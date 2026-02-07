@@ -18,9 +18,8 @@ use oxc_ast::ast::*;
 use oxc_syntax::scope::ScopeId;
 
 use crate::{
+    Traverse, TraverseCtx,
     generated::ancestor::{self, Ancestor, AncestorType},
-    generated::traverse::MinifierTraverse,
-    traverse_context::MinifierTraverseCtx,
 };
 
 /// Walk AST with `Traverse` impl.
@@ -30,18 +29,18 @@ use crate::{
 ///   (`Program<'a>`).
 /// * `ctx` must contain a `TraverseAncestry<'a>` with single `Ancestor::None` on its stack.
 #[inline]
-pub unsafe fn walk_ast<'a, Tr: MinifierTraverse<'a>>(
+pub unsafe fn walk_ast<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     program: *mut Program<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     walk_program(traverser, program, ctx);
 }
 
-unsafe fn walk_program<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_program<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Program<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_program(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -80,10 +79,10 @@ unsafe fn walk_program<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_program(&mut *node, ctx);
 }
 
-unsafe fn walk_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Expression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_expression(&mut *node, ctx);
     match &mut *node {
@@ -206,55 +205,55 @@ unsafe fn walk_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_identifier_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_identifier_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut IdentifierName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_identifier_name(&mut *node, ctx);
     traverser.exit_identifier_name(&mut *node, ctx);
 }
 
-unsafe fn walk_identifier_reference<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_identifier_reference<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut IdentifierReference<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_identifier_reference(&mut *node, ctx);
     traverser.exit_identifier_reference(&mut *node, ctx);
 }
 
-unsafe fn walk_binding_identifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_binding_identifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut BindingIdentifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_binding_identifier(&mut *node, ctx);
     traverser.exit_binding_identifier(&mut *node, ctx);
 }
 
-unsafe fn walk_label_identifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_label_identifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut LabelIdentifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_label_identifier(&mut *node, ctx);
     traverser.exit_label_identifier(&mut *node, ctx);
 }
 
-unsafe fn walk_this_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_this_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ThisExpression,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_this_expression(&mut *node, ctx);
     traverser.exit_this_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_array_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_array_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ArrayExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_array_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ArrayExpressionElements(
@@ -269,10 +268,10 @@ unsafe fn walk_array_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_array_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_array_expression_element<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_array_expression_element<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ArrayExpressionElement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_array_expression_element(&mut *node, ctx);
     match &mut *node {
@@ -329,19 +328,19 @@ unsafe fn walk_array_expression_element<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_array_expression_element(&mut *node, ctx);
 }
 
-unsafe fn walk_elision<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_elision<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Elision,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_elision(&mut *node, ctx);
     traverser.exit_elision(&mut *node, ctx);
 }
 
-unsafe fn walk_object_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_object_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ObjectExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_object_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ObjectExpressionProperties(
@@ -356,10 +355,10 @@ unsafe fn walk_object_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_object_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_object_property_kind<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_object_property_kind<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ObjectPropertyKind<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_object_property_kind(&mut *node, ctx);
     match &mut *node {
@@ -373,10 +372,10 @@ unsafe fn walk_object_property_kind<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_object_property_kind(&mut *node, ctx);
 }
 
-unsafe fn walk_object_property<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_object_property<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ObjectProperty<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_object_property(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ObjectPropertyKey(
@@ -397,10 +396,10 @@ unsafe fn walk_object_property<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_object_property(&mut *node, ctx);
 }
 
-unsafe fn walk_property_key<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut PropertyKey<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_property_key(&mut *node, ctx);
     match &mut *node {
@@ -457,10 +456,10 @@ unsafe fn walk_property_key<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_property_key(&mut *node, ctx);
 }
 
-unsafe fn walk_template_literal<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_template_literal<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TemplateLiteral<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_template_literal(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TemplateLiteralQuasis(
@@ -481,10 +480,10 @@ unsafe fn walk_template_literal<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_template_literal(&mut *node, ctx);
 }
 
-unsafe fn walk_tagged_template_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TaggedTemplateExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_tagged_template_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TaggedTemplateExpressionTag(
@@ -513,19 +512,19 @@ unsafe fn walk_tagged_template_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_tagged_template_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_template_element<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_template_element<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TemplateElement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_template_element(&mut *node, ctx);
     traverser.exit_template_element(&mut *node, ctx);
 }
 
-unsafe fn walk_member_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_member_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut MemberExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_member_expression(&mut *node, ctx);
     match &mut *node {
@@ -542,10 +541,10 @@ unsafe fn walk_member_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_member_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_computed_member_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_computed_member_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ComputedMemberExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_computed_member_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ComputedMemberExpressionObject(
@@ -568,10 +567,10 @@ unsafe fn walk_computed_member_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_computed_member_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_static_member_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_static_member_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut StaticMemberExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_static_member_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::StaticMemberExpressionObject(
@@ -593,10 +592,10 @@ unsafe fn walk_static_member_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_static_member_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_private_field_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_private_field_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut PrivateFieldExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_private_field_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::PrivateFieldExpressionObject(
@@ -618,10 +617,10 @@ unsafe fn walk_private_field_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_private_field_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_call_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_call_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut CallExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_call_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::CallExpressionCallee(
@@ -649,10 +648,10 @@ unsafe fn walk_call_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_call_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_new_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_new_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut NewExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_new_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::NewExpressionCallee(
@@ -680,10 +679,10 @@ unsafe fn walk_new_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_new_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_meta_property<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_meta_property<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut MetaProperty<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_meta_property(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::MetaPropertyMeta(ancestor::MetaPropertyWithoutMeta(
@@ -705,10 +704,10 @@ unsafe fn walk_meta_property<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_meta_property(&mut *node, ctx);
 }
 
-unsafe fn walk_spread_element<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_spread_element<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut SpreadElement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_spread_element(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::SpreadElementArgument(
@@ -723,10 +722,10 @@ unsafe fn walk_spread_element<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_spread_element(&mut *node, ctx);
 }
 
-unsafe fn walk_argument<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_argument<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Argument<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_argument(&mut *node, ctx);
     match &mut *node {
@@ -780,10 +779,10 @@ unsafe fn walk_argument<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_argument(&mut *node, ctx);
 }
 
-unsafe fn walk_update_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_update_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut UpdateExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_update_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::UpdateExpressionArgument(
@@ -799,10 +798,10 @@ unsafe fn walk_update_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_update_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_unary_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_unary_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut UnaryExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_unary_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::UnaryExpressionArgument(
@@ -817,10 +816,10 @@ unsafe fn walk_unary_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_unary_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_binary_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_binary_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut BinaryExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_binary_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::BinaryExpressionLeft(
@@ -841,10 +840,10 @@ unsafe fn walk_binary_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_binary_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_private_in_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_private_in_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut PrivateInExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_private_in_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::PrivateInExpressionLeft(
@@ -866,10 +865,10 @@ unsafe fn walk_private_in_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_private_in_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_logical_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_logical_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut LogicalExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_logical_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::LogicalExpressionLeft(
@@ -890,10 +889,10 @@ unsafe fn walk_logical_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_logical_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_conditional_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_conditional_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ConditionalExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_conditional_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ConditionalExpressionTest(
@@ -921,10 +920,10 @@ unsafe fn walk_conditional_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_conditional_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_assignment_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_assignment_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AssignmentExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::AssignmentExpressionLeft(
@@ -945,10 +944,10 @@ unsafe fn walk_assignment_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_assignment_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_assignment_target<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_assignment_target<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AssignmentTarget<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target(&mut *node, ctx);
     match &mut *node {
@@ -970,10 +969,10 @@ unsafe fn walk_assignment_target<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_assignment_target(&mut *node, ctx);
 }
 
-unsafe fn walk_simple_assignment_target<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_simple_assignment_target<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut SimpleAssignmentTarget<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_simple_assignment_target(&mut *node, ctx);
     match &mut *node {
@@ -1001,10 +1000,10 @@ unsafe fn walk_simple_assignment_target<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_simple_assignment_target(&mut *node, ctx);
 }
 
-unsafe fn walk_assignment_target_pattern<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_assignment_target_pattern<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AssignmentTargetPattern<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_pattern(&mut *node, ctx);
     match &mut *node {
@@ -1018,10 +1017,10 @@ unsafe fn walk_assignment_target_pattern<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_assignment_target_pattern(&mut *node, ctx);
 }
 
-unsafe fn walk_array_assignment_target<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_array_assignment_target<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ArrayAssignmentTarget<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_array_assignment_target(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ArrayAssignmentTargetElements(
@@ -1044,10 +1043,10 @@ unsafe fn walk_array_assignment_target<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_array_assignment_target(&mut *node, ctx);
 }
 
-unsafe fn walk_object_assignment_target<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_object_assignment_target<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ObjectAssignmentTarget<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_object_assignment_target(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ObjectAssignmentTargetProperties(
@@ -1069,10 +1068,10 @@ unsafe fn walk_object_assignment_target<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_object_assignment_target(&mut *node, ctx);
 }
 
-unsafe fn walk_assignment_target_rest<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_assignment_target_rest<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AssignmentTargetRest<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_rest(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::AssignmentTargetRestTarget(
@@ -1088,10 +1087,10 @@ unsafe fn walk_assignment_target_rest<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_assignment_target_rest(&mut *node, ctx);
 }
 
-unsafe fn walk_assignment_target_maybe_default<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_assignment_target_maybe_default<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AssignmentTargetMaybeDefault<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_maybe_default(&mut *node, ctx);
     match &mut *node {
@@ -1114,10 +1113,10 @@ unsafe fn walk_assignment_target_maybe_default<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_assignment_target_maybe_default(&mut *node, ctx);
 }
 
-unsafe fn walk_assignment_target_with_default<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_assignment_target_with_default<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AssignmentTargetWithDefault<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_with_default(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::AssignmentTargetWithDefaultBinding(
@@ -1140,10 +1139,10 @@ unsafe fn walk_assignment_target_with_default<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_assignment_target_with_default(&mut *node, ctx);
 }
 
-unsafe fn walk_assignment_target_property<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_assignment_target_property<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AssignmentTargetProperty<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_property(&mut *node, ctx);
     match &mut *node {
@@ -1157,10 +1156,10 @@ unsafe fn walk_assignment_target_property<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_assignment_target_property(&mut *node, ctx);
 }
 
-unsafe fn walk_assignment_target_property_identifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_assignment_target_property_identifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AssignmentTargetPropertyIdentifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_property_identifier(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::AssignmentTargetPropertyIdentifierBinding(
@@ -1183,10 +1182,10 @@ unsafe fn walk_assignment_target_property_identifier<'a, Tr: MinifierTraverse<'a
     traverser.exit_assignment_target_property_identifier(&mut *node, ctx);
 }
 
-unsafe fn walk_assignment_target_property_property<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_assignment_target_property_property<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AssignmentTargetPropertyProperty<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_property_property(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::AssignmentTargetPropertyPropertyName(
@@ -1209,10 +1208,10 @@ unsafe fn walk_assignment_target_property_property<'a, Tr: MinifierTraverse<'a>>
     traverser.exit_assignment_target_property_property(&mut *node, ctx);
 }
 
-unsafe fn walk_sequence_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_sequence_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut SequenceExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_sequence_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::SequenceExpressionExpressions(
@@ -1227,19 +1226,19 @@ unsafe fn walk_sequence_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_sequence_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_super<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_super<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Super,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_super(&mut *node, ctx);
     traverser.exit_super(&mut *node, ctx);
 }
 
-unsafe fn walk_await_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_await_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AwaitExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_await_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::AwaitExpressionArgument(
@@ -1254,10 +1253,10 @@ unsafe fn walk_await_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_await_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_chain_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_chain_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ChainExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_chain_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ChainExpressionExpression(
@@ -1272,10 +1271,10 @@ unsafe fn walk_chain_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_chain_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_chain_element<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_chain_element<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ChainElement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_chain_element(&mut *node, ctx);
     match &mut *node {
@@ -1294,10 +1293,10 @@ unsafe fn walk_chain_element<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_chain_element(&mut *node, ctx);
 }
 
-unsafe fn walk_parenthesized_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_parenthesized_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ParenthesizedExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_parenthesized_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ParenthesizedExpressionExpression(
@@ -1313,10 +1312,10 @@ unsafe fn walk_parenthesized_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_parenthesized_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Statement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_statement(&mut *node, ctx);
     match &mut *node {
@@ -1395,10 +1394,10 @@ unsafe fn walk_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_directive<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_directive<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Directive<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_directive(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::DirectiveExpression(
@@ -1413,19 +1412,19 @@ unsafe fn walk_directive<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_directive(&mut *node, ctx);
 }
 
-unsafe fn walk_hashbang<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_hashbang<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Hashbang<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_hashbang(&mut *node, ctx);
     traverser.exit_hashbang(&mut *node, ctx);
 }
 
-unsafe fn walk_block_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_block_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut BlockStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_block_statement(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -1450,10 +1449,10 @@ unsafe fn walk_block_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_block_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Declaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_declaration(&mut *node, ctx);
     match &mut *node {
@@ -1486,10 +1485,10 @@ unsafe fn walk_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_variable_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_variable_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut VariableDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_variable_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::VariableDeclarationDeclarations(
@@ -1504,10 +1503,10 @@ unsafe fn walk_variable_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_variable_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_variable_declarator<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_variable_declarator<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut VariableDeclarator<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_variable_declarator(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::VariableDeclaratorId(
@@ -1535,19 +1534,19 @@ unsafe fn walk_variable_declarator<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_variable_declarator(&mut *node, ctx);
 }
 
-unsafe fn walk_empty_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_empty_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut EmptyStatement,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_empty_statement(&mut *node, ctx);
     traverser.exit_empty_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_expression_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_expression_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ExpressionStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_expression_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ExpressionStatementExpression(
@@ -1562,10 +1561,10 @@ unsafe fn walk_expression_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_expression_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_if_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_if_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut IfStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_if_statement(&mut *node, ctx);
     let pop_token = ctx
@@ -1591,10 +1590,10 @@ unsafe fn walk_if_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_if_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_do_while_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_do_while_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut DoWhileStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_do_while_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::DoWhileStatementBody(
@@ -1615,10 +1614,10 @@ unsafe fn walk_do_while_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_do_while_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_while_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_while_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut WhileStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_while_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::WhileStatementTest(
@@ -1639,10 +1638,10 @@ unsafe fn walk_while_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_while_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_for_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ForStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_for_statement(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -1683,10 +1682,10 @@ unsafe fn walk_for_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_for_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_for_statement_init<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ForStatementInit<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_for_statement_init(&mut *node, ctx);
     match &mut *node {
@@ -1742,10 +1741,10 @@ unsafe fn walk_for_statement_init<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_for_statement_init(&mut *node, ctx);
 }
 
-unsafe fn walk_for_in_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ForInStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_for_in_statement(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -1779,10 +1778,10 @@ unsafe fn walk_for_in_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_for_in_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_for_statement_left<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ForStatementLeft<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_for_statement_left(&mut *node, ctx);
     match &mut *node {
@@ -1805,10 +1804,10 @@ unsafe fn walk_for_statement_left<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_for_statement_left(&mut *node, ctx);
 }
 
-unsafe fn walk_for_of_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ForOfStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_for_of_statement(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -1842,10 +1841,10 @@ unsafe fn walk_for_of_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_for_of_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_continue_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_continue_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ContinueStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_continue_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ContinueStatementLabel(
@@ -1860,10 +1859,10 @@ unsafe fn walk_continue_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_continue_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_break_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_break_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut BreakStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_break_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::BreakStatementLabel(
@@ -1878,10 +1877,10 @@ unsafe fn walk_break_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_break_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_return_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_return_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ReturnStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_return_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ReturnStatementArgument(
@@ -1896,10 +1895,10 @@ unsafe fn walk_return_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_return_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_with_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_with_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut WithStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_with_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::WithStatementObject(
@@ -1927,10 +1926,10 @@ unsafe fn walk_with_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_with_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_switch_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_switch_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut SwitchStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_switch_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::SwitchStatementDiscriminant(
@@ -1958,10 +1957,10 @@ unsafe fn walk_switch_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_switch_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_switch_case<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_switch_case<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut SwitchCase<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_switch_case(&mut *node, ctx);
     let pop_token = ctx
@@ -1981,10 +1980,10 @@ unsafe fn walk_switch_case<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_switch_case(&mut *node, ctx);
 }
 
-unsafe fn walk_labeled_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_labeled_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut LabeledStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_labeled_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::LabeledStatementLabel(
@@ -2005,10 +2004,10 @@ unsafe fn walk_labeled_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_labeled_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_throw_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_throw_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ThrowStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_throw_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ThrowStatementArgument(
@@ -2023,10 +2022,10 @@ unsafe fn walk_throw_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_throw_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_try_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_try_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TryStatement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_try_statement(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TryStatementBlock(
@@ -2054,10 +2053,10 @@ unsafe fn walk_try_statement<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_try_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_catch_clause<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut CatchClause<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_catch_clause(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -2087,10 +2086,10 @@ unsafe fn walk_catch_clause<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_catch_clause(&mut *node, ctx);
 }
 
-unsafe fn walk_catch_parameter<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_catch_parameter<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut CatchParameter<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_catch_parameter(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::CatchParameterPattern(
@@ -2112,19 +2111,19 @@ unsafe fn walk_catch_parameter<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_catch_parameter(&mut *node, ctx);
 }
 
-unsafe fn walk_debugger_statement<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_debugger_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut DebuggerStatement,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_debugger_statement(&mut *node, ctx);
     traverser.exit_debugger_statement(&mut *node, ctx);
 }
 
-unsafe fn walk_binding_pattern<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_binding_pattern<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut BindingPattern<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_binding_pattern(&mut *node, ctx);
     match &mut *node {
@@ -2144,10 +2143,10 @@ unsafe fn walk_binding_pattern<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_binding_pattern(&mut *node, ctx);
 }
 
-unsafe fn walk_assignment_pattern<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_assignment_pattern<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AssignmentPattern<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_pattern(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::AssignmentPatternLeft(
@@ -2168,10 +2167,10 @@ unsafe fn walk_assignment_pattern<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_assignment_pattern(&mut *node, ctx);
 }
 
-unsafe fn walk_object_pattern<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_object_pattern<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ObjectPattern<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_object_pattern(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ObjectPatternProperties(
@@ -2192,10 +2191,10 @@ unsafe fn walk_object_pattern<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_object_pattern(&mut *node, ctx);
 }
 
-unsafe fn walk_binding_property<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_binding_property<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut BindingProperty<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_binding_property(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::BindingPropertyKey(
@@ -2216,10 +2215,10 @@ unsafe fn walk_binding_property<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_binding_property(&mut *node, ctx);
 }
 
-unsafe fn walk_array_pattern<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_array_pattern<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ArrayPattern<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_array_pattern(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ArrayPatternElements(
@@ -2242,10 +2241,10 @@ unsafe fn walk_array_pattern<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_array_pattern(&mut *node, ctx);
 }
 
-unsafe fn walk_binding_rest_element<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_binding_rest_element<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut BindingRestElement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_binding_rest_element(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::BindingRestElementArgument(
@@ -2261,10 +2260,10 @@ unsafe fn walk_binding_rest_element<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_binding_rest_element(&mut *node, ctx);
 }
 
-unsafe fn walk_function<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_function<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Function<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_function(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -2322,10 +2321,10 @@ unsafe fn walk_function<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_function(&mut *node, ctx);
 }
 
-unsafe fn walk_formal_parameters<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_formal_parameters<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut FormalParameters<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_formal_parameters(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::FormalParametersItems(
@@ -2346,10 +2345,10 @@ unsafe fn walk_formal_parameters<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_formal_parameters(&mut *node, ctx);
 }
 
-unsafe fn walk_formal_parameter<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_formal_parameter<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut FormalParameter<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_formal_parameter(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::FormalParameterDecorators(
@@ -2383,10 +2382,10 @@ unsafe fn walk_formal_parameter<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_formal_parameter(&mut *node, ctx);
 }
 
-unsafe fn walk_formal_parameter_rest<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_formal_parameter_rest<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut FormalParameterRest<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_formal_parameter_rest(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::FormalParameterRestDecorators(
@@ -2415,10 +2414,10 @@ unsafe fn walk_formal_parameter_rest<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_formal_parameter_rest(&mut *node, ctx);
 }
 
-unsafe fn walk_function_body<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_function_body<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut FunctionBody<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_function_body(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::FunctionBodyDirectives(
@@ -2439,10 +2438,10 @@ unsafe fn walk_function_body<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_function_body(&mut *node, ctx);
 }
 
-unsafe fn walk_arrow_function_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ArrowFunctionExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_arrow_function_expression(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -2493,10 +2492,10 @@ unsafe fn walk_arrow_function_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_arrow_function_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_yield_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_yield_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut YieldExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_yield_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::YieldExpressionArgument(
@@ -2511,10 +2510,10 @@ unsafe fn walk_yield_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_yield_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_class<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_class<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Class<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_class(&mut *node, ctx);
     let pop_token = ctx
@@ -2572,10 +2571,10 @@ unsafe fn walk_class<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_class(&mut *node, ctx);
 }
 
-unsafe fn walk_class_body<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_class_body<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ClassBody<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_class_body(&mut *node, ctx);
     let pop_token =
@@ -2589,10 +2588,10 @@ unsafe fn walk_class_body<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_class_body(&mut *node, ctx);
 }
 
-unsafe fn walk_class_element<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_class_element<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ClassElement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_class_element(&mut *node, ctx);
     match &mut *node {
@@ -2615,10 +2614,10 @@ unsafe fn walk_class_element<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_class_element(&mut *node, ctx);
 }
 
-unsafe fn walk_method_definition<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut MethodDefinition<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_method_definition(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::MethodDefinitionDecorators(
@@ -2646,10 +2645,10 @@ unsafe fn walk_method_definition<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_method_definition(&mut *node, ctx);
 }
 
-unsafe fn walk_property_definition<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_property_definition<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut PropertyDefinition<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_property_definition(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::PropertyDefinitionDecorators(
@@ -2683,19 +2682,19 @@ unsafe fn walk_property_definition<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_property_definition(&mut *node, ctx);
 }
 
-unsafe fn walk_private_identifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_private_identifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut PrivateIdentifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_private_identifier(&mut *node, ctx);
     traverser.exit_private_identifier(&mut *node, ctx);
 }
 
-unsafe fn walk_static_block<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut StaticBlock<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_static_block(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -2722,10 +2721,10 @@ unsafe fn walk_static_block<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_static_block(&mut *node, ctx);
 }
 
-unsafe fn walk_module_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_module_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ModuleDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_module_declaration(&mut *node, ctx);
     match &mut *node {
@@ -2751,10 +2750,10 @@ unsafe fn walk_module_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_module_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_accessor_property<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut AccessorProperty<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_accessor_property(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::AccessorPropertyDecorators(
@@ -2788,10 +2787,10 @@ unsafe fn walk_accessor_property<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_accessor_property(&mut *node, ctx);
 }
 
-unsafe fn walk_import_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_import_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ImportExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ImportExpressionSource(
@@ -2812,10 +2811,10 @@ unsafe fn walk_import_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_import_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_import_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_import_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ImportDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ImportDeclarationSpecifiers(
@@ -2846,10 +2845,10 @@ unsafe fn walk_import_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_import_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_import_declaration_specifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_import_declaration_specifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ImportDeclarationSpecifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_declaration_specifier(&mut *node, ctx);
     match &mut *node {
@@ -2866,10 +2865,10 @@ unsafe fn walk_import_declaration_specifier<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_import_declaration_specifier(&mut *node, ctx);
 }
 
-unsafe fn walk_import_specifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_import_specifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ImportSpecifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_specifier(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ImportSpecifierImported(
@@ -2890,10 +2889,10 @@ unsafe fn walk_import_specifier<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_import_specifier(&mut *node, ctx);
 }
 
-unsafe fn walk_import_default_specifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_import_default_specifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ImportDefaultSpecifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_default_specifier(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ImportDefaultSpecifierLocal(
@@ -2909,10 +2908,10 @@ unsafe fn walk_import_default_specifier<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_import_default_specifier(&mut *node, ctx);
 }
 
-unsafe fn walk_import_namespace_specifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_import_namespace_specifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ImportNamespaceSpecifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_namespace_specifier(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ImportNamespaceSpecifierLocal(
@@ -2928,10 +2927,10 @@ unsafe fn walk_import_namespace_specifier<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_import_namespace_specifier(&mut *node, ctx);
 }
 
-unsafe fn walk_with_clause<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_with_clause<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut WithClause<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_with_clause(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::WithClauseWithEntries(
@@ -2946,10 +2945,10 @@ unsafe fn walk_with_clause<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_with_clause(&mut *node, ctx);
 }
 
-unsafe fn walk_import_attribute<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_import_attribute<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ImportAttribute<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_attribute(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ImportAttributeKey(
@@ -2970,10 +2969,10 @@ unsafe fn walk_import_attribute<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_import_attribute(&mut *node, ctx);
 }
 
-unsafe fn walk_import_attribute_key<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_import_attribute_key<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ImportAttributeKey<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_attribute_key(&mut *node, ctx);
     match &mut *node {
@@ -2987,10 +2986,10 @@ unsafe fn walk_import_attribute_key<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_import_attribute_key(&mut *node, ctx);
 }
 
-unsafe fn walk_export_named_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_export_named_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ExportNamedDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_named_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ExportNamedDeclarationDeclaration(
@@ -3026,10 +3025,10 @@ unsafe fn walk_export_named_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_export_named_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_export_default_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_export_default_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ExportDefaultDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_default_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ExportDefaultDeclarationDeclaration(
@@ -3045,10 +3044,10 @@ unsafe fn walk_export_default_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_export_default_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_export_all_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_export_all_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ExportAllDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_all_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ExportAllDeclarationExported(
@@ -3077,10 +3076,10 @@ unsafe fn walk_export_all_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_export_all_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_export_specifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_export_specifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ExportSpecifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_specifier(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::ExportSpecifierLocal(
@@ -3101,10 +3100,10 @@ unsafe fn walk_export_specifier<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_export_specifier(&mut *node, ctx);
 }
 
-unsafe fn walk_export_default_declaration_kind<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_export_default_declaration_kind<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ExportDefaultDeclarationKind<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_default_declaration_kind(&mut *node, ctx);
     match &mut *node {
@@ -3166,10 +3165,10 @@ unsafe fn walk_export_default_declaration_kind<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_export_default_declaration_kind(&mut *node, ctx);
 }
 
-unsafe fn walk_module_export_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_module_export_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ModuleExportName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_module_export_name(&mut *node, ctx);
     match &mut *node {
@@ -3186,10 +3185,10 @@ unsafe fn walk_module_export_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_module_export_name(&mut *node, ctx);
 }
 
-unsafe fn walk_v8_intrinsic_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_v8_intrinsic_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut V8IntrinsicExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_v8_intrinsic_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::V8IntrinsicExpressionName(
@@ -3210,64 +3209,64 @@ unsafe fn walk_v8_intrinsic_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_v8_intrinsic_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_boolean_literal<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_boolean_literal<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut BooleanLiteral,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_boolean_literal(&mut *node, ctx);
     traverser.exit_boolean_literal(&mut *node, ctx);
 }
 
-unsafe fn walk_null_literal<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_null_literal<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut NullLiteral,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_null_literal(&mut *node, ctx);
     traverser.exit_null_literal(&mut *node, ctx);
 }
 
-unsafe fn walk_numeric_literal<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_numeric_literal<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut NumericLiteral<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_numeric_literal(&mut *node, ctx);
     traverser.exit_numeric_literal(&mut *node, ctx);
 }
 
-unsafe fn walk_string_literal<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_string_literal<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut StringLiteral<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_string_literal(&mut *node, ctx);
     traverser.exit_string_literal(&mut *node, ctx);
 }
 
-unsafe fn walk_big_int_literal<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_big_int_literal<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut BigIntLiteral<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_big_int_literal(&mut *node, ctx);
     traverser.exit_big_int_literal(&mut *node, ctx);
 }
 
-unsafe fn walk_reg_exp_literal<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_reg_exp_literal<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut RegExpLiteral<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_reg_exp_literal(&mut *node, ctx);
     traverser.exit_reg_exp_literal(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_element<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_element<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXElement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_element(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSXElementOpeningElement(
@@ -3295,10 +3294,10 @@ unsafe fn walk_jsx_element<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_element(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_opening_element<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_opening_element<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXOpeningElement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_opening_element(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSXOpeningElementName(
@@ -3326,10 +3325,10 @@ unsafe fn walk_jsx_opening_element<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_opening_element(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_closing_element<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_closing_element<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXClosingElement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_closing_element(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSXClosingElementName(
@@ -3344,10 +3343,10 @@ unsafe fn walk_jsx_closing_element<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_closing_element(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_fragment<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXFragment<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_fragment(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSXFragmentOpeningFragment(
@@ -3376,28 +3375,28 @@ unsafe fn walk_jsx_fragment<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_fragment(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_opening_fragment<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_opening_fragment<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXOpeningFragment,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_opening_fragment(&mut *node, ctx);
     traverser.exit_jsx_opening_fragment(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_closing_fragment<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_closing_fragment<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXClosingFragment,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_closing_fragment(&mut *node, ctx);
     traverser.exit_jsx_closing_fragment(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_element_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_element_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXElementName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_element_name(&mut *node, ctx);
     match &mut *node {
@@ -3420,10 +3419,10 @@ unsafe fn walk_jsx_element_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_element_name(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_namespaced_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_namespaced_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXNamespacedName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_namespaced_name(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSXNamespacedNameNamespace(
@@ -3444,10 +3443,10 @@ unsafe fn walk_jsx_namespaced_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_namespaced_name(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_member_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_member_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXMemberExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_member_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSXMemberExpressionObject(
@@ -3470,10 +3469,10 @@ unsafe fn walk_jsx_member_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_member_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_member_expression_object<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_member_expression_object<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXMemberExpressionObject<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_member_expression_object(&mut *node, ctx);
     match &mut *node {
@@ -3490,10 +3489,10 @@ unsafe fn walk_jsx_member_expression_object<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_member_expression_object(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_expression_container<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_expression_container<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXExpressionContainer<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_expression_container(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSXExpressionContainerExpression(
@@ -3509,10 +3508,10 @@ unsafe fn walk_jsx_expression_container<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_expression_container(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_expression(&mut *node, ctx);
     match &mut *node {
@@ -3568,19 +3567,19 @@ unsafe fn walk_jsx_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_empty_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_empty_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXEmptyExpression,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_empty_expression(&mut *node, ctx);
     traverser.exit_jsx_empty_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_attribute_item<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_attribute_item<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXAttributeItem<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_attribute_item(&mut *node, ctx);
     match &mut *node {
@@ -3594,10 +3593,10 @@ unsafe fn walk_jsx_attribute_item<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_attribute_item(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_attribute<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_attribute<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXAttribute<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_attribute(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSXAttributeName(ancestor::JSXAttributeWithoutName(
@@ -3619,10 +3618,10 @@ unsafe fn walk_jsx_attribute<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_attribute(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_spread_attribute<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_spread_attribute<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXSpreadAttribute<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_spread_attribute(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSXSpreadAttributeArgument(
@@ -3637,10 +3636,10 @@ unsafe fn walk_jsx_spread_attribute<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_spread_attribute(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_attribute_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_attribute_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXAttributeName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_attribute_name(&mut *node, ctx);
     match &mut *node {
@@ -3654,10 +3653,10 @@ unsafe fn walk_jsx_attribute_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_attribute_name(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_attribute_value<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_attribute_value<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXAttributeValue<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_attribute_value(&mut *node, ctx);
     match &mut *node {
@@ -3677,19 +3676,19 @@ unsafe fn walk_jsx_attribute_value<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_attribute_value(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_identifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_identifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXIdentifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_identifier(&mut *node, ctx);
     traverser.exit_jsx_identifier(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_child<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_child<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXChild<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_child(&mut *node, ctx);
     match &mut *node {
@@ -3704,10 +3703,10 @@ unsafe fn walk_jsx_child<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_child(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_spread_child<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_spread_child<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXSpreadChild<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_spread_child(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSXSpreadChildExpression(
@@ -3722,19 +3721,19 @@ unsafe fn walk_jsx_spread_child<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_jsx_spread_child(&mut *node, ctx);
 }
 
-unsafe fn walk_jsx_text<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_jsx_text<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSXText<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_text(&mut *node, ctx);
     traverser.exit_jsx_text(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_this_parameter<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_this_parameter<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSThisParameter<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_this_parameter(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSThisParameterTypeAnnotation(
@@ -3750,10 +3749,10 @@ unsafe fn walk_ts_this_parameter<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_this_parameter(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_enum_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSEnumDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_enum_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSEnumDeclarationId(
@@ -3774,10 +3773,10 @@ unsafe fn walk_ts_enum_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_enum_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_enum_body<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_enum_body<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSEnumBody<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_enum_body(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -3799,10 +3798,10 @@ unsafe fn walk_ts_enum_body<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_enum_body(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_enum_member<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_enum_member<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSEnumMember<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_enum_member(&mut *node, ctx);
     let pop_token = ctx
@@ -3822,10 +3821,10 @@ unsafe fn walk_ts_enum_member<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_enum_member(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_enum_member_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_enum_member_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSEnumMemberName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_enum_member_name(&mut *node, ctx);
     match &mut *node {
@@ -3845,10 +3844,10 @@ unsafe fn walk_ts_enum_member_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_enum_member_name(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_annotation<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_annotation<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeAnnotation<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_annotation(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypeAnnotationTypeAnnotation(
@@ -3863,10 +3862,10 @@ unsafe fn walk_ts_type_annotation<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_annotation(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_literal_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_literal_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSLiteralType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_literal_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSLiteralTypeLiteral(
@@ -3881,10 +3880,10 @@ unsafe fn walk_ts_literal_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_literal_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_literal<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_literal<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSLiteral<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_literal(&mut *node, ctx);
     match &mut *node {
@@ -3910,10 +3909,10 @@ unsafe fn walk_ts_literal<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_literal(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type(&mut *node, ctx);
     match &mut *node {
@@ -4014,10 +4013,10 @@ unsafe fn walk_ts_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_conditional_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSConditionalType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_conditional_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSConditionalTypeCheckType(
@@ -4057,10 +4056,10 @@ unsafe fn walk_ts_conditional_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_conditional_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_union_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_union_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSUnionType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_union_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSUnionTypeTypes(ancestor::TSUnionTypeWithoutTypes(
@@ -4076,10 +4075,10 @@ unsafe fn walk_ts_union_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_union_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_intersection_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_intersection_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSIntersectionType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_intersection_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSIntersectionTypeTypes(
@@ -4094,10 +4093,10 @@ unsafe fn walk_ts_intersection_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_intersection_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_parenthesized_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_parenthesized_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSParenthesizedType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_parenthesized_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSParenthesizedTypeTypeAnnotation(
@@ -4113,10 +4112,10 @@ unsafe fn walk_ts_parenthesized_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_parenthesized_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_operator<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_operator<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeOperator<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_operator(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypeOperatorTypeAnnotation(
@@ -4131,10 +4130,10 @@ unsafe fn walk_ts_type_operator<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_operator(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_array_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_array_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSArrayType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_array_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSArrayTypeElementType(
@@ -4149,10 +4148,10 @@ unsafe fn walk_ts_array_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_array_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_indexed_access_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_indexed_access_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSIndexedAccessType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_indexed_access_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSIndexedAccessTypeObjectType(
@@ -4173,10 +4172,10 @@ unsafe fn walk_ts_indexed_access_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_indexed_access_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_tuple_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_tuple_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTupleType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_tuple_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTupleTypeElementTypes(
@@ -4191,10 +4190,10 @@ unsafe fn walk_ts_tuple_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_tuple_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_named_tuple_member<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_named_tuple_member<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSNamedTupleMember<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_named_tuple_member(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSNamedTupleMemberLabel(
@@ -4216,10 +4215,10 @@ unsafe fn walk_ts_named_tuple_member<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_named_tuple_member(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_optional_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_optional_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSOptionalType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_optional_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSOptionalTypeTypeAnnotation(
@@ -4234,10 +4233,10 @@ unsafe fn walk_ts_optional_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_optional_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_rest_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_rest_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSRestType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_rest_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSRestTypeTypeAnnotation(
@@ -4252,10 +4251,10 @@ unsafe fn walk_ts_rest_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_rest_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_tuple_element<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTupleElement<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_tuple_element(&mut *node, ctx);
     match &mut *node {
@@ -4306,136 +4305,136 @@ unsafe fn walk_ts_tuple_element<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_tuple_element(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_any_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_any_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSAnyKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_any_keyword(&mut *node, ctx);
     traverser.exit_ts_any_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_string_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_string_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSStringKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_string_keyword(&mut *node, ctx);
     traverser.exit_ts_string_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_boolean_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_boolean_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSBooleanKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_boolean_keyword(&mut *node, ctx);
     traverser.exit_ts_boolean_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_number_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_number_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSNumberKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_number_keyword(&mut *node, ctx);
     traverser.exit_ts_number_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_never_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_never_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSNeverKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_never_keyword(&mut *node, ctx);
     traverser.exit_ts_never_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_intrinsic_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_intrinsic_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSIntrinsicKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_intrinsic_keyword(&mut *node, ctx);
     traverser.exit_ts_intrinsic_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_unknown_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_unknown_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSUnknownKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_unknown_keyword(&mut *node, ctx);
     traverser.exit_ts_unknown_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_null_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_null_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSNullKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_null_keyword(&mut *node, ctx);
     traverser.exit_ts_null_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_undefined_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_undefined_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSUndefinedKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_undefined_keyword(&mut *node, ctx);
     traverser.exit_ts_undefined_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_void_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_void_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSVoidKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_void_keyword(&mut *node, ctx);
     traverser.exit_ts_void_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_symbol_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_symbol_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSSymbolKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_symbol_keyword(&mut *node, ctx);
     traverser.exit_ts_symbol_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_this_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_this_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSThisType,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_this_type(&mut *node, ctx);
     traverser.exit_ts_this_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_object_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_object_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSObjectKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_object_keyword(&mut *node, ctx);
     traverser.exit_ts_object_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_big_int_keyword<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_big_int_keyword<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSBigIntKeyword,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_big_int_keyword(&mut *node, ctx);
     traverser.exit_ts_big_int_keyword(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_reference<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_reference<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeReference<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_reference(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypeReferenceTypeName(
@@ -4457,10 +4456,10 @@ unsafe fn walk_ts_type_reference<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_reference(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_name(&mut *node, ctx);
     match &mut *node {
@@ -4477,10 +4476,10 @@ unsafe fn walk_ts_type_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_name(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_qualified_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_qualified_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSQualifiedName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_qualified_name(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSQualifiedNameLeft(
@@ -4501,10 +4500,10 @@ unsafe fn walk_ts_qualified_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_qualified_name(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_parameter_instantiation<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_parameter_instantiation<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeParameterInstantiation<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_parameter_instantiation(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypeParameterInstantiationParams(
@@ -4520,10 +4519,10 @@ unsafe fn walk_ts_type_parameter_instantiation<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_parameter_instantiation(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_parameter<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_parameter<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeParameter<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_parameter(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypeParameterName(
@@ -4550,10 +4549,10 @@ unsafe fn walk_ts_type_parameter<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_parameter(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_parameter_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_parameter_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeParameterDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_parameter_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypeParameterDeclarationParams(
@@ -4568,10 +4567,10 @@ unsafe fn walk_ts_type_parameter_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_parameter_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_alias_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_alias_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeAliasDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_alias_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypeAliasDeclarationId(
@@ -4609,10 +4608,10 @@ unsafe fn walk_ts_type_alias_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_alias_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_class_implements<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_class_implements<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSClassImplements<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_class_implements(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSClassImplementsExpression(
@@ -4634,10 +4633,10 @@ unsafe fn walk_ts_class_implements<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_class_implements(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_interface_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_interface_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSInterfaceDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_interface_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSInterfaceDeclarationId(
@@ -4681,10 +4680,10 @@ unsafe fn walk_ts_interface_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_interface_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_interface_body<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_interface_body<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSInterfaceBody<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_interface_body(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSInterfaceBodyBody(
@@ -4699,10 +4698,10 @@ unsafe fn walk_ts_interface_body<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_interface_body(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_property_signature<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_property_signature<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSPropertySignature<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_property_signature(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSPropertySignatureKey(
@@ -4724,10 +4723,10 @@ unsafe fn walk_ts_property_signature<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_property_signature(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_signature<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_signature<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSSignature<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_signature(&mut *node, ctx);
     match &mut *node {
@@ -4750,10 +4749,10 @@ unsafe fn walk_ts_signature<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_signature(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_index_signature<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_index_signature<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSIndexSignature<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_index_signature(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureParameters(
@@ -4775,10 +4774,10 @@ unsafe fn walk_ts_index_signature<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_index_signature(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_call_signature_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_call_signature_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSCallSignatureDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_call_signature_declaration(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -4823,10 +4822,10 @@ unsafe fn walk_ts_call_signature_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_call_signature_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_method_signature<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSMethodSignature<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_method_signature(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -4876,10 +4875,10 @@ unsafe fn walk_ts_method_signature<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_method_signature(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_construct_signature_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_construct_signature_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSConstructSignatureDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_construct_signature_declaration(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -4917,10 +4916,10 @@ unsafe fn walk_ts_construct_signature_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_construct_signature_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_index_signature_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_index_signature_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSIndexSignatureName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_index_signature_name(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureNameTypeAnnotation(
@@ -4936,10 +4935,10 @@ unsafe fn walk_ts_index_signature_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_index_signature_name(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_interface_heritage<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_interface_heritage<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSInterfaceHeritage<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_interface_heritage(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSInterfaceHeritageExpression(
@@ -4961,10 +4960,10 @@ unsafe fn walk_ts_interface_heritage<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_interface_heritage(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_predicate<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_predicate<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypePredicate<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_predicate(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypePredicateParameterName(
@@ -4987,10 +4986,10 @@ unsafe fn walk_ts_type_predicate<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_predicate(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_predicate_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_predicate_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypePredicateName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_predicate_name(&mut *node, ctx);
     match &mut *node {
@@ -5002,10 +5001,10 @@ unsafe fn walk_ts_type_predicate_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_predicate_name(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSModuleDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_module_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSModuleDeclarationId(
@@ -5041,10 +5040,10 @@ unsafe fn walk_ts_module_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_module_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_declaration_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_module_declaration_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSModuleDeclarationName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_module_declaration_name(&mut *node, ctx);
     match &mut *node {
@@ -5058,10 +5057,10 @@ unsafe fn walk_ts_module_declaration_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_module_declaration_name(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_declaration_body<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_module_declaration_body<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSModuleDeclarationBody<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_module_declaration_body(&mut *node, ctx);
     match &mut *node {
@@ -5075,10 +5074,10 @@ unsafe fn walk_ts_module_declaration_body<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_module_declaration_body(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_global_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_global_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSGlobalDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_global_declaration(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -5107,10 +5106,10 @@ unsafe fn walk_ts_global_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_global_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_block<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_module_block<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSModuleBlock<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_module_block(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSModuleBlockDirectives(
@@ -5131,10 +5130,10 @@ unsafe fn walk_ts_module_block<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_module_block(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_literal<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_literal<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeLiteral<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_literal(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypeLiteralMembers(
@@ -5149,10 +5148,10 @@ unsafe fn walk_ts_type_literal<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_literal(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_infer_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_infer_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSInferType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_infer_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSInferTypeTypeParameter(
@@ -5168,10 +5167,10 @@ unsafe fn walk_ts_infer_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_infer_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_query<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_query<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeQuery<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_query(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypeQueryExprName(
@@ -5192,10 +5191,10 @@ unsafe fn walk_ts_type_query<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_query(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_query_expr_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_query_expr_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeQueryExprName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_query_expr_name(&mut *node, ctx);
     match &mut *node {
@@ -5211,10 +5210,10 @@ unsafe fn walk_ts_type_query_expr_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_query_expr_name(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_import_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSImportType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSImportTypeSource(
@@ -5248,10 +5247,10 @@ unsafe fn walk_ts_import_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_import_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_import_type_qualifier<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_import_type_qualifier<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSImportTypeQualifier<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_type_qualifier(&mut *node, ctx);
     match &mut *node {
@@ -5265,10 +5264,10 @@ unsafe fn walk_ts_import_type_qualifier<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_import_type_qualifier(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_import_type_qualified_name<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_import_type_qualified_name<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSImportTypeQualifiedName<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_type_qualified_name(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSImportTypeQualifiedNameLeft(
@@ -5291,10 +5290,10 @@ unsafe fn walk_ts_import_type_qualified_name<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_import_type_qualified_name(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_function_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_function_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSFunctionType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_function_type(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -5337,10 +5336,10 @@ unsafe fn walk_ts_function_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_function_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_constructor_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_constructor_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSConstructorType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_constructor_type(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -5377,10 +5376,10 @@ unsafe fn walk_ts_constructor_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_constructor_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_mapped_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_mapped_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSMappedType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_mapped_type(&mut *node, ctx);
     let previous_scope_id = ctx.current_scope_id();
@@ -5420,10 +5419,10 @@ unsafe fn walk_ts_mapped_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_mapped_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_template_literal_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_template_literal_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTemplateLiteralType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_template_literal_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTemplateLiteralTypeQuasis(
@@ -5444,10 +5443,10 @@ unsafe fn walk_ts_template_literal_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_template_literal_type(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_as_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_as_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSAsExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_as_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSAsExpressionExpression(
@@ -5468,10 +5467,10 @@ unsafe fn walk_ts_as_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_as_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_satisfies_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_satisfies_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSSatisfiesExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_satisfies_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSSatisfiesExpressionExpression(
@@ -5494,10 +5493,10 @@ unsafe fn walk_ts_satisfies_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_satisfies_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_type_assertion<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_type_assertion<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSTypeAssertion<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_assertion(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionTypeAnnotation(
@@ -5518,10 +5517,10 @@ unsafe fn walk_ts_type_assertion<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_type_assertion(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_import_equals_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_import_equals_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSImportEqualsDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_equals_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSImportEqualsDeclarationId(
@@ -5544,10 +5543,10 @@ unsafe fn walk_ts_import_equals_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_import_equals_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_module_reference<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_module_reference<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSModuleReference<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_module_reference(&mut *node, ctx);
     match &mut *node {
@@ -5564,10 +5563,10 @@ unsafe fn walk_ts_module_reference<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_module_reference(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_external_module_reference<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_external_module_reference<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSExternalModuleReference<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_external_module_reference(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSExternalModuleReferenceExpression(
@@ -5583,10 +5582,10 @@ unsafe fn walk_ts_external_module_reference<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_external_module_reference(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_non_null_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_non_null_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSNonNullExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_non_null_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSNonNullExpressionExpression(
@@ -5602,10 +5601,10 @@ unsafe fn walk_ts_non_null_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_non_null_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_decorator<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_decorator<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut Decorator<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_decorator(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::DecoratorExpression(
@@ -5620,10 +5619,10 @@ unsafe fn walk_decorator<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_decorator(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_export_assignment<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_export_assignment<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSExportAssignment<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_export_assignment(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSExportAssignmentExpression(
@@ -5638,10 +5637,10 @@ unsafe fn walk_ts_export_assignment<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_export_assignment(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_namespace_export_declaration<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_namespace_export_declaration<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSNamespaceExportDeclaration<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_namespace_export_declaration(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSNamespaceExportDeclarationId(
@@ -5657,10 +5656,10 @@ unsafe fn walk_ts_namespace_export_declaration<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_namespace_export_declaration(&mut *node, ctx);
 }
 
-unsafe fn walk_ts_instantiation_expression<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_ts_instantiation_expression<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut TSInstantiationExpression<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_instantiation_expression(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::TSInstantiationExpressionExpression(
@@ -5683,10 +5682,10 @@ unsafe fn walk_ts_instantiation_expression<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_ts_instantiation_expression(&mut *node, ctx);
 }
 
-unsafe fn walk_js_doc_nullable_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_js_doc_nullable_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSDocNullableType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_js_doc_nullable_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSDocNullableTypeTypeAnnotation(
@@ -5701,10 +5700,10 @@ unsafe fn walk_js_doc_nullable_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_js_doc_nullable_type(&mut *node, ctx);
 }
 
-unsafe fn walk_js_doc_non_nullable_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_js_doc_non_nullable_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSDocNonNullableType<'a>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_js_doc_non_nullable_type(&mut *node, ctx);
     let pop_token = ctx.push_stack(Ancestor::JSDocNonNullableTypeTypeAnnotation(
@@ -5720,19 +5719,19 @@ unsafe fn walk_js_doc_non_nullable_type<'a, Tr: MinifierTraverse<'a>>(
     traverser.exit_js_doc_non_nullable_type(&mut *node, ctx);
 }
 
-unsafe fn walk_js_doc_unknown_type<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_js_doc_unknown_type<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut JSDocUnknownType,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_js_doc_unknown_type(&mut *node, ctx);
     traverser.exit_js_doc_unknown_type(&mut *node, ctx);
 }
 
-unsafe fn walk_statements<'a, Tr: MinifierTraverse<'a>>(
+unsafe fn walk_statements<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     stmts: *mut Vec<'a, Statement<'a>>,
-    ctx: &mut MinifierTraverseCtx<'a>,
+    ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_statements(&mut *stmts, ctx);
     for stmt in &mut *stmts {

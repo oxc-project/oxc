@@ -72,10 +72,10 @@ impl TraverseTraitConfig {
 
     pub fn minifier() -> Self {
         Self {
-            trait_ident: quote::format_ident!("MinifierTraverse"),
+            trait_ident: quote::format_ident!("Traverse"),
             trait_generics: quote! { <'a> },
-            ctx_ty: quote! { MinifierTraverseCtx<'a> },
-            ctx_use: quote! { use crate::traverse_context::MinifierTraverseCtx; },
+            ctx_ty: quote! { TraverseCtx<'a> },
+            ctx_use: quote! { use crate::TraverseCtx; },
         }
     }
 }

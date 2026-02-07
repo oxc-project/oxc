@@ -42,12 +42,12 @@ impl WalkConfig {
             use_code: quote! {
                 use crate::{
                     generated::ancestor::{self, Ancestor, AncestorType},
-                    generated::traverse::MinifierTraverse,
-                    traverse_context::MinifierTraverseCtx,
+                    Traverse,
+                    TraverseCtx,
                 };
             },
-            trait_bound: quote! { Tr: MinifierTraverse<'a> },
-            ctx_ty: quote! { MinifierTraverseCtx<'a> },
+            trait_bound: quote! { Tr: Traverse<'a> },
+            ctx_ty: quote! { TraverseCtx<'a> },
             has_state: false,
         }
     }
