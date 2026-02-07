@@ -1,0 +1,87 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:24]
+ 1 │ import { Button } from '../../../components/Button'
+   ·                        ────────────────────────────
+   ╰────
+  help: Replace '../../../components/Button' with '@/components/Button'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:20]
+ 1 │ import helper from '../../utils/helper'
+   ·                    ────────────────────
+   ╰────
+  help: Replace '../../utils/helper' with '@/pages/utils/helper'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:24]
+ 1 │ const config = require('../../../config')
+   ·                        ─────────────────
+   ╰────
+  help: Replace '../../../config' with '@/config'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:24]
+ 1 │ export { Button } from '../../components/Button'
+   ·                        ─────────────────────────
+   ╰────
+  help: Replace '../../components/Button' with '@/pages/components/Button'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:15]
+ 1 │ export * from '../../../utils'
+   ·               ────────────────
+   ╰────
+  help: Replace '../../../utils' with '@/utils'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:8]
+ 1 │ import('../../../dynamic/module')
+   ·        ─────────────────────────
+   ╰────
+  help: Replace '../../../dynamic/module' with '@/dynamic/module'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:24]
+ 1 │ import { Button } from '../../components/Button'
+   ·                        ─────────────────────────
+   ╰────
+  help: Replace '../../components/Button' with '@/pages/components/Button'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:24]
+ 1 │ import { helper } from '../../utils/helper'
+   ·                        ────────────────────
+   ╰────
+  help: Replace '../../utils/helper' with '@/pages/utils/helper'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:21]
+ 1 │ import { foo } from '../bar'
+   ·                     ────────
+   ╰────
+  help: Replace '../bar' with '@/pages/deep/bar'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:21]
+ 1 │ import { foo } from '../../bar'
+   ·                     ───────────
+   ╰────
+  help: Replace '../../bar' with '@/pages/bar'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:29]
+ 1 │ import { UserService } from '../../../app/services/UserService'
+   ·                             ───────────────────────────────────
+   ╰────
+  help: Replace '../../../app/services/UserService' with '@app/services/UserService'
+
+  ⚠ eslint-plugin-import(prefer-alias-import): Prefer using path alias instead of relative import
+   ╭─[src/pages/deep/nested/component.tsx:1:21]
+ 1 │ import { foo } from '../../lib/utils/foo'
+   ·                     ─────────────────────
+   ╰────
+  help: Replace '../../lib/utils/foo' with '@utils/foo'
