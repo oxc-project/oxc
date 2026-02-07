@@ -39,21 +39,13 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
 
                     // Try to find a similar name with edit distance <= 2
                     const THRESHOLD: usize = 2;
-                    if let Some(suggestion) =
-                        best_match(&ident.name, available_names.iter().copied(), THRESHOLD)
-                    {
-                        ctx.errors.borrow_mut().push(
-                            diagnostics::undefined_export_with_suggestion(
-                                &ident.name,
-                                suggestion,
-                                ident.span,
-                            ),
-                        );
-                    } else {
-                        ctx.errors
-                            .borrow_mut()
-                            .push(diagnostics::undefined_export(&ident.name, ident.span));
-                    }
+                    let suggestion =
+                        best_match(&ident.name, available_names.iter().copied(), THRESHOLD);
+                    ctx.errors.borrow_mut().push(diagnostics::undefined_export(
+                        &ident.name,
+                        suggestion,
+                        ident.span,
+                    ));
                 }
             }
         }
@@ -377,20 +369,13 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
 
                 // Try to find a similar name with edit distance <= 2
                 const THRESHOLD: usize = 2;
-                if let Some(suggestion) =
-                    best_match(&reference.name, available_names.iter().copied(), THRESHOLD)
-                {
-                    ctx.error(diagnostics::private_field_undeclared_with_suggestion(
-                        &reference.name,
-                        suggestion,
-                        reference.span,
-                    ));
-                } else {
-                    ctx.error(diagnostics::private_field_undeclared(
-                        &reference.name,
-                        reference.span,
-                    ));
-                }
+                let suggestion =
+                    best_match(&reference.name, available_names.iter().copied(), THRESHOLD);
+                ctx.error(diagnostics::private_field_undeclared(
+                    &reference.name,
+                    suggestion,
+                    reference.span,
+                ));
             }
         }
     }
@@ -844,15 +829,9 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                     |label| {
                         // Try to find a similar label with edit distance <= 2
                         const THRESHOLD: usize = 2;
-                        if let Some(suggestion) =
-                            best_match(&label.name, available_labels.iter().copied(), THRESHOLD)
-                        {
-                            ctx.error(diagnostics::invalid_label_target_with_suggestion(
-                                suggestion, label.span,
-                            ));
-                        } else {
-                            ctx.error(diagnostics::invalid_label_target(label.span));
-                        }
+                        let suggestion =
+                            best_match(&label.name, available_labels.iter().copied(), THRESHOLD);
+                        ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
                     },
                 );
             }
@@ -897,15 +876,9 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                     |label| {
                         // Try to find a similar label with edit distance <= 2
                         const THRESHOLD: usize = 2;
-                        if let Some(suggestion) =
-                            best_match(&label.name, available_labels.iter().copied(), THRESHOLD)
-                        {
-                            ctx.error(diagnostics::invalid_label_target_with_suggestion(
-                                suggestion, label.span,
-                            ));
-                        } else {
-                            ctx.error(diagnostics::invalid_label_target(label.span));
-                        }
+                        let suggestion =
+                            best_match(&label.name, available_labels.iter().copied(), THRESHOLD);
+                        ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
                     },
                 );
             }
