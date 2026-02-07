@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::GetAddress;
 use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
-use oxc_span::{GetSpan, ModuleKind, Span};
+use oxc_span::{GetSpan, ModuleKind, Span, best_match};
 use oxc_syntax::{
     class::ClassId,
     number::NumberBase,
@@ -22,15 +22,34 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
         return;
     }
 
+    // Collect all available names in the root scope
+    let root_scope_id = ctx.scoping.root_scope_id();
+    let available_names: Vec<&str> =
+        ctx.scoping.get_bindings(root_scope_id).keys().map(|name| name.as_str()).collect();
+
     for stmt in &program.body {
         if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
                 {
-                    ctx.errors
-                        .borrow_mut()
-                        .push(diagnostics::undefined_export(&ident.name, ident.span));
+                    // Try to find a similar name with edit distance <= 2
+                    const THRESHOLD: usize = 2;
+                    if let Some(suggestion) =
+                        best_match(&ident.name, available_names.iter().copied(), THRESHOLD)
+                    {
+                        ctx.errors.borrow_mut().push(
+                            diagnostics::undefined_export_with_suggestion(
+                                &ident.name,
+                                suggestion,
+                                ident.span,
+                            ),
+                        );
+                    } else {
+                        ctx.errors
+                            .borrow_mut()
+                            .push(diagnostics::undefined_export(&ident.name, ident.span));
+                    }
                 }
             }
         }
@@ -340,7 +359,34 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
             if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
                 ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
             }) {
-                ctx.error(diagnostics::private_field_undeclared(&reference.name, reference.span));
+                // Collect all available private field names in the class and its ancestors
+                let mut available_names: Vec<&str> = Vec::new();
+                for ancestor_class_id in ctx.class_table_builder.classes.ancestors(class_id) {
+                    for element in
+                        ctx.class_table_builder.classes.elements[ancestor_class_id].iter()
+                    {
+                        if element.is_private {
+                            available_names.push(element.name.as_ref());
+                        }
+                    }
+                }
+
+                // Try to find a similar name with edit distance <= 2
+                const THRESHOLD: usize = 2;
+                if let Some(suggestion) =
+                    best_match(&reference.name, available_names.iter().copied(), THRESHOLD)
+                {
+                    ctx.error(diagnostics::private_field_undeclared_with_suggestion(
+                        &reference.name,
+                        suggestion,
+                        reference.span,
+                    ));
+                } else {
+                    ctx.error(diagnostics::private_field_undeclared(
+                        &reference.name,
+                        reference.span,
+                    ));
+                }
             }
         }
     }
