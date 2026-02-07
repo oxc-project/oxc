@@ -32,6 +32,9 @@ export declare const enum Severity {
  * - `source_text` is the original source code.
  * - `fixes_json` is a JSON string containing `Vec<Vec<JsFix>>` — an array of fix groups, one per diagnostic.
  *
+ * If source text starts with a BOM, `JSFix`es must have offsets relative to the start
+ * of the source text *without* the BOM.
+ *
  * Each group's fixes are merged, then all merged fixes are applied to `source_text`.
  *
  * Fix ranges are converted from UTF-16 code units to UTF-8 bytes.
