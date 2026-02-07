@@ -828,12 +828,28 @@ pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuil
 
 pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
+
+    // Collect all available labels in the current scope (before crossing function boundaries)
+    let mut available_labels: Vec<&str> = Vec::new();
+
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
-                    |label| ctx.error(diagnostics::invalid_label_target(label.span)),
+                    |label| {
+                        // Try to find a similar label with edit distance <= 2
+                        const THRESHOLD: usize = 2;
+                        if let Some(suggestion) =
+                            best_match(&label.name, available_labels.iter().copied(), THRESHOLD)
+                        {
+                            ctx.error(diagnostics::invalid_label_target_with_suggestion(
+                                suggestion, label.span,
+                            ));
+                        } else {
+                            ctx.error(diagnostics::invalid_label_target(label.span));
+                        }
+                    },
                 );
             }
             AstKind::Function(_) | AstKind::StaticBlock(_) => {
@@ -843,6 +859,7 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                 );
             }
             AstKind::LabeledStatement(labeled_statement) => {
+                available_labels.push(&labeled_statement.label.name);
                 if stmt
                     .label
                     .as_ref()
@@ -864,12 +881,28 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
 
 pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
+
+    // Collect all available labels in the current scope (before crossing function boundaries)
+    let mut available_labels: Vec<&str> = Vec::new();
+
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
-                    |label| ctx.error(diagnostics::invalid_label_target(label.span)),
+                    |label| {
+                        // Try to find a similar label with edit distance <= 2
+                        const THRESHOLD: usize = 2;
+                        if let Some(suggestion) =
+                            best_match(&label.name, available_labels.iter().copied(), THRESHOLD)
+                        {
+                            ctx.error(diagnostics::invalid_label_target_with_suggestion(
+                                suggestion, label.span,
+                            ));
+                        } else {
+                            ctx.error(diagnostics::invalid_label_target(label.span));
+                        }
+                    },
                 );
             }
             AstKind::Function(_) | AstKind::StaticBlock(_) => {
@@ -878,27 +911,30 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
                 );
             }
-            AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
-                Some(label) if label.name == labeled_statement.label.name => {
-                    if matches!(
-                        labeled_statement.body,
-                        Statement::LabeledStatement(_)
-                            | Statement::DoWhileStatement(_)
-                            | Statement::WhileStatement(_)
-                            | Statement::ForStatement(_)
-                            | Statement::ForInStatement(_)
-                            | Statement::ForOfStatement(_)
-                    ) {
-                        break;
+            AstKind::LabeledStatement(labeled_statement) => {
+                available_labels.push(&labeled_statement.label.name);
+                match &stmt.label {
+                    Some(label) if label.name == labeled_statement.label.name => {
+                        if matches!(
+                            labeled_statement.body,
+                            Statement::LabeledStatement(_)
+                                | Statement::DoWhileStatement(_)
+                                | Statement::WhileStatement(_)
+                                | Statement::ForStatement(_)
+                                | Statement::ForInStatement(_)
+                                | Statement::ForOfStatement(_)
+                        ) {
+                            break;
+                        }
+                        return ctx.error(diagnostics::invalid_label_non_iteration(
+                            "continue",
+                            labeled_statement.label.span,
+                            label.span,
+                        ));
                     }
-                    return ctx.error(diagnostics::invalid_label_non_iteration(
-                        "continue",
-                        labeled_statement.label.span,
-                        label.span,
-                    ));
+                    _ => {}
                 }
-                _ => {}
-            },
+            }
             kind if kind.is_iteration_statement() && stmt.label.is_none() => break,
             _ => {}
         }

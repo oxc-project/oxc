@@ -191,6 +191,13 @@ pub fn invalid_label_target(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn invalid_label_target_with_suggestion(suggestion: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Use of undefined label")
+        .with_help(format!("Did you mean '{suggestion}'?"))
+        .with_label(span)
+}
+
+#[cold]
 pub fn invalid_label_non_iteration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("A `{x0}` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement."))
         .with_labels([
