@@ -338,25 +338,22 @@ impl<'a> ParserImpl<'a> {
             },
         );
 
-        match self.cur_kind() {
-            Kind::PrivateIdentifier => {
-                let private_ident = self.parse_private_identifier();
-                // `private #foo`, etc. is illegal
-                if self.is_ts {
-                    self.verify_modifiers(
-                        modifiers,
-                        !ModifierFlags::ACCESSIBILITY,
-                        false,
-                        diagnostics::accessibility_modifier_on_private_property,
-                    );
-                }
-                if private_ident.name == "constructor" {
-                    self.error(diagnostics::private_name_constructor(private_ident.span));
-                }
-                (PropertyKey::PrivateIdentifier(self.alloc(private_ident)), false)
+        let (name, computed) = self.parse_property_name(true);
+        if let PropertyKey::PrivateIdentifier(private_ident) = &name {
+            // `private #foo`, etc. is illegal
+            if self.is_ts {
+                self.verify_modifiers(
+                    modifiers,
+                    !ModifierFlags::ACCESSIBILITY,
+                    false,
+                    diagnostics::accessibility_modifier_on_private_property,
+                );
             }
-            _ => self.parse_property_name(),
+            if private_ident.name == "constructor" {
+                self.error(diagnostics::private_name_constructor(private_ident.span));
+            }
         }
+        (name, computed)
     }
 
     /// `ClassStaticBlockStatementList` :

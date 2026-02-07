@@ -165,7 +165,7 @@ impl<'a> ParserImpl<'a> {
         let mut shorthand = false;
         let is_binding_identifier = self.cur_kind().is_binding_identifier();
         let key_cur_kind = self.cur_kind();
-        let (key, computed) = self.parse_property_name();
+        let (key, computed) = self.parse_property_name(false);
 
         let value = if is_binding_identifier && !self.at(Kind::Colon) {
             // let { a = b } = c
