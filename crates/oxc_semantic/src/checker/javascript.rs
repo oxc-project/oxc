@@ -22,17 +22,21 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
         return;
     }
 
-    // Collect all available names in the root scope
-    let root_scope_id = ctx.scoping.root_scope_id();
-    let available_names: Vec<&str> =
-        ctx.scoping.get_bindings(root_scope_id).keys().map(|name| name.as_str()).collect();
-
     for stmt in &program.body {
         if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
                 {
+                    // Collect all available names in the root scope only when we have an error
+                    let root_scope_id = ctx.scoping.root_scope_id();
+                    let available_names: Vec<&str> = ctx
+                        .scoping
+                        .get_bindings(root_scope_id)
+                        .keys()
+                        .map(|name| name.as_str())
+                        .collect();
+
                     // Try to find a similar name with edit distance <= 2
                     const THRESHOLD: usize = 2;
                     if let Some(suggestion) =
