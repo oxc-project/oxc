@@ -75,28 +75,31 @@ impl Rule for NoNamedAsDefault {
             };
 
             let import_name = import_entry.local_name.name();
-            if remote_module_record.exported_bindings.contains_key(import_name) {
-                // If both the default export and the named export are re-exports
-                // that point to the same source module and the same identifier,
-                // they refer to the same value, so using the name for the default
-                // import is not confusing.
-                // See: https://github.com/import-js/eslint-plugin-import/pull/3032
-                if default_and_named_are_same_reexport(&remote_module_record, import_name) {
-                    continue;
-                }
-
-                ctx.diagnostic(no_named_as_default_diagnostic(
-                    *import_span,
-                    import_name,
-                    import_entry.module_request.name(),
-                ));
+            if !remote_module_record.exported_bindings.contains_key(import_name) {
+                continue;
             }
+
+            if default_and_named_are_same_reexport(&remote_module_record, import_name) {
+                continue;
+            }
+
+            ctx.diagnostic(no_named_as_default_diagnostic(
+                *import_span,
+                import_name,
+                import_entry.module_request.name(),
+            ));
         }
     }
 }
 
 /// Check if the remote module re-exports both the default and the given named export
 /// from the same source module with the same local identifier.
+///
+/// This is a special case where using the named export's name for the default import is allowed,
+/// because they refer to the same value.
+///
+/// See https://github.com/import-js/eslint-plugin-import/pull/3032
+/// and https://github.com/oxc-project/oxc/issues/19099.
 fn default_and_named_are_same_reexport(remote_module_record: &ModuleRecord, name: &str) -> bool {
     // Find the default re-export entry.
     // `export default foo` uses `ExportExportName::Default`, but
