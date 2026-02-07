@@ -3,7 +3,7 @@
 use std::borrow::Cow;
 
 use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{Atom, Ident, SPAN, Span};
 use oxc_syntax::{
     comment_node::CommentNodeId, number::NumberBase, operator::UnaryOperator, scope::ScopeId,
 };
@@ -96,6 +96,29 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn str(self, value: &str) -> &'a str {
         self.allocator.alloc_str(value)
+    }
+
+    /// Allocate an [`Ident`] from a string slice.
+    #[inline]
+    pub fn ident(self, value: &str) -> Ident<'a> {
+        Ident::from_in(value, self.allocator)
+    }
+
+    /// Allocate an [`Ident`] from an array of string slices.
+    #[inline]
+    pub fn ident_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Ident<'a> {
+        Ident::from_strs_array_in(strings, self.allocator)
+    }
+
+    /// Convert a [`Cow<'a, str>`] to an [`Ident<'a>`].
+    ///
+    /// If the `Cow` borrows a string from arena, returns an `Ident` which references that same string,
+    /// without allocating a new one.
+    ///
+    /// If the `Cow` is owned, allocates the string into arena to generate a new `Ident`.
+    #[inline]
+    pub fn ident_from_cow(self, value: &Cow<'a, str>) -> Ident<'a> {
+        Ident::from_cow_in(value, self.allocator)
     }
 
     /// Allocate an [`Atom`] from a string slice.

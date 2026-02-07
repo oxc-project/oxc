@@ -277,7 +277,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             let this_argument = Argument::from(ctx.ast.expression_this(SPAN));
             let arguments_argument = Argument::from(ctx.create_unbound_ident_expr(
                 SPAN,
-                Ident::new_const("arguments"),
+                ctx.ast.ident("arguments"),
                 ReferenceFlags::Read,
             ));
             (callee, ctx.ast.vec_from_array([this_argument, arguments_argument]))
@@ -574,7 +574,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
     fn normalize_function_name(input: &Cow<'a, str>, ctx: &TraverseCtx<'a>) -> Ident<'a> {
         let input_str = input.as_ref();
         if !is_reserved_keyword(input_str) && is_identifier_name(input_str) {
-            return Ident::from_cow_in(input, ctx.ast.allocator);
+            return ctx.ast.ident_from_cow(input);
         }
 
         let mut name = ArenaStringBuilder::with_capacity_in(input_str.len() + 1, ctx.ast.allocator);
@@ -601,7 +601,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         if name.is_empty() {
-            return Ident::new_const("_");
+            return ctx.ast.ident("_");
         }
 
         if is_reserved_keyword(name.as_str()) {
@@ -651,14 +651,10 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         bound_ident: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let symbol_id =
-            ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("arguments"));
-        let arguments_ident = Argument::from(ctx.create_ident_expr(
-            SPAN,
-            Ident::new_const("arguments"),
-            symbol_id,
-            ReferenceFlags::Read,
-        ));
+        let arguments = ctx.ast.ident("arguments");
+        let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), arguments);
+        let arguments_ident =
+            Argument::from(ctx.create_ident_expr(SPAN, arguments, symbol_id, ReferenceFlags::Read));
 
         // (this, arguments)
         let this = Argument::from(ctx.ast.expression_this(SPAN));
