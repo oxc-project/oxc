@@ -25,7 +25,6 @@ oxc_estree = { workspace = true }
 
 compact_str = { workspace = true }
 hashbrown = { workspace = true }
-rustc-hash = { workspace = true }
 
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }

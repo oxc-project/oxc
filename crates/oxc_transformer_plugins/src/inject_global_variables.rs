@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_semantic::Scoping;
-use oxc_span::{CompactStr, Ident, SPAN, format_compact_str};
+use oxc_span::{CompactStr, Ident, IdentStr, SPAN, format_compact_str};
 use oxc_syntax::identifier;
 use oxc_traverse::{Traverse, traverse_mut};
 
@@ -192,7 +192,7 @@ impl<'a> InjectGlobalVariables<'a> {
                         } else {
                             scoping
                                 .root_unresolved_references()
-                                .contains_key(i.specifier.local().as_str())
+                                .contains_key(&IdentStr(i.specifier.local().as_str()))
                         }
                     }
                 }

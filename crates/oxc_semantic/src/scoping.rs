@@ -5,7 +5,7 @@ use self_cell::self_cell;
 
 use oxc_allocator::{Allocator, CloneIn, FromIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
-use oxc_span::{ArenaIdentHashMap, Ident, Span};
+use oxc_span::{ArenaIdentHashMap, Ident, IdentStr, Span};
 use oxc_syntax::{
     node::NodeId,
     reference::{Reference, ReferenceId},
@@ -103,7 +103,7 @@ impl Default for Scoping {
                 resolved_references: ArenaVec::new_in(allocator),
                 symbol_redeclarations: FxHashMap::default(),
                 bindings: IndexVec::new(),
-                root_unresolved_references: UnresolvedReferences::new_in(allocator),
+                root_unresolved_references: UnresolvedReferences::new_passthrough_in(allocator),
             }),
         }
     }
@@ -662,11 +662,12 @@ impl Scoping {
     /// Panics if there is no unresolved reference for provided `name` and `reference_id`.
     #[inline]
     pub fn delete_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
+        let name = name.as_str();
         self.cell.with_dependent_mut(|_allocator, cell| {
-            let reference_ids = cell.root_unresolved_references.get_mut(name.as_str()).unwrap();
+            let reference_ids = cell.root_unresolved_references.get_mut(&IdentStr(name)).unwrap();
             if reference_ids.len() == 1 {
                 assert_eq!(reference_ids[0], reference_id);
-                cell.root_unresolved_references.remove(name.as_str());
+                cell.root_unresolved_references.remove(&IdentStr(name));
             } else {
                 let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
                 reference_ids.swap_remove(index);
@@ -747,7 +748,7 @@ impl Scoping {
 
     /// Like [`Scoping::get_binding`], but looks up by `&str` name.
     pub fn get_binding_str(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
-        self.cell.borrow_dependent().bindings[scope_id].get(name).copied()
+        self.cell.borrow_dependent().bindings[scope_id].get(&IdentStr(name)).copied()
     }
 
     /// Find a binding by name in a scope or its ancestors.
@@ -826,7 +827,7 @@ impl Scoping {
         let scope_id = self.scope_parent_ids.push(parent_id);
         self.scope_flags.push(flags);
         self.cell.with_dependent_mut(|allocator, cell| {
-            cell.bindings.push(Bindings::new_in(allocator));
+            cell.bindings.push(Bindings::new_passthrough_in(allocator));
         });
         self.scope_node_ids.push(node_id);
 
@@ -851,16 +852,18 @@ impl Scoping {
 
     /// Remove an existing binding from a scope.
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: Ident<'_>) {
+        let name = name.as_str();
         self.cell.with_dependent_mut(|_allocator, cell| {
-            cell.bindings[scope_id].remove(name.as_str());
+            cell.bindings[scope_id].remove(&IdentStr(name));
         });
     }
 
     /// Move a binding from one scope to another.
     pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: Ident<'_>) {
+        let name = name.as_str();
         self.cell.with_dependent_mut(|_allocator, cell| {
             let from_map = &mut cell.bindings[from];
-            if let Some((name, symbol_id)) = from_map.remove_entry(name.as_str()) {
+            if let Some((name, symbol_id)) = from_map.remove_entry(&IdentStr(name)) {
                 cell.bindings[to].insert(name, symbol_id);
             }
         });
@@ -883,7 +886,7 @@ impl Scoping {
     ) {
         self.cell.with_dependent_mut(|allocator, cell| {
             let bindings = &mut cell.bindings[scope_id];
-            let old_symbol_id = bindings.remove(old_name.as_str());
+            let old_symbol_id = bindings.remove(&IdentStr(old_name.as_str()));
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
             let new_name = new_name.clone_in(allocator);
             let existing_symbol_id = bindings.insert(new_name, symbol_id);
@@ -907,7 +910,7 @@ impl Scoping {
             // Rename binding, same as `Self::rename_binding`, we cannot call it directly
             // because the `old_name` borrowed `cell`.
             let bindings = &mut cell.bindings[scope_id];
-            let old_symbol_id = bindings.remove(old_name.as_str());
+            let old_symbol_id = bindings.remove(&IdentStr(old_name.as_str()));
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
             let existing_symbol_id = bindings.insert(new_name, symbol_id);
             debug_assert!(existing_symbol_id.is_none());

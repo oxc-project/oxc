@@ -12,7 +12,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::PropName;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, Reference, SymbolId};
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, IdentStr, Span};
 
 use crate::{
     ast_util::iter_outer_expressions,
@@ -209,7 +209,8 @@ impl Rule for DisplayName {
         }
 
         // Check for CommonJS module.exports by looking at references to 'module' global
-        if let Some(module_reference_ids) = ctx.scoping().root_unresolved_references().get("module")
+        if let Some(module_reference_ids) =
+            ctx.scoping().root_unresolved_references().get(&IdentStr("module"))
         {
             for &reference_id in module_reference_ids {
                 let reference = ctx.scoping().get_reference(reference_id);

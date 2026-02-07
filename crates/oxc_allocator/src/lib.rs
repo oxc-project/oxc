@@ -75,7 +75,7 @@ pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::HashMap;
 pub use hash_set::HashSet;
-pub use interner::{HEADER_SIZE, InternedStrHeader, interned_str_from_ptr};
+pub use interner::{HEADER_SIZE, InternedStrHeader, fx_hash, interned_str_from_ptr};
 pub use passthrough_hasher::{PassthroughBuildHasher, PassthroughHasher};
 #[cfg(feature = "pool")]
 pub use pool::*;

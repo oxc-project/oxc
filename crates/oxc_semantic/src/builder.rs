@@ -16,7 +16,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Ident, IdentHashMap, SourceType, Span};
+use oxc_span::{Ident, IdentHashMap, IdentStr, SourceType, Span};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -484,7 +484,9 @@ impl<'a> SemanticBuilder<'a> {
         report_error: bool,
     ) -> Option<SymbolId> {
         let symbol_id = self.scoping.get_binding_str(scope_id, name).or_else(|| {
-            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
+            self.hoisting_variables
+                .get(&scope_id)
+                .and_then(|symbols| symbols.get(&IdentStr(name)).copied())
         })?;
 
         self.check_redeclaration_common(symbol_id, span, name, excludes, report_error)
@@ -858,7 +860,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 if cell.bindings[parent_scope_id].is_empty() {
                     None
                 } else {
-                    let mut parent_bindings = Bindings::new_in(allocator);
+                    let mut parent_bindings = Bindings::new_passthrough_in(allocator);
                     mem::swap(&mut cell.bindings[parent_scope_id], &mut parent_bindings);
                     let parent_symbol_ids = parent_bindings.values().copied().collect::<Vec<_>>();
                     cell.bindings[self.current_scope_id] = parent_bindings;

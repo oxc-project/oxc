@@ -11,7 +11,7 @@ use oxc_allocator::{Allocator, BitSet, FromIn, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::{Atom, CompactStr, Ident, SourceType};
+use oxc_span::{Atom, CompactStr, Ident, IdentStr, SourceType};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -487,8 +487,8 @@ impl<'t> Mangler<'t> {
                 let n = name.as_str();
                 if !oxc_syntax::keyword::is_reserved_keyword(n)
                     && !is_special_name(n)
-                    && !root_unresolved_references.contains_key(n)
-                    && !(root_bindings.contains_key(n)
+                    && !root_unresolved_references.contains_key(&IdentStr(n))
+                    && !(root_bindings.contains_key(&IdentStr(n))
                         && (!top_level || exported_names.contains(n)))
                     // TODO: only skip the names that are kept in the current scope
                     && !keep_name_names.contains(n)

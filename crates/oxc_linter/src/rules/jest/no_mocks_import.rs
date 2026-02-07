@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{IdentStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -70,7 +70,8 @@ impl Rule for NoMocksImport {
             }
         }
 
-        let Some(require_reference_ids) = ctx.scoping().root_unresolved_references().get("require")
+        let Some(require_reference_ids) =
+            ctx.scoping().root_unresolved_references().get(&IdentStr("require"))
         else {
             return;
         };

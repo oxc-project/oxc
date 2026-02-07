@@ -3,7 +3,8 @@
 use std::{borrow::Cow, fmt, hash, marker::PhantomData, ops::Deref, ptr::NonNull};
 
 use oxc_allocator::{
-    Allocator, CloneIn, Dummy, FromIn, HEADER_SIZE, InternedStrHeader, interned_str_from_ptr,
+    Allocator, CloneIn, Dummy, FromIn, HEADER_SIZE, InternedStrHeader, PassthroughBuildHasher,
+    fx_hash, interned_str_from_ptr,
 };
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
@@ -113,6 +114,15 @@ impl<'a> Ident<'a> {
     #[inline]
     pub fn to_compact_str(self) -> CompactStr {
         CompactStr::new(self.as_str())
+    }
+
+    /// Get the precomputed FxHash stored in the interned string header.
+    #[expect(clippy::cast_ptr_alignment)]
+    #[inline]
+    pub fn precomputed_hash(&self) -> u64 {
+        // SAFETY: `self.ptr` was created by `intern_str`. The header is at `ptr - HEADER_SIZE`,
+        // and the original allocation was aligned to `align_of::<InternedStrHeader>()`.
+        unsafe { (*self.ptr.as_ptr().sub(HEADER_SIZE).cast::<InternedStrHeader>()).hash }
     }
 }
 
@@ -225,12 +235,24 @@ impl AsRef<str> for Ident<'_> {
     }
 }
 
-/// Allows looking up an `Ident`-keyed hashbrown map with a `&str` key,
-/// without requiring `Ident: Borrow<str>`.
-impl oxc_allocator::hash_map::Equivalent<Ident<'_>> for str {
+/// Wrapper for `&str` lookups in [`PassthroughBuildHasher`]-based `Ident` maps.
+///
+/// Computes `fx_hash` on the fly so the lookup hash matches the precomputed
+/// hash stored in [`Ident`].
+#[repr(transparent)]
+pub struct IdentStr<'a>(pub &'a str);
+
+impl hash::Hash for IdentStr<'_> {
+    #[inline]
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        state.write_u64(fx_hash(self.0));
+    }
+}
+
+impl oxc_allocator::hash_map::Equivalent<Ident<'_>> for IdentStr<'_> {
     #[inline]
     fn equivalent(&self, key: &Ident<'_>) -> bool {
-        self == key.as_str()
+        self.0 == key.as_str()
     }
 }
 
@@ -265,7 +287,7 @@ impl PartialEq<Ident<'_>> for Cow<'_, str> {
 impl hash::Hash for Ident<'_> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
-        self.as_str().hash(hasher);
+        hasher.write_u64(self.precomputed_hash());
     }
 }
 
@@ -297,14 +319,15 @@ impl ESTree for Ident<'_> {
     }
 }
 
-/// Hash map keyed by [`Ident`], using hashbrown with FxHash.
-pub type IdentHashMap<'a, V> = hashbrown::HashMap<Ident<'a>, V, rustc_hash::FxBuildHasher>;
+/// Hash map keyed by [`Ident`], using [`PassthroughBuildHasher`] to skip re-hashing.
+pub type IdentHashMap<'a, V> = hashbrown::HashMap<Ident<'a>, V, PassthroughBuildHasher>;
 
-/// Arena-allocated hash map keyed by [`Ident`].
-pub type ArenaIdentHashMap<'alloc, V> = oxc_allocator::HashMap<'alloc, Ident<'alloc>, V>;
+/// Arena-allocated hash map keyed by [`Ident`], using [`PassthroughBuildHasher`].
+pub type ArenaIdentHashMap<'alloc, V> =
+    oxc_allocator::HashMap<'alloc, Ident<'alloc>, V, PassthroughBuildHasher>;
 
-/// Hash set of [`Ident`], using hashbrown with FxHash.
-pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, rustc_hash::FxBuildHasher>;
+/// Hash set of [`Ident`], using [`PassthroughBuildHasher`] to skip re-hashing.
+pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, PassthroughBuildHasher>;
 
 /// Creates an [`Ident`] using interpolation of runtime expressions.
 ///

@@ -8,7 +8,7 @@ use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::Semantic;
-use oxc_span::Span;
+use oxc_span::{IdentStr, Span};
 
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
@@ -215,13 +215,13 @@ impl<'a> LintContext<'a> {
     /// Checks if the provided identifier is a reference to a global variable.
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         let name = ident.name.as_str();
-        self.scoping().root_unresolved_references().contains_key(name)
+        self.scoping().root_unresolved_references().contains_key(&IdentStr(name))
             && !self.globals().get(name).is_some_and(|value| *value == GlobalValue::Off)
     }
 
     /// Checks if the provided identifier is a reference to a global variable.
     pub fn get_global_variable_value(&self, name: &str) -> Option<GlobalValue> {
-        if !self.scoping().root_unresolved_references().contains_key(name) {
+        if !self.scoping().root_unresolved_references().contains_key(&IdentStr(name)) {
             return None;
         }
 

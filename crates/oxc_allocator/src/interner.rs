@@ -163,7 +163,7 @@ impl StringInterner {
 
 /// Compute FxHash of a byte string.
 #[inline]
-fn fx_hash(s: &str) -> u64 {
+pub fn fx_hash(s: &str) -> u64 {
     let mut hasher = FxBuildHasher.build_hasher();
     hasher.write(s.as_bytes());
     hasher.finish()

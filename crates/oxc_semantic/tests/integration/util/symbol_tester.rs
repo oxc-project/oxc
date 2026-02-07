@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_semantic::{Reference, ScopeFlags, Semantic, SymbolFlags, SymbolId};
+use oxc_span::IdentStr;
 
 use super::{Expect, SemanticTester};
 
@@ -67,7 +68,7 @@ impl<'a> SymbolTester<'a> {
         let mut symbols_with_target_name: Vec<SymbolId> = semantic
             .scoping()
             .iter_bindings()
-            .filter_map(|(_, bindings)| bindings.get(target).copied())
+            .filter_map(|(_, bindings)| bindings.get(&IdentStr(target)).copied())
             .collect();
 
         let data = match symbols_with_target_name.len() {
