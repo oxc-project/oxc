@@ -205,6 +205,7 @@ describe("RuleTester", () => {
             column: 4,
             endLine: 1,
             endColumn: 7,
+            fixes: null,
             suggestions: null
           }
         ]
@@ -222,6 +223,7 @@ describe("RuleTester", () => {
             column: 0,
             endLine: 1,
             endColumn: 3,
+            fixes: null,
             suggestions: null
           },
           {
@@ -234,6 +236,7 @@ describe("RuleTester", () => {
             column: 4,
             endLine: 1,
             endColumn: 7,
+            fixes: null,
             suggestions: null
           }
         ]
@@ -446,6 +449,7 @@ describe("RuleTester", () => {
               column: 4,
               endLine: 1,
               endColumn: 7,
+              fixes: null,
               suggestions: null
             }
           ]
