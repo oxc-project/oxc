@@ -30,6 +30,25 @@ console.log(person);
     expect(result.errors).toStrictEqual([]);
   });
 
+  it("should not add ; for single JSX element in code block", async () => {
+    const input = `
+# Mdx
+
+\`\`\`jsx
+<div>Hello, JSX</div>
+\`\`\`
+`;
+    const result = await format("a.mdx", input);
+
+    expect(result.code).not.toContain(";");
+    expect(result.errors).toStrictEqual([]);
+
+    const result2 = await format("a.mdx", input, { semi: false });
+
+    expect(result2.code).not.toContain(";");
+    expect(result2.errors).toStrictEqual([]);
+  });
+
   it("should format import/export in .mdx", async () => {
     const input = `
 import React from 'react';

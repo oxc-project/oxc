@@ -7,6 +7,10 @@ _Look,_ code blocks are formatted *too!*
 function identity(x) { return x }
 ```
 
+```jsx
+<Button>Click</Button>
+```
+
 ```ts
 const a:string ="x";
 ```

@@ -943,6 +943,9 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
             }
         }
 
+        // In embedded contexts, final newline is useless
+        oxfmt_plugin_options.insert("insertFinalNewline".to_string(), false.into());
+
         if let Ok(json_str) = serde_json::to_string(&Value::Object(oxfmt_plugin_options)) {
             obj.insert("_oxfmtPluginOptionsJson".to_string(), Value::String(json_str));
         }
