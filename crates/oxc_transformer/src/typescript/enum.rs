@@ -328,14 +328,9 @@ impl<'a> TypeScriptEnum<'a> {
 
         // Infinity
         let expr = if value.is_infinite() {
-            let infinity_symbol_id =
-                ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("Infinity"));
-            ctx.create_ident_expr(
-                SPAN,
-                Ident::new_const("Infinity"),
-                infinity_symbol_id,
-                ReferenceFlags::Read,
-            )
+            let infinity = ctx.ast.ident("Infinity");
+            let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), infinity);
+            ctx.create_ident_expr(SPAN, infinity, infinity_symbol_id, ReferenceFlags::Read)
         } else {
             let value = if is_negative { -value } else { value };
             Self::get_number_literal_expression(value, ctx)

@@ -38,7 +38,7 @@ use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
-use oxc_span::{Atom, Ident, SPAN};
+use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -182,7 +182,7 @@ impl<'a> ModuleImportsStore<'a> {
             return;
         }
 
-        let require_symbol_id = ctx.scoping().get_root_binding(Ident::new_const("require"));
+        let require_symbol_id = ctx.scoping().get_root_binding(ctx.ast.ident("require"));
         let stmts = imports
             .drain(..)
             .map(|(source, names)| Self::get_require(source, names, require_symbol_id, ctx));
@@ -228,7 +228,7 @@ impl<'a> ModuleImportsStore<'a> {
     ) -> Statement<'a> {
         let callee = ctx.create_ident_expr(
             SPAN,
-            Ident::new_const("require"),
+            ctx.ast.ident("require"),
             require_symbol_id,
             ReferenceFlags::read(),
         );

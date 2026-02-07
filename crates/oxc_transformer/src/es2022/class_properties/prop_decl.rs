@@ -2,7 +2,7 @@
 //! Transform of class property declarations (instance or static properties).
 
 use oxc_ast::{NONE, ast::*};
-use oxc_span::{Ident, SPAN};
+use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 
 use crate::{
@@ -341,14 +341,10 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // `Object.defineProperty`
-        let object_symbol_id =
-            ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("Object"));
-        let object = ctx.create_ident_expr(
-            SPAN,
-            Ident::new_const("Object"),
-            object_symbol_id,
-            ReferenceFlags::Read,
-        );
+        let object_name = ctx.ast.ident("Object");
+        let object_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), object_name);
+        let object =
+            ctx.create_ident_expr(SPAN, object_name, object_symbol_id, ReferenceFlags::Read);
         let property = ctx.ast.identifier_name(SPAN, "defineProperty");
         let callee =
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));

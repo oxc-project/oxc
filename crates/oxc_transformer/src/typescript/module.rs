@@ -1,7 +1,7 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{Reference, SymbolFlags};
-use oxc_span::{Ident, SPAN};
+use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::Traverse;
 
@@ -72,10 +72,8 @@ impl<'a> TypeScriptModule<'a, '_> {
 
         // module.exports
         let module_exports = {
-            let reference_id = ctx.create_reference_in_current_scope(
-                Ident::new_const("module"),
-                ReferenceFlags::Read,
-            );
+            let reference_id = ctx
+                .create_reference_in_current_scope(ctx.ast.ident("module"), ReferenceFlags::Read);
             let reference =
                 ctx.ast.alloc_identifier_reference_with_reference_id(SPAN, "module", reference_id);
             let object = Expression::Identifier(reference);
@@ -151,14 +149,10 @@ impl<'a> TypeScriptModule<'a, '_> {
                     self.ctx.error(diagnostics::import_equals_cannot_be_used_in_esm(decl_span));
                 }
 
-                let require_symbol_id =
-                    ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("require"));
-                let callee = ctx.create_ident_expr(
-                    SPAN,
-                    Ident::new_const("require"),
-                    require_symbol_id,
-                    ReferenceFlags::Read,
-                );
+                let require = ctx.ast.ident("require");
+                let require_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), require);
+                let callee =
+                    ctx.create_ident_expr(SPAN, require, require_symbol_id, ReferenceFlags::Read);
                 let arguments =
                     ctx.ast.vec1(Argument::StringLiteral(ctx.alloc(reference.expression.clone())));
                 (
