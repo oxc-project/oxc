@@ -17,6 +17,14 @@ edition = "2024"
 # Balance between the core contributors enjoying the latest version of rustc, while waiting for dependents to catch up.
 rust-version = "1.91.0"
 
+[patch.crates-io]
+oxc_allocator = { path = "crates/oxc_allocator" }
+oxc_ast = { path = "crates/oxc_ast" }
+oxc_diagnostics = { path = "crates/oxc_diagnostics" }
+oxc_parser = { path = "crates/oxc_parser" }
+oxc_span = { path = "crates/oxc_span" }
+oxc_syntax = { path = "crates/oxc_syntax" }
+
 # <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>
 [workspace.lints.rust]
 absolute_paths_not_starting_with_crate = "warn"
