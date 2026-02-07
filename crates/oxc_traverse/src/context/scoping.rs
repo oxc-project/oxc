@@ -298,7 +298,11 @@ impl<'a> TraverseScoping<'a> {
     }
 
     /// Create an unbound reference
-    pub fn create_unbound_reference(&mut self, name: Ident<'_>, flags: ReferenceFlags) -> ReferenceId {
+    pub fn create_unbound_reference(
+        &mut self,
+        name: Ident<'_>,
+        flags: ReferenceFlags,
+    ) -> ReferenceId {
         let reference = Reference::new(NodeId::DUMMY, self.current_scope_id, flags);
         let reference_id = self.scoping.create_reference(reference);
         self.scoping.add_root_unresolved_reference(name, reference_id);

@@ -323,7 +323,8 @@ impl<'a> HelperLoaderStore<'a> {
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         static HELPER_VAR: &str = "babelHelpers";
 
-        let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const(HELPER_VAR));
+        let symbol_id =
+            ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const(HELPER_VAR));
         let object = ctx.create_ident_expr(
             SPAN,
             Ident::new_const(HELPER_VAR),

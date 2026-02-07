@@ -537,7 +537,11 @@ impl<'a, State> TraverseCtx<'a, State> {
     ///
     /// This is a shortcut for `ctx.scoping.create_unbound_reference`.
     #[inline]
-    pub fn create_unbound_reference(&mut self, name: Ident<'_>, flags: ReferenceFlags) -> ReferenceId {
+    pub fn create_unbound_reference(
+        &mut self,
+        name: Ident<'_>,
+        flags: ReferenceFlags,
+    ) -> ReferenceId {
         self.scoping.create_unbound_reference(name, flags)
     }
 

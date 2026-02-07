@@ -328,7 +328,8 @@ impl<'a> TypeScriptEnum<'a> {
 
         // Infinity
         let expr = if value.is_infinite() {
-            let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("Infinity"));
+            let infinity_symbol_id =
+                ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("Infinity"));
             ctx.create_ident_expr(
                 SPAN,
                 Ident::new_const("Infinity"),

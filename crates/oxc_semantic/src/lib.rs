@@ -285,8 +285,10 @@ mod tests {
         let allocator = Allocator::default();
         let semantic = get_semantic(&allocator, source, SourceType::default());
 
-        let top_level_a =
-            semantic.scoping().get_binding(semantic.scoping().root_scope_id(), Ident::new_const("a")).unwrap();
+        let top_level_a = semantic
+            .scoping()
+            .get_binding(semantic.scoping().root_scope_id(), Ident::new_const("a"))
+            .unwrap();
 
         let decl = semantic.symbol_declaration(top_level_a);
         match decl.kind() {
@@ -448,8 +450,10 @@ mod tests {
 
         for (source_type, source, flags) in sources {
             let semantic = get_semantic(&alloc, source, source_type);
-            let a_id =
-                semantic.scoping().get_root_binding(target_symbol_name.as_str().into()).unwrap_or_else(|| {
+            let a_id = semantic
+                .scoping()
+                .get_root_binding(target_symbol_name.as_str().into())
+                .unwrap_or_else(|| {
                     panic!("no references for '{target_symbol_name}' found");
                 });
             let a_refs: Vec<_> = semantic.symbol_references(a_id).collect();

@@ -298,8 +298,9 @@ fn diagnostic_invalid_function(
 
     let function_name = guess_function_name(ctx, node.id()).map(Cow::into_owned);
 
-    let is_safe_fix =
-        function_name.as_ref().is_some_and(|name| can_safely_apply_fix(func, name.as_str().into(), ctx));
+    let is_safe_fix = function_name
+        .as_ref()
+        .is_some_and(|name| can_safely_apply_fix(func, name.as_str().into(), ctx));
 
     let msg = unnamed_diagnostic(&func_name_complete, report_span);
 

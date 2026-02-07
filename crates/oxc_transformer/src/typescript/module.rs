@@ -72,8 +72,10 @@ impl<'a> TypeScriptModule<'a, '_> {
 
         // module.exports
         let module_exports = {
-            let reference_id =
-                ctx.create_reference_in_current_scope(Ident::new_const("module"), ReferenceFlags::Read);
+            let reference_id = ctx.create_reference_in_current_scope(
+                Ident::new_const("module"),
+                ReferenceFlags::Read,
+            );
             let reference =
                 ctx.ast.alloc_identifier_reference_with_reference_id(SPAN, "module", reference_id);
             let object = Expression::Identifier(reference);
