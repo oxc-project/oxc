@@ -23,6 +23,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_estree_tokens::{EstreeTokenOptions, to_estree_tokens_json};
 use oxc_semantic::AstNode;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
 mod ast_util;
 mod config;
@@ -38,6 +39,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod suppression;
 mod tsgolint;
 mod utils;
 
@@ -93,6 +95,7 @@ use crate::{
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
+    suppression::{DiagnosticCounts, RuleName, SuppressionId},
     utils::iter_possible_jest_call_node,
 };
 
@@ -169,7 +172,8 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message> {
-        self.run_with_disable_directives(path, context_sub_hosts, allocator, None).0
+        //TODO Inside LintRunner::run, we should check self.options.suppression_options, to handle each setting correctly
+        self.run_with_disable_directives(path, context_sub_hosts, allocator, None, None).0
     }
 
     /// Same as `run` but also returns the disable directives for the file
@@ -187,6 +191,7 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
+        suppression_count: Option<&FxHashMap<RuleName, DiagnosticCounts>>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
@@ -412,7 +417,44 @@ impl Linter {
             Rc::try_unwrap(ctx_host).unwrap().into_disable_directives()
         };
 
-        (diagnostics, disable_directives)
+        if let Some(suppression_by_file) = suppression_count {
+            let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
+                FxHashMap::default();
+            diagnostics.iter().for_each(|message| {
+                let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
+                    return;
+                };
+
+                if let Some(violation_count) = suppression_tracking.get_mut(&rule_name) {
+                    violation_count.count += 1;
+                } else {
+                    suppression_tracking.insert(rule_name.clone(), DiagnosticCounts { count: 1 });
+                }
+            });
+
+            let diagnostics_filtered = diagnostics
+                .into_iter()
+                .filter(|message| {
+                    let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
+                        return false;
+                    };
+
+                    let Some(count_runtime) = suppression_tracking.get(rule_name) else {
+                        return false;
+                    };
+
+                    let Some(count_file) = suppression_by_file.get(rule_name) else {
+                        return false;
+                    };
+
+                    count_file.count != count_runtime.count
+                })
+                .collect();
+
+            (diagnostics_filtered, disable_directives)
+        } else {
+            (diagnostics, disable_directives)
+        }
     }
 
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

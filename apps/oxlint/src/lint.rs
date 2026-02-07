@@ -1419,3 +1419,34 @@ export { redundant };
         Tester::new().with_cwd("fixtures/invalid_config_tuple_rules".into()).test_and_snapshot(&[]);
     }
 }
+
+#[cfg(test)]
+mod suppression {
+    use std::fs;
+
+    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use oxc_linter::rules::RULES;
+
+    #[test]
+    fn test_suppression_not_file_reporting_errors() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_not_file_reporting_errors".into())
+            .test_and_snapshot(args);
+    }
+    #[test]
+    fn test_suppression_not_reporting_new_errors() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_not_reporting_new_errors".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_not_reporting_errors_one_file() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_not_reporting_errors_one_file".into())
+            .test_and_snapshot(args);
+    }
+}

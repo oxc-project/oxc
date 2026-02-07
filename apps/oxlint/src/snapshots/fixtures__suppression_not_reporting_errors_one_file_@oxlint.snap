@@ -1,0 +1,38 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/suppression_not_reporting_errors_one_file
+----------
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[folder_a/test.js:1:1]
+ 1 | console.log();
+   : ^^^^^^^^^^^
+ 2 | console.log();
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[folder_a/test.js:2:1]
+ 1 | console.log();
+ 2 | console.log();
+   : ^^^^^^^^^^^
+ 3 | console.log();
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[folder_a/test.js:3:1]
+ 2 | console.log();
+ 3 | console.log();
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+Found 0 warnings and 3 errors.
+Finished in <variable>ms on 2 files with 56 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

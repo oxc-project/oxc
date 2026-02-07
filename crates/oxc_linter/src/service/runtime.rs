@@ -32,6 +32,7 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
+    suppression::SuppressionManager,
     utils::read_to_arena_str,
 };
 
@@ -589,6 +590,11 @@ impl Runtime {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
+        // TODO: Parse cli options
+
+        let suppression_manager =
+            SuppressionManager::load(self.cwd.join("oxlint-suppressions.json").as_path()).unwrap();
+
         rayon::scope(|scope| {
             self.resolve_modules(
                 file_system,
@@ -643,12 +649,18 @@ impl Runtime {
                             return;
                         }
 
+                        let suppression_per_file =
+                            path.strip_prefix(&self.cwd).ok().and_then(|relative_url| {
+                                suppression_manager.get_suppression_per_file(&relative_url)
+                            });
+
                         let (mut messages, disable_directives) =
                             me.linter.run_with_disable_directives(
                                 path,
                                 context_sub_hosts,
                                 allocator_guard,
                                 me.js_allocator_pool(),
+                                suppression_per_file,
                             );
 
                         // Store the disable directives for this file
@@ -765,7 +777,7 @@ impl Runtime {
 
                         let (section_messages, disable_directives) = me
                             .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool());
+                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool(), None);
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map

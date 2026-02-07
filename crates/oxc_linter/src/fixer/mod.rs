@@ -4,7 +4,7 @@ use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SourceType, Span};
 
-use crate::LintContext;
+use crate::{LintContext, suppression::SuppressionId};
 
 mod fix;
 pub use fix::{CompositeFix, Fix, FixKind, MergeFixesError, PossibleFixes, RuleFix};
@@ -233,6 +233,7 @@ pub struct FixResult<'a> {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Message {
+    pub suppression_id: Option<SuppressionId>,
     pub error: OxcDiagnostic,
     pub fixes: PossibleFixes,
     pub span: Span,
@@ -250,7 +251,7 @@ impl Message {
             .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, section_offset: 0 }
+        Self { suppression_id: None, error, span, fixes, fixed: false, section_offset: 0 }
     }
 
     #[must_use]
