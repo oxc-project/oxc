@@ -103,16 +103,18 @@ impl Rule for NoNamedAsDefault {
 fn default_and_named_are_same_reexport(remote_module_record: &ModuleRecord, name: &str) -> bool {
     // Find the default re-export entry.
     // Only re-exports like `export { foo as default }` are found here.
-    let Some(default_entry) = remote_module_record.indirect_export_entries.iter().find(|entry| {
-        matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == "default")
-    }) else {
+    let Some(default_entry) = remote_module_record.indirect_export_entries.iter().find(
+        |entry| matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == "default"),
+    ) else {
         return false;
     };
 
     // Find the named re-export entry
-    let Some(named_entry) = remote_module_record.indirect_export_entries.iter().find(|entry| {
-        matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == name)
-    }) else {
+    let Some(named_entry) = remote_module_record
+        .indirect_export_entries
+        .iter()
+        .find(|entry| matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == name))
+    else {
         return false;
     };
 
