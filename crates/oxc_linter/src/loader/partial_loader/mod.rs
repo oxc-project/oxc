@@ -1,6 +1,8 @@
 use memchr::{memmem::Finder, memmem::FinderRev};
+use oxc_allocator::Allocator;
+use oxc_diagnostics::OxcDiagnostic;
 
-use crate::loader::JavaScriptSource;
+use crate::loader::{JavaScriptSource, parse::LinterParseResult, parse_javascript_source};
 
 mod astro;
 mod svelte;
@@ -21,12 +23,20 @@ pub struct PartialLoader;
 impl PartialLoader {
     /// Extract js section of special files.
     /// Returns `None` if the special file does not have a js section.
-    pub fn parse<'a>(ext: &str, source_text: &'a str) -> Option<Vec<JavaScriptSource<'a>>> {
-        match ext {
-            "astro" => Some(AstroPartialLoader::new(source_text).parse()),
-            "svelte" => Some(SveltePartialLoader::new(source_text).parse()),
-            _ => None,
-        }
+    #[expect(clippy::type_complexity)]
+    pub fn parse<'a>(
+        allocator: &'a Allocator,
+        ext: &str,
+        source_text: &'a str,
+    ) -> Option<Vec<(Result<LinterParseResult<'a>, Vec<OxcDiagnostic>>, JavaScriptSource<'a>)>>
+    {
+        let sources = match ext {
+            "astro" => AstroPartialLoader::new(source_text).parse(),
+            "svelte" => SveltePartialLoader::new(source_text).parse(),
+            _ => return None,
+        };
+
+        Some(sources.into_iter().map(|source| parse_javascript_source(allocator, source)).collect())
     }
 }
 
