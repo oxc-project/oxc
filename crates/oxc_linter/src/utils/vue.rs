@@ -1,12 +1,12 @@
+use crate::{ContextSubHost, LintContext};
 use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectPropertyKind,
+        ObjectPropertyKind, Statement,
     },
 };
-
-use crate::{ContextSubHost, LintContext};
+use oxc_semantic::ScopeId;
 
 /// Check if any of the other contexts has a default export with the `name` property.
 ///
@@ -114,4 +114,41 @@ fn is_non_local_reference(identifier: &IdentifierReference, ctx: &LintContext<'_
     // variables outside the current `<script>` block are valid.
     // This is the same for unresolved variables.
     true
+}
+
+/// Get the scope ID of the Vue setup block (last top-level BlockStatement).
+///
+/// According to https://github.com/liangmiQwQ/vue-oxc-toolkit/blob/main/MAPPING.md,
+/// In vue-oxc-toolkit compiled AST, the last top-level BlockStatement contains
+/// the `<script setup>` code.
+pub fn get_vue_setup_scope_id(ctx: &LintContext<'_>) -> ScopeId {
+    let program = ctx.nodes().program();
+
+    // Find the last top-level BlockStatement
+    let Statement::BlockStatement(block) = program.body.last().unwrap() else {
+        unreachable!();
+    };
+
+    block.scope_id.get().unwrap()
+}
+
+/// Check if a scope is within the Vue `<script setup>` block.
+///
+/// Uses scope ancestry to determine if the scope is a descendant
+/// of the setup block's scope.
+pub fn is_in_vue_setup(ctx: &LintContext<'_>, scope_id: ScopeId) -> bool {
+    let setup_scope_id = get_vue_setup_scope_id(ctx);
+
+    // Check if scope_id is setup_scope_id or a descendant
+    let scopes = ctx.scoping();
+    let mut current_scope = Some(scope_id);
+
+    while let Some(current) = current_scope {
+        if current == setup_scope_id {
+            return true;
+        }
+        current_scope = scopes.scope_parent_id(current);
+    }
+
+    false
 }

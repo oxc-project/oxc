@@ -15,8 +15,8 @@ use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    frameworks::FrameworkOptions,
     rule::Rule,
+    utils::is_in_vue_setup,
 };
 
 fn no_required_prop_with_default_diagnostic(span: Span, prop_name: &str) -> OxcDiagnostic {
@@ -90,7 +90,7 @@ impl Rule for NoRequiredPropWithDefault {
 
 impl NoRequiredPropWithDefault {
     fn run_on_vue<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if ctx.frameworks_options() == FrameworkOptions::VueSetup {
+        if is_in_vue_setup(ctx, node.scope_id()) {
             self.run_on_setup(node, ctx);
         } else {
             self.run_on_composition(node, ctx);

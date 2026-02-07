@@ -5,9 +5,11 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    frameworks::FrameworkOptions,
     rule::Rule,
-    utils::{DefineMacroProblem, check_define_macro_call_expression, has_default_exports_property},
+    utils::{
+        DefineMacroProblem, check_define_macro_call_expression, has_default_exports_property,
+        is_in_vue_setup,
+    },
 };
 
 fn has_type_and_arguments_diagnostic(span: Span) -> OxcDiagnostic {
@@ -154,6 +156,10 @@ impl Rule for ValidDefineProps {
                 continue;
             }
 
+            if !is_in_vue_setup(ctx, node.scope_id()) {
+                continue;
+            }
+
             if let Some(other_span) = found {
                 ctx.diagnostic(called_multiple_times(call_expr.span, other_span));
                 continue;
@@ -179,7 +185,7 @@ impl Rule for ValidDefineProps {
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.frameworks_options() == FrameworkOptions::VueSetup
+        ctx.frameworks().is_vue()
     }
 }
 
