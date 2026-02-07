@@ -2075,6 +2075,7 @@ version = "0.112.0"
 dependencies = [
  "cow-utils",
  "insta",
+ "itoa",
  "javascript-globals",
  "oxc_allocator",
  "oxc_ast",
@@ -2090,6 +2091,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_sourcemap",
  "oxc_span",
+ "oxc_str",
  "oxc_syntax",
  "oxc_traverse",
  "pico-args",

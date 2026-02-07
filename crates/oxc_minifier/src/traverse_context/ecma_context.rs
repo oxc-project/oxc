@@ -1,51 +1,36 @@
-use std::ops::{Deref, DerefMut};
-
 use oxc_ast::{AstBuilder, ast::*};
+use oxc_compat::ESFeature;
 use oxc_ecmascript::{
+    GlobalContext,
     constant_evaluation::{
         ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
     },
-    side_effects::{MayHaveSideEffects, PropertyReadSideEffects, is_pure_function},
+    side_effects::{
+        MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects, is_pure_function,
+    },
 };
-use oxc_semantic::{IsGlobalReference, Scoping, SymbolId};
+use oxc_semantic::{IsGlobalReference, SymbolId};
 use oxc_span::format_atom;
 use oxc_syntax::{
     identifier::{is_identifier_part, is_identifier_start},
     reference::ReferenceId,
     scope::ScopeFlags,
 };
-use oxc_traverse::Ancestor;
 
-use crate::{options::CompressOptions, state::MinifierState, symbol_value::SymbolValue};
-use oxc_compat::ESFeature;
+use crate::{
+    generated::ancestor::Ancestor, options::CompressOptions, state::MinifierState,
+    symbol_value::SymbolValue,
+};
 
-pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
+use super::TraverseCtx;
 
-pub struct Ctx<'a, 'b>(&'b mut TraverseCtx<'a>);
-
-impl<'a, 'b> Ctx<'a, 'b> {
-    pub fn new(ctx: &'b mut TraverseCtx<'a>) -> Self {
-        Self(ctx)
-    }
+pub fn is_exact_int64(num: f64) -> bool {
+    num.fract() == 0.0
 }
 
-impl<'a> Deref for Ctx<'a, '_> {
-    type Target = TraverseCtx<'a>;
-
-    fn deref(&self) -> &Self::Target {
-        self.0
-    }
-}
-
-impl<'a> DerefMut for Ctx<'a, '_> {
-    fn deref_mut(&mut self) -> &mut TraverseCtx<'a> {
-        self.0
-    }
-}
-
-impl<'a> oxc_ecmascript::GlobalContext<'a> for Ctx<'a, '_> {
+impl<'a> GlobalContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
-        ident.is_global_reference(self.0.scoping())
+        ident.is_global_reference(self.scoping())
     }
 
     fn get_constant_value_for_reference_id(
@@ -62,7 +47,33 @@ impl<'a> oxc_ecmascript::GlobalContext<'a> for Ctx<'a, '_> {
     }
 }
 
-impl<'a> oxc_ecmascript::side_effects::MayHaveSideEffectsContext<'a> for Ctx<'a, '_> {
+impl<'a> GlobalContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
+        (*self).is_global_reference(ident)
+    }
+
+    fn get_constant_value_for_reference_id(
+        &self,
+        reference_id: ReferenceId,
+    ) -> Option<ConstantValue<'a>> {
+        (*self).get_constant_value_for_reference_id(reference_id)
+    }
+}
+
+impl<'a> GlobalContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> bool {
+        (**self).is_global_reference(ident)
+    }
+
+    fn get_constant_value_for_reference_id(
+        &self,
+        reference_id: ReferenceId,
+    ) -> Option<ConstantValue<'a>> {
+        (**self).get_constant_value_for_reference_id(reference_id)
+    }
+}
+
+impl<'a> MayHaveSideEffectsContext<'a> for TraverseCtx<'a, MinifierState<'a>> {
     fn annotations(&self) -> bool {
         self.state.options.treeshake.annotations
     }
@@ -84,23 +95,63 @@ impl<'a> oxc_ecmascript::side_effects::MayHaveSideEffectsContext<'a> for Ctx<'a,
     }
 }
 
-impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
+impl<'a> MayHaveSideEffectsContext<'a> for &TraverseCtx<'a, MinifierState<'a>> {
+    fn annotations(&self) -> bool {
+        (*self).annotations()
+    }
+
+    fn manual_pure_functions(&self, callee: &Expression) -> bool {
+        (*self).manual_pure_functions(callee)
+    }
+
+    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
+        (*self).property_read_side_effects()
+    }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        (*self).unknown_global_side_effects()
+    }
+}
+
+impl<'a> MayHaveSideEffectsContext<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
+    fn annotations(&self) -> bool {
+        (**self).annotations()
+    }
+
+    fn manual_pure_functions(&self, callee: &Expression) -> bool {
+        (**self).manual_pure_functions(callee)
+    }
+
+    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
+        (**self).property_read_side_effects()
+    }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        (**self).unknown_global_side_effects()
+    }
+}
+
+impl<'a> ConstantEvaluationCtx<'a> for TraverseCtx<'a, MinifierState<'a>> {
     fn ast(&self) -> AstBuilder<'a> {
         self.ast
     }
 }
 
-pub fn is_exact_int64(num: f64) -> bool {
-    num.fract() == 0.0
+impl<'a> ConstantEvaluationCtx<'a> for &TraverseCtx<'a, MinifierState<'a>> {
+    fn ast(&self) -> AstBuilder<'a> {
+        (*self).ast()
+    }
 }
 
-impl<'a> Ctx<'a, '_> {
-    pub fn scoping(&self) -> &Scoping {
-        self.0.scoping()
+impl<'a> ConstantEvaluationCtx<'a> for &mut TraverseCtx<'a, MinifierState<'a>> {
+    fn ast(&self) -> AstBuilder<'a> {
+        (**self).ast()
     }
+}
 
+impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     pub fn options(&self) -> &CompressOptions {
-        &self.0.state.options
+        &self.state.options
     }
 
     /// Check if the target engines supports a feature.
@@ -111,11 +162,11 @@ impl<'a> Ctx<'a, '_> {
     }
 
     pub fn source_type(&self) -> SourceType {
-        self.0.state.source_type
+        self.state.source_type
     }
 
     pub fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
-        ident.is_global_reference(self.0.scoping())
+        ident.is_global_reference(self.scoping())
     }
 
     pub fn eval_binary(&self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {

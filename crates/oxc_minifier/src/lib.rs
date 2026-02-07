@@ -45,12 +45,15 @@
 //! See the [crate documentation](https://github.com/oxc-project/oxc/tree/main/crates/oxc_minifier) for more details.
 
 mod compressor;
-mod ctx;
+pub(crate) mod generated;
 mod keep_var;
+mod minifier_traverse;
 mod options;
 mod peephole;
 mod state;
 mod symbol_value;
+mod traverse_ast_operations;
+mod traverse_context;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
