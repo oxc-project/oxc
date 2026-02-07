@@ -11,11 +11,11 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
+use oxc_traverse::ast_operations::{GatherNodeParts, get_var_name_from_node};
 
 use crate::{
     generated::ancestor::{Ancestor, AncestorType},
     state::MinifierState,
-    traverse_ast_operations::{GatherNodeParts, get_var_name_from_node},
 };
 
 mod ancestry;

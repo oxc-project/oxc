@@ -52,7 +52,6 @@ mod options;
 mod peephole;
 mod state;
 mod symbol_value;
-mod traverse_ast_operations;
 mod traverse_context;
 
 use oxc_allocator::Allocator;
