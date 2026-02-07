@@ -256,10 +256,24 @@ impl oxc_allocator::hash_map::Equivalent<Ident<'_>> for IdentStr<'_> {
     }
 }
 
-impl<T: AsRef<str>> PartialEq<T> for Ident<'_> {
+impl PartialEq for Ident<'_> {
     #[inline]
-    fn eq(&self, other: &T) -> bool {
-        self.as_str() == other.as_ref()
+    fn eq(&self, other: &Self) -> bool {
+        self.ptr == other.ptr
+    }
+}
+
+impl PartialEq<&Ident<'_>> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &&Ident<'_>) -> bool {
+        self.ptr == other.ptr
+    }
+}
+
+impl PartialEq<Ident<'_>> for &Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &Ident<'_>) -> bool {
+        self.ptr == other.ptr
     }
 }
 
@@ -274,6 +288,48 @@ impl PartialEq<str> for Ident<'_> {
     #[inline]
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
+    }
+}
+
+impl PartialEq<&str> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == *other
+    }
+}
+
+impl PartialEq<String> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &String) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<Ident<'_>> for String {
+    #[inline]
+    fn eq(&self, other: &Ident<'_>) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<CompactStr> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &CompactStr) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<Atom<'_>> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &Atom<'_>) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<Cow<'_, str>> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &Cow<'_, str>) -> bool {
+        self.as_str() == other.as_ref()
     }
 }
 
@@ -366,4 +422,40 @@ macro_rules! format_ident {
         let str = s.into_str();
         <$crate::Ident as FromIn<&str>>::from_in(str, alloc)
     }}
+}
+
+#[cfg(test)]
+mod test {
+    use std::borrow::Cow;
+
+    use oxc_allocator::{Allocator, FromIn};
+
+    use crate::{CompactStr, Ident};
+
+    #[test]
+    fn ident_eq_is_pointer_based() {
+        let allocator = Allocator::new();
+        let a = Ident::from_in("foo", &allocator);
+        let b = Ident::from_in("foo", &allocator);
+        assert_eq!(a, b);
+
+        let other_allocator = Allocator::new();
+        let c = Ident::from_in("foo", &other_allocator);
+        assert_ne!(a, c);
+    }
+
+    #[test]
+    fn ident_eq_with_string_like_types_is_content_based() {
+        let allocator = Allocator::new();
+        let ident = Ident::from_in("foo", &allocator);
+
+        assert_eq!(ident, "foo");
+        assert_eq!("foo", ident);
+        assert_eq!(ident, String::from("foo"));
+        assert_eq!(String::from("foo"), ident);
+        assert_eq!(ident, CompactStr::new("foo"));
+        assert_eq!(CompactStr::new("foo"), ident);
+        assert_eq!(ident, Cow::<str>::Borrowed("foo"));
+        assert_eq!(Cow::<str>::Borrowed("foo"), ident);
+    }
 }
