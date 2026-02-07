@@ -18,7 +18,7 @@ fn no_named_as_default_diagnostic(
         .with_label(span)
 }
 
-// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-named-as-default-member.md>
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-named-as-default.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoNamedAsDefault;
 
@@ -98,8 +98,8 @@ impl Rule for NoNamedAsDefault {
 /// This is a special case where using the named export's name for the default import is allowed,
 /// because they refer to the same value.
 ///
-/// See https://github.com/import-js/eslint-plugin-import/pull/3032
-/// and https://github.com/oxc-project/oxc/issues/19099.
+/// See <https://github.com/import-js/eslint-plugin-import/pull/3032>
+/// and <https://github.com/oxc-project/oxc/issues/19099>
 fn default_and_named_are_same_reexport(remote_module_record: &ModuleRecord, name: &str) -> bool {
     // Find the default re-export entry.
     // `export default foo` uses `ExportExportName::Default`, but
