@@ -2,8 +2,6 @@
 
 use unicode_id_start::{is_id_continue_unicode, is_id_start_unicode};
 
-use oxc_data_structures::assert_unchecked;
-
 use crate::line_terminator::{CR, LF, LS, PS};
 
 pub const EOF: char = '\0';
@@ -83,38 +81,26 @@ pub fn is_white_space_single_line(c: char) -> bool {
     matches!(c, SP | TAB) || is_irregular_whitespace(c)
 }
 
-const XX: bool = true;
-const __: bool = false;
+const ID_START: u8 = 1;
+const ID_CONTINUE: u8 = 2;
 
 #[repr(C, align(64))]
 pub struct Align64<T>(pub(crate) T);
 
-// `a`-`z`, `A`-`Z`, `$` (0x24), `_` (0x5F)
+// Packed: ID_START | ID_CONTINUE per ASCII byte.
+// `a`-`z`, `A`-`Z`, `$`, `_` get ID_START | ID_CONTINUE (3).
+// `0`-`9` get ID_CONTINUE only (2).
 #[rustfmt::skip]
-pub static ASCII_START: Align64<[bool; 128]> = Align64([
-//  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F   //
-    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 0
-    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 1
-    __, __, __, __, XX, __, __, __, __, __, __, __, __, __, __, __, // 2
-    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 3
-    __, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 4
-    XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, __, __, __, __, XX, // 5
-    __, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 6
-    XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, __, __, __, __, __, // 7
-]);
-
-// `ASCII_START` + `0`-`9`
-#[rustfmt::skip]
-pub static ASCII_CONTINUE: Align64<[bool; 128]> = Align64([
-//  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F   //
-    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 0
-    __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 1
-    __, __, __, __, XX, __, __, __, __, __, __, __, __, __, __, __, // 2
-    XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, __, __, __, __, __, __, // 3
-    __, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 4
-    XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, __, __, __, __, XX, // 5
-    __, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, // 6
-    XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, XX, __, __, __, __, __, // 7
+pub static ASCII_ID_FLAGS: Align64<[u8; 128]> = Align64([
+//  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F  //
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 1
+    0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 2  $ = 3
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, // 3  0-9 = 2
+    0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 4  A-Z = 3
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 3, // 5  _ = 3
+    0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 6  a-z = 3
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, // 7
 ]);
 
 /// Section 12.7 Detect `IdentifierStartChar`
@@ -128,7 +114,7 @@ pub fn is_identifier_start(c: char) -> bool {
 
 #[inline]
 pub fn is_identifier_start_ascii(c: char) -> bool {
-    ASCII_START.0[c as usize]
+    ASCII_ID_FLAGS.0[c as usize] & ID_START != 0
 }
 
 #[inline]
@@ -148,7 +134,7 @@ pub fn is_identifier_part(c: char) -> bool {
 
 #[inline]
 pub fn is_identifier_part_ascii(c: char) -> bool {
-    ASCII_CONTINUE.0[c as usize]
+    ASCII_ID_FLAGS.0[c as usize] & ID_CONTINUE != 0
 }
 
 #[inline]
@@ -171,7 +157,7 @@ pub fn is_identifier_name(name: &str) -> bool {
 
     let mut chars = if first_byte.is_ascii() {
         // First byte is ASCII
-        if !is_identifier_start_ascii(first_byte as char) {
+        if ASCII_ID_FLAGS.0[first_byte as usize] & ID_START == 0 {
             return false;
         }
 
@@ -196,9 +182,7 @@ pub fn is_identifier_name(name: &str) -> bool {
 
                 let next8 = next8_as_u64.to_ne_bytes();
                 for b in next8 {
-                    // SAFETY: We just checked all these bytes are ASCII
-                    unsafe { assert_unchecked!(b.is_ascii()) };
-                    if !is_identifier_part_ascii(b as char) {
+                    if ASCII_ID_FLAGS.0[b as usize] & ID_CONTINUE == 0 {
                         return false;
                     }
                 }
@@ -221,9 +205,7 @@ pub fn is_identifier_name(name: &str) -> bool {
 
                 let next4 = next4_as_u32.to_ne_bytes();
                 for b in next4 {
-                    // SAFETY: We just checked all these bytes are ASCII
-                    unsafe { assert_unchecked!(b.is_ascii()) };
-                    if !is_identifier_part_ascii(b as char) {
+                    if ASCII_ID_FLAGS.0[b as usize] & ID_CONTINUE == 0 {
                         return false;
                     }
                 }
@@ -237,7 +219,7 @@ pub fn is_identifier_name(name: &str) -> bool {
                     };
 
                     if b.is_ascii() {
-                        if !is_identifier_part_ascii(b as char) {
+                        if ASCII_ID_FLAGS.0[b as usize] & ID_CONTINUE == 0 {
                             return false;
                         }
                     } else {
