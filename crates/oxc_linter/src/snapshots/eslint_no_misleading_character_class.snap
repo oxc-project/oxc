@@ -139,6 +139,12 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──
    ╰────
 
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:15]
+ 1 │ var r = /[👶🏻]/
+   ·             ─
+   ╰────
+
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👶🏻]/u
@@ -170,9 +176,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:15]
+ 1 │ var r = /[🇯🇵]/
+   ·            ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[🇯🇵]/i
    ·           ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:15]
+ 1 │ var r = /[🇯🇵]/i
+   ·            ─
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
@@ -199,16 +217,40 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─
    ╰────
 
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:22]
+ 1 │ var r = /[👨‍👩‍👦]/
+   ·             ─
+   ╰────
+
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👨‍👩‍👦]/
    ·           ──
    ╰────
 
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:18]
+ 1 │ var r = /[👨‍👩‍👦]/
+   ·             ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:25]
+ 1 │ var r = /[👨‍👩‍👦]/
+   ·             ─
+   ╰────
+
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[👨‍👩‍👦]/u
    ·           ──
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:18]
+ 1 │ var r = /[👨‍👩‍👦]/u
+   ·             ─
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
@@ -236,9 +278,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:18]
+ 1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
+   ·             ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:34]
  1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
    ·                  ──
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:41]
+ 1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
+   ·                    ─
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
@@ -248,15 +302,39 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:18]
+ 1 │ var r = /[👨‍👩‍👦👩‍👦]/u
+   ·             ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = /[👨‍👩‍👦👩‍👦]/u
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC66]/u
    ·           ──────────────────────────────
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = /[\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC66]/u
+   ·                             ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
    ·           ──────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:28]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·                            ──────────────────────────
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
@@ -278,9 +356,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:28]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]foo[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·                            ──────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:59]
  1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]foo[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
    ·                                                           ──────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:76]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]foo[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·                                                                            ──────────────────────────
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
@@ -490,6 +580,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──
    ╰────
 
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[👶🏻]", "")
+   ·                        ─
+   ╰────
+
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👶🏻]", "u")
@@ -527,9 +623,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[🇯🇵]", "")
+   ·                       ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[🇯🇵]", "i")
    ·                      ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[🇯🇵]", "i")
+   ·                       ─
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
@@ -539,9 +647,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp('[🇯🇵]', `i`)
+   ·                       ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[🇯🇵]")
    ·                      ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[🇯🇵]")
+   ·                       ─
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
@@ -551,9 +671,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:26]
+ 1 │ var r = new RegExp("[🇯🇵]",)
+   ·                       ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:23]
  1 │ var r = new RegExp(("[🇯🇵]"))
    ·                       ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:27]
+ 1 │ var r = new RegExp(("[🇯🇵]"))
+   ·                        ─
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
@@ -563,9 +695,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:28]
+ 1 │ var r = new RegExp((("[🇯🇵]")))
+   ·                         ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:23]
  1 │ var r = new RegExp(("[🇯🇵]"),)
    ·                       ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:27]
+ 1 │ var r = new RegExp(("[🇯🇵]"),)
+   ·                        ─
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected regional indicator in character class.
@@ -592,16 +736,40 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─
    ╰────
 
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:33]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "")
+   ·                        ─
+   ╰────
+
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👨‍👩‍👦]", "")
    ·                      ──
    ╰────
 
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "")
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:36]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "")
+   ·                        ─
+   ╰────
+
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[👨‍👩‍👦]", "u")
    ·                      ──
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]", "u")
+   ·                        ─
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
@@ -629,9 +797,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]foo[👨‍👩‍👦]", "u")
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:45]
  1 │ var r = new RegExp("[👨‍👩‍👦]foo[👨‍👩‍👦]", "u")
    ·                             ──
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:52]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]foo[👨‍👩‍👦]", "u")
+   ·                               ─
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
@@ -641,15 +821,39 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:29]
+ 1 │ var r = new RegExp("[👨‍👩‍👦👩‍👦]", "u")
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:40]
+ 1 │ var r = new RegExp("[👨‍👩‍👦👩‍👦]", "u")
+   ·                        ──
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[\\uD83D\\uDC68\\u200D\\uD83D\\uDC69\\u200D\\uD83D\\uDC66]", "u")
    ·                      ───────────────────────────────────
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:43]
+ 1 │ var r = new RegExp("[\\uD83D\\uDC68\\u200D\\uD83D\\uDC69\\u200D\\uD83D\\uDC66]", "u")
+   ·                                           ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
    ·                      ─────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:41]
+ 1 │ var r = new RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
+   ·                                         ─────────────────────────────
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
@@ -670,10 +874,22 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─
    ╰────
 
+  ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
+   ╭─[no_misleading_character_class.tsx:1:37]
+ 1 │ var r = new globalThis.RegExp("[🇯🇵]", "")
+   ·                                  ─
+   ╰────
+
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:33]
  1 │ var r = new globalThis.RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
    ·                                 ─────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:52]
+ 1 │ var r = new globalThis.RegExp("[\\u{1F468}\\u{200D}\\u{1F469}\\u{200D}\\u{1F466}]", "u")
+   ·                                                    ─────────────────────────────
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.

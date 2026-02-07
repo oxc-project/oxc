@@ -185,24 +185,12 @@ impl Rule for NoMisleadingCharacterClass {
                 }
 
                 // Always check for combining marks, regional indicator, ZWJ, and emoji modifier sequences
-                if let Some(span) = combining_class_sequences(unfiltered_chars) {
-                    ctx.diagnostic(combining_class_diagnostic(span));
-                }
-                if let Some(span) = regional_indicator_symbol_sequences(unfiltered_chars) {
-                    ctx.diagnostic(regional_indicator_diagnostic(span));
-                }
-                if let Some(span) = zwj_sequences(unfiltered_chars) {
-                    ctx.diagnostic(zwj_diagnostic(span));
-                }
-                if let Some(span) = emoji_modifier_sequences(unfiltered_chars) {
-                    ctx.diagnostic(emoji_modifiers_diagnostic(span));
-                }
-                if let Some(span) = surrogate_pair_sequences(unfiltered_chars) {
-                    ctx.diagnostic(surrogate_pair_diagnostic(span));
-                }
-                if let Some(span) = surrogate_pair_sequences_without_flag(unfiltered_chars) {
-                    ctx.diagnostic(surrogate_pair_diagnostic(span));
-                }
+                combining_class_sequences(unfiltered_chars, ctx);
+                regional_indicator_symbol_sequences(unfiltered_chars, ctx);
+                zwj_sequences(unfiltered_chars, ctx);
+                emoji_modifier_sequences(unfiltered_chars, ctx);
+                surrogate_pair_sequences(unfiltered_chars, ctx);
+                surrogate_pair_sequences_without_flag(unfiltered_chars, ctx);
             }
         });
     }
@@ -220,13 +208,15 @@ fn is_regional_indicator_symbol(value: u32) -> bool {
 }
 
 // Find regional indicator symbol pairs
-fn regional_indicator_symbol_sequences(chars: &[&Character]) -> Option<Span> {
+fn regional_indicator_symbol_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (prev, curr) in chars.iter().tuple_windows() {
         if is_regional_indicator_symbol(prev.value) && is_regional_indicator_symbol(curr.value) {
-            return Some(Span::new(prev.span.start, curr.span.end));
+            ctx.diagnostic(regional_indicator_diagnostic(Span::new(
+                prev.span.start,
+                curr.span.end,
+            )));
         }
     }
-    None
 }
 
 // Returns true if the code point is a combining mark (Unicode category Mn, Mc, or Me)
@@ -269,21 +259,23 @@ fn is_combining_character(value: u32) -> bool {
 }
 
 // Find combining mark sequences: previous is not combining, current is combining
-fn combining_class_sequences(chars: &[&Character]) -> Option<Span> {
+fn combining_class_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
         }
         let previous = chars[index - 1];
         if is_combining_character(char.value) && !is_combining_character(previous.value) {
-            return Some(Span::new(previous.span.start, char.span.end));
+            ctx.diagnostic(combining_class_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-    None
 }
 
-// Returns the span of a zero width joiner sequence detected between two non-ZWJ characters, if any
-fn zwj_sequences(chars: &[&Character]) -> Option<Span> {
+// Reports the span of a zero width joiner sequence detected between two non-ZWJ characters, if any
+fn zwj_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         let previous = if index > 0 { Some(chars[index - 1]) } else { None };
         let next = chars.get(index + 1).copied();
@@ -292,17 +284,16 @@ fn zwj_sequences(chars: &[&Character]) -> Option<Span> {
             && previous.value != 0x200D
             && next.value != 0x200D
         {
-            return Some(Span::new(previous.span.start, next.span.end));
+            ctx.diagnostic(zwj_diagnostic(Span::new(previous.span.start, next.span.end)));
         }
     }
-    None
 }
 
 fn is_emoji_modifier(char: &Character) -> bool {
     char.value >= 0x1f3fb && char.value <= 0x1f3ff
 }
 
-// Returns the span of an emoji modifier sequence detected between a non-emoji-modifier character and an emoji modifier, if any.
+// Reports one or multiple spans of an emoji modifier sequence detected between a non-emoji-modifier character and an emoji modifier.
 //
 // Emoji modifiers are special Unicode characters used to modify the appearance of other emojis, such as:
 // - Skin tone
@@ -311,7 +302,7 @@ fn is_emoji_modifier(char: &Character) -> bool {
 // - etc.
 //
 // They’re combined with base emojis (like people or body parts) to create variant emoji sequences.
-fn emoji_modifier_sequences(chars: &[&Character]) -> Option<Span> {
+fn emoji_modifier_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
@@ -319,11 +310,12 @@ fn emoji_modifier_sequences(chars: &[&Character]) -> Option<Span> {
         let previous = chars[index - 1];
 
         if is_emoji_modifier(char) && !is_emoji_modifier(previous) {
-            return Some(Span::new(previous.span.start, char.span.end));
+            ctx.diagnostic(emoji_modifiers_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-
-    None
 }
 
 // Returns true if the two code units form a surrogate pair
@@ -347,7 +339,7 @@ fn is_unicode_code_point_escape(char: &Character) -> bool {
 }
 
 // Find surrogate pairs where neither character is a Unicode code point escape
-fn surrogate_pair_sequences_without_flag(chars: &[&Character]) -> Option<Span> {
+fn surrogate_pair_sequences_without_flag(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
@@ -357,14 +349,16 @@ fn surrogate_pair_sequences_without_flag(chars: &[&Character]) -> Option<Span> {
             && !is_unicode_code_point_escape(previous)
             && !is_unicode_code_point_escape(char)
         {
-            return Some(Span::new(previous.span.start, char.span.end));
+            ctx.diagnostic(surrogate_pair_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-    None
 }
 
-// Find surrogate pairs where at least one is a Unicode code point escape
-fn surrogate_pair_sequences(chars: &[&Character]) -> Option<Span> {
+// Reports the spans of any zero width joiner sequences detected between two non-ZWJ characters.
+fn surrogate_pair_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
@@ -373,10 +367,12 @@ fn surrogate_pair_sequences(chars: &[&Character]) -> Option<Span> {
         if is_surrogate_pair(previous.value, char.value)
             && (is_unicode_code_point_escape(previous) || is_unicode_code_point_escape(char))
         {
-            return Some(Span::new(previous.span.start, char.span.end));
+            ctx.diagnostic(surrogate_pair_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-    None
 }
 
 #[test]
