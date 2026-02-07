@@ -263,7 +263,8 @@ impl<'a> ModuleRunnerTransform<'a> {
         }
 
         let flags = ReferenceFlags::Read;
-        let callee = ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident(SSR_DYNAMIC_IMPORT_KEY), flags);
+        let callee =
+            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident(SSR_DYNAMIC_IMPORT_KEY), flags);
         let arguments = options.into_iter().map(Argument::from);
         let arguments = ctx.ast.vec_from_iter(iter::once(Argument::from(source)).chain(arguments));
         *expr = ctx.ast.expression_call(span, callee, NONE, arguments, false);
@@ -276,7 +277,11 @@ impl<'a> ModuleRunnerTransform<'a> {
             unreachable!();
         };
 
-        *expr = ctx.create_unbound_ident_expr(meta.span, ctx.ast.ident(SSR_IMPORT_META_KEY), ReferenceFlags::Read);
+        *expr = ctx.create_unbound_ident_expr(
+            meta.span,
+            ctx.ast.ident(SSR_IMPORT_META_KEY),
+            ReferenceFlags::Read,
+        );
     }
 
     /// Transform import declaration (`import { foo } from 'vue'`).
@@ -557,7 +562,12 @@ impl<'a> ModuleRunnerTransform<'a> {
                 if let Some(id) = &func.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                     new_stmts.push(Statement::FunctionDeclaration(func));
-                    hoist_exports.push(Self::create_export(span, ident, ctx.ast.ident(DEFAULT), ctx));
+                    hoist_exports.push(Self::create_export(
+                        span,
+                        ident,
+                        ctx.ast.ident(DEFAULT),
+                        ctx,
+                    ));
                 } else {
                     func.r#type = FunctionType::FunctionExpression;
                     let right = Expression::FunctionExpression(func);
@@ -570,7 +580,12 @@ impl<'a> ModuleRunnerTransform<'a> {
                 if let Some(id) = &class.id {
                     let ident = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                     new_stmts.push(Statement::ClassDeclaration(class));
-                    hoist_exports.push(Self::create_export(span, ident, ctx.ast.ident(DEFAULT), ctx));
+                    hoist_exports.push(Self::create_export(
+                        span,
+                        ident,
+                        ctx.ast.ident(DEFAULT),
+                        ctx,
+                    ));
                 } else {
                     class.r#type = ClassType::ClassExpression;
                     let right = Expression::ClassExpression(class);
@@ -689,7 +704,11 @@ impl<'a> ModuleRunnerTransform<'a> {
         arguments: ArenaVec<'a, Argument<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let callee = ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident(SSR_IMPORT_KEY), ReferenceFlags::Read);
+        let callee = ctx.create_unbound_ident_expr(
+            SPAN,
+            ctx.ast.ident(SSR_IMPORT_KEY),
+            ReferenceFlags::Read,
+        );
         let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         let init = ctx.ast.expression_await(SPAN, call);
 

@@ -1517,11 +1517,7 @@ mod fix {
         let mut vec = deps.elements.clone_in(&alloc);
 
         for name in names {
-            vec.push(
-                ast_builder
-                    .expression_identifier(SPAN, ast_builder.ident(&name.name))
-                    .into(),
-            );
+            vec.push(ast_builder.expression_identifier(SPAN, ast_builder.ident(&name.name)).into());
         }
 
         codegen.print_expression(&ast_builder.expression_array(SPAN, vec));

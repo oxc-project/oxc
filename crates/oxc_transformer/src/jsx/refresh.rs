@@ -365,12 +365,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 
                             if is_member_expression {
                                 // binding_name.hook_name
-                                expr = Expression::from(ctx.ast.member_expression_static(
-                                    SPAN,
-                                    expr,
-                                    ctx.ast.identifier_name(SPAN, ctx.ast.ident(hook_name.as_str())),
-                                    false,
-                                ));
+                                expr =
+                                    Expression::from(ctx.ast.member_expression_static(
+                                        SPAN,
+                                        expr,
+                                        ctx.ast.identifier_name(
+                                            SPAN,
+                                            ctx.ast.ident(hook_name.as_str()),
+                                        ),
+                                        false,
+                                    ));
                             }
                             expr
                         }),

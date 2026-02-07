@@ -238,7 +238,9 @@ impl<'a> InjectGlobalVariables<'a> {
                             self.ast.module_export_name_string_literal(SPAN, imported_name, None)
                         }
                     }
-                    None => self.ast.module_export_name_identifier_name(SPAN, self.ast.ident("default")),
+                    None => {
+                        self.ast.module_export_name_identifier_name(SPAN, self.ast.ident("default"))
+                    }
                 };
 
                 let local = inject.replace_value.as_ref().unwrap_or(local).as_str();

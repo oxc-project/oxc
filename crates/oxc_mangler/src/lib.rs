@@ -545,7 +545,10 @@ impl<'t> Mangler<'t> {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
-                    scoping.set_symbol_name(symbol_id, Ident::from_in(new_name.as_str(), temp_allocator));
+                    scoping.set_symbol_name(
+                        symbol_id,
+                        Ident::from_in(new_name.as_str(), temp_allocator),
+                    );
                 }
             }
         }

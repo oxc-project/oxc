@@ -391,7 +391,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                                     ModuleExportName::IdentifierReference(
                                         var_id.create_read_reference(ctx),
                                     ),
-                                    ctx.ast.module_export_name_identifier_name(SPAN, ctx.ast.ident("default")),
+                                    ctx.ast.module_export_name_identifier_name(
+                                        SPAN,
+                                        ctx.ast.ident("default"),
+                                    ),
                                     ImportOrExportKind::Value,
                                 )),
                                 None,
@@ -750,7 +753,10 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                         Expression::from(ctx.ast.member_expression_static(
                             SPAN,
                             using_ctx.as_ref().unwrap().create_read_expression(ctx),
-                            ctx.ast.identifier_name(SPAN, ctx.ast.ident(if is_await_using { "a" } else { "u" })),
+                            ctx.ast.identifier_name(
+                                SPAN,
+                                ctx.ast.ident(if is_await_using { "a" } else { "u" }),
+                            ),
                             false,
                         )),
                         NONE,

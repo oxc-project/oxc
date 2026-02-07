@@ -667,7 +667,8 @@ impl<'a> JsxImpl<'a, '_> {
                     let elements = ctx.ast.vec_from_iter(elements);
                     ctx.ast.expression_array(SPAN, elements)
                 };
-                let children = ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident("children"));
+                let children =
+                    ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident("children"));
                 let kind = PropertyKind::Init;
                 let property = ctx.ast.object_property_kind_object_property(
                     SPAN, kind, children, value, false, false, false,
@@ -864,7 +865,8 @@ impl<'a> JsxImpl<'a, '_> {
             }
             JSXMemberExpressionObject::ThisExpression(expr) => ctx.ast.expression_this(expr.span),
         };
-        let property = ctx.ast.identifier_name(property.span, ctx.ast.ident(property.name.as_str()));
+        let property =
+            ctx.ast.identifier_name(property.span, ctx.ast.ident(property.name.as_str()));
         ctx.ast.member_expression_static(span, object, property, false).into()
     }
 
@@ -1198,9 +1200,9 @@ fn get_read_identifier_reference<'a>(
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     let ident_name = ctx.ast.ident(name.as_str());
-    let reference_id =
-        ctx.create_reference_in_current_scope(ident_name, ReferenceFlags::Read);
-    let ident = ctx.ast.alloc_identifier_reference_with_reference_id(span, ident_name, reference_id);
+    let reference_id = ctx.create_reference_in_current_scope(ident_name, ReferenceFlags::Read);
+    let ident =
+        ctx.ast.alloc_identifier_reference_with_reference_id(span, ident_name, reference_id);
     Expression::Identifier(ident)
 }
 
