@@ -241,6 +241,7 @@ sort-package-json = "0.0.10"
 oxc-toml = "0.14.2"
 unicode-width = "0.2"
 website_common = { path = "tasks/website_common" }
+vue_oxc_toolkit = "0.6.0"
 
 [workspace.metadata.cargo-shear]
 ignored = ["oxc_transform_napi", "oxc_parser_napi", "oxc_minify_napi"]
