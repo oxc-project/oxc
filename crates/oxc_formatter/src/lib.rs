@@ -28,6 +28,10 @@ use crate::{
 };
 #[cfg(feature = "detect_code_removal")]
 pub use detect_code_removal::detect_code_removal;
+pub use oxc_formatter_core as formatter_core;
+pub use oxc_formatter_core::{
+    Format as CoreFormat, FormatContext as CoreFormatContext, Formatter as CoreFormatter,
+};
 
 use self::formatter::prelude::tag::Label;
 

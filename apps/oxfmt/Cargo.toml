@@ -31,6 +31,8 @@ oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
+oxc_formatter_core = { workspace = true }
+oxc_formatter_json = { workspace = true }
 oxc_language_server = { workspace = true }
 oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
