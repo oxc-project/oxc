@@ -733,7 +733,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::BreakStatement(self.alloc(stmt));
         self.enter_node(kind);
         if let Some(label) = &stmt.label {
-            self.unused_labels.reference(label.name.as_str());
+            self.unused_labels.reference(label.name);
         }
 
         /* cfg */
@@ -829,7 +829,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::ContinueStatement(self.alloc(stmt));
         self.enter_node(kind);
         if let Some(label) = &stmt.label {
-            self.unused_labels.reference(label.name.as_str());
+            self.unused_labels.reference(label.name);
         }
 
         /* cfg */
@@ -1385,7 +1385,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
         control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
-        self.unused_labels.add(stmt.label.name.as_str(), self.current_node_id);
+        self.unused_labels.add(stmt.label.name, self.current_node_id);
 
         /* cfg */
         #[cfg(feature = "cfg")]
