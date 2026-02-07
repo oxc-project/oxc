@@ -540,15 +540,27 @@ impl Extensions {
                 return;
             }
 
+            // Determine if the extension being checked is actually written in the import
+            // For files with multiple extensions (e.g., foo.stories.tsx), we need to check
+            // if the ACTUAL file extension (resolved) matches what's written in the import.
+            // If resolved is "tsx" but written is "stories", then tsx is NOT written.
+            let extension_is_written = if let Some(resolved) = resolved_extension {
+                // If we have a resolved extension, check if it matches the written extension
+                written_extension == Some(resolved)
+            } else {
+                // Otherwise, just check if there's any written extension
+                written_extension.is_some()
+            };
+
             if config.should_flag_extension(
                 ext_str,
-                written_extension.is_some(),
+                extension_is_written,
                 resolved_extension.is_some(),
                 require_extension,
             ) {
-                if let Some(ext) = written_extension {
+                if extension_is_written {
                     ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                        span, ext, is_import,
+                        span, ext_str, is_import,
                     ));
                 } else {
                     ctx.diagnostic(extension_missing_diagnostic(span, is_import));
@@ -1217,6 +1229,11 @@ fn test() {
             r#"import data from "./data.json" with { type: "json" };"#,
             Some(json!(["ignorePackages"])),
         ),
+        // Files with multiple extensions (e.g., Component.stories.tsx)
+        // These test cases use actual fixture files for proper module resolution
+        (r"import { Component } from './Component.stories';", Some(json!([{ "tsx": "never" }]))),
+        (r"import { testUtil } from './utils.test';", Some(json!([{ "ts": "never" }]))),
+        (r"import { helper } from './helper.spec';", Some(json!([{ "js": "never" }]))),
         // Subpath imports
         // https://nodejs.org/api/packages.html#subpath-imports
         // (
@@ -1685,6 +1702,16 @@ fn test() {
             r"import useState from '@foo/bar/useState.ts';",
             Some(json!(["never", { "ignorePackages": true }])),
         ),
+        // Files with multiple extensions - should fail when actual extension IS included
+        (
+            r"import Component from './Component.stories.tsx';",
+            Some(json!(["never", { "tsx": "never" }])),
+        ),
+        (
+            r"import Component from './Component.test.ts';",
+            Some(json!(["never", { "ts": "never" }])),
+        ),
+        (r"import utils from './utils.spec.js';", Some(json!(["never", { "js": "never" }]))),
         // TODO: This should probably fail? Needs further investigation.
         // (
         //     r"import useState from '@foo/bar/useState';",
