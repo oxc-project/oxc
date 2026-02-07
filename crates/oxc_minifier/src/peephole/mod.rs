@@ -24,11 +24,7 @@ use rustc_hash::FxHashSet;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
-use crate::{
-    generated::traverse::MinifierTraverse,
-    minifier_traverse::traverse_mut_with_ctx,
-    traverse_context::{MinifierTraverseCtx as TraverseCtx, ReusableMinifierTraverseCtx},
-};
+use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
@@ -36,11 +32,7 @@ pub use self::normalize::{Normalize, NormalizeOptions};
 pub struct PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
-    pub fn run_once(
-        &mut self,
-        program: &mut Program<'a>,
-        ctx: &mut ReusableMinifierTraverseCtx<'a>,
-    ) {
+    pub fn run_once(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 
@@ -114,7 +106,7 @@ impl<'a> PeepholeOptimizations {
     }
 }
 
-impl<'a> MinifierTraverse<'a> for PeepholeOptimizations {
+impl<'a> Traverse<'a> for PeepholeOptimizations {
     fn enter_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         ctx.state.symbol_values.clear();
         ctx.state.changed = false;

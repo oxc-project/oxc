@@ -1,7 +1,7 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
-use crate::traverse_context::MinifierTraverseCtx as TraverseCtx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 

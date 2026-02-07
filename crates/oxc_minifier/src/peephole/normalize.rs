@@ -9,11 +9,7 @@ use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::{
-    generated::traverse::MinifierTraverse,
-    minifier_traverse::traverse_mut_with_ctx,
-    traverse_context::{MinifierTraverseCtx as TraverseCtx, ReusableMinifierTraverseCtx},
-};
+use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
@@ -47,12 +43,12 @@ pub struct Normalize {
 }
 
 impl<'a> Normalize {
-    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableMinifierTraverseCtx<'a>) {
+    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
-impl<'a> MinifierTraverse<'a> for Normalize {
+impl<'a> Traverse<'a> for Normalize {
     fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
             node.directives.drain_filter(|d| d.directive.as_str() == "use strict");

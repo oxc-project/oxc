@@ -1,5 +1,5 @@
 use super::PeepholeOptimizations;
-use crate::{CompressOptionsUnused, traverse_context::MinifierTraverseCtx as TraverseCtx};
+use crate::{CompressOptionsUnused, TraverseCtx};
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 

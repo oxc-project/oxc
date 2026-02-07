@@ -11,7 +11,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan};
 
-use crate::{keep_var::KeepVar, traverse_context::MinifierTraverseCtx as TraverseCtx};
+use crate::{TraverseCtx, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
 

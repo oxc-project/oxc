@@ -1,6 +1,6 @@
 use std::iter;
 
-use crate::{CompressOptionsUnused, traverse_context::MinifierTraverseCtx as TraverseCtx};
+use crate::{CompressOptionsUnused, TraverseCtx};
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;

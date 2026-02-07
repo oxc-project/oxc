@@ -16,7 +16,7 @@ use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
 };
 
-use crate::traverse_context::MinifierTraverseCtx as TraverseCtx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 

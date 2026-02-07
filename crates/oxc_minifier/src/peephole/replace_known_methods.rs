@@ -16,7 +16,7 @@ use oxc_regular_expression::{
 };
 use oxc_span::SPAN;
 
-use crate::traverse_context::MinifierTraverseCtx as TraverseCtx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 

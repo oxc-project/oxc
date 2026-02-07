@@ -8,7 +8,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 
-use crate::traverse_context::MinifierTraverseCtx as TraverseCtx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 

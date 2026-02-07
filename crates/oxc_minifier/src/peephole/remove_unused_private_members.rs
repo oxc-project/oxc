@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 
-use crate::traverse_context::MinifierTraverseCtx as TraverseCtx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 

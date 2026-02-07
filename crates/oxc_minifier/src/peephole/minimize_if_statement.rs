@@ -4,7 +4,7 @@ use oxc_ast::ast::*;
 use oxc_semantic::ScopeFlags;
 use oxc_span::GetSpan;
 
-use crate::traverse_context::MinifierTraverseCtx as TraverseCtx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 

@@ -3,14 +3,14 @@ use std::ptr;
 use oxc_ast::ast::Program;
 
 use crate::{
-    generated::{ancestor::Ancestor, traverse::MinifierTraverse, walk::walk_ast},
-    traverse_context::ReusableMinifierTraverseCtx,
+    ReusableTraverseCtx, Traverse,
+    generated::{ancestor::Ancestor, walk::walk_ast},
 };
 
-pub fn traverse_mut_with_ctx<'a, Tr: MinifierTraverse<'a>>(
+pub fn traverse_mut_with_ctx<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     program: &mut Program<'a>,
-    ctx: &mut ReusableMinifierTraverseCtx<'a>,
+    ctx: &mut ReusableTraverseCtx<'a>,
 ) {
     let program = ptr::from_mut(program);
     let ctx = ctx.get_mut();

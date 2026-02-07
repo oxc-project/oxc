@@ -1,4 +1,4 @@
-use crate::traverse_context::MinifierTraverseCtx as TraverseCtx;
+use crate::TraverseCtx;
 use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
