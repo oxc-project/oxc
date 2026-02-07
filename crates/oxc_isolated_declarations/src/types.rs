@@ -71,13 +71,19 @@ impl<'a> IsolatedDeclarations<'a> {
         match key {
             // ["string"] -> string
             PropertyKey::StringLiteral(literal) if is_identifier_name(&literal.value) => {
-                self.ast.property_key_static_identifier(literal.span, literal.value.as_str())
+                self.ast.property_key_static_identifier(
+                    literal.span,
+                    self.ast.ident(literal.value.as_str()),
+                )
             }
             // [`string`] -> string
             PropertyKey::TemplateLiteral(literal)
                 if is_identifier_name(&literal.quasis[0].value.raw) =>
             {
-                self.ast.property_key_static_identifier(literal.span, literal.quasis[0].value.raw)
+                self.ast.property_key_static_identifier(
+                    literal.span,
+                    self.ast.ident(literal.quasis[0].value.raw.as_str()),
+                )
             }
             // [100] -> 100
             // number literal will be cloned as-is

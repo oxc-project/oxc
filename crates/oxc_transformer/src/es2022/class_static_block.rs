@@ -112,7 +112,7 @@ impl ClassStaticBlock {
         let expr = Self::convert_block_to_expression(block, ctx);
 
         let key = keys.get_unique(ctx);
-        let key = ctx.ast.property_key_private_identifier(SPAN, key);
+        let key = ctx.ast.property_key_private_identifier(SPAN, ctx.ast.ident(key.as_str()));
 
         ctx.ast.class_element_property_definition(
             block.span,

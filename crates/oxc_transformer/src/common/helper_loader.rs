@@ -326,7 +326,7 @@ impl<'a> HelperLoaderStore<'a> {
         let helper_var = ctx.ast.ident(HELPER_VAR);
         let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), helper_var);
         let object = ctx.create_ident_expr(SPAN, helper_var, symbol_id, ReferenceFlags::Read);
-        let property = ctx.ast.identifier_name(SPAN, helper.name());
+        let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident(helper.name()));
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }
 }

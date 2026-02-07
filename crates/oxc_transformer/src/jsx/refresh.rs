@@ -47,21 +47,21 @@ impl<'a> RefreshIdentifierResolver<'a> {
         let first_part = parts.next().unwrap();
         let Some(second_part) = parts.next() else {
             // Handle simple identifier reference
-            return Self::Identifier(ast.identifier_reference(SPAN, ast.atom(input)));
+            return Self::Identifier(ast.identifier_reference(SPAN, ast.ident(input)));
         };
 
         if first_part == "import" {
             // Handle `import.meta.$RefreshReg$` expression
             let mut expr = ast.expression_meta_property(
                 SPAN,
-                ast.identifier_name(SPAN, "import"),
-                ast.identifier_name(SPAN, ast.atom(second_part)),
+                ast.identifier_name(SPAN, ast.ident("import")),
+                ast.identifier_name(SPAN, ast.ident(second_part)),
             );
             if let Some(property) = parts.next() {
                 expr = Expression::from(ast.member_expression_static(
                     SPAN,
                     expr,
-                    ast.identifier_name(SPAN, ast.atom(property)),
+                    ast.identifier_name(SPAN, ast.ident(property)),
                     false,
                 ));
             }
@@ -69,8 +69,8 @@ impl<'a> RefreshIdentifierResolver<'a> {
         }
 
         // Handle `window.$RefreshReg$` member expression
-        let object = ast.identifier_reference(SPAN, ast.atom(first_part));
-        let property = ast.identifier_name(SPAN, ast.atom(second_part));
+        let object = ast.identifier_reference(SPAN, ast.ident(first_part));
+        let property = ast.identifier_name(SPAN, ast.ident(second_part));
         Self::Member((object, property))
     }
 
@@ -368,7 +368,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
                                 expr = Expression::from(ctx.ast.member_expression_static(
                                     SPAN,
                                     expr,
-                                    ctx.ast.identifier_name(SPAN, hook_name),
+                                    ctx.ast.identifier_name(SPAN, ctx.ast.ident(hook_name.as_str())),
                                     false,
                                 ));
                             }

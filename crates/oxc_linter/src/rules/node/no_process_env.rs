@@ -2,7 +2,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{CompactStr, GetSpan, Ident, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -66,7 +66,7 @@ fn is_process_global_object(object_expr: &oxc_ast::ast::Expression, ctx: &LintCo
     let Some(obj_id) = object_expr.get_identifier_reference() else {
         return false;
     };
-    obj_id.is_global_reference_name(Ident::new_const("process"), ctx.scoping())
+    obj_id.is_global_reference_name_str("process", ctx.scoping())
 }
 
 impl Rule for NoProcessEnv {

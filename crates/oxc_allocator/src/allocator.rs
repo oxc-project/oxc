@@ -1,5 +1,6 @@
 use std::{
     alloc::Layout,
+    cell::UnsafeCell,
     ptr::{self, NonNull},
     slice, str,
 };
@@ -8,6 +9,7 @@ use std::{
 use std::mem::offset_of;
 
 use crate::bump::Bump;
+use crate::interner::StringInterner;
 
 use oxc_data_structures::assert_unchecked;
 
@@ -218,12 +220,19 @@ use crate::tracking::AllocationStats;
 /// [`Box::new_in`]: crate::Box::new_in
 /// [`Vec::new_in`]: crate::Vec::new_in
 /// [`HashMap::new_in`]: crate::HashMap::new_in
-#[derive(Default)]
 pub struct Allocator {
     bump: Bump,
+    /// String interner for deduplicating identifier strings.
+    interner: UnsafeCell<StringInterner>,
     /// Used to track number of allocations made in this allocator when `track_allocations` feature is enabled
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
     pub(crate) stats: AllocationStats,
+}
+
+impl Default for Allocator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Offset of `stats` field, relative to `bump` field.
@@ -259,6 +268,7 @@ impl Allocator {
     pub fn new() -> Self {
         Self {
             bump: Bump::new(),
+            interner: UnsafeCell::new(StringInterner::new()),
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
             stats: AllocationStats::default(),
         }
@@ -274,6 +284,7 @@ impl Allocator {
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             bump: Bump::with_capacity(capacity),
+            interner: UnsafeCell::new(StringInterner::new()),
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
             stats: AllocationStats::default(),
         }
@@ -514,6 +525,7 @@ impl Allocator {
         self.stats.reset();
 
         self.bump.reset();
+        self.interner.get_mut().reset();
     }
 
     /// Calculate the total capacity of this [`Allocator`] including all chunks, in bytes.
@@ -613,6 +625,28 @@ impl Allocator {
         bytes
     }
 
+    /// Intern a string into the arena, returning a [`NonNull<u8>`] pointing to the string bytes.
+    ///
+    /// The returned pointer has an [`InternedStrHeader`] at negative offset (ptr - 16)
+    /// containing the precomputed hash and length.
+    ///
+    /// If the same string was previously interned, returns the existing pointer (deduplication).
+    ///
+    /// [`InternedStrHeader`]: crate::interner::InternedStrHeader
+    //
+    // `#[inline(always)]` because this is a hot path (called for every identifier in parser).
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn intern_str(&self, s: &str) -> NonNull<u8> {
+        // SAFETY: We have `&self`, so no other mutable references to the allocator exist.
+        // `UnsafeCell` is used because `intern` needs `&mut StringInterner` but we only have `&self`.
+        // This is safe because:
+        // 1. `Allocator` is `!Sync`, so only one thread can access it.
+        // 2. No other code can access the interner while we hold `&self`.
+        let interner = unsafe { &mut *self.interner.get() };
+        interner.intern(s, &self.bump)
+    }
+
     /// Get inner [`Bump`].
     ///
     /// This method is not public. We don't want to expose `Bump` to user.
@@ -636,6 +670,7 @@ impl Allocator {
     pub(crate) fn from_bump(bump: Bump) -> Self {
         Self {
             bump,
+            interner: UnsafeCell::new(StringInterner::new()),
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
             stats: AllocationStats::default(),
         }

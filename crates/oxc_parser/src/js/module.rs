@@ -587,7 +587,7 @@ impl<'a> ParserImpl<'a> {
 
                         // `local` becomes a reference for `export { local }`.
                         specifier.local = ModuleExportName::IdentifierReference(
-                            self.ast.identifier_reference(ident.span, ident.name.as_str()),
+                            self.ast.identifier_reference(ident.span, ident.name),
                         );
                     }
                     // No prior code path should lead to parsing `ModuleExportName` as `IdentifierReference`.
@@ -868,7 +868,7 @@ impl<'a> ParserImpl<'a> {
                         // { type as as }
                         property_name = Some(self.ast.module_export_name_identifier_name(
                             type_or_name_token.span(),
-                            self.token_source(&type_or_name_token),
+                            self.ast.ident(self.token_source(&type_or_name_token)),
                         ));
                         name = self
                             .ast
@@ -928,7 +928,7 @@ impl<'a> ParserImpl<'a> {
                 ImportOrExportSpecifier::Import(self.ast.import_specifier(
                     self.end_span(specifier_span),
                     property_name.unwrap_or_else(|| name.clone()),
-                    self.ast.binding_identifier(name.span(), name.name()),
+                    self.ast.binding_identifier(name.span(), self.ast.ident(name.name().as_str())),
                     kind,
                 ))
             }

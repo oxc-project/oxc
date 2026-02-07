@@ -887,7 +887,7 @@ impl<'a> PeepholeOptimizations {
                 Expression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                     SPAN,
                     obj,
-                    ctx.ast.identifier_name(SPAN, "slice"),
+                    ctx.ast.identifier_name(SPAN, ctx.ast.ident("slice")),
                     false,
                 ));
             ctx.ast.expression_call(
@@ -1229,7 +1229,7 @@ impl<'a> PeepholeOptimizations {
                 let reference_id = ctx.create_unbound_reference(object, ReferenceFlags::Read);
                 call_expr.callee = ctx.ast.expression_identifier_with_reference_id(
                     call_expr.callee.span(),
-                    "Object",
+                    ctx.ast.ident("Object"),
                     reference_id,
                 );
                 ctx.state.changed = true;
@@ -1261,7 +1261,7 @@ impl<'a> PeepholeOptimizations {
                 if Ctx::is_identifier_name_patched(value) {
                     *computed = false;
                     *key = PropertyKey::StaticIdentifier(
-                        ctx.ast.alloc_identifier_name(s.span, s.value),
+                        ctx.ast.alloc_identifier_name(s.span, ctx.ast.ident(s.value.as_str())),
                     );
                     ctx.state.changed = true;
                     return;
@@ -1524,7 +1524,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.ast.atom(&concatenated_string),
                     None,
                 ),
-                ctx.ast.identifier_name(expr.span(), "split"),
+                ctx.ast.identifier_name(expr.span(), ctx.ast.ident("split")),
                 false,
             )),
             NONE,

@@ -93,7 +93,7 @@ use oxc_allocator::{
 };
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
-use oxc_span::{Atom, Ident, SPAN, Span};
+use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{
     identifier::is_white_space_single_line, line_terminator::is_line_terminator,
     reference::ReferenceFlags, symbol::SymbolFlags, xml_entities::XML_ENTITIES,
@@ -370,7 +370,7 @@ impl<'a> Pragma<'a> {
                 return Expression::from(ctx.ast.member_expression_static(
                     SPAN,
                     object,
-                    ctx.ast.identifier_name(SPAN, *second),
+                    ctx.ast.identifier_name(SPAN, ctx.ast.ident(second.as_str())),
                     false,
                 ));
             }
@@ -390,8 +390,8 @@ impl<'a> Pragma<'a> {
             Self::ImportMeta(parts) => {
                 let object = ctx.ast.expression_meta_property(
                     SPAN,
-                    ctx.ast.identifier_name(SPAN, Atom::from("import")),
-                    ctx.ast.identifier_name(SPAN, Atom::from("meta")),
+                    ctx.ast.identifier_name(SPAN, ctx.ast.ident("import")),
+                    ctx.ast.identifier_name(SPAN, ctx.ast.ident("meta")),
                 );
                 (object, parts.iter())
             }
@@ -399,7 +399,7 @@ impl<'a> Pragma<'a> {
 
         let mut expr = object;
         for &item in parts {
-            let name = ctx.ast.identifier_name(SPAN, item);
+            let name = ctx.ast.identifier_name(SPAN, ctx.ast.ident(item.as_str()));
             expr = ctx.ast.member_expression_static(SPAN, expr, name, false).into();
         }
         expr
@@ -667,7 +667,7 @@ impl<'a> JsxImpl<'a, '_> {
                     let elements = ctx.ast.vec_from_iter(elements);
                     ctx.ast.expression_array(SPAN, elements)
                 };
-                let children = ctx.ast.property_key_static_identifier(SPAN, "children");
+                let children = ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident("children"));
                 let kind = PropertyKind::Init;
                 let property = ctx.ast.object_property_kind_object_property(
                     SPAN, kind, children, value, false, false, false,
@@ -864,7 +864,7 @@ impl<'a> JsxImpl<'a, '_> {
             }
             JSXMemberExpressionObject::ThisExpression(expr) => ctx.ast.expression_this(expr.span),
         };
-        let property = ctx.ast.identifier_name(property.span, property.name);
+        let property = ctx.ast.identifier_name(property.span, ctx.ast.ident(property.name.as_str()));
         ctx.ast.member_expression_static(span, object, property, false).into()
     }
 
@@ -961,7 +961,7 @@ impl<'a> JsxImpl<'a, '_> {
                 if ident.name.contains('-') {
                     PropertyKey::from(ctx.ast.expression_string_literal(ident.span, name, None))
                 } else {
-                    ctx.ast.property_key_static_identifier(ident.span, name)
+                    ctx.ast.property_key_static_identifier(ident.span, ctx.ast.ident(name.as_str()))
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
@@ -1197,9 +1197,10 @@ fn get_read_identifier_reference<'a>(
     name: Atom<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
+    let ident_name = ctx.ast.ident(name.as_str());
     let reference_id =
-        ctx.create_reference_in_current_scope(Ident::from(name), ReferenceFlags::Read);
-    let ident = ctx.ast.alloc_identifier_reference_with_reference_id(span, name, reference_id);
+        ctx.create_reference_in_current_scope(ident_name, ReferenceFlags::Read);
+    let ident = ctx.ast.alloc_identifier_reference_with_reference_id(span, ident_name, reference_id);
     Expression::Identifier(ident)
 }
 
@@ -1209,7 +1210,7 @@ fn create_static_member_expression<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let object = Expression::Identifier(ctx.alloc(object_ident));
-    let property = ctx.ast.identifier_name(SPAN, property_name);
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident(property_name.as_str()));
     ctx.ast.member_expression_static(SPAN, object, property, false).into()
 }
 

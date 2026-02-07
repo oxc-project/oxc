@@ -429,6 +429,37 @@ impl<'a> SemanticBuilder<'a> {
         self.declare_symbol_on_scope(span, name, self.current_scope_id, includes, excludes)
     }
 
+    /// Like [`SemanticBuilder::declare_symbol`], but takes a `&str` name.
+    ///
+    /// The name is interned in the scoping allocator. This is used for rare cases where
+    /// an [`Ident`] is not readily available (e.g. string-literal TS enum member names).
+    pub(crate) fn declare_symbol_str(
+        &mut self,
+        span: Span,
+        name: &str,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> SymbolId {
+        let scope_id = self.current_scope_id;
+        if let Some(symbol_id) = self.check_redeclaration_str(scope_id, span, name, excludes, true)
+        {
+            self.add_redeclare_variable(symbol_id, includes, span);
+            self.scoping.union_symbol_flag(symbol_id, includes);
+            return symbol_id;
+        }
+
+        let symbol_id = self.scoping.create_symbol_str(
+            span,
+            name,
+            includes,
+            scope_id,
+            self.current_node_id,
+        );
+
+        self.scoping.add_binding_str(scope_id, name, symbol_id);
+        symbol_id
+    }
+
     /// Check if a symbol with the same name has already been declared in the
     /// current scope. Returns the symbol ID if it exists and is not excluded by `excludes`.
     ///
@@ -445,6 +476,33 @@ impl<'a> SemanticBuilder<'a> {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(&name).copied())
         })?;
 
+        self.check_redeclaration_common(symbol_id, span, &name, excludes, report_error)
+    }
+
+    /// Like [`SemanticBuilder::check_redeclaration`], but looks up by `&str` name.
+    pub(crate) fn check_redeclaration_str(
+        &self,
+        scope_id: ScopeId,
+        span: Span,
+        name: &str,
+        excludes: SymbolFlags,
+        report_error: bool,
+    ) -> Option<SymbolId> {
+        let symbol_id = self.scoping.get_binding_str(scope_id, name).or_else(|| {
+            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
+        })?;
+
+        self.check_redeclaration_common(symbol_id, span, name, excludes, report_error)
+    }
+
+    fn check_redeclaration_common(
+        &self,
+        symbol_id: SymbolId,
+        span: Span,
+        name: &str,
+        excludes: SymbolFlags,
+        report_error: bool,
+    ) -> Option<SymbolId> {
         // `(function n(n) {})()`
         //              ^ is not a redeclaration
         // Since we put the function expression binding 'n' Symbol into the function itself scope,
@@ -465,7 +523,7 @@ impl<'a> SemanticBuilder<'a> {
             let flags = self.scoping.symbol_flags(symbol_id);
             if flags.intersects(excludes) {
                 let symbol_span = self.scoping.symbol_span(symbol_id);
-                self.error(redeclaration(&name, symbol_span, span));
+                self.error(redeclaration(name, symbol_span, span));
             }
         }
 

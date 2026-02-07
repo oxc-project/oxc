@@ -391,7 +391,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                                     ModuleExportName::IdentifierReference(
                                         var_id.create_read_reference(ctx),
                                     ),
-                                    ctx.ast.module_export_name_identifier_name(SPAN, "default"),
+                                    ctx.ast.module_export_name_identifier_name(SPAN, ctx.ast.ident("default")),
                                     ImportOrExportKind::Value,
                                 )),
                                 None,
@@ -630,7 +630,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                                             .create_read_expression(ctx),
                                         ctx.ast.identifier_name(
                                             SPAN,
-                                            if needs_await { "a" } else { "u" },
+                                            ctx.ast.ident(if needs_await { "a" } else { "u" }),
                                         ),
                                         false,
                                     ),
@@ -750,7 +750,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                         Expression::from(ctx.ast.member_expression_static(
                             SPAN,
                             using_ctx.as_ref().unwrap().create_read_expression(ctx),
-                            ctx.ast.identifier_name(SPAN, if is_await_using { "a" } else { "u" }),
+                            ctx.ast.identifier_name(SPAN, ctx.ast.ident(if is_await_using { "a" } else { "u" })),
                             false,
                         )),
                         NONE,
@@ -829,7 +829,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                 AssignmentTarget::from(ctx.ast.member_expression_static(
                     SPAN,
                     using_ctx.create_read_expression(ctx),
-                    ctx.ast.identifier_name(SPAN, "e"),
+                    ctx.ast.identifier_name(SPAN, ctx.ast.ident("e")),
                     false,
                 )),
                 ident.create_read_expression(ctx),
@@ -860,7 +860,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             Expression::from(ctx.ast.member_expression_static(
                 SPAN,
                 using_ctx.create_read_expression(ctx),
-                ctx.ast.identifier_name(SPAN, "d"),
+                ctx.ast.identifier_name(SPAN, ctx.ast.ident("d")),
                 false,
             )),
             NONE,

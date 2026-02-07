@@ -1,9 +1,9 @@
 use cow_utils::CowUtils;
-use oxc_allocator::{Box, TakeIn, Vec};
+use oxc_allocator::{Box, FromIn, TakeIn, Vec};
 use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Ident, Span};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
     precedence::Precedence,
@@ -117,11 +117,11 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[inline]
-    pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Atom<'a>) {
+    pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Ident<'a>) {
         let span = self.cur_token().span();
         let name = self.cur_string();
         self.bump_remap(kind);
-        (span, Atom::from(name))
+        (span, Ident::from_in(name, self.ast.allocator))
     }
 
     pub(crate) fn check_identifier(&mut self, kind: Kind, ctx: Context) {
@@ -152,7 +152,7 @@ impl<'a> ParserImpl<'a> {
     /// # Panics
     pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier<'a> {
         let span = self.cur_token().span();
-        let name = Atom::from(self.cur_string());
+        let name = Ident::from_in(self.cur_string(), self.ast.allocator);
         self.bump_any();
         self.ast.private_identifier(span, name)
     }

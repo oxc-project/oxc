@@ -3,7 +3,6 @@
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
-use oxc_span::Ident;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
 
 use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};
@@ -389,12 +388,24 @@ impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
 
 impl<'a> Binder<'a> for TSEnumMember<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        builder.declare_symbol(
-            self.span,
-            Ident::from(self.id.static_name()),
-            SymbolFlags::EnumMember,
-            SymbolFlags::EnumMemberExcludes,
-        );
+        if let TSEnumMemberName::Identifier(ident) = &self.id {
+            builder.declare_symbol(
+                self.span,
+                ident.name,
+                SymbolFlags::EnumMember,
+                SymbolFlags::EnumMemberExcludes,
+            );
+        } else {
+            // String or template literal enum member names (rare in practice).
+            // Use `declare_symbol_str` since we don't have an `Ident` here.
+            let name = self.id.static_name();
+            builder.declare_symbol_str(
+                self.span,
+                &name,
+                SymbolFlags::EnumMember,
+                SymbolFlags::EnumMemberExcludes,
+            );
+        }
     }
 }
 

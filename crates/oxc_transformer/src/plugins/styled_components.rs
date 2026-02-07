@@ -453,7 +453,7 @@ impl<'a> StyledComponents<'a, '_> {
             let object = ctx.ast.alloc_object_expression(SPAN, properties);
             let arguments = ctx.ast.vec1(Argument::ObjectExpression(object));
             let object = expr.take_in(ctx.ast);
-            let property = ctx.ast.identifier_name(SPAN, "withConfig");
+            let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident("withConfig"));
             let callee =
                 Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
             let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
@@ -799,7 +799,7 @@ impl<'a> StyledComponents<'a, '_> {
         value: Atom<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
-        let key = ctx.ast.property_key_static_identifier(SPAN, key);
+        let key = ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident(key));
         let value = ctx.ast.expression_string_literal(SPAN, value, None);
         ctx.ast.object_property_kind_object_property(
             SPAN,

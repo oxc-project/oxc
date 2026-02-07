@@ -3,7 +3,7 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, CloneIn, FromIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
 use oxc_span::{ArenaIdentHashMap, Ident, Span};
 use oxc_syntax::{
@@ -402,6 +402,25 @@ impl Scoping {
         self.symbol_declarations.push(node_id)
     }
 
+    /// Like [`Scoping::create_symbol`], but interns a `&str` name using the scoping allocator.
+    pub fn create_symbol_str(
+        &mut self,
+        span: Span,
+        name: &str,
+        flags: SymbolFlags,
+        scope_id: ScopeId,
+        node_id: NodeId,
+    ) -> SymbolId {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            cell.symbol_names.push(Ident::from_in(name, allocator));
+            cell.resolved_references.push(ArenaVec::new_in(allocator));
+        });
+        self.symbol_spans.push(span);
+        self.symbol_flags.push(flags);
+        self.symbol_scope_ids.push(scope_id);
+        self.symbol_declarations.push(node_id)
+    }
+
     pub fn add_symbol_redeclaration(
         &mut self,
         symbol_id: SymbolId,
@@ -693,6 +712,12 @@ impl Scoping {
         self.get_binding(self.root_scope_id(), name)
     }
 
+    /// Like [`Scoping::get_root_binding`], but looks up by `&str` name.
+    #[inline]
+    pub fn get_root_binding_str(&self, name: &str) -> Option<SymbolId> {
+        self.get_binding_str(self.root_scope_id(), name)
+    }
+
     pub fn add_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = name.clone_in(allocator);
@@ -720,6 +745,11 @@ impl Scoping {
         self.cell.borrow_dependent().bindings[scope_id].get(&name).copied()
     }
 
+    /// Like [`Scoping::get_binding`], but looks up by `&str` name.
+    pub fn get_binding_str(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+        self.cell.borrow_dependent().bindings[scope_id].get(name).copied()
+    }
+
     /// Find a binding by name in a scope or its ancestors.
     ///
     /// Bindings are resolved by walking up the scope tree until a binding is
@@ -727,6 +757,16 @@ impl Scoping {
     pub fn find_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
         for scope_id in self.scope_ancestors(scope_id) {
             if let Some(symbol_id) = self.get_binding(scope_id, name) {
+                return Some(symbol_id);
+            }
+        }
+        None
+    }
+
+    /// Like [`Scoping::find_binding`], but looks up by `&str` name.
+    pub fn find_binding_str(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+        for scope_id in self.scope_ancestors(scope_id) {
+            if let Some(symbol_id) = self.get_binding_str(scope_id, name) {
                 return Some(symbol_id);
             }
         }
@@ -797,6 +837,14 @@ impl Scoping {
     pub fn add_binding(&mut self, scope_id: ScopeId, name: Ident<'_>, symbol_id: SymbolId) {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = name.clone_in(allocator);
+            cell.bindings[scope_id].insert(name, symbol_id);
+        });
+    }
+
+    /// Like [`Scoping::add_binding`], but interns a `&str` name using the scoping allocator.
+    pub fn add_binding_str(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let name = Ident::from_in(name, allocator);
             cell.bindings[scope_id].insert(name, symbol_id);
         });
     }

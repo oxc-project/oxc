@@ -28,6 +28,9 @@ use crate::{ReferenceId, Scoping};
 pub trait IsGlobalReference {
     fn is_global_reference(&self, scoping: &Scoping) -> bool;
     fn is_global_reference_name(&self, name: Ident<'_>, scoping: &Scoping) -> bool;
+    /// Like [`is_global_reference_name`](IsGlobalReference::is_global_reference_name),
+    /// but accepts a `&str` name instead of an `Ident`.
+    fn is_global_reference_name_str(&self, name: &str, scoping: &Scoping) -> bool;
 }
 
 impl IsGlobalReference for ReferenceId {
@@ -36,6 +39,10 @@ impl IsGlobalReference for ReferenceId {
     }
 
     fn is_global_reference_name(&self, _name: Ident<'_>, _scoping: &Scoping) -> bool {
+        panic!("This function is pointless to be called.");
+    }
+
+    fn is_global_reference_name_str(&self, _name: &str, _scoping: &Scoping) -> bool {
         panic!("This function is pointless to be called.");
     }
 }
@@ -48,6 +55,10 @@ impl IsGlobalReference for IdentifierReference<'_> {
     }
 
     fn is_global_reference_name(&self, name: Ident<'_>, scoping: &Scoping) -> bool {
+        self.name == name && self.is_global_reference(scoping)
+    }
+
+    fn is_global_reference_name_str(&self, name: &str, scoping: &Scoping) -> bool {
         self.name == name && self.is_global_reference(scoping)
     }
 }
@@ -63,6 +74,13 @@ impl IsGlobalReference for Expression<'_> {
     fn is_global_reference_name(&self, name: Ident<'_>, scoping: &Scoping) -> bool {
         if let Expression::Identifier(ident) = self {
             return ident.is_global_reference_name(name, scoping);
+        }
+        false
+    }
+
+    fn is_global_reference_name_str(&self, name: &str, scoping: &Scoping) -> bool {
+        if let Expression::Identifier(ident) = self {
+            return ident.is_global_reference_name_str(name, scoping);
         }
         false
     }

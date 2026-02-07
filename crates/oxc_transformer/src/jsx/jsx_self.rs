@@ -90,7 +90,7 @@ impl<'a> JsxSelf<'a, '_> {
         ctx: &TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let key = ctx.ast.property_key_static_identifier(SPAN, SELF);
+        let key = ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident(SELF));
         let value = ctx.ast.expression_this(SPAN);
         ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
     }

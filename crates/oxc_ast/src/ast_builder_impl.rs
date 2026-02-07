@@ -104,21 +104,19 @@ impl<'a> AstBuilder<'a> {
         Ident::from_in(value, self.allocator)
     }
 
-    /// Allocate an [`Ident`] from an array of string slices.
+    /// Allocate an [`Ident`] from an array of string slices concatenated together.
     #[inline]
     pub fn ident_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Ident<'a> {
-        Ident::from_strs_array_in(strings, self.allocator)
+        let s = self.allocator.alloc_concat_strs_array(strings);
+        Ident::from_in(s, self.allocator)
     }
 
     /// Convert a [`Cow<'a, str>`] to an [`Ident<'a>`].
     ///
-    /// If the `Cow` borrows a string from arena, returns an `Ident` which references that same string,
-    /// without allocating a new one.
-    ///
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Ident`.
     #[inline]
     pub fn ident_from_cow(self, value: &Cow<'a, str>) -> Ident<'a> {
-        Ident::from_cow_in(value, self.allocator)
+        Ident::from_in(value.as_ref(), self.allocator)
     }
 
     /// Allocate an [`Atom`] from a string slice.

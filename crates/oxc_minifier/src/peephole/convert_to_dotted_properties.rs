@@ -17,7 +17,7 @@ impl<'a> PeepholeOptimizations {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
         if Ctx::is_identifier_name_patched(&s.value) {
-            let property = ctx.ast.identifier_name(s.span, s.value);
+            let property = ctx.ast.identifier_name(s.span, ctx.ast.ident(s.value.as_str()));
             *expr =
                 MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                     e.span,

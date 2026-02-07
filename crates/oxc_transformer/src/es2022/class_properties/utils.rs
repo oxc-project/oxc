@@ -40,7 +40,7 @@ where
 
 /// Create `IdentifierName` for `_`.
 pub(super) fn create_underscore_ident_name<'a>(ctx: &TraverseCtx<'a>) -> IdentifierName<'a> {
-    ctx.ast.identifier_name(SPAN, Atom::from("_"))
+    ctx.ast.identifier_name(SPAN, ctx.ast.ident("_"))
 }
 
 /// Debug assert that an `Expression` is not `ParenthesizedExpression` or TS syntax

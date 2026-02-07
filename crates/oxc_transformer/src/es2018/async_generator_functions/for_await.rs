@@ -101,7 +101,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
         let step_value = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             step_key.create_read_expression(ctx),
-            ctx.ast.identifier_name(SPAN, "value"),
+            ctx.ast.identifier_name(SPAN, ctx.ast.ident("value")),
             false,
         ));
 
@@ -300,7 +300,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                             Expression::from(ctx.ast.member_expression_static(
                                                 SPAN,
                                                 iterator_key.create_read_expression(ctx),
-                                                ctx.ast.identifier_name(SPAN, "next"),
+                                                ctx.ast.identifier_name(SPAN, ctx.ast.ident("next")),
                                                 false,
                                             )),
                                             NONE,
@@ -310,7 +310,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                     ),
                                 ),
                             ),
-                            ctx.ast.identifier_name(SPAN, "done"),
+                            ctx.ast.identifier_name(SPAN, ctx.ast.ident("done")),
                             false,
                         )),
                     ),
@@ -399,7 +399,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                 Expression::from(ctx.ast.member_expression_static(
                                     SPAN,
                                     iterator_key.create_read_expression(ctx),
-                                    ctx.ast.identifier_name(SPAN, "return"),
+                                    ctx.ast.identifier_name(SPAN, ctx.ast.ident("return")),
                                     false,
                                 )),
                                 BinaryOperator::Inequality,
@@ -417,7 +417,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                         Expression::from(ctx.ast.member_expression_static(
                                             SPAN,
                                             iterator_key.create_read_expression(ctx),
-                                            ctx.ast.identifier_name(SPAN, "return"),
+                                            ctx.ast.identifier_name(SPAN, ctx.ast.ident("return")),
                                             false,
                                         )),
                                         NONE,

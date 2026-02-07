@@ -1,8 +1,10 @@
 //! Identifier string type.
 
-use std::{borrow::Cow, fmt, hash, ops::Deref};
+use std::{borrow::Cow, fmt, hash, marker::PhantomData, ops::Deref, ptr::NonNull};
 
-use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn, StringBuilder as ArenaStringBuilder};
+use oxc_allocator::{
+    Allocator, CloneIn, Dummy, FromIn, HEADER_SIZE, InternedStrHeader, interned_str_from_ptr,
+};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
@@ -10,44 +12,85 @@ use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{Atom, CompactStr};
 
-/// An identifier string for oxc_allocator.
+/// An identifier string backed by an interned arena pointer.
 ///
-/// Use [CompactStr] with [Ident::to_compact_str] or [Ident::into_compact_str] for
+/// Each `Ident` is 8 bytes (a single `NonNull<u8>` pointer). The pointer points
+/// to the string bytes in the arena, with an [`InternedStrHeader`] at negative
+/// offset (`ptr - HEADER_SIZE`) containing the precomputed hash and length.
+///
+/// Use [`CompactStr`] with [`Ident::to_compact_str`] or [`Ident::into_compact_str`] for
 /// the lifetimeless form.
-#[repr(transparent)]
 #[derive(Clone, Copy, Eq)]
-pub struct Ident<'a>(&'a str);
+pub struct Ident<'a> {
+    /// Pointer to string bytes in arena.
+    /// Header `[hash:u64][len:u32][_pad:u32]` at `ptr - HEADER_SIZE`.
+    ptr: NonNull<u8>,
+    _marker: PhantomData<&'a str>,
+}
+
+const _: () = assert!(size_of::<Ident<'_>>() == 8);
+
+// SAFETY: `Ident` is just a pointer into arena memory. It's safe to send between threads
+// as long as the arena outlives the `Ident`, which is guaranteed by the lifetime parameter.
+unsafe impl Send for Ident<'_> {}
+// SAFETY: `Ident` is immutable (shared reference semantics via the lifetime),
+// so it's safe to share between threads.
+unsafe impl Sync for Ident<'_> {}
+
+/// Static empty interned string — used for `Ident::empty()`.
+#[repr(C, align(8))]
+struct StaticEmptyInternedStr {
+    header: InternedStrHeader,
+    // No bytes follow — the string is empty.
+}
+
+/// Precomputed FxHash of the empty string.
+/// FxHash of "" is 0 (the hasher state starts at 0, and writing 0 bytes doesn't change it).
+const EMPTY_FX_HASH: u64 = {
+    // FxHasher initial state is 0. Hashing an empty byte slice produces 0.
+    0
+};
+
+static EMPTY_INTERNED: StaticEmptyInternedStr =
+    StaticEmptyInternedStr { header: InternedStrHeader::new(EMPTY_FX_HASH, 0) };
 
 impl<'a> Ident<'a> {
-    /// Create a new [`Ident`] from a string slice.
+    /// Create a new [`Ident`] from a raw interned pointer.
     ///
-    /// This is a const, no-op wrapper.
-    /// Use this for strings that already have the correct lifetime
-    /// (e.g. arena-allocated strings, or `'static` string literals).
+    /// # Safety
+    /// `ptr` must point to valid interned string bytes with a valid
+    /// [`InternedStrHeader`] at `ptr - HEADER_SIZE`.
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    pub const fn new_const(s: &'a str) -> Self {
-        Ident(s)
+    #[inline(always)]
+    pub unsafe fn from_interned_ptr(ptr: NonNull<u8>) -> Self {
+        Self { ptr, _marker: PhantomData }
     }
 
     /// Get an [`Ident`] containing the empty string (`""`).
     #[inline]
-    pub const fn empty() -> Self {
-        Self::new_const("")
+    pub fn empty() -> Self {
+        // SAFETY: `EMPTY_INTERNED` has a valid header followed by zero bytes of string data.
+        // The pointer points to the byte just after the header, which is the start of (empty) string data.
+        unsafe {
+            let base = (&raw const EMPTY_INTERNED).cast::<u8>();
+            let str_ptr = base.add(HEADER_SIZE);
+            Self::from_interned_ptr(NonNull::new_unchecked(str_ptr.cast_mut()))
+        }
     }
 
     /// Borrow a string slice.
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[expect(clippy::inline_always, clippy::trivially_copy_pass_by_ref)]
+    #[inline(always)]
     pub fn as_str(&self) -> &'a str {
-        self.0
+        // SAFETY: `self.ptr` points to a valid interned string with a valid header at negative offset.
+        unsafe { interned_str_from_ptr(self.ptr) }
     }
 
     /// Convert this [`Ident`] into an [`Atom`].
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[expect(clippy::trivially_copy_pass_by_ref)]
+    #[inline]
     pub fn as_atom(&self) -> Atom<'a> {
-        Atom::from(self.0)
+        Atom::from(self.as_str())
     }
 
     /// Convert this [`Ident`] into a [`String`].
@@ -70,37 +113,6 @@ impl<'a> Ident<'a> {
     #[inline]
     pub fn to_compact_str(self) -> CompactStr {
         CompactStr::new(self.as_str())
-    }
-
-    /// Create new [`Ident`] from a fixed-size array of `&str`s concatenated together,
-    /// allocated in the given `allocator`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the sum of length of all strings exceeds `isize::MAX`.
-    // `#[inline(always)]` because want compiler to be able to optimize where some of `strings`
-    // are statically known. See `Allocator::alloc_concat_strs_array`.
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    pub fn from_strs_array_in<const N: usize>(
-        strings: [&str; N],
-        allocator: &'a Allocator,
-    ) -> Ident<'a> {
-        Self::from(allocator.alloc_concat_strs_array(strings))
-    }
-
-    /// Convert a [`Cow<'a, str>`] to an [`Ident<'a>`].
-    ///
-    /// If the `Cow` borrows a string from arena, returns an `Ident` which references that same string,
-    /// without allocating a new one.
-    ///
-    /// If the `Cow` is owned, allocates the string into arena to generate a new `Ident`.
-    #[inline]
-    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &'a Allocator) -> Ident<'a> {
-        match value {
-            Cow::Borrowed(s) => Ident::from(*s),
-            Cow::Owned(s) => Ident::from_in(s, allocator),
-        }
     }
 }
 
@@ -133,7 +145,8 @@ impl<'alloc> FromIn<'alloc, &Ident<'alloc>> for Ident<'alloc> {
 impl<'alloc> FromIn<'alloc, &str> for Ident<'alloc> {
     #[inline]
     fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
-        Self::from(allocator.alloc_str(s))
+        // SAFETY: `intern_str` returns a valid interned pointer.
+        unsafe { Self::from_interned_ptr(allocator.intern_str(s)) }
     }
 }
 
@@ -158,42 +171,18 @@ impl<'alloc> FromIn<'alloc, Cow<'_, str>> for Ident<'alloc> {
     }
 }
 
-impl<'a> From<&'a str> for Ident<'a> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    fn from(s: &'a str) -> Self {
-        Self(s)
-    }
-}
-
-impl<'alloc> From<ArenaStringBuilder<'alloc>> for Ident<'alloc> {
-    #[inline]
-    fn from(s: ArenaStringBuilder<'alloc>) -> Self {
-        Self::from(s.into_str())
-    }
-}
-
 impl<'a> From<Ident<'a>> for &'a str {
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     fn from(s: Ident<'a>) -> Self {
         s.as_str()
     }
 }
 
 impl<'a> From<Ident<'a>> for Atom<'a> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline]
     fn from(s: Ident<'a>) -> Self {
         s.as_atom()
-    }
-}
-
-impl<'a> From<Atom<'a>> for Ident<'a> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    fn from(s: Atom<'a>) -> Self {
-        Self(s.as_str())
     }
 }
 
@@ -222,7 +211,7 @@ impl Deref for Ident<'_> {
     type Target = str;
 
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         self.as_str()
     }
@@ -230,7 +219,7 @@ impl Deref for Ident<'_> {
 
 impl AsRef<str> for Ident<'_> {
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
@@ -324,7 +313,7 @@ pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, rustc_hash::FxBuildHas
 /// * First argument is the allocator.
 /// * Produces an [`Ident`] instead of a [`String`].
 ///
-/// The string is built in the arena, without allocating an intermediate `String`.
+/// The string is built in the arena via a `StringBuilder`, then interned.
 ///
 /// # Panics
 ///
@@ -346,10 +335,12 @@ pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, rustc_hash::FxBuildHas
 macro_rules! format_ident {
     ($alloc:expr, $($arg:tt)*) => {{
         use ::std::{write, fmt::Write};
-        use $crate::{Ident, __internal::ArenaStringBuilder};
+        use $crate::__internal::{ArenaStringBuilder, FromIn};
 
-        let mut s = ArenaStringBuilder::new_in($alloc);
+        let alloc = $alloc;
+        let mut s = ArenaStringBuilder::new_in(alloc);
         write!(s, $($arg)*).unwrap();
-        Ident::from(s)
+        let str = s.into_str();
+        <$crate::Ident as FromIn<&str>>::from_in(str, alloc)
     }}
 }

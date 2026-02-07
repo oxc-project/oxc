@@ -624,7 +624,8 @@ impl<'a> Assignment<'a> {
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
         let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlags::Read);
-        let id = ctx.ast.identifier_reference_with_reference_id(self.span, self.name, reference_id);
+        let ident_name = ctx.ast.ident(self.name.as_str());
+        let id = ctx.ast.identifier_reference_with_reference_id(self.span, ident_name, reference_id);
 
         ctx.ast.statement_expression(
             SPAN,
@@ -634,7 +635,7 @@ impl<'a> Assignment<'a> {
                 SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
                     SPAN,
                     ctx.ast.expression_this(SPAN),
-                    ctx.ast.identifier_name(self.span, self.name),
+                    ctx.ast.identifier_name(self.span, ident_name),
                     false,
                 ))
                 .into(),

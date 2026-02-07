@@ -92,7 +92,7 @@ impl Rule for NoNamedAsDefaultMember {
             }
 
             let Some(symbol_id) =
-                ctx.scoping().get_root_binding(import_entry.local_name.name().into())
+                ctx.scoping().get_root_binding_str(import_entry.local_name.name())
             else {
                 return;
             };

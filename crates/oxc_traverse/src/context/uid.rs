@@ -3,7 +3,7 @@ use std::str;
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Allocator, StringBuilder as ArenaStringBuilder};
+use oxc_allocator::{Allocator, FromIn, StringBuilder as ArenaStringBuilder};
 use oxc_semantic::Scoping;
 use oxc_str::Ident;
 
@@ -286,7 +286,8 @@ impl<'a> UidGenerator<'a> {
             let digits = buffer.format(uid_name.postfix);
 
             if uid_name.underscore_count == 1 {
-                Ident::from_strs_array_in(["_", base, digits], self.allocator)
+                let s = self.allocator.alloc_concat_strs_array(["_", base, digits]);
+                Ident::from_in(s, self.allocator)
             } else {
                 let mut uid = ArenaStringBuilder::with_capacity_in(
                     uid_name.underscore_count as usize + base.len() + digits.len(),
@@ -295,10 +296,11 @@ impl<'a> UidGenerator<'a> {
                 uid.push_ascii_byte_repeat(b'_', uid_name.underscore_count as usize);
                 uid.push_str(base);
                 uid.push_str(digits);
-                Ident::from(uid)
+                Ident::from_in(uid.into_str(), self.allocator)
             }
         } else {
-            let uid = Ident::from_strs_array_in(["_", base], self.allocator);
+            let s = self.allocator.alloc_concat_strs_array(["_", base]);
+            let uid = Ident::from_in(s, self.allocator);
             // SAFETY: String starts with `_`, so trimming off that byte leaves a valid UTF-8 string
             let base = unsafe { uid.as_str().get_unchecked(1..) };
             self.names.insert(base, UidName { underscore_count: 1, postfix: 1 });

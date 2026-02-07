@@ -270,7 +270,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             MethodDefinitionKind::Set => {
                 let params = self.create_formal_parameters(
-                    self.ast.binding_pattern_binding_identifier(SPAN, "value"),
+                    self.ast.binding_pattern_binding_identifier(SPAN, self.ast.ident("value")),
                 );
                 self.transform_class_method_definition(method, params, None)
             }
@@ -446,7 +446,10 @@ impl<'a> IsolatedDeclarations<'a> {
                             let params = &method.value.params;
                             if params.items.is_empty() {
                                 self.create_formal_parameters(
-                                    self.ast.binding_pattern_binding_identifier(SPAN, "value"),
+                                    self.ast.binding_pattern_binding_identifier(
+                                        SPAN,
+                                        self.ast.ident("value"),
+                                    ),
                                 )
                             } else {
                                 let mut params = params.clone_in(self.ast.allocator);
@@ -603,7 +606,7 @@ impl<'a> IsolatedDeclarations<'a> {
             // <https://github.com/microsoft/TypeScript/blob/64d2eeea7b9c7f1a79edf42cb99f302535136a2e/src/compiler/transformers/declarations.ts#L1699-L1709>
             // When the class has at least one private identifier, create a unique constant identifier to retain the nominal typing behavior
             // Prevents other classes with the same public members from being used in place of the current class
-            let ident = self.ast.property_key_private_identifier(SPAN, "private");
+            let ident = self.ast.property_key_private_identifier(SPAN, self.ast.ident("private"));
             let r#type = PropertyDefinitionType::PropertyDefinition;
             let decorators = self.ast.vec();
             let element = self.ast.class_element_property_definition(

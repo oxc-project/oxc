@@ -1138,7 +1138,8 @@ impl<'a> ParserImpl<'a> {
         let key_name = self.cur_string();
         let with_key_span = self.start_span();
         self.bump_any();
-        let with_key = self.ast.identifier_name(self.end_span(with_key_span), key_name);
+        let with_key =
+            self.ast.identifier_name(self.end_span(with_key_span), self.ast.ident(key_name));
 
         self.expect(Kind::Colon);
 

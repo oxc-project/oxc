@@ -269,7 +269,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let callee = self.create_async_to_generator_call(params, body, generator_scope_id, ctx);
         let (callee, arguments) = if needs_move_parameters_to_inner_function {
             // callee.apply(this, arguments)
-            let property = ctx.ast.identifier_name(SPAN, "apply");
+            let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident("apply"));
             let callee =
                 Expression::from(ctx.ast.member_expression_static(SPAN, callee, property, false));
 
@@ -608,7 +608,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             name.push_ascii_byte_start(b'_');
         }
 
-        Ident::from(name)
+        ctx.ast.ident(name.as_str())
     }
 
     /// Creates a [`Function`] with the specified params, body and scope_id.
@@ -663,7 +663,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let callee = Expression::from(ctx.ast.member_expression_static(
             SPAN,
             bound_ident.create_read_expression(ctx),
-            ctx.ast.identifier_name(SPAN, "apply"),
+            ctx.ast.identifier_name(SPAN, ctx.ast.ident("apply")),
             false,
         ));
         let argument = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);

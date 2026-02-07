@@ -300,7 +300,7 @@ fn diagnostic_invalid_function(
 
     let is_safe_fix = function_name
         .as_ref()
-        .is_some_and(|name| can_safely_apply_fix(func, name.as_str().into(), ctx));
+        .is_some_and(|name| can_safely_apply_fix(func, name.as_str(), ctx));
 
     let msg = unnamed_diagnostic(&func_name_complete, report_span);
 
@@ -416,8 +416,8 @@ fn is_invalid_function(
 }
 
 /// Returns whether it's safe to insert a function name without breaking shadowing rules
-fn can_safely_apply_fix(func: &Function, name: Ident<'_>, ctx: &LintContext) -> bool {
-    !ctx.scoping().find_binding(func.scope_id(), name).is_some_and(|shadowed_var| {
+fn can_safely_apply_fix(func: &Function, name: &str, ctx: &LintContext) -> bool {
+    !ctx.scoping().find_binding_str(func.scope_id(), name).is_some_and(|shadowed_var| {
         ctx.semantic().symbol_references(shadowed_var).any(|reference| {
             func.span.contains_inclusive(ctx.nodes().get_node(reference.node_id()).kind().span())
         })

@@ -171,7 +171,10 @@ impl<'a> ParserImpl<'a> {
         } && !name.contains('-'); // Exclude hyphenated custom elements
 
         if is_reference {
-            let identifier = self.ast.alloc_identifier_reference(identifier.span, identifier.name);
+            let identifier = self.ast.alloc_identifier_reference(
+                identifier.span,
+                self.ast.ident(identifier.name.as_str()),
+            );
             JSXElementName::IdentifierReference(identifier)
         } else if name == "this" {
             JSXElementName::ThisExpression(self.ast.alloc_this_expression(identifier.span))
@@ -191,7 +194,10 @@ impl<'a> ParserImpl<'a> {
         let mut object = if object.name == "this" {
             self.ast.jsx_member_expression_object_this_expression(object.span)
         } else {
-            self.ast.jsx_member_expression_object_identifier_reference(object.span, object.name)
+            self.ast.jsx_member_expression_object_identifier_reference(
+                object.span,
+                self.ast.ident(object.name.as_str()),
+            )
         };
 
         let mut span = Span::new(span, 0);
