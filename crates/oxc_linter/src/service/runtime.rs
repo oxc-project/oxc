@@ -9,7 +9,6 @@ use std::{
 };
 
 use indexmap::IndexSet;
-use oxc_ast::ast::Program;
 use rayon::iter::ParallelDrainRange;
 use rayon::{
     Scope,
@@ -24,13 +23,13 @@ use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{CompactStr, SourceType, Span, VALID_EXTENSIONS};
+use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
 use crate::{
     Fixer, LINTABLE_EXTENSIONS, Linter, Message, PossibleFixes,
     context::ContextSubHost,
     disable_directives::DisableDirectives,
-    loader::{JavaScriptSource, PartialLoader},
+    loader::{JavaScriptSource, LinterParseResult, PartialLoader, parse_javascript_source},
     module_record::ModuleRecord,
     utils::read_to_arena_str,
 };
@@ -956,21 +955,19 @@ impl Runtime {
         allocator: &'a Allocator,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
-        let section_sources = PartialLoader::parse(ext, source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::new(source_text, source_type)]);
+        let section_sources =
+            PartialLoader::parse(allocator, ext, source_text).unwrap_or_else(|| {
+                vec![parse_javascript_source(
+                    allocator,
+                    JavaScriptSource::new(source_text, source_type),
+                )]
+            });
 
         let mut section_module_records = SmallVec::<
             [Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1],
         >::with_capacity(section_sources.len());
-        for section_source in section_sources {
-            match self.process_source_section(
-                path,
-                allocator,
-                check_syntax_errors,
-                todo!(),
-                todo!(),
-                todo!(),
-            ) {
+        for (result, section_source) in section_sources {
+            match self.process_source_section(path, allocator, check_syntax_errors, result) {
                 Ok((record, semantic)) => {
                     section_module_records.push(Ok(record));
                     if let Some(sections) = &mut out_sections {
@@ -1010,23 +1007,24 @@ impl Runtime {
         path: &Path,
         allocator: &'a Allocator,
         check_syntax_errors: bool,
-        program: Program<'a>,
-        irregular_whitespaces: Box<[Span]>,
-        module_record: &oxc_syntax::module_record::ModuleRecord,
+        parse_result: Result<LinterParseResult<'a>, Vec<OxcDiagnostic>>,
     ) -> Result<(ResolvedModuleRecord, Semantic<'a>), Vec<OxcDiagnostic>> {
+        let parse_result = parse_result?;
+
         let semantic_ret = SemanticBuilder::new()
             .with_cfg(true)
             .with_check_syntax_error(check_syntax_errors)
-            .build(allocator.alloc(program));
+            .build(allocator.alloc(parse_result.program));
 
         if !semantic_ret.errors.is_empty() {
             return Err(semantic_ret.errors);
         }
 
         let mut semantic = semantic_ret.semantic;
-        semantic.set_irregular_whitespaces(irregular_whitespaces);
+        semantic.set_irregular_whitespaces(parse_result.irregular_whitespaces);
 
-        let module_record = Arc::new(ModuleRecord::new(path, module_record, &semantic));
+        let module_record =
+            Arc::new(ModuleRecord::new(path, &parse_result.module_record, &semantic));
 
         let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 

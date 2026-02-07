@@ -1,8 +1,10 @@
 use std::{error::Error, fmt, path::Path};
 
+mod parse;
 mod partial_loader;
 mod source;
 use oxc_span::VALID_EXTENSIONS;
+pub use parse::{LinterParseResult, parse_javascript_source, parse_vue_source};
 pub use partial_loader::{LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader};
 pub use source::JavaScriptSource;
 
