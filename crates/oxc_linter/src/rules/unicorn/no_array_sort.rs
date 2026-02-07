@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, ArrayExpressionElement, Expression},
+    ast::{
+        Argument, ArrayExpressionElement, Expression, IdentifierReference,
+        ImportDeclarationSpecifier,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,6 +14,7 @@ use serde_json::Value;
 
 use crate::{
     AstNode,
+    ast_util::leftmost_identifier_reference,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
@@ -97,6 +101,11 @@ impl Rule for NoArraySort {
         if static_property_name != "sort" {
             return;
         }
+        if leftmost_identifier_reference(member_expr.object())
+            .is_ok_and(|ident| is_imported_symbol(ident, "effect", "Chunk", ctx))
+        {
+            return;
+        }
 
         let is_spread = match member_expr.object() {
             Expression::ArrayExpression(array) => {
@@ -127,6 +136,39 @@ impl Rule for NoArraySort {
     }
 }
 
+fn is_imported_symbol(
+    ident: &IdentifierReference,
+    module_name: &str,
+    imported_name: &str,
+    ctx: &LintContext,
+) -> bool {
+    let reference = ctx.scoping().get_reference(ident.reference_id());
+    let Some(symbol_id) = reference.symbol_id() else {
+        return false;
+    };
+
+    if !ctx.scoping().symbol_flags(symbol_id).is_import() {
+        return false;
+    }
+
+    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
+        return false;
+    };
+
+    if import_decl.source.value.as_str() != module_name {
+        return false;
+    }
+
+    import_decl.specifiers.iter().flatten().any(|specifier| match specifier {
+        ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
+            import_specifier.local.symbol_id() == symbol_id
+                && import_specifier.imported.name() == imported_name
+        }
+        _ => false,
+    })
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -143,6 +185,8 @@ fn test() {
         ("sorted = array.sort(...[])", None),
         ("sorted = array.sort(...[compareFn])", None),
         ("sorted = array.sort(compareFn, extraArgument)", None),
+        (r#"import { Chunk } from "effect"; const sorted = Chunk.sort(compareFn)"#, None),
+        (r#"import { Chunk as C } from "effect"; const sorted = C.sort(compareFn)"#, None),
     ];
 
     let fail = vec![
