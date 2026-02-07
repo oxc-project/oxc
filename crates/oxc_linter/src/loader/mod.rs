@@ -2,13 +2,22 @@ use std::{error::Error, fmt, path::Path};
 
 mod partial_loader;
 mod source;
-pub use partial_loader::{LINT_PARTIAL_LOADER_EXTENSIONS, LINTABLE_EXTENSIONS, PartialLoader};
+use oxc_span::VALID_EXTENSIONS;
+pub use partial_loader::{LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader};
 pub use source::JavaScriptSource;
 
 // TODO: use oxc_resolver::FileSystem. We can't do so until that crate exposes FileSystemOs
 // externally.
 #[derive(Default, Clone)]
 pub struct Loader;
+
+/// File extensions that has similar syntax or based on JS/TS, (e.g. Vue SFCs)
+/// and can be transformed into JS/TS(X) using a specific loader.
+pub const LINT_TRANSFORM_LOADER_EXTENSIONS: &[&str] = &["vue"];
+
+/// All valid JavaScript/TypeScript extensions, plus additional framework files that
+/// contain JavaScript/TypeScript code in them (e.g., Astro, Svelte, etc.).
+pub const LINTABLE_EXTENSIONS: &[&str] = constcat::concat_slices!([&str]: VALID_EXTENSIONS, LINT_TRANSFORM_LOADER_EXTENSIONS, LINT_PARTIAL_LOADER_EXTENSIONS);
 
 impl Loader {
     pub fn can_load<P: AsRef<Path>>(path: P) -> bool {
