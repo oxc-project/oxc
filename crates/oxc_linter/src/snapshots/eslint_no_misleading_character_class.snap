@@ -1,7 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:10]
  1 │ var r = /[👍]/
@@ -774,4 +773,10 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_misleading_character_class.tsx:1:9]
  1 │ RegExp(`[\👍]`) // Backslash + U+D83D + U+DC4D
    ·         ─────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:2]
+ 1 │ /[\u200c\u200d\p{ID_Continue}.]/
+   ·  ──────────────────────────────
    ╰────

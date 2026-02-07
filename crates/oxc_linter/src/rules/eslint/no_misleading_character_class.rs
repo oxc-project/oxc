@@ -136,12 +136,17 @@ impl<'ast> Visit<'ast> for CharacterSequenceCollector<'ast> {
                 self.sequences.push(std::mem::take(&mut self.current_seq));
                 self.current_seq.push(&range.max);
             }
-            CharacterClassContents::ClassStringDisjunction(_) => {
+
+
+            CharacterClassContents::ClassStringDisjunction(_) // \q{...}
+            | CharacterClassContents::UnicodePropertyEscape(_) // \p{...}
+            | CharacterClassContents::NestedCharacterClass(_) // [[]] nested character class
+            | CharacterClassContents::CharacterClassEscape(_) // \d, \w, etc.
+             => {
                 if !self.current_seq.is_empty() {
                     self.sequences.push(std::mem::take(&mut self.current_seq));
                 }
             }
-            _ => {}
         }
     }
 
@@ -449,6 +454,8 @@ fn test() {
             r#"RegExp(`[\uD83D\uDC4D]`) // Backslash + "uD83D" + Backslash + "uDC4D""#,
             Some(serde_json::json!([{ "allowEscape": true }])),
         ),
+        // https://github.com/oxc-project/oxc/issues/19090
+        (r"/[\u200c\u200d\p{ID_Continue}.]/u", None),
     ];
 
     let fail = vec![
@@ -638,6 +645,9 @@ fn test() {
         //     r#"const pattern = "[\x41\u0301]"; RegExp(pattern);"#,
         //     Some(serde_json::json!([{ "allowEscape": true }])),
         // ),
+        // https://github.com/oxc-project/oxc/issues/19090 -- without u flag it should fail
+        // this should not be a `UnicodePropertyEscape`
+        (r"/[\u200c\u200d\p{ID_Continue}.]/", None),
     ];
 
     Tester::new(NoMisleadingCharacterClass::NAME, NoMisleadingCharacterClass::PLUGIN, pass, fail)
