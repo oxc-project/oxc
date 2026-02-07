@@ -2,7 +2,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::{ExportExportName, ExportImportName, ImportImportName, ModuleRecord},
+    rule::Rule,
+};
 
 fn no_named_as_default_diagnostic(
     span: Span,
@@ -72,6 +76,15 @@ impl Rule for NoNamedAsDefault {
 
             let import_name = import_entry.local_name.name();
             if remote_module_record.exported_bindings.contains_key(import_name) {
+                // If both the default export and the named export are re-exports
+                // that point to the same source module and the same identifier,
+                // they refer to the same value, so using the name for the default
+                // import is not confusing.
+                // See: https://github.com/import-js/eslint-plugin-import/pull/3032
+                if default_and_named_are_same_reexport(&remote_module_record, import_name) {
+                    continue;
+                }
+
                 ctx.diagnostic(no_named_as_default_diagnostic(
                     *import_span,
                     import_name,
@@ -80,6 +93,52 @@ impl Rule for NoNamedAsDefault {
             }
         }
     }
+}
+
+/// Check if the remote module re-exports both the default and the given named export
+/// from the same source module with the same local identifier.
+fn default_and_named_are_same_reexport(remote_module_record: &ModuleRecord, name: &str) -> bool {
+    // Find the default re-export entry.
+    // `export default foo` uses `ExportExportName::Default`, but
+    // `export { foo as default }` uses `ExportExportName::Name("default")`.
+    let default_entry = remote_module_record.indirect_export_entries.iter().find(|entry| {
+        match &entry.export_name {
+            ExportExportName::Default(_) => true,
+            ExportExportName::Name(n) => n.name() == "default",
+            ExportExportName::Null => false,
+        }
+    });
+
+    // Find the named re-export entry
+    let named_entry = remote_module_record
+        .indirect_export_entries
+        .iter()
+        .find(|entry| matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == name));
+
+    let (Some(default_entry), Some(named_entry)) = (default_entry, named_entry) else {
+        return false;
+    };
+
+    // Both must have a module_request (i.e., be re-exports)
+    let (Some(default_module), Some(named_module)) =
+        (&default_entry.module_request, &named_entry.module_request)
+    else {
+        return false;
+    };
+
+    // Both must re-export from the same module
+    if default_module.name() != named_module.name() {
+        return false;
+    }
+
+    // Both must import the same identifier from that module
+    let (ExportImportName::Name(default_import), ExportImportName::Name(named_import)) =
+        (&default_entry.import_name, &named_entry.import_name)
+    else {
+        return false;
+    };
+
+    default_import.name() == named_import.name()
 }
 
 #[test]
@@ -93,6 +152,9 @@ fn test() {
         // unsupported syntax
         // r#"export default from "./bar";"#,
         r#"import bar, { foo } from "./export-default-string-and-named""#,
+        // When both default and named exports are re-exported from the same source,
+        // using the named export's name for the default import is not confusing.
+        r#"import userEvent from "./re-export-default-and-named""#,
     ];
 
     let fail = vec![
@@ -103,6 +165,9 @@ fn test() {
         // r#"import foo from "./malformed.js""#,
         r#"import foo from "./export-default-string-and-named""#,
         r#"import foo, { foo as bar } from "./export-default-string-and-named""#,
+        // When default and named exports are re-exported from different sources,
+        // it should still report.
+        r#"import userEvent from "./re-export-default-and-named-misleading""#,
     ];
 
     Tester::new(NoNamedAsDefault::NAME, NoNamedAsDefault::PLUGIN, pass, fail)
