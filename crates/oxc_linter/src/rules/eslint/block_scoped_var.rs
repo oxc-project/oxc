@@ -6,7 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Scoping;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
 fn redeclaration_diagnostic(decl_span: Span, redeclare_span: Span, name: &str) -> OxcDiagnostic {
@@ -151,7 +151,7 @@ impl Rule for BlockScopedVar {
 }
 
 fn run_for_all_references(
-    (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
+    (pattern, name, symbol): (&BindingPattern, Ident<'_>, &SymbolId),
     declare_scope_id: ScopeId,
     ctx: &LintContext,
 ) {
@@ -169,13 +169,13 @@ fn run_for_all_references(
             ctx.diagnostic(use_outside_scope_diagnostic(
                 pattern.span(),
                 ctx.reference_span(reference),
-                name,
+                &name,
             ));
         });
 }
 
 fn run_for_all_redeclarations(
-    (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
+    (pattern, name, symbol): (&BindingPattern, Ident<'_>, &SymbolId),
     declare_scope_id: ScopeId,
     ctx: &LintContext,
 ) {
@@ -191,14 +191,14 @@ fn run_for_all_redeclarations(
             )
         })
         .for_each(|redeclaration| {
-            ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, name));
+            ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, &name));
         });
 }
 
 fn run_for_declaration(pattern: &BindingPattern, node_scope_id: ScopeId, ctx: &LintContext) {
     // e.g. "var [a, b] = [1, 2]"
     for ident in pattern.get_binding_identifiers() {
-        let name = ident.name.as_str();
+        let name = ident.name;
         let Some(symbol) = ctx.scoping().find_binding(node_scope_id, name) else {
             continue;
         };

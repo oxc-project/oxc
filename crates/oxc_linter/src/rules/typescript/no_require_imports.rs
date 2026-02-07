@@ -7,7 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{CompactStr, Span};
+use oxc_span::{CompactStr, Ident, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -170,7 +170,11 @@ impl Rule for NoRequireImports {
                     }
                 }
 
-                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
+                if ctx
+                    .scoping()
+                    .find_binding(ctx.scoping().root_scope_id(), Ident::new_const("require"))
+                    .is_some()
+                {
                     return;
                 }
 

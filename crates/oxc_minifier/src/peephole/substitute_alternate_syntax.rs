@@ -7,8 +7,8 @@ use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, Det
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
 use oxc_semantic::ReferenceFlags;
-use oxc_span::GetSpan;
 use oxc_span::SPAN;
+use oxc_span::{GetSpan, Ident};
 use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     number::NumberBase,
@@ -1225,7 +1225,8 @@ impl<'a> PeepholeOptimizations {
                     .as_member_expression()
                     .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
             {
-                let reference_id = ctx.create_unbound_reference("Object", ReferenceFlags::Read);
+                let reference_id =
+                    ctx.create_unbound_reference(Ident::new_const("Object"), ReferenceFlags::Read);
                 call_expr.callee = ctx.ast.expression_identifier_with_reference_id(
                     call_expr.callee.span(),
                     "Object",

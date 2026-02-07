@@ -888,8 +888,9 @@ fn create_new_weakmap<'a>(
     symbol_id: &mut Option<Option<SymbolId>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let symbol_id = *symbol_id
-        .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), "WeakMap"));
+    let symbol_id = *symbol_id.get_or_insert_with(|| {
+        ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("WeakMap"))
+    });
     let ident =
         ctx.create_ident_expr(SPAN, Ident::new_const("WeakMap"), symbol_id, ReferenceFlags::Read);
     ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
@@ -897,7 +898,7 @@ fn create_new_weakmap<'a>(
 
 /// Create `new WeakSet()` expression.
 fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-    let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "WeakSet");
+    let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("WeakSet"));
     let ident =
         ctx.create_ident_expr(SPAN, Ident::new_const("WeakSet"), symbol_id, ReferenceFlags::Read);
     ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)

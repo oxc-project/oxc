@@ -3,7 +3,7 @@ use oxc_ast::{
     ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator},
 };
 use oxc_semantic::NodeId;
-use oxc_span::{CompactStr, GetSpan};
+use oxc_span::{CompactStr, GetSpan, Ident};
 
 use super::{BindingInfo, NoUnusedVars, Symbol, count_whitespace_or_commas};
 use crate::{
@@ -138,7 +138,7 @@ impl NoUnusedVars {
         let scope_id = symbol.scope_id();
         let mut i = 0;
         let mut new_name = ignored_name.clone();
-        while scopes.scope_has_binding(scope_id, &new_name) {
+        while scopes.scope_has_binding(scope_id, Ident::from(new_name.as_str())) {
             new_name = format!("{ignored_name}{i}");
             i += 1;
         }

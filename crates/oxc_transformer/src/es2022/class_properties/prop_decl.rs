@@ -341,7 +341,8 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // `Object.defineProperty`
-        let object_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Object");
+        let object_symbol_id =
+            ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("Object"));
         let object = ctx.create_ident_expr(
             SPAN,
             Ident::new_const("Object"),

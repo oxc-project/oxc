@@ -153,7 +153,7 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         if !LIFECYCLE_HOOKS.contains(&import_name) {
             continue;
         }
-        if let Some(symbol_id) = scoping.get_root_binding(import_entry.local_name.name()) {
+        if let Some(symbol_id) = scoping.get_root_binding(import_entry.local_name.name().into()) {
             symbol_to_import_entry.insert(symbol_id, import_entry);
         }
     }
