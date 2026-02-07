@@ -73,7 +73,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         // module.exports
         let module_exports = {
             let reference_id =
-                ctx.create_reference_in_current_scope("module", ReferenceFlags::Read);
+                ctx.create_reference_in_current_scope(Ident::new_const("module"), ReferenceFlags::Read);
             let reference =
                 ctx.ast.alloc_identifier_reference_with_reference_id(SPAN, "module", reference_id);
             let object = Expression::Identifier(reference);
@@ -150,7 +150,7 @@ impl<'a> TypeScriptModule<'a, '_> {
                 }
 
                 let require_symbol_id =
-                    ctx.scoping().find_binding(ctx.current_scope_id(), "require");
+                    ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("require"));
                 let callee = ctx.create_ident_expr(
                     SPAN,
                     Ident::new_const("require"),

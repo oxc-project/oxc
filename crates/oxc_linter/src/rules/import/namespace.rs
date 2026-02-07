@@ -158,7 +158,7 @@ impl Rule for Namespace {
                 return;
             }
 
-            let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name()) else {
+            let Some(symbol_id) = ctx.scoping().get_root_binding(entry.local_name.name().into()) else {
                 return;
             };
 

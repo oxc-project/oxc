@@ -536,7 +536,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         right: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let math_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Math");
+        let math_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), Ident::new_const("Math"));
         let object = ctx.create_ident_expr(
             SPAN,
             Ident::new_const("Math"),

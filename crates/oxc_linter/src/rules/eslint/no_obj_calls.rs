@@ -87,7 +87,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
         return Some(ident.name.as_str());
     }
 
-    let Some(binding_id) = scope.find_binding(scope_id, &ident.name) else {
+    let Some(binding_id) = scope.find_binding(scope_id, ident.name) else {
         // Panic in debug builds, but fail gracefully in release builds.
         debug_assert!(
             false,

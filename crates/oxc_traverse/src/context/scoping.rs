@@ -298,10 +298,10 @@ impl<'a> TraverseScoping<'a> {
     }
 
     /// Create an unbound reference
-    pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
+    pub fn create_unbound_reference(&mut self, name: Ident<'_>, flags: ReferenceFlags) -> ReferenceId {
         let reference = Reference::new(NodeId::DUMMY, self.current_scope_id, flags);
         let reference_id = self.scoping.create_reference(reference);
-        self.scoping.add_root_unresolved_reference(Ident::from(name), reference_id);
+        self.scoping.add_root_unresolved_reference(name, reference_id);
         reference_id
     }
 
@@ -311,7 +311,7 @@ impl<'a> TraverseScoping<'a> {
     /// or `TraverseCtx::create_unbound_reference`.
     pub fn create_reference(
         &mut self,
-        name: &str,
+        name: Ident<'_>,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
@@ -325,7 +325,7 @@ impl<'a> TraverseScoping<'a> {
     /// Create reference in current scope, looking up binding for `name`
     pub fn create_reference_in_current_scope(
         &mut self,
-        name: &str,
+        name: Ident<'_>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
         let symbol_id = self.scoping.find_binding(self.current_scope_id, name);
@@ -335,18 +335,18 @@ impl<'a> TraverseScoping<'a> {
     /// Delete a reference.
     ///
     /// Provided `name` must match `reference_id`.
-    pub fn delete_reference(&mut self, reference_id: ReferenceId, name: &str) {
+    pub fn delete_reference(&mut self, reference_id: ReferenceId, name: Ident<'_>) {
         let symbol_id = self.scoping.get_reference(reference_id).symbol_id();
         if let Some(symbol_id) = symbol_id {
             self.scoping.delete_resolved_reference(symbol_id, reference_id);
         } else {
-            self.scoping.delete_root_unresolved_reference(Ident::from(name), reference_id);
+            self.scoping.delete_root_unresolved_reference(name, reference_id);
         }
     }
 
     /// Delete reference for an `IdentifierReference`.
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
-        self.delete_reference(ident.reference_id(), &ident.name);
+        self.delete_reference(ident.reference_id(), ident.name);
     }
 }
 

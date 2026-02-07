@@ -689,7 +689,7 @@ impl Scoping {
 
     /// Get a variable binding by name that was declared in the top-level scope
     #[inline]
-    pub fn get_root_binding(&self, name: &str) -> Option<SymbolId> {
+    pub fn get_root_binding(&self, name: Ident<'_>) -> Option<SymbolId> {
         self.get_binding(self.root_scope_id(), name)
     }
 
@@ -704,8 +704,8 @@ impl Scoping {
     }
 
     /// Check if a symbol is declared in a certain scope.
-    pub fn scope_has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
-        self.cell.borrow_dependent().bindings[scope_id].contains_key(name)
+    pub fn scope_has_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> bool {
+        self.cell.borrow_dependent().bindings[scope_id].contains_key(name.as_str())
     }
 
     /// Get the symbol bound to an identifier name in a scope.
@@ -716,15 +716,15 @@ impl Scoping {
     /// binding that might be declared in a parent scope, use [`find_binding`].
     ///
     /// [`find_binding`]: Scoping::find_binding
-    pub fn get_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
-        self.cell.borrow_dependent().bindings[scope_id].get(name).copied()
+    pub fn get_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
+        self.cell.borrow_dependent().bindings[scope_id].get(name.as_str()).copied()
     }
 
     /// Find a binding by name in a scope or its ancestors.
     ///
     /// Bindings are resolved by walking up the scope tree until a binding is
     /// found. If no binding is found, [`None`] is returned.
-    pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+    pub fn find_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
         for scope_id in self.scope_ancestors(scope_id) {
             if let Some(symbol_id) = self.get_binding(scope_id, name) {
                 return Some(symbol_id);
