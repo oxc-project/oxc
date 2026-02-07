@@ -35,7 +35,7 @@ use crate::{
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         error_with_position::{
-            DiagnosticReport, LinterCodeAction, create_unused_directives_messages,
+            DiagnosticReport, LinterCodeAction, create_unused_directives_report,
             generate_inverted_diagnostics, message_to_lsp_diagnostic,
         },
         lsp_file_system::LspFileSystem,
@@ -774,11 +774,12 @@ impl ServerLinter {
         if let Some(severity) = self.unused_directives_severity
             && let Some(directives) = self.runner.directives_coordinator().get(path)
         {
-            messages.extend(
-                create_unused_directives_messages(&directives, severity, source_text)
-                    .into_iter()
-                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope)),
-            );
+            messages.extend(create_unused_directives_report(
+                &directives,
+                severity,
+                source_text,
+                rope,
+            ));
         }
 
         // Clear any stale directives because they are no longer needed.
