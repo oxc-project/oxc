@@ -225,6 +225,18 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👩‍👦][👩‍👦]/u
+   ·          ────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
+   ·          ───────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
  1 │ var r = /[👨‍👩‍👦]foo[👨‍👩‍👦]/u
    ·          ───────────
    ╰────
@@ -257,6 +269,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_misleading_character_class.tsx:1:10]
  1 │ var r = /[\u{1F468}\u{200D}\u{1F469}]/u
    ·          ────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:10]
+ 1 │ var r = /[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]foo[\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F466}]/u
+   ·          ─────────────────────────────────────────────────────────────────────────────────────────────
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
@@ -440,6 +458,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
+   ╭─[no_misleading_character_class.tsx:1:13]
+ 1 │ new RegExp("[ \\ufe0f][ \\ufe0f]")
+   ·             ────────────────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:21]
  1 │ var r = new RegExp("[\\u2747\\uFE0F]", "")
    ·                     ────────────────
@@ -587,6 +611,18 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_misleading_character_class.tsx:1:21]
  1 │ var r = new RegExp("[👩‍👦][👩‍👦]", "u")
    ·                     ────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👩‍👦][👩‍👦]", "u")
+   ·                     ────────
+   ╰────
+
+  ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
+   ╭─[no_misleading_character_class.tsx:1:21]
+ 1 │ var r = new RegExp("[👨‍👩‍👦]foo[👨‍👩‍👦]", "u")
+   ·                     ───────────
    ╰────
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
