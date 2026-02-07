@@ -70,8 +70,9 @@ export interface SuggestionReport {
   fixes: FixReport[];
 }
 
-// Diagnostic in form sent to Rust.
-// Actually, the `messageId` field is removed before sending to Rust.
+/**
+ * Diagnostic in form sent to Rust.
+ */
 export interface DiagnosticReport {
   message: string;
   start: number;
@@ -79,8 +80,9 @@ export interface DiagnosticReport {
   ruleIndex: number;
   fixes: FixReport[] | null;
   suggestions: SuggestionReport[] | null;
+  // Not needed on Rust side, but `RuleTester` needs it
   messageId: string | null;
-  // Only used in conformance tests
+  // Only used in conformance tests. This field is not present except in conformance build.
   loc?: LocationWithOptionalEnd | null;
 }
 
