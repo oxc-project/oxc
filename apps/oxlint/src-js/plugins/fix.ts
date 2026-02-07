@@ -148,15 +148,8 @@ export function getSuggestions(
     if (typeof fix !== "function") throw new TypeError("Suggestion without a fix function");
 
     // Get suggestion message
-    let messageId: string | null = null;
-    if (Object.hasOwn(suggestion, "messageId")) {
-      (messageId as string | null | undefined) = suggestion.messageId;
-      if (messageId === undefined) messageId = null;
-    }
-
-    const message = getMessage(
+    const { message, messageId } = getMessage(
       Object.hasOwn(suggestion, "desc") ? suggestion.desc : null,
-      messageId,
       suggestion,
       ruleDetails,
     );
