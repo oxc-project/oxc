@@ -73,7 +73,7 @@ serde_json = { workspace = true, features = [
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
 url = { workspace = true }
-vue_oxc_toolkit = { workspace = true}
+vue_oxc_toolkit = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
