@@ -150,7 +150,13 @@ impl<'ast> Visit<'ast> for CharacterSequenceCollector<'ast> {
         }
     }
 
-    fn leave_node(&mut self, _kind: RegExpAstKind<'ast>) {}
+    fn leave_node(&mut self, kind: RegExpAstKind<'ast>) {
+        // Flush the current sequence when leaving a character class to ensure
+        // sequences don't span across different character classes
+        if matches!(kind, RegExpAstKind::CharacterClass(_)) && !self.current_seq.is_empty() {
+            self.sequences.push(std::mem::take(&mut self.current_seq));
+        }
+    }
 }
 
 impl Rule for NoMisleadingCharacterClass {
@@ -162,11 +168,6 @@ impl Rule for NoMisleadingCharacterClass {
         run_on_regex_node(node, ctx, |pattern, _span| {
             let mut collector = CharacterSequenceCollector::new();
             collector.visit_pattern(pattern);
-
-            // Restore: push any remaining sequence after visiting
-            if !collector.current_seq.is_empty() {
-                collector.sequences.push(std::mem::take(&mut collector.current_seq));
-            }
 
             for unfiltered_chars in &collector.sequences {
                 if self.allow_escape {
@@ -456,6 +457,9 @@ fn test() {
         ),
         // https://github.com/oxc-project/oxc/issues/19090
         (r"/[\u200c\u200d\p{ID_Continue}.]/u", None),
+        // Separate character classes should not trigger warnings for cross-class sequences
+        (r"/[\u200c][\u200d][a]/", None),
+        (r"/[\uD83D][\uDC4D]/", None), // Solo surrogates in separate classes
     ];
 
     let fail = vec![
