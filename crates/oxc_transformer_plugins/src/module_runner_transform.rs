@@ -651,7 +651,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let mut buffer = ItoaBuffer::new();
         let uid_str = buffer.format(self.import_uid);
         self.import_uid += 1;
-        Ident::from_strs_array_in(["__vite_ssr_import_", uid_str, "__"], ctx.ast.allocator)
+        ctx.ast.ident_from_strs_array(["__vite_ssr_import_", uid_str, "__"])
     }
 
     /// Generate a unique import binding whose name is like `__vite_ssr_import_{uid}__`.
@@ -703,7 +703,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let object =
-            ctx.create_unbound_ident_expr(SPAN, Ident::new_const("Object"), ReferenceFlags::Read);
+            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("Object"), ReferenceFlags::Read);
         let member = create_member_callee(object, "defineProperty", ctx);
         ctx.ast.expression_call(SPAN, member, NONE, arguments, false)
     }

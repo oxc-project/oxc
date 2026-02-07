@@ -766,7 +766,7 @@ struct UpdateReplacedExpression<'a, 'b> {
 impl VisitMut<'_> for UpdateReplacedExpression<'_, '_> {
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'_>) {
         let reference_id =
-            self.ctx.create_reference_in_current_scope(ident.name.as_str(), ReferenceFlags::Read);
+            self.ctx.create_reference_in_current_scope(ident.name, ReferenceFlags::Read);
         ident.set_reference_id(reference_id);
         walk_mut::walk_identifier_reference(self, ident);
     }

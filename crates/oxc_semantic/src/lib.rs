@@ -215,7 +215,7 @@ impl<'a> Semantic<'a> {
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
             return false;
         };
-        self.scoping.root_unresolved_references().contains_key(id.name.as_str())
+        self.scoping.root_unresolved_references().contains_key(&id.name)
     }
 
     /// Find which scope a symbol is declared in
@@ -236,7 +236,7 @@ impl<'a> Semantic<'a> {
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
-        self.scoping.root_unresolved_references().contains_key(ident.name.as_str())
+        self.scoping.root_unresolved_references().contains_key(&ident.name)
     }
 
     pub fn reference_name(&self, reference: &Reference) -> &str {
@@ -257,7 +257,7 @@ impl<'a> Semantic<'a> {
 mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::{AstKind, ast::VariableDeclarationKind};
-    use oxc_span::{Atom, SourceType};
+    use oxc_span::{Atom, Ident, SourceType};
 
     use super::*;
 
@@ -285,8 +285,10 @@ mod tests {
         let allocator = Allocator::default();
         let semantic = get_semantic(&allocator, source, SourceType::default());
 
-        let top_level_a =
-            semantic.scoping().get_binding(semantic.scoping().root_scope_id(), "a").unwrap();
+        let top_level_a = semantic
+            .scoping()
+            .get_binding(semantic.scoping().root_scope_id(), Ident::new_const("a"))
+            .unwrap();
 
         let decl = semantic.symbol_declaration(top_level_a);
         match decl.kind() {
@@ -307,7 +309,7 @@ mod tests {
         let semantic = get_semantic(&allocator, source, SourceType::default());
         let scopes = semantic.scoping();
 
-        assert!(scopes.get_binding(scopes.root_scope_id(), "Fn").is_some());
+        assert!(scopes.get_binding(scopes.root_scope_id(), Ident::new_const("Fn")).is_some());
     }
 
     #[test]
@@ -448,8 +450,10 @@ mod tests {
 
         for (source_type, source, flags) in sources {
             let semantic = get_semantic(&alloc, source, source_type);
-            let a_id =
-                semantic.scoping().get_root_binding(&target_symbol_name).unwrap_or_else(|| {
+            let a_id = semantic
+                .scoping()
+                .get_root_binding(target_symbol_name.into())
+                .unwrap_or_else(|| {
                     panic!("no references for '{target_symbol_name}' found");
                 });
             let a_refs: Vec<_> = semantic.symbol_references(a_id).collect();

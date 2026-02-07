@@ -1,4 +1,5 @@
 use oxc_ast::ast::{Expression, IdentifierReference};
+use oxc_span::Ident;
 
 use crate::{ReferenceId, Scoping};
 
@@ -26,7 +27,7 @@ use crate::{ReferenceId, Scoping};
 /// See: <https://github.com/oxc-project/oxc/issues/8365>
 pub trait IsGlobalReference {
     fn is_global_reference(&self, scoping: &Scoping) -> bool;
-    fn is_global_reference_name(&self, name: &str, scoping: &Scoping) -> bool;
+    fn is_global_reference_name(&self, name: Ident<'_>, scoping: &Scoping) -> bool;
 }
 
 impl IsGlobalReference for ReferenceId {
@@ -34,7 +35,7 @@ impl IsGlobalReference for ReferenceId {
         scoping.references[*self].symbol_id().is_none()
     }
 
-    fn is_global_reference_name(&self, _name: &str, _scoping: &Scoping) -> bool {
+    fn is_global_reference_name(&self, _name: Ident<'_>, _scoping: &Scoping) -> bool {
         panic!("This function is pointless to be called.");
     }
 }
@@ -46,7 +47,7 @@ impl IsGlobalReference for IdentifierReference<'_> {
             .is_some_and(|reference_id| reference_id.is_global_reference(scoping))
     }
 
-    fn is_global_reference_name(&self, name: &str, scoping: &Scoping) -> bool {
+    fn is_global_reference_name(&self, name: Ident<'_>, scoping: &Scoping) -> bool {
         self.name == name && self.is_global_reference(scoping)
     }
 }
@@ -59,7 +60,7 @@ impl IsGlobalReference for Expression<'_> {
         false
     }
 
-    fn is_global_reference_name(&self, name: &str, scoping: &Scoping) -> bool {
+    fn is_global_reference_name(&self, name: Ident<'_>, scoping: &Scoping) -> bool {
         if let Expression::Identifier(ident) = self {
             return ident.is_global_reference_name(name, scoping);
         }

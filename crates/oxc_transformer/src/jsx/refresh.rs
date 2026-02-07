@@ -78,7 +78,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
     pub fn to_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match self {
             Self::Identifier(ident) => {
-                let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
+                let reference_id = ctx.create_unbound_reference(ident.name, ReferenceFlags::Read);
                 ctx.ast.expression_identifier_with_reference_id(
                     ident.span,
                     ident.name,
@@ -86,7 +86,7 @@ impl<'a> RefreshIdentifierResolver<'a> {
                 )
             }
             Self::Member((ident, property)) => {
-                let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
+                let reference_id = ctx.create_unbound_reference(ident.name, ReferenceFlags::Read);
                 let ident = ctx.ast.expression_identifier_with_reference_id(
                     ident.span,
                     ident.name,
@@ -353,7 +353,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
                     ctx.scoping()
                         .find_binding(
                             ctx.scoping().scope_parent_id(ctx.current_scope_id()).unwrap(),
-                            binding_name.as_str(),
+                            binding_name,
                         )
                         .map(|symbol_id| {
                             let mut expr = ctx.create_bound_ident_expr(

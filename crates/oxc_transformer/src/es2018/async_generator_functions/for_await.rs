@@ -3,7 +3,7 @@
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{Ident, SPAN};
+use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{common::helper_loader::Helper, context::TraverseCtx};
@@ -343,7 +343,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             let catch_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::CatchClause);
             let block_scope_id = ctx.create_child_scope(catch_scope_id, ScopeFlags::empty());
             let err_ident = ctx.generate_binding(
-                Ident::new_const("err"),
+                ctx.ast.ident("err"),
                 block_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );

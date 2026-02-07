@@ -18,11 +18,15 @@ use crate::{Atom, CompactStr};
 #[derive(Clone, Copy, Eq)]
 pub struct Ident<'a>(&'a str);
 
-impl Ident<'static> {
-    /// Get an [`Ident`] containing a static string.
+impl<'a> Ident<'a> {
+    /// Create a new [`Ident`] from a string slice.
+    ///
+    /// This is a const, no-op wrapper.
+    /// Use this for strings that already have the correct lifetime
+    /// (e.g. arena-allocated strings, or `'static` string literals).
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op
-    pub const fn new_const(s: &'static str) -> Self {
+    pub const fn new_const(s: &'a str) -> Self {
         Ident(s)
     }
 
@@ -31,9 +35,7 @@ impl Ident<'static> {
     pub const fn empty() -> Self {
         Self::new_const("")
     }
-}
 
-impl<'a> Ident<'a> {
     /// Borrow a string slice.
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op

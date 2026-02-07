@@ -1110,18 +1110,15 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         Self::adjust_binding_scope(target_scope_id, &arguments_var, ctx);
 
-        let mut init = ctx.create_unbound_ident_expr(
-            SPAN,
-            Ident::new_const("arguments"),
-            ReferenceFlags::Read,
-        );
+        let mut init =
+            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("arguments"), ReferenceFlags::Read);
 
         // Top level may not have `arguments`, so we need to check it.
         // `typeof arguments === "undefined" ? void 0 : arguments;`
         if ctx.scoping().root_scope_id() == target_scope_id {
             let argument = ctx.create_unbound_ident_expr(
                 SPAN,
-                Ident::new_const("arguments"),
+                ctx.ast.ident("arguments"),
                 ReferenceFlags::Read,
             );
             let typeof_arguments = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, argument);

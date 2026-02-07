@@ -127,7 +127,7 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
         // with same `ScopeId` every time here, but `ScopeTree` doesn't allow that, and we also
         // take a `&mut ScopeTree` in `reparent_scope`, so borrow-checker doesn't allow that.
         let Some(constructor_symbol_id) =
-            self.ctx.scoping().get_binding(self.constructor_scope_id, &ident.name)
+            self.ctx.scoping().get_binding(self.constructor_scope_id, ident.name)
         else {
             return;
         };

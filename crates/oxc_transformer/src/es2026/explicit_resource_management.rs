@@ -41,7 +41,7 @@ use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVe
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{Ident, SPAN};
+use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
@@ -341,7 +341,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                             }
                             _ => (
                                 ctx.generate_binding_in_current_scope(
-                                    Ident::new_const("_default"),
+                                    ctx.ast.ident("_default"),
                                     SymbolFlags::FunctionScopedVariable,
                                 ),
                                 SPAN,
@@ -812,7 +812,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         // We can skip using `generate_uid` here as no code within the `catch` block which can use a
         // binding called `_`. `using_ctx` is a UID with prefix `_usingCtx`.
         let ident = ctx.generate_binding(
-            Ident::new_const("_"),
+            ctx.ast.ident("_"),
             block_scope_id,
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );

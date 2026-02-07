@@ -358,7 +358,7 @@ impl AccessorPairs {
         };
 
         let object_name = match member.object.without_parentheses() {
-            Expression::Identifier(id) => &id.name,
+            Expression::Identifier(id) => id.name,
             _ => return None,
         };
 
