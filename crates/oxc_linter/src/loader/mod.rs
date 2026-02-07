@@ -1,7 +1,5 @@
 use std::{error::Error, fmt, path::Path};
 
-use oxc_span::SourceType;
-
 mod partial_loader;
 mod source;
 pub use partial_loader::{LINT_PARTIAL_LOADER_EXTENSIONS, LINTABLE_EXTENSIONS, PartialLoader};
@@ -15,11 +13,9 @@ pub struct Loader;
 impl Loader {
     pub fn can_load<P: AsRef<Path>>(path: P) -> bool {
         let path = path.as_ref();
-        SourceType::from_path(path).is_ok()
-            || path
-                .extension()
-                .and_then(std::ffi::OsStr::to_str)
-                .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext))
+        path.extension()
+            .and_then(std::ffi::OsStr::to_str)
+            .is_some_and(|ext| LINTABLE_EXTENSIONS.contains(&ext))
     }
 }
 

@@ -27,10 +27,10 @@ use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
 use crate::{
-    Fixer, Linter, Message, PossibleFixes,
+    Fixer, LINTABLE_EXTENSIONS, Linter, Message, PossibleFixes,
     context::ContextSubHost,
     disable_directives::DisableDirectives,
-    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
+    loader::{JavaScriptSource, PartialLoader},
     module_record::ModuleRecord,
     utils::read_to_arena_str,
 };
@@ -316,7 +316,7 @@ impl Runtime {
     ) -> Option<Result<(SourceType, &'a str), Error>> {
         let source_type = SourceType::from_path(path);
         let not_supported_yet =
-            source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext));
+            source_type.as_ref().is_err_and(|_| !LINTABLE_EXTENSIONS.contains(&ext));
         if not_supported_yet {
             return None;
         }
@@ -871,10 +871,7 @@ impl Runtime {
     ) -> Option<ProcessedModule<'a>> {
         let ext = Path::new(path).extension().and_then(OsStr::to_str)?;
 
-        if SourceType::from_path(Path::new(path))
-            .as_ref()
-            .is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext))
-        {
+        if !LINTABLE_EXTENSIONS.contains(&ext) {
             return None;
         }
 
