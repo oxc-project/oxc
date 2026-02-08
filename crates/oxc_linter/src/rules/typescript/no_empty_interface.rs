@@ -13,11 +13,14 @@ use crate::{
 };
 
 fn no_empty_interface_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("an empty interface is equivalent to `{}`").with_label(span)
+    OxcDiagnostic::warn("an empty interface is equivalent to `{}`")
+        .with_help("Remove the empty interface or add members to it.")
+        .with_label(span)
 }
 
 fn no_empty_interface_extend_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("an interface declaring no members is equivalent to its supertype")
+        .with_help("Use the supertype directly instead of an empty extending interface.")
         .with_label(span)
 }
 

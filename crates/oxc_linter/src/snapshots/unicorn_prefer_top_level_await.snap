@@ -7,42 +7,49 @@ source: crates/oxc_linter/src/tester.rs
  1 │ (async () => {})()
    · ──────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ (async () => {})?.()
    · ────────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ (async function() {})()
    · ───────────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:2]
  1 │ (async function() {}())
    ·  ─────────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ (async function run() {})()
    · ───────────────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ (async function(c, d) {})(a, b)
    · ───────────────────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:10]
  1 │ if (foo) (async () => {})()
    ·          ──────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:2:5]
@@ -51,144 +58,168 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────
  3 │             }
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:5]
  1 │ a = (async () => {})()
    ·     ──────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:2]
  1 │ !async function() {}()
    ·  ─────────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:6]
  1 │ void async function() {}()
    ·      ─────────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ (async () => {})().catch(foo)
    · ─────────────────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo.then(bar)
    · ─────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo.then?.(bar)
    · ───────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo?.then(bar)
    · ──────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo.catch(() => process.exit(1))
    · ────────────────────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo.finally(bar)
    · ────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo.then(bar, baz)
    · ──────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo.then(bar, baz).finally(qux)
    · ───────────────────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ (foo.then(bar, baz)).finally(qux)
    · ─────────────────────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:2]
  1 │ (foo.then(bar, baz)).finally(qux)
    ·  ──────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ (async () => {})().catch(() => process.exit(1))
    · ───────────────────────────────────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ (async function() {}()).finally(() => {})
    · ─────────────────────────────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:2]
  1 │ (async function() {}()).finally(() => {})
    ·  ─────────────────────
    ╰────
+  help: Use `await` at the top level instead of an async IIFE.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:24]
  1 │ for (const foo of bar) foo.then(bar)
    ·                        ─────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo?.then(bar).finally(qux)
    · ───────────────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo.then().toString()
    · ──────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:2]
  1 │ !foo.then()
    ·  ──────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo.then(bar).then(baz)?.then(qux)
    · ──────────────────────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo.then(bar).then(baz).then?.(qux)
    · ───────────────────────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ foo.then(bar).catch(bar).finally(bar)
    · ─────────────────────────────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over an async function call.
    ╭─[prefer_top_level_await.mjs:2:4]
@@ -212,6 +243,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             foo().then(foo);
    ·             ───────────────
    ╰────
+  help: Use `await` at the top level instead of `.then()`.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over an async function call.
    ╭─[prefer_top_level_await.mjs:2:4]

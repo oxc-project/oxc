@@ -16,16 +16,20 @@ use crate::{
 };
 
 fn over_method(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.").with_label(span)
+    OxcDiagnostic::warn("Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.")
+        .with_help("Replace `.find()` or `.findLast()` with `.some()` when checking for existence.")
+        .with_label(span)
 }
 
 fn non_zero_filter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `.some(…)` over non-zero length check from `.filter(…)`.")
+        .with_help("Replace `.filter().length` check with `.some()`.")
         .with_label(span)
 }
 
 fn negative_one_or_zero_filter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.")
+        .with_help("Replace `.findIndex()` or `.findLastIndex()` with `.some()` when checking for existence.")
         .with_label(span)
 }
 

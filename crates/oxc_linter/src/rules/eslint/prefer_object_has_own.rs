@@ -11,7 +11,9 @@ use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule}
 fn prefer_object_has_own_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`."
-    ).with_label(span)
+    )
+    .with_help("Use `Object.hasOwn(obj, prop)` instead.")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

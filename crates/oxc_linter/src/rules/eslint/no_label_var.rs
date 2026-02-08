@@ -7,6 +7,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_label_var_diagnostic(name: &str, id_span: Span, label_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Found identifier '{name}' with the same name as a label."))
+        .with_help("Rename the label or the variable to avoid confusion.")
         .with_labels([
             id_span.label(format!("Identifier '{name}' found here.")),
             label_span.label("Label with the same name."),

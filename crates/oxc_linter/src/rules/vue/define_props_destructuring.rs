@@ -13,15 +13,21 @@ use crate::{
 };
 
 fn prefer_destructuring_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer destructuring from `defineProps` directly.").with_label(span)
+    OxcDiagnostic::warn("Prefer destructuring from `defineProps` directly.")
+        .with_help("Destructure directly from `defineProps()` instead of assigning to a variable.")
+        .with_label(span)
 }
 
 fn avoid_destructuring_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid destructuring from `defineProps`.").with_label(span)
+    OxcDiagnostic::warn("Avoid destructuring from `defineProps`.")
+        .with_help("Assign `defineProps()` to a variable and access properties from it.")
+        .with_label(span)
 }
 
 fn avoid_with_defaults_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid using `withDefaults` with destructuring.").with_label(span)
+    OxcDiagnostic::warn("Avoid using `withDefaults` with destructuring.")
+        .with_help("Use default values in the destructuring pattern instead of `withDefaults`.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]

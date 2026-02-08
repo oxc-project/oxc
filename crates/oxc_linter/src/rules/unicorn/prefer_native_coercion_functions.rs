@@ -13,11 +13,13 @@ fn function(span: Span, called_fn: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "The function is equivalent to `{called_fn}`. Call `{called_fn}` directly."
     ))
+    .with_help(format!("Replace with `{called_fn}`."))
     .with_label(span)
 }
 
 fn array_callback(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The arrow function in the callback of the array is equivalent to `Boolean`. Replace the callback with `Boolean`.")
+        .with_help("Replace the arrow function with `Boolean`.")
         .with_label(span)
 }
 

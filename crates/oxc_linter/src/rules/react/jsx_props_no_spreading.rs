@@ -17,7 +17,9 @@ use crate::{
 };
 
 fn jsx_props_no_spreading_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prop spreading is forbidden").with_label(span)
+    OxcDiagnostic::warn("Prop spreading is forbidden")
+        .with_help("Pass each prop individually instead of using spread syntax.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema, Deserialize, Serialize)]

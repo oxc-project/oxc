@@ -12,15 +12,20 @@ use crate::{
 };
 
 fn prefer_math_abs(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `Math.abs(x)` over alternatives").with_label(span)
+    OxcDiagnostic::warn("Prefer `Math.abs(x)` over alternatives")
+        .with_help("Replace with `Math.abs(x)`.")
+        .with_label(span)
 }
 
 fn prefer_math_hypot(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `Math.hypot(…)` over alternatives").with_label(span)
+    OxcDiagnostic::warn("Prefer `Math.hypot(…)` over alternatives")
+        .with_help("Replace with `Math.hypot(…)`.")
+        .with_label(span)
 }
 
 fn prefer_math_log_n(span: Span, good_method: &str, bad_method: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer `Math.{good_method}(x)` over `{bad_method}`"))
+        .with_help(format!("Replace with `Math.{good_method}(x)`."))
         .with_label(span)
 }
 

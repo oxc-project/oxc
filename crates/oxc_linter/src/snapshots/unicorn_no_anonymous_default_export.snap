@@ -7,66 +7,77 @@ source: crates/oxc_linter/src/tester.rs
  1 │ export default function () {}
    ·                ──────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default class {}
    ·                ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default () => {}
    ·                ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default function * () {}
    ·                ────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default async function () {}
    ·                ────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default async function * () {}
    ·                ──────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default async () => {}
    ·                ──────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default class {}
    ·                ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default class extends class {} {}
    ·                ─────────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default class{}
    ·                ───────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default class {}
    ·                ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:2:19]
@@ -74,6 +85,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             export default class {}
    ·                            ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:2:20]
@@ -81,12 +93,14 @@ source: crates/oxc_linter/src/tester.rs
  2 │             export default (class{})
    ·                             ───────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:17]
  1 │ export default (class extends class {} {})
    ·                 ─────────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:2:14]
@@ -94,60 +108,70 @@ source: crates/oxc_linter/src/tester.rs
  2 │             exports = class {}
    ·                       ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:18]
  1 │ module.exports = class {}
    ·                  ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default function () {}
    ·                ──────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default function* () {}
    ·                ───────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default async function* () {}
    ·                ─────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default async function*() {}
    ·                ────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default async function *() {}
    ·                ─────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default async function   *   () {}
    ·                ──────────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default async function * /* comment */ () {}
    ·                ────────────────────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ ╭─▶ export default async function * // comment
  2 │ ╰─▶             () {}
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:2:19]
@@ -155,6 +179,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             export default async function * () {}
    ·                            ──────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:2:20]
@@ -162,6 +187,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             export default (async function * () {})
    ·                             ──────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:2:14]
@@ -169,54 +195,63 @@ source: crates/oxc_linter/src/tester.rs
  2 │             exports = function() {}
    ·                       ─────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:18]
  1 │ module.exports = function() {}
    ·                  ─────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default () => {}
    ·                ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default async () => {}
    ·                ──────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default () => {};
    ·                ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:15]
  1 │ export default() => {}
    ·               ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default foo => {}
    ·                ─────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:19]
  1 │ export default (( () => {} ))
    ·                   ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:65]
  1 │ /* comment 1 */ export /* comment 2 */ default /* comment 3 */  () => {}
    ·                                                                 ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:6:4]
@@ -224,6 +259,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │             () => {}
    ·             ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:2:19]
@@ -231,6 +267,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             export default async () => {}
    ·                            ──────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:2:17]
@@ -238,6 +275,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             exports = (( () => {} ))
    ·                          ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:8:4]
@@ -245,51 +283,60 @@ source: crates/oxc_linter/src/tester.rs
  8 │             () => {};
    ·             ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:17]
  1 │ (( exports = (( () => {} )) ))
    ·                 ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:24]
  1 │ (( module.exports = (( () => {} )) ))
    ·                        ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:17]
  1 │ (( exports = (( () => {} )) ));
    ·                 ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:24]
  1 │ (( module.exports = (( () => {} )) ));
    ·                        ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:27]
  1 │ @decorator export default class {}
    ·                           ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default @decorator(class {}) class extends class {} {}
    ·                ──────────────────────────────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:18]
  1 │ module.exports = @decorator(class {}) class extends class {} {}
    ·                  ──────────────────────────────────────────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.
 
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:48]
  1 │ @decorator @decorator(class {}) export default class {}
    ·                                                ────────
    ╰────
+  help: Add a name to the default export for better debugging and refactoring.

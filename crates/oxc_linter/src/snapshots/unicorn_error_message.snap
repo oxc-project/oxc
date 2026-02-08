@@ -7,123 +7,144 @@ source: crates/oxc_linter/src/tester.rs
  1 │ throw new Error()
    ·       ───────────
    ╰────
+  help: Provide a descriptive error message string.
 
   ⚠ eslint-plugin-unicorn(error-message): Pass a message to the Error constructor.
    ╭─[error_message.tsx:1:7]
  1 │ throw Error()
    ·       ───────
    ╰────
+  help: Provide a descriptive error message string.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should not be an empty string.
    ╭─[error_message.tsx:1:17]
  1 │ throw new Error('')
    ·                 ──
    ╰────
+  help: Provide a non-empty, descriptive error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should not be an empty string.
    ╭─[error_message.tsx:1:17]
  1 │ throw new Error(``)
    ·                 ──
    ╰────
+  help: Provide a non-empty, descriptive error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Pass a message to the TypeError constructor.
    ╭─[error_message.tsx:1:13]
  1 │ const foo = new TypeError()
    ·             ───────────────
    ╰────
+  help: Provide a descriptive error message string.
 
   ⚠ eslint-plugin-unicorn(error-message): Pass a message to the SyntaxError constructor.
    ╭─[error_message.tsx:1:13]
  1 │ const foo = new SyntaxError()
    ·             ─────────────────
    ╰────
+  help: Provide a descriptive error message string.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should be a string.
    ╭─[error_message.tsx:1:17]
  1 │ throw new Error([])
    ·                 ──
    ╰────
+  help: Pass a string as the error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should be a string.
    ╭─[error_message.tsx:1:17]
  1 │ throw new Error([foo])
    ·                 ─────
    ╰────
+  help: Pass a string as the error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should be a string.
    ╭─[error_message.tsx:1:17]
  1 │ throw new Error({})
    ·                 ──
    ╰────
+  help: Pass a string as the error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should be a string.
    ╭─[error_message.tsx:1:17]
  1 │ throw new Error({foo})
    ·                 ─────
    ╰────
+  help: Pass a string as the error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Pass a message to the RangeError constructor.
    ╭─[error_message.tsx:1:15]
  1 │ const error = new RangeError;
    ·               ──────────────
    ╰────
+  help: Provide a descriptive error message string.
 
   ⚠ eslint-plugin-unicorn(error-message): Pass a message to the AggregateError constructor.
    ╭─[error_message.tsx:1:1]
  1 │ new AggregateError(errors)
    · ──────────────────────────
    ╰────
+  help: Provide a descriptive error message string.
 
   ⚠ eslint-plugin-unicorn(error-message): Pass a message to the AggregateError constructor.
    ╭─[error_message.tsx:1:1]
  1 │ AggregateError(errors)
    · ──────────────────────
    ╰────
+  help: Provide a descriptive error message string.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should not be an empty string.
    ╭─[error_message.tsx:1:28]
  1 │ new AggregateError(errors, "")
    ·                            ──
    ╰────
+  help: Provide a non-empty, descriptive error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should not be an empty string.
    ╭─[error_message.tsx:1:28]
  1 │ new AggregateError(errors, ``)
    ·                            ──
    ╰────
+  help: Provide a non-empty, descriptive error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should not be an empty string.
    ╭─[error_message.tsx:1:28]
  1 │ new AggregateError(errors, "", extraArgument)
    ·                            ──
    ╰────
+  help: Provide a non-empty, descriptive error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should be a string.
    ╭─[error_message.tsx:1:28]
  1 │ new AggregateError(errors, [])
    ·                            ──
    ╰────
+  help: Pass a string as the error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should be a string.
    ╭─[error_message.tsx:1:28]
  1 │ new AggregateError(errors, [foo])
    ·                            ─────
    ╰────
+  help: Pass a string as the error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should be a string.
    ╭─[error_message.tsx:1:28]
  1 │ new AggregateError(errors, {})
    ·                            ──
    ╰────
+  help: Pass a string as the error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Error message should be a string.
    ╭─[error_message.tsx:1:28]
  1 │ new AggregateError(errors, {foo})
    ·                            ─────
    ╰────
+  help: Pass a string as the error message.
 
   ⚠ eslint-plugin-unicorn(error-message): Pass a message to the AggregateError constructor.
    ╭─[error_message.tsx:1:15]
  1 │ const error = new AggregateError;
    ·               ──────────────────
    ╰────
+  help: Provide a descriptive error message string.

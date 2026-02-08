@@ -13,6 +13,7 @@ fn prefer_blob_reading_methods_diagnostic(
     OxcDiagnostic::warn(format!(
         "Prefer `Blob#{good_method}()` over `FileReader#{bad_method}(blob)`."
     ))
+    .with_help(format!("Use `blob.{good_method}()` instead of `FileReader`."))
     .with_label(span)
 }
 

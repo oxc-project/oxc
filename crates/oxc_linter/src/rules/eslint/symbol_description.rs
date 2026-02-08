@@ -9,7 +9,9 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 pub struct SymbolDescription;
 
 fn symbol_description_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected Symbol to have a description.").with_label(span)
+    OxcDiagnostic::warn("Expected Symbol to have a description.")
+        .with_help("Pass a descriptive string argument to `Symbol()` for easier debugging.")
+        .with_label(span)
 }
 
 declare_oxc_lint!(

@@ -18,7 +18,9 @@ use oxc_span::{CompactStr, Span};
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
     let message = format!(r#""body" is not allowed when method is "{method}""#);
 
-    OxcDiagnostic::warn(message).with_label(span)
+    OxcDiagnostic::warn(message)
+        .with_help("Remove the `body` property or change the request method.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -14,6 +14,7 @@ use crate::{context::LintContext, rule::Rule};
 fn no_mutable_exports_diagnostic(span: Span, kind: VariableDeclarationKind) -> OxcDiagnostic {
     let kind_str = if kind == VariableDeclarationKind::Var { "var" } else { "let" };
     OxcDiagnostic::warn(format!("Exporting mutable '{kind_str}' binding, use 'const' instead."))
+        .with_help("Replace the `let` or `var` declaration with `const`.")
         .with_label(span)
 }
 

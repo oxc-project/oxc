@@ -8,6 +8,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn prefer_math_trunc_diagnostic(span: Span, bad_op: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer `Math.trunc()` over instead of `{bad_op} 0`."))
+        .with_help("Replace with `Math.trunc()` for clarity.")
         .with_label(span)
 }
 

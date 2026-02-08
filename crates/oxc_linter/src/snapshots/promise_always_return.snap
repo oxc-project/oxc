@@ -7,84 +7,98 @@ source: crates/oxc_linter/src/tester.rs
  1 │ hey.then(x => {})
    ·          ───────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(function() { })
    ·          ──────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(function() { }).then(x)
    ·          ──────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(function() { }).then(function() { })
    ·          ──────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:31]
  1 │ hey.then(function() { }).then(function() { })
    ·                               ──────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:39]
  1 │ hey.then(function() { return; }).then(function() { })
    ·                                       ──────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(function() { doSomethingWicked(); })
    ·          ───────────────────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(function() { if (x) { return x; } })
    ·          ───────────────────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(function() { if (x) { return x; } else { }})
    ·          ───────────────────────────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(function() { if (x) { } else { return x; }})
    ·          ───────────────────────────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(function() { if (x) { process.chdir(); } else { return x; }})
    ·          ────────────────────────────────────────────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(function() { if (x) { return you.then(function() { return x; }); } })
    ·          ────────────────────────────────────────────────────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:11]
  1 │ hey.then( x => { x ? x.id : null })
    ·           ────────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(function(x) { x ? x.id : null })
    ·          ───────────────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
     ╭─[always_return.tsx:2:21]
@@ -99,6 +113,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶     })
  10 │     })()
     ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
@@ -108,6 +123,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │ │       }
  5 │ ╰─▶ })
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
@@ -117,6 +133,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │ │       }
  5 │ ╰─▶ })
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:2:11]
@@ -125,12 +142,14 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────────────────────────────────────────────────────────
  3 │     .then(function(y) { console.log(y) /* no error here */ })
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:22]
  1 │ const foo = hey.then(function(x) {});
    ·                      ──────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:2:21]
@@ -139,6 +158,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────
  3 │ }
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:2:27]
@@ -147,45 +167,53 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ───────────────────────
  3 │ }
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:23]
  1 │ const foo = hey?.then(x => { console.log(x) })
    ·                       ───────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(x => { invalid = x })
    ·          ────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(x => { invalid['x'] = x })
    ·          ─────────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(x => { wind[x] = x })
    ·          ────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(x => { wind['x'] = x })
    ·          ──────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(x => { windows['x'] = x })
    ·          ─────────────────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.
 
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(x => { x() })
    ·          ────────────
    ╰────
+  help: Add a return statement or throw in the `then()` callback.

@@ -16,11 +16,15 @@ use crate::{
 };
 
 fn starts_with(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer String#startsWith over a regex with a caret.").with_label(span)
+    OxcDiagnostic::warn("Prefer String#startsWith over a regex with a caret.")
+        .with_help("Use `String.prototype.startsWith()` instead of a regex.")
+        .with_label(span)
 }
 
 fn ends_with(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer String#endsWith over a regex with a dollar sign.").with_label(span)
+    OxcDiagnostic::warn("Prefer String#endsWith over a regex with a dollar sign.")
+        .with_help("Use `String.prototype.endsWith()` instead of a regex.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

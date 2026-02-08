@@ -12,6 +12,7 @@ use crate::{
 
 fn no_global_assign_diagnostic(global_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Read-only global '{global_name}' should not be modified."))
+        .with_help("Assign the value to a local variable instead of modifying the global.")
         .with_label(span.label(format!("Read-only global '{global_name}' should not be modified.")))
 }
 

@@ -7,9 +7,11 @@ source: crates/oxc_linter/src/tester.rs
  1 │ fileReader.readAsArrayBuffer(blob)
    ·            ─────────────────
    ╰────
+  help: Use `blob.arrayBuffer()` instead of `FileReader`.
 
   ⚠ eslint-plugin-unicorn(prefer-blob-reading-methods): Prefer `Blob#text()` over `FileReader#readAsText(blob)`.
    ╭─[prefer_blob_reading_methods.tsx:1:12]
  1 │ fileReader.readAsText(blob)
    ·            ──────────
    ╰────
+  help: Use `blob.text()` instead of `FileReader`.

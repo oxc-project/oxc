@@ -11,7 +11,9 @@ use crate::{
 };
 
 fn no_set_state_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use `setState`.").with_label(span)
+    OxcDiagnostic::warn("Do not use `setState`.")
+        .with_help("Use an external state management solution instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

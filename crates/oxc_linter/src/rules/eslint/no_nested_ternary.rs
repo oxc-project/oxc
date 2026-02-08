@@ -7,7 +7,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_nested_ternary_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not nest ternary expressions.").with_label(span)
+    OxcDiagnostic::warn("Do not nest ternary expressions.")
+        .with_help("Replace the nested ternary with an `if-else` statement for better readability.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

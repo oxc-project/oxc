@@ -16,7 +16,9 @@ use crate::{
 };
 
 fn missing_parameters(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing parameters.").with_label(span)
+    OxcDiagnostic::warn("Missing parameters.")
+        .with_help("Pass a string and radix parameter to `parseInt()`.")
+        .with_label(span)
 }
 
 fn missing_radix(span: Span) -> OxcDiagnostic {
@@ -26,11 +28,14 @@ fn missing_radix(span: Span) -> OxcDiagnostic {
 }
 
 fn redundant_radix(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Redundant radix parameter.").with_label(span)
+    OxcDiagnostic::warn("Redundant radix parameter.")
+        .with_help("Remove the radix parameter `10` since it is the default.")
+        .with_label(span)
 }
 
 fn invalid_radix(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid radix parameter, must be an integer between 2 and 36.")
+        .with_help("Use a radix value between 2 and 36.")
         .with_label(span)
 }
 

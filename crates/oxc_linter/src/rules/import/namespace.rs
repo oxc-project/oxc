@@ -21,6 +21,7 @@ fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagn
     OxcDiagnostic::warn(format!(
         "{specifier_name:?} not found in imported namespace {namespace_name:?}."
     ))
+    .with_help("Verify the export name exists in the imported module.")
     .with_label(span)
 }
 
@@ -32,6 +33,7 @@ fn no_export_in_deeply_imported_namespace(
     OxcDiagnostic::warn(format!(
         "{specifier_name:?} not found in deeply imported namespace {namespace_name:?}."
     ))
+    .with_help("Verify the export name exists in the deeply imported module.")
     .with_label(span)
 }
 
@@ -39,11 +41,13 @@ fn computed_reference(span: Span, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Unable to validate computed reference to imported namespace {namespace_name:?}."
     ))
+    .with_help("Use a static property access instead of a computed reference.")
     .with_label(span)
 }
 
 fn assignment(span: Span, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Assignment to member of namespace {namespace_name:?}.'"))
+        .with_help("Do not assign to namespace members. Use a local variable instead.")
         .with_label(span)
 }
 

@@ -7,379 +7,427 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = new Generic<int>() as Foo;
    ·           ─────────────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<A>` instead of `as A`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = b as A;
    ·           ──────
    ╰────
+  help: Replace `as A` with `<A>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<readonly number[]>` instead of `as readonly number[]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = [1] as readonly number[];
    ·           ────────────────────────
    ╰────
+  help: Replace `as readonly number[]` with `<readonly number[]>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<a | b>` instead of `as a | b`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = 'string' as a | b;
    ·           ─────────────────
    ╰────
+  help: Replace `as a | b` with `<a | b>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<A>` instead of `as A`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = !'string' as A;
    ·           ──────────────
    ╰────
+  help: Replace `as A` with `<A>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<A>` instead of `as A`.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = (a as A) + b;
    ·            ──────
    ╰────
+  help: Replace `as A` with `<A>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = new Generic<string>() as Foo;
    ·           ────────────────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (Generic<string> as Foo)();
    ·                ──────────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (Generic<string> as Foo)('string');
    ·                ──────────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => ({ bar: 5 }) as Foo;
    ·                 ───────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => bar as Foo;
    ·                 ──────────
    ╰────
+  help: Replace `as Foo` with `<Foo>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = bar<string>`${'baz'}` as Foo;
    ·           ────────────────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<const>` instead of `as const`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = { key: 'value' } as const;
    ·           ─────────────────────────
    ╰────
+  help: Replace `as const` with `<const>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>new Generic<int>();
    ·           ───────────────────────
    ╰────
-  help: Replace `<Foo>new Generic<int>()` with `new Generic<int>() as Foo`.
+  help: Replace `<Foo>` with `as Foo` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as A` instead of `<A>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>b;
    ·           ────
    ╰────
-  help: Replace `<A>b` with `b as A`.
+  help: Replace `<A>` with `as A` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as readonly number[]` instead of `<readonly number[]>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <readonly number[]>[1];
    ·           ──────────────────────
    ╰────
-  help: Replace `<readonly number[]>[1]` with `[1] as readonly number[]`.
+  help: Replace `<readonly number[]>` with `as readonly number[]` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as a | b` instead of `<a | b>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <a | b>'string';
    ·           ───────────────
    ╰────
-  help: Replace `<a | b>'string'` with `'string' as a | b`.
+  help: Replace `<a | b>` with `as a | b` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as A` instead of `<A>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>!'string';
    ·           ────────────
    ╰────
-  help: Replace `<A>!'string'` with `!'string' as A`.
+  help: Replace `<A>` with `as A` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as A` instead of `<A>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>a + b;
    ·           ────
    ╰────
-  help: Replace `<A>a` with `(a as A)`.
+  help: Replace `<A>` with `as A` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>new Generic<string>();
    ·           ──────────────────────────
    ╰────
-  help: Replace `<Foo>new Generic<string>()` with `new Generic<string>() as Foo`.
+  help: Replace `<Foo>` with `as Foo` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (<Foo>Generic<string>)();
    ·                ────────────────────
    ╰────
-  help: Replace `<Foo>Generic<string>` with `(Generic<string>) as Foo`.
+  help: Replace `<Foo>` with `as Foo` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (<Foo>Generic<string>)('string');
    ·                ────────────────────
    ╰────
-  help: Replace `<Foo>Generic<string>` with `(Generic<string>) as Foo`.
+  help: Replace `<Foo>` with `as Foo` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => <Foo>{ bar: 5 };
    ·                 ───────────────
    ╰────
-  help: Replace `<Foo>{ bar: 5 }` with `({ bar: 5 } as Foo)`.
+  help: Replace `<Foo>` with `as Foo` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => <Foo>bar;
    ·                 ────────
    ╰────
-  help: Replace `<Foo>bar` with `(bar as Foo)`.
+  help: Replace `<Foo>` with `as Foo` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>bar<string>`${'baz'}`;
    ·           ──────────────────────────
    ╰────
-  help: Replace `<Foo>bar<string>`${'baz'}`` with `bar<string>`${'baz'}` as Foo`.
+  help: Replace `<Foo>` with `as Foo` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as const` instead of `<const>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <const>{ key: 'value' };
    ·           ───────────────────────
    ╰────
-  help: Replace `<const>{ key: 'value' }` with `{ key: 'value' } as const`.
+  help: Replace `<const>` with `as const` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = new Generic<int>() as Foo;
    ·           ─────────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = b as A;
    ·           ──────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = [1] as readonly number[];
    ·           ────────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = 'string' as a | b;
    ·           ─────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = !'string' as A;
    ·           ──────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = (a as A) + b;
    ·            ──────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = new Generic<string>() as Foo;
    ·           ────────────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (Generic<string> as Foo)();
    ·                ──────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (Generic<string> as Foo)('string');
    ·                ──────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => ({ bar: 5 }) as Foo;
    ·                 ───────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => bar as Foo;
    ·                 ──────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = bar<string>`${'baz'}` as Foo;
    ·           ────────────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>new Generic<int>();
    ·           ───────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>b;
    ·           ────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <readonly number[]>[1];
    ·           ──────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <a | b>'string';
    ·           ───────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>!'string';
    ·           ────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>a + b;
    ·           ────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>new Generic<string>();
    ·           ──────────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (<Foo>Generic<string>)();
    ·                ────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (<Foo>Generic<string>)('string');
    ·                ────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => <Foo>{ bar: 5 };
    ·                 ───────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => <Foo>bar;
    ·                 ────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>bar<string>`${'baz'}`;
    ·           ──────────────────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as Foo<int>;
    ·           ──────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as a | b;
    ·           ───────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = ({} as A) + b;
    ·            ───────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo<int>>{};
    ·           ────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <a | b>{};
    ·           ─────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>{} + b;
    ·           ─────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as Foo<int>;
    ·           ──────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as a | b;
    ·           ───────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = ({} as A) + b;
    ·            ───────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:7]
  1 │ print({ bar: 5 } as Foo);
    ·       ─────────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print({ bar: 5 } as Foo);
    ·           ─────────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -388,66 +436,77 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────────
  4 │             }
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function b(x = {} as Foo.Bar) {}
    ·                ─────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function c(x = {} as Foo) {}
    ·                ─────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print?.({ bar: 5 } as Foo);
    ·         ─────────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:13]
  1 │ print?.call({ bar: 5 } as Foo);
    ·             ─────────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${{ bar: 5 } as Foo}`;
    ·         ─────────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo<int>>{};
    ·           ────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <a | b>{};
    ·           ─────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>{} + b;
    ·           ─────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:7]
  1 │ print(<Foo>{ bar: 5 });
    ·       ───────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print(<Foo>{ bar: 5 });
    ·           ───────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -456,52 +515,56 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────────────
  4 │             }
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print?.(<Foo>{ bar: 5 });
    ·         ───────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:13]
  1 │ print?.call(<Foo>{ bar: 5 });
    ·             ───────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${<Foo>{ bar: 5 }}`;
    ·         ───────────────
    ╰────
+  help: Use a type annotation instead of asserting an object literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const a = <any>(b, c);
    ·           ───────────
    ╰────
-  help: Replace `<any>(b, c)` with `(b, c) as any`.
+  help: Replace `<any>` with `as any` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const f = <any>(() => {});
    ·           ───────────────
    ╰────
-  help: Replace `<any>(() => {})` with `(() => {}) as any`.
+  help: Replace `<any>` with `as any` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const f = <any>function () {};
    ·           ───────────────────
    ╰────
-  help: Replace `<any>function () {}` with `function () {} as any`.
+  help: Replace `<any>` with `as any` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const f = <any>(async () => {});
    ·           ─────────────────────
    ╰────
-  help: Replace `<any>(async () => {})` with `(async () => {}) as any`.
+  help: Replace `<any>` with `as any` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
    ╭─[consistent_type_assertions.ts:3:25]
@@ -510,7 +573,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────────
  4 │             }
    ╰────
-  help: Replace `<any>(yield a)` with `(yield a) as any`.
+  help: Replace `<any>` with `as any` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
    ╭─[consistent_type_assertions.ts:3:24]
@@ -519,69 +582,77 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────────────
  4 │                   
    ╰────
-  help: Replace `<any>(x <<= y)` with `(x <<= y) as any`.
+  help: Replace `<any>` with `as any` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const ternary = <any>(true ? x : y);
    ·                 ───────────────────
    ╰────
-  help: Replace `<any>(true ? x : y)` with `(true ? x : y) as any`.
+  help: Replace `<any>` with `as any` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = [] as string[];
    ·           ──────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <string[]>[];
    ·           ────────────
    ╰────
+  help: Use type annotations instead of type assertions.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<string[]>` instead of `as string[]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = [] as string[];
    ·           ──────────────
    ╰────
+  help: Replace `as string[]` with `<string[]>` for angle-bracket assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as string[]` instead of `<string[]>`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <string[]>[];
    ·           ────────────
    ╰────
-  help: Replace `<string[]>[]` with `[] as string[]`.
+  help: Replace `<string[]>` with `as string[]` for as-assertion style.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = [] as string[];
    ·           ──────────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <string[]>[];
    ·           ────────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:7]
  1 │ print([5] as Foo);
    ·       ──────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print([5] as Foo);
    ·           ──────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function b(x = [5] as Foo.Bar) {}
    ·                ──────────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -590,30 +661,35 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────
  4 │             }
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${[5] as Foo}`;
    ·         ──────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:19]
  1 │ const foo = () => [5] as Foo;
    ·                   ──────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print(<Foo>[5]);
    ·           ────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function b(x = <Foo.Bar>[5]) {}
    ·                ────────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -622,21 +698,25 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────
  4 │             }
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${<Foo>[5]}`;
    ·         ────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:13]
  1 │ const foo = <Foo>[5];
    ·             ────────
    ╰────
+  help: Use a type annotation instead of asserting an array literal.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:25]
  1 │ const foo = <Foo style={{ bar: 5 } as Bar} />;
    ·                         ─────────────────
    ╰────
+  help: Use type annotations instead of type assertions.

@@ -17,11 +17,13 @@ use crate::{
 
 fn has_arg_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use type based declaration instead of runtime declaration")
+        .with_help("Use `defineEmits<{...}>()` with type parameters instead.")
         .with_label(span)
 }
 
 fn has_type_arg_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use runtime declaration instead of type based declaration")
+        .with_help("Use `defineEmits([...])` with a runtime array instead.")
         .with_label(span)
 }
 
@@ -29,6 +31,7 @@ fn has_type_call_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Use new type literal declaration instead of the old call signature declaration",
     )
+    .with_help("Replace call signatures with the new type literal syntax.")
     .with_label(span)
 }
 

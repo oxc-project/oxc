@@ -7,12 +7,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let foo; export { foo }; export * from "./export-all"
    ·                   ───    ────────────────────────────
    ╰────
+  help: Remove the duplicate export or rename one of them.
 
   ⚠ eslint-plugin-import(export): Multiple exports of name 'foo'.
    ╭─[index.ts:1:26]
  1 │ let foo; export { foo as "foo" }; export * from "./export-all"
    ·                          ─────    ────────────────────────────
    ╰────
+  help: Remove the duplicate export or rename one of them.
 
   × Identifier `Foo` has already been declared
    ╭─[index.ts:2:29]

@@ -19,23 +19,35 @@ use crate::{
 };
 
 fn use_angle_bracket_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use `<{cast}>` instead of `as {cast}`.")).with_label(span)
+    OxcDiagnostic::warn(format!("Use `<{cast}>` instead of `as {cast}`."))
+        .with_help(format!(
+            "Replace `as {cast}` with `<{cast}>` for angle-bracket assertion style."
+        ))
+        .with_label(span)
 }
 
 fn use_as_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use `as {cast}` instead of `<{cast}>`.")).with_label(span)
+    OxcDiagnostic::warn(format!("Use `as {cast}` instead of `<{cast}>`."))
+        .with_help(format!("Replace `<{cast}>` with `as {cast}` for as-assertion style."))
+        .with_label(span)
 }
 
 fn never_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use any type assertions.").with_label(span)
+    OxcDiagnostic::warn("Do not use any type assertions.")
+        .with_help("Use type annotations instead of type assertions.")
+        .with_label(span)
 }
 
 fn unexpected_object_type_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Always prefer `const x: T = { ... }`.").with_label(span)
+    OxcDiagnostic::warn("Always prefer `const x: T = { ... }`.")
+        .with_help("Use a type annotation instead of asserting an object literal.")
+        .with_label(span)
 }
 
 fn unexpected_array_type_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Always prefer `const x: T[] = [ ... ]`.").with_label(span)
+    OxcDiagnostic::warn("Always prefer `const x: T[] = [ ... ]`.")
+        .with_help("Use a type annotation instead of asserting an array literal.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]

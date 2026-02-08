@@ -6,7 +6,9 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 fn prefer_wait_to_then_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer await to then()/catch()/finally()").with_label(span)
+    OxcDiagnostic::warn("Prefer await to then()/catch()/finally()")
+        .with_help("Refactor to use `await` instead of `.then()`/`.catch()`/`.finally()`.")
+        .with_label(span)
 }
 
 use crate::{

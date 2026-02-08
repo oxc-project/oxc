@@ -7,234 +7,235 @@ source: crates/oxc_linter/src/tester.rs
  1 │ Object.hasOwnProperty.call(obj, 'foo')
    · ──────────────────────────────────────
    ╰────
-  help: Replace `Object.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
  1 │ Object.hasOwnProperty.call(obj, property)
    · ─────────────────────────────────────────
    ╰────
-  help: Replace `Object.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
  1 │ Object.prototype.hasOwnProperty.call(obj, 'foo')
    · ────────────────────────────────────────────────
    ╰────
-  help: Replace `Object.prototype.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
  1 │ ({}).hasOwnProperty.call(obj, 'foo')
    · ────────────────────────────────────
    ╰────
-  help: Replace `({}).hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
  1 │ Object/* comment */.prototype.hasOwnProperty.call(a, b);
    · ───────────────────────────────────────────────────────
    ╰────
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
  1 │ const hasProperty = Object.prototype.hasOwnProperty.call(object, property);
    ·                     ──────────────────────────────────────────────────────
    ╰────
-  help: Replace `Object.prototype.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:24]
  1 │ const hasProperty = (( Object.prototype.hasOwnProperty.call(object, property) ));
    ·                        ──────────────────────────────────────────────────────
    ╰────
-  help: Replace `Object.prototype.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
  1 │ const hasProperty = (( Object.prototype.hasOwnProperty.call ))(object, property);
    ·                     ────────────────────────────────────────────────────────────
    ╰────
-  help: Replace `Object.prototype.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
  1 │ const hasProperty = (( Object.prototype.hasOwnProperty )).call(object, property);
    ·                     ────────────────────────────────────────────────────────────
    ╰────
-  help: Replace `(( Object.prototype.hasOwnProperty )).call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
  1 │ const hasProperty = (( Object.prototype )).hasOwnProperty.call(object, property);
    ·                     ────────────────────────────────────────────────────────────
    ╰────
-  help: Replace `(( Object.prototype )).hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
  1 │ const hasProperty = (( Object )).prototype.hasOwnProperty.call(object, property);
    ·                     ────────────────────────────────────────────────────────────
    ╰────
-  help: Replace `(( Object )).prototype.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
  1 │ const hasProperty = {}.hasOwnProperty.call(object, property);
    ·                     ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:19]
  1 │ const hasProperty={}.hasOwnProperty.call(object, property);
    ·                   ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:24]
  1 │ const hasProperty = (( {}.hasOwnProperty.call(object, property) ));
    ·                        ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
  1 │ const hasProperty = (( {}.hasOwnProperty.call ))(object, property);
    ·                     ──────────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
  1 │ const hasProperty = (( {}.hasOwnProperty )).call(object, property);
    ·                     ──────────────────────────────────────────────
    ╰────
-  help: Replace `(( {}.hasOwnProperty )).call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
  1 │ const hasProperty = (( {} )).hasOwnProperty.call(object, property);
    ·                     ──────────────────────────────────────────────
    ╰────
-  help: Replace `(( {} )).hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:23]
  1 │ function foo(){return {}.hasOwnProperty.call(object, property)}
    ·                       ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:22]
  1 │ function foo(){return{}.hasOwnProperty.call(object, property)}
    ·                      ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with ` Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:33]
  1 │ function foo(){return/*comment*/{}.hasOwnProperty.call(object, property)}
    ·                                 ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:34]
  1 │ async function foo(){return await{}.hasOwnProperty.call(object, property)}
    ·                                  ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with ` Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:45]
  1 │ async function foo(){return await/*comment*/{}.hasOwnProperty.call(object, property)}
    ·                                             ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:16]
  1 │ for (const x of{}.hasOwnProperty.call(object, property).toString());
    ·                ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with ` Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:27]
  1 │ for (const x of/*comment*/{}.hasOwnProperty.call(object, property).toString());
    ·                           ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:16]
  1 │ for (const x in{}.hasOwnProperty.call(object, property).toString());
    ·                ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with ` Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:27]
  1 │ for (const x in/*comment*/{}.hasOwnProperty.call(object, property).toString());
    ·                           ────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:22]
  1 │ function foo(){return({}.hasOwnProperty.call)(object, property)}
    ·                      ──────────────────────────────────────────
    ╰────
-  help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
  1 │ Object['prototype']['hasOwnProperty']['call'](object, property);
    · ───────────────────────────────────────────────────────────────
    ╰────
-  help: Replace `Object['prototype']['hasOwnProperty']['call']` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
  1 │ Object[`prototype`][`hasOwnProperty`][`call`](object, property);
    · ───────────────────────────────────────────────────────────────
    ╰────
-  help: Replace `Object[`prototype`][`hasOwnProperty`][`call`]` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
  1 │ Object['hasOwnProperty']['call'](object, property);
    · ──────────────────────────────────────────────────
    ╰────
-  help: Replace `Object['hasOwnProperty']['call']` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
  1 │ Object[`hasOwnProperty`][`call`](object, property);
    · ──────────────────────────────────────────────────
    ╰────
-  help: Replace `Object[`hasOwnProperty`][`call`]` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
  1 │ ({})['hasOwnProperty']['call'](object, property);
    · ────────────────────────────────────────────────
    ╰────
-  help: Replace `({})['hasOwnProperty']['call']` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
  1 │ ({})[`hasOwnProperty`][`call`](object, property);
    · ────────────────────────────────────────────────
    ╰────
-  help: Replace `({})[`hasOwnProperty`][`call`]` with `Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:3]
  1 │ Object.prototype.hasOwnProperty.call(C,x);
    ·  ─────────────────────────────────────────
    ╰────
-  help: Replace `Object.prototype.hasOwnProperty.call` with ` Object.hasOwn`.
+  help: Use `Object.hasOwn(obj, prop)` instead.

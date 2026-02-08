@@ -8,7 +8,9 @@ use crate::{context::LintContext, rule::Rule};
 
 fn exports_last_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Export statements should appear at the end of the file").with_label(span)
+    OxcDiagnostic::warn("Export statements should appear at the end of the file")
+        .with_help("Move export statements to the end of the file.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

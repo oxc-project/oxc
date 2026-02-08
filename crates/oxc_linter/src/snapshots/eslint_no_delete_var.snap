@@ -7,3 +7,4 @@ source: crates/oxc_linter/src/tester.rs
  1 │ delete x
    · ────────
    ╰────
+  help: Use `delete` only on object properties, not on variables.

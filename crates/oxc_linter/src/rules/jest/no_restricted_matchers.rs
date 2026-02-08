@@ -17,7 +17,9 @@ use crate::{
 };
 
 fn restricted_chain(chain_call: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use of `{chain_call}` is disallowed")).with_label(span)
+    OxcDiagnostic::warn(format!("Use of `{chain_call}` is disallowed"))
+        .with_help(format!("Avoid using `{chain_call}` in tests."))
+        .with_label(span)
 }
 
 fn restricted_chain_with_message(chain_call: &str, message: &str, span: Span) -> OxcDiagnostic {

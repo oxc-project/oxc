@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────────────────────
  4 │                   </script>
    ╰────
+  help: Destructure directly from `defineProps()` instead of assigning to a variable.
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
    ╭─[define_props_destructuring.tsx:3:46]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                              ────────────────────
  4 │                   </script>
    ╰────
+  help: Destructure directly from `defineProps()` instead of assigning to a variable.
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Avoid using `withDefaults` with destructuring.
    ╭─[define_props_destructuring.tsx:3:35]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────────────
  4 │                   </script>
    ╰────
+  help: Use default values in the destructuring pattern instead of `withDefaults`.
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Prefer destructuring from `defineProps` directly.
    ╭─[define_props_destructuring.tsx:3:46]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                              ───────────────────────────────
  4 │                   </script>
    ╰────
+  help: Destructure directly from `defineProps()` instead of assigning to a variable.
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Avoid using `withDefaults` with destructuring.
    ╭─[define_props_destructuring.tsx:3:35]
@@ -41,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────────────
  4 │                   </script>
    ╰────
+  help: Use default values in the destructuring pattern instead of `withDefaults`.
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Avoid destructuring from `defineProps`.
    ╭─[define_props_destructuring.tsx:3:35]
@@ -49,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────────────────────
  4 │                   </script>
    ╰────
+  help: Assign `defineProps()` to a variable and access properties from it.
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Avoid destructuring from `defineProps`.
    ╭─[define_props_destructuring.tsx:3:48]
@@ -57,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                ────────────────────
  4 │                   </script>
    ╰────
+  help: Assign `defineProps()` to a variable and access properties from it.
 
   ⚠ eslint-plugin-vue(define-props-destructuring): Avoid destructuring from `defineProps`.
    ╭─[define_props_destructuring.tsx:3:35]
@@ -65,3 +72,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ───────────────────────────────
  4 │                   </script>
    ╰────
+  help: Assign `defineProps()` to a variable and access properties from it.

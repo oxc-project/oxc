@@ -13,11 +13,13 @@ use crate::{
 
 fn known_method(span: Span, obj_name: &str, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer using `{obj_name}.prototype.{method_name}`."))
+        .with_help(format!("Use `{obj_name}.prototype.{method_name}` instead."))
         .with_label(span)
 }
 
 fn unknown_method(span: Span, obj_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer using method from `{obj_name}.prototype`."))
+        .with_help(format!("Use the method from `{obj_name}.prototype` instead."))
         .with_label(span)
 }
 

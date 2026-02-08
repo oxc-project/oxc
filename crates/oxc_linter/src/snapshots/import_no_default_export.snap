@@ -7,6 +7,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ export default function bar() {};
    ·        ───────
    ╰────
+  help: Use a named export instead of a default export.
 
   ⚠ eslint-plugin-import(no-default-export): Prefer named exports
    ╭─[index.ts:2:8]
@@ -14,27 +15,32 @@ source: crates/oxc_linter/src/tester.rs
  2 │ export default bar;
    ·        ───────
    ╰────
+  help: Use a named export instead of a default export.
 
   ⚠ eslint-plugin-import(no-default-export): Prefer named exports
    ╭─[index.ts:1:8]
  1 │ export default class Bar {};
    ·        ───────
    ╰────
+  help: Use a named export instead of a default export.
 
   ⚠ eslint-plugin-import(no-default-export): Prefer named exports
    ╭─[index.ts:1:8]
  1 │ export default function() {};
    ·        ───────
    ╰────
+  help: Use a named export instead of a default export.
 
   ⚠ eslint-plugin-import(no-default-export): Prefer named exports
    ╭─[index.ts:1:8]
  1 │ export default class {};
    ·        ───────
    ╰────
+  help: Use a named export instead of a default export.
 
   ⚠ eslint-plugin-import(no-default-export): Prefer named exports
    ╭─[index.ts:1:26]
  1 │ let foo; export { foo as default }
    ·                          ───────
    ╰────
+  help: Use a named export instead of a default export.

@@ -14,11 +14,13 @@ use crate::{
 
 fn unexpected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Components should use `createReactClass` instead of an ES2015 class.")
+        .with_help("Rewrite this component using `createReactClass`.")
         .with_label(span)
 }
 
 fn expected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Components should use an ES2015 class instead of `createReactClass`.")
+        .with_help("Rewrite this component using an ES2015 class.")
         .with_label(span)
 }
 

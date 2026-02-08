@@ -14,7 +14,9 @@ static ESCAPED_SINGLE_QUOTE: &str = "&apos; or &lsquo; or &#39; or &rsquo;";
 
 fn no_unescaped_entities_diagnostic(span: Span, unescaped: char) -> OxcDiagnostic {
     let escaped = if unescaped == '"' { ESCAPED_DOUBLE_QUOTE } else { ESCAPED_SINGLE_QUOTE };
-    OxcDiagnostic::warn(format!("`{unescaped}` can be escaped with {escaped}")).with_label(span)
+    OxcDiagnostic::warn(format!("`{unescaped}` can be escaped with {escaped}"))
+        .with_help(format!("Replace `{unescaped}` with the HTML entity {escaped}."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

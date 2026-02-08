@@ -7,15 +7,18 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var x = new Promise(function (x, y) {})
    ·         ───────────────────────────────
    ╰────
+  help: Return the value directly or use an `async` function instead.
 
   ⚠ eslint-plugin-promise(avoid-new): Avoid creating new promises
    ╭─[avoid_new.tsx:1:1]
  1 │ new Promise()
    · ─────────────
    ╰────
+  help: Return the value directly or use an `async` function instead.
 
   ⚠ eslint-plugin-promise(avoid-new): Avoid creating new promises
    ╭─[avoid_new.tsx:1:7]
  1 │ Thing(new Promise(() => {}))
    ·       ─────────────────────
    ╰────
+  help: Return the value directly or use an `async` function instead.

@@ -14,11 +14,13 @@ use crate::{
 
 fn use_runtime_declaration_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use runtime declaration instead of type-based declaration")
+        .with_help("Use `defineProps({...})` with a runtime object instead.")
         .with_label(span)
 }
 
 fn use_type_based_declaration_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use type-based declaration instead of runtime declaration")
+        .with_help("Use `defineProps<{...}>()` with type parameters instead.")
         .with_label(span)
 }
 

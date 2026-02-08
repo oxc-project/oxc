@@ -10,7 +10,9 @@ use crate::{
 };
 
 fn no_extra_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("extra non-null assertion").with_label(span)
+    OxcDiagnostic::warn("extra non-null assertion")
+        .with_help("Remove the extra `!` non-null assertion.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

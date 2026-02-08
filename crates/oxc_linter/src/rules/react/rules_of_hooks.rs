@@ -37,6 +37,7 @@ mod diagnostics {
             React component names must start with an uppercase letter. \
             React Hook names must start with the word \"use\".",
         ))
+        .with_help("Move the Hook call to a React function component or a custom Hook function.")
         .with_labels(vec![
             react_hook_span.primary_label("Hook is called here"),
             outer_function_span.label("Outer function"),
@@ -49,6 +50,7 @@ mod diagnostics {
             "React Hook {hook_name:?} is called conditionally. React Hooks must be \
             called in the exact same order in every component render."
         ))
+        .with_help("Move the Hook call to the top level of the component.")
         .with_label(span)
         .with_error_code_scope(SCOPE)
     }
@@ -59,6 +61,7 @@ mod diagnostics {
             because it is called in a loop. React Hooks must be called in the \
             exact same order in every component render."
         ))
+        .with_help("Move the Hook call outside of the loop.")
         .with_label(span)
         .with_error_code_scope(SCOPE)
     }
@@ -69,6 +72,7 @@ mod diagnostics {
             must be called in a React function component or a custom React \
             Hook function."
         ))
+        .with_help("Call Hooks inside a React function component or a custom Hook function.")
         .with_label(span)
         .with_error_code_scope(SCOPE)
     }
@@ -77,6 +81,7 @@ mod diagnostics {
         OxcDiagnostic::warn(format!(
             "React Hook {func_name:?} cannot be called in an async function. "
         ))
+        .with_help("Remove the `async` keyword from the function or move the Hook call outside.")
         .with_label(span)
         .with_error_code_scope(SCOPE)
     }
@@ -87,6 +92,7 @@ mod diagnostics {
             must be called in a React function component or a custom React \
             Hook function."
         ))
+        .with_help("Convert the class component to a function component to use Hooks.")
         .with_label(span)
         .with_error_code_scope(SCOPE)
     }
@@ -97,6 +103,7 @@ mod diagnostics {
             must be called in a React function component or a custom React \
             Hook function."
         ))
+        .with_help("Move the Hook call to the outer component or custom Hook.")
         .with_label(span)
         .with_error_code_scope(SCOPE)
     }

@@ -24,17 +24,21 @@ fn unexpected_syntax_order_diagnostic(
     span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected '{curr_kind}' syntax before '{prev_kind}' syntax."))
+        .with_help("Reorder the imports so that the import kinds appear in the configured order.")
         .with_label(span)
 }
 
 fn sort_imports_alphabetically_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Imports should be sorted alphabetically.").with_label(span)
+    OxcDiagnostic::warn("Imports should be sorted alphabetically.")
+        .with_help("Reorder the import statements alphabetically.")
+        .with_label(span)
 }
 
 fn sort_members_alphabetically_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Member '{name}' of the import declaration should be sorted alphabetically."
     ))
+    .with_help("Reorder the import members alphabetically.")
     .with_label(span)
 }
 

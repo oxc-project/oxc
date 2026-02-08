@@ -15,6 +15,7 @@ fn no_redundant_should_component_update_diagnostic(
     OxcDiagnostic::warn(format!(
         "{component_name} does not need `shouldComponentUpdate` when extending `React.PureComponent`."
     ))
+    .with_help("Remove `shouldComponentUpdate`. `PureComponent` already implements shallow comparison.")
     .with_label(span)
 }
 

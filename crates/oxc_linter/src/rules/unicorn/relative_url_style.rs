@@ -17,11 +17,15 @@ use crate::{
 };
 
 fn never_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Remove the `./` prefix from the relative URL.").with_label(span)
+    OxcDiagnostic::warn("Remove the `./` prefix from the relative URL.")
+        .with_help("Remove the unnecessary `./` prefix.")
+        .with_label(span)
 }
 
 fn always_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Add a `./` prefix to the relative URL.").with_label(span)
+    OxcDiagnostic::warn("Add a `./` prefix to the relative URL.")
+        .with_help("Add a `./` prefix to make the relative URL explicit.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]

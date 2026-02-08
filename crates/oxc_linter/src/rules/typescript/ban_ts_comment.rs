@@ -14,6 +14,7 @@ fn comment(ts_comment_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Do not use @ts-{ts_comment_name} because it alters compilation errors."
     ))
+    .with_help(format!("Remove the @ts-{ts_comment_name} comment and fix the underlying issue."))
     .with_label(span)
 }
 
@@ -27,6 +28,7 @@ fn comment_requires_description(ts_comment_name: &str, min_len: u64, span: Span)
     OxcDiagnostic::warn(format!(
         "Include a description after the @ts-{ts_comment_name} directive to explain why the @ts-{ts_comment_name} is necessary. The description must be {min_len} characters or longer."
     ))
+    .with_help("Add a description explaining why this directive is necessary.")
     .with_label(span)
 }
 
@@ -38,6 +40,7 @@ fn comment_description_not_match_pattern(
     OxcDiagnostic::warn(format!(
         "The description for the @ts-{ts_comment_name} directive must match the {pattern} format."
     ))
+    .with_help(format!("Update the description to match the required `{pattern}` format."))
     .with_label(span)
 }
 

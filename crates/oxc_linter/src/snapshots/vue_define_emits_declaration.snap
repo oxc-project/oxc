@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────────────────────────
  4 │                    </script>
    ╰────
+  help: Use `defineEmits<{...}>()` with type parameters instead.
 
   ⚠ eslint-plugin-vue(define-emits-declaration): Use type based declaration instead of runtime declaration
    ╭─[define_emits_declaration.tsx:3:24]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────────────────────────
  4 │                    </script>
    ╰────
+  help: Use `defineEmits<{...}>()` with type parameters instead.
 
   ⚠ eslint-plugin-vue(define-emits-declaration): Use type based declaration instead of runtime declaration
    ╭─[define_emits_declaration.tsx:3:24]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────────────────────────
  4 │                    </script>
    ╰────
+  help: Use `defineEmits<{...}>()` with type parameters instead.
 
   ⚠ eslint-plugin-vue(define-emits-declaration): Use runtime declaration instead of type based declaration
    ╭─[define_emits_declaration.tsx:3:25]
@@ -35,6 +38,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                     }>()
  7 │                         </script>
    ╰────
+  help: Use `defineEmits([...])` with a runtime array instead.
 
   ⚠ eslint-plugin-vue(define-emits-declaration): Use new type literal declaration instead of the old call signature declaration
    ╭─[define_emits_declaration.tsx:4:14]
@@ -43,6 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────────────────────────────
  5 │                       (e: 'update', value: string): void
    ╰────
+  help: Replace call signatures with the new type literal syntax.
 
   ⚠ eslint-plugin-vue(define-emits-declaration): Use new type literal declaration instead of the old call signature declaration
    ╭─[define_emits_declaration.tsx:5:14]
@@ -51,6 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──────────────────────────────────
  6 │                     }>()
    ╰────
+  help: Replace call signatures with the new type literal syntax.
 
   ⚠ eslint-plugin-vue(define-emits-declaration): Use new type literal declaration instead of the old call signature declaration
    ╭─[define_emits_declaration.tsx:5:14]
@@ -59,6 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──────────────────────────────────
  6 │                     }>()
    ╰────
+  help: Replace call signatures with the new type literal syntax.
 
   ⚠ eslint-plugin-vue(define-emits-declaration): Use new type literal declaration instead of the old call signature declaration
    ╭─[define_emits_declaration.tsx:3:37]
@@ -67,3 +74,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                                              ─────────────────────────────────
  4 │                     </script>
    ╰────
+  help: Replace call signatures with the new type literal syntax.

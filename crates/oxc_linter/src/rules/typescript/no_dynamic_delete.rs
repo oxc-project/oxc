@@ -39,7 +39,9 @@ declare_oxc_lint!(
 );
 
 fn no_dynamic_delete_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not delete dynamically computed property keys.").with_label(span)
+    OxcDiagnostic::warn("Do not delete dynamically computed property keys.")
+        .with_help("Use `Map` or `Set` instead of object properties for dynamic keys.")
+        .with_label(span)
 }
 
 impl Rule for NoDynamicDelete {

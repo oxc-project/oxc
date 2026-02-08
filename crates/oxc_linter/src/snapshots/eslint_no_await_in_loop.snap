@@ -7,99 +7,116 @@ source: crates/oxc_linter/src/tester.rs
  1 │ async function foo() { while (baz) { await bar; } }
    ·                                      ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:31]
  1 │ async function foo() { while (await foo()) {  } }
    ·                               ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:42]
  1 │ async function foo() { while (baz) { for await (x of xs); } }
    ·                                          ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:47]
  1 │ async function foo() { for (var bar of baz) { await bar; } }
    ·                                               ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:45]
  1 │ async function foo() { for (var bar of baz) await bar; }
    ·                                             ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:47]
  1 │ async function foo() { for (var bar in baz) { await bar; } }
    ·                                               ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:50]
  1 │ async function foo() { for (var i; i < n; i++) { await bar; } }
    ·                                                  ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:36]
  1 │ async function foo() { for (var i; await foo(i); i++) {  } }
    ·                                    ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:47]
  1 │ async function foo() { for (var i; i < n; i = await bar) {  } }
    ·                                               ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:29]
  1 │ async function foo() { do { await bar; } while (baz); }
    ·                             ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:38]
  1 │ async function foo() { do { } while (await bar); }
    ·                                      ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:54]
  1 │ async function foo() { while (true) { if (bar) { foo(await bar); } } }
    ·                                                      ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:42]
  1 │ async function foo() { while (xyz || 5 > await x) {  } }
    ·                                          ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:60]
  1 │ async function foo() { for await (var x of xs) { while (1) await f(x) } }
    ·                                                            ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:16]
  1 │ while (true) { await using resource = getResource(); }
    ·                ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:12]
  1 │ for (;;) { await using resource = getResource(); }
    ·            ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.
 
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:6]
  1 │ for (await using resource of resources) {}
    ·      ─────
    ╰────
+  help: Refactor to use `Promise.all()` or move the `await` outside the loop for better performance.

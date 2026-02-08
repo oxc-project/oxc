@@ -9,11 +9,15 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn prefer_top_level_await_over_promise_chain_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer top-level await over using a promise chain.").with_label(span)
+    OxcDiagnostic::warn("Prefer top-level await over using a promise chain.")
+        .with_help("Use `await` at the top level instead of `.then()`.")
+        .with_label(span)
 }
 
 fn prefer_top_level_await_over_async_iife_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer top-level await over using an async IIFE.").with_label(span)
+    OxcDiagnostic::warn("Prefer top-level await over using an async IIFE.")
+        .with_help("Use `await` at the top level instead of an async IIFE.")
+        .with_label(span)
 }
 
 fn prefer_top_level_await_over_async_function_call_diagnostic(span: Span) -> OxcDiagnostic {

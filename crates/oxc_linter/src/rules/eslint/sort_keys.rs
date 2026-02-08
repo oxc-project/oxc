@@ -58,7 +58,9 @@ impl Default for SortKeysOptions {
 pub struct SortKeysConfig(SortOrder, SortKeysOptions);
 
 fn sort_properties_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Object keys should be sorted").with_label(span)
+    OxcDiagnostic::warn("Object keys should be sorted")
+        .with_help("Sort the object keys alphabetically.")
+        .with_label(span)
 }
 
 declare_oxc_lint!(

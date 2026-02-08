@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────────────
  4 │                         return true;
    ╰────
+  help: Remove `shouldComponentUpdate`. `PureComponent` already implements shallow comparison.
 
   ⚠ eslint-plugin-react(no-redundant-should-component-update): Foo does not need `shouldComponentUpdate` when extending `React.PureComponent`.
    ╭─[no_redundant_should_component_update.tsx:3:14]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────────────
  4 │                         return true;
    ╰────
+  help: Remove `shouldComponentUpdate`. `PureComponent` already implements shallow comparison.
 
   ⚠ eslint-plugin-react(no-redundant-should-component-update): Foo does not need `shouldComponentUpdate` when extending `React.PureComponent`.
    ╭─[no_redundant_should_component_update.tsx:3:14]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────────────
  4 │                         return true;
    ╰────
+  help: Remove `shouldComponentUpdate`. `PureComponent` already implements shallow comparison.
 
   ⚠ eslint-plugin-react(no-redundant-should-component-update): Bar does not need `shouldComponentUpdate` when extending `React.PureComponent`.
    ╭─[no_redundant_should_component_update.tsx:4:16]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────────────────────
  5 │                           return true;
    ╰────
+  help: Remove `shouldComponentUpdate`. `PureComponent` already implements shallow comparison.
 
   ⚠ eslint-plugin-react(no-redundant-should-component-update): Bar does not need `shouldComponentUpdate` when extending `React.PureComponent`.
    ╭─[no_redundant_should_component_update.tsx:4:16]
@@ -41,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────────────────────
  5 │                           return true;
    ╰────
+  help: Remove `shouldComponentUpdate`. `PureComponent` already implements shallow comparison.
 
   ⚠ eslint-plugin-react(no-redundant-should-component-update): Foo does not need `shouldComponentUpdate` when extending `React.PureComponent`.
    ╭─[no_redundant_should_component_update.tsx:3:14]
@@ -49,3 +54,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────────────
  4 │                         return true;
    ╰────
+  help: Remove `shouldComponentUpdate`. `PureComponent` already implements shallow comparison.

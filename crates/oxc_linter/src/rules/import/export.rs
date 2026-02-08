@@ -10,6 +10,7 @@ use crate::{ModuleRecord, context::LintContext, rule::Rule};
 
 fn no_named_export(module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No named exports found in module '{module_name}'"))
+        .with_help("Verify the module exports the expected names.")
         .with_label(span)
 }
 
@@ -93,6 +94,7 @@ impl Rule for Export {
 
                 ctx.diagnostic(
                     OxcDiagnostic::warn(format!("Multiple exports of name '{name}'."))
+                        .with_help("Remove the duplicate export or rename one of them.")
                         .with_labels(labels),
                 );
             }

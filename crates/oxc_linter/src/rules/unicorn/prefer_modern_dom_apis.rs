@@ -14,6 +14,7 @@ fn prefer_modern_dom_apis_diagnostic(
     span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer using `{good_method}` over `{bad_method}`."))
+        .with_help(format!("Replace `{bad_method}` with `{good_method}`."))
         .with_label(span)
 }
 

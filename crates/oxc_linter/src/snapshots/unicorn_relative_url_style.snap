@@ -7,45 +7,53 @@ source: crates/oxc_linter/src/tester.rs
  1 │ new URL("./foo", base)
    ·         ───────
    ╰────
+  help: Remove the unnecessary `./` prefix.
 
   ⚠ eslint-plugin-unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
    ╭─[relative_url_style.tsx:1:9]
  1 │ new URL('./foo', base)
    ·         ───────
    ╰────
+  help: Remove the unnecessary `./` prefix.
 
   ⚠ eslint-plugin-unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
    ╭─[relative_url_style.tsx:1:9]
  1 │ new URL("././a", base)
    ·         ───────
    ╰────
+  help: Remove the unnecessary `./` prefix.
 
   ⚠ eslint-plugin-unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
    ╭─[relative_url_style.tsx:1:9]
  1 │ new URL(`./${foo}`, base)
    ·         ──────────
    ╰────
+  help: Remove the unnecessary `./` prefix.
 
   ⚠ eslint-plugin-unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
    ╭─[relative_url_style.tsx:1:9]
  1 │ new URL("./", "https://example.com/a/b/")
    ·         ────
    ╰────
+  help: Remove the unnecessary `./` prefix.
 
   ⚠ eslint-plugin-unicorn(relative-url-style): Add a `./` prefix to the relative URL.
    ╭─[relative_url_style.tsx:1:9]
  1 │ new URL("foo", base)
    ·         ─────
    ╰────
+  help: Add a `./` prefix to make the relative URL explicit.
 
   ⚠ eslint-plugin-unicorn(relative-url-style): Add a `./` prefix to the relative URL.
    ╭─[relative_url_style.tsx:1:9]
  1 │ new URL('foo', base)
    ·         ─────
    ╰────
+  help: Add a `./` prefix to make the relative URL explicit.
 
   ⚠ eslint-plugin-unicorn(relative-url-style): Add a `./` prefix to the relative URL.
    ╭─[relative_url_style.tsx:1:9]
  1 │ new URL("", "https://example.com/a/b/")
    ·         ──
    ╰────
+  help: Add a `./` prefix to make the relative URL explicit.

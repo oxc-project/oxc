@@ -7,12 +7,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ parseInt();
    · ──────────
    ╰────
+  help: Pass a string and radix parameter to `parseInt()`.
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:1]
  1 │ parseInt();
    · ──────────
    ╰────
+  help: Pass a string and radix parameter to `parseInt()`.
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -47,60 +49,70 @@ source: crates/oxc_linter/src/tester.rs
  1 │ parseInt("10", null);
    ·                ────
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", undefined);
    ·                ─────────
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", true);
    ·                ────
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", "foo");
    ·                ─────
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", "123");
    ·                ─────
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", 1);
    ·                ─
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", 37);
    ·                ──
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", 10.5);
    ·                ────
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:1]
  1 │ Number.parseInt();
    · ─────────────────
    ╰────
+  help: Pass a string and radix parameter to `parseInt()`.
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:1]
  1 │ Number.parseInt();
    · ─────────────────
    ╰────
+  help: Pass a string and radix parameter to `parseInt()`.
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -114,24 +126,28 @@ source: crates/oxc_linter/src/tester.rs
  1 │ Number.parseInt("10", 1);
    ·                       ─
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:23]
  1 │ Number.parseInt("10", 37);
    ·                       ──
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:23]
  1 │ Number.parseInt("10", 10.5);
    ·                       ────
    ╰────
+  help: Use a radix value between 2 and 36.
 
   ⚠ eslint(radix): Redundant radix parameter.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", 10);
    ·                ──
    ╰────
+  help: Remove the radix parameter `10` since it is the default.
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -166,21 +182,25 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function *f(){ yield(Number).parseInt() }
    ·                     ───────────────────
    ╰────
+  help: Pass a string and radix parameter to `parseInt()`.
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:19]
  1 │ { let parseInt; } parseInt();
    ·                   ──────────
    ╰────
+  help: Pass a string and radix parameter to `parseInt()`.
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:17]
  1 │ { let Number; } Number.parseInt();
    ·                 ─────────────────
    ╰────
+  help: Pass a string and radix parameter to `parseInt()`.
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:17]
  1 │ { let Number; } (Number?.parseInt)();
    ·                 ────────────────────
    ╰────
+  help: Pass a string and radix parameter to `parseInt()`.

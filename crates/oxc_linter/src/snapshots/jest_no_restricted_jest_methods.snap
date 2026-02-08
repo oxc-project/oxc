@@ -7,24 +7,28 @@ source: crates/oxc_linter/src/tester.rs
  1 │ jest.fn()
    ·      ──
    ╰────
+  help: Avoid using `fn` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-jest-methods): Use of `fn` is not allowed
    ╭─[no_restricted_jest_methods.tsx:1:6]
  1 │ jest["fn"]()
    ·      ────
    ╰────
+  help: Avoid using `fn` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-jest-methods): Do not use mocks
    ╭─[no_restricted_jest_methods.tsx:1:6]
  1 │ jest.mock()
    ·      ────
    ╰────
+  help: Use an alternative jest method.
 
   ⚠ eslint-plugin-jest(no-restricted-jest-methods): Do not use mocks
    ╭─[no_restricted_jest_methods.tsx:1:6]
  1 │ jest["mock"]()
    ·      ──────
    ╰────
+  help: Use an alternative jest method.
 
   ⚠ eslint-plugin-jest(no-restricted-jest-methods): Use of `advanceTimersByTime` is not allowed
    ╭─[no_restricted_jest_methods.tsx:3:22]
@@ -33,18 +37,21 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───────────────────
  4 │             
    ╰────
+  help: Avoid using `advanceTimersByTime` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-jest-methods): Use of `fn` is not allowed
    ╭─[no_restricted_jest_methods.tsx:1:4]
  1 │ vi.fn()
    ·    ──
    ╰────
+  help: Avoid using `fn` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-jest-methods): Do not use mocks
    ╭─[no_restricted_jest_methods.tsx:1:4]
  1 │ vi.mock()
    ·    ────
    ╰────
+  help: Use an alternative jest method.
 
   ⚠ eslint-plugin-jest(no-restricted-jest-methods): Use of `advanceTimersByTime` is not allowed
    ╭─[no_restricted_jest_methods.tsx:3:12]
@@ -53,9 +60,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────────────────
  4 │                 
    ╰────
+  help: Avoid using `advanceTimersByTime` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-jest-methods): Use of `fn` is not allowed
    ╭─[no_restricted_jest_methods.tsx:1:4]
  1 │ vi["fn"]()
    ·    ────
    ╰────
+  help: Avoid using `fn` in tests.

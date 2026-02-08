@@ -17,7 +17,9 @@ use crate::{
 
 fn no_anonymous_default_export_diagnostic(span: Span, msg: &'static str) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn(msg).with_label(span)
+    OxcDiagnostic::warn(msg)
+        .with_help("Add a name to the default export for better debugging and refactoring.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]

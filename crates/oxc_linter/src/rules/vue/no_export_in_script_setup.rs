@@ -9,7 +9,11 @@ use crate::{
 };
 
 fn no_export_in_script_setup_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("<script setup>` cannot contain ES module exports.").with_label(span)
+    OxcDiagnostic::warn("<script setup>` cannot contain ES module exports.")
+        .with_help(
+            "Remove the export statement. `<script setup>` variables are automatically exposed.",
+        )
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ──────────
  5 │                       }
    ╰────
+  help: Wrap the comment with braces: `{/* comment */}`.
 
   ⚠ eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces
    ╭─[jsx_no_comment_textnodes.tsx:4:26]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ──────────
  5 │                       }
    ╰────
+  help: Wrap the comment with braces: `{/* comment */}`.
 
   ⚠ eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces
    ╭─[jsx_no_comment_textnodes.tsx:4:29]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ─────────────
  5 │                       }
    ╰────
+  help: Wrap the comment with braces: `{/* comment */}`.
 
   ⚠ eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces
    ╭─[jsx_no_comment_textnodes.tsx:5:23]
@@ -34,6 +37,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                           </div>
  8 │                             );
    ╰────
+  help: Wrap the comment with braces: `{/* comment */}`.
 
   ⚠ eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces
     ╭─[jsx_no_comment_textnodes.tsx:5:23]
@@ -45,6 +49,7 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                           </div>
  10 │                             );
     ╰────
+  help: Wrap the comment with braces: `{/* comment */}`.
 
   ⚠ eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces
    ╭─[jsx_no_comment_textnodes.tsx:6:30]
@@ -54,6 +59,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                             {'foo'}
  9 │                               </div>
    ╰────
+  help: Wrap the comment with braces: `{/* comment */}`.
 
   ⚠ eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces
    ╭─[jsx_no_comment_textnodes.tsx:3:27]
@@ -62,3 +68,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ──
  4 │                     };
    ╰────
+  help: Wrap the comment with braces: `{/* comment */}`.

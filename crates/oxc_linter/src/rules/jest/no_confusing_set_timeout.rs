@@ -13,6 +13,7 @@ use crate::{
 
 fn non_global_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`jest.setTimeout` should only be called in a global scope")
+        .with_help("Move `jest.setTimeout` to the top level of the test file.")
         .with_label(span)
 }
 
@@ -24,6 +25,7 @@ fn no_multiple_set_timeouts_diagnostic(span: Span) -> OxcDiagnostic {
 
 fn no_unorder_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`jest.setTimeout` should be placed before any other jest methods.")
+        .with_help("Move `jest.setTimeout` before any test or describe blocks.")
         .with_label(span)
 }
 

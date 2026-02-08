@@ -14,11 +14,13 @@ use crate::{
 
 fn export_all_components_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("This rule can't verify that `export *` only exports components.")
+        .with_help("Use named exports instead of `export *` for better fast refresh support.")
         .with_label(span)
 }
 
 fn named_export_components_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.")
+        .with_help("Move non-component exports to a separate file.")
         .with_label(span)
 }
 
@@ -26,21 +28,25 @@ fn anonymous_components_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Fast refresh can't handle anonymous components. Add a name to your export.",
     )
+    .with_help("Add a name to the exported component.")
     .with_label(span)
 }
 
 fn local_components_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file only exports components. Move your component(s) to a separate file.")
+        .with_help("Move components to a separate file that only exports components.")
         .with_label(span)
 }
 
 fn no_export_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file has exports. Move your component(s) to a separate file.")
+        .with_help("Export the component or move it to a separate file.")
         .with_label(span)
 }
 
 fn react_context_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file only exports components. Move your React context(s) to a separate file.")
+        .with_help("Move React contexts to a separate file.")
         .with_label(span)
 }
 

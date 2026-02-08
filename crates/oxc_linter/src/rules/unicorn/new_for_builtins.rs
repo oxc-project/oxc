@@ -7,11 +7,15 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
 
 fn enforce(span: Span, fn_name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use `new {fn_name}()` instead of `{fn_name}()`")).with_label(span)
+    OxcDiagnostic::warn(format!("Use `new {fn_name}()` instead of `{fn_name}()`"))
+        .with_help(format!("Add the `new` keyword before `{fn_name}()`."))
+        .with_label(span)
 }
 
 fn disallow(span: Span, fn_name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use `{fn_name}()` instead of `new {fn_name}()`")).with_label(span)
+    OxcDiagnostic::warn(format!("Use `{fn_name}()` instead of `new {fn_name}()`"))
+        .with_help(format!("Remove the `new` keyword before `{fn_name}()`."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

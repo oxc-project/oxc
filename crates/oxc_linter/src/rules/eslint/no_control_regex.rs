@@ -39,6 +39,7 @@ fn no_control_regex_diagnostic(control_chars: &[Character]) -> OxcDiagnostic {
     } else {
         "Unexpected control character"
     })
+    .with_help("Avoid using control characters in regular expressions.")
     .with_labels(labels)
 }
 #[derive(Debug, Default, Clone)]

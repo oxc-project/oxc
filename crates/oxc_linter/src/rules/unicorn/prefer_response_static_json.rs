@@ -14,7 +14,9 @@ use crate::{
 };
 
 fn prefer_response_static_json_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer using `Response.json(…)` over `JSON.stringify()`.").with_label(span)
+    OxcDiagnostic::warn("Prefer using `Response.json(…)` over `JSON.stringify()`.")
+        .with_help("Replace with `Response.json(data)` for cleaner code.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -19,7 +19,9 @@ use crate::{
 };
 
 fn no_absolute_path_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not import modules using an absolute path").with_label(span)
+    OxcDiagnostic::warn("Do not import modules using an absolute path")
+        .with_help("Use a relative path or module alias instead.")
+        .with_label(span)
 }
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-absolute-path.md>

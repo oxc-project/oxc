@@ -20,7 +20,9 @@ use crate::{
 };
 
 fn no_self_assign_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("this expression is assigned to itself").with_label(span)
+    OxcDiagnostic::warn("this expression is assigned to itself")
+        .with_help("Remove the self-assignment or assign to a different variable.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]

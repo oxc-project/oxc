@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────────────────────
  5 │                }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook1" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:3:22]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────
  4 │                 b && useHook2();
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:22]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────
  5 │             }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:5:21]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────
  6 │                 }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:3:29]
@@ -41,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────
  4 │             }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHasPermission" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:5:23]
@@ -49,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──────────────────
  6 │             return <Foo />
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:2:13]
@@ -57,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────
  3 │             Hook._useState();
    ╰────
+  help: Call Hooks inside a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:5:13]
@@ -65,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────
  6 │             Hook.use_hook();
    ╰────
+  help: Call Hooks inside a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:4:22]
@@ -73,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────────
  5 │                      Super.useHook();
    ╰────
+  help: Convert the class component to a function component to use Hooks.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:5:22]
@@ -81,6 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───────────────
  6 │                  }
    ╰────
+  help: Convert the class component to a function component to use Hooks.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useFeatureFlag" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:5:25]
@@ -89,6 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────────────────────────
  6 │                     }
    ╰────
+  help: Convert the class component to a function component to use Hooks.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useConditionalHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:21]
@@ -97,6 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────────────
  5 │                 }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useConditionalHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:5:29]
@@ -105,6 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────────────────────
  6 │                         }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useConditionalHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:25]
@@ -113,6 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────────────────────
  5 │                     }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useConditionalHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:5:29]
@@ -121,6 +135,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────────────────────
  6 │                         }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useTernaryHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:3:28]
@@ -129,6 +144,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────────────────
  4 │                 }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideCallback" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:4:25]
@@ -137,6 +153,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────────────────────
  5 │                     });
    ╰────
+  help: Move the Hook call to the outer component or custom Hook.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideCallback" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:5:29]
@@ -145,6 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───────────────────────
  6 │                         });
    ╰────
+  help: Move the Hook call to the outer component or custom Hook.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideCallback" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:4:25]
@@ -153,6 +171,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────────────────────
  5 │                     });
    ╰────
+  help: Move the Hook call to the outer component or custom Hook.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideCallback" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:4:25]
@@ -161,6 +180,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────────────────────
  5 │                     });
    ╰────
+  help: Move the Hook call to the outer component or custom Hook.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "handleClick" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:4:25]
@@ -173,6 +193,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ╰── Hook is called here
  5 │                     }
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "handleClick" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:5:29]
@@ -185,6 +206,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ╰── Hook is called here
  6 │                         }
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideLoop" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:25]
@@ -193,6 +215,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────────────────
  5 │                     }
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideLoop" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:17]
@@ -201,6 +224,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───────────────────
  5 │               } while (cond);
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideLoop" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:5:24]
@@ -209,6 +233,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────────
  6 │             }
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "renderItem" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:3:21]
@@ -221,6 +246,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ╰── Hook is called here
  4 │                 }
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideNormalFunction" is called in function "normalFunctionWithHook" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:3:21]
@@ -233,6 +259,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ╰── Hook is called here
  4 │                 }
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideNormalFunction" is called in function "_normalFunctionWithHook" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:3:21]
@@ -245,6 +272,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ╰── Hook is called here
  4 │                 }
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideNormalFunction" is called in function "_useNotAHook" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:6:21]
@@ -257,6 +285,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ╰── Hook is called here
  7 │                 }
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHookInsideNormalFunction" is called in function "normalFunctionWithConditionalHook" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:4:25]
@@ -270,6 +299,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ╰── Hook is called here
  5 │                     }
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook1" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:25]
@@ -278,6 +308,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────
  5 │                         if (b) return;
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:6:25]
@@ -286,6 +317,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────
  7 │                     }
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook3" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
     ╭─[rules_of_hooks.tsx:9:25]
@@ -294,6 +326,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                         ──────────
  10 │                         if (d) return;
     ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook4" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
     ╭─[rules_of_hooks.tsx:11:25]
@@ -302,6 +335,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                         ──────────
  12 │                     }
     ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook1" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:21]
@@ -310,6 +344,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────
  5 │                     if (b) continue;
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:6:21]
@@ -318,6 +353,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────
  7 │                 }
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook1" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:12]
@@ -326,6 +362,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────────
  5 │            if (a) return;
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:6:12]
@@ -334,6 +371,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────────
  7 │          } while (b);
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook3" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
     ╭─[rules_of_hooks.tsx:10:12]
@@ -342,6 +380,7 @@ source: crates/oxc_linter/src/tester.rs
     ·            ──────────
  11 │            if (c) return;
     ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook4" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
     ╭─[rules_of_hooks.tsx:12:12]
@@ -350,6 +389,7 @@ source: crates/oxc_linter/src/tester.rs
     ·            ──────────
  13 │          } while (d)
     ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook1" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:13]
@@ -358,6 +398,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
  5 │             if (a) continue;
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:6:13]
@@ -366,6 +407,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
  7 │           } while (b);
    ╰────
+  help: Move the Hook call outside of the loop.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:5:25]
@@ -374,6 +416,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────────
  6 │                     }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "a" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:2:28]
@@ -384,6 +427,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ╰── Outer function
  3 │             const whatever = function b() { useState(); };
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "b" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:3:45]
@@ -394,6 +438,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ╰── Outer function
  4 │             const c = () => { useState(); };
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:4:31]
@@ -404,6 +449,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ╰── Outer function
  5 │             let d = () => useState();
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:5:27]
@@ -414,6 +460,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ╰── Outer function
  6 │             e = () => { useState(); };
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:6:25]
@@ -424,6 +471,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ╰── Outer function
  7 │             ({f: () => { useState(); }});
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:7:26]
@@ -434,6 +482,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ╰── Outer function
  8 │             ({g() { useState(); }});
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:8:21]
@@ -444,6 +493,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ╰── Outer function
  9 │             const {j = () => { useState(); }} = {};
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
     ╭─[rules_of_hooks.tsx:9:32]
@@ -454,6 +504,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                                  ╰── Outer function
  10 │             ({k = () => { useState(); }} = {});
     ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:21]
@@ -462,6 +513,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────
  5 │                 }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
     ╭─[rules_of_hooks.tsx:9:21]
@@ -470,6 +522,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                     ──────────
  10 │                 }
     ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
     ╭─[rules_of_hooks.tsx:9:21]
@@ -478,6 +531,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                     ──────────
  10 │                 }
     ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook1" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:3:26]
@@ -486,6 +540,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────────
  4 │                     b && useHook2();
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook2" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:26]
@@ -494,6 +549,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────────
  5 │                 }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:5:25]
@@ -502,6 +558,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────
  6 │                     } catch {}
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:3:39]
@@ -510,6 +567,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ──────────
  4 │                     let foo2 = bar || useState();
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:39]
@@ -518,6 +576,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ──────────
  5 │                     let foo3 = bar ?? useState();
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:5:39]
@@ -526,6 +585,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ──────────
  6 │                 }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useCustomHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:25]
@@ -534,6 +594,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────────────
  5 │                     }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useCustomHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:25]
@@ -542,6 +603,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────────────
  5 │                     }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useCustomHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:25]
@@ -550,6 +612,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────────────
  5 │                     }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useProbablyAHook" is called in function "notAComponent" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:3:21]
@@ -562,6 +625,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ╰── Hook is called here
  4 │                 });
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:2:13]
@@ -570,6 +634,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
  3 │             if (foo) {
    ╰────
+  help: Call Hooks inside a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useCallback" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:4:29]
@@ -578,6 +643,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───────────────────────────
  5 │             }
    ╰────
+  help: Call Hooks inside a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useCustomHook" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:6:13]
@@ -586,6 +652,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────
  7 │         
    ╰────
+  help: Call Hooks inside a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useBasename" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:3:36]
@@ -594,6 +661,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ──────────────────────────
  4 │                 basename: '/',
    ╰────
+  help: Call Hooks inside a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useFeatureFlag" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:5:29]
@@ -602,6 +670,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────────────────
  6 │                         }
    ╰────
+  help: Convert the class component to a function component to use Hooks.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:4:25]
@@ -610,30 +679,35 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────────────────
  5 │                     }
    ╰────
+  help: Convert the class component to a function component to use Hooks.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:1:27]
  1 │ (class {useHook = () => { useState(); }});
    ·                           ──────────
    ╰────
+  help: Convert the class component to a function component to use Hooks.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:1:21]
  1 │ (class {useHook() { useState(); }});
    ·                     ──────────
    ╰────
+  help: Convert the class component to a function component to use Hooks.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:1:21]
  1 │ (class {h = () => { useState(); }});
    ·                     ──────────
    ╰────
+  help: Convert the class component to a function component to use Hooks.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:1:15]
  1 │ (class {i() { useState(); }});
    ·               ──────────
    ╰────
+  help: Convert the class component to a function component to use Hooks.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:3:21]
@@ -642,6 +716,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────
  4 │                 }
    ╰────
+  help: Remove the `async` keyword from the function or move the Hook call outside.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "Anonymous" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:2:40]
@@ -651,6 +726,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │ ╰─▶                 }
  5 │             
    ╰────
+  help: Remove the `async` keyword from the function or move the Hook call outside.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useId" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:3:19]
@@ -659,6 +735,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────
  4 │                   React.useId();
    ╰────
+  help: Remove the `async` keyword from the function or move the Hook call outside.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useId" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:4:19]
@@ -667,6 +744,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────────
  5 │                 }
    ╰────
+  help: Remove the `async` keyword from the function or move the Hook call outside.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:3:21]
@@ -675,6 +753,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────
  4 │                 }
    ╰────
+  help: Remove the `async` keyword from the function or move the Hook call outside.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useId" is called in function "notAHook" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:3:19]
@@ -687,6 +766,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ╰── Hook is called here
  4 │                 }
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "use" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:2:13]
@@ -695,6 +775,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
  3 │             Hook._use();
    ╰────
+  help: Call Hooks inside a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:4:13]
@@ -703,6 +784,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────
  5 │             Hook._useState();
    ╰────
+  help: Call Hooks inside a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:7:13]
@@ -711,6 +793,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────
  8 │             Hook.use_hook();
    ╰────
+  help: Call Hooks inside a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "use" is called in function "notAComponent" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:3:21]
@@ -723,6 +806,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ╰── Hook is called here
  4 │                 }
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "use" cannot be called at the top level. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:2:26]
@@ -731,6 +815,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────────────
  3 │             function App() {
    ╰────
+  help: Call Hooks inside a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "use" cannot be called in a class component. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:4:21]
@@ -739,6 +824,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────
  5 │                 }
    ╰────
+  help: Convert the class component to a function component to use Hooks.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "use" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:3:21]
@@ -747,6 +833,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────
  4 │             }
    ╰────
+  help: Remove the `async` keyword from the function or move the Hook call outside.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:3:17]
@@ -759,6 +846,7 @@ source: crates/oxc_linter/src/tester.rs
    · ╰──── Outer function
  5 │             
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:21]
@@ -767,6 +855,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────────
  5 │                 }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:21]
@@ -775,6 +864,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────────
  5 │                 }
    ╰────
+  help: Move the Hook call to the top level of the component.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useHook" is called in function "foo" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:1:54]
@@ -783,6 +873,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                              │          ╰── Hook is called here
    ·                                              ╰── Outer function
    ╰────
+  help: Move the Hook call to a React function component or a custom Hook function.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:3:38]
@@ -791,6 +882,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ──────────
  4 │             }
    ╰────
+  help: Move the Hook call to the outer component or custom Hook.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useMemo" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:3:41]
@@ -799,6 +891,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ─────────────────────
  4 │             }
    ╰────
+  help: Move the Hook call to the outer component or custom Hook.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:3:45]
@@ -807,6 +900,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                             ──────────
  4 │             }
    ╰────
+  help: Move the Hook call to the outer component or custom Hook.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useCallback" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
    ╭─[rules_of_hooks.tsx:3:48]
@@ -815,9 +909,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                ─────────────────────────
  4 │             }
    ╰────
+  help: Move the Hook call to the outer component or custom Hook.
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:1:81]
  1 │ const Foo3 = hoc(function NamedComp(props) { if (props.cond) { const [_a, _b] = useState(false); } });
    ·                                                                                 ───────────────
    ╰────
+  help: Move the Hook call to the top level of the component.

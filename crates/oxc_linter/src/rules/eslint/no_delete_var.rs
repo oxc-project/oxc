@@ -7,7 +7,9 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_delete_var_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Variables should not be deleted").with_label(span)
+    OxcDiagnostic::warn("Variables should not be deleted")
+        .with_help("Use `delete` only on object properties, not on variables.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

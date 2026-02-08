@@ -20,7 +20,11 @@ fn state_in_constructor_diagnostic(span: Span, is_state_init_constructor: bool) 
     } else {
         "State initialization should be in a class property"
     };
-    OxcDiagnostic::warn(message).with_label(span)
+    OxcDiagnostic::warn(message)
+        .with_help(
+            "Move the state initialization to the expected location based on the configured style.",
+        )
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]

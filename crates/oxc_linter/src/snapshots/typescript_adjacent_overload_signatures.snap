@@ -12,6 +12,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───
  6 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:18]
@@ -23,6 +24,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───
  6 │         foo(a);
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:23]
@@ -34,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │       export function foo(sn: string | number) {}
    ·                       ───
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:23]
@@ -45,6 +48,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │       export function foo(sn: string | number) {}
    ·                       ───
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:16]
@@ -56,6 +60,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │       function foo(sn: string | number) {}
    ·                ───
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:16]
@@ -67,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │       function foo(sn: string | number) {}
    ·                ───
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:24]
@@ -78,6 +84,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │       declare function foo(sn: string | number);
    ·                        ───
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:24]
@@ -89,6 +96,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │       declare function foo(sn: string | number);
    ·                        ───
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:25]
@@ -101,6 +109,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
  7 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "baz" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:5:18]
@@ -112,6 +121,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───
  8 │         function baz(sn: string | number): void;
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:25]
@@ -124,6 +134,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
  7 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "baz" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:5:18]
@@ -135,6 +146,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───
  8 │         function baz(sn: string | number): void;
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
@@ -147,6 +159,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  7 │       };
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:10]
@@ -159,6 +172,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  7 │       };
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
@@ -170,6 +184,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  5 │         foo(sn: string | number): void;
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "call" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
@@ -181,6 +196,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────────
  5 │         (sn: string | number): void;
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
@@ -193,6 +209,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  7 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:10]
@@ -205,6 +222,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  7 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
@@ -217,6 +235,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  7 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
@@ -228,6 +247,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  5 │         foo(sn: string | number): void;
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "baz" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:5:11]
@@ -239,6 +259,7 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───
  8 │         };
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "new" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
@@ -251,6 +272,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  7 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "new" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
@@ -262,6 +284,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  5 │         bar(): void;
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "new" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
@@ -276,6 +299,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  7 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "constructor" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
@@ -288,6 +312,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────
  7 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
@@ -300,6 +325,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  7 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
@@ -312,6 +338,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  7 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:4:9]
@@ -324,6 +351,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  8 │       }
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "constructor" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
@@ -335,6 +363,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────
  5 │         constructor(sn: string | number) {}
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
@@ -346,6 +375,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
  5 │         foo(sn: string | number): void {}
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "static foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:2:9]
@@ -357,6 +387,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────
  5 │         static foo(sn: string | number): void {}
    ╰────
+  help: Move overload signatures next to each other.
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "#private" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:9]
@@ -368,3 +399,4 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────
  6 │       }
    ╰────
+  help: Move overload signatures next to each other.

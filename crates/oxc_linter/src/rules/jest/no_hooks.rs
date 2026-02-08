@@ -13,7 +13,9 @@ use crate::{
 };
 
 fn unexpected_hook_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use setup or teardown hooks.").with_label(span)
+    OxcDiagnostic::warn("Do not use setup or teardown hooks.")
+        .with_help("Inline the setup or teardown logic directly in each test.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

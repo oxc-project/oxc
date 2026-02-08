@@ -13,6 +13,7 @@ use crate::{AstNode, ast_util::get_symbol_id_of_variable, context::LintContext, 
 
 fn prefer_numeric_literals_diagnostic(span: Span, prefix_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use {prefix_name} literals instead of parseInt()."))
+        .with_help(format!("Replace `parseInt()` with a {prefix_name} literal."))
         .with_label(span)
 }
 

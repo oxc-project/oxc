@@ -6,7 +6,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_multi_str_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected multi string.").with_label(span)
+    OxcDiagnostic::warn("Unexpected multi string.")
+        .with_help("Use string concatenation or template literals instead of line continuations.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

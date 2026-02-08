@@ -10,15 +10,20 @@ use crate::{AstNode, context::LintContext, rule::Rule, utils::BUILT_IN_ERRORS};
 
 fn missing_message(ctor_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Pass a message to the {ctor_name:1} constructor."))
+        .with_help("Provide a descriptive error message string.")
         .with_label(span)
 }
 
 fn empty_message(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Error message should not be an empty string.").with_label(span)
+    OxcDiagnostic::warn("Error message should not be an empty string.")
+        .with_help("Provide a non-empty, descriptive error message.")
+        .with_label(span)
 }
 
 fn not_string(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Error message should be a string.").with_label(span)
+    OxcDiagnostic::warn("Error message should be a string.")
+        .with_help("Pass a string as the error message.")
+        .with_label(span)
 }
 
 #[derive(Default, Debug, Clone)]

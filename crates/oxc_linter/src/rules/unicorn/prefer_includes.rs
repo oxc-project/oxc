@@ -15,6 +15,7 @@ fn prefer_includes_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Prefer `includes()` over `indexOf()` when checking for existence or non-existence.",
     )
+    .with_help("Replace `indexOf()` comparison with `includes()`.")
     .with_label(span)
 }
 

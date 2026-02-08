@@ -13,7 +13,9 @@ use schemars::JsonSchema;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn sort_vars_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Variable declarations should be sorted").with_label(span)
+    OxcDiagnostic::warn("Variable declarations should be sorted")
+        .with_help("Sort the variable declarations alphabetically.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]

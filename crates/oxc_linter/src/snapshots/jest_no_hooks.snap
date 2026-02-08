@@ -7,30 +7,35 @@ source: crates/oxc_linter/src/tester.rs
  1 │ beforeAll(() => {})
    · ─────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeEach(() => {})
    · ──────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterAll(() => {})
    · ────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterEach(() => {})
    · ─────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeEach(() => {}); afterEach(() => { jest.resetModules() });
    · ──────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:5:17]
@@ -39,48 +44,56 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────
  6 │             
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeAll(() => {})
    · ─────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeEach(() => {})
    · ──────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterAll(() => {})
    · ────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterEach(() => {})
    · ─────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterEach(() => {})
    · ─────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterEach(() => {})
    · ─────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeEach(() => {}); afterEach(() => { vi.resetModules() });
    · ──────────
    ╰────
+  help: Inline the setup or teardown logic directly in each test.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:4:8]
@@ -89,3 +102,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────
  5 │             
    ╰────
+  help: Inline the setup or teardown logic directly in each test.

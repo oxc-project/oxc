@@ -9,7 +9,9 @@ fn no_throw_literal_diagnostic(span: Span, is_undef: bool) -> OxcDiagnostic {
     let message =
         if is_undef { "Do not throw undefined" } else { "Expected an error object to be thrown" };
 
-    OxcDiagnostic::warn(message).with_label(span)
+    OxcDiagnostic::warn(message)
+        .with_help("Throw an `Error` object instead: `throw new Error(message)`.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

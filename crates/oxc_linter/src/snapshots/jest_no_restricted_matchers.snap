@@ -7,54 +7,63 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect(a).toBe(b)
    ·           ────
    ╰────
+  help: Avoid using `toBe` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `toBe` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a)["toBe"](b)
    ·           ──────
    ╰────
+  help: Avoid using `toBe` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `not` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).not[x]()
    ·           ───
    ╰────
+  help: Avoid using `not` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `not.toBe` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).not.toBe(b)
    ·           ────────
    ╰────
+  help: Avoid using `not.toBe` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `resolves.toBe` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).resolves.toBe(b)
    ·           ─────────────
    ╰────
+  help: Avoid using `resolves.toBe` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `resolves.not.toBe` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).resolves.not.toBe(b)
    ·           ─────────────────
    ╰────
+  help: Avoid using `resolves.not.toBe` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `resolves.not.toBe` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).resolves.not.toBe(b)
    ·           ─────────────────
    ╰────
+  help: Avoid using `resolves.not.toBe` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `not.toBe` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).not.toBe(b)
    ·           ────────
    ╰────
+  help: Avoid using `not.toBe` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `resolves.not.toBe` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).resolves.not.toBe(b)
    ·           ─────────────────
    ╰────
+  help: Avoid using `resolves.not.toBe` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `toBe` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
@@ -77,6 +86,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect(Promise.resolve({})).rejects.toBeFalsy()
    ·                             ─────────────────
    ╰────
+  help: Avoid using `rejects.toBeFalsy` in tests.
 
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `not.toHaveBeenCalledWith` is disallowed
    ╭─[no_restricted_matchers.tsx:1:24]
