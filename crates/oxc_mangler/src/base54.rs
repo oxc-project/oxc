@@ -108,7 +108,7 @@ fn base54_dynamic(str: &mut InlineString<7, u8>, n: usize) {
 
 #[cfg(test)]
 mod test {
-    use super::{base54, base54_dynamic, TWO_CHAR_LIMIT};
+    use super::{TWO_CHAR_LIMIT, base54, base54_dynamic};
     use oxc_data_structures::inline_string::InlineString;
 
     #[test]
@@ -129,11 +129,7 @@ mod test {
             let from_table = base54(n);
             let mut from_dynamic = InlineString::new();
             base54_dynamic(&mut from_dynamic, n as usize);
-            assert_eq!(
-                from_table.as_str(),
-                from_dynamic.as_str(),
-                "Mismatch at n={n}"
-            );
+            assert_eq!(from_table.as_str(), from_dynamic.as_str(), "Mismatch at n={n}");
         }
         // Boundary: last two-char and first three-char
         assert_eq!(base54(TWO_CHAR_LIMIT as u32 - 1).len_usize(), 2);
