@@ -665,7 +665,6 @@ pub use crate::rules::vue::define_props_destructuring::DefinePropsDestructuring 
 pub use crate::rules::vue::max_props::MaxProps as VueMaxProps;
 pub use crate::rules::vue::no_arrow_functions_in_watch::NoArrowFunctionsInWatch as VueNoArrowFunctionsInWatch;
 pub use crate::rules::vue::no_deprecated_destroyed_lifecycle::NoDeprecatedDestroyedLifecycle as VueNoDeprecatedDestroyedLifecycle;
-pub use crate::rules::vue::no_export_in_script_setup::NoExportInScriptSetup as VueNoExportInScriptSetup;
 pub use crate::rules::vue::no_import_compiler_macros::NoImportCompilerMacros as VueNoImportCompilerMacros;
 pub use crate::rules::vue::no_lifecycle_after_await::NoLifecycleAfterAwait as VueNoLifecycleAfterAwait;
 pub use crate::rules::vue::no_multiple_slot_args::NoMultipleSlotArgs as VueNoMultipleSlotArgs;
@@ -1346,7 +1345,6 @@ pub enum RuleEnum {
     VueMaxProps(VueMaxProps),
     VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch),
     VueNoDeprecatedDestroyedLifecycle(VueNoDeprecatedDestroyedLifecycle),
-    VueNoExportInScriptSetup(VueNoExportInScriptSetup),
     VueNoImportCompilerMacros(VueNoImportCompilerMacros),
     VueNoLifecycleAfterAwait(VueNoLifecycleAfterAwait),
     VueNoMultipleSlotArgs(VueNoMultipleSlotArgs),
@@ -2018,17 +2016,16 @@ impl RuleEnum {
             Self::VueMaxProps(_) => 654usize,
             Self::VueNoArrowFunctionsInWatch(_) => 655usize,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => 656usize,
-            Self::VueNoExportInScriptSetup(_) => 657usize,
-            Self::VueNoImportCompilerMacros(_) => 658usize,
-            Self::VueNoLifecycleAfterAwait(_) => 659usize,
-            Self::VueNoMultipleSlotArgs(_) => 660usize,
-            Self::VueNoRequiredPropWithDefault(_) => 661usize,
-            Self::VueNoThisInBeforeRouteEnter(_) => 662usize,
-            Self::VuePreferImportFromVue(_) => 663usize,
-            Self::VueRequireDefaultExport(_) => 664usize,
-            Self::VueRequireTypedRef(_) => 665usize,
-            Self::VueValidDefineEmits(_) => 666usize,
-            Self::VueValidDefineProps(_) => 667usize,
+            Self::VueNoImportCompilerMacros(_) => 657usize,
+            Self::VueNoLifecycleAfterAwait(_) => 658usize,
+            Self::VueNoMultipleSlotArgs(_) => 659usize,
+            Self::VueNoRequiredPropWithDefault(_) => 660usize,
+            Self::VueNoThisInBeforeRouteEnter(_) => 661usize,
+            Self::VuePreferImportFromVue(_) => 662usize,
+            Self::VueRequireDefaultExport(_) => 663usize,
+            Self::VueRequireTypedRef(_) => 664usize,
+            Self::VueValidDefineEmits(_) => 665usize,
+            Self::VueValidDefineProps(_) => 666usize,
         }
     }
     pub fn name(&self) -> &'static str {
@@ -2774,7 +2771,6 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::NAME,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::NAME,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VueNoDeprecatedDestroyedLifecycle::NAME,
-            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::NAME,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::NAME,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::NAME,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::NAME,
@@ -3574,7 +3570,6 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::CATEGORY
             }
-            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::CATEGORY,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::CATEGORY,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::CATEGORY,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::CATEGORY,
@@ -4331,7 +4326,6 @@ impl RuleEnum {
             Self::VueMaxProps(_) => VueMaxProps::FIX,
             Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::FIX,
             Self::VueNoDeprecatedDestroyedLifecycle(_) => VueNoDeprecatedDestroyedLifecycle::FIX,
-            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::FIX,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::FIX,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::FIX,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::FIX,
@@ -5270,7 +5264,6 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::documentation()
             }
-            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::documentation(),
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::documentation(),
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::documentation(),
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::documentation(),
@@ -7140,8 +7133,6 @@ impl RuleEnum {
                 VueNoDeprecatedDestroyedLifecycle::config_schema(generator)
                     .or_else(|| VueNoDeprecatedDestroyedLifecycle::schema(generator))
             }
-            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::config_schema(generator)
-                .or_else(|| VueNoExportInScriptSetup::schema(generator)),
             Self::VueNoImportCompilerMacros(_) => {
                 VueNoImportCompilerMacros::config_schema(generator)
                     .or_else(|| VueNoImportCompilerMacros::schema(generator))
@@ -7829,7 +7820,6 @@ impl RuleEnum {
             Self::VueMaxProps(_) => "vue",
             Self::VueNoArrowFunctionsInWatch(_) => "vue",
             Self::VueNoDeprecatedDestroyedLifecycle(_) => "vue",
-            Self::VueNoExportInScriptSetup(_) => "vue",
             Self::VueNoImportCompilerMacros(_) => "vue",
             Self::VueNoLifecycleAfterAwait(_) => "vue",
             Self::VueNoMultipleSlotArgs(_) => "vue",
@@ -9944,9 +9934,6 @@ impl RuleEnum {
                     VueNoDeprecatedDestroyedLifecycle::from_configuration(value)?,
                 ))
             }
-            Self::VueNoExportInScriptSetup(_) => Ok(Self::VueNoExportInScriptSetup(
-                VueNoExportInScriptSetup::from_configuration(value)?,
-            )),
             Self::VueNoImportCompilerMacros(_) => Ok(Self::VueNoImportCompilerMacros(
                 VueNoImportCompilerMacros::from_configuration(value)?,
             )),
@@ -10642,7 +10629,6 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.to_configuration(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.to_configuration(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.to_configuration(),
-            Self::VueNoExportInScriptSetup(rule) => rule.to_configuration(),
             Self::VueNoImportCompilerMacros(rule) => rule.to_configuration(),
             Self::VueNoLifecycleAfterAwait(rule) => rule.to_configuration(),
             Self::VueNoMultipleSlotArgs(rule) => rule.to_configuration(),
@@ -11314,7 +11300,6 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run(node, ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run(node, ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run(node, ctx),
-            Self::VueNoExportInScriptSetup(rule) => rule.run(node, ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.run(node, ctx),
             Self::VueNoLifecycleAfterAwait(rule) => rule.run(node, ctx),
             Self::VueNoMultipleSlotArgs(rule) => rule.run(node, ctx),
@@ -11986,7 +11971,6 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run_once(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_once(ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_once(ctx),
-            Self::VueNoExportInScriptSetup(rule) => rule.run_once(ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.run_once(ctx),
             Self::VueNoLifecycleAfterAwait(rule) => rule.run_once(ctx),
             Self::VueNoMultipleSlotArgs(rule) => rule.run_once(ctx),
@@ -12746,7 +12730,6 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VueNoExportInScriptSetup(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoLifecycleAfterAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueNoMultipleSlotArgs(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13418,7 +13401,6 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.should_run(ctx),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.should_run(ctx),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.should_run(ctx),
-            Self::VueNoExportInScriptSetup(rule) => rule.should_run(ctx),
             Self::VueNoImportCompilerMacros(rule) => rule.should_run(ctx),
             Self::VueNoLifecycleAfterAwait(rule) => rule.should_run(ctx),
             Self::VueNoMultipleSlotArgs(rule) => rule.should_run(ctx),
@@ -14356,7 +14338,6 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::IS_TSGOLINT_RULE
             }
-            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::IS_TSGOLINT_RULE,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::IS_TSGOLINT_RULE,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::IS_TSGOLINT_RULE,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::IS_TSGOLINT_RULE,
@@ -15179,7 +15160,6 @@ impl RuleEnum {
             Self::VueNoDeprecatedDestroyedLifecycle(_) => {
                 VueNoDeprecatedDestroyedLifecycle::HAS_CONFIG
             }
-            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::HAS_CONFIG,
             Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::HAS_CONFIG,
             Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::HAS_CONFIG,
             Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::HAS_CONFIG,
@@ -15851,7 +15831,6 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.types_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.types_info(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.types_info(),
-            Self::VueNoExportInScriptSetup(rule) => rule.types_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.types_info(),
             Self::VueNoLifecycleAfterAwait(rule) => rule.types_info(),
             Self::VueNoMultipleSlotArgs(rule) => rule.types_info(),
@@ -16523,7 +16502,6 @@ impl RuleEnum {
             Self::VueMaxProps(rule) => rule.run_info(),
             Self::VueNoArrowFunctionsInWatch(rule) => rule.run_info(),
             Self::VueNoDeprecatedDestroyedLifecycle(rule) => rule.run_info(),
-            Self::VueNoExportInScriptSetup(rule) => rule.run_info(),
             Self::VueNoImportCompilerMacros(rule) => rule.run_info(),
             Self::VueNoLifecycleAfterAwait(rule) => rule.run_info(),
             Self::VueNoMultipleSlotArgs(rule) => rule.run_info(),
@@ -17301,7 +17279,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueMaxProps(VueMaxProps::default()),
         RuleEnum::VueNoArrowFunctionsInWatch(VueNoArrowFunctionsInWatch::default()),
         RuleEnum::VueNoDeprecatedDestroyedLifecycle(VueNoDeprecatedDestroyedLifecycle::default()),
-        RuleEnum::VueNoExportInScriptSetup(VueNoExportInScriptSetup::default()),
         RuleEnum::VueNoImportCompilerMacros(VueNoImportCompilerMacros::default()),
         RuleEnum::VueNoLifecycleAfterAwait(VueNoLifecycleAfterAwait::default()),
         RuleEnum::VueNoMultipleSlotArgs(VueNoMultipleSlotArgs::default()),
