@@ -1,8 +1,6 @@
+use crate::loader::{PossibleParseResult, parse_javascript_source};
 use memchr::{memmem::Finder, memmem::FinderRev};
 use oxc_allocator::Allocator;
-use oxc_diagnostics::OxcDiagnostic;
-
-use crate::loader::{JavaScriptSource, parse::LinterParseResult, parse_javascript_source};
 
 mod astro;
 mod svelte;
@@ -28,8 +26,7 @@ impl PartialLoader {
         allocator: &'a Allocator,
         ext: &str,
         source_text: &'a str,
-    ) -> Option<Vec<(Result<LinterParseResult<'a>, Vec<OxcDiagnostic>>, JavaScriptSource<'a>)>>
-    {
+    ) -> PossibleParseResult<'a> {
         let sources = match ext {
             "astro" => AstroPartialLoader::new(source_text).parse(),
             "svelte" => SveltePartialLoader::new(source_text).parse(),

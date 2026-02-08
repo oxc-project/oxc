@@ -29,7 +29,10 @@ use crate::{
     Fixer, LINTABLE_EXTENSIONS, Linter, Message, PossibleFixes,
     context::ContextSubHost,
     disable_directives::DisableDirectives,
-    loader::{JavaScriptSource, LinterParseResult, PartialLoader, parse_javascript_source},
+    loader::{
+        JavaScriptSource, LinterParseResult, PartialLoader, TransformLoader,
+        parse_javascript_source,
+    },
     module_record::ModuleRecord,
     utils::read_to_arena_str,
 };
@@ -955,8 +958,9 @@ impl Runtime {
         allocator: &'a Allocator,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
-        let section_sources =
-            PartialLoader::parse(allocator, ext, source_text).unwrap_or_else(|| {
+        let section_sources = PartialLoader::parse(allocator, ext, source_text)
+            .or_else(|| TransformLoader::parse(allocator, ext, source_text))
+            .unwrap_or_else(|| {
                 vec![parse_javascript_source(
                     allocator,
                     JavaScriptSource::new(source_text, source_type),
