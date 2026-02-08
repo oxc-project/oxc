@@ -44,6 +44,14 @@
         "allowOptionalChaining": true
       }
     ],
+    "typescript/no-unnecessary-condition": [
+      "error",
+      {
+        "allowConstantLoopConditions": true,
+        "checkTypePredicates": false,
+        "allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing": false
+      }
+    ],
     "typescript/only-throw-error": [
       "error",
       {

@@ -17,6 +17,7 @@
     "typescript/no-mixed-enums": "error",
     "typescript/no-redundant-type-constituents": "error",
     "typescript/no-unnecessary-boolean-literal-compare": "error",
+    "typescript/no-unnecessary-condition": "error",
     "typescript/no-unnecessary-template-expression": "error",
     "typescript/no-unnecessary-type-arguments": "error",
     "typescript/no-unnecessary-type-assertion": "error",
