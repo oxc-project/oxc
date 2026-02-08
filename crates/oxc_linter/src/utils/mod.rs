@@ -11,7 +11,6 @@ use oxc_allocator::Allocator;
 
 mod comment;
 mod config;
-mod edit_distance;
 mod express;
 mod jest;
 mod jsdoc;
@@ -27,7 +26,7 @@ mod vitest;
 mod vue;
 
 pub use self::{
-    comment::*, config::*, edit_distance::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*,
+    comment::*, config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*,
     react::*, react_perf::*, regex::*, typescript::*, unicorn::*, url::*, vitest::*, vue::*,
 };
 

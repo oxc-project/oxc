@@ -5,10 +5,12 @@
 #![warn(missing_docs)]
 
 mod cmp;
+mod edit_distance;
 mod source_type;
 mod span;
 
 pub use cmp::ContentEq;
+pub use edit_distance::{best_match, min_edit_distance};
 pub use oxc_str::{
     ArenaIdentHashMap, Atom, CompactStr, Ident, IdentHashMap, IdentHashSet,
     MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN, format_atom, format_compact_str, format_ident,
