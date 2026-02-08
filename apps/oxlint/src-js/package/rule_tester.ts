@@ -125,6 +125,17 @@ interface Config {
    * If not provided, defaults to the directory containing the test file.
    */
   cwd?: string;
+
+  /**
+   * Maximum number of additional fix passes to apply.
+   * After the first fix pass, re-lints the fixed code and applies fixes again,
+   * repeating up to `recursive` additional times (or until no more fixes are produced).
+   *
+   * - `false` / `null` / `undefined`: no recursion (default)
+   * - `true`: 10 extra passes
+   * - `number`: N extra passes
+   */
+  recursive?: boolean | number | null | undefined;
 }
 
 /**
@@ -246,6 +257,9 @@ interface EcmaFeaturesInternal extends EcmaFeatures {
  * Parser language.
  */
 type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
+
+// Number of additional fix passes to apply after the first pass if `recursive: true`
+const RECURSIVE_TRUE_PASSES = 10;
 
 // Empty language options
 const EMPTY_LANGUAGE_OPTIONS: LanguageOptionsInternal = {};
@@ -625,19 +639,23 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
   }
 
   // Test output after fixes
-  const fixGroups: FixReport[][] = [];
-  for (const diagnostic of diagnostics) {
-    if (diagnostic.fixes !== null) fixGroups.push(diagnostic.fixes);
-  }
-
   const { code } = test;
 
-  let fixedCode;
-  if (fixGroups.length > 0) {
-    fixedCode = applyFixes(code, JSON.stringify(fixGroups));
-    if (fixedCode === null) throw new Error("Failed to apply fixes");
-  } else {
-    fixedCode = code;
+  let fixedCode = runFixes(diagnostics, code);
+  if (fixedCode === null) fixedCode = code;
+
+  // Re-lint and re-fix for additional passes if `recursive` option used
+  const { recursive } = test;
+  const extraPassCount =
+    typeof recursive === "number" ? recursive : recursive === true ? RECURSIVE_TRUE_PASSES : 0;
+
+  if (extraPassCount > 0 && fixedCode !== code) {
+    for (let pass = 0; pass < extraPassCount; pass++) {
+      const diagnostics = lint({ ...test, code: fixedCode }, plugin);
+      const newFixedCode = runFixes(diagnostics, fixedCode);
+      if (newFixedCode === null) break;
+      fixedCode = newFixedCode;
+    }
   }
 
   if (Object.hasOwn(test, "output")) {
@@ -655,6 +673,28 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
   } else {
     assert.strictEqual(fixedCode, code, "The rule fixed the code. Please add `output` property.");
   }
+}
+
+/**
+ * Run fixes on code and return fixed code.
+ * If no fixes to apply, returns `null`.
+ *
+ * @param diagnostics - Array of `Diagnostic`s returned by `lint`
+ * @param code - Code to run fixes on
+ * @returns Fixed code, or `null` if no fixes to apply
+ * @throws {Error} If error when applying fixes
+ */
+function runFixes(diagnostics: Diagnostic[], code: string): string | null {
+  const fixGroups: FixReport[][] = [];
+  for (const diagnostic of diagnostics) {
+    if (diagnostic.fixes !== null) fixGroups.push(diagnostic.fixes);
+  }
+  if (fixGroups.length === 0) return null;
+
+  const fixedCode = applyFixes(code, JSON.stringify(fixGroups));
+  if (fixedCode === null) throw new Error("Failed to apply fixes");
+
+  return fixedCode;
 }
 
 /**
