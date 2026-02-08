@@ -141,7 +141,7 @@ impl Rule for ValidDefineEmits {
     fn run_once(&self, ctx: &LintContext) {
         let mut found: Option<Span> = None;
 
-        let has_other_script_emits = has_default_exports_property(&ctx.other_file_hosts(), "emits");
+        let has_other_script_emits = has_default_exports_property(ctx, "emits");
         for node in ctx.nodes() {
             let AstKind::CallExpression(call_expr) = node.kind() else {
                 continue;

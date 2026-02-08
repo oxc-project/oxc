@@ -1,9 +1,8 @@
-use crate::{ContextSubHost, LintContext};
+use crate::LintContext;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectPropertyKind, Statement,
+        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, Statement,
     },
 };
 use oxc_semantic::ScopeId;
@@ -21,29 +20,26 @@ use oxc_semantic::ScopeId;
 /// ```
 ///
 /// Check if it has `emits` property with `has_default_exports_property(others, "emits")`
-pub fn has_default_exports_property(others: &Vec<&ContextSubHost<'_>>, check_name: &str) -> bool {
-    for host in others {
-        for other_node in host.semantic().nodes() {
-            let AstKind::ExportDefaultDeclaration(export) = other_node.kind() else {
-                continue;
+pub fn has_default_exports_property(ctx: &LintContext<'_>, check_name: &str) -> bool {
+    for other_node in ctx.semantic().nodes() {
+        let AstKind::ExportDefaultDeclaration(export) = other_node.kind() else {
+            continue;
+        };
+
+        let ExportDefaultDeclarationKind::ObjectExpression(export_obj) = &export.declaration else {
+            continue;
+        };
+
+        let has_emits_exports = export_obj.properties.iter().any(|property| {
+            let ObjectPropertyKind::ObjectProperty(property) = property else {
+                return false;
             };
 
-            let ExportDefaultDeclarationKind::ObjectExpression(export_obj) = &export.declaration
-            else {
-                continue;
-            };
+            property.key.name().is_some_and(|name| name == check_name)
+        });
 
-            let has_emits_exports = export_obj.properties.iter().any(|property| {
-                let ObjectPropertyKind::ObjectProperty(property) = property else {
-                    return false;
-                };
-
-                property.key.name().is_some_and(|name| name == check_name)
-            });
-
-            if has_emits_exports {
-                return true;
-            }
+        if has_emits_exports {
+            return true;
         }
     }
 
@@ -94,26 +90,15 @@ pub fn check_define_macro_call_expression(
     match expression {
         Expression::ArrayExpression(_) | Expression::ObjectExpression(_) => None,
         Expression::Identifier(identifier) => {
-            if !is_non_local_reference(identifier, ctx) {
-                return Some(DefineMacroProblem::ReferencingLocally);
+            // Check if the identifier is defined in the <script setup> block
+            if ctx.scoping().get_binding(get_vue_setup_scope_id(ctx), identifier.name).is_some() {
+                Some(DefineMacroProblem::ReferencingLocally)
+            } else {
+                None
             }
-            None
         }
         _ => Some(DefineMacroProblem::EventsNotDefined),
     }
-}
-
-fn is_non_local_reference(identifier: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    if let Some(symbol_id) = ctx.semantic().scoping().get_root_binding(identifier.name) {
-        return matches!(
-            ctx.semantic().symbol_declaration(symbol_id).kind(),
-            AstKind::ImportSpecifier(_)
-        );
-    }
-
-    // variables outside the current `<script>` block are valid.
-    // This is the same for unresolved variables.
-    true
 }
 
 /// Get the scope ID of the Vue setup block (last top-level BlockStatement).
