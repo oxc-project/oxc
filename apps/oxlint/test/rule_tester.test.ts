@@ -637,7 +637,7 @@ describe("RuleTester", () => {
           - 'No identifiers! {{name}}'
                              ^
           ],
-            [AssertionError: The reported message has an unsubstituted placeholder 'name'. Please provide the missing value via the \`data\` property on the error object.],
+            [AssertionError: The reported message has an unsubstituted placeholder 'name'. Please provide the missing value via the \`data\` property.],
             [AssertionError: Hydrated message "No bar! bar" does not match "No bar! {{name}}"
           + actual - expected
 
@@ -1214,6 +1214,337 @@ describe("RuleTester", () => {
             ],
           });
           expect(runCases()).toEqual([null]);
+        });
+      });
+    });
+
+    describe("suggestions", () => {
+      // Rule which suggests renaming `foo` to `bar` or `qux`
+      const suggestRule: Rule = {
+        meta: {
+          hasSuggestions: true,
+        },
+        create(context) {
+          return {
+            Identifier(node) {
+              if (node.name !== "foo") return;
+
+              context.report({
+                message: "No foo!",
+                node,
+                suggest: [
+                  {
+                    desc: "Rename to bar",
+                    fix(fixer) {
+                      return fixer.replaceText(node, "bar");
+                    },
+                  },
+                  {
+                    desc: "Rename to qux",
+                    fix(fixer) {
+                      return fixer.replaceText(node, "qux");
+                    },
+                  },
+                ],
+              });
+            },
+          };
+        },
+      };
+
+      // Same as above rule, but using `messageId`s
+      const suggestMessageIdRule: Rule = {
+        meta: {
+          hasSuggestions: true,
+          messages: {
+            noFoo: "No foo!",
+            renameToBar: "Rename to bar",
+            renameTo: "Rename to {{name}}",
+          },
+        },
+        create(context) {
+          return {
+            Identifier(node) {
+              if (node.name !== "foo") return;
+
+              context.report({
+                messageId: "noFoo",
+                node,
+                suggest: [
+                  {
+                    messageId: "renameToBar",
+                    fix(fixer) {
+                      return fixer.replaceText(node, "bar");
+                    },
+                  },
+                  {
+                    messageId: "renameTo",
+                    data: { name: "qux" },
+                    fix(fixer) {
+                      return fixer.replaceText(node, "qux");
+                    },
+                  },
+                ],
+              });
+            },
+          };
+        },
+      };
+
+      describe("which are correct", () => {
+        it("with `desc`", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: [
+                      { desc: "Rename to bar", output: "let bar;" },
+                      { desc: "Rename to qux", output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `messageId`", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestMessageIdRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    messageId: "noFoo",
+                    suggestions: [
+                      { messageId: "renameToBar", output: "let bar;" },
+                      { messageId: "renameTo", data: { name: "qux" }, output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `suggestions: null` when no suggestions", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: null,
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("without `suggestions` (not checked)", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [{ message: "No foo!" }],
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+      });
+
+      describe("which are incorrect", () => {
+        it("wrong suggestion count", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: [{ desc: "Rename to bar", output: "let bar;" }],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Error should have 1 suggestion. Instead found 2 suggestions.
+
+              2 !== 1
+              ],
+              ]
+            `);
+        });
+
+        it("wrong `desc`", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: [
+                      { desc: "Wrong description", output: "let bar;" },
+                      { desc: "Rename to qux", output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Suggestion at index 0: \`desc\` should be "Wrong description" but got "Rename to bar" instead
+              + actual - expected
+
+              + 'Rename to bar'
+              - 'Wrong description'
+              ],
+              ]
+            `);
+        });
+
+        it("wrong `output`", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: [
+                      { desc: "Rename to bar", output: "let qux;" },
+                      { desc: "Rename to qux", output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Suggestion at index 0: Expected the applied suggestion fix to match the test suggestion output
+              + actual - expected
+
+              + 'let bar;'
+              - 'let qux;'
+                     ^
+              ],
+              ]
+            `);
+        });
+
+        it("`output` same as original source code", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: [
+                      { desc: "Rename to bar", output: "let foo;" },
+                      { desc: "Rename to qux", output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Suggestion at index 0: Expected the applied suggestion fix to match the test suggestion output
+              + actual - expected
+
+              + 'let bar;'
+              - 'let foo;'
+                     ^
+              ],
+              ]
+            `);
+        });
+
+        it("wrong `messageId`", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestMessageIdRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    messageId: "noFoo",
+                    suggestions: [
+                      { messageId: "renameTo", output: "let bar;" },
+                      { messageId: "renameTo", data: { name: "qux" }, output: "let qux;" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Suggestion at index 0: messageId 'renameToBar' does not match expected messageId 'renameTo'
+              + actual - expected
+
+              + 'renameToBar'
+              - 'renameTo'
+                         ^
+              ],
+              ]
+            `);
+        });
+
+        it("`suggestions: null` when rule has suggestions", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", suggestRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: [
+                  {
+                    message: "No foo!",
+                    suggestions: null,
+                  },
+                ],
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+              [
+                [AssertionError: Rule produced suggestions],
+              ]
+            `);
         });
       });
     });

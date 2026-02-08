@@ -67,6 +67,8 @@ interface SuggestionBase {
  */
 export interface SuggestionReport {
   message: string;
+  // Not needed on Rust side, but `RuleTester` needs it
+  messageId: string | null;
   fixes: FixReport[];
 }
 

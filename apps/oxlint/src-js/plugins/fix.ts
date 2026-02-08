@@ -163,7 +163,7 @@ export function getSuggestions(
 
     // Call fix function - drop suggestion if fix function produces no fixes
     const fixes = getFixesFromFixFn(fix, suggestion);
-    if (fixes !== null) suggestions.push({ message, fixes });
+    if (fixes !== null) suggestions.push({ message, messageId, fixes });
   }
 
   if (suggestions.length === 0) return null;
