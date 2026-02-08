@@ -96,7 +96,7 @@ impl<'a> ParserImpl<'a> {
     /// Move to the next token
     /// Checks if the current token is escaped if it is a keyword
     #[inline]
-    fn advance(&mut self, kind: Kind) {
+    pub(crate) fn advance(&mut self, kind: Kind) {
         // Manually inlined escaped keyword check - escaped identifiers are extremely rare
         if self.token.escaped() && kind.is_any_keyword() {
             self.report_escaped_keyword(self.token.span());
@@ -135,12 +135,6 @@ impl<'a> ParserImpl<'a> {
     #[inline]
     pub(crate) fn bump_any(&mut self) {
         self.advance(self.cur_kind());
-    }
-
-    /// Advance and change token type, useful for changing keyword to ident
-    #[inline]
-    pub(crate) fn bump_remap(&mut self, kind: Kind) {
-        self.advance(kind);
     }
 
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
