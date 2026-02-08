@@ -5,7 +5,7 @@
 ```
   x Error running JS plugin.
   | File path: <fixture>/files/range_end_negative.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 116
+  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-9`, expected u32 at line 1 column 129
 
   x Plugin `fixes-plugin/fixes` returned invalid fixes.
   | File path: <fixture>/files/range_end_out_of_bounds.js
@@ -17,7 +17,7 @@
 
   x Error running JS plugin.
   | File path: <fixture>/files/range_end_too_large.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 124
+  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967297`, expected u32 at line 1 column 138
 
   x Plugin `fixes-plugin/fixes` returned invalid fixes.
   | File path: <fixture>/files/range_start_after_end.js
@@ -29,11 +29,11 @@
 
   x Error running JS plugin.
   | File path: <fixture>/files/range_start_negative.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 110
+  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-9`, expected u32 at line 1 column 116
 
   x Error running JS plugin.
   | File path: <fixture>/files/range_start_too_large.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 118
+  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967297`, expected u32 at line 1 column 125
 
   x fixes-plugin(fixes): Replace "a" with "daddy"
    ,-[files/bom.js:1:4]
@@ -88,6 +88,74 @@
    ,-[files/bom_and_unicode.js:3:5]
  2 | // 😀🤪😆😎🤮
  3 | g = b
+   :     ^
+   `----
+
+  x fixes-plugin(fixes): Replace "a" with "daddy"
+   ,-[files/bom_remove.js:1:4]
+ 1 | ﻿a = c;
+   : ^
+ 2 | d = b
+   `----
+
+  x fixes-plugin(fixes): Remove BOM
+   ,-[files/bom_remove.js:1:4]
+ 1 | ,-> ﻿a = c;
+ 2 | `-> d = b
+   `----
+
+  x fixes-plugin(fixes): Prefix "c" with "magi"
+   ,-[files/bom_remove.js:1:8]
+ 1 | ﻿a = c;
+   :     ^
+ 2 | d = b
+   `----
+
+  x fixes-plugin(fixes): Prefix "d" with "damne"
+   ,-[files/bom_remove.js:2:1]
+ 1 | ﻿a = c;
+ 2 | d = b
+   : ^
+   `----
+
+  x fixes-plugin(fixes): Replace "b" with "abacus"
+   ,-[files/bom_remove.js:2:5]
+ 1 | ﻿a = c;
+ 2 | d = b
+   :     ^
+   `----
+
+  x fixes-plugin(fixes): Replace "a" with "daddy"
+   ,-[files/bom_remove2.js:1:4]
+ 1 | ﻿a = c;
+   : ^
+ 2 | d = b
+   `----
+
+  x fixes-plugin(fixes): Remove BOM multiple
+   ,-[files/bom_remove2.js:1:4]
+ 1 | ,-> ﻿a = c;
+ 2 | `-> d = b
+   `----
+
+  x fixes-plugin(fixes): Prefix "c" with "magi"
+   ,-[files/bom_remove2.js:1:8]
+ 1 | ﻿a = c;
+   :     ^
+ 2 | d = b
+   `----
+
+  x fixes-plugin(fixes): Prefix "d" with "damne"
+   ,-[files/bom_remove2.js:2:1]
+ 1 | ﻿a = c;
+ 2 | d = b
+   : ^
+   `----
+
+  x fixes-plugin(fixes): Replace "b" with "abacus"
+   ,-[files/bom_remove2.js:2:5]
+ 1 | ﻿a = c;
+ 2 | d = b
    :     ^
    `----
 
@@ -237,8 +305,8 @@
    :     ^
    `----
 
-Found 0 warnings and 36 errors.
-Finished in Xms on 10 files with 1 rules using X threads.
+Found 0 warnings and 46 errors.
+Finished in Xms on 12 files with 1 rules using X threads.
 ```
 
 # stderr

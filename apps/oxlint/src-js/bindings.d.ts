@@ -34,6 +34,9 @@ export declare const enum Severity {
  *    one group per diagnostic which provides fixes.
  *    Each inner array should have length of 1 at minimum.
  *
+ * If source text starts with a BOM, `JSFix`es must have offsets relative to the start
+ * of the source text *without* the BOM.
+ *
  * Each group's fixes are merged, then all merged fixes are applied to `source_text`.
  *
  * Fix ranges are converted from UTF-16 code units to UTF-8 bytes.
