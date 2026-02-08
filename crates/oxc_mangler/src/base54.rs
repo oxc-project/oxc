@@ -30,6 +30,31 @@ struct Aligned64([u8; 64]);
 const BASE54_CHARS: Aligned64 =
     Aligned64(*b"etnriaoscludfpmhg_vybxSCwTEDOkAjMNPFILRzBVHUWGKqJYXZQ$1024368579");
 
+/// Base 54 for the first character (valid identifier start characters).
+/// <https://tc39.es/ecma262/#prod-IdentifierStart>
+const FIRST_BASE: usize = 54;
+
+/// Base 64 for remaining characters (identifier start + digits 0-9).
+/// <https://tc39.es/ecma262/#prod-IdentifierPart>
+const REST_BASE: usize = 64;
+
+/// Pre-computed two-character base54 values for indices 54..3510.
+/// This covers the vast majority of real-world mangled names without runtime division.
+/// 3456 entries × 2 bytes = 6912 bytes.
+const TWO_CHAR_TABLE: [[u8; 2]; FIRST_BASE * REST_BASE] = {
+    let mut table = [[0u8; 2]; FIRST_BASE * REST_BASE];
+    let mut i = 0usize;
+    while i < FIRST_BASE * REST_BASE {
+        let n = i + FIRST_BASE;
+        table[i] = [BASE54_CHARS.0[n % FIRST_BASE], BASE54_CHARS.0[n / FIRST_BASE - 1]];
+        i += 1;
+    }
+    table
+};
+
+/// Threshold above which we need 3+ character names and fall back to dynamic computation.
+const TWO_CHAR_LIMIT: usize = FIRST_BASE + FIRST_BASE * REST_BASE; // 3510
+
 /// Get the shortest mangled name for a given n.
 /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
 //
@@ -37,38 +62,54 @@ const BASE54_CHARS: Aligned64 =
 // so the total size of `InlineString` is 8, including the `u8` length field.
 // Then initializing the `InlineString` is a single instruction, and with luck it'll sit in a register
 // throughout this function.
-#[expect(clippy::items_after_statements)]
 pub fn base54(n: u32) -> InlineString<7, u8> {
     let mut str = InlineString::new();
+    let num = n as usize;
 
-    let mut num = n as usize;
-
-    // Base 54 at first because these are the usable first characters in JavaScript identifiers
-    // <https://tc39.es/ecma262/#prod-IdentifierStart>
-    const FIRST_BASE: usize = 54;
-    let byte = BASE54_CHARS.0[num % FIRST_BASE];
-    // SAFETY: All `BASE54_CHARS` are ASCII. This is first byte we push, so can't be out of bounds.
-    unsafe { str.push_unchecked(byte) };
-    num /= FIRST_BASE;
-
-    // Base 64 for the rest because after the first character we can also use 0-9 too
-    // <https://tc39.es/ecma262/#prod-IdentifierPart>
-    const REST_BASE: usize = 64;
-    while num > 0 {
-        num -= 1;
-        let byte = BASE54_CHARS.0[num % REST_BASE];
-        // SAFETY: All `BASE54_CHARS` are ASCII.
-        // String for `u64::MAX` is `ZrN6rN6rN6r` (11 bytes), so cannot push more than `CAPACITY` (12).
-        unsafe { str.push_unchecked(byte) };
-        num /= REST_BASE;
+    if num < FIRST_BASE {
+        // Single character: direct lookup
+        // SAFETY: `num < 54`, so in bounds. All `BASE54_CHARS` are ASCII.
+        unsafe { str.push_unchecked(BASE54_CHARS.0[num]) };
+    } else if num < TWO_CHAR_LIMIT {
+        // Two characters: pre-computed lookup table (covers indices 54..3510)
+        let [a, b] = TWO_CHAR_TABLE[num - FIRST_BASE];
+        // SAFETY: All values in `TWO_CHAR_TABLE` are derived from `BASE54_CHARS` which are ASCII.
+        // Pushing 2 bytes is within `CAPACITY` (7).
+        unsafe {
+            str.push_unchecked(a);
+            str.push_unchecked(b);
+        }
+    } else {
+        // Three+ characters: dynamic computation (rare in practice)
+        base54_dynamic(&mut str, num);
     }
 
     str
 }
 
+/// Dynamic base54 computation for indices >= 3510 (3+ character names).
+fn base54_dynamic(str: &mut InlineString<7, u8>, n: usize) {
+    let mut num = n;
+
+    let byte = BASE54_CHARS.0[num % FIRST_BASE];
+    // SAFETY: All `BASE54_CHARS` are ASCII. This is first byte we push, so can't be out of bounds.
+    unsafe { str.push_unchecked(byte) };
+    num /= FIRST_BASE;
+
+    while num > 0 {
+        num -= 1;
+        let byte = BASE54_CHARS.0[num % REST_BASE];
+        // SAFETY: All `BASE54_CHARS` are ASCII.
+        // String for `u32::MAX` is `xKrTKr` (6 bytes), so cannot push more than `CAPACITY` (7).
+        unsafe { str.push_unchecked(byte) };
+        num /= REST_BASE;
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use super::base54;
+    use super::{base54, base54_dynamic, TWO_CHAR_LIMIT};
+    use oxc_data_structures::inline_string::InlineString;
 
     #[test]
     fn test_base54() {
@@ -78,5 +119,24 @@ mod test {
         assert_eq!(&*base54(54), "ee");
         assert_eq!(&*base54(55), "te");
         assert_eq!(&*base54(u32::MAX), "xKrTKr");
+    }
+
+    /// Verify the const lookup table matches the dynamic computation at all boundaries.
+    #[test]
+    fn test_base54_table_matches_dynamic() {
+        // Test all two-char values against the dynamic fallback
+        for n in 54..TWO_CHAR_LIMIT as u32 {
+            let from_table = base54(n);
+            let mut from_dynamic = InlineString::new();
+            base54_dynamic(&mut from_dynamic, n as usize);
+            assert_eq!(
+                from_table.as_str(),
+                from_dynamic.as_str(),
+                "Mismatch at n={n}"
+            );
+        }
+        // Boundary: last two-char and first three-char
+        assert_eq!(base54(TWO_CHAR_LIMIT as u32 - 1).len_usize(), 2);
+        assert_eq!(base54(TWO_CHAR_LIMIT as u32).len_usize(), 3);
     }
 }
