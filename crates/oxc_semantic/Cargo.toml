@@ -35,7 +35,6 @@ itertools = { workspace = true }
 memchr = { workspace = true }
 rustc-hash = { workspace = true }
 self_cell = { workspace = true }
-smallvec = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true, features = ["glob"] }
