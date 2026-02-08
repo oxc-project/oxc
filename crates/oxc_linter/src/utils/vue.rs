@@ -103,7 +103,7 @@ pub fn check_define_macro_call_expression(
 
 /// Get the scope ID of the Vue setup block (last top-level BlockStatement).
 ///
-/// According to https://github.com/liangmiQwQ/vue-oxc-toolkit/blob/main/MAPPING.md,
+/// According to <https://github.com/liangmiQwQ/vue-oxc-toolkit/blob/main/MAPPING.md>,
 /// In vue-oxc-toolkit compiled AST, the last top-level BlockStatement contains
 /// the `<script setup>` code.
 pub fn get_vue_setup_scope_id(ctx: &LintContext<'_>) -> ScopeId {
