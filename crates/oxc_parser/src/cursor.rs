@@ -31,73 +31,54 @@ impl<'a> ParserImpl<'a> {
         Span::new(start, self.prev_token_end)
     }
 
-    /// Get current token
     #[inline]
     pub(crate) fn cur_token(&self) -> Token {
         self.token
     }
 
-    /// Get current Kind
     #[inline]
     pub(crate) fn cur_kind(&self) -> Kind {
         self.token.kind()
     }
 
-    /// Get current source text
     #[inline]
     pub(crate) fn cur_src(&self) -> &'a str {
         self.token_source(&self.token)
     }
 
-    /// Get source text for a token
     #[inline]
     pub(crate) fn token_source(&self, token: &Token) -> &'a str {
         let span = token.span();
         if cfg!(debug_assertions) {
             &self.source_text[span.start as usize..span.end as usize]
         } else {
-            // SAFETY:
-            // Span comes from the lexer, which ensures:
-            // * `start` and `end` are in bounds of source text.
-            // * `end >= start`.
-            // * `start` and `end` are both on UTF-8 char boundaries.
-            // * `self.source_text` is same text that `Token`s are generated from.
-            //
-            // TODO: I (@overlookmotel) don't think we should really be doing this.
-            // We don't have static guarantees of these properties.
+            // SAFETY: Span comes from the lexer, which ensures bounds, ordering,
+            // UTF-8 boundaries, and same source text.
             unsafe { self.source_text.get_unchecked(span.start as usize..span.end as usize) }
         }
     }
 
-    /// Get current string
     pub(crate) fn cur_string(&self) -> &'a str {
         self.lexer.get_string(self.token)
     }
 
-    /// Get current template string
     pub(crate) fn cur_template_string(&self) -> Option<&'a str> {
         self.lexer.get_template_string(self.token.start())
     }
 
-    /// Checks if the current index has token `Kind`
     #[inline]
     pub(crate) fn at(&self, kind: Kind) -> bool {
         self.cur_kind() == kind
     }
 
-    /// `StringValue` of `IdentifierName` normalizes any Unicode escape sequences
-    /// in `IdentifierName` hence such escapes cannot be used to write an Identifier
-    /// whose code point sequence is the same as a `ReservedWord`.
     #[cold]
     fn report_escaped_keyword(&mut self, span: Span) {
         self.error(diagnostics::escaped_keyword(span));
     }
 
-    /// Move to the next token
-    /// Checks if the current token is escaped if it is a keyword
+    /// Advance to next token, checking for escaped keywords.
     #[inline]
-    fn advance(&mut self, kind: Kind) {
-        // Manually inlined escaped keyword check - escaped identifiers are extremely rare
+    pub(crate) fn advance(&mut self, kind: Kind) {
         if self.token.escaped() && kind.is_any_keyword() {
             self.report_escaped_keyword(self.token.span());
         }
@@ -105,14 +86,12 @@ impl<'a> ParserImpl<'a> {
         self.token = self.lexer.next_token();
     }
 
-    /// Move to the next `JSXChild`
-    /// Checks if the current token is escaped if it is a keyword
     pub(crate) fn advance_for_jsx_child(&mut self) {
         self.prev_token_end = self.token.end();
         self.token = self.lexer.next_jsx_child();
     }
 
-    /// Advance and return true if we are at `Kind`, return false otherwise
+    /// Advance and return true if we are at `kind`.
     #[inline]
     #[must_use = "Use `bump` instead of `eat` if you are ignoring the return value"]
     pub(crate) fn eat(&mut self, kind: Kind) -> bool {
@@ -123,7 +102,7 @@ impl<'a> ParserImpl<'a> {
         false
     }
 
-    /// Advance if we are at `Kind`
+    /// Advance if we are at `kind`.
     #[inline]
     pub(crate) fn bump(&mut self, kind: Kind) {
         if self.at(kind) {
@@ -131,27 +110,18 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    /// Advance any token
+    /// Advance any token.
     #[inline]
     pub(crate) fn bump_any(&mut self) {
         self.advance(self.cur_kind());
     }
 
-    /// Advance and change token type, useful for changing keyword to ident
-    #[inline]
-    pub(crate) fn bump_remap(&mut self, kind: Kind) {
-        self.advance(kind);
-    }
-
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
-    /// # Errors
     pub(crate) fn asi(&mut self) {
-        if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
-            /* no op */
-        } else {
-            let span = Span::empty(self.prev_token_end);
-            let error = diagnostics::auto_semicolon_insertion(span);
-            self.set_fatal_error(error);
+        if !self.eat(Kind::Semicolon) && !self.can_insert_semicolon() {
+            self.set_fatal_error(diagnostics::auto_semicolon_insertion(Span::empty(
+                self.prev_token_end,
+            )));
         }
     }
 
@@ -161,17 +131,17 @@ impl<'a> ParserImpl<'a> {
         matches!(token.kind(), Kind::Semicolon | Kind::RCurly | Kind::Eof) || token.is_on_new_line()
     }
 
-    /// Cold path for expect failures - separated to improve branch prediction
     #[cold]
     #[inline(never)]
     fn handle_expect_failure(&mut self, expected_kind: Kind) {
         let range = self.cur_token().span();
-        let error =
-            diagnostics::expect_token(expected_kind.to_str(), self.cur_kind().to_str(), range);
-        self.set_fatal_error(error);
+        self.set_fatal_error(diagnostics::expect_token(
+            expected_kind.to_str(),
+            self.cur_kind().to_str(),
+            range,
+        ));
     }
 
-    /// # Errors
     #[inline]
     pub(crate) fn expect_without_advance(&mut self, kind: Kind) {
         if !self.at(kind) {
@@ -179,8 +149,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    /// Expect a `Kind` or return error
-    /// # Errors
+    /// Expect a `Kind` or set fatal error, then advance.
     #[inline]
     pub(crate) fn expect(&mut self, kind: Kind) {
         if !self.at(kind) {
@@ -192,14 +161,12 @@ impl<'a> ParserImpl<'a> {
     #[inline]
     pub(crate) fn expect_closing(&mut self, kind: Kind, opening_span: Span) {
         if !self.at(kind) {
-            let range = self.cur_token().span();
-            let error = diagnostics::expect_closing(
+            self.set_fatal_error(diagnostics::expect_closing(
                 kind.to_str(),
                 self.cur_kind().to_str(),
-                range,
+                self.cur_token().span(),
                 opening_span,
-            );
-            self.set_fatal_error(error);
+            ));
         }
         self.advance(kind);
     }
@@ -207,47 +174,38 @@ impl<'a> ParserImpl<'a> {
     #[inline]
     pub(crate) fn expect_conditional_alternative(&mut self, question_span: Span) {
         if !self.at(Kind::Colon) {
-            let range = self.cur_token().span();
-            let error = diagnostics::expect_conditional_alternative(
+            self.set_fatal_error(diagnostics::expect_conditional_alternative(
                 self.cur_kind().to_str(),
-                range,
+                self.cur_token().span(),
                 question_span,
-            );
-            self.set_fatal_error(error);
+            ));
         }
         self.bump_any(); // bump `:`
     }
 
-    /// Expect the next next token to be a `JsxChild`, i.e. `<` or `{` or `JSXText`
-    /// # Errors
     pub(crate) fn expect_jsx_child(&mut self, kind: Kind) {
         self.expect_without_advance(kind);
         self.advance_for_jsx_child();
     }
 
-    /// Expect the next next token to be a `JsxString` or any other token
-    /// # Errors
     pub(crate) fn expect_jsx_attribute_value(&mut self, kind: Kind) {
         self.lexer.set_context(LexerContext::JsxAttributeValue);
         self.expect(kind);
         self.lexer.set_context(LexerContext::Regular);
     }
 
-    /// Tell lexer to read a regex
     pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags, bool) {
         let (token, pattern_end, flags, flags_error) = self.lexer.next_regex(self.cur_kind());
         self.token = token;
         (pattern_end, flags, flags_error)
     }
 
-    /// Tell lexer to read a template substitution tail
     pub(crate) fn re_lex_template_substitution_tail(&mut self) {
         if self.at(Kind::RCurly) {
             self.token = self.lexer.next_template_substitution_tail();
         }
     }
 
-    /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`
     pub(crate) fn continue_lex_jsx_identifier(&mut self) {
         if let Some(token) = self.lexer.continue_lex_jsx_identifier() {
             self.token = token;
@@ -323,7 +281,6 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
         let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
             checkpoint;
-
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
@@ -355,7 +312,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[expect(clippy::inline_always)]
-    #[inline(always)] // inline because this is always on a hot path
+    #[inline(always)]
     pub(crate) fn context_add<F, T>(&mut self, add_flags: Context, cb: F) -> T
     where
         F: FnOnce(&mut Self) -> T,
@@ -368,7 +325,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[expect(clippy::inline_always)]
-    #[inline(always)] // inline because this is always on a hot path
+    #[inline(always)]
     pub(crate) fn context_remove<F, T>(&mut self, remove_flags: Context, cb: F) -> T
     where
         F: FnOnce(&mut Self) -> T,
@@ -381,7 +338,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     #[expect(clippy::inline_always)]
-    #[inline(always)] // inline because this is always on a hot path
+    #[inline(always)]
     pub(crate) fn context<F, T>(&mut self, add_flags: Context, remove_flags: Context, cb: F) -> T
     where
         F: FnOnce(&mut Self) -> T,
@@ -451,7 +408,6 @@ impl<'a> ParserImpl<'a> {
         F: FnMut(&mut Self) -> T,
     {
         let mut list = self.ast.vec();
-        // Cache cur_kind() to avoid redundant calls in compound checks
         let kind = self.cur_kind();
         if kind == close
             || matches!(kind, Kind::Eof | Kind::Undetermined)
@@ -517,14 +473,13 @@ impl<'a> ParserImpl<'a> {
             } else {
                 let comma_span = self.cur_token().span();
                 if kind != Kind::Comma {
-                    let error = diagnostics::expect_closing_or_separator(
+                    self.set_fatal_error(diagnostics::expect_closing_or_separator(
                         close.to_str(),
                         Kind::Comma.to_str(),
                         kind.to_str(),
                         comma_span,
                         opening_span,
-                    );
-                    self.set_fatal_error(error);
+                    ));
                     break;
                 }
                 self.bump_any();
@@ -542,7 +497,6 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
-            // Re-capture kind to get the current token (may have changed after else branch)
             let kind = self.cur_kind();
             if kind == Kind::Dot3 {
                 rest.replace(parse_rest(self));
