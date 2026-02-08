@@ -1145,6 +1145,77 @@ describe("RuleTester", () => {
           expect(runCases()).toEqual([null]);
         });
       });
+
+      describe("adjacent fixes", () => {
+        // Rule which produces two diagnostics with adjacent fix ranges for identifier `ab`.
+        // Fix 1 replaces `a` (first char), fix 2 replaces `b` (second char).
+        // End of fix 1's range === start of fix 2's range.
+        //
+        // In standard mode, adjacent fixes are not considered overlapping, so both apply.
+        // In ESLint compat mode, adjacent fixes are considered overlapping (matching ESLint),
+        // so only the first fix applies.
+        const adjacentFixesRule: Rule = {
+          meta: {
+            fixable: "code",
+          },
+          create(context) {
+            return {
+              Identifier(node) {
+                if (node.name !== "ab") return;
+
+                const start = node.range[0];
+                const mid = start + 1;
+                const end = node.range[1];
+                context.report({
+                  message: "Fix a",
+                  node,
+                  fix(fixer) {
+                    return fixer.replaceTextRange([start, mid], "x");
+                  },
+                });
+                context.report({
+                  message: "Fix b",
+                  node,
+                  fix(fixer) {
+                    return fixer.replaceTextRange([mid, end], "y");
+                  },
+                });
+              },
+            };
+          },
+        };
+
+        it("adjacent fixes applied in standard mode", () => {
+          const tester = new RuleTester();
+          tester.run("adjacent-fixes", adjacentFixesRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let ab;",
+                output: "let xy;",
+                errors: 2,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("only first adjacent fix applied in ESLint compat mode", () => {
+          const tester = new RuleTester();
+          tester.run("adjacent-fixes", adjacentFixesRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let ab;",
+                output: "let xb;",
+                eslintCompat: true,
+                errors: 2,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+      });
     });
   });
 
