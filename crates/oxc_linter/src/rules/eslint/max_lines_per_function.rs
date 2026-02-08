@@ -6,13 +6,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Semantic;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
     AstNode,
     ast_util::{get_function_name_with_kind, iter_outer_expressions},
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::count_comment_lines,
 };
 
@@ -29,8 +30,8 @@ fn max_lines_per_function_diagnostic(
     .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxLinesPerFunctionConfig {
     /// Maximum number of lines allowed in a function.
     max: usize,
@@ -58,7 +59,7 @@ impl Default for MaxLinesPerFunctionConfig {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct MaxLinesPerFunction(Box<MaxLinesPerFunctionConfig>);
 
 impl Deref for MaxLinesPerFunction {
@@ -123,42 +124,21 @@ declare_oxc_lint!(
 impl Rule for MaxLinesPerFunction {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
-        let config = if let Some(max) = config
+        if let Some(max) = config
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
             .and_then(|v| usize::try_from(v).ok())
         {
-            MaxLinesPerFunctionConfig {
+            Ok(Self(Box::new(MaxLinesPerFunctionConfig {
                 max,
                 skip_comments: false,
                 skip_blank_lines: false,
                 iifes: false,
-            }
+            })))
         } else {
-            let max = config
-                .and_then(|config| config.get("max"))
-                .and_then(Value::as_number)
-                .and_then(serde_json::Number::as_u64)
-                .map_or(DEFAULT_MAX_LINES_PER_FUNCTION, |v| {
-                    usize::try_from(v).unwrap_or(DEFAULT_MAX_LINES_PER_FUNCTION)
-                });
-            let skip_comments = config
-                .and_then(|config| config.get("skipComments"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-            let skip_blank_lines = config
-                .and_then(|config| config.get("skipBlankLines"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-            let iifes = config
-                .and_then(|config| config.get("IIFEs"))
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-
-            MaxLinesPerFunctionConfig { max, skip_comments, skip_blank_lines, iifes }
-        };
-
-        Ok(Self(Box::new(config)))
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
+        }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
