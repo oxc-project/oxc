@@ -216,6 +216,14 @@ function createStylisticRuleRunnerMock(tsEslintParser: TSEslintParser) {
         config.languageOptions = languageOptions;
       }
 
+      // Pass through `recursive` setting from test options.
+      // `eslint-vitest-rule-tester`'s default is `recursive: 10`, but `eslint-plugin-stylistic`'s
+      // test runner wrapper overrides this to `recursive: false` (no recursion).
+      // Individual rules can opt back in (e.g. `indent-binary-ops` sets `recursive: 10`).
+      // https://github.com/eslint-stylistic/eslint-stylistic/blob/5c4b512a225a314fa5f41eead9fdc4d51fc243d7/shared/test-utils/runner.ts#L38
+      // `false` is our `RuleTester`'s default, so we don't need to override a default of 10.
+      if (options.recursive != null) config.recursive = options.recursive;
+
       // Add other options to config.
       // These don't have any effect, but we add them so they appear in snapshot.
       if (options.linterOptions != null) (config as any).linterOptions = options.linterOptions;

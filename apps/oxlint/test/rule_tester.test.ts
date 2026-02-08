@@ -978,6 +978,173 @@ describe("RuleTester", () => {
         `);
         });
       });
+
+      describe("recursive", () => {
+        // Rule which requires multiple fix passes. It removes trailing `_` from identifiers one at a time.
+        // e.g. `foo__` -> `foo_` -> `foo`
+        const multiPassFixRule: Rule = {
+          meta: {
+            fixable: "code",
+          },
+          create(context) {
+            return {
+              Identifier(node) {
+                if (!node.name.endsWith("_")) return;
+
+                context.report({
+                  message: "No trailing underscore!",
+                  node,
+                  fix(fixer) {
+                    return fixer.replaceText(node, node.name.slice(0, -1));
+                  },
+                });
+              },
+            };
+          },
+        };
+
+        it("without `recursive` applies only one fix pass", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo__;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `recursive: false`", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo__;",
+                recursive: false,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `recursive: 0`", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo__;",
+                recursive: 0,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `recursive: 1` applies two fix passes total", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo_;",
+                recursive: 1,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `recursive: 2` applies three fix passes total", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo;",
+                recursive: 2,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `recursive: true` applies all fix passes", () => {
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo;",
+                recursive: true,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({ recursive: true });
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({ recursive: true });
+          const tester = new RuleTester();
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("test case overrides `RuleTester` options", () => {
+          const tester = new RuleTester({ recursive: true });
+          tester.run("no-trailing-underscore", multiPassFixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo___;",
+                output: "let foo__;",
+                recursive: false,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+      });
     });
   });
 
