@@ -392,7 +392,7 @@ impl AstKind<'_> {
             Self::VariableDeclaration(_) => "VariableDeclaration".into(),
             Self::VariableDeclarator(v) => format!(
                 "VariableDeclarator({})",
-                v.id.get_identifier_name().unwrap_or(Ident::from(DESTRUCTURE.as_ref()))
+                v.id.get_identifier_name().map_or(DESTRUCTURE.as_ref(), |id| id.as_str())
             )
             .into(),
 
@@ -474,7 +474,7 @@ impl AstKind<'_> {
             Self::FormalParameters(_) => "FormalParameters".into(),
             Self::FormalParameter(p) => format!(
                 "FormalParameter({})",
-                p.pattern.get_identifier_name().unwrap_or(Ident::from(DESTRUCTURE.as_ref()))
+                p.pattern.get_identifier_name().map_or(DESTRUCTURE.as_ref(), |id| id.as_str())
             )
             .into(),
             Self::FormalParameterRest(_) => "FormalParameterRest".into(),

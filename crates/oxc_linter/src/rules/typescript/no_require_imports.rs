@@ -7,7 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{CompactStr, Ident, Span};
+use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -133,7 +133,7 @@ impl Rule for NoRequireImports {
             AstKind::CallExpression(call_expr) => {
                 if node.scope_id() != ctx.scoping().root_scope_id()
                     && let Some(id) = call_expr.callee.get_identifier_reference()
-                    && !id.is_global_reference_name(Ident::new_const("require"), ctx.scoping())
+                    && !id.is_global_reference_name_str("require", ctx.scoping())
                 {
                     return;
                 }
@@ -172,7 +172,7 @@ impl Rule for NoRequireImports {
 
                 if ctx
                     .scoping()
-                    .find_binding(ctx.scoping().root_scope_id(), Ident::new_const("require"))
+                    .find_binding_str(ctx.scoping().root_scope_id(), "require")
                     .is_some()
                 {
                     return;

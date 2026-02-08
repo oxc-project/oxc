@@ -184,6 +184,23 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     }
 }
 
+/// Methods that use [`PassthroughBuildHasher`] for pre-computed hashes.
+impl<'alloc, K, V> HashMap<'alloc, K, V, crate::PassthroughBuildHasher> {
+    /// Creates an empty [`HashMap`] with [`PassthroughBuildHasher`].
+    /// It will be allocated with the given allocator.
+    #[inline(always)]
+    pub fn new_passthrough_in(allocator: &'alloc Allocator) -> Self {
+        Self::with_hasher_in(crate::PassthroughBuildHasher, allocator)
+    }
+
+    /// Creates an empty [`HashMap`] with [`PassthroughBuildHasher`] and the specified capacity.
+    /// It will be allocated with the given allocator.
+    #[inline(always)]
+    pub fn with_capacity_passthrough_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
+        Self::with_capacity_and_hasher_in(capacity, crate::PassthroughBuildHasher, allocator)
+    }
+}
+
 /// Methods that use the default [`FxBuildHasher`].
 impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// Creates an empty [`HashMap`]. It will be allocated with the given allocator.

@@ -224,7 +224,7 @@ impl<'a> Dummy<'a> for TemplateElementValue<'a> {
 impl<'a> Dummy<'a> for MemberExpression<'a> {
     /// Create a dummy [`MemberExpression`].
     ///
-    /// Has cost of making 2 allocations (64 bytes).
+    /// Has cost of making 2 allocations (56 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::StaticMemberExpression(Dummy::dummy(allocator))
     }
@@ -337,7 +337,7 @@ impl<'a> Dummy<'a> for Argument<'a> {
 impl<'a> Dummy<'a> for UpdateExpression<'a> {
     /// Create a dummy [`UpdateExpression`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -419,7 +419,7 @@ impl<'a> Dummy<'a> for ConditionalExpression<'a> {
 impl<'a> Dummy<'a> for AssignmentExpression<'a> {
     /// Create a dummy [`AssignmentExpression`].
     ///
-    /// Has cost of making 2 allocations (40 bytes).
+    /// Has cost of making 2 allocations (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -433,7 +433,7 @@ impl<'a> Dummy<'a> for AssignmentExpression<'a> {
 impl<'a> Dummy<'a> for AssignmentTarget<'a> {
     /// Create a dummy [`AssignmentTarget`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::AssignmentTargetIdentifier(Dummy::dummy(allocator))
     }
@@ -442,7 +442,7 @@ impl<'a> Dummy<'a> for AssignmentTarget<'a> {
 impl<'a> Dummy<'a> for SimpleAssignmentTarget<'a> {
     /// Create a dummy [`SimpleAssignmentTarget`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::AssignmentTargetIdentifier(Dummy::dummy(allocator))
     }
@@ -486,7 +486,7 @@ impl<'a> Dummy<'a> for ObjectAssignmentTarget<'a> {
 impl<'a> Dummy<'a> for AssignmentTargetRest<'a> {
     /// Create a dummy [`AssignmentTargetRest`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self { span: Dummy::dummy(allocator), target: Dummy::dummy(allocator) }
     }
@@ -495,7 +495,7 @@ impl<'a> Dummy<'a> for AssignmentTargetRest<'a> {
 impl<'a> Dummy<'a> for AssignmentTargetMaybeDefault<'a> {
     /// Create a dummy [`AssignmentTargetMaybeDefault`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::AssignmentTargetIdentifier(Dummy::dummy(allocator))
     }
@@ -504,7 +504,7 @@ impl<'a> Dummy<'a> for AssignmentTargetMaybeDefault<'a> {
 impl<'a> Dummy<'a> for AssignmentTargetWithDefault<'a> {
     /// Create a dummy [`AssignmentTargetWithDefault`].
     ///
-    /// Has cost of making 2 allocations (40 bytes).
+    /// Has cost of making 2 allocations (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -517,7 +517,7 @@ impl<'a> Dummy<'a> for AssignmentTargetWithDefault<'a> {
 impl<'a> Dummy<'a> for AssignmentTargetProperty<'a> {
     /// Create a dummy [`AssignmentTargetProperty`].
     ///
-    /// Has cost of making 1 allocation (56 bytes).
+    /// Has cost of making 1 allocation (48 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::AssignmentTargetPropertyIdentifier(Dummy::dummy(allocator))
     }
@@ -539,7 +539,7 @@ impl<'a> Dummy<'a> for AssignmentTargetPropertyIdentifier<'a> {
 impl<'a> Dummy<'a> for AssignmentTargetPropertyProperty<'a> {
     /// Create a dummy [`AssignmentTargetPropertyProperty`].
     ///
-    /// Has cost of making 2 allocations (40 bytes).
+    /// Has cost of making 2 allocations (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -684,7 +684,7 @@ impl<'a> Dummy<'a> for VariableDeclarationKind {
 impl<'a> Dummy<'a> for VariableDeclarator<'a> {
     /// Create a dummy [`VariableDeclarator`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -783,7 +783,7 @@ impl<'a> Dummy<'a> for ForStatementInit<'a> {
 impl<'a> Dummy<'a> for ForInStatement<'a> {
     /// Create a dummy [`ForInStatement`].
     ///
-    /// Has cost of making 3 allocations (48 bytes).
+    /// Has cost of making 3 allocations (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -798,7 +798,7 @@ impl<'a> Dummy<'a> for ForInStatement<'a> {
 impl<'a> Dummy<'a> for ForStatementLeft<'a> {
     /// Create a dummy [`ForStatementLeft`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::AssignmentTargetIdentifier(Dummy::dummy(allocator))
     }
@@ -807,7 +807,7 @@ impl<'a> Dummy<'a> for ForStatementLeft<'a> {
 impl<'a> Dummy<'a> for ForOfStatement<'a> {
     /// Create a dummy [`ForOfStatement`].
     ///
-    /// Has cost of making 3 allocations (48 bytes).
+    /// Has cost of making 3 allocations (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -941,7 +941,7 @@ impl<'a> Dummy<'a> for CatchClause<'a> {
 impl<'a> Dummy<'a> for CatchParameter<'a> {
     /// Create a dummy [`CatchParameter`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -963,7 +963,7 @@ impl<'a> Dummy<'a> for DebuggerStatement {
 impl<'a> Dummy<'a> for BindingPattern<'a> {
     /// Create a dummy [`BindingPattern`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::BindingIdentifier(Dummy::dummy(allocator))
     }
@@ -972,7 +972,7 @@ impl<'a> Dummy<'a> for BindingPattern<'a> {
 impl<'a> Dummy<'a> for AssignmentPattern<'a> {
     /// Create a dummy [`AssignmentPattern`].
     ///
-    /// Has cost of making 2 allocations (40 bytes).
+    /// Has cost of making 2 allocations (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -998,7 +998,7 @@ impl<'a> Dummy<'a> for ObjectPattern<'a> {
 impl<'a> Dummy<'a> for BindingProperty<'a> {
     /// Create a dummy [`BindingProperty`].
     ///
-    /// Has cost of making 2 allocations (40 bytes).
+    /// Has cost of making 2 allocations (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1026,7 +1026,7 @@ impl<'a> Dummy<'a> for ArrayPattern<'a> {
 impl<'a> Dummy<'a> for BindingRestElement<'a> {
     /// Create a dummy [`BindingRestElement`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self { span: Dummy::dummy(allocator), argument: Dummy::dummy(allocator) }
     }
@@ -1083,7 +1083,7 @@ impl<'a> Dummy<'a> for FormalParameters<'a> {
 impl<'a> Dummy<'a> for FormalParameter<'a> {
     /// Create a dummy [`FormalParameter`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1112,7 +1112,7 @@ impl<'a> Dummy<'a> for FormalParameterKind {
 impl<'a> Dummy<'a> for FormalParameterRest<'a> {
     /// Create a dummy [`FormalParameterRest`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1222,7 +1222,7 @@ impl<'a> Dummy<'a> for ClassElement<'a> {
 impl<'a> Dummy<'a> for MethodDefinition<'a> {
     /// Create a dummy [`MethodDefinition`].
     ///
-    /// Has cost of making 3 allocations (152 bytes).
+    /// Has cost of making 3 allocations (144 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1319,7 +1319,7 @@ impl<'a> Dummy<'a> for StaticBlock<'a> {
 impl<'a> Dummy<'a> for ModuleDeclaration<'a> {
     /// Create a dummy [`ModuleDeclaration`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::TSNamespaceExportDeclaration(Dummy::dummy(allocator))
     }
@@ -1399,7 +1399,7 @@ impl<'a> Dummy<'a> for ImportPhase {
 impl<'a> Dummy<'a> for ImportDeclarationSpecifier<'a> {
     /// Create a dummy [`ImportDeclarationSpecifier`].
     ///
-    /// Has cost of making 1 allocation (40 bytes).
+    /// Has cost of making 1 allocation (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::ImportDefaultSpecifier(Dummy::dummy(allocator))
     }
@@ -1931,7 +1931,7 @@ impl<'a> Dummy<'a> for TSEnumBody<'a> {
 impl<'a> Dummy<'a> for TSEnumMember<'a> {
     /// Create a dummy [`TSEnumMember`].
     ///
-    /// Has cost of making 1 allocation (24 bytes).
+    /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1944,7 +1944,7 @@ impl<'a> Dummy<'a> for TSEnumMember<'a> {
 impl<'a> Dummy<'a> for TSEnumMemberName<'a> {
     /// Create a dummy [`TSEnumMemberName`].
     ///
-    /// Has cost of making 1 allocation (24 bytes).
+    /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::Identifier(Dummy::dummy(allocator))
     }
@@ -2619,7 +2619,7 @@ impl<'a> Dummy<'a> for TSTypeLiteral<'a> {
 impl<'a> Dummy<'a> for TSInferType<'a> {
     /// Create a dummy [`TSInferType`].
     ///
-    /// Has cost of making 1 allocation (80 bytes).
+    /// Has cost of making 1 allocation (72 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self { span: Dummy::dummy(allocator), type_parameter: Dummy::dummy(allocator) }
     }
@@ -2665,7 +2665,7 @@ impl<'a> Dummy<'a> for TSImportType<'a> {
 impl<'a> Dummy<'a> for TSImportTypeQualifier<'a> {
     /// Create a dummy [`TSImportTypeQualifier`].
     ///
-    /// Has cost of making 1 allocation (24 bytes).
+    /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::Identifier(Dummy::dummy(allocator))
     }
@@ -2674,7 +2674,7 @@ impl<'a> Dummy<'a> for TSImportTypeQualifier<'a> {
 impl<'a> Dummy<'a> for TSImportTypeQualifiedName<'a> {
     /// Create a dummy [`TSImportTypeQualifiedName`].
     ///
-    /// Has cost of making 1 allocation (24 bytes).
+    /// Has cost of making 1 allocation (16 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2799,7 +2799,7 @@ impl<'a> Dummy<'a> for TSTypeAssertion<'a> {
 impl<'a> Dummy<'a> for TSImportEqualsDeclaration<'a> {
     /// Create a dummy [`TSImportEqualsDeclaration`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2813,7 +2813,7 @@ impl<'a> Dummy<'a> for TSImportEqualsDeclaration<'a> {
 impl<'a> Dummy<'a> for TSModuleReference<'a> {
     /// Create a dummy [`TSModuleReference`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 1 allocation (24 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::IdentifierReference(Dummy::dummy(allocator))
     }

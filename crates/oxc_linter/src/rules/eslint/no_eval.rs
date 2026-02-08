@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, IdentStr, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -107,7 +107,8 @@ impl Rule for NoEval {
                     });
 
                 for name in globals {
-                    let Some(references) = ctx.scoping().root_unresolved_references().get(name)
+                    let Some(references) =
+                        ctx.scoping().root_unresolved_references().get(&IdentStr(name))
                     else {
                         continue;
                     };

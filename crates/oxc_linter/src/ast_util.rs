@@ -9,7 +9,7 @@ use oxc_ast::{
 };
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
-use oxc_span::{GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     identifier::is_irregular_whitespace,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -405,7 +405,7 @@ pub fn is_global_require_call(call_expr: &CallExpression, ctx: &Semantic) -> boo
     if call_expr.arguments.len() != 1 {
         return false;
     }
-    call_expr.callee.is_global_reference_name(Ident::new_const("require"), ctx.scoping())
+    call_expr.callee.is_global_reference_name_str("require", ctx.scoping())
 }
 
 pub fn is_function_node(node: &AstNode) -> bool {

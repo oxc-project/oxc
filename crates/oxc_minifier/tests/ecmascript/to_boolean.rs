@@ -10,7 +10,7 @@ fn test() {
     let allocator = Allocator::default();
     let ast = AstBuilder::new(&allocator);
 
-    let undefined = ast.expression_identifier(SPAN, "undefined");
+    let undefined = ast.expression_identifier(SPAN, ast.ident("undefined"));
     let shadowed_undefined_bool =
         undefined.to_boolean(&GlobalReferenceInformation { is_undefined_shadowed: true });
     let global_undefined_bool =

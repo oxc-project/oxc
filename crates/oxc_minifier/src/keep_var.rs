@@ -66,6 +66,7 @@ impl<'a> KeepVar<'a> {
 
         let kind = VariableDeclarationKind::Var;
         let decls = self.ast.vec_from_iter(self.vars.into_iter().map(|(name, span, symbol_id)| {
+            let name = self.ast.ident(name.as_str());
             let id = symbol_id.map_or_else(
                 || self.ast.binding_pattern_binding_identifier(span, name),
                 |symbol_id| {

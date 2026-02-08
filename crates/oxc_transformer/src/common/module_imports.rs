@@ -199,7 +199,7 @@ impl<'a> ModuleImportsStore<'a> {
                 ImportDeclarationSpecifier::ImportSpecifier(ctx.ast.alloc_import_specifier(
                     SPAN,
                     ModuleExportName::IdentifierName(
-                        ctx.ast.identifier_name(SPAN, import.imported),
+                        ctx.ast.identifier_name(SPAN, ctx.ast.ident(import.imported.as_str())),
                     ),
                     import.local.create_binding_identifier(ctx),
                     ImportOrExportKind::Value,

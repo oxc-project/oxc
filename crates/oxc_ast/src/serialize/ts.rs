@@ -275,8 +275,13 @@ pub struct TSGlobalDeclarationId<'a, 'b>(pub &'b TSGlobalDeclaration<'a>);
 
 impl ESTree for TSGlobalDeclarationId<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let ident = IdentifierName { span: self.0.global_span, name: Atom::from("global").into() };
-        ident.serialize(serializer);
+        // Manually serialize an IdentifierName-like structure with name "global"
+        // instead of constructing a real IdentifierName (which would require an arena-interned Ident).
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &"Identifier");
+        state.serialize_field("span", &self.0.global_span);
+        state.serialize_field("name", &"global");
+        state.end();
     }
 }
 

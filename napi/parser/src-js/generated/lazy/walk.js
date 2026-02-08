@@ -854,7 +854,7 @@ function walkMetaProperty(pos, ast, visitors) {
   }
 
   walkIdentifierName(pos + 8, ast, visitors);
-  walkIdentifierName(pos + 32, ast, visitors);
+  walkIdentifierName(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1075,7 +1075,7 @@ function walkPrivateInExpression(pos, ast, visitors) {
   }
 
   walkPrivateIdentifier(pos + 8, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkExpression(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1316,7 +1316,7 @@ function walkAssignmentTargetPropertyIdentifier(pos, ast, visitors) {
   }
 
   walkIdentifierReference(pos + 8, ast, visitors);
-  walkOptionExpression(pos + 40, ast, visitors);
+  walkOptionExpression(pos + 32, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2041,7 +2041,7 @@ function walkLabeledStatement(pos, ast, visitors) {
   }
 
   walkLabelIdentifier(pos + 8, ast, visitors);
-  walkStatement(pos + 32, ast, visitors);
+  walkStatement(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2203,10 +2203,10 @@ function walkFunction(pos, ast, visitors) {
   }
 
   walkOptionBindingIdentifier(pos + 8, ast, visitors);
-  walkOptionBoxTSTypeParameterDeclaration(pos + 40, ast, visitors);
-  walkBoxFormalParameters(pos + 56, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 64, ast, visitors);
-  walkOptionBoxFunctionBody(pos + 72, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 32, ast, visitors);
+  walkBoxFormalParameters(pos + 48, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 56, ast, visitors);
+  walkOptionBoxFunctionBody(pos + 64, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2298,11 +2298,11 @@ function walkClass(pos, ast, visitors) {
 
   walkVecDecorator(pos + 8, ast, visitors);
   walkOptionBindingIdentifier(pos + 32, ast, visitors);
-  walkOptionBoxTSTypeParameterDeclaration(pos + 64, ast, visitors);
-  walkOptionExpression(pos + 72, ast, visitors);
-  walkOptionBoxTSTypeParameterInstantiation(pos + 88, ast, visitors);
-  walkVecTSClassImplements(pos + 96, ast, visitors);
-  walkBoxClassBody(pos + 120, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 56, ast, visitors);
+  walkOptionExpression(pos + 64, ast, visitors);
+  walkOptionBoxTSTypeParameterInstantiation(pos + 80, ast, visitors);
+  walkVecTSClassImplements(pos + 88, ast, visitors);
+  walkBoxClassBody(pos + 112, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2801,7 +2801,7 @@ function walkV8IntrinsicExpression(pos, ast, visitors) {
   }
 
   walkIdentifierName(pos + 8, ast, visitors);
-  walkVecArgument(pos + 32, ast, visitors);
+  walkVecArgument(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3286,7 +3286,7 @@ function walkTSEnumDeclaration(pos, ast, visitors) {
   }
 
   walkBindingIdentifier(pos + 8, ast, visitors);
-  walkTSEnumBody(pos + 40, ast, visitors);
+  walkTSEnumBody(pos + 32, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3662,7 +3662,7 @@ function walkTSNamedTupleMember(pos, ast, visitors) {
   }
 
   walkIdentifierName(pos + 8, ast, visitors);
-  walkTSTupleElement(pos + 32, ast, visitors);
+  walkTSTupleElement(pos + 24, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3971,8 +3971,8 @@ function walkTSTypeParameter(pos, ast, visitors) {
   }
 
   walkBindingIdentifier(pos + 8, ast, visitors);
-  walkOptionTSType(pos + 40, ast, visitors);
-  walkOptionTSType(pos + 56, ast, visitors);
+  walkOptionTSType(pos + 32, ast, visitors);
+  walkOptionTSType(pos + 48, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4005,8 +4005,8 @@ function walkTSTypeAliasDeclaration(pos, ast, visitors) {
   }
 
   walkBindingIdentifier(pos + 8, ast, visitors);
-  walkOptionBoxTSTypeParameterDeclaration(pos + 40, ast, visitors);
-  walkTSType(pos + 48, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 32, ast, visitors);
+  walkTSType(pos + 40, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4040,9 +4040,9 @@ function walkTSInterfaceDeclaration(pos, ast, visitors) {
   }
 
   walkBindingIdentifier(pos + 8, ast, visitors);
-  walkOptionBoxTSTypeParameterDeclaration(pos + 40, ast, visitors);
-  walkVecTSInterfaceHeritage(pos + 48, ast, visitors);
-  walkBoxTSInterfaceBody(pos + 72, ast, visitors);
+  walkOptionBoxTSTypeParameterDeclaration(pos + 32, ast, visitors);
+  walkVecTSInterfaceHeritage(pos + 40, ast, visitors);
+  walkBoxTSInterfaceBody(pos + 64, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4477,9 +4477,9 @@ function walkTSMappedType(pos, ast, visitors) {
   }
 
   walkBindingIdentifier(pos + 8, ast, visitors);
-  walkTSType(pos + 40, ast, visitors);
-  walkOptionTSType(pos + 56, ast, visitors);
-  walkOptionTSType(pos + 72, ast, visitors);
+  walkTSType(pos + 32, ast, visitors);
+  walkOptionTSType(pos + 48, ast, visitors);
+  walkOptionTSType(pos + 64, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4564,7 +4564,7 @@ function walkTSImportEqualsDeclaration(pos, ast, visitors) {
   }
 
   walkBindingIdentifier(pos + 8, ast, visitors);
-  walkTSModuleReference(pos + 40, ast, visitors);
+  walkTSModuleReference(pos + 32, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -5712,10 +5712,10 @@ function walkVecTSTypeParameter(pos, ast, visitors) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 80;
+  const endPos = pos + uint32[pos32 + 2] * 72;
   while (pos < endPos) {
     walkTSTypeParameter(pos, ast, visitors);
-    pos += 80;
+    pos += 72;
   }
 }
 

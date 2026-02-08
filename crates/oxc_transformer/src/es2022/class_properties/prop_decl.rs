@@ -345,7 +345,7 @@ impl<'a> ClassProperties<'a, '_> {
         let object_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), object_name);
         let object =
             ctx.create_ident_expr(SPAN, object_name, object_symbol_id, ReferenceFlags::Read);
-        let property = ctx.ast.identifier_name(SPAN, "defineProperty");
+        let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident("defineProperty"));
         let callee =
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
 
@@ -356,7 +356,7 @@ impl<'a> ClassProperties<'a, '_> {
                 ctx.ast.object_property_kind_object_property(
                     SPAN,
                     PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, Atom::from("writable")),
+                    ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident("writable")),
                     ctx.ast.expression_boolean_literal(SPAN, true),
                     false,
                     false,
@@ -365,7 +365,7 @@ impl<'a> ClassProperties<'a, '_> {
                 ctx.ast.object_property_kind_object_property(
                     SPAN,
                     PropertyKind::Init,
-                    ctx.ast.property_key_static_identifier(SPAN, Atom::from("value")),
+                    ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident("value")),
                     value,
                     false,
                     false,

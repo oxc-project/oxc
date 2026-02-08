@@ -242,6 +242,35 @@ where
     }
 }
 
+impl<'new_alloc, K, V, CK, CV> CloneIn<'new_alloc>
+    for HashMap<'_, K, V, crate::PassthroughBuildHasher>
+where
+    K: CloneIn<'new_alloc, Cloned = CK>,
+    V: CloneIn<'new_alloc, Cloned = CV>,
+    CK: Hash + Eq,
+{
+    type Cloned = HashMap<'new_alloc, CK, CV, crate::PassthroughBuildHasher>;
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        let mut cloned = HashMap::with_capacity_passthrough_in(self.len(), allocator);
+        for (key, value) in self {
+            cloned.insert(key.clone_in(allocator), value.clone_in(allocator));
+        }
+        cloned
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        let mut cloned = HashMap::with_capacity_passthrough_in(self.len(), allocator);
+        for (key, value) in self {
+            cloned.insert(
+                key.clone_in_with_semantic_ids(allocator),
+                value.clone_in_with_semantic_ids(allocator),
+            );
+        }
+        cloned
+    }
+}
+
 impl<'alloc, T: Copy> CloneIn<'alloc> for Cell<T> {
     type Cloned = Cell<T>;
 

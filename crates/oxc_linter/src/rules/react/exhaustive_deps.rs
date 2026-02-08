@@ -1497,7 +1497,7 @@ mod fix {
         AstBuilder,
         ast::{ArrayExpression, Expression},
     };
-    use oxc_span::{Atom, GetSpan, SPAN};
+    use oxc_span::{GetSpan, SPAN};
 
     use crate::{
         fixer::{RuleFix, RuleFixer},
@@ -1517,11 +1517,7 @@ mod fix {
         let mut vec = deps.elements.clone_in(&alloc);
 
         for name in names {
-            vec.push(
-                ast_builder
-                    .expression_identifier(SPAN, Atom::from_cow_in(&name.name, &alloc))
-                    .into(),
-            );
+            vec.push(ast_builder.expression_identifier(SPAN, ast_builder.ident(&name.name)).into());
         }
 
         codegen.print_expression(&ast_builder.expression_array(SPAN, vec));

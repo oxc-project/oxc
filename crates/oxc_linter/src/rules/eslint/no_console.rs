@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, IdentStr, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -105,7 +105,7 @@ impl Rule for NoConsole {
         };
 
         if ident.name != "console"
-            || !ctx.scoping().root_unresolved_references().contains_key("console")
+            || !ctx.scoping().root_unresolved_references().contains_key(&IdentStr("console"))
         {
             return;
         }

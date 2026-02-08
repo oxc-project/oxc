@@ -98,7 +98,7 @@ impl<'a> JsxSource<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let key = ctx.ast.property_key_static_identifier(SPAN, SOURCE);
+        let key = ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident(SOURCE));
         let value = self.get_source_object(line, column, ctx);
         ctx.ast.object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
     }
@@ -153,14 +153,14 @@ impl<'a> JsxSource<'a, '_> {
         let kind = PropertyKind::Init;
 
         let filename = {
-            let key = ctx.ast.property_key_static_identifier(SPAN, "fileName");
+            let key = ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident("fileName"));
             let value = self.get_filename_var(ctx).create_read_expression(ctx);
             ctx.ast
                 .object_property_kind_object_property(SPAN, kind, key, value, false, false, false)
         };
 
         let line_number = {
-            let key = ctx.ast.property_key_static_identifier(SPAN, "lineNumber");
+            let key = ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident("lineNumber"));
             let value =
                 ctx.ast.expression_numeric_literal(SPAN, line as f64, None, NumberBase::Decimal);
             ctx.ast
@@ -168,7 +168,7 @@ impl<'a> JsxSource<'a, '_> {
         };
 
         let column_number = {
-            let key = ctx.ast.property_key_static_identifier(SPAN, "columnNumber");
+            let key = ctx.ast.property_key_static_identifier(SPAN, ctx.ast.ident("columnNumber"));
             let value =
                 ctx.ast.expression_numeric_literal(SPAN, column as f64, None, NumberBase::Decimal);
             ctx.ast

@@ -10,7 +10,7 @@ mod span;
 
 pub use cmp::ContentEq;
 pub use oxc_str::{
-    ArenaIdentHashMap, Atom, CompactStr, Ident, IdentHashMap, IdentHashSet,
+    ArenaIdentHashMap, Atom, CompactStr, Ident, IdentHashMap, IdentHashSet, IdentStr,
     MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN, format_atom, format_compact_str, format_ident,
 };
 pub use source_type::{

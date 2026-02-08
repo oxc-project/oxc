@@ -1,4 +1,4 @@
-use std::{borrow::Cow, ops::Deref};
+use std::ops::Deref;
 
 use oxc_allocator::{Address, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
@@ -9,7 +9,7 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{CompactStr, GetSpan, Ident, Span};
+use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -335,15 +335,11 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         }
     }
     fn with_target_property(&mut self, prop: Option<&PropertyKey<'a>>) -> bool {
-        let Some(id) = prop else {
+        let Some(PropertyKey::StaticIdentifier(id)) = prop else {
             return false;
         };
-        if let Some(Cow::Borrowed(name)) = id.static_name() {
-            self.target_symbol.replace(IdentifierName { name: Ident::from(name), span: id.span() });
-            true
-        } else {
-            false
-        }
+        self.target_symbol.replace(IdentifierName { name: id.name, span: id.span });
+        true
     }
     #[inline]
     fn reset_target(&mut self, had_target: bool) {

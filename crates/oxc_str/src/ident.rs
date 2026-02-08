@@ -1,8 +1,11 @@
 //! Identifier string type.
 
-use std::{borrow::Cow, fmt, hash, ops::Deref};
+use std::{borrow::Cow, fmt, hash, marker::PhantomData, ops::Deref, ptr::NonNull};
 
-use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn, StringBuilder as ArenaStringBuilder};
+use oxc_allocator::{
+    Allocator, CloneIn, Dummy, FromIn, HEADER_SIZE, InternedStrHeader, PassthroughBuildHasher,
+    fx_hash, interned_str_from_ptr,
+};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
@@ -10,44 +13,85 @@ use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{Atom, CompactStr};
 
-/// An identifier string for oxc_allocator.
+/// An identifier string backed by an interned arena pointer.
 ///
-/// Use [CompactStr] with [Ident::to_compact_str] or [Ident::into_compact_str] for
+/// Each `Ident` is 8 bytes (a single `NonNull<u8>` pointer). The pointer points
+/// to the string bytes in the arena, with an [`InternedStrHeader`] at negative
+/// offset (`ptr - HEADER_SIZE`) containing the precomputed hash and length.
+///
+/// Use [`CompactStr`] with [`Ident::to_compact_str`] or [`Ident::into_compact_str`] for
 /// the lifetimeless form.
-#[repr(transparent)]
 #[derive(Clone, Copy, Eq)]
-pub struct Ident<'a>(&'a str);
+pub struct Ident<'a> {
+    /// Pointer to string bytes in arena.
+    /// Header `[hash:u64][len:u32][_pad:u32]` at `ptr - HEADER_SIZE`.
+    ptr: NonNull<u8>,
+    _marker: PhantomData<&'a str>,
+}
+
+const _: () = assert!(size_of::<Ident<'_>>() == 8);
+
+// SAFETY: `Ident` is just a pointer into arena memory. It's safe to send between threads
+// as long as the arena outlives the `Ident`, which is guaranteed by the lifetime parameter.
+unsafe impl Send for Ident<'_> {}
+// SAFETY: `Ident` is immutable (shared reference semantics via the lifetime),
+// so it's safe to share between threads.
+unsafe impl Sync for Ident<'_> {}
+
+/// Static empty interned string — used for `Ident::empty()`.
+#[repr(C, align(8))]
+struct StaticEmptyInternedStr {
+    header: InternedStrHeader,
+    // No bytes follow — the string is empty.
+}
+
+/// Precomputed FxHash of the empty string.
+/// FxHash of "" is 0 (the hasher state starts at 0, and writing 0 bytes doesn't change it).
+const EMPTY_FX_HASH: u64 = {
+    // FxHasher initial state is 0. Hashing an empty byte slice produces 0.
+    0
+};
+
+static EMPTY_INTERNED: StaticEmptyInternedStr =
+    StaticEmptyInternedStr { header: InternedStrHeader::new(EMPTY_FX_HASH, 0) };
 
 impl<'a> Ident<'a> {
-    /// Create a new [`Ident`] from a string slice.
+    /// Create a new [`Ident`] from a raw interned pointer.
     ///
-    /// This is a const, no-op wrapper.
-    /// Use this for strings that already have the correct lifetime
-    /// (e.g. arena-allocated strings, or `'static` string literals).
+    /// # Safety
+    /// `ptr` must point to valid interned string bytes with a valid
+    /// [`InternedStrHeader`] at `ptr - HEADER_SIZE`.
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    pub const fn new_const(s: &'a str) -> Self {
-        Ident(s)
+    #[inline(always)]
+    pub unsafe fn from_interned_ptr(ptr: NonNull<u8>) -> Self {
+        Self { ptr, _marker: PhantomData }
     }
 
     /// Get an [`Ident`] containing the empty string (`""`).
     #[inline]
-    pub const fn empty() -> Self {
-        Self::new_const("")
+    pub fn empty() -> Self {
+        // SAFETY: `EMPTY_INTERNED` has a valid header followed by zero bytes of string data.
+        // The pointer points to the byte just after the header, which is the start of (empty) string data.
+        unsafe {
+            let base = (&raw const EMPTY_INTERNED).cast::<u8>();
+            let str_ptr = base.add(HEADER_SIZE);
+            Self::from_interned_ptr(NonNull::new_unchecked(str_ptr.cast_mut()))
+        }
     }
 
     /// Borrow a string slice.
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[expect(clippy::inline_always, clippy::trivially_copy_pass_by_ref)]
+    #[inline(always)]
     pub fn as_str(&self) -> &'a str {
-        self.0
+        // SAFETY: `self.ptr` points to a valid interned string with a valid header at negative offset.
+        unsafe { interned_str_from_ptr(self.ptr) }
     }
 
     /// Convert this [`Ident`] into an [`Atom`].
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[expect(clippy::trivially_copy_pass_by_ref)]
+    #[inline]
     pub fn as_atom(&self) -> Atom<'a> {
-        Atom::from(self.0)
+        Atom::from(self.as_str())
     }
 
     /// Convert this [`Ident`] into a [`String`].
@@ -72,35 +116,14 @@ impl<'a> Ident<'a> {
         CompactStr::new(self.as_str())
     }
 
-    /// Create new [`Ident`] from a fixed-size array of `&str`s concatenated together,
-    /// allocated in the given `allocator`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the sum of length of all strings exceeds `isize::MAX`.
-    // `#[inline(always)]` because want compiler to be able to optimize where some of `strings`
-    // are statically known. See `Allocator::alloc_concat_strs_array`.
-    #[expect(clippy::inline_always)]
+    /// Get the precomputed FxHash stored in the interned string header.
+    #[expect(clippy::inline_always, clippy::cast_ptr_alignment)]
     #[inline(always)]
-    pub fn from_strs_array_in<const N: usize>(
-        strings: [&str; N],
-        allocator: &'a Allocator,
-    ) -> Ident<'a> {
-        Self::from(allocator.alloc_concat_strs_array(strings))
-    }
-
-    /// Convert a [`Cow<'a, str>`] to an [`Ident<'a>`].
-    ///
-    /// If the `Cow` borrows a string from arena, returns an `Ident` which references that same string,
-    /// without allocating a new one.
-    ///
-    /// If the `Cow` is owned, allocates the string into arena to generate a new `Ident`.
-    #[inline]
-    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &'a Allocator) -> Ident<'a> {
-        match value {
-            Cow::Borrowed(s) => Ident::from(*s),
-            Cow::Owned(s) => Ident::from_in(s, allocator),
-        }
+    pub fn precomputed_hash(&self) -> u64 {
+        // Read hash directly — it's the first field (u64) at ptr - HEADER_SIZE.
+        // SAFETY: `self.ptr` was created by `intern_str`. The header is at `ptr - HEADER_SIZE`,
+        // and the original allocation was aligned to 8 bytes.
+        unsafe { self.ptr.as_ptr().sub(HEADER_SIZE).cast::<u64>().read() }
     }
 }
 
@@ -133,7 +156,8 @@ impl<'alloc> FromIn<'alloc, &Ident<'alloc>> for Ident<'alloc> {
 impl<'alloc> FromIn<'alloc, &str> for Ident<'alloc> {
     #[inline]
     fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
-        Self::from(allocator.alloc_str(s))
+        // SAFETY: `intern_str` returns a valid interned pointer.
+        unsafe { Self::from_interned_ptr(allocator.intern_str(s)) }
     }
 }
 
@@ -158,42 +182,18 @@ impl<'alloc> FromIn<'alloc, Cow<'_, str>> for Ident<'alloc> {
     }
 }
 
-impl<'a> From<&'a str> for Ident<'a> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    fn from(s: &'a str) -> Self {
-        Self(s)
-    }
-}
-
-impl<'alloc> From<ArenaStringBuilder<'alloc>> for Ident<'alloc> {
-    #[inline]
-    fn from(s: ArenaStringBuilder<'alloc>) -> Self {
-        Self::from(s.into_str())
-    }
-}
-
 impl<'a> From<Ident<'a>> for &'a str {
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     fn from(s: Ident<'a>) -> Self {
         s.as_str()
     }
 }
 
 impl<'a> From<Ident<'a>> for Atom<'a> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline]
     fn from(s: Ident<'a>) -> Self {
         s.as_atom()
-    }
-}
-
-impl<'a> From<Atom<'a>> for Ident<'a> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    fn from(s: Atom<'a>) -> Self {
-        Self(s.as_str())
     }
 }
 
@@ -222,7 +222,7 @@ impl Deref for Ident<'_> {
     type Target = str;
 
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         self.as_str()
     }
@@ -230,25 +230,51 @@ impl Deref for Ident<'_> {
 
 impl AsRef<str> for Ident<'_> {
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
-/// Allows looking up an `Ident`-keyed hashbrown map with a `&str` key,
-/// without requiring `Ident: Borrow<str>`.
-impl oxc_allocator::hash_map::Equivalent<Ident<'_>> for str {
+/// Wrapper for `&str` lookups in [`PassthroughBuildHasher`]-based `Ident` maps.
+///
+/// Computes `fx_hash` on the fly so the lookup hash matches the precomputed
+/// hash stored in [`Ident`].
+#[repr(transparent)]
+pub struct IdentStr<'a>(pub &'a str);
+
+impl hash::Hash for IdentStr<'_> {
     #[inline]
-    fn equivalent(&self, key: &Ident<'_>) -> bool {
-        self == key.as_str()
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        state.write_u64(fx_hash(self.0));
     }
 }
 
-impl<T: AsRef<str>> PartialEq<T> for Ident<'_> {
+impl oxc_allocator::hash_map::Equivalent<Ident<'_>> for IdentStr<'_> {
     #[inline]
-    fn eq(&self, other: &T) -> bool {
-        self.as_str() == other.as_ref()
+    fn equivalent(&self, key: &Ident<'_>) -> bool {
+        self.0 == key.as_str()
+    }
+}
+
+impl PartialEq for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.ptr == other.ptr
+    }
+}
+
+impl PartialEq<&Ident<'_>> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &&Ident<'_>) -> bool {
+        self.ptr == other.ptr
+    }
+}
+
+impl PartialEq<Ident<'_>> for &Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &Ident<'_>) -> bool {
+        self.ptr == other.ptr
     }
 }
 
@@ -266,6 +292,48 @@ impl PartialEq<str> for Ident<'_> {
     }
 }
 
+impl PartialEq<&str> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == *other
+    }
+}
+
+impl PartialEq<String> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &String) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<Ident<'_>> for String {
+    #[inline]
+    fn eq(&self, other: &Ident<'_>) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<CompactStr> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &CompactStr) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<Atom<'_>> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &Atom<'_>) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<Cow<'_, str>> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &Cow<'_, str>) -> bool {
+        self.as_str() == other.as_ref()
+    }
+}
+
 impl PartialEq<Ident<'_>> for Cow<'_, str> {
     #[inline]
     fn eq(&self, other: &Ident<'_>) -> bool {
@@ -274,9 +342,10 @@ impl PartialEq<Ident<'_>> for Cow<'_, str> {
 }
 
 impl hash::Hash for Ident<'_> {
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
-        self.as_str().hash(hasher);
+        hasher.write_u64(self.precomputed_hash());
     }
 }
 
@@ -308,14 +377,15 @@ impl ESTree for Ident<'_> {
     }
 }
 
-/// Hash map keyed by [`Ident`], using hashbrown with FxHash.
-pub type IdentHashMap<'a, V> = hashbrown::HashMap<Ident<'a>, V, rustc_hash::FxBuildHasher>;
+/// Hash map keyed by [`Ident`], using [`PassthroughBuildHasher`] to skip re-hashing.
+pub type IdentHashMap<'a, V> = hashbrown::HashMap<Ident<'a>, V, PassthroughBuildHasher>;
 
-/// Arena-allocated hash map keyed by [`Ident`].
-pub type ArenaIdentHashMap<'alloc, V> = oxc_allocator::HashMap<'alloc, Ident<'alloc>, V>;
+/// Arena-allocated hash map keyed by [`Ident`], using [`PassthroughBuildHasher`].
+pub type ArenaIdentHashMap<'alloc, V> =
+    oxc_allocator::HashMap<'alloc, Ident<'alloc>, V, PassthroughBuildHasher>;
 
-/// Hash set of [`Ident`], using hashbrown with FxHash.
-pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, rustc_hash::FxBuildHasher>;
+/// Hash set of [`Ident`], using [`PassthroughBuildHasher`] to skip re-hashing.
+pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, PassthroughBuildHasher>;
 
 /// Creates an [`Ident`] using interpolation of runtime expressions.
 ///
@@ -324,7 +394,7 @@ pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, rustc_hash::FxBuildHas
 /// * First argument is the allocator.
 /// * Produces an [`Ident`] instead of a [`String`].
 ///
-/// The string is built in the arena, without allocating an intermediate `String`.
+/// The string is built in the arena via a `StringBuilder`, then interned.
 ///
 /// # Panics
 ///
@@ -346,10 +416,48 @@ pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, rustc_hash::FxBuildHas
 macro_rules! format_ident {
     ($alloc:expr, $($arg:tt)*) => {{
         use ::std::{write, fmt::Write};
-        use $crate::{Ident, __internal::ArenaStringBuilder};
+        use $crate::__internal::{ArenaStringBuilder, FromIn};
 
-        let mut s = ArenaStringBuilder::new_in($alloc);
+        let alloc = $alloc;
+        let mut s = ArenaStringBuilder::new_in(alloc);
         write!(s, $($arg)*).unwrap();
-        Ident::from(s)
+        let str = s.into_str();
+        <$crate::Ident as FromIn<&str>>::from_in(str, alloc)
     }}
+}
+
+#[cfg(test)]
+mod test {
+    use std::borrow::Cow;
+
+    use oxc_allocator::{Allocator, FromIn};
+
+    use crate::{CompactStr, Ident};
+
+    #[test]
+    fn ident_eq_is_pointer_based() {
+        let allocator = Allocator::new();
+        let a = Ident::from_in("foo", &allocator);
+        let b = Ident::from_in("foo", &allocator);
+        assert_eq!(a, b);
+
+        let other_allocator = Allocator::new();
+        let c = Ident::from_in("foo", &other_allocator);
+        assert_ne!(a, c);
+    }
+
+    #[test]
+    fn ident_eq_with_string_like_types_is_content_based() {
+        let allocator = Allocator::new();
+        let ident = Ident::from_in("foo", &allocator);
+
+        assert_eq!(ident, "foo");
+        assert_eq!("foo", ident);
+        assert_eq!(ident, String::from("foo"));
+        assert_eq!(String::from("foo"), ident);
+        assert_eq!(ident, CompactStr::new("foo"));
+        assert_eq!(CompactStr::new("foo"), ident);
+        assert_eq!(ident, Cow::<str>::Borrowed("foo"));
+        assert_eq!(Cow::<str>::Borrowed("foo"), ident);
+    }
 }

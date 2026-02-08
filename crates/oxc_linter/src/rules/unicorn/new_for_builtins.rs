@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{IdentStr, Span};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
@@ -94,7 +94,7 @@ fn is_expr_global_builtin<'a, 'b>(
     let expr = expr.without_parentheses();
     if let Expression::Identifier(ident) = expr {
         let name = ident.name.as_str();
-        if !ctx.scoping().root_unresolved_references().contains_key(name) {
+        if !ctx.scoping().root_unresolved_references().contains_key(&IdentStr(name)) {
             return None;
         }
 

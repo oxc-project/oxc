@@ -14,7 +14,7 @@ pub fn create_member_callee<'a>(
     property: &'static str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident(property));
     Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
 }
 
@@ -80,7 +80,7 @@ pub fn create_prototype_member<'a>(
     object: Expression<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, Atom::from("prototype"));
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident("prototype"));
     let static_member = ctx.ast.member_expression_static(SPAN, object, property, false);
     Expression::from(static_member)
 }
@@ -92,7 +92,7 @@ pub fn create_property_access<'a>(
     property: &str,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let property = ctx.ast.identifier_name(SPAN, ctx.ast.atom(property));
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident(property));
     Expression::from(ctx.ast.member_expression_static(span, object, property, false))
 }
 
@@ -104,7 +104,7 @@ pub fn create_this_property_access<'a>(
     ctx: &TraverseCtx<'a>,
 ) -> MemberExpression<'a> {
     let object = ctx.ast.expression_this(span);
-    let property = ctx.ast.identifier_name(SPAN, property);
+    let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident(property.as_str()));
     ctx.ast.member_expression_static(span, object, property, false)
 }
 
@@ -197,7 +197,7 @@ pub fn create_class_constructor_with_params<'a>(
         MethodDefinitionType::MethodDefinition,
         ctx.ast.vec(),
         PropertyKey::StaticIdentifier(
-            ctx.ast.alloc_identifier_name(SPAN, Atom::from("constructor")),
+            ctx.ast.alloc_identifier_name(SPAN, ctx.ast.ident("constructor")),
         ),
         ctx.ast.alloc_function_with_scope_id(
             SPAN,

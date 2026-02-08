@@ -257,7 +257,7 @@ impl<'a> Semantic<'a> {
 mod tests {
     use oxc_allocator::Allocator;
     use oxc_ast::{AstKind, ast::VariableDeclarationKind};
-    use oxc_span::{Atom, Ident, SourceType};
+    use oxc_span::{Atom, SourceType};
 
     use super::*;
 
@@ -285,10 +285,8 @@ mod tests {
         let allocator = Allocator::default();
         let semantic = get_semantic(&allocator, source, SourceType::default());
 
-        let top_level_a = semantic
-            .scoping()
-            .get_binding(semantic.scoping().root_scope_id(), Ident::new_const("a"))
-            .unwrap();
+        let top_level_a =
+            semantic.scoping().get_binding_str(semantic.scoping().root_scope_id(), "a").unwrap();
 
         let decl = semantic.symbol_declaration(top_level_a);
         match decl.kind() {
@@ -309,7 +307,7 @@ mod tests {
         let semantic = get_semantic(&allocator, source, SourceType::default());
         let scopes = semantic.scoping();
 
-        assert!(scopes.get_binding(scopes.root_scope_id(), Ident::new_const("Fn")).is_some());
+        assert!(scopes.get_binding_str(scopes.root_scope_id(), "Fn").is_some());
     }
 
     #[test]
@@ -452,7 +450,7 @@ mod tests {
             let semantic = get_semantic(&alloc, source, source_type);
             let a_id = semantic
                 .scoping()
-                .get_root_binding(target_symbol_name.into())
+                .get_binding_str(semantic.scoping().root_scope_id(), &target_symbol_name)
                 .unwrap_or_else(|| {
                     panic!("no references for '{target_symbol_name}' found");
                 });

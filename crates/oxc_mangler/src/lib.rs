@@ -7,11 +7,11 @@ use oxc_syntax::class::ClassId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use base54::base54;
-use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
+use oxc_allocator::{Allocator, BitSet, FromIn, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::{Atom, CompactStr, Ident, SourceType};
+use oxc_span::{Atom, CompactStr, Ident, IdentStr, SourceType};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -52,7 +52,7 @@ type Slot = u32;
 /// more ergonomic by either accepting an existing allocator, or allowing an internal one to
 /// be created and used temporarily automatically.
 enum TempAllocator<'t> {
-    Owned(Allocator),
+    Owned(Box<Allocator>),
     Borrowed(&'t Allocator),
 }
 
@@ -203,7 +203,7 @@ impl Default for Mangler<'_> {
     fn default() -> Self {
         Self {
             options: MangleOptions::default(),
-            temp_allocator: TempAllocator::Owned(Allocator::default()),
+            temp_allocator: TempAllocator::Owned(Box::default()),
         }
     }
 }
@@ -487,8 +487,8 @@ impl<'t> Mangler<'t> {
                 let n = name.as_str();
                 if !oxc_syntax::keyword::is_reserved_keyword(n)
                     && !is_special_name(n)
-                    && !root_unresolved_references.contains_key(n)
-                    && !(root_bindings.contains_key(n)
+                    && !root_unresolved_references.contains_key(&IdentStr(n))
+                    && !(root_bindings.contains_key(&IdentStr(n))
                         && (!top_level || exported_names.contains(n)))
                     // TODO: only skip the names that are kept in the current scope
                     && !keep_name_names.contains(n)
@@ -545,7 +545,10 @@ impl<'t> Mangler<'t> {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
-                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
+                    scoping.set_symbol_name(
+                        symbol_id,
+                        Ident::from_in(new_name.as_str(), temp_allocator),
+                    );
                 }
             }
         }

@@ -823,7 +823,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
         arguments.extend(call.arguments.take_in(ctx.ast));
 
-        let property = ctx.ast.identifier_name(SPAN, "call");
+        let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident("call"));
         let callee = ctx.ast.member_expression_static(SPAN, object, property, false);
         let callee = Expression::from(callee);
         Some(ctx.ast.expression_call(SPAN, callee, NONE, arguments, false))

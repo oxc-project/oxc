@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{GetSpan, Ident, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -79,7 +79,7 @@ impl Rule for NoArrayConstructor {
         let last_arg_is_spread = arguments.last().is_some_and(Argument::is_spread);
         let arg_len = arguments.len();
 
-        if ident.is_global_reference_name(Ident::new_const("Array"), ctx.scoping())
+        if ident.is_global_reference_name_str("Array", ctx.scoping())
             && (arg_len != 1 || last_arg_is_spread)
             && type_parameters.is_none()
             && !optional

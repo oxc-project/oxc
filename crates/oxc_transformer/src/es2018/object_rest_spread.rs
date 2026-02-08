@@ -1151,7 +1151,7 @@ impl<'a> SpreadPair<'a> {
             } else if !self.all_primitives {
                 // map to `toPropertyKey` to handle the possible non-string values
                 // `[_ref].map(babelHelpers.toPropertyKey))`
-                let property = ctx.ast.identifier_name(SPAN, "map");
+                let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident("map"));
                 let callee = Expression::StaticMemberExpression(
                     ctx.ast.alloc_static_member_expression(SPAN, key_expression, property, false),
                 );

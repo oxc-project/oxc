@@ -539,7 +539,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         let math = ctx.ast.ident("Math");
         let math_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), math);
         let object = ctx.create_ident_expr(SPAN, math, math_symbol_id, ReferenceFlags::Read);
-        let property = ctx.ast.identifier_name(SPAN, "pow");
+        let property = ctx.ast.identifier_name(SPAN, ctx.ast.ident("pow"));
         let callee =
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));
         let arguments = ctx.ast.vec_from_array([Argument::from(left), Argument::from(right)]);

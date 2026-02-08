@@ -1478,8 +1478,8 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
             let prop = self.ast.object_property_kind_object_property(
                 SPAN,
                 PropertyKind::Init,
-                self.ast.property_key_static_identifier(SPAN, "__proto__"),
-                self.ast.expression_identifier(SPAN, "NodeProto"),
+                self.ast.property_key_static_identifier(SPAN, self.ast.ident("__proto__")),
+                self.ast.expression_identifier(SPAN, self.ast.ident("NodeProto")),
                 false,
                 false,
                 false,
