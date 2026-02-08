@@ -93,7 +93,14 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
                 for &scope_id in &var_scope_ids {
-                    builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
+                    if let Some(symbols) = builder.hoisting_variables.get_mut(&scope_id) {
+                        symbols.insert(name, symbol_id);
+                    } else {
+                        let mut symbols =
+                            oxc_span::ArenaIdentHashMap::new_in_scratch(builder.allocator);
+                        symbols.insert(name, symbol_id);
+                        builder.hoisting_variables.insert(scope_id, symbols);
+                    }
                 }
             });
         }

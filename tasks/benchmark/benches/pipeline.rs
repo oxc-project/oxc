@@ -41,7 +41,7 @@ fn bench_pipeline(criterion: &mut Criterion) {
                     let mut program = parser_ret.program;
 
                     // Semantic
-                    let scoping = SemanticBuilder::new()
+                    let scoping = SemanticBuilder::new(&allocator)
                         .with_excess_capacity(2.0)
                         .build(&program)
                         .semantic

@@ -269,7 +269,7 @@ mod tests {
     ) -> Semantic<'s> {
         let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
         assert!(parse.errors.is_empty());
-        let semantic = SemanticBuilder::new().build(allocator.alloc(parse.program));
+        let semantic = SemanticBuilder::new(allocator).build(allocator.alloc(parse.program));
         assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
         semantic.semantic
     }

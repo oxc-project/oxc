@@ -275,7 +275,10 @@ impl<'t> Mangler<'t> {
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
-        let mut semantic = SemanticBuilder::new().build(program).semantic;
+        let mut semantic = {
+            let temp_allocator = self.temp_allocator.as_ref();
+            SemanticBuilder::new(temp_allocator).build(program).semantic
+        };
         let class_private_mappings = self.build_with_semantic(&mut semantic, program);
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }
@@ -284,7 +287,7 @@ impl<'t> Mangler<'t> {
     ///
     /// Panics if the child_ids does not exist in scope_tree.
     pub fn build_with_semantic(
-        self,
+        &self,
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
@@ -298,7 +301,7 @@ impl<'t> Mangler<'t> {
     }
 
     fn build_with_semantic_impl<const CAPACITY: usize, G: Fn(u32) -> InlineString<CAPACITY, u8>>(
-        self,
+        &self,
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,

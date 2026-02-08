@@ -136,7 +136,7 @@ pub trait CompilerInterface {
 
         /* Semantic */
 
-        let mut semantic_return = self.semantic(&program);
+        let mut semantic_return = self.semantic(&allocator, &program);
         if !semantic_return.errors.is_empty() {
             self.handle_errors(semantic_return.errors);
             return;
@@ -171,8 +171,11 @@ pub trait CompilerInterface {
 
         // Symbols and scopes are out of sync.
         if inject_options.is_some() || define_options.is_some() {
-            scoping =
-                SemanticBuilder::new().with_stats(stats).build(&program).semantic.into_scoping();
+            scoping = SemanticBuilder::new(&allocator)
+                .with_stats(stats)
+                .build(&program)
+                .semantic
+                .into_scoping();
         }
 
         if let Some(options) = inject_options {
@@ -220,8 +223,12 @@ pub trait CompilerInterface {
         Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
     }
 
-    fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
-        let mut builder = SemanticBuilder::new();
+    fn semantic<'a>(
+        &self,
+        allocator: &'a Allocator,
+        program: &'a Program<'a>,
+    ) -> SemanticBuilderReturn<'a> {
+        let mut builder = SemanticBuilder::new(allocator);
 
         if self.transform_options().is_some() {
             // Estimate transformer will triple scopes, symbols, references

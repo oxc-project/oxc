@@ -5,9 +5,7 @@ use std::{
     mem,
 };
 
-use rustc_hash::FxHashMap;
-
-use oxc_allocator::Address;
+use oxc_allocator::{Address, Allocator, HashMap as ArenaHashMap};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
 #[cfg(feature = "cfg")]
@@ -16,7 +14,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Ident, IdentHashMap, SourceType, Span};
+use oxc_span::{Ident, SourceType, Span};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -66,6 +64,9 @@ macro_rules! control_flow {
 ///
 /// [`build`]: SemanticBuilder::build
 pub struct SemanticBuilder<'a> {
+    /// allocator of the parsed program
+    pub(crate) allocator: &'a Allocator,
+
     /// source code of the parsed program
     pub(crate) source_text: &'a str,
 
@@ -82,9 +83,9 @@ pub struct SemanticBuilder<'a> {
     /// `NodeId` of current `Function` (not including arrow functions).
     /// When not in a function, is `NodeId` of `Program`.
     pub(crate) current_function_node_id: NodeId,
-    pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
+    pub(crate) module_instance_state_cache: ArenaHashMap<'a, Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
-    pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
+    pub(crate) hoisting_variables: ArenaHashMap<'a, ScopeId, Bindings<'a>>,
 
     // builders
     pub(crate) nodes: AstNodes<'a>,
@@ -121,18 +122,13 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
-impl Default for SemanticBuilder<'_> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<'a> SemanticBuilder<'a> {
-    pub fn new() -> Self {
+    pub fn new(allocator: &'a Allocator) -> Self {
         let scoping = Scoping::default();
         let current_scope_id = scoping.root_scope_id();
 
         Self {
+            allocator,
             source_text: "",
             source_type: SourceType::default(),
             errors: RefCell::new(vec![]),
@@ -141,11 +137,11 @@ impl<'a> SemanticBuilder<'a> {
             current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
             current_function_node_id: NodeId::ROOT,
-            module_instance_state_cache: FxHashMap::default(),
+            module_instance_state_cache: ArenaHashMap::new_in_scratch(allocator),
             nodes: AstNodes::default(),
-            hoisting_variables: FxHashMap::default(),
+            hoisting_variables: ArenaHashMap::new_in_scratch(allocator),
             scoping,
-            unresolved_references: UnresolvedReferencesStack::new(),
+            unresolved_references: UnresolvedReferencesStack::new(allocator),
             unused_labels: UnusedLabels::default(),
             #[cfg(feature = "linter")]
             jsdoc: JSDocBuilder::default(),
@@ -483,7 +479,7 @@ impl<'a> SemanticBuilder<'a> {
     ) -> ReferenceId {
         let reference_id = self.scoping.create_reference(reference);
 
-        self.unresolved_references.current_mut().entry(name).or_default().push(reference_id);
+        self.unresolved_references.add_reference(name, reference_id);
         reference_id
     }
 

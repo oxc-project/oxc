@@ -149,7 +149,8 @@ pub fn run() -> Result<(), io::Error> {
         assert!(parsed.errors.is_empty());
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
-        let scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
+        let scoping =
+            SemanticBuilder::new(&allocator).build(&parsed.program).semantic.into_scoping();
         let transform_options = TransformOptions::from_target("esnext").unwrap();
         let _ =
             Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
@@ -181,7 +182,7 @@ pub fn run() -> Result<(), io::Error> {
         ));
 
         let (scoping, semantic_stats) = record_stats_in(&allocator, || {
-            SemanticBuilder::new().build(&parsed.program).semantic.into_scoping()
+            SemanticBuilder::new(&allocator).build(&parsed.program).semantic.into_scoping()
         });
 
         semantic_out.push_str(&format_table_row(

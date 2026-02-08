@@ -29,7 +29,8 @@ fn bench_minifier(criterion: &mut Criterion) {
 
                 // Create fresh AST + semantic data for each iteration
                 let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+                let scoping =
+                    SemanticBuilder::new(&allocator).build(&program).semantic.into_scoping();
 
                 // Minifier only works on esnext.
                 let transform_options = TransformOptions::from_target("esnext").unwrap();
@@ -37,7 +38,8 @@ fn bench_minifier(criterion: &mut Criterion) {
                     Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
                         .build_with_scoping(scoping, &mut program);
                 assert!(transformer_ret.errors.is_empty());
-                let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+                let scoping =
+                    SemanticBuilder::new(&allocator).build(&program).semantic.into_scoping();
 
                 let options = CompressOptions::smallest();
                 runner.run(|| {
@@ -63,7 +65,7 @@ fn bench_mangler(criterion: &mut Criterion) {
                 allocator.reset();
                 temp_allocator.reset();
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let mut semantic = SemanticBuilder::new().build(&program).semantic;
+                let mut semantic = SemanticBuilder::new(&allocator).build(&program).semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
                         .build_with_semantic(&mut semantic, &program);
@@ -83,7 +85,7 @@ fn bench_mangler(criterion: &mut Criterion) {
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let mut semantic = SemanticBuilder::new().build(&program).semantic;
+                let mut semantic = SemanticBuilder::new(&allocator).build(&program).semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
                         .with_options(MangleOptions {

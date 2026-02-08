@@ -81,6 +81,16 @@ impl<'alloc, T> Vec<'alloc, T> {
         Self(InnerVec::new_in(allocator.bump()))
     }
 
+    /// Constructs a new, empty `Vec<T>` in the allocator's scratch arena.
+    ///
+    /// Data in the scratch arena is intended for temporary allocations.
+    #[inline(always)]
+    pub fn new_in_scratch(allocator: &'alloc Allocator) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(InnerVec::new_in(allocator.scratch_bump()))
+    }
+
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
     /// with the provided allocator.
     ///
@@ -132,6 +142,15 @@ impl<'alloc, T> Vec<'alloc, T> {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
         Self(InnerVec::with_capacity_in(capacity, allocator.bump()))
+    }
+
+    /// Constructs a new, empty `Vec<T>` with at least the specified capacity in the
+    /// allocator's scratch arena.
+    #[inline(always)]
+    pub fn with_capacity_in_scratch(capacity: usize, allocator: &'alloc Allocator) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(InnerVec::with_capacity_in(capacity, allocator.scratch_bump()))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and

@@ -41,7 +41,7 @@ fn main() -> std::io::Result<()> {
     }
 
     // Build semantic model for AST analysis
-    let semantic_ret = SemanticBuilder::new().build(&ret.program);
+    let semantic_ret = SemanticBuilder::new(&allocator).build(&ret.program);
 
     let mut errors: Vec<OxcDiagnostic> = vec![];
 

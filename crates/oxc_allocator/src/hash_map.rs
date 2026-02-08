@@ -131,6 +131,15 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
         Self(ManuallyDrop::new(inner))
     }
 
+    /// Creates an empty [`HashMap`] with the given hasher in the allocator's scratch arena.
+    #[inline(always)]
+    pub fn with_hasher_in_scratch(hasher: S, allocator: &'alloc Allocator) -> Self {
+        const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
+
+        let inner = InnerHashMap::with_hasher_in(hasher, allocator.scratch_bump());
+        Self(ManuallyDrop::new(inner))
+    }
+
     /// Creates an empty [`HashMap`] with the specified capacity and hasher.
     /// It will be allocated with the given allocator.
     ///
@@ -145,6 +154,21 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
         let inner = InnerHashMap::with_capacity_and_hasher_in(capacity, hasher, allocator.bump());
+        Self(ManuallyDrop::new(inner))
+    }
+
+    /// Creates an empty [`HashMap`] with the specified capacity and hasher in the
+    /// allocator's scratch arena.
+    #[inline(always)]
+    pub fn with_capacity_and_hasher_in_scratch(
+        capacity: usize,
+        hasher: S,
+        allocator: &'alloc Allocator,
+    ) -> Self {
+        const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
+
+        let inner =
+            InnerHashMap::with_capacity_and_hasher_in(capacity, hasher, allocator.scratch_bump());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -195,6 +219,12 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
         Self::with_hasher_in(FxBuildHasher, allocator)
     }
 
+    /// Creates an empty [`HashMap`] in the allocator's scratch arena.
+    #[inline(always)]
+    pub fn new_in_scratch(allocator: &'alloc Allocator) -> Self {
+        Self::with_hasher_in_scratch(FxBuildHasher, allocator)
+    }
+
     /// Creates an empty [`HashMap`] with the specified capacity. It will be allocated with the given allocator.
     ///
     /// The hash map will be able to hold at least capacity elements without reallocating.
@@ -202,6 +232,12 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         Self::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator)
+    }
+
+    /// Creates an empty [`HashMap`] with the specified capacity in the allocator's scratch arena.
+    #[inline(always)]
+    pub fn with_capacity_in_scratch(capacity: usize, allocator: &'alloc Allocator) -> Self {
+        Self::with_capacity_and_hasher_in_scratch(capacity, FxBuildHasher, allocator)
     }
 
     /// Create a new [`HashMap`] whose elements are taken from an iterator and
