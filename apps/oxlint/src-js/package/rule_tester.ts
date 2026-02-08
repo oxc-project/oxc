@@ -112,11 +112,21 @@ interface Config {
   /**
    * ESLint compatibility mode.
    *
+   * Useful if moving test cases over from ESLint's `RuleTester` to Oxlint's.
+   * It is recommended to only use this option as a temporary measure and alter the test cases
+   * so `eslintCompat` is no longer required.
+   *
    * If `true`:
    * - Column offsets in diagnostics are incremented by 1.
    * - Fixes which are adjacent to each other are considered overlapping, and only the first fix is applied.
+   * - Defaults `sourceType` to "module" if not provided (otherwise default is "unambiguous").
+   * - Disallows `sourceType: "unambiguous"`.
+   * - Allows `null` as property value for `globals`.
+   *   `globals: { foo: null }` is treated as equivalent to `globals: { foo: "readonly" }`.
+   *   ESLint accepts `null`, though this is undocumented. Oxlint does not accept `null`.
+   * - Slightly different behavior when `report` is called with `loc` of form `{ line, column }`.
    *
-   * Both these match ESLint's behavior.
+   * All of these match ESLint `RuleTester`'s behavior.
    */
   eslintCompat?: boolean;
 
