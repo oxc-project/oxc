@@ -41,7 +41,7 @@ export declare const enum Severity {
  *
  * Fix ranges are converted from UTF-16 code units to UTF-8 bytes.
  */
-export declare function applyFixes(sourceText: string, fixesJson: string): string | null
+export declare function applyFixes(sourceText: string, fixesJson: string, eslintCompat: boolean): string | null
 
 /**
  * Get offset within a `Uint8Array` which is aligned on `BUFFER_ALIGN`.

@@ -23,7 +23,7 @@ const BOM_LEN: u32 = BOM.len() as u32;
 /// Fix ranges are converted from UTF-16 code units to UTF-8 bytes.
 #[napi]
 #[allow(dead_code, clippy::needless_pass_by_value, clippy::allow_attributes)]
-pub fn apply_fixes(source_text: String, fixes_json: String) -> Option<String> {
+pub fn apply_fixes(source_text: String, fixes_json: String, eslint_compat: bool) -> Option<String> {
     // Deserialize fixes JSON
     let fix_groups: Vec<Vec<JsFix>> = serde_json::from_str(&fixes_json).ok()?;
 
@@ -47,7 +47,11 @@ pub fn apply_fixes(source_text: String, fixes_json: String) -> Option<String> {
         .collect::<Option<Vec<_>>>()?;
 
     // Apply all the fixes
-    let fixed_code = Fixer::new(&source_text, messages, None).fix().fixed_code.into_owned();
+    let fixed_code = Fixer::new(&source_text, messages, None)
+        .with_eslint_compat(eslint_compat)
+        .fix()
+        .fixed_code
+        .into_owned();
 
     Some(fixed_code)
 }

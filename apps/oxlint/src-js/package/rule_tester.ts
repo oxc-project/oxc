@@ -111,7 +111,12 @@ function getItOnly(): ItFn {
 interface Config {
   /**
    * ESLint compatibility mode.
-   * If `true`, column offsets in diagnostics are incremented by 1, to match ESLint's behavior.
+   *
+   * If `true`:
+   * - Column offsets in diagnostics are incremented by 1.
+   * - Fixes which are adjacent to each other are considered overlapping, and only the first fix is applied.
+   *
+   * Both these match ESLint's behavior.
    */
   eslintCompat?: boolean;
 
@@ -640,8 +645,9 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
 
   // Test output after fixes
   const { code } = test;
+  const eslintCompat = test.eslintCompat === true;
 
-  let fixedCode = runFixes(diagnostics, code);
+  let fixedCode = runFixes(diagnostics, code, eslintCompat);
   if (fixedCode === null) fixedCode = code;
 
   // Re-lint and re-fix for additional passes if `recursive` option used
@@ -652,7 +658,7 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
   if (extraPassCount > 0 && fixedCode !== code) {
     for (let pass = 0; pass < extraPassCount; pass++) {
       const diagnostics = lint({ ...test, code: fixedCode }, plugin);
-      const newFixedCode = runFixes(diagnostics, fixedCode);
+      const newFixedCode = runFixes(diagnostics, fixedCode, eslintCompat);
       if (newFixedCode === null) break;
       fixedCode = newFixedCode;
     }
@@ -684,14 +690,14 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
  * @returns Fixed code, or `null` if no fixes to apply
  * @throws {Error} If error when applying fixes
  */
-function runFixes(diagnostics: Diagnostic[], code: string): string | null {
+function runFixes(diagnostics: Diagnostic[], code: string, eslintCompat: boolean): string | null {
   const fixGroups: FixReport[][] = [];
   for (const diagnostic of diagnostics) {
     if (diagnostic.fixes !== null) fixGroups.push(diagnostic.fixes);
   }
   if (fixGroups.length === 0) return null;
 
-  const fixedCode = applyFixes(code, JSON.stringify(fixGroups));
+  const fixedCode = applyFixes(code, JSON.stringify(fixGroups), eslintCompat);
   if (fixedCode === null) throw new Error("Failed to apply fixes");
 
   return fixedCode;
