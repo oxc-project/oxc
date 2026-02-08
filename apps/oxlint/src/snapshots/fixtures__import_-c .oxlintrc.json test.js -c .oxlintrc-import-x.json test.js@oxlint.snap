@@ -13,6 +13,7 @@ working directory: fixtures/import
    :        ^^^^^^^
  8 | 
    `----
+  help: Use a named export instead.
 
 Found 0 warnings and 1 error.
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.
@@ -32,6 +33,7 @@ working directory: fixtures/import
    :        ^^^^^^^
  8 | 
    `----
+  help: Use a named export instead.
 
 Found 0 warnings and 1 error.
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.

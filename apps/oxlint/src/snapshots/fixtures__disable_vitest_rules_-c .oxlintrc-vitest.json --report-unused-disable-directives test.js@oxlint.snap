@@ -13,6 +13,7 @@ working directory: fixtures/disable_vitest_rules
    :      ^^^^^^^^^^^^^^^^^^^
  8 | })
    `----
+  help: Replace with an alternative or remove the call.
 
   ! Unused eslint-disable directive (no problems were reported).
     ,-[test.js:19:5]
