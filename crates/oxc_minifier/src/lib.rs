@@ -115,7 +115,7 @@ impl<'a> Minifier {
             .options
             .compress
             .map(|options| {
-                let semantic = SemanticBuilder::new().build(program).semantic;
+                let semantic = SemanticBuilder::new(allocator).build(program).semantic;
                 let stats = semantic.stats();
                 let scoping = semantic.into_scoping();
                 let compressor = Compressor::new(allocator);
@@ -136,7 +136,8 @@ impl<'a> Minifier {
             .options
             .mangle
             .map(|options| {
-                let mut semantic = SemanticBuilder::new().with_stats(stats).build(program).semantic;
+                let mut semantic =
+                    SemanticBuilder::new(allocator).with_stats(stats).build(program).semantic;
                 let class_private_mappings = Mangler::default()
                     .with_options(options)
                     .build_with_semantic(&mut semantic, program);

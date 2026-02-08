@@ -623,7 +623,7 @@ impl Scoping {
 
     pub(crate) fn set_root_unresolved_references<'a>(
         &mut self,
-        entries: impl Iterator<Item = (Ident<'a>, ReferenceIds)>,
+        entries: impl Iterator<Item = (Ident<'a>, ReferenceIds<'a>)>,
     ) {
         self.cell.with_dependent_mut(|allocator, cell| {
             for (k, v) in entries {

@@ -1,17 +1,13 @@
-use smallvec::SmallVec;
-
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_data_structures::assert_unchecked;
-use oxc_span::IdentHashMap;
+use oxc_span::{ArenaIdentHashMap, Ident};
 use oxc_syntax::reference::ReferenceId;
 
 /// Stores reference IDs for a single identifier name within a scope.
-/// Uses `SmallVec` to avoid heap allocations for the common case where an identifier
-/// is referenced only a few times within a given scope.
-pub type ReferenceIds = SmallVec<[ReferenceId; 8]>;
+pub type ReferenceIds<'alloc> = ArenaVec<'alloc, ReferenceId>;
 
-/// Unlike `ScopeTree`'s `UnresolvedReferences`, this type uses `Ident` as the key,
-/// and uses a heap-allocated hashmap (not arena-allocated)
-type TempUnresolvedReferences<'a> = IdentHashMap<'a, ReferenceIds>;
+/// Unlike `ScopeTree`'s `UnresolvedReferences`, this type uses `Ident` as the key.
+type TempUnresolvedReferences<'alloc> = ArenaIdentHashMap<'alloc, ReferenceIds<'alloc>>;
 
 // Stack used to accumulate unresolved refs while traversing scopes.
 // Indexed by scope depth. We recycle `UnresolvedReferences` instances during traversal
@@ -19,7 +15,8 @@ type TempUnresolvedReferences<'a> = IdentHashMap<'a, ReferenceIds>;
 // See: <https://github.com/oxc-project/oxc/issues/4169>
 // This stack abstraction uses the invariant that stack only grows to avoid bounds checks.
 pub struct UnresolvedReferencesStack<'a> {
-    stack: Vec<TempUnresolvedReferences<'a>>,
+    stack: ArenaVec<'a, TempUnresolvedReferences<'a>>,
+    allocator: &'a Allocator,
     /// Current scope depth.
     /// 0 is global scope. 1 is `Program`.
     /// Incremented on entering a scope, and decremented on exit.
@@ -46,21 +43,23 @@ impl<'a> UnresolvedReferencesStack<'a> {
         assert!(Self::INITIAL_SIZE > Self::INITIAL_DEPTH);
     };
 
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(allocator: &'a Allocator) -> Self {
         // Invoke `ASSERT_INVARIANTS` assertions. Without this line, the assertions are ignored.
         const { Self::ASSERT_INVARIANTS };
 
-        let mut stack = vec![];
-        stack.resize_with(Self::INITIAL_SIZE, TempUnresolvedReferences::default);
-        Self { stack, current_scope_depth: Self::INITIAL_DEPTH }
+        let mut stack = ArenaVec::with_capacity_in_scratch(Self::INITIAL_SIZE, allocator);
+        for _ in 0..Self::INITIAL_SIZE {
+            stack.push(TempUnresolvedReferences::new_in_scratch(allocator));
+        }
+        Self { stack, allocator, current_scope_depth: Self::INITIAL_DEPTH }
     }
 
     pub(crate) fn increment_scope_depth(&mut self) {
         self.current_scope_depth += 1;
 
-        // Grow stack if required to ensure `self.stack[self.current_scope_depth]` is in bounds
+        // Grow stack if required to ensure `self.stack[self.current_scope_depth]` is in bounds.
         if self.stack.len() <= self.current_scope_depth {
-            self.stack.push(TempUnresolvedReferences::default());
+            self.stack.push(TempUnresolvedReferences::new_in_scratch(self.allocator));
         }
     }
 
@@ -77,7 +76,19 @@ impl<'a> UnresolvedReferencesStack<'a> {
         self.current_scope_depth
     }
 
-    /// Get unresolved references hash map for current scope
+    #[inline]
+    pub(crate) fn add_reference(&mut self, name: Ident<'a>, reference_id: ReferenceId) {
+        if let Some(reference_ids) = self.current_mut().get_mut(&name) {
+            reference_ids.push(reference_id);
+            return;
+        }
+
+        let mut reference_ids = ReferenceIds::new_in_scratch(self.allocator);
+        reference_ids.push(reference_id);
+        self.current_mut().insert(name, reference_ids);
+    }
+
+    /// Get unresolved references hash map for current scope.
     #[inline]
     pub(crate) fn current_mut(&mut self) -> &mut TempUnresolvedReferences<'a> {
         // SAFETY: `stack.len() > current_scope_depth` initially.
@@ -88,7 +99,7 @@ impl<'a> UnresolvedReferencesStack<'a> {
         unsafe { self.stack.get_unchecked_mut(self.current_scope_depth) }
     }
 
-    /// Get unresolved references hash maps for current scope, and parent scope
+    /// Get unresolved references hash maps for current scope, and parent scope.
     #[inline]
     pub(crate) fn current_and_parent_mut(
         &mut self,

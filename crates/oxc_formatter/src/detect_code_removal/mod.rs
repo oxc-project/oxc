@@ -35,7 +35,7 @@ fn collect(code: &str, source_type: SourceType) -> StatsCollector {
     }
 
     // Using semantic analysis here only to get parent node
-    let semantic_ret = SemanticBuilder::new().build(&program);
+    let semantic_ret = SemanticBuilder::new(&allocator).build(&program);
     collector.collect(&program, &semantic_ret.semantic)
 }
 

@@ -1027,7 +1027,7 @@ impl Runtime {
             return Err(if ret.is_flow_language { vec![] } else { ret.errors });
         }
 
-        let semantic_ret = SemanticBuilder::new()
+        let semantic_ret = SemanticBuilder::new(allocator)
             .with_cfg(true)
             .with_check_syntax_error(check_syntax_errors)
             .build(allocator.alloc(ret.program));

@@ -181,7 +181,8 @@ unsafe fn parse_raw_impl(
         // Check for semantic errors.
         // If `ignore_non_fatal_errors` is `true`, skip running semantic, as any errors will be ignored anyway.
         if !parsing_failed && !ignore_non_fatal_errors {
-            let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(program);
+            let semantic_ret =
+                SemanticBuilder::new(&allocator).with_check_syntax_error(true).build(program);
             parsing_failed = !semantic_ret.errors.is_empty();
         }
 

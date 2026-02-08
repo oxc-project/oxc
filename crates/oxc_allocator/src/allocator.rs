@@ -220,7 +220,10 @@ use crate::tracking::AllocationStats;
 /// [`HashMap::new_in`]: crate::HashMap::new_in
 #[derive(Default)]
 pub struct Allocator {
+    /// Primary arena for long-lived allocations (e.g. AST data).
     bump: Bump,
+    /// Scratch arena for temporary per-pass allocations.
+    scratch: Bump,
     /// Used to track number of allocations made in this allocator when `track_allocations` feature is enabled
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
     pub(crate) stats: AllocationStats,
@@ -259,6 +262,7 @@ impl Allocator {
     pub fn new() -> Self {
         Self {
             bump: Bump::new(),
+            scratch: Bump::new(),
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
             stats: AllocationStats::default(),
         }
@@ -274,6 +278,7 @@ impl Allocator {
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             bump: Bump::with_capacity(capacity),
+            scratch: Bump::new(),
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
             stats: AllocationStats::default(),
         }
@@ -514,6 +519,7 @@ impl Allocator {
         self.stats.reset();
 
         self.bump.reset();
+        self.scratch.reset();
     }
 
     /// Calculate the total capacity of this [`Allocator`] including all chunks, in bytes.
@@ -625,6 +631,33 @@ impl Allocator {
         &self.bump
     }
 
+    /// Get scratch [`Bump`].
+    ///
+    /// This method is not public. We don't want to expose `Bump` to users.
+    /// The inner `Bump` is an internal implementation detail.
+    ///
+    /// NOTE: When allocation tracking is enabled, temporary/scratch allocations are redirected
+    /// to the main bump arena to avoid relying on additional unsound pointer-offset hacks in
+    /// tracking internals.
+    //
+    // `#[inline(always)]` because it's a small function.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(crate) fn scratch_bump(&self) -> &Bump {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        {
+            &self.bump
+        }
+
+        #[cfg(not(all(
+            feature = "track_allocations",
+            not(feature = "disable_track_allocations")
+        )))]
+        {
+            &self.scratch
+        }
+    }
+
     /// Create [`Allocator`] from a [`Bump`].
     ///
     /// This method is not public. Only used by [`Allocator::from_raw_parts`].
@@ -636,6 +669,7 @@ impl Allocator {
     pub(crate) fn from_bump(bump: Bump) -> Self {
         Self {
             bump,
+            scratch: Bump::new(),
             #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
             stats: AllocationStats::default(),
         }
@@ -656,6 +690,20 @@ mod test {
             assert_eq!(str, "hello");
         }
         allocator.reset();
+    }
+
+    #[test]
+    fn reset_clears_scratch_arena() {
+        let mut allocator = Allocator::default();
+
+        let first_ptr = allocator.scratch.alloc(1u32) as *mut u32;
+        let second_ptr = allocator.scratch.alloc(2u32) as *mut u32;
+        assert_ne!(first_ptr, second_ptr);
+
+        allocator.reset();
+
+        let after_reset_ptr = allocator.scratch.alloc(3u32) as *mut u32;
+        assert_eq!(first_ptr, after_reset_ptr);
     }
 
     #[test]

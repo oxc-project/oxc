@@ -18,7 +18,7 @@ fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) 
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty());
     let mut program = ret.program;
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let scoping = SemanticBuilder::new(&allocator).build(&program).semantic.into_scoping();
     let ret = InjectGlobalVariables::new(&allocator, config).build(scoping, &mut program);
     assert_eq!(ret.changed, source_text != expected);
     let result = Codegen::new()
