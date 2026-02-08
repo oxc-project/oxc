@@ -3,19 +3,21 @@ use std::{error::Error, fmt, path::Path};
 mod parse;
 mod partial_loader;
 mod source;
+mod transform;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::VALID_EXTENSIONS;
 pub use parse::{LinterParseResult, parse_javascript_source, parse_vue_source};
 pub use partial_loader::{LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader};
 pub use source::JavaScriptSource;
+pub use transform::{LINT_TRANSFORM_LOADER_EXTENSIONS, TransformLoader};
 
 // TODO: use oxc_resolver::FileSystem. We can't do so until that crate exposes FileSystemOs
 // externally.
 #[derive(Default, Clone)]
 pub struct Loader;
 
-/// File extensions that has similar syntax or based on JS/TS, (e.g. Vue SFCs)
-/// and can be transformed into JS/TS(X) using a specific loader.
-pub const LINT_TRANSFORM_LOADER_EXTENSIONS: &[&str] = &["vue"];
+type PossibleParseResult<'a> =
+    Option<Vec<(Result<LinterParseResult<'a>, Vec<OxcDiagnostic>>, JavaScriptSource<'a>)>>;
 
 /// All valid JavaScript/TypeScript extensions, plus additional framework files that
 /// contain JavaScript/TypeScript code in them (e.g., Astro, Svelte, etc.).
