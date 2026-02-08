@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "prettier": "3.8.1",
-    "prettier-plugin-tailwindcss": "0.7.2",
+    "prettier-plugin-tailwindcss": "0.0.0-insiders.2ac6e70",
     "tinypool": "2.1.0"
   },
   "devDependencies": {

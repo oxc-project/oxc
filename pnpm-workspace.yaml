@@ -26,7 +26,4 @@ onlyBuiltDependencies:
   - "@vscode/vsce-sign@2.0.8"
   - esbuild@0.25.11
 
-patchedDependencies:
-  prettier-plugin-tailwindcss@0.7.2: patches/prettier-plugin-tailwindcss@0.7.2.patch
-
 verifyDepsBeforeRun: install
