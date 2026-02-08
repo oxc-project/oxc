@@ -18,6 +18,12 @@ export type FixFn = (
 
 /**
  * Fix, as returned by `fix` function.
+ *
+ * `range` offsets are relative to start of the source text.
+ * When the file has a BOM, they are relative to the start of the source text *without* the BOM.
+ *
+ * To represent a position *before* a BOM, -1 is used to mean "before the BOM".
+ * ESLint's `unicode-bom` rule produces a fix `{ range: [-1, 0], text: "" }` to remove a BOM.
  */
 export interface Fix {
   range: Range;
@@ -26,10 +32,19 @@ export interface Fix {
 
 /**
  * Fix, in form sent to Rust.
+ *
+ * Offsets have 1 added to them, so that -1 in `Fix`'s `range` is represented as 0 in `FixReport`.
+ * This means that both `startPlusOne` and `endPlusOne` are valid `u32`s, even if original range elements were -1.
+ *
+ * `Fix { range: [0, 10], text: "xxx" }` -> `FixReport { startPlusOne: 1, endPlusOne: 11, text: "xxx" }`.
+ * `Fix { range: [-1, 0], text: "" }` -> `FixReport { startPlusOne: 0, endPlusOne: 1, text: "" }`.
+ *
+ * Range offsets can be -1 when the file has a BOM, and the fix starts before the BOM.
+ * ESLint's `unicode-bom` rule produces a fix `{ range: [-1, 0], text: "" }` to remove a BOM.
  */
 export interface FixReport {
-  start: number;
-  end: number;
+  startPlusOne: number;
+  endPlusOne: number;
   text: string;
 }
 
@@ -223,8 +238,11 @@ function validateAndConvertFix(fix: Fix): FixReport {
     const start = range[0],
       end = range[1];
     if (typeof start === "number" && typeof end === "number") {
-      // Converting `text` to string follows ESLint, which does that implicitly
-      return { start, end, text: String(text) };
+      // Add 1 to `start` and `end`, to allow original offsets to be -1 (meaning "before the BOM"),
+      // and `FixReport`'s `startPlusOne` and `endPlusOne` are still valid `u32`s on Rust side.
+      //
+      // Converting `text` to string follows ESLint, which does that implicitly.
+      return { startPlusOne: start + 1, endPlusOne: end + 1, text: String(text) };
     }
   }
 

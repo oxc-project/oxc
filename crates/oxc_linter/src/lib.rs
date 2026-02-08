@@ -646,6 +646,7 @@ impl Linter {
                         fixes,
                         original_source_text,
                         &span_converter,
+                        has_bom,
                     ) {
                         Ok(fix) => Some(fix.with_kind(fix_kind)),
                         Err(err) => {

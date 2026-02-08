@@ -21,6 +21,39 @@ const rule: Rule = {
     let debuggerCount = 0;
 
     return {
+      Program(node) {
+        // Remove BOM in `bom_remove.js` and `bom_remove2.js`.
+        // ESLint's `unicode-bom` rule returns fixes with `range: [-1, 0]` to remove BOM.
+        // Check behavior is correct for both `fix` returning a single fix and returning multiple fixes.
+        if (filename === "bom_remove.js") {
+          context.report({
+            message: "Remove BOM",
+            node,
+            suggest: [
+              {
+                desc: "Do it",
+                fix(fixer) {
+                  return fixer.removeRange([-1, 0]);
+                },
+              },
+            ],
+          });
+        } else if (filename === "bom_remove2.js") {
+          context.report({
+            message: "Remove BOM multiple",
+            node,
+            suggest: [
+              {
+                desc: "Do it",
+                fix(fixer) {
+                  return [fixer.removeRange([0, 0]), fixer.removeRange([-1, 0])];
+                },
+              },
+            ],
+          });
+        }
+      },
+
       DebuggerStatement(node) {
         debuggerCount++;
 
