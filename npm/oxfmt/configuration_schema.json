@@ -265,13 +265,13 @@
       "type": "object",
       "properties": {
         "elementNamePattern": {
-          "description": "List of import name prefixes to match for this group.",
+          "description": "List of glob patterns to match import sources for this group.",
           "default": [],
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "List of import name prefixes to match for this group."
+          "markdownDescription": "List of glob patterns to match import sources for this group."
         },
         "groupName": {
           "description": "Name of the custom group, used in the `groups` option.",

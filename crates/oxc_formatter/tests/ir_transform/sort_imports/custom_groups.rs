@@ -81,47 +81,47 @@ import CartComponentB from "./cart/CartComponentB.vue";
     "experimentalSortImports": {
         "customGroups": [
             {
-                "elementNamePattern": ["~/validators/"],
+                "elementNamePattern": ["~/validators/*"],
                 "groupName": "validators"
             },
             {
-                "elementNamePattern": ["~/composable/"],
+                "elementNamePattern": ["~/composable/*"],
                 "groupName": "composable"
             },
             {
-                "elementNamePattern": ["~/components/"],
+                "elementNamePattern": ["~/components/*"],
                 "groupName": "components"
             },
             {
-                "elementNamePattern": ["~/services/"],
+                "elementNamePattern": ["~/services/*"],
                 "groupName": "services"
             },
             {
-                "elementNamePattern": ["~/widgets/"],
+                "elementNamePattern": ["~/widgets/*"],
                 "groupName": "widgets"
             },
             {
-                "elementNamePattern": ["~/stores/"],
+                "elementNamePattern": ["~/stores/*"],
                 "groupName": "stores"
             },
             {
-                "elementNamePattern": ["~/logics/"],
+                "elementNamePattern": ["~/logics/*"],
                 "groupName": "logics"
             },
             {
-                "elementNamePattern": ["~/assets/"],
+                "elementNamePattern": ["~/assets/*"],
                 "groupName": "assets"
             },
             {
-                "elementNamePattern": ["~/utils/"],
+                "elementNamePattern": ["~/utils/*"],
                 "groupName": "utils"
             },
             {
-                "elementNamePattern": ["~/pages/"],
+                "elementNamePattern": ["~/pages/*"],
                 "groupName": "pages"
             },
             {
-                "elementNamePattern": ["~/ui/"],
+                "elementNamePattern": ["~/ui/*"],
                 "groupName": "ui"
             }
         ],
@@ -196,47 +196,47 @@ import ComponentC from "~/components/ComponentC.vue";
     "experimentalSortImports": {
         "customGroups": [
             {
-                "elementNamePattern": ["~/validators/"],
+                "elementNamePattern": ["~/validators/*"],
                 "groupName": "validators"
             },
             {
-                "elementNamePattern": ["~/composable/"],
+                "elementNamePattern": ["~/composable/*"],
                 "groupName": "composable"
             },
             {
-                "elementNamePattern": ["~/components/"],
+                "elementNamePattern": ["~/components/*"],
                 "groupName": "components"
             },
             {
-                "elementNamePattern": ["~/services/"],
+                "elementNamePattern": ["~/services/*"],
                 "groupName": "services"
             },
             {
-                "elementNamePattern": ["~/widgets/"],
+                "elementNamePattern": ["~/widgets/*"],
                 "groupName": "widgets"
             },
             {
-                "elementNamePattern": ["~/stores/"],
+                "elementNamePattern": ["~/stores/*"],
                 "groupName": "stores"
             },
             {
-                "elementNamePattern": ["~/logics/"],
+                "elementNamePattern": ["~/logics/*"],
                 "groupName": "logics"
             },
             {
-                "elementNamePattern": ["~/assets/"],
+                "elementNamePattern": ["~/assets/*"],
                 "groupName": "assets"
             },
             {
-                "elementNamePattern": ["~/utils/"],
+                "elementNamePattern": ["~/utils/*"],
                 "groupName": "utils"
             },
             {
-                "elementNamePattern": ["~/pages/"],
+                "elementNamePattern": ["~/pages/*"],
                 "groupName": "pages"
             },
             {
-                "elementNamePattern": ["~/ui/"],
+                "elementNamePattern": ["~/ui/*"],
                 "groupName": "ui"
             }
         ],
@@ -283,6 +283,101 @@ import ComponentC from "~/components/ComponentC.vue";
 
 import CartComponentA from "./cart/CartComponentA.vue";
 import CartComponentB from "./cart/CartComponentB.vue";
+"#,
+    );
+}
+
+#[test]
+fn glob_pattern_suffix_matching() {
+    assert_format(
+        r#"
+import { setup } from "./setup.mock.ts";
+import { a } from "./a.ts";
+"#,
+        r#"
+{
+    "experimentalSortImports": {
+        "customGroups": [
+            {
+                "groupName": "mocks",
+                "elementNamePattern": ["**/*.mock.ts"]
+            }
+        ],
+        "groups": [
+            "mocks",
+            "unknown"
+        ]
+    }
+}
+"#,
+        r#"
+import { setup } from "./setup.mock.ts";
+
+import { a } from "./a.ts";
+"#,
+    );
+}
+
+#[test]
+fn glob_pattern_brace_expansion() {
+    assert_format(
+        r#"
+import { createApp } from "vue";
+import React from "react";
+import Vuetify from "vuetify";
+"#,
+        r#"
+{
+    "experimentalSortImports": {
+        "customGroups": [
+            {
+                "groupName": "frameworks",
+                "elementNamePattern": ["{react,vue}"]
+            }
+        ],
+        "groups": [
+            "frameworks",
+            "unknown"
+        ]
+    }
+}
+"#,
+        r#"
+import React from "react";
+import { createApp } from "vue";
+
+import Vuetify from "vuetify";
+"#,
+    );
+}
+
+#[test]
+fn glob_pattern_exact_match() {
+    assert_format(
+        r#"
+import { createApp } from "vue";
+import Vuetify from "vuetify";
+"#,
+        r#"
+{
+    "experimentalSortImports": {
+        "customGroups": [
+            {
+                "groupName": "vue-core",
+                "elementNamePattern": ["vue"]
+            }
+        ],
+        "groups": [
+            "vue-core",
+            "unknown"
+        ]
+    }
+}
+"#,
+        r#"
+import { createApp } from "vue";
+
+import Vuetify from "vuetify";
 "#,
     );
 }

@@ -1917,6 +1917,7 @@ name = "oxc_formatter"
 version = "0.28.0"
 dependencies = [
  "cow-utils",
+ "fast-glob",
  "insta",
  "natord",
  "nodejs-built-in-modules",
