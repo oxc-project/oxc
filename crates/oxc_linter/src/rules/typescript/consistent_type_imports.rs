@@ -23,19 +23,26 @@ use crate::{
 };
 
 fn no_import_type_annotations_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`import()` type annotations are forbidden.").with_label(span)
+    OxcDiagnostic::warn("`import()` type annotations are forbidden.")
+        .with_help("Use a top-level `import` statement instead.")
+        .with_label(span)
 }
 
 fn avoid_import_type_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use an `import` instead of an `import type`.").with_label(span)
+    OxcDiagnostic::warn("Use an `import` instead of an `import type`.")
+        .with_help("Remove the `type` keyword from the import.")
+        .with_label(span)
 }
 fn type_over_value_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("All imports in the declaration are only used as types. Use `import type`.")
+        .with_help("Add the `type` keyword to the import.")
         .with_label(span)
 }
 
 fn some_imports_are_only_types_diagnostic(span: Span, type_imports: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Imports {type_imports} are only used as type.")).with_label(span)
+    OxcDiagnostic::warn(format!("Imports {type_imports} are only used as type."))
+        .with_help("Mark type-only imports with the `type` keyword.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

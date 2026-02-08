@@ -7,153 +7,179 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import * as names from './named-exports'; console.log(names.c)
    ·                                                             ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): Unable to validate computed reference to imported namespace "names".
    ╭─[index.js:1:55]
  1 │ import * as names from './named-exports'; console.log(names['a']);
    ·                                                       ──────────
    ╰────
+  note: Computed references cannot be statically validated.
 
   ⚠ eslint-plugin-import(namespace): Assignment to member of namespace "foo".'
    ╭─[index.js:1:31]
  1 │ import * as foo from './bar'; foo.foo = 'y';
    ·                               ───────
    ╰────
+  note: Imported namespace members are read-only.
 
   ⚠ eslint-plugin-import(namespace): Assignment to member of namespace "foo".'
    ╭─[index.js:1:31]
  1 │ import * as foo from './bar'; foo.x = 'y';
    ·                               ─────
    ╰────
+  note: Imported namespace members are read-only.
 
   ⚠ eslint-plugin-import(namespace): "x" not found in imported namespace "./bar".
    ╭─[index.js:1:35]
  1 │ import * as foo from './bar'; foo.x = 'y';
    ·                                   ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
    ╭─[index.js:1:51]
  1 │ import * as names from "./named-exports"; const { c } = names
    ·                                                   ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
    ╭─[index.js:1:66]
  1 │ import * as names from "./named-exports"; function b() { const { c } = names }
    ·                                                                  ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
    ╭─[index.js:1:51]
  1 │ import * as names from "./named-exports"; const { c: d } = names
    ·                                                   ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
    ╭─[index.js:1:51]
  1 │ import * as names from "./named-exports"; const { c: { d } } = names
    ·                                                   ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
    ╭─[index.js:1:19]
  1 │ console.log(names.c); import * as names from './named-exports';
    ·                   ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "c" not found in imported namespace "./named-exports".
    ╭─[index.js:1:34]
  1 │ function x() { console.log(names.c) } import * as names from './named-exports';
    ·                                  ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "default" not found in imported namespace "./re-export".
    ╭─[index.js:1:53]
  1 │ import * as ree from "./re-export"; console.log(ree.default)
    ·                                                     ───────
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./named-exports".
    ╭─[index.js:1:62]
  1 │ import * as Names from "./named-exports"; const Foo = <Names.e/>
    ·                                                              ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./b".
    ╭─[index.js:1:52]
  1 │ import { "b" as b } from "./deep/a"; console.log(b.e)
    ·                                                    ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "b.c".
    ╭─[index.js:1:54]
  1 │ import { "b" as b } from "./deep/a"; console.log(b.c.e)
    ·                                                      ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b".
    ╭─[index.js:1:48]
  1 │ import * as a from "./deep/a"; console.log(a.b.e)
    ·                                                ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./b".
    ╭─[index.js:1:45]
  1 │ import { b } from "./deep/a"; console.log(b.e)
    ·                                             ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b.c".
    ╭─[index.js:1:50]
  1 │ import * as a from "./deep/a"; console.log(a.b.c.e)
    ·                                                  ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "b.c".
    ╭─[index.js:1:47]
  1 │ import { b } from "./deep/a"; console.log(b.c.e)
    ·                                               ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b".
    ╭─[index.js:1:52]
  1 │ import * as a from "./deep-es7/a"; console.log(a.b.e)
    ·                                                    ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./b".
    ╭─[index.js:1:49]
  1 │ import { b } from "./deep-es7/a"; console.log(b.e)
    ·                                                 ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b.c".
    ╭─[index.js:1:54]
  1 │ import * as a from "./deep-es7/a"; console.log(a.b.c.e)
    ·                                                      ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "b.c".
    ╭─[index.js:1:51]
  1 │ import { b } from "./deep-es7/a"; console.log(b.c.e)
    ·                                                   ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b".
    ╭─[index.js:1:45]
  1 │ import * as a from "./deep-es7/a"; var {b:{ e }} = a
    ·                                             ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b.c".
    ╭─[index.js:1:48]
  1 │ import * as a from "./deep-es7/a"; var {b:{c:{ e }, e: { c }}} = a
    ·                                                ─
    ╰────
+  help: Remove this reference or add the missing export.
 
   ⚠ eslint-plugin-import(namespace): "e" not found in deeply imported namespace "a.b".
    ╭─[index.js:1:53]
  1 │ import * as a from "./deep-es7/a"; var {b:{c:{ e }, e: { c }}} = a
    ·                                                     ─
    ╰────
+  help: Remove this reference or add the missing export.

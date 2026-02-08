@@ -13,6 +13,7 @@ fn zero_or_one_argument_required_diagnostic(
     OxcDiagnostic::warn(format!(
         "`Promise.{prop_name}()` requires 0 or 1 arguments, but received {args_len}."
     ))
+    .with_help("Remove the extra arguments")
     .with_label(span)
 }
 
@@ -24,6 +25,7 @@ fn one_or_two_argument_required_diagnostic(
     OxcDiagnostic::warn(format!(
         "`Promise.{prop_name}()` requires 1 or 2 arguments, but received {args_len}."
     ))
+    .with_help("Pass the correct number of arguments")
     .with_label(span)
 }
 
@@ -31,6 +33,7 @@ fn one_argument_required_diagnostic(span: Span, prop_name: &str, args_len: usize
     OxcDiagnostic::warn(format!(
         "`Promise.{prop_name}()` requires 1 argument, but received {args_len}."
     ))
+    .with_help("Pass exactly one argument")
     .with_label(span)
 }
 

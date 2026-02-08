@@ -115,6 +115,7 @@ impl Rule for NoExtendNative {
                         OxcDiagnostic::error(format!(
                             "{name} prototype is read-only, properties should not be added."
                         ))
+                        .with_help("Define the property on a custom object instead.")
                         .with_label(prop_assign.span()),
                     );
                 }
@@ -126,6 +127,7 @@ impl Rule for NoExtendNative {
                         OxcDiagnostic::error(format!(
                             "{name} prototype is read-only, properties should not be added."
                         ))
+                        .with_help("Define the property on a custom object instead.")
                         .with_label(define_property_call.span()),
                     );
                 }

@@ -13,7 +13,9 @@ fn no_namespace_diagnostic(span: Span, component_name: &str) -> OxcDiagnostic {
         r"React component {component_name} must not be in a namespace, as React does not support them."
     );
 
-    OxcDiagnostic::warn(message).with_label(span)
+    OxcDiagnostic::warn(message)
+        .with_help("Remove the namespace.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

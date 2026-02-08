@@ -18,11 +18,15 @@ enum NoMagicNumberReportReason {
 }
 
 fn must_use_const_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Number constants declarations must use 'const'.").with_label(span)
+    OxcDiagnostic::warn("Number constants declarations must use 'const'.")
+        .with_help("Use 'const' instead.")
+        .with_label(span)
 }
 
 fn no_magic_number_diagnostic(span: Span, raw: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("No magic number: {raw}")).with_label(span)
+    OxcDiagnostic::warn(format!("No magic number: {raw}"))
+        .with_help("Extract into a named constant.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

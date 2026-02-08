@@ -28,7 +28,9 @@ use crate::{
 const TARGET_METHODS: [&str; 3] = ["flatMap", "from", "map"];
 
 fn missing_key_prop_for_element_in_array(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#).with_label(span)
+    OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#)
+        .with_help(r#"Add a "key" prop to each element in the array."#)
+        .with_label(span)
 }
 
 fn missing_key_prop_for_element_in_iterator(iter_span: Span, el_span: Span) -> OxcDiagnostic {

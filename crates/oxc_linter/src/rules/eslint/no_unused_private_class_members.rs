@@ -9,7 +9,9 @@ use oxc_syntax::class::ElementKind;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unused_private_class_members_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is defined but never used.")).with_label(span)
+    OxcDiagnostic::warn(format!("'{name}' is defined but never used."))
+        .with_help("Remove the unused private member.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ──
  6 │                       }
    ╰────
+  help: Remove this prop.
 
   ⚠ eslint-plugin-react(forbid-dom-props): Prop "id" is forbidden on DOM Nodes
    ╭─[forbid_dom_props.tsx:4:37]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ──
  5 │                       }
    ╰────
+  help: Remove this prop.
 
   ⚠ eslint-plugin-react(forbid-dom-props): Prop "id" is forbidden on DOM Nodes
    ╭─[forbid_dom_props.tsx:3:28]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ──
  4 │                     );
    ╰────
+  help: Remove this prop.
 
   ⚠ eslint-plugin-react(forbid-dom-props): Please use class instead of ClassName
    ╭─[forbid_dom_props.tsx:3:28]
@@ -57,6 +60,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ─────────
  4 │                         <div otherProp="bar" />
    ╰────
+  help: Remove this prop.
 
   ⚠ eslint-plugin-react(forbid-dom-props): Avoid using otherProp
    ╭─[forbid_dom_props.tsx:4:30]

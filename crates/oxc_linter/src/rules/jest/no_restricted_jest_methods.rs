@@ -13,11 +13,15 @@ use crate::{
 };
 
 fn restricted_jest_method(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use of `{method_name}` is not allowed")).with_label(span)
+    OxcDiagnostic::warn(format!("Use of `{method_name}` is not allowed"))
+        .with_help("Replace with an alternative or remove the call.")
+        .with_label(span)
 }
 
 fn restricted_jest_method_with_message(message: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(message.to_string()).with_label(span)
+    OxcDiagnostic::warn(message.to_string())
+        .with_help("Replace with an alternative or remove the call.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

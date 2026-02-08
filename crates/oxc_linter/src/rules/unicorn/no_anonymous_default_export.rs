@@ -16,6 +16,7 @@ fn no_anonymous_default_export_diagnostic(span: Span, kind: ErrorNodeKind) -> Ox
 
     OxcDiagnostic::warn(format!("This {kind} default export is missing a name"))
         // TODO: suggest a name. https://github.com/sindresorhus/eslint-plugin-unicorn/blob/d3e4b805da31c6ed7275e2e2e770b6b0fbcf11c2/rules/no-anonymous-default-export.js#L41
+        .with_help("Add a name to this default export.")
         .with_label(span)
 }
 

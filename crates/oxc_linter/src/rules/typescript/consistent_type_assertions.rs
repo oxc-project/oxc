@@ -27,15 +27,21 @@ fn use_as_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
 }
 
 fn never_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use any type assertions.").with_label(span)
+    OxcDiagnostic::warn("Do not use any type assertions.")
+        .with_help("Use a type annotation or `satisfies` instead.")
+        .with_label(span)
 }
 
 fn unexpected_object_type_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Always prefer `const x: T = { ... }`.").with_label(span)
+    OxcDiagnostic::warn("Always prefer `const x: T = { ... }`.")
+        .with_help("Use a type annotation or `satisfies` instead.")
+        .with_label(span)
 }
 
 fn unexpected_array_type_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Always prefer `const x: T[] = [ ... ]`.").with_label(span)
+    OxcDiagnostic::warn("Always prefer `const x: T[] = [ ... ]`.")
+        .with_help("Use a type annotation or `satisfies` instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]

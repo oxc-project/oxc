@@ -10,11 +10,15 @@ use crate::{
 };
 
 fn missing_default_export_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing default export.").with_label(span)
+    OxcDiagnostic::warn("Missing default export.")
+        .with_help("Add `export default { ... }` to define the component")
+        .with_label(span)
 }
 
 fn must_be_default_export_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Component must be the default export.").with_label(span)
+    OxcDiagnostic::warn("Component must be the default export.")
+        .with_help("Use `export default defineComponent({ ... })`")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

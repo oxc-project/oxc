@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────────
  3 │                   
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:2:17]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────────
  3 │                   
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:2:17]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────────
  3 │                   
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:5:21]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ──────────
  6 │                     </App>
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:20]
@@ -41,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────────
  7 │                     </App>
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:20]
@@ -49,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────────
  7 │                     </App>
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:5:22]
@@ -57,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ──────────
  6 │                        <img {...props}/>
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:20]
@@ -65,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────────
  7 │                        <div {...props}/>
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:6:22]
@@ -73,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ──────────
  7 │                     </App>
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:19]
@@ -81,6 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────────────────────────────
  4 │                     </App>
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:19]
@@ -89,6 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ───────────────────────
  4 │                     </App>
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:19]
@@ -97,6 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ─────────────────
  4 │                     </App>
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:3:19]
@@ -105,6 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ───────────
  4 │                     </App>
    ╰────
+  help: Pass each prop individually.
 
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:4:33]
@@ -113,3 +126,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                                          ──────────
  5 │                        <Nav.Item {...props}/>
    ╰────
+  help: Pass each prop individually.

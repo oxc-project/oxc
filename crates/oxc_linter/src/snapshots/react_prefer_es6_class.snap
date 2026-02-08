@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────────────────
  3 │               displayName: 'Hello',
    ╰────
+  help: Replace `createReactClass` with an ES2015 class.
 
   ⚠ eslint-plugin-react(prefer-es6-class): Components should use an ES2015 class instead of `createReactClass`.
    ╭─[prefer_es6_class.tsx:2:25]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────────────────
  3 │               render: function() {
    ╰────
+  help: Replace `createReactClass` with an ES2015 class.
 
   ⚠ eslint-plugin-react(prefer-es6-class): Components should use `createReactClass` instead of an ES2015 class.
    ╭─[prefer_es6_class.tsx:2:19]
@@ -25,3 +27,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────
  3 │               render() {
    ╰────
+  help: Replace the class with `createReactClass`.

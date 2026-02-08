@@ -15,7 +15,9 @@ use crate::{
 };
 
 fn no_test_return_statement_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Jest tests should not return a value").with_label(span)
+    OxcDiagnostic::warn("Jest tests should not return a value")
+        .with_help("Use `await` instead of returning the promise.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

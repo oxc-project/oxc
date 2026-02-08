@@ -5,7 +5,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_self_import_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("A module importing itself is not allowed").with_label(span)
+    OxcDiagnostic::warn("A module importing itself is not allowed")
+        .with_help("Remove this self-import.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -15,7 +15,9 @@ fn no_rest_spread_properties_diagnostic(
     spread_kind: &str,
     message_suffix: &str,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{spread_kind} are not allowed. {message_suffix}")).with_label(span)
+    OxcDiagnostic::warn(format!("{spread_kind} are not allowed. {message_suffix}"))
+        .with_help("Use 'Object.assign()' or explicit property access instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

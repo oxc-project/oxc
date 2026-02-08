@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────
  8 │     })
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 3.
    ╭─[no_multiple_resolved.tsx:6:5]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────
  7 │ })
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 2.
    ╭─[no_multiple_resolved.tsx:3:5]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────
  4 │ })
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 4.
     ╭─[no_multiple_resolved.tsx:12:9]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
     ·         ──────────────
  13 │     })
     ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 5.
     ╭─[no_multiple_resolved.tsx:9:9]
@@ -41,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
     ·         ──────────────
  10 │     })
     ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 4.
     ╭─[no_multiple_resolved.tsx:9:9]
@@ -49,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
     ·         ──────────────
  10 │     })
     ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 4.
    ╭─[no_multiple_resolved.tsx:8:9]
@@ -57,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────
  9 │     }
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 8.
     ╭─[no_multiple_resolved.tsx:11:5]
@@ -65,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
     ·     ──────────────
  12 │ })
     ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 3.
    ╭─[no_multiple_resolved.tsx:8:9]
@@ -73,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────
  9 │     }
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 3.
    ╭─[no_multiple_resolved.tsx:5:5]
@@ -81,6 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────
  6 │ })
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 4.
    ╭─[no_multiple_resolved.tsx:7:5]
@@ -89,6 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────
  8 │ })
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 4.
    ╭─[no_multiple_resolved.tsx:7:5]
@@ -97,6 +108,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────
  8 │ })
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 3.
    ╭─[no_multiple_resolved.tsx:5:9]
@@ -105,6 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────
  6 │     }
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 4.
    ╭─[no_multiple_resolved.tsx:7:9]
@@ -113,6 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────
  8 │     }
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 4.
    ╭─[no_multiple_resolved.tsx:7:9]
@@ -121,6 +135,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
  8 │     }
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 5.
    ╭─[no_multiple_resolved.tsx:8:9]
@@ -129,6 +144,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
  9 │     }
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 5.
    ╭─[no_multiple_resolved.tsx:8:9]
@@ -137,6 +153,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
  9 │     }
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 5.
    ╭─[no_multiple_resolved.tsx:8:9]
@@ -145,6 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
  9 │     }
    ╰────
+  help: Add an early return after the first resolve/reject call
 
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is already resolved on line 5.
    ╭─[no_multiple_resolved.tsx:8:13]
@@ -153,3 +171,4 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────
  9 │         }
    ╰────
+  help: Add an early return after the first resolve/reject call

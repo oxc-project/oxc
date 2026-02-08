@@ -11,6 +11,7 @@ use crate::{
 
 fn jsx_no_comment_textnodes_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Comments inside children section of tag should be placed inside braces")
+        .with_help("Wrap the comment in braces: {/* comment */}")
         .with_label(span)
 }
 

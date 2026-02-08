@@ -20,7 +20,9 @@ fn forbid_dom_props_diagnostic(
     if let Some(message) = message {
         return OxcDiagnostic::warn(message.clone()).with_label(span);
     }
-    OxcDiagnostic::warn(format!("Prop \"{property}\" is forbidden on DOM Nodes")).with_label(span)
+    OxcDiagnostic::warn(format!("Prop \"{property}\" is forbidden on DOM Nodes"))
+        .with_help("Remove this prop.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

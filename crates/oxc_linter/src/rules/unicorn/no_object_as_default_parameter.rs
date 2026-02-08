@@ -10,11 +10,14 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn identifier(span: Span, param: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not use an object literal as default for parameter `{param}`."))
+        .with_help("Accept individual properties as parameters instead.")
         .with_label(span)
 }
 
 fn non_identifier(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use an object literal as default").with_label(span)
+    OxcDiagnostic::warn("Do not use an object literal as default")
+        .with_help("Accept individual properties as parameters instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

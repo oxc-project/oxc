@@ -176,210 +176,245 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = new Generic<int>() as Foo;
    ·           ─────────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = b as A;
    ·           ──────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = [1] as readonly number[];
    ·           ────────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = 'string' as a | b;
    ·           ─────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = !'string' as A;
    ·           ──────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = (a as A) + b;
    ·            ──────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = new Generic<string>() as Foo;
    ·           ────────────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (Generic<string> as Foo)();
    ·                ──────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (Generic<string> as Foo)('string');
    ·                ──────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => ({ bar: 5 }) as Foo;
    ·                 ───────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => bar as Foo;
    ·                 ──────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = bar<string>`${'baz'}` as Foo;
    ·           ────────────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>new Generic<int>();
    ·           ───────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>b;
    ·           ────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <readonly number[]>[1];
    ·           ──────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <a | b>'string';
    ·           ───────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>!'string';
    ·           ────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>a + b;
    ·           ────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>new Generic<string>();
    ·           ──────────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (<Foo>Generic<string>)();
    ·                ────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (<Foo>Generic<string>)('string');
    ·                ────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => <Foo>{ bar: 5 };
    ·                 ───────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => <Foo>bar;
    ·                 ────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>bar<string>`${'baz'}`;
    ·           ──────────────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as Foo<int>;
    ·           ──────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as a | b;
    ·           ───────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = ({} as A) + b;
    ·            ───────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo<int>>{};
    ·           ────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <a | b>{};
    ·           ─────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>{} + b;
    ·           ─────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as Foo<int>;
    ·           ──────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as a | b;
    ·           ───────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = ({} as A) + b;
    ·            ───────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:7]
  1 │ print({ bar: 5 } as Foo);
    ·       ─────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print({ bar: 5 } as Foo);
    ·           ─────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -388,66 +423,77 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────────
  4 │             }
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function b(x = {} as Foo.Bar) {}
    ·                ─────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function c(x = {} as Foo) {}
    ·                ─────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print?.({ bar: 5 } as Foo);
    ·         ─────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:13]
  1 │ print?.call({ bar: 5 } as Foo);
    ·             ─────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${{ bar: 5 } as Foo}`;
    ·         ─────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo<int>>{};
    ·           ────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <a | b>{};
    ·           ─────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>{} + b;
    ·           ─────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:7]
  1 │ print(<Foo>{ bar: 5 });
    ·       ───────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print(<Foo>{ bar: 5 });
    ·           ───────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -456,24 +502,28 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────────────
  4 │             }
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print?.(<Foo>{ bar: 5 });
    ·         ───────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:13]
  1 │ print?.call(<Foo>{ bar: 5 });
    ·             ───────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${<Foo>{ bar: 5 }}`;
    ·         ───────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
    ╭─[consistent_type_assertions.ts:1:11]
@@ -533,12 +583,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = [] as string[];
    ·           ──────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <string[]>[];
    ·           ────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<string[]>` instead of `as string[]`.
    ╭─[consistent_type_assertions.ts:1:11]
@@ -558,30 +610,35 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = [] as string[];
    ·           ──────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <string[]>[];
    ·           ────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:7]
  1 │ print([5] as Foo);
    ·       ──────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print([5] as Foo);
    ·           ──────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function b(x = [5] as Foo.Bar) {}
    ·                ──────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -590,30 +647,35 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────
  4 │             }
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${[5] as Foo}`;
    ·         ──────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:19]
  1 │ const foo = () => [5] as Foo;
    ·                   ──────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print(<Foo>[5]);
    ·           ────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function b(x = <Foo.Bar>[5]) {}
    ·                ────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -622,21 +684,25 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────
  4 │             }
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${<Foo>[5]}`;
    ·         ────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:13]
  1 │ const foo = <Foo>[5];
    ·             ────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:25]
  1 │ const foo = <Foo style={{ bar: 5 } as Bar} />;
    ·                         ─────────────────
    ╰────
+  help: Use a type annotation or `satisfies` instead.

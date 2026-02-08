@@ -17,23 +17,33 @@ use crate::{
 };
 
 fn surrogate_pair_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected surrogate pair in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected surrogate pair in character class.")
+        .with_note("Multi-code-point characters may not match as expected.")
+        .with_label(span)
 }
 
 fn combining_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected combining class in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected combining class in character class.")
+        .with_note("Multi-code-point characters may not match as expected.")
+        .with_label(span)
 }
 
 fn emoji_modifiers_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected emoji modifier in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected emoji modifier in character class.")
+        .with_note("Multi-code-point characters may not match as expected.")
+        .with_label(span)
 }
 
 fn regional_indicator_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected regional indicator in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected regional indicator in character class.")
+        .with_note("Multi-code-point characters may not match as expected.")
+        .with_label(span)
 }
 
 fn zwj_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected joined character sequence in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected joined character sequence in character class.")
+        .with_note("Multi-code-point characters may not match as expected.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]

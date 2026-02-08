@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
  4 │                     </App>
    ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 1 exceeds the configured maximum of 0
    ╭─[jsx_max_depth.tsx:3:14]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────────────────
  4 │                     </App>
    ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:4:16]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────
  5 │                       </foo>
    ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:3:12]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────
  4 │                   
    ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:4:12]
@@ -41,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────
  5 │                   
    ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:4:12]
@@ -49,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────
  5 │                   
    ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 3 exceeds the configured maximum of 2
    ╭─[jsx_max_depth.tsx:3:23]
@@ -57,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ────────
  4 │                     </div>
    ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 1 exceeds the configured maximum of 0
    ╭─[jsx_max_depth.tsx:3:14]
@@ -65,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
  4 │                     </>
    ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:4:16]
@@ -73,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────
  5 │                       </>
    ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
    ╭─[jsx_max_depth.tsx:4:12]
@@ -81,6 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────
  5 │                   
    ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 2 exceeds the configured maximum of 1
     ╭─[jsx_max_depth.tsx:8:12]
@@ -90,6 +100,7 @@ source: crates/oxc_linter/src/tester.rs
  10 │ ╰─▶                     </tbody>
  11 │                       
     ╰────
+  help: Extract nested JSX into a separate component.
 
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 5 exceeds the configured maximum of 4
     ╭─[jsx_max_depth.tsx:9:22]
@@ -99,3 +110,4 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                               </Button>
  12 │                                 </div>
     ╰────
+  help: Extract nested JSX into a separate component.

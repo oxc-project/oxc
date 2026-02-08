@@ -7,18 +7,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div style="color: 'red'" />
    ·            ──────────────
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:1:14]
  1 │ <Hello style="color: 'green'" />
    ·              ────────────────
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:1:12]
  1 │ <div style={true} />
    ·            ──────
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:4:35]
@@ -27,6 +30,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────────
  5 │               }
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:4:35]
@@ -35,6 +39,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────────
  5 │               }
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:4:37]
@@ -43,6 +48,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────────
  5 │               }
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:4:35]
@@ -51,18 +57,21 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────────
  5 │               }
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:1:20]
  1 │ <MyComponent style="myStyle" />
    ·                    ─────────
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:1:44]
  1 │ React.createElement(MyComponent2, { style: "mySpecialStyle" })
    ·                                            ────────────────
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:3:31]
@@ -71,6 +80,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ────────
  4 │           
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:3:31]
@@ -79,6 +89,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ────────
  4 │           
    ╰────
+  help: Pass an object literal to the `style` prop.
 
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:3:31]
@@ -87,3 +98,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ────────
  4 │           
    ╰────
+  help: Pass an object literal to the `style` prop.

@@ -17,11 +17,15 @@ fn prefer_destructuring_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 fn avoid_destructuring_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid destructuring from `defineProps`.").with_label(span)
+    OxcDiagnostic::warn("Avoid destructuring from `defineProps`.")
+        .with_help("Store props in a variable instead")
+        .with_label(span)
 }
 
 fn avoid_with_defaults_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid using `withDefaults` with destructuring.").with_label(span)
+    OxcDiagnostic::warn("Avoid using `withDefaults` with destructuring.")
+        .with_help("Use default values in the destructuring pattern instead")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]

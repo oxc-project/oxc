@@ -25,6 +25,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─
  5 │             }
    ╰────
+  help: Use the HTML entity instead.
 
   × Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
    ╭─[no_unescaped_entities.tsx:4:60]
@@ -39,15 +40,18 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <script>window.foo = "bar"</script>
    ·                      ─
    ╰────
+  help: Use the HTML entity instead.
 
   ⚠ eslint-plugin-react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
    ╭─[no_unescaped_entities.tsx:1:26]
  1 │ <script>window.foo = "bar"</script>
    ·                          ─
    ╰────
+  help: Use the HTML entity instead.
 
   ⚠ eslint-plugin-react(no-unescaped-entities): `"` can be escaped with &quot; or &ldquo; or &#34; or &rdquo;
    ╭─[no_unescaped_entities.tsx:1:16]
  1 │ <script>测试 " 测试</script>
    ·              ─
    ╰────
+  help: Use the HTML entity instead.

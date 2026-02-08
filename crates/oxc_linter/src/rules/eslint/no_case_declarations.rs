@@ -9,7 +9,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_case_declarations_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected lexical declaration in case block.").with_label(span)
+    OxcDiagnostic::warn("Unexpected lexical declaration in case block.")
+        .with_help("Wrap the case block in braces to create a new scope.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

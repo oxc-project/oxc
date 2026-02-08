@@ -23,15 +23,21 @@ use crate::{
 };
 
 fn func_missing_return_type(fn_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing return type on function").with_label(fn_span)
+    OxcDiagnostic::warn("Missing return type on function")
+        .with_help("Add an explicit return type to the function.")
+        .with_label(fn_span)
 }
 
 fn func_missing_argument_type(param_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing argument type on function").with_label(param_span)
+    OxcDiagnostic::warn("Missing argument type on function")
+        .with_help("Add a type annotation to the parameter.")
+        .with_label(param_span)
 }
 
 fn func_argument_is_explicitly_any(param_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Argument is explicitly typed as `any`").with_label(param_span)
+    OxcDiagnostic::warn("Argument is explicitly typed as `any`")
+        .with_help("Use a more specific type instead of `any`.")
+        .with_label(param_span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

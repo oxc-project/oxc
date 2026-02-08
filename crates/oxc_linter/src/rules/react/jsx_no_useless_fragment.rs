@@ -21,11 +21,15 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 fn needs_more_children(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span)
+    OxcDiagnostic::warn("Fragments should contain more than one child.")
+        .with_help("Remove the unnecessary fragment.")
+        .with_label(span)
 }
 
 fn child_of_html_element(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Passing a fragment to a HTML element is useless.").with_label(span)
+    OxcDiagnostic::warn("Passing a fragment to a HTML element is useless.")
+        .with_help("Remove the fragment and pass children directly.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]

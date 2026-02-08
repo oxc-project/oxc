@@ -7,24 +7,28 @@ source: crates/oxc_linter/src/tester.rs
  1 │ export function test(a: number, b: number) { return; }
    ·                 ────
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:17]
  1 │ export function test() { return; }
    ·                 ────
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:12]
  1 │ export var fn = function () { return 1; };
    ·            ──
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:12]
  1 │ export var arrowFn = () => 'test';
    ·            ───────
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:4:19]
@@ -33,6 +37,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
  5 │                 return 1;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:7:24]
@@ -41,6 +46,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────
  8 │               method() {
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:8:15]
@@ -49,6 +55,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
  9 │                 return;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
     ╭─[explicit_module_boundary_types.tsx:11:23]
@@ -57,6 +64,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                       ───
  12 │               private method() {
     ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
     ╭─[explicit_module_boundary_types.tsx:11:15]
@@ -65,6 +73,7 @@ source: crates/oxc_linter/src/tester.rs
     ·               ─────
  12 │               private method() {
     ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
     ╭─[explicit_module_boundary_types.tsx:15:28]
@@ -73,6 +82,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                            ───
  16 │             }
     ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:3:22]
@@ -81,6 +91,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─
  4 │               public b = function () {};
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:4:22]
@@ -89,6 +100,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─
  5 │               public c = function test() {};
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:5:35]
@@ -97,6 +109,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────
  6 │ 
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:7:22]
@@ -105,6 +118,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─
  8 │               static e = function () {};
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:8:22]
@@ -113,24 +127,28 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─
  9 │             }
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:30]
  1 │ export default () => (true ? () => {} : (): void => {});
    ·                              ──
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:12]
  1 │ export var arrowFn = () => 'test';
    ·            ───────
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:12]
  1 │ export var funcExpr = function () { return 'test'; };
    ·            ────────
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:4:15]
@@ -139,24 +157,28 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───
  5 │             };
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:22]
  1 │ export default () => () => {};
    ·                      ──
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:22]
  1 │ export default () => function () {};
    ·                      ────────
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:31]
  1 │ export default () => { return () => {}; };
    ·                               ──
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:3:22]
@@ -165,18 +187,21 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ────────
  4 │             };
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:17]
  1 │ export function fn() { return () => {}; }
    ·                 ──
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:17]
  1 │ export function fn() { return function () {}; }
    ·                 ──
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:4:33]
@@ -185,6 +210,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────────────────────────────────────────────
  5 │                   return () => {
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:3:22]
@@ -193,6 +219,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──
  4 │                 return;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:26]
@@ -201,6 +228,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────
  3 │             export const func2 = (value: number) => ({ type: 'X', value }) as Action;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:3:26]
@@ -209,6 +237,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────
  4 │             
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:26]
@@ -217,6 +246,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────
  3 │             
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:7:26]
@@ -225,6 +255,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────
  8 │               ({ type: 'X', value }) as const satisfies R;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:8:15]
@@ -233,6 +264,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
  9 │                 return;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
     ╭─[explicit_module_boundary_types.tsx:12:15]
@@ -241,6 +273,7 @@ source: crates/oxc_linter/src/tester.rs
     ·               ───
  13 │             }
     ╰────
+  help: Add an explicit return type to the function.
 
   × Unexpected token
    ╭─[explicit_module_boundary_types.tsx:5:25]
@@ -257,6 +290,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────
  3 │             export const func2 = (value: number) => value;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:32]
@@ -265,12 +299,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ────
  3 │               return '123';
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:1:33]
  1 │ export const fn = (one: number, two): string => '123';
    ·                                 ───
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:33]
@@ -279,6 +315,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────
  3 │               return function (inner) {};
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:3:32]
@@ -287,6 +324,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ─────
  4 │             }
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:29]
@@ -295,12 +333,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───
  3 │               return function (inner) {};
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:1:20]
  1 │ export const baz = arg => arg as const;
    ·                    ───
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:25]
@@ -309,6 +349,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
  3 │             export default foo;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:19]
@@ -317,6 +358,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
  3 │             export default foo;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:25]
@@ -325,6 +367,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
  3 │             export = foo;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:19]
@@ -333,6 +376,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
  3 │             export = foo;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:25]
@@ -341,6 +385,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
  3 │             export default [foo];
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:19]
@@ -349,6 +394,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
  3 │             export default [foo];
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:25]
@@ -357,6 +403,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
  3 │             export default { foo };
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:19]
@@ -365,6 +412,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
  3 │             export default { foo };
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:26]
@@ -373,6 +421,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───
  3 │               return arg;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:22]
@@ -381,6 +430,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
  3 │               return arg;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:26]
@@ -389,6 +439,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───
  3 │               return arg;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:22]
@@ -397,6 +448,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
  3 │               return arg;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:26]
@@ -405,6 +457,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───
  3 │               return arg;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:22]
@@ -413,6 +466,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
  3 │               return arg;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:38]
@@ -421,6 +475,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ───
  3 │               return arg;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:34]
@@ -429,6 +484,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ───
  3 │               return arg;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:3:20]
@@ -437,6 +493,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───
  4 │                 return arg;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:3:15]
@@ -445,6 +502,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
  4 │                 return arg;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:3:22]
@@ -453,6 +511,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
  4 │                 return arg;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:3:15]
@@ -461,6 +520,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
  4 │                 return arg;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:3:32]
@@ -469,6 +529,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ───
  4 │                 return arg;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:3:15]
@@ -477,6 +538,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
  4 │                 return arg;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:3:31]
@@ -485,6 +547,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ───
  4 │                 return arg;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:3:24]
@@ -493,6 +556,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────
  4 │                 return arg;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:3:41]
@@ -501,6 +565,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ───
  4 │                 return arg;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:3:24]
@@ -509,6 +574,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────
  4 │                 return arg;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:3:32]
@@ -517,6 +583,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ───
  4 │                 return arg;
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:3:15]
@@ -525,6 +592,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
  4 │                 return arg;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:24]
@@ -533,6 +601,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───
  3 │             test = (): void => {
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:17]
@@ -541,6 +610,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────
  3 │             test = (): void => {
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:24]
@@ -549,6 +619,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───
  3 │             test = (): void => {
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:17]
@@ -557,6 +628,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────
  3 │             test = (): void => {
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:26]
@@ -565,12 +637,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───
  3 │               () =>
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:12]
  1 │ export var arrowFn = () => () => {};
    ·            ───────
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:29]
@@ -579,6 +653,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──
  3 │               return function () {};
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:2:33]
@@ -587,6 +662,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────
  3 │               return function (inner): void {};
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:3:32]
@@ -595,6 +671,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ─────
  4 │             }
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:6:32]
@@ -603,60 +680,70 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ─────
  7 │             }
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:1:21]
  1 │ export function foo({ foo }): void {}
    ·                     ───────
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:1:21]
  1 │ export function foo([bar]): void {}
    ·                     ─────
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:1:20]
  1 │ export function foo(...bar): void {}
    ·                    ────────
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing argument type on function
    ╭─[explicit_module_boundary_types.tsx:1:20]
  1 │ export function foo(...[a]): void {}
    ·                    ────────
    ╰────
+  help: Add a type annotation to the parameter.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Argument is explicitly typed as `any`
    ╭─[explicit_module_boundary_types.tsx:1:21]
  1 │ export function foo(foo: any): void {}
    ·                     ────────
    ╰────
+  help: Use a more specific type instead of `any`.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Argument is explicitly typed as `any`
    ╭─[explicit_module_boundary_types.tsx:1:21]
  1 │ export function foo({ foo }: any): void {}
    ·                     ────────────
    ╰────
+  help: Use a more specific type instead of `any`.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Argument is explicitly typed as `any`
    ╭─[explicit_module_boundary_types.tsx:1:21]
  1 │ export function foo([bar]: any): void {}
    ·                     ──────────
    ╰────
+  help: Use a more specific type instead of `any`.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Argument is explicitly typed as `any`
    ╭─[explicit_module_boundary_types.tsx:1:20]
  1 │ export function foo(...bar: any): void {}
    ·                    ─────────────
    ╰────
+  help: Use a more specific type instead of `any`.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Argument is explicitly typed as `any`
    ╭─[explicit_module_boundary_types.tsx:1:20]
  1 │ export function foo(...[a]: any): void {}
    ·                    ─────────────
    ╰────
+  help: Use a more specific type instead of `any`.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:2:29]
@@ -665,6 +752,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────
  3 │               return 0;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:6:15]
@@ -673,6 +761,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─────
  7 │                 return 0;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:4:29]
@@ -681,6 +770,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────
  5 │               return a;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:4:37]
@@ -689,6 +779,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────
  5 │               return a;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:4:28]
@@ -697,6 +788,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────────
  5 │               return a;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:5:15]
@@ -705,15 +797,18 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
  6 │                 return a;
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:58]
  1 │ function Test(): void { const _x = () => { }; } function Test2() { return () => { }; } export { Test2 };
    ·                                                          ─────
    ╰────
+  help: Add an explicit return type to the function.
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:10]
  1 │ function App() { return 42; } export default App
    ·          ───
    ╰────
+  help: Add an explicit return type to the function.

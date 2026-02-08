@@ -7,36 +7,43 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let a: String;
    ·        ──────
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let b: Boolean;
    ·        ───────
    ╰────
+  help: Use `boolean` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "Number" as a type. Use "number" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let c: Number;
    ·        ──────
    ╰────
+  help: Use `number` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let d: Symbol;
    ·        ──────
    ╰────
+  help: Use `symbol` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "BigInt" as a type. Use "bigint" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let e: BigInt;
    ·        ──────
    ╰────
+  help: Use `bigint` instead.
 
   ⚠ typescript-eslint(ban-types): 'The `Object` type actually means "any non-nullish value"
    ╭─[ban_types.tsx:1:8]
  1 │ let f: Object;
    ·        ──────
    ╰────
+  help: Use `object` or define an explicit object shape.
+  note: The `Object` type includes primitives like strings and numbers, which is rarely intended.
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
    ╭─[ban_types.tsx:1:8]
@@ -57,24 +64,28 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let i: { b: String };
    ·             ──────
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:13]
  1 │ let j: { c: String };
    ·             ──────
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:20]
  1 │ function foo(arg0: String) {}
    ·                    ──────
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:10]
  1 │ 'foo' as String;
    ·          ──────
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
    ╭─[ban_types.tsx:1:10]
@@ -88,18 +99,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let d: Symbol = Symbol('foo');
    ·        ──────
    ╰────
+  help: Use `symbol` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
    ╭─[ban_types.tsx:1:20]
  1 │ let baz: [boolean, Boolean] = [true, false];
    ·                    ───────
    ╰────
+  help: Use `boolean` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
    ╭─[ban_types.tsx:1:17]
  1 │ let z = true as Boolean;
    ·                 ───────
    ╰────
+  help: Use `boolean` instead.
 
   ⚠ typescript-eslint(ban-types): Prefer explicitly define the object shape
    ╭─[ban_types.tsx:1:14]
@@ -120,30 +134,35 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const str: String = 'foo';
    ·            ──────
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "Boolean" as a type. Use "boolean" instead
    ╭─[ban_types.tsx:1:13]
  1 │ const bool: Boolean = true;
    ·             ───────
    ╰────
+  help: Use `boolean` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "Number" as a type. Use "number" instead
    ╭─[ban_types.tsx:1:12]
  1 │ const num: Number = 1;
    ·            ──────
    ╰────
+  help: Use `number` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "Symbol" as a type. Use "symbol" instead
    ╭─[ban_types.tsx:1:13]
  1 │ const symb: Symbol = Symbol('foo');
    ·             ──────
    ╰────
+  help: Use `symbol` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "BigInt" as a type. Use "bigint" instead
    ╭─[ban_types.tsx:1:15]
  1 │ const bigInt: BigInt = 1n;
    ·               ──────
    ╰────
+  help: Use `bigint` instead.
 
   ⚠ typescript-eslint(ban-types): Prefer explicitly define the object shape
    ╭─[ban_types.tsx:1:17]
@@ -167,6 +186,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────
  3 │           constructor(foo: String | Object | Function) {}
    ╰────
+  help: Use `boolean` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:2:45]
@@ -175,6 +195,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                             ──────
  3 │           constructor(foo: String | Object | Function) {}
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): 'The `Object` type actually means "any non-nullish value"
    ╭─[ban_types.tsx:2:68]
@@ -183,6 +204,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                    ──────
  3 │           constructor(foo: String | Object | Function) {}
    ╰────
+  help: Use `object` or define an explicit object shape.
+  note: The `Object` type includes primitives like strings and numbers, which is rarely intended.
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:3:28]
@@ -191,6 +214,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ──────
  4 │ 
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): 'The `Object` type actually means "any non-nullish value"
    ╭─[ban_types.tsx:3:37]
@@ -199,6 +223,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ──────
  4 │ 
    ╰────
+  help: Use `object` or define an explicit object shape.
+  note: The `Object` type includes primitives like strings and numbers, which is rarely intended.
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
    ╭─[ban_types.tsx:3:46]
@@ -216,6 +242,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────
  6 │             const foo: String = 1 as String;
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:6:24]
@@ -224,6 +251,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────
  7 │           }
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:6:38]
@@ -232,6 +260,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ──────
  7 │           }
    ╰────
+  help: Use `string` instead.
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type
    ╭─[ban_types.tsx:3:12]

@@ -7,30 +7,35 @@ source: crates/oxc_linter/src/tester.rs
  1 │ beforeAll(() => {})
    · ─────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeEach(() => {})
    · ──────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterAll(() => {})
    · ────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterEach(() => {})
    · ─────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeEach(() => {}); afterEach(() => { jest.resetModules() });
    · ──────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:5:17]
@@ -39,48 +44,56 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────
  6 │             
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeAll(() => {})
    · ─────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeEach(() => {})
    · ──────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterAll(() => {})
    · ────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterEach(() => {})
    · ─────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterEach(() => {})
    · ─────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ afterEach(() => {})
    · ─────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:1:1]
  1 │ beforeEach(() => {}); afterEach(() => { vi.resetModules() });
    · ──────────
    ╰────
+  help: Use helper functions instead.
 
   ⚠ eslint-plugin-jest(no-hooks): Do not use setup or teardown hooks.
    ╭─[no_hooks.tsx:4:8]
@@ -89,3 +102,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────
  5 │             
    ╰────
+  help: Use helper functions instead.

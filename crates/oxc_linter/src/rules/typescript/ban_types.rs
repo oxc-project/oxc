@@ -14,6 +14,7 @@ fn type_diagnostic(banned_type: &str, suggested_type: &str, span: Span) -> OxcDi
     OxcDiagnostic::warn(format!(
         "Do not use {banned_type:?} as a type. Use \"{suggested_type}\" instead"
     ))
+    .with_help(format!("Use `{suggested_type}` instead."))
     .with_label(span)
 }
 
@@ -31,6 +32,8 @@ fn function(span: Span) -> OxcDiagnostic {
 
 fn object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("'The `Object` type actually means \"any non-nullish value\"")
+        .with_help("Use `object` or define an explicit object shape.")
+        .with_note("The `Object` type includes primitives like strings and numbers, which is rarely intended.")
         .with_label(span)
 }
 

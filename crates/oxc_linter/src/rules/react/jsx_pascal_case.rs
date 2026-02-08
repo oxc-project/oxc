@@ -23,7 +23,9 @@ fn jsx_pascal_case_diagnostic(
         format!("JSX component {component_name} must be in PascalCase")
     };
 
-    OxcDiagnostic::warn(message).with_label(span)
+    OxcDiagnostic::warn(message)
+        .with_help("Rename the component to PascalCase.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

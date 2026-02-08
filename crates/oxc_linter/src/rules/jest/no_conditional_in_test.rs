@@ -10,7 +10,9 @@ use crate::{
 };
 
 fn no_conditional_in_test(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid having conditionals in tests.").with_label(span)
+    OxcDiagnostic::warn("Avoid having conditionals in tests.")
+        .with_help("Move the conditional logic outside of the test.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

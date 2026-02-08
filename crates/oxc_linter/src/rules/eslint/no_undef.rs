@@ -13,7 +13,9 @@ use crate::{
 };
 
 fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{name}' is not defined.")).with_label(span)
+    OxcDiagnostic::warn(format!("'{name}' is not defined."))
+        .with_help("Declare the variable or fix the reference.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]

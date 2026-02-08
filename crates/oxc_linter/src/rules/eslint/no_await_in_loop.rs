@@ -9,7 +9,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_await_in_loop_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected `await` inside a loop.").with_label(span)
+    OxcDiagnostic::warn("Unexpected `await` inside a loop.")
+        .with_help("Collect promises and use 'Promise.all()' instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

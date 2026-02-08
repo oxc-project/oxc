@@ -16,11 +16,11 @@ fn no_useless_backreference_diagnostic(
     group: &str,
 ) -> OxcDiagnostic {
     match problem {
-        Problem::Nested =>OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' from within that group.")).with_label(span),
-        Problem::Disjunctive => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which is in another alternative.")).with_label(span),
-        Problem::Forward => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which appears later in the pattern.")).with_label(span),
-        Problem::Backward => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which appears before in the same lookbehind.")).with_label(span),
-        Problem::IntoNegativeLookaround => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which is in a negative lookaround.")).with_label(span),
+        Problem::Nested =>OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' from within that group.")).with_note("This backreference always matches the empty string.").with_label(span),
+        Problem::Disjunctive => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which is in another alternative.")).with_note("This backreference always matches the empty string.").with_label(span),
+        Problem::Forward => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which appears later in the pattern.")).with_note("This backreference always matches the empty string.").with_label(span),
+        Problem::Backward => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which appears before in the same lookbehind.")).with_note("This backreference always matches the empty string.").with_label(span),
+        Problem::IntoNegativeLookaround => OxcDiagnostic::warn(format!("Backreference '{back_reference}' will be ignored. It references group '{group}' which is in a negative lookaround.")).with_note("This backreference always matches the empty string.").with_label(span),
     }
 }
 

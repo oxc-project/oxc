@@ -10,7 +10,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_wrapper_object_types(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use wrapper object types.").with_label(span)
+    OxcDiagnostic::warn("Do not use wrapper object types.")
+        .with_help("Use the primitive type instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

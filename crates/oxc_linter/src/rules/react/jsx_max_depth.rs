@@ -21,6 +21,7 @@ fn jsx_max_depth_diagnostic(depth: usize, max: usize, span: Span) -> OxcDiagnost
     OxcDiagnostic::warn(format!(
         "JSX nesting depth of {depth} exceeds the configured maximum of {max}"
     ))
+    .with_help("Extract nested JSX into a separate component.")
     .with_label(span)
 }
 

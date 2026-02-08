@@ -20,7 +20,9 @@ use crate::{
 };
 
 fn style_prop_object_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`style` prop value must be an object.").with_label(span)
+    OxcDiagnostic::warn("`style` prop value must be an object.")
+        .with_help("Pass an object literal to the `style` prop.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

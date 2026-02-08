@@ -14,6 +14,7 @@ fn prefer_enum_initializers_diagnostic(member_name: &str, span: Span) -> OxcDiag
     OxcDiagnostic::warn(format!(
         "The value of the member {member_name:?} should be explicitly defined."
     ))
+    .with_help("Assign an explicit value.")
     .with_label(span)
 }
 

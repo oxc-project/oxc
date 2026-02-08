@@ -20,7 +20,8 @@ fn adjacent_overload_signatures_diagnostic(
     first: Option<Span>,
     second: Span,
 ) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!("All {fn_name:?} signatures should be adjacent."));
+    let mut d = OxcDiagnostic::warn(format!("All {fn_name:?} signatures should be adjacent."))
+        .with_help("Move the overload signatures next to each other.");
     if let Some(span) = first {
         d = d.and_label(span);
     }
