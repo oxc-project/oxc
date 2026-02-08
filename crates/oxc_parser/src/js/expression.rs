@@ -120,7 +120,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Atom<'a>) {
         let span = self.cur_token().span();
         let name = self.cur_string();
-        self.bump_remap(kind);
+        self.advance(kind);
         (span, Atom::from(name))
     }
 
