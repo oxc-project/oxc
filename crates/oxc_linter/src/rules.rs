@@ -15,6 +15,7 @@ pub(crate) mod import {
     pub mod max_dependencies;
     pub mod named;
     pub mod namespace;
+    pub mod newline_after_import;
     pub mod no_absolute_path;
     pub mod no_amd;
     pub mod no_anonymous_default_export;
