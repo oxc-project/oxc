@@ -235,16 +235,14 @@ impl SourceFormatter {
         sort_options: Option<&sort_package_json::SortOptions>,
     ) -> Result<String, OxcDiagnostic> {
         let source_text: Cow<'_, str> = if let Some(options) = sort_options {
-            Cow::Owned(
-                sort_package_json::sort_package_json_with_options(source_text, options).map_err(
-                    |err| {
-                        OxcDiagnostic::error(format!(
-                            "Failed to sort package.json: {}\n{err}",
-                            path.display()
-                        ))
-                    },
-                )?,
-            )
+            match sort_package_json::sort_package_json_with_options(source_text, options) {
+                Ok(sorted) => Cow::Owned(sorted),
+                // `sort_package_json` can only handle strictly valid JSON.
+                // On the other hand, Prettier's `json-stringify` parser is very permissive.
+                // It can format JSON like input even with unquoted keys or trailing commas.
+                // Therefore, rather than bailing out due to a sorting failure, we opt to format without sorting.
+                Err(_) => Cow::Borrowed(source_text),
+            }
         } else {
             Cow::Borrowed(source_text)
         };
