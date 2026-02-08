@@ -7,7 +7,7 @@ use oxc_span::{GetSpan, Ident, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_new_func(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("The Function constructor is eval.").with_label(span)
+    OxcDiagnostic::warn("Using `new Function` or `Function` is not allowed.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
