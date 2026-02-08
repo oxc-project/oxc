@@ -794,6 +794,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Parse import statement or import expression.
+    #[inline(never)]
     fn parse_import_statement(&mut self) -> Statement<'a> {
         let checkpoint = self.checkpoint();
         let span = self.start_span();
@@ -823,6 +824,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Parse statements that start with `@`.
+    #[inline(never)]
     fn parse_decorated_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
         let decorators = self.parse_decorators();

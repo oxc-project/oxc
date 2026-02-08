@@ -648,6 +648,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Section 13.3 ImportCall or ImportMeta
+    #[inline(never)]
     fn parse_import_meta_or_call(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let meta = self.parse_keyword_identifier(Kind::Import);
@@ -685,6 +686,7 @@ impl<'a> ParserImpl<'a> {
 
     /// V8 Runtime calls.
     /// See: [runtime.h](https://github.com/v8/v8/blob/5fe0aa3bc79c0a9d3ad546b79211f07105f09585/src/runtime/runtime.h#L43)
+    #[inline(never)]
     pub(crate) fn parse_v8_intrinsic_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
         self.expect(Kind::Percent);
@@ -768,6 +770,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Section 13.3 Super Call
+    #[inline(never)]
     fn parse_super(&mut self) -> Expression<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `super`
@@ -1575,6 +1578,7 @@ impl<'a> ParserImpl<'a> {
         self.parse_update_expression(lhs_span)
     }
 
+    #[inline(never)]
     fn parse_decorated_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let decorators = self.parse_decorators();
