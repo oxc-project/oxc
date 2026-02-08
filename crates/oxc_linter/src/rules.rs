@@ -151,6 +151,7 @@ pub(crate) mod eslint {
     pub mod no_self_compare;
     pub mod no_sequences;
     pub mod no_setter_return;
+    pub mod no_shadow;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
     pub mod no_template_curly_in_string;
