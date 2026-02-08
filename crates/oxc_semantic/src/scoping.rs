@@ -53,6 +53,20 @@ multi_index_vec! {
     }
 }
 
+multi_index_vec! {
+    /// Symbol table stored as struct-of-arrays in a single allocation.
+    ///
+    /// Contains spans, flags, scope IDs, and declaration node IDs for all symbols.
+    /// Using a single allocation with one `len`/`cap` instead of 4 separate `IndexVec`s
+    /// saves memory and CPU.
+    struct SymbolTable<SymbolId> {
+        symbol_spans => symbol_spans_mut: Span,
+        symbol_flags => symbol_flags_mut: SymbolFlags,
+        symbol_scope_ids => symbol_scope_ids_mut: ScopeId,
+        symbol_declarations => symbol_declarations_mut: NodeId,
+    }
+}
+
 /// # Symbol Table and Scope Tree
 ///
 /// ## Symbol Table
@@ -72,12 +86,8 @@ multi_index_vec! {
 /// - Scopes can have 0 or more child scopes.
 /// - Nodes that create a scope store the [`ScopeId`] of the scope they create.
 pub struct Scoping {
-    /* Symbol Table Fields */
-    pub(crate) symbol_spans: IndexVec<SymbolId, Span>,
-    pub(crate) symbol_flags: IndexVec<SymbolId, SymbolFlags>,
-    pub(crate) symbol_scope_ids: IndexVec<SymbolId, ScopeId>,
-    /// Pointer to the AST Node where this symbol is declared
-    pub(crate) symbol_declarations: IndexVec<SymbolId, NodeId>,
+    /* Symbol Table - single allocation for all symbol-indexed flat fields */
+    symbol_table: SymbolTable,
 
     pub(crate) references: IndexVec<ReferenceId, Reference>,
 
@@ -99,10 +109,7 @@ impl fmt::Debug for Scoping {
 impl Default for Scoping {
     fn default() -> Self {
         Self {
-            symbol_spans: IndexVec::new(),
-            symbol_flags: IndexVec::new(),
-            symbol_scope_ids: IndexVec::new(),
-            symbol_declarations: IndexVec::new(),
+            symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
             scope_table: ScopeTable::new(),
@@ -280,13 +287,13 @@ impl Scoping {
     /// Returns the number of symbols in this table.
     #[inline]
     pub fn symbols_len(&self) -> usize {
-        self.symbol_spans.len()
+        self.symbol_table.len()
     }
 
     /// Returns `true` if this table contains no symbols.
     #[inline]
     pub fn symbols_is_empty(&self) -> bool {
-        self.symbol_spans.is_empty()
+        self.symbol_table.is_empty()
     }
 
     pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
@@ -304,7 +311,7 @@ impl Scoping {
     ///
     /// [`ScopeTree::iter_bindings_in`]: crate::scoping::Scoping::iter_bindings_in
     pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
-        self.symbol_spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
+        self.symbol_table.iter_ids()
     }
 
     /// Get the [`Span`] of the [`AstNode`] declaring a symbol.
@@ -312,7 +319,7 @@ impl Scoping {
     /// [`AstNode`]: crate::node::AstNode
     #[inline]
     pub fn symbol_span(&self, symbol_id: SymbolId) -> Span {
-        self.symbol_spans[symbol_id]
+        *self.symbol_table.symbol_spans(symbol_id)
     }
 
     /// Get the identifier name a symbol is bound to.
@@ -342,13 +349,13 @@ impl Scoping {
     /// To find how a symbol is used, use [`Scoping::get_resolved_references`].
     #[inline]
     pub fn symbol_flags(&self, symbol_id: SymbolId) -> SymbolFlags {
-        self.symbol_flags[symbol_id]
+        *self.symbol_table.symbol_flags(symbol_id)
     }
 
     /// Get a mutable reference to a symbol's [flags](SymbolFlags).
     #[inline]
     pub fn symbol_flags_mut(&mut self, symbol_id: SymbolId) -> &mut SymbolFlags {
-        &mut self.symbol_flags[symbol_id]
+        self.symbol_table.symbol_flags_mut(symbol_id)
     }
 
     #[inline]
@@ -364,17 +371,17 @@ impl Scoping {
 
     #[inline]
     pub fn union_symbol_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
-        self.symbol_flags[symbol_id] |= includes;
+        *self.symbol_table.symbol_flags_mut(symbol_id) |= includes;
     }
 
     #[inline]
     pub fn set_symbol_scope_id(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
-        self.symbol_scope_ids[symbol_id] = scope_id;
+        *self.symbol_table.symbol_scope_ids_mut(symbol_id) = scope_id;
     }
 
     #[inline]
     pub fn symbol_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
-        self.symbol_scope_ids[symbol_id]
+        *self.symbol_table.symbol_scope_ids(symbol_id)
     }
 
     /// Get the ID of the AST node declaring a symbol.
@@ -389,7 +396,7 @@ impl Scoping {
     /// [`BindingPattern`]: oxc_ast::ast::BindingPattern
     #[inline]
     pub fn symbol_declaration(&self, symbol_id: SymbolId) -> NodeId {
-        self.symbol_declarations[symbol_id]
+        *self.symbol_table.symbol_declarations(symbol_id)
     }
 
     pub fn create_symbol(
@@ -404,10 +411,7 @@ impl Scoping {
             cell.symbol_names.push(name.clone_in(allocator));
             cell.resolved_references.push(ArenaVec::new_in(allocator));
         });
-        self.symbol_spans.push(span);
-        self.symbol_flags.push(flags);
-        self.symbol_scope_ids.push(scope_id);
-        self.symbol_declarations.push(node_id)
+        self.symbol_table.push(span, flags, scope_id, node_id)
     }
 
     pub fn add_symbol_redeclaration(
@@ -503,7 +507,7 @@ impl Scoping {
     /// If symbol is `const`, always returns `false`.
     /// Otherwise, returns `true` if the symbol is assigned to somewhere in AST.
     pub fn symbol_is_mutated(&self, symbol_id: SymbolId) -> bool {
-        if self.symbol_flags[symbol_id].contains(SymbolFlags::ConstVariable) {
+        if self.symbol_table.symbol_flags(symbol_id).contains(SymbolFlags::ConstVariable) {
             false
         } else {
             self.get_resolved_references(symbol_id).any(Reference::is_write)
@@ -546,10 +550,7 @@ impl Scoping {
         additional_references: usize,
         additional_scopes: usize,
     ) {
-        self.symbol_spans.reserve(additional_symbols);
-        self.symbol_flags.reserve(additional_symbols);
-        self.symbol_scope_ids.reserve(additional_symbols);
-        self.symbol_declarations.reserve(additional_symbols);
+        self.symbol_table.reserve(additional_symbols);
         self.cell.with_dependent_mut(|_allocator, cell| {
             cell.symbol_names.reserve_exact(additional_symbols);
             cell.resolved_references.reserve_exact(additional_symbols);
@@ -875,7 +876,7 @@ impl Scoping {
         self.cell.with_dependent_mut(|_allocator, cell| {
             for bindings in &mut cell.bindings {
                 bindings.retain(|_name, symbol_id| {
-                    let flags = self.symbol_flags[*symbol_id];
+                    let flags = *self.symbol_table.symbol_flags(*symbol_id);
                     !flags.intersects(
                         SymbolFlags::TypeAlias
                             | SymbolFlags::Interface
@@ -895,10 +896,7 @@ impl Scoping {
         let cell = self.cell.borrow_dependent();
 
         Self {
-            symbol_spans: self.symbol_spans.clone(),
-            symbol_flags: self.symbol_flags.clone(),
-            symbol_scope_ids: self.symbol_scope_ids.clone(),
-            symbol_declarations: self.symbol_declarations.clone(),
+            symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
             scope_table: self.scope_table.clone(),
