@@ -4,7 +4,7 @@ use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_semantic::{NodeId, Reference, Scoping};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -232,7 +232,7 @@ impl<'a> TraverseScoping<'a> {
     #[inline]
     pub(crate) fn add_binding(
         &mut self,
-        name: &str,
+        name: Ident<'_>,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> SymbolId {
@@ -247,11 +247,11 @@ impl<'a> TraverseScoping<'a> {
     /// Creates a symbol with the provided name and flags and adds it to the specified scope.
     pub fn generate_binding(
         &mut self,
-        name: Atom<'a>,
+        name: Ident<'a>,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        let symbol_id = self.add_binding(name.as_str(), scope_id, flags);
+        let symbol_id = self.add_binding(name, scope_id, flags);
         BoundIdentifier::new(name, symbol_id)
     }
 
@@ -260,7 +260,7 @@ impl<'a> TraverseScoping<'a> {
     /// Creates a symbol with the provided name and flags and adds it to the current scope.
     pub fn generate_binding_in_current_scope(
         &mut self,
-        name: Atom<'a>,
+        name: Ident<'a>,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
         self.generate_binding(name, self.current_scope_id, flags)
@@ -275,7 +275,7 @@ impl<'a> TraverseScoping<'a> {
     /// starting with a digit (0-9) is fine.
     ///
     /// See comments on `UidGenerator` for further details.
-    pub fn generate_uid_name(&mut self, name: &str, allocator: &'a Allocator) -> Atom<'a> {
+    pub fn generate_uid_name(&mut self, name: &str, allocator: &'a Allocator) -> Ident<'a> {
         // If `uid_generator` is not already populated, initialize it
         let uid_generator =
             self.uid_generator.get_or_insert_with(|| UidGenerator::new(&self.scoping, allocator));
@@ -297,7 +297,11 @@ impl<'a> TraverseScoping<'a> {
     }
 
     /// Create an unbound reference
-    pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
+    pub fn create_unbound_reference(
+        &mut self,
+        name: Ident<'_>,
+        flags: ReferenceFlags,
+    ) -> ReferenceId {
         let reference = Reference::new(NodeId::DUMMY, self.current_scope_id, flags);
         let reference_id = self.scoping.create_reference(reference);
         self.scoping.add_root_unresolved_reference(name, reference_id);
@@ -310,7 +314,7 @@ impl<'a> TraverseScoping<'a> {
     /// or `TraverseCtx::create_unbound_reference`.
     pub fn create_reference(
         &mut self,
-        name: &str,
+        name: Ident<'_>,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
@@ -324,7 +328,7 @@ impl<'a> TraverseScoping<'a> {
     /// Create reference in current scope, looking up binding for `name`
     pub fn create_reference_in_current_scope(
         &mut self,
-        name: &str,
+        name: Ident<'_>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
         let symbol_id = self.scoping.find_binding(self.current_scope_id, name);
@@ -334,7 +338,7 @@ impl<'a> TraverseScoping<'a> {
     /// Delete a reference.
     ///
     /// Provided `name` must match `reference_id`.
-    pub fn delete_reference(&mut self, reference_id: ReferenceId, name: &str) {
+    pub fn delete_reference(&mut self, reference_id: ReferenceId, name: Ident<'_>) {
         let symbol_id = self.scoping.get_reference(reference_id).symbol_id();
         if let Some(symbol_id) = symbol_id {
             self.scoping.delete_resolved_reference(symbol_id, reference_id);
@@ -345,7 +349,7 @@ impl<'a> TraverseScoping<'a> {
 
     /// Delete reference for an `IdentifierReference`.
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
-        self.delete_reference(ident.reference_id(), &ident.name);
+        self.delete_reference(ident.reference_id(), ident.name);
     }
 }
 

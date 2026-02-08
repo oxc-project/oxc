@@ -323,10 +323,10 @@ impl<'a> HelperLoaderStore<'a> {
     fn transform_for_external_helper(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         static HELPER_VAR: &str = "babelHelpers";
 
-        let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), HELPER_VAR);
-        let object =
-            ctx.create_ident_expr(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
-        let property = ctx.ast.identifier_name(SPAN, Atom::from(helper.name()));
+        let helper_var = ctx.ast.ident(HELPER_VAR);
+        let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), helper_var);
+        let object = ctx.create_ident_expr(SPAN, helper_var, symbol_id, ReferenceFlags::Read);
+        let property = ctx.ast.identifier_name(SPAN, helper.name());
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }
 }

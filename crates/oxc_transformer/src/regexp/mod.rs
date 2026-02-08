@@ -49,7 +49,7 @@ use oxc_regular_expression::{
     RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
 };
 use oxc_semantic::ReferenceFlags;
-use oxc_span::{Atom, SPAN};
+use oxc_span::SPAN;
 use oxc_traverse::Traverse;
 
 use crate::{
@@ -163,8 +163,9 @@ impl<'a> RegExp<'a, '_> {
         }
 
         let callee = {
-            let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "RegExp");
-            ctx.create_ident_expr(SPAN, Atom::from("RegExp"), symbol_id, ReferenceFlags::read())
+            let regexp = ctx.ast.ident("RegExp");
+            let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), regexp);
+            ctx.create_ident_expr(SPAN, regexp, symbol_id, ReferenceFlags::read())
         };
 
         let arguments = ctx.ast.vec_from_array([

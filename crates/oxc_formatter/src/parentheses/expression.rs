@@ -666,8 +666,7 @@ impl NeedsParentheses<'_> for AstNode<'_, SequenceExpression<'_>> {
             AstNodes::ReturnStatement(_)
             | AstNodes::ThrowStatement(_)
             // There's a precedence for writing `x++, y++`
-            | AstNodes::ForStatement(_)
-            | AstNodes::SequenceExpression(_) => false,
+            | AstNodes::ForStatement(_) => false,
             AstNodes::ExpressionStatement(stmt) => !stmt.is_arrow_function_body(),
             _ => true,
         }
@@ -1030,6 +1029,7 @@ fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'_>) ->
     match parent {
         AstNodes::TSNonNullExpression(_)
         | AstNodes::StaticMemberExpression(_)
+        | AstNodes::PrivateFieldExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
         _ if is_class_extends(span, parent) || parent.is_call_like_callee_span(span) => {
             return true;

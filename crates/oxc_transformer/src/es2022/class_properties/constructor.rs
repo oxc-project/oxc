@@ -106,7 +106,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::{
     node::NodeId,
     scope::{ScopeFlags, ScopeId},
@@ -432,7 +432,7 @@ impl<'a> ClassProperties<'a, '_> {
             // Save replacement name in `clashing_symbols`
             *name = new_name;
             // Rename symbol and binding
-            ctx.scoping_mut().rename_symbol(symbol_id, constructor_scope_id, new_name.as_str());
+            ctx.scoping_mut().rename_symbol(symbol_id, constructor_scope_id, new_name);
         }
 
         // Rename identifiers for clashing symbols in constructor params and body
@@ -769,13 +769,13 @@ impl<'a> ConstructorBodySuperReplacer<'a, '_> {
 
 /// Visitor to rename bindings and references.
 struct ConstructorSymbolRenamer<'a, 'v> {
-    clashing_symbols: &'v mut FxHashMap<SymbolId, Atom<'a>>,
+    clashing_symbols: &'v mut FxHashMap<SymbolId, Ident<'a>>,
     ctx: &'v TraverseCtx<'a>,
 }
 
 impl<'a, 'v> ConstructorSymbolRenamer<'a, 'v> {
     fn new(
-        clashing_symbols: &'v mut FxHashMap<SymbolId, Atom<'a>>,
+        clashing_symbols: &'v mut FxHashMap<SymbolId, Ident<'a>>,
         ctx: &'v TraverseCtx<'a>,
     ) -> Self {
         Self { clashing_symbols, ctx }
@@ -786,7 +786,7 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
     fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
         let symbol_id = ident.symbol_id();
         if let Some(new_name) = self.clashing_symbols.get(&symbol_id) {
-            ident.name = (*new_name).into();
+            ident.name = *new_name;
         }
     }
 
@@ -795,7 +795,7 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
         if let Some(symbol_id) = self.ctx.scoping().get_reference(reference_id).symbol_id()
             && let Some(new_name) = self.clashing_symbols.get(&symbol_id)
         {
-            ident.name = (*new_name).into();
+            ident.name = *new_name;
         }
     }
 }

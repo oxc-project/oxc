@@ -1,8 +1,7 @@
-use rustc_hash::FxHashMap;
 use smallvec::SmallVec;
 
 use oxc_data_structures::assert_unchecked;
-use oxc_span::Atom;
+use oxc_span::IdentHashMap;
 use oxc_syntax::reference::ReferenceId;
 
 /// Stores reference IDs for a single identifier name within a scope.
@@ -10,9 +9,9 @@ use oxc_syntax::reference::ReferenceId;
 /// is referenced only a few times within a given scope.
 pub type ReferenceIds = SmallVec<[ReferenceId; 8]>;
 
-/// Unlike `ScopeTree`'s `UnresolvedReferences`, this type uses `Atom` as the key,
+/// Unlike `ScopeTree`'s `UnresolvedReferences`, this type uses `Ident` as the key,
 /// and uses a heap-allocated hashmap (not arena-allocated)
-type TempUnresolvedReferences<'a> = FxHashMap<Atom<'a>, ReferenceIds>;
+type TempUnresolvedReferences<'a> = IdentHashMap<'a, ReferenceIds>;
 
 // Stack used to accumulate unresolved refs while traversing scopes.
 // Indexed by scope depth. We recycle `UnresolvedReferences` instances during traversal

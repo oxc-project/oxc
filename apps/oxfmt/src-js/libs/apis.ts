@@ -1,3 +1,17 @@
+/**
+ * API functions for Prettier integration.
+ *
+ * These must be plain functions because:
+ * - They can be called as `tinypool` RPC functions via `cli-worker.ts`
+ *   - Tinypool runs workers as `child_process`, so each worker is an isolated process
+ *   - Module-level caches are shared only within each worker process
+ * - They can also be imported directly via `index.ts` (Node.js API)
+ *   - In this case, module-level caches are shared globally
+ *
+ * The caches (`xxxCache`) are for lazy loading
+ * and avoiding redundant dynamic imports within the same process.
+ */
+
 import type { Options, Plugin } from "prettier";
 
 // Lazy load Prettier
@@ -33,7 +47,7 @@ export async function resolvePlugins(): Promise<string[]> {
 export type FormatEmbeddedCodeParam = {
   code: string;
   parserName: string;
-  options: Options & { _tailwindPluginEnabled?: boolean };
+  options: Options;
 };
 
 /**
@@ -69,7 +83,7 @@ export type FormatFileParam = {
   code: string;
   parserName: string;
   fileName: string;
-  options: Options & { _tailwindPluginEnabled?: boolean };
+  options: Options;
 };
 
 /**
@@ -93,6 +107,9 @@ export async function formatFile({
 
   // Enable Tailwind CSS plugin for non-JS files if needed
   await setupTailwindPlugin(options);
+  // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
+  // NOTE: This must be last since Prettier plugins are applied in order
+  await setupOxfmtPlugin(options);
 
   return prettier.format(code, options);
 }
@@ -116,28 +133,18 @@ async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tail
 
 // ---
 
-const TAILWIND_RELEVANT_PARSERS = new Set(["html", "vue", "angular", "glimmer"]);
-
 /**
- * Set up Tailwind CSS plugin for Prettier when:
- * - `options._tailwindPluginEnabled` is set
- * - And, the parser is relevant for Tailwind CSS
- * Loads the plugin lazily. Option mapping is done in Rust side.
+ * Load Tailwind CSS plugin lazily when `options._useTailwindPlugin` flag is set.
+ * The flag is added by Rust side only for relevant parsers.
+ *
+ * Option mapping (experimentalTailwindcss.xxx → tailwindXxx) is also done in Rust side.
  */
-async function setupTailwindPlugin(
-  options: Options & { _tailwindPluginEnabled?: boolean },
-): Promise<void> {
-  if (!options._tailwindPluginEnabled) return;
-
-  // Clean up internal flag
-  delete options._tailwindPluginEnabled;
-
-  // PERF: Skip loading Tailwind plugin for parsers that don't use it
-  if (!TAILWIND_RELEVANT_PARSERS.has(options.parser as string)) return;
+async function setupTailwindPlugin(options: Options): Promise<void> {
+  if ("_useTailwindPlugin" in options === false) return;
 
   const tailwindPlugin = await loadTailwindPlugin();
 
-  options.plugins = options.plugins || [];
+  options.plugins ??= [];
   options.plugins.push(tailwindPlugin as Plugin);
 }
 
@@ -150,8 +157,7 @@ export interface SortTailwindClassesArgs {
 }
 
 /**
- * Process Tailwind CSS classes found in JSX attributes.
- * Option mapping (`experimentalTailwindcss.xxx` → `tailwindXxx`) is done in Rust side.
+ * Process Tailwind CSS classes found in JS/TS files in batch.
  * @param args - Object containing filepath, classes, and options
  * @returns Array of sorted class strings (same order/length as input)
  */
@@ -181,4 +187,32 @@ export async function sortTailwindClasses({
       return classStr;
     }
   });
+}
+
+// ---
+// Oxfmt plugin support for (j|t)-in-xxx files
+// ---
+
+let oxfmtPluginCache: Plugin;
+
+async function loadOxfmtPlugin(): Promise<Plugin> {
+  if (oxfmtPluginCache) return oxfmtPluginCache;
+
+  oxfmtPluginCache = (await import("./prettier-plugin-oxfmt/index")) as Plugin;
+  return oxfmtPluginCache;
+}
+
+// ---
+
+/**
+ * Load oxfmt plugin for js-in-xxx parsers when `options._oxfmtPluginOptionsJson` is set.
+ * The flag is added by Rust side only for relevant parsers.
+ */
+async function setupOxfmtPlugin(options: Options): Promise<void> {
+  if ("_oxfmtPluginOptionsJson" in options === false) return;
+
+  const oxcPlugin = await loadOxfmtPlugin();
+
+  options.plugins ??= [];
+  options.plugins.push(oxcPlugin);
 }

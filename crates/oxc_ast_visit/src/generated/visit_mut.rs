@@ -619,8 +619,8 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_v_8_intrinsic_expression(&mut self, it: &mut V8IntrinsicExpression<'a>) {
-        walk_v_8_intrinsic_expression(self, it);
+    fn visit_v8_intrinsic_expression(&mut self, it: &mut V8IntrinsicExpression<'a>) {
+        walk_v8_intrinsic_expression(self, it);
     }
 
     #[inline]
@@ -1419,7 +1419,7 @@ pub mod walk_mut {
             Expression::TSInstantiationExpression(it) => {
                 visitor.visit_ts_instantiation_expression(it)
             }
-            Expression::V8IntrinsicExpression(it) => visitor.visit_v_8_intrinsic_expression(it),
+            Expression::V8IntrinsicExpression(it) => visitor.visit_v8_intrinsic_expression(it),
             match_member_expression!(Expression) => {
                 visitor.visit_member_expression(it.to_member_expression_mut())
             }
@@ -3013,7 +3013,7 @@ pub mod walk_mut {
     }
 
     #[inline]
-    pub fn walk_v_8_intrinsic_expression<'a, V: VisitMut<'a>>(
+    pub fn walk_v8_intrinsic_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut V8IntrinsicExpression<'a>,
     ) {

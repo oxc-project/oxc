@@ -3,7 +3,11 @@ use std::{
     sync::mpsc,
 };
 
-use ignore::gitignore::{Gitignore, GitignoreBuilder};
+use ignore::{
+    gitignore::{Gitignore, GitignoreBuilder},
+    overrides::OverrideBuilder,
+};
+use rustc_hash::FxHashSet;
 
 use crate::core::{FormatFileStrategy, utils::normalize_relative_path};
 
@@ -23,8 +27,10 @@ impl Walk {
         //
         // Classify and normalize specified paths
         //
-        let mut target_paths = vec![];
+        let mut target_paths = FxHashSet::default();
+        let mut glob_patterns = vec![];
         let mut exclude_patterns = vec![];
+
         for path in paths {
             let path_str = path.to_string_lossy();
 
@@ -35,26 +41,38 @@ impl Walk {
                 continue;
             }
 
-            // Otherwise, treat as target path
+            // Normalize `./` prefix
+            let normalized =
+                if let Some(stripped) = path_str.strip_prefix("./") { stripped } else { &path_str };
 
-            if path.is_absolute() {
-                target_paths.push(path.clone());
+            // Separate glob patterns from concrete paths
+            if is_glob_pattern(normalized, cwd) {
+                glob_patterns.push(normalized.to_string());
                 continue;
             }
 
-            // NOTE: `.` and cwd behave differently, need to normalize
-            let path = if path_str == "." {
+            // Resolve full path for concrete paths
+            let full_path = if path.is_absolute() {
+                path.clone()
+            } else if normalized == "." {
+                // NOTE: `.` and cwd behave differently, need to normalize
                 cwd.to_path_buf()
-            } else if let Some(stripped) = path_str.strip_prefix("./") {
-                cwd.join(stripped)
             } else {
-                cwd.join(path)
+                cwd.join(normalized)
             };
-            target_paths.push(path);
+            target_paths.insert(full_path);
         }
-        // Default to cwd if no target paths are provided
-        if target_paths.is_empty() {
-            target_paths.push(cwd.to_path_buf());
+
+        // Expand glob patterns and add to target paths
+        // NOTE: See `expand_glob_patterns()` for why we pre-expand globs here
+        if !glob_patterns.is_empty() {
+            target_paths.extend(expand_glob_patterns(cwd, &glob_patterns)?);
+        }
+
+        // Default to `cwd` if no positive paths were specified.
+        // Exclude patterns alone should still walk, but unmatched globs should not.
+        if target_paths.is_empty() && glob_patterns.is_empty() {
+            target_paths.insert(cwd.to_path_buf());
         }
 
         //
@@ -182,27 +200,7 @@ impl Walk {
             true
         });
 
-        let inner = inner
-            // Do not follow symlinks like Prettier does.
-            // See https://github.com/prettier/prettier/pull/14627
-            .follow_links(false)
-            // Include hidden files and directories except those we explicitly skip above
-            .hidden(false)
-            // Do not respect `.ignore` file
-            .ignore(false)
-            // Do not search upward
-            // NOTE: Prettier only searches current working directory
-            .parents(false)
-            // Also do not respect globals
-            .git_global(false)
-            // But respect downward nested `.gitignore` files
-            // NOTE: Prettier does not: https://github.com/prettier/prettier/issues/4081
-            .git_ignore(true)
-            // Also do not respect `.git/info/exclude`
-            .git_exclude(false)
-            // Git is not required
-            .require_git(false)
-            .build_parallel();
+        let inner = apply_walk_settings(&mut inner).build_parallel();
         Ok(Some(Self { inner }))
     }
 
@@ -248,6 +246,51 @@ fn is_ignored(matchers: &[Gitignore], path: &Path, is_dir: bool, check_ancestors
     false
 }
 
+/// Check if a path string looks like a glob pattern.
+/// Glob-like characters are also valid path characters on some environments.
+/// If the path actually exists on disk, it is treated as a concrete path.
+/// e.g. `{config}.js`, `[id].tsx`
+fn is_glob_pattern(s: &str, cwd: &Path) -> bool {
+    let has_glob_chars = s.contains('*') || s.contains('?') || s.contains('[') || s.contains('{');
+    has_glob_chars && !cwd.join(s).exists()
+}
+
+// NOTE: Why pre-expand globs?
+// An alternative approach would be:
+// - to always walk the entire `cwd`
+// - and filter by both concrete paths and glob patterns
+//
+// However, this would be inefficient for common use cases
+// like `oxfmt src/a.js` or pre-commit hooks that specify only staged files.
+//
+// Pre-expanding globs allows us to walk only the necessary paths.
+// And this only happens if glob patterns are specified.
+//
+// NOTE: Why not use `ignore::Overrides` in the main walk?
+// `ignore::Overrides` have the highest priority in the `ignore` crate,
+// so files matching the glob would be collected even if they're in `.gitignore`!
+/// Expand glob patterns to concrete file paths.
+fn expand_glob_patterns(cwd: &Path, patterns: &[String]) -> Result<Vec<PathBuf>, String> {
+    let mut ob = OverrideBuilder::new(cwd);
+    for pattern in patterns {
+        ob.add(pattern).map_err(|e| format!("Invalid glob pattern `{pattern}`: {e}"))?;
+    }
+    let overrides = ob.build().map_err(|e| format!("Failed to build glob overrides: {e}"))?;
+
+    let mut builder = ignore::WalkBuilder::new(cwd);
+    builder.overrides(overrides);
+
+    let mut paths = vec![];
+    for entry in apply_walk_settings(&mut builder).build().flatten() {
+        // Use `!is_dir()` instead of `is_file()` to handle symlinks correctly
+        if entry.file_type().is_some_and(|ft| !ft.is_dir()) {
+            paths.push(entry.into_path());
+        }
+    }
+
+    Ok(paths)
+}
+
 fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
     // If specified, resolve absolute paths and check existence
     if !ignore_paths.is_empty() {
@@ -270,6 +313,31 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf
             path.exists().then_some(path)
         })
         .collect())
+}
+
+/// Apply common walk settings.
+/// This ensures consistent behavior across glob expansion and main walk.
+fn apply_walk_settings(builder: &mut ignore::WalkBuilder) -> &mut ignore::WalkBuilder {
+    builder
+        // Do not follow symlinks like Prettier does.
+        // See https://github.com/prettier/prettier/pull/14627
+        .follow_links(false)
+        // Include hidden files and directories except those we explicitly skip
+        .hidden(false)
+        // Do not respect `.ignore` file
+        .ignore(false)
+        // Do not search upward
+        // NOTE: Prettier only searches current working directory
+        .parents(false)
+        // Also do not respect globals
+        .git_global(false)
+        // But respect downward nested `.gitignore` files
+        // NOTE: Prettier does not: https://github.com/prettier/prettier/issues/4081
+        .git_ignore(true)
+        // Also do not respect `.git/info/exclude`
+        .git_exclude(false)
+        // Git is not required
+        .require_git(false)
 }
 
 // ---

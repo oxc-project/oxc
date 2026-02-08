@@ -6,6 +6,8 @@
     "**/fixtures/**",
     "!apps/oxlint/test/fixtures/**",
     "apps/oxlint/test/fixtures/bom/files/**",
+    "apps/oxlint/test/fixtures/fixes/files/**",
+    "apps/oxlint/test/fixtures/suggestions/files/**",
     "**/dist/**",
     "**/generated/**",
     "**/CHANGELOG.md",
@@ -32,8 +34,5 @@
     "npm/oxc-types/types.d.ts",
     "npm/oxfmt/configuration_schema.json",
     "npm/oxlint/configuration_schema.json",
-    "npm/oxlint-plugins/index.js",
-    "npm/oxlint-plugins/index.cjs",
-    "npm/oxlint-plugins/index.d.ts",
   ],
 }

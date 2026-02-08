@@ -5,24 +5,24 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-import(max-dependencies): File has too many dependencies (3). Maximum allowed is 1.
    ╭─[index.ts:3:31]
  2 │             import { x } from './foo';
- 3 │             import { y } from './foo';
+ 3 │             import { y } from './bar';
    ·                               ───────
- 4 │             import { z } from './bar';
+ 4 │             import { z } from './baz';
    ╰────
   help: Reduce the number of dependencies in this file
 
   ⚠ eslint-plugin-import(max-dependencies): File has too many dependencies (3). Maximum allowed is 1.
    ╭─[index.ts:3:31]
  2 │             import { x } from './foo';
- 3 │             import { y } from './foo';
+ 3 │             import { y } from './bar';
    ·                               ───────
- 4 │             import { z } from './bar';
+ 4 │             import { z } from './baz';
    ╰────
   help: Reduce the number of dependencies in this file
 
   ⚠ eslint-plugin-import(max-dependencies): File has too many dependencies (3). Maximum allowed is 2.
    ╭─[index.ts:4:31]
- 3 │             import { y } from './foo';
+ 3 │             import { y } from './bar';
  4 │             import { z } from './baz';
    ·                               ───────
  5 │             
@@ -32,7 +32,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-import(max-dependencies): File has too many dependencies (2). Maximum allowed is 1.
    ╭─[index.ts:3:36]
  2 │             import type { x } from './foo';
- 3 │             import type { y } from './foo';
+ 3 │             import type { y } from './bar';
    ·                                    ───────
  4 │             
    ╰────
@@ -40,9 +40,45 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-import(max-dependencies): File has too many dependencies (3). Maximum allowed is 2.
    ╭─[index.ts:4:36]
- 3 │             import type { y } from './foo';
+ 3 │             import type { y } from './bar';
  4 │             import type { z } from './baz';
    ·                                    ───────
+ 5 │             
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ eslint-plugin-import(max-dependencies): File has too many dependencies (3). Maximum allowed is 2.
+   ╭─[index.ts:4:36]
+ 3 │             import { type y } from './bar';
+ 4 │             import { type z } from './baz';
+   ·                                    ───────
+ 5 │             
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ eslint-plugin-import(max-dependencies): File has too many dependencies (3). Maximum allowed is 2.
+   ╭─[index.ts:4:31]
+ 3 │             import { y } from './bar';
+ 4 │             import { z } from './baz.json' with { type: 'json' };
+   ·                               ────────────
+ 5 │             
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ eslint-plugin-import(max-dependencies): File has too many dependencies (3). Maximum allowed is 2.
+   ╭─[index.ts:4:39]
+ 3 │             // This should still count, because only one is a type import
+ 4 │             import { type x, y } from './bar';
+   ·                                       ───────
+ 5 │             import { z } from './baz';
+   ╰────
+  help: Reduce the number of dependencies in this file
+
+  ⚠ eslint-plugin-import(max-dependencies): File has too many dependencies (3). Maximum allowed is 2.
+   ╭─[index.ts:4:34]
+ 3 │             import { fsSync } from 'node:fs';
+ 4 │             import { path } from 'node:path';
+   ·                                  ───────────
  5 │             
    ╰────
   help: Reduce the number of dependencies in this file

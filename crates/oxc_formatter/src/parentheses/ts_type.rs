@@ -7,6 +7,22 @@ use crate::{
     formatter::Formatter,
 };
 
+/// Looks through single-member `TSUnionType` and `TSIntersectionType` to find the effective parent.
+///
+/// In Prettier's AST (Babel), single-member unions/intersections (e.g., from leading `|` in
+/// `(| number)[]`) don't exist — the parser unwraps them. In oxc's AST, they do exist, so inner
+/// types need to "see through" them when checking `needs_parentheses` to get the correct parent
+/// context.
+fn effective_parent<'a>(parent: &'a AstNodes<'a>) -> &'a AstNodes<'a> {
+    match parent {
+        AstNodes::TSUnionType(union) if union.types.len() <= 1 => effective_parent(union.parent()),
+        AstNodes::TSIntersectionType(intersection) if intersection.types.len() <= 1 => {
+            effective_parent(intersection.parent())
+        }
+        other => other,
+    }
+}
+
 impl NeedsParentheses<'_> for AstNode<'_, TSType<'_>> {
     fn needs_parentheses(&self, f: &Formatter<'_, '_>) -> bool {
         match self.as_ast_nodes() {
@@ -29,16 +45,21 @@ impl NeedsParentheses<'_> for AstNode<'_, TSType<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, TSFunctionType<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        function_like_type_needs_parentheses(self.span(), self.parent(), Some(&self.return_type))
+        function_like_type_needs_parentheses(
+            self.span(),
+            effective_parent(self.parent()),
+            Some(&self.return_type),
+        )
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSInferType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        match self.parent() {
+        let parent = effective_parent(self.parent());
+        match parent {
             AstNodes::TSIntersectionType(_) | AstNodes::TSUnionType(_) => true,
             AstNodes::TSRestType(_) => false,
-            _ => operator_type_or_higher_needs_parens(self.span, self.parent()),
+            _ => operator_type_or_higher_needs_parens(self.span, parent),
         }
     }
 }
@@ -46,17 +67,24 @@ impl NeedsParentheses<'_> for AstNode<'_, TSInferType<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, TSConstructorType<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        function_like_type_needs_parentheses(self.span(), self.parent(), Some(&self.return_type))
+        function_like_type_needs_parentheses(
+            self.span(),
+            effective_parent(self.parent()),
+            Some(&self.return_type),
+        )
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSUnionType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        match self.parent() {
-            AstNodes::TSUnionType(union) => self.types.len() > 1 && union.types.len() > 1,
-            AstNodes::TSIntersectionType(intersection) => {
-                self.types.len() > 1 && intersection.types.len() > 1
-            }
+        // Single-member unions are transparent (formatted as just the member).
+        // In Prettier/Babel, these don't exist in the AST.
+        if self.types.len() <= 1 {
+            return false;
+        }
+        match effective_parent(self.parent()) {
+            AstNodes::TSUnionType(union) => union.types.len() > 1,
+            AstNodes::TSIntersectionType(intersection) => intersection.types.len() > 1,
             parent => operator_type_or_higher_needs_parens(self.span(), parent),
         }
     }
@@ -125,11 +153,13 @@ fn operator_type_or_higher_needs_parens(span: Span, parent: &AstNodes) -> bool {
 
 impl NeedsParentheses<'_> for AstNode<'_, TSIntersectionType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        match self.parent() {
-            AstNodes::TSUnionType(union) => self.types.len() > 1 && union.types.len() > 1,
-            AstNodes::TSIntersectionType(intersection) => {
-                self.types.len() > 1 && intersection.types.len() > 1
-            }
+        // Single-member intersections are transparent (formatted as just the member).
+        if self.types.len() <= 1 {
+            return false;
+        }
+        match effective_parent(self.parent()) {
+            AstNodes::TSUnionType(union) => union.types.len() > 1,
+            AstNodes::TSIntersectionType(intersection) => intersection.types.len() > 1,
             parent => operator_type_or_higher_needs_parens(self.span(), parent),
         }
     }
@@ -137,26 +167,27 @@ impl NeedsParentheses<'_> for AstNode<'_, TSIntersectionType<'_>> {
 
 impl NeedsParentheses<'_> for AstNode<'_, TSConditionalType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        match self.parent() {
+        let parent = effective_parent(self.parent());
+        match parent {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
             }
             AstNodes::TSUnionType(union) => union.types.len() > 1,
             AstNodes::TSIntersectionType(intersection) => intersection.types.len() > 1,
-            _ => operator_type_or_higher_needs_parens(self.span, self.parent()),
+            _ => operator_type_or_higher_needs_parens(self.span, parent),
         }
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSTypeOperator<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        operator_type_or_higher_needs_parens(self.span(), self.parent())
+        operator_type_or_higher_needs_parens(self.span(), effective_parent(self.parent()))
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSTypeQuery<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        match self.parent() {
+        match effective_parent(self.parent()) {
             AstNodes::TSArrayType(_) => true,
             // Typeof operators are parenthesized when used as an object type in an indexed access
             // to avoid ambiguity of precedence, as it's higher than the JS equivalent:

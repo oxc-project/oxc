@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
     fmt::{self, Display},
+    iter,
     ops::Deref,
 };
 
@@ -384,6 +385,33 @@ impl PossibleFixes {
             PossibleFixes::Multiple(fixes) => {
                 fixes.iter().map(|fix| fix.span).reduce(Span::merge).unwrap_or(SPAN)
             }
+        }
+    }
+}
+
+impl From<Option<Fix>> for PossibleFixes {
+    /// Create a new [`PossibleFixes`] from an `Option<Fix>`.
+    fn from(fix: Option<Fix>) -> Self {
+        match fix {
+            Some(fix) => PossibleFixes::Single(fix),
+            None => PossibleFixes::None,
+        }
+    }
+}
+
+impl FromIterator<Fix> for PossibleFixes {
+    /// Create a new [`PossibleFixes`] from an iterator of [`Fix`]es.
+    fn from_iter<T: IntoIterator<Item = Fix>>(fixes: T) -> Self {
+        let mut fixes = fixes.into_iter();
+
+        if let Some(first_fix) = fixes.next() {
+            if let Some(second_fix) = fixes.next() {
+                PossibleFixes::Multiple(iter::chain([first_fix, second_fix], fixes).collect())
+            } else {
+                PossibleFixes::Single(first_fix)
+            }
+        } else {
+            PossibleFixes::None
         }
     }
 }

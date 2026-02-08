@@ -9,7 +9,7 @@ import { sourceText } from "./source_code.ts";
 import { debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
-import type { Fix, FixFn } from "./fix.ts";
+import type { FixFn, FixReport } from "./fix.ts";
 import type { RuleDetails } from "./load.ts";
 import type { LineColumn, Ranged } from "./location.ts";
 
@@ -67,20 +67,22 @@ interface SuggestionBase {
  */
 export interface SuggestionReport {
   message: string;
-  fixes: Fix[];
+  fixes: FixReport[];
 }
 
-// Diagnostic in form sent to Rust.
-// Actually, the `messageId` field is removed before sending to Rust.
+/**
+ * Diagnostic in form sent to Rust.
+ */
 export interface DiagnosticReport {
   message: string;
   start: number;
   end: number;
   ruleIndex: number;
-  fixes: Fix[] | null;
+  fixes: FixReport[] | null;
   suggestions: SuggestionReport[] | null;
+  // Not needed on Rust side, but `RuleTester` needs it
   messageId: string | null;
-  // Only used in conformance tests
+  // Only used in conformance tests. This field is not present except in conformance build.
   loc?: LocationWithOptionalEnd | null;
 }
 

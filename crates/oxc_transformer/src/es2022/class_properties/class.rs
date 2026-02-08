@@ -4,7 +4,7 @@
 use indexmap::map::Entry;
 use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::{
     node::NodeId,
     reference::ReferenceFlags,
@@ -155,7 +155,7 @@ impl<'a> ClassProperties<'a, '_> {
                     // TODO: Not sure what we should do here.
                     // Only added this to prevent panics in TS conformance tests.
                     if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
-                        let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
+                        let dummy_binding = BoundIdentifier::new(Ident::empty(), SymbolId::new(0));
                         private_props.insert(
                             ident.name.into(),
                             PrivateProp::new(dummy_binding, prop.r#static, None, true),
@@ -888,15 +888,17 @@ fn create_new_weakmap<'a>(
     symbol_id: &mut Option<Option<SymbolId>>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
+    let weak_map = ctx.ast.ident("WeakMap");
     let symbol_id = *symbol_id
-        .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), "WeakMap"));
-    let ident = ctx.create_ident_expr(SPAN, Atom::from("WeakMap"), symbol_id, ReferenceFlags::Read);
+        .get_or_insert_with(|| ctx.scoping().find_binding(ctx.current_scope_id(), weak_map));
+    let ident = ctx.create_ident_expr(SPAN, weak_map, symbol_id, ReferenceFlags::Read);
     ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
 }
 
 /// Create `new WeakSet()` expression.
 fn create_new_weakset<'a>(ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-    let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "WeakSet");
-    let ident = ctx.create_ident_expr(SPAN, Atom::from("WeakSet"), symbol_id, ReferenceFlags::Read);
+    let weak_set = ctx.ast.ident("WeakSet");
+    let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), weak_set);
+    let ident = ctx.create_ident_expr(SPAN, weak_set, symbol_id, ReferenceFlags::Read);
     ctx.ast.expression_new_with_pure(SPAN, ident, NONE, ctx.ast.vec(), true)
 }

@@ -3,9 +3,9 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, CloneIn, FromIn, HashMap as ArenaHashMap, Vec as ArenaVec};
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
-use oxc_span::{Atom, Span};
+use oxc_span::{ArenaIdentHashMap, Ident, Span};
 use oxc_syntax::{
     node::NodeId,
     reference::{Reference, ReferenceId},
@@ -13,8 +13,8 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-pub type Bindings<'a> = ArenaHashMap<'a, &'a str, SymbolId>;
-pub type UnresolvedReferences<'a> = ArenaHashMap<'a, &'a str, ArenaVec<'a, ReferenceId>>;
+pub type Bindings<'a> = ArenaIdentHashMap<'a, SymbolId>;
+pub type UnresolvedReferences<'a> = ArenaIdentHashMap<'a, ArenaVec<'a, ReferenceId>>;
 
 #[derive(Clone, Debug)]
 pub struct Redeclaration {
@@ -249,7 +249,7 @@ use crate::unresolved_stack::ReferenceIds;
 
 pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
-    symbol_names: ArenaVec<'cell, Atom<'cell>>,
+    symbol_names: ArenaVec<'cell, Ident<'cell>>,
     resolved_references: ArenaVec<'cell, ArenaVec<'cell, ReferenceId>>,
     /// Redeclarations of a symbol.
     ///
@@ -282,7 +282,7 @@ impl Scoping {
     }
 
     pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
-        self.cell.borrow_dependent().symbol_names.iter().map(Atom::as_str)
+        self.cell.borrow_dependent().symbol_names.iter().map(Ident::as_str)
     }
 
     pub fn resolved_references(&self) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
@@ -310,16 +310,22 @@ impl Scoping {
     /// Get the identifier name a symbol is bound to.
     #[inline]
     pub fn symbol_name(&self, symbol_id: SymbolId) -> &str {
-        &self.cell.borrow_dependent().symbol_names[symbol_id.index()]
+        self.cell.borrow_dependent().symbol_names[symbol_id.index()].as_str()
+    }
+
+    /// Get the [`Ident`] for the identifier name a symbol is bound to.
+    #[inline]
+    pub fn symbol_ident(&self, symbol_id: SymbolId) -> Ident<'_> {
+        self.cell.borrow_dependent().symbol_names[symbol_id.index()]
     }
 
     /// Rename a symbol.
     ///
     /// Returns the old name.
     #[inline]
-    pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: &str) {
+    pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: Ident<'_>) {
         self.cell.with_dependent_mut(|allocator, cell| {
-            cell.symbol_names[symbol_id.index()] = Atom::from_in(name, allocator);
+            cell.symbol_names[symbol_id.index()] = name.clone_in(allocator);
         });
     }
 
@@ -381,13 +387,13 @@ impl Scoping {
     pub fn create_symbol(
         &mut self,
         span: Span,
-        name: &str,
+        name: Ident<'_>,
         flags: SymbolFlags,
         scope_id: ScopeId,
         node_id: NodeId,
     ) -> SymbolId {
         self.cell.with_dependent_mut(|allocator, cell| {
-            cell.symbol_names.push(Atom::from_in(name, allocator));
+            cell.symbol_names.push(name.clone_in(allocator));
             cell.resolved_references.push(ArenaVec::new_in(allocator));
         });
         self.symbol_spans.push(span);
@@ -432,6 +438,7 @@ impl Scoping {
         });
     }
 
+    #[inline]
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
         self.references.push(reference)
     }
@@ -616,11 +623,11 @@ impl Scoping {
 
     pub(crate) fn set_root_unresolved_references<'a>(
         &mut self,
-        entries: impl Iterator<Item = (&'a str, ReferenceIds)>,
+        entries: impl Iterator<Item = (Ident<'a>, ReferenceIds)>,
     ) {
         self.cell.with_dependent_mut(|allocator, cell| {
             for (k, v) in entries {
-                let k = allocator.alloc_str(k);
+                let k = k.clone_in(allocator);
                 let v = ArenaVec::from_iter_in(v, allocator);
                 cell.root_unresolved_references.insert(k, v);
             }
@@ -635,16 +642,12 @@ impl Scoping {
     /// # Panics
     /// Panics if there is no unresolved reference for provided `name` and `reference_id`.
     #[inline]
-    pub fn delete_root_unresolved_reference(&mut self, name: &str, reference_id: ReferenceId) {
-        // It would be better to use `Entry` API to avoid 2 hash table lookups when deleting,
-        // but `map.entry` requires an owned key to be provided. Currently we use `CompactStr`s as keys
-        // which are not cheap to construct, so this is best we can do at present.
-        // TODO: Switch to `Entry` API once we use `&str`s or `Atom`s as keys.
+    pub fn delete_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
         self.cell.with_dependent_mut(|_allocator, cell| {
-            let reference_ids = cell.root_unresolved_references.get_mut(name).unwrap();
+            let reference_ids = cell.root_unresolved_references.get_mut(name.as_str()).unwrap();
             if reference_ids.len() == 1 {
                 assert_eq!(reference_ids[0], reference_id);
-                cell.root_unresolved_references.remove(name);
+                cell.root_unresolved_references.remove(name.as_str());
             } else {
                 let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
                 reference_ids.swap_remove(index);
@@ -686,13 +689,13 @@ impl Scoping {
 
     /// Get a variable binding by name that was declared in the top-level scope
     #[inline]
-    pub fn get_root_binding(&self, name: &str) -> Option<SymbolId> {
+    pub fn get_root_binding(&self, name: Ident<'_>) -> Option<SymbolId> {
         self.get_binding(self.root_scope_id(), name)
     }
 
-    pub fn add_root_unresolved_reference(&mut self, name: &str, reference_id: ReferenceId) {
+    pub fn add_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
         self.cell.with_dependent_mut(|allocator, cell| {
-            let name = allocator.alloc_str(name);
+            let name = name.clone_in(allocator);
             cell.root_unresolved_references
                 .entry(name)
                 .or_insert_with(|| ArenaVec::new_in(allocator))
@@ -701,8 +704,8 @@ impl Scoping {
     }
 
     /// Check if a symbol is declared in a certain scope.
-    pub fn scope_has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
-        self.cell.borrow_dependent().bindings[scope_id].contains_key(name)
+    pub fn scope_has_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> bool {
+        self.cell.borrow_dependent().bindings[scope_id].contains_key(&name)
     }
 
     /// Get the symbol bound to an identifier name in a scope.
@@ -713,15 +716,15 @@ impl Scoping {
     /// binding that might be declared in a parent scope, use [`find_binding`].
     ///
     /// [`find_binding`]: Scoping::find_binding
-    pub fn get_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
-        self.cell.borrow_dependent().bindings[scope_id].get(name).copied()
+    pub fn get_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
+        self.cell.borrow_dependent().bindings[scope_id].get(&name).copied()
     }
 
     /// Find a binding by name in a scope or its ancestors.
     ///
     /// Bindings are resolved by walking up the scope tree until a binding is
     /// found. If no binding is found, [`None`] is returned.
-    pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+    pub fn find_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
         for scope_id in self.scope_ancestors(scope_id) {
             if let Some(symbol_id) = self.get_binding(scope_id, name) {
                 return Some(symbol_id);
@@ -760,9 +763,14 @@ impl Scoping {
     }
 
     #[inline]
-    pub(crate) fn insert_binding(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
+    pub(crate) fn insert_binding(
+        &mut self,
+        scope_id: ScopeId,
+        name: Ident<'_>,
+        symbol_id: SymbolId,
+    ) {
         self.cell.with_dependent_mut(|allocator, cell| {
-            let name = allocator.alloc_str(name);
+            let name = name.clone_in(allocator);
             cell.bindings[scope_id].insert(name, symbol_id);
         });
     }
@@ -786,25 +794,25 @@ impl Scoping {
     }
 
     /// Add a binding to a scope.
-    pub fn add_binding(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
+    pub fn add_binding(&mut self, scope_id: ScopeId, name: Ident<'_>, symbol_id: SymbolId) {
         self.cell.with_dependent_mut(|allocator, cell| {
-            let name = allocator.alloc_str(name);
+            let name = name.clone_in(allocator);
             cell.bindings[scope_id].insert(name, symbol_id);
         });
     }
 
     /// Remove an existing binding from a scope.
-    pub fn remove_binding(&mut self, scope_id: ScopeId, name: &str) {
+    pub fn remove_binding(&mut self, scope_id: ScopeId, name: Ident<'_>) {
         self.cell.with_dependent_mut(|_allocator, cell| {
-            cell.bindings[scope_id].remove(name);
+            cell.bindings[scope_id].remove(name.as_str());
         });
     }
 
     /// Move a binding from one scope to another.
-    pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: &str) {
+    pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: Ident<'_>) {
         self.cell.with_dependent_mut(|_allocator, cell| {
             let from_map = &mut cell.bindings[from];
-            if let Some((name, symbol_id)) = from_map.remove_entry(name) {
+            if let Some((name, symbol_id)) = from_map.remove_entry(name.as_str()) {
                 cell.bindings[to].insert(name, symbol_id);
             }
         });
@@ -822,14 +830,14 @@ impl Scoping {
         &mut self,
         scope_id: ScopeId,
         symbol_id: SymbolId,
-        old_name: &str,
-        new_name: &str,
+        old_name: Ident<'_>,
+        new_name: Ident<'_>,
     ) {
         self.cell.with_dependent_mut(|allocator, cell| {
             let bindings = &mut cell.bindings[scope_id];
-            let old_symbol_id = bindings.remove(old_name);
+            let old_symbol_id = bindings.remove(old_name.as_str());
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
-            let new_name = allocator.alloc_str(new_name);
+            let new_name = new_name.clone_in(allocator);
             let existing_symbol_id = bindings.insert(new_name, symbol_id);
             debug_assert!(existing_symbol_id.is_none());
         });
@@ -842,10 +850,10 @@ impl Scoping {
     /// * No binding already exists in scope for `new_name`.
     ///
     /// Panics in debug mode if either of the above are not satisfied.
-    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: &str) {
+    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: Ident<'_>) {
         self.cell.with_dependent_mut(|allocator, cell| {
             // Rename symbol
-            let new_name = Atom::from_in(new_name, allocator);
+            let new_name = new_name.clone_in(allocator);
             let old_name = mem::replace(&mut cell.symbol_names[symbol_id.index()], new_name);
 
             // Rename binding, same as `Self::rename_binding`, we cannot call it directly
@@ -853,7 +861,7 @@ impl Scoping {
             let bindings = &mut cell.bindings[scope_id];
             let old_symbol_id = bindings.remove(old_name.as_str());
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
-            let existing_symbol_id = bindings.insert(new_name.as_str(), symbol_id);
+            let existing_symbol_id = bindings.insert(new_name, symbol_id);
             debug_assert!(existing_symbol_id.is_none());
         });
     }

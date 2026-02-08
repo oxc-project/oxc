@@ -343,7 +343,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             let catch_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::CatchClause);
             let block_scope_id = ctx.create_child_scope(catch_scope_id, ScopeFlags::empty());
             let err_ident = ctx.generate_binding(
-                Atom::from("err"),
+                ctx.ast.ident("err"),
                 block_scope_id,
                 SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
             );

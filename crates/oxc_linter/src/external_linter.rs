@@ -3,10 +3,13 @@ use std::{fmt::Debug, sync::Arc};
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
 
 use oxc_allocator::Allocator;
+use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
+use oxc_span::Span;
 
 use crate::{
     config::{OxlintEnv, OxlintGlobals},
     context::ContextHost,
+    fixer::{CompositeFix, Fix, MergeFixesError},
 };
 
 pub type ExternalLinterCreateWorkspaceCb =
@@ -83,7 +86,8 @@ pub struct LintFileResult {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JsFix {
-    pub range: [u32; 2],
+    pub start: u32,
+    pub end: u32,
     pub text: String,
 }
 
@@ -92,6 +96,45 @@ pub struct JsFix {
 pub struct JsSuggestion {
     pub message: String,
     pub fixes: Vec<JsFix>,
+}
+
+/// Convert a `Vec<JsFix>` to a single [`Fix`], including converting spans from UTF-16 to UTF-8.
+pub fn convert_and_merge_js_fixes(
+    fixes: Vec<JsFix>,
+    source_text: &str,
+    span_converter: &Utf8ToUtf16,
+) -> Result<Fix, MergeFixesError> {
+    // JS should send `None` instead of `Some([])`
+    debug_assert!(!fixes.is_empty());
+
+    let is_single = fixes.len() == 1;
+
+    let mut fixes = fixes.into_iter().map(|fix| {
+        let mut span = Span::new(fix.start, fix.end);
+        span_converter.convert_span_back(&mut span);
+        Fix::new(fix.text, span)
+    });
+
+    if is_single {
+        #[expect(clippy::missing_panics_doc, reason = "infallible")]
+        let fix = fixes.next().unwrap();
+
+        // Same validation logic as in `CompositeFix::merge_fixes_fallible`.
+        // We use `source_text.get(start, end).is_none()` instead of just `end > source_text.len()`
+        // to also check that `start` and `end` are on UTF-8 character boundaries.
+        // It's possible for offsets not to be on UTF-8 character boundaries if the original UTF-16 offset
+        // was in middle of a surrogate pair (2 x UTF-16 characters, 1 x 4-byte UTF-8 character).
+        if fix.span.start > fix.span.end {
+            Err(MergeFixesError::NegativeRange(fix.span))
+        } else if source_text.get(fix.span.start as usize..fix.span.end as usize).is_none() {
+            // `end..end` matches the error from `CompositeFix::merge_fixes_fallible`
+            Err(MergeFixesError::InvalidRange(fix.span.end, fix.span.end))
+        } else {
+            Ok(fix)
+        }
+    } else {
+        CompositeFix::merge_fixes_fallible(fixes.collect(), source_text)
+    }
 }
 
 #[derive(Clone)]

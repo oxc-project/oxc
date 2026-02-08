@@ -13,6 +13,7 @@ const USIZE_BITS: usize = usize::BITS as usize;
 /// A bitset allocated in an arena.
 pub struct BitSet<'alloc> {
     entries: Box<'alloc, [usize]>,
+    max_bit_count: usize,
 }
 
 impl<'alloc> BitSet<'alloc> {
@@ -35,7 +36,7 @@ impl<'alloc> BitSet<'alloc> {
         // Lifetime of returned `BitSet` matches the `Allocator` the data was allocated in.
         let entries = unsafe { Box::from_non_null(NonNull::from(slice)) };
 
-        Self { entries }
+        Self { entries, max_bit_count }
     }
 
     /// Returns `true` if the bit at the given position is set.
@@ -67,6 +68,14 @@ impl<'alloc> BitSet<'alloc> {
     /// Clear all bits in the bitset, setting them to 0.
     pub fn clear(&mut self) {
         self.entries.fill(0);
+    }
+
+    /// Iterates over all enabled bits.
+    ///
+    /// Iterator element is the index of the `1` bit, type `usize`.
+    #[inline]
+    pub fn ones(&self) -> Ones<'_, '_> {
+        Ones { bitset: self, idx: 0 }
     }
 }
 
@@ -156,7 +165,37 @@ impl<'new_alloc> CloneIn<'new_alloc> for BitSet<'_> {
         // Lifetime of returned `BitSet` matches the `Allocator` the data was allocated in.
         let entries = unsafe { Box::from_non_null(NonNull::from(new_slice)) };
 
-        BitSet { entries }
+        BitSet { entries, max_bit_count: self.max_bit_count }
+    }
+}
+
+/// This struct is created by the [`BitSet::ones`] method.
+#[derive(Clone)]
+pub struct Ones<'a, 'b> {
+    bitset: &'b BitSet<'a>,
+    idx: usize,
+}
+
+impl Iterator for Ones<'_, '_> {
+    type Item = usize;
+
+    #[inline]
+    fn next(&mut self) -> Option<usize> {
+        while self.idx < self.bitset.max_bit_count {
+            if self.bitset.has_bit(self.idx) {
+                let ret = self.idx;
+                self.idx += 1;
+                return Some(ret);
+            }
+            self.idx += 1;
+        }
+        None
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let remaining = self.bitset.max_bit_count - self.idx;
+        (0, Some(remaining))
     }
 }
 
@@ -281,5 +320,14 @@ mod tests {
         // Can set bits again after clear
         bs.set_bit(42);
         assert!(bs.has_bit(42));
+    }
+
+    #[test]
+    fn ones() {
+        let allocator = Allocator::default();
+        let mut bs = BitSet::new_in(3, &allocator);
+        bs.set_bit(0);
+        bs.set_bit(2);
+        assert_eq!(bs.ones().collect::<Vec<_>>(), [0, 2]);
     }
 }

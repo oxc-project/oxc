@@ -695,7 +695,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
 
     #[inline]
     fn create_global_identifier(ident: &'static str, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        ctx.create_unbound_ident_expr(SPAN, Atom::new_const(ident), ReferenceFlags::Read)
+        ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident(ident), ReferenceFlags::Read)
     }
 
     #[inline]

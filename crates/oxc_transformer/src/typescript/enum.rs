@@ -8,7 +8,7 @@ use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_semantic::{ScopeFlags, ScopeId};
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{Atom, Ident, SPAN, Span};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -23,7 +23,7 @@ use crate::{context::TraverseCtx, state::TransformState};
 type PrevMembers<'a> = FxHashMap<Atom<'a>, Option<ConstantValue<'a>>>;
 
 pub struct TypeScriptEnum<'a> {
-    enums: FxHashMap<Atom<'a>, PrevMembers<'a>>,
+    enums: FxHashMap<Ident<'a>, PrevMembers<'a>>,
 }
 
 impl TypeScriptEnum<'_> {
@@ -84,7 +84,7 @@ impl<'a> TypeScriptEnum<'a> {
         let is_export = export_span.is_some();
         let is_not_top_scope = !ctx.scoping().scope_flags(ctx.current_scope_id()).is_top();
 
-        let enum_name: Atom = decl.id.name.into();
+        let enum_name: Ident = decl.id.name;
         let func_scope_id = decl.body.scope_id();
         let param_binding =
             ctx.generate_binding(enum_name, func_scope_id, SymbolFlags::FunctionScopedVariable);
@@ -328,13 +328,9 @@ impl<'a> TypeScriptEnum<'a> {
 
         // Infinity
         let expr = if value.is_infinite() {
-            let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Infinity");
-            ctx.create_ident_expr(
-                SPAN,
-                Atom::from("Infinity"),
-                infinity_symbol_id,
-                ReferenceFlags::Read,
-            )
+            let infinity = ctx.ast.ident("Infinity");
+            let infinity_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), infinity);
+            ctx.create_ident_expr(SPAN, infinity, infinity_symbol_id, ReferenceFlags::Read)
         } else {
             let value = if is_negative { -value } else { value };
             Self::get_number_literal_expression(value, ctx)
@@ -375,7 +371,7 @@ impl<'a> TypeScriptEnum<'a> {
             match_member_expression!(Expression) => {
                 let expr = expr.to_member_expression();
                 let Expression::Identifier(ident) = expr.object() else { return None };
-                let members = self.enums.get(&Atom::from(ident.name))?;
+                let members = self.enums.get(&ident.name)?;
                 let property = expr.static_property_name()?;
                 *members.get(property)?
             }
@@ -560,7 +556,7 @@ impl<'a> TypeScriptEnum<'a> {
 /// }
 /// ```
 struct IdentifierReferenceRename<'a, 'ctx, 'members> {
-    enum_name: Atom<'a>,
+    enum_name: Ident<'a>,
     previous_enum_members: &'members PrevMembers<'a>,
     scope_stack: NonEmptyStack<ScopeId>,
     ctx: &'ctx TraverseCtx<'a>,
@@ -568,7 +564,7 @@ struct IdentifierReferenceRename<'a, 'ctx, 'members> {
 
 impl<'a, 'ctx, 'members> IdentifierReferenceRename<'a, 'ctx, 'members> {
     fn new(
-        enum_name: Atom<'a>,
+        enum_name: Ident<'a>,
         enum_scope_id: ScopeId,
         previous_enum_members: &'members PrevMembers<'a>,
         ctx: &'ctx TraverseCtx<'a>,

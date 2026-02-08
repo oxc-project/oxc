@@ -202,7 +202,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap};
 use serde::Deserialize;
 
 use oxc_ast::ast::*;
-use oxc_span::Atom;
+use oxc_span::Ident;
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
@@ -276,7 +276,7 @@ pub struct ClassProperties<'a, 'ctx> {
     /// Symbols in constructor which clash with instance prop initializers.
     /// Keys are symbols' IDs.
     /// Values are initially the original name of binding, later on the name of new UID name.
-    clashing_constructor_symbols: FxHashMap<SymbolId, Atom<'a>>,
+    clashing_constructor_symbols: FxHashMap<SymbolId, Ident<'a>>,
 
     // ----- State used only during exit phase -----
     //

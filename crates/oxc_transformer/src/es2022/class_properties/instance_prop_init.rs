@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap;
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_data_structures::stack::Stack;
-use oxc_span::Atom;
+use oxc_span::Ident;
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
@@ -63,7 +63,7 @@ struct InstanceInitializerVisitor<'a, 'v> {
     /// Constructor's scope, for checking symbol clashes against
     constructor_scope_id: ScopeId,
     /// Clashing symbols
-    clashing_symbols: &'v mut FxHashMap<SymbolId, Atom<'a>>,
+    clashing_symbols: &'v mut FxHashMap<SymbolId, Ident<'a>>,
     /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
@@ -127,7 +127,7 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
         // with same `ScopeId` every time here, but `ScopeTree` doesn't allow that, and we also
         // take a `&mut ScopeTree` in `reparent_scope`, so borrow-checker doesn't allow that.
         let Some(constructor_symbol_id) =
-            self.ctx.scoping().get_binding(self.constructor_scope_id, &ident.name)
+            self.ctx.scoping().get_binding(self.constructor_scope_id, ident.name)
         else {
             return;
         };
@@ -146,7 +146,7 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
         }
 
         // Record the symbol clash. Symbol in constructor needs to be renamed.
-        self.clashing_symbols.entry(constructor_symbol_id).or_insert(ident.name.into());
+        self.clashing_symbols.entry(constructor_symbol_id).or_insert(ident.name);
     }
 }
 

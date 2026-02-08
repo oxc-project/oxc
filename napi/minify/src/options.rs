@@ -202,7 +202,7 @@ impl From<&CompressOptionsKeepNames> for oxc_minifier::CompressOptionsKeepNames 
 pub struct MangleOptions {
     /// Pass `true` to mangle names declared in the top level scope.
     ///
-    /// @default false
+    /// @default true for modules and commonjs, otherwise false
     pub toplevel: Option<bool>,
 
     /// Preserve `name` property for functions and classes.
@@ -218,7 +218,7 @@ impl From<&MangleOptions> for oxc_minifier::MangleOptions {
     fn from(o: &MangleOptions) -> Self {
         let default = oxc_minifier::MangleOptions::default();
         Self {
-            top_level: o.toplevel.unwrap_or(default.top_level),
+            top_level: o.toplevel,
             keep_names: match &o.keep_names {
                 Some(Either::A(false)) => oxc_minifier::MangleOptionsKeepNames::all_false(),
                 Some(Either::A(true)) => oxc_minifier::MangleOptionsKeepNames::all_true(),

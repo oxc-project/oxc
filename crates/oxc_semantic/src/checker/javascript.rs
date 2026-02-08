@@ -37,6 +37,34 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
     }
 }
 
+/// It is a Syntax Error if any element of the BoundNames of ImportDeclaration
+/// also occurs in the VarDeclaredNames or LexicallyDeclaredNames of ModuleItemList.
+/// <https://tc39.es/ecma262/#sec-imports-static-semantics-early-errors>
+pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
+    if !ctx.source_type.is_module() || ctx.source_type.is_typescript() {
+        return;
+    }
+
+    let scope_id = ctx.scoping.root_scope_id();
+    for (_, &symbol_id) in ctx.scoping.get_bindings(scope_id) {
+        let flags = ctx.scoping.symbol_flags(symbol_id);
+        if !flags.contains(SymbolFlags::Import) {
+            continue;
+        }
+        if !flags.intersects(SymbolFlags::Variable | SymbolFlags::Class | SymbolFlags::Function) {
+            continue;
+        }
+        let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
+        if redeclarations.len() < 2 {
+            continue;
+        }
+        let name = ctx.scoping.symbol_name(symbol_id);
+        let first = &redeclarations[0];
+        let last = &redeclarations[redeclarations.len() - 1];
+        ctx.error(diagnostics::redeclaration(name, first.span, last.span));
+    }
+}
+
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
     classes.iter_enumerated().for_each(|(class_id, _)| {
@@ -310,7 +338,7 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
             if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
-                ctx.class_table_builder.classes.has_private_definition(class_id, &reference.name)
+                ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
             }) {
                 ctx.error(diagnostics::private_field_undeclared(&reference.name, reference.span));
             }
@@ -614,10 +642,17 @@ pub fn check_variable_declarator_redeclaration(
     decl: &VariableDeclarator,
     ctx: &SemanticBuilder<'_>,
 ) {
-    if decl.kind != VariableDeclarationKind::Var
-        || ctx.current_scope_flags().intersects(ScopeFlags::Top | ScopeFlags::Function)
+    if decl.kind != VariableDeclarationKind::Var {
+        return;
+    }
+
+    let scope_flags = ctx.current_scope_flags();
+    // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
+    // in script mode, but in module mode at the top level, function declarations are
+    // lexically scoped, so `function a() {}; var a;` is a redeclaration error.
+    if scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
+        && !(ctx.source_type.is_module() && scope_flags.is_top())
     {
-        // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
         return;
     }
 
@@ -625,7 +660,8 @@ pub fn check_variable_declarator_redeclaration(
         let redeclarations = ctx.scoping.symbol_redeclarations(ident.symbol_id());
         let Some(rd) = redeclarations.iter().nth_back(1) else { return };
 
-        // `{ function f() {}; var f; }` is invalid in both strict and non-strict mode
+        // `{ function f() {}; var f; }` is invalid in both strict and non-strict mode.
+        // In module mode at the top level, `function f() {}; var f;` is also invalid.
         if rd.flags.is_function() {
             ctx.error(diagnostics::redeclaration(&ident.name, rd.span, decl.span));
         }

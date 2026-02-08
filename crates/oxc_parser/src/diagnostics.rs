@@ -49,6 +49,11 @@ pub fn overlong_source() -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn file_appears_to_be_binary() -> OxcDiagnostic {
+    ts_error("1490", "File appears to be binary.")
+}
+
+#[cold]
 pub fn flow(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Flow is not supported").with_label(span)
 }

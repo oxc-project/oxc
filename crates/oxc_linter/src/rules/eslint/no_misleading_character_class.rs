@@ -105,7 +105,7 @@ declare_oxc_lint!(
     /// ```
     NoMisleadingCharacterClass,
     eslint,
-    nursery, // TODO: change category to `correctness`, after oxc-project/oxc#13660 and oxc-project/oxc#13436
+    correctness,
     config = NoMisleadingCharacterClass,
 );
 
@@ -136,16 +136,27 @@ impl<'ast> Visit<'ast> for CharacterSequenceCollector<'ast> {
                 self.sequences.push(std::mem::take(&mut self.current_seq));
                 self.current_seq.push(&range.max);
             }
-            CharacterClassContents::ClassStringDisjunction(_) => {
+
+
+            CharacterClassContents::ClassStringDisjunction(_) // \q{...}
+            | CharacterClassContents::UnicodePropertyEscape(_) // \p{...}
+            | CharacterClassContents::NestedCharacterClass(_) // [[]] nested character class
+            | CharacterClassContents::CharacterClassEscape(_) // \d, \w, etc.
+             => {
                 if !self.current_seq.is_empty() {
                     self.sequences.push(std::mem::take(&mut self.current_seq));
                 }
             }
-            _ => {}
         }
     }
 
-    fn leave_node(&mut self, _kind: RegExpAstKind<'ast>) {}
+    fn leave_node(&mut self, kind: RegExpAstKind<'ast>) {
+        // Flush the current sequence when leaving a character class to ensure
+        // sequences don't span across different character classes
+        if matches!(kind, RegExpAstKind::CharacterClass(_)) && !self.current_seq.is_empty() {
+            self.sequences.push(std::mem::take(&mut self.current_seq));
+        }
+    }
 }
 
 impl Rule for NoMisleadingCharacterClass {
@@ -157,11 +168,6 @@ impl Rule for NoMisleadingCharacterClass {
         run_on_regex_node(node, ctx, |pattern, _span| {
             let mut collector = CharacterSequenceCollector::new();
             collector.visit_pattern(pattern);
-
-            // Restore: push any remaining sequence after visiting
-            if !collector.current_seq.is_empty() {
-                collector.sequences.push(std::mem::take(&mut collector.current_seq));
-            }
 
             for unfiltered_chars in &collector.sequences {
                 if self.allow_escape {
@@ -179,24 +185,12 @@ impl Rule for NoMisleadingCharacterClass {
                 }
 
                 // Always check for combining marks, regional indicator, ZWJ, and emoji modifier sequences
-                if combining_class_sequences(unfiltered_chars) {
-                    ctx.diagnostic(combining_class_diagnostic(pattern.span));
-                }
-                if regional_indicator_symbol_sequences(unfiltered_chars) {
-                    ctx.diagnostic(regional_indicator_diagnostic(pattern.span));
-                }
-                if zwj_sequences(unfiltered_chars) {
-                    ctx.diagnostic(zwj_diagnostic(pattern.span));
-                }
-                if emoji_modifier_sequences(unfiltered_chars) {
-                    ctx.diagnostic(emoji_modifiers_diagnostic(pattern.span));
-                }
-                if surrogate_pair_sequences(unfiltered_chars) {
-                    ctx.diagnostic(surrogate_pair_diagnostic(pattern.span));
-                }
-                if surrogate_pair_sequences_without_flag(unfiltered_chars) {
-                    ctx.diagnostic(surrogate_pair_diagnostic(pattern.span));
-                }
+                combining_class_sequences(unfiltered_chars, ctx);
+                regional_indicator_symbol_sequences(unfiltered_chars, ctx);
+                zwj_sequences(unfiltered_chars, ctx);
+                emoji_modifier_sequences(unfiltered_chars, ctx);
+                surrogate_pair_sequences(unfiltered_chars, ctx);
+                surrogate_pair_sequences_without_flag(unfiltered_chars, ctx);
             }
         });
     }
@@ -214,13 +208,15 @@ fn is_regional_indicator_symbol(value: u32) -> bool {
 }
 
 // Find regional indicator symbol pairs
-fn regional_indicator_symbol_sequences(chars: &[&Character]) -> bool {
+fn regional_indicator_symbol_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (prev, curr) in chars.iter().tuple_windows() {
         if is_regional_indicator_symbol(prev.value) && is_regional_indicator_symbol(curr.value) {
-            return true;
+            ctx.diagnostic(regional_indicator_diagnostic(Span::new(
+                prev.span.start,
+                curr.span.end,
+            )));
         }
     }
-    false
 }
 
 // Returns true if the code point is a combining mark (Unicode category Mn, Mc, or Me)
@@ -263,21 +259,23 @@ fn is_combining_character(value: u32) -> bool {
 }
 
 // Find combining mark sequences: previous is not combining, current is combining
-fn combining_class_sequences(chars: &[&Character]) -> bool {
+fn combining_class_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
         }
         let previous = chars[index - 1];
         if is_combining_character(char.value) && !is_combining_character(previous.value) {
-            return true;
+            ctx.diagnostic(combining_class_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-    false
 }
 
-// Returns true if a zero width joiner character is detected between two characters
-fn zwj_sequences(chars: &[&Character]) -> bool {
+// Reports the span of a zero width joiner sequence detected between two non-ZWJ characters, if any
+fn zwj_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         let previous = if index > 0 { Some(chars[index - 1]) } else { None };
         let next = chars.get(index + 1).copied();
@@ -286,17 +284,16 @@ fn zwj_sequences(chars: &[&Character]) -> bool {
             && previous.value != 0x200D
             && next.value != 0x200D
         {
-            return true;
+            ctx.diagnostic(zwj_diagnostic(Span::new(previous.span.start, next.span.end)));
         }
     }
-    false
 }
 
 fn is_emoji_modifier(char: &Character) -> bool {
     char.value >= 0x1f3fb && char.value <= 0x1f3ff
 }
 
-// Returns true if a emoji modifier sequence is detected
+// Reports one or multiple spans of an emoji modifier sequence detected between a non-emoji-modifier character and an emoji modifier.
 //
 // Emoji modifiers are special Unicode characters used to modify the appearance of other emojis, such as:
 // - Skin tone
@@ -305,7 +302,7 @@ fn is_emoji_modifier(char: &Character) -> bool {
 // - etc.
 //
 // They’re combined with base emojis (like people or body parts) to create variant emoji sequences.
-fn emoji_modifier_sequences(chars: &[&Character]) -> bool {
+fn emoji_modifier_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
@@ -313,11 +310,12 @@ fn emoji_modifier_sequences(chars: &[&Character]) -> bool {
         let previous = chars[index - 1];
 
         if is_emoji_modifier(char) && !is_emoji_modifier(previous) {
-            return true;
+            ctx.diagnostic(emoji_modifiers_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-
-    false
 }
 
 // Returns true if the two code units form a surrogate pair
@@ -340,8 +338,8 @@ fn is_unicode_code_point_escape(char: &Character) -> bool {
     matches!(char.kind, CharacterKind::UnicodeEscape)
 }
 
-// Find surrogate pairs where at least one is a Unicode code point escape
-fn surrogate_pair_sequences_without_flag(chars: &[&Character]) -> bool {
+// Find surrogate pairs where neither character is a Unicode code point escape
+fn surrogate_pair_sequences_without_flag(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
@@ -351,14 +349,16 @@ fn surrogate_pair_sequences_without_flag(chars: &[&Character]) -> bool {
             && !is_unicode_code_point_escape(previous)
             && !is_unicode_code_point_escape(char)
         {
-            return true;
+            ctx.diagnostic(surrogate_pair_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-    false
 }
 
-// Find surrogate pairs where at least one is a Unicode code point escape
-fn surrogate_pair_sequences(chars: &[&Character]) -> bool {
+// Reports the spans of any zero width joiner sequences detected between two non-ZWJ characters.
+fn surrogate_pair_sequences(chars: &[&Character], ctx: &LintContext<'_>) {
     for (index, &char) in chars.iter().enumerate() {
         if index == 0 {
             continue;
@@ -367,10 +367,12 @@ fn surrogate_pair_sequences(chars: &[&Character]) -> bool {
         if is_surrogate_pair(previous.value, char.value)
             && (is_unicode_code_point_escape(previous) || is_unicode_code_point_escape(char))
         {
-            return true;
+            ctx.diagnostic(surrogate_pair_diagnostic(Span::new(
+                previous.span.start,
+                char.span.end,
+            )));
         }
     }
-    false
 }
 
 #[test]
@@ -442,13 +444,18 @@ fn test() {
         (r"/[👨\u200d👩\u200d👦]/u", Some(serde_json::json!([{ "allowEscape": true }]))),
         (r"/[\u00B7\u0300-\u036F]/u", Some(serde_json::json!([{ "allowEscape": true }]))),
         (r"/[\n\u0305]/", Some(serde_json::json!([{ "allowEscape": true }]))),
-        // (r#"RegExp("[\uD83D\uDC4D]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
-        // (r#"RegExp("[A\u0301]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
+        (r#"RegExp("[\uD83D\uDC4D]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
+        (r#"RegExp("[A\u0301]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
         (r#"RegExp("[\x41\\u0301]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
-        // (
-        //     r#"RegExp(`[\uD83D\uDC4D]`) // Backslash + "uD83D" + Backslash + "uDC4D""#,
-        //     Some(serde_json::json!([{ "allowEscape": true }])),
-        // ),
+        (
+            r#"RegExp(`[\uD83D\uDC4D]`) // Backslash + "uD83D" + Backslash + "uDC4D""#,
+            Some(serde_json::json!([{ "allowEscape": true }])),
+        ),
+        // https://github.com/oxc-project/oxc/issues/19090
+        (r"/[\u200c\u200d\p{ID_Continue}.]/u", None),
+        // Separate character classes should not trigger warnings for cross-class sequences
+        (r"/[\u200c][\u200d][a]/", None),
+        (r"/[\uD83D][\uDC4D]/", None), // Solo surrogates in separate classes
     ];
 
     let fail = vec![
@@ -638,6 +645,9 @@ fn test() {
         //     r#"const pattern = "[\x41\u0301]"; RegExp(pattern);"#,
         //     Some(serde_json::json!([{ "allowEscape": true }])),
         // ),
+        // https://github.com/oxc-project/oxc/issues/19090 -- without u flag it should fail
+        // this should not be a `UnicodePropertyEscape`
+        (r"/[\u200c\u200d\p{ID_Continue}.]/", None),
     ];
 
     Tester::new(NoMisleadingCharacterClass::NAME, NoMisleadingCharacterClass::PLUGIN, pass, fail)

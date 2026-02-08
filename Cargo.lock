@@ -2336,9 +2336,11 @@ name = "oxc_str"
 version = "0.112.0"
 dependencies = [
  "compact_str",
+ "hashbrown 0.16.1",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_estree",
+ "rustc-hash",
  "serde",
 ]
 
@@ -2352,7 +2354,6 @@ dependencies = [
  "nonmax",
  "oxc_allocator",
  "oxc_ast_macros",
- "oxc_data_structures",
  "oxc_estree",
  "oxc_index",
  "oxc_span",
@@ -2497,6 +2498,7 @@ dependencies = [
  "oxc_ecmascript",
  "oxc_semantic",
  "oxc_span",
+ "oxc_str",
  "oxc_syntax",
  "rustc-hash",
 ]
@@ -2528,6 +2530,7 @@ dependencies = [
  "oxc_span",
  "phf",
  "rayon",
+ "rustc-hash",
  "serde",
  "serde_json",
  "simdutf8",

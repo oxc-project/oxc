@@ -3,18 +3,12 @@ commit: 92c052dc
 parser_babel Summary:
 AST Parsed     : 2224/2224 (100.00%)
 Positive Passed: 2211/2224 (99.42%)
-Negative Passed: 1660/1689 (98.28%)
+Negative Passed: 1668/1689 (98.76%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-1/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-2/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-3/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-field-initializer/input.ts
 
@@ -22,11 +16,7 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer-w-annotation/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/invalid-modifiers-order/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts
 
@@ -43,12 +33,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/dts/invalid-class-implementation/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/dts/invalid-class-initializer/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/expect-plugin/export-interface/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/expect-plugin/export-type/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/expect-plugin/export-type-named/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-script/input.ts
 
@@ -12039,14 +12023,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:3:3]
- 2 │   method();
- 3 │   #method();
-   ·   ───────
- 4 │   declare method();
-   ╰────
-
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:4:11]
  3 │   #method();
  4 │   declare method();
@@ -12414,6 +12390,30 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override
 
+  × TS(1029): 'override' modifier must precede 'readonly' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-1/input.ts:2:24]
+ 1 │ class D extends B {
+ 2 │   constructor(readonly override foo: string) {}
+   ·                        ────────
+ 3 │ }
+   ╰────
+
+  × TS(1029): 'public' modifier must precede 'readonly' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-2/input.ts:2:24]
+ 1 │ class D extends B {
+ 2 │   constructor(readonly public foo: string) {}
+   ·                        ──────
+ 3 │ }
+   ╰────
+
+  × TS(1029): 'public' modifier must precede 'override' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-3/input.ts:2:33]
+ 1 │ class D extends B {
+ 2 │   constructor(override readonly public foo: string) {}
+   ·                                 ──────
+ 3 │ }
+   ╰────
+
   × TS(1092): Type parameters cannot appear on a constructor declaration
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters/input.ts:2:14]
  1 │ class C {
@@ -12635,6 +12635,46 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × TS(1029): 'private' modifier must precede 'override' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-modifiers-order/input.ts:2:12]
+ 1 │ class Foo extends Bar {
+ 2 │   override private foo1: string
+   ·            ───────
+ 3 │   readonly private foo2: string;
+   ╰────
+
+  × TS(1029): 'private' modifier must precede 'readonly' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-modifiers-order/input.ts:3:12]
+ 2 │   override private foo1: string
+ 3 │   readonly private foo2: string;
+   ·            ───────
+ 4 │   readonly private override foo3: string;
+   ╰────
+
+  × TS(1029): 'private' modifier must precede 'readonly' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-modifiers-order/input.ts:4:12]
+ 3 │   readonly private foo2: string;
+ 4 │   readonly private override foo3: string;
+   ·            ───────
+ 5 │   private readonly override foo4: string;
+   ╰────
+
+  × TS(1029): 'override' modifier must precede 'readonly' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-modifiers-order/input.ts:4:20]
+ 3 │   readonly private foo2: string;
+ 4 │   readonly private override foo3: string;
+   ·                    ────────
+ 5 │   private readonly override foo4: string;
+   ╰────
+
+  × TS(1029): 'override' modifier must precede 'readonly' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/invalid-modifiers-order/input.ts:5:20]
+ 4 │   readonly private override foo3: string;
+ 5 │   private readonly override foo4: string;
+   ·                    ────────
+ 6 │ }
+   ╰────
+
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/method-readonly/input.ts:2:5]
  1 │ class C {
@@ -12712,6 +12752,78 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │ }
    ╰────
   help: Allowed modifiers are: static, readonly
+
+  × TS(1029): 'static' modifier must precede 'override' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts:3:12]
+ 2 │   static override m1() {}
+ 3 │   override static m2() {}
+   ·            ──────
+ 4 │ 
+   ╰────
+
+  × TS(1029): 'override' modifier must precede 'readonly' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts:6:12]
+ 5 │   override readonly p4;
+ 6 │   readonly override p3;
+   ·            ────────
+ 7 │ 
+   ╰────
+
+  × TS(1029): 'public' modifier must precede 'override' modifier.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts:9:12]
+  8 │   public override m5() {}
+  9 │   override public m6() {}
+    ·            ──────
+ 10 │ 
+    ╰────
+
+  × TS(1029): 'protected' modifier must precede 'override' modifier.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts:12:12]
+ 11 │   protected override m7() {}
+ 12 │   override protected m8() {}
+    ·            ─────────
+ 13 │ 
+    ╰────
+
+  × TS(1029): 'private' modifier must precede 'override' modifier.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts:15:12]
+ 14 │   private override m9() {}
+ 15 │   override private m10() {}
+    ·            ───────
+ 16 │ 
+    ╰────
+
+  × TS(1029): 'abstract' modifier must precede 'override' modifier.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts:18:12]
+ 17 │   abstract override m12();
+ 18 │   override abstract m11();
+    ·            ────────
+ 19 │ 
+    ╰────
+
+  × TS(1029): 'public' modifier must precede 'static' modifier.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts:21:10]
+ 20 │   public static m14() {}
+ 21 │   static public m13() {}
+    ·          ──────
+ 22 │ 
+    ╰────
+
+  × TS(1029): 'protected' modifier must precede 'static' modifier.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts:24:10]
+ 23 │   protected static m16() {}
+ 24 │   static protected m15() {}
+    ·          ─────────
+ 25 │ 
+    ╰────
+
+  × TS(1029): 'private' modifier must precede 'static' modifier.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts:27:10]
+ 26 │   private static m18() {}
+ 27 │   static private m17() {}
+    ·          ───────
+ 28 │ }
+    ╰────
 
   × TS(1071): 'override' modifier cannot appear on an index signature.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override-errors/input.ts:3:3]
@@ -13089,6 +13201,25 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/expect-plugin/export-interface/input.js:1:8]
+ 1 │ export interface Foo {}
+   ·        ─────────
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/expect-plugin/export-type/input.js:1:8]
+ 1 │ export type Foo = number;
+   ·        ────
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/expect-plugin/export-type-named/input.js:2:8]
+ 1 │ var Foo;
+ 2 │ export type { Foo };
+   ·        ────
+   ╰────
 
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/exponentiation/await-non-null-before-exponential/input.ts:1:14]
@@ -13846,6 +13977,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × TS(1029): 'private' modifier must precede 'static' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-private-02/input.ts:2:10]
+ 1 │ class Foo {
+ 2 │   static private {}
+   ·          ───────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-private-02/input.ts:2:18]
  1 │ class Foo {
@@ -13862,6 +14001,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × TS(1029): 'protected' modifier must precede 'static' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-protected-02/input.ts:2:10]
+ 1 │ class Foo {
+ 2 │   static protected {}
+   ·          ─────────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-protected-02/input.ts:2:20]
  1 │ class Foo {
@@ -13875,6 +14022,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ class Foo {
  2 │   public static {}
    ·   ──────
+ 3 │ }
+   ╰────
+
+  × TS(1029): 'public' modifier must precede 'static' modifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/static-blocks/invalid-static-block-with-accessibility-public-02/input.ts:2:10]
+ 1 │ class Foo {
+ 2 │   static public {}
+   ·          ──────
  3 │ }
    ╰────
 

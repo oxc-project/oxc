@@ -635,7 +635,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 // Move the bindings from the for init scope to scope of the loop body.
                 for ident in bound_names {
                     ctx.scoping_mut().set_symbol_scope_id(ident.symbol_id(), new_scope_id);
-                    ctx.scoping_mut().move_binding(scope_id, new_scope_id, ident.name.into());
+                    ctx.scoping_mut().move_binding(scope_id, new_scope_id, ident.name);
                 }
             }
         }

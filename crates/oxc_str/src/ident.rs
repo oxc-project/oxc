@@ -1,10 +1,6 @@
 //! Identifier string type.
 
-use std::{
-    borrow::{Borrow, Cow},
-    fmt, hash,
-    ops::Deref,
-};
+use std::{borrow::Cow, fmt, hash, ops::Deref};
 
 use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn, StringBuilder as ArenaStringBuilder};
 #[cfg(feature = "serialize")]
@@ -22,11 +18,15 @@ use crate::{Atom, CompactStr};
 #[derive(Clone, Copy, Eq)]
 pub struct Ident<'a>(&'a str);
 
-impl Ident<'static> {
-    /// Get an [`Ident`] containing a static string.
+impl<'a> Ident<'a> {
+    /// Create a new [`Ident`] from a string slice.
+    ///
+    /// This is a const, no-op wrapper.
+    /// Use this for strings that already have the correct lifetime
+    /// (e.g. arena-allocated strings, or `'static` string literals).
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op
-    pub const fn new_const(s: &'static str) -> Self {
+    pub const fn new_const(s: &'a str) -> Self {
         Ident(s)
     }
 
@@ -35,9 +35,7 @@ impl Ident<'static> {
     pub const fn empty() -> Self {
         Self::new_const("")
     }
-}
 
-impl<'a> Ident<'a> {
     /// Borrow a string slice.
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op
@@ -238,11 +236,12 @@ impl AsRef<str> for Ident<'_> {
     }
 }
 
-impl Borrow<str> for Ident<'_> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    fn borrow(&self) -> &str {
-        self.as_str()
+/// Allows looking up an `Ident`-keyed hashbrown map with a `&str` key,
+/// without requiring `Ident: Borrow<str>`.
+impl oxc_allocator::hash_map::Equivalent<Ident<'_>> for str {
+    #[inline]
+    fn equivalent(&self, key: &Ident<'_>) -> bool {
+        self == key.as_str()
     }
 }
 
@@ -308,6 +307,15 @@ impl ESTree for Ident<'_> {
         ESTree::serialize(self.as_str(), serializer);
     }
 }
+
+/// Hash map keyed by [`Ident`], using hashbrown with FxHash.
+pub type IdentHashMap<'a, V> = hashbrown::HashMap<Ident<'a>, V, rustc_hash::FxBuildHasher>;
+
+/// Arena-allocated hash map keyed by [`Ident`].
+pub type ArenaIdentHashMap<'alloc, V> = oxc_allocator::HashMap<'alloc, Ident<'alloc>, V>;
+
+/// Hash set of [`Ident`], using hashbrown with FxHash.
+pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, rustc_hash::FxBuildHasher>;
 
 /// Creates an [`Ident`] using interpolation of runtime expressions.
 ///

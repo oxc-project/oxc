@@ -7,7 +7,7 @@
 #![expect(clippy::missing_errors_doc)]
 
 use std::{
-    mem,
+    iter, mem,
     path::Path,
     ptr::{self, NonNull},
     rc::Rc,
@@ -70,7 +70,7 @@ pub use crate::{
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-        JsFix, LintFileResult, LoadPluginResult,
+        JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
@@ -551,7 +551,8 @@ impl Linter {
         const BOM: &str = "\u{feff}";
         const BOM_LEN: usize = BOM.len();
 
-        let mut source_text = program.source_text;
+        let original_source_text = program.source_text;
+        let mut source_text = original_source_text;
         let has_bom = source_text.starts_with(BOM);
         if has_bom {
             source_text = &source_text[BOM_LEN..];
@@ -641,73 +642,50 @@ impl Linter {
                     }
 
                     // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
-                    let create_fix = |fixes: Vec<JsFix>| {
-                        debug_assert!(!fixes.is_empty()); // JS should send `None` instead of `Some([])`
-
-                        let is_single = fixes.len() == 1;
-
-                        let fixes = fixes.into_iter().map(|fix| {
-                            // TODO: Validate span offsets are within bounds and `start <= end`.
-                            // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
-                            // That's possible if UTF-16 offset points to middle of a surrogate pair.
-                            let mut span = Span::new(fix.range[0], fix.range[1]);
-                            span_converter.convert_span_back(&mut span);
-                            Fix::new(fix.text, span).with_kind(FixKind::Fix)
-                        });
-
-                        if is_single {
-                            Some(fixes.into_iter().next().unwrap())
-                        } else {
-                            let fixes = fixes.collect::<Vec<_>>();
-                            match CompositeFix::merge_fixes_fallible(fixes, source_text) {
-                                Ok(fix) => Some(fix),
-                                Err(err) => {
-                                    let message = format!(
-                                        "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
-                                    );
-                                    ctx_host.push_diagnostic(Message::new(
-                                        OxcDiagnostic::error(message),
-                                        PossibleFixes::None,
-                                    ));
-                                    None
-                                }
-                            }
+                    let create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
+                        fixes,
+                        original_source_text,
+                        &span_converter,
+                    ) {
+                        Ok(fix) => Some(fix.with_kind(fix_kind)),
+                        Err(err) => {
+                            let fixes_type = if fix_kind.contains(FixKind::Suggestion) {
+                                "suggestions"
+                            } else {
+                                "fixes"
+                            };
+                            let message = format!(
+                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path}\n{err}"
+                            );
+                            ctx_host.push_diagnostic(Message::new(
+                                OxcDiagnostic::error(message),
+                                PossibleFixes::None,
+                            ));
+                            None
                         }
                     };
 
                     // Convert fix
-                    let fix = diagnostic.fixes.and_then(create_fix);
+                    let fix = diagnostic.fixes.and_then(|fixes| create_fix(fixes, FixKind::Fix));
 
                     // Convert suggestions (only if fix kind allows suggestions), and combine with fix
                     let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
                         && ctx_host.fix.can_apply(FixKind::Suggestion)
                     {
-                        let mut fixes =
-                            Vec::with_capacity(usize::from(fix.is_some()) + suggestions.len());
-                        if let Some(fix) = fix {
-                            fixes.push(fix);
-                        }
+                        debug_assert!(
+                            !suggestions.is_empty(),
+                            "`diagnostic.suggestions` should be `None` if there are no suggestions"
+                        );
 
-                        for suggestion in suggestions {
-                            if let Some(fix) = create_fix(suggestion.fixes) {
-                                fixes.push(
-                                    fix.with_message(suggestion.message)
-                                        .with_kind(FixKind::Suggestion),
-                                );
-                            }
-                        }
+                        let suggestions = suggestions.into_iter().filter_map(|suggestion| {
+                            create_fix(suggestion.fixes, FixKind::Suggestion)
+                                .map(|fix| fix.with_message(suggestion.message))
+                        });
 
-                        if fixes.is_empty() {
-                            PossibleFixes::None
-                        } else if fixes.len() == 1 {
-                            PossibleFixes::Single(fixes.into_iter().next().unwrap())
-                        } else {
-                            PossibleFixes::Multiple(fixes)
-                        }
-                    } else if let Some(fix) = fix {
-                        PossibleFixes::Single(fix)
+                        #[expect(clippy::from_iter_instead_of_collect)]
+                        PossibleFixes::from_iter(iter::chain(fix, suggestions))
                     } else {
-                        PossibleFixes::None
+                        PossibleFixes::from(fix)
                     };
 
                     ctx_host.push_diagnostic(Message::new(

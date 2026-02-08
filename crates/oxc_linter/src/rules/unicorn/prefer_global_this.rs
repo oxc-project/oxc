@@ -65,7 +65,7 @@ impl Rule for PreferGlobalThis {
 
         if !matches!(ident.name.as_str(), "window" | "self" | "global")
             || is_computed_member_expression_object(node, ctx)
-            || !ctx.scoping().root_unresolved_references().contains_key(&ident.name.as_str())
+            || !ctx.scoping().root_unresolved_references().contains_key(&ident.name)
         {
             return;
         }

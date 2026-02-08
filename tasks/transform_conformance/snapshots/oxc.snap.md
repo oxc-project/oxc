@@ -536,7 +536,7 @@ Scope parent mismatch:
 after transform: ScopeId(20): Some(ScopeId(0))
 rebuilt        : ScopeId(20): Some(ScopeId(15))
 Unresolved reference IDs mismatch for "dce":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(17)]
+after transform: [ReferenceId(9), ReferenceId(12), ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(14), ReferenceId(17)]
 rebuilt        : [ReferenceId(5)]
 
 
@@ -801,8 +801,8 @@ Bindings mismatch:
 after transform: ScopeId(3): ["Cls2"]
 rebuilt        : ScopeId(4): []
 Symbol reference IDs mismatch for "dec":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(0), ReferenceId(3), ReferenceId(4)]
+rebuilt        : SymbolId(0): [ReferenceId(10), ReferenceId(1)]
 Symbol span mismatch for "Cls":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(1): Span { start: 46, end: 49 }
@@ -835,7 +835,7 @@ after transform: SymbolId(2) "Cls2"
 rebuilt        : SymbolId(2) "Cls2"
 Unresolved reference IDs mismatch for "babelHelpers":
 after transform: [ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24)]
-rebuilt        : [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16)]
+rebuilt        : [ReferenceId(8), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(6)]
 
 * oxc/metadata/this/input.ts
 Symbol span mismatch for "Example":

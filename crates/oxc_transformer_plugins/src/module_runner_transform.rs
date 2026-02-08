@@ -54,7 +54,7 @@ use oxc_allocator::{Allocator, Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, traverse_mut};
 
@@ -96,13 +96,13 @@ impl<'a> ModuleRunnerTransform<'a> {
     }
 }
 
-const SSR_MODULE_EXPORTS_KEY: Atom<'static> = Atom::new_const("__vite_ssr_exports__");
-const SSR_EXPORT_DEFAULT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_export_default__");
-const SSR_IMPORT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_import__");
-const SSR_DYNAMIC_IMPORT_KEY: Atom<'static> = Atom::new_const("__vite_ssr_dynamic_import__");
-const SSR_EXPORT_ALL_KEY: Atom<'static> = Atom::new_const("__vite_ssr_exportAll__");
-const SSR_IMPORT_META_KEY: Atom<'static> = Atom::new_const("__vite_ssr_import_meta__");
-const DEFAULT: Atom<'static> = Atom::new_const("default");
+const SSR_MODULE_EXPORTS_KEY: Ident<'static> = Ident::new_const("__vite_ssr_exports__");
+const SSR_EXPORT_DEFAULT_KEY: Ident<'static> = Ident::new_const("__vite_ssr_export_default__");
+const SSR_IMPORT_KEY: Ident<'static> = Ident::new_const("__vite_ssr_import__");
+const SSR_DYNAMIC_IMPORT_KEY: Ident<'static> = Ident::new_const("__vite_ssr_dynamic_import__");
+const SSR_EXPORT_ALL_KEY: Ident<'static> = Ident::new_const("__vite_ssr_exportAll__");
+const SSR_IMPORT_META_KEY: Ident<'static> = Ident::new_const("__vite_ssr_import_meta__");
+const DEFAULT: Ident<'static> = Ident::new_const("default");
 
 impl<'a> Traverse<'a, ()> for ModuleRunnerTransform<'a> {
     #[inline]
@@ -327,9 +327,9 @@ impl<'a> ModuleRunnerTransform<'a> {
 
                 // Reuse the `vue` binding identifier by renaming it to `__vite_ssr_import_0__`
                 let mut local = specifier.unbox().local;
-                local.name = self.generate_import_binding_name(ctx).into();
+                local.name = self.generate_import_binding_name(ctx);
                 let binding = BoundIdentifier::from_binding_ident(&local);
-                ctx.scoping_mut().set_symbol_name(binding.symbol_id, &binding.name);
+                ctx.scoping_mut().set_symbol_name(binding.symbol_id, binding.name);
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
 
                 BindingPattern::BindingIdentifier(ctx.alloc(local))
@@ -460,7 +460,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     };
                     Expression::Identifier(ctx.ast.alloc(ident))
                 };
-                Self::create_export(span, expr, exported.name(), ctx)
+                Self::create_export(span, expr, exported.name().into(), ctx)
             }));
         }
     }
@@ -502,7 +502,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         if let Some(exported) = exported {
             // `export * as foo from 'vue'` ->
             // `Object.defineProperty(__vite_ssr_exports__, 'foo', { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ } });`
-            let export = Self::create_export(span, ident, exported.name(), ctx);
+            let export = Self::create_export(span, ident, exported.name().into(), ctx);
             hoist_imports.push(import);
             hoist_exports.push(export);
         } else {
@@ -603,7 +603,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                 }
                 ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
                     let ImportDefaultSpecifier { span, local } = specifier.unbox();
-                    self.insert_import_binding(span, binding, local, DEFAULT, ctx)
+                    self.insert_import_binding(span, binding, local, DEFAULT.into(), ctx)
                 }
                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
                     unreachable!()
@@ -624,7 +624,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let BindingIdentifier { name, symbol_id, .. } = ident;
 
         let scopes = ctx.scoping_mut();
-        scopes.remove_binding(scopes.root_scope_id(), &name);
+        scopes.remove_binding(scopes.root_scope_id(), name);
 
         let symbol_id = symbol_id.get().unwrap();
         // Do not need to insert if there no identifiers that point to this symbol
@@ -647,11 +647,11 @@ impl<'a> ModuleRunnerTransform<'a> {
     }
 
     /// Generate a unique import binding name like `__vite_ssr_import_{uid}__`.
-    fn generate_import_binding_name(&mut self, ctx: &TraverseCtx<'a>) -> Atom<'a> {
+    fn generate_import_binding_name(&mut self, ctx: &TraverseCtx<'a>) -> Ident<'a> {
         let mut buffer = ItoaBuffer::new();
         let uid_str = buffer.format(self.import_uid);
         self.import_uid += 1;
-        ctx.ast.atom_from_strs_array(["__vite_ssr_import_", uid_str, "__"])
+        ctx.ast.ident_from_strs_array(["__vite_ssr_import_", uid_str, "__"])
     }
 
     /// Generate a unique import binding whose name is like `__vite_ssr_import_{uid}__`.
@@ -703,7 +703,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let object =
-            ctx.create_unbound_ident_expr(SPAN, Atom::from("Object"), ReferenceFlags::Read);
+            ctx.create_unbound_ident_expr(SPAN, ctx.ast.ident("Object"), ReferenceFlags::Read);
         let member = create_member_callee(object, "defineProperty", ctx);
         ctx.ast.expression_call(SPAN, member, NONE, arguments, false)
     }
@@ -759,7 +759,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     fn create_export(
         span: Span,
         expr: Expression<'a>,
-        exported_name: Atom<'a>,
+        exported_name: Ident<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let getter = Self::create_function_with_return_statement(expr, ctx);

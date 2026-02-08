@@ -89,12 +89,18 @@ pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
     // TSC: Does not report errors since `.js` file with `checkJs: false`
     // OXC: Reports errors
     "plainJSRedeclare3.ts",
+    // TSC: Allows import+const redeclaration in `.js` file with `allowJs: true`
+    // OXC: Reports redeclaration error per ES spec
+    "usedImportNotElidedInJs.ts",
     // TSC: Parse without error, they support BOM
     // OXC: We do not ignore or exclude BOM, will be invalid character error
     "bom-utf16be.ts",
-    // TSC: This is just a binary file, but their test project skips reading
-    // OXC: Try to parse, and fail
-    "TransportStream.ts",
+    // TSC: Allows `catch({x}) { var x; }` (destructured catch param + var redeclaration)
+    // OXC: Reports redeclaration error per Annex B §B.3.4 (only simple identifiers are exempt)
+    "asyncWithVarShadowing_es6.ts",
+    // TSC: Allows top-level `using` in scripts (no import/export)
+    // OXC: Rejects per TC39 spec — `using` is not allowed at the top level of scripts
+    "usingDeclarations.14.ts",
 ];
 // spellchecker:on
 

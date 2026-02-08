@@ -2,7 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -79,13 +79,13 @@ fn is_global_this_ref_or_global_window<'a>(
     if ctx.is_reference_to_global_variable(ident)
         && (expr.is_specific_id(GLOBAL_WINDOW) || (expr.is_specific_id(GLOBAL_THIS)))
     {
-        return !is_shadowed(scope_id, ident.name.as_str(), ctx);
+        return !is_shadowed(scope_id, ident.name, ctx);
     }
 
     false
 }
 
-fn is_shadowed<'a>(scope_id: ScopeId, name: &'a str, ctx: &LintContext<'a>) -> bool {
+fn is_shadowed(scope_id: ScopeId, name: Ident<'_>, ctx: &LintContext<'_>) -> bool {
     ctx.scoping().find_binding(scope_id, name).is_some()
 }
 
@@ -99,8 +99,7 @@ impl Rule for NoAlert {
         let callee = &call_expr.callee;
 
         if let Expression::Identifier(ident) = callee {
-            let name = ident.name.as_str();
-            if !is_shadowed(scope_id, name, ctx) && is_prohibited_identifier(name) {
+            if !is_shadowed(scope_id, ident.name, ctx) && is_prohibited_identifier(&ident.name) {
                 return ctx.diagnostic(no_alert_diagnostic(ident.span));
             }
 

@@ -1,23 +1,24 @@
-// For now, just returns the most outer braces
+// Find the type annotation range `{...}` at the start of the string (after whitespace).
+// According to JSDoc spec, type annotations must appear at the beginning of the tag body.
+// Curly braces appearing later (e.g. `{@link Foo}` in descriptions) are not type annotations.
 pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
-    let mut start = None;
+    let trimmed = s.trim_start();
+    if !trimmed.starts_with('{') {
+        return None;
+    }
+
+    let offset = s.len() - trimmed.len();
     let mut brace_count = 0;
-    for (idx, ch) in s.char_indices() {
+
+    for (idx, ch) in trimmed.char_indices() {
         match ch {
             '{' => {
                 brace_count += 1;
-
-                if start.is_none() {
-                    start = Some(idx);
-                }
             }
             '}' => {
                 brace_count -= 1;
-
-                if brace_count == 0
-                    && let Some(start) = start
-                {
-                    return Some((start, idx + 1));
+                if brace_count == 0 {
+                    return Some((offset, offset + idx + 1));
                 }
             }
             _ => {}
@@ -101,13 +102,16 @@ mod test {
         for (actual, expect) in [
             ("{t1}", Some("{t1}")),
             (" { t2 } ", Some("{ t2 }")),
-            ("x{{ t3: string }}x", Some("{{ t3: string }}")),
+            ("x{{ t3: string }}x", None),
             ("{t4} name", Some("{t4}")),
             (" {t5} ", Some("{t5}")),
             ("{t6 x", None),
             ("t7", None),
             ("{{t8}", None),
             ("", None),
+            ("entries Description {@link Type}", None),
+            ("name See {@link Foo} and {@link Bar}", None),
+            ("bar - With braces {}", None),
             ("{[ true, false ]}", Some("{[ true, false ]}")),
             (
                 "{{
