@@ -11,6 +11,7 @@ import { default as assert, AssertionError } from "node:assert";
 import { join as pathJoin, isAbsolute as isAbsolutePath, dirname } from "node:path";
 import util from "node:util";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
+import { applyFixes } from "../bindings.js";
 import { ecmaFeaturesOverride, setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
 import { registerPlugin, registeredRules } from "../plugins/load.ts";
 import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
@@ -20,6 +21,7 @@ import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/
 import { parse } from "./parse.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
+import type { FixReport } from "../plugins/fix.ts";
 import type { Plugin, Rule } from "../plugins/load.ts";
 import type { Options } from "../plugins/options.ts";
 import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
@@ -347,6 +349,7 @@ interface Diagnostic {
   column: number;
   endLine: number;
   endColumn: number;
+  fixes: FixReport[] | null;
   suggestions: Suggestion[] | null;
 }
 
@@ -621,7 +624,37 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
     }
   }
 
-  // TODO: Test output after fixes
+  // Test output after fixes
+  const fixGroups: FixReport[][] = [];
+  for (const diagnostic of diagnostics) {
+    if (diagnostic.fixes !== null) fixGroups.push(diagnostic.fixes);
+  }
+
+  const { code } = test;
+
+  let fixedCode;
+  if (fixGroups.length > 0) {
+    fixedCode = applyFixes(code, JSON.stringify(fixGroups));
+    if (fixedCode === null) throw new Error("Failed to apply fixes");
+  } else {
+    fixedCode = code;
+  }
+
+  if (Object.hasOwn(test, "output")) {
+    const expectedOutput = test.output;
+    if (expectedOutput === null) {
+      assert.strictEqual(fixedCode, code, "Expected no autofixes to be suggested");
+    } else {
+      assert.strictEqual(fixedCode, expectedOutput, "Output is incorrect");
+      assert.notStrictEqual(
+        code,
+        expectedOutput,
+        "Test property `output` matches `code`. If no autofix is expected, set output to `null`.",
+      );
+    }
+  } else {
+    assert.strictEqual(fixedCode, code, "The rule fixed the code. Please add `output` property.");
+  }
 }
 
 /**
@@ -1068,6 +1101,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
         column,
         endLine,
         endColumn,
+        fixes: diagnostic.fixes,
         suggestions: null, // TODO
       };
     });
