@@ -37,7 +37,7 @@ const group: TestGroup = {
     if (
       ruleName === "no-invalid-this" &&
       code.includes("function (x, this: context) {") &&
-      err?.message === "Parsing failed"
+      err.message === "Parsing failed"
     ) {
       return true;
     }
