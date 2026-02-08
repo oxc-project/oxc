@@ -2,7 +2,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::{ExportExportName, ExportImportName, ImportImportName, ModuleRecord},
+    rule::Rule,
+};
 
 fn no_named_as_default_diagnostic(
     span: Span,
@@ -14,7 +18,7 @@ fn no_named_as_default_diagnostic(
         .with_label(span)
 }
 
-// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-named-as-default-member.md>
+// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-named-as-default.md>
 #[derive(Debug, Default, Clone)]
 pub struct NoNamedAsDefault;
 
@@ -71,15 +75,69 @@ impl Rule for NoNamedAsDefault {
             };
 
             let import_name = import_entry.local_name.name();
-            if remote_module_record.exported_bindings.contains_key(import_name) {
-                ctx.diagnostic(no_named_as_default_diagnostic(
-                    *import_span,
-                    import_name,
-                    import_entry.module_request.name(),
-                ));
+            if !remote_module_record.exported_bindings.contains_key(import_name) {
+                continue;
             }
+
+            if default_and_named_are_same_reexport(&remote_module_record, import_name) {
+                continue;
+            }
+
+            ctx.diagnostic(no_named_as_default_diagnostic(
+                *import_span,
+                import_name,
+                import_entry.module_request.name(),
+            ));
         }
     }
+}
+
+/// Check if the remote module re-exports both the default and the given named export
+/// from the same source module with the same local identifier.
+///
+/// This is a special case where using the named export's name for the default import is allowed,
+/// because they refer to the same value.
+///
+/// See <https://github.com/import-js/eslint-plugin-import/pull/3032>
+/// and <https://github.com/oxc-project/oxc/issues/19099>
+fn default_and_named_are_same_reexport(remote_module_record: &ModuleRecord, name: &str) -> bool {
+    // Find the default re-export entry.
+    // Only re-exports like `export { foo as default }` are found here.
+    let Some(default_entry) = remote_module_record.indirect_export_entries.iter().find(
+        |entry| matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == "default"),
+    ) else {
+        return false;
+    };
+
+    // Find the named re-export entry
+    let Some(named_entry) = remote_module_record
+        .indirect_export_entries
+        .iter()
+        .find(|entry| matches!(&entry.export_name, ExportExportName::Name(n) if n.name() == name))
+    else {
+        return false;
+    };
+
+    // Both must have a module_request (i.e., be re-exports)
+    let (Some(default_module), Some(named_module)) =
+        (&default_entry.module_request, &named_entry.module_request)
+    else {
+        return false;
+    };
+
+    // Both must re-export from the same module
+    if default_module.name() != named_module.name() {
+        return false;
+    }
+
+    // Both must import the same identifier from that module
+    let (ExportImportName::Name(default_import), ExportImportName::Name(named_import)) =
+        (&default_entry.import_name, &named_entry.import_name)
+    else {
+        return false;
+    };
+
+    default_import.name() == named_import.name()
 }
 
 #[test]
@@ -93,6 +151,11 @@ fn test() {
         // unsupported syntax
         // r#"export default from "./bar";"#,
         r#"import bar, { foo } from "./export-default-string-and-named""#,
+        // When both default and named exports are re-exported from the same source,
+        // using the named export's name for the default import is not confusing.
+        r#"import userEvent from "./re-export-default-and-named""#,
+        // Also allowed.
+        r#"import { userEvent } from "./re-export-default-and-named""#,
     ];
 
     let fail = vec![
@@ -103,6 +166,9 @@ fn test() {
         // r#"import foo from "./malformed.js""#,
         r#"import foo from "./export-default-string-and-named""#,
         r#"import foo, { foo as bar } from "./export-default-string-and-named""#,
+        // When default and named exports are re-exported from different sources,
+        // it should still report.
+        r#"import userEvent from "./re-export-default-and-named-misleading""#,
     ];
 
     Tester::new(NoNamedAsDefault::NAME, NoNamedAsDefault::PLUGIN, pass, fail)
