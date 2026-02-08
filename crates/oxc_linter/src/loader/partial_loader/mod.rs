@@ -21,7 +21,6 @@ pub struct PartialLoader;
 impl PartialLoader {
     /// Extract js section of special files.
     /// Returns `None` if the special file does not have a js section.
-    #[expect(clippy::type_complexity)]
     pub fn parse<'a>(
         allocator: &'a Allocator,
         ext: &str,
