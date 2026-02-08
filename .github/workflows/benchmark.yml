@@ -93,7 +93,7 @@ jobs:
           rm target/codspeed/analysis/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@208425962c215de49ed713e18c4b9bde9bda5c52 # v4.10.2
+        uses: CodSpeedHQ/action@9a74b6ba663684052277e8f342b5eb99c7442a03 # v4.10.5
         timeout-minutes: 30
         with:
           mode: simulation
