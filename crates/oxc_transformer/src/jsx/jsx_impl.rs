@@ -93,7 +93,7 @@ use oxc_allocator::{
 };
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{Atom, Ident, SPAN, Span};
 use oxc_syntax::{
     identifier::is_white_space_single_line, line_terminator::is_line_terminator,
     reference::ReferenceFlags, symbol::SymbolFlags, xml_entities::XML_ENTITIES,
@@ -1197,7 +1197,8 @@ fn get_read_identifier_reference<'a>(
     name: Atom<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let reference_id = ctx.create_reference_in_current_scope(name.as_str(), ReferenceFlags::Read);
+    let reference_id =
+        ctx.create_reference_in_current_scope(Ident::from(name), ReferenceFlags::Read);
     let ident = ctx.ast.alloc_identifier_reference_with_reference_id(span, name, reference_id);
     Expression::Identifier(ident)
 }

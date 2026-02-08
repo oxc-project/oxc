@@ -1225,7 +1225,8 @@ impl<'a> PeepholeOptimizations {
                     .as_member_expression()
                     .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
             {
-                let reference_id = ctx.create_unbound_reference("Object", ReferenceFlags::Read);
+                let object = ctx.ast.ident("Object");
+                let reference_id = ctx.create_unbound_reference(object, ReferenceFlags::Read);
                 call_expr.callee = ctx.ast.expression_identifier_with_reference_id(
                     call_expr.callee.span(),
                     "Object",

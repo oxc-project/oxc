@@ -54,7 +54,7 @@ impl Rule for AvoidNew {
         };
 
         if ident.name == "Promise"
-            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
+            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
         {
             ctx.diagnostic(avoid_new_promise_diagnostic(expr.span));
         }

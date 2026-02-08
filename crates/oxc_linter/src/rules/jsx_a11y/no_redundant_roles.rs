@@ -27,8 +27,9 @@ pub struct NoRedundantRoles;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforces that the explicit `role` property is not the same as
-    /// implicit/default role property on element.
+    /// Enforces that code does not include a redundant `role` property, in the
+    /// case that it's identical to the implicit `role` property of the
+    /// element type.
     ///
     /// ### Why is this bad?
     ///
@@ -36,14 +37,24 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
+    /// This rule applies for the following elements and their implicit roles:
+    ///
+    /// - `<nav>`: `navigation`
+    /// - `<button>`: `button`
+    /// - `<body>`: `document`
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// <nav role="navigation" />
+    /// <nav role="navigation"></nav>
+    /// <button role="button"></button>
+    /// <body role="document"></body>
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
-    /// <nav />
+    /// <nav></nav>
+    /// <button></button>
+    /// <body></body>
     /// ```
     NoRedundantRoles,
     jsx_a11y,
@@ -101,6 +112,12 @@ fn test() {
 
     let pass = vec![
         ("<div />", None, None),
+        ("<button />", None, None),
+        ("<button></button>", None, None),
+        ("<button>Foo</button>", None, None),
+        ("<button>role</button>", None, None),
+        ("<nav />", None, None),
+        ("<body />", None, None),
         ("<button role='main' />", None, None),
         ("<MyComponent role='button' />", None, None),
         ("<button role={`${foo}button`} />", None, None),
@@ -109,13 +126,37 @@ fn test() {
 
     let fail = vec![
         ("<button role='button' />", None, None),
+        ("<button role='button' data-foo='bar' />", None, None),
+        ("<button role='button' data-role='bar' />", None, None),
+        ("<button data-role='bar' role='button' />", None, None),
+        ("<button role='button'></button>", None, None),
+        ("<button role='button'>Foo</button>", None, None),
+        ("<button role='button'><p>Test</p></button>", None, None),
+        ("<button role='button' title='button'></button>", None, None),
         ("<body role='document' />", None, None),
+        ("<nav role='navigation' />", None, None),
         ("<Button role='button' />", None, Some(settings())),
     ];
 
     let fix = vec![
         ("<button role='button' />", "<button  />"),
+        ("<button role='button'>Foo</button>", "<button >Foo</button>"),
+        ("<button role='button' data-role='bar' />", "<button  data-role='bar' />"),
+        ("<button data-role='bar' role='button' />", "<button data-role='bar'  />"),
+        (
+            "<button role='button'>
+              Foo
+             </button>",
+            "<button >
+              Foo
+             </button>",
+        ),
+        ("<nav role='navigation' />", "<nav  />"),
         ("<body role='document' />", "<body  />"),
+        (
+            "<body role='document'><p>Foobarbaz!! document body role</p></body>",
+            "<body ><p>Foobarbaz!! document body role</p></body>",
+        ),
     ];
 
     Tester::new(NoRedundantRoles::NAME, NoRedundantRoles::PLUGIN, pass, fail)

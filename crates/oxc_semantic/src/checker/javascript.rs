@@ -37,6 +37,34 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
     }
 }
 
+/// It is a Syntax Error if any element of the BoundNames of ImportDeclaration
+/// also occurs in the VarDeclaredNames or LexicallyDeclaredNames of ModuleItemList.
+/// <https://tc39.es/ecma262/#sec-imports-static-semantics-early-errors>
+pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
+    if !ctx.source_type.is_module() || ctx.source_type.is_typescript() {
+        return;
+    }
+
+    let scope_id = ctx.scoping.root_scope_id();
+    for (_, &symbol_id) in ctx.scoping.get_bindings(scope_id) {
+        let flags = ctx.scoping.symbol_flags(symbol_id);
+        if !flags.contains(SymbolFlags::Import) {
+            continue;
+        }
+        if !flags.intersects(SymbolFlags::Variable | SymbolFlags::Class | SymbolFlags::Function) {
+            continue;
+        }
+        let redeclarations = ctx.scoping.symbol_redeclarations(symbol_id);
+        if redeclarations.len() < 2 {
+            continue;
+        }
+        let name = ctx.scoping.symbol_name(symbol_id);
+        let first = &redeclarations[0];
+        let last = &redeclarations[redeclarations.len() - 1];
+        ctx.error(diagnostics::redeclaration(name, first.span, last.span));
+    }
+}
+
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
     classes.iter_enumerated().for_each(|(class_id, _)| {
@@ -310,7 +338,7 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
             if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
-                ctx.class_table_builder.classes.has_private_definition(class_id, &reference.name)
+                ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
             }) {
                 ctx.error(diagnostics::private_field_undeclared(&reference.name, reference.span));
             }
