@@ -3,22 +3,6 @@
 
 # stdout
 ```
-  x Error running JS plugin.
-  | File path: <fixture>/files/range_end_negative.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-9`, expected u32 at line 1 column 176
-
-  x Error running JS plugin.
-  | File path: <fixture>/files/range_end_too_large.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967297`, expected u32 at line 1 column 185
-
-  x Error running JS plugin.
-  | File path: <fixture>/files/range_start_negative.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-9`, expected u32 at line 1 column 163
-
-  x Error running JS plugin.
-  | File path: <fixture>/files/range_start_too_large.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967297`, expected u32 at line 1 column 172
-
   x suggestions-plugin(suggestions): Replace "a" with "daddy"
    ,-[files/bom.js:1:4]
  1 | ﻿a = c;
@@ -245,6 +229,18 @@
     : ^^^^^^^^^
     `----
 
+  x suggestions-plugin(suggestions): end negative
+   ,-[files/range_end_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): end negative multiple
+   ,-[files/range_end_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
   x suggestions-plugin(suggestions): end out of bounds
    ,-[files/range_end_out_of_bounds.js:1:5]
  1 | let x;
@@ -257,6 +253,18 @@
    :     ^
    `----
 
+  x suggestions-plugin(suggestions): end too large
+   ,-[files/range_end_too_large.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): end too large multiple
+   ,-[files/range_end_too_large.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
   x suggestions-plugin(suggestions): start after end
    ,-[files/range_start_after_end.js:1:5]
  1 | let x;
@@ -265,6 +273,30 @@
 
   x suggestions-plugin(suggestions): start after end multiple
    ,-[files/range_start_after_end.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): start negative
+   ,-[files/range_start_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): start negative multiple
+   ,-[files/range_start_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): start too large
+   ,-[files/range_start_too_large.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): start too large multiple
+   ,-[files/range_start_too_large.js:1:5]
  1 | let x;
    :     ^
    `----
@@ -297,7 +329,7 @@
    :     ^
    `----
 
-Found 0 warnings and 43 errors.
+Found 0 warnings and 47 errors.
 Finished in Xms on 12 files with 1 rules using X threads.
 ```
 

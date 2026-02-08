@@ -85,18 +85,15 @@ pub struct LintFileResult {
 
 /// Fix in form sent from JS to Rust.
 ///
-/// Offsets have 1 added to them on JS side.
-/// So an original range of `[0, 10]` becomes `JsFix { start_plus_one: 1, end_plus_one: 11, text: "..." }`.
-///
-/// This allows offsets which were originally -1, and they can be stored in `u32`s.
+/// `start` and `end` can be -1, so these fields are `i64`s instead of `u32`s, to accommodate both negative numbers
+/// and the full range of `u32`.
 ///
 /// ESLint's `unicode-bom` rule produces a fix `{ range: [-1, 0], text: "" }` to remove a BOM.
-/// This becomes `JsFix { start_plus_one: 0, end_plus_one: 1, text: "" }`.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JsFix {
-    pub start_plus_one: u32,
-    pub end_plus_one: u32,
+    pub start: i64,
+    pub end: i64,
     pub text: String,
 }
 
@@ -124,19 +121,31 @@ pub fn convert_and_merge_js_fixes(
 
     let is_single = fixes.len() == 1;
 
-    let mut illegal_bom_fix_span = None;
+    let mut invalid_span = None;
     let mut fixes = fixes.into_iter().map(|fix| {
-        // `start_plus_one` and `end_plus_one` are original `start` and `end` + 1.
-        // If either is 0, it means the fix is before a BOM.
-        // This is a very rare case, so handle it in a `#[cold]` function.
-        if fix.start_plus_one == 0 || fix.end_plus_one == 0 {
-            return convert_bom_fix(fix, span_converter, has_bom, &mut illegal_bom_fix_span);
+        // `start` and `end` can be `-1` to mean before a BOM.
+        // We also need to handle values which are out of range of `u32`.
+        // These are very rare cases, so handle them in a `#[cold]` function.
+        let mut negative_or_out_of_range_offset = false;
+        let start = u32::try_from(fix.start).unwrap_or_else(|_| {
+            negative_or_out_of_range_offset = true;
+            0
+        });
+        let end = u32::try_from(fix.end).unwrap_or_else(|_| {
+            negative_or_out_of_range_offset = true;
+            0
+        });
+
+        if negative_or_out_of_range_offset {
+            return convert_negative_or_out_of_range_fix(
+                fix,
+                span_converter,
+                has_bom,
+                &mut invalid_span,
+            );
         }
 
         // Convert span from UTF-16 to UTF-8.
-        // Deduct 1 from `start_plus_one` and `end_plus_one` to get original offsets.
-        let start = fix.start_plus_one - 1;
-        let end = fix.end_plus_one - 1;
         let mut span = Span::new(start, end);
         span_converter.convert_span_back(&mut span);
 
@@ -164,60 +173,75 @@ pub fn convert_and_merge_js_fixes(
         CompositeFix::merge_fixes_fallible(fixes.collect(), source_text)
     };
 
-    // If any `JsFix` had `start_plus_one == 0` or `end_plus_one == 0`, but the file doesn't have a BOM,
-    // the fix is invalid. This is a very rare case, so handle it in a `#[cold]` function.
-    if let Some(span) = illegal_bom_fix_span { create_illegal_bom_error(span) } else { res }
+    // If any `JsFix` had invalid `start` or `end`, we need to produce an error.
+    // These are very rare cases, so handle them in a `#[cold]` function.
+    if let Some(span) = invalid_span { create_invalid_offset_error(span) } else { res }
 }
 
-/// Convert `JsFix` to `Fix` where either `start_plus_one` or `end_plus_one` is 0.
-/// This means that the fix starts before the BOM.
+/// Convert `JsFix` to `Fix` where either `start` or `end` is out of range of `u32`.
+///
+/// This means either:
+/// * -1 = before the BOM - valid if file has a BOM, invalid if not.
+/// * Any other negative offset = invalid.
+/// * Offset > `u32::MAX` = invalid.
 ///
 /// Convert offsets from UTF-16 to UTF-8.
-/// * If file has a BOM, adjust 0 offsets manually to be before the BOM.
-/// * If file doesn't have a BOM, set `illegal_span` to the span of the fix (without the BOM-adjustment).
-///   `convert_and_merge_js_fixes` will return an error in this case.
+/// * If file has a BOM, adjust -1 offsets manually to be before the BOM.
+/// * If file doesn't have a BOM, or offsets are out of range, set `invalid_span` to the span of the fix
+///   (without the BOM-adjustment). `convert_and_merge_js_fixes` will return an error.
 ///
-/// This is a very rare case, so handling this is in this separate `#[cold]` function.
+/// -1 and invalid offsets are very rare cases, so handling them is in this separate `#[cold]` function.
 #[cold]
-fn convert_bom_fix(
+fn convert_negative_or_out_of_range_fix(
     fix: JsFix,
     span_converter: &Utf8ToUtf16,
     has_bom: bool,
-    illegal_span: &mut Option<Span>,
+    invalid_span: &mut Option<Span>,
 ) -> Fix {
-    // Convert span from UTF-16 to UTF-8.
-    // Perform conversion with original offsets (`start_plus_one - 1`, `end_plus_one - 1`).
-    // Offsets which are 0 are clamped to 0 for this initial conversion, so the UTF-8 offsets point to start of the file,
-    // *after* the BOM.
-    let start = fix.start_plus_one.saturating_sub(1);
-    let end = fix.end_plus_one.saturating_sub(1);
-    let mut span = Span::new(start, end);
+    // Detect if either `start` or `end` is out of range, and convert illegal offsets, or valid -1 offsets to 0
+    let mut is_invalid = false;
+    let mut convert_offset = |offset| {
+        if offset < 0 {
+            // Only -1 is valid, and only if file has a BOM
+            if offset != -1 || !has_bom {
+                is_invalid = true;
+            }
+            0
+        } else if let Ok(offset) = u32::try_from(offset) {
+            offset
+        } else {
+            is_invalid = true;
+            0
+        }
+    };
 
+    let start = convert_offset(fix.start);
+    let end = convert_offset(fix.end);
+
+    // Convert offsets from UTF-16 to UTF-8
+    let mut span = Span::new(start, end);
     span_converter.convert_span_back(&mut span);
 
-    if has_bom {
-        // Adjust offsets which were 0 to be before the BOM
-        if fix.start_plus_one == 0 {
+    if is_invalid {
+        *invalid_span = Some(span);
+    } else {
+        // Adjust offsets which were -1 to be before the BOM
+        if fix.start == -1 {
             span.start -= BOM_LEN;
         }
-        if fix.end_plus_one == 0 {
+        if fix.end == -1 {
             span.end -= BOM_LEN;
         }
-    } else {
-        // File doesn't have a BOM, so this is an invalid fix.
-        // Set `illegal_span`. `convert_and_merge_js_fixes` will return an error in this case.
-        *illegal_span = Some(span);
     }
 
     Fix::new(fix.text, span)
 }
 
-/// Create an error for an invalid fix which had `start_plus_one` or `end_plus_one` of 0,
-/// but in a file which doesn't have a BOM.
+/// Create an error for a fix which had invalid `start` or `end`.
 ///
 /// This is a very rare case, so handling this is in this separate `#[cold]` function.
 #[cold]
-fn create_illegal_bom_error(span: Span) -> Result<Fix, MergeFixesError> {
+fn create_invalid_offset_error(span: Span) -> Result<Fix, MergeFixesError> {
     Err(MergeFixesError::InvalidRange(span.start, span.end))
 }
 

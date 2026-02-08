@@ -67,6 +67,8 @@ interface SuggestionBase {
  */
 export interface SuggestionReport {
   message: string;
+  // Not needed on Rust side, but `RuleTester` needs it
+  messageId: string | null;
   fixes: FixReport[];
 }
 
@@ -102,15 +104,8 @@ export const PLACEHOLDER_REGEX = /\{\{([^{}]+)\}\}/gu;
 export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   if (filePath === null) throw new Error("Cannot report errors in `createOnce`");
 
-  let messageId: string | null = null;
-  if (Object.hasOwn(diagnostic, "messageId")) {
-    (messageId as string | null | undefined) = diagnostic.messageId;
-    if (messageId === undefined) messageId = null;
-  }
-
-  const message = getMessage(
+  const { message, messageId } = getMessage(
     Object.hasOwn(diagnostic, "message") ? diagnostic.message : null,
-    messageId,
     diagnostic,
     ruleDetails,
   );
@@ -206,19 +201,20 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
  * Resolve message from `messageId` if present, and interpolate placeholders {{key}} with data values.
  *
  * @param message - Provided message string
- * @param messageId - Provided message ID
- * @param descriptor - Diagnostic or suggestion object
+ * @param descriptor - `Diagnostic` or `Suggestion` object
  * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
- * @returns Message string
+ * @returns Object containing message string and message ID (if present in `descriptor`)
  * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
  */
 export function getMessage(
   message: string | null | undefined,
-  messageId: string | null,
   descriptor: Diagnostic | Suggestion,
   ruleDetails: RuleDetails,
-): string {
+): { message: string; messageId: string | null } {
   // Resolve from `messageId` if present, otherwise use `message`
+  let messageId: string | null = null;
+  if (Object.hasOwn(descriptor, "messageId")) messageId = descriptor.messageId ?? null;
+
   if (messageId !== null) {
     if (typeof messageId !== "string") throw new TypeError("`messageId` must be a string");
     message = resolveMessageFromMessageId(messageId, ruleDetails);
@@ -234,7 +230,7 @@ export function getMessage(
     if (data != null) message = replacePlaceholders(message, data);
   }
 
-  return message;
+  return { message, messageId };
 }
 
 /**

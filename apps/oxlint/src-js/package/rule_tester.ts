@@ -24,7 +24,7 @@ import type { RequireAtLeastOne } from "type-fest";
 import type { FixReport } from "../plugins/fix.ts";
 import type { Plugin, Rule } from "../plugins/load.ts";
 import type { Options } from "../plugins/options.ts";
-import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
+import type { DiagnosticData, SuggestionReport } from "../plugins/report.ts";
 import type { Settings } from "../plugins/settings.ts";
 import type { ParseOptions } from "./parse.ts";
 
@@ -112,11 +112,21 @@ interface Config {
   /**
    * ESLint compatibility mode.
    *
+   * Useful if moving test cases over from ESLint's `RuleTester` to Oxlint's.
+   * It is recommended to only use this option as a temporary measure and alter the test cases
+   * so `eslintCompat` is no longer required.
+   *
    * If `true`:
    * - Column offsets in diagnostics are incremented by 1.
    * - Fixes which are adjacent to each other are considered overlapping, and only the first fix is applied.
+   * - Defaults `sourceType` to "module" if not provided (otherwise default is "unambiguous").
+   * - Disallows `sourceType: "unambiguous"`.
+   * - Allows `null` as property value for `globals`.
+   *   `globals: { foo: null }` is treated as equivalent to `globals: { foo: "readonly" }`.
+   *   ESLint accepts `null`, though this is undocumented. Oxlint does not accept `null`.
+   * - Slightly different behavior when `report` is called with `loc` of form `{ line, column }`.
    *
-   * Both these match ESLint's behavior.
+   * All of these match ESLint `RuleTester`'s behavior.
    */
   eslintCompat?: boolean;
 
@@ -342,6 +352,17 @@ interface ErrorBase {
   column?: number;
   endLine?: number | undefined;
   endColumn?: number | undefined;
+  suggestions?: ErrorSuggestion[] | null;
+}
+
+/**
+ * Expected suggestion in a test case error.
+ */
+interface ErrorSuggestion {
+  desc?: string;
+  messageId?: string;
+  data?: DiagnosticData;
+  output: string;
 }
 
 /**
@@ -369,7 +390,7 @@ interface Diagnostic {
   endLine: number;
   endColumn: number;
   fixes: FixReport[] | null;
-  suggestions: Suggestion[] | null;
+  suggestions: SuggestionReport[] | null;
 }
 
 // Default path (without extension) for test cases if not provided
@@ -638,7 +659,15 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
         assertInvalidTestCaseMessageIsCorrect(diagnostic, error, messages);
         assertInvalidTestCaseLocationIsCorrect(diagnostic, error, test);
 
-        // TODO: Test suggestions
+        // Test suggestions
+        if (Object.hasOwn(error, "suggestions")) {
+          if (error.suggestions == null) {
+            // `suggestions: null` means "expect no suggestions"
+            assert(diagnostic.suggestions === null, "Rule produced suggestions");
+          } else {
+            assertSuggestionsAreCorrect(diagnostic, error, messages, test);
+          }
+        }
       }
     }
   }
@@ -717,7 +746,6 @@ function assertInvalidTestCaseMessageIsCorrect(
 ): void {
   // Check `message` property
   if (Object.hasOwn(error, "message")) {
-    // Check `message` property
     assert(
       !Object.hasOwn(error, "messageId"),
       "Error should not specify both `message` and a `messageId`",
@@ -733,53 +761,80 @@ function assertInvalidTestCaseMessageIsCorrect(
   );
 
   // Check `messageId` property
+  assertMessageIdIsCorrect(
+    diagnostic.messageId,
+    diagnostic.message,
+    error.messageId!,
+    error.data,
+    messages,
+    "",
+  );
+}
+
+/**
+ * Assert that a `messageId` used by the rule under test is correct, and validate `data` (if provided).
+ *
+ * @param reportedMessageId - `messageId` from the diagnostic or suggestion
+ * @param reportedMessage - Message from the diagnostic or suggestion
+ * @param messageId - Expected `messageId` from the test case
+ * @param data - Data from the test case (if provided)
+ * @param messages - Messages from the rule under test
+ * @param prefix - Prefix for assertion error messages (e.g. "" or "Suggestion at index 0: ")
+ * @throws {AssertionError} If messageId is not correct
+ * @throws {AssertionError} If message tenplate with placeholder data inserted does not match reported message
+ */
+function assertMessageIdIsCorrect(
+  reportedMessageId: string | null,
+  reportedMessage: string,
+  messageId: string,
+  data: DiagnosticData | undefined,
+  messages: Record<string, string> | null,
+  prefix: string,
+): void {
   assert(
     messages !== null,
-    "Error can not use `messageId` if rule under test doesn't define `meta.messages`",
+    `${prefix}Cannot use 'messageId' if rule under test doesn't define 'meta.messages'`,
   );
 
-  const messageId: string = error.messageId!;
   if (!Object.hasOwn(messages, messageId)) {
     const legalMessageIds = `[${Object.keys(messages)
       .map((key) => `'${key}'`)
       .join(", ")}]`;
-    assert.fail(`Invalid messageId '${messageId}'. Expected one of ${legalMessageIds}`);
+    assert.fail(`${prefix}Invalid messageId '${messageId}'. Expected one of ${legalMessageIds}.`);
   }
 
   assert.strictEqual(
-    diagnostic.messageId,
+    reportedMessageId,
     messageId,
-    `messageId '${diagnostic.messageId}' does not match expected messageId '${messageId}'`,
+    `${prefix}messageId '${reportedMessageId}' does not match expected messageId '${messageId}'`,
   );
 
-  const reportedMessage = diagnostic.message;
+  // Check if message contains placeholders for which no data was provided
   const ruleMessage = messages[messageId];
-
   const unsubstitutedPlaceholders = getUnsubstitutedMessagePlaceholders(
     reportedMessage,
     ruleMessage,
-    error.data,
+    data,
   );
   if (unsubstitutedPlaceholders.length !== 0) {
     assert.fail(
-      "The reported message has " +
+      `${prefix}The reported message has ` +
         (unsubstitutedPlaceholders.length > 1
           ? `unsubstituted placeholders: ${unsubstitutedPlaceholders.map((name) => `'${name}'`).join(", ")}`
           : `an unsubstituted placeholder '${unsubstitutedPlaceholders[0]}'`) +
         `. Please provide the missing ${unsubstitutedPlaceholders.length > 1 ? "values" : "value"} ` +
-        "via the `data` property on the error object.",
+        "via the `data` property.",
     );
   }
 
-  if (Object.hasOwn(error, "data")) {
-    // If data was provided, then directly compare the returned message to a synthetic
-    // interpolated message using the same message ID and data provided in the test
-    const rehydratedMessage = replacePlaceholders(ruleMessage, error.data!);
-
+  // Check `data` is correct by filling in placeholders in the message with provided data and checking that
+  // rehydrated message matches the reported message
+  if (data !== undefined) {
+    const rehydratedMessage = replacePlaceholders(ruleMessage, data);
     assert.strictEqual(
       reportedMessage,
       rehydratedMessage,
-      `Hydrated message "${rehydratedMessage}" does not match "${reportedMessage}"`,
+      `${prefix}Hydrated message "${rehydratedMessage}" does not match "${reportedMessage}"`,
     );
   }
 }
@@ -855,6 +910,110 @@ function assertInvalidTestCaseLocationIsCorrect(
       "Actual error location does not match expected error location.",
     );
   }
+}
+
+/**
+ * Assert that suggestions reported by the rule under test match expected suggestions.
+ * @param diagnostic - Diagnostic emitted by the rule under test
+ * @param error - Error object from the test case
+ * @param messages - Messages from the rule under test
+ * @param test - Test case
+ * @throws {AssertionError} If suggestions do not match
+ */
+function assertSuggestionsAreCorrect(
+  diagnostic: Diagnostic,
+  error: Error,
+  messages: Record<string, string> | null,
+  test: TestCase,
+): void {
+  const actualSuggestions = diagnostic.suggestions ?? [];
+  const expectedSuggestions = error.suggestions!;
+
+  assert.strictEqual(
+    actualSuggestions.length,
+    expectedSuggestions.length,
+    `Error should have ${expectedSuggestions.length} suggestion${expectedSuggestions.length > 1 ? "s" : ""}. ` +
+      `Instead found ${actualSuggestions.length} suggestion${actualSuggestions.length > 1 ? "s" : ""}.`,
+  );
+
+  const eslintCompat = test.eslintCompat === true;
+
+  for (let i = 0; i < expectedSuggestions.length; i++) {
+    const actual = actualSuggestions[i]!;
+    const expected = expectedSuggestions[i]!;
+    const prefix = `Suggestion at index ${i}`;
+
+    // Validate suggestion message (`desc` or `messageId` + `data`)
+    assertSuggestionMessageIsCorrect(actual, expected, messages, prefix);
+
+    // Validate output
+    assert(Object.hasOwn(expected, "output"), `${prefix}: \`output\` property is required`);
+
+    const suggestedCode = applyFixes(test.code, JSON.stringify([actual.fixes]), eslintCompat);
+    assert(suggestedCode !== null, `${prefix}: Failed to apply suggestion fix`);
+
+    assert.strictEqual(
+      suggestedCode,
+      expected.output,
+      `${prefix}: Expected the applied suggestion fix to match the test suggestion output`,
+    );
+
+    assert.notStrictEqual(
+      expected.output,
+      test.code,
+      `${prefix}: The output of a suggestion should differ from the original source code`,
+    );
+  }
+}
+
+/**
+ * Assert that a suggestion's message matches expectations.
+ * @param actual - Actual suggestion from the diagnostic
+ * @param expected - Expected suggestion from the test case
+ * @param messages - Messages from the rule under test
+ * @param prefix - Prefix for assertion error messages
+ * @throws {AssertionError} If suggestion message does not match
+ */
+function assertSuggestionMessageIsCorrect(
+  actual: SuggestionReport,
+  expected: ErrorSuggestion,
+  messages: Record<string, string> | null,
+  prefix: string,
+): void {
+  if (Object.hasOwn(expected, "desc")) {
+    assert(
+      !Object.hasOwn(expected, "messageId"),
+      `${prefix}: Test should not specify both \`desc\` and \`messageId\``,
+    );
+    assert(
+      !Object.hasOwn(expected, "data"),
+      `${prefix}: Test should not specify both \`desc\` and \`data\``,
+    );
+    assert.strictEqual(
+      actual.message,
+      expected.desc,
+      `${prefix}: \`desc\` should be "${expected.desc}" but got "${actual.message}" instead`,
+    );
+    return;
+  }
+
+  if (Object.hasOwn(expected, "messageId")) {
+    assertMessageIdIsCorrect(
+      actual.messageId,
+      actual.message,
+      expected.messageId!,
+      expected.data,
+      messages,
+      `${prefix}: `,
+    );
+    return;
+  }
+
+  if (Object.hasOwn(expected, "data")) {
+    assert.fail(`${prefix}: Test must specify \`messageId\` if \`data\` is used`);
+  }
+
+  assert.fail(`${prefix}: Test must specify either \`messageId\` or \`desc\``);
 }
 
 /**
@@ -1148,7 +1307,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
         endLine,
         endColumn,
         fixes: diagnostic.fixes,
-        suggestions: null, // TODO
+        suggestions: diagnostic.suggestions,
       };
     });
   } finally {
@@ -1628,6 +1787,7 @@ type _ValidTestCase = ValidTestCase;
 type _InvalidTestCase = InvalidTestCase;
 type _TestCases = TestCases;
 type _Error = Error;
+type _ErrorSuggestion = ErrorSuggestion;
 
 export namespace RuleTester {
   export type Config = _Config;
@@ -1644,4 +1804,5 @@ export namespace RuleTester {
   export type InvalidTestCase = _InvalidTestCase;
   export type TestCases = _TestCases;
   export type Error = _Error;
+  export type ErrorSuggestion = _ErrorSuggestion;
 }
