@@ -42,6 +42,21 @@ const group: TestGroup = {
       return true;
     }
 
+    // Oxlint's suggestion message differs from ESLint's, but in a completely cosmetic way
+    if (
+      ruleName === "prefer-regex-literals" &&
+      code === "new RegExp(/a/ig, 'g');" &&
+      err.message.startsWith(
+        "Suggestion at index 1: Hydrated message " +
+          `"Replace with a regular expression literal with flags 'ig'."` +
+          " does not match " +
+          `"Replace with a regular expression literal with flags 'gi'."` +
+          "\n",
+      )
+    ) {
+      return true;
+    }
+
     // TypeScript parser does not support HTML comments
     if (ruleName === "prefer-object-spread" && code.includes("<!--")) return true;
 
