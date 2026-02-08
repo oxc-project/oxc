@@ -7,9 +7,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_lone_blocks_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Block is unnecessary.")
-        .with_help("Remove the block.")
-        .with_label(span)
+    OxcDiagnostic::warn("Block is unnecessary.").with_help("Remove the block.").with_label(span)
 }
 
 fn no_nested_lone_blocks_diagnostic(span: Span) -> OxcDiagnostic {

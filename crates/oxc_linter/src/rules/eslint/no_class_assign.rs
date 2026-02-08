@@ -10,9 +10,9 @@ fn no_class_assign_diagnostic(name: &str, decl_span: Span, assign_span: Span) ->
     OxcDiagnostic::warn(format!("Unexpected re-assignment of class {name}"))
         .with_help("Use a different variable name.")
         .with_labels([
-        decl_span.label(format!("{name} is declared as class here")),
-        assign_span.label(format!("{name} is re-assigned here")),
-    ])
+            decl_span.label(format!("{name} is declared as class here")),
+            assign_span.label(format!("{name} is re-assigned here")),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]
