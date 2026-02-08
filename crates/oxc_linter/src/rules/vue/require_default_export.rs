@@ -5,7 +5,6 @@ use oxc_span::Span;
 
 use crate::{
     context::{ContextHost, LintContext},
-    frameworks::FrameworkOptions,
     rule::Rule,
 };
 
@@ -58,25 +57,33 @@ declare_oxc_lint!(
 
 impl Rule for RequireDefaultExport {
     fn run_once(&self, ctx: &LintContext) {
-        let has_define_component = ctx.nodes().iter().any(|node| {
+        let mut has_define_component = false;
+
+        for node in ctx.nodes() {
+            if let AstKind::ExportDefaultDeclaration(_) = node.kind() {
+                return;
+            }
+
             let AstKind::CallExpression(call_expr) = node.kind() else {
-                return false;
+                continue;
             };
 
-            match call_expr.callee.get_inner_expression() {
+            if match call_expr.callee.get_inner_expression() {
                 Expression::Identifier(identifier) => identifier.name == "defineComponent",
                 Expression::StaticMemberExpression(member_expr) => {
                     let Expression::Identifier(object_identifier) =
                         member_expr.object.get_inner_expression()
                     else {
-                        return false;
+                        continue;
                     };
 
                     object_identifier.name == "Vue" && member_expr.property.name == "component"
                 }
-                _ => false,
+                _ => continue,
+            } {
+                has_define_component = true;
             }
-        });
+        }
 
         #[expect(clippy::cast_possible_truncation)]
         let span = Span::sized(
@@ -93,24 +100,7 @@ impl Rule for RequireDefaultExport {
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
         // only on vue files
-        if ctx.file_extension().is_none_or(|ext| ext != "vue") {
-            return false;
-        }
-
-        // only with `<script>`, not `<script setup>`
-        if ctx.frameworks_options() == FrameworkOptions::VueSetup {
-            return false;
-        }
-
-        // only when no default export is present
-        if ctx.module_record().export_default.is_some() {
-            return false;
-        }
-
-        // only when no `<script setup>` is present in the current file
-        !ctx.other_file_hosts()
-            .iter()
-            .any(|host| host.framework_options() == FrameworkOptions::VueSetup)
+        ctx.frameworks().is_vue()
     }
 }
 
