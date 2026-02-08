@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   292 | 100.0% |
-| Fully passing     |   292 | 100.0% |
-| Partially passing |     0 |   0.0% |
+| Fully passing     |   286 |  97.9% |
+| Partially passing |     6 |   2.1% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,14 +18,13 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33159 | 100.0% |
-| Passing     | 32881 |  99.2% |
-| Failing     |     0 |   0.0% |
+| Passing     | 32869 |  99.1% |
+| Failing     |    12 |   0.0% |
 | Skipped     |   278 |   0.8% |
 
 ## Fully Passing Rules
 
 - `accessor-pairs` (302 tests)
-- `array-bracket-newline` (209 tests)
 - `array-bracket-spacing` (143 tests) (4 skipped)
 - `array-callback-return` (216 tests)
 - `array-element-newline` (155 tests)
@@ -61,7 +60,6 @@
 - `func-names` (109 tests)
 - `func-style` (120 tests)
 - `function-call-argument-newline` (58 tests)
-- `function-paren-newline` (177 tests) (2 skipped)
 - `generator-star-spacing` (201 tests)
 - `getter-return` (70 tests)
 - `global-require` (22 tests)
@@ -238,7 +236,6 @@
 - `no-unsafe-negation` (29 tests)
 - `no-unsafe-optional-chaining` (187 tests)
 - `no-unused-expressions` (124 tests)
-- `no-unused-labels` (26 tests)
 - `no-unused-private-class-members` (39 tests)
 - `no-unused-vars` (448 tests) (21 skipped)
 - `no-use-before-define` (354 tests) (1 skipped)
@@ -258,7 +255,6 @@
 - `no-whitespace-before-property` (192 tests)
 - `no-with` (2 tests)
 - `nonblock-statement-body-position` (48 tests)
-- `object-curly-newline` (144 tests) (8 skipped)
 - `object-curly-spacing` (178 tests) (2 skipped)
 - `object-property-newline` (75 tests)
 - `object-shorthand` (262 tests) (2 skipped)
@@ -299,7 +295,6 @@
 - `sort-vars` (61 tests)
 - `space-before-blocks` (161 tests) (2 skipped)
 - `space-before-function-paren` (75 tests) (1 skipped)
-- `space-in-parens` (139 tests)
 - `space-infix-ops` (74 tests) (7 skipped)
 - `space-unary-ops` (112 tests)
 - `spaced-comment` (99 tests)
@@ -308,7 +303,6 @@
 - `symbol-description` (8 tests)
 - `template-curly-spacing` (57 tests)
 - `template-tag-spacing` (63 tests)
-- `unicode-bom` (7 tests)
 - `use-isnan` (214 tests)
 - `valid-typeof` (54 tests)
 - `vars-on-top` (61 tests)
@@ -319,4 +313,522 @@
 
 ## Rules with Failures
 
-No rules with failures
+- `array-bracket-newline` - 206 / 209 (98.6%)
+- `function-paren-newline` - 176 / 177 (99.4%)
+- `no-unused-labels` - 23 / 26 (88.5%)
+- `object-curly-newline` - 143 / 144 (99.3%)
+- `space-in-parens` - 137 / 139 (98.6%)
+- `unicode-bom` - 5 / 7 (71.4%)
+
+## Rules with Failures Detail
+
+### `array-bracket-newline`
+
+Pass: 206 / 209 (98.6%)
+Fail: 3 / 209 (1.4%)
+Skip: 0 / 209 (0.0%)
+
+#### array-bracket-newline > invalid
+
+```js
+var foo = [];
+```
+
+```json
+{
+  "output": "var foo = [\n];",
+  "options": [
+    "always"
+  ],
+  "errors": [
+    {
+      "messageId": "missingOpeningLinebreak",
+      "line": 1,
+      "column": 11,
+      "endLine": 1,
+      "endColumn": 12
+    },
+    {
+      "messageId": "missingClosingLinebreak",
+      "line": 1,
+      "column": 12,
+      "endLine": 1,
+      "endColumn": 13
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'var foo = [\n\n];'
+- 'var foo = [\n];'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### array-bracket-newline > invalid
+
+```js
+var foo = [];
+```
+
+```json
+{
+  "output": "var foo = [\n];",
+  "options": [
+    {
+      "minItems": 0
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "missingOpeningLinebreak",
+      "line": 1,
+      "column": 11
+    },
+    {
+      "messageId": "missingClosingLinebreak",
+      "line": 1,
+      "column": 12
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'var foo = [\n\n];'
+- 'var foo = [\n];'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### array-bracket-newline > invalid
+
+```js
+var [] = foo;
+```
+
+```json
+{
+  "output": "var [\n] = foo;",
+  "options": [
+    "always"
+  ],
+  "languageOptions": {
+    "ecmaVersion": 6
+  },
+  "errors": [
+    {
+      "messageId": "missingOpeningLinebreak",
+      "line": 1,
+      "column": 5
+    },
+    {
+      "messageId": "missingClosingLinebreak",
+      "line": 1,
+      "column": 6
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'var [\n\n] = foo;'
+- 'var [\n] = foo;'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `function-paren-newline`
+
+Pass: 174 / 177 (98.3%)
+Fail: 1 / 177 (0.6%)
+Skip: 2 / 177 (1.1%)
+
+#### function-paren-newline > invalid
+
+```js
+function baz() {}
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "script"
+  },
+  "output": "function baz(\n) {}",
+  "options": [
+    "always"
+  ],
+  "errors": [
+    {
+      "messageId": "expectedAfter"
+    },
+    {
+      "messageId": "expectedBefore"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'function baz(\n\n) {}'
+- 'function baz(\n) {}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `no-unused-labels`
+
+Pass: 23 / 26 (88.5%)
+Fail: 3 / 26 (11.5%)
+Skip: 0 / 26 (0.0%)
+
+#### no-unused-labels > invalid
+
+```js
+A: B: C: 'foo'
+```
+
+```json
+{
+  "output": "B: C: 'foo'",
+  "errors": [
+    {
+      "messageId": "unused"
+    },
+    {
+      "messageId": "unused"
+    },
+    {
+      "messageId": "unused"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ "C: 'foo'"
+- "B: C: 'foo'"
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### no-unused-labels > invalid
+
+```js
+A: B: C: D: 'foo'
+```
+
+```json
+{
+  "output": "B: D: 'foo'",
+  "errors": [
+    {
+      "messageId": "unused"
+    },
+    {
+      "messageId": "unused"
+    },
+    {
+      "messageId": "unused"
+    },
+    {
+      "messageId": "unused"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ "D: 'foo'"
+- "B: D: 'foo'"
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### no-unused-labels > invalid
+
+```js
+A: B: C: D: E: 'foo'
+```
+
+```json
+{
+  "output": "B: D: E: 'foo'",
+  "errors": [
+    {
+      "messageId": "unused"
+    },
+    {
+      "messageId": "unused"
+    },
+    {
+      "messageId": "unused"
+    },
+    {
+      "messageId": "unused"
+    },
+    {
+      "messageId": "unused"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ "E: 'foo'"
+- "B: D: E: 'foo'"
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `object-curly-newline`
+
+Pass: 135 / 144 (93.8%)
+Fail: 1 / 144 (0.7%)
+Skip: 8 / 144 (5.6%)
+
+#### object-curly-newline > invalid
+
+```js
+var a = {};
+```
+
+```json
+{
+  "languageOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "output": "var a = {\n};",
+  "options": [
+    "always"
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 9,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 1,
+      "column": 10,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'var a = {\n\n};'
+- 'var a = {\n};'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `space-in-parens`
+
+Pass: 137 / 139 (98.6%)
+Fail: 2 / 139 (1.4%)
+Skip: 0 / 139 (0.0%)
+
+#### space-in-parens > invalid
+
+```js
+foo()
+```
+
+```json
+{
+  "output": "foo( )",
+  "options": [
+    "never",
+    {
+      "exceptions": [
+        "empty"
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "missingOpeningSpace",
+      "line": 1,
+      "column": 4
+    },
+    {
+      "messageId": "missingClosingSpace",
+      "line": 1,
+      "column": 5
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'foo(  )'
+- 'foo( )'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### space-in-parens > invalid
+
+```js
+foo( bar() )
+```
+
+```json
+{
+  "output": "foo(bar( ))",
+  "options": [
+    "never",
+    {
+      "exceptions": [
+        "empty"
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "rejectedOpeningSpace",
+      "line": 1,
+      "column": 5
+    },
+    {
+      "messageId": "missingOpeningSpace",
+      "line": 1,
+      "column": 9
+    },
+    {
+      "messageId": "missingClosingSpace",
+      "line": 1,
+      "column": 10
+    },
+    {
+      "messageId": "rejectedClosingSpace",
+      "line": 1,
+      "column": 11
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'foo(bar(  ))'
+- 'foo(bar( ))'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `unicode-bom`
+
+Pass: 5 / 7 (71.4%)
+Fail: 2 / 7 (28.6%)
+Skip: 0 / 7 (0.0%)
+
+#### unicode-bom > invalid
+
+```js
+﻿ var a = 123;
+```
+
+```json
+{
+  "output": " var a = 123;",
+  "errors": [
+    {
+      "messageId": "unexpected",
+      "line": 1,
+      "column": 1
+    }
+  ]
+}
+```
+
+Error: Failed to apply fixes
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### unicode-bom > invalid
+
+```js
+﻿ var a = 123;
+```
+
+```json
+{
+  "output": " var a = 123;",
+  "options": [
+    "never"
+  ],
+  "errors": [
+    {
+      "messageId": "unexpected",
+      "line": 1,
+      "column": 1
+    }
+  ]
+}
+```
+
+Error: Failed to apply fixes
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+

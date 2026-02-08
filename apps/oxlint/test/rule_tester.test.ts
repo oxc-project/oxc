@@ -55,6 +55,7 @@ function runCases(): (Error | null)[] {
   return errors;
 }
 
+// Simple rule which flags identifiers named "foo"
 const simpleRule: Rule = {
   create(context) {
     return {
@@ -65,6 +66,7 @@ const simpleRule: Rule = {
   },
 };
 
+// Rule which flags all identifiers, and uses message IDs to report messages
 const messageIdsRule: Rule = {
   meta: {
     messages: {
@@ -205,6 +207,7 @@ describe("RuleTester", () => {
             column: 4,
             endLine: 1,
             endColumn: 7,
+            fixes: null,
             suggestions: null
           }
         ]
@@ -222,6 +225,7 @@ describe("RuleTester", () => {
             column: 0,
             endLine: 1,
             endColumn: 3,
+            fixes: null,
             suggestions: null
           },
           {
@@ -234,6 +238,7 @@ describe("RuleTester", () => {
             column: 4,
             endLine: 1,
             endColumn: 7,
+            fixes: null,
             suggestions: null
           }
         ]
@@ -446,6 +451,7 @@ describe("RuleTester", () => {
               column: 4,
               endLine: 1,
               endColumn: 7,
+              fixes: null,
               suggestions: null
             }
           ]
@@ -776,6 +782,201 @@ describe("RuleTester", () => {
             [AssertionError: Detected duplicate test case],
           ]
         `);
+      });
+    });
+
+    describe("fixes", () => {
+      // Rule which flags identifiers named "foo", and provides a fix to rename them to "bar"
+      const fixRule: Rule = {
+        meta: {
+          fixable: "code",
+        },
+        create(context) {
+          return {
+            Identifier(node) {
+              if (node.name !== "foo") return;
+
+              context.report({
+                message: "No foo!",
+                node,
+                fix(fixer) {
+                  return fixer.replaceText(node, "bar");
+                },
+              });
+            },
+          };
+        },
+      };
+
+      describe("which are correct", () => {
+        it("with `output: null` when no fixes", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: null,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("without `output` when no fixes", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null]);
+        });
+
+        it("with `output` matching fixed code", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", fixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: "let bar;",
+                errors: 1,
+              },
+              {
+                code: "let foo = foo;",
+                output: "let bar = bar;",
+                errors: 2,
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null, null]);
+        });
+      });
+
+      describe("which are incorrect", () => {
+        it("with `output` not matching fixed code", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", fixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: "let qux;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [AssertionError: Output is incorrect
+          + actual - expected
+
+          + 'let bar;'
+          - 'let qux;'
+                 ^
+          ],
+          ]
+        `);
+        });
+
+        it("with `output: null` when there are fixes", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", fixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: null,
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [AssertionError: Expected no autofixes to be suggested
+          + actual - expected
+
+          + 'let bar;'
+          - 'let foo;'
+                 ^
+          ],
+          ]
+        `);
+        });
+
+        it("without `output` when there are fixes", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", fixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [AssertionError: The rule fixed the code. Please add \`output\` property.
+          + actual - expected
+
+          + 'let bar;'
+          - 'let foo;'
+                 ^
+          ],
+          ]
+        `);
+        });
+
+        it("with `output` same as `code` (fixable rule)", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", fixRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [AssertionError: Output is incorrect
+          + actual - expected
+
+          + 'let bar;'
+          - 'let foo;'
+                 ^
+          ],
+          ]
+        `);
+        });
+
+        it("with `output` same as `code` (non-fixable rule)", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [],
+            invalid: [
+              {
+                code: "let foo;",
+                output: "let foo;",
+                errors: 1,
+              },
+            ],
+          });
+          expect(runCases()).toMatchInlineSnapshot(`
+          [
+            [AssertionError: Test property \`output\` matches \`code\`. If no autofix is expected, set output to \`null\`.],
+          ]
+        `);
+        });
       });
     });
   });
