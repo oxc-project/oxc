@@ -1,12 +1,11 @@
+use crate::LintContext;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectPropertyKind,
+        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, Statement,
     },
 };
-
-use crate::{ContextSubHost, LintContext};
+use oxc_semantic::ScopeId;
 
 /// Check if any of the other contexts has a default export with the `name` property.
 ///
@@ -21,29 +20,26 @@ use crate::{ContextSubHost, LintContext};
 /// ```
 ///
 /// Check if it has `emits` property with `has_default_exports_property(others, "emits")`
-pub fn has_default_exports_property(others: &Vec<&ContextSubHost<'_>>, check_name: &str) -> bool {
-    for host in others {
-        for other_node in host.semantic().nodes() {
-            let AstKind::ExportDefaultDeclaration(export) = other_node.kind() else {
-                continue;
+pub fn has_default_exports_property(ctx: &LintContext<'_>, check_name: &str) -> bool {
+    for other_node in ctx.semantic().nodes() {
+        let AstKind::ExportDefaultDeclaration(export) = other_node.kind() else {
+            continue;
+        };
+
+        let ExportDefaultDeclarationKind::ObjectExpression(export_obj) = &export.declaration else {
+            continue;
+        };
+
+        let has_emits_exports = export_obj.properties.iter().any(|property| {
+            let ObjectPropertyKind::ObjectProperty(property) = property else {
+                return false;
             };
 
-            let ExportDefaultDeclarationKind::ObjectExpression(export_obj) = &export.declaration
-            else {
-                continue;
-            };
+            property.key.name().is_some_and(|name| name == check_name)
+        });
 
-            let has_emits_exports = export_obj.properties.iter().any(|property| {
-                let ObjectPropertyKind::ObjectProperty(property) = property else {
-                    return false;
-                };
-
-                property.key.name().is_some_and(|name| name == check_name)
-            });
-
-            if has_emits_exports {
-                return true;
-            }
+        if has_emits_exports {
+            return true;
         }
     }
 
@@ -94,24 +90,50 @@ pub fn check_define_macro_call_expression(
     match expression {
         Expression::ArrayExpression(_) | Expression::ObjectExpression(_) => None,
         Expression::Identifier(identifier) => {
-            if !is_non_local_reference(identifier, ctx) {
-                return Some(DefineMacroProblem::ReferencingLocally);
+            // Check if the identifier is defined in the <script setup> block
+            if ctx.scoping().get_binding(get_vue_setup_scope_id(ctx), identifier.name).is_some() {
+                Some(DefineMacroProblem::ReferencingLocally)
+            } else {
+                None
             }
-            None
         }
         _ => Some(DefineMacroProblem::EventsNotDefined),
     }
 }
 
-fn is_non_local_reference(identifier: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    if let Some(symbol_id) = ctx.semantic().scoping().get_root_binding(identifier.name) {
-        return matches!(
-            ctx.semantic().symbol_declaration(symbol_id).kind(),
-            AstKind::ImportSpecifier(_)
-        );
+/// Get the scope ID of the Vue setup block (last top-level BlockStatement).
+///
+/// According to <https://github.com/liangmiQwQ/vue-oxc-toolkit/blob/main/MAPPING.md>,
+/// In vue-oxc-toolkit compiled AST, the last top-level BlockStatement contains
+/// the `<script setup>` code.
+pub fn get_vue_setup_scope_id(ctx: &LintContext<'_>) -> ScopeId {
+    let program = ctx.nodes().program();
+
+    // Find the last top-level BlockStatement
+    let Statement::BlockStatement(block) = program.body.last().unwrap() else {
+        unreachable!();
+    };
+
+    block.scope_id.get().unwrap()
+}
+
+/// Check if a scope is within the Vue `<script setup>` block.
+///
+/// Uses scope ancestry to determine if the scope is a descendant
+/// of the setup block's scope.
+pub fn is_in_vue_setup(ctx: &LintContext<'_>, scope_id: ScopeId) -> bool {
+    let setup_scope_id = get_vue_setup_scope_id(ctx);
+
+    // Check if scope_id is setup_scope_id or a descendant
+    let scopes = ctx.scoping();
+    let mut current_scope = Some(scope_id);
+
+    while let Some(current) = current_scope {
+        if current == setup_scope_id {
+            return true;
+        }
+        current_scope = scopes.scope_parent_id(current);
     }
 
-    // variables outside the current `<script>` block are valid.
-    // This is the same for unresolved variables.
-    true
+    false
 }
