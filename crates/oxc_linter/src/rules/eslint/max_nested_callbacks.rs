@@ -4,13 +4,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Semantic;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
     AstNode,
     ast_util::{is_function_node, iter_outer_expressions},
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn max_nested_callbacks_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
@@ -19,8 +20,8 @@ fn max_nested_callbacks_diagnostic(num: usize, max: usize, span: Span) -> OxcDia
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxNestedCallbacks {
     /// The `max` enforces a maximum depth that callbacks can be nested.
     max: usize,
@@ -112,23 +113,17 @@ impl Rule for MaxNestedCallbacks {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value.get(0);
-        let max = if let Some(max) = config
+        if let Some(max) = value
+            .get(0)
             .and_then(Value::as_number)
             .and_then(serde_json::Number::as_u64)
             .and_then(|v| usize::try_from(v).ok())
         {
-            max
+            Ok(Self { max })
         } else {
-            config
-                .and_then(|config| config.get("max"))
-                .and_then(Value::as_number)
-                .and_then(serde_json::Number::as_u64)
-                .map_or(DEFAULT_MAX_NESTED_CALLBACKS, |v| {
-                    usize::try_from(v).unwrap_or(DEFAULT_MAX_NESTED_CALLBACKS)
-                })
-        };
-        Ok(Self { max })
+            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+                .map(DefaultRuleConfig::into_inner)
+        }
     }
 }
 
