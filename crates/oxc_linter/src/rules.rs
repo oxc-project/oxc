@@ -605,6 +605,7 @@ pub(crate) mod oxc {
     pub mod no_this_in_exported_function;
     pub mod number_arg_out_of_range;
     pub mod only_used_in_recursion;
+    pub mod prefer_direct_import;
     pub mod uninvoked_array_callback;
 }
 
