@@ -6,7 +6,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
 
 fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
@@ -16,7 +16,19 @@ fn new_cap_diagnostic(span: Span, cap: &GetCapResult) -> OxcDiagnostic {
         "A function with a name starting with an uppercase letter should only be used as a constructor."
     };
 
-    OxcDiagnostic::warn(msg).with_label(span)
+    let label = if *cap == GetCapResult::Lower {
+        "This should be uppercase"
+    } else {
+        "This should be called with `new`"
+    };
+
+    let help = if *cap == GetCapResult::Lower {
+        "Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized."
+    } else {
+        "Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new."
+    };
+
+    OxcDiagnostic::warn(msg).with_help(help).with_label(span.label(label))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -465,7 +477,8 @@ impl Rule for NewCap {
             AstKind::NewExpression(expression) if self.new_is_cap => {
                 let callee = expression.callee.without_parentheses();
 
-                let Some(short_name) = &extract_name_from_expression(callee) else {
+                let Some((short_name, short_name_span)) = &extract_name_from_expression(callee)
+                else {
                     return;
                 };
 
@@ -485,13 +498,14 @@ impl Rule for NewCap {
                     || (!self.properties && short_name != name);
 
                 if !allowed {
-                    ctx.diagnostic(new_cap_diagnostic(callee.span(), capitalization));
+                    ctx.diagnostic(new_cap_diagnostic(*short_name_span, capitalization));
                 }
             }
             AstKind::CallExpression(expression) if self.cap_is_new => {
                 let callee = expression.callee.without_parentheses();
 
-                let Some(short_name) = &extract_name_from_expression(callee) else {
+                let Some((short_name, short_name_span)) = &extract_name_from_expression(callee)
+                else {
                     return;
                 };
 
@@ -514,7 +528,7 @@ impl Rule for NewCap {
                     || (!self.properties && short_name != name);
 
                 if !allowed {
-                    ctx.diagnostic(new_cap_diagnostic(callee.span(), capitalization));
+                    ctx.diagnostic(new_cap_diagnostic(*short_name_span, capitalization));
                 }
             }
             _ => (),
@@ -541,7 +555,7 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
             Some(prop_name)
         }
         Expression::ComputedMemberExpression(expression) => {
-            let prop_name = get_computed_member_name(expression)?;
+            let (prop_name, _) = get_computed_member_name(expression)?;
             let obj_name =
                 extract_name_deep_from_expression(expression.object.without_parentheses());
 
@@ -570,7 +584,7 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
                 Some(prop_name)
             }
             ChainElement::ComputedMemberExpression(expression) => {
-                let prop_name = get_computed_member_name(expression)?;
+                let (prop_name, _) = get_computed_member_name(expression)?;
                 let obj_name =
                     extract_name_deep_from_expression(expression.object.without_parentheses());
 
@@ -587,31 +601,37 @@ fn extract_name_deep_from_expression(expression: &Expression) -> Option<CompactS
     }
 }
 
-fn get_computed_member_name(computed_member: &ComputedMemberExpression) -> Option<CompactStr> {
+fn get_computed_member_name(
+    computed_member: &ComputedMemberExpression,
+) -> Option<(CompactStr, Span)> {
     let expression = computed_member.expression.without_parentheses();
 
     match &expression {
-        Expression::StringLiteral(lit) if !lit.value.is_empty() => Some(lit.value.as_ref().into()),
+        Expression::StringLiteral(lit) if !lit.value.is_empty() => {
+            Some((lit.value.as_ref().into(), lit.span))
+        }
         Expression::TemplateLiteral(lit)
             if lit.expressions.is_empty()
                 && lit.quasis.len() == 1
                 && !lit.quasis[0].value.raw.is_empty() =>
         {
-            Some(lit.quasis[0].value.raw.as_ref().into())
+            Some((lit.quasis[0].value.raw.as_ref().into(), lit.span))
         }
-        Expression::RegExpLiteral(lit) => lit.raw.as_ref().map(|&x| x.into_compact_str()),
+        Expression::RegExpLiteral(lit) => {
+            lit.raw.as_ref().map(|&x| (x.into_compact_str(), lit.span))
+        }
         _ => None,
     }
 }
 
-fn extract_name_from_expression(expression: &Expression) -> Option<CompactStr> {
+fn extract_name_from_expression(expression: &Expression) -> Option<(CompactStr, Span)> {
     if let Some(identifier) = expression.get_identifier_reference() {
-        return Some(identifier.name.into());
+        return Some((identifier.name.into(), identifier.span));
     }
 
     match expression.without_parentheses() {
         Expression::StaticMemberExpression(expression) => {
-            Some(expression.property.name.into_compact_str())
+            Some((expression.property.name.into_compact_str(), expression.property.span))
         }
         Expression::ComputedMemberExpression(expression) => get_computed_member_name(expression),
         Expression::ChainExpression(chain) => match &chain.expression {
@@ -620,7 +640,7 @@ fn extract_name_from_expression(expression: &Expression) -> Option<CompactStr> {
                 extract_name_from_expression(&non_null.expression)
             }
             ChainElement::StaticMemberExpression(expression) => {
-                Some(expression.property.name.into_compact_str())
+                Some((expression.property.name.into_compact_str(), expression.property.span))
             }
             ChainElement::ComputedMemberExpression(expression) => {
                 get_computed_member_name(expression)

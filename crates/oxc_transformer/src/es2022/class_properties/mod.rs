@@ -206,10 +206,7 @@ use oxc_span::Ident;
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 mod class;
 mod class_bindings;
@@ -239,7 +236,7 @@ pub struct ClassPropertiesOptions {
 /// See [module docs] for details.
 ///
 /// [module docs]: self
-pub struct ClassProperties<'a, 'ctx> {
+pub struct ClassProperties<'a> {
     // ----- Options -----
     //
     /// If `true`, set properties with `=`, instead of `_defineProperty` helper (loose option).
@@ -252,8 +249,6 @@ pub struct ClassProperties<'a, 'ctx> {
     ///
     /// This option is controlled by [`crate::TypeScriptOptions::remove_class_fields_without_initializer`].
     remove_class_fields_without_initializer: bool,
-
-    ctx: &'ctx TransformCtx<'a>,
 
     // ----- State used during all phases of transform -----
     //
@@ -288,26 +283,18 @@ pub struct ClassProperties<'a, 'ctx> {
     insert_after_stmts: Vec<Statement<'a>>,
 }
 
-impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
+impl ClassProperties<'_> {
     /// Create `ClassProperties` transformer
     pub fn new(
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
         remove_class_fields_without_initializer: bool,
-        ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
-        // TODO: Raise error if these 2 options are inconsistent
-        let set_public_class_fields = options.loose || ctx.assumptions.set_public_class_fields;
-        // TODO: Raise error if these 2 options are inconsistent
-        let private_fields_as_properties =
-            options.loose || ctx.assumptions.private_fields_as_properties;
-
         Self {
-            set_public_class_fields,
-            private_fields_as_properties,
+            set_public_class_fields: options.loose,
+            private_fields_as_properties: options.loose,
             transform_static_blocks,
             remove_class_fields_without_initializer,
-            ctx,
             classes_stack: ClassesStack::new(),
             private_field_count: 0,
             // `Vec`s and `FxHashMap`s which are reused for every class being transformed
@@ -319,7 +306,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a> {
     #[expect(clippy::inline_always)]
     #[inline(always)] // Because this is a no-op in release mode
     fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -327,6 +314,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassProperties<'a, '_> {
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        // Combine loose option with assumptions (assumptions don't change, so this is idempotent)
+        self.set_public_class_fields =
+            self.set_public_class_fields || ctx.state.assumptions.set_public_class_fields;
+        self.private_fields_as_properties =
+            self.private_fields_as_properties || ctx.state.assumptions.private_fields_as_properties;
+
         self.transform_class_body_on_entry(body, ctx);
     }
 

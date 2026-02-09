@@ -37,7 +37,22 @@ const group: TestGroup = {
     if (
       ruleName === "no-invalid-this" &&
       code.includes("function (x, this: context) {") &&
-      err?.message === "Parsing failed"
+      err.message === "Parsing failed"
+    ) {
+      return true;
+    }
+
+    // Oxlint's suggestion message differs from ESLint's, but in a completely cosmetic way
+    if (
+      ruleName === "prefer-regex-literals" &&
+      code === "new RegExp(/a/ig, 'g');" &&
+      err.message.startsWith(
+        "Suggestion at index 1: Hydrated message " +
+          `"Replace with a regular expression literal with flags 'ig'."` +
+          " does not match " +
+          `"Replace with a regular expression literal with flags 'gi'."` +
+          "\n",
+      )
     ) {
       return true;
     }

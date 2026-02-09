@@ -11,8 +11,10 @@ use serde_json::Value;
 
 use crate::{
     AstNode,
+    ast_util::leftmost_identifier_reference,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::is_import_symbol,
 };
 
 fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
@@ -97,6 +99,11 @@ impl Rule for NoArraySort {
         if static_property_name != "sort" {
             return;
         }
+        if leftmost_identifier_reference(member_expr.object())
+            .is_ok_and(|ident| is_import_symbol(ident, "effect", "Chunk", ctx))
+        {
+            return;
+        }
 
         let is_spread = match member_expr.object() {
             Expression::ArrayExpression(array) => {
@@ -143,6 +150,8 @@ fn test() {
         ("sorted = array.sort(...[])", None),
         ("sorted = array.sort(...[compareFn])", None),
         ("sorted = array.sort(compareFn, extraArgument)", None),
+        (r#"import { Chunk } from "effect"; const sorted = Chunk.sort(compareFn)"#, None),
+        (r#"import { Chunk as C } from "effect"; const sorted = C.sort(compareFn)"#, None),
     ];
 
     let fail = vec![

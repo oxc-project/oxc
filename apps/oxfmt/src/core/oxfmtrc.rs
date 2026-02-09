@@ -866,8 +866,8 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
 static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     // "html",
     // "vue",
-    "markdown",
-    "mdx",
+    // "markdown",
+    // "mdx",
 };
 
 /// Finalizes external options by adding plugin-specific flags based on the formatting strategy.
@@ -942,6 +942,9 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
                 oxfmt_plugin_options.insert(key.to_string(), value.clone());
             }
         }
+
+        // In embedded contexts, final newline is useless
+        oxfmt_plugin_options.insert("insertFinalNewline".to_string(), false.into());
 
         if let Ok(json_str) = serde_json::to_string(&Value::Object(oxfmt_plugin_options)) {
             obj.insert("_oxfmtPluginOptionsJson".to_string(), Value::String(json_str));

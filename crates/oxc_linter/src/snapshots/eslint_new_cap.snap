@@ -5,137 +5,185 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
    ╭─[new_cap.tsx:1:13]
  1 │ var x = new c();
-   ·             ─
+   ·             ┬
+   ·             ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
    ╭─[new_cap.tsx:1:13]
  1 │ var x = new φ;
-   ·             ─
+   ·             ┬
+   ·             ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
-   ╭─[new_cap.tsx:1:13]
+   ╭─[new_cap.tsx:1:17]
  1 │ var x = new a.b.c;
-   ·             ─────
+   ·                 ┬
+   ·                 ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
-   ╭─[new_cap.tsx:1:13]
+   ╭─[new_cap.tsx:1:17]
  1 │ var x = new a.b['c'];
-   ·             ────────
+   ·                 ─┬─
+   ·                  ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
    ╭─[new_cap.tsx:1:9]
  1 │ var b = Foo();
-   ·         ───
+   ·         ─┬─
+   ·          ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
-   ╭─[new_cap.tsx:1:9]
+   ╭─[new_cap.tsx:1:11]
  1 │ var b = a.Foo();
-   ·         ─────
+   ·           ─┬─
+   ·            ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
-   ╭─[new_cap.tsx:1:9]
+   ╭─[new_cap.tsx:1:11]
  1 │ var b = a['Foo']();
-   ·         ────────
+   ·           ──┬──
+   ·             ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
-   ╭─[new_cap.tsx:1:9]
+   ╭─[new_cap.tsx:1:16]
  1 │ var b = a.Date.UTC();
-   ·         ──────────
+   ·                ─┬─
+   ·                 ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
    ╭─[new_cap.tsx:1:9]
  1 │ var b = UTC();
-   ·         ───
+   ·         ─┬─
+   ·          ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
-   ╭─[new_cap.tsx:1:9]
+   ╭─[new_cap.tsx:1:11]
  1 │ var a = B.C();
-   ·         ───
+   ·           ┬
+   ·           ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
-   ╭─[new_cap.tsx:1:9]
- 1 │ ╭─▶ var a = B
- 2 │ ╰─▶             .C();
+   ╭─[new_cap.tsx:2:5]
+ 1 │ var a = B
+ 2 │             .C();
+   ·              ┬
+   ·              ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
-   ╭─[new_cap.tsx:1:13]
+   ╭─[new_cap.tsx:1:15]
  1 │ var a = new B.c();
-   ·             ───
+   ·               ┬
+   ·               ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
-   ╭─[new_cap.tsx:1:13]
- 1 │ ╭─▶ var a = new B.
- 2 │ ╰─▶             c();
+   ╭─[new_cap.tsx:2:4]
+ 1 │ var a = new B.
+ 2 │             c();
+   ·             ┬
+   ·             ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
    ╭─[new_cap.tsx:1:13]
  1 │ var a = new c();
-   ·             ─
+   ·             ┬
+   ·             ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
-   ╭─[new_cap.tsx:1:13]
+   ╭─[new_cap.tsx:1:18]
  1 │ var a = new b[ ( 'foo' ) ]();
-   ·             ──────────────
+   ·                  ──┬──
+   ·                    ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
-   ╭─[new_cap.tsx:1:13]
+   ╭─[new_cap.tsx:1:15]
  1 │ var a = new b[`foo`];
-   ·             ────────
+   ·               ──┬──
+   ·                 ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
-   ╭─[new_cap.tsx:1:9]
+   ╭─[new_cap.tsx:1:13]
  1 │ var x = Foo.Bar(42);
-   ·         ───────
+   ·             ─┬─
+   ·              ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
-   ╭─[new_cap.tsx:1:9]
+   ╭─[new_cap.tsx:1:13]
  1 │ var x = Bar.Foo(42);
-   ·         ───────
+   ·             ─┬─
+   ·              ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
-   ╭─[new_cap.tsx:1:13]
+   ╭─[new_cap.tsx:1:17]
  1 │ var x = new foo.bar(42);
-   ·             ───────
+   ·                 ─┬─
+   ·                  ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
-   ╭─[new_cap.tsx:1:13]
+   ╭─[new_cap.tsx:1:17]
  1 │ var x = new bar.foo(42);
-   ·             ───────
+   ·                 ─┬─
+   ·                  ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
-   ╭─[new_cap.tsx:1:6]
+   ╭─[new_cap.tsx:1:11]
  1 │ new (foo?.bar)();
-   ·      ────────
+   ·           ─┬─
+   ·            ╰── This should be uppercase
    ╰────
+  help: Capitalize the first letter of the constructor name, or add it to the exceptions list if it should not be capitalized.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
-   ╭─[new_cap.tsx:1:1]
+   ╭─[new_cap.tsx:1:6]
  1 │ foo?.Bar();
-   · ────────
+   ·      ─┬─
+   ·       ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.
 
   ⚠ eslint(new-cap): A function with a name starting with an uppercase letter should only be used as a constructor.
-   ╭─[new_cap.tsx:1:2]
+   ╭─[new_cap.tsx:1:7]
  1 │ (foo?.Bar)();
-   ·  ────────
+   ·       ─┬─
+   ·        ╰── This should be called with `new`
    ╰────
+  help: Use the new operator when calling this function, or add it to the exceptions list if it should not be called with new.

@@ -3,22 +3,6 @@
 
 # stdout
 ```
-  x Error running JS plugin.
-  | File path: <fixture>/files/range_end_negative.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 163
-
-  x Error running JS plugin.
-  | File path: <fixture>/files/range_end_too_large.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 171
-
-  x Error running JS plugin.
-  | File path: <fixture>/files/range_start_negative.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 157
-
-  x Error running JS plugin.
-  | File path: <fixture>/files/range_start_too_large.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 165
-
   x suggestions-plugin(suggestions): Replace "a" with "daddy"
    ,-[files/bom.js:1:4]
  1 | ﻿a = c;
@@ -72,6 +56,74 @@
    ,-[files/bom_and_unicode.js:3:5]
  2 | // 😀🤪😆😎🤮
  3 | g = b
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): Replace "a" with "daddy"
+   ,-[files/bom_remove.js:1:4]
+ 1 | ﻿a = c;
+   : ^
+ 2 | d = b
+   `----
+
+  x suggestions-plugin(suggestions): Remove BOM
+   ,-[files/bom_remove.js:1:4]
+ 1 | ,-> ﻿a = c;
+ 2 | `-> d = b
+   `----
+
+  x suggestions-plugin(suggestions): Prefix "c" with "magi"
+   ,-[files/bom_remove.js:1:8]
+ 1 | ﻿a = c;
+   :     ^
+ 2 | d = b
+   `----
+
+  x suggestions-plugin(suggestions): Prefix "d" with "damne"
+   ,-[files/bom_remove.js:2:1]
+ 1 | ﻿a = c;
+ 2 | d = b
+   : ^
+   `----
+
+  x suggestions-plugin(suggestions): Replace "b" with "abacus"
+   ,-[files/bom_remove.js:2:5]
+ 1 | ﻿a = c;
+ 2 | d = b
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): Replace "a" with "daddy"
+   ,-[files/bom_remove2.js:1:4]
+ 1 | ﻿a = c;
+   : ^
+ 2 | d = b
+   `----
+
+  x suggestions-plugin(suggestions): Remove BOM multiple
+   ,-[files/bom_remove2.js:1:4]
+ 1 | ,-> ﻿a = c;
+ 2 | `-> d = b
+   `----
+
+  x suggestions-plugin(suggestions): Prefix "c" with "magi"
+   ,-[files/bom_remove2.js:1:8]
+ 1 | ﻿a = c;
+   :     ^
+ 2 | d = b
+   `----
+
+  x suggestions-plugin(suggestions): Prefix "d" with "damne"
+   ,-[files/bom_remove2.js:2:1]
+ 1 | ﻿a = c;
+ 2 | d = b
+   : ^
+   `----
+
+  x suggestions-plugin(suggestions): Replace "b" with "abacus"
+   ,-[files/bom_remove2.js:2:5]
+ 1 | ﻿a = c;
+ 2 | d = b
    :     ^
    `----
 
@@ -177,6 +229,18 @@
     : ^^^^^^^^^
     `----
 
+  x suggestions-plugin(suggestions): end negative
+   ,-[files/range_end_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): end negative multiple
+   ,-[files/range_end_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
   x suggestions-plugin(suggestions): end out of bounds
    ,-[files/range_end_out_of_bounds.js:1:5]
  1 | let x;
@@ -189,6 +253,18 @@
    :     ^
    `----
 
+  x suggestions-plugin(suggestions): end too large
+   ,-[files/range_end_too_large.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): end too large multiple
+   ,-[files/range_end_too_large.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
   x suggestions-plugin(suggestions): start after end
    ,-[files/range_start_after_end.js:1:5]
  1 | let x;
@@ -197,6 +273,30 @@
 
   x suggestions-plugin(suggestions): start after end multiple
    ,-[files/range_start_after_end.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): start negative
+   ,-[files/range_start_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): start negative multiple
+   ,-[files/range_start_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): start too large
+   ,-[files/range_start_too_large.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x suggestions-plugin(suggestions): start too large multiple
+   ,-[files/range_start_too_large.js:1:5]
  1 | let x;
    :     ^
    `----
@@ -229,8 +329,8 @@
    :     ^
    `----
 
-Found 0 warnings and 33 errors.
-Finished in Xms on 10 files with 1 rules using X threads.
+Found 0 warnings and 47 errors.
+Finished in Xms on 12 files with 1 rules using X threads.
 ```
 
 # stderr

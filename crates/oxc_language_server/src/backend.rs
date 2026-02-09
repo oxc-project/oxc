@@ -220,6 +220,7 @@ impl LanguageServer for Backend {
             };
 
             let known_files = self.file_system.read().await.keys();
+            // will only be filled when using push diagnostic model
             let mut new_diagnostics = Vec::new();
 
             for (index, worker) in needed_configurations.values().copied().enumerate() {
@@ -230,6 +231,11 @@ impl LanguageServer for Backend {
 
                 // run diagnostics for all known files in the workspace of the worker.
                 // This is necessary because the worker was not started before.
+                // On Pull diagnostic model, we will ask the client to refresh diagnostics instead of sending them all.
+                if capabilities.diagnostic_mode != DiagnosticMode::Push {
+                    continue;
+                }
+
                 for uri in &known_files {
                     // Check if this worker is the most specific one for this URI
                     let responsible_worker = Self::find_worker_for_uri(workers, uri);
@@ -252,6 +258,18 @@ impl LanguageServer for Backend {
 
             if !new_diagnostics.is_empty() {
                 self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
+            } else if capabilities.diagnostic_mode == DiagnosticMode::Pull
+                && !needed_configurations.is_empty()
+            {
+                debug_assert!(
+                    capabilities.refresh_diagnostics,
+                    "pull mode requires refresh diagnostics capability"
+                );
+
+                // In pull diagnostic model, we ask the client to refresh diagnostics
+                if let Err(err) = self.client.workspace_diagnostic_refresh().await {
+                    warn!("sending workspace/diagnostic/refresh failed: {err}");
+                }
             }
         }
 

@@ -89,11 +89,11 @@ declare_oxc_lint!(
     ///
     /// An example of an **incorrect** file path for this rule configured as `{"allTestPattern": "__tests__",  "pattern": ".*\.spec\.ts$"}`:
     ///
-    /// __tests__/2.ts
+    /// `__tests__/2.ts`
     ///
     /// An example of a **correct** file path for this rule configured as `{"allTestPattern": "__tests__",  "pattern": ".*\.spec\.ts$"}`:
     ///
-    /// __tests__/2.spec.ts
+    /// `__tests__/2.spec.ts`
     ///
     ConsistentTestFilename,
     vitest,

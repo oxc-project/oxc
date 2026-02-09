@@ -11,15 +11,9 @@ use oxc_syntax::{
 };
 use oxc_traverse::Traverse;
 
-use crate::{
-    TypeScriptOptions,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{TypeScriptOptions, context::TraverseCtx, state::TransformState};
 
-pub struct TypeScriptAnnotations<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-
+pub struct TypeScriptAnnotations<'a> {
     // Options
     only_remove_type_imports: bool,
 
@@ -33,8 +27,8 @@ pub struct TypeScriptAnnotations<'a, 'ctx> {
     jsx_fragment_import_name: String,
 }
 
-impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl TypeScriptAnnotations<'_> {
+    pub fn new(options: &TypeScriptOptions) -> Self {
         let jsx_element_import_name = if options.jsx_pragma.contains('.') {
             options.jsx_pragma.split('.').next().map(String::from).unwrap()
         } else {
@@ -48,7 +42,6 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
         };
 
         Self {
-            ctx,
             only_remove_type_imports: options.only_remove_type_imports,
             has_super_call: false,
             assignments: vec![],
@@ -60,7 +53,7 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;
@@ -164,7 +157,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
-        if no_modules_remaining && some_modules_deleted && self.ctx.module_imports.is_empty() {
+        if no_modules_remaining && some_modules_deleted && ctx.state.module_imports.is_empty() {
             let export_decl = Statement::ExportNamedDeclaration(
                 ctx.ast.plain_export_named_declaration(SPAN, ctx.ast.vec(), None),
             );
@@ -282,7 +275,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
                 }
                 _ => {
                     // This should be never hit until more syntax is added to the JavaScript/TypeScrips
-                    self.ctx.error(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
+                    ctx.state.error(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
                 }
             }
         }
@@ -397,12 +390,12 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
         }
 
         // Add assignments after super calls
-        self.ctx.statement_injector.insert_many_after(
-            stmt,
-            self.assignments
-                .iter()
-                .map(|assignment| assignment.create_this_property_assignment(ctx)),
-        );
+        let assignments: Vec<_> = self
+            .assignments
+            .iter()
+            .map(|assignment| assignment.create_this_property_assignment(ctx))
+            .collect();
+        ctx.state.statement_injector.insert_many_after(stmt, assignments);
         self.has_super_call = true;
     }
 
@@ -541,7 +534,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
     }
 }
 
-impl<'a> TypeScriptAnnotations<'a, '_> {
+impl<'a> TypeScriptAnnotations<'a> {
     /// Check if the given name is a JSX pragma or fragment pragma import
     /// and if the file contains JSX elements or fragments
     fn is_jsx_imports(&self, name: &str) -> bool {

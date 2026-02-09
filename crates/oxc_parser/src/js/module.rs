@@ -351,7 +351,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Assert if !self.cur_token().is_on_new_line() => WithClauseKeyword::Assert,
             _ => return None,
         };
-        self.bump_remap(keyword_kind);
+        self.advance(keyword_kind);
 
         let span = self.start_span();
         let opening_span = self.cur_token().span();
@@ -654,7 +654,7 @@ impl<'a> ParserImpl<'a> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
         let default_keyword_span = self.cur_token().span();
-        self.bump_remap(Kind::Default);
+        self.advance(Kind::Default);
         let declaration = self.parse_export_default_declaration_kind(decorators);
         let span = self.end_span(span);
         let export_default_decl = self.ast.alloc_export_default_declaration(span, declaration);

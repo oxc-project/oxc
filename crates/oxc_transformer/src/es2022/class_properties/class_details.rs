@@ -269,7 +269,7 @@ pub(super) struct ResolvedGetSetPrivateProp<'a, 'b> {
 }
 
 // Shortcut methods to get current class
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Get details of current class.
     pub(super) fn current_class(&self) -> &ClassDetails<'a> {
         self.classes_stack.last()

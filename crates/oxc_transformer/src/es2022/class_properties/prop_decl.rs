@@ -6,7 +6,9 @@ use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 
 use crate::{
-    common::helper_loader::Helper, context::TraverseCtx, utils::ast_builder::create_assignment,
+    common::helper_loader::{Helper, helper_call_expr},
+    context::TraverseCtx,
+    utils::ast_builder::create_assignment,
 };
 
 use super::{
@@ -15,7 +17,7 @@ use super::{
 };
 
 // Instance properties
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Convert instance property to initialization expression.
     /// Property `prop = 123;` -> Expression `this.prop = 123` or `_defineProperty(this, "prop", 123)`.
     pub(super) fn convert_instance_property(
@@ -85,12 +87,12 @@ impl<'a> ClassProperties<'a, '_> {
             Argument::from(value),
         ]);
         // TODO: Should this have span of original `PropertyDefinition`?
-        self.ctx.helper_call_expr(Helper::ClassPrivateFieldInitSpec, SPAN, arguments, ctx)
+        helper_call_expr(Helper::ClassPrivateFieldInitSpec, SPAN, arguments, ctx)
     }
 }
 
 // Static properties
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Convert static property to initialization expression.
     /// Property `static prop = 123;` -> Expression `C.prop = 123` or `_defineProperty(C, "prop", 123)`.
     pub(super) fn convert_static_property(
@@ -226,7 +228,7 @@ impl<'a> ClassProperties<'a, '_> {
 }
 
 // Used for both instance and static properties
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// `assignee.prop = value` or `_defineProperty(assignee, "prop", value)`
     /// `#[inline]` because the caller has been checked `self.set_public_class_fields`.
     /// After inlining, the two `self.set_public_class_fields` checks may be folded into one.
@@ -329,7 +331,7 @@ impl<'a> ClassProperties<'a, '_> {
             Argument::from(value),
         ]);
         // TODO: Should this have span of the original `PropertyDefinition`?
-        self.ctx.helper_call_expr(Helper::DefineProperty, SPAN, arguments, ctx)
+        helper_call_expr(Helper::DefineProperty, SPAN, arguments, ctx)
     }
 
     /// `Object.defineProperty(<assignee>, _prop, {writable: true, value: value})`

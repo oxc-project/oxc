@@ -14,8 +14,8 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
-    common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
+    common::helper_loader::{Helper, helper_call_expr},
+    context::TraverseCtx,
     utils::ast_builder::create_assignment,
 };
 
@@ -42,7 +42,7 @@ use super::{
 // Maybe force transform of static blocks if any static properties?
 // Or alternatively could insert static property initializers into static blocks.
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Perform first phase of transformation of class.
     ///
     /// This is the only entry point into the transform upon entering class body.
@@ -206,7 +206,7 @@ impl<'a> ClassProperties<'a, '_> {
                 // TODO(improve-on-babel): Inserting the temp var `var _Class` statement here is only
                 // to match Babel's output. It'd be simpler just to insert it at the end and get rid of
                 // `temp_var_is_created` that tracks whether it's done already or not.
-                self.ctx.var_declarations.insert_var(&temp_binding, ctx);
+                ctx.state.var_declarations.insert_var(&temp_binding, ctx.ast);
             }
             Some(temp_binding)
         } else {
@@ -454,7 +454,7 @@ impl<'a> ClassProperties<'a, '_> {
             if let Some(ident) = &class.id {
                 // Insert `var _Class` statement, if it wasn't already in entry phase
                 if !class_details.bindings.temp_var_is_created {
-                    self.ctx.var_declarations.insert_var(temp_binding, ctx);
+                    ctx.state.var_declarations.insert_var(temp_binding, ctx.ast);
                 }
 
                 // Insert `_Class = Class` after class.
@@ -482,60 +482,61 @@ impl<'a> ClassProperties<'a, '_> {
         };
 
         if !self.insert_before.is_empty() {
-            self.ctx.statement_injector.insert_many_before(
+            ctx.state.statement_injector.insert_many_before(
                 &stmt_address,
-                exprs_into_stmts(self.insert_before.drain(..), ctx),
+                exprs_into_stmts(self.insert_before.drain(..), ctx.ast),
             );
         }
 
         if let Some(private_props) = &class_details.private_props {
             if self.private_fields_as_properties {
-                let mut private_props = private_props
+                let props_to_init: Vec<_> = private_props
                     .iter()
                     .filter_map(|(&name, prop)| {
                         // TODO: Output `var _C_brand = new WeakSet();` for private instance method
                         if prop.is_method() || prop.is_accessor {
                             return None;
                         }
-
-                        // `var _prop = _classPrivateFieldLooseKey("prop");`
-                        let value = Self::create_private_prop_key_loose(name, self.ctx, ctx);
-                        Some(create_variable_declaration(&prop.binding, value, ctx))
+                        Some((name, prop.binding.clone()))
                     })
-                    .peekable();
-                if private_props.peek().is_some() {
-                    self.ctx.statement_injector.insert_many_before(&stmt_address, private_props);
+                    .collect();
+                if !props_to_init.is_empty() {
+                    let mut stmts = Vec::with_capacity(props_to_init.len());
+                    for (name, binding) in props_to_init {
+                        // `var _prop = _classPrivateFieldLooseKey("prop");`
+                        let value = Self::create_private_prop_key_loose(name, ctx);
+                        stmts.push(create_variable_declaration(&binding, value, ctx));
+                    }
+                    ctx.state.statement_injector.insert_many_before(&stmt_address, stmts);
                 }
             } else {
                 let mut weakmap_symbol_id = None;
                 let mut has_method = false;
-                let mut private_props = private_props
-                    .values()
-                    .filter_map(|prop| {
-                        if prop.is_static || (prop.is_method() && has_method) || prop.is_accessor {
-                            return None;
-                        }
-                        if prop.is_method() {
-                            // `var _C_brand = new WeakSet();`
-                            has_method = true;
-                            let binding = class_details.bindings.brand();
-                            let value = create_new_weakset(ctx);
-                            Some(create_variable_declaration(binding, value, ctx))
-                        } else {
-                            // `var _prop = new WeakMap();`
-                            let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
-                            Some(create_variable_declaration(&prop.binding, value, ctx))
-                        }
-                    })
-                    .peekable();
-                if private_props.peek().is_some() {
-                    self.ctx.statement_injector.insert_many_before(&stmt_address, private_props);
+                let mut stmts = Vec::new();
+                for prop in private_props.values() {
+                    if prop.is_static || (prop.is_method() && has_method) || prop.is_accessor {
+                        continue;
+                    }
+                    if prop.is_method() {
+                        // `var _C_brand = new WeakSet();`
+                        has_method = true;
+                        let binding = class_details.bindings.brand();
+                        let value = create_new_weakset(ctx);
+                        stmts.push(create_variable_declaration(binding, value, ctx));
+                    } else {
+                        // `var _prop = new WeakMap();`
+                        let value = create_new_weakmap(&mut weakmap_symbol_id, ctx);
+                        stmts.push(create_variable_declaration(&prop.binding, value, ctx));
+                    }
+                }
+                if !stmts.is_empty() {
+                    ctx.state.statement_injector.insert_many_before(&stmt_address, stmts);
                 }
             }
         }
 
         if !self.insert_after_stmts.is_empty() {
-            self.ctx
+            ctx.state
                 .statement_injector
                 .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
         }
@@ -650,10 +651,10 @@ impl<'a> ClassProperties<'a, '_> {
                     }
 
                     // Insert `var _prop;` declaration
-                    self.ctx.var_declarations.insert_var(&prop.binding, ctx);
+                    ctx.state.var_declarations.insert_var(&prop.binding, ctx.ast);
 
                     // `_prop = _classPrivateFieldLooseKey("prop")`
-                    let value = Self::create_private_prop_key_loose(name, self.ctx, ctx);
+                    let value = Self::create_private_prop_key_loose(name, ctx);
                     Some(create_assignment(&prop.binding, value, ctx))
                 }));
             } else {
@@ -671,13 +672,13 @@ impl<'a> ClassProperties<'a, '_> {
                         has_method = true;
                         // `_C_brand = new WeakSet()`
                         let binding = class_details.bindings.brand();
-                        self.ctx.var_declarations.insert_var(binding, ctx);
+                        ctx.state.var_declarations.insert_var(binding, ctx.ast);
                         let value = create_new_weakset(ctx);
                         return Some(create_assignment(binding, value, ctx));
                     }
 
                     // Insert `var _prop;` declaration
-                    self.ctx.var_declarations.insert_var(&prop.binding, ctx);
+                    ctx.state.var_declarations.insert_var(&prop.binding, ctx.ast);
 
                     if prop.is_static {
                         return None;
@@ -701,7 +702,7 @@ impl<'a> ClassProperties<'a, '_> {
                 stmt_address = ancestor.address();
             }
 
-            self.ctx
+            ctx.state
                 .statement_injector
                 .insert_many_after(&stmt_address, self.insert_after_stmts.drain(..));
         }
@@ -713,7 +714,7 @@ impl<'a> ClassProperties<'a, '_> {
         if let Some(binding) = &class_details.bindings.temp {
             // Insert `var _Class` statement, if it wasn't already in entry phase
             if !class_details.bindings.temp_var_is_created {
-                self.ctx.var_declarations.insert_var(binding, ctx);
+                ctx.state.var_declarations.insert_var(binding, ctx.ast);
             }
 
             // `_Class = class {}`
@@ -850,12 +851,8 @@ impl<'a> ClassProperties<'a, '_> {
     }
 
     /// `_classPrivateFieldLooseKey("prop")`
-    fn create_private_prop_key_loose(
-        name: Atom<'a>,
-        transform_ctx: &TransformCtx<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        transform_ctx.helper_call_expr(
+    fn create_private_prop_key_loose(name: Atom<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
             SPAN,
             ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, name, None))),

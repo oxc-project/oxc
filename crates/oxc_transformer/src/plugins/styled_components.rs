@@ -70,10 +70,7 @@ use oxc_semantic::SymbolId;
 use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
@@ -285,9 +282,8 @@ impl StyledComponentsHelper {
     }
 }
 
-pub struct StyledComponents<'a, 'ctx> {
+pub struct StyledComponents<'a> {
     pub options: StyledComponentsOptions,
-    pub ctx: &'ctx TransformCtx<'a>,
 
     // State
     /// Tracks which variables are bound to styled-components imports
@@ -300,11 +296,10 @@ pub struct StyledComponents<'a, 'ctx> {
     block_name: Option<Atom<'a>>,
 }
 
-impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
-    pub fn new(options: StyledComponentsOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl StyledComponents<'_> {
+    pub fn new(options: StyledComponentsOptions) -> Self {
         Self {
             options,
-            ctx,
             styled_bindings: StyledComponentsBinding::default(),
             component_id_prefix: None,
             component_count: 0,
@@ -313,7 +308,7 @@ impl<'a, 'ctx> StyledComponents<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.collect_styled_bindings(program, ctx);
     }
@@ -347,7 +342,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for StyledComponents<'a, '_> {
     }
 }
 
-impl<'a> StyledComponents<'a, '_> {
+impl<'a> StyledComponents<'a> {
     fn transform_tagged_template_expression(
         &mut self,
         expr: &mut Expression<'a>,
@@ -617,7 +612,7 @@ impl<'a> StyledComponents<'a, '_> {
                 String::with_capacity(PREFIX_LEN)
             };
 
-            prefix.extend(["sc-", self.get_file_hash().as_str(), "-"]);
+            prefix.extend(["sc-", Self::get_file_hash(&ctx.state).as_str(), "-"]);
 
             self.component_id_prefix = Some(prefix);
             self.component_id_prefix.as_deref().unwrap()
@@ -631,7 +626,7 @@ impl<'a> StyledComponents<'a, '_> {
     }
 
     /// Generates a unique file hash based on the source path or source code.
-    fn get_file_hash(&self) -> InlineString<7, u8> {
+    fn get_file_hash(state: &TransformState<'a>) -> InlineString<7, u8> {
         #[inline]
         fn base36_encode(mut num: u64) -> InlineString<7, u8> {
             const BASE36_BYTES: &[u8; 36] = b"abcdefghijklmnopqrstuvwxyz0123456789";
@@ -650,10 +645,10 @@ impl<'a> StyledComponents<'a, '_> {
         }
 
         let mut hasher = FxHasher::default();
-        if self.ctx.source_path.is_absolute() {
-            self.ctx.source_path.hash(&mut hasher);
+        if state.source_path.is_absolute() {
+            state.source_path.hash(&mut hasher);
         } else {
-            self.ctx.source_text.hash(&mut hasher);
+            state.source_text.hash(&mut hasher);
         }
 
         base36_encode(hasher.finish())
@@ -665,14 +660,14 @@ impl<'a> StyledComponents<'a, '_> {
             return None;
         }
 
-        let file_stem = self.ctx.source_path.file_stem().and_then(|stem| stem.to_str())?;
+        let file_stem = ctx.state.source_path.file_stem().and_then(|stem| stem.to_str())?;
 
         Some(*self.block_name.get_or_insert_with(|| {
             // Should be a name, but if the file stem is in the meaningless file names list,
             // we will use the parent directory name instead.
             let block_name =
                 if self.options.meaningless_file_names.iter().any(|name| name == file_stem) {
-                    self.ctx
+                    ctx.state
                         .source_path
                         .parent()
                         .and_then(|parent| parent.file_name())

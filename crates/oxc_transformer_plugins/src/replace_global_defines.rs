@@ -10,9 +10,8 @@ use oxc_parser::Parser;
 use oxc_semantic::{IsGlobalReference, ReferenceFlags, ScopeFlags, Scoping};
 use oxc_span::{CompactStr, SPAN, SourceType};
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_traverse::{Ancestor, Traverse, traverse_mut};
-
-use crate::TraverseCtx;
+use oxc_syntax::node::NodeId;
+use oxc_syntax::reference::Reference;
 
 /// Configuration for [ReplaceGlobalDefines].
 ///
@@ -221,82 +220,130 @@ pub struct ReplaceGlobalDefinesReturn {
 pub struct ReplaceGlobalDefines<'a> {
     allocator: &'a Allocator,
     config: ReplaceGlobalDefinesConfig,
-    /// Since `Traverse` did not provide a way to skipping visiting sub tree of the AstNode,
+    /// Since `VisitMut` does not provide a way to skip visiting a sub tree of the AstNode,
     /// Use `Option<Address>` to lock the current node when it is `Some`.
-    /// during visiting sub tree, the `Lock` will always be `Some`, and we can early return, this
-    /// could acheieve same effect as skipping visiting sub tree.
-    /// When `exit` the node, reset the `Lock` to `None` to make sure not affect other
+    /// During visiting sub tree, the `Lock` will always be `Some`, and we can early return, this
+    /// could achieve same effect as skipping visiting sub tree.
+    /// When exiting the node, reset the `Lock` to `None` to make sure not affect other
     /// transformation.
     ast_node_lock: Option<Address>,
     changed: bool,
+    /// Scoping data, stored during `build()`.
+    scoping: Option<Scoping>,
+    /// Depth of non-arrow functions we're inside of. Used to compute scope flags for `this`
+    /// replacement.
+    non_arrow_function_depth: u32,
+    /// Destructuring keys from the parent `VariableDeclarator` when its `id` is an
+    /// `ObjectPattern`. Used to optimize object expression replacements by only keeping needed
+    /// keys.
+    destructuring_keys: Option<FxHashSet<CompactStr>>,
 }
 
-impl<'a> Traverse<'a, ()> for ReplaceGlobalDefines<'a> {
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         if self.ast_node_lock.is_some() {
             return;
         }
-        let is_replaced =
-            self.replace_identifier_defines(expr, ctx) || self.replace_dot_defines(expr, ctx);
+        let is_replaced = self.replace_identifier_defines(expr) || self.replace_dot_defines(expr);
+        // Clear `destructuring_keys` after checking the first expression so the
+        // optimization only applies to the direct init expression of a
+        // destructuring `VariableDeclarator`, not to nested sub-expressions
+        // (e.g. `const { a } = foo(DEFINE)` should not optimize the replacement
+        // inside the call).
+        self.destructuring_keys = None;
         if is_replaced {
             self.mark_as_changed();
             self.ast_node_lock = Some(expr.address());
         }
-    }
-
-    fn exit_expression(&mut self, node: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if self.ast_node_lock == Some(node.address()) {
+        walk_mut::walk_expression(self, expr);
+        if self.ast_node_lock == Some(expr.address()) {
             self.ast_node_lock = None;
         }
     }
 
-    fn enter_assignment_expression(
-        &mut self,
-        node: &mut AssignmentExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn visit_assignment_expression(&mut self, node: &mut AssignmentExpression<'a>) {
         if self.ast_node_lock.is_some() {
             return;
         }
-        if self.replace_define_with_assignment_expr(node, ctx) {
+        if self.replace_define_with_assignment_expr(node) {
             self.mark_as_changed();
             // `AssignmentExpression` is stored in a `Box`, so has a stable memory location
             self.ast_node_lock = Some(node.unstable_address());
         }
-    }
-
-    fn exit_assignment_expression(
-        &mut self,
-        node: &mut AssignmentExpression<'a>,
-        _: &mut TraverseCtx<'a>,
-    ) {
+        walk_mut::walk_assignment_expression(self, node);
         // `AssignmentExpression` is stored in a `Box`, so has a stable memory location
         if self.ast_node_lock == Some(node.unstable_address()) {
             self.ast_node_lock = None;
         }
     }
+
+    fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
+        self.non_arrow_function_depth += 1;
+        walk_mut::walk_function(self, func, flags);
+        self.non_arrow_function_depth -= 1;
+    }
+
+    fn visit_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
+        // Collect destructuring keys if LHS is an ObjectPattern.
+        // `visit_expression` clears `destructuring_keys` after the first expression check,
+        // ensuring the optimization only applies to the direct init, not nested sub-expressions.
+        if let BindingPattern::ObjectPattern(pat) = &declarator.id {
+            let mut keys = FxHashSet::default();
+            let mut all_static = true;
+            for prop in &pat.properties {
+                if let Some(key) = prop.key.name() {
+                    keys.insert(CompactStr::from(key.as_ref()));
+                } else {
+                    all_static = false;
+                    break;
+                }
+            }
+            if all_static && !keys.is_empty() {
+                self.destructuring_keys = Some(keys);
+            }
+        }
+        walk_mut::walk_variable_declarator(self, declarator);
+    }
 }
 
 impl<'a> ReplaceGlobalDefines<'a> {
     pub fn new(allocator: &'a Allocator, config: ReplaceGlobalDefinesConfig) -> Self {
-        Self { allocator, config, ast_node_lock: None, changed: false }
+        Self {
+            allocator,
+            config,
+            ast_node_lock: None,
+            changed: false,
+            scoping: None,
+            non_arrow_function_depth: 0,
+            destructuring_keys: None,
+        }
     }
 
     fn mark_as_changed(&mut self) {
         self.changed = true;
     }
 
+    /// # Panics
+    ///
+    /// Panics if scoping is not set (i.e. called outside of `build`).
+    fn scoping(&self) -> &Scoping {
+        self.scoping.as_ref().unwrap()
+    }
+
+    #[expect(clippy::missing_panics_doc)]
     pub fn build(
         &mut self,
         scoping: Scoping,
         program: &mut Program<'a>,
     ) -> ReplaceGlobalDefinesReturn {
-        let scoping = traverse_mut(self, self.allocator, program, scoping, ());
+        self.scoping = Some(scoping);
+        self.visit_program(program);
+        let scoping = self.scoping.take().unwrap();
         ReplaceGlobalDefinesReturn { scoping, changed: self.changed }
     }
 
     // Construct a new expression because we don't have ast clone right now.
-    fn parse_value(&self, source_text: &str, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    fn parse_value(&mut self, source_text: &str) -> Expression<'a> {
         // Allocate the string lazily because replacement happens rarely.
         let source_text = self.allocator.alloc_str(source_text);
         // Unwrapping here, it should already be checked by [ReplaceGlobalDefinesConfig::new].
@@ -304,30 +351,28 @@ impl<'a> ReplaceGlobalDefines<'a> {
             .parse_expression()
             .unwrap();
 
-        UpdateReplacedExpression { ctx }.visit_expression(&mut expr);
+        let scoping = self.scoping.as_mut().unwrap();
+        UpdateReplacedExpression { scoping }.visit_expression(&mut expr);
 
         expr
     }
 
-    fn replace_identifier_defines(
-        &self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> bool {
+    fn replace_identifier_defines(&mut self, expr: &mut Expression<'a>) -> bool {
         match expr {
             Expression::Identifier(ident) => {
-                if let Some(new_expr) = self.replace_identifier_define_impl(ident, ctx) {
+                if let Some(new_expr) = self.replace_identifier_define_impl(ident) {
                     *expr = new_expr;
                     return true;
                 }
             }
             Expression::ThisExpression(_)
                 if self.config.0.identifier.has_this_expr_define
-                    && should_replace_this_expr(ctx.current_scope_flags()) =>
+                    && should_replace_this_expr(self.current_scope_flags()) =>
             {
                 for (key, value) in &self.config.0.identifier.identifier_defines {
                     if key.as_str() == "this" {
-                        let value = self.parse_value(value, ctx);
+                        let value = value.clone();
+                        let value = self.parse_value(&value);
                         *expr = value;
 
                         return true;
@@ -340,47 +385,44 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_identifier_define_impl(
-        &self,
+        &mut self,
         ident: &oxc_allocator::Box<'_, IdentifierReference<'_>>,
-        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        let scoping = self.scoping();
         if let Some(symbol_id) = ident
             .reference_id
             .get()
-            .and_then(|reference_id| ctx.scoping().get_reference(reference_id).symbol_id())
+            .and_then(|reference_id| scoping.get_reference(reference_id).symbol_id())
         {
             // Ignore `declare const IS_PROD: boolean;`
-            if !ctx.scoping().symbol_flags(symbol_id).is_ambient() {
+            if !scoping.symbol_flags(symbol_id).is_ambient() {
                 return None;
             }
         }
         // This is a global variable, including ambient variants such as `declare const`.
         for (key, value) in &self.config.0.identifier.identifier_defines {
             if ident.name.as_str() == key {
-                let value = self.parse_value(value, ctx);
+                let value = value.clone();
+                let value = self.parse_value(&value);
                 return Some(value);
             }
         }
         None
     }
 
-    fn replace_define_with_assignment_expr(
-        &self,
-        node: &mut AssignmentExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> bool {
+    fn replace_define_with_assignment_expr(&mut self, node: &mut AssignmentExpression<'a>) -> bool {
         let new_left = node
             .left
             .as_simple_assignment_target_mut()
             .and_then(|item| match item {
                 SimpleAssignmentTarget::ComputedMemberExpression(computed_member_expr) => {
-                    self.replace_dot_computed_member_expr(computed_member_expr, ctx)
+                    self.replace_dot_computed_member_expr(computed_member_expr)
                 }
                 SimpleAssignmentTarget::StaticMemberExpression(member) => {
-                    self.replace_dot_static_member_expr(member, ctx)
+                    self.replace_dot_static_member_expr_no_optimize(member)
                 }
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                    self.replace_identifier_define_impl(ident, ctx)
+                    self.replace_identifier_define_impl(ident)
                 }
                 _ => None,
             })
@@ -392,16 +434,16 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
-    fn replace_dot_defines(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>) -> bool {
         match expr {
             Expression::ChainExpression(chain) => {
                 let Some(new_expr) =
                     chain.expression.as_member_expression_mut().and_then(|item| match item {
                         MemberExpression::ComputedMemberExpression(computed_member_expr) => {
-                            self.replace_dot_computed_member_expr(computed_member_expr, ctx)
+                            self.replace_dot_computed_member_expr(computed_member_expr)
                         }
                         MemberExpression::StaticMemberExpression(member) => {
-                            self.replace_dot_static_member_expr(member, ctx)
+                            self.replace_dot_static_member_expr(member)
                         }
                         MemberExpression::PrivateFieldExpression(_) => None,
                     })
@@ -412,23 +454,23 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 return true;
             }
             Expression::StaticMemberExpression(member) => {
-                if let Some(new_expr) = self.replace_dot_static_member_expr(member, ctx) {
+                if let Some(new_expr) = self.replace_dot_static_member_expr(member) {
                     *expr = new_expr;
                     return true;
                 }
             }
             Expression::ComputedMemberExpression(member) => {
-                if let Some(new_expr) = self.replace_dot_computed_member_expr(member, ctx) {
+                if let Some(new_expr) = self.replace_dot_computed_member_expr(member) {
                     *expr = new_expr;
                     return true;
                 }
             }
             Expression::MetaProperty(meta_property) => {
-                if let Some(replacement) = &self.config.0.import_meta
+                if let Some(replacement) = self.config.0.import_meta.clone()
                     && meta_property.meta.name == "import"
                     && meta_property.property.name == "meta"
                 {
-                    let value = self.parse_value(replacement, ctx);
+                    let value = self.parse_value(&replacement);
                     *expr = value;
                     return true;
                 }
@@ -439,44 +481,111 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_dot_computed_member_expr(
-        &self,
+        &mut self,
         member: &ComputedMemberExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        for dot_define in &self.config.0.dot {
-            if Self::is_dot_define(
-                ctx,
-                dot_define,
-                DotDefineMemberExpression::ComputedMemberExpression(member),
-            ) {
-                let value = self.parse_value(&dot_define.value, ctx);
-                return Some(value);
-            }
+        let scoping = self.scoping();
+        let scope_flags = self.current_scope_flags();
+        let value = self
+            .config
+            .0
+            .dot
+            .iter()
+            .find(|dot_define| {
+                Self::is_dot_define(
+                    scoping,
+                    scope_flags,
+                    dot_define,
+                    DotDefineMemberExpression::ComputedMemberExpression(member),
+                )
+            })
+            .map(|dot_define| dot_define.value.clone());
+        if let Some(value) = value {
+            let value = self.parse_value(&value);
+            return Some(value);
         }
         // TODO: meta_property_define
         None
     }
 
     fn replace_dot_static_member_expr(
-        &self,
+        &mut self,
         member: &StaticMemberExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        for dot_define in &self.config.0.dot {
-            if Self::is_dot_define(
-                ctx,
-                dot_define,
-                DotDefineMemberExpression::StaticMemberExpression(member),
-            ) {
-                let value = self.parse_value(&dot_define.value, ctx);
-                return Some(destructing_dot_define_optimizer(value, ctx));
-            }
+        let scoping = self.scoping();
+        let scope_flags = self.current_scope_flags();
+        let value = self
+            .config
+            .0
+            .dot
+            .iter()
+            .find(|dot_define| {
+                Self::is_dot_define(
+                    scoping,
+                    scope_flags,
+                    dot_define,
+                    DotDefineMemberExpression::StaticMemberExpression(member),
+                )
+            })
+            .map(|dot_define| dot_define.value.clone());
+        if let Some(value) = value {
+            let value = self.parse_value(&value);
+            return Some(self.destructing_dot_define_optimizer(value));
         }
-        for meta_property_define in &self.config.0.meta_property {
-            if Self::is_meta_property_define(meta_property_define, member) {
-                let value = self.parse_value(&meta_property_define.value, ctx);
-                return Some(destructing_dot_define_optimizer(value, ctx));
-            }
+        let value = self
+            .config
+            .0
+            .meta_property
+            .iter()
+            .find(|meta_property_define| {
+                Self::is_meta_property_define(meta_property_define, member)
+            })
+            .map(|meta_property_define| meta_property_define.value.clone());
+        if let Some(value) = value {
+            let value = self.parse_value(&value);
+            return Some(self.destructing_dot_define_optimizer(value));
+        }
+        None
+    }
+
+    /// Like `replace_dot_static_member_expr` but without the destructuring optimization.
+    /// Used for assignment targets where we don't have a parent destructuring pattern.
+    fn replace_dot_static_member_expr_no_optimize(
+        &mut self,
+        member: &StaticMemberExpression<'a>,
+    ) -> Option<Expression<'a>> {
+        let scoping = self.scoping();
+        let scope_flags = self.current_scope_flags();
+        let value = self
+            .config
+            .0
+            .dot
+            .iter()
+            .find(|dot_define| {
+                Self::is_dot_define(
+                    scoping,
+                    scope_flags,
+                    dot_define,
+                    DotDefineMemberExpression::StaticMemberExpression(member),
+                )
+            })
+            .map(|dot_define| dot_define.value.clone());
+        if let Some(value) = value {
+            let value = self.parse_value(&value);
+            return Some(value);
+        }
+        let value = self
+            .config
+            .0
+            .meta_property
+            .iter()
+            .find(|meta_property_define| {
+                Self::is_meta_property_define(meta_property_define, member)
+            })
+            .map(|meta_property_define| meta_property_define.value.clone());
+        if let Some(value) = value {
+            let value = self.parse_value(&value);
+            return Some(value);
         }
         None
     }
@@ -573,13 +682,19 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
+    /// Compute the current scope flags based on function depth tracking.
+    fn current_scope_flags(&self) -> ScopeFlags {
+        if self.non_arrow_function_depth > 0 { ScopeFlags::Function } else { ScopeFlags::Top }
+    }
+
     pub fn is_dot_define<'b>(
-        ctx: &TraverseCtx<'a>,
+        scoping: &Scoping,
+        scope_flags: ScopeFlags,
         dot_define: &DotDefine,
         member: DotDefineMemberExpression<'b, 'a>,
     ) -> bool {
         debug_assert!(dot_define.parts.len() > 1);
-        let should_replace_this_expr = should_replace_this_expr(ctx.current_scope_flags());
+        let should_replace_this_expr = should_replace_this_expr(scope_flags);
         let Some(cur_part_name) = member.name() else {
             return false;
         };
@@ -607,7 +722,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         })
                     }
                     Expression::Identifier(ident) => {
-                        if !ident.is_global_reference(ctx.scoping()) {
+                        if !ident.is_global_reference(scoping) {
                             return false;
                         }
                         cur_part_name = &ident.name;
@@ -644,6 +759,42 @@ impl<'a> ReplaceGlobalDefines<'a> {
         }
 
         current_part_member_expression.is_none()
+    }
+
+    /// Optimize object expression replacements in destructuring patterns by only keeping needed
+    /// keys.
+    fn destructing_dot_define_optimizer(&self, mut expr: Expression<'a>) -> Expression<'a> {
+        let Expression::ObjectExpression(obj) = &mut expr else { return expr };
+        let Some(needed_keys) = &self.destructuring_keys else { return expr };
+
+        // here we iterate the object properties twice
+        // for the first time we check if all the keys are static
+        // for the second time we only keep the needed keys
+        // Another way to do this is mutate the objectExpr only the fly,
+        // but need to save the checkpoint(to return the original Expr if there are any dynamic key exists) which is a memory clone,
+        // cpu is faster than memory allocation
+        let mut should_preserved_keys = Vec::with_capacity(obj.properties.len());
+        for prop in &obj.properties {
+            let v = match prop {
+                ObjectPropertyKind::ObjectProperty(prop) => {
+                    // not static key just preserve it
+                    if let Some(name) = prop.key.name() {
+                        needed_keys.contains(CompactStr::from(name.as_ref()).as_str())
+                    } else {
+                        true
+                    }
+                }
+                // not static key
+                ObjectPropertyKind::SpreadProperty(_) => true,
+            };
+            should_preserved_keys.push(v);
+        }
+
+        // we could ensure `should_preserved_keys` has the same length as `obj.properties`
+        // the method copy from std doc https://doc.rust-lang.org/std/vec/struct.Vec.html#examples-26
+        let mut iter = should_preserved_keys.iter();
+        obj.properties.retain(|_| *iter.next().unwrap());
+        expr
     }
 }
 
@@ -685,60 +836,6 @@ fn static_property_name_of_computed_expr<'b, 'a: 'b>(
     }
 }
 
-fn destructing_dot_define_optimizer<'ast>(
-    mut expr: Expression<'ast>,
-    ctx: &TraverseCtx<'ast>,
-) -> Expression<'ast> {
-    let Expression::ObjectExpression(obj) = &mut expr else { return expr };
-    let parent = ctx.parent();
-    let destruct_obj_pat = match parent {
-        Ancestor::VariableDeclaratorInit(declarator) => match &declarator.id() {
-            BindingPattern::ObjectPattern(pat) => pat,
-            _ => return expr,
-        },
-        _ => {
-            return expr;
-        }
-    };
-    let mut needed_keys = FxHashSet::default();
-    for prop in &destruct_obj_pat.properties {
-        match prop.key.name() {
-            Some(key) => {
-                needed_keys.insert(key);
-            }
-            // if there exists a none static key, we can't optimize
-            None => {
-                return expr;
-            }
-        }
-    }
-
-    // here we iterate the object properties twice
-    // for the first time we check if all the keys are static
-    // for the second time we only keep the needed keys
-    // Another way to do this is mutate the objectExpr only the fly,
-    // but need to save the checkpoint(to return the original Expr if there are any dynamic key exists) which is a memory clone,
-    // cpu is faster than memory allocation
-    let mut should_preserved_keys = Vec::with_capacity(obj.properties.len());
-    for prop in &obj.properties {
-        let v = match prop {
-            ObjectPropertyKind::ObjectProperty(prop) => {
-                // not static key just preserve it
-                if let Some(name) = prop.key.name() { needed_keys.contains(&name) } else { true }
-            }
-            // not static key
-            ObjectPropertyKind::SpreadProperty(_) => true,
-        };
-        should_preserved_keys.push(v);
-    }
-
-    // we could ensure `should_preserved_keys` has the same length as `obj.properties`
-    // the method copy from std doc https://doc.rust-lang.org/std/vec/struct.Vec.html#examples-26
-    let mut iter = should_preserved_keys.iter();
-    obj.properties.retain(|_| *iter.next().unwrap());
-    expr
-}
-
 const fn should_replace_this_expr(scope_flags: ScopeFlags) -> bool {
     !scope_flags.contains(ScopeFlags::Function) || scope_flags.contains(ScopeFlags::Arrow)
 }
@@ -758,15 +855,17 @@ fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {
 
 /// Update the replaced expression:
 /// * change spans to empty spans for sourcemap
-/// * assign reference id in current scope
-struct UpdateReplacedExpression<'a, 'b> {
-    ctx: &'b mut TraverseCtx<'a>,
+/// * assign reference id in root scope
+struct UpdateReplacedExpression<'a> {
+    scoping: &'a mut Scoping,
 }
 
-impl VisitMut<'_> for UpdateReplacedExpression<'_, '_> {
+impl VisitMut<'_> for UpdateReplacedExpression<'_> {
     fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'_>) {
-        let reference_id =
-            self.ctx.create_reference_in_current_scope(ident.name, ReferenceFlags::Read);
+        let reference =
+            Reference::new(NodeId::DUMMY, self.scoping.root_scope_id(), ReferenceFlags::Read);
+        let reference_id = self.scoping.create_reference(reference);
+        self.scoping.add_root_unresolved_reference(ident.name, reference_id);
         ident.set_reference_id(reference_id);
         walk_mut::walk_identifier_reference(self, ident);
     }

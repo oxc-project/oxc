@@ -40,8 +40,8 @@ use oxc_span::{GetSpan, SPAN};
 use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
 
 use crate::{
-    common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
+    common::helper_loader::{Helper, helper_call, helper_call_expr, helper_load},
+    context::TraverseCtx,
     state::TransformState,
 };
 
@@ -53,41 +53,39 @@ pub struct ObjectRestSpreadOptions {
     pub use_built_ins: bool,
 }
 
-pub struct ObjectRestSpread<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-
+pub struct ObjectRestSpread<'a> {
     options: ObjectRestSpreadOptions,
 
     excluded_variable_declarators: Vec<VariableDeclarator<'a>>,
 }
 
-impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
-    pub fn new(options: ObjectRestSpreadOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl<'a> ObjectRestSpread<'a> {
+    pub fn new(options: ObjectRestSpreadOptions, state: &mut TransformState<'a>) -> Self {
         if options.loose {
-            ctx.error(OxcDiagnostic::error(
+            state.error(OxcDiagnostic::error(
                 "Option `loose` is not implemented for object-rest-spread.",
             ));
         }
         if options.use_built_ins {
-            ctx.error(OxcDiagnostic::error(
+            state.error(OxcDiagnostic::error(
                 "Option `useBuiltIns` is not implemented for object-rest-spread.",
             ));
         }
-        if ctx.assumptions.object_rest_no_symbols {
-            ctx.error(OxcDiagnostic::error(
+        if state.assumptions.object_rest_no_symbols {
+            state.error(OxcDiagnostic::error(
                 "Compiler assumption `objectRestNoSymbols` is not implemented for object-rest-spread.",
             ));
         }
-        if ctx.assumptions.ignore_function_length {
-            ctx.error(OxcDiagnostic::error(
+        if state.assumptions.ignore_function_length {
+            state.error(OxcDiagnostic::error(
                 "Compiler assumption `ignoreFunctionLength` is not implemented for object-rest-spread.",
             ));
         }
-        Self { ctx, options, excluded_variable_declarators: vec![] }
+        Self { options, excluded_variable_declarators: vec![] }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a> {
     // For excluded keys when destructuring inside a function.
     // `function foo() { ({a, ...b} = c) }` -> `const _excluded = ["a"]; function foo() { ... }`
     fn exit_program(&mut self, _node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -96,7 +94,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a, '_> {
             let kind = VariableDeclarationKind::Const;
             let declaration = ctx.ast.alloc_variable_declaration(SPAN, kind, declarators, false);
             let statement = Statement::VariableDeclaration(declaration);
-            self.ctx.top_level_statements.insert_statement(statement);
+            ctx.state.top_level_statements.insert_statement(statement);
         }
     }
 
@@ -107,7 +105,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a, '_> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::ObjectExpression(_) => {
-                Self::transform_object_expression(self.options, expr, self.ctx, ctx);
+                Self::transform_object_expression(self.options, expr, ctx);
             }
             Expression::AssignmentExpression(_) => {
                 self.transform_assignment_expression(expr, ctx);
@@ -185,7 +183,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a, '_> {
     }
 }
 
-impl<'a> ObjectRestSpread<'a, '_> {
+impl<'a> ObjectRestSpread<'a> {
     // Transform `({ x, ..y } = foo)`.
     // Transform `([{ x, ..y }] = foo)`.
     fn transform_assignment_expression(
@@ -223,19 +221,23 @@ impl<'a> ObjectRestSpread<'a, '_> {
 
         // Insert `var _foo` before this statement.
         if !new_decls.is_empty() {
+            let mut target_address = None;
             for node in ctx.ancestors() {
                 if let Ancestor::ExpressionStatementExpression(decl) = node {
-                    let kind = VariableDeclarationKind::Var;
-                    let declaration = ctx.ast.alloc_variable_declaration(
-                        SPAN,
-                        kind,
-                        ctx.ast.vec_from_iter(new_decls),
-                        false,
-                    );
-                    let statement = Statement::VariableDeclaration(declaration);
-                    self.ctx.statement_injector.insert_before(&decl.address(), statement);
+                    target_address = Some(decl.address());
                     break;
                 }
+            }
+            if let Some(address) = target_address {
+                let kind = VariableDeclarationKind::Var;
+                let declaration = ctx.ast.alloc_variable_declaration(
+                    SPAN,
+                    kind,
+                    ctx.ast.vec_from_iter(new_decls),
+                    false,
+                );
+                let statement = Statement::VariableDeclaration(declaration);
+                ctx.state.statement_injector.insert_before(&address, statement);
             }
         }
 
@@ -266,7 +268,6 @@ impl<'a> ObjectRestSpread<'a, '_> {
             let (lhs, rhs) = datum.get_lhs_rhs(
                 &mut reference_builder,
                 &mut self.excluded_variable_declarators,
-                self.ctx,
                 ctx,
             );
             if let BindingPatternOrAssignmentTarget::AssignmentTarget(lhs) = lhs {
@@ -381,6 +382,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         }
     }
 
+    #[expect(clippy::unused_self)]
     fn walk_and_replace_nested_object_target(
         &self,
         expr: &mut Expression<'a>,
@@ -392,19 +394,19 @@ impl<'a> ObjectRestSpread<'a, '_> {
         let mut decls = vec![];
         let mut exprs = vec![];
         Self::recursive_walk_assignment_target(&mut assign_expr.left, &mut decls, &mut exprs, ctx);
+        let mut target_address = None;
         for node in ctx.ancestors() {
             if let Ancestor::ExpressionStatementExpression(decl) = node {
-                let kind = VariableDeclarationKind::Var;
-                let declaration = ctx.ast.alloc_variable_declaration(
-                    SPAN,
-                    kind,
-                    ctx.ast.vec_from_iter(decls),
-                    false,
-                );
-                let statement = Statement::VariableDeclaration(declaration);
-                self.ctx.statement_injector.insert_before(&decl.address(), statement);
+                target_address = Some(decl.address());
                 break;
             }
+        }
+        if let Some(address) = target_address {
+            let kind = VariableDeclarationKind::Var;
+            let declaration =
+                ctx.ast.alloc_variable_declaration(SPAN, kind, ctx.ast.vec_from_iter(decls), false);
+            let statement = Statement::VariableDeclaration(declaration);
+            ctx.state.statement_injector.insert_before(&address, statement);
         }
         let mut expressions = ctx.ast.vec1(expr.take_in(ctx.ast));
         expressions.extend(exprs);
@@ -475,13 +477,12 @@ impl<'a> ObjectRestSpread<'a, '_> {
     }
 }
 
-impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
+impl<'a> ObjectRestSpread<'a> {
     // Transform `({ x, ..y })`.
     // `pub` for jsx spread.
     pub fn transform_object_expression(
         _options: ObjectRestSpreadOptions,
         expr: &mut Expression<'a>,
-        transform_ctx: &'ctx TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::ObjectExpression(obj_expr) = expr else { unreachable!() };
@@ -495,7 +496,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
 
         for prop in obj_expr.properties.drain(..) {
             if let ObjectPropertyKind::SpreadProperty(mut spread_prop) = prop {
-                Self::make_object_spread(&mut call_expr, &mut props, transform_ctx, ctx);
+                Self::make_object_spread(&mut call_expr, &mut props, ctx);
                 let arg = spread_prop.argument.take_in(ctx.ast);
                 call_expr.as_mut().unwrap().arguments.push(Argument::from(arg));
             } else {
@@ -504,7 +505,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
         }
 
         if !props.is_empty() {
-            Self::make_object_spread(&mut call_expr, &mut props, transform_ctx, ctx);
+            Self::make_object_spread(&mut call_expr, &mut props, ctx);
         }
 
         *expr = Expression::CallExpression(call_expr.unwrap());
@@ -513,7 +514,6 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     fn make_object_spread(
         expr: &mut Option<ArenaBox<'a, CallExpression<'a>>>,
         props: &mut ArenaVec<'a, ObjectPropertyKind<'a>>,
-        transform_ctx: &'ctx TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let had_props = !props.is_empty();
@@ -534,12 +534,12 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
         } else {
             ctx.ast.vec1(Argument::from(obj))
         };
-        let new_expr = transform_ctx.helper_call(Helper::ObjectSpread2, SPAN, arguments, ctx);
+        let new_expr = helper_call(Helper::ObjectSpread2, SPAN, arguments, ctx);
         expr.replace(ctx.ast.alloc(new_expr));
     }
 }
 
-impl<'a> ObjectRestSpread<'a, '_> {
+impl<'a> ObjectRestSpread<'a> {
     // Transform `function foo({...x}) {}`.
     fn transform_function(func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = func.scope_id();
@@ -787,7 +787,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
     }
 }
 
-impl<'a> ObjectRestSpread<'a, '_> {
+impl<'a> ObjectRestSpread<'a> {
     // Transform `let { x, ..y } = foo`.
     // Transform `let [{ x, ..y }] = foo`.
     fn transform_variable_declaration(
@@ -894,7 +894,6 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 let (lhs, rhs) = datum.get_lhs_rhs(
                     &mut reference_builder,
                     &mut self.excluded_variable_declarators,
-                    self.ctx,
                     ctx,
                 );
                 if let BindingPatternOrAssignmentTarget::BindingPattern(lhs) = lhs {
@@ -1095,7 +1094,6 @@ impl<'a> SpreadPair<'a> {
         self,
         reference_builder: &mut ReferenceBuilder<'a>,
         excluded_variable_declarators: &mut Vec<VariableDeclarator<'a>>,
-        transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (BindingPatternOrAssignmentTarget<'a>, Expression<'a>) {
         let rhs = if self.has_no_properties {
@@ -1111,7 +1109,7 @@ impl<'a> SpreadPair<'a> {
                 SPAN,
                 {
                     let mut sequence = ctx.ast.vec();
-                    sequence.push(transform_ctx.helper_call_expr(
+                    sequence.push(helper_call_expr(
                         Helper::ObjectDestructuringEmpty,
                         SPAN,
                         ctx.ast.vec1(Argument::from(reference_builder.create_read_expression(ctx))),
@@ -1121,7 +1119,7 @@ impl<'a> SpreadPair<'a> {
                     sequence
                 },
             )));
-            transform_ctx.helper_call_expr(Helper::Extends, SPAN, arguments, ctx)
+            helper_call_expr(Helper::Extends, SPAN, arguments, ctx)
         } else {
             // / `let { a, b, ...c } = z` -> _objectWithoutProperties(_z, ["a", "b"]);
             // / `_objectWithoutProperties(_z, ["a", "b"])`
@@ -1155,15 +1153,14 @@ impl<'a> SpreadPair<'a> {
                 let callee = Expression::StaticMemberExpression(
                     ctx.ast.alloc_static_member_expression(SPAN, key_expression, property, false),
                 );
-                let arguments = ctx
-                    .ast
-                    .vec1(Argument::from(transform_ctx.helper_load(Helper::ToPropertyKey, ctx)));
+                let arguments =
+                    ctx.ast.vec1(Argument::from(helper_load(Helper::ToPropertyKey, ctx)));
                 ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
             } else {
                 key_expression
             };
             arguments.push(Argument::from(key_expression));
-            transform_ctx.helper_call_expr(Helper::ObjectWithoutProperties, SPAN, arguments, ctx)
+            helper_call_expr(Helper::ObjectWithoutProperties, SPAN, arguments, ctx)
         };
         (self.lhs, rhs)
     }

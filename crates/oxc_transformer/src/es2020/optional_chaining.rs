@@ -55,8 +55,7 @@ use oxc_span::SPAN;
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
     utils::ast_builder::wrap_expression_in_arrow_function_iife,
 };
 
@@ -70,9 +69,7 @@ enum CallContext<'a> {
     Binding(MaybeBoundIdentifier<'a>),
 }
 
-pub struct OptionalChaining<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-
+pub struct OptionalChaining<'a> {
     // states
     is_inside_function_parameter: bool,
     temp_binding: Option<BoundIdentifier<'a>>,
@@ -81,10 +78,9 @@ pub struct OptionalChaining<'a, 'ctx> {
     call_context: CallContext<'a>,
 }
 
-impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+impl OptionalChaining<'_> {
+    pub fn new() -> Self {
         Self {
-            ctx,
             is_inside_function_parameter: false,
             temp_binding: None,
             call_context: CallContext::None,
@@ -92,7 +88,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for OptionalChaining<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for OptionalChaining<'a> {
     // `#[inline]` because this is a hot path
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -125,7 +121,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for OptionalChaining<'a, '_> {
     }
 }
 
-impl<'a> OptionalChaining<'a, '_> {
+impl<'a> OptionalChaining<'a> {
     fn set_temp_binding(&mut self, binding: BoundIdentifier<'a>) {
         self.temp_binding.replace(binding);
     }
@@ -175,13 +171,14 @@ impl<'a> OptionalChaining<'a, '_> {
     ///
     /// If no temp variable required, returns `MaybeBoundIdentifier` for existing variable/global.
     /// If temp variable is required, returns `None`.
+    #[expect(clippy::unused_self)]
     fn get_existing_binding_for_identifier(
         &self,
         ident: &IdentifierReference<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<MaybeBoundIdentifier<'a>> {
         let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-        if self.ctx.assumptions.pure_getters
+        if ctx.state.assumptions.pure_getters
             || binding.to_bound_identifier().is_some()
             || ident.name == "eval"
         {
@@ -192,8 +189,9 @@ impl<'a> OptionalChaining<'a, '_> {
     }
 
     /// Return `left === null`
+    #[expect(clippy::unused_self)]
     fn wrap_null_check(&self, left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
-        let operator = if self.ctx.assumptions.no_document_all {
+        let operator = if ctx.state.assumptions.no_document_all {
             BinaryOperator::Equality
         } else {
             BinaryOperator::StrictEquality
@@ -365,7 +363,7 @@ impl<'a> OptionalChaining<'a, '_> {
         // Find proper context
         let context = if let Some(member) = expr.as_member_expression_mut() {
             let object = member.object_mut().get_inner_expression_mut();
-            let context = if self.ctx.assumptions.pure_getters {
+            let context = if ctx.state.assumptions.pure_getters {
                 // TODO: `clone_in` causes reference loss of reference id
                 object.clone_in(ctx.ast.allocator)
             } else if let Expression::Identifier(ident) = object {
@@ -373,7 +371,7 @@ impl<'a> OptionalChaining<'a, '_> {
                     .create_read_expression(ctx)
             } else {
                 // `foo.bar` -> `_foo$bar = foo.bar`
-                let binding = self.ctx.var_declarations.create_uid_var_based_on_node(object, ctx);
+                let binding = VarDeclarationsStore::create_uid_var_based_on_node(object, ctx);
                 *object = Self::create_assignment_expression(
                     binding.create_write_target(ctx),
                     object.take_in(ctx.ast),
@@ -484,7 +482,7 @@ impl<'a> OptionalChaining<'a, '_> {
                     let callee = call.callee.get_inner_expression_mut();
                     let left = Some(self.transform_optional_expression(true, left, callee, ctx));
 
-                    if !self.ctx.assumptions.pure_getters {
+                    if !ctx.state.assumptions.pure_getters {
                         // After transformation of the callee, this call expression may lose the original context,
                         // so we need to check if we need to specify the context.
                         if let Expression::Identifier(ident) = callee
@@ -543,7 +541,7 @@ impl<'a> OptionalChaining<'a, '_> {
             }
 
             let left1 = binding.create_read_expression(ctx);
-            let replacement = if self.ctx.assumptions.no_document_all {
+            let replacement = if ctx.state.assumptions.no_document_all {
                 // `foo === null`
                 self.wrap_null_check(left1, ctx)
             } else {
@@ -556,8 +554,8 @@ impl<'a> OptionalChaining<'a, '_> {
         }
 
         // We should generate a temp binding for the expression first to avoid the next step changing the expression.
-        let temp_binding = self.ctx.var_declarations.create_uid_var_based_on_node(expr, ctx);
-        if is_call && !self.ctx.assumptions.pure_getters {
+        let temp_binding = VarDeclarationsStore::create_uid_var_based_on_node(expr, ctx);
+        if is_call && !ctx.state.assumptions.pure_getters {
             self.set_chain_call_context(expr, ctx);
         }
 
@@ -566,7 +564,7 @@ impl<'a> OptionalChaining<'a, '_> {
         // `(binding = expr)`
         let assignment_expression =
             Self::create_assignment_expression(temp_binding.create_write_target(ctx), expr, ctx);
-        let expr = if self.ctx.assumptions.no_document_all {
+        let expr = if ctx.state.assumptions.no_document_all {
             // `(binding = expr) === null`
             self.wrap_null_check(assignment_expression, ctx)
         } else {
@@ -608,7 +606,7 @@ impl<'a> OptionalChaining<'a, '_> {
 
         let temp_binding = {
             if self.temp_binding.is_none() {
-                let binding = self.ctx.var_declarations.create_uid_var_based_on_node(expr, ctx);
+                let binding = VarDeclarationsStore::create_uid_var_based_on_node(expr, ctx);
                 self.set_temp_binding(binding);
             }
             self.temp_binding.as_ref().unwrap()
@@ -627,7 +625,7 @@ impl<'a> OptionalChaining<'a, '_> {
             ctx,
         );
 
-        if self.ctx.assumptions.no_document_all {
+        if ctx.state.assumptions.no_document_all {
             left
         } else {
             let reference = temp_binding.create_read_expression(ctx);
@@ -649,7 +647,7 @@ impl<'a> OptionalChaining<'a, '_> {
                     .and_then(|ident| self.get_existing_binding_for_identifier(ident, ctx))
                     .unwrap_or_else(|| {
                         let binding =
-                            self.ctx.var_declarations.create_uid_var_based_on_node(object, ctx);
+                            VarDeclarationsStore::create_uid_var_based_on_node(object, ctx);
                         // `(_foo = foo)`
                         *object = Self::create_assignment_expression(
                             binding.create_write_target(ctx),

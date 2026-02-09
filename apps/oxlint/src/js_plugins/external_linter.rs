@@ -207,7 +207,8 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                             Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
                             // Error occurred on JS side
                             Ok(LintFileReturnValue::Failure(err)) => Err(err),
-                            // Invalid JSON - should be impossible, because we control serialization on JS side
+                            // JSON deserialization failure.
+                            // Possible if rule produces fixes/suggestions with out of range offsets.
                             Err(err) => Err(format!(
                                 "Failed to deserialize JSON returned by `lintFile`: {err}"
                             )),

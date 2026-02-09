@@ -146,7 +146,7 @@ pub(super) struct InstanceInitScopes {
     pub constructor_scope_id: Option<ScopeId>,
 }
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Replace `super()` call(s) in constructor, if required.
     ///
     /// Returns:
@@ -241,7 +241,7 @@ impl<'a> ClassProperties<'a, '_> {
             stmts.push(ctx.ast.statement_expression(SPAN, create_super_call(&args_binding, ctx)));
         }
         // TODO: Should these have the span of the original `PropertyDefinition`s?
-        stmts.extend(exprs_into_stmts(inits, ctx));
+        stmts.extend(exprs_into_stmts(inits, ctx.ast));
 
         let params = ctx.ast.alloc_formal_parameters(
             SPAN,
@@ -269,7 +269,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         // Insert inits into constructor body
         let body_stmts = &mut constructor.body.as_mut().unwrap().statements;
-        body_stmts.splice(insertion_index..insertion_index, exprs_into_stmts(inits, ctx));
+        body_stmts.splice(insertion_index..insertion_index, exprs_into_stmts(inits, ctx.ast));
     }
 
     /// Create `_super` function containing instance property initializers,
@@ -370,7 +370,8 @@ impl<'a> ClassProperties<'a, '_> {
         // `return this;`
         let return_stmt = ctx.ast.statement_return(SPAN, Some(ctx.ast.expression_this(SPAN)));
         // `<inits>; return this;`
-        let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
+        let body_stmts =
+            ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx.ast).chain([return_stmt]));
         // `function() { <inits>; return this; }`
         let super_func = ctx.ast.expression_function_with_scope_id_and_pure_and_pife(
             SPAN,
@@ -410,7 +411,7 @@ impl<'a> ClassProperties<'a, '_> {
             self.insert_after_exprs.push(assignment);
             None
         };
-        self.ctx.var_declarations.insert_let(super_binding, init, ctx);
+        ctx.state.var_declarations.insert_let(super_binding, init, ctx.ast);
     }
 
     /// Rename any symbols in constructor which clash with symbols used in initializers

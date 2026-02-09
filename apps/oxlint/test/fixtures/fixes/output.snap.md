@@ -3,9 +3,13 @@
 
 # stdout
 ```
-  x Error running JS plugin.
+  x Plugin `fixes-plugin/fixes` returned invalid fixes.
   | File path: <fixture>/files/range_end_negative.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 116
+  | Invalid range: 0..0
+
+  x Plugin `fixes-plugin/fixes` returned invalid fixes.
+  | File path: <fixture>/files/range_end_negative.js
+  | Invalid range: 0..0
 
   x Plugin `fixes-plugin/fixes` returned invalid fixes.
   | File path: <fixture>/files/range_end_out_of_bounds.js
@@ -15,9 +19,13 @@
   | File path: <fixture>/files/range_end_out_of_bounds.js
   | Invalid range: 7..7
 
-  x Error running JS plugin.
+  x Plugin `fixes-plugin/fixes` returned invalid fixes.
   | File path: <fixture>/files/range_end_too_large.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 124
+  | Invalid range: 0..0
+
+  x Plugin `fixes-plugin/fixes` returned invalid fixes.
+  | File path: <fixture>/files/range_end_too_large.js
+  | Invalid range: 0..0
 
   x Plugin `fixes-plugin/fixes` returned invalid fixes.
   | File path: <fixture>/files/range_start_after_end.js
@@ -27,13 +35,21 @@
   | File path: <fixture>/files/range_start_after_end.js
   | Negative range is invalid: Span { start: 3, end: 2 }
 
-  x Error running JS plugin.
+  x Plugin `fixes-plugin/fixes` returned invalid fixes.
   | File path: <fixture>/files/range_start_negative.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 110
+  | Invalid range: 0..0
 
-  x Error running JS plugin.
+  x Plugin `fixes-plugin/fixes` returned invalid fixes.
+  | File path: <fixture>/files/range_start_negative.js
+  | Invalid range: 0..0
+
+  x Plugin `fixes-plugin/fixes` returned invalid fixes.
   | File path: <fixture>/files/range_start_too_large.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 118
+  | Invalid range: 0..0
+
+  x Plugin `fixes-plugin/fixes` returned invalid fixes.
+  | File path: <fixture>/files/range_start_too_large.js
+  | Invalid range: 0..0
 
   x fixes-plugin(fixes): Replace "a" with "daddy"
    ,-[files/bom.js:1:4]
@@ -88,6 +104,74 @@
    ,-[files/bom_and_unicode.js:3:5]
  2 | // 😀🤪😆😎🤮
  3 | g = b
+   :     ^
+   `----
+
+  x fixes-plugin(fixes): Replace "a" with "daddy"
+   ,-[files/bom_remove.js:1:4]
+ 1 | ﻿a = c;
+   : ^
+ 2 | d = b
+   `----
+
+  x fixes-plugin(fixes): Remove BOM
+   ,-[files/bom_remove.js:1:4]
+ 1 | ,-> ﻿a = c;
+ 2 | `-> d = b
+   `----
+
+  x fixes-plugin(fixes): Prefix "c" with "magi"
+   ,-[files/bom_remove.js:1:8]
+ 1 | ﻿a = c;
+   :     ^
+ 2 | d = b
+   `----
+
+  x fixes-plugin(fixes): Prefix "d" with "damne"
+   ,-[files/bom_remove.js:2:1]
+ 1 | ﻿a = c;
+ 2 | d = b
+   : ^
+   `----
+
+  x fixes-plugin(fixes): Replace "b" with "abacus"
+   ,-[files/bom_remove.js:2:5]
+ 1 | ﻿a = c;
+ 2 | d = b
+   :     ^
+   `----
+
+  x fixes-plugin(fixes): Replace "a" with "daddy"
+   ,-[files/bom_remove2.js:1:4]
+ 1 | ﻿a = c;
+   : ^
+ 2 | d = b
+   `----
+
+  x fixes-plugin(fixes): Remove BOM multiple
+   ,-[files/bom_remove2.js:1:4]
+ 1 | ,-> ﻿a = c;
+ 2 | `-> d = b
+   `----
+
+  x fixes-plugin(fixes): Prefix "c" with "magi"
+   ,-[files/bom_remove2.js:1:8]
+ 1 | ﻿a = c;
+   :     ^
+ 2 | d = b
+   `----
+
+  x fixes-plugin(fixes): Prefix "d" with "damne"
+   ,-[files/bom_remove2.js:2:1]
+ 1 | ﻿a = c;
+ 2 | d = b
+   : ^
+   `----
+
+  x fixes-plugin(fixes): Replace "b" with "abacus"
+   ,-[files/bom_remove2.js:2:5]
+ 1 | ﻿a = c;
+ 2 | d = b
    :     ^
    `----
 
@@ -185,6 +269,18 @@
     : ^^^^^^^^^
     `----
 
+  x fixes-plugin(fixes): end negative
+   ,-[files/range_end_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x fixes-plugin(fixes): end negative multiple
+   ,-[files/range_end_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
   x fixes-plugin(fixes): end out of bounds
    ,-[files/range_end_out_of_bounds.js:1:5]
  1 | let x;
@@ -197,6 +293,18 @@
    :     ^
    `----
 
+  x fixes-plugin(fixes): end too large
+   ,-[files/range_end_too_large.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x fixes-plugin(fixes): end too large multiple
+   ,-[files/range_end_too_large.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
   x fixes-plugin(fixes): start after end
    ,-[files/range_start_after_end.js:1:5]
  1 | let x;
@@ -205,6 +313,30 @@
 
   x fixes-plugin(fixes): start after end multiple
    ,-[files/range_start_after_end.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x fixes-plugin(fixes): start negative
+   ,-[files/range_start_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x fixes-plugin(fixes): start negative multiple
+   ,-[files/range_start_negative.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x fixes-plugin(fixes): start too large
+   ,-[files/range_start_too_large.js:1:5]
+ 1 | let x;
+   :     ^
+   `----
+
+  x fixes-plugin(fixes): start too large multiple
+   ,-[files/range_start_too_large.js:1:5]
  1 | let x;
    :     ^
    `----
@@ -237,8 +369,8 @@
    :     ^
    `----
 
-Found 0 warnings and 36 errors.
-Finished in Xms on 10 files with 1 rules using X threads.
+Found 0 warnings and 58 errors.
+Finished in Xms on 12 files with 1 rules using X threads.
 ```
 
 # stderr

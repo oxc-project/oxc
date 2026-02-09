@@ -219,6 +219,31 @@ fn this_expr() {
 }
 
 #[test]
+fn this_expr_nested_functions() {
+    let config = config(&[("this", "1"), ("this.foo", "2")]);
+
+    // Arrow inside regular function: `this` captures function's `this`, should NOT be replaced.
+    test_same("export function foo() { return () => this.foo }", &config);
+
+    // Nested arrows without enclosing function: `this` captures module-level `this`, SHOULD be replaced.
+    test("export const f = () => () => this.foo", "export const f = () => () => 2;\n", &config);
+
+    // Arrow inside regular function inside arrow: innermost `this` is function's `this`.
+    test_same("export const outer = () => function() { return () => this.foo }", &config);
+}
+
+#[test]
+fn dot_define_with_destruct_nested() {
+    // Destructuring optimization should NOT apply when the define is nested inside a function call
+    let c = config(&[("process.env.NODE_ENV", "{'a': 1, b: 2, c: true}")]);
+    test(
+        "const {a} = foo(process.env.NODE_ENV)",
+        "const { a } = foo({\n\t'a': 1,\n\tb: 2,\n\tc: true\n});\n",
+        &c,
+    );
+}
+
+#[test]
 fn assignment_target() {
     let config =
         config(&[("d", "ident"), ("e.f", "ident"), ("g", "dot.chain"), ("h.i", "dot.chain")]);
