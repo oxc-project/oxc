@@ -661,6 +661,14 @@ impl<'a> ParserImpl<'a> {
             });
             self.error(diagnostics::abstract_property_cannot_have_initializer(name, span));
         }
+        if self.ctx.has_ambient()
+            && let Some(initializer) = &initializer
+            && !(modifiers.contains(ModifierKind::Readonly) && type_annotation.is_none())
+        {
+            self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(
+                initializer.span(),
+            ));
+        }
         self.ast.class_element_property_definition(
             self.end_span(span),
             r#type,
