@@ -33,24 +33,19 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SPAN, Span};
 use oxc_traverse::{Ancestor, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 const SELF: &str = "__self";
 
-pub struct JsxSelf<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct JsxSelf;
 
-impl<'a, 'ctx> JsxSelf<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl JsxSelf {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf {
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
@@ -60,10 +55,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxSelf<'a, '_> {
     }
 }
 
-impl<'a> JsxSelf<'a, '_> {
-    pub fn report_error(&self, span: Span) {
+impl<'a> JsxSelf {
+    pub fn report_error(span: Span, ctx: &mut TraverseCtx<'a>) {
         let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
-        self.ctx.error(error);
+        ctx.state.error(error);
     }
 
     fn is_inside_constructor(ctx: &TraverseCtx<'a>) -> bool {
@@ -101,14 +96,15 @@ impl<'a> JsxSelf<'a, '_> {
 
     /// `<div __self={this} />`
     ///       ^^^^^^^^^^^^^
-    fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>, ctx: &TraverseCtx<'a>) {
+    #[expect(clippy::unused_self)]
+    fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>, ctx: &mut TraverseCtx<'a>) {
         // Check if `__self` attribute already exists
         for item in &elem.attributes {
             if let JSXAttributeItem::Attribute(attribute) = item
                 && let JSXAttributeName::Identifier(ident) = &attribute.name
                 && ident.name == SELF
             {
-                self.report_error(ident.span);
+                Self::report_error(ident.span, ctx);
                 return;
             }
         }

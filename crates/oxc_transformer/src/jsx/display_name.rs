@@ -49,22 +49,17 @@ use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
 use oxc_traverse::{Ancestor, Traverse};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
-pub struct ReactDisplayName<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct ReactDisplayName;
 
-impl<'a, 'ctx> ReactDisplayName<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl ReactDisplayName {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
     fn enter_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,
@@ -119,7 +114,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.
                 Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    break ctx.ast.atom(&self.ctx.filename);
+                    break ctx.ast.atom(&ctx.state.filename);
                 }
                 // Stop crawling up when hit a statement
                 _ if ancestor.is_parent_of_statement() => return,
@@ -131,7 +126,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName<'a, '_> {
     }
 }
 
-impl<'a> ReactDisplayName<'a, '_> {
+impl<'a> ReactDisplayName {
     /// Get the object from `React.createClass({})` or `createReactClass({})`
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,

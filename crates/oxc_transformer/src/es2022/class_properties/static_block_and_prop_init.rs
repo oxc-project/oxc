@@ -15,7 +15,7 @@ use super::{
     super_converter::{ClassPropertiesSuperConverter, ClassPropertiesSuperConverterMode},
 };
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Transform static property initializer.
     ///
     /// Replace `this`, and references to class name, with temp var for class. Transform `super`.
@@ -187,7 +187,7 @@ impl<'a> ClassProperties<'a, '_> {
 // TODO(improve-on-babel): Updating `ScopeFlags` for strict mode makes semantic correctly for the output,
 // but actually the transform isn't right. Should wrap initializer/block in a strict mode IIFE so that
 // code runs in strict mode, as it was before within class body.
-struct StaticVisitor<'a, 'ctx, 'v> {
+struct StaticVisitor<'a, 'v> {
     /// `true` if class has name, or `ScopeFlags` need updating.
     /// Either of these neccesitates walking the whole tree. If neither applies, we only need to walk
     /// as far as functions and other constructs which define a `this`.
@@ -209,16 +209,16 @@ struct StaticVisitor<'a, 'ctx, 'v> {
     /// so `scope_depth` is ignored.
     scope_depth: u32,
     /// Converter for `super` expressions.
-    super_converter: ClassPropertiesSuperConverter<'a, 'ctx, 'v>,
+    super_converter: ClassPropertiesSuperConverter<'a, 'v>,
     /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
 
-impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
+impl<'a, 'v> StaticVisitor<'a, 'v> {
     fn new(
         make_sloppy_mode: bool,
         reparent_scopes: bool,
-        class_properties: &'v mut ClassProperties<'a, 'ctx>,
+        class_properties: &'v mut ClassProperties<'a>,
         ctx: &'v mut TraverseCtx<'a>,
     ) -> Self {
         let walk_deep =
@@ -243,7 +243,7 @@ impl<'a, 'ctx, 'v> StaticVisitor<'a, 'ctx, 'v> {
     }
 }
 
-impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
+impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
     #[inline]
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         match expr {
@@ -516,7 +516,7 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_, '_> {
     }
 }
 
-impl<'a> StaticVisitor<'a, '_, '_> {
+impl<'a> StaticVisitor<'a, '_> {
     /// Replace `this` with reference to temp var for class.
     fn replace_this_with_temp_var(&mut self, expr: &mut Expression<'a>, span: Span) {
         if self.this_depth == 0 {

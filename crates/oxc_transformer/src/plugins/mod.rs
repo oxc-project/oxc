@@ -8,26 +8,24 @@ use oxc_traverse::Traverse;
 pub use styled_components::StyledComponentsOptions;
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
+    context::TraverseCtx,
     plugins::{
         styled_components::StyledComponents, tagged_template_transform::TaggedTemplateTransform,
     },
     state::TransformState,
 };
 
-pub struct Plugins<'a, 'ctx> {
-    styled_components: Option<StyledComponents<'a, 'ctx>>,
-    tagged_template_escape: Option<TaggedTemplateTransform<'a, 'ctx>>,
+pub struct Plugins<'a> {
+    styled_components: Option<StyledComponents<'a>>,
+    tagged_template_escape: Option<TaggedTemplateTransform>,
 }
 
-impl<'a, 'ctx> Plugins<'a, 'ctx> {
-    pub fn new(options: PluginsOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl Plugins<'_> {
+    pub fn new(options: PluginsOptions) -> Self {
         Self {
-            styled_components: options
-                .styled_components
-                .map(|options| StyledComponents::new(options, ctx)),
+            styled_components: options.styled_components.map(StyledComponents::new),
             tagged_template_escape: if options.tagged_template_transform {
-                Some(TaggedTemplateTransform::new(ctx))
+                Some(TaggedTemplateTransform::new())
             } else {
                 None
             },
@@ -35,7 +33,7 @@ impl<'a, 'ctx> Plugins<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Plugins<'a> {
     fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(styled_components) = &mut self.styled_components {
             styled_components.enter_program(node, ctx);

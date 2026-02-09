@@ -1,25 +1,31 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
+// TODO: Re-enable these diagnostics once JSX option validation is restored.
+
 #[cold]
+#[expect(dead_code)]
 pub fn pragma_and_pragma_frag_cannot_be_set() -> OxcDiagnostic {
     OxcDiagnostic::warn("pragma and pragmaFrag cannot be set when runtime is automatic.")
         .with_help("Remove `pragma` and `pragmaFrag` options.")
 }
 
 #[cold]
+#[cfg_attr(not(test), expect(dead_code))]
 pub fn invalid_pragma() -> OxcDiagnostic {
     OxcDiagnostic::warn("pragma and pragmaFrag must be of the form `foo` or `foo.bar`.")
         .with_help("Fix `pragma` and `pragmaFrag` options.")
 }
 
 #[cold]
+#[expect(dead_code)]
 pub fn import_source_cannot_be_set() -> OxcDiagnostic {
     OxcDiagnostic::warn("importSource cannot be set when runtime is classic.")
         .with_help("Remove `importSource` option.")
 }
 
 #[cold]
+#[expect(dead_code)]
 pub fn invalid_import_source() -> OxcDiagnostic {
     OxcDiagnostic::warn("importSource cannot be an empty string or longer than u32::MAX bytes")
         .with_help("Fix `importSource` option.")

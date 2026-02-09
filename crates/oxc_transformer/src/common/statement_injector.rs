@@ -1,54 +1,28 @@
 //! Utility transform to add new statements before or after the specified statement.
 //!
-//! `StatementInjectorStore` contains a `FxHashMap<Address, Vec<AdjacentStatement>>`. It is stored on `TransformCtx`.
+//! `StatementInjectorStore` contains a `FxHashMap<Address, Vec<AdjacentStatement>>`. It is stored on `TransformState`.
 //!
-//! `StatementInjector` transform inserts new statements before or after a statement which is determined by the address of the statement.
+//! `Common` transform's `exit_statements` calls `insert_into_statements` to insert new statements
+//! before or after a statement which is determined by the address of the statement.
 //!
 //! Other transforms can add statements to the store with following methods:
 //!
 //! ```rs
-//! self.ctx.statement_injector.insert_before(address, statement);
-//! self.ctx.statement_injector.insert_after(address, statement);
-//! self.ctx.statement_injector.insert_many_after(address, statements);
+//! ctx.state.statement_injector.insert_before(address, statement);
+//! ctx.state.statement_injector.insert_after(address, statement);
+//! ctx.state.statement_injector.insert_many_after(address, statements);
 //! ```
 
-use std::{cell::RefCell, collections::hash_map::Entry};
+use std::collections::hash_map::Entry;
 
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
-use oxc_ast::ast::*;
-use oxc_traverse::Traverse;
+use oxc_ast::{AstBuilder, ast::*};
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
-
-/// Transform that inserts any statements which have been requested insertion via `StatementInjectorStore`
-pub struct StatementInjector<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
-
-impl<'a, 'ctx> StatementInjector<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
-    }
-}
-
-impl<'a> Traverse<'a, TransformState<'a>> for StatementInjector<'a, '_> {
-    fn exit_statements(
-        &mut self,
-        statements: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.ctx.statement_injector.insert_into_statements(statements, ctx);
-    }
-
-    #[inline]
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.ctx.statement_injector.assert_no_insertions_remaining();
-    }
+/// Store for statements to be added to the statements.
+pub struct StatementInjectorStore<'a> {
+    insertions: FxHashMap<Address, Vec<AdjacentStatement<'a>>>,
 }
 
 #[derive(Debug)]
@@ -63,16 +37,11 @@ struct AdjacentStatement<'a> {
     direction: Direction,
 }
 
-/// Store for statements to be added to the statements.
-pub struct StatementInjectorStore<'a> {
-    insertions: RefCell<FxHashMap<Address, Vec<AdjacentStatement<'a>>>>,
-}
-
 // Public methods
 impl StatementInjectorStore<'_> {
     /// Create new `StatementInjectorStore`.
     pub fn new() -> Self {
-        Self { insertions: RefCell::new(FxHashMap::default()) }
+        Self { insertions: FxHashMap::default() }
     }
 }
 
@@ -88,13 +57,12 @@ impl StatementInjectorStore<'_> {
 impl<'a> StatementInjectorStore<'a> {
     /// Add a statement to be inserted immediately before the target statement.
     #[inline]
-    pub fn insert_before<A: GetAddress>(&self, target: &A, stmt: Statement<'a>) {
+    pub fn insert_before<A: GetAddress>(&mut self, target: &A, stmt: Statement<'a>) {
         self.insert_before_address(target.address(), stmt);
     }
 
-    fn insert_before_address(&self, target: Address, stmt: Statement<'a>) {
-        let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target).or_default();
+    fn insert_before_address(&mut self, target: Address, stmt: Statement<'a>) {
+        let adjacent_stmts = self.insertions.entry(target).or_default();
         let index = adjacent_stmts
             .iter()
             .position(|s| matches!(s.direction, Direction::After))
@@ -104,19 +72,18 @@ impl<'a> StatementInjectorStore<'a> {
 
     /// Add a statement to be inserted immediately after the target statement.
     #[inline]
-    pub fn insert_after<A: GetAddress>(&self, target: &A, stmt: Statement<'a>) {
+    pub fn insert_after<A: GetAddress>(&mut self, target: &A, stmt: Statement<'a>) {
         self.insert_after_address(target.address(), stmt);
     }
 
-    fn insert_after_address(&self, target: Address, stmt: Statement<'a>) {
-        let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target).or_default();
+    fn insert_after_address(&mut self, target: Address, stmt: Statement<'a>) {
+        let adjacent_stmts = self.insertions.entry(target).or_default();
         adjacent_stmts.push(AdjacentStatement { stmt, direction: Direction::After });
     }
 
     /// Add multiple statements to be inserted immediately before the target statement.
     #[inline]
-    pub fn insert_many_before<A, S>(&self, target: &A, stmts: S)
+    pub fn insert_many_before<A, S>(&mut self, target: &A, stmts: S)
     where
         A: GetAddress,
         S: IntoIterator<Item = Statement<'a>>,
@@ -124,12 +91,11 @@ impl<'a> StatementInjectorStore<'a> {
         self.insert_many_before_address(target.address(), stmts);
     }
 
-    fn insert_many_before_address<S>(&self, target: Address, stmts: S)
+    fn insert_many_before_address<S>(&mut self, target: Address, stmts: S)
     where
         S: IntoIterator<Item = Statement<'a>>,
     {
-        let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target).or_default();
+        let adjacent_stmts = self.insertions.entry(target).or_default();
         adjacent_stmts.splice(
             0..0,
             stmts.into_iter().map(|stmt| AdjacentStatement { stmt, direction: Direction::Before }),
@@ -138,7 +104,7 @@ impl<'a> StatementInjectorStore<'a> {
 
     /// Add multiple statements to be inserted immediately after the target statement.
     #[inline]
-    pub fn insert_many_after<A, S>(&self, target: &A, stmts: S)
+    pub fn insert_many_after<A, S>(&mut self, target: &A, stmts: S)
     where
         A: GetAddress,
         S: IntoIterator<Item = Statement<'a>>,
@@ -146,12 +112,11 @@ impl<'a> StatementInjectorStore<'a> {
         self.insert_many_after_address(target.address(), stmts);
     }
 
-    fn insert_many_after_address<S>(&self, target: Address, stmts: S)
+    fn insert_many_after_address<S>(&mut self, target: Address, stmts: S)
     where
         S: IntoIterator<Item = Statement<'a>>,
     {
-        let mut insertions = self.insertions.borrow_mut();
-        let adjacent_stmts = insertions.entry(target).or_default();
+        let adjacent_stmts = self.insertions.entry(target).or_default();
         adjacent_stmts.extend(
             stmts.into_iter().map(|stmt| AdjacentStatement { stmt, direction: Direction::After }),
         );
@@ -163,18 +128,17 @@ impl<'a> StatementInjectorStore<'a> {
     /// insertions to the original statement.
     #[inline]
     pub fn move_insertions<A1: GetAddress, A2: GetAddress>(
-        &self,
+        &mut self,
         old_target: &A1,
         new_target: &A2,
     ) {
         self.move_insertions_address(old_target.address(), new_target.address());
     }
 
-    fn move_insertions_address(&self, old_address: Address, new_address: Address) {
-        let mut insertions = self.insertions.borrow_mut();
-        let Some(mut adjacent_stmts) = insertions.remove(&old_address) else { return };
+    fn move_insertions_address(&mut self, old_address: Address, new_address: Address) {
+        let Some(mut adjacent_stmts) = self.insertions.remove(&old_address) else { return };
 
-        match insertions.entry(new_address) {
+        match self.insertions.entry(new_address) {
             Entry::Occupied(entry) => {
                 entry.into_mut().append(&mut adjacent_stmts);
             }
@@ -185,31 +149,30 @@ impl<'a> StatementInjectorStore<'a> {
     }
 }
 
-// Internal methods
+// Internal methods - called by `Common` transform
 impl<'a> StatementInjectorStore<'a> {
     /// Insert statements immediately before / after the target statement.
-    fn insert_into_statements(
-        &self,
+    pub(crate) fn insert_into_statements(
+        &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ast: AstBuilder<'a>,
     ) {
-        let mut insertions = self.insertions.borrow_mut();
-        if insertions.is_empty() {
+        if self.insertions.is_empty() {
             return;
         }
 
         let new_statement_count = statements
             .iter()
-            .filter_map(|s| insertions.get(&s.address()).map(Vec::len))
+            .filter_map(|s| self.insertions.get(&s.address()).map(Vec::len))
             .sum::<usize>();
         if new_statement_count == 0 {
             return;
         }
 
-        let mut new_statements = ctx.ast.vec_with_capacity(statements.len() + new_statement_count);
+        let mut new_statements = ast.vec_with_capacity(statements.len() + new_statement_count);
 
         for stmt in statements.drain(..) {
-            match insertions.remove(&stmt.address()) {
+            match self.insertions.remove(&stmt.address()) {
                 Some(mut adjacent_stmts) => {
                     let first_after_stmt_index = adjacent_stmts
                         .iter()
@@ -238,7 +201,7 @@ impl<'a> StatementInjectorStore<'a> {
     // `#[inline(always)]` because this is a no-op in release mode
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn assert_no_insertions_remaining(&self) {
-        debug_assert!(self.insertions.borrow().is_empty());
+    pub(crate) fn assert_no_insertions_remaining(&self) {
+        debug_assert!(self.insertions.is_empty());
     }
 }

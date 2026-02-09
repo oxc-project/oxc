@@ -2,10 +2,7 @@ use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 mod annotations;
 mod class;
@@ -44,36 +41,39 @@ use rewrite_extensions::TypeScriptRewriteExtensions;
 ///
 /// In:  `const x: number = 0;`
 /// Out: `const x = 0;`
-pub struct TypeScript<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-
-    annotations: TypeScriptAnnotations<'a, 'ctx>,
+pub struct TypeScript<'a> {
+    annotations: TypeScriptAnnotations<'a>,
     r#enum: TypeScriptEnum<'a>,
-    namespace: TypeScriptNamespace<'a, 'ctx>,
-    module: TypeScriptModule<'a, 'ctx>,
+    namespace: TypeScriptNamespace,
+    module: TypeScriptModule,
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
     // Options
+    source_type_is_typescript_definition: bool,
+    is_class_properties_plugin_enabled: bool,
+    set_public_class_fields: bool,
     remove_class_fields_without_initializer: bool,
 }
 
-impl<'a, 'ctx> TypeScript<'a, 'ctx> {
-    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl<'a> TypeScript<'a> {
+    pub fn new(options: &TypeScriptOptions, state: &TransformState<'a>) -> Self {
         Self {
-            ctx,
-            annotations: TypeScriptAnnotations::new(options, ctx),
+            annotations: TypeScriptAnnotations::new(options),
             r#enum: TypeScriptEnum::new(),
-            namespace: TypeScriptNamespace::new(options, ctx),
-            module: TypeScriptModule::new(options.only_remove_type_imports, ctx),
+            namespace: TypeScriptNamespace::new(options),
+            module: TypeScriptModule::new(options.only_remove_type_imports, state.module),
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
+            source_type_is_typescript_definition: state.source_type.is_typescript_definition(),
+            is_class_properties_plugin_enabled: state.is_class_properties_plugin_enabled,
+            set_public_class_fields: state.assumptions.set_public_class_fields,
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
         }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.ctx.source_type.is_typescript_definition() {
+        if self.source_type_is_typescript_definition {
             // Output empty file for TS definitions
             program.directives.clear();
             program.hashbang = None;
@@ -120,9 +120,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
 
         // Avoid converting class fields when class-properties plugin is enabled, that plugin has covered all
         // this transformation does.
-        if !self.ctx.is_class_properties_plugin_enabled
-            && self.ctx.assumptions.set_public_class_fields
-        {
+        if !self.is_class_properties_plugin_enabled && self.set_public_class_fields {
             self.transform_class_fields(class, ctx);
         }
     }
@@ -132,7 +130,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
 
         // Avoid converting class fields when class-properties plugin is enabled, that plugin has covered all
         // this transformation does.
-        if !self.ctx.is_class_properties_plugin_enabled {
+        if !self.is_class_properties_plugin_enabled {
             self.transform_class_on_exit(class, ctx);
         }
     }
@@ -183,9 +181,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.enter_method_definition(def, ctx);
-        if self.ctx.is_class_properties_plugin_enabled
-            || !self.ctx.assumptions.set_public_class_fields
-        {
+        if self.is_class_properties_plugin_enabled || !self.set_public_class_fields {
             Self::transform_class_constructor(def, ctx);
         }
     }

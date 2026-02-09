@@ -5,17 +5,17 @@
 //!
 //! ## Usage
 //!
-//! You can call [`TransformCtx::helper_load`] to load a helper function and use it in your CallExpression.
+//! You can call [`helper_load`] to load a helper function and use it in your CallExpression.
 //!
 //! ```rs
-//! let callee = self.ctx.helper_load("helperName");
-//! let call = self.ctx.ast.call_expression(callee, ...arguments);
+//! let callee = helper_load(Helper::ObjectSpread2, ctx);
+//! let call = ctx.ast.call_expression(callee, ...arguments);
 //! ```
 //!
-//! And also you can call [`TransformCtx::helper_call`] directly to load and call a helper function.
+//! And also you can call [`helper_call`] directly to load and call a helper function.
 //!
 //! ```rs
-//! let call_expression = self.ctx.helper_call("helperName", ...arguments);
+//! let call_expression = helper_call(Helper::ObjectSpread2, ...arguments, ctx);
 //! ```
 //!
 //! ## Modes
@@ -65,7 +65,7 @@
 //! Unlike other "common" utilities, this one has no transformer. It adds imports to the program
 //! via `ModuleImports` transform.
 
-use std::{borrow::Cow, cell::RefCell};
+use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
@@ -79,7 +79,7 @@ use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN, Span};
 use oxc_traverse::BoundIdentifier;
 
-use crate::context::{TransformCtx, TraverseCtx};
+use crate::context::TraverseCtx;
 
 /// Defines the mode for loading helper functions.
 #[derive(Default, Clone, Copy, Debug, Deserialize)]
@@ -211,13 +211,13 @@ impl Helper {
     }
 }
 
-/// Stores the state of the helper loader in [`TransformCtx`].
+/// Stores the state of the helper loader in `TransformState`.
 pub struct HelperLoaderStore<'a> {
     module_name: Cow<'static, str>,
     mode: HelperLoaderMode,
     /// Loaded helpers, determined what helpers are loaded and what imports should be added.
-    loaded_helpers: RefCell<FxHashMap<Helper, BoundIdentifier<'a>>>,
-    pub(crate) used_helpers: RefCell<FxHashMap<Helper, String>>,
+    loaded_helpers: FxHashMap<Helper, BoundIdentifier<'a>>,
+    pub(crate) used_helpers: FxHashMap<Helper, String>,
 }
 
 impl HelperLoaderStore<'_> {
@@ -225,96 +225,76 @@ impl HelperLoaderStore<'_> {
         Self {
             module_name: options.module_name.clone(),
             mode: options.mode,
-            loaded_helpers: RefCell::new(FxHashMap::default()),
-            used_helpers: RefCell::new(FxHashMap::default()),
+            loaded_helpers: FxHashMap::default(),
+            used_helpers: FxHashMap::default(),
         }
     }
 }
 
-// Public methods implemented directly on `TransformCtx`, as they need access to `TransformCtx::module_imports`.
-impl<'a> TransformCtx<'a> {
-    /// Load and call a helper function and return a `CallExpression`.
-    pub fn helper_call(
-        &self,
-        helper: Helper,
-        span: Span,
-        arguments: ArenaVec<'a, Argument<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> CallExpression<'a> {
-        let callee = self.helper_load(helper, ctx);
-        let pure = helper.pure();
-        ctx.ast.call_expression_with_pure(span, callee, NONE, arguments, false, pure)
-    }
+/// Load and call a helper function and return a `CallExpression`.
+///
+/// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
+pub fn helper_call<'a>(
+    helper: Helper,
+    span: Span,
+    arguments: ArenaVec<'a, Argument<'a>>,
+    ctx: &mut TraverseCtx<'a>,
+) -> CallExpression<'a> {
+    let callee = helper_load(helper, ctx);
+    let pure = helper.pure();
+    ctx.ast.call_expression_with_pure(span, callee, NONE, arguments, false, pure)
+}
 
-    /// Same as [`TransformCtx::helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
-    pub fn helper_call_expr(
-        &self,
-        helper: Helper,
-        span: Span,
-        arguments: ArenaVec<'a, Argument<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let callee = self.helper_load(helper, ctx);
-        let pure = helper.pure();
-        ctx.ast.expression_call_with_pure(span, callee, NONE, arguments, false, pure)
-    }
+/// Same as [`helper_call`], but returns a `CallExpression` wrapped in an `Expression`.
+///
+/// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
+pub fn helper_call_expr<'a>(
+    helper: Helper,
+    span: Span,
+    arguments: ArenaVec<'a, Argument<'a>>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Expression<'a> {
+    let callee = helper_load(helper, ctx);
+    let pure = helper.pure();
+    ctx.ast.expression_call_with_pure(span, callee, NONE, arguments, false, pure)
+}
 
-    /// Load a helper function and return a callee expression.
-    pub fn helper_load(&self, helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        let helper_loader = &self.helper_loader;
-        let source = helper_loader.get_runtime_source(helper, ctx);
-        helper_loader.used_helpers.borrow_mut().entry(helper).or_insert_with(|| source.to_string());
+/// Load a helper function and return a callee expression.
+///
+/// This is a free function to avoid borrow conflicts when accessing state through `ctx.state`.
+pub fn helper_load<'a>(helper: Helper, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    let source = ctx.state.helper_loader.get_runtime_source(helper, ctx);
+    ctx.state.helper_loader.used_helpers.entry(helper).or_insert_with(|| source.to_string());
 
-        match helper_loader.mode {
-            HelperLoaderMode::Runtime => {
-                helper_loader.transform_for_runtime_helper(helper, source, self, ctx)
+    let mode = ctx.state.helper_loader.mode;
+    match mode {
+        HelperLoaderMode::Runtime => {
+            // Check if helper is already loaded
+            let existing = ctx.state.helper_loader.loaded_helpers.get(&helper).cloned();
+            if let Some(binding) = existing {
+                return binding.create_read_expression(ctx);
             }
-            HelperLoaderMode::External => {
-                HelperLoaderStore::transform_for_external_helper(helper, ctx)
-            }
-            HelperLoaderMode::Inline => {
-                unreachable!("Inline helpers are not supported yet");
-            }
+
+            // Generate new binding
+            let is_module = ctx.state.source_type.is_module();
+            let flag =
+                if is_module { SymbolFlags::Import } else { SymbolFlags::FunctionScopedVariable };
+            let binding = ctx.generate_uid_in_root_scope(helper.name(), flag);
+
+            ctx.state.module_imports.add_default_import(source, binding.clone(), false);
+            ctx.state.helper_loader.loaded_helpers.insert(helper, binding.clone());
+
+            binding.create_read_expression(ctx)
+        }
+        HelperLoaderMode::External => HelperLoaderStore::transform_for_external_helper(helper, ctx),
+        HelperLoaderMode::Inline => {
+            unreachable!("Inline helpers are not supported yet");
         }
     }
 }
 
 // Internal methods
 impl<'a> HelperLoaderStore<'a> {
-    fn transform_for_runtime_helper(
-        &self,
-        helper: Helper,
-        source: Atom<'a>,
-        transform_ctx: &TransformCtx<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let mut loaded_helpers = self.loaded_helpers.borrow_mut();
-        let binding = loaded_helpers
-            .entry(helper)
-            .or_insert_with(|| Self::get_runtime_helper(helper, source, transform_ctx, ctx));
-        binding.create_read_expression(ctx)
-    }
-
-    fn get_runtime_helper(
-        helper: Helper,
-        source: Atom<'a>,
-        transform_ctx: &TransformCtx<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> BoundIdentifier<'a> {
-        let helper_name = helper.name();
-
-        let flag = if transform_ctx.source_type.is_module() {
-            SymbolFlags::Import
-        } else {
-            SymbolFlags::FunctionScopedVariable
-        };
-        let binding = ctx.generate_uid_in_root_scope(helper_name, flag);
-
-        transform_ctx.module_imports.add_default_import(source, binding.clone(), false);
-
-        binding
-    }
-
     // Construct string directly in arena without an intermediate temp allocation
     fn get_runtime_source(&self, helper: Helper, ctx: &TraverseCtx<'a>) -> Atom<'a> {
         ctx.ast.atom_from_strs_array([&self.module_name, "/helpers/", helper.name()])
