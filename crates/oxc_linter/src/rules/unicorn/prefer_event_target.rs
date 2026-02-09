@@ -1,10 +1,18 @@
 use oxc_allocator::{GetAddress, UnstableAddress};
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, BindingPattern, Expression, IdentifierReference},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::get_declaration_of_variable, context::LintContext, rule::Rule,
+    utils::is_import_from_module,
+};
+
+const IGNORED_PACKAGES: [&str; 2] = ["@angular/core", "eventemitter3"];
 
 fn prefer_event_target_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `EventTarget` over `EventEmitter`")
@@ -68,8 +76,97 @@ impl Rule for PreferEventTarget {
             _ => return,
         }
 
+        if is_event_emitter_from_ignored_package(ident, ctx) {
+            return;
+        }
+
         ctx.diagnostic(prefer_event_target_diagnostic(ident.span));
     }
+}
+
+fn is_ignored_package(source: &str) -> bool {
+    IGNORED_PACKAGES.contains(&source)
+}
+
+fn is_await_import_or_require_from_ignored_packages(expr: &Expression) -> bool {
+    match expr.get_inner_expression() {
+        Expression::CallExpression(call_expr) => {
+            !call_expr.optional
+                && call_expr.callee.is_specific_id("require")
+                && call_expr.arguments.len() == 1
+                && match &call_expr.arguments[0] {
+                    Argument::StringLiteral(source) => is_ignored_package(source.value.as_str()),
+                    Argument::TemplateLiteral(source) => source
+                        .single_quasi()
+                        .is_some_and(|source| is_ignored_package(source.as_str())),
+                    _ => false,
+                }
+        }
+        Expression::AwaitExpression(await_expr) => match await_expr.argument.get_inner_expression()
+        {
+            Expression::ImportExpression(import_expr) => {
+                match import_expr.source.get_inner_expression() {
+                    Expression::StringLiteral(source) => is_ignored_package(source.value.as_str()),
+                    Expression::TemplateLiteral(source) => source
+                        .single_quasi()
+                        .is_some_and(|source| is_ignored_package(source.as_str())),
+                    _ => false,
+                }
+            }
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
+fn is_event_emitter_member_access_from_ignored_packages(expr: &Expression) -> bool {
+    let Some(member_expr) = expr.get_inner_expression().as_member_expression() else {
+        return false;
+    };
+
+    !member_expr.optional()
+        && !member_expr.is_computed()
+        && member_expr.static_property_name() == Some("EventEmitter")
+        && is_await_import_or_require_from_ignored_packages(member_expr.object())
+}
+
+fn is_event_emitter_from_ignored_package<'a>(
+    ident: &IdentifierReference<'a>,
+    ctx: &LintContext<'a>,
+) -> bool {
+    if IGNORED_PACKAGES.iter().any(|package_name| is_import_from_module(ident, package_name, ctx)) {
+        return true;
+    }
+
+    let Some(declaration_node) = get_declaration_of_variable(ident, ctx) else {
+        return false;
+    };
+
+    let AstKind::VariableDeclarator(var_decl) = declaration_node.kind() else {
+        return false;
+    };
+
+    if let BindingPattern::ObjectPattern(object_pattern) = &var_decl.id
+        && object_pattern.properties.iter().any(|property| {
+            property.key.is_specific_static_name("EventEmitter")
+                && property
+                    .value
+                    .get_identifier_name()
+                    .is_some_and(|name| name.as_str() == "EventEmitter")
+        })
+        && var_decl.init.as_ref().is_some_and(is_await_import_or_require_from_ignored_packages)
+    {
+        return true;
+    }
+
+    if var_decl.id.get_identifier_name().is_some_and(|name| name.as_str() == "EventEmitter")
+        && let Some(init) = &var_decl.init
+        && is_event_emitter_member_access_from_ignored_packages(init)
+    {
+        return true;
+    }
+
+    false
 }
 
 #[test]
@@ -89,6 +186,17 @@ fn test() {
         "const Foo = class EventEmitter extends Foo {}",
         "new Foo(EventEmitter)",
         "new foo.EventEmitter()",
+        r#"import { EventEmitter } from "@angular/core"; class Foo extends EventEmitter {}"#,
+        r#"const { EventEmitter } = require("@angular/core"); class Foo extends EventEmitter {}"#,
+        r#"let { EventEmitter } = require("@angular/core"); class Foo extends EventEmitter {}"#,
+        r#"const EventEmitter = require("@angular/core").EventEmitter; class Foo extends EventEmitter {}"#,
+        r#"var EventEmitter = require("eventemitter3").EventEmitter; class Foo extends EventEmitter {}"#,
+        r#"import EventEmitter from "eventemitter3"; class Foo extends EventEmitter {}"#,
+        r#"import { EventEmitter } from "eventemitter3"; class Foo extends EventEmitter {}"#,
+        r#"async function f() { const { EventEmitter } = await import("eventemitter3"); class Foo extends EventEmitter {} }"#,
+        r"async function f() { const { EventEmitter } = await import(`eventemitter3`); class Foo extends EventEmitter {} }",
+        r#"async function f() { const EventEmitter = (await import("eventemitter3")).EventEmitter; class Foo extends EventEmitter {} }"#,
+        r"async function f() { const EventEmitter = (await import(`@angular/core`)).EventEmitter; class Foo extends EventEmitter {} }",
         "EventTarget()",
         "new EventTarget",
         "const target = new EventTarget;",
