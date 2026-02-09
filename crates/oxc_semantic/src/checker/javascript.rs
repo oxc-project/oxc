@@ -25,9 +25,7 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
         return;
     }
 
-    // Lazily collect available names only once when we find the first error
     let mut available_names: Option<Vec<&str>> = None;
-
     for stmt in &program.body {
         if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
@@ -357,9 +355,7 @@ pub fn check_private_identifier_outside_class(
 
 fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
-        // Lazily collect available names only once when we find the first error
         let mut available_names: Option<Vec<&str>> = None;
-
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
             if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
                 ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
@@ -828,9 +824,7 @@ pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuil
 pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
 
-    // Lazily collect available labels only once when we find an error
     let mut available_labels: Option<Vec<&str>> = None;
-
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
@@ -889,9 +883,7 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
 pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
 
-    // Lazily collect available labels only once when we find an error
     let mut available_labels: Option<Vec<&str>> = None;
-
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
