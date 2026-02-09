@@ -207,11 +207,11 @@ const plugin: Plugin = {
 
 export default plugin;
 
-function tryCatch(fn: () => unknown) {
+function tryCatch(fn: () => unknown): Error {
   try {
     fn();
   } catch (err) {
-    return err;
+    return err as Error;
   }
   throw new Error("Expected function to throw");
 }
