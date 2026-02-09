@@ -1,10 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 mod async_generator_functions;
 mod object_rest_spread;
@@ -14,28 +11,28 @@ pub use async_generator_functions::AsyncGeneratorFunctions;
 pub use object_rest_spread::{ObjectRestSpread, ObjectRestSpreadOptions};
 pub use options::ES2018Options;
 
-pub struct ES2018<'a, 'ctx> {
+pub struct ES2018<'a> {
     options: ES2018Options,
 
     // Plugins
-    object_rest_spread: ObjectRestSpread<'a, 'ctx>,
-    async_generator_functions: AsyncGeneratorFunctions<'a, 'ctx>,
+    object_rest_spread: ObjectRestSpread<'a>,
+    async_generator_functions: AsyncGeneratorFunctions<'a>,
 }
 
-impl<'a, 'ctx> ES2018<'a, 'ctx> {
-    pub fn new(options: ES2018Options, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl<'a> ES2018<'a> {
+    pub fn new(options: ES2018Options, state: &mut TransformState<'a>) -> Self {
         Self {
             object_rest_spread: ObjectRestSpread::new(
                 options.object_rest_spread.unwrap_or_default(),
-                ctx,
+                state,
             ),
-            async_generator_functions: AsyncGeneratorFunctions::new(ctx),
+            async_generator_functions: AsyncGeneratorFunctions::new(),
             options,
         }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ES2018<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2018<'a> {
     fn exit_program(&mut self, program: &mut oxc_ast::ast::Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.object_rest_spread.is_some() {
             self.object_rest_spread.exit_program(program, ctx);

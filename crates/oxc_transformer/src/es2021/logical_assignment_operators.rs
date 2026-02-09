@@ -60,22 +60,17 @@ use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{common::duplicate::duplicate_expression, context::TraverseCtx, state::TransformState};
 
-pub struct LogicalAssignmentOperators<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct LogicalAssignmentOperators;
 
-impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl LogicalAssignmentOperators {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators {
     // `#[inline]` because this is a hot path, and most `Expression`s are not `AssignmentExpression`s
     // with a logical operator. So we want to bail out as fast as possible for everything else,
     // without the cost of a function call.
@@ -90,7 +85,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators<'a, '_>
     }
 }
 
-impl<'a> LogicalAssignmentOperators<'a, '_> {
+impl<'a> LogicalAssignmentOperators {
     fn transform_logical_assignment(
         &self,
         expr: &mut Expression<'a>,
@@ -151,13 +146,14 @@ impl<'a> LogicalAssignmentOperators<'a, '_> {
         (left_expr, assign_target)
     }
 
+    #[expect(clippy::unused_self)]
     fn convert_static_member_expression(
         &self,
         static_expr: &mut StaticMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, AssignmentTarget<'a>) {
         let object = static_expr.object.take_in(ctx.ast);
-        let (object, object_ref) = self.ctx.duplicate_expression(object, true, ctx);
+        let (object, object_ref) = duplicate_expression(object, true, ctx);
 
         let left_expr = Expression::from(ctx.ast.member_expression_static(
             static_expr.span,
@@ -177,16 +173,17 @@ impl<'a> LogicalAssignmentOperators<'a, '_> {
         (left_expr, assign_target)
     }
 
+    #[expect(clippy::unused_self)]
     fn convert_computed_member_expression(
         &self,
         computed_expr: &mut ComputedMemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> (Expression<'a>, AssignmentTarget<'a>) {
         let object = computed_expr.object.take_in(ctx.ast);
-        let (object, object_ref) = self.ctx.duplicate_expression(object, true, ctx);
+        let (object, object_ref) = duplicate_expression(object, true, ctx);
 
         let expression = computed_expr.expression.take_in(ctx.ast);
-        let (expression, expression_ref) = self.ctx.duplicate_expression(expression, true, ctx);
+        let (expression, expression_ref) = duplicate_expression(expression, true, ctx);
 
         let left_expr = Expression::from(ctx.ast.member_expression_computed(
             computed_expr.span,

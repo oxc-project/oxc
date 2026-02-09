@@ -1,10 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::{context::TraverseCtx, state::TransformState};
 
 mod explicit_resource_management;
 mod options;
@@ -12,14 +9,14 @@ mod options;
 use explicit_resource_management::ExplicitResourceManagement;
 pub use options::ES2026Options;
 
-pub struct ES2026<'a, 'ctx> {
-    explicit_resource_management: Option<ExplicitResourceManagement<'a, 'ctx>>,
+pub struct ES2026<'a> {
+    explicit_resource_management: Option<ExplicitResourceManagement<'a>>,
 }
 
-impl<'a, 'ctx> ES2026<'a, 'ctx> {
-    pub fn new(options: ES2026Options, ctx: &'ctx TransformCtx<'a>) -> Self {
+impl ES2026<'_> {
+    pub fn new(options: ES2026Options) -> Self {
         let explicit_resource_management = if options.explicit_resource_management {
-            Some(ExplicitResourceManagement::new(ctx))
+            Some(ExplicitResourceManagement::new())
         } else {
             None
         };
@@ -27,7 +24,7 @@ impl<'a, 'ctx> ES2026<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ES2026<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2026<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(explicit_resource_management) = &mut self.explicit_resource_management {
             explicit_resource_management.enter_program(program, ctx);

@@ -47,19 +47,17 @@ use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
+    common::helper_loader::{Helper, helper_call_expr},
+    context::TraverseCtx,
     state::TransformState,
 };
 
 const SCRIPT_TAG: &[u8; 8] = b"</script";
 const SCRIPT_TAG_LEN: usize = SCRIPT_TAG.len();
 
-pub struct TaggedTemplateTransform<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-}
+pub struct TaggedTemplateTransform;
 
-impl<'a> Traverse<'a, TransformState<'a>> for TaggedTemplateTransform<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TaggedTemplateTransform {
     // `#[inline]` because this is a hot path and most `Expression`s are not `TaggedTemplateExpression`s,
     // so we want this inlined to handle the common case without a function call
     #[inline]
@@ -70,9 +68,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for TaggedTemplateTransform<'a, '_> {
     }
 }
 
-impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl<'a> TaggedTemplateTransform {
+    pub fn new() -> Self {
+        Self {}
     }
 
     /// Transform a tagged template expression to use the [`Helper::TaggedTemplateLiteral`] helper function.
@@ -143,6 +141,7 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
     /// Final arguments:
     /// - `(binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>])), <...expressions>)` when cooked == raw
     /// - `(binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>])), <...expressions>)` when cooked != raw
+    #[expect(clippy::unused_self)]
     fn transform_template_literal(
         &self,
         binding: &BoundIdentifier<'a>,
@@ -182,7 +181,7 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
 
         // `babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?)`
         let template_call =
-            self.ctx.helper_call_expr(Helper::TaggedTemplateLiteral, SPAN, template_arguments, ctx);
+            helper_call_expr(Helper::TaggedTemplateLiteral, SPAN, template_arguments, ctx);
         // `binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?))`
         let template_call =
             Argument::from(Self::create_logical_or_expression(binding, template_call, ctx));
@@ -212,6 +211,7 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
     }
 
     /// Creates a `var binding;` variable declaration at the top level and returns the binding
+    #[expect(clippy::unused_self)]
     fn create_top_level_binding(&self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
         let binding = ctx.generate_uid(
             "templateObject",
@@ -235,7 +235,7 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
             false,
         ));
 
-        self.ctx.top_level_statements.insert_statement(stmt);
+        ctx.state.top_level_statements.insert_statement(stmt);
 
         binding
     }

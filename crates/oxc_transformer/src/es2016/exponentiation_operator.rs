@@ -40,21 +40,20 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
 };
 
-pub struct ExponentiationOperator<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+pub struct ExponentiationOperator<'a> {
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx }
+impl ExponentiationOperator<'_> {
+    pub fn new() -> Self {
+        Self { _marker: std::marker::PhantomData }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a> {
     // Note: Do not transform to `Math.pow` with BigInt arguments - that's a runtime error
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
@@ -101,7 +100,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a, '_> {
     }
 }
 
-impl<'a> ExponentiationOperator<'a, '_> {
+impl<'a> ExponentiationOperator<'a> {
     /// Convert `BinaryExpression`.
     ///
     /// `left ** right` -> `Math.pow(left, right)`
@@ -550,6 +549,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
     /// Add a `var _name;` statement to enclosing scope.
     /// Add initialization expression `_name = expr` to `temp_var_inits`.
     /// Return `BoundIdentifier` for the temp var.
+    #[expect(clippy::unused_self)]
     fn create_temp_var(
         &self,
         expr: Expression<'a>,
@@ -557,7 +557,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         // var _name;
-        let binding = self.ctx.var_declarations.create_uid_var_based_on_node(&expr, ctx);
+        let binding = VarDeclarationsStore::create_uid_var_based_on_node(&expr, ctx);
 
         // Add new reference `_name = name` to `temp_var_inits`
         temp_var_inits.push(ctx.ast.expression_assignment(

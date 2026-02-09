@@ -8,6 +8,7 @@ use oxc_traverse::ast_operations::get_var_name_from_node;
 
 use crate::{
     Helper,
+    common::{helper_loader::helper_call_expr, var_declarations::VarDeclarationsStore},
     context::TraverseCtx,
     utils::ast_builder::{create_assignment, create_prototype_member},
 };
@@ -25,21 +26,21 @@ pub(super) enum ClassPropertiesSuperConverterMode {
 }
 
 /// Convert `super` expressions.
-pub(super) struct ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
+pub(super) struct ClassPropertiesSuperConverter<'a, 'v> {
     mode: ClassPropertiesSuperConverterMode,
-    pub(super) class_properties: &'v mut ClassProperties<'a, 'ctx>,
+    pub(super) class_properties: &'v mut ClassProperties<'a>,
 }
 
-impl<'a, 'ctx, 'v> ClassPropertiesSuperConverter<'a, 'ctx, 'v> {
+impl<'a, 'v> ClassPropertiesSuperConverter<'a, 'v> {
     pub(super) fn new(
         mode: ClassPropertiesSuperConverterMode,
-        class_properties: &'v mut ClassProperties<'a, 'ctx>,
+        class_properties: &'v mut ClassProperties<'a>,
     ) -> Self {
         Self { mode, class_properties }
     }
 }
 
-impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
+impl<'a> ClassPropertiesSuperConverter<'a, '_> {
     /// Transform static member expression where object is `super`.
     ///
     /// `super.prop` -> `_superPropGet(_Class, "prop", _Class)`
@@ -499,8 +500,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         let get_call = self.create_super_prop_get(SPAN, property2, false, ctx);
 
         // `_super$prop = _superPropGet(_Class, prop, _Class)`
-        let temp_binding =
-            self.class_properties.ctx.var_declarations.create_uid_var(temp_var_name_base, ctx);
+        let temp_binding = VarDeclarationsStore::create_uid_var(temp_var_name_base, ctx);
         let assignment = create_assignment(&temp_binding, get_call, ctx);
 
         // `++_super$prop` / `_super$prop++` (reusing existing `UpdateExpression`)
@@ -521,8 +521,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         } else {
             // Source = `super.prop++` (postfix `++`)
             // `_super$prop2 = _super$prop++`
-            let temp_binding2 =
-                self.class_properties.ctx.var_declarations.create_uid_var(temp_var_name_base, ctx);
+            let temp_binding2 = VarDeclarationsStore::create_uid_var(temp_var_name_base, ctx);
             let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
 
             // `(_super$prop = _superPropGet(_Class, prop, _Class), _super$prop2 = _super$prop++, _super$prop)`
@@ -570,7 +569,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         };
 
         // `_superPropGet(_Class, prop, _Class)` or `_superPropGet(_Class, prop, _Class, 2)`
-        self.class_properties.ctx.helper_call_expr(Helper::SuperPropGet, span, arguments, ctx)
+        helper_call_expr(Helper::SuperPropGet, span, arguments, ctx)
     }
 
     /// `_superPropSet(_Class, prop, value, _Class, 1)`
@@ -594,7 +593,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
                 NumberBase::Decimal,
             )),
         ]);
-        self.class_properties.ctx.helper_call_expr(Helper::SuperPropSet, span, arguments, ctx)
+        helper_call_expr(Helper::SuperPropSet, span, arguments, ctx)
     }
 
     /// * [`ClassPropertiesSuperConverterMode::Static`]

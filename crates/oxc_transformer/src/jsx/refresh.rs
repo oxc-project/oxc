@@ -22,8 +22,7 @@ use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    common::var_declarations::VarDeclarationsStore, context::TraverseCtx, state::TransformState,
 };
 
 use super::options::ReactRefreshOptions;
@@ -112,11 +111,10 @@ impl<'a> RefreshIdentifierResolver<'a> {
 ///
 /// * <https://github.com/facebook/react/issues/16604#issuecomment-528663101>
 /// * <https://github.com/facebook/react/blob/v18.3.1/packages/react-refresh/src/ReactFreshBabelPlugin.js>
-pub struct ReactRefresh<'a, 'ctx> {
+pub struct ReactRefresh<'a> {
     refresh_reg: RefreshIdentifierResolver<'a>,
     refresh_sig: RefreshIdentifierResolver<'a>,
     emit_full_signatures: bool,
-    ctx: &'ctx TransformCtx<'a>,
     // States
     registrations: Vec<(BoundIdentifier<'a>, Atom<'a>)>,
     /// Used to wrap call expression with signature.
@@ -129,18 +127,13 @@ pub struct ReactRefresh<'a, 'ctx> {
     used_in_jsx_bindings: FxHashSet<SymbolId>,
 }
 
-impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
-    pub fn new(
-        options: &ReactRefreshOptions,
-        ast: AstBuilder<'a>,
-        ctx: &'ctx TransformCtx<'a>,
-    ) -> Self {
+impl<'a> ReactRefresh<'a> {
+    pub fn new(options: &ReactRefreshOptions, ast: AstBuilder<'a>) -> Self {
         Self {
             refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ast),
             refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ast),
             emit_full_signatures: options.emit_full_signatures,
             registrations: Vec::default(),
-            ctx,
             last_signature: None,
             function_signature_keys: FxHashMap::default(),
             non_builtin_hooks_callee: FxHashMap::default(),
@@ -149,7 +142,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.used_in_jsx_bindings = UsedInJSXBindingsCollector::collect(program, ctx);
 
@@ -311,7 +304,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             // `Function` is always stored in a `Box`, so has a stable memory address.
             _ => func.unstable_address(),
         };
-        self.ctx.statement_injector.insert_after(&address, statement);
+        ctx.state.statement_injector.insert_after(&address, statement);
     }
 
     fn enter_call_expression(
@@ -380,17 +373,17 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 
         let declarator_id = if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
             // TODO: if there is no LHS, consider some other heuristic.
-            declarator.id().span().source_text(self.ctx.source_text)
+            declarator.id().span().source_text(ctx.state.source_text)
         } else {
             ""
         };
 
         let args = &call_expr.arguments;
         let (args_key, mut key_len) = if hook_name == "useState" && !args.is_empty() {
-            let args_key = args[0].span().source_text(self.ctx.source_text);
+            let args_key = args[0].span().source_text(ctx.state.source_text);
             (args_key, args_key.len() + 4)
         } else if hook_name == "useReducer" && args.len() > 1 {
-            let args_key = args[1].span().source_text(self.ctx.source_text);
+            let args_key = args[1].span().source_text(ctx.state.source_text);
             (args_key, args_key.len() + 4)
         } else {
             ("", 2)
@@ -426,7 +419,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 }
 
 // Internal Methods
-impl<'a> ReactRefresh<'a, '_> {
+impl<'a> ReactRefresh<'a> {
     fn create_registration(
         &mut self,
         persistent_id: Atom<'a>,
@@ -485,7 +478,7 @@ impl<'a> ReactRefresh<'a, '_> {
                         format!(
                             "{}${}",
                             inferred_name,
-                            callee_span.source_text(self.ctx.source_text)
+                            callee_span.source_text(ctx.state.source_text)
                         )
                         .as_str(),
                         argument_expr,
@@ -645,7 +638,7 @@ impl<'a> ReactRefresh<'a, '_> {
             ctx.ast.vec(),
             false,
         );
-        let binding = self.ctx.var_declarations.create_uid_var_with_init("s", init, ctx);
+        let binding = VarDeclarationsStore::create_uid_var_with_init("s", init, ctx);
 
         // _s();
         let call_expression = ctx.ast.statement_expression(
@@ -824,6 +817,7 @@ impl<'a> ReactRefresh<'a, '_> {
     }
 
     /// Handle `export const Foo = () => {}` or `const Foo = function() {}`
+    #[expect(clippy::unused_self)]
     fn handle_function_in_variable_declarator(
         &self,
         id_binding: &BoundIdentifier<'a>,
@@ -862,7 +856,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 debug_assert!(matches!(var_decl, Ancestor::VariableDeclarationDeclarations(_)));
                 var_decl.address()
             };
-        self.ctx.statement_injector.insert_after(&address, statement);
+        ctx.state.statement_injector.insert_after(&address, statement);
     }
 
     /// Convert arrow function expression to normal arrow function

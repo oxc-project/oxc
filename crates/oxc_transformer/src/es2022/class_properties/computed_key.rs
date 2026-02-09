@@ -4,11 +4,12 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
+use crate::common::computed_key::{create_computed_key_temp_var, key_needs_temp_var};
 use crate::context::TraverseCtx;
 
 use super::ClassProperties;
 
-impl<'a> ClassProperties<'a, '_> {
+impl<'a> ClassProperties<'a> {
     /// Substitute temp var for method computed key.
     /// `class C { [x()]() {} }` -> `let _x; _x = x(); class C { [_x]() {} }`
     /// This transform is only required if class has properties or a static block.
@@ -25,7 +26,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         // Exit if evaluating key cannot have side effects.
         // This check also results in exit for non-computed keys e.g. `class C { 'x'() {} 123() {} }`.
-        if !self.ctx.key_needs_temp_var(key, ctx) {
+        if !key_needs_temp_var(key, ctx) {
             return;
         }
 
@@ -36,7 +37,7 @@ impl<'a> ClassProperties<'a, '_> {
         //    or class contains a static block which is being transformed
         //    (static blocks are always evaluated after computed keys, regardless of order)
         let original_key = key.take_in(ctx.ast);
-        let (assignment, temp_var) = self.ctx.create_computed_key_temp_var(original_key, ctx);
+        let (assignment, temp_var) = create_computed_key_temp_var(original_key, ctx);
         self.insert_before.push(assignment);
         method.key = PropertyKey::from(temp_var);
     }
@@ -64,8 +65,8 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let original_key = key.take_in(ctx.ast);
-        if self.ctx.key_needs_temp_var(&original_key, ctx) {
-            let (assignment, ident) = self.ctx.create_computed_key_temp_var(original_key, ctx);
+        if key_needs_temp_var(&original_key, ctx) {
+            let (assignment, ident) = create_computed_key_temp_var(original_key, ctx);
             if is_static {
                 self.insert_before.push(assignment);
             } else {
@@ -101,7 +102,7 @@ impl<'a> ClassProperties<'a, '_> {
             return;
         };
 
-        if self.ctx.key_needs_temp_var(key, ctx) {
+        if key_needs_temp_var(key, ctx) {
             self.insert_before.push(key.take_in(ctx.ast));
         }
     }

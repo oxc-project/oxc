@@ -45,24 +45,21 @@ use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    Helper,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    Helper, common::helper_loader::helper_load, context::TraverseCtx, state::TransformState,
 };
 
-pub struct ExplicitResourceManagement<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-
+pub struct ExplicitResourceManagement<'a> {
     top_level_using: FxHashMap<Address, /* is await-using */ bool>,
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a, 'ctx> ExplicitResourceManagement<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, top_level_using: FxHashMap::default() }
+impl ExplicitResourceManagement<'_> {
+    pub fn new() -> Self {
+        Self { top_level_using: FxHashMap::default(), _marker: std::marker::PhantomData }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
     /// Transform `for (using ... of ...)`, ready for `enter_statement` to do the rest.
     ///
     /// * `for (using x of y) {}` -> `for (const _x of y) { using x = _x; }`
@@ -519,7 +516,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
     }
 }
 
-impl<'a> ExplicitResourceManagement<'a, '_> {
+impl<'a> ExplicitResourceManagement<'a> {
     /// Transform block statement.
     ///
     /// Input:
@@ -586,6 +583,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     ///   _usingCtx.d();
     /// }
     /// ```
+    #[expect(clippy::unused_self)]
     fn transform_switch_statement(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut using_ctx = None;
         let mut needs_await = false;
@@ -651,7 +649,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         ctx.scoping_mut().change_scope_parent_id(switch_stmt_scope_id, Some(block_stmt_sid));
 
-        let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);
+        let callee = helper_load(Helper::UsingCtx, ctx);
 
         let block = {
             let vec = ctx.ast.vec_from_array([
@@ -766,7 +764,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         let mut stmts = stmts.take_in(ctx.ast);
 
         // `var _usingCtx = babelHelpers.usingCtx();`
-        let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);
+        let callee = helper_load(Helper::UsingCtx, ctx);
         let helper = ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
