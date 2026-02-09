@@ -17,17 +17,17 @@
 
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
-| Total tests | 33159 | 100.0% |
-| Passing     | 32880 |  99.2% |
+| Total tests | 33285 | 100.0% |
+| Passing     | 33005 |  99.2% |
 | Failing     |     0 |   0.0% |
-| Skipped     |   279 |   0.8% |
+| Skipped     |   280 |   0.8% |
 
 ## Fully Passing Rules
 
 - `accessor-pairs` (302 tests)
 - `array-bracket-newline` (209 tests)
 - `array-bracket-spacing` (143 tests) (4 skipped)
-- `array-callback-return` (216 tests)
+- `array-callback-return` (230 tests)
 - `array-element-newline` (155 tests)
 - `arrow-body-style` (87 tests)
 - `arrow-parens` (109 tests) (21 skipped)
@@ -137,7 +137,7 @@
 - `no-empty-static-block` (10 tests)
 - `no-empty` (35 tests)
 - `no-eq-null` (5 tests)
-- `no-eval` (101 tests)
+- `no-eval` (102 tests)
 - `no-ex-assign` (8 tests)
 - `no-extend-native` (40 tests)
 - `no-extra-bind` (43 tests)
@@ -151,12 +151,12 @@
 - `no-global-assign` (18 tests) (3 skipped)
 - `no-implicit-coercion` (134 tests)
 - `no-implicit-globals` (245 tests) (83 skipped)
-- `no-implied-eval` (138 tests)
+- `no-implied-eval` (175 tests)
 - `no-import-assign` (116 tests)
 - `no-inline-comments` (49 tests)
 - `no-inner-declarations` (68 tests)
 - `no-invalid-regexp` (108 tests)
-- `no-invalid-this` (562 tests) (1 skipped)
+- `no-invalid-this` (572 tests) (1 skipped)
 - `no-irregular-whitespace` (280 tests)
 - `no-iterator` (9 tests)
 - `no-label-var` (5 tests)
@@ -205,7 +205,7 @@
 - `no-restricted-imports` (263 tests) (1 skipped)
 - `no-restricted-modules` (44 tests)
 - `no-restricted-properties` (89 tests)
-- `no-restricted-syntax` (32 tests)
+- `no-restricted-syntax` (34 tests)
 - `no-return-assign` (30 tests)
 - `no-return-await` (71 tests)
 - `no-script-url` (10 tests)
@@ -214,7 +214,7 @@
 - `no-sequences` (42 tests)
 - `no-setter-return` (164 tests) (1 skipped)
 - `no-shadow-restricted-names` (44 tests)
-- `no-shadow` (308 tests)
+- `no-shadow` (368 tests)
 - `no-spaced-func` (28 tests)
 - `no-sparse-arrays` (6 tests)
 - `no-sync` (10 tests)
@@ -303,7 +303,7 @@
 - `space-infix-ops` (74 tests) (7 skipped)
 - `space-unary-ops` (112 tests)
 - `spaced-comment` (99 tests)
-- `strict` (126 tests)
+- `strict` (128 tests) (1 skipped)
 - `switch-colon-spacing` (46 tests)
 - `symbol-description` (8 tests)
 - `template-curly-spacing` (57 tests)
