@@ -40,11 +40,6 @@ catalogs:
       specifier: 4.0.18
       version: 4.0.18
 
-patchedDependencies:
-  prettier-plugin-tailwindcss@0.7.2:
-    hash: 85d2396832ac55f5f0187f4ba0a7b8bf22d7d117e33f75c1290670eb9a8c55af
-    path: patches/prettier-plugin-tailwindcss@0.7.2.patch
-
 importers:
 
   .:
@@ -68,8 +63,8 @@ importers:
         specifier: 3.8.1
         version: 3.8.1
       prettier-plugin-tailwindcss:
-        specifier: 0.7.2
-        version: 0.7.2(patch_hash=85d2396832ac55f5f0187f4ba0a7b8bf22d7d117e33f75c1290670eb9a8c55af)(prettier@3.8.1)
+        specifier: 0.0.0-insiders.2ac6e70
+        version: 0.0.0-insiders.2ac6e70(prettier@3.8.1)
       tinypool:
         specifier: 2.1.0
         version: 2.1.0
@@ -3753,8 +3748,8 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
 
-  prettier-plugin-tailwindcss@0.7.2:
-    resolution: {integrity: sha512-LkphyK3Fw+q2HdMOoiEHWf93fNtYJwfamoKPl7UwtjFQdei/iIBoX11G6j706FzN3ymX9mPVi97qIY8328vdnA==}
+  prettier-plugin-tailwindcss@0.0.0-insiders.2ac6e70:
+    resolution: {integrity: sha512-BHWDfSnPiaCkGau1GXirxp8ROUxiQQLlHM71FWTb8OeHS7CNi5wXUpWmDTtor/C+HhgByjGPwfszikQjrx9p8g==}
     engines: {node: '>=20.19'}
     peerDependencies:
       '@ianvs/prettier-plugin-sort-imports': '*'
@@ -7761,7 +7756,7 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-tailwindcss@0.7.2(patch_hash=85d2396832ac55f5f0187f4ba0a7b8bf22d7d117e33f75c1290670eb9a8c55af)(prettier@3.8.1):
+  prettier-plugin-tailwindcss@0.0.0-insiders.2ac6e70(prettier@3.8.1):
     dependencies:
       prettier: 3.8.1
 

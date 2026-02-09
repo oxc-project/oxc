@@ -19,6 +19,7 @@ export default defineConfig({
     // We are using patched version, so we must bundle it
     // Also, it internally loads plugins dynamically, so they also must be bundled
     "prettier-plugin-tailwindcss",
+    "prettier-plugin-tailwindcss/sorter",
     /^prettier\/plugins\//,
 
     // Cannot bundle: `cli-worker.js` runs in separate thread and can't resolve bundled chunks
