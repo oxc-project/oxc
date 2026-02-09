@@ -32,7 +32,6 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
                 if let ModuleExportName::IdentifierReference(ident) = &specifier.local
                     && ident.is_global_reference(&ctx.scoping)
                 {
-                    // Collect all available names in the root scope only when we have an error
                     let names = available_names.get_or_insert_with(|| {
                         let root_scope_id = ctx.scoping.root_scope_id();
                         ctx.scoping
