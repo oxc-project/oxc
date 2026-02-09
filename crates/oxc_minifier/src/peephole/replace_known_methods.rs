@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
+use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{Box, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
@@ -14,9 +15,8 @@ use oxc_regular_expression::{
     RegexUnsupportedPatterns, has_unsupported_regular_expression_pattern,
 };
 use oxc_span::SPAN;
-use oxc_traverse::Ancestor;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -25,7 +25,7 @@ type Arguments<'a> = oxc_allocator::Vec<'a, Argument<'a>>;
 /// Minimize With Known Methods
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/PeepholeReplaceKnownMethods.java>
 impl<'a> PeepholeOptimizations {
-    pub fn replace_known_global_methods(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn replace_known_global_methods(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::CallExpression(ce) = node else { return };
 
         // Use constant evaluation for known method calls
@@ -66,7 +66,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         arguments: &mut Arguments<'a>,
         object: &Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if !ctx.supports_feature(ESFeature::ES2016ExponentiationOperator) {
             return None;
@@ -104,7 +104,7 @@ impl<'a> PeepholeOptimizations {
         arguments: &mut Arguments<'a>,
         name: &str,
         object: &Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if !Self::validate_global_reference(object, "Array", ctx) {
             return None;
@@ -120,7 +120,7 @@ impl<'a> PeepholeOptimizations {
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
-    pub fn replace_concat_chain(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn replace_concat_chain(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let original_span = if let Expression::CallExpression(root_call_expr) = node {
             root_call_expr.span
         } else {
@@ -206,7 +206,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         args: &mut Arguments<'a>,
         callee: &mut Expression<'a>,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // let concat chaining reduction handle it first
         if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent()
@@ -361,7 +361,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn replace_known_property_access(node: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn replace_known_property_access(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // property access should be kept to keep `this` value
         if matches!(
             ctx.parent(),
@@ -484,7 +484,7 @@ impl<'a> PeepholeOptimizations {
     fn try_fold_number_constants(
         name: &str,
         span: Span,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let num = |span: Span, n: f64| {
             ctx.ast.expression_numeric_literal(span, n, None, NumberBase::Decimal)
@@ -550,7 +550,7 @@ impl<'a> PeepholeOptimizations {
         object: &mut Expression<'a>,
         property: u32,
         span: Span,
-        ctx: &Ctx<'a, '_>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         if object.may_have_side_effects(ctx) {
             return None;
@@ -589,7 +589,11 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn validate_global_reference(expr: &Expression<'a>, target: &str, ctx: &Ctx<'a, '_>) -> bool {
+    fn validate_global_reference(
+        expr: &Expression<'a>,
+        target: &str,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
         let Expression::Identifier(ident) = expr else { return false };
         ctx.is_global_reference(ident) && ident.name == target
     }

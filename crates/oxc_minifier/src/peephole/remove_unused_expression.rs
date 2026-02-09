@@ -1,6 +1,6 @@
 use std::iter;
 
-use crate::{CompressOptionsUnused, ctx::Ctx};
+use crate::{CompressOptionsUnused, TraverseCtx};
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
@@ -14,7 +14,7 @@ use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
     /// `SimplifyUnusedExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L534>
-    pub fn remove_unused_expression(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    pub fn remove_unused_expression(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         match e {
             Expression::ArrayExpression(_) => Self::remove_unused_array_expr(e, ctx),
             Expression::AssignmentExpression(_) => Self::remove_unused_assignment_expr(e, ctx),
@@ -32,7 +32,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn remove_unused_unary_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_unary_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::UnaryExpression(unary_expr) = e else { return false };
         match unary_expr.operator {
             UnaryOperator::Void | UnaryOperator::LogicalNot => {
@@ -53,7 +53,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    fn remove_unused_sequence_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_sequence_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::SequenceExpression(sequence_expr) = e else { return false };
         let old_len = sequence_expr.expressions.len();
         sequence_expr.expressions.retain_mut(|e| !Self::remove_unused_expression(e, ctx));
@@ -63,7 +63,7 @@ impl<'a> PeepholeOptimizations {
         sequence_expr.expressions.is_empty()
     }
 
-    fn remove_unused_logical_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_logical_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         if !e.may_have_side_effects(ctx) {
             return true;
         }
@@ -175,7 +175,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     // `([1,2,3, foo()])` -> `foo()`
-    fn remove_unused_array_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_array_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::ArrayExpression(array_expr) = e else {
             return false;
         };
@@ -225,7 +225,7 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn remove_unused_new_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_new_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::NewExpression(new_expr) = e else { return false };
         if (new_expr.pure && ctx.annotations()) || ctx.manual_pure_functions(&new_expr.callee) {
             let mut exprs =
@@ -245,7 +245,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     // "`${1}2${foo()}3`" -> "`${foo()}`"
-    fn remove_unused_template_literal(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_template_literal(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::TemplateLiteral(temp_lit) = e else { return false };
         if temp_lit.expressions.is_empty() {
             return true;
@@ -327,7 +327,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     // `({ 1: 1, [foo()]: bar() })` -> `foo(), bar()`
-    fn remove_unused_object_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_object_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::ObjectExpression(object_expr) = e else {
             return false;
         };
@@ -392,7 +392,7 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn remove_unused_conditional_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_conditional_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         if !e.may_have_side_effects(ctx) {
             return true;
         }
@@ -443,7 +443,7 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn remove_unused_binary_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_binary_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::BinaryExpression(binary_expr) = e else {
             return false;
         };
@@ -493,7 +493,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// returns whether the passed expression is a string
-    fn fold_string_addition_chain(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn fold_string_addition_chain(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::BinaryExpression(binary_expr) = e else {
             return e.to_primitive(ctx).is_string() == Some(true);
         };
@@ -536,7 +536,7 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn remove_unused_call_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_call_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::CallExpression(call_expr) = e else { return false };
 
         let is_pure = {
@@ -572,7 +572,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn fold_arguments_into_needed_expressions(
         args: &mut Vec<'a, Argument<'a>>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Vec<'a, Expression<'a>> {
         ctx.ast.vec_from_iter(args.drain(..).filter_map(|arg| {
             let mut expr = match arg {
@@ -586,7 +586,10 @@ impl<'a> PeepholeOptimizations {
         }))
     }
 
-    pub fn remove_unused_assignment_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    pub fn remove_unused_assignment_expr(
+        e: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
         let Expression::AssignmentExpression(assign_expr) = e else { return false };
         if matches!(
             ctx.state.options.unused,
@@ -627,7 +630,7 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
-    fn remove_unused_class_expr(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+    fn remove_unused_class_expr(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::ClassExpression(c) = e else { return false };
         if let Some(exprs) = Self::remove_unused_class(c, ctx) {
             if exprs.is_empty() {
@@ -640,7 +643,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn remove_unused_class(
         c: &mut Class<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Vec<'a, Expression<'a>>> {
         // TypeError `class C extends (() => {}) {}`
         if c.super_class

@@ -1,3 +1,4 @@
+use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
@@ -7,12 +8,8 @@ use oxc_ecmascript::{
 use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
-use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
-use crate::{
-    ctx::{Ctx, TraverseCtx},
-    state::MinifierState,
-};
+use crate::{ReusableTraverseCtx, Traverse, TraverseCtx, minifier_traverse::traverse_mut_with_ctx};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
@@ -46,16 +43,12 @@ pub struct Normalize {
 }
 
 impl<'a> Normalize {
-    pub fn build(
-        &mut self,
-        program: &mut Program<'a>,
-        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
-    ) {
+    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
-impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
+impl<'a> Traverse<'a> for Normalize {
     fn exit_program(&mut self, node: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_unnecessary_use_strict && node.source_type.is_module() {
             node.directives.drain_filter(|d| d.directive.as_str() == "use strict");
@@ -271,7 +264,7 @@ impl<'a> Normalize {
 
     fn fold_number_nan_to_nan(
         e: &StaticMemberExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let Expression::Identifier(ident) = &e.object else { return None };
         if ident.name != "Number" {
@@ -280,7 +273,7 @@ impl<'a> Normalize {
         if e.property.name != "NaN" {
             return None;
         }
-        if !Ctx::new(ctx).is_global_reference(ident) {
+        if !ctx.is_global_reference(ident) {
             return None;
         }
         Some(ctx.ast.nan(ident.span))
@@ -305,7 +298,7 @@ impl<'a> Normalize {
     /// `PC` or `PC_WITH_ARRAY` in <https://github.com/rollup/rollup/blob/v4.42.0/src/ast/nodes/shared/knownGlobals.ts>
     fn set_pure_or_no_side_effects_to_new_expr(
         new_expr: &mut NewExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) {
         if new_expr.pure {
             return;
@@ -321,7 +314,6 @@ impl<'a> Normalize {
             return;
         }
         // callee is a global reference.
-        let ctx = Ctx::new(ctx);
         let len = new_expr.arguments.len();
 
         let (zero_arg_throws_error, one_arg_array_throws_error, one_arg_throws_error): (
@@ -371,7 +363,7 @@ impl<'a> Normalize {
             | "TypeError" | "URIError" | "Number" | "Object" | "String" => (false, false, &[]),
             // RegExp needs special validation using the regex parser
             "RegExp" => {
-                if Self::can_set_pure(ident, &ctx) && is_valid_regexp(&new_expr.arguments) {
+                if Self::can_set_pure(ident, ctx) && is_valid_regexp(&new_expr.arguments) {
                     new_expr.pure = true;
                 }
                 return;
@@ -379,7 +371,7 @@ impl<'a> Normalize {
             _ => return,
         };
 
-        if !Self::can_set_pure(ident, &ctx) {
+        if !Self::can_set_pure(ident, ctx) {
             return;
         }
 
@@ -409,7 +401,7 @@ impl<'a> Normalize {
         }
     }
 
-    fn can_set_pure(ident: &IdentifierReference<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn can_set_pure(ident: &IdentifierReference<'a>, ctx: &TraverseCtx<'a>) -> bool {
         ctx.is_global_reference(ident)
             // Throw is never pure.
             && !matches!(ctx.parent(), Ancestor::ThrowStatementArgument(_))

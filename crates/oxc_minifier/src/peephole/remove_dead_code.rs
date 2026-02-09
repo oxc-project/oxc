@@ -1,3 +1,4 @@
+use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
@@ -6,9 +7,8 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::GetSpan;
-use oxc_traverse::Ancestor;
 
-use crate::{ctx::Ctx, keep_var::KeepVar};
+use crate::{TraverseCtx, keep_var::KeepVar};
 
 use super::PeepholeOptimizations;
 
@@ -21,7 +21,7 @@ use super::PeepholeOptimizations;
 impl<'a> PeepholeOptimizations {
     /// Remove block from single line blocks
     /// `{ block } -> block`
-    pub fn try_optimize_block(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_optimize_block(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::BlockStatement(s) = stmt else { return };
         match s.body.len() {
             0 => {
@@ -54,7 +54,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn try_fold_if(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_if(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::IfStatement(if_stmt) = stmt else { return };
         // Descend and remove `else` blocks first.
         match &mut if_stmt.alternate {
@@ -123,7 +123,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn try_fold_for(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_for(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ForStatement(for_stmt) = stmt else { return };
         if let Some(init) = &mut for_stmt.init
             && let Some(init) = init.as_expression_mut()
@@ -194,7 +194,7 @@ impl<'a> PeepholeOptimizations {
     /// ```js
     /// a: break a;
     /// ```
-    pub fn try_fold_labeled(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_labeled(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::LabeledStatement(s) = stmt else { return };
         let id = s.label.name.as_str();
 
@@ -224,7 +224,7 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
     }
 
-    pub fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_expression_stmt(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ExpressionStatement(expr_stmt) = stmt else { return };
         // We need to check if it is in arrow function with `expression: true`.
         // This is the only scenario where we can't remove it even if `ExpressionStatement`.
@@ -240,7 +240,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn try_fold_try(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_try(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::TryStatement(s) = stmt else { return };
         if let Some(handler) = &s.handler
             && s.block.body.is_empty()
@@ -276,7 +276,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Try folding conditional expression (?:) if the condition results of the condition is known.
-    pub fn try_fold_conditional_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn try_fold_conditional_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ConditionalExpression(e) = expr else { return };
         let Some(v) = e.test.evaluate_value_to_boolean(ctx) else { return };
         ctx.state.changed = true;
@@ -310,7 +310,7 @@ impl<'a> PeepholeOptimizations {
         };
     }
 
-    pub fn remove_sequence_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_sequence_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::SequenceExpression(e) = expr else { return };
         let should_keep_as_sequence_expr = e
             .expressions
@@ -352,7 +352,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn keep_track_of_pure_functions(stmt: &mut Statement<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn keep_track_of_pure_functions(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
             Statement::FunctionDeclaration(f) => {
                 if let Some(body) = &f.body {
@@ -407,7 +407,7 @@ impl<'a> PeepholeOptimizations {
         body: &FunctionBody<'a>,
         r#async: bool,
         generator: bool,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if r#async || generator {
             return;
@@ -428,7 +428,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_dead_code_call_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::CallExpression(e) = expr else { return };
         if let Expression::Identifier(ident) = &e.callee {
             let reference_id = ident.reference_id();
@@ -456,7 +456,10 @@ impl<'a> PeepholeOptimizations {
     /// Example case: `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
     ///
     /// * `access_value` - The expression that may need to be kept as indirect reference (`foo.bar` in the example above)
-    pub fn should_keep_indirect_access(access_value: &Expression<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    pub fn should_keep_indirect_access(
+        access_value: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
         match ctx.parent() {
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_) => {
                 match access_value {
@@ -496,7 +499,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
         body.body.retain(|e| !matches!(e, ClassElement::StaticBlock(s) if s.body.is_empty()));
     }
 

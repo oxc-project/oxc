@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -10,7 +10,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// This function uses the private member usage collected during the main traverse
     /// to remove unused private fields and methods from the class body.
-    pub fn remove_unused_private_members(body: &mut ClassBody<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn remove_unused_private_members(body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         if ctx.current_scope_flags().contains_direct_eval() {
             return;
         }

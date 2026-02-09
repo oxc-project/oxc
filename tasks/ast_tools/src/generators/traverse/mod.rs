@@ -5,8 +5,8 @@
 //! * `walk.rs` - Unsafe `walk_*` functions for AST traversal.
 //! * `ancestor.rs` - Ancestor tracking types and offset constants.
 
-mod ancestor;
-mod walk;
+pub(super) mod ancestor;
+pub(super) mod walk;
 
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -27,14 +27,15 @@ define_generator!(TraverseGenerator);
 
 impl Generator for TraverseGenerator {
     fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
+        let config = TraverseTraitConfig::traverse();
         vec![
             Output::Rust {
                 path: output_path(TRAVERSE_CRATE_PATH, "traverse.rs"),
-                tokens: generate_traverse_trait(schema),
+                tokens: generate_traverse_trait(schema, &config),
             },
             Output::Rust {
                 path: output_path(TRAVERSE_CRATE_PATH, "walk.rs"),
-                tokens: walk::generate_walk(schema),
+                tokens: generate_walk_traverse(schema),
             },
             Output::Rust {
                 path: output_path(TRAVERSE_CRATE_PATH, "ancestor.rs"),
@@ -44,8 +45,50 @@ impl Generator for TraverseGenerator {
     }
 }
 
+pub(super) fn generate_walk_traverse(schema: &Schema) -> TokenStream {
+    walk::generate_walk(schema, &walk::WalkConfig::traverse())
+}
+
+pub(super) fn generate_walk_minifier(schema: &Schema) -> TokenStream {
+    walk::generate_walk(schema, &walk::WalkConfig::minifier())
+}
+
+pub(super) struct TraverseTraitConfig {
+    pub trait_ident: syn::Ident,
+    pub trait_generics: TokenStream,
+    pub ctx_ty: TokenStream,
+    pub ctx_use: TokenStream,
+}
+
+impl TraverseTraitConfig {
+    pub fn traverse() -> Self {
+        Self {
+            trait_ident: quote::format_ident!("Traverse"),
+            trait_generics: quote! { <'a, State> },
+            ctx_ty: quote! { TraverseCtx<'a, State> },
+            ctx_use: quote! { use crate::TraverseCtx; },
+        }
+    }
+
+    pub fn minifier() -> Self {
+        Self {
+            trait_ident: quote::format_ident!("Traverse"),
+            trait_generics: quote! { <'a> },
+            ctx_ty: quote! { TraverseCtx<'a> },
+            ctx_use: quote! { use crate::TraverseCtx; },
+        }
+    }
+}
+
 /// Generate `Traverse` trait with `enter_*` / `exit_*` methods for each visited type.
-fn generate_traverse_trait(schema: &Schema) -> TokenStream {
+pub(super) fn generate_traverse_trait(
+    schema: &Schema,
+    config: &TraverseTraitConfig,
+) -> TokenStream {
+    let ctx_ty = &config.ctx_ty;
+    let trait_ident = &config.trait_ident;
+    let trait_generics = &config.trait_generics;
+    let ctx_use = &config.ctx_use;
     let mut methods = quote!();
 
     for type_def in &schema.types {
@@ -66,9 +109,9 @@ fn generate_traverse_trait(schema: &Schema) -> TokenStream {
         methods.extend(quote! {
             ///@@line_break
             #[inline]
-            fn #enter_ident(&mut self, node: &mut #ty, ctx: &mut TraverseCtx<'a, State>) {}
+            fn #enter_ident(&mut self, node: &mut #ty, ctx: &mut #ctx_ty) {}
             #[inline]
-            fn #exit_ident(&mut self, node: &mut #ty, ctx: &mut TraverseCtx<'a, State>) {}
+            fn #exit_ident(&mut self, node: &mut #ty, ctx: &mut #ctx_ty) {}
         });
     }
 
@@ -76,9 +119,9 @@ fn generate_traverse_trait(schema: &Schema) -> TokenStream {
     methods.extend(quote! {
         ///@@line_break
         #[inline]
-        fn enter_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a, State>) {}
+        fn enter_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &mut #ctx_ty) {}
         #[inline]
-        fn exit_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a, State>) {}
+        fn exit_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &mut #ctx_ty) {}
     });
 
     quote! {
@@ -86,11 +129,11 @@ fn generate_traverse_trait(schema: &Schema) -> TokenStream {
         use oxc_ast::ast::*;
 
         ///@@line_break
-        use crate::TraverseCtx;
+        #ctx_use
 
         ///@@line_break
         #[expect(unused_variables)]
-        pub trait Traverse<'a, State> {
+        pub trait #trait_ident #trait_generics {
             #methods
         }
     }

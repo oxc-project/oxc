@@ -20,9 +20,45 @@ use super::{
     traverse_snake_name,
 };
 
+pub(super) struct WalkConfig {
+    pub use_code: TokenStream,
+    pub trait_bound: TokenStream,
+    pub ctx_ty: TokenStream,
+    pub has_state: bool,
+}
+
+impl WalkConfig {
+    pub fn traverse() -> Self {
+        Self {
+            use_code: quote! { use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx}; },
+            trait_bound: quote! { Tr: Traverse<'a, State> },
+            ctx_ty: quote! { TraverseCtx<'a, State> },
+            has_state: true,
+        }
+    }
+
+    pub fn minifier() -> Self {
+        Self {
+            use_code: quote! {
+                use crate::{
+                    generated::ancestor::{self, Ancestor, AncestorType},
+                    Traverse,
+                    TraverseCtx,
+                };
+            },
+            trait_bound: quote! { Tr: Traverse<'a> },
+            ctx_ty: quote! { TraverseCtx<'a> },
+            has_state: false,
+        }
+    }
+}
+
 /// Generate all walk functions.
-pub fn generate_walk(schema: &Schema) -> TokenStream {
+pub(super) fn generate_walk(schema: &Schema, config: &WalkConfig) -> TokenStream {
     let mut walk_methods = quote!();
+    let use_code = &config.use_code;
+    let ctx_ty = &config.ctx_ty;
+    let walk_generics = walk_generics_tokens(config);
 
     for type_def in &schema.types {
         if !is_ast_type_with_visitor(type_def, schema) {
@@ -30,10 +66,10 @@ pub fn generate_walk(schema: &Schema) -> TokenStream {
         }
         match type_def {
             TypeDef::Struct(struct_def) => {
-                walk_methods.extend(generate_walk_for_struct(struct_def, schema));
+                walk_methods.extend(generate_walk_for_struct(struct_def, schema, config));
             }
             TypeDef::Enum(enum_def) => {
-                walk_methods.extend(generate_walk_for_enum(enum_def, schema));
+                walk_methods.extend(generate_walk_for_enum(enum_def, schema, config));
             }
             _ => {}
         }
@@ -59,7 +95,7 @@ pub fn generate_walk(schema: &Schema) -> TokenStream {
         use oxc_syntax::scope::ScopeId;
 
         ///@@line_break
-        use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx};
+        #use_code
 
         ///@@line_break
         /// Walk AST with `Traverse` impl.
@@ -69,10 +105,10 @@ pub fn generate_walk(schema: &Schema) -> TokenStream {
         ///   (`Program<'a>`).
         /// * `ctx` must contain a `TraverseAncestry<'a>` with single `Ancestor::None` on its stack.
         #[inline]
-        pub unsafe fn walk_ast<'a, State, Tr: Traverse<'a, State>>(
+        pub unsafe fn walk_ast<#walk_generics>(
             traverser: &mut Tr,
             program: *mut Program<'a>,
-            ctx: &mut TraverseCtx<'a, State>,
+            ctx: &mut #ctx_ty,
         ) {
             walk_program(traverser, program, ctx);
         }
@@ -80,10 +116,10 @@ pub fn generate_walk(schema: &Schema) -> TokenStream {
         #walk_methods
 
         ///@@line_break
-        unsafe fn walk_statements<'a, State, Tr: Traverse<'a, State>>(
+        unsafe fn walk_statements<#walk_generics>(
             traverser: &mut Tr,
             stmts: *mut Vec<'a, Statement<'a>>,
-            ctx: &mut TraverseCtx<'a, State>,
+            ctx: &mut #ctx_ty,
         ) {
             traverser.enter_statements(&mut *stmts, ctx);
             for stmt in &mut *stmts {
@@ -94,8 +130,23 @@ pub fn generate_walk(schema: &Schema) -> TokenStream {
     }
 }
 
+fn walk_generics_tokens(config: &WalkConfig) -> TokenStream {
+    let trait_bound = &config.trait_bound;
+    if config.has_state {
+        quote! { 'a, State, #trait_bound }
+    } else {
+        quote! { 'a, #trait_bound }
+    }
+}
+
 /// Generate walk function for a struct type.
-fn generate_walk_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+fn generate_walk_for_struct(
+    struct_def: &StructDef,
+    schema: &Schema,
+    config: &WalkConfig,
+) -> TokenStream {
+    let walk_generics = walk_generics_tokens(config);
+    let ctx_ty = &config.ctx_ty;
     let visitor_names = struct_def.visit.visitor_names.as_ref().unwrap();
     let snake_name = traverse_snake_name(visitor_names);
     let walk_fn_name = format_ident!("walk_{snake_name}");
@@ -195,10 +246,10 @@ fn generate_walk_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
 
     quote! {
         ///@@line_break
-        unsafe fn #walk_fn_name<'a, State, Tr: Traverse<'a, State>>(
+        unsafe fn #walk_fn_name<#walk_generics>(
             traverser: &mut Tr,
             node: *mut #struct_ty,
-            ctx: &mut TraverseCtx<'a, State>,
+            ctx: &mut #ctx_ty,
         ) {
             traverser.#enter_fn_name(&mut *node, ctx);
             #fields_code
@@ -472,7 +523,9 @@ fn generate_field_walk_option_with_retag(
 }
 
 /// Generate walk function for an enum type.
-fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema, config: &WalkConfig) -> TokenStream {
+    let walk_generics = walk_generics_tokens(config);
+    let ctx_ty = &config.ctx_ty;
     let visitor_names = enum_def.visit.visitor_names.as_ref().unwrap();
     let snake_name = traverse_snake_name(visitor_names);
     let walk_fn_name = format_ident!("walk_{snake_name}");
@@ -528,10 +581,10 @@ fn generate_walk_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 
     quote! {
         ///@@line_break
-        unsafe fn #walk_fn_name<'a, State, Tr: Traverse<'a, State>>(
+        unsafe fn #walk_fn_name<#walk_generics>(
             traverser: &mut Tr,
             node: *mut #enum_ty,
-            ctx: &mut TraverseCtx<'a, State>,
+            ctx: &mut #ctx_ty,
         ) {
             traverser.#enter_fn_name(&mut *node, ctx);
             match &mut *node {
