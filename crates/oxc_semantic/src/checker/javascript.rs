@@ -15,11 +15,12 @@ use oxc_syntax::{
 
 use crate::{IsGlobalReference, builder::SemanticBuilder, class::Element, diagnostics};
 
+/// Threshold for edit distance when suggesting similar names
+const SUGGESTION_THRESHOLD: usize = 2;
+
 /// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
 /// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
 pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>) {
-    const THRESHOLD: usize = 2;
-
     if ctx.source_type.is_typescript() || !ctx.source_type.is_module() {
         return;
     }
@@ -41,7 +42,7 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
 
                     // Try to find a similar name with edit distance <= 2
                     let suggestion =
-                        best_match(&ident.name, available_names.iter().copied(), THRESHOLD);
+                        best_match(&ident.name, available_names.iter().copied(), SUGGESTION_THRESHOLD);
                     ctx.errors.borrow_mut().push(diagnostics::undefined_export(
                         &ident.name,
                         suggestion,
@@ -351,8 +352,6 @@ pub fn check_private_identifier_outside_class(
 }
 
 fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
-    const THRESHOLD: usize = 2;
-
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
             if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
@@ -370,7 +369,7 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
 
                 // Try to find a similar name with edit distance <= 2
                 let suggestion =
-                    best_match(&reference.name, available_names.iter().copied(), THRESHOLD);
+                    best_match(&reference.name, available_names.iter().copied(), SUGGESTION_THRESHOLD);
                 ctx.error(diagnostics::private_field_undeclared(
                     &reference.name,
                     suggestion,
@@ -816,7 +815,6 @@ pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuil
 }
 
 pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
-    const THRESHOLD: usize = 2;
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
 
     // Collect all available labels in the current scope (before crossing function boundaries)
@@ -830,7 +828,7 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                     |label| {
                         // Try to find a similar label with edit distance <= 2
                         let suggestion =
-                            best_match(&label.name, available_labels.iter().copied(), THRESHOLD);
+                            best_match(&label.name, available_labels.iter().copied(), SUGGESTION_THRESHOLD);
                         ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
                     },
                 );
@@ -863,7 +861,6 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
 }
 
 pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<'_>) {
-    const THRESHOLD: usize = 2;
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
 
     // Collect all available labels in the current scope (before crossing function boundaries)
@@ -877,7 +874,7 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                     |label| {
                         // Try to find a similar label with edit distance <= 2
                         let suggestion =
-                            best_match(&label.name, available_labels.iter().copied(), THRESHOLD);
+                            best_match(&label.name, available_labels.iter().copied(), SUGGESTION_THRESHOLD);
                         ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
                     },
                 );
