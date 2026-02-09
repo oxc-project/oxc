@@ -25,6 +25,7 @@ working directory: fixtures/tsgolint
  1 | ({}).toString();
    : ^^^^
    `----
+  help: Consider picking a property (e.g. `user.name`), using a formatter (or `JSON.stringify`), or implementing a custom `toString()`/`toLocaleString()` on the type.
 
   x typescript-eslint(no-meaningless-void-operator): void operator shouldn't be used on void; it should convey that a return value is being ignored
    ,-[no-confusing-void-expression.ts:2:19]
@@ -370,6 +371,7 @@ working directory: fixtures/tsgolint
    :                        ^^^
  3 | 
    `----
+  help: Consider picking a property (e.g. `user.name`), using a formatter (or `JSON.stringify`), or implementing a custom `toString()`/`toLocaleString()` on the type.
 
   x typescript-eslint(restrict-template-expressions): Invalid type "object" of template literal expression.
    ,-[restrict-template-expressions.ts:2:24]
