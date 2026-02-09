@@ -40,8 +40,6 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
                             .map(oxc_span::Ident::as_str)
                             .collect()
                     });
-
-                    // Try to find a similar name with edit distance <= 2
                     let suggestion =
                         best_match(&ident.name, names.iter().copied(), SUGGESTION_THRESHOLD);
                     ctx.errors.borrow_mut().push(diagnostics::undefined_export(
