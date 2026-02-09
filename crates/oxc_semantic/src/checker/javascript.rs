@@ -369,8 +369,6 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
                     }
                     names
                 });
-
-                // Try to find a similar name with edit distance <= 2
                 let suggestion =
                     best_match(&reference.name, names.iter().copied(), SUGGESTION_THRESHOLD);
                 ctx.error(diagnostics::private_field_undeclared(
