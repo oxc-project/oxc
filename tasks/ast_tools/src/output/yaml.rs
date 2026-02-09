@@ -71,6 +71,7 @@ impl Output {
             "package.json",
             "oxfmtrc.jsonc",
             "Cargo.toml",
+            "Cargo.lock",
         ];
 
         // Add additional paths and dependency crate paths to `paths`, and sort
