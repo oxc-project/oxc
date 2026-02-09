@@ -1443,10 +1443,42 @@ mod suppression {
     }
 
     #[test]
-    fn test_suppression_not_reporting_errors_one_file() {
+    fn test_suppression_report_only_from_one_file() {
         let args = &[];
         Tester::new()
-            .with_cwd("fixtures/suppression_not_reporting_errors_one_file".into())
+            .with_cwd("fixtures/suppression_report_only_from_one_file".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_eslint_file_format() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_eslint_file_format".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_less_rules_violations_warning() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_less_rules_violations_warning".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_prune_errors_warning() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_prune_errors_warning".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_report_one_of_the_errors_from_one_file() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_report_one_of_the_errors_from_one_file".into())
             .test_and_snapshot(args);
     }
 }
