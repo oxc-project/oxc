@@ -502,6 +502,11 @@ fn test_fold_unary() {
     fold("a=+[0, 1]", "a=NaN");
     test_same("var foo; NOOP(a=+[0, ...foo])"); // can be either `a=0` or `a=NaN` (also `...foo` may have a side effect)
     test("var foo; NOOP(a=+[0, ...[foo ? 'foo': ''], 1])", "var foo; NOOP(a=NaN)");
+
+    fold("a=+[false]", "a=NaN"); // `+"false"`
+    fold("a=+[true]", "a=NaN"); // `+"true"`
+    fold("a=+[undefined]", "a=0"); // `+""`
+    fold("a=+[null]", "a=0"); // `+""`
 }
 
 #[test]
