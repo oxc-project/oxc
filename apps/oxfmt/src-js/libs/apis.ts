@@ -119,7 +119,6 @@ export async function formatFile({
 // ---
 
 // Import types only to avoid runtime error if plugin is not installed
-import type { TransformerEnv } from "prettier-plugin-tailwindcss";
 
 // Shared cache for prettier-plugin-tailwindcss
 let tailwindPluginCache: typeof import("prettier-plugin-tailwindcss");
@@ -153,7 +152,12 @@ async function setupTailwindPlugin(options: Options): Promise<void> {
 export interface SortTailwindClassesArgs {
   filepath: string;
   classes: string[];
-  options?: Record<string, unknown>;
+  options?: {
+    tailwindStylesheet?: string;
+    tailwindConfig?: string;
+    tailwindPreserveWhitespace?: boolean;
+    tailwindPreserveDuplicates?: boolean;
+  } & Options;
 }
 
 /**
@@ -166,27 +170,17 @@ export async function sortTailwindClasses({
   classes,
   options = {},
 }: SortTailwindClassesArgs): Promise<string[]> {
-  const tailwindPlugin = await loadTailwindPlugin();
+  const { createSorter } = await import("prettier-plugin-tailwindcss/sorter");
 
-  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  options.filepath = filepath;
-
-  // Load Tailwind context
-  const context = await tailwindPlugin.getTailwindConfig(options);
-  if (!context) return classes;
-
-  // Create transformer env with options
-  const env: TransformerEnv = { context, options };
-
-  // Sort all classes
-  return classes.map((classStr) => {
-    try {
-      return tailwindPlugin.sortClasses(classStr, { env });
-    } catch {
-      // Failed to sort, return original
-      return classStr;
-    }
+  const sorter = await createSorter({
+    filepath,
+    stylesheetPath: options.tailwindStylesheet,
+    configPath: options.tailwindConfig,
+    preserveWhitespace: options.tailwindPreserveWhitespace,
+    preserveDuplicates: options.tailwindPreserveDuplicates,
   });
+
+  return sorter.sortClassAttributes(classes);
 }
 
 // ---

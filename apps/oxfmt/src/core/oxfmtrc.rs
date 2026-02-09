@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -814,7 +816,7 @@ pub struct OxfmtOptions {
 ///
 /// This function should be called once during config caching.
 /// For strategy-specific options (plugin flags), use [`finalize_external_options()`] separately.
-pub fn sync_external_options(config: &mut Value, options: &FormatOptions) {
+pub fn sync_external_options(options: &FormatOptions, config: &mut Value) {
     let Some(obj) = config.as_object_mut() else {
         return;
     };
@@ -877,7 +879,11 @@ static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
 /// - `_oxfmtPluginOptionsJson`: Bundled options for `prettier-plugin-oxfmt`
 ///
 /// Also removes Prettier-unaware options to minimize payload size.
-pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrategy) {
+pub fn finalize_external_options(
+    config_dir: Option<&PathBuf>,
+    config: &mut Value,
+    strategy: &FormatFileStrategy,
+) {
     let Some(obj) = config.as_object_mut() else {
         return;
     };
@@ -907,8 +913,25 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
                 ("preserveWhitespace", "tailwindPreserveWhitespace"),
                 ("preserveDuplicates", "tailwindPreserveDuplicates"),
             ] {
-                if let Some(v) = tailwind.get(src) {
-                    obj.insert(dst.to_string(), v.clone());
+                if let Some(value) = tailwind.get(src).cloned() {
+                    if matches!(src, "config" | "stylesheet")
+                        && let Some(path_str) = value.as_str()
+                        && let Some(config_dir) = config_dir
+                    {
+                        let path = Path::new(path_str);
+                        if path.is_relative() {
+                            // Resolve relative paths to absolute paths, which can avoid `prettier-plugin-tailwindcss`
+                            // from resolving the Prettier configuration file.
+                            // <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/125a8bc77639529a5a0c7e4e8a02174d7ed2d70b/src/config.ts#L50-L54>
+                            let config_path = config_dir.join(path);
+                            let canonical_path = config_path.canonicalize().unwrap_or(config_path);
+                            let normalized_path = canonical_path.to_string_lossy().to_string();
+                            obj.insert(dst.to_string(), Value::from(normalized_path));
+                            continue;
+                        }
+                    }
+
+                    obj.insert(dst.to_string(), value);
                 }
             }
         }
@@ -1178,7 +1201,7 @@ mod tests_sync_external_options {
         let config: FormatConfig = serde_json::from_str(json_string).unwrap();
         let oxfmt_options = config.into_oxfmt_options().unwrap();
 
-        sync_external_options(&mut raw_config, &oxfmt_options.format_options);
+        sync_external_options(&oxfmt_options.format_options, &mut raw_config);
 
         let obj = raw_config.as_object().unwrap();
         assert_eq!(obj.get("printWidth").unwrap(), 100);
@@ -1195,7 +1218,7 @@ mod tests_sync_external_options {
         let config: FormatConfig = serde_json::from_str(json_string).unwrap();
         let oxfmt_options = config.into_oxfmt_options().unwrap();
 
-        sync_external_options(&mut raw_config, &oxfmt_options.format_options);
+        sync_external_options(&oxfmt_options.format_options, &mut raw_config);
 
         let obj = raw_config.as_object().unwrap();
         // User-specified value is preserved via FormatOptions
@@ -1252,7 +1275,7 @@ mod tests_sync_external_options {
         let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
         let oxfmt_options = oxfmtrc.format_config.into_oxfmt_options().unwrap();
 
-        sync_external_options(&mut raw_config, &oxfmt_options.format_options);
+        sync_external_options(&oxfmt_options.format_options, &mut raw_config);
 
         let obj = raw_config.as_object().unwrap();
         // Overrides are preserved (for caching)
@@ -1280,7 +1303,7 @@ mod tests_sync_external_options {
             path: PathBuf::from("test.js"),
             source_type: SourceType::mjs(),
         };
-        finalize_external_options(&mut raw_config, &strategy);
+        finalize_external_options(None, &mut raw_config, &strategy);
 
         let obj = raw_config.as_object().unwrap();
         // oxfmt extensions are removed by finalize_external_options

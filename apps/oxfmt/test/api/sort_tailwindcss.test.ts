@@ -1,3 +1,6 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
 
@@ -15,6 +18,30 @@ describe("Tailwind CSS Sorting", () => {
     expect(result.code).toContain('className="flex');
     expect(result.code).not.toContain('className="p-4 flex'); // p-4 should not be before flex
     expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should resolve relative tailwindConfig paths", async () => {
+    const cwd = process.cwd();
+    const dir = await mkdtemp(join(tmpdir(), "oxfmt-tailwind-"));
+
+    try {
+      await writeFile(
+        join(dir, "tailwind.config.js"),
+        "module.exports = { content: [], theme: { extend: {} }, plugins: [] };",
+      );
+
+      const input = `const A = <div className="p-4 flex">Hello</div>;`;
+      const result = await format("src/test.tsx", input, {
+        experimentalTailwindcss: {
+          config: join(relative(cwd, dir), "tailwind.config.js"),
+        },
+      });
+
+      expect(result.code).toContain('className="flex p-4"');
+      expect(result.errors).toStrictEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it("should NOT sort Tailwind classes when experimentalTailwindcss is disabled (default)", async () => {

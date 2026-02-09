@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    env::current_dir,
+    path::{Path, PathBuf},
+};
 
 use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
@@ -62,9 +65,15 @@ pub fn resolve_options_from_value(
     let oxfmt_options = format_config
         .into_oxfmt_options()
         .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
-    sync_external_options(&mut external_options, &oxfmt_options.format_options);
 
-    Ok(ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy))
+    sync_external_options(&oxfmt_options.format_options, &mut external_options);
+
+    Ok(ResolvedOptions::from_oxfmt_options(
+        current_dir().ok().as_ref(),
+        oxfmt_options,
+        external_options,
+        strategy,
+    ))
 }
 
 // ---
@@ -99,12 +108,13 @@ impl ResolvedOptions {
     ///
     /// This also applies plugin-specific options (Tailwind, oxfmt plugin flags) based on strategy.
     fn from_oxfmt_options(
+        config_dir: Option<&PathBuf>,
         oxfmt_options: OxfmtOptions,
         mut external_options: Value,
         strategy: &FormatFileStrategy,
     ) -> Self {
         // Apply plugin-specific options based on strategy
-        finalize_external_options(&mut external_options, strategy);
+        finalize_external_options(config_dir, &mut external_options, strategy);
 
         #[cfg(feature = "napi")]
         let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
@@ -265,7 +275,7 @@ impl ConfigResolver {
         // Apply common Prettier mappings for caching.
         // Plugin options will be added later in `resolve()` via `finalize_external_options()`.
         // If we finalize here, every per-file options contain plugin options even if not needed.
-        sync_external_options(&mut external_options, &oxfmt_options.format_options);
+        sync_external_options(&oxfmt_options.format_options, &mut external_options);
 
         // Save cache for fast path: no per-file overrides
         self.cached_options = Some((oxfmt_options, external_options));
@@ -278,7 +288,12 @@ impl ConfigResolver {
     #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %strategy.path().display()))]
     pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
         let (oxfmt_options, external_options) = self.resolve_options(strategy.path());
-        ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy)
+        ResolvedOptions::from_oxfmt_options(
+            self.config_dir.as_ref(),
+            oxfmt_options,
+            external_options,
+            strategy,
+        )
     }
 
     /// Resolve options for a specific file path.
@@ -323,7 +338,8 @@ impl ConfigResolver {
         let oxfmt_options = format_config
             .into_oxfmt_options()
             .expect("If this fails, there is an issue with override values");
-        sync_external_options(&mut external_options, &oxfmt_options.format_options);
+
+        sync_external_options(&oxfmt_options.format_options, &mut external_options);
 
         (oxfmt_options, external_options)
     }
