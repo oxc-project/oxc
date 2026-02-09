@@ -249,7 +249,13 @@ function runGroup(group: TestGroup, mocks: Mocks) {
       mocks.set(resolveFromTestsDir(specifier), RuleTester);
     } else {
       const mod = requireFromTestsDir(specifier);
-      mod[propName] = RuleTester;
+      // Use `Object.defineProperty` to handle if `mod[propName]` is a getter (transpiled ESM module)
+      Object.defineProperty(mod, propName, {
+        value: RuleTester,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
     }
   }
 
