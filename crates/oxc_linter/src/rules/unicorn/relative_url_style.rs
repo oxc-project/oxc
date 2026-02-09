@@ -300,7 +300,7 @@ fn test() {
         (r#"new URL("./foo", base)"#, r#"new URL("foo", base)"#, None),
         (r"new URL('./foo', base)", r"new URL('foo', base)", None),
         (r#"new URL("././a", base)"#, r#"new URL("./a", base)"#, None),
-        (r#"new URL(`./${foo}`, base)"#, r#"new URL(`${foo}`, base)"#, None),
+        (r"new URL(`./${foo}`, base)", r"new URL(`${foo}`, base)", None),
         (
             r#"new URL("./", "https://example.com/a/b/")"#,
             r#"new URL("", "https://example.com/a/b/")"#,
