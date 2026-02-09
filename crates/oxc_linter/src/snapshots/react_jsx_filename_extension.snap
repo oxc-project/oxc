@@ -32,9 +32,17 @@ source: crates/oxc_linter/src/tester.rs
   help: Rename the file to use an allowed extension: .jsx
 
   ⚠ eslint-plugin-react(jsx-filename-extension): Only files containing JSX may use the extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:1]
+ 1 │ module.exports = {}
+   · ▲
+   ╰────
   help: Rename the file with a good extension.
 
   ⚠ eslint-plugin-react(jsx-filename-extension): Only files containing JSX may use the extension '.jsx'
+   ╭─[jsx_filename_extension.tsx:1:1]
+ 1 │ export function foo() { return 'foo'; }
+   · ▲
+   ╰────
   help: Rename the file with a good extension.
 
   ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.js'
