@@ -1,4 +1,4 @@
-import type { TestGroup } from "../index.ts";
+import type { MockFn, TestGroup } from "../index.ts";
 import type { TestCase } from "../rule_tester.ts";
 
 const group: TestGroup = {
@@ -20,7 +20,7 @@ const group: TestGroup = {
     }
   },
 
-  prepare(require: NodeJS.Require, mock: (path: string, value: unknown) => void) {
+  prepare(require: NodeJS.Require, mock: MockFn) {
     // Add `default` export to `eslint-plugin-react-hooks` module
     const plugin = require("eslint-plugin-react-hooks") as any;
     plugin.default = plugin;

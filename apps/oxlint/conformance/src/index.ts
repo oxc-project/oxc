@@ -77,7 +77,7 @@ export interface TestGroup {
    * @param require - Require function, which requires modules relative to the test files directory
    * @param mock - Mock function, which mocks modules relative to the test files directory
    */
-  prepare?: (require: NodeJS.Require, mock: (path: string, value: unknown) => void) => void;
+  prepare?: (require: NodeJS.Require, mock: MockFn) => void;
 
   /**
    * Function that will be called for every failing test case.
@@ -121,6 +121,20 @@ export interface TestGroup {
    */
   parsers: ParserDetails[];
 }
+
+/**
+ * Mock function.
+ *
+ * Takes specifier of module to mock, and value to mock it with.
+ * Specifier is resolved relative to the test files directory.
+ *
+ * If need to mock a module which is imported by another package, pass the specifiers of
+ * "breadcrumb" packages on way to the module as `via`.
+ *
+ * e.g. If test file imports `foo`, `foo` imports `bar`, and `bar` imports `qux`, and `qux` is the module to mock:
+ * `mock("qux", value, ["foo", "bar"])`
+ */
+export type MockFn = (specifier: string, value: unknown, via?: string[]) => void;
 
 /**
  * Custom parser details.
@@ -244,10 +258,7 @@ function runGroup(group: TestGroup, mocks: Mocks) {
   if (prepare) {
     console.log(`Running prepare hook for ${groupName}...`);
 
-    const mock = (path: string, value: unknown) => {
-      mocks.set(resolveFromTestsDir(path), value);
-    };
-
+    const mock = createMockFn(testFilesDirPath, mocks);
     prepare(requireFromTestsDir, mock);
   }
 
@@ -307,6 +318,27 @@ function runGroup(group: TestGroup, mocks: Mocks) {
   console.log(`  Fully passing: ${fullyPassingCount}`);
   console.log(`  Load errors: ${loadErrorCount}`);
   console.log(`  With failures: ${totalRuleCount - fullyPassingCount - loadErrorCount}`);
+}
+
+/**
+ * Create a mock function which mocks a module relative to the test files directory.
+ * @param testFilesDirPath - Path to the test files directory
+ * @param mocks - Mocks
+ * @returns Mock function
+ */
+function createMockFn(testFilesDirPath: string, mocks: Mocks): MockFn {
+  const startPath = pathJoin(testFilesDirPath, "dummy.js");
+
+  return (specifier: string, value: unknown, via?: string[]) => {
+    let fromPath = startPath;
+    if (via != null) {
+      for (const specifier of via) {
+        fromPath = createRequire(fromPath).resolve(specifier);
+      }
+    }
+
+    mocks.set(createRequire(fromPath).resolve(specifier), value);
+  };
 }
 
 /**

@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import { join as pathJoin } from "node:path";
 import { currentRule } from "../capture.ts";
 
-import type { TestGroup } from "../index.ts";
+import type { MockFn, TestGroup } from "../index.ts";
 import type { TestCase, TestCases, ValidTestCase, InvalidTestCase } from "../rule_tester.ts";
 import type { Rule } from "#oxlint/plugins";
 
@@ -35,7 +35,7 @@ const group: TestGroup = {
     return `${meta.eslintId} (${parts[0]})`;
   },
 
-  prepare(require: NodeJS.Require, _mock: (path: string, value: unknown) => void) {
+  prepare(require: NodeJS.Require, _mock: MockFn) {
     // Patch SonarJS's rule tester classes.
     // Internally they use ESLint's `RuleTester`, which is already patched to use conformance `RuleTester`,
     // but we need to apply further patches.
