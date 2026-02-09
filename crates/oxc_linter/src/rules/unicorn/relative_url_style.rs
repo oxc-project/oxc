@@ -70,7 +70,7 @@ declare_oxc_lint!(
     RelativeUrlStyle,
     unicorn,
     style,
-    pending,
+    fix_suggestion,
     config = RelativeUrlStyleConfig,
 );
 
@@ -112,12 +112,25 @@ impl Rule for RelativeUrlStyle {
                         });
 
                         if can_remove_dot_slash(raw, new_expr) {
-                            ctx.diagnostic(never_diagnostic(str_lit.span));
+                            ctx.diagnostic_with_fix(never_diagnostic(str_lit.span), |fixer| {
+                                let dot_slash_start = str_lit.span.start + 1;
+                                let dot_slash_span =
+                                    Span::new(dot_slash_start, dot_slash_start + 2);
+                                fixer
+                                    .delete_range(dot_slash_span)
+                                    .with_message("Remove leading `./`")
+                            });
                         }
                     }
                     RelativeUrlStyleConfig::Always => {
                         if can_add_dot_slash(url, new_expr) {
-                            ctx.diagnostic(always_diagnostic(str_lit.span));
+                            ctx.diagnostic_with_fix(always_diagnostic(str_lit.span), |fixer| {
+                                let insert_pos = str_lit.span.start + 1;
+                                let insert_span = Span::new(insert_pos, insert_pos);
+                                fixer
+                                    .replace(insert_span, DOT_SLASH)
+                                    .with_message("Add `./` prefix")
+                            });
                         }
                     }
                 }
@@ -132,7 +145,11 @@ impl Rule for RelativeUrlStyle {
                 };
 
                 if first_quasi.value.raw.starts_with(DOT_SLASH) {
-                    ctx.diagnostic(never_diagnostic(template_lit.span));
+                    ctx.diagnostic_with_suggestion(never_diagnostic(template_lit.span), |fixer| {
+                        let dot_slash_start = template_lit.span.start + 1;
+                        let dot_slash_span = Span::new(dot_slash_start, dot_slash_start + 2);
+                        fixer.delete_range(dot_slash_span).with_message("Remove leading `./`")
+                    });
                 }
             }
             _ => (),
@@ -279,5 +296,30 @@ fn test() {
         (r#"new URL("", "https://example.com/a/b/")"#, Some(serde_json::json!(["always"]))),
     ];
 
-    Tester::new(RelativeUrlStyle::NAME, RelativeUrlStyle::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r#"new URL("./foo", base)"#, r#"new URL("foo", base)"#, None),
+        (r"new URL('./foo', base)", r"new URL('foo', base)", None),
+        (r#"new URL("././a", base)"#, r#"new URL("./a", base)"#, None),
+        (r#"new URL(`./${foo}`, base)"#, r#"new URL(`${foo}`, base)"#, None),
+        (
+            r#"new URL("./", "https://example.com/a/b/")"#,
+            r#"new URL("", "https://example.com/a/b/")"#,
+            None,
+        ),
+        (
+            r#"new URL("foo", base)"#,
+            r#"new URL("./foo", base)"#,
+            Some(serde_json::json!(["always"])),
+        ),
+        (r"new URL('foo', base)", r"new URL('./foo', base)", Some(serde_json::json!(["always"]))),
+        (
+            r#"new URL("", "https://example.com/a/b/")"#,
+            r#"new URL("./", "https://example.com/a/b/")"#,
+            Some(serde_json::json!(["always"])),
+        ),
+    ];
+
+    Tester::new(RelativeUrlStyle::NAME, RelativeUrlStyle::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }
