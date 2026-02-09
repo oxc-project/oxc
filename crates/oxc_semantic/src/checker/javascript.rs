@@ -825,7 +825,6 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
                     |label| {
-                        // Collect all available labels only when there's an error
                         let labels = available_labels.get_or_insert_with(|| {
                             let mut labels = Vec::new();
                             for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
