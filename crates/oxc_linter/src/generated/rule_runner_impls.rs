@@ -4274,6 +4274,12 @@ impl RuleRunner for crate::rules::node::no_new_require::NoNewRequire {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::node::no_path_concat::NoPathConcat {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression, AstType::TemplateLiteral]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::node::no_process_env::NoProcessEnv {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::ComputedMemberExpression,
