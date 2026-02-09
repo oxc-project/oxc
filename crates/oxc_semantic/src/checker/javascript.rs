@@ -839,8 +839,6 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                             }
                             labels
                         });
-
-                        // Try to find a similar label with edit distance <= 2
                         let suggestion =
                             best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
                         ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
