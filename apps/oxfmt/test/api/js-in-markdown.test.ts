@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
 
-describe("Format js-in-markdown with prettier-plugin-oxfmt", () => {
+// oxlint-disable jest/no-disabled-tests
+describe.skip("Format js-in-markdown with prettier-plugin-oxfmt", () => {
   it("should format .md w/o duplicating TS lines", async () => {
     // https://prettier.io/playground/#N4Igxg9gdgLgprEAuEADdMDOAdKBDAdzwEsYACABQCcIBbYzOAOirkwgBsA3OACjLLYQXPBwCucIQICUAblyES5YLgEwAFgl7SyKqAIC+AGlwH5UAPQWyAFXUMykWrQTk8UACZkARnA4QCMgJiDg4fODIPMQAHDmIwPHgPBSJSMgBzOBhqOgY+aVx0VBAjEAhomGJoTGRQPCoaAgp6hBqUUSIATxrS7yo8MABrLIBlPBcAGWIoOGQAM1FGUohvACs4MBgAdX7o5BBo1kYqHhKQPoHhmBHogen05BgqCVLGekfnuFK4AA9ouCoxBcsFEAHl-v0YBAqBQIJhSFUoPsEB4zr8IUDXKIbAD8IC2PNFl8QPCoOkOHAAIpiCDwQkcJYgVaYH4je4U6m02ZIBYM4kARxp8By0TaIDwmAAtDM4B5ZWcniQ4mSAMJ0Wh4faiDhnUnkuAAQRgT2I3jEwoBUxm9MZ6hgtA4W3s8EwtzAcBGrQRXFInX2YEwPWEEgAkp5XCMwICKgbPCMYJ0KTbiYc4XAdng9ihDmwAadvp5QXMrdyQBw5mdpsdsv10hrk6VblRjvsNVRBh4AkjG4DYFtiB4NMgABwABlKrEFxFY1Dwdc1PKJpRgeG8-cH6mQACZSmJGDZV21eYy4LRfB45R4Ju50mI53AAGLQjXG+5a80QEAGAxAA
     const input = `

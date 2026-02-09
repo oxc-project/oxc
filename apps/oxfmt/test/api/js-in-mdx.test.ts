@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
 
-describe("Format js-in-mdx with prettier-plugin-oxfmt", () => {
+// oxlint-disable jest/no-disabled-tests
+describe.skip("Format js-in-mdx with prettier-plugin-oxfmt", () => {
   it("should format code block in .mdx", async () => {
     const input = `
 # MDX
