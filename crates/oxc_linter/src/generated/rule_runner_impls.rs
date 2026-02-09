@@ -382,8 +382,11 @@ impl RuleRunner for crate::rules::eslint::max_nested_callbacks::MaxNestedCallbac
 }
 
 impl RuleRunner for crate::rules::eslint::max_params::MaxParams {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ArrowFunctionExpression, AstType::Function]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ArrowFunctionExpression,
+        AstType::Function,
+        AstType::TSFunctionType,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
