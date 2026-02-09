@@ -866,8 +866,8 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
 static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     // "html",
     // "vue",
-    "markdown",
-    "mdx",
+    // "markdown",
+    // "mdx",
 };
 
 /// Finalizes external options by adding plugin-specific flags based on the formatting strategy.
