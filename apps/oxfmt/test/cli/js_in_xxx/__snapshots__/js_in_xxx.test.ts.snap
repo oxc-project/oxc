@@ -13,6 +13,10 @@ _Look,_ code blocks are formatted *too!*
 function identity(x) { return x }
 \`\`\`
 
+\`\`\`jsx
+<Button>Click</Button>
+\`\`\`
+
 \`\`\`ts
 const a:string ="x";
 \`\`\`
@@ -50,6 +54,10 @@ _Look,_ code blocks are formatted _too!_
 function identity(x) {
   return x;
 }
+\`\`\`
+
+\`\`\`jsx
+<Button>Click</Button>
 \`\`\`
 
 \`\`\`ts
@@ -117,6 +125,14 @@ test codeblock
 module.exports =         'test'
 \`\`\`
 
+\`\`\`tsx
+<>
+  <div>
+    Hello,   world!
+  </div>
+</>
+\`\`\`
+
 \`\`\`sh
 npm i -g foo
 \`\`\`
@@ -155,6 +171,12 @@ test codeblock
 
 \`\`\`js
 module.exports = "test";
+\`\`\`
+
+\`\`\`tsx
+<>
+  <div>Hello, world!</div>
+</>
 \`\`\`
 
 \`\`\`sh
