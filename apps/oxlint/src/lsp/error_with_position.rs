@@ -30,6 +30,16 @@ pub struct FixedContent {
     pub code: String,
     pub range: Range,
     pub kind: FixKind,
+    #[expect(dead_code)]
+    lsp_kind: FixedContentKind,
+}
+
+#[derive(Debug, Clone)]
+enum FixedContentKind {
+    LintRule,
+    IgnoreLintRuleLine,
+    IgnoreLintRuleSection,
+    UnusedDirective,
 }
 
 fn miette_severity_to_lsp_severity(value: Severity) -> DiagnosticSeverity {
@@ -126,14 +136,19 @@ pub fn message_to_lsp_diagnostic(
             if fix.message.is_none() {
                 fix.message = Some(alternative_fix_title);
             }
-            fixed_content.push(fix_to_fixed_content(&fix, rope, source_text));
+            fixed_content.push(fix_to_fixed_content(
+                &fix,
+                rope,
+                source_text,
+                FixedContentKind::LintRule,
+            ));
         }
         PossibleFixes::Multiple(fixes) => {
             fixed_content.extend(fixes.into_iter().map(|mut fix| {
                 if fix.message.is_none() {
                     fix.message = Some(alternative_fix_title.clone());
                 }
-                fix_to_fixed_content(&fix, rope, source_text)
+                fix_to_fixed_content(&fix, rope, source_text, FixedContentKind::LintRule)
             }));
         }
     }
@@ -170,7 +185,12 @@ pub fn message_to_lsp_diagnostic(
     DiagnosticReport { diagnostic, code_action }
 }
 
-fn fix_to_fixed_content(fix: &Fix, rope: &Rope, source_text: &str) -> FixedContent {
+fn fix_to_fixed_content(
+    fix: &Fix,
+    rope: &Rope,
+    source_text: &str,
+    fix_kind: FixedContentKind,
+) -> FixedContent {
     let start_position = offset_to_position(rope, fix.span.start, source_text);
     let end_position = offset_to_position(rope, fix.span.end, source_text);
 
@@ -184,6 +204,7 @@ fn fix_to_fixed_content(fix: &Fix, rope: &Rope, source_text: &str) -> FixedConte
         code: fix.content.to_string(),
         range: Range::new(start_position, end_position),
         kind: fix.kind,
+        lsp_kind: fix_kind,
     }
 }
 
@@ -329,7 +350,12 @@ fn build_unused_disable_diagnostic_report(
         },
         code_action: fix.map(|fix| LinterCodeAction {
             range,
-            fixed_content: vec![fix_to_fixed_content(fix, rope, source_text)],
+            fixed_content: vec![fix_to_fixed_content(
+                fix,
+                rope,
+                source_text,
+                FixedContentKind::UnusedDirective,
+            )],
         }),
     }
 }
@@ -449,6 +475,7 @@ fn disable_for_this_line(
         ),
         range: Range::new(position, position),
         kind: FixKind::SafeFix,
+        lsp_kind: FixedContentKind::IgnoreLintRuleLine,
     }
 }
 
@@ -471,6 +498,7 @@ fn disable_for_this_section(
         code: content,
         range: Range::new(position, position),
         kind: FixKind::SafeFix,
+        lsp_kind: FixedContentKind::IgnoreLintRuleSection,
     }
 }
 
