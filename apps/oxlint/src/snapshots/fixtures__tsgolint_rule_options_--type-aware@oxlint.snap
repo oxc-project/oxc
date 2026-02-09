@@ -38,6 +38,7 @@ working directory: fixtures/tsgolint_rule_options
     :                    ^^^^^^^^^^^^
  64 | 
     `----
+  help: Consider picking a property (e.g. `user.name`), using a formatter (or `JSON.stringify`), or implementing a custom `toString()`/`toLocaleString()` on the type.
 
 Found 0 warnings and 4 errors.
 Finished in <variable>ms on 1 file with 7 rules using 1 threads.
