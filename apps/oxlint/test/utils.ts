@@ -67,7 +67,7 @@ export function getFixtures(): Fixture[] {
     try {
       options = JSON.parse(readFileSync(pathJoin(dirPath, "options.json"), "utf8"));
     } catch (err) {
-      if (err?.code !== "ENOENT") throw err;
+      if ((err as NodeJS.ErrnoException)?.code !== "ENOENT") throw err;
       options = DEFAULT_OPTIONS;
     }
 

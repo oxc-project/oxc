@@ -126,13 +126,14 @@ export function it(code: string, fn: () => void): void {
     if (currentTest === null) throw new Error("Test case was not run with `RuleTester`");
 
     testResult.isPassed = true;
-  } catch (err) {
+  } catch (_err) {
+    let err: Error;
     if (currentTest === null) {
-      // oxlint-disable-next-line no-ex-assign
       err = new Error("Test case was not run with `RuleTester`");
       currentTest = { code };
-    } else if (!(err instanceof Error)) {
-      // oxlint-disable-next-line no-ex-assign
+    } else if (_err instanceof Error) {
+      err = _err;
+    } else {
       err = new Error("Unknown error");
     }
 
