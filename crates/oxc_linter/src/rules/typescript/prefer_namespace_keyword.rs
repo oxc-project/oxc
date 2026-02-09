@@ -34,6 +34,14 @@ declare_oxc_lint!(
     /// This rule reports when the module keyword is used instead of namespace.
     /// This rule does not report on the use of TypeScript module declarations to describe external APIs (declare module 'foo' {}).
     ///
+    /// ::: warning
+    /// This rule is deprecated and will be removed in a future release.
+    ///
+    /// In a future version of TypeScript and Oxlint, this will be a hard error produced by the parser.
+    ///
+    /// See: https://github.com/microsoft/TypeScript/issues/54500, https://github.com/microsoft/TypeScript/issues/62211 and https://github.com/microsoft/TypeScript/pull/62876.
+    /// :::
+    ///
     /// ### Why is this bad?
     ///
     /// Namespaces are an outdated way to organize TypeScript code. ES2015 module syntax is now preferred (import/export).
