@@ -1,7 +1,7 @@
 import { unindent } from "eslint-vitest-rule-tester";
 import { RuleTester } from "../rule_tester.ts";
 
-import type { TestGroup } from "../index.ts";
+import type { MockFn, TestGroup } from "../index.ts";
 import type {
   ValidTestCase,
   InvalidTestCase,
@@ -31,7 +31,7 @@ const group: TestGroup = {
     return parts[0];
   },
 
-  prepare(require: NodeJS.Require, mock: (path: string, value: unknown) => void) {
+  prepare(require: NodeJS.Require, mock: MockFn) {
     // Load the copy of `@typescript-eslint/parser` which is used by the test cases
     const tsEslintParser = require("@typescript-eslint/parser") as TSEslintParser;
 
