@@ -32,7 +32,7 @@ tags: None
 ########### Code Actions/Commands
 CodeAction: 
 Title: Disable no-control-regex for this line
-Is Preferred: Some(true)
+Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
         start: Position {
