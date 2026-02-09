@@ -19,9 +19,9 @@ const group: TestGroup = {
     // `RuleTester` does not support enabling other rules beyond the rule under test.
     if (code.match(/^\s*\/\*\s*(globals?|exported|eslint)\s/)) return true;
 
-    // Skip test cases which include `// eslint-disable` comments.
+    // Skip test cases which include `// eslint-disable` or `/* eslint-disable` comments.
     // These are not handled by `RuleTester`.
-    if (code.match(/\/\/\s*eslint-disable((-next)?-line)?(\s|$)/)) return true;
+    if (code.match(/\/[/*]\s*eslint-disable((-next)?-line)?(\s|$)/)) return true;
 
     // Test relies on scope analysis to follow ES5 semantics where function declarations in blocks are bound in parent scope.
     // TS-ESLint scope manager does not support ES5. Oxc also doesn't support parsing/semantic as ES5.

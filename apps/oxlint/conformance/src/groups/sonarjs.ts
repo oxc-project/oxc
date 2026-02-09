@@ -90,7 +90,7 @@ const group: TestGroup = {
   },
 
   shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Error): boolean {
-    // Skip test cases which include `// eslint-disable` comments.
+    // Skip test cases which include `// eslint-disable` or `/* eslint-disable` comments.
     // These are not handled by `RuleTester`.
     if (code.match(/\/[/*]\s*eslint-disable((-next)?-line)?(\s|$)/)) return true;
 
