@@ -25,6 +25,9 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
         return;
     }
 
+    // Lazily collect available names only once when we find the first error
+    let mut available_names: Option<Vec<&str>> = None;
+
     for stmt in &program.body {
         if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
@@ -32,17 +35,18 @@ pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>
                     && ident.is_global_reference(&ctx.scoping)
                 {
                     // Collect all available names in the root scope only when we have an error
-                    let root_scope_id = ctx.scoping.root_scope_id();
-                    let available_names: Vec<&str> = ctx
-                        .scoping
-                        .get_bindings(root_scope_id)
-                        .keys()
-                        .map(oxc_span::Ident::as_str)
-                        .collect();
+                    let names = available_names.get_or_insert_with(|| {
+                        let root_scope_id = ctx.scoping.root_scope_id();
+                        ctx.scoping
+                            .get_bindings(root_scope_id)
+                            .keys()
+                            .map(oxc_span::Ident::as_str)
+                            .collect()
+                    });
 
                     // Try to find a similar name with edit distance <= 2
                     let suggestion =
-                        best_match(&ident.name, available_names.iter().copied(), SUGGESTION_THRESHOLD);
+                        best_match(&ident.name, names.iter().copied(), SUGGESTION_THRESHOLD);
                     ctx.errors.borrow_mut().push(diagnostics::undefined_export(
                         &ident.name,
                         suggestion,
@@ -353,23 +357,30 @@ pub fn check_private_identifier_outside_class(
 
 fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
+        // Lazily collect available names only once when we find the first error
+        let mut available_names: Option<Vec<&str>> = None;
+
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
             if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
                 ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
             }) {
                 // Collect all available private field names in the class and its ancestors
-                let mut available_names: Vec<&str> = Vec::new();
-                for ancestor_class_id in ctx.class_table_builder.classes.ancestors(class_id) {
-                    for element in &ctx.class_table_builder.classes.elements[ancestor_class_id] {
-                        if element.is_private {
-                            available_names.push(element.name.as_ref());
+                let names = available_names.get_or_insert_with(|| {
+                    let mut names = Vec::new();
+                    for ancestor_class_id in ctx.class_table_builder.classes.ancestors(class_id) {
+                        for element in &ctx.class_table_builder.classes.elements[ancestor_class_id]
+                        {
+                            if element.is_private {
+                                names.push(element.name.as_ref());
+                            }
                         }
                     }
-                }
+                    names
+                });
 
                 // Try to find a similar name with edit distance <= 2
                 let suggestion =
-                    best_match(&reference.name, available_names.iter().copied(), SUGGESTION_THRESHOLD);
+                    best_match(&reference.name, names.iter().copied(), SUGGESTION_THRESHOLD);
                 ctx.error(diagnostics::private_field_undeclared(
                     &reference.name,
                     suggestion,
@@ -817,15 +828,22 @@ pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuil
 pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
 
-    // Collect all available labels in the current scope (before crossing function boundaries)
-    let mut available_labels: Vec<&str> = Vec::new();
-
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
                     |label| {
+                        // Collect all available labels only when there's an error
+                        let mut available_labels: Vec<&str> = Vec::new();
+                        for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                            if let AstKind::LabeledStatement(labeled_statement) = node_kind {
+                                available_labels.push(&labeled_statement.label.name);
+                            } else if matches!(node_kind, AstKind::Function(_) | AstKind::StaticBlock(_)) {
+                                break;
+                            }
+                        }
+
                         // Try to find a similar label with edit distance <= 2
                         let suggestion =
                             best_match(&label.name, available_labels.iter().copied(), SUGGESTION_THRESHOLD);
@@ -840,7 +858,6 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                 );
             }
             AstKind::LabeledStatement(labeled_statement) => {
-                available_labels.push(&labeled_statement.label.name);
                 if stmt
                     .label
                     .as_ref()
@@ -863,15 +880,22 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
 pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
 
-    // Collect all available labels in the current scope (before crossing function boundaries)
-    let mut available_labels: Vec<&str> = Vec::new();
-
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
                     |label| {
+                        // Collect all available labels only when there's an error
+                        let mut available_labels: Vec<&str> = Vec::new();
+                        for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                            if let AstKind::LabeledStatement(labeled_statement) = node_kind {
+                                available_labels.push(&labeled_statement.label.name);
+                            } else if matches!(node_kind, AstKind::Function(_) | AstKind::StaticBlock(_)) {
+                                break;
+                            }
+                        }
+
                         // Try to find a similar label with edit distance <= 2
                         let suggestion =
                             best_match(&label.name, available_labels.iter().copied(), SUGGESTION_THRESHOLD);
@@ -885,30 +909,27 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
                 );
             }
-            AstKind::LabeledStatement(labeled_statement) => {
-                available_labels.push(&labeled_statement.label.name);
-                match &stmt.label {
-                    Some(label) if label.name == labeled_statement.label.name => {
-                        if matches!(
-                            labeled_statement.body,
-                            Statement::LabeledStatement(_)
-                                | Statement::DoWhileStatement(_)
-                                | Statement::WhileStatement(_)
-                                | Statement::ForStatement(_)
-                                | Statement::ForInStatement(_)
-                                | Statement::ForOfStatement(_)
-                        ) {
-                            break;
-                        }
-                        return ctx.error(diagnostics::invalid_label_non_iteration(
-                            "continue",
-                            labeled_statement.label.span,
-                            label.span,
-                        ));
+            AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
+                Some(label) if label.name == labeled_statement.label.name => {
+                    if matches!(
+                        labeled_statement.body,
+                        Statement::LabeledStatement(_)
+                            | Statement::DoWhileStatement(_)
+                            | Statement::WhileStatement(_)
+                            | Statement::ForStatement(_)
+                            | Statement::ForInStatement(_)
+                            | Statement::ForOfStatement(_)
+                    ) {
+                        break;
                     }
-                    _ => {}
+                    return ctx.error(diagnostics::invalid_label_non_iteration(
+                        "continue",
+                        labeled_statement.label.span,
+                        label.span,
+                    ));
                 }
-            }
+                _ => {}
+            },
             kind if kind.is_iteration_statement() && stmt.label.is_none() => break,
             _ => {}
         }
