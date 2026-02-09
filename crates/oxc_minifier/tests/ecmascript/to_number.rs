@@ -37,4 +37,19 @@ fn test() {
     assert!(global_undefined_number.is_some_and(f64::is_nan));
     assert!(empty_object_number.is_some_and(f64::is_nan));
     assert_eq!(object_with_to_string_number, None);
+
+    // Test arrays with boolean elements - should convert to NaN
+    let false_literal = ast.alloc_boolean_literal(SPAN, false);
+    let true_literal = ast.alloc_boolean_literal(SPAN, true);
+    let array_with_false =
+        ast.expression_array(SPAN, ast.vec1(ArrayExpressionElement::BooleanLiteral(false_literal)));
+    let array_with_true =
+        ast.expression_array(SPAN, ast.vec1(ArrayExpressionElement::BooleanLiteral(true_literal)));
+    let array_with_false_number = array_with_false.to_number(&WithoutGlobalReferenceInformation {});
+    let array_with_true_number = array_with_true.to_number(&WithoutGlobalReferenceInformation {});
+
+    // [false].toString() = "false", Number("false") = NaN
+    assert!(array_with_false_number.is_some_and(f64::is_nan));
+    // [true].toString() = "true", Number("true") = NaN
+    assert!(array_with_true_number.is_some_and(f64::is_nan));
 }
