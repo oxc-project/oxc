@@ -30,12 +30,11 @@ pub struct FixedContent {
     pub code: String,
     pub range: Range,
     pub kind: FixKind,
-    #[expect(dead_code)]
-    lsp_kind: FixedContentKind,
+    pub lsp_kind: FixedContentKind,
 }
 
-#[derive(Debug, Clone)]
-enum FixedContentKind {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FixedContentKind {
     LintRule,
     IgnoreLintRuleLine,
     IgnoreLintRuleSection,

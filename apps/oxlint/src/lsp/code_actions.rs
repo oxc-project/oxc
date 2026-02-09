@@ -2,7 +2,7 @@ use oxc_linter::FixKind;
 use tower_lsp_server::ls_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
 use tracing::debug;
 
-use crate::lsp::error_with_position::{FixedContent, LinterCodeAction};
+use crate::lsp::error_with_position::{FixedContent, FixedContentKind, LinterCodeAction};
 
 pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
     CodeActionKind::new("source.fixAll.oxc");
@@ -34,11 +34,19 @@ fn fix_content_to_code_action(
 pub fn apply_fix_code_actions(action: LinterCodeAction, uri: &Uri) -> Vec<CodeAction> {
     let mut code_actions = vec![];
 
-    // only the first code action is preferred
-    let mut preferred = true;
+    let mut preferred_possible = true;
     for fixed in action.fixed_content {
+        // only rule fixes and unused directive fixes can be preferred, ignore fixes are not preferred.
+        let preferred = preferred_possible
+            && matches!(
+                fixed.lsp_kind,
+                FixedContentKind::LintRule | FixedContentKind::UnusedDirective
+            );
+        if preferred {
+            // only the first fix can be preferred, if there are multiple fixes available.
+            preferred_possible = false;
+        }
         let action = fix_content_to_code_action(fixed, uri.clone(), preferred);
-        preferred = false;
         code_actions.push(action);
     }
 
