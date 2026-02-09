@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, path::Path};
+use std::{ffi::OsStr, path::Path, sync::Mutex};
 
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashMap;
@@ -95,13 +95,9 @@ impl SuppressionTracking {
 
         Ok(config)
     }
-
-    pub fn save(&self) -> Result<(), OxcDiagnostic> {
-        Ok(())
-    }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SuppressionManager {
     pub suppressions_by_file: SuppressionTracking,
     pub runtime_suppressions: SuppressionTracking,

@@ -192,7 +192,8 @@ impl Linter {
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
         suppression_count: Option<&FxHashMap<RuleName, DiagnosticCounts>>,
-    ) -> (Vec<Message>, Option<DisableDirectives>) {
+    ) -> (Vec<Message>, Option<DisableDirectives>, Option<FxHashMap<RuleName, DiagnosticCounts>>)
+    {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
         let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
@@ -451,9 +452,9 @@ impl Linter {
                 })
                 .collect();
 
-            (diagnostics_filtered, disable_directives)
+            (diagnostics_filtered, disable_directives, Some(suppression_tracking))
         } else {
-            (diagnostics, disable_directives)
+            (diagnostics, disable_directives, None)
         }
     }
 

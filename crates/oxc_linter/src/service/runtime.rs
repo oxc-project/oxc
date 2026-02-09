@@ -32,7 +32,7 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    suppression::SuppressionManager,
+    suppression::{DiagnosticCounts, Filename, RuleName, SuppressionManager},
     utils::read_to_arena_str,
 };
 
@@ -595,6 +595,11 @@ impl Runtime {
         let suppression_manager =
             SuppressionManager::load(self.cwd.join("oxlint-suppressions.json").as_path()).unwrap();
 
+        let (tracking_channel, runtime_suppression_recv) =
+            std::sync::mpsc::channel::<(Filename, RuleName, DiagnosticCounts)>();
+
+        println!("Initial map {:?}", suppression_manager);
+
         rayon::scope(|scope| {
             self.resolve_modules(
                 file_system,
@@ -603,6 +608,7 @@ impl Runtime {
                 true,
                 Some(tx_error),
                 move |me, mut module_to_lint| {
+                    let runtime_suppression_sender = tracking_channel.clone();
                     module_to_lint.content.with_dependent_mut(|allocator_guard, dep| {
                         // If there are fixes, we will accumulate all of them and write to the file at the end.
                         // This means we do not write multiple times to the same file if there are multiple sources
@@ -654,7 +660,7 @@ impl Runtime {
                                 suppression_manager.get_suppression_per_file(&relative_url)
                             });
 
-                        let (mut messages, disable_directives) =
+                        let (mut messages, disable_directives, suppression) =
                             me.linter.run_with_disable_directives(
                                 path,
                                 context_sub_hosts,
@@ -669,6 +675,16 @@ impl Runtime {
                                 .lock()
                                 .expect("disable_directives_map mutex poisoned")
                                 .insert(path.to_path_buf(), disable_directives);
+                        }
+
+                        if let Some(suppression_detected) = suppression {
+                            let file_name = Filename::new(path.strip_prefix(&self.cwd).unwrap());
+
+                            suppression_detected.iter().for_each(|(key, value)| {
+                                runtime_suppression_sender
+                                    .send((file_name.clone(), key.clone(), value.clone()))
+                                    .unwrap();
+                            });
                         }
 
                         if me.linter.options().fix.is_some() {
@@ -711,6 +727,24 @@ impl Runtime {
                 },
             );
         });
+
+        let mut runtime_map: FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>> =
+            FxHashMap::default();
+
+        while let Ok((file_name, rule_name, diagnostic)) = runtime_suppression_recv.recv() {
+            runtime_map.entry(file_name.clone()).or_insert_with(FxHashMap::default);
+
+            if let Some(entry) = runtime_map.get_mut(&file_name) {
+                entry.insert(rule_name, diagnostic);
+            } else {
+                let mut rule_count: FxHashMap<RuleName, DiagnosticCounts> = FxHashMap::default();
+
+                rule_count.insert(rule_name, diagnostic);
+                runtime_map.insert(file_name, rule_count);
+            }
+        }
+
+        println!("Final map {:?}", runtime_map);
     }
 
     // language_server: the language server needs line and character position
@@ -775,7 +809,7 @@ impl Runtime {
 
                         let path = Path::new(&module_to_lint.path);
 
-                        let (section_messages, disable_directives) = me
+                        let (section_messages, disable_directives, _) = me
                             .linter
                             .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool(), None);
 
