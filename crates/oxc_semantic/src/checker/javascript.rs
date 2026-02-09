@@ -357,7 +357,6 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
             if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
                 ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
             }) {
-                // Collect all available private field names in the class and its ancestors
                 let names = available_names.get_or_insert_with(|| {
                     let mut names = Vec::new();
                     for ancestor_class_id in ctx.class_table_builder.classes.ancestors(class_id) {
