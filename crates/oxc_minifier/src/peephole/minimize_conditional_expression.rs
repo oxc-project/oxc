@@ -1,4 +1,4 @@
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_compat::ESFeature;
@@ -16,7 +16,7 @@ impl<'a> PeepholeOptimizations {
         test: Expression<'a>,
         consequent: Expression<'a>,
         alternate: Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
         Self::minimize_conditional_expression(&mut cond_expr, ctx)
@@ -26,7 +26,7 @@ impl<'a> PeepholeOptimizations {
     /// `MangleIfExpr`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_ast_helpers.go#L2745>
     pub fn minimize_conditional_expression(
         expr: &mut ConditionalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match &mut expr.test {
             // "(a, b) ? c : d" => "a, b ? c : d"
@@ -416,7 +416,7 @@ impl<'a> PeepholeOptimizations {
     /// - `x ? a = 0 : a = 1` -> `a = x ? 0 : 1`
     fn try_merge_conditional_expression_inside(
         expr: &mut ConditionalExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let (
             Expression::AssignmentExpression(consequent),
@@ -461,7 +461,7 @@ impl<'a> PeepholeOptimizations {
         target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         if Self::inject_optional_chaining_if_matched_inner(
             target_id_name,
@@ -486,7 +486,7 @@ impl<'a> PeepholeOptimizations {
         target_id_name: &str,
         expr_to_inject: &mut Expression<'a>,
         expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         match expr {
             Expression::StaticMemberExpression(e) => {

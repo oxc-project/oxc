@@ -8,7 +8,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -27,7 +27,7 @@ impl<'a> PeepholeOptimizations {
         op: LogicalOperator,
         a: Expression<'a>,
         b: Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // "(a, b) op c" => "a, b op c"
         if let Expression::SequenceExpression(mut sequence_expr) = a {
@@ -67,7 +67,7 @@ impl<'a> PeepholeOptimizations {
     //  ^^^^^^^^^^^^^^ `ctx.expression_value_type(&e.left).is_boolean()` is `true`.
     // `x >> +y !== 0` -> `x >> +y`
     //  ^^^^^^^ ctx.expression_value_type(&e.left).is_number()` is `true`.
-    pub fn minimize_binary(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn minimize_binary(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BinaryExpression(e) = expr else { return };
         if !e.operator.is_equality() {
             return;
@@ -124,7 +124,7 @@ impl<'a> PeepholeOptimizations {
     ///
     /// In `IsLooselyEqual`, `true` and `false` are converted to `1` and `0` first.
     /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-islooselyequal>
-    pub fn minimize_loose_boolean(e: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
+    pub fn minimize_loose_boolean(e: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BinaryExpression(e) = e else { return };
         if !matches!(e.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
             return;
@@ -173,7 +173,7 @@ impl<'a> PeepholeOptimizations {
     /// This can only be done for resolved identifiers as this would avoid setting `a` when `a` is truthy.
     pub fn minimize_normal_assignment_to_combined_logical_assignment(
         expr: &mut AssignmentExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if !ctx.supports_feature(ESFeature::ES2021LogicalAssignmentOperators)
             || !matches!(expr.operator, AssignmentOperator::Assign)
@@ -212,7 +212,7 @@ impl<'a> PeepholeOptimizations {
     /// Compress `a = a + b` to `a += b`
     pub fn minimize_normal_assignment_to_combined_assignment(
         expr: &mut AssignmentExpression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if !matches!(expr.operator, AssignmentOperator::Assign) {
             return;
@@ -235,7 +235,7 @@ impl<'a> PeepholeOptimizations {
     #[expect(clippy::float_cmp)]
     pub fn minimize_assignment_to_update_expression(
         expr: &mut Expression<'a>,
-        ctx: &mut Ctx<'a, '_>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::AssignmentExpression(e) = expr else { return };
         if !matches!(e.operator, AssignmentOperator::Subtraction) {

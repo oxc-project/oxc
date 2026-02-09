@@ -15,7 +15,6 @@ pub struct SymbolValue<'a> {
     pub read_references_count: u32,
     pub write_references_count: u32,
 
-    #[expect(unused)]
     pub scope_id: ScopeId,
 }
 

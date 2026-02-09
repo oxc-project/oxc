@@ -1,7 +1,7 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 
-use crate::ctx::Ctx;
+use crate::TraverseCtx;
 
 use super::PeepholeOptimizations;
 
@@ -13,10 +13,10 @@ impl<'a> PeepholeOptimizations {
     ///
     /// `foo['bar']` -> `foo.bar`
     /// `foo?.['bar']` -> `foo?.bar`
-    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &Ctx<'a, '_>) {
+    pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &TraverseCtx<'a>) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
-        if Ctx::is_identifier_name_patched(&s.value) {
+        if TraverseCtx::is_identifier_name_patched(&s.value) {
             let property = ctx.ast.identifier_name(s.span, s.value);
             *expr =
                 MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
@@ -31,7 +31,7 @@ impl<'a> PeepholeOptimizations {
         if e.optional {
             return;
         }
-        if let Some(n) = Ctx::string_to_equivalent_number_value(v) {
+        if let Some(n) = TraverseCtx::string_to_equivalent_number_value(v) {
             e.expression = ctx.ast.expression_numeric_literal(s.span, n, None, NumberBase::Decimal);
         }
     }
