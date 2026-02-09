@@ -2,7 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingPattern, CallExpression, Expression, FormalParameters, FunctionBody,
-        LogicalExpression, MemberExpression, Statement, match_member_expression,
+        IdentifierReference, ImportDeclarationSpecifier, LogicalExpression, MemberExpression,
+        Statement, match_member_expression,
     },
 };
 use oxc_semantic::AstNode;
@@ -30,6 +31,49 @@ pub const BUILT_IN_ERRORS: [&str; 9] = [
     "InternalError",
     "AggregateError",
 ];
+
+/// Returns `true` when `ident` resolves to a named import with the given source module and
+/// imported symbol name.
+///
+/// This checks semantic resolution first (`reference_id` -> `symbol_id`) and then validates:
+/// - the symbol is an import binding,
+/// - the enclosing declaration source matches `module_name`,
+/// - one of the declaration's `ImportSpecifier`s maps to this symbol and `imported_name`.
+///
+/// Aliased named imports are supported (`import { Foo as Bar }` matches `Bar` for `"Foo"`).
+/// Namespace/default imports are intentionally ignored.
+pub fn is_import_symbol(
+    ident: &IdentifierReference,
+    module_name: &str,
+    imported_name: &str,
+    ctx: &LintContext,
+) -> bool {
+    let reference = ctx.scoping().get_reference(ident.reference_id());
+    let Some(symbol_id) = reference.symbol_id() else {
+        return false;
+    };
+
+    if !ctx.scoping().symbol_flags(symbol_id).is_import() {
+        return false;
+    }
+
+    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
+        return false;
+    };
+
+    if import_decl.source.value.as_str() != module_name {
+        return false;
+    }
+
+    import_decl.specifiers.iter().flatten().any(|specifier| match specifier {
+        ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
+            import_specifier.local.symbol_id() == symbol_id
+                && import_specifier.imported.name() == imported_name
+        }
+        _ => false,
+    })
+}
 
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
     matches!(

@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        Argument, ArrayExpressionElement, Expression, IdentifierReference,
-        ImportDeclarationSpecifier,
-    },
+    ast::{Argument, ArrayExpressionElement, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -17,6 +14,7 @@ use crate::{
     ast_util::leftmost_identifier_reference,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::is_import_symbol,
 };
 
 fn no_array_sort_diagnostic(span: Span) -> OxcDiagnostic {
@@ -102,7 +100,7 @@ impl Rule for NoArraySort {
             return;
         }
         if leftmost_identifier_reference(member_expr.object())
-            .is_ok_and(|ident| is_imported_symbol(ident, "effect", "Chunk", ctx))
+            .is_ok_and(|ident| is_import_symbol(ident, "effect", "Chunk", ctx))
         {
             return;
         }
@@ -134,39 +132,6 @@ impl Rule for NoArraySort {
             fixer.replace(span, "toSorted")
         });
     }
-}
-
-fn is_imported_symbol(
-    ident: &IdentifierReference,
-    module_name: &str,
-    imported_name: &str,
-    ctx: &LintContext,
-) -> bool {
-    let reference = ctx.scoping().get_reference(ident.reference_id());
-    let Some(symbol_id) = reference.symbol_id() else {
-        return false;
-    };
-
-    if !ctx.scoping().symbol_flags(symbol_id).is_import() {
-        return false;
-    }
-
-    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
-    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
-        return false;
-    };
-
-    if import_decl.source.value.as_str() != module_name {
-        return false;
-    }
-
-    import_decl.specifiers.iter().flatten().any(|specifier| match specifier {
-        ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {
-            import_specifier.local.symbol_id() == symbol_id
-                && import_specifier.imported.name() == imported_name
-        }
-        _ => false,
-    })
 }
 
 #[test]
