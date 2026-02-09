@@ -828,6 +828,9 @@ pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuil
 pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
 
+    // Lazily collect available labels only once when we find an error
+    let mut available_labels: Option<Vec<&str>> = None;
+
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
@@ -835,18 +838,24 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
                     |label| {
                         // Collect all available labels only when there's an error
-                        let mut available_labels: Vec<&str> = Vec::new();
-                        for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-                            if let AstKind::LabeledStatement(labeled_statement) = node_kind {
-                                available_labels.push(&labeled_statement.label.name);
-                            } else if matches!(node_kind, AstKind::Function(_) | AstKind::StaticBlock(_)) {
-                                break;
+                        let labels = available_labels.get_or_insert_with(|| {
+                            let mut labels = Vec::new();
+                            for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                                if let AstKind::LabeledStatement(labeled_statement) = node_kind {
+                                    labels.push(labeled_statement.label.name.as_str());
+                                } else if matches!(
+                                    node_kind,
+                                    AstKind::Function(_) | AstKind::StaticBlock(_)
+                                ) {
+                                    break;
+                                }
                             }
-                        }
+                            labels
+                        });
 
                         // Try to find a similar label with edit distance <= 2
                         let suggestion =
-                            best_match(&label.name, available_labels.iter().copied(), SUGGESTION_THRESHOLD);
+                            best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
                         ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
                     },
                 );
@@ -880,6 +889,9 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
 pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
 
+    // Lazily collect available labels only once when we find an error
+    let mut available_labels: Option<Vec<&str>> = None;
+
     for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
         match node_kind {
             AstKind::Program(_) => {
@@ -887,18 +899,24 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
                     |label| {
                         // Collect all available labels only when there's an error
-                        let mut available_labels: Vec<&str> = Vec::new();
-                        for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-                            if let AstKind::LabeledStatement(labeled_statement) = node_kind {
-                                available_labels.push(&labeled_statement.label.name);
-                            } else if matches!(node_kind, AstKind::Function(_) | AstKind::StaticBlock(_)) {
-                                break;
+                        let labels = available_labels.get_or_insert_with(|| {
+                            let mut labels = Vec::new();
+                            for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                                if let AstKind::LabeledStatement(labeled_statement) = node_kind {
+                                    labels.push(labeled_statement.label.name.as_str());
+                                } else if matches!(
+                                    node_kind,
+                                    AstKind::Function(_) | AstKind::StaticBlock(_)
+                                ) {
+                                    break;
+                                }
                             }
-                        }
+                            labels
+                        });
 
                         // Try to find a similar label with edit distance <= 2
                         let suggestion =
-                            best_match(&label.name, available_labels.iter().copied(), SUGGESTION_THRESHOLD);
+                            best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
                         ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
                     },
                 );
