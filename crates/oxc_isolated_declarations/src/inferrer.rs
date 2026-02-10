@@ -44,7 +44,14 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
-                    self.transform_expression_to_ts_type(&expr.expression)
+                    self.transform_const_expression_to_ts_type(&expr.expression)
+                } else {
+                    Some(expr.type_annotation.clone_in(self.ast.allocator))
+                }
+            }
+            Expression::TSTypeAssertion(expr) => {
+                if expr.type_annotation.is_const_type_reference() {
+                    self.transform_const_expression_to_ts_type(&expr.expression)
                 } else {
                     Some(expr.type_annotation.clone_in(self.ast.allocator))
                 }
@@ -61,9 +68,6 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::TSSatisfiesExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
-            }
-            Expression::TSTypeAssertion(expr) => {
-                Some(expr.type_annotation.clone_in(self.ast.allocator))
             }
             Expression::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {

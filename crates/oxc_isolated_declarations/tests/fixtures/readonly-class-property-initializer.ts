@@ -13,5 +13,14 @@ export class ReadonlyLiteralInitializers {
   readonly unaryParenNumber = (-1);
   readonly constAssertNumber = (1 as const);
 
+  readonly directObject = { a: 1 };
+  readonly parenObject = ({ a: 1 });
+  readonly constAssertObject = ({ a: 1 } as const);
+  readonly nestedConstAssertObject = ((({ a: 1 } as const)));
+
+  readonly directNestedObject = { nested: { a: 1 } };
+  readonly constAssertNestedObject = ({ nested: { a: 1 } } as const);
+
+  writableObject = { a: 1 };
   writableTrue = true;
 }
