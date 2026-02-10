@@ -389,9 +389,14 @@ impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
 
 impl<'a> Binder<'a> for TSEnumMember<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
+        // Extract Ident directly from Identifier variant to preserve precomputed hash.
+        let name = match &self.id {
+            TSEnumMemberName::Identifier(ident) => ident.name,
+            _ => Ident::from(self.id.static_name()),
+        };
         builder.declare_symbol(
             self.span,
-            Ident::from(self.id.static_name()),
+            name,
             SymbolFlags::EnumMember,
             SymbolFlags::EnumMemberExcludes,
         );

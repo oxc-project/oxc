@@ -3,7 +3,7 @@ use std::iter;
 use oxc_allocator::{Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{GetSpan, Ident, SPAN};
 use oxc_traverse::BoundIdentifier;
 
 use crate::context::TraverseCtx;
@@ -100,7 +100,7 @@ pub fn create_property_access<'a>(
 #[inline]
 pub fn create_this_property_access<'a>(
     span: Span,
-    property: Atom<'a>,
+    property: Ident<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> MemberExpression<'a> {
     let object = ctx.ast.expression_this(span);
@@ -112,7 +112,7 @@ pub fn create_this_property_access<'a>(
 #[inline]
 pub fn create_this_property_assignment<'a>(
     span: Span,
-    property: Atom<'a>,
+    property: Ident<'a>,
     ctx: &TraverseCtx<'a>,
 ) -> AssignmentTarget<'a> {
     AssignmentTarget::from(create_this_property_access(span, property, ctx))

@@ -1,4 +1,10 @@
-use std::{alloc::Layout, cell::Cell, hash::Hash, ptr::NonNull, slice};
+use std::{
+    alloc::Layout,
+    cell::Cell,
+    hash::{BuildHasher, Hash},
+    ptr::NonNull,
+    slice,
+};
 
 use crate::{Allocator, Box, HashMap, Vec};
 
@@ -207,13 +213,14 @@ where
     }
 }
 
-impl<'new_alloc, K, V, CK, CV> CloneIn<'new_alloc> for HashMap<'_, K, V>
+impl<'new_alloc, K, V, CK, CV, S> CloneIn<'new_alloc> for HashMap<'_, K, V, S>
 where
     K: CloneIn<'new_alloc, Cloned = CK>,
     V: CloneIn<'new_alloc, Cloned = CV>,
     CK: Hash + Eq,
+    S: Default + BuildHasher,
 {
-    type Cloned = HashMap<'new_alloc, CK, CV>;
+    type Cloned = HashMap<'new_alloc, CK, CV, S>;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         // Keys in original hash map are guaranteed to be unique.
@@ -320,7 +327,7 @@ mod test {
     fn clone_in_hash_map() {
         let allocator = Allocator::default();
 
-        let mut original = HashMap::with_capacity_in(8, &allocator);
+        let mut original: HashMap<'_, &str, &str> = HashMap::with_capacity_in(8, &allocator);
         original.extend(&[("x", "xx"), ("y", "yy"), ("z", "zz")]);
 
         let cloned = original.clone_in(&allocator);
