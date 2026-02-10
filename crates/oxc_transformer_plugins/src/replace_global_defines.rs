@@ -1,5 +1,6 @@
 use std::{cmp::Ordering, sync::Arc};
 
+use oxc_ecmascript::BoundNames;
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::{Address, Allocator, GetAddress, UnstableAddress};
@@ -7,11 +8,80 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
-use oxc_semantic::{IsGlobalReference, ReferenceFlags, ScopeFlags, Scoping};
+use oxc_semantic::ScopeFlags;
 use oxc_span::{CompactStr, SPAN, SourceType};
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_syntax::node::NodeId;
-use oxc_syntax::reference::Reference;
+
+/// Lightweight scope binding tracker that replaces full `Scoping`.
+///
+/// Tracks binding names in a stack of scopes during the VisitMut walk, so we can determine
+/// whether an identifier is a global reference without needing pre-built scoping data.
+pub struct ScopeBindingTracker<'a> {
+    /// Stack of scopes, each containing bound names.
+    /// The first entry is always the program/module scope.
+    pub(crate) scopes: Vec<FxHashSet<&'a str>>,
+    /// Indices of function scopes in the `scopes` stack (for `var` hoisting).
+    pub(crate) function_scope_indices: Vec<usize>,
+    /// Names declared with `declare` keyword (ambient declarations like `declare const`).
+    ambient_names: FxHashSet<&'a str>,
+}
+
+impl<'a> ScopeBindingTracker<'a> {
+    pub(crate) fn new() -> Self {
+        Self {
+            scopes: vec![FxHashSet::default()],
+            function_scope_indices: vec![0],
+            ambient_names: FxHashSet::default(),
+        }
+    }
+
+    /// Enter a new scope.
+    pub(crate) fn enter_scope(&mut self, is_function: bool) {
+        let idx = self.scopes.len();
+        self.scopes.push(FxHashSet::default());
+        if is_function {
+            self.function_scope_indices.push(idx);
+        }
+    }
+
+    /// Leave the current scope.
+    pub(crate) fn leave_scope(&mut self, is_function: bool) {
+        self.scopes.pop();
+        if is_function {
+            self.function_scope_indices.pop();
+        }
+    }
+
+    /// Add a binding to the current scope (`let`, `const`, function params, etc.).
+    pub(crate) fn add_binding(&mut self, name: &'a str) {
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert(name);
+        }
+    }
+
+    /// Add a `var` binding, which hoists to the nearest function scope.
+    pub(crate) fn add_var_binding(&mut self, name: &'a str) {
+        if let Some(&idx) = self.function_scope_indices.last() {
+            self.scopes[idx].insert(name);
+        }
+    }
+
+    /// Mark a name as an ambient declaration (`declare const`).
+    pub(crate) fn add_ambient(&mut self, name: &'a str) {
+        self.ambient_names.insert(name);
+    }
+
+    /// Check if a name is bound in any enclosing scope.
+    /// Returns `true` if the name is NOT bound (i.e., is a global reference).
+    pub(crate) fn is_global(&self, name: &str) -> bool {
+        !self.scopes.iter().any(|scope| scope.contains(name))
+    }
+
+    /// Check if a name is an ambient declaration (e.g., `declare const`).
+    pub(crate) fn is_ambient(&self, name: &str) -> bool {
+        self.ambient_names.contains(name)
+    }
+}
 
 /// Configuration for [ReplaceGlobalDefines].
 ///
@@ -206,7 +276,6 @@ impl ReplaceGlobalDefinesConfig {
 
 #[must_use]
 pub struct ReplaceGlobalDefinesReturn {
-    pub scoping: Scoping,
     pub changed: bool,
 }
 
@@ -228,8 +297,8 @@ pub struct ReplaceGlobalDefines<'a> {
     /// transformation.
     ast_node_lock: Option<Address>,
     changed: bool,
-    /// Scoping data, stored during `build()`.
-    scoping: Option<Scoping>,
+    /// Lightweight scope binding tracker.
+    scope_tracker: ScopeBindingTracker<'a>,
     /// Depth of non-arrow functions we're inside of. Used to compute scope flags for `this`
     /// replacement.
     non_arrow_function_depth: u32,
@@ -240,6 +309,25 @@ pub struct ReplaceGlobalDefines<'a> {
 }
 
 impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
+    fn enter_scope(
+        &mut self,
+        flags: ScopeFlags,
+        _scope_id: &std::cell::Cell<Option<oxc_syntax::scope::ScopeId>>,
+    ) {
+        let is_function = flags.contains(ScopeFlags::Function);
+        self.scope_tracker.enter_scope(is_function);
+    }
+
+    fn leave_scope(&mut self) {
+        // We need to know if the scope being left is a function scope.
+        // The simplest way: check if the current scope index matches the top
+        // of the function_scope_indices stack.
+        let current_idx = self.scope_tracker.scopes.len() - 1;
+        let is_function =
+            self.scope_tracker.function_scope_indices.last().is_some_and(|&i| i == current_idx);
+        self.scope_tracker.leave_scope(is_function);
+    }
+
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         if self.ast_node_lock.is_some() {
             return;
@@ -278,9 +366,51 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
     }
 
     fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
+        // Add function name to the ENCLOSING scope (not the function's own scope).
+        // Function declarations bind their name in the enclosing scope.
+        if let Some(id) = &func.id {
+            self.scope_tracker.add_binding(id.name.as_str());
+        }
         self.non_arrow_function_depth += 1;
+        // walk_function will call enter_scope for the function scope, then visit params+body.
+        // Params are visited inside the function scope, so they'll be added there.
         walk_mut::walk_function(self, func, flags);
         self.non_arrow_function_depth -= 1;
+    }
+
+    fn visit_class(&mut self, class: &mut Class<'a>) {
+        // Add class name to the ENCLOSING scope.
+        if let Some(id) = &class.id {
+            self.scope_tracker.add_binding(id.name.as_str());
+        }
+        walk_mut::walk_class(self, class);
+    }
+
+    fn visit_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
+        // Add parameter names to the current scope (function scope).
+        param.pattern.bound_names(&mut |ident| {
+            self.scope_tracker.add_binding(ident.name.as_str());
+        });
+        walk_mut::walk_formal_parameter(self, param);
+    }
+
+    fn visit_variable_declaration(&mut self, decl: &mut VariableDeclaration<'a>) {
+        // Collect bindings and handle `var` hoisting.
+        let is_var = decl.kind.is_var();
+        let is_ambient = decl.declare;
+        decl.bound_names(&mut |ident| {
+            let name = ident.name.as_str();
+            if is_ambient {
+                self.scope_tracker.add_ambient(name);
+            }
+            if is_var {
+                self.scope_tracker.add_var_binding(name);
+            } else {
+                self.scope_tracker.add_binding(name);
+            }
+        });
+        // Still need destructuring key optimization for VariableDeclarator.
+        walk_mut::walk_variable_declaration(self, decl);
     }
 
     fn visit_variable_declarator(&mut self, declarator: &mut VariableDeclarator<'a>) {
@@ -304,6 +434,19 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
         }
         walk_mut::walk_variable_declarator(self, declarator);
     }
+
+    fn visit_catch_clause(&mut self, clause: &mut CatchClause<'a>) {
+        // Catch param binds in the catch clause scope (entered by walk_catch_clause).
+        walk_mut::walk_catch_clause(self, clause);
+    }
+
+    fn visit_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
+        // Import bindings are in the module scope.
+        decl.bound_names(&mut |ident| {
+            self.scope_tracker.add_binding(ident.name.as_str());
+        });
+        walk_mut::walk_import_declaration(self, decl);
+    }
 }
 
 impl<'a> ReplaceGlobalDefines<'a> {
@@ -313,7 +456,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             config,
             ast_node_lock: None,
             changed: false,
-            scoping: None,
+            scope_tracker: ScopeBindingTracker::new(),
             non_arrow_function_depth: 0,
             destructuring_keys: None,
         }
@@ -323,27 +466,13 @@ impl<'a> ReplaceGlobalDefines<'a> {
         self.changed = true;
     }
 
-    /// # Panics
-    ///
-    /// Panics if scoping is not set (i.e. called outside of `build`).
-    fn scoping(&self) -> &Scoping {
-        self.scoping.as_ref().unwrap()
-    }
-
-    #[expect(clippy::missing_panics_doc)]
-    pub fn build(
-        &mut self,
-        scoping: Scoping,
-        program: &mut Program<'a>,
-    ) -> ReplaceGlobalDefinesReturn {
-        self.scoping = Some(scoping);
+    pub fn build(&mut self, program: &mut Program<'a>) -> ReplaceGlobalDefinesReturn {
         self.visit_program(program);
-        let scoping = self.scoping.take().unwrap();
-        ReplaceGlobalDefinesReturn { scoping, changed: self.changed }
+        ReplaceGlobalDefinesReturn { changed: self.changed }
     }
 
     // Construct a new expression because we don't have ast clone right now.
-    fn parse_value(&mut self, source_text: &str) -> Expression<'a> {
+    fn parse_value(&self, source_text: &str) -> Expression<'a> {
         // Allocate the string lazily because replacement happens rarely.
         let source_text = self.allocator.alloc_str(source_text);
         // Unwrapping here, it should already be checked by [ReplaceGlobalDefinesConfig::new].
@@ -351,13 +480,12 @@ impl<'a> ReplaceGlobalDefines<'a> {
             .parse_expression()
             .unwrap();
 
-        let scoping = self.scoping.as_mut().unwrap();
-        UpdateReplacedExpression { scoping }.visit_expression(&mut expr);
+        ClearSpans.visit_expression(&mut expr);
 
         expr
     }
 
-    fn replace_identifier_defines(&mut self, expr: &mut Expression<'a>) -> bool {
+    fn replace_identifier_defines(&self, expr: &mut Expression<'a>) -> bool {
         match expr {
             Expression::Identifier(ident) => {
                 if let Some(new_expr) = self.replace_identifier_define_impl(ident) {
@@ -385,23 +513,18 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_identifier_define_impl(
-        &mut self,
+        &self,
         ident: &oxc_allocator::Box<'_, IdentifierReference<'_>>,
     ) -> Option<Expression<'a>> {
-        let scoping = self.scoping();
-        if let Some(symbol_id) = ident
-            .reference_id
-            .get()
-            .and_then(|reference_id| scoping.get_reference(reference_id).symbol_id())
-        {
-            // Ignore `declare const IS_PROD: boolean;`
-            if !scoping.symbol_flags(symbol_id).is_ambient() {
-                return None;
-            }
+        let name = ident.name.as_str();
+        // If the name is bound in an enclosing scope (not global), skip replacement.
+        // Exception: ambient declarations (`declare const`) should still be replaced.
+        if !self.scope_tracker.is_global(name) && !self.scope_tracker.is_ambient(name) {
+            return None;
         }
         // This is a global variable, including ambient variants such as `declare const`.
         for (key, value) in &self.config.0.identifier.identifier_defines {
-            if ident.name.as_str() == key {
+            if name == key {
                 let value = value.clone();
                 let value = self.parse_value(&value);
                 return Some(value);
@@ -410,7 +533,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         None
     }
 
-    fn replace_define_with_assignment_expr(&mut self, node: &mut AssignmentExpression<'a>) -> bool {
+    fn replace_define_with_assignment_expr(&self, node: &mut AssignmentExpression<'a>) -> bool {
         let new_left = node
             .left
             .as_simple_assignment_target_mut()
@@ -434,7 +557,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
-    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>) -> bool {
+    fn replace_dot_defines(&self, expr: &mut Expression<'a>) -> bool {
         match expr {
             Expression::ChainExpression(chain) => {
                 let Some(new_expr) =
@@ -481,10 +604,10 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_dot_computed_member_expr(
-        &mut self,
+        &self,
         member: &ComputedMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
-        let scoping = self.scoping();
+        let scope_tracker = &self.scope_tracker;
         let scope_flags = self.current_scope_flags();
         let value = self
             .config
@@ -493,7 +616,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             .iter()
             .find(|dot_define| {
                 Self::is_dot_define(
-                    scoping,
+                    scope_tracker,
                     scope_flags,
                     dot_define,
                     DotDefineMemberExpression::ComputedMemberExpression(member),
@@ -509,10 +632,10 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_dot_static_member_expr(
-        &mut self,
+        &self,
         member: &StaticMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
-        let scoping = self.scoping();
+        let scope_tracker = &self.scope_tracker;
         let scope_flags = self.current_scope_flags();
         let value = self
             .config
@@ -521,7 +644,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             .iter()
             .find(|dot_define| {
                 Self::is_dot_define(
-                    scoping,
+                    scope_tracker,
                     scope_flags,
                     dot_define,
                     DotDefineMemberExpression::StaticMemberExpression(member),
@@ -551,10 +674,10 @@ impl<'a> ReplaceGlobalDefines<'a> {
     /// Like `replace_dot_static_member_expr` but without the destructuring optimization.
     /// Used for assignment targets where we don't have a parent destructuring pattern.
     fn replace_dot_static_member_expr_no_optimize(
-        &mut self,
+        &self,
         member: &StaticMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
-        let scoping = self.scoping();
+        let scope_tracker = &self.scope_tracker;
         let scope_flags = self.current_scope_flags();
         let value = self
             .config
@@ -563,7 +686,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
             .iter()
             .find(|dot_define| {
                 Self::is_dot_define(
-                    scoping,
+                    scope_tracker,
                     scope_flags,
                     dot_define,
                     DotDefineMemberExpression::StaticMemberExpression(member),
@@ -687,8 +810,8 @@ impl<'a> ReplaceGlobalDefines<'a> {
         if self.non_arrow_function_depth > 0 { ScopeFlags::Function } else { ScopeFlags::Top }
     }
 
-    pub fn is_dot_define<'b>(
-        scoping: &Scoping,
+    pub(crate) fn is_dot_define<'b>(
+        scope_tracker: &ScopeBindingTracker<'a>,
         scope_flags: ScopeFlags,
         dot_define: &DotDefine,
         member: DotDefineMemberExpression<'b, 'a>,
@@ -722,7 +845,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         })
                     }
                     Expression::Identifier(ident) => {
-                        if !ident.is_global_reference(scoping) {
+                        if !scope_tracker.is_global(&ident.name) {
                             return false;
                         }
                         cur_part_name = &ident.name;
@@ -853,23 +976,10 @@ fn assignment_target_from_expr(expr: Expression) -> Option<AssignmentTarget> {
     }
 }
 
-/// Update the replaced expression:
-/// * change spans to empty spans for sourcemap
-/// * assign reference id in root scope
-struct UpdateReplacedExpression<'a> {
-    scoping: &'a mut Scoping,
-}
+/// Clear spans on replaced expressions for sourcemap accuracy.
+struct ClearSpans;
 
-impl VisitMut<'_> for UpdateReplacedExpression<'_> {
-    fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'_>) {
-        let reference =
-            Reference::new(NodeId::DUMMY, self.scoping.root_scope_id(), ReferenceFlags::Read);
-        let reference_id = self.scoping.create_reference(reference);
-        self.scoping.add_root_unresolved_reference(ident.name, reference_id);
-        ident.set_reference_id(reference_id);
-        walk_mut::walk_identifier_reference(self, ident);
-    }
-
+impl VisitMut<'_> for ClearSpans {
     fn visit_span(&mut self, span: &mut Span) {
         *span = SPAN;
     }

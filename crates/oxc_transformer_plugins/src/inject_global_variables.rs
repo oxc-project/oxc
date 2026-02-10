@@ -5,13 +5,14 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_semantic::{ScopeFlags, Scoping};
+use oxc_ecmascript::BoundNames;
+use oxc_semantic::ScopeFlags;
 use oxc_span::{CompactStr, SPAN, format_compact_str};
 use oxc_syntax::identifier;
 
 use super::{
     DotDefineMemberExpression,
-    replace_global_defines::{DotDefine, ReplaceGlobalDefines},
+    replace_global_defines::{DotDefine, ReplaceGlobalDefines, ScopeBindingTracker},
 };
 
 #[derive(Debug, Clone)]
@@ -110,7 +111,6 @@ impl From<&InjectImport> for DotDefineState<'_> {
 
 #[must_use]
 pub struct InjectGlobalVariablesReturn {
-    pub scoping: Scoping,
     pub changed: bool,
 }
 
@@ -133,8 +133,12 @@ pub struct InjectGlobalVariables<'a> {
 
     changed: bool,
 
-    /// Scoping data, stored during `build()`.
-    scoping: Option<Scoping>,
+    /// Lightweight scope binding tracker.
+    scope_tracker: ScopeBindingTracker<'a>,
+
+    /// Set of global identifier names that are referenced (used but not bound).
+    /// Populated during the VisitMut walk.
+    unresolved_references: rustc_hash::FxHashSet<&'a str>,
 
     /// Depth of non-arrow functions we're inside of. Used to compute scope flags for `this`
     /// replacement.
@@ -142,15 +146,77 @@ pub struct InjectGlobalVariables<'a> {
 }
 
 impl<'a> VisitMut<'a> for InjectGlobalVariables<'a> {
+    fn enter_scope(
+        &mut self,
+        flags: ScopeFlags,
+        _scope_id: &std::cell::Cell<Option<oxc_syntax::scope::ScopeId>>,
+    ) {
+        let is_function = flags.contains(ScopeFlags::Function);
+        self.scope_tracker.enter_scope(is_function);
+    }
+
+    fn leave_scope(&mut self) {
+        let current_idx = self.scope_tracker.scopes.len() - 1;
+        let is_function =
+            self.scope_tracker.function_scope_indices.last().is_some_and(|&i| i == current_idx);
+        self.scope_tracker.leave_scope(is_function);
+    }
+
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.replace_dot_defines(expr);
         walk_mut::walk_expression(self, expr);
     }
 
     fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
+        if let Some(id) = &func.id {
+            self.scope_tracker.add_binding(id.name.as_str());
+        }
         self.non_arrow_function_depth += 1;
         walk_mut::walk_function(self, func, flags);
         self.non_arrow_function_depth -= 1;
+    }
+
+    fn visit_class(&mut self, class: &mut Class<'a>) {
+        if let Some(id) = &class.id {
+            self.scope_tracker.add_binding(id.name.as_str());
+        }
+        walk_mut::walk_class(self, class);
+    }
+
+    fn visit_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
+        param.pattern.bound_names(&mut |ident| {
+            self.scope_tracker.add_binding(ident.name.as_str());
+        });
+        walk_mut::walk_formal_parameter(self, param);
+    }
+
+    fn visit_variable_declaration(&mut self, decl: &mut VariableDeclaration<'a>) {
+        let is_var = decl.kind.is_var();
+        decl.bound_names(&mut |ident| {
+            let name = ident.name.as_str();
+            if is_var {
+                self.scope_tracker.add_var_binding(name);
+            } else {
+                self.scope_tracker.add_binding(name);
+            }
+        });
+        walk_mut::walk_variable_declaration(self, decl);
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
+        // Track unresolved global references.
+        let name = ident.name.as_str();
+        if self.scope_tracker.is_global(name) {
+            self.unresolved_references.insert(name);
+        }
+        walk_mut::walk_identifier_reference(self, ident);
+    }
+
+    fn visit_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
+        decl.bound_names(&mut |ident| {
+            self.scope_tracker.add_binding(ident.name.as_str());
+        });
+        walk_mut::walk_import_declaration(self, decl);
     }
 }
 
@@ -162,7 +228,8 @@ impl<'a> InjectGlobalVariables<'a> {
             dot_defines: vec![],
             replaced_dot_defines: vec![],
             changed: false,
-            scoping: None,
+            scope_tracker: ScopeBindingTracker::new(),
+            unresolved_references: rustc_hash::FxHashSet::default(),
             non_arrow_function_depth: 0,
         }
     }
@@ -171,27 +238,13 @@ impl<'a> InjectGlobalVariables<'a> {
         self.changed = true;
     }
 
-    /// # Panics
-    ///
-    /// Panics if scoping is not set (i.e. called outside of `build`).
-    fn scoping(&self) -> &Scoping {
-        self.scoping.as_ref().unwrap()
-    }
-
     /// Compute the current scope flags based on function depth tracking.
     fn current_scope_flags(&self) -> ScopeFlags {
         if self.non_arrow_function_depth > 0 { ScopeFlags::Function } else { ScopeFlags::Top }
     }
 
-    #[expect(clippy::missing_panics_doc)]
-    pub fn build(
-        &mut self,
-        scoping: Scoping,
-        program: &mut Program<'a>,
-    ) -> InjectGlobalVariablesReturn {
-        self.scoping = Some(scoping);
-
-        // Step 1: slow path where visiting the AST is required to replace dot defines.
+    pub fn build(&mut self, program: &mut Program<'a>) -> InjectGlobalVariablesReturn {
+        // Step 1: Walk the program to replace dot defines (if any) and collect scope bindings.
         let dot_defines = self
             .config
             .injects
@@ -202,11 +255,13 @@ impl<'a> InjectGlobalVariables<'a> {
 
         if !dot_defines.is_empty() {
             self.dot_defines = dot_defines;
-            self.visit_program(program);
         }
 
+        // Always walk the program to collect scope bindings for step 2
+        // (and replace dot defines if any exist).
+        self.visit_program(program);
+
         // Step 2: find all the injects that are referenced.
-        let scoping = self.scoping();
         let injects = self
             .config
             .injects
@@ -221,9 +276,8 @@ impl<'a> InjectGlobalVariables<'a> {
                         if self.replaced_dot_defines.iter().any(|d| d.0 == i.specifier.local()) {
                             false
                         } else {
-                            scoping
-                                .root_unresolved_references()
-                                .contains_key(i.specifier.local().as_str())
+                            // Check if the identifier was used as an unresolved global reference.
+                            self.unresolved_references.contains(i.specifier.local().as_str())
                         }
                     }
                 }
@@ -232,14 +286,12 @@ impl<'a> InjectGlobalVariables<'a> {
             .collect::<Vec<_>>();
 
         if injects.is_empty() {
-            let scoping = self.scoping.take().unwrap();
-            return InjectGlobalVariablesReturn { scoping, changed: self.changed };
+            return InjectGlobalVariablesReturn { changed: self.changed };
         }
 
         self.inject_imports(&injects, program);
 
-        let scoping = self.scoping.take().unwrap();
-        InjectGlobalVariablesReturn { scoping, changed: self.changed }
+        InjectGlobalVariablesReturn { changed: self.changed }
     }
 
     fn inject_imports(&mut self, injects: &[InjectImport], program: &mut Program<'a>) {
@@ -294,13 +346,13 @@ impl<'a> InjectGlobalVariables<'a> {
     }
 
     fn replace_dot_defines(&mut self, expr: &mut Expression<'a>) {
-        let scoping = self.scoping.as_ref().unwrap();
+        let scope_tracker = &self.scope_tracker;
         let scope_flags = self.current_scope_flags();
         match expr {
             Expression::StaticMemberExpression(member) => {
                 for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
                     if ReplaceGlobalDefines::is_dot_define(
-                        scoping,
+                        scope_tracker,
                         scope_flags,
                         dot_define,
                         DotDefineMemberExpression::StaticMemberExpression(member),

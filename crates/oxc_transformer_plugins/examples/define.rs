@@ -19,7 +19,6 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_semantic::SemanticBuilder;
 use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
 use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
@@ -40,9 +39,8 @@ fn main() -> std::io::Result<()> {
     let allocator = Allocator::default();
 
     let mut program = parse(&allocator, &source_text, source_type);
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let config = ReplaceGlobalDefinesConfig::new(&defines).unwrap();
-    let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
+    let _ = ReplaceGlobalDefines::new(&allocator, config).build(&mut program);
     let printed = codegen(&program, sourcemap);
 
     println!("{printed}");

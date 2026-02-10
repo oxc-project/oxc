@@ -1,5 +1,4 @@
 use oxc_allocator::Allocator;
-use oxc_ast_visit::Visit;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
@@ -16,13 +15,10 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty());
     let mut program = ret.program;
-    let mut scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    let ret = ReplaceGlobalDefines::new(&allocator, config.clone()).build(scoping, &mut program);
+    let ret = ReplaceGlobalDefines::new(&allocator, config.clone()).build(&mut program);
     assert_eq!(ret.changed, source_text != expected);
-    // Use the updated scoping, instead of recreating one.
-    scoping = ret.scoping;
-    AssertAst.visit_program(&program);
     // Run DCE, to align pipeline in crates/oxc/src/compiler.rs
+    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     Compressor::new(&allocator).dead_code_elimination_with_scoping(
         &mut program,
         scoping,
@@ -39,14 +35,6 @@ pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConf
 #[track_caller]
 fn test_same(source_text: &str, config: &ReplaceGlobalDefinesConfig) {
     test(source_text, source_text, config);
-}
-
-struct AssertAst;
-
-impl Visit<'_> for AssertAst {
-    fn visit_identifier_reference(&mut self, ident: &oxc_ast::ast::IdentifierReference<'_>) {
-        assert!(ident.reference_id.get().is_some());
-    }
 }
 
 fn config<S: AsRef<str>>(defines: &[(S, S)]) -> ReplaceGlobalDefinesConfig {
@@ -307,8 +295,7 @@ log(__MEMBER__);
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
-    let _ = ReplaceGlobalDefines::new(&allocator, c).build(scoping, &mut program);
+    let _ = ReplaceGlobalDefines::new(&allocator, c).build(&mut program);
     let result = Codegen::new()
         .with_options(CodegenOptions {
             single_quote: true,

@@ -17,7 +17,6 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::{TestFile, TestFiles, project_root};
 use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
@@ -160,12 +159,11 @@ fn minify(source_text: &str, source_type: SourceType, options: Options) -> (Stri
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty());
     let mut program = ret.program;
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(
         &allocator,
         ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "'development'")]).unwrap(),
     )
-    .build(scoping, &mut program);
+    .build(&mut program);
     let ret = Minifier::new(MinifierOptions {
         mangle: (!options.compress_only).then(MangleOptions::default),
         compress: Some(CompressOptions::default()),
