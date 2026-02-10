@@ -305,7 +305,9 @@ jobs:
       - run: npm install -g npm@latest # For trusted publishing support
 
       - name: Check Publish
-        run: node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
+        run: |
+          node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
+          node .github/scripts/check-npm-packages.js "${plugins_package_path}"
 
       - name: Trusted Publish
         run: |
