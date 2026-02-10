@@ -1,7 +1,7 @@
 use std::{ffi::OsStr, path::Path, sync::Mutex};
 
 use oxc_diagnostics::OxcDiagnostic;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::{Deserialize, Serialize};
 
 use crate::read_to_string;
@@ -100,27 +100,43 @@ impl SuppressionTracking {
 #[derive(Clone, Debug)]
 pub struct SuppressionManager {
     pub suppressions_by_file: SuppressionTracking,
-    pub runtime_suppressions: SuppressionTracking,
+    pub suppression_key_set: FxHashSet<(Filename, RuleName)>,
 }
 
 impl Default for SuppressionManager {
     fn default() -> Self {
         Self {
             suppressions_by_file: SuppressionTracking::default(),
-            runtime_suppressions: SuppressionTracking::default(),
+            suppression_key_set: FxHashSet::default(),
         }
     }
 }
 
+#[derive(Debug)]
+pub enum SuppressionDiff {
+    Increased { file: Filename, rule: RuleName, from: usize, to: usize },
+    Decreased { file: Filename, rule: RuleName, from: usize, to: usize },
+    PrunedRuled { file: Filename, rule: RuleName },
+    Appeared { file: Filename, rule: RuleName },
+}
+
 impl SuppressionManager {
-    // reads the `oxlint-suppressions.json` from the disk
     pub fn load(path: &Path) -> Result<Self, OxcDiagnostic> {
         let suppression_file = SuppressionTracking::from_file(path)?;
 
-        Ok(Self {
-            suppressions_by_file: suppression_file,
-            runtime_suppressions: SuppressionTracking::default(),
-        })
+        let mut set: FxHashSet<(Filename, RuleName)> = FxHashSet::default();
+
+        let mut keys_iterator = suppression_file.suppressions.keys().into_iter();
+
+        while let Some(file_key) = keys_iterator.next() {
+            let mut values_iterator =
+                suppression_file.suppressions.get(file_key).unwrap().keys().into_iter();
+            while let Some(rule_name_key) = values_iterator.next() {
+                set.insert((file_key.clone(), rule_name_key.clone()));
+            }
+        }
+
+        Ok(Self { suppressions_by_file: suppression_file, suppression_key_set: set })
     }
 
     pub fn get_suppression_per_file(
@@ -132,51 +148,85 @@ impl SuppressionManager {
         self.suppressions_by_file.suppressions.get(&filename)
     }
 
-    fn is_suppressed(&self, filename: &Filename, rule_name: &RuleName) -> bool {
-        let Some(runtime_suppressions) = self.runtime_suppressions.suppressions.get(filename)
-        else {
-            return false;
-        };
+    pub fn diff(
+        &self,
+        runtime_suppressions: &FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>>,
+        runtime_set: &FxHashSet<(Filename, RuleName)>,
+    ) -> Vec<SuppressionDiff> {
+        let mut diff: Vec<SuppressionDiff> = vec![];
 
-        let Some(runtime_violations) = runtime_suppressions.get(rule_name) else {
-            return false;
-        };
-
-        let Some(file_suppressions) = self.suppressions_by_file.suppressions.get(filename) else {
-            return false;
-        };
-
-        let Some(file_violations) = file_suppressions.get(rule_name) else {
-            return false;
-        };
-
-        if file_violations.count >= runtime_violations.count {
-            return false;
+        if self.suppression_key_set.is_empty() && runtime_set.is_empty() {
+            return diff;
         }
 
-        true
-    }
-
-    // Adds a suppression for the given file, plugin, and rule.
-    pub fn add_violation(&mut self, file_path: &Path, plugin_name: &str, rule_name: &str) {
-        let filename = Filename::new(file_path);
-        let rule = RuleName::new(plugin_name, rule_name);
-
-        if let Some(violation_count) = self
-            .runtime_suppressions
-            .suppressions
-            .get_mut(&filename)
-            .and_then(|rules| rules.get_mut(&rule))
-        {
-            violation_count.count += 1;
-        } else {
-            let violation_counts = {
-                let mut init_map = FxHashMap::default();
-                init_map.insert(rule, DiagnosticCounts { count: 1 });
-                init_map
-            };
-
-            self.runtime_suppressions.suppressions.insert(filename, violation_counts);
+        if self.suppression_key_set.is_empty() {
+            return runtime_set
+                .iter()
+                .map(|(file_key, rule_key)| SuppressionDiff::Appeared {
+                    file: file_key.clone(),
+                    rule: rule_key.clone(),
+                })
+                .collect();
         }
+
+        if runtime_set.is_empty() {
+            return self
+                .suppression_key_set
+                .iter()
+                .map(|(file_key, rule_key)| SuppressionDiff::PrunedRuled {
+                    file: file_key.clone(),
+                    rule: rule_key.clone(),
+                })
+                .collect();
+        }
+
+        let mut pruned_rules = self.suppression_key_set.difference(runtime_set);
+        let mut new_violations = runtime_set.difference(&self.suppression_key_set);
+        let mut existing_violations = self.suppression_key_set.intersection(runtime_set);
+
+        println!("pruned {:?}", pruned_rules);
+        println!("new_violations {:?}", new_violations);
+        println!("existing_violations {:?}", existing_violations);
+
+        while let Some((file_key, rule_key)) = pruned_rules.next() {
+            diff.push(SuppressionDiff::PrunedRuled {
+                file: file_key.clone(),
+                rule: rule_key.clone(),
+            });
+        }
+
+        while let Some((file_key, rule_key)) = new_violations.next() {
+            diff.push(SuppressionDiff::Appeared { file: file_key.clone(), rule: rule_key.clone() });
+        }
+
+        while let Some((file_key, rule_key)) = existing_violations.next() {
+            let file_diagnostic = self
+                .suppressions_by_file
+                .suppressions
+                .get(file_key)
+                .unwrap()
+                .get(rule_key)
+                .unwrap();
+            let runtime_diagnostic =
+                runtime_suppressions.get(file_key).unwrap().get(rule_key).unwrap();
+
+            if file_diagnostic.count > runtime_diagnostic.count {
+                diff.push(SuppressionDiff::Decreased {
+                    file: file_key.clone(),
+                    rule: rule_key.clone(),
+                    from: file_diagnostic.count,
+                    to: runtime_diagnostic.count,
+                });
+            } else if file_diagnostic.count < runtime_diagnostic.count {
+                diff.push(SuppressionDiff::Increased {
+                    file: file_key.clone(),
+                    rule: rule_key.clone(),
+                    from: file_diagnostic.count,
+                    to: runtime_diagnostic.count,
+                });
+            }
+        }
+
+        diff
     }
 }

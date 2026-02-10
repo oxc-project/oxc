@@ -731,8 +731,12 @@ impl Runtime {
         let mut runtime_map: FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>> =
             FxHashMap::default();
 
+        let mut set: FxHashSet<(Filename, RuleName)> = FxHashSet::default();
+
         while let Ok((file_name, rule_name, diagnostic)) = runtime_suppression_recv.recv() {
             runtime_map.entry(file_name.clone()).or_insert_with(FxHashMap::default);
+
+            set.insert((file_name.clone(), rule_name.clone()));
 
             if let Some(entry) = runtime_map.get_mut(&file_name) {
                 entry.insert(rule_name, diagnostic);
@@ -744,7 +748,13 @@ impl Runtime {
             }
         }
 
-        println!("Final map {:?}", runtime_map);
+        println!("NEW {:?}", runtime_map);
+        println!("SET {:?}", set);
+
+        let suppression_manager_two =
+            SuppressionManager::load(self.cwd.join("oxlint-suppressions.json").as_path()).unwrap();
+
+        println!("diff {:?}", suppression_manager_two.diff(&runtime_map, &set));
     }
 
     // language_server: the language server needs line and character position

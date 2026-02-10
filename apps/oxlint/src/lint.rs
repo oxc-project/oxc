@@ -1481,4 +1481,10 @@ mod suppression {
             .with_cwd("fixtures/suppression_report_one_of_the_errors_from_one_file".into())
             .test_and_snapshot(args);
     }
+
+    #[test]
+    fn test_suppression_without_file() {
+        let args = &[];
+        Tester::new().with_cwd("fixtures/suppression_without_file".into()).test_and_snapshot(args);
+    }
 }
