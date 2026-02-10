@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- f32ea19 semantic: Report redeclaration error for import bindings conflicting with value declarations (#19068) (Boshen)
+- 3aeba7a semantic: Report redeclaration error for `function a() {} var a` in module mode (#19041) (Boshen)
+- 463d60d semantic: Skip TS2391 for standalone computed-name class methods (#19025) (Boshen)
+- 6067a49 linter/jsdoc: False positive in `check-tag-names` for `@` in email addresses and npm scopes (#19021) (Boshen)
+- b13bb70 semantic/jsdoc: Inline tags like `{@link}` break jsdoc parsing (#19019) (Boshen)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+- 2537924 semantic: Optimize scope resolution with fast paths and inlining (#19029) (Boshen)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES
