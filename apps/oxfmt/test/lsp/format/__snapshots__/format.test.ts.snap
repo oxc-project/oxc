@@ -217,29 +217,6 @@ null
 --------------------"
 `;
 
-exports[`LSP formatting > ignore patterns > should respect .gitignore 1`] = `
-"--- FILE -----------
-ignore-gitignore/ignored.ts
---- BEFORE ---------
-const   x   =   1
-
---- AFTER ----------
-null
---------------------"
-`;
-
-exports[`LSP formatting > ignore patterns > should respect .gitignore 2`] = `
-"--- FILE -----------
-ignore-gitignore/not-ignored.ts
---- BEFORE ---------
-const   x   =   1
-
---- AFTER ----------
-const x = 1;
-
---------------------"
-`;
-
 exports[`LSP formatting > initializationOptions > should use custom config path from fmt.configPath 1`] = `
 "--- FILE -----------
 custom_config_path/semicolons-as-needed.ts

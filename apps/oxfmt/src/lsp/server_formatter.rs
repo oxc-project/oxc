@@ -365,15 +365,15 @@ fn compute_minimal_text_edit<'a>(
     (start, end, replacement)
 }
 
-// Almost the same as `oxfmt::walk::load_ignore_paths`, but does not handle custom ignore files.
+// Almost the same as `cli::walk::load_ignore_paths`, but does not handle custom ignore files.
+//
+// NOTE: `.gitignore` is intentionally NOT included here.
+// In LSP, every file is explicitly opened by the user (like directly specifying a file in CLI),
+// so `.gitignore` should not prevent formatting.
+// Only formatter-specific ignore files apply.
 fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
-    [".gitignore", ".prettierignore"]
-        .iter()
-        .filter_map(|file_name| {
-            let path = cwd.join(file_name);
-            if path.exists() { Some(path) } else { None }
-        })
-        .collect::<Vec<_>>()
+    let path = cwd.join(".prettierignore");
+    if path.exists() { vec![path] } else { vec![] }
 }
 
 // ---
