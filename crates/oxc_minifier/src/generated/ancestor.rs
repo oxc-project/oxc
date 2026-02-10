@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/traverse/mod.rs`.
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/minifier_traverse/mod.rs`.
 
 #![expect(
     clippy::cast_ptr_alignment,
