@@ -27,6 +27,7 @@
     "eslint/camelcase": "Superseded by `@typescript-eslint/naming-convention`, which accomplishes the same behavior with more flexibility.",
     "eslint/no-invalid-this": "Superseded by TypeScript's [`noImplicitThis`](https://www.typescriptlang.org/tsconfig/#noImplicitThis) compiler option (enabled by `strict` mode).",
     "react/jsx-uses-react": "It is unnecessary to import React for JSX/TSX files with React 17+ when using the new JSX transform. This rule is also not easy to implement in Oxlint as it modifies the behavior of another rule.",
+    "import/no-internal-modules": "Not necessary to implement this rule as we already have `eslint/no-restricted-imports`, which is able to cover the same use-cases.",
 
     "n/prefer-node-protocol": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
     "n/no-process-exit": "No need to implement, already implemented by `unicorn/no-process-exit`.",
