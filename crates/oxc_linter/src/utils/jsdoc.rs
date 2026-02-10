@@ -74,6 +74,9 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
             {
                 return None;
             }
+            // Do not apply object-level docs to functions nested in object literals.
+            // e.g. `const x = /** ... */ { method(arg) {} }`
+            AstKind::ObjectExpression(_) |
             AstKind::Program(_) => return None,
             AstKind::VariableDeclaration(_)
             | AstKind::MethodDefinition(_)
