@@ -26,6 +26,7 @@ pub enum AssignmentLike<'a, 'b> {
     ObjectProperty(&'b AstNode<'a, ObjectProperty<'a>>),
     BindingProperty(&'b AstNode<'a, BindingProperty<'a>>),
     PropertyDefinition(&'b AstNode<'a, PropertyDefinition<'a>>),
+    AccessorProperty(&'b AstNode<'a, AccessorProperty<'a>>),
     TSTypeAliasDeclaration(&'b AstNode<'a, TSTypeAliasDeclaration<'a>>),
 }
 
@@ -291,6 +292,40 @@ impl<'a> AssignmentLike<'a, '_> {
 
                 false // Class properties don't use "short" key logic
             }
+            AssignmentLike::AccessorProperty(property) => {
+                write!(f, [property.decorators()]);
+
+                if let Some(accessibility) = property.accessibility {
+                    write!(f, [accessibility.as_str(), space()]);
+                }
+                if property.r#static {
+                    write!(f, ["static", space()]);
+                }
+                if property.r#type.is_abstract() {
+                    write!(f, ["abstract", space()]);
+                }
+                if property.r#override {
+                    write!(f, ["override", space()]);
+                }
+                write!(f, ["accessor", space()]);
+
+                // Write the property key
+                if property.computed {
+                    write!(f, ["[", property.key(), "]"]);
+                } else {
+                    format_property_key(property.key(), f);
+                }
+
+                // Write definite and type annotation
+                if property.definite {
+                    write!(f, "!");
+                }
+                if let Some(type_annotation) = property.type_annotation() {
+                    write!(f, type_annotation);
+                }
+
+                false // Class properties don't use "short" key logic
+            }
             AssignmentLike::TSTypeAliasDeclaration(declaration) => {
                 write!(f, [declaration.declare.then_some("declare "), "type "]);
 
@@ -362,6 +397,10 @@ impl<'a> AssignmentLike<'a, '_> {
                 debug_assert!(property_class_member.value().is_some());
                 write!(f, [space(), "="]);
             }
+            Self::AccessorProperty(property) => {
+                debug_assert!(property.value().is_some());
+                write!(f, [space(), "="]);
+            }
             Self::TSTypeAliasDeclaration(_) => {
                 write!(f, [space(), "="]);
             }
@@ -385,6 +424,9 @@ impl<'a> AssignmentLike<'a, '_> {
                 write!(f, property.value());
             }
             Self::PropertyDefinition(property) => {
+                write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
+            }
+            Self::AccessorProperty(property) => {
                 write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
             }
             Self::TSTypeAliasDeclaration(declaration) => {
@@ -462,6 +504,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::PropertyDefinition(property_class_member) => {
                 property_class_member.value()
             }
+            AssignmentLike::AccessorProperty(property) => property.value(),
             AssignmentLike::BindingProperty(_) | AssignmentLike::TSTypeAliasDeclaration(_) => None,
         }
     }
@@ -473,6 +516,7 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::AssignmentExpression(_) | Self::TSTypeAliasDeclaration(_) => false,
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
             Self::PropertyDefinition(property) => property.value().is_none(),
+            Self::AccessorProperty(property) => property.value().is_none(),
             Self::BindingProperty(property) => {
                 // Treats binding property has a left-hand side only
                 // when the value is an assignment pattern,
@@ -651,6 +695,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::ObjectProperty(_)
             | AssignmentLike::BindingProperty(_)
             | AssignmentLike::PropertyDefinition(_)
+            | AssignmentLike::AccessorProperty(_)
             | AssignmentLike::TSTypeAliasDeclaration(_) => false,
         }
     }
