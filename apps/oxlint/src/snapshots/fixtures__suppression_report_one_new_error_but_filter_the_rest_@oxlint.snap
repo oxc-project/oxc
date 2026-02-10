@@ -1,0 +1,23 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/suppression_report_one_new_error_but_filter_the_rest
+----------
+
+  x New errors for eslint/no-debugger have appeared in folder_b/test.js.
+
+  x eslint(no-debugger): `debugger` statement is not allowed
+   ,-[folder_b/test.js:2:1]
+ 1 | console.log();
+ 2 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 2 files with 56 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

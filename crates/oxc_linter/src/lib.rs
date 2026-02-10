@@ -482,11 +482,11 @@ impl Linter {
                             return false;
                         };
 
-                        let Some(count_runtime) = suppression_tracking.get(rule_name) else {
-                            return false;
+                        let Some(count_file) = recorded_violations.get(rule_name) else {
+                            return true;
                         };
 
-                        let Some(count_file) = recorded_violations.get(rule_name) else {
+                        let Some(count_runtime) = suppression_tracking.get(rule_name) else {
                             return false;
                         };
 

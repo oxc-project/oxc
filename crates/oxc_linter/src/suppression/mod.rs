@@ -221,6 +221,7 @@ impl SuppressionManager {
         path: &Path,
         new_file: FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>>,
     ) -> Result<(), OxcDiagnostic> {
+        println!("{:?}", self);
         if !self.file_exists && self.prune_suppression {
             return Err(OxcDiagnostic::error(
                 "You can't prune error messages if a bulk suppression file doesn't exist.",

@@ -2,6 +2,6 @@
   "plugins": ["eslint"],
   "rules": {
     "no-console": "error",
-    "no-debugger": "error"
+    "no-unused-vars": "off"
   }
 }

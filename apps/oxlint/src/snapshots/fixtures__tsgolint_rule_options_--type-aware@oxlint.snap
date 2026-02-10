@@ -38,7 +38,6 @@ working directory: fixtures/tsgolint_rule_options
     :                    ^^^^^^^^^^^^
  64 | 
     `----
-  help: Consider picking a property (e.g. `user.name`), using a formatter (or `JSON.stringify`), or implementing a custom `toString()`/`toLocaleString()` on the type.
 
   x typescript-eslint(no-unnecessary-condition): Unnecessary conditional, value is always truthy.
     ,-[test.ts:68:5]

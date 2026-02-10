@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow,
     ffi::OsStr,
-    fmt::format,
     fs,
     hash::BuildHasherDefault,
     mem::take,
@@ -671,7 +670,7 @@ impl Runtime {
                             .map(|relative_url| {
                                 suppression_manager.get_suppression_per_file(&relative_url)
                             })
-                            .unwrap(); //?? In theory is safe as at this point the file exists
+                            .unwrap_or(SuppressionFileState::Ignored);
 
                         let (mut messages, disable_directives, suppression) =
                             me.linter.run_with_disable_directives(
