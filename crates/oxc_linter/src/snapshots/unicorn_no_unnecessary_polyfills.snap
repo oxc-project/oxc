@@ -1,0 +1,159 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("setprototypeof")
+   ·         ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("core-js/features/array/last-index-of")
+   ·         ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): All polyfilled features imported from `core-js-pure/features/array/from` are available as built-ins. Use the built-ins instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("core-js-pure/features/array/from")
+   ·         ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): All polyfilled features imported from `core-js/features/array/from` are available as built-ins. Use the built-ins instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("core-js/features/array/from")
+   ·         ─────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): All polyfilled features imported from `core-js/features/typed-array` are available as built-ins. Use the built-ins instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("core-js/features/typed-array")
+   ·         ──────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("es6-symbol")
+   ·         ────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("code-point-at")
+   ·         ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("object.getownpropertydescriptors")
+   ·         ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("string.prototype.padstart")
+   ·         ───────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("p-finally")
+   ·         ───────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("promise-polyfill")
+   ·         ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("es6-promise")
+   ·         ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("object-assign")
+   ·         ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:20]
+ 1 │ import assign from "object-assign"
+   ·                    ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:8]
+ 1 │ import("object-assign")
+   ·        ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("object-assign")
+   ·         ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("object-assign")
+   ·         ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("array-from")
+   ·         ────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("array-find-index")
+   ·         ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("array-find-index")
+   ·         ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("array-find-index")
+   ·         ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("mdn-polyfills/Array.prototype.findIndex")
+   ·         ─────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("weakmap-polyfill")
+   ·         ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("typed-array-float64-array-polyfill")
+   ·         ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:26]
+ 1 │ import regexpEscape from "regexp.escape"
+   ·                          ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-polyfills): Use built-in instead.
+   ╭─[no_unnecessary_polyfills.tsx:1:9]
+ 1 │ require("core-js/full/regexp/escape")
+   ·         ────────────────────────────
+   ╰────
