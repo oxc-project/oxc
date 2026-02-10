@@ -798,12 +798,19 @@ impl Runtime {
             diagnostics.push(diagnostic);
         }
 
-        // TODO: ONLY WHEN cli args aren't provided
-        if !diagnostics.is_empty() {
+        let has_diagnostics = !diagnostics.is_empty();
+
+        if has_diagnostics && !suppression_manager_two.is_updating_file() {
             let errors = diagnostics.into_iter().map(Into::into).collect();
             let diagnostics_wrapped =
                 DiagnosticService::wrap_diagnostics(&self.cwd, &self.cwd, "", errors);
             tx_error.send(diagnostics_wrapped).unwrap();
+        }
+
+        if has_diagnostics && suppression_manager_two.is_updating_file() {
+            suppression_manager_two
+                .write(self.cwd.join("oxlint-suppressions.json").as_path(), runtime_map)
+                .unwrap();
         }
     }
 
