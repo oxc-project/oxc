@@ -89,7 +89,9 @@ impl StdinRunner {
         }
 
         // Determine format strategy from filepath
-        let Ok(strategy) = FormatFileStrategy::try_from(filepath) else {
+        let Ok(strategy) =
+            FormatFileStrategy::try_from(filepath).map(|s| s.resolve_relative_path(&cwd))
+        else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };

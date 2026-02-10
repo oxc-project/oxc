@@ -174,7 +174,9 @@ pub async fn format(
     }
 
     // Determine format strategy from file path
-    let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(&filename)) else {
+    let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(&filename))
+        .map(|s| s.resolve_relative_path(&cwd))
+    else {
         external_formatter.cleanup();
         return FormatResult {
             code: source_text,
