@@ -4,13 +4,13 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, NONE, ast::*};
-use oxc_semantic::Scoping;
+use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_semantic::{ScopeFlags, Scoping};
 use oxc_span::{CompactStr, SPAN, format_compact_str};
 use oxc_syntax::identifier;
-use oxc_traverse::{Traverse, traverse_mut};
 
 use super::{
-    DotDefineMemberExpression, TraverseCtx,
+    DotDefineMemberExpression,
     replace_global_defines::{DotDefine, ReplaceGlobalDefines},
 };
 
@@ -132,11 +132,25 @@ pub struct InjectGlobalVariables<'a> {
         Vec<(/* identifier of member expression */ CompactStr, /* local */ CompactStr)>,
 
     changed: bool,
+
+    /// Scoping data, stored during `build()`.
+    scoping: Option<Scoping>,
+
+    /// Depth of non-arrow functions we're inside of. Used to compute scope flags for `this`
+    /// replacement.
+    non_arrow_function_depth: u32,
 }
 
-impl<'a> Traverse<'a, ()> for InjectGlobalVariables<'a> {
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.replace_dot_defines(expr, ctx);
+impl<'a> VisitMut<'a> for InjectGlobalVariables<'a> {
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        self.replace_dot_defines(expr);
+        walk_mut::walk_expression(self, expr);
+    }
+
+    fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
+        self.non_arrow_function_depth += 1;
+        walk_mut::walk_function(self, func, flags);
+        self.non_arrow_function_depth -= 1;
     }
 }
 
@@ -148,6 +162,8 @@ impl<'a> InjectGlobalVariables<'a> {
             dot_defines: vec![],
             replaced_dot_defines: vec![],
             changed: false,
+            scoping: None,
+            non_arrow_function_depth: 0,
         }
     }
 
@@ -155,12 +171,26 @@ impl<'a> InjectGlobalVariables<'a> {
         self.changed = true;
     }
 
+    /// # Panics
+    ///
+    /// Panics if scoping is not set (i.e. called outside of `build`).
+    fn scoping(&self) -> &Scoping {
+        self.scoping.as_ref().unwrap()
+    }
+
+    /// Compute the current scope flags based on function depth tracking.
+    fn current_scope_flags(&self) -> ScopeFlags {
+        if self.non_arrow_function_depth > 0 { ScopeFlags::Function } else { ScopeFlags::Top }
+    }
+
+    #[expect(clippy::missing_panics_doc)]
     pub fn build(
         &mut self,
         scoping: Scoping,
         program: &mut Program<'a>,
     ) -> InjectGlobalVariablesReturn {
-        let mut scoping = scoping;
+        self.scoping = Some(scoping);
+
         // Step 1: slow path where visiting the AST is required to replace dot defines.
         let dot_defines = self
             .config
@@ -172,10 +202,11 @@ impl<'a> InjectGlobalVariables<'a> {
 
         if !dot_defines.is_empty() {
             self.dot_defines = dot_defines;
-            scoping = traverse_mut(self, self.ast.allocator, program, scoping, ());
+            self.visit_program(program);
         }
 
         // Step 2: find all the injects that are referenced.
+        let scoping = self.scoping();
         let injects = self
             .config
             .injects
@@ -201,11 +232,13 @@ impl<'a> InjectGlobalVariables<'a> {
             .collect::<Vec<_>>();
 
         if injects.is_empty() {
+            let scoping = self.scoping.take().unwrap();
             return InjectGlobalVariablesReturn { scoping, changed: self.changed };
         }
 
         self.inject_imports(&injects, program);
 
+        let scoping = self.scoping.take().unwrap();
         InjectGlobalVariablesReturn { scoping, changed: self.changed }
     }
 
@@ -260,13 +293,15 @@ impl<'a> InjectGlobalVariables<'a> {
         }
     }
 
-    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
+    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>) {
+        let scoping = self.scoping.as_ref().unwrap();
+        let scope_flags = self.current_scope_flags();
         match expr {
             Expression::StaticMemberExpression(member) => {
                 for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
                     if ReplaceGlobalDefines::is_dot_define(
-                        ctx.scoping(),
-                        ctx.current_scope_flags(),
+                        scoping,
+                        scope_flags,
                         dot_define,
                         DotDefineMemberExpression::StaticMemberExpression(member),
                     ) {
