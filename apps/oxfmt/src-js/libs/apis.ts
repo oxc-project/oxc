@@ -46,7 +46,6 @@ export async function resolvePlugins(): Promise<string[]> {
 
 export type FormatEmbeddedCodeParam = {
   code: string;
-  parserName: string;
   options: Options;
 };
 
@@ -59,13 +58,9 @@ export type FormatEmbeddedCodeParam = {
  */
 export async function formatEmbeddedCode({
   code,
-  parserName,
   options,
 }: FormatEmbeddedCodeParam): Promise<string> {
   const prettier = await loadPrettier();
-
-  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  options.parser = parserName;
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   await setupTailwindPlugin(options);
@@ -81,8 +76,6 @@ export async function formatEmbeddedCode({
 
 export type FormatFileParam = {
   code: string;
-  parserName: string;
-  fileName: string;
   options: Options;
 };
 
@@ -91,19 +84,8 @@ export type FormatFileParam = {
  *
  * @returns Formatted code
  */
-export async function formatFile({
-  code,
-  parserName,
-  fileName,
-  options,
-}: FormatFileParam): Promise<string> {
+export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
   const prettier = await loadPrettier();
-
-  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  // We specify `parser` to skip parser inference for performance
-  options.parser = parserName;
-  // But some plugins rely on `filepath`, so we set it too
-  options.filepath = fileName;
 
   // Enable Tailwind CSS plugin for non-JS files if needed
   await setupTailwindPlugin(options);

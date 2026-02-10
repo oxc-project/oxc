@@ -37,13 +37,9 @@ pub async fn run_cli(
     args: Vec<String>,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
     #[napi(
         ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
@@ -144,13 +140,9 @@ pub async fn format(
     options: Option<Value>,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
     #[napi(
         ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
