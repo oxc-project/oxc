@@ -3052,6 +3052,11 @@ impl RuleRunner for crate::rules::unicorn::no_unnecessary_await::NoUnnecessaryAw
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::no_unnecessary_polyfills::NoUnnecessaryPolyfills {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::no_unnecessary_slice_end::NoUnnecessarySliceEnd {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
