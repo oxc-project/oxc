@@ -120,6 +120,7 @@ impl SourceFormatter {
     }
 
     /// Format JS/TS source code using oxc_formatter.
+    #[cfg_attr(not(feature = "napi"), expect(unused_mut))]
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter", skip_all)]
     fn format_by_oxc_formatter(
         &self,
