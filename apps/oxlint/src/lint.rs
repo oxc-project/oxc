@@ -81,6 +81,7 @@ impl CliRunner {
             misc_options,
             disable_nested_config,
             inline_config_options,
+            suppression_options,
             ..
         } = self.options;
 
@@ -393,7 +394,9 @@ impl CliRunner {
 
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+            .with_report_unused_directives(report_unused_directives)
+            .with_suppress_all(suppression_options.suppress_all)
+            .with_prune_suppressions(suppression_options.prune_suppressions);
 
         let number_of_files = files_to_lint.len();
         let tsconfig = basic_options.tsconfig;
@@ -424,6 +427,8 @@ impl CliRunner {
             .with_type_check(type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
+            .with_suppress_all(suppression_options.suppress_all)
+            .with_prune_suppressions(suppression_options.prune_suppressions)
             .build()
         {
             Ok(runner) => runner,
@@ -1665,6 +1670,7 @@ mod suppression {
 
     #[test]
     fn test_suppression_without_file() {
+        // TODO: Write the file
         let args = &[];
         Tester::new().with_cwd("fixtures/suppression_without_file".into()).test_and_snapshot(args);
     }
