@@ -26,6 +26,12 @@ impl Filename {
     }
 }
 
+impl std::fmt::Display for Filename {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 #[derive(Debug, Default, Clone, Deserialize, Serialize, Hash, Eq, PartialEq)]
 #[serde(default)]
 pub struct RuleName(String);
@@ -44,6 +50,12 @@ impl RuleName {
         let compose_key = format!("{plugin_name}/{rule_name}");
 
         Self(compose_key)
+    }
+}
+
+impl std::fmt::Display for RuleName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
