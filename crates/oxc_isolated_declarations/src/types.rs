@@ -331,6 +331,9 @@ impl<'a> IsolatedDeclarations<'a> {
                     Some(expr.type_annotation.clone_in(self.ast.allocator))
                 }
             }
+            Expression::ParenthesizedExpression(expr) => {
+                self.transform_expression_to_ts_type(&expr.expression)
+            }
             _ => None,
         }
     }
