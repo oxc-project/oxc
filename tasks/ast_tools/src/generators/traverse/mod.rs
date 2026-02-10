@@ -53,6 +53,10 @@ pub(super) fn generate_walk_minifier(schema: &Schema) -> TokenStream {
     walk::generate_walk(schema, &walk::WalkConfig::minifier())
 }
 
+pub(super) fn generate_ancestor(schema: &Schema) -> TokenStream {
+    ancestor::generate_ancestor(schema)
+}
+
 pub(super) struct TraverseTraitConfig {
     pub trait_ident: syn::Ident,
     pub trait_generics: TokenStream,

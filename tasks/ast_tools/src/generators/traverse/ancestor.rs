@@ -208,6 +208,7 @@ pub fn generate_ancestor(schema: &Schema) -> TokenStream {
             clippy::ref_option,
             clippy::undocumented_unsafe_blocks,
         )]
+        #![allow(clippy::redundant_pub_crate)]
 
         ///@@line_break
         use std::{cell::Cell, marker::PhantomData, mem::offset_of};
