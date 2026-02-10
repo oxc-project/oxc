@@ -104,8 +104,11 @@ impl<'a> IsolatedDeclarations<'a> {
                 type_annotation = property.type_annotation.clone_in(self.ast.allocator);
             } else if let Some(expr) = property.value.as_ref() {
                 let ts_type = if property.readonly {
-                    // `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
-                    if Self::is_need_to_infer_type_from_expression(expr) {
+                    // Keep literal const initializers on readonly class properties to match TS d.ts emit.
+                    if let Some(initializer) = self.get_literal_const_initializer(expr) {
+                        value = Some(initializer);
+                        None
+                    } else if Self::is_need_to_infer_type_from_expression(expr) {
                         self.transform_expression_to_ts_type(expr)
                     } else {
                         if let Expression::TemplateLiteral(lit) = expr {
@@ -145,6 +148,31 @@ impl<'a> IsolatedDeclarations<'a> {
             property.readonly,
             Self::transform_accessibility(property.accessibility),
         )
+    }
+
+    fn get_literal_const_initializer(&self, expr: &Expression<'a>) -> Option<Expression<'a>> {
+        match expr {
+            Expression::BooleanLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::StringLiteral(_) => Some(expr.clone_in(self.ast.allocator)),
+            Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
+                self.transform_template_to_string(lit).map(Expression::StringLiteral)
+            }
+            Expression::UnaryExpression(expr) if Self::can_infer_unary_expression(expr) => {
+                Some(Expression::UnaryExpression(expr.clone_in(self.ast.allocator)))
+            }
+            Expression::ParenthesizedExpression(expr) => {
+                self.get_literal_const_initializer(&expr.expression)
+            }
+            Expression::TSAsExpression(expr) if expr.type_annotation.is_const_type_reference() => {
+                self.get_literal_const_initializer(&expr.expression)
+            }
+            Expression::TSTypeAssertion(expr) if expr.type_annotation.is_const_type_reference() => {
+                self.get_literal_const_initializer(&expr.expression)
+            }
+            _ => None,
+        }
     }
 
     fn transform_class_method_definition(
