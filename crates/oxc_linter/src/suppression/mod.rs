@@ -1,8 +1,4 @@
-use std::{
-    ffi::OsStr,
-    path::{Path, PathBuf},
-    sync::Mutex,
-};
+use std::{ffi::OsStr, fs, path::Path};
 
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -73,6 +69,10 @@ impl Default for SuppressionTracking {
 }
 
 impl SuppressionTracking {
+    pub fn new(suppressions: FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>>) -> Self {
+        Self { version: "0.1.0".to_string(), suppressions }
+    }
+
     pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
         let string = read_to_string(path).map_err(|e| {
             OxcDiagnostic::error(format!(
@@ -106,6 +106,18 @@ impl SuppressionTracking {
         })?;
 
         Ok(config)
+    }
+
+    pub fn save(&self, path: &Path) -> Result<(), OxcDiagnostic> {
+        let content = serde_json::to_string_pretty(&self).map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to serialize suppression file: {err}"))
+        })?;
+
+        fs::write(path, content).map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to write suppression file: {err}"))
+        })?;
+
+        Ok(())
     }
 }
 
@@ -198,6 +210,24 @@ impl SuppressionManager {
         SuppressionFileState::Exists {
             file_suppressions: self.suppressions_by_file.suppressions.get(&filename),
         }
+    }
+
+    pub fn is_updating_file(&self) -> bool {
+        self.suppress_all || self.prune_suppression
+    }
+
+    pub fn write(
+        &self,
+        path: &Path,
+        new_file: FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>>,
+    ) -> Result<(), OxcDiagnostic> {
+        if !self.file_exists && self.prune_suppression {
+            return Err(OxcDiagnostic::error(
+                "You can't prune error messages if a bulk suppression file doesn't exist.",
+            ));
+        }
+
+        SuppressionTracking::new(new_file).save(path)
     }
 
     pub fn diff(
