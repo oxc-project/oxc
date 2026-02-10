@@ -19,7 +19,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     resolvePlugins,
     (options, code) => formatEmbeddedCode({ options, code }),
     (options, code) => formatFile({ options, code }),
-    (filepath, options, classes) => sortTailwindClasses({ filepath, classes, options }),
+    (options, classes) => sortTailwindClasses({ options, classes }),
   );
 }
 

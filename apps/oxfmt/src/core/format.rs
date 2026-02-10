@@ -127,7 +127,7 @@ impl SourceFormatter {
         path: &Path,
         source_type: SourceType,
         format_options: FormatOptions,
-        external_options: Value,
+        mut external_options: Value,
     ) -> Result<String, OxcDiagnostic> {
         let source_type = enable_jsx_source_type(source_type);
         let allocator = self.allocator_pool.get();
@@ -147,7 +147,16 @@ impl SourceFormatter {
                 .as_ref()
                 .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-            Some(external_formatter.to_external_callbacks(path, &format_options, external_options))
+            // Set `filepath` on options for Prettier plugins that depend on it,
+            // and for the Tailwind sorter to resolve config.
+            if let Value::Object(ref mut map) = external_options {
+                map.insert(
+                    "filepath".to_string(),
+                    Value::String(path.to_string_lossy().to_string()),
+                );
+            }
+
+            Some(external_formatter.to_external_callbacks(&format_options, external_options))
         };
 
         #[cfg(not(feature = "napi"))]
@@ -200,14 +209,12 @@ impl SourceFormatter {
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-        let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
-
         // Set `parser` and `filepath` on options for Prettier.
         // We specify `parser` to skip parser inference for perf,
         // and `filepath` because some plugins depend on it.
         if let Value::Object(ref mut map) = external_options {
             map.insert("parser".to_string(), Value::String(parser_name.to_string()));
-            map.insert("filepath".to_string(), Value::String(file_name.to_string()));
+            map.insert("filepath".to_string(), Value::String(path.to_string_lossy().to_string()));
         }
 
         external_formatter.format_file(external_options, source_text).map_err(|err| {

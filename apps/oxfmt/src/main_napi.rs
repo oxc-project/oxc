@@ -41,9 +41,7 @@ pub async fn run_cli(
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
-    #[napi(
-        ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[]>")]
     sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
 ) -> (String, Option<u8>) {
     // Convert `String` args to `OsString` for compatibility with `bpaf`
@@ -144,9 +142,7 @@ pub async fn format(
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
-    #[napi(
-        ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[]>")]
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> FormatResult {
     let num_of_threads = 1;

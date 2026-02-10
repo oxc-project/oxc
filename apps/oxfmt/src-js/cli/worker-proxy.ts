@@ -5,7 +5,6 @@ import type {
   FormatFileParam,
   SortTailwindClassesArgs,
 } from "../libs/apis";
-import type { Options } from "prettier";
 
 // Worker pool for parallel Prettier formatting
 let pool: Tinypool | null = null;
@@ -29,24 +28,29 @@ export async function disposeExternalFormatter(): Promise<void> {
   pool = null;
 }
 
-export async function formatEmbeddedCode(options: Options, code: string): Promise<string> {
+export async function formatEmbeddedCode(
+  options: FormatEmbeddedCodeParam["options"],
+  code: string,
+): Promise<string> {
   return pool!.run({ options, code } satisfies FormatEmbeddedCodeParam, {
     name: "formatEmbeddedCode",
   });
 }
 
-export async function formatFile(options: Options, code: string): Promise<string> {
+export async function formatFile(
+  options: FormatFileParam["options"],
+  code: string,
+): Promise<string> {
   return pool!.run({ options, code } satisfies FormatFileParam, {
     name: "formatFile",
   });
 }
 
 export async function sortTailwindClasses(
-  filepath: string,
-  options: Options,
+  options: SortTailwindClassesArgs["options"],
   classes: string[],
 ): Promise<string[]> {
-  return pool!.run({ filepath, options, classes } satisfies SortTailwindClassesArgs, {
+  return pool!.run({ classes, options } satisfies SortTailwindClassesArgs, {
     name: "sortTailwindClasses",
   });
 }

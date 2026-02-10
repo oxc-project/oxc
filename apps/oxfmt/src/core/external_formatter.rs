@@ -1,7 +1,4 @@
-use std::{
-    path::Path,
-    sync::{Arc, RwLock},
-};
+use std::sync::{Arc, RwLock};
 
 use napi::{
     Status,
@@ -63,11 +60,12 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 >;
 
 /// Type alias for Tailwind class processing callback.
-/// Takes (filepath, options, classes) and returns sorted array.
+/// Takes (options, classes) and returns sorted array.
+/// The `filepath` is included in `options`.
 pub type JsSortTailwindClassesCb = ThreadsafeFunction<
-    FnArgs<(String, Value, Vec<String>)>, // Input: (filepath, options, classes)
-    Promise<Vec<String>>,                 // Return: promise of sorted array
-    FnArgs<(String, Value, Vec<String>)>,
+    FnArgs<(Value, Vec<String>)>, // Input: (options, classes)
+    Promise<Vec<String>>,         // Return: promise of sorted array
+    FnArgs<(Value, Vec<String>)>,
     Status,
     false,
 >;
@@ -114,9 +112,9 @@ type InitExternalFormatterCallback =
     Arc<dyn Fn(usize) -> Result<Vec<String>, String> + Send + Sync>;
 
 /// Internal callback type for Tailwind processing with config.
-/// Takes (filepath, options, classes) and returns sorted classes.
-type TailwindWithConfigCallback =
-    Arc<dyn Fn(&str, &Value, Vec<String>) -> Vec<String> + Send + Sync>;
+/// Takes (options, classes) and returns sorted classes.
+/// The `filepath` is included in `options`.
+type TailwindWithConfigCallback = Arc<dyn Fn(&Value, Vec<String>) -> Vec<String> + Send + Sync>;
 
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
@@ -195,10 +193,9 @@ impl ExternalFormatter {
     }
 
     /// Convert this external formatter to the oxc_formatter::ExternalCallbacks type.
-    /// The filepath and options are captured in the closures and passed to JS on each call.
+    /// The options (including `filepath`) are captured in the closures and passed to JS on each call.
     pub fn to_external_callbacks(
         &self,
-        filepath: &Path,
         format_options: &FormatOptions,
         options: Value,
     ) -> ExternalCallbacks {
@@ -245,11 +242,10 @@ impl ExternalFormatter {
 
         let needs_tailwind = format_options.experimental_tailwindcss.is_some();
         let tailwind_callback: Option<TailwindCallback> = if needs_tailwind {
-            let file_path = filepath.to_string_lossy().to_string();
             let sort_tailwindcss_classes = Arc::clone(&self.sort_tailwindcss_classes);
             Some(Arc::new(move |classes: Vec<String>| {
                 debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len())
-                    .in_scope(|| (sort_tailwindcss_classes)(&file_path, &options, classes))
+                    .in_scope(|| (sort_tailwindcss_classes)(&options, classes))
             }))
         } else {
             None
@@ -280,7 +276,7 @@ impl ExternalFormatter {
             init: Arc::new(|_| Err("Dummy init called".to_string())),
             format_embedded: Arc::new(|_, _| Err("Dummy format_embedded called".to_string())),
             format_file: Arc::new(|_, _| Err("Dummy format_file called".to_string())),
-            sort_tailwindcss_classes: Arc::new(|_, _, _| vec![]),
+            sort_tailwindcss_classes: Arc::new(|_, _| vec![]),
         }
     }
 }
@@ -395,14 +391,14 @@ fn wrap_format_file(
 fn wrap_sort_tailwind_classes(
     cb_handle: Arc<RwLock<Option<JsSortTailwindClassesCb>>>,
 ) -> TailwindWithConfigCallback {
-    Arc::new(move |filepath: &str, options: &Value, classes: Vec<String>| {
+    Arc::new(move |options: &Value, classes: Vec<String>| {
         let guard = cb_handle.read().unwrap();
         let Some(cb) = guard.as_ref() else {
             // Return original classes if callback unavailable
             return classes;
         };
         let result = block_on(async {
-            let args = FnArgs::from((filepath.to_string(), options.clone(), classes.clone()));
+            let args = FnArgs::from((options.clone(), classes.clone()));
             match cb.call_async(args).await {
                 Ok(promise) => match promise.await {
                     Ok(sorted) => sorted,
