@@ -255,7 +255,6 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
 
       // Some stack traces can use file paths instead of file URLs on Windows.
       // Keep frames in fixtures, drop everything else.
-      // oxlint-disable-next-line oxc/bad-replace-all-arg
       const normalizedAt = at.replaceAll(PATH_REGEXP, (_, subPath) => {
         if (subPath === undefined) return "<root>";
         return convertSubPath(normalizeSlashes(subPath), fixtureName);
@@ -270,7 +269,6 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
 
     // Handle fixture file URLs anywhere else in the line.
     // e.g. `... file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1 ...`
-    // oxlint-disable-next-line oxc/bad-replace-all-arg
     line = line.replaceAll(
       // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
       new RegExp(`${RegExp.escape(FIXTURES_URL)}([^\\s\\)'"\`]+)`, isWindows ? "gi" : "g"),
@@ -278,7 +276,6 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
     );
 
     // Handle paths anywhere else in the line
-    // oxlint-disable-next-line oxc/bad-replace-all-arg
     line = line.replaceAll(PATH_REGEXP, (_, subPath) => {
       if (subPath === undefined) return "<root>";
       return convertSubPath(normalizeSlashes(subPath), fixtureName);
