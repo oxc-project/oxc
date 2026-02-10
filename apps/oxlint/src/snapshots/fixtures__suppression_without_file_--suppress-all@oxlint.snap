@@ -1,6 +1,5 @@
 ---
 source: apps/oxlint/src/tester.rs
-assertion_line: 134
 ---
 ########## 
 arguments: --suppress-all

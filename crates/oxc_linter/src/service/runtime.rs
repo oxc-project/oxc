@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
     ffi::OsStr,
+    fmt::format,
     fs,
     hash::BuildHasherDefault,
     mem::take,
@@ -32,7 +33,10 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    suppression::{DiagnosticCounts, Filename, RuleName, SuppressionFileState, SuppressionManager},
+    suppression::{
+        DiagnosticCounts, Filename, RuleName, SuppressionDiff, SuppressionFileState,
+        SuppressionManager,
+    },
     utils::read_to_arena_str,
 };
 
@@ -767,7 +771,40 @@ impl Runtime {
         )
         .unwrap();
 
-        println!("diff {:?}", suppression_manager_two.diff(&runtime_map, &set));
+        let diff = suppression_manager_two.diff(&runtime_map, &set);
+
+        println!("diff {:?}", diff);
+
+        let mut diff_iterator = diff.iter();
+        let mut diagnostics: Vec<OxcDiagnostic> = vec![];
+
+        while let Some(diff) = diff_iterator.next() {
+            let message = match diff {
+                SuppressionDiff::Increased { file, rule, from, to } => {
+                    format!("The {rule} errors in {file} have increased from {from} to {to}.")
+                }
+                SuppressionDiff::Decreased { file, rule, from, to } => {
+                    format!("The {rule} errors in {file} have decreased from {from} to {to}.")
+                }
+                SuppressionDiff::PrunedRuled { file, rule } => {
+                    format!("All {rule} errors has been pruned in {file}.")
+                }
+                SuppressionDiff::Appeared { file, rule } => {
+                    format!("New errors for {rule} have appeared in {file}.")
+                }
+            };
+
+            let diagnostic = OxcDiagnostic::error(message);
+            diagnostics.push(diagnostic);
+        }
+
+        // TODO: ONLY WHEN cli args aren't provided
+        if !diagnostics.is_empty() {
+            let errors = diagnostics.into_iter().map(Into::into).collect();
+            let diagnostics_wrapped =
+                DiagnosticService::wrap_diagnostics(&self.cwd, &self.cwd, "", errors);
+            tx_error.send(diagnostics_wrapped).unwrap();
+        }
     }
 
     // language_server: the language server needs line and character position

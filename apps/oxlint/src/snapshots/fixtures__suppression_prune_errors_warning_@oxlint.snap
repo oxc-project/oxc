@@ -5,8 +5,11 @@ source: apps/oxlint/src/tester.rs
 arguments: 
 working directory: fixtures/suppression_prune_errors_warning
 ----------
-Found 0 warnings and 0 errors.
+
+  x All eslint/no-console errors has been pruned in folder_b/test.js.
+
+Found 0 warnings and 1 error.
 Finished in <variable>ms on 2 files with 55 rules using 1 threads.
 ----------
-CLI result: LintSucceeded
+CLI result: LintFoundErrors
 ----------
