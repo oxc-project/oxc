@@ -1,0 +1,141 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import util from 'util'
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import util from 'node:util'
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as util from 'util'
+   · ────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as util from 'node:util'
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `util`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const util = require('util')
+   ·       ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `node:util`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const util = require('node:util')
+   ·       ───────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('util')
+   · ───────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('node:util')
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('ut' + 'il')
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('node:' + 'util')
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use default import for module `chalk`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {red} from 'chalk'
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use default import for module `chalk`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {red as green} from 'chalk'
+   · ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use default import for module `chalk`.
+   ╭─[import_style.tsx:1:21]
+ 1 │ async () => { const {red} = await import('chalk'); }
+   ·                     ─────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:7]
+ 1 │ const {x} = require('unassigned')
+   ·       ───────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use unassigned import for module `unassigned`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import x from 'unassigned'
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ require('default')
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {x} from 'default'
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use default import for module `default`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ export {x} from 'default'
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as x from 'named'
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:21]
+ 1 │ async () => { const x = await import('named'); }
+   ·                     ─────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named import for module `named`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import util, {inspect} from 'named'
+   · ───────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use named or default import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import * as util from 'node:util'
+   · ─────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(import-style): Use default import for module `node:util`.
+   ╭─[import_style.tsx:1:1]
+ 1 │ import {foo} from 'node:util'
+   · ─────────────────────────────
+   ╰────
