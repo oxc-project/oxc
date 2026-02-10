@@ -78,17 +78,13 @@ export default group;
 function createTsRuleTester(tsEslintParser: TSEslintParser): { RuleTester: typeof RuleTester } {
   class TsRuleTester extends RuleTester {
     constructor(config?: { languageOptions?: LanguageOptions } | null) {
-      if (config == null) {
-        config = {};
-      } else {
-        config = { ...config };
-      }
-
-      const languageOptions = { ...config.languageOptions };
-      config.languageOptions = languageOptions;
-      if (config.languageOptions.parser == null) config.languageOptions.parser = tsEslintParser;
-
-      super(config);
+      super({
+        ...config,
+        languageOptions: {
+          parser: tsEslintParser,
+          ...config?.languageOptions,
+        },
+      });
     }
   }
 
