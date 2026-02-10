@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 35e32c6 coverage: Match Babel's options.json inheritance for test fixtures (#19002) (Boshen)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+
 ## [0.112.0] - 2026-02-02
 
 ### 📚 Documentation

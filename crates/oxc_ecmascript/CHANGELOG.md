@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 110c300 oxc_ecmascript: `+[false]` and `+[true]` should evaluate to `NaN` (#19174) (copilot-swe-agent)
+
 ## [0.109.0] - 2026-01-19
 
 ### 🐛 Bug Fixes

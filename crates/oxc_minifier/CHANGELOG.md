@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 2bf7293 mangler: [**BREAKING**] Enable `top_level` by default for modules and commonjs (#18278) (sapphi-red)
+
+### 🚀 Features
+
+- 500d071 minifier: Local traverse ctx and generated minifier traverse (#19106) (Boshen)
+- 742ad3f minifier: Default `invalid_import_side_effects` to `false` (#18916) (sapphi-red)
+
+### 🐛 Bug Fixes
+
+- 110c300 oxc_ecmascript: `+[false]` and `+[true]` should evaluate to `NaN` (#19174) (copilot-swe-agent)
+
 ## [0.112.0] - 2026-02-02
 
 ### 🐛 Bug Fixes

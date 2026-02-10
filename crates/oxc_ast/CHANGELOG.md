@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.113.0] - 2026-02-10
+
+### 🚀 Features
+
+- 18320c6 span: Store file extension in `SourceType` (#18893) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES

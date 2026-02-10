@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- a7514e4 isolated-declarations: Preserve const context in literal type inference (#19178) (camc314)
+- 312e756 isolated-declarations: Preserve readonly literal initializers (#19177) (camc314)
+- d0ca8d0 isolated-declarations: Skip parenthesis when inferring type (#19176) (camc314)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES
