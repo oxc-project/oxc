@@ -116,8 +116,10 @@ export interface TestGroup {
    *
    * `specifier` is a module specifier which is resolved relative to the tests directory, using `require.resolve`.
    * `lang` is the language to parse the test case code with when this parser is used.
+   * `propName` (optional) is the name of the property of the module which is the parser.
    *
    * e.g. `{ specifier: "@typescript-eslint/parser", lang: "ts" }`
+   * e.g. `{ specifier: "typescript-eslint", propName: "parser", lang: "ts" }`
    */
   parsers: ParserDetails[];
 }
@@ -141,6 +143,7 @@ export type MockFn = (specifier: string, value: unknown, via?: string[]) => void
  */
 export interface ParserDetails {
   specifier: string;
+  propName?: string;
   lang: Language;
 }
 
@@ -276,10 +279,13 @@ function runGroup(group: TestGroup, mocks: Mocks) {
 
   for (const parserDetails of group.parsers) {
     const path = resolveFromTestsDir(parserDetails.specifier);
-    const parser = require(path);
-
-    // Set `default` export on parser module to work around apparent bug in `tsx`
-    if (parser && parser.default === undefined) parser.default = parser;
+    let parser = require(path);
+    if (parserDetails.propName != null) {
+      parser = parser[parserDetails.propName];
+    } else if (parser && parser.default === undefined) {
+      // Set `default` export on parser module to work around apparent bug in `tsx`
+      parser.default = parser;
+    }
 
     if (typeof parser.parseForESLint === "function") {
       parseForESLintFns.set(parser.parseForESLint, parserDetails);
