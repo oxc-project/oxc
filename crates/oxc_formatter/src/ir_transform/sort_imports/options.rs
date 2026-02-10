@@ -97,7 +97,9 @@ impl fmt::Display for SortOrder {
 
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct CustomGroupDefinition {
+    /// The identifier used in `groups` representing this group.
     pub group_name: String,
+    /// List of glob patterns to match import sources for this group.
     pub element_name_pattern: Vec<String>,
 }
 

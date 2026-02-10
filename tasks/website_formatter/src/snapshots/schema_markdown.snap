@@ -111,7 +111,7 @@ type: `string[]`
 
 default: `[]`
 
-List of import name prefixes to match for this group.
+List of glob patterns to match import sources for this group.
 
 
 ##### experimentalSortImports.customGroups[n].groupName
@@ -599,7 +599,7 @@ type: `string[]`
 
 default: `[]`
 
-List of import name prefixes to match for this group.
+List of glob patterns to match import sources for this group.
 
 
 ######## overrides[n].options.experimentalSortImports.customGroups[n].groupName

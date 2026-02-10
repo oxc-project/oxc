@@ -65,7 +65,7 @@ impl GroupMatcher {
             let is_match = custom_group
                 .element_name_pattern
                 .iter()
-                .any(|pattern| import_metadata.source.starts_with(pattern));
+                .any(|pattern| fast_glob::glob_match(pattern, import_metadata.source));
             if is_match {
                 return *index;
             }
