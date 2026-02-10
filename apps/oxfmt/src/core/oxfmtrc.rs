@@ -688,7 +688,7 @@ impl SortGroupItemConfig {
 pub struct CustomGroupItemConfig {
     /// Name of the custom group, used in the `groups` option.
     pub group_name: String,
-    /// List of import name prefixes to match for this group.
+    /// List of glob patterns to match import sources for this group.
     pub element_name_pattern: Vec<String>,
 }
 

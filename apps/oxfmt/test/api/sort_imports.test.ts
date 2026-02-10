@@ -11,8 +11,8 @@ import { store } from "~/stores/store";
       experimentalSortImports: {
         newlinesBetween: false,
         customGroups: [
-          { elementNamePattern: ["~/stores/"], groupName: "stores" },
-          { elementNamePattern: ["~/utils/"], groupName: "utils" },
+          { elementNamePattern: ["~/stores/*"], groupName: "stores" },
+          { elementNamePattern: ["~/utils/*"], groupName: "utils" },
         ],
         groups: ["stores", "utils", "sibling"],
       },
