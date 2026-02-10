@@ -334,6 +334,21 @@ fn test() {
 
 			          }
 			      ", None, None),
+        (
+            "
+                      /**
+                       * @param md
+                       */
+                      const component = (md) => {
+                        md.renderer.rules.fence = (...args) => {
+                          const [tokens, index] = args;
+                          return tokens[index];
+                        };
+                      };
+                  ",
+            None,
+            None,
+        ),
 ("
 			          /**
 			           * @param root0
