@@ -98,11 +98,19 @@ export const PLACEHOLDER_REGEX = /\{\{([^{}]+)\}\}/gu;
 /**
  * Report error.
  * @param diagnostic - Diagnostic object
+ * @param extraArgs - Extra arguments passed to `context.report()` (legacy positional forms)
  * @param ruleDetails - `RuleDetails` object, containing rule-specific details e.g. `isFixable`
  * @throws {TypeError} If `diagnostic` is invalid
  */
-export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
+export function report(
+  diagnostic: Diagnostic,
+  extraArgs: unknown[],
+  ruleDetails: RuleDetails,
+): void {
   if (filePath === null) throw new Error("Cannot report errors in `createOnce`");
+
+  // Handle legacy positional forms
+  if (extraArgs.length > 0) diagnostic = convertLegacyCallArgs(diagnostic, extraArgs);
 
   const { message, messageId } = getMessage(
     Object.hasOwn(diagnostic, "message") ? diagnostic.message : null,
@@ -193,6 +201,40 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
 
   // We need the original location in conformance tests
   if (CONFORMANCE) diagnostics.at(-1)!.loc = conformedLoc;
+}
+
+/**
+ * Convert legacy `context.report()` arguments to a `Diagnostic` object.
+ *
+ * Supported:
+ * - `context.report(node, message, data?, fix?)`
+ * - `context.report(node, loc, message, data?, fix?)`
+ *
+ * @param node - Node to report (first argument)
+ * @param extraArgs - Extra arguments passed to `context.report()`
+ * @returns Diagnostic object
+ */
+function convertLegacyCallArgs(node: unknown, extraArgs: unknown[]): Diagnostic {
+  const firstExtraArg = extraArgs[0];
+  if (typeof firstExtraArg === "string") {
+    // `context.report(node, message, data, fix)`
+    return {
+      message: firstExtraArg,
+      node,
+      loc: undefined,
+      data: extraArgs[1],
+      fix: extraArgs[2],
+    } as Diagnostic;
+  }
+
+  // `context.report(node, loc, message, data, fix)`
+  return {
+    message: extraArgs[1],
+    node,
+    loc: firstExtraArg,
+    data: extraArgs[2],
+    fix: extraArgs[3],
+  } as Diagnostic;
 }
 
 /**

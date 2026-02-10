@@ -516,6 +516,7 @@ export function createContext(ruleDetails: RuleDetails): Readonly<Context> {
   return Object.freeze({
     // Inherit from `FILE_CONTEXT`, which provides getters for file-specific properties
     __proto__: FILE_CONTEXT,
+
     // Rule ID, in form `<plugin>/<rule>`
     get id(): string {
       // It's not possible to allow access to `id` in `createOnce` in ESLint compatibility mode, so we don't
@@ -523,61 +524,31 @@ export function createContext(ruleDetails: RuleDetails): Readonly<Context> {
       if (filePath === null) throw new Error("Cannot access `context.id` in `createOnce`");
       return ruleDetails.fullName;
     },
+
     // Getter for rule options for this rule on this file
     get options(): Readonly<Options> {
       if (filePath === null) throw new Error("Cannot access `context.options` in `createOnce`");
       debugAssertIsNonNull(ruleDetails.options);
       return ruleDetails.options;
     },
+
     /**
      * Report error.
+     *
+     * Normally called with a single `Diagnostic` object.
+     *
+     * Can also be called with legacy positional forms:
+     * - `context.report(node, message, data?, fix?)`
+     * - `context.report(node, loc, message, data?, fix?)`
+     * These legacy forms are not included in type def for this method, as they are deprecated,
+     * but some plugins still use them, so we support them.
+     *
      * @param diagnostic - Diagnostic object
      * @throws {TypeError} If `diagnostic` is invalid
      */
-    report(this: void, diagnostic: Diagnostic): void {
-      const normalizedDiagnostic = normalizeReportCallArgs(diagnostic, arguments);
-
+    report(this: void, diagnostic: Diagnostic, ...extraArgs: unknown[]): void {
       // Delegate to `report` implementation shared between all rules, passing rule-specific details (`RuleDetails`)
-      report(normalizedDiagnostic, ruleDetails);
+      report(diagnostic, extraArgs, ruleDetails);
     },
   } as unknown as Context); // It seems TS can't understand `__proto__: FILE_CONTEXT`
-}
-
-/**
- * Normalize `context.report()` arguments.
- *
- * Supports both forms:
- * 1. New-style: `context.report({ ...descriptor })`
- * 2. Legacy: `context.report(node, message, data?, fix?)`
- *    or `context.report(node, loc, message, data?, fix?)`
- */
-function normalizeReportCallArgs(diagnostic: Diagnostic, args: IArguments): Diagnostic {
-  // New-style call already has a descriptor object.
-  if (args.length <= 1) return diagnostic;
-
-  // Legacy positional forms.
-  const node = diagnostic as unknown;
-  let loc: unknown = undefined,
-    message: unknown,
-    data: unknown = undefined,
-    fix: unknown = undefined;
-
-  if (typeof args[1] === "string") {
-    // [node, message, data, fix]
-    message = args[1];
-    data = args[2];
-    fix = args[3];
-  } else {
-    // [node, loc, message, data, fix]
-    loc = args[1];
-    message = args[2];
-    data = args[3];
-    fix = args[4];
-  }
-
-  const descriptor: Record<string, unknown> = { node, message };
-  if (loc !== undefined) descriptor.loc = loc;
-  if (data !== undefined) descriptor.data = data;
-  if (fix !== undefined) descriptor.fix = fix;
-  return descriptor as Diagnostic;
 }
