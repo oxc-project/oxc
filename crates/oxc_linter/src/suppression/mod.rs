@@ -1,4 +1,8 @@
-use std::{ffi::OsStr, path::Path, sync::Mutex};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
 
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -58,10 +62,6 @@ impl Default for SuppressionTracking {
 
 impl SuppressionTracking {
     pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
-        if !path.exists() {
-            return Ok(Self::default());
-        }
-
         let string = read_to_string(path).map_err(|e| {
             OxcDiagnostic::error(format!(
                 "Failed to parse suppression rules file {} with error {e:?}",
@@ -101,6 +101,10 @@ impl SuppressionTracking {
 pub struct SuppressionManager {
     pub suppressions_by_file: SuppressionTracking,
     pub suppression_key_set: FxHashSet<(Filename, RuleName)>,
+    suppress_all: bool,
+    prune_suppression: bool,
+    //If the source of truth exists
+    file_exists: bool,
 }
 
 impl Default for SuppressionManager {
@@ -108,6 +112,9 @@ impl Default for SuppressionManager {
         Self {
             suppressions_by_file: SuppressionTracking::default(),
             suppression_key_set: FxHashSet::default(),
+            suppress_all: false,
+            prune_suppression: false,
+            file_exists: false,
         }
     }
 }
@@ -120,8 +127,28 @@ pub enum SuppressionDiff {
     Appeared { file: Filename, rule: RuleName },
 }
 
+pub enum SuppressionFileState<'a> {
+    Ignored,
+    New,
+    Exists { file_suppressions: Option<&'a FxHashMap<RuleName, DiagnosticCounts>> },
+}
+
 impl SuppressionManager {
-    pub fn load(path: &Path) -> Result<Self, OxcDiagnostic> {
+    pub fn load(
+        path: &Path,
+        suppress_all: bool,
+        prune_suppression: bool,
+    ) -> Result<Self, OxcDiagnostic> {
+        if !path.exists() {
+            return Ok(Self {
+                suppressions_by_file: SuppressionTracking::default(),
+                suppression_key_set: FxHashSet::default(),
+                file_exists: false,
+                prune_suppression,
+                suppress_all,
+            });
+        }
+
         let suppression_file = SuppressionTracking::from_file(path)?;
 
         let mut set: FxHashSet<(Filename, RuleName)> = FxHashSet::default();
@@ -136,16 +163,29 @@ impl SuppressionManager {
             }
         }
 
-        Ok(Self { suppressions_by_file: suppression_file, suppression_key_set: set })
+        Ok(Self {
+            suppressions_by_file: suppression_file,
+            suppression_key_set: set,
+            file_exists: true,
+            prune_suppression,
+            suppress_all,
+        })
     }
 
-    pub fn get_suppression_per_file(
-        &self,
-        path: &Path,
-    ) -> Option<&FxHashMap<RuleName, DiagnosticCounts>> {
+    pub fn get_suppression_per_file(&self, path: &Path) -> SuppressionFileState<'_> {
+        if !self.file_exists && !self.suppress_all {
+            return SuppressionFileState::Ignored;
+        }
+
+        if !self.file_exists && self.suppress_all {
+            return SuppressionFileState::New;
+        }
+
         let filename = Filename::new(path);
 
-        self.suppressions_by_file.suppressions.get(&filename)
+        SuppressionFileState::Exists {
+            file_suppressions: self.suppressions_by_file.suppressions.get(&filename),
+        }
     }
 
     pub fn diff(
