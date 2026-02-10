@@ -1,8 +1,9 @@
 //! Generator for minifier-local traverse runtime.
 //!
-//! Generates 2 files in `oxc_minifier` crate:
+//! Generates 3 files in `oxc_minifier` crate:
 //! * `traverse.rs` - `MinifierTraverse` trait with `enter_*` / `exit_*` methods.
 //! * `walk.rs` - Unsafe `walk_*` functions for AST traversal.
+//! * `ancestor.rs` - Ancestor tracking types and offset constants.
 
 use super::traverse::{self, TraverseTraitConfig};
 use crate::{
@@ -28,6 +29,10 @@ impl Generator for MinifierTraverseGenerator {
             Output::Rust {
                 path: output_path(MINIFIER_CRATE_PATH, "walk.rs"),
                 tokens: traverse::generate_walk_minifier(schema),
+            },
+            Output::Rust {
+                path: output_path(MINIFIER_CRATE_PATH, "ancestor.rs"),
+                tokens: traverse::generate_ancestor(schema),
             },
         ]
     }
