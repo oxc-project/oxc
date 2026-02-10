@@ -6,6 +6,8 @@ arguments:
 working directory: fixtures/suppression_report_only_from_one_file
 ----------
 
+  x The eslint/no-console errors in folder_a/test.js have increased from 1 to 3.
+
   x eslint(no-console): Unexpected console statement.
    ,-[folder_a/test.js:1:1]
  1 | console.log();
@@ -31,7 +33,7 @@ working directory: fixtures/suppression_report_only_from_one_file
    `----
   help: Delete this console statement.
 
-Found 0 warnings and 3 errors.
+Found 0 warnings and 4 errors.
 Finished in <variable>ms on 2 files with 56 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
