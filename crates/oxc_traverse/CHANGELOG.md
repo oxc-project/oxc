@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 - 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
 
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES

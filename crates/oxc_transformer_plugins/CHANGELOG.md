@@ -14,6 +14,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 - d4a0867 transformer_plugins: Switch ReplaceGlobalDefines from Traverse to VisitMut (#19146) (Boshen)
 
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 48b0542 span: [**BREAKING**] SourceType::ts should set module to unambigious (#18873) (Boshen)
+
+### ⚡ Performance
+
+- d4a0867 transformer_plugins: Switch ReplaceGlobalDefines from Traverse to VisitMut (#19146) (Boshen)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES

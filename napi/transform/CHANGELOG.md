@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 ### 🐛 Bug Fixes
 
+- bcd0f64 napi: Disable mimalloc global allocator on android targets (#19214) (Cameron)
+- 487601b napi: Disable mimalloc on Windows to fix worker_threads crash (#18923) (Boshen)
+
+## [0.113.0] - 2026-02-10
+
+### 🐛 Bug Fixes
+
 - 487601b napi: Disable mimalloc on Windows to fix worker_threads crash (#18923) (Boshen)
 
 ## [0.112.0] - 2026-02-02

@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 - 9eb16b3 syntax: Pack ASCII identifier tables into single bitflag table (#19088) (Boshen)
 
+## [0.113.0] - 2026-02-10
+
+### ⚡ Performance
+
+- 9eb16b3 syntax: Pack ASCII identifier tables into single bitflag table (#19088) (Boshen)
+
 ## [0.109.0] - 2026-01-19
 
 ### 🚀 Features

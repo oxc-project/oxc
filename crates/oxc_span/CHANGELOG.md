@@ -14,6 +14,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 - 18320c6 span: Store file extension in `SourceType` (#18893) (Boshen)
 
+### 🐛 Bug Fixes
+
+- 0441237 source-type: Don't treat `d.ts` as a declaration file (#19185) (Cameron)
+
+## [0.113.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 48b0542 span: [**BREAKING**] SourceType::ts should set module to unambigious (#18873) (Boshen)
+
+### 🚀 Features
+
+- 18320c6 span: Store file extension in `SourceType` (#18893) (Boshen)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES
