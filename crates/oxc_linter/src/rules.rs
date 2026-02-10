@@ -455,6 +455,7 @@ pub(crate) mod unicorn {
     pub mod escape_case;
     pub mod explicit_length_check;
     pub mod filename_case;
+    pub mod import_style;
     pub mod new_for_builtins;
     pub mod no_abusive_eslint_disable;
     pub mod no_accessor_recursion;
