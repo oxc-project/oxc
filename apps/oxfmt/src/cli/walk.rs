@@ -1,6 +1,6 @@
 use std::{
     path::{Path, PathBuf},
-    sync::mpsc,
+    sync::{Mutex, mpsc},
 };
 
 use ignore::{
@@ -280,15 +280,24 @@ fn expand_glob_patterns(cwd: &Path, patterns: &[String]) -> Result<Vec<PathBuf>,
     let mut builder = ignore::WalkBuilder::new(cwd);
     builder.overrides(overrides);
 
-    let mut paths = vec![];
-    for entry in apply_walk_settings(&mut builder).build().flatten() {
-        // Use `!is_dir()` instead of `is_file()` to handle symlinks correctly
-        if entry.file_type().is_some_and(|ft| !ft.is_dir()) {
-            paths.push(entry.into_path());
-        }
-    }
+    let paths = Mutex::new(vec![]);
+    apply_walk_settings(&mut builder).build_parallel().run(|| {
+        Box::new(|entry| {
+            match entry {
+                Ok(entry) => {
+                    // Align with main walk: only include files
+                    #[expect(clippy::filetype_is_file)]
+                    if entry.file_type().is_some_and(|ft| ft.is_file()) {
+                        paths.lock().unwrap().push(entry.into_path());
+                    }
+                    ignore::WalkState::Continue
+                }
+                Err(_err) => ignore::WalkState::Skip,
+            }
+        })
+    });
 
-    Ok(paths)
+    Ok(paths.into_inner().unwrap())
 }
 
 fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf>, String> {
