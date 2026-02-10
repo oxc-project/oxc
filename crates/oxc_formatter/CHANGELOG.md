@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.29.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 856a01f formatter/sort_imports: [**BREAKING**] Replace prefix match with glob pattern in `customGroups.elementNamePattern` (#19066) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 5243307 formatter: Preserve numeric separators in number literals (#19015) (Dunqing)
+- b79c065 formatter: Preserve comment between callee and optional chaining operator (#19020) (Dunqing)
+- 01d1be1 formatter: Remove unnecessary parentheses for single-member union types (#19018) (Dunqing)
+- f5c7e75 formatter: Preserve parentheses around await with private field access (#19014) (Dunqing)
+- 5a75785 formatter: Preserve parentheses around nested sequence expressions (#19013) (Dunqing)
+- 0ef11bb formatter: Add space before type annotation with leading comment (#19012) (Dunqing)
+- cc232e1 formatter: Keep spread with callback on same line (#18999) (Dunqing)
+- d53f5c4 formatter: Require string first arg in test calls (#18935) (Dunqing)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+- 2db8c05 formatter: Avoid breaking generic call assignments (#18933) (Dunqing)
+- 1e023e1 formatter: Preserve trailing comma in mts/cts arrow generics (#18928) (Dunqing)
+- 7c4e558 formatter/detect_code_removal: Do not count `TemplateLiteral` content (#18848) (leaysgur)
+
 ## [0.28.0] - 2026-02-02
 
 ### 🐛 Bug Fixes
