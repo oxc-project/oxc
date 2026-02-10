@@ -349,6 +349,7 @@ fn test() {
             None,
             None,
         ),
+
 ("
 			          /**
 			           * @param root0
@@ -786,7 +787,21 @@ fn test() {
              * @type {import('node:module').ResolveHook}
              */
             async function resolveJSONC(specifier, ctx, nextResolve) {}
-        ", None, None)
+        ", None, None),
+        (
+            r#"
+			      /**
+			       * A shiki transformer.
+			       */
+			      const shikiTransformer: ShikiTransformer = {
+			        name: "example",
+			        tokens(tokens) {
+			        }
+			      };
+			      "#,
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1410,6 +1425,21 @@ fn test() {
 			        /** Foo. */
 			        function foo(a, b, c) {}
 			      ",
+            None,
+            None,
+        ),
+        // https://github.com/oxc-project/oxc/issues/19139#issuecomment-3875380106
+        (
+            r#"
+			const shikiTransformer: ShikiTransformer = {
+				name: "example",
+				/**
+				 * A shiki transformer.
+				 */
+			        tokens(tokens) {
+			        }
+			      };
+			      "#,
             None,
             None,
         ),

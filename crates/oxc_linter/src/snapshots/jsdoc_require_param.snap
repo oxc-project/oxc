@@ -424,3 +424,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   
    ╰────
   help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:7:19]
+ 6 │                  */
+ 7 │                     tokens(tokens) {
+   ·                            ──────
+ 8 │                     }
+   ╰────
+  help: Add `@param` tag with name.
