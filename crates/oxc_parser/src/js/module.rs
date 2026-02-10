@@ -587,7 +587,7 @@ impl<'a> ParserImpl<'a> {
 
                         // `local` becomes a reference for `export { local }`.
                         specifier.local = ModuleExportName::IdentifierReference(
-                            self.ast.identifier_reference(ident.span, ident.name.as_str()),
+                            self.ast.identifier_reference(ident.span, ident.name),
                         );
                     }
                     // No prior code path should lead to parsing `ModuleExportName` as `IdentifierReference`.

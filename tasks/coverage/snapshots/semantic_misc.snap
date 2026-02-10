@@ -91,12 +91,12 @@ rebuilt        : SymbolId(164): Span { start: 0, end: 0 }
 Symbol span mismatch for "Inner4":
 after transform: SymbolId(195): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(165): Span { start: 12166, end: 12172 }
-Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(67), ReferenceId(71), ReferenceId(75), ReferenceId(79), ReferenceId(105), ReferenceId(107), ReferenceId(119), ReferenceId(121), ReferenceId(133), ReferenceId(135), ReferenceId(147), ReferenceId(149), ReferenceId(161), ReferenceId(165), ReferenceId(181), ReferenceId(183), ReferenceId(195), ReferenceId(199), ReferenceId(215), ReferenceId(217), ReferenceId(229), ReferenceId(233), ReferenceId(249), ReferenceId(251), ReferenceId(263), ReferenceId(267), ReferenceId(283), ReferenceId(285), ReferenceId(394), ReferenceId(398), ReferenceId(414), ReferenceId(418), ReferenceId(422), ReferenceId(426)]
-rebuilt        : [ReferenceId(68), ReferenceId(72), ReferenceId(76), ReferenceId(80), ReferenceId(118), ReferenceId(122), ReferenceId(144), ReferenceId(148), ReferenceId(170), ReferenceId(174), ReferenceId(263), ReferenceId(270), ReferenceId(336), ReferenceId(340), ReferenceId(356), ReferenceId(360), ReferenceId(364), ReferenceId(368)]
 Unresolved reference IDs mismatch for "Function":
 after transform: [ReferenceId(83), ReferenceId(89), ReferenceId(109), ReferenceId(123), ReferenceId(137), ReferenceId(151), ReferenceId(169), ReferenceId(185), ReferenceId(203), ReferenceId(219), ReferenceId(237), ReferenceId(253), ReferenceId(271), ReferenceId(287), ReferenceId(402), ReferenceId(430), ReferenceId(436), ReferenceId(444), ReferenceId(448), ReferenceId(452), ReferenceId(458), ReferenceId(462), ReferenceId(466), ReferenceId(472), ReferenceId(476), ReferenceId(480)]
 rebuilt        : [ReferenceId(84), ReferenceId(90), ReferenceId(126), ReferenceId(152), ReferenceId(178), ReferenceId(277), ReferenceId(344), ReferenceId(372), ReferenceId(378), ReferenceId(385), ReferenceId(391), ReferenceId(398)]
+Unresolved reference IDs mismatch for "Object":
+after transform: [ReferenceId(67), ReferenceId(71), ReferenceId(75), ReferenceId(79), ReferenceId(105), ReferenceId(107), ReferenceId(119), ReferenceId(121), ReferenceId(133), ReferenceId(135), ReferenceId(147), ReferenceId(149), ReferenceId(161), ReferenceId(165), ReferenceId(181), ReferenceId(183), ReferenceId(195), ReferenceId(199), ReferenceId(215), ReferenceId(217), ReferenceId(229), ReferenceId(233), ReferenceId(249), ReferenceId(251), ReferenceId(263), ReferenceId(267), ReferenceId(283), ReferenceId(285), ReferenceId(394), ReferenceId(398), ReferenceId(414), ReferenceId(418), ReferenceId(422), ReferenceId(426)]
+rebuilt        : [ReferenceId(68), ReferenceId(72), ReferenceId(76), ReferenceId(80), ReferenceId(118), ReferenceId(122), ReferenceId(144), ReferenceId(148), ReferenceId(170), ReferenceId(174), ReferenceId(263), ReferenceId(270), ReferenceId(336), ReferenceId(340), ReferenceId(356), ReferenceId(360), ReferenceId(364), ReferenceId(368)]
 
 semantic Error: tasks/coverage/misc/pass/oxc-13284.ts
 Symbol reference IDs mismatch for "_super":

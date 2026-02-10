@@ -475,7 +475,12 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "f64" => Layout::from_type::<f64>(),
         "&str" => str_layout,
         "Atom" => str_layout,
-        "Ident" => str_layout,
+        // `Ident` is `NonNull<u8>` + `u64` on 64-bit, `NonNull<u8>` + `u32` + `u32` on 32-bit.
+        // Niche for 0 on the pointer field.
+        "Ident" => Layout {
+            layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
+            layout_32: PlatformLayout::from_size_align_niche(12, 4, Niche::new(0, 4, 1, 0)),
+        },
         "NonZeroU8" => Layout::from_type_with_niche_for_zero::<num::NonZeroU8>(),
         "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
         "NonZeroU32" => Layout::from_type_with_niche_for_zero::<num::NonZeroU32>(),

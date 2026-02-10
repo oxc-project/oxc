@@ -8,7 +8,7 @@ use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_ecmascript::{ToInt32, ToUint32};
 use oxc_semantic::{ScopeFlags, ScopeId};
-use oxc_span::{Atom, Ident, SPAN, Span};
+use oxc_span::{Atom, Ident, IdentHashMap, SPAN, Span};
 use oxc_syntax::{
     number::{NumberBase, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -23,12 +23,12 @@ use crate::{context::TraverseCtx, state::TransformState};
 type PrevMembers<'a> = FxHashMap<Atom<'a>, Option<ConstantValue<'a>>>;
 
 pub struct TypeScriptEnum<'a> {
-    enums: FxHashMap<Ident<'a>, PrevMembers<'a>>,
+    enums: IdentHashMap<'a, PrevMembers<'a>>,
 }
 
 impl TypeScriptEnum<'_> {
     pub fn new() -> Self {
-        Self { enums: FxHashMap::default() }
+        Self { enums: IdentHashMap::default() }
     }
 }
 

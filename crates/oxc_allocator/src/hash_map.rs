@@ -184,15 +184,17 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     }
 }
 
-/// Methods that use the default [`FxBuildHasher`].
-impl<'alloc, K, V> HashMap<'alloc, K, V> {
+/// Methods for any hasher that implements [`Default`].
+///
+/// This includes [`FxBuildHasher`] and any custom hasher (e.g. `IdentBuildHasher`).
+impl<'alloc, K, V, S: Default> HashMap<'alloc, K, V, S> {
     /// Creates an empty [`HashMap`]. It will be allocated with the given allocator.
     ///
     /// The hash map is initially created with a capacity of 0, so it will not allocate
     /// until it is first inserted into.
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        Self::with_hasher_in(FxBuildHasher, allocator)
+        Self::with_hasher_in(S::default(), allocator)
     }
 
     /// Creates an empty [`HashMap`] with the specified capacity. It will be allocated with the given allocator.
@@ -201,7 +203,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// If capacity is 0, the hash map will not allocate.
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        Self::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator)
+        Self::with_capacity_and_hasher_in(capacity, S::default(), allocator)
     }
 
     /// Create a new [`HashMap`] whose elements are taken from an iterator and
@@ -215,6 +217,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     ) -> Self
     where
         K: Eq + Hash,
+        S: BuildHasher,
     {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
@@ -229,7 +232,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
         //   e.g. filter iterators.
         let capacity = iter.size_hint().0;
         let map =
-            InnerHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
+            InnerHashMap::with_capacity_and_hasher_in(capacity, S::default(), allocator.bump());
         // Wrap in `ManuallyDrop` *before* calling `for_each`, so compiler doesn't insert unnecessary code
         // to drop the `FxHashMap` in case of a panic in iterator's `next` method
         let mut map = ManuallyDrop::new(map);

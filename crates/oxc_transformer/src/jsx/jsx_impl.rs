@@ -1183,8 +1183,8 @@ fn get_read_identifier_reference<'a>(
     name: Atom<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let reference_id =
-        ctx.create_reference_in_current_scope(Ident::from(name), ReferenceFlags::Read);
+    let name = Ident::from(name);
+    let reference_id = ctx.create_reference_in_current_scope(name, ReferenceFlags::Read);
     let ident = ctx.ast.alloc_identifier_reference_with_reference_id(span, name, reference_id);
     Expression::Identifier(ident)
 }
