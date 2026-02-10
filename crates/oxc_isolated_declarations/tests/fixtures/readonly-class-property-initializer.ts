@@ -24,3 +24,15 @@ export class ReadonlyLiteralInitializers {
   writableObject = { a: 1 };
   writableTrue = true;
 }
+
+const values = [1, 2] as const;
+
+export class ReadonlyArrayInitializers {
+  readonly emptyArray = [];
+  readonly arrayAsConst = [] as const;
+  readonly arrayWithTypeAnnotation: number[] = [];
+  readonly nonEmptyArray = [1, 2];
+  readonly arrayWithSpread = [...values];
+  readonly arrayIdentifierReference = [values];
+  readonly arrayIdentifierReferenceAndAnnotation: [readonly [1,2]] = [values];
+}

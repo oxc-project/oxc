@@ -5,8 +5,9 @@ use oxc_span::{ContentEq, GetSpan, SPAN};
 use crate::{
     IsolatedDeclarations,
     diagnostics::{
-        accessor_must_have_explicit_return_type, computed_property_name, extends_clause_expression,
-        method_must_have_explicit_return_type, property_must_have_explicit_type,
+        accessor_must_have_explicit_return_type, array_inferred, computed_property_name,
+        extends_clause_expression, method_must_have_explicit_return_type,
+        property_must_have_explicit_type,
     },
 };
 
@@ -108,17 +109,11 @@ impl<'a> IsolatedDeclarations<'a> {
                     if let Some(initializer) = self.get_literal_const_initializer(expr) {
                         value = Some(initializer);
                         None
-                    } else if Self::is_need_to_infer_type_from_expression(expr) {
-                        self.transform_expression_to_ts_type(expr)
+                    } else if Self::is_non_const_array_literal(expr) {
+                        self.error(array_inferred(expr.span()));
+                        Some(self.ast.ts_type_unknown_keyword(expr.span()))
                     } else {
-                        if let Expression::TemplateLiteral(lit) = expr {
-                            value = self
-                                .transform_template_to_string(lit)
-                                .map(Expression::StringLiteral);
-                        } else {
-                            value = Some(expr.clone_in(self.ast.allocator));
-                        }
-                        None
+                        self.transform_expression_to_ts_type(expr)
                     }
                 } else {
                     self.infer_type_from_expression(expr)
@@ -172,6 +167,16 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.get_literal_const_initializer(&expr.expression)
             }
             _ => None,
+        }
+    }
+
+    fn is_non_const_array_literal(expr: &Expression<'a>) -> bool {
+        match expr {
+            Expression::ArrayExpression(_) => true,
+            Expression::ParenthesizedExpression(expr) => {
+                Self::is_non_const_array_literal(&expr.expression)
+            }
+            _ => false,
         }
     }
 
