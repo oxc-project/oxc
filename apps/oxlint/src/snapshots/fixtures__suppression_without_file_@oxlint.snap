@@ -3,7 +3,7 @@ source: apps/oxlint/src/tester.rs
 ---
 ########## 
 arguments: 
-working directory: fixtures/suppression_less_rules_violations_warning
+working directory: fixtures/suppression_without_file
 ----------
 
   x eslint(no-console): Unexpected console statement.
@@ -31,7 +31,14 @@ working directory: fixtures/suppression_less_rules_violations_warning
    `----
   help: Delete this console statement.
 
-Found 0 warnings and 3 errors.
+  x eslint(no-console): Unexpected console statement.
+   ,-[folder_b/test.js:1:1]
+ 1 | console.log();
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+Found 0 warnings and 4 errors.
 Finished in <variable>ms on 2 files with 56 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
