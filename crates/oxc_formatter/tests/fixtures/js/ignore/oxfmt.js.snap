@@ -95,7 +95,7 @@ function a() {
   };
 
   function giveMeSome() {
-    a(a); // oxfmt-ignore
+    a(  a  ); // oxfmt-ignore
     // shouldn't I return something?  :shrug:
   }
 
@@ -159,7 +159,7 @@ function a() {
   };
 
   function giveMeSome() {
-    a(a); // oxfmt-ignore
+    a(  a  ); // oxfmt-ignore
     // shouldn't I return something?  :shrug:
   }
 
