@@ -631,6 +631,7 @@ pub use crate::rules::unicorn::prefer_dom_node_dataset::PreferDomNodeDataset as 
 pub use crate::rules::unicorn::prefer_dom_node_remove::PreferDomNodeRemove as UnicornPreferDomNodeRemove;
 pub use crate::rules::unicorn::prefer_dom_node_text_content::PreferDomNodeTextContent as UnicornPreferDomNodeTextContent;
 pub use crate::rules::unicorn::prefer_event_target::PreferEventTarget as UnicornPreferEventTarget;
+pub use crate::rules::unicorn::prefer_export_from::PreferExportFrom as UnicornPreferExportFrom;
 pub use crate::rules::unicorn::prefer_global_this::PreferGlobalThis as UnicornPreferGlobalThis;
 pub use crate::rules::unicorn::prefer_includes::PreferIncludes as UnicornPreferIncludes;
 pub use crate::rules::unicorn::prefer_keyboard_event_key::PreferKeyboardEventKey as UnicornPreferKeyboardEventKey;
@@ -1223,6 +1224,7 @@ pub enum RuleEnum {
     UnicornPreferDomNodeRemove(UnicornPreferDomNodeRemove),
     UnicornPreferDomNodeTextContent(UnicornPreferDomNodeTextContent),
     UnicornPreferEventTarget(UnicornPreferEventTarget),
+    UnicornPreferExportFrom(UnicornPreferExportFrom),
     UnicornPreferGlobalThis(UnicornPreferGlobalThis),
     UnicornPreferIncludes(UnicornPreferIncludes),
     UnicornPreferKeyboardEventKey(UnicornPreferKeyboardEventKey),
@@ -1987,7 +1989,8 @@ const UNICORN_PREFER_DOM_NODE_DATASET_ID: usize = UNICORN_PREFER_DOM_NODE_APPEND
 const UNICORN_PREFER_DOM_NODE_REMOVE_ID: usize = UNICORN_PREFER_DOM_NODE_DATASET_ID + 1usize;
 const UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID: usize = UNICORN_PREFER_DOM_NODE_REMOVE_ID + 1usize;
 const UNICORN_PREFER_EVENT_TARGET_ID: usize = UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID + 1usize;
-const UNICORN_PREFER_GLOBAL_THIS_ID: usize = UNICORN_PREFER_EVENT_TARGET_ID + 1usize;
+const UNICORN_PREFER_EXPORT_FROM_ID: usize = UNICORN_PREFER_EVENT_TARGET_ID + 1usize;
+const UNICORN_PREFER_GLOBAL_THIS_ID: usize = UNICORN_PREFER_EXPORT_FROM_ID + 1usize;
 const UNICORN_PREFER_INCLUDES_ID: usize = UNICORN_PREFER_GLOBAL_THIS_ID + 1usize;
 const UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID: usize = UNICORN_PREFER_INCLUDES_ID + 1usize;
 const UNICORN_PREFER_LOGICAL_OPERATOR_OVER_TERNARY_ID: usize =
@@ -2798,6 +2801,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(_) => UNICORN_PREFER_DOM_NODE_REMOVE_ID,
             Self::UnicornPreferDomNodeTextContent(_) => UNICORN_PREFER_DOM_NODE_TEXT_CONTENT_ID,
             Self::UnicornPreferEventTarget(_) => UNICORN_PREFER_EVENT_TARGET_ID,
+            Self::UnicornPreferExportFrom(_) => UNICORN_PREFER_EXPORT_FROM_ID,
             Self::UnicornPreferGlobalThis(_) => UNICORN_PREFER_GLOBAL_THIS_ID,
             Self::UnicornPreferIncludes(_) => UNICORN_PREFER_INCLUDES_ID,
             Self::UnicornPreferKeyboardEventKey(_) => UNICORN_PREFER_KEYBOARD_EVENT_KEY_ID,
@@ -3596,6 +3600,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::NAME,
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::NAME,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::NAME,
+            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::NAME,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::NAME,
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::NAME,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::NAME,
@@ -4426,6 +4431,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::CATEGORY,
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::CATEGORY,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::CATEGORY,
+            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::CATEGORY,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::CATEGORY,
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::CATEGORY,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::CATEGORY,
@@ -5235,6 +5241,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::FIX,
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::FIX,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::FIX,
+            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::FIX,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::FIX,
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::FIX,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::FIX,
@@ -6176,6 +6183,7 @@ impl RuleEnum {
                 UnicornPreferDomNodeTextContent::documentation()
             }
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::documentation(),
+            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::documentation(),
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::documentation(),
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::documentation(),
             Self::UnicornPreferKeyboardEventKey(_) => {
@@ -7890,6 +7898,8 @@ impl RuleEnum {
             }
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::config_schema(generator)
                 .or_else(|| UnicornPreferEventTarget::schema(generator)),
+            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::config_schema(generator)
+                .or_else(|| UnicornPreferExportFrom::schema(generator)),
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::config_schema(generator)
                 .or_else(|| UnicornPreferGlobalThis::schema(generator)),
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::config_schema(generator)
@@ -8937,6 +8947,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(_) => "unicorn",
             Self::UnicornPreferDomNodeTextContent(_) => "unicorn",
             Self::UnicornPreferEventTarget(_) => "unicorn",
+            Self::UnicornPreferExportFrom(_) => "unicorn",
             Self::UnicornPreferGlobalThis(_) => "unicorn",
             Self::UnicornPreferIncludes(_) => "unicorn",
             Self::UnicornPreferKeyboardEventKey(_) => "unicorn",
@@ -10770,6 +10781,9 @@ impl RuleEnum {
             Self::UnicornPreferEventTarget(_) => Ok(Self::UnicornPreferEventTarget(
                 UnicornPreferEventTarget::from_configuration(value)?,
             )),
+            Self::UnicornPreferExportFrom(_) => Ok(Self::UnicornPreferExportFrom(
+                UnicornPreferExportFrom::from_configuration(value)?,
+            )),
             Self::UnicornPreferGlobalThis(_) => Ok(Self::UnicornPreferGlobalThis(
                 UnicornPreferGlobalThis::from_configuration(value)?,
             )),
@@ -11884,6 +11898,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(rule) => rule.to_configuration(),
             Self::UnicornPreferDomNodeTextContent(rule) => rule.to_configuration(),
             Self::UnicornPreferEventTarget(rule) => rule.to_configuration(),
+            Self::UnicornPreferExportFrom(rule) => rule.to_configuration(),
             Self::UnicornPreferGlobalThis(rule) => rule.to_configuration(),
             Self::UnicornPreferIncludes(rule) => rule.to_configuration(),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.to_configuration(),
@@ -12588,6 +12603,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(rule) => rule.run(node, ctx),
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run(node, ctx),
             Self::UnicornPreferEventTarget(rule) => rule.run(node, ctx),
+            Self::UnicornPreferExportFrom(rule) => rule.run(node, ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.run(node, ctx),
             Self::UnicornPreferIncludes(rule) => rule.run(node, ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run(node, ctx),
@@ -13290,6 +13306,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(rule) => rule.run_once(ctx),
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run_once(ctx),
             Self::UnicornPreferEventTarget(rule) => rule.run_once(ctx),
+            Self::UnicornPreferExportFrom(rule) => rule.run_once(ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.run_once(ctx),
             Self::UnicornPreferIncludes(rule) => rule.run_once(ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run_once(ctx),
@@ -14076,6 +14093,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferEventTarget(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferExportFrom(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferIncludes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14792,6 +14810,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(rule) => rule.should_run(ctx),
             Self::UnicornPreferDomNodeTextContent(rule) => rule.should_run(ctx),
             Self::UnicornPreferEventTarget(rule) => rule.should_run(ctx),
+            Self::UnicornPreferExportFrom(rule) => rule.should_run(ctx),
             Self::UnicornPreferGlobalThis(rule) => rule.should_run(ctx),
             Self::UnicornPreferIncludes(rule) => rule.should_run(ctx),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.should_run(ctx),
@@ -15718,6 +15737,7 @@ impl RuleEnum {
                 UnicornPreferDomNodeTextContent::IS_TSGOLINT_RULE
             }
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::IS_TSGOLINT_RULE,
+            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::IS_TSGOLINT_RULE,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::IS_TSGOLINT_RULE,
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::IS_TSGOLINT_RULE,
             Self::UnicornPreferKeyboardEventKey(_) => {
@@ -16629,6 +16649,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::HAS_CONFIG,
             Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::HAS_CONFIG,
             Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::HAS_CONFIG,
+            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::HAS_CONFIG,
             Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::HAS_CONFIG,
             Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::HAS_CONFIG,
             Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::HAS_CONFIG,
@@ -17361,6 +17382,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(rule) => rule.types_info(),
             Self::UnicornPreferDomNodeTextContent(rule) => rule.types_info(),
             Self::UnicornPreferEventTarget(rule) => rule.types_info(),
+            Self::UnicornPreferExportFrom(rule) => rule.types_info(),
             Self::UnicornPreferGlobalThis(rule) => rule.types_info(),
             Self::UnicornPreferIncludes(rule) => rule.types_info(),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.types_info(),
@@ -18063,6 +18085,7 @@ impl RuleEnum {
             Self::UnicornPreferDomNodeRemove(rule) => rule.run_info(),
             Self::UnicornPreferDomNodeTextContent(rule) => rule.run_info(),
             Self::UnicornPreferEventTarget(rule) => rule.run_info(),
+            Self::UnicornPreferExportFrom(rule) => rule.run_info(),
             Self::UnicornPreferGlobalThis(rule) => rule.run_info(),
             Self::UnicornPreferIncludes(rule) => rule.run_info(),
             Self::UnicornPreferKeyboardEventKey(rule) => rule.run_info(),
@@ -18867,6 +18890,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferDomNodeRemove(UnicornPreferDomNodeRemove::default()),
         RuleEnum::UnicornPreferDomNodeTextContent(UnicornPreferDomNodeTextContent::default()),
         RuleEnum::UnicornPreferEventTarget(UnicornPreferEventTarget::default()),
+        RuleEnum::UnicornPreferExportFrom(UnicornPreferExportFrom::default()),
         RuleEnum::UnicornPreferGlobalThis(UnicornPreferGlobalThis::default()),
         RuleEnum::UnicornPreferIncludes(UnicornPreferIncludes::default()),
         RuleEnum::UnicornPreferKeyboardEventKey(UnicornPreferKeyboardEventKey::default()),
