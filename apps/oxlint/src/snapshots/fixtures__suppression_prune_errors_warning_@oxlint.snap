@@ -6,7 +6,7 @@ arguments:
 working directory: fixtures/suppression_prune_errors_warning
 ----------
 Found 0 warnings and 0 errors.
-Finished in <variable>ms on 2 files with 56 rules using 1 threads.
+Finished in <variable>ms on 2 files with 55 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------
