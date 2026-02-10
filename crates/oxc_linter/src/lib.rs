@@ -95,7 +95,7 @@ use crate::{
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
-    suppression::{DiagnosticCounts, RuleName, SuppressionId},
+    suppression::{DiagnosticCounts, RuleName, SuppressionFileState, SuppressionId},
     utils::iter_possible_jest_call_node,
 };
 
@@ -173,7 +173,24 @@ impl Linter {
         allocator: &'a Allocator,
     ) -> Vec<Message> {
         //TODO Inside LintRunner::run, we should check self.options.suppression_options, to handle each setting correctly
-        self.run_with_disable_directives(path, context_sub_hosts, allocator, None, None).0
+        self.run_with_disable_directives(
+            path,
+            context_sub_hosts,
+            allocator,
+            None,
+            SuppressionFileState::Ignored,
+        )
+        .0
+    }
+
+    pub fn with_suppress_all(mut self, suppress_all: bool) -> Self {
+        self.options.suppress_all = suppress_all;
+        self
+    }
+
+    pub fn with_prune_suppressions(mut self, prune_suppressions: bool) -> Self {
+        self.options.prune_suppressions = prune_suppressions;
+        self
     }
 
     /// Same as `run` but also returns the disable directives for the file
@@ -191,7 +208,7 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
-        suppression_count: Option<&FxHashMap<RuleName, DiagnosticCounts>>,
+        suppression_count: SuppressionFileState,
     ) -> (Vec<Message>, Option<DisableDirectives>, Option<FxHashMap<RuleName, DiagnosticCounts>>)
     {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
@@ -418,43 +435,67 @@ impl Linter {
             Rc::try_unwrap(ctx_host).unwrap().into_disable_directives()
         };
 
-        if let Some(suppression_by_file) = suppression_count {
-            let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
-                FxHashMap::default();
-            diagnostics.iter().for_each(|message| {
-                let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
-                    return;
+        match suppression_count {
+            SuppressionFileState::Ignored => (diagnostics, disable_directives, None),
+            SuppressionFileState::New => {
+                let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
+                    FxHashMap::default();
+                diagnostics.iter().for_each(|message| {
+                    let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
+                        return;
+                    };
+
+                    if let Some(violation_count) = suppression_tracking.get_mut(&rule_name) {
+                        violation_count.count += 1;
+                    } else {
+                        suppression_tracking
+                            .insert(rule_name.clone(), DiagnosticCounts { count: 1 });
+                    }
+                });
+
+                (diagnostics, disable_directives, Some(suppression_tracking))
+            }
+            SuppressionFileState::Exists { file_suppressions } => {
+                let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
+                    FxHashMap::default();
+                diagnostics.iter().for_each(|message| {
+                    let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
+                        return;
+                    };
+
+                    if let Some(violation_count) = suppression_tracking.get_mut(&rule_name) {
+                        violation_count.count += 1;
+                    } else {
+                        suppression_tracking
+                            .insert(rule_name.clone(), DiagnosticCounts { count: 1 });
+                    }
+                });
+
+                let Some(recorded_violations) = file_suppressions else {
+                    return (diagnostics, disable_directives, Some(suppression_tracking));
                 };
 
-                if let Some(violation_count) = suppression_tracking.get_mut(&rule_name) {
-                    violation_count.count += 1;
-                } else {
-                    suppression_tracking.insert(rule_name.clone(), DiagnosticCounts { count: 1 });
-                }
-            });
+                let diagnostics_filtered = diagnostics
+                    .into_iter()
+                    .filter(|message| {
+                        let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
+                            return false;
+                        };
 
-            let diagnostics_filtered = diagnostics
-                .into_iter()
-                .filter(|message| {
-                    let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
-                        return false;
-                    };
+                        let Some(count_runtime) = suppression_tracking.get(rule_name) else {
+                            return false;
+                        };
 
-                    let Some(count_runtime) = suppression_tracking.get(rule_name) else {
-                        return false;
-                    };
+                        let Some(count_file) = recorded_violations.get(rule_name) else {
+                            return false;
+                        };
 
-                    let Some(count_file) = suppression_by_file.get(rule_name) else {
-                        return false;
-                    };
+                        count_file.count < count_runtime.count
+                    })
+                    .collect();
 
-                    count_file.count < count_runtime.count
-                })
-                .collect();
-
-            (diagnostics_filtered, disable_directives, Some(suppression_tracking))
-        } else {
-            (diagnostics, disable_directives, None)
+                (diagnostics_filtered, disable_directives, Some(suppression_tracking))
+            }
         }
     }
 

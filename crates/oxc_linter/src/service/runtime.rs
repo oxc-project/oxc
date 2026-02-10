@@ -32,7 +32,7 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    suppression::{DiagnosticCounts, Filename, RuleName, SuppressionManager},
+    suppression::{DiagnosticCounts, Filename, RuleName, SuppressionFileState, SuppressionManager},
     utils::read_to_arena_str,
 };
 
@@ -591,9 +591,15 @@ impl Runtime {
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         // TODO: Parse cli options
+        //
+        //
 
-        let suppression_manager =
-            SuppressionManager::load(self.cwd.join("oxlint-suppressions.json").as_path()).unwrap();
+        let suppression_manager = SuppressionManager::load(
+            self.cwd.join("oxlint-suppressions.json").as_path(),
+            self.linter.options.suppress_all,
+            self.linter.options.prune_suppressions,
+        )
+        .unwrap();
 
         let (tracking_channel, runtime_suppression_recv) =
             std::sync::mpsc::channel::<(Filename, RuleName, DiagnosticCounts)>();
@@ -655,10 +661,13 @@ impl Runtime {
                             return;
                         }
 
-                        let suppression_per_file =
-                            path.strip_prefix(&self.cwd).ok().and_then(|relative_url| {
+                        let suppression_per_file = path
+                            .strip_prefix(&self.cwd)
+                            .ok()
+                            .map(|relative_url| {
                                 suppression_manager.get_suppression_per_file(&relative_url)
-                            });
+                            })
+                            .unwrap(); //?? In theory is safe as at this point the file exists
 
                         let (mut messages, disable_directives, suppression) =
                             me.linter.run_with_disable_directives(
@@ -751,8 +760,12 @@ impl Runtime {
         println!("NEW {:?}", runtime_map);
         println!("SET {:?}", set);
 
-        let suppression_manager_two =
-            SuppressionManager::load(self.cwd.join("oxlint-suppressions.json").as_path()).unwrap();
+        let suppression_manager_two = SuppressionManager::load(
+            self.cwd.join("oxlint-suppressions.json").as_path(),
+            self.linter.options.suppress_all,
+            self.linter.options.prune_suppressions,
+        )
+        .unwrap();
 
         println!("diff {:?}", suppression_manager_two.diff(&runtime_map, &set));
     }
@@ -821,7 +834,7 @@ impl Runtime {
 
                         let (section_messages, disable_directives, _) = me
                             .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool(), None);
+                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool(), SuppressionFileState::Ignored);
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map
