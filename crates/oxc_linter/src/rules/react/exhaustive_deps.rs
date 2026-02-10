@@ -355,6 +355,11 @@ impl Rule for ExhaustiveDeps {
 
                             // Try to find the var in the current scope
                             if let Some(decl) = get_declaration_of_variable(ident, ctx.semantic()) {
+                                // Declared outside component scope (e.g. module-level); stable.
+                                if decl.scope_id() != component_scope_id {
+                                    return;
+                                }
+
                                 match decl.kind() {
                                     AstKind::VariableDeclarator(var_decl) => {
                                         if let Some(init) = &var_decl.init {
@@ -2653,6 +2658,34 @@ fn test() {
             console.log((data.count + 1).toString());
           }, [data.count]);
         }",
+        // Module-scoped function references passed as callbacks are stable.
+        r"
+          function getColumns() { return []; }
+          function MyComponent() {
+            const columns = useMemo(getColumns, []);
+            return columns;
+          }
+        ",
+        r"
+          const getFields = () => { return []; };
+          function MyComponent() {
+            const fields = useMemo(getFields, []);
+            return fields;
+          }
+        ",
+        r"
+          function checkIfIsSafari() { return false; }
+          function MyComponent() {
+            const isSafari = useMemo(checkIfIsSafari, []);
+            return isSafari;
+          }
+        ",
+        r"
+          function setup() { console.log('setup'); }
+          function MyComponent() {
+            useEffect(setup, []);
+          }
+        ",
     ];
 
     let fail = vec![
