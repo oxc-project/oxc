@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ use oxc_formatter::{
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
-use super::FormatFileStrategy;
+use super::{FormatFileStrategy, utils};
 
 /// Configuration options for the Oxfmt.
 ///
@@ -231,6 +231,28 @@ pub struct FormatConfig {
 }
 
 impl FormatConfig {
+    /// Resolve relative tailwind paths (`config`, `stylesheet`) to absolute paths.
+    /// Otherwise, the plugin tries to resolve the Prettier's configuration file, not Oxfmt's.
+    /// <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/125a8bc77639529a5a0c7e4e8a02174d7ed2d70b/src/config.ts#L50-L54>
+    pub fn resolve_tailwind_paths(&mut self, base_dir: &Path) {
+        let Some(ref mut tw) = self.experimental_tailwindcss else {
+            return;
+        };
+
+        for path_field in [&mut tw.config, &mut tw.stylesheet] {
+            let Some(path_str) = path_field.as_ref() else {
+                continue;
+            };
+
+            let path = Path::new(path_str);
+            if path.is_relative() {
+                *path_field = Some(
+                    utils::normalize_relative_path(base_dir, path).to_string_lossy().to_string(),
+                );
+            }
+        }
+    }
+
     /// Merge another `FormatConfig`, overwriting only fields that are `Some<T>`.
     ///
     /// # Panics
@@ -879,11 +901,7 @@ static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
 /// - `_oxfmtPluginOptionsJson`: Bundled options for `prettier-plugin-oxfmt`
 ///
 /// Also removes Prettier-unaware options to minimize payload size.
-pub fn finalize_external_options(
-    config_dir: Option<&PathBuf>,
-    config: &mut Value,
-    strategy: &FormatFileStrategy,
-) {
+pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrategy) {
     let Some(obj) = config.as_object_mut() else {
         return;
     };
@@ -914,23 +932,6 @@ pub fn finalize_external_options(
                 ("preserveDuplicates", "tailwindPreserveDuplicates"),
             ] {
                 if let Some(value) = tailwind.get(src).cloned() {
-                    if matches!(src, "config" | "stylesheet")
-                        && let Some(path_str) = value.as_str()
-                        && let Some(config_dir) = config_dir
-                    {
-                        let path = Path::new(path_str);
-                        if path.is_relative() {
-                            // Resolve relative paths to absolute paths, which can avoid `prettier-plugin-tailwindcss`
-                            // from resolving the Prettier configuration file.
-                            // <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/125a8bc77639529a5a0c7e4e8a02174d7ed2d70b/src/config.ts#L50-L54>
-                            let config_path = config_dir.join(path);
-                            let canonical_path = config_path.canonicalize().unwrap_or(config_path);
-                            let normalized_path = canonical_path.to_string_lossy().to_string();
-                            obj.insert(dst.to_string(), Value::from(normalized_path));
-                            continue;
-                        }
-                    }
-
                     obj.insert(dst.to_string(), value);
                 }
             }
@@ -1303,7 +1304,7 @@ mod tests_sync_external_options {
             path: PathBuf::from("test.js"),
             source_type: SourceType::mjs(),
         };
-        finalize_external_options(None, &mut raw_config, &strategy);
+        finalize_external_options(&mut raw_config, &strategy);
 
         let obj = raw_config.as_object().unwrap();
         // oxfmt extensions are removed by finalize_external_options

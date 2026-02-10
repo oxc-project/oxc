@@ -1,7 +1,4 @@
-use std::{
-    env::current_dir,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
@@ -54,11 +51,13 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
 /// which doesn't need `.oxfmtrc` overrides, `.editorconfig`, or ignore patterns.
 #[cfg(feature = "napi")]
 pub fn resolve_options_from_value(
+    cwd: &Path,
     raw_config: Value,
     strategy: &FormatFileStrategy,
 ) -> Result<ResolvedOptions, String> {
-    let format_config: FormatConfig = serde_json::from_value(raw_config)
+    let mut format_config: FormatConfig = serde_json::from_value(raw_config)
         .map_err(|err| format!("Failed to deserialize FormatConfig: {err}"))?;
+    format_config.resolve_tailwind_paths(cwd);
 
     let mut external_options =
         serde_json::to_value(&format_config).expect("FormatConfig serialization should not fail");
@@ -68,12 +67,7 @@ pub fn resolve_options_from_value(
 
     sync_external_options(&oxfmt_options.format_options, &mut external_options);
 
-    Ok(ResolvedOptions::from_oxfmt_options(
-        current_dir().ok().as_ref(),
-        oxfmt_options,
-        external_options,
-        strategy,
-    ))
+    Ok(ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy))
 }
 
 // ---
@@ -108,13 +102,12 @@ impl ResolvedOptions {
     ///
     /// This also applies plugin-specific options (Tailwind, oxfmt plugin flags) based on strategy.
     fn from_oxfmt_options(
-        config_dir: Option<&PathBuf>,
         oxfmt_options: OxfmtOptions,
         mut external_options: Value,
         strategy: &FormatFileStrategy,
     ) -> Self {
         // Apply plugin-specific options based on strategy
-        finalize_external_options(config_dir, &mut external_options, strategy);
+        finalize_external_options(&mut external_options, strategy);
 
         #[cfg(feature = "napi")]
         let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
@@ -243,7 +236,7 @@ impl ConfigResolver {
             .map_err(|err| format!("Failed to deserialize Oxfmtrc: {err}"))?;
 
         // Resolve `overrides` from `Oxfmtrc` for later per-file matching
-        let base_dir = self.config_dir.take();
+        let base_dir = self.config_dir.clone();
         self.oxfmtrc_overrides =
             oxfmtrc.overrides.map(|overrides| OxfmtrcOverrides::new(overrides, base_dir));
 
@@ -256,6 +249,11 @@ impl ConfigResolver {
                 editorconfig.sections().iter().find(|s| s.name == "*").map(|s| &s.properties)
         {
             apply_editorconfig(&mut format_config, props);
+        }
+
+        // Resolve relative tailwind paths before serialization
+        if let Some(config_dir) = &self.config_dir {
+            format_config.resolve_tailwind_paths(config_dir);
         }
 
         // NOTE: Revisit this when adding Prettier plugin support.
@@ -288,12 +286,7 @@ impl ConfigResolver {
     #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %strategy.path().display()))]
     pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
         let (oxfmt_options, external_options) = self.resolve_options(strategy.path());
-        ResolvedOptions::from_oxfmt_options(
-            self.config_dir.as_ref(),
-            oxfmt_options,
-            external_options,
-            strategy,
-        )
+        ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy)
     }
 
     /// Resolve options for a specific file path.
@@ -330,6 +323,11 @@ impl ConfigResolver {
         if let Some(ec) = &self.editorconfig {
             let props = ec.resolve(path);
             apply_editorconfig(&mut format_config, &props);
+        }
+
+        // Resolve relative tailwind paths before serialization
+        if let Some(config_dir) = &self.config_dir {
+            format_config.resolve_tailwind_paths(config_dir);
         }
 
         // NOTE: See `build_and_validate()` for details about `external_options` handling
