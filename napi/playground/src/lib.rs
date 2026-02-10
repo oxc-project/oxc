@@ -146,7 +146,7 @@ impl Oxc {
 
         self.run_formatter(run_options, &source_text, source_type, &formatter_options);
 
-        let mut scoping = semantic.into_scoping();
+        let scoping = semantic.into_scoping();
 
         // Extract scope and symbol information if needed
         if !source_type.is_typescript_definition() {
@@ -174,14 +174,12 @@ impl Oxc {
         // Phase 5.5: Apply ReplaceGlobalDefines (before transformations)
         if let Some(define_opts) = define_options {
             let define_config = Self::build_define_config(&define_opts)?;
-            let ret =
-                ReplaceGlobalDefines::new(&allocator, define_config).build(scoping, &mut program);
-            scoping = ret.scoping;
+            let _ = ReplaceGlobalDefines::new(&allocator, define_config).build(&mut program);
         }
 
         // Phase 6: Apply transformations
         if run_options.transform {
-            scoping = self.apply_transformations(
+            self.apply_transformations(
                 &allocator,
                 &path,
                 &mut program,
@@ -193,8 +191,7 @@ impl Oxc {
         // Phase 6.5: Apply InjectGlobalVariables (after transformations)
         if let Some(inject_opts) = inject_options {
             let inject_config = Self::build_inject_config(&inject_opts)?;
-            let _ =
-                InjectGlobalVariables::new(&allocator, inject_config).build(scoping, &mut program);
+            let _ = InjectGlobalVariables::new(&allocator, inject_config).build(&mut program);
         }
 
         // Phase 7: Apply minification

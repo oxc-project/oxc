@@ -146,11 +146,11 @@ pub trait CompilerInterface {
         }
 
         let stats = semantic_return.semantic.stats();
-        let mut scoping = semantic_return.semantic.into_scoping();
 
         /* Transform */
 
         if let Some(options) = self.transform_options() {
+            let scoping = semantic_return.semantic.into_scoping();
             let mut transformer_return =
                 self.transform(options, &allocator, &mut program, source_path, scoping);
 
@@ -162,32 +162,25 @@ pub trait CompilerInterface {
             if self.after_transform(&mut program, &mut transformer_return).is_break() {
                 return;
             }
-
-            (scoping) = transformer_return.scoping;
         }
 
-        let inject_options = self.inject_options();
-        let define_options = self.define_options();
-
-        // Symbols and scopes are out of sync.
-        if inject_options.is_some() || define_options.is_some() {
-            scoping =
-                SemanticBuilder::new().with_stats(stats).build(&program).semantic.into_scoping();
+        if let Some(options) = self.inject_options() {
+            let _ = InjectGlobalVariables::new(&allocator, options).build(&mut program);
         }
 
-        if let Some(options) = inject_options {
-            let ret = InjectGlobalVariables::new(&allocator, options).build(scoping, &mut program);
-            scoping = ret.scoping;
-        }
-
-        if let Some(options) = define_options {
-            let ret = ReplaceGlobalDefines::new(&allocator, options).build(scoping, &mut program);
-            scoping = ret.scoping;
+        if let Some(options) = self.define_options() {
+            let _ = ReplaceGlobalDefines::new(&allocator, options).build(&mut program);
             // Run DCE if minification is disabled.
             if self.compress_options().is_none() {
+                // DCE needs scoping, build it on demand.
+                let dce_scoping = SemanticBuilder::new()
+                    .with_stats(stats)
+                    .build(&program)
+                    .semantic
+                    .into_scoping();
                 Compressor::new(&allocator).dead_code_elimination_with_scoping(
                     &mut program,
-                    scoping,
+                    dce_scoping,
                     CompressOptions::dce(),
                 );
             }
