@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::{Deserialize, Serialize};
 
-use crate::read_to_string;
+use crate::{Message, read_to_string};
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 #[serde(default)]
@@ -311,5 +311,66 @@ impl SuppressionManager {
         }
 
         diff
+    }
+
+    pub fn suppress_lint_diagnostics(
+        suppression_file_state: SuppressionFileState<'_>,
+        lint_diagnostics: Vec<Message>,
+    ) -> (Vec<Message>, Option<FxHashMap<RuleName, DiagnosticCounts>>) {
+        let build_suppression_map = |diagnostics: &Vec<Message>| {
+            let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
+                FxHashMap::default();
+            diagnostics.iter().for_each(|message| {
+                let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
+                    return;
+                };
+
+                if let Some(violation_count) = suppression_tracking.get_mut(&rule_name) {
+                    violation_count.count += 1;
+                } else {
+                    suppression_tracking.insert(rule_name.clone(), DiagnosticCounts { count: 1 });
+                }
+            });
+
+            suppression_tracking
+        };
+
+        match suppression_file_state {
+            SuppressionFileState::Ignored => (lint_diagnostics, None),
+            SuppressionFileState::New => {
+                let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
+
+                (lint_diagnostics, Some(runtime_suppression_tracking))
+            }
+            SuppressionFileState::Exists { file_suppressions } => {
+                let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
+
+                let Some(recorded_violations) = file_suppressions else {
+                    return (lint_diagnostics, Some(runtime_suppression_tracking));
+                };
+
+                let diagnostics_filtered = lint_diagnostics
+                    .into_iter()
+                    .filter(|message| {
+                        let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
+                            return false;
+                        };
+
+                        let Some(count_file) = recorded_violations.get(rule_name) else {
+                            return true;
+                        };
+
+                        let Some(count_runtime) = runtime_suppression_tracking.get(rule_name)
+                        else {
+                            return false;
+                        };
+
+                        count_file.count < count_runtime.count
+                    })
+                    .collect();
+
+                (diagnostics_filtered, Some(runtime_suppression_tracking))
+            }
+        }
     }
 }
