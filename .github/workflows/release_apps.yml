@@ -272,6 +272,7 @@ jobs:
       id-token: write # for `pnpm publish --provenance`
     env:
       package_path: npm/oxlint
+      plugins_package_path: npm/oxlint-plugins
       npm_dir: npm/oxlint-release
       PUBLISH_FLAGS: "--provenance --access public --no-git-checks"
     steps:
@@ -299,19 +300,24 @@ jobs:
 
       - name: Copy dist files to @oxlint/plugins npm package
         run: |
-          cp apps/oxlint/dist-pkg-plugins/* npm/oxlint-plugins/
+          cp apps/oxlint/dist-pkg-plugins/* ${plugins_package_path}/
 
       - run: npm install -g npm@latest # For trusted publishing support
 
       - name: Check Publish
-        run: node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
+        run: |
+          node .github/scripts/check-npm-packages.js "${npm_dir}/*" "${package_path}"
+          node .github/scripts/check-npm-packages.js "${plugins_package_path}"
 
       - name: Trusted Publish
         run: |
           # Trusted publishing is configured, publish token is not required.
           # Publish sub-packages and adds `optionalDependencies` to main package.
           pnpm napi pre-publish --no-gh-release -t npm --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
+          # Publish `oxlint` package
           pnpm publish ${package_path}/ ${PUBLISH_FLAGS}
+          # Publish `@oxlint/plugins` package
+          pnpm publish ${plugins_package_path}/ ${PUBLISH_FLAGS}
 
   build-oxfmt:
     needs: check
