@@ -106,10 +106,10 @@ impl SuppressionTracking {
 
     pub fn update(&mut self, diff: SuppressionDiff) {
         match diff {
-            SuppressionDiff::Increased { file, rule, from, to } => {
+            SuppressionDiff::Increased { file, rule, from: _, to } => {
                 self.suppressions.get_mut(&file).unwrap().get_mut(&rule).unwrap().count = to;
             }
-            SuppressionDiff::Decreased { file, rule, from, to } => {
+            SuppressionDiff::Decreased { file, rule, from: _, to } => {
                 self.suppressions.get_mut(&file).unwrap().get_mut(&rule).unwrap().count = to;
             }
             SuppressionDiff::PrunedRuled { file, rule } => {
@@ -156,8 +156,6 @@ type StaticSuppressionMap = papaya::HashMap<
 #[derive(Clone, Debug)]
 pub struct SuppressionManager {
     pub suppressions_by_file: SuppressionTracking,
-    pub suppression_key_set: FxHashSet<(Filename, RuleName)>,
-    pub concurrent_suppression_by_file: StaticSuppressionMap,
     suppress_all: bool,
     prune_suppression: bool,
     //If the source of truth exists
@@ -243,16 +241,9 @@ impl SuppressionManager {
         suppress_all: bool,
         prune_suppression: bool,
     ) -> Result<Self, OxcDiagnostic> {
-        let concurrent_papaya = papaya::HashMap::builder()
-            .hasher(BuildHasherDefault::default())
-            .resize_mode(papaya::ResizeMode::Blocking)
-            .build();
-
         if !path.exists() {
             return Ok(Self {
                 suppressions_by_file: SuppressionTracking::default(),
-                suppression_key_set: FxHashSet::default(),
-                concurrent_suppression_by_file: concurrent_papaya,
                 file_exists: false,
                 prune_suppression,
                 suppress_all,
@@ -261,28 +252,8 @@ impl SuppressionManager {
 
         let suppression_file = SuppressionTracking::from_file(path)?;
 
-        let mut set: FxHashSet<(Filename, RuleName)> = FxHashSet::default();
-
-        let mut keys_iterator = suppression_file.suppressions.keys().into_iter();
-
-        while let Some(file_key) = keys_iterator.next() {
-            let mut values_iterator =
-                suppression_file.suppressions.get(file_key).unwrap().keys().into_iter();
-
-            while let Some(rule_name_key) = values_iterator.next() {
-                set.insert((file_key.clone(), rule_name_key.clone()));
-            }
-
-            concurrent_papaya.pin().insert(
-                Arc::new(file_key.clone()),
-                suppression_file.suppressions.get(file_key).unwrap().to_owned(),
-            );
-        }
-
         Ok(Self {
             suppressions_by_file: suppression_file,
-            suppression_key_set: set,
-            concurrent_suppression_by_file: concurrent_papaya,
             file_exists: true,
             prune_suppression,
             suppress_all,
