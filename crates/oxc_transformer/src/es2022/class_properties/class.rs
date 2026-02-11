@@ -1,7 +1,6 @@
 //! ES2022: Class Properties
 //! Transform of class itself.
 
-use indexmap::map::Entry;
 use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{Ident, SPAN};
@@ -20,7 +19,7 @@ use crate::{
 };
 
 use super::{
-    ClassBindings, ClassDetails, ClassProperties, FxIndexMap, PrivateProp,
+    ClassBindings, ClassDetails, ClassProperties, IdentIndexMap, PrivateProp,
     constructor::InstanceInitsInsertLocation,
     utils::{create_variable_declaration, exprs_into_stmts},
 };
@@ -79,8 +78,8 @@ impl<'a> ClassProperties<'a> {
         let mut has_static_prop = false;
         let mut has_instance_private_method = false;
         let mut has_static_private_method_or_static_block = false;
-        // TODO: Store `FxIndexMap`s in a pool and re-use them
-        let mut private_props = FxIndexMap::default();
+        // TODO: Store `IdentIndexMap`s in a pool and re-use them
+        let mut private_props: IdentIndexMap<'a, PrivateProp<'a>> = IdentIndexMap::default();
         for element in &mut body.body {
             match element {
                 ClassElement::PropertyDefinition(prop) => {
@@ -97,7 +96,7 @@ impl<'a> ClassProperties<'a> {
                         // Note: Current scope is outside class.
                         let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
                         private_props.insert(
-                            ident.name.into(),
+                            ident.name,
                             PrivateProp::new(binding, prop.r#static, None, false),
                         );
                     }
@@ -134,20 +133,20 @@ impl<'a> ClassProperties<'a> {
                             SymbolFlags::Function,
                         );
 
-                        match private_props.entry(ident.name.into()) {
-                            Entry::Occupied(mut entry) => {
-                                // If there's already a binding for this private property,
-                                // it's a setter or getter, so store the binding in `binding2`.
-                                entry.get_mut().set_binding2(binding);
-                            }
-                            Entry::Vacant(entry) => {
-                                entry.insert(PrivateProp::new(
+                        if let Some(prop) = private_props.get_mut(&ident.name) {
+                            // If there's already a binding for this private property,
+                            // it's a setter or getter, so store the binding in `binding2`.
+                            prop.set_binding2(binding);
+                        } else {
+                            private_props.insert(
+                                ident.name,
+                                PrivateProp::new(
                                     binding,
                                     method.r#static,
                                     Some(method.kind),
                                     false,
-                                ));
-                            }
+                                ),
+                            );
                         }
                     }
                 }
@@ -157,7 +156,7 @@ impl<'a> ClassProperties<'a> {
                     if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
                         let dummy_binding = BoundIdentifier::new(Ident::empty(), SymbolId::new(0));
                         private_props.insert(
-                            ident.name.into(),
+                            ident.name,
                             PrivateProp::new(dummy_binding, prop.r#static, None, true),
                         );
                     }
@@ -851,7 +850,7 @@ impl<'a> ClassProperties<'a> {
     }
 
     /// `_classPrivateFieldLooseKey("prop")`
-    fn create_private_prop_key_loose(name: Atom<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    fn create_private_prop_key_loose(name: Ident<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
             SPAN,
