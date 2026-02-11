@@ -138,6 +138,13 @@ impl<'a> IsolatedDeclarations<'a> {
             return self.ast.alloc(params.clone_in(self.ast.allocator));
         }
 
+        let mut is_remaining_params_have_required = vec![false; params.items.len()];
+        let mut has_required = false;
+        for (index, item) in params.items.iter().enumerate().rev() {
+            has_required |= !(item.optional || item.initializer.is_some());
+            is_remaining_params_have_required[index] = has_required;
+        }
+
         let items = self.ast.vec_from_iter(
             params
                 .items
@@ -145,12 +152,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 .enumerate()
                 .filter(|(_, item)| !skip_no_accessibility_param || item.has_modifier())
                 .filter_map(|(index, item)| {
-                    let is_remaining_params_have_required = params
-                        .items
-                        .iter()
-                        .skip(index)
-                        .any(|item| !(item.optional || item.initializer.is_some()));
-                    self.transform_formal_parameter(item, is_remaining_params_have_required)
+                    self.transform_formal_parameter(item, is_remaining_params_have_required[index])
                 }),
         );
 
