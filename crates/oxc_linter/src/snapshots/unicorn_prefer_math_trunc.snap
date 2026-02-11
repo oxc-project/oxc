@@ -42,7 +42,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() {return.1 | 0;}
    ·                       ──────
    ╰────
-  help: Replace `.1 | 0` with `Math.trunc(.1)`.
+  help: Replace `.1 | 0` with ` Math.trunc(.1)`.
 
   ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
    ╭─[prefer_math_trunc.tsx:1:13]
@@ -168,7 +168,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() {return~~3.9;}
    ·                       ─────
    ╰────
-  help: Replace `~~3.9` with `Math.trunc(3.9)`.
+  help: Replace `~~3.9` with ` Math.trunc(3.9)`.
 
   ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `>> 0`.
    ╭─[prefer_math_trunc.tsx:1:13]
@@ -196,7 +196,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() {return.1 ^0;}
    ·                       ─────
    ╰────
-  help: Replace `.1 ^0` with `Math.trunc(.1)`.
+  help: Replace `.1 ^0` with ` Math.trunc(.1)`.
 
   ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `^= 0`.
    ╭─[prefer_math_trunc.tsx:1:23]
