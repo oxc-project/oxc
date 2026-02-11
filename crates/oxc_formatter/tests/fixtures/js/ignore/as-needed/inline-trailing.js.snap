@@ -1,0 +1,40 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+assertion_line: 229
+---
+==================== Input ====================
+foo();
+[1,2,3]; // prettier-ignore
+
+bar();
+[4,5,6]; // prettier-ignore
+
+baz();
+[7,8,9]
+
+==================== Output ====================
+-------------------------------
+{ printWidth: 80, semi: false }
+-------------------------------
+foo()
+;[1,2,3]; // prettier-ignore
+
+bar()
+;[4,5,6]; // prettier-ignore
+
+baz()
+;[7, 8, 9]
+
+--------------------------------
+{ printWidth: 100, semi: false }
+--------------------------------
+foo()
+;[1,2,3]; // prettier-ignore
+
+bar()
+;[4,5,6]; // prettier-ignore
+
+baz()
+;[7, 8, 9]
+
+===================== End =====================
