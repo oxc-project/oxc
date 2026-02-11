@@ -1,0 +1,356 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type.
+   ╭─[no_invalid_void_type.tsx:1:28]
+ 1 │ type GenericVoid = Generic<void>;
+   ·                            ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type.
+   ╭─[no_invalid_void_type.tsx:1:26]
+ 1 │ function takeVoid(thing: void) {}
+   ·                          ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type.
+   ╭─[no_invalid_void_type.tsx:1:26]
+ 1 │ let voidPromise: Promise<void> = new Promise<void>(() => {});
+   ·                          ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type.
+   ╭─[no_invalid_void_type.tsx:1:46]
+ 1 │ let voidPromise: Promise<void> = new Promise<void>(() => {});
+   ·                                              ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type.
+   ╭─[no_invalid_void_type.tsx:1:26]
+ 1 │ let voidMap: Map<string, void> = new Map<string, void>();
+   ·                          ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type.
+   ╭─[no_invalid_void_type.tsx:1:50]
+ 1 │ let voidMap: Map<string, void> = new Map<string, void>();
+   ·                                                  ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type.
+   ╭─[no_invalid_void_type.tsx:1:25]
+ 1 │ type invalidVoidUnion = void | number;
+   ·                         ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:26]
+ 1 │ function takeVoid(thing: void) {}
+   ·                          ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:33]
+ 1 │ const arrowGeneric = <T extends void>(arg: T) => {};
+   ·                                 ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:34]
+ 1 │ const arrowGeneric2 = <T extends void = void>(arg: T) => {};
+   ·                                  ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:36]
+ 1 │ function functionGeneric<T extends void>(arg: T) {}
+   ·                                    ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:37]
+ 1 │ function functionGeneric2<T extends void = void>(arg: T) {}
+   ·                                     ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:48]
+ 1 │ declare function functionDeclaration<T extends void>(arg: T): void;
+   ·                                                ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:49]
+ 1 │ declare function functionDeclaration2<T extends void = void>(arg: T): void;
+   ·                                                 ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:17]
+ 1 │ functionGeneric<void>(undefined);
+   ·                 ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:34]
+ 1 │ declare function voidArray(args: void[]): void[];
+   ·                                  ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:43]
+ 1 │ declare function voidArray(args: void[]): void[];
+   ·                                           ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:26]
+ 1 │ let value = undefined as void;
+   ·                          ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  × Unexpected token
+   ╭─[no_invalid_void_type.tsx:1:19]
+ 1 │ let value = <void>undefined;
+   ·                   ──────────
+   ╰────
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:33]
+ 1 │ function takesThings(...things: void[]): void {}
+   ·                                 ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:24]
+ 1 │ type KeyofVoid = keyof void;
+   ·                        ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:4:33]
+ 3 │                       lambda: () => void;
+ 4 │                       voidProp: void;
+   ·                                 ────
+ 5 │                     }
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:3:50]
+ 2 │                     class ClassName {
+ 3 │                       private readonly propName: void;
+   ·                                                  ────
+ 4 │                     }
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:3:42]
+ 2 │                     class ClassName {
+ 3 │                       accessor propName: void;
+   ·                                          ────
+ 4 │                     }
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:14]
+ 1 │ let letVoid: void;
+   ·              ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:2:37]
+ 1 │ 
+ 2 │                     type VoidType = void;
+   ·                                     ────
+ 3 │                     class OtherClassName {
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:1:37]
+ 1 │ type UnionType2 = string | number | void;
+   ·                                     ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:1:56]
+ 1 │ type UnionType3 = string | ((number & any) | (string | void));
+   ·                                                        ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:1:35]
+ 1 │ declare function test(): number | void;
+   ·                                   ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:1:42]
+ 1 │ declare function test<T extends number | void>(): T;
+   ·                                          ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:43]
+ 1 │ type IntersectionType = string & number & void;
+   ·                                           ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:3:39]
+ 2 │                     type MappedType<T> = {
+ 3 │                       [K in keyof T]: void;
+   ·                                       ────
+ 4 │                     };
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:3:61]
+ 2 │                     type ConditionalType<T> = {
+ 3 │                       [K in keyof T]: T[K] extends string ? void : string;
+   ·                                                             ────
+ 4 │                     };
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:26]
+ 1 │ type ManyVoid = readonly void[];
+   ·                          ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:28]
+ 1 │ function foo(arr: readonly void[]) {}
+   ·                            ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:1:25]
+ 1 │ type invalidVoidUnion = void | Map<string, number>;
+   ·                         ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:1:25]
+ 1 │ type invalidVoidUnion = void | Map;
+   ·                         ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:3:39]
+ 2 │             class SomeClass {
+ 3 │               f(x?: string): string | void {
+   ·                                       ────
+ 4 │                 if (x !== undefined) {
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:1:48]
+ 1 │ export default function (x?: string): string | void {}
+   ·                                                ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:1:41]
+ 1 │ export function f(x?: string): string | void {}
+   ·                                         ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:3:45]
+ 2 │             function f(): void;
+ 3 │             function f(x: string): string | void;
+   ·                                             ────
+ 4 │             function f(x?: string): string | void {
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Remove `void` from this union type constituent.
+   ╭─[no_invalid_void_type.tsx:4:38]
+ 3 │               f(): void;
+ 4 │               f(x: string): string | void;
+   ·                                      ────
+ 5 │               f(x?: string): string | void {
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Do not use `void` as a type argument for `Banned`.
+   ╭─[no_invalid_void_type.tsx:1:26]
+ 1 │ type BannedVoid = Banned<void>;
+   ·                          ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Do not use `void` as a type argument for `Ex.Mx.Tx`.
+   ╭─[no_invalid_void_type.tsx:1:28]
+ 1 │ type BannedVoid = Ex.Mx.Tx<void>;
+   ·                            ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or generic type argument.
+   ╭─[no_invalid_void_type.tsx:1:26]
+ 1 │ function takeVoid(thing: void) {}
+   ·                          ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type, generic type argument, or the type of a `this` parameter.
+   ╭─[no_invalid_void_type.tsx:1:14]
+ 1 │ type alias = void;
+   ·              ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or as the type of a `this` parameter.
+   ╭─[no_invalid_void_type.tsx:1:14]
+ 1 │ type alias = void;
+   ·              ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.
+
+  ⚠ typescript-eslint(no-invalid-void-type): Use `void` only as a return type or as the type of a `this` parameter.
+   ╭─[no_invalid_void_type.tsx:1:20]
+ 1 │ type alias = Array<void>;
+   ·                    ────
+   ╰────
+  help: Replace this `void` type with an allowed type, or keep `void` only in a valid return position.

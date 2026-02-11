@@ -242,6 +242,7 @@ pub(crate) mod typescript {
     pub mod no_implied_eval;
     pub mod no_import_type_side_effects;
     pub mod no_inferrable_types;
+    pub mod no_invalid_void_type;
     pub mod no_meaningless_void_operator;
     pub mod no_misused_new;
     pub mod no_misused_promises;

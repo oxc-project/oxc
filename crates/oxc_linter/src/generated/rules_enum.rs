@@ -464,6 +464,7 @@ pub use crate::rules::typescript::no_for_in_array::NoForInArray as TypescriptNoF
 pub use crate::rules::typescript::no_implied_eval::NoImpliedEval as TypescriptNoImpliedEval;
 pub use crate::rules::typescript::no_import_type_side_effects::NoImportTypeSideEffects as TypescriptNoImportTypeSideEffects;
 pub use crate::rules::typescript::no_inferrable_types::NoInferrableTypes as TypescriptNoInferrableTypes;
+pub use crate::rules::typescript::no_invalid_void_type::NoInvalidVoidType as TypescriptNoInvalidVoidType;
 pub use crate::rules::typescript::no_meaningless_void_operator::NoMeaninglessVoidOperator as TypescriptNoMeaninglessVoidOperator;
 pub use crate::rules::typescript::no_misused_new::NoMisusedNew as TypescriptNoMisusedNew;
 pub use crate::rules::typescript::no_misused_promises::NoMisusedPromises as TypescriptNoMisusedPromises;
@@ -917,6 +918,7 @@ pub enum RuleEnum {
     TypescriptNoImpliedEval(TypescriptNoImpliedEval),
     TypescriptNoImportTypeSideEffects(TypescriptNoImportTypeSideEffects),
     TypescriptNoInferrableTypes(TypescriptNoInferrableTypes),
+    TypescriptNoInvalidVoidType(TypescriptNoInvalidVoidType),
     TypescriptNoMeaninglessVoidOperator(TypescriptNoMeaninglessVoidOperator),
     TypescriptNoMisusedNew(TypescriptNoMisusedNew),
     TypescriptNoMisusedPromises(TypescriptNoMisusedPromises),
@@ -2285,6 +2287,7 @@ impl RuleEnum {
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::NAME,
             Self::TypescriptNoImportTypeSideEffects(_) => TypescriptNoImportTypeSideEffects::NAME,
             Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::NAME,
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::NAME,
             Self::TypescriptNoMeaninglessVoidOperator(_) => {
                 TypescriptNoMeaninglessVoidOperator::NAME
             }
@@ -3054,6 +3057,7 @@ impl RuleEnum {
                 TypescriptNoImportTypeSideEffects::CATEGORY
             }
             Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::CATEGORY,
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::CATEGORY,
             Self::TypescriptNoMeaninglessVoidOperator(_) => {
                 TypescriptNoMeaninglessVoidOperator::CATEGORY
             }
@@ -3844,6 +3848,7 @@ impl RuleEnum {
             Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::FIX,
             Self::TypescriptNoImportTypeSideEffects(_) => TypescriptNoImportTypeSideEffects::FIX,
             Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::FIX,
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::FIX,
             Self::TypescriptNoMeaninglessVoidOperator(_) => {
                 TypescriptNoMeaninglessVoidOperator::FIX
             }
@@ -4640,6 +4645,7 @@ impl RuleEnum {
                 TypescriptNoImportTypeSideEffects::documentation()
             }
             Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::documentation(),
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::documentation(),
             Self::TypescriptNoMeaninglessVoidOperator(_) => {
                 TypescriptNoMeaninglessVoidOperator::documentation()
             }
@@ -5899,6 +5905,10 @@ impl RuleEnum {
             Self::TypescriptNoInferrableTypes(_) => {
                 TypescriptNoInferrableTypes::config_schema(generator)
                     .or_else(|| TypescriptNoInferrableTypes::schema(generator))
+            }
+            Self::TypescriptNoInvalidVoidType(_) => {
+                TypescriptNoInvalidVoidType::config_schema(generator)
+                    .or_else(|| TypescriptNoInvalidVoidType::schema(generator))
             }
             Self::TypescriptNoMeaninglessVoidOperator(_) => {
                 TypescriptNoMeaninglessVoidOperator::config_schema(generator)
@@ -7412,6 +7422,7 @@ impl RuleEnum {
             Self::TypescriptNoImpliedEval(_) => "typescript",
             Self::TypescriptNoImportTypeSideEffects(_) => "typescript",
             Self::TypescriptNoInferrableTypes(_) => "typescript",
+            Self::TypescriptNoInvalidVoidType(_) => "typescript",
             Self::TypescriptNoMeaninglessVoidOperator(_) => "typescript",
             Self::TypescriptNoMisusedNew(_) => "typescript",
             Self::TypescriptNoMisusedPromises(_) => "typescript",
@@ -8567,6 +8578,9 @@ impl RuleEnum {
             }
             Self::TypescriptNoInferrableTypes(_) => Ok(Self::TypescriptNoInferrableTypes(
                 TypescriptNoInferrableTypes::from_configuration(value)?,
+            )),
+            Self::TypescriptNoInvalidVoidType(_) => Ok(Self::TypescriptNoInvalidVoidType(
+                TypescriptNoInvalidVoidType::from_configuration(value)?,
             )),
             Self::TypescriptNoMeaninglessVoidOperator(_) => {
                 Ok(Self::TypescriptNoMeaninglessVoidOperator(
@@ -10225,6 +10239,7 @@ impl RuleEnum {
             Self::TypescriptNoImpliedEval(rule) => rule.to_configuration(),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.to_configuration(),
             Self::TypescriptNoInferrableTypes(rule) => rule.to_configuration(),
+            Self::TypescriptNoInvalidVoidType(rule) => rule.to_configuration(),
             Self::TypescriptNoMeaninglessVoidOperator(rule) => rule.to_configuration(),
             Self::TypescriptNoMisusedNew(rule) => rule.to_configuration(),
             Self::TypescriptNoMisusedPromises(rule) => rule.to_configuration(),
@@ -10902,6 +10917,7 @@ impl RuleEnum {
             Self::TypescriptNoImpliedEval(rule) => rule.run(node, ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run(node, ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.run(node, ctx),
+            Self::TypescriptNoInvalidVoidType(rule) => rule.run(node, ctx),
             Self::TypescriptNoMeaninglessVoidOperator(rule) => rule.run(node, ctx),
             Self::TypescriptNoMisusedNew(rule) => rule.run(node, ctx),
             Self::TypescriptNoMisusedPromises(rule) => rule.run(node, ctx),
@@ -11575,6 +11591,7 @@ impl RuleEnum {
             Self::TypescriptNoImpliedEval(rule) => rule.run_once(ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run_once(ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.run_once(ctx),
+            Self::TypescriptNoInvalidVoidType(rule) => rule.run_once(ctx),
             Self::TypescriptNoMeaninglessVoidOperator(rule) => rule.run_once(ctx),
             Self::TypescriptNoMisusedNew(rule) => rule.run_once(ctx),
             Self::TypescriptNoMisusedPromises(rule) => rule.run_once(ctx),
@@ -12270,6 +12287,7 @@ impl RuleEnum {
             Self::TypescriptNoImpliedEval(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptNoInvalidVoidType(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoMeaninglessVoidOperator(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -13009,6 +13027,7 @@ impl RuleEnum {
             Self::TypescriptNoImpliedEval(rule) => rule.should_run(ctx),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.should_run(ctx),
             Self::TypescriptNoInferrableTypes(rule) => rule.should_run(ctx),
+            Self::TypescriptNoInvalidVoidType(rule) => rule.should_run(ctx),
             Self::TypescriptNoMeaninglessVoidOperator(rule) => rule.should_run(ctx),
             Self::TypescriptNoMisusedNew(rule) => rule.should_run(ctx),
             Self::TypescriptNoMisusedPromises(rule) => rule.should_run(ctx),
@@ -13738,6 +13757,7 @@ impl RuleEnum {
                 TypescriptNoImportTypeSideEffects::IS_TSGOLINT_RULE
             }
             Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::IS_TSGOLINT_RULE,
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::IS_TSGOLINT_RULE,
             Self::TypescriptNoMeaninglessVoidOperator(_) => {
                 TypescriptNoMeaninglessVoidOperator::IS_TSGOLINT_RULE
             }
@@ -14656,6 +14676,7 @@ impl RuleEnum {
                 TypescriptNoImportTypeSideEffects::HAS_CONFIG
             }
             Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::HAS_CONFIG,
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::HAS_CONFIG,
             Self::TypescriptNoMeaninglessVoidOperator(_) => {
                 TypescriptNoMeaninglessVoidOperator::HAS_CONFIG
             }
@@ -15445,6 +15466,7 @@ impl RuleEnum {
             Self::TypescriptNoImpliedEval(rule) => rule.types_info(),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.types_info(),
             Self::TypescriptNoInferrableTypes(rule) => rule.types_info(),
+            Self::TypescriptNoInvalidVoidType(rule) => rule.types_info(),
             Self::TypescriptNoMeaninglessVoidOperator(rule) => rule.types_info(),
             Self::TypescriptNoMisusedNew(rule) => rule.types_info(),
             Self::TypescriptNoMisusedPromises(rule) => rule.types_info(),
@@ -16118,6 +16140,7 @@ impl RuleEnum {
             Self::TypescriptNoImpliedEval(rule) => rule.run_info(),
             Self::TypescriptNoImportTypeSideEffects(rule) => rule.run_info(),
             Self::TypescriptNoInferrableTypes(rule) => rule.run_info(),
+            Self::TypescriptNoInvalidVoidType(rule) => rule.run_info(),
             Self::TypescriptNoMeaninglessVoidOperator(rule) => rule.run_info(),
             Self::TypescriptNoMisusedNew(rule) => rule.run_info(),
             Self::TypescriptNoMisusedPromises(rule) => rule.run_info(),
@@ -16831,6 +16854,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptNoImpliedEval(TypescriptNoImpliedEval::default()),
         RuleEnum::TypescriptNoImportTypeSideEffects(TypescriptNoImportTypeSideEffects::default()),
         RuleEnum::TypescriptNoInferrableTypes(TypescriptNoInferrableTypes::default()),
+        RuleEnum::TypescriptNoInvalidVoidType(TypescriptNoInvalidVoidType::default()),
         RuleEnum::TypescriptNoMeaninglessVoidOperator(
             TypescriptNoMeaninglessVoidOperator::default(),
         ),
