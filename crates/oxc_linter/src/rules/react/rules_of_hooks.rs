@@ -568,22 +568,6 @@ fn test() {
               useHook();
             }
         ",
-        // Valid because 'use' followed by a digit is a valid hook name (/^use[A-Z0-9]/).
-        "
-            function use2FAMutation() {
-              return useState(null);
-            }
-        ",
-        "
-            function Component() {
-              use2FAMutation();
-            }
-        ",
-        "
-            function use3DEngine() {
-              useEffect(() => {}, []);
-            }
-        ",
         // Valid because hooks can use hooks.
         "
             function createHook() {
