@@ -1,0 +1,409 @@
+Implement the following plan:
+
+# Fix Sourcemap Correctness in oxc_transformer
+
+## Context
+
+The transformer has ~698 uses of `SPAN` (empty span `Span::new(0,0)`) across 41 files. Codegen skips empty spans for sourcemap generation (`!span.is_empty()` guard at `crates/oxc_codegen/src/lib.rs:895`), so all transformed nodes with `SPAN` produce **no sourcemap entries**, leading to incorrect/incomplete sourcemaps.
+
+## Span Propagation Rules
+
+**Fix**: Outermost node that **replaces** an original source node must inherit that node's span.
+**Keep SPAN**: Truly synthetic nodes with no source equivalent (injected imports, helper loader code, generated temp vars, internal function bodies/params of wrappers).
+
+In other words: the user wrote `enum Foo { ... }` — the resulting `var Foo = ...` statement should map back to the original enum span.
+
+## Implementation Plan
+
+### Phase 0: Shared Utilities
+**`crates/oxc_transformer/src/utils/ast_builder.rs`**
+- Add `span: Span` param to `create_member_callee()`, `create_prototype_member()`, `create_assignment()`
+- Update all call sites to pass the appropriate span
+
+### Phase 1: High-Priority Transforms (most common user code)
+
+#### 1a. `typescript/enum.rs` (27 SPAN uses)
+- `transform_ts_enum()`: Use `decl.span` for:
+  - L120: callee function expression
+  - L157: `expression_logical` (`Foo || {}`)
+  - L162: `expression_call_with_pure` (the overall IIFE call)
+  - L179: `expression_assignment` (redeclaration case)
+  - L192: `variable_declarator`
+- `transform_ts_enum_members()`: Use `member.span` for each member's assignment expressions
+- Keep SPAN for: formal_parameter, formal_parameters, `{}` object literal, return statement
+
+#### 1b. `typescript/namespace.rs` (30 SPAN uses)
+- Use original `TSModuleDeclaration.span` for:
+  - The IIFE function expression
+  - The variable declarator/declaration for `let Foo`
+  - The `export` wrapper when applicable
+- Keep SPAN for: internal function body, formal parameters, property identifiers
+
+#### 1c. `jsx/jsx_impl.rs` (25 SPAN uses)
+- `transform_jsx()` already receives `span` — propagate it to:
+  - Children array expression
+  - Props object expression
+  - The overall `createElement`/`jsx` call expression
+- Keep SPAN for: synthetic property names (`children`, `__source`), `void 0`, boolean literals
+
+#### 1d. `es2016/exponentiation_operator.rs` (13 SPAN uses)
+- Use original `BinaryExpression.span` for `Math.pow(left, right)` call expression
+- Use original span for `expression_sequence` wrapper
+
+#### 1e. `es2020/optional_chaining.rs` (16 SPAN uses)
+- Use `ChainExpression.span` for the replacement conditional expression
+
+#### 1f. `es2020/nullish_coalescing_operator.rs` (12 SPAN uses)
+- Use original `??` expression span for the replacement conditional
+
+#### 1g. `es2021/logical_assignment_operators.rs` (4 SPAN uses)
+- Use original assignment expression span for the replacement
+
+### Phase 2: Medium-Priority Transforms
+
+#### 2a. `es2017/async_to_generator.rs` (35 SPAN uses)
+- `transform_await_expression()`: Use `expr.span` for `expression_yield`
+- `transform_function_expression()`: Use function span for the IIFE call
+- `transform_arrow_function()`: Use `arrow.span` for the IIFE call
+- Keep SPAN for: `.apply` member expressions, internal helper call structure
+
+#### 2b. `es2018/object_rest_spread.rs` (35 SPAN uses)
+- Use destructuring pattern/object spread spans for helper calls
+- Use original variable declaration spans for replacement declarations
+
+#### 2c. `jsx/refresh.rs` (38 SPAN uses)
+- Propagate component spans to registration wrapper calls
+- Keep SPAN for: config-parsed identifiers, signature computation internals
+
+#### 2d. `common/arrow_function_converter.rs` (28 SPAN uses)
+- Already partially correct — verify all outermost replacement nodes use arrow span
+
+### Phase 3: Complex Transforms (lots of synthetic boilerplate)
+
+#### 3a. `es2022/class_properties/` (~138 SPAN uses across 6 files)
+- `prop_decl.rs`: Use `PropertyDefinition.span` for `this.prop = value` assignments
+- `private_field.rs`: Use field access span for helper call wrappers
+- `constructor.rs`: Use property definition spans where noted (existing TODO at L243)
+- Keep SPAN for: synthetic constructor body, super call forwarding, temp var declarations
+
+#### 3b. `es2018/async_generator_functions/for_await.rs` (63 SPAN uses)
+- Use `ForOfStatement.span` for the outermost replacement `for` statement and `try` wrapper
+- Keep SPAN for: iterator protocol boilerplate (most of the 63 uses)
+
+#### 3c. `es2026/explicit_resource_management.rs` (49 SPAN uses)
+- Use `using` declaration span for the outermost wrapper
+- Keep SPAN for: disposal protocol boilerplate
+
+#### 3d. `decorator/legacy/` (53 SPAN uses)
+- Use decorator/class spans for outermost decorator application expressions
+- Keep SPAN for: internal helper function structure
+
+### Files to Leave Unchanged (truly synthetic)
+- `common/var_declarations.rs` (7) — generated temp var declarations
+- `common/module_imports.rs` (11) — injected import/require statements
+- `common/helper_loader.rs` (4) — runtime helper imports
+- `common/statement_injector.rs` — injection infrastructure
+
+## Verification
+
+1. **Existing test**: `crates/oxc_codegen/tests/integration/sourcemap.rs` — extend `stacktrace_is_correct` test to cover transformed code
+2. **Manual check**: Use sourcemap visualizer on transformed output to confirm mappings point to correct source locations
+3. **Run**: `just test` and `just conformance` to ensure no regressions
+4. **Spot check**: For each phase, pick a representative transform, generate sourcemap output, verify with `cargo run -p oxc_codegen --example codegen`
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.REDACTED.jsonl
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze the conversation to build a comprehensive summary.
+
+1. The user provided a detailed implementation plan to fix sourcemap correctness in oxc_transformer by propagating spans from original source nodes to their transformed replacements.
+
+2. The plan has multiple phases (0-3) with specific files and line numbers to change.
+
+3. I created task items for each phase and worked through them systematically.
+
+Phase 0: Updated shared utilities in ast_builder.rs
+- Added `span: Span` param to `create_member_callee()`, `create_prototype_member()`, `create_assignment()`
+- Updated all call sites to pass SPAN (preserving existing behavior for now)
+- Hit an error: `computed_key.rs` needed `use oxc_span::SPAN;` import added
+
+Phase 1a: Fixed typescript/enum.rs spans
+- Used `decl.span` for callee function expression, logical expression, call expression, assignment expression, variable declarator
+- Used `member.span` for each member's assignment expressions
+- Kept SPAN for formal_parameter, formal_parameters, `{}` object literal, return statement
+
+Phase 1b: Fixed typescript/namespace.rs spans
+- Added `span: Span` param to `create_variable_declaration`
+- Used `span` for function expression, parenthesized expression, call expression, variable declarator, export wrapper
+
+Phase 1c: Fixed jsx/jsx_impl.rs spans
+- Used `span` for children array expression, props object expression (both automatic and classic modes)
+- The overall call expression already used `span`
+
+Phase 1d: Fixed es2016/exponentiation_operator.rs
+- Added `span: Span` param to `math_pow()` and `revise_expression()`
+- Passed `binary_expr.span` for binary expression case
+- Passed `assign_expr.span` for assignment expression cases
+- Updated all 4 callers of `revise_expression`
+
+Phase 1e: Fixed es2020/optional_chaining.rs
+- Added `span: Span` param to `create_conditional_expression()`
+- Captured span from chain expression before conversion
+- Added `GetSpan` and `Span` imports
+
+Phase 1f: es2020/nullish_coalescing_operator.rs - Already correct (already uses span)
+
+Phase 1g: Fixed es2021/logical_assignment_operators.rs
+- Used `assignment_expr.span` for the replacement logical expression
+
+Phase 2a: Fixed es2017/async_to_generator.rs
+- Used `expr.span` for yield expression (await → yield)
+- Used function span for IIFE call in transform_function_expression
+- Used arrow_span for IIFE call in transform_arrow_function
+
+Phase 2b: Fixed es2018/object_rest_spread.rs
+- Captured `obj_expr.span` and set it on the final call expression
+
+Phase 2c: Fixed jsx/refresh.rs
+- Used `expr.span()` for signature wrapper call in exit_expression
+- Used `func.span` for signature wrapper call in exit_function
+
+Phase 2d: Fixed common/arrow_function_converter.rs
+- Used `expr.span()` for call expression in transform_member_expression_for_super
+- Used `call.span` for call expression in transform_call_expression_for_super
+
+Phase 3 was started with exploration agents gathering analysis for:
+- class_properties (prop_decl.rs, private_field.rs, constructor.rs)
+- for_await.rs
+- explicit_resource_management.rs
+- decorator/legacy was planned but not yet explored
+
+The agents returned analysis results but no edits were made for Phase 3 yet.
+
+Task status:
+- #1 Phase 0: completed
+- #2 Phase 1a: completed
+- #3 Phase 1b: completed
+- #4 Phase 1c: completed
+- #5 Phase 1d-g: completed
+- #6 Phase 2: completed
+- #7 Phase 3: in_progress
+- #8 Verify: pending
+
+Summary:
+1. Primary Request and Intent:
+   The user asked to implement a detailed plan to fix sourcemap correctness in `oxc_transformer`. The core problem: ~698 uses of `SPAN` (empty span `Span::new(0,0)`) across 41 files in the transformer. Codegen skips empty spans for sourcemap generation (`!span.is_empty()` guard at `crates/oxc_codegen/src/lib.rs:895`), so all transformed nodes with `SPAN` produce no sourcemap entries.
+
+   **Span Propagation Rules:**
+   - **Fix**: Outermost node that **replaces** an original source node must inherit that node's span
+   - **Keep SPAN**: Truly synthetic nodes with no source equivalent (injected imports, helper loader code, generated temp vars, internal function bodies/params of wrappers)
+
+   The plan has 4 phases: Phase 0 (shared utilities), Phase 1 (high-priority transforms), Phase 2 (medium-priority transforms), Phase 3 (complex transforms), plus verification.
+
+2. Key Technical Concepts:
+   - Sourcemap generation in oxc_codegen skips nodes with empty spans (`SPAN`)
+   - Span propagation: outermost replacement nodes inherit the original source node's span
+   - `SPAN` constant = `Span::new(0, 0)` from `oxc_span`
+   - `GetSpan` trait provides `.span()` method on AST nodes
+   - Transform architecture: each transform visits AST nodes and replaces them with new nodes
+   - IIFE (Immediately Invoked Function Expression) pattern used in enum, namespace, async transforms
+   - Helper functions like `create_assignment`, `create_member_callee`, `create_prototype_member` are shared utilities
+
+3. Files and Code Sections:
+
+   - **`crates/oxc_transformer/src/utils/ast_builder.rs`** (Phase 0)
+     - Core shared utility functions used across transforms
+     - Added `span: Span` parameter to 3 functions:
+     ```rust
+     pub fn create_member_callee<'a>(
+         object: Expression<'a>,
+         property: &'static str,
+         span: Span,  // ADDED
+         ctx: &TraverseCtx<'a>,
+     ) -> Expression<'a> {
+         let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
+         Expression::from(ctx.ast.member_expression_static(span, object, property, false))
+     }
+     
+     pub fn create_prototype_member<'a>(
+         object: Expression<'a>,
+         span: Span,  // ADDED
+         ctx: &TraverseCtx<'a>,
+     ) -> Expression<'a> {
+         let property = ctx.ast.identifier_name(SPAN, Atom::from("prototype"));
+         let static_member = ctx.ast.member_expression_static(span, object, property, false);
+         Expression::from(static_member)
+     }
+     
+     pub fn create_assignment<'a>(
+         binding: &BoundIdentifier<'a>,
+         value: Expression<'a>,
+         span: Span,  // ADDED
+         ctx: &mut TraverseCtx<'a>,
+     ) -> Expression<'a> {
+         ctx.ast.expression_assignment(
+             span,
+             AssignmentOperator::Assign,
+             binding.create_target(ReferenceFlags::Write, ctx),
+             value,
+         )
+     }
+     ```
+     - Updated all call sites to pass `SPAN` (preserving existing behavior), to be refined in later phases
+
+   - **Call site updates for Phase 0** (all passing `SPAN` for now):
+     - `crates/oxc_transformer/src/es2022/class_properties/private_field.rs` - 2 `create_member_callee` calls updated with span param, 4 `create_assignment` calls updated
+     - `crates/oxc_transformer/src/es2022/class_properties/super_converter.rs` - 1 `create_prototype_member` call, 2 `create_assignment` calls
+     - `crates/oxc_transformer/src/es2022/class_properties/class.rs` - 5 `create_assignment` calls
+     - `crates/oxc_transformer/src/es2022/class_properties/prop_decl.rs` - 1 `create_assignment` call
+     - `crates/oxc_transformer/src/es2022/class_properties/constructor.rs` - 1 `create_assignment` call
+     - `crates/oxc_transformer/src/decorator/legacy/mod.rs` - 1 `create_prototype_member` call, 1 `create_assignment` call
+     - `crates/oxc_transformer/src/common/computed_key.rs` - 1 `create_assignment` call, added `use oxc_span::SPAN;` import
+
+   - **`crates/oxc_transformer/src/typescript/enum.rs`** (Phase 1a)
+     - Enum transform: `enum Foo { X = 1 }` → `var Foo = ((Foo) => { ... })(Foo || {})`
+     - Captured `let span = decl.span;` early in `transform_ts_enum`
+     - Changed `SPAN` to `span` for: function expression (callee), logical expression (`Foo || {}`), call expression (IIFE), assignment expression (redeclaration), variable declarator
+     - Added `let member_span = member.span;` in member loop
+     - Changed member assignment expressions to use `member_span`
+
+   - **`crates/oxc_transformer/src/typescript/namespace.rs`** (Phase 1b)
+     - Added `use oxc_span::{SPAN, Span};`
+     - Added `span: Span` param to `create_variable_declaration()`
+     - Updated call site to pass `span`
+     - Updated export wrapper to use `span` instead of `SPAN`
+     - Updated `transform_namespace` to use `span` for function expression, parenthesized expression, call expression
+
+   - **`crates/oxc_transformer/src/jsx/jsx_impl.rs`** (Phase 1c)
+     - The overall call expression at line 759 already used `span`
+     - Changed children array expression (`expression_array`) to use `span`
+     - Changed props object expression (`expression_object`) to use `span` in both automatic and classic modes
+
+   - **`crates/oxc_transformer/src/es2016/exponentiation_operator.rs`** (Phase 1d)
+     - Added `use oxc_span::{SPAN, Span};`
+     - Added `span: Span` as first param to `math_pow()` - used for member expression and call expression
+     - Added `span: Span` param to `revise_expression()` - used for sequence expression
+     - Updated `convert_binary_expression` to pass `binary_expr.span`
+     - Updated `convert_assignment` to capture and pass `assign_expr.span`
+     - Updated all 4 callers of `revise_expression` to capture `assign_expr.span` before conversion
+
+   - **`crates/oxc_transformer/src/es2020/optional_chaining.rs`** (Phase 1e)
+     - Added `use oxc_span::{GetSpan, SPAN, Span};`
+     - Added `span: Span` param to `create_conditional_expression()`
+     - In `transform_chain_expression_impl`: captured `let span = chain_expr.span();` before conversion
+     - Passed `span` to `create_conditional_expression`
+
+   - **`crates/oxc_transformer/src/es2020/nullish_coalescing_operator.rs`** (Phase 1f)
+     - Already correct - `create_conditional_expression` already accepts and uses `span`
+
+   - **`crates/oxc_transformer/src/es2021/logical_assignment_operators.rs`** (Phase 1g)
+     - Captured `let span = assignment_expr.span;`
+     - Changed outer `expression_logical(SPAN, ...)` to `expression_logical(span, ...)`
+
+   - **`crates/oxc_transformer/src/es2017/async_to_generator.rs`** (Phase 2a)
+     - `transform_await_expression`: Changed `expression_yield(SPAN, ...)` to `expression_yield(expr.span, ...)`
+     - `transform_function_expression`: Captured `let span = wrapper_function.span;`, used for IIFE call
+     - `transform_arrow_function`: Captured `let arrow_span = arrow.span;`, used for IIFE call
+
+   - **`crates/oxc_transformer/src/es2018/object_rest_spread.rs`** (Phase 2b)
+     - In `transform_object_expression`: Captured `let span = obj_expr.span;`
+     - Set span on final call expression: `final_call.span = span;`
+
+   - **`crates/oxc_transformer/src/jsx/refresh.rs`** (Phase 2c)
+     - `exit_expression`: Captured `let span = expr.span();` before taking, used for signature wrapper call
+     - `exit_function`: Used `func.span` for signature wrapper call and statement expression
+
+   - **`crates/oxc_transformer/src/common/arrow_function_converter.rs`** (Phase 2d)
+     - `transform_member_expression_for_super`: Changed `expression_call(SPAN, ...)` to `expression_call(expr.span(), ...)`
+     - `transform_call_expression_for_super`: Changed `expression_call(SPAN, ...)` to `expression_call(call.span, ...)`
+
+4. Errors and fixes:
+   - **Missing SPAN import in computed_key.rs**: After adding `span: Span` param to `create_assignment`, the call site in `computed_key.rs` needed `SPAN` but didn't import it. Fixed by adding `use oxc_span::SPAN;` to the imports.
+   - All other changes compiled cleanly on first try.
+
+5. Problem Solving:
+   - The approach of adding `span` params to shared utilities first (Phase 0) and passing `SPAN` at all call sites was effective - it kept the code compiling while allowing gradual refinement in later phases.
+   - For `object_rest_spread.rs`, instead of threading span through the helper function `make_object_spread`, the simpler approach of setting the span on the final call expression after construction was used.
+   - For `nullish_coalescing_operator.rs`, analysis showed spans were already correct, so no changes needed.
+   - Each phase was verified with `cargo check -p oxc_transformer` before moving on.
+
+6. All user messages:
+   - Initial message: "Implement the following plan: [detailed multi-phase plan for fixing sourcemap correctness in oxc_transformer]" with a link to a previous transcript for reference.
+
+7. Pending Tasks:
+   - **Phase 3: Fix complex transform spans** (Task #7, in_progress) - Analysis completed by agents, edits NOT yet made:
+     - `es2022/class_properties/prop_decl.rs`: Lines 89-90 (SPAN→prop.span), 293-298 (SPAN→prop.span), 334 (SPAN→prop.span), 387 (SPAN→prop.span)
+     - `es2022/class_properties/constructor.rs`: Line 243 TODO depends on prop_decl fixes
+     - `es2018/async_generator_functions/for_await.rs`: Lines 260, 343, 480, 74 should use `stmt.span`
+     - `es2026/explicit_resource_management.rs`: ~10 lines need original declaration spans
+     - `decorator/legacy/` (~53 SPAN uses): Not yet explored
+   - **Task #8: Verify** (pending) - Run `just test` and `just conformance`
+
+8. Current Work:
+   Phase 3 was in progress. Three exploration agents returned analysis for:
+   1. **class_properties** (prop_decl.rs, private_field.rs, constructor.rs) - Key changes: prop_decl.rs lines 90, 293-294, 334, 387 need `prop.span`
+   2. **for_await.rs** - Lines 260, 343, 480, 74 need `stmt.span`
+   3. **explicit_resource_management.rs** - ~10 lines need original spans
+   
+   No Phase 3 edits have been made yet. The agents provided analysis only.
+
+9. Optional Next Step:
+   Continue implementing Phase 3 edits based on the agent analysis results. The most impactful file to start with is `prop_decl.rs` (class property initialization spans), then `for_await.rs`, then `explicit_resource_management.rs`, then `decorator/legacy/`. After all Phase 3 edits, run verification (Task #8: `just test` and `just conformance`).
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.claude/projects/-Users-boshen-oxc-oxc3/329329ee-a303-44f8-95ca-5475bd2c3f50.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+<task-notification>
+<task-id>b85b155</task-id>
+<output-file>/private/tmp/claude-501/-Users-boshen-oxc-oxc3/tasks/b85b155.output</output-file>
+<status>completed</status>
+<summary>Background command "Run transformer tests" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-boshen-oxc-oxc3/tasks/b85b155.output
+
+---
+
+<task-notification>
+<task-id>b4ea587</task-id>
+<output-file>REDACTED.output</output-file>
+<status>completed</status>
+<summary>Background command "Run codegen sourcemap tests" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: REDACTED.output
+
+---
+
+<task-notification>
+<task-id>b601e33</task-id>
+<output-file>/private/tmp/claude-501/-Users-boshen-oxc-oxc3/tasks/b601e33.output</output-file>
+<status>completed</status>
+<summary>Background command "Run transformer conformance tests" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-boshen-oxc-oxc3/tasks/b601e33.output
+
+---
+
+create draft pr
+
+---
+
+create draft pr
+
+---
+
+create draft pr
+
+---
+
+[Request interrupted by user for tool use]
+
+---
+
+create draft pr
