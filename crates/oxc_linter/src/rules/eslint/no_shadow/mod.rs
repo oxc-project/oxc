@@ -13,6 +13,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::Reference;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     node::NodeId,
@@ -108,24 +109,9 @@ impl Rule for NoShadow {
         for symbol_id in scoping.symbol_ids() {
             let symbol_name = scoping.symbol_ident(symbol_id);
             let symbol_name_str = symbol_name.as_str();
-            let symbol_flags = scoping.symbol_flags(symbol_id);
-            let symbol_scope = scoping.symbol_scope_id(symbol_id);
             let symbol_span = scoping.symbol_span(symbol_id);
 
-            // Skip if in allow list
-            if self.allow.iter().any(|allowed| allowed.as_str() == symbol_name_str) {
-                continue;
-            }
-
-            if symbol_name_str == "this" {
-                continue;
-            }
-
-            if Self::is_declare_in_definition_file(ctx, symbol_id) {
-                continue;
-            }
-
-            if Self::is_in_global_augmentation(ctx, symbol_id) {
+            if self.should_skip_symbol(ctx, symbol_id, symbol_name_str) {
                 continue;
             }
 
@@ -136,41 +122,20 @@ impl Rule for NoShadow {
                 continue;
             }
 
-            let shadowed_symbol_id = scoping
-                .scope_ancestors(symbol_scope)
-                .skip(1)
-                .find_map(|scope_id| scoping.get_binding(scope_id, symbol_name));
-
-            if let Some(shadowed_symbol_id) = shadowed_symbol_id {
-                let shadowed_flags = scoping.symbol_flags(shadowed_symbol_id);
-                let shadowed_span = scoping.symbol_span(shadowed_symbol_id);
-
-                if Self::is_function_name_initializer_exception(ctx, symbol_id, shadowed_symbol_id)
-                    || (self.ignore_on_initialization
-                        && Self::is_init_pattern_node(ctx, symbol_id, shadowed_symbol_id))
-                    || (self.hoist != HoistOption::All
-                        && self.is_in_tdz(ctx, symbol_id, shadowed_symbol_id))
-                    || self.should_ignore_shadow(
-                        ctx,
-                        symbol_id,
-                        symbol_flags,
-                        shadowed_symbol_id,
-                        shadowed_flags,
-                    )
-                    || Self::is_external_declaration_merging(ctx, symbol_id, shadowed_symbol_id)
-                {
-                    continue;
+            if let Some(shadowed_symbol_id) = Self::find_shadowed_symbol_id(ctx, symbol_id) {
+                if !self.should_ignore_shadowed_symbol(ctx, symbol_id, shadowed_symbol_id) {
+                    let shadowed_span = scoping.symbol_span(shadowed_symbol_id);
+                    ctx.diagnostic(no_shadow_diagnostic(
+                        symbol_span,
+                        symbol_name_str,
+                        shadowed_span,
+                    ));
                 }
-
-                ctx.diagnostic(no_shadow_diagnostic(symbol_span, symbol_name_str, shadowed_span));
                 continue;
             }
 
-            if self.builtin_globals && is_builtin_global_name(ctx, symbol_name_str) {
-                if self.should_ignore_global_shadow(ctx, symbol_id, symbol_flags) {
-                    continue;
-                }
-
+            let symbol_flags = scoping.symbol_flags(symbol_id);
+            if self.is_builtin_global_shadow(ctx, symbol_id, symbol_name_str, symbol_flags) {
                 ctx.diagnostic(no_shadow_global_diagnostic(symbol_span, symbol_name_str));
             }
         }
@@ -178,6 +143,66 @@ impl Rule for NoShadow {
 }
 
 impl NoShadow {
+    fn should_skip_symbol(
+        &self,
+        ctx: &LintContext,
+        symbol_id: SymbolId,
+        symbol_name: &str,
+    ) -> bool {
+        self.allow.iter().any(|allowed| allowed.as_str() == symbol_name)
+            || symbol_name == "this"
+            || Self::is_declare_in_definition_file(ctx, symbol_id)
+            || Self::is_in_global_augmentation(ctx, symbol_id)
+    }
+
+    fn find_shadowed_symbol_id(ctx: &LintContext, symbol_id: SymbolId) -> Option<SymbolId> {
+        let scoping = ctx.scoping();
+        let symbol_name = scoping.symbol_ident(symbol_id);
+        let symbol_scope = scoping.symbol_scope_id(symbol_id);
+
+        scoping
+            .scope_ancestors(symbol_scope)
+            .skip(1)
+            .find_map(|scope_id| scoping.get_binding(scope_id, symbol_name))
+    }
+
+    fn should_ignore_shadowed_symbol(
+        &self,
+        ctx: &LintContext,
+        symbol_id: SymbolId,
+        shadowed_symbol_id: SymbolId,
+    ) -> bool {
+        let scoping = ctx.scoping();
+        let symbol_flags = scoping.symbol_flags(symbol_id);
+        let shadowed_flags = scoping.symbol_flags(shadowed_symbol_id);
+
+        Self::is_function_name_initializer_exception(ctx, symbol_id, shadowed_symbol_id)
+            || (self.ignore_on_initialization
+                && Self::is_init_pattern_node(ctx, symbol_id, shadowed_symbol_id))
+            || (self.hoist != HoistOption::All
+                && self.is_in_tdz(ctx, symbol_id, shadowed_symbol_id))
+            || self.should_ignore_shadow(
+                ctx,
+                symbol_id,
+                symbol_flags,
+                shadowed_symbol_id,
+                shadowed_flags,
+            )
+            || Self::is_external_declaration_merging(ctx, symbol_id, shadowed_symbol_id)
+    }
+
+    fn is_builtin_global_shadow(
+        &self,
+        ctx: &LintContext,
+        symbol_id: SymbolId,
+        symbol_name: &str,
+        symbol_flags: SymbolFlags,
+    ) -> bool {
+        self.builtin_globals
+            && is_builtin_global_name(ctx, symbol_name)
+            && !self.should_ignore_global_shadow(ctx, symbol_id, symbol_flags)
+    }
+
     fn should_ignore_global_shadow(
         &self,
         ctx: &LintContext,
@@ -200,17 +225,10 @@ impl NoShadow {
         shadowed_flags: SymbolFlags,
     ) -> bool {
         // Ignore when one side is type-only and the other side is value-only.
-        if self.ignore_type_value_shadow {
-            let symbol_is_value = symbol_flags.can_be_referenced_by_value();
-            let shadowed_is_value = if shadowed_flags.is_type_import() {
-                false
-            } else {
-                shadowed_flags.can_be_referenced_by_value()
-            };
-
-            if symbol_is_value != shadowed_is_value {
-                return true;
-            }
+        if self.ignore_type_value_shadow
+            && Self::is_type_value_shadow_pair(symbol_flags, shadowed_flags)
+        {
+            return true;
         }
 
         if self.ignore_function_type_parameter_name_value_shadow
@@ -224,18 +242,33 @@ impl NoShadow {
         }
 
         // Value imports that are only used as types are allowed to be shadowed by values.
-        if shadowed_flags.contains(SymbolFlags::Import) {
-            let references: Vec<_> =
-                ctx.scoping().get_resolved_references(shadowed_symbol_id).collect();
-            let has_refs = !references.is_empty();
-            let all_type_refs = references.iter().all(|r| r.is_type());
+        Self::is_value_import_used_only_as_type(
+            ctx,
+            symbol_flags,
+            shadowed_symbol_id,
+            shadowed_flags,
+        )
+    }
 
-            if has_refs && all_type_refs && !is_type_only(symbol_flags) {
-                return true;
-            }
+    fn is_type_value_shadow_pair(symbol_flags: SymbolFlags, shadowed_flags: SymbolFlags) -> bool {
+        let symbol_is_value = symbol_flags.can_be_referenced_by_value();
+        let shadowed_is_value =
+            !shadowed_flags.is_type_import() && shadowed_flags.can_be_referenced_by_value();
+        symbol_is_value != shadowed_is_value
+    }
+
+    fn is_value_import_used_only_as_type(
+        ctx: &LintContext,
+        symbol_flags: SymbolFlags,
+        shadowed_symbol_id: SymbolId,
+        shadowed_flags: SymbolFlags,
+    ) -> bool {
+        if !shadowed_flags.contains(SymbolFlags::Import) || is_type_only(symbol_flags) {
+            return false;
         }
 
-        false
+        let mut references = ctx.scoping().get_resolved_references(shadowed_symbol_id).peekable();
+        references.peek().is_some() && references.all(Reference::is_type)
     }
 
     fn is_function_type_parameter_name_value_shadow(
@@ -269,16 +302,11 @@ impl NoShadow {
         }
 
         let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
-        let mut type_parameter_decl_id = None;
-
-        for ancestor_id in ctx.nodes().ancestor_ids(declaration_id) {
-            if matches!(ctx.nodes().kind(ancestor_id), AstKind::TSTypeParameterDeclaration(_)) {
-                type_parameter_decl_id = Some(ancestor_id);
-                break;
-            }
-        }
-
-        let Some(type_parameter_decl_id) = type_parameter_decl_id else {
+        let Some(type_parameter_decl_id) =
+            ctx.nodes().ancestor_ids(declaration_id).find(|&ancestor_id| {
+                matches!(ctx.nodes().kind(ancestor_id), AstKind::TSTypeParameterDeclaration(_))
+            })
+        else {
             return false;
         };
 
