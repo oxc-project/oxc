@@ -1849,17 +1849,6 @@ impl<'a> Format<'a> for AstNode<'a, BlockStatement<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        if f.comments().has_line_suppression_comment_at_end_of_line(self.span().end) {
-            format_leading_comments(self.span()).fmt(f);
-            FormatSuppressedNode(self.span()).fmt(f);
-            format_trailing_comments(
-                self.parent.span(),
-                self.inner.span(),
-                self.following_span_start,
-            )
-            .fmt(f);
-            return;
-        }
         let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {

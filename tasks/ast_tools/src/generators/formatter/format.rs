@@ -45,12 +45,6 @@ const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeOperator",
 ];
 
-/// Enum nodes where an inline trailing suppression comment should suppress the whole node.
-///
-/// This gives broad coverage for statement-like syntax without duplicating checks in every
-/// concrete statement/declaration formatter.
-const ENUM_NODE_WITH_INLINE_TRAILING_SUPPRESSION_LIST: &[&str] = &["Statement", "Declaration"];
-
 const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "ArrowFunctionExpression" => "FormatJsArrowFunctionExpressionOptions",
     "Function" => "FormatFunctionOptions",
@@ -324,20 +318,12 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
     };
     let node_type = get_node_type(&enum_ty);
 
-    let inline_trailing_suppression = if ENUM_NODE_WITH_INLINE_TRAILING_SUPPRESSION_LIST
-        .contains(&enum_def.name())
-    {
+    let inline_trailing_suppression = if enum_def.name() == "Statement" {
         // Expression statements need specialized ASI-safe suppression handling in
         // `AstNode<ExpressionStatement>::write`.
-        let skip_expression_statement = if enum_def.name() == "Statement" {
-            quote! { !matches!(self.inner, Statement::ExpressionStatement(_)) && }
-        } else {
-            quote! {}
-        };
-
         quote! {
-            if #skip_expression_statement
-                f.comments().has_line_suppression_comment_at_end_of_line(self.span().end)
+            if !matches!(self.inner, Statement::ExpressionStatement(_))
+                && f.comments().has_line_suppression_comment_at_end_of_line(self.span().end)
             {
                 format_leading_comments(self.span()).fmt(f);
                 FormatSuppressedNode(self.span()).fmt(f);
