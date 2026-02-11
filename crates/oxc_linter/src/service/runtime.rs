@@ -690,11 +690,36 @@ impl Runtime {
                         }
 
                         if let Some(suppression_detected) = suppression {
-                            let file_name = Filename::new(path.strip_prefix(&self.cwd).unwrap());
+                            let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
 
+                            // TODO: Remove after modify how we build the new filename structure passing messages
+                            let suppression_per_file = path
+                                .strip_prefix(&self.cwd)
+                                .ok()
+                                .map(|relative_url| {
+                                    suppression_manager.get_suppression_per_file(&relative_url)
+                                })
+                                .unwrap_or(SuppressionFileState::Ignored);
+
+                            let diff = SuppressionManager::diff_filename(
+                                suppression_per_file,
+                                &suppression_detected,
+                                &filename,
+                            );
+
+                            if !diff.is_empty() && !suppression_manager.is_updating_file() {
+                                let errors = diff.into_iter().map(Into::into).collect();
+                                let diagnostics =
+                                    DiagnosticService::wrap_diagnostics(&me.cwd, path, "", errors);
+                                tx_error.send(diagnostics).unwrap();
+                            } else if !diff.is_empty() && suppression_manager.is_updating_file() {
+                                // TODO: Send the diff here
+                            }
+
+                            // TODO TO BE REMOVED
                             suppression_detected.iter().for_each(|(key, value)| {
                                 runtime_suppression_sender
-                                    .send((file_name.clone(), key.clone(), value.clone()))
+                                    .send((filename.clone(), key.clone(), value.clone()))
                                     .unwrap();
                             });
                         }
@@ -798,13 +823,6 @@ impl Runtime {
         }
 
         let has_diagnostics = !diagnostics.is_empty();
-
-        if has_diagnostics && !suppression_manager_two.is_updating_file() {
-            let errors = diagnostics.into_iter().map(Into::into).collect();
-            let diagnostics_wrapped =
-                DiagnosticService::wrap_diagnostics(&self.cwd, &self.cwd, "", errors);
-            tx_error.send(diagnostics_wrapped).unwrap();
-        }
 
         if has_diagnostics && suppression_manager_two.is_updating_file() {
             suppression_manager_two

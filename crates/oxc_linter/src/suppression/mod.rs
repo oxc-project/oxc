@@ -151,6 +151,27 @@ pub enum SuppressionDiff {
     Appeared { file: Filename, rule: RuleName },
 }
 
+impl Into<OxcDiagnostic> for SuppressionDiff {
+    fn into(self) -> OxcDiagnostic {
+        let message = match self {
+            SuppressionDiff::Increased { file, rule, from, to } => {
+                format!("The {rule} errors in {file} have increased from {from} to {to}.")
+            }
+            SuppressionDiff::Decreased { file, rule, from, to } => {
+                format!("The {rule} errors in {file} have decreased from {from} to {to}.")
+            }
+            SuppressionDiff::PrunedRuled { file, rule } => {
+                format!("All {rule} errors has been pruned in {file}.")
+            }
+            SuppressionDiff::Appeared { file, rule } => {
+                format!("New errors for {rule} have appeared in {file}.")
+            }
+        };
+
+        OxcDiagnostic::error(message)
+    }
+}
+
 pub enum SuppressionFileState<'a> {
     Ignored,
     New,
@@ -304,6 +325,71 @@ impl SuppressionManager {
                 diff.push(SuppressionDiff::Increased {
                     file: file_key.clone(),
                     rule: rule_key.clone(),
+                    from: file_diagnostic.count,
+                    to: runtime_diagnostic.count,
+                });
+            }
+        }
+
+        diff
+    }
+
+    pub fn diff_filename(
+        suppression_file_state: SuppressionFileState<'_>,
+        runtime_suppression: &FxHashMap<RuleName, DiagnosticCounts>,
+        filename: &Filename,
+    ) -> Vec<SuppressionDiff> {
+        let static_suppression = match suppression_file_state {
+            SuppressionFileState::Ignored => return vec![],
+            SuppressionFileState::New if runtime_suppression.is_empty() => return vec![],
+            SuppressionFileState::New => FxHashMap::default(),
+            SuppressionFileState::Exists { file_suppressions: Some(file) } => file.to_owned(),
+            SuppressionFileState::Exists { file_suppressions: None } => FxHashMap::default(),
+        };
+
+        let mut diff = vec![];
+
+        if static_suppression.is_empty() && runtime_suppression.is_empty() {
+            return diff;
+        }
+
+        let static_suppression_keys = FxHashSet::from_iter(static_suppression.keys());
+        let runtime_suppression_keys = FxHashSet::from_iter(runtime_suppression.keys());
+
+        let mut pruned_rules = static_suppression_keys.difference(&runtime_suppression_keys);
+        let mut new_violations = runtime_suppression_keys.difference(&static_suppression_keys);
+        let mut existing_violations =
+            static_suppression_keys.intersection(&runtime_suppression_keys);
+
+        while let Some(rule_key) = pruned_rules.next() {
+            diff.push(SuppressionDiff::PrunedRuled {
+                file: filename.clone(),
+                rule: (*rule_key).clone(),
+            });
+        }
+
+        while let Some(rule_key) = new_violations.next() {
+            diff.push(SuppressionDiff::Appeared {
+                file: filename.clone(),
+                rule: (*rule_key).clone(),
+            });
+        }
+
+        while let Some(rule_key) = existing_violations.next() {
+            let file_diagnostic = static_suppression.get(rule_key).unwrap();
+            let runtime_diagnostic = runtime_suppression.get(rule_key).unwrap();
+
+            if file_diagnostic.count > runtime_diagnostic.count {
+                diff.push(SuppressionDiff::Decreased {
+                    file: filename.clone(),
+                    rule: (*rule_key).clone(),
+                    from: file_diagnostic.count,
+                    to: runtime_diagnostic.count,
+                });
+            } else if file_diagnostic.count < runtime_diagnostic.count {
+                diff.push(SuppressionDiff::Increased {
+                    file: filename.clone(),
+                    rule: (*rule_key).clone(), // Deref??? es un string por debajo al final
                     from: file_diagnostic.count,
                     to: runtime_diagnostic.count,
                 });
