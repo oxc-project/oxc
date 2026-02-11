@@ -4,7 +4,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
-use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, fixer::RuleFixer, rule::Rule, utils::pad_fix_with_token_boundary,
+};
 
 fn prefer_math_trunc_diagnostic(span: Span, bad_op: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer `Math.trunc()` over instead of `{bad_op} 0`."))
@@ -120,13 +122,15 @@ impl Rule for PreferMathTrunc {
             prefer_math_trunc_diagnostic(span, operator),
             |fixer: RuleFixer<'_, 'a>| {
                 let argument_text = ctx.source_range(argument_span);
-                if is_assignment {
+                let mut replacement = if is_assignment {
                     // `x |= 0` -> `x = Math.trunc(x)`
-                    fixer.replace(span, format!("{argument_text} = Math.trunc({argument_text})"))
+                    format!("{argument_text} = Math.trunc({argument_text})")
                 } else {
                     // `x | 0` or `~~x` -> `Math.trunc(x)`
-                    fixer.replace(span, format!("Math.trunc({argument_text})"))
-                }
+                    format!("Math.trunc({argument_text})")
+                };
+                pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
+                fixer.replace(span, replacement)
             },
         );
     }
@@ -194,6 +198,8 @@ fn test() {
     let fix = vec![
         (r"const foo = 1.1 | 0;", r"const foo = Math.trunc(1.1);"),
         (r"const foo = ~~3.9;", r"const foo = Math.trunc(3.9);"),
+        (r"function foo() {return.1 | 0;}", r"function foo() {return Math.trunc(.1);}"),
+        (r"function foo() {return~~3.9;}", r"function foo() {return Math.trunc(3.9);}"),
         (r"const foo = bar >> 0;", r"const foo = Math.trunc(bar);"),
         (r"const foo = bar << 0;", r"const foo = Math.trunc(bar);"),
         (r"const foo = bar ^ 0;", r"const foo = Math.trunc(bar);"),
