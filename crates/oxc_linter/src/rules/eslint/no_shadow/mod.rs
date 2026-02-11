@@ -238,7 +238,10 @@ impl NoShadow {
         false
     }
 
-    fn is_function_type_parameter_name_value_shadow(ctx: &LintContext, symbol_id: SymbolId) -> bool {
+    fn is_function_type_parameter_name_value_shadow(
+        ctx: &LintContext,
+        symbol_id: SymbolId,
+    ) -> bool {
         let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
         ctx.nodes().ancestor_kinds(declaration_id).any(|ancestor_kind| {
             matches!(
@@ -479,7 +482,11 @@ impl NoShadow {
         initializer.address() == ctx.nodes().kind(unwrapped_expression_id).address()
     }
 
-    fn is_init_pattern_node(ctx: &LintContext, symbol_id: SymbolId, shadowed_symbol_id: SymbolId) -> bool {
+    fn is_init_pattern_node(
+        ctx: &LintContext,
+        symbol_id: SymbolId,
+        shadowed_symbol_id: SymbolId,
+    ) -> bool {
         let scoping = ctx.scoping();
 
         let variable_scope_id = scoping.symbol_scope_id(symbol_id);
@@ -624,7 +631,8 @@ impl NoShadow {
                     current_id = parent_id;
                 }
                 AstKind::ConditionalExpression(conditional_expression) => {
-                    if conditional_expression.test.address() == ctx.nodes().kind(current_id).address()
+                    if conditional_expression.test.address()
+                        == ctx.nodes().kind(current_id).address()
                     {
                         break;
                     }
