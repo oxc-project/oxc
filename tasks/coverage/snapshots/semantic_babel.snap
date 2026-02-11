@@ -2,7 +2,7 @@ commit: 92c052dc
 
 semantic_babel Summary:
 AST Parsed     : 2224/2224 (100.00%)
-Positive Passed: 2024/2224 (91.01%)
+Positive Passed: 2025/2224 (91.05%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -655,12 +655,7 @@ rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-asi/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["A", "B", "a", "b"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-equals-require/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["a"]
+after transform: ScopeId(0): ["B", "b"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/extends/input.ts

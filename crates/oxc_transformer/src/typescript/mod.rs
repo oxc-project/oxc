@@ -214,14 +214,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         self.annotations.enter_statements(stmts, ctx);
     }
 
-    fn exit_statements(
-        &mut self,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.annotations.exit_statements(stmts, ctx);
-    }
-
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.r#enum.enter_statement(stmt, ctx);
         self.module.enter_statement(stmt, ctx);

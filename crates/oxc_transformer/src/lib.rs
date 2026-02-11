@@ -597,9 +597,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.exit_statements(stmts, ctx);
-        }
         self.common.exit_statements(stmts, ctx);
     }
 
