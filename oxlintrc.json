@@ -12,7 +12,6 @@
     "promise",
     "vitest"
   ],
-  "jsPlugins": ["./plugins/oxlint-plugin.ts"],
   "categories": {
     "correctness": "error",
     "perf": "error"
@@ -20,6 +19,7 @@
   "rules": {
     "no-console": "error",
     "curly": ["error", "multi-line"],
+    "prefer-const": ["error", { "destructuring": "all" }],
     "prefer-destructuring": [
       "error",
       {
@@ -28,8 +28,7 @@
     ],
     "unicode-bom": ["error", "never"],
     "typescript/consistent-indexed-object-style": ["error", "record"],
-    "typescript/ban-ts-comment": ["error", { "ts-expect-error": "allow-with-description" }],
-    "eslint-js/prefer-const": ["error", { "destructuring": "all" }]
+    "typescript/ban-ts-comment": ["error", { "ts-expect-error": "allow-with-description" }]
   },
   "overrides": [
     {
