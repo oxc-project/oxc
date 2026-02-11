@@ -3092,6 +3092,18 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Remove the dependency from the dependency array.
 
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'props.value'
+   ╭─[exhaustive_deps.tsx:4:31]
+ 2 │           if (props.ok) {
+ 3 │             const callback = () => props.value;
+   ·                                    ──┬──
+   ·                                      ╰── useMemo uses `props.value` here
+ 4 │             useMemo(callback, []);
+   ·                               ──
+ 5 │           }
+   ╰────
+  help: Either include it or remove the dependency array.
+
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useSpecialEffect has a missing dependency: 'state'
    ╭─[exhaustive_deps.tsx:7:14]
  5 │             const someNumber: typeof state = 2;
