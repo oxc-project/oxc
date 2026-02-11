@@ -3,7 +3,6 @@ packages:
   - napi/*
   - wasm/*
   - npm/*
-  - plugins/
   - tasks/e2e
   - tasks/transform_conformance
   - tasks/compat_data

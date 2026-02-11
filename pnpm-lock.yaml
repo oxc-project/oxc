@@ -282,15 +282,6 @@ importers:
 
   npm/runtime: {}
 
-  plugins:
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.1.0
-      eslint:
-        specifier: 'catalog:'
-        version: 9.39.2(jiti@2.6.1)
-
   tasks/compat_data:
     devDependencies:
       degit:
