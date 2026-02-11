@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 /// Controls how hoisting is handled when checking for shadowing.
 #[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "kebab-case", deny_unknown_fields)]
 pub enum HoistOption {
     /// Report shadowing even before the outer variable is declared (due to hoisting).
     All,

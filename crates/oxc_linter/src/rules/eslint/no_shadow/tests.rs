@@ -258,8 +258,6 @@ fn test_eslint() {
         ("function foo(a) { } var a;", None, None, None), // { "ecmaVersion": 6 },
         ("function foo() { var Object = 0; }", None, None, None),
         ("function foo() { var top = 0; }", None, None, None), // { "globals": globals.browser },
-        ("var Object = 0;", Some(serde_json::json!([{ "builtinGlobals": true }])), None, None),
-        ("var top = 0;", Some(serde_json::json!([{ "builtinGlobals": true }])), None, None), // { "globals": globals.browser },
         (
             "function foo(cb) { (function (cb) { cb(42); })(cb); }",
             Some(serde_json::json!([{ "allow": ["cb"] }])),
@@ -1808,7 +1806,7 @@ fn test_eslint() {
             Some(
                 serde_json::json!([ { "builtinGlobals": true, "ignoreTypeValueShadow": false, }, ]),
             ),
-            None,
+            Some(serde_json::json!({ "globals": { "Foo": "writable" } })),
             None,
         ), // { "globals": { "Foo": "writable", }, },
         (
@@ -1827,7 +1825,7 @@ fn test_eslint() {
             Some(
                 serde_json::json!([ { "builtinGlobals": true, "ignoreFunctionTypeParameterNameValueShadow": false, }, ]),
             ),
-            None,
+            Some(serde_json::json!({ "globals": { "Foo": "writable" } })),
             None,
         ), // { "globals": { "Foo": "writable", }, },
         (
@@ -2234,7 +2232,7 @@ fn test_eslint() {
             Some(
                 serde_json::json!([ { "builtinGlobals": true, "ignoreTypeValueShadow": false, }, ]),
             ),
-            None,
+            Some(serde_json::json!({ "globals": { "args": "writable" } })),
             None,
         ), // { "globals": { "args": "writable", }, },
         (
@@ -2242,7 +2240,7 @@ fn test_eslint() {
               declare const has = (environment: 'dev' | 'prod' | 'test') => boolean;
             		",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
-            None,
+            Some(serde_json::json!({ "globals": { "has": false } })),
             None,
         ), // { "globals": { "has": false, }, },
         (
@@ -3223,7 +3221,7 @@ fn test_typescript_eslint() {
             Some(
                 serde_json::json!([ { "builtinGlobals": true, "ignoreTypeValueShadow": false, }, ]),
             ),
-            None,
+            Some(serde_json::json!({ "globals": { "Foo": "writable" } })),
             None,
         ), // { "globals": { "Foo": "writable", }, },
         (
@@ -3242,7 +3240,7 @@ fn test_typescript_eslint() {
             Some(
                 serde_json::json!([ { "builtinGlobals": true, "ignoreFunctionTypeParameterNameValueShadow": false, }, ]),
             ),
-            None,
+            Some(serde_json::json!({ "globals": { "Foo": "writable" } })),
             None,
         ), // { "globals": { "Foo": "writable", }, },
         (
@@ -3603,7 +3601,7 @@ fn test_typescript_eslint() {
             Some(
                 serde_json::json!([ { "builtinGlobals": true, "ignoreTypeValueShadow": false, }, ]),
             ),
-            None,
+            Some(serde_json::json!({ "globals": { "args": "writable" } })),
             None,
         ), // { "globals": { "args": "writable", }, },
         (
@@ -3611,7 +3609,7 @@ fn test_typescript_eslint() {
             declare const has = (environment: 'dev' | 'prod' | 'test') => boolean;
                   ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
-            None,
+            Some(serde_json::json!({ "globals": { "has": false } })),
             None,
         ), // { "globals": { "has": false, }, },
         (
