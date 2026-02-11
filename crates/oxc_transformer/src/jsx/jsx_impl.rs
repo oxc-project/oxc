@@ -657,7 +657,7 @@ impl<'a> JsxImpl<'a> {
                     need_jsxs = true;
                     let elements = children.into_iter().map(ArrayExpressionElement::from);
                     let elements = ctx.ast.vec_from_iter(elements);
-                    ctx.ast.expression_array(SPAN, elements)
+                    ctx.ast.expression_array(span, elements)
                 };
                 let children = ctx.ast.property_key_static_identifier(SPAN, "children");
                 let kind = PropertyKind::Init;
@@ -668,7 +668,7 @@ impl<'a> JsxImpl<'a> {
             }
 
             // If runtime is automatic that means we always to add `{ .. }` as the second argument even if it's empty
-            let mut object_expression = ctx.ast.expression_object(SPAN, properties);
+            let mut object_expression = ctx.ast.expression_object(span, properties);
             if let Some(options) = self.object_rest_spread_options {
                 ObjectRestSpread::transform_object_expression(options, &mut object_expression, ctx);
             }
@@ -719,7 +719,7 @@ impl<'a> JsxImpl<'a> {
             }
 
             if !properties.is_empty() {
-                let mut object_expression = ctx.ast.expression_object(SPAN, properties);
+                let mut object_expression = ctx.ast.expression_object(span, properties);
                 if let Some(options) = self.object_rest_spread_options {
                     ObjectRestSpread::transform_object_expression(
                         options,

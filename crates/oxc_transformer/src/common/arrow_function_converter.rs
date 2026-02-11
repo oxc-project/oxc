@@ -786,7 +786,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         if let Some(assign_value) = assign_value {
             arguments.push(Argument::from(assign_value.take_in(ctx.ast)));
         }
-        let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
+        let call = ctx.ast.expression_call(expr.span(), callee, NONE, arguments, false);
         Some(call)
     }
 
@@ -826,7 +826,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         let property = ctx.ast.identifier_name(SPAN, "call");
         let callee = ctx.ast.member_expression_static(SPAN, object, property, false);
         let callee = Expression::from(callee);
-        Some(ctx.ast.expression_call(SPAN, callee, NONE, arguments, false))
+        Some(ctx.ast.expression_call(call.span, callee, NONE, arguments, false))
     }
 
     /// Transform an `AssignmentExpression` whose assignment target is a `super` member expression.

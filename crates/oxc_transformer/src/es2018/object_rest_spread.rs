@@ -491,6 +491,7 @@ impl<'a> ObjectRestSpread<'a> {
             return;
         }
 
+        let span = obj_expr.span;
         let mut call_expr: Option<ArenaBox<'a, CallExpression<'a>>> = None;
         let mut props = ctx.ast.vec_with_capacity(obj_expr.properties.len());
 
@@ -508,7 +509,9 @@ impl<'a> ObjectRestSpread<'a> {
             Self::make_object_spread(&mut call_expr, &mut props, ctx);
         }
 
-        *expr = Expression::CallExpression(call_expr.unwrap());
+        let mut final_call = call_expr.unwrap();
+        final_call.span = span;
+        *expr = Expression::CallExpression(final_call);
     }
 
     fn make_object_spread(

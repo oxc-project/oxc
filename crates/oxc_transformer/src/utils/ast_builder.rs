@@ -12,10 +12,11 @@ use crate::context::TraverseCtx;
 pub fn create_member_callee<'a>(
     object: Expression<'a>,
     property: &'static str,
+    span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = ctx.ast.identifier_name(SPAN, Atom::from(property));
-    Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
+    Expression::from(ctx.ast.member_expression_static(span, object, property, false))
 }
 
 /// `object` -> `object.bind(this)`.
@@ -25,7 +26,7 @@ pub fn create_bind_call<'a>(
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let callee = create_member_callee(callee, "bind", ctx);
+    let callee = create_member_callee(callee, "bind", span, ctx);
     let arguments = ctx.ast.vec1(Argument::from(this));
     ctx.ast.expression_call(span, callee, NONE, arguments, false)
 }
@@ -37,7 +38,7 @@ pub fn create_call_call<'a>(
     span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
-    let callee = create_member_callee(callee, "call", ctx);
+    let callee = create_member_callee(callee, "call", span, ctx);
     let arguments = ctx.ast.vec1(Argument::from(this));
     ctx.ast.expression_call(span, callee, NONE, arguments, false)
 }
@@ -78,10 +79,11 @@ pub fn wrap_statements_in_arrow_function_iife<'a>(
 /// `object` -> `object.prototype`.
 pub fn create_prototype_member<'a>(
     object: Expression<'a>,
+    span: Span,
     ctx: &TraverseCtx<'a>,
 ) -> Expression<'a> {
     let property = ctx.ast.identifier_name(SPAN, Atom::from("prototype"));
-    let static_member = ctx.ast.member_expression_static(SPAN, object, property, false);
+    let static_member = ctx.ast.member_expression_static(span, object, property, false);
     Expression::from(static_member)
 }
 
@@ -122,10 +124,11 @@ pub fn create_this_property_assignment<'a>(
 pub fn create_assignment<'a>(
     binding: &BoundIdentifier<'a>,
     value: Expression<'a>,
+    span: Span,
     ctx: &mut TraverseCtx<'a>,
 ) -> Expression<'a> {
     ctx.ast.expression_assignment(
-        SPAN,
+        span,
         AssignmentOperator::Assign,
         binding.create_target(ReferenceFlags::Write, ctx),
         value,
