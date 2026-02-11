@@ -1,0 +1,169 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP code actions > basic code actions > should handle fix/test.ts 1`] = `
+"--- FILE -----------
+fix/test.ts
+--- Original Content ---------
+debugger;
+
+--- Code Actions ---------
+
+Title : Remove the debugger statement
+Preferred: Yes
+Resulting Content:
+
+######
+
+Title : Disable no-debugger for this line
+Preferred: No
+Resulting Content:
+// oxlint-disable-next-line no-debugger
+debugger;
+######
+
+Title : Disable no-debugger for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable no-debugger
+debugger;
+
+--------------------"
+`;
+
+exports[`LSP code actions > basic code actions > should handle js-plugin-fix/test.js 1`] = `
+"--- FILE -----------
+js-plugin-fix/test.js
+--- Original Content ---------
+debugger;
+
+--- Code Actions ---------
+
+Title : Fix this Remove debugger statement problem
+Preferred: Yes
+Resulting Content:
+
+######
+
+Title : Disable fixes-plugin/fixes for this line
+Preferred: No
+Resulting Content:
+// oxlint-disable-next-line fixes-plugin/fixes
+debugger;
+######
+
+Title : Disable fixes-plugin/fixes for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable fixes-plugin/fixes
+debugger;
+
+--------------------"
+`;
+
+exports[`LSP code actions > basic code actions > should handle js-plugin-suggestion/test.js 1`] = `
+"--- FILE -----------
+js-plugin-suggestion/test.js
+--- Original Content ---------
+debugger;
+
+--- Code Actions ---------
+
+Title : Do it
+Preferred: Yes
+Resulting Content:
+
+######
+
+Title : Disable suggestions-plugin/suggestions for this line
+Preferred: No
+Resulting Content:
+// oxlint-disable-next-line suggestions-plugin/suggestions
+debugger;
+######
+
+Title : Disable suggestions-plugin/suggestions for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable suggestions-plugin/suggestions
+debugger;
+
+--------------------"
+`;
+
+exports[`LSP code actions > basic code actions > should handle suggestion/test.ts 1`] = `
+"--- FILE -----------
+suggestion/test.ts
+--- Original Content ---------
+let pi = 3.141592
+
+--- Code Actions ---------
+
+Title : Replace \`3.141592\` with \`Math.PI\`.
+Preferred: Yes
+Resulting Content:
+let pi = Math.PI
+######
+
+Title : Disable oxc/approx-constant for this line
+Preferred: No
+Resulting Content:
+// oxlint-disable-next-line oxc/approx-constant
+let pi = 3.141592
+######
+
+Title : Disable oxc/approx-constant for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable oxc/approx-constant
+let pi = 3.141592
+
+--------------------"
+`;
+
+exports[`LSP code actions > code actions hidden behind \`fixKind\` filter > should handle js-plugin-suggestion/test.js 1`] = `
+"--- FILE -----------
+js-plugin-suggestion/test.js
+--- Original Content ---------
+debugger;
+
+--- Code Actions ---------
+
+Title : Disable suggestions-plugin/suggestions for this line
+Preferred: No
+Resulting Content:
+// oxlint-disable-next-line suggestions-plugin/suggestions
+debugger;
+######
+
+Title : Disable suggestions-plugin/suggestions for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable suggestions-plugin/suggestions
+debugger;
+
+--------------------"
+`;
+
+exports[`LSP code actions > code actions hidden behind \`fixKind\` filter > should handle suggestion/test.ts 1`] = `
+"--- FILE -----------
+suggestion/test.ts
+--- Original Content ---------
+let pi = 3.141592
+
+--- Code Actions ---------
+
+Title : Disable oxc/approx-constant for this line
+Preferred: No
+Resulting Content:
+// oxlint-disable-next-line oxc/approx-constant
+let pi = 3.141592
+######
+
+Title : Disable oxc/approx-constant for this whole file
+Preferred: No
+Resulting Content:
+// oxlint-disable oxc/approx-constant
+let pi = 3.141592
+
+--------------------"
+`;
