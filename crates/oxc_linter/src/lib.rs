@@ -95,10 +95,7 @@ use crate::{
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
-    suppression::{
-        DiagnosticCounts, RuleName, SuppressionFile,
-        SuppressionManager,
-    },
+    suppression::{DiagnosticCounts, RuleName, SuppressionFile, SuppressionManager},
     utils::iter_possible_jest_call_node,
 };
 

@@ -61,12 +61,12 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
+    #[bpaf(external)]
+    pub suppression_options: SuppressionOptions,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
-
-    #[bpaf(external)]
-    pub suppression_options: SuppressionOptions,
 }
 
 #[derive(Debug, Clone, Bpaf)]
