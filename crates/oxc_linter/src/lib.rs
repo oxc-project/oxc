@@ -95,7 +95,9 @@ use crate::{
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
-    suppression::{DiagnosticCounts, RuleName, SuppressionFileState, SuppressionId},
+    suppression::{
+        DiagnosticCounts, RuleName, SuppressionFileState, SuppressionId, SuppressionManager,
+    },
     utils::iter_possible_jest_call_node,
 };
 
@@ -208,7 +210,7 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
-        suppression_count: SuppressionFileState,
+        suppression_file_state: SuppressionFileState,
     ) -> (Vec<Message>, Option<DisableDirectives>, Option<FxHashMap<RuleName, DiagnosticCounts>>)
     {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
@@ -435,68 +437,10 @@ impl Linter {
             Rc::try_unwrap(ctx_host).unwrap().into_disable_directives()
         };
 
-        match suppression_count {
-            SuppressionFileState::Ignored => (diagnostics, disable_directives, None),
-            SuppressionFileState::New => {
-                let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
-                    FxHashMap::default();
-                diagnostics.iter().for_each(|message| {
-                    let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
-                        return;
-                    };
+        let (filtered_diagnostics, runtime_suppression_tracking) =
+            SuppressionManager::suppress_lint_diagnostics(suppression_file_state, diagnostics);
 
-                    if let Some(violation_count) = suppression_tracking.get_mut(&rule_name) {
-                        violation_count.count += 1;
-                    } else {
-                        suppression_tracking
-                            .insert(rule_name.clone(), DiagnosticCounts { count: 1 });
-                    }
-                });
-
-                (diagnostics, disable_directives, Some(suppression_tracking))
-            }
-            SuppressionFileState::Exists { file_suppressions } => {
-                let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
-                    FxHashMap::default();
-                diagnostics.iter().for_each(|message| {
-                    let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
-                        return;
-                    };
-
-                    if let Some(violation_count) = suppression_tracking.get_mut(&rule_name) {
-                        violation_count.count += 1;
-                    } else {
-                        suppression_tracking
-                            .insert(rule_name.clone(), DiagnosticCounts { count: 1 });
-                    }
-                });
-
-                let Some(recorded_violations) = file_suppressions else {
-                    return (diagnostics, disable_directives, Some(suppression_tracking));
-                };
-
-                let diagnostics_filtered = diagnostics
-                    .into_iter()
-                    .filter(|message| {
-                        let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
-                            return false;
-                        };
-
-                        let Some(count_file) = recorded_violations.get(rule_name) else {
-                            return true;
-                        };
-
-                        let Some(count_runtime) = suppression_tracking.get(rule_name) else {
-                            return false;
-                        };
-
-                        count_file.count < count_runtime.count
-                    })
-                    .collect();
-
-                (diagnostics_filtered, disable_directives, Some(suppression_tracking))
-            }
-        }
+        (filtered_diagnostics, disable_directives, runtime_suppression_tracking)
     }
 
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
