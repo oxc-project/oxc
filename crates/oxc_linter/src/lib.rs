@@ -148,6 +148,18 @@ impl Linter {
         self
     }
 
+    #[must_use]
+    pub fn with_suppress_all(mut self, suppress_all: bool) -> Self {
+        self.options.suppress_all = suppress_all;
+        self
+    }
+
+    #[must_use]
+    pub fn with_prune_suppressions(mut self, prune_suppressions: bool) -> Self {
+        self.options.prune_suppressions = prune_suppressions;
+        self
+    }
+
     pub(crate) fn options(&self) -> &LintOptions {
         &self.options
     }
@@ -181,16 +193,6 @@ impl Linter {
             &SuppressionFile::default(),
         )
         .0
-    }
-
-    pub fn with_suppress_all(mut self, suppress_all: bool) -> Self {
-        self.options.suppress_all = suppress_all;
-        self
-    }
-
-    pub fn with_prune_suppressions(mut self, prune_suppressions: bool) -> Self {
-        self.options.prune_suppressions = prune_suppressions;
-        self
     }
 
     /// Same as `run` but also returns the disable directives for the file

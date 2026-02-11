@@ -696,23 +696,23 @@ impl Runtime {
                         if let Some(suppression_detected) = suppression {
                             let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
 
-                            let diff = SuppressionManager::diff_filename(
-                                suppression_file,
+                            let diffs = SuppressionManager::diff_filename(
+                                &suppression_file,
                                 &suppression_detected,
                                 &filename,
                             );
 
-                            if !diff.is_empty() && !is_updating_suppression_file {
-                                let errors = diff.into_iter().map(Into::into).collect();
+                            if !diffs.is_empty() && !is_updating_suppression_file {
+                                let errors = diffs.into_iter().map(Into::into).collect();
                                 let diagnostics =
                                     DiagnosticService::wrap_diagnostics(&me.cwd, path, "", errors);
                                 tx_error.send(diagnostics).unwrap();
-                            } else if !diff.is_empty() && is_updating_suppression_file {
+                            } else if !diffs.is_empty() && is_updating_suppression_file {
                                 let diff_suppression_sender = suppression_diff_channel.clone();
 
-                                diff.iter().for_each(|diff| {
+                                for diff in diffs {
                                     diff_suppression_sender.send(diff.clone()).unwrap();
-                                });
+                                }
                             }
                         }
 
