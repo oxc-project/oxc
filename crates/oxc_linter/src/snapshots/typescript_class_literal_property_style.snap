@@ -1,0 +1,174 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+   ╭─[class_literal_property_style.tsx:3:19]
+ 2 │             class Mx {
+ 3 │               get p1() {
+   ·                   ──
+ 4 │                 return 'hello world';
+   ╰────
+  help: Replace this getter with a readonly field initialized to the returned literal.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+   ╭─[class_literal_property_style.tsx:3:19]
+ 2 │             class Mx {
+ 3 │               get p1() {
+   ·                   ──
+ 4 │                 return `hello world`;
+   ╰────
+  help: Replace this getter with a readonly field initialized to the returned literal.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+   ╭─[class_literal_property_style.tsx:3:26]
+ 2 │             class Mx {
+ 3 │               static get p1() {
+   ·                          ──
+ 4 │                 return 'hello world';
+   ╰────
+  help: Replace this getter with a readonly field initialized to the returned literal.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+   ╭─[class_literal_property_style.tsx:3:33]
+ 2 │             class Mx {
+ 3 │               public static get foo() {
+   ·                                 ───
+ 4 │                 return 1;
+   ╰────
+  help: Replace this getter with a readonly field initialized to the returned literal.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+   ╭─[class_literal_property_style.tsx:3:27]
+ 2 │             class Mx {
+ 3 │               public get [myValue]() {
+   ·                           ───────
+ 4 │                 return 'a literal value';
+   ╰────
+  help: Replace this getter with a readonly field initialized to the returned literal.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+   ╭─[class_literal_property_style.tsx:3:27]
+ 2 │             class Mx {
+ 3 │               public get [myValue]() {
+   ·                           ───────
+ 4 │                 return 12345n;
+   ╰────
+  help: Replace this getter with a readonly field initialized to the returned literal.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:32]
+ 2 │             class Mx {
+ 3 │               public readonly [myValue] = 'a literal value';
+   ·                                ───────
+ 4 │             }
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:24]
+ 2 │             class Mx {
+ 3 │               readonly p1 = 'hello world';
+   ·                        ──
+ 4 │             }
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:24]
+ 2 │             class Mx {
+ 3 │               readonly p1 = `hello world`;
+   ·                        ──
+ 4 │             }
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:31]
+ 2 │             class Mx {
+ 3 │               static readonly p1 = 'hello world';
+   ·                               ──
+ 4 │             }
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+   ╭─[class_literal_property_style.tsx:3:29]
+ 2 │             class Mx {
+ 3 │               protected get p1() {
+   ·                             ──
+ 4 │                 return 'hello world';
+   ╰────
+  help: Replace this getter with a readonly field initialized to the returned literal.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:34]
+ 2 │             class Mx {
+ 3 │               protected readonly p1 = 'hello world';
+   ·                                  ──
+ 4 │             }
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+   ╭─[class_literal_property_style.tsx:3:33]
+ 2 │             class Mx {
+ 3 │               public static get p1() {
+   ·                                 ──
+ 4 │                 return 'hello world';
+   ╰────
+  help: Replace this getter with a readonly field initialized to the returned literal.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:38]
+ 2 │             class Mx {
+ 3 │               public static readonly p1 = 'hello world';
+   ·                                      ──
+ 4 │             }
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using readonly fields.
+   ╭─[class_literal_property_style.tsx:3:26]
+ 2 │             class Mx {
+ 3 │               public get myValue() {
+   ·                          ───────
+ 4 │                 return gql`
+   ╰────
+  help: Replace this getter with a readonly field initialized to the returned literal.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:31]
+ 2 │             class Mx {
+ 3 │               public readonly myValue = gql`
+   ·                               ───────
+ 4 │                 {
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:32]
+ 2 │             class A {
+ 3 │               private readonly foo: string = 'bar';
+   ·                                ───
+ 4 │               constructor(foo: string) {
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:6:36]
+ 5 │                 const bar = new (class {
+ 6 │                   private readonly foo: string = 'baz';
+   ·                                    ───
+ 7 │                   constructor() {}
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript-eslint(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:32]
+ 2 │             class A {
+ 3 │               private readonly foo: string = 'bar';
+   ·                                ───
+ 4 │               constructor(foo: string) {
+   ╰────
+  help: Replace this readonly literal field with a getter.
