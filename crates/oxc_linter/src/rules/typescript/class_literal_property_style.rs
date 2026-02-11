@@ -12,7 +12,7 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -132,7 +132,7 @@ fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
 }
 
 fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
-    let mut excluded_properties = FxHashSet::default();
+    let mut excluded_properties: FxHashSet<Atom<'a>> = FxHashSet::default();
     for element in &class_body.body {
         if let ClassElement::MethodDefinition(method) = element
             && method.kind == MethodDefinitionKind::Constructor
@@ -148,8 +148,8 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
         if let ClassElement::PropertyDefinition(property) = element
             && is_literal_readonly_property(property)
         {
-            if let Some(name) = key_name(&property.key)
-                && excluded_properties.contains(name.as_str())
+            if let Some(name) = property.key.name()
+                && excluded_properties.contains(&*name)
             {
                 continue;
             }
@@ -197,10 +197,6 @@ fn is_supported_literal(expression: &Expression<'_>) -> bool {
     }
 }
 
-fn key_name(key: &PropertyKey<'_>) -> Option<String> {
-    key.name().map(std::borrow::Cow::into_owned)
-}
-
 fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
     match (a.name(), b.name()) {
         (Some(a_name), Some(b_name)) => a_name == b_name,
@@ -213,29 +209,29 @@ fn property_keys_match(a: &PropertyKey<'_>, b: &PropertyKey<'_>) -> bool {
     }
 }
 
-fn assigned_this_property_name(left: &AssignmentTarget<'_>) -> Option<String> {
+fn assigned_this_property_name<'a>(left: &AssignmentTarget<'a>) -> Option<Atom<'a>> {
     let is_this_object =
         |expr: &Expression<'_>| matches!(expr.without_parentheses(), Expression::ThisExpression(_));
 
     match left {
         AssignmentTarget::StaticMemberExpression(expr) if is_this_object(&expr.object) => {
-            Some(expr.property.name.to_string())
+            Some(expr.property.name.as_atom())
         }
         AssignmentTarget::ComputedMemberExpression(expr) if is_this_object(&expr.object) => {
-            expr.static_property_name().map(|name| name.to_string())
+            expr.static_property_name()
         }
         AssignmentTarget::PrivateFieldExpression(expr) if is_this_object(&expr.object) => {
-            Some(expr.field.name.to_string())
+            Some(expr.field.name.as_atom())
         }
         _ => None,
     }
 }
 
-struct ConstructorAssignmentCollector<'a> {
-    excluded_properties: &'a mut FxHashSet<String>,
+struct ConstructorAssignmentCollector<'set, 'a> {
+    excluded_properties: &'set mut FxHashSet<Atom<'a>>,
 }
 
-impl<'a> Visit<'a> for ConstructorAssignmentCollector<'_> {
+impl<'a> Visit<'a> for ConstructorAssignmentCollector<'_, 'a> {
     fn visit_assignment_expression(&mut self, assignment: &AssignmentExpression<'a>) {
         if let Some(name) = assigned_this_property_name(&assignment.left) {
             self.excluded_properties.insert(name);
