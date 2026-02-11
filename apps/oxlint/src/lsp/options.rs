@@ -31,6 +31,7 @@ pub struct LintOptions {
     pub ts_config_path: Option<String>,
     pub unused_disable_directives: UnusedDisableDirectives,
     pub type_aware: bool,
+    pub js_plugins: bool,
     pub disable_nested_config: bool,
     pub fix_kind: LintFixKindFlag,
 }
@@ -119,6 +120,9 @@ impl TryFrom<Value> for LintOptions {
             type_aware: object
                 .get("typeAware")
                 .is_some_and(|key| serde_json::from_value::<bool>(key.clone()).unwrap_or_default()),
+            js_plugins: object
+                .get("jsPlugins")
+                .is_some_and(|key| serde_json::from_value::<bool>(key.clone()).unwrap_or_default()),
             disable_nested_config: object
                 .get("disableNestedConfig")
                 .and_then(|key| serde_json::from_value::<bool>(key.clone()).ok())
@@ -154,6 +158,7 @@ mod test {
             "configPath": "./custom.json",
             "unusedDisableDirectives": "warn",
             "typeAware": true,
+            "jsPlugins": true,
             "disableNestedConfig": true,
             "fixKind": "dangerous_fix"
         });
@@ -163,6 +168,7 @@ mod test {
         assert_eq!(options.config_path, Some("./custom.json".into()));
         assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Warn);
         assert!(options.type_aware);
+        assert!(options.js_plugins);
         assert!(options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::DangerousFix);
     }
@@ -176,6 +182,7 @@ mod test {
         assert_eq!(options.config_path, None);
         assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Allow);
         assert!(!options.type_aware);
+        assert!(!options.js_plugins);
         assert!(!options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFix);
     }

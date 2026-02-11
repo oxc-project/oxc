@@ -76,7 +76,8 @@ impl ServerLinterBuilder {
             }
         };
         let root_path = root_uri.to_file_path().unwrap();
-        let mut external_linter = self.external_linter.as_ref();
+        let mut external_linter =
+            if options.js_plugins { self.external_linter.as_ref() } else { None };
         let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
 
         // Setup JS workspace. This must be done before loading any configs
@@ -93,6 +94,7 @@ impl ServerLinterBuilder {
         let nested_configs = if options.use_nested_configs() {
             self.create_nested_configs(
                 &root_path,
+                external_linter,
                 &mut external_plugin_store,
                 &mut nested_ignore_patterns,
                 &mut extended_paths,
@@ -313,6 +315,11 @@ impl ToolBuilder for ServerLinterBuilder {
         return;
 
         // Destroy JS workspace
+        // TODO: This isn't correct as JS plugins are only enabled when `options.js_plugins` is true.
+        // `create_workspace` call is skipped if `options.js_plugins` is false. We should only call `destroy_workspace`
+        // if `create_workspace` was called first, but here we call it unconditionally.
+        // At present it doesn't matter, because this is dead code anyway (see early return above),
+        // but we'll need to fix this if we re-enable this code.
         if let Some(external_linter) = &self.external_linter {
             let res = (external_linter.destroy_workspace)(root_uri.as_str().to_string());
 
@@ -329,6 +336,7 @@ impl ServerLinterBuilder {
     fn create_nested_configs(
         &self,
         root_path: &Path,
+        external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
@@ -337,12 +345,8 @@ impl ServerLinterBuilder {
         let config_paths = discover_configs_in_tree(root_path);
 
         #[cfg_attr(not(feature = "napi"), allow(unused_mut))]
-        let mut loader = ConfigLoader::new(
-            self.external_linter.as_ref(),
-            external_plugin_store,
-            &[],
-            workspace_uri,
-        );
+        let mut loader =
+            ConfigLoader::new(external_linter, external_plugin_store, &[], workspace_uri);
 
         #[cfg(feature = "napi")]
         {
@@ -799,6 +803,7 @@ impl ServerLinter {
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
+            || old_options.js_plugins != new_options.js_plugins
     }
 
     /// Check if the linter is responsible for the given URI.
@@ -1182,6 +1187,7 @@ mod test {
         let mut extended_paths = FxHashSet::default();
         let configs = builder.create_nested_configs(
             &get_file_path("fixtures/lsp/init_nested_configs"),
+            None,
             &mut external_plugin_store,
             &mut nested_ignore_patterns,
             &mut extended_paths,
