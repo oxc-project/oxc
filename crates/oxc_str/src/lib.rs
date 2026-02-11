@@ -6,7 +6,7 @@
 
 mod atom;
 mod compact_str;
-mod ident;
+pub mod ident;
 
 pub use atom::Atom;
 pub use compact_str::{CompactStr, MAX_INLINE_LEN};
