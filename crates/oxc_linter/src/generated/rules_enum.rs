@@ -439,6 +439,7 @@ pub use crate::rules::typescript::await_thenable::AwaitThenable as TypescriptAwa
 pub use crate::rules::typescript::ban_ts_comment::BanTsComment as TypescriptBanTsComment;
 pub use crate::rules::typescript::ban_tslint_comment::BanTslintComment as TypescriptBanTslintComment;
 pub use crate::rules::typescript::ban_types::BanTypes as TypescriptBanTypes;
+pub use crate::rules::typescript::class_literal_property_style::ClassLiteralPropertyStyle as TypescriptClassLiteralPropertyStyle;
 pub use crate::rules::typescript::consistent_generic_constructors::ConsistentGenericConstructors as TypescriptConsistentGenericConstructors;
 pub use crate::rules::typescript::consistent_indexed_object_style::ConsistentIndexedObjectStyle as TypescriptConsistentIndexedObjectStyle;
 pub use crate::rules::typescript::consistent_type_assertions::ConsistentTypeAssertions as TypescriptConsistentTypeAssertions;
@@ -893,6 +894,7 @@ pub enum RuleEnum {
     TypescriptBanTsComment(TypescriptBanTsComment),
     TypescriptBanTslintComment(TypescriptBanTslintComment),
     TypescriptBanTypes(TypescriptBanTypes),
+    TypescriptClassLiteralPropertyStyle(TypescriptClassLiteralPropertyStyle),
     TypescriptConsistentGenericConstructors(TypescriptConsistentGenericConstructors),
     TypescriptConsistentIndexedObjectStyle(TypescriptConsistentIndexedObjectStyle),
     TypescriptConsistentTypeAssertions(TypescriptConsistentTypeAssertions),
@@ -2246,6 +2248,9 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::NAME,
             Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::NAME,
             Self::TypescriptBanTypes(_) => TypescriptBanTypes::NAME,
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::NAME
+            }
             Self::TypescriptConsistentGenericConstructors(_) => {
                 TypescriptConsistentGenericConstructors::NAME
             }
@@ -3010,6 +3015,9 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::CATEGORY,
             Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::CATEGORY,
             Self::TypescriptBanTypes(_) => TypescriptBanTypes::CATEGORY,
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::CATEGORY
+            }
             Self::TypescriptConsistentGenericConstructors(_) => {
                 TypescriptConsistentGenericConstructors::CATEGORY
             }
@@ -3807,6 +3815,9 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::FIX,
             Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::FIX,
             Self::TypescriptBanTypes(_) => TypescriptBanTypes::FIX,
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::FIX
+            }
             Self::TypescriptConsistentGenericConstructors(_) => {
                 TypescriptConsistentGenericConstructors::FIX
             }
@@ -4594,6 +4605,9 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::documentation(),
             Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::documentation(),
             Self::TypescriptBanTypes(_) => TypescriptBanTypes::documentation(),
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::documentation()
+            }
             Self::TypescriptConsistentGenericConstructors(_) => {
                 TypescriptConsistentGenericConstructors::documentation()
             }
@@ -5818,6 +5832,10 @@ impl RuleEnum {
             }
             Self::TypescriptBanTypes(_) => TypescriptBanTypes::config_schema(generator)
                 .or_else(|| TypescriptBanTypes::schema(generator)),
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::config_schema(generator)
+                    .or_else(|| TypescriptClassLiteralPropertyStyle::schema(generator))
+            }
             Self::TypescriptConsistentGenericConstructors(_) => {
                 TypescriptConsistentGenericConstructors::config_schema(generator)
                     .or_else(|| TypescriptConsistentGenericConstructors::schema(generator))
@@ -7397,6 +7415,7 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(_) => "typescript",
             Self::TypescriptBanTslintComment(_) => "typescript",
             Self::TypescriptBanTypes(_) => "typescript",
+            Self::TypescriptClassLiteralPropertyStyle(_) => "typescript",
             Self::TypescriptConsistentGenericConstructors(_) => "typescript",
             Self::TypescriptConsistentIndexedObjectStyle(_) => "typescript",
             Self::TypescriptConsistentTypeAssertions(_) => "typescript",
@@ -8481,6 +8500,11 @@ impl RuleEnum {
             )),
             Self::TypescriptBanTypes(_) => {
                 Ok(Self::TypescriptBanTypes(TypescriptBanTypes::from_configuration(value)?))
+            }
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                Ok(Self::TypescriptClassLiteralPropertyStyle(
+                    TypescriptClassLiteralPropertyStyle::from_configuration(value)?,
+                ))
             }
             Self::TypescriptConsistentGenericConstructors(_) => {
                 Ok(Self::TypescriptConsistentGenericConstructors(
@@ -10214,6 +10238,7 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(rule) => rule.to_configuration(),
             Self::TypescriptBanTslintComment(rule) => rule.to_configuration(),
             Self::TypescriptBanTypes(rule) => rule.to_configuration(),
+            Self::TypescriptClassLiteralPropertyStyle(rule) => rule.to_configuration(),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.to_configuration(),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.to_configuration(),
@@ -10892,6 +10917,7 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(rule) => rule.run(node, ctx),
             Self::TypescriptBanTslintComment(rule) => rule.run(node, ctx),
             Self::TypescriptBanTypes(rule) => rule.run(node, ctx),
+            Self::TypescriptClassLiteralPropertyStyle(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.run(node, ctx),
@@ -11566,6 +11592,7 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(rule) => rule.run_once(ctx),
             Self::TypescriptBanTslintComment(rule) => rule.run_once(ctx),
             Self::TypescriptBanTypes(rule) => rule.run_once(ctx),
+            Self::TypescriptClassLiteralPropertyStyle(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.run_once(ctx),
@@ -12246,6 +12273,9 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptBanTslintComment(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptBanTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptClassLiteralPropertyStyle(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::TypescriptConsistentGenericConstructors(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -13002,6 +13032,7 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(rule) => rule.should_run(ctx),
             Self::TypescriptBanTslintComment(rule) => rule.should_run(ctx),
             Self::TypescriptBanTypes(rule) => rule.should_run(ctx),
+            Self::TypescriptClassLiteralPropertyStyle(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.should_run(ctx),
@@ -13706,6 +13737,9 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::IS_TSGOLINT_RULE,
             Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::IS_TSGOLINT_RULE,
             Self::TypescriptBanTypes(_) => TypescriptBanTypes::IS_TSGOLINT_RULE,
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::IS_TSGOLINT_RULE
+            }
             Self::TypescriptConsistentGenericConstructors(_) => {
                 TypescriptConsistentGenericConstructors::IS_TSGOLINT_RULE
             }
@@ -14629,6 +14663,9 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::HAS_CONFIG,
             Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::HAS_CONFIG,
             Self::TypescriptBanTypes(_) => TypescriptBanTypes::HAS_CONFIG,
+            Self::TypescriptClassLiteralPropertyStyle(_) => {
+                TypescriptClassLiteralPropertyStyle::HAS_CONFIG
+            }
             Self::TypescriptConsistentGenericConstructors(_) => {
                 TypescriptConsistentGenericConstructors::HAS_CONFIG
             }
@@ -15441,6 +15478,7 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(rule) => rule.types_info(),
             Self::TypescriptBanTslintComment(rule) => rule.types_info(),
             Self::TypescriptBanTypes(rule) => rule.types_info(),
+            Self::TypescriptClassLiteralPropertyStyle(rule) => rule.types_info(),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.types_info(),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.types_info(),
@@ -16115,6 +16153,7 @@ impl RuleEnum {
             Self::TypescriptBanTsComment(rule) => rule.run_info(),
             Self::TypescriptBanTslintComment(rule) => rule.run_info(),
             Self::TypescriptBanTypes(rule) => rule.run_info(),
+            Self::TypescriptClassLiteralPropertyStyle(rule) => rule.run_info(),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.run_info(),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.run_info(),
@@ -16813,6 +16852,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptBanTsComment(TypescriptBanTsComment::default()),
         RuleEnum::TypescriptBanTslintComment(TypescriptBanTslintComment::default()),
         RuleEnum::TypescriptBanTypes(TypescriptBanTypes::default()),
+        RuleEnum::TypescriptClassLiteralPropertyStyle(
+            TypescriptClassLiteralPropertyStyle::default(),
+        ),
         RuleEnum::TypescriptConsistentGenericConstructors(
             TypescriptConsistentGenericConstructors::default(),
         ),

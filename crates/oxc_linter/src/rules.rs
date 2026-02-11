@@ -217,6 +217,7 @@ pub(crate) mod typescript {
     pub mod ban_ts_comment;
     pub mod ban_tslint_comment;
     pub mod ban_types;
+    pub mod class_literal_property_style;
     pub mod consistent_generic_constructors;
     pub mod consistent_indexed_object_style;
     pub mod consistent_type_assertions;
