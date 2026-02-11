@@ -33,8 +33,8 @@ use crate::{
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
     suppression::{
-        DiagnosticCounts, Filename, RuleName, SuppressionDiff, SuppressionFileState,
-        SuppressionManager,
+        DiagnosticCounts, Filename, RuleName, SuppressionDiff, SuppressionFile,
+        SuppressionFileState, SuppressionManager,
     },
     utils::read_to_arena_str,
 };
@@ -593,16 +593,16 @@ impl Runtime {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
-        // TODO: Parse cli options
-        //
-        //
-
         let suppression_manager = SuppressionManager::load(
             self.cwd.join("oxlint-suppressions.json").as_path(),
             self.linter.options.suppress_all,
             self.linter.options.prune_suppressions,
         )
         .unwrap();
+
+        let is_updating_suppression_file = suppression_manager.is_updating_file();
+        let file_exists = suppression_manager.exists_suppression_file();
+        let concurrent_tracking_map = suppression_manager.concurrent_map();
 
         let (tracking_channel, runtime_suppression_recv) =
             std::sync::mpsc::channel::<(Filename, RuleName, DiagnosticCounts)>();
@@ -664,13 +664,19 @@ impl Runtime {
                             return;
                         }
 
-                        let suppression_per_file = path
-                            .strip_prefix(&self.cwd)
-                            .ok()
-                            .map(|relative_url| {
-                                suppression_manager.get_suppression_per_file(&relative_url)
-                            })
-                            .unwrap_or(SuppressionFileState::Ignored);
+                        let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
+
+                        let key_arc = Arc::from(filename);
+
+                        let tmp_pin = concurrent_tracking_map.pin();
+
+                        let suppression_data = tmp_pin.get(&key_arc);
+
+                        let suppression_file = SuppressionFile::new(
+                            file_exists,
+                            self.linter.options.suppress_all,
+                            suppression_data,
+                        );
 
                         let (mut messages, disable_directives, suppression) =
                             me.linter.run_with_disable_directives(
@@ -678,7 +684,7 @@ impl Runtime {
                                 context_sub_hosts,
                                 allocator_guard,
                                 me.js_allocator_pool(),
-                                suppression_per_file,
+                                &suppression_file,
                             );
 
                         // Store the disable directives for this file
@@ -692,27 +698,18 @@ impl Runtime {
                         if let Some(suppression_detected) = suppression {
                             let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
 
-                            // TODO: Remove after modify how we build the new filename structure passing messages
-                            let suppression_per_file = path
-                                .strip_prefix(&self.cwd)
-                                .ok()
-                                .map(|relative_url| {
-                                    suppression_manager.get_suppression_per_file(&relative_url)
-                                })
-                                .unwrap_or(SuppressionFileState::Ignored);
-
                             let diff = SuppressionManager::diff_filename(
-                                suppression_per_file,
+                                suppression_file,
                                 &suppression_detected,
                                 &filename,
                             );
 
-                            if !diff.is_empty() && !suppression_manager.is_updating_file() {
+                            if !diff.is_empty() && !is_updating_suppression_file {
                                 let errors = diff.into_iter().map(Into::into).collect();
                                 let diagnostics =
                                     DiagnosticService::wrap_diagnostics(&me.cwd, path, "", errors);
                                 tx_error.send(diagnostics).unwrap();
-                            } else if !diff.is_empty() && suppression_manager.is_updating_file() {
+                            } else if !diff.is_empty() && is_updating_suppression_file {
                                 // TODO: Send the diff here
                             }
 
@@ -788,14 +785,7 @@ impl Runtime {
         println!("NEW {:?}", runtime_map);
         println!("SET {:?}", set);
 
-        let suppression_manager_two = SuppressionManager::load(
-            self.cwd.join("oxlint-suppressions.json").as_path(),
-            self.linter.options.suppress_all,
-            self.linter.options.prune_suppressions,
-        )
-        .unwrap();
-
-        let diff = suppression_manager_two.diff(&runtime_map, &set);
+        let diff = suppression_manager.diff(&runtime_map, &set);
 
         println!("diff {:?}", diff);
 
@@ -824,8 +814,8 @@ impl Runtime {
 
         let has_diagnostics = !diagnostics.is_empty();
 
-        if has_diagnostics && suppression_manager_two.is_updating_file() {
-            suppression_manager_two
+        if has_diagnostics && suppression_manager.is_updating_file() {
+            suppression_manager
                 .write(self.cwd.join("oxlint-suppressions.json").as_path(), runtime_map)
                 .unwrap();
         }
@@ -895,7 +885,7 @@ impl Runtime {
 
                         let (section_messages, disable_directives, _) = me
                             .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool(), SuppressionFileState::Ignored);
+                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool(), &SuppressionFile::default());
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map

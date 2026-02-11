@@ -96,7 +96,8 @@ use crate::{
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
     suppression::{
-        DiagnosticCounts, RuleName, SuppressionFileState, SuppressionId, SuppressionManager,
+        DiagnosticCounts, RuleName, SuppressionFile, SuppressionFileState, SuppressionId,
+        SuppressionManager,
     },
     utils::iter_possible_jest_call_node,
 };
@@ -180,7 +181,7 @@ impl Linter {
             context_sub_hosts,
             allocator,
             None,
-            SuppressionFileState::Ignored,
+            &SuppressionFile::default(),
         )
         .0
     }
@@ -210,7 +211,7 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
-        suppression_file_state: SuppressionFileState,
+        suppression_file_state: &SuppressionFile,
     ) -> (Vec<Message>, Option<DisableDirectives>, Option<FxHashMap<RuleName, DiagnosticCounts>>)
     {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);

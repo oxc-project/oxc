@@ -1,7 +1,7 @@
-use std::{ffi::OsStr, fs, path::Path};
+use std::{ffi::OsStr, fs, hash::BuildHasherDefault, path::Path, sync::Arc};
 
 use oxc_diagnostics::OxcDiagnostic;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
 use serde::{Deserialize, Serialize};
 
 use crate::{Message, read_to_string};
@@ -121,26 +121,21 @@ impl SuppressionTracking {
     }
 }
 
+type StaticSuppressionMap = papaya::HashMap<
+    Arc<Filename>,
+    FxHashMap<RuleName, DiagnosticCounts>,
+    BuildHasherDefault<FxHasher>,
+>;
+
 #[derive(Clone, Debug)]
 pub struct SuppressionManager {
     pub suppressions_by_file: SuppressionTracking,
     pub suppression_key_set: FxHashSet<(Filename, RuleName)>,
+    pub concurrent_suppression_by_file: StaticSuppressionMap,
     suppress_all: bool,
     prune_suppression: bool,
     //If the source of truth exists
     file_exists: bool,
-}
-
-impl Default for SuppressionManager {
-    fn default() -> Self {
-        Self {
-            suppressions_by_file: SuppressionTracking::default(),
-            suppression_key_set: FxHashSet::default(),
-            suppress_all: false,
-            prune_suppression: false,
-            file_exists: false,
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -178,16 +173,66 @@ pub enum SuppressionFileState<'a> {
     Exists { file_suppressions: Option<&'a FxHashMap<RuleName, DiagnosticCounts>> },
 }
 
+#[derive(Debug, Eq, PartialEq)]
+pub enum SuppressionFileStateNew {
+    Ignored,
+    New,
+    Exists,
+}
+
+#[derive(Debug)]
+pub struct SuppressionFile<'a> {
+    state: SuppressionFileStateNew,
+    suppression_data: Option<&'a FxHashMap<RuleName, DiagnosticCounts>>,
+}
+
+impl<'a> Default for SuppressionFile<'a> {
+    fn default() -> Self {
+        Self { state: SuppressionFileStateNew::Ignored, suppression_data: None }
+    }
+}
+
+impl<'a> SuppressionFile<'a> {
+    pub fn new<'b>(
+        file_exists: bool,
+        suppress_all: bool,
+        suppression_data: Option<&'b FxHashMap<RuleName, DiagnosticCounts>>,
+    ) -> Self
+    where
+        'b: 'a,
+    {
+        if !file_exists && !suppress_all {
+            return Self { state: SuppressionFileStateNew::Ignored, suppression_data: None };
+        }
+
+        if !file_exists && suppress_all {
+            return Self { state: SuppressionFileStateNew::New, suppression_data: None };
+        }
+
+        Self { state: SuppressionFileStateNew::Exists, suppression_data }
+    }
+
+    pub fn suppression_state(&self) -> &SuppressionFileStateNew {
+        &self.state
+    }
+}
+
 impl SuppressionManager {
     pub fn load(
         path: &Path,
         suppress_all: bool,
         prune_suppression: bool,
     ) -> Result<Self, OxcDiagnostic> {
+        let concurrent_papaya = papaya::HashMap::builder()
+            .hasher(BuildHasherDefault::default())
+            .resize_mode(papaya::ResizeMode::Blocking)
+            .build();
+
         if !path.exists() {
             return Ok(Self {
                 suppressions_by_file: SuppressionTracking::default(),
                 suppression_key_set: FxHashSet::default(),
+                concurrent_suppression_by_file: concurrent_papaya,
                 file_exists: false,
                 prune_suppression,
                 suppress_all,
@@ -203,20 +248,50 @@ impl SuppressionManager {
         while let Some(file_key) = keys_iterator.next() {
             let mut values_iterator =
                 suppression_file.suppressions.get(file_key).unwrap().keys().into_iter();
+
             while let Some(rule_name_key) = values_iterator.next() {
                 set.insert((file_key.clone(), rule_name_key.clone()));
             }
+
+            concurrent_papaya.pin().insert(
+                Arc::new(file_key.clone()),
+                suppression_file.suppressions.get(file_key).unwrap().to_owned(),
+            );
         }
 
         Ok(Self {
             suppressions_by_file: suppression_file,
             suppression_key_set: set,
+            concurrent_suppression_by_file: concurrent_papaya,
             file_exists: true,
             prune_suppression,
             suppress_all,
         })
     }
 
+    pub fn concurrent_map(&self) -> StaticSuppressionMap {
+        let concurrent_papaya = papaya::HashMap::builder()
+            .hasher(BuildHasherDefault::default())
+            .resize_mode(papaya::ResizeMode::Blocking)
+            .build();
+
+        if !self.file_exists {
+            return concurrent_papaya;
+        }
+
+        let mut keys_iterator = self.suppressions_by_file.suppressions.keys().into_iter();
+
+        while let Some(file_key) = keys_iterator.next() {
+            concurrent_papaya.pin().insert(
+                Arc::new(file_key.clone()),
+                self.suppressions_by_file.suppressions.get(file_key).unwrap().to_owned(),
+            );
+        }
+
+        concurrent_papaya
+    }
+
+    // TODO: Esto es una propiedad de un nuevo struct
     pub fn get_suppression_per_file(&self, path: &Path) -> SuppressionFileState<'_> {
         if !self.file_exists && !self.suppress_all {
             return SuppressionFileState::Ignored;
@@ -237,6 +312,10 @@ impl SuppressionManager {
         self.suppress_all || self.prune_suppression
     }
 
+    pub fn exists_suppression_file(&self) -> bool {
+        self.file_exists
+    }
+
     pub fn write(
         &self,
         path: &Path,
@@ -252,6 +331,10 @@ impl SuppressionManager {
         SuppressionTracking::new(new_file).save(path)
     }
 
+    // TODO
+    pub fn write_diff() {}
+
+    // REMOVE
     pub fn diff(
         &self,
         runtime_suppressions: &FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>>,
@@ -335,16 +418,20 @@ impl SuppressionManager {
     }
 
     pub fn diff_filename(
-        suppression_file_state: SuppressionFileState<'_>,
+        suppression_file_state: SuppressionFile<'_>,
         runtime_suppression: &FxHashMap<RuleName, DiagnosticCounts>,
         filename: &Filename,
     ) -> Vec<SuppressionDiff> {
-        let static_suppression = match suppression_file_state {
-            SuppressionFileState::Ignored => return vec![],
-            SuppressionFileState::New if runtime_suppression.is_empty() => return vec![],
-            SuppressionFileState::New => FxHashMap::default(),
-            SuppressionFileState::Exists { file_suppressions: Some(file) } => file.to_owned(),
-            SuppressionFileState::Exists { file_suppressions: None } => FxHashMap::default(),
+        let static_suppression = match suppression_file_state.suppression_state() {
+            SuppressionFileStateNew::Ignored => return vec![],
+            SuppressionFileStateNew::New => FxHashMap::default(),
+            SuppressionFileStateNew::Exists => {
+                if let Some(data) = suppression_file_state.suppression_data {
+                    data.to_owned()
+                } else {
+                    FxHashMap::default()
+                }
+            }
         };
 
         let mut diff = vec![];
@@ -400,7 +487,7 @@ impl SuppressionManager {
     }
 
     pub fn suppress_lint_diagnostics(
-        suppression_file_state: SuppressionFileState<'_>,
+        suppression_file_state: &SuppressionFile<'_>,
         lint_diagnostics: Vec<Message>,
     ) -> (Vec<Message>, Option<FxHashMap<RuleName, DiagnosticCounts>>) {
         let build_suppression_map = |diagnostics: &Vec<Message>| {
@@ -421,17 +508,17 @@ impl SuppressionManager {
             suppression_tracking
         };
 
-        match suppression_file_state {
-            SuppressionFileState::Ignored => (lint_diagnostics, None),
-            SuppressionFileState::New => {
+        match suppression_file_state.suppression_state() {
+            SuppressionFileStateNew::Ignored => (lint_diagnostics, None),
+            SuppressionFileStateNew::New => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
                 (lint_diagnostics, Some(runtime_suppression_tracking))
             }
-            SuppressionFileState::Exists { file_suppressions } => {
+            SuppressionFileStateNew::Exists => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
-                let Some(recorded_violations) = file_suppressions else {
+                let Some(recorded_violations) = suppression_file_state.suppression_data else {
                     return (lint_diagnostics, Some(runtime_suppression_tracking));
                 };
 
