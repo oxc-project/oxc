@@ -98,12 +98,10 @@ const fn hashbrown_state(len: u32, hash: u32) -> u64 {
 }
 
 /// Unpack `len` (low 32 bits) and `hash` (high 32 bits) from packed `u64`.
+#[expect(clippy::cast_possible_truncation)]
 #[inline]
 const fn unpack_len_hash(packed: u64) -> (u32, u32) {
-    let bytes = packed.to_le_bytes();
-    let len = u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
-    let hash = u32::from_le_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]);
-    (len, hash)
+    (packed as u32, (packed >> 32) as u32)
 }
 
 /// A [`BuildHasher`] for `Ident`-keyed hash maps.

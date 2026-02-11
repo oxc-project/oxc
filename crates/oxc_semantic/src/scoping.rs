@@ -724,13 +724,15 @@ impl Scoping {
     ///
     /// Bindings are resolved by walking up the scope tree until a binding is
     /// found. If no binding is found, [`None`] is returned.
-    pub fn find_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
-        for scope_id in self.scope_ancestors(scope_id) {
-            if let Some(symbol_id) = self.get_binding(scope_id, name) {
-                return Some(symbol_id);
+    pub fn find_binding(&self, mut scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
+        let cell = self.cell.borrow_dependent();
+        loop {
+            if let Some(symbol_id) = cell.bindings[scope_id].get(&name) {
+                return Some(*symbol_id);
             }
+            let parent_scope_id = self.scope_parent_ids[scope_id]?;
+            scope_id = parent_scope_id;
         }
-        None
     }
 
     /// Get all bound identifiers in a scope.
