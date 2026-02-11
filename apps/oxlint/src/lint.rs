@@ -405,8 +405,6 @@ impl CliRunner {
             .with_type_check(self.options.type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
-            .with_suppress_all(suppression_options.suppress_all)
-            .with_prune_suppressions(suppression_options.prune_suppressions)
             .build()
         {
             Ok(runner) => runner,

@@ -32,10 +32,7 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    suppression::{
-        DiagnosticCounts, Filename, RuleName, SuppressionDiff, SuppressionFile,
-        SuppressionFileState, SuppressionManager,
-    },
+    suppression::{Filename, SuppressionDiff, SuppressionFile, SuppressionManager},
     utils::read_to_arena_str,
 };
 
@@ -661,19 +658,23 @@ impl Runtime {
                             return;
                         }
 
-                        let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
-
-                        let key_arc = Arc::from(filename);
-
                         let tmp_pin = concurrent_tracking_map.pin();
 
-                        let suppression_data = tmp_pin.get(&key_arc);
+                        let suppression_file = if let Ok(file_path) = path.strip_prefix(&self.cwd) {
+                            let filename = Filename::new(file_path);
 
-                        let suppression_file = SuppressionFile::new(
-                            file_exists,
-                            self.linter.options.suppress_all,
-                            suppression_data,
-                        );
+                            let key_arc = Arc::from(filename);
+
+                            let suppression_data = tmp_pin.get(&key_arc);
+
+                            SuppressionFile::new(
+                                file_exists,
+                                self.linter.options.suppress_all,
+                                suppression_data,
+                            )
+                        } else {
+                            SuppressionFile::default()
+                        };
 
                         let (mut messages, disable_directives, suppression) =
                             me.linter.run_with_disable_directives(

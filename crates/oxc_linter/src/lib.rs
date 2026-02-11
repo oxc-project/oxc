@@ -96,7 +96,7 @@ use crate::{
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
     suppression::{
-        DiagnosticCounts, RuleName, SuppressionFile, SuppressionFileState, SuppressionId,
+        DiagnosticCounts, RuleName, SuppressionFile,
         SuppressionManager,
     },
     utils::iter_possible_jest_call_node,

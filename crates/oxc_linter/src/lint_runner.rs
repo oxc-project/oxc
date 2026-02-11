@@ -25,10 +25,6 @@ pub struct LintRunner {
     directives_store: DirectivesStore,
     /// Current working directory
     cwd: PathBuf,
-    /// Create/Update a bulk suppression file
-    suppress_all: bool,
-    /// Update a bulk suppression file
-    prune_suppressions: bool,
 }
 
 /// Manages disable directives across all linting engines.
@@ -146,8 +142,6 @@ pub struct LintRunnerBuilder {
     lint_service_options: LintServiceOptions,
     silent: bool,
     fix_kind: FixKind,
-    suppress_all: bool,
-    prune_suppressions: bool,
 }
 
 impl LintRunnerBuilder {
@@ -159,8 +153,6 @@ impl LintRunnerBuilder {
             lint_service_options,
             silent: false,
             fix_kind: FixKind::None,
-            suppress_all: false,
-            prune_suppressions: false,
         }
     }
 
@@ -185,16 +177,6 @@ impl LintRunnerBuilder {
     #[must_use]
     pub fn with_fix_kind(mut self, fix_kind: FixKind) -> Self {
         self.fix_kind = fix_kind;
-        self
-    }
-
-    pub fn with_suppress_all(mut self, suppress_all: bool) -> Self {
-        self.suppress_all = suppress_all;
-        self
-    }
-
-    pub fn with_prune_suppressions(mut self, prune_suppressions: bool) -> Self {
-        self.prune_suppressions = prune_suppressions;
         self
     }
 
@@ -225,8 +207,6 @@ impl LintRunnerBuilder {
             type_aware_linter,
             directives_store: directives_coordinator,
             cwd,
-            suppress_all: self.suppress_all,
-            prune_suppressions: self.suppress_all,
         })
     }
 }
