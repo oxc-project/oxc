@@ -1,4 +1,3 @@
-mod diagnostic;
 mod options;
 
 #[cfg(test)]
@@ -6,6 +5,7 @@ mod tests;
 
 use oxc_ast::AstKind;
 
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::symbol::SymbolFlags;
@@ -17,7 +17,16 @@ use crate::{
 
 pub use options::{HoistOption, NoShadowConfig};
 
-
+pub fn no_shadow_diagnostic(span: Span, name: &str, shadowed_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{name}' is already declared in the upper scope."))
+        .with_help(format!(
+            "Consider renaming '{name}' to avoid shadowing the variable from the outer scope."
+        ))
+        .with_labels([
+            span.label(format!("'{name}' is declared here")),
+            shadowed_span.label("shadowed declaration is here"),
+        ])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoShadow(Box<NoShadowConfig>);
@@ -82,7 +91,7 @@ impl Rule for NoShadow {
         let scoping = ctx.scoping();
 
         for symbol_id in scoping.symbol_ids() {
-            let symbol_name = scoping.symbol_name(symbol_id);
+            let symbol_name = scoping.symbol_ident(symbol_id);
 
             // Skip if in allow list
             if self.allow.iter().any(|allowed| allowed.as_str() == symbol_name) {
@@ -120,9 +129,11 @@ impl Rule for NoShadow {
                         continue;
                     }
 
-                    // Report the shadowing
-                    // Report the shadowing
-                    ctx.diagnostic(diagnostic::no_shadow(symbol_span, symbol_name, shadowed_span));
+                    ctx.diagnostic(no_shadow_diagnostic(
+                        symbol_span,
+                        symbol_name.as_str(),
+                        shadowed_span,
+                    ));
                     break;
                 }
             }
