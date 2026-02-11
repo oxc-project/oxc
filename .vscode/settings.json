@@ -1,5 +1,5 @@
 {
-  // "oxc.path.oxlint": "apps/oxlint/dist/cli.js", // debug with local oxlint build
+  "oxc.path.oxlint": "apps/oxlint/dist/cli.js", // debug with local oxlint build
   "oxc.typeAware": true,
   "oxc.configPath": "oxlintrc.json",
   "oxc.unusedDisableDirectives": "deny",

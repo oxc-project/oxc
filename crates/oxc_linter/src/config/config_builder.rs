@@ -632,6 +632,12 @@ impl ConfigStoreBuilder {
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = String::from(Url::from_file_path(&plugin_path).unwrap());
 
+        // remove this comment, the // tower_lsp_server::transport error goes away
+        // return ConfigBuilderError::PluginLoadFailed {
+        //     plugin_specifier: plugin_specifier.to_string(),
+        //     error,
+        // };
+
         let result = (external_linter.load_plugin)(
             plugin_url,
             plugin_name,

@@ -54,12 +54,13 @@ pub struct ServerLinterBuilder {
 impl ServerLinterBuilder {
     pub fn new(
         external_linter: Option<ExternalLinter>,
-        #[cfg(feature = "napi")] js_config_loader: Option<crate::js_config::JsConfigLoaderCb>,
+        #[cfg(feature = "napi")] _js_config_loader: Option<crate::js_config::JsConfigLoaderCb>,
     ) -> Self {
         Self {
             external_linter,
             #[cfg(feature = "napi")]
-            js_config_loader,
+            // js config loader is not the problem, just to make sure
+            js_config_loader: None,
         }
     }
 
@@ -78,17 +79,9 @@ impl ServerLinterBuilder {
         let root_path = root_uri.to_file_path().unwrap();
         let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
 
-        // Setup JS workspace. This must be done before loading any configs
-        if let Some(external_linter) = &self.external_linter {
-            let res = (external_linter.create_workspace)(root_uri.as_str().to_string());
-
-            if let Err(err) = res {
-                error!("Failed to setup JS workspace:\n{err}\n");
-            }
-        }
-
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
+        // this path will always be false on the oxc project where we target with `configPath` (.vscode/settings.json)
         let nested_configs = if options.use_nested_configs() {
             self.create_nested_configs(
                 &root_path,
@@ -102,12 +95,9 @@ impl ServerLinterBuilder {
         };
 
         let config_path = options.config_path.as_ref().filter(|p| !p.is_empty()).map(PathBuf::from);
-        let loader = ConfigLoader::new(
-            self.external_linter.as_ref(),
-            &mut external_plugin_store,
-            &[],
-            Some(root_uri.as_str()),
-        );
+        // removed everywhere the workspace reference, thought maybe because of this. But nope, still happens.
+        let loader =
+            ConfigLoader::new(self.external_linter.as_ref(), &mut external_plugin_store, &[], None);
         #[cfg(feature = "napi")]
         let loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
 
@@ -127,7 +117,7 @@ impl ServerLinterBuilder {
             oxlintrc,
             self.external_linter.as_ref(),
             &mut external_plugin_store,
-            Some(root_uri.as_str()),
+            None,
         ) {
             Ok(builder) => builder,
             Err(e) => {
@@ -165,20 +155,9 @@ impl ServerLinterBuilder {
         let config_store = ConfigStore::new(base_config, nested_configs, external_plugin_store);
         let config_store_clone = config_store.clone();
 
-        // Send JS plugins config to JS side
-        if let Some(external_linter) = &external_linter {
-            let res = config_store.external_plugin_store().setup_rule_configs(
-                root_path.to_string_lossy().into_owned(),
-                Some(root_uri.as_str()),
-                external_linter,
-            );
-            if let Err(err) = res {
-                error!("Failed to setup JS plugins config:\n{err}\n");
-            }
-        }
+        // removing the configs does not fix it too
 
-        let linter = Linter::new(lint_options, config_store, external_linter.cloned())
-            .with_workspace_uri(Some(root_uri.as_str()));
+        let linter = Linter::new(lint_options, config_store, external_linter.cloned());
         let mut lint_service_options =
             LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
 

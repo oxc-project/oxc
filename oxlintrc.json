@@ -12,6 +12,7 @@
     "promise",
     "vitest"
   ],
+  "jsPlugins": ["@stylistic/eslint-plugin"],
   "categories": {
     "correctness": "error",
     "perf": "error"
