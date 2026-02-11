@@ -275,10 +275,15 @@ impl<'a> ObjectRestSpread<'a> {
             }
         }
 
-        // Insert final read `_foo`.
-        // TODO: remove this if the assignment is not a read reference.
-        // e.g. remove for `({ a2, ...b2 } = c2)`, keep `(x, ({ a2, ...b2 } = c2)`.
-        expressions.push(reference_builder.create_read_expression(ctx));
+        // Insert final read `_foo` only if the expression result is consumed.
+        // e.g. remove for `({ a2, ...b2 } = c2)`, keep for `(x, ({ a2, ...b2 } = c2))`.
+        let is_expression_statement = ctx
+            .ancestors()
+            .find(|a| !matches!(a, Ancestor::ParenthesizedExpressionExpression(_)))
+            .is_some_and(|a| matches!(a, Ancestor::ExpressionStatementExpression(_)));
+        if !is_expression_statement {
+            expressions.push(reference_builder.create_read_expression(ctx));
+        }
 
         *expr = ctx.ast.expression_sequence(assign_expr.span, expressions);
     }
