@@ -41,7 +41,7 @@ use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVe
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, Span};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
@@ -179,6 +179,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 &using_ctx,
                 static_block_new_scope_id,
                 needs_await,
+                SPAN,
                 ctx,
             ));
         }
@@ -220,6 +221,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 &using_ctx,
                 current_scope_id,
                 needs_await,
+                SPAN,
                 ctx,
             ));
         }
@@ -279,6 +281,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                 &using_ctx,
                 block_stmt_scope_id,
                 needs_await,
+                SPAN,
                 ctx,
             ));
 
@@ -538,6 +541,7 @@ impl<'a> ExplicitResourceManagement<'a> {
     /// ```
     fn transform_block_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::BlockStatement(block_stmt) = stmt else { unreachable!() };
+        let span = block_stmt.span;
 
         if let Some((new_stmts, needs_await, using_ctx)) =
             self.transform_statements(&mut block_stmt.body, ctx.current_hoist_scope_id(), ctx)
@@ -549,6 +553,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                 &using_ctx,
                 current_scope_id,
                 needs_await,
+                span,
                 ctx,
             );
         }
@@ -590,7 +595,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         let current_scope_id = ctx.current_scope_id();
 
         let Statement::SwitchStatement(switch_stmt) = stmt else { unreachable!() };
-
+        let span = switch_stmt.span;
         let switch_stmt_scope_id = switch_stmt.scope_id();
 
         for case in &mut switch_stmt.cases {
@@ -674,7 +679,7 @@ impl<'a> ExplicitResourceManagement<'a> {
 
         let catch = Self::create_catch_clause(&using_ctx, current_scope_id, ctx);
         let finally = Self::create_finally_block(&using_ctx, current_scope_id, needs_await, ctx);
-        *stmt = ctx.ast.statement_try(SPAN, block, Some(catch), Some(finally));
+        *stmt = ctx.ast.statement_try(span, block, Some(catch), Some(finally));
     }
 
     /// Transforms:
@@ -788,11 +793,12 @@ impl<'a> ExplicitResourceManagement<'a> {
         using_ctx: &BoundIdentifier<'a>,
         parent_scope_id: ScopeId,
         needs_await: bool,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let catch = Self::create_catch_clause(using_ctx, parent_scope_id, ctx);
         let finally = Self::create_finally_block(using_ctx, parent_scope_id, needs_await, ctx);
-        ctx.ast.statement_try(SPAN, body, Some(catch), Some(finally))
+        ctx.ast.statement_try(span, body, Some(catch), Some(finally))
     }
 
     /// `catch (_) { _usingCtx.e = _; }`
