@@ -1,0 +1,77 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ oxc(prefer-direct-import): Prefer importing from defining modules.
+   ╭─[index.ts:1:1]
+ 1 │ import { User } from './barrel';
+   · ────────────────────────────────
+   ╰────
+  help: Import directly from `./barrel/user`.
+
+  ⚠ oxc(prefer-direct-import): Prefer importing from defining modules.
+   ╭─[index.ts:1:1]
+ 1 │ import { User, Product } from './barrel';
+   · ─────────────────────────────────────────
+   ╰────
+  help: Import bindings from defining modules: `./barrel/product`, `./barrel/user`.
+
+  ⚠ oxc(prefer-direct-import): Prefer importing from defining modules.
+   ╭─[index.ts:1:1]
+ 1 │ import { type RecordType, Product } from './barrel';
+   · ────────────────────────────────────────────────────
+   ╰────
+  help: Import bindings from defining modules: `./barrel/deep/record/record`, `./barrel/product`.
+
+  ⚠ oxc(prefer-direct-import): Prefer importing from defining modules.
+   ╭─[index.ts:1:1]
+ 1 │ ╭─▶ import {
+ 2 │ │     User,
+ 3 │ │     Product,
+ 4 │ │     type RecordType,
+ 5 │ │     UserModel as Person,
+ 6 │ ╰─▶ } from './barrel';
+   ╰────
+  help: Import bindings from defining modules: `./barrel/deep/record/record`, `./barrel/product`, `./barrel/user`.
+
+  ⚠ oxc(prefer-direct-import): Prefer importing from defining modules.
+   ╭─[index.ts:1:1]
+ 1 │ import { fromIndex, RecordType } from './barrel/deep';
+   · ──────────────────────────────────────────────────────
+   ╰────
+  help: Import directly from `./barrel/deep/record/record`.
+
+  ⚠ oxc(prefer-direct-import): Prefer importing from defining modules.
+   ╭─[index.ts:1:1]
+ 1 │ import { UserModel } from './barrel';
+   · ─────────────────────────────────────
+   ╰────
+  help: Import directly from `./barrel/user`.
+
+  ⚠ oxc(prefer-direct-import): Prefer importing from defining modules.
+   ╭─[index.ts:1:1]
+ 1 │ import { UserModel as Person } from './barrel';
+   · ───────────────────────────────────────────────
+   ╰────
+  help: Import directly from `./barrel/user`.
+
+  ⚠ oxc(prefer-direct-import): Prefer importing from defining modules.
+   ╭─[index.ts:1:1]
+ 1 │ import type { ModelRecord } from './barrel';
+   · ────────────────────────────────────────────
+   ╰────
+  help: Import directly from `./barrel/deep/record/record`.
+
+  ⚠ oxc(prefer-direct-import): Prefer importing from defining modules.
+   ╭─[index.ts:1:1]
+ 1 │ import { User } from './barrel/index';
+   · ──────────────────────────────────────
+   ╰────
+  help: Import directly from `./barrel/user`.
+
+  ⚠ oxc(prefer-direct-import): Prefer importing from defining modules.
+   ╭─[index.ts:1:1]
+ 1 │ import { UserModel } from './barrel/renamed';
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Import directly from `./barrel/user`.

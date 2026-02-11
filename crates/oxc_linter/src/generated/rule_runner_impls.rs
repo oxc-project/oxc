@@ -3720,6 +3720,11 @@ impl RuleRunner for crate::rules::oxc::only_used_in_recursion::OnlyUsedInRecursi
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::oxc::prefer_direct_import::PreferDirectImport {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
 impl RuleRunner for crate::rules::oxc::uninvoked_array_callback::UninvokedArrayCallback {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::NewExpression]));
