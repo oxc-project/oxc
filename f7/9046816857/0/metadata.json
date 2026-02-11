@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "f79046816857",
+  "session_id": "704f6a50-abd4-4836-9364-f4c53989c500",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-11T02:45:25.533815Z",
+  "branch": "refactor/shared-ident-globals",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "crates/oxc_allocator/src/ident_hasher.rs",
+    "crates/oxc_semantic/src/scoping.rs",
+    "crates/oxc_str/src/ident.rs"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 18,
+    "cache_creation_tokens": 25335,
+    "cache_read_tokens": 403144,
+    "output_tokens": 165,
+    "api_call_count": 14
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-11T02:45:25.519623Z",
+    "agent_lines": 16,
+    "human_added": 2435,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2451,
+    "agent_percentage": 0.6527947776417788
+  }
+}
