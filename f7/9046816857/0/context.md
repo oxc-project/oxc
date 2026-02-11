@@ -10,3 +10,7 @@ fix `just lint` by adding expect missing docs
 
 commit
 
+### Prompt 3
+
+should move #[expect(missing_docs)] to top of ident.rs
+

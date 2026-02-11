@@ -5,9 +5,8 @@
   "branch": "refactor/shared-ident-globals",
   "checkpoints_count": 1,
   "files_touched": [
-    "crates/oxc_allocator/src/ident_hasher.rs",
-    "crates/oxc_semantic/src/scoping.rs",
-    "crates/oxc_str/src/ident.rs"
+    "crates/oxc_str/src/ident.rs",
+    "crates/oxc_str/src/lib.rs"
   ],
   "sessions": [
     {
@@ -19,10 +18,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 18,
-    "cache_creation_tokens": 25335,
-    "cache_read_tokens": 403144,
-    "output_tokens": 165,
-    "api_call_count": 14
+    "input_tokens": 12,
+    "cache_creation_tokens": 4151,
+    "cache_read_tokens": 372629,
+    "output_tokens": 478,
+    "api_call_count": 10
   }
 }
