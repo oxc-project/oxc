@@ -28,3 +28,11 @@ Based on my exploration of the Oxc codebase, here's a comprehensive report of th
 
 Total occurrences across all 4 A...
 
+### Prompt 3
+
+revert the type-ware snapshots, they are irrelevant
+
+### Prompt 4
+
+in generated files, import the types instead of using full path
+

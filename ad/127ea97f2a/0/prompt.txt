@@ -286,3 +286,11 @@ tool_uses: 27
 duration_ms: 55474</usage>
 </task-notification>
 Full transcript available at: /private/tmp/claude-501/-Users-boshen-oxc-oxc4/tasks/acbe1be.output
+
+---
+
+revert the type-ware snapshots, they are irrelevant
+
+---
+
+in generated files, import the types instead of using full path
