@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_ast::{
     AstKind,
     ast::{
@@ -19,20 +17,54 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_invalid_void_type_diagnostic(message: Cow<'static, str>, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(message)
-        .with_help("Replace this `void` type with an allowed type, or keep `void` only in a valid return position.")
+fn invalid_void_for_generic_diagnostic(span: Span, generic: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not use `void` as a type argument for `{generic}`."))
+        .with_help(
+            "Replace this `void` type with an allowed type, or keep `void` only in a valid return position.",
+        )
         .with_label(span)
 }
 
-#[derive(Debug, Clone, Copy)]
-enum MessageId {
-    InvalidVoidForGeneric,
-    InvalidVoidNotReturn,
-    InvalidVoidNotReturnOrGeneric,
-    InvalidVoidNotReturnOrThisParam,
-    InvalidVoidNotReturnOrThisParamOrGeneric,
-    InvalidVoidUnionConstituent,
+fn invalid_void_not_return_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `void` only as a return type.")
+        .with_help(
+            "Replace this `void` type with an allowed type, or keep `void` only in a valid return position.",
+        )
+        .with_label(span)
+}
+
+fn invalid_void_not_return_or_generic_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `void` only as a return type or generic type argument.")
+        .with_help(
+            "Replace this `void` type with an allowed type, or keep `void` only in a valid return position.",
+        )
+        .with_label(span)
+}
+
+fn invalid_void_not_return_or_this_param_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `void` only as a return type or as the type of a `this` parameter.")
+        .with_help(
+            "Replace this `void` type with an allowed type, or keep `void` only in a valid return position.",
+        )
+        .with_label(span)
+}
+
+fn invalid_void_not_return_or_this_param_or_generic_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Use `void` only as a return type, generic type argument, or the type of a `this` parameter.",
+    )
+    .with_help(
+        "Replace this `void` type with an allowed type, or keep `void` only in a valid return position.",
+    )
+    .with_label(span)
+}
+
+fn invalid_void_union_constituent_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Remove `void` from this union type constituent.")
+        .with_help(
+            "Replace this `void` type with an allowed type, or keep `void` only in a valid return position.",
+        )
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -122,7 +154,7 @@ impl Rule for NoInvalidVoidType {
             if let AstKind::TSTypeReference(type_reference) = grand_parent_node.kind() {
                 self.check_generic_type_argument(
                     keyword.span,
-                    remove_spaces(ctx.source_range(type_reference.type_name.span())),
+                    ctx.source_range(type_reference.type_name.span()),
                     ctx,
                 );
                 return;
@@ -132,12 +164,7 @@ impl Rule for NoInvalidVoidType {
                 match self.0.allow_in_generic_type_arguments {
                     AllowInGenericTypeArguments::Boolean(true) => return,
                     AllowInGenericTypeArguments::Boolean(false) => {
-                        let message_id = if self.0.allow_as_this_parameter {
-                            MessageId::InvalidVoidNotReturnOrThisParam
-                        } else {
-                            MessageId::InvalidVoidNotReturn
-                        };
-                        self.report(ctx, keyword.span, message_id, None);
+                        ctx.diagnostic(self.not_return_for_disabled_generics(keyword.span));
                         return;
                     }
                     AllowInGenericTypeArguments::AllowList(_) => {}
@@ -148,31 +175,30 @@ impl Rule for NoInvalidVoidType {
         if self.0.allow_in_generic_type_arguments_enabled()
             && let AstKind::TSTypeParameter(type_parameter) = parent.kind()
         {
-            if type_parameter.default.as_ref().is_some_and(|default| default.span() == keyword.span) {
+            if type_parameter.default.as_ref().is_some_and(|default| default.span() == keyword.span)
+            {
                 return;
             }
 
-            self.report(
-                ctx,
-                keyword.span,
-                get_not_return_or_generic_message_id(is_void_union_member(parent.kind())),
-                None,
-            );
+            ctx.diagnostic(if matches!(parent.kind(), AstKind::TSUnionType(_)) {
+                invalid_void_union_constituent_diagnostic(keyword.span)
+            } else {
+                invalid_void_not_return_or_generic_diagnostic(keyword.span)
+            });
             return;
         }
 
-        if let AstKind::TSUnionType(union_type) = parent.kind()
-            && is_valid_union_type(union_type)
-        {
-            return;
-        }
+        if let AstKind::TSUnionType(union_type) = parent.kind() {
+            if is_valid_union_type(union_type) {
+                return;
+            }
 
-        if let AstKind::TSUnionType(union_type) = parent.kind()
-            && let Some(decl) = get_parent_function_declaration_node(node, ctx)
-            && is_union_within_function_return_type(union_type.span, decl)
-            && has_overload_signatures(decl, ctx)
-        {
-            return;
+            if let Some(decl) = get_parent_function_declaration_node(node, ctx)
+                && is_union_within_function_return_type(union_type.span, decl)
+                && has_overload_signatures(decl, ctx)
+            {
+                return;
+            }
         }
 
         if self.0.allow_as_this_parameter
@@ -186,20 +212,8 @@ impl Rule for NoInvalidVoidType {
             return;
         }
 
-        let in_union = is_void_union_member(parent.kind());
-        let message_id = if self.0.allow_in_generic_type_arguments_enabled()
-            && self.0.allow_as_this_parameter
-        {
-            MessageId::InvalidVoidNotReturnOrThisParamOrGeneric
-        } else if self.0.allow_in_generic_type_arguments_enabled() {
-            get_not_return_or_generic_message_id(in_union)
-        } else if self.0.allow_as_this_parameter {
-            MessageId::InvalidVoidNotReturnOrThisParam
-        } else {
-            MessageId::InvalidVoidNotReturn
-        };
-
-        self.report(ctx, keyword.span, message_id, None);
+        let in_union = matches!(parent.kind(), AstKind::TSUnionType(_));
+        ctx.diagnostic(self.not_return_for_options(keyword.span, in_union));
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -208,63 +222,48 @@ impl Rule for NoInvalidVoidType {
 }
 
 impl NoInvalidVoidType {
-    fn check_generic_type_argument<'a>(
+    fn check_generic_type_argument(
         &self,
         span: Span,
-        fully_qualified_name: Cow<'a, str>,
+        fully_qualified_name: &str,
         ctx: &LintContext<'_>,
     ) {
         match &self.0.allow_in_generic_type_arguments {
             AllowInGenericTypeArguments::AllowList(allow_list) => {
-                let normalized_name = remove_spaces(fully_qualified_name.as_ref());
+                let normalized_name = remove_spaces(fully_qualified_name);
                 if allow_list.iter().all(|allow| remove_spaces(allow.as_str()) != normalized_name) {
-                    self.report(
-                        ctx,
-                        span,
-                        MessageId::InvalidVoidForGeneric,
-                        Some(normalized_name.into_owned()),
-                    );
+                    ctx.diagnostic(invalid_void_for_generic_diagnostic(span, &normalized_name));
                 }
             }
             AllowInGenericTypeArguments::Boolean(false) => {
-                let message_id = if self.0.allow_as_this_parameter {
-                    MessageId::InvalidVoidNotReturnOrThisParam
-                } else {
-                    MessageId::InvalidVoidNotReturn
-                };
-                self.report(ctx, span, message_id, None);
+                ctx.diagnostic(self.not_return_for_disabled_generics(span));
             }
             AllowInGenericTypeArguments::Boolean(true) => {}
         }
     }
 
-    fn report(
-        &self,
-        ctx: &LintContext<'_>,
-        span: Span,
-        message_id: MessageId,
-        generic: Option<String>,
-    ) {
-        let message = match message_id {
-            MessageId::InvalidVoidForGeneric => Cow::Owned(format!(
-                "Do not use `void` as a type argument for `{}`.",
-                generic.unwrap_or_default()
-            )),
-            MessageId::InvalidVoidNotReturn => Cow::Borrowed("Use `void` only as a return type."),
-            MessageId::InvalidVoidNotReturnOrGeneric => {
-                Cow::Borrowed("Use `void` only as a return type or generic type argument.")
+    fn not_return_for_disabled_generics(&self, span: Span) -> OxcDiagnostic {
+        if self.0.allow_as_this_parameter {
+            invalid_void_not_return_or_this_param_diagnostic(span)
+        } else {
+            invalid_void_not_return_diagnostic(span)
+        }
+    }
+
+    fn not_return_for_options(&self, span: Span, in_union: bool) -> OxcDiagnostic {
+        if self.0.allow_in_generic_type_arguments_enabled() && self.0.allow_as_this_parameter {
+            invalid_void_not_return_or_this_param_or_generic_diagnostic(span)
+        } else if self.0.allow_in_generic_type_arguments_enabled() {
+            if in_union {
+                invalid_void_union_constituent_diagnostic(span)
+            } else {
+                invalid_void_not_return_or_generic_diagnostic(span)
             }
-            MessageId::InvalidVoidNotReturnOrThisParam => {
-                Cow::Borrowed("Use `void` only as a return type or as the type of a `this` parameter.")
-            }
-            MessageId::InvalidVoidNotReturnOrThisParamOrGeneric => Cow::Borrowed(
-                "Use `void` only as a return type, generic type argument, or the type of a `this` parameter.",
-            ),
-            MessageId::InvalidVoidUnionConstituent => {
-                Cow::Borrowed("Remove `void` from this union type constituent.")
-            }
-        };
-        ctx.diagnostic(no_invalid_void_type_diagnostic(message, span));
+        } else if self.0.allow_as_this_parameter {
+            invalid_void_not_return_or_this_param_diagnostic(span)
+        } else {
+            invalid_void_not_return_diagnostic(span)
+        }
     }
 }
 
@@ -299,18 +298,6 @@ fn is_valid_return_type_annotation(parent: AstKind<'_>, grand_parent: Option<Ast
     }
 }
 
-fn get_not_return_or_generic_message_id(in_union: bool) -> MessageId {
-    if in_union {
-        MessageId::InvalidVoidUnionConstituent
-    } else {
-        MessageId::InvalidVoidNotReturnOrGeneric
-    }
-}
-
-fn is_void_union_member(parent: AstKind<'_>) -> bool {
-    matches!(parent, AstKind::TSUnionType(_))
-}
-
 fn is_valid_union_type(union_type: &TSUnionType<'_>) -> bool {
     union_type.types.iter().all(|member| {
         matches!(member, TSType::TSVoidKeyword(_) | TSType::TSNeverKeyword(_))
@@ -340,8 +327,10 @@ fn get_parent_function_declaration_node<'n, 'a>(
                 return Some(ParentFunctionDeclarationNode::Method(ancestor, method));
             }
             AstKind::Function(function) if function.body.is_some() => {
-                if matches!(ctx.nodes().parent_node(ancestor.id()).kind(), AstKind::MethodDefinition(_))
-                {
+                if matches!(
+                    ctx.nodes().parent_node(ancestor.id()).kind(),
+                    AstKind::MethodDefinition(_)
+                ) {
                     continue;
                 }
                 return Some(ParentFunctionDeclarationNode::Function(ancestor, function));
@@ -360,11 +349,9 @@ fn is_union_within_function_return_type(
         ParentFunctionDeclarationNode::Function(_, function) => {
             function.return_type.as_ref().is_some_and(|ret| span_contains(ret.span, union_span))
         }
-        ParentFunctionDeclarationNode::Method(_, method) => method
-            .value
-            .return_type
-            .as_ref()
-            .is_some_and(|ret| span_contains(ret.span, union_span)),
+        ParentFunctionDeclarationNode::Method(_, method) => {
+            method.value.return_type.as_ref().is_some_and(|ret| span_contains(ret.span, union_span))
+        }
     }
 }
 
@@ -403,9 +390,15 @@ fn has_function_overload_signatures(
 
     for ancestor in ctx.nodes().ancestors(function_node.id()) {
         let has_match = match ancestor.kind() {
-            AstKind::Program(program) => has_overload_in_statements(&program.body, wrapper, impl_name),
-            AstKind::TSModuleBlock(block) => has_overload_in_statements(&block.body, wrapper, impl_name),
-            AstKind::BlockStatement(block) => has_overload_in_statements(&block.body, wrapper, impl_name),
+            AstKind::Program(program) => {
+                has_overload_in_statements(&program.body, wrapper, impl_name)
+            }
+            AstKind::TSModuleBlock(block) => {
+                has_overload_in_statements(&block.body, wrapper, impl_name)
+            }
+            AstKind::BlockStatement(block) => {
+                has_overload_in_statements(&block.body, wrapper, impl_name)
+            }
             AstKind::FunctionBody(body) => {
                 has_overload_in_statements(&body.statements, wrapper, impl_name)
             }
@@ -431,7 +424,8 @@ fn has_overload_in_statements(
         if candidate_wrapper != impl_wrapper {
             return false;
         }
-        if candidate.body.is_some() && !matches!(candidate.r#type, FunctionType::TSDeclareFunction) {
+        if candidate.body.is_some() && !matches!(candidate.r#type, FunctionType::TSDeclareFunction)
+        {
             return false;
         }
 
@@ -513,12 +507,8 @@ fn span_contains(outer: Span, inner: Span) -> bool {
     inner.start >= outer.start && inner.end <= outer.end
 }
 
-fn remove_spaces(s: &str) -> Cow<'_, str> {
-    if s.contains(char::is_whitespace) {
-        Cow::Owned(s.chars().filter(|c| !c.is_whitespace()).collect())
-    } else {
-        Cow::Borrowed(s)
-    }
+fn remove_spaces(s: &str) -> String {
+    s.chars().filter(|c| !c.is_whitespace()).collect()
 }
 
 #[test]
@@ -663,7 +653,7 @@ fn test() {
         (
             "
             const staticSymbol = Symbol.for('static symbol');
-            
+
             class SomeClass {
               [staticSymbol](): void;
               [staticSymbol](x: string): string;
@@ -733,9 +723,9 @@ fn test() {
         (
             "
             function f(): void;
-            
+
             const a = 5;
-            
+
             function f(x: string): string;
             function f(x?: string): string | void {
               if (x !== undefined) {
@@ -772,7 +762,7 @@ fn test() {
         (
             "
             export {};
-            
+
             export function f(): void;
             export function f(x: string): string;
             export function f(x?: string): string | void {
