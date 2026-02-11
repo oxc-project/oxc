@@ -19,7 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
-    context::{ContextHost, LintContext},
+    context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -113,74 +113,49 @@ impl Rule for ClassLiteralPropertyStyle {
             ClassLiteralPropertyStyleOption::Getters => check_getters_mode(class_body, ctx),
         }
     }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
-    }
 }
 
 fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
     for element in &class_body.body {
-        let ClassElement::MethodDefinition(method) = element else {
-            continue;
-        };
-        if method.kind != MethodDefinitionKind::Get || method.r#override {
-            continue;
+        if let ClassElement::MethodDefinition(method) = element
+            && method.kind == MethodDefinitionKind::Get
+            && !method.r#override
+            && let Some(body) = &method.value.body
+            && let Some(Statement::ReturnStatement(return_statement)) = body.statements.first()
+            && let Some(argument) = &return_statement.argument
+            && is_supported_literal(argument)
+            && !has_duplicate_setter(class_body, method)
+        {
+            ctx.diagnostic(prefer_field_style_diagnostic(method.key.span()));
         }
-        let Some(body) = method.value.body.as_ref() else {
-            continue;
-        };
-        let Some(Statement::ReturnStatement(return_statement)) = body.statements.first() else {
-            continue;
-        };
-        let Some(argument) = return_statement.argument.as_ref() else {
-            continue;
-        };
-        if !is_supported_literal(argument) {
-            continue;
-        }
-
-        if has_duplicate_setter(class_body, method) {
-            continue;
-        }
-
-        ctx.diagnostic(prefer_field_style_diagnostic(method.key.span()));
     }
 }
 
 fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
     let mut excluded_properties = FxHashSet::default();
     for element in &class_body.body {
-        let ClassElement::MethodDefinition(method) = element else {
-            continue;
-        };
-        if method.kind != MethodDefinitionKind::Constructor {
-            continue;
+        if let ClassElement::MethodDefinition(method) = element
+            && method.kind == MethodDefinitionKind::Constructor
+            && let Some(body) = &method.value.body
+        {
+            let mut collector =
+                ConstructorAssignmentCollector { excluded_properties: &mut excluded_properties };
+            collector.visit_function_body(body);
         }
-        let Some(body) = method.value.body.as_ref() else {
-            continue;
-        };
-
-        let mut collector =
-            ConstructorAssignmentCollector { excluded_properties: &mut excluded_properties };
-        collector.visit_function_body(body);
     }
 
     for element in &class_body.body {
-        let ClassElement::PropertyDefinition(property) = element else {
-            continue;
-        };
-        if !is_literal_readonly_property(property) {
-            continue;
-        }
-
-        if let Some(name) = key_name(&property.key)
-            && excluded_properties.contains(name.as_str())
+        if let ClassElement::PropertyDefinition(property) = element
+            && is_literal_readonly_property(property)
         {
-            continue;
-        }
+            if let Some(name) = key_name(&property.key)
+                && excluded_properties.contains(name.as_str())
+            {
+                continue;
+            }
 
-        ctx.diagnostic(prefer_getter_style_diagnostic(property.key.span()));
+            ctx.diagnostic(prefer_getter_style_diagnostic(property.key.span()));
+        }
     }
 }
 
@@ -352,7 +327,7 @@ fn test() {
                       if (this._aValue) {
                         return 'on';
                       }
-            
+
                       return 'off';
                     }
                   }
@@ -376,7 +351,7 @@ fn test() {
                       if (this._aValue) {
                         return 'on';
                       }
-            
+
                       return 'off';
                     }
                   }
@@ -585,7 +560,7 @@ fn test() {
             declare abstract class BaseClass {
               get cursor(): string;
             }
-            
+
             class ChildClass extends BaseClass {
               override get cursor() {
                 return 'overridden value';
@@ -599,7 +574,7 @@ fn test() {
             declare abstract class BaseClass {
               protected readonly foo: string;
             }
-            
+
             class ChildClass extends BaseClass {
               protected override readonly foo = 'bar';
             }
@@ -794,7 +769,7 @@ fn test() {
                   private readonly foo: string = 'baz';
                   constructor() {}
                 })();
-            
+
                 if (bar) {
                   this.foo = 'baz';
                 }
