@@ -1,0 +1,296 @@
+Implement the following plan:
+
+# Plan: Change `node_id` to `Cell<NodeId>` and add generated getter
+
+## Context
+
+The `node_id` field was recently added to all AST struct nodes (commit `cbe58122c`) as a plain `NodeId`. It needs to be changed to `Cell<NodeId>` to allow interior mutability (setting the ID after construction without `&mut`), consistent with how `scope_id`, `symbol_id`, and `reference_id` already use `Cell<Option<T>>`. A `node_id()` getter (and `set_node_id()` setter) should be code-generated for all AST nodes.
+
+## Changes
+
+### 1. AST source definitions: `NodeId` → `Cell<NodeId>`
+
+**Files:**
+- `crates/oxc_ast/src/ast/js.rs`
+- `crates/oxc_ast/src/ast/jsx.rs`
+- `crates/oxc_ast/src/ast/literal.rs`
+- `crates/oxc_ast/src/ast/ts.rs`
+
+Change all `pub node_id: NodeId` to `pub node_id: Cell<NodeId>` (~190 structs across 4 files).
+
+### 2. Add `node_id()` getter and `set_node_id()` setter via `get_id.rs` generator
+
+**Generator:** `tasks/ast_tools/src/generators/get_id.rs`
+**Output:** `crates/oxc_ast/src/generated/get_id.rs` (alongside existing `scope_id()`, `symbol_id()`, `reference_id()` getters)
+
+Add separate handling for `node_id` field alongside the existing semantic ID handling. Unlike semantic IDs which are `Cell<Option<T>>` (getter calls `.get().unwrap()`), `node_id` is `Cell<NodeId>` (getter calls `.get()`):
+
+```rust
+// Generated in get_id.rs for every AST struct that has node_id:
+pub fn node_id(&self) -> NodeId {
+    self.node_id.get()
+}
+
+pub fn set_node_id(&self, node_id: NodeId) {
+    self.node_id.set(node_id);
+}
+```
+
+Approach: In `generate_for_type()`, after the existing semantic ID method generation loop, add a separate check for `node_id` fields (detected by name `"node_id"` where the field type is `Cell`). Generate `node_id()` / `set_node_id()` for every struct that has it. Add `use oxc_syntax::node::NodeId;` to the prelude imports.
+
+### 3. Update derive generators
+
+**`tasks/ast_tools/src/derives/dummy.rs`** (line ~202-203):
+- Change: `quote!(#field_ident: oxc_syntax::node::NodeId::DUMMY)`
+- To: `quote!(#field_ident: std::cell::Cell::new(oxc_syntax::node::NodeId::DUMMY))`
+
+**`tasks/ast_tools/src/derives/clone_in.rs`** (lines ~88-89, ~105-106):
+- Regular clone (line ~89): `quote!( #field_ident: std::cell::Cell::new(oxc_syntax::node::NodeId::DUMMY) )`
+- Semantic clone (line ~106): `quote!( #field_ident: std::cell::Cell::new(self.#field_ident.get()) )`
+
+**`tasks/ast_tools/src/derives/content_eq.rs`**: No change needed (already skips `node_id`).
+
+**`tasks/ast_tools/src/derives/estree.rs`**: No change needed (already skips `node_id`).
+
+### 4. Update `ast_builder.rs` generator
+
+**File:** `tasks/ast_tools/src/generators/ast_builder.rs` (line ~503)
+
+- Change: `fields.push(quote!( #param_ident: NodeId::DUMMY ));`
+- To: `fields.push(quote!( #param_ident: Cell::new(NodeId::DUMMY) ));`
+
+Note: `Cell` is already imported in the builder's prelude (line 81).
+
+### 5. Update formatter `ast_nodes.rs` generator
+
+**File:** `tasks/ast_tools/src/generators/formatter/ast_nodes.rs` (line ~212-244)
+
+The `generate_struct_impls` function already skips `Cell` fields at line 240 (`TypeDef::Cell(_) => return None`). Since `node_id` will now be `Cell<NodeId>`, it would be skipped. Add special handling before the skip to generate a `node_id()` method that calls the AST node's getter:
+
+```rust
+// Before the existing field type match, add:
+if field.name == "node_id" {
+    // Generate: pub fn node_id(&self) -> NodeId { self.inner.node_id() }
+    return Some(quote! {
+        #[inline]
+        pub fn node_id(&self) -> NodeId {
+            self.inner.node_id()
+        }
+    });
+}
+```
+
+### 6. Ancestor generator (traverse)
+
+**File:** `tasks/ast_tools/src/generators/traverse/ancestor.rs`
+
+The ancestor generator creates `offset_of!` constants and unsafe pointer casts for each field. It doesn't special-case `node_id` — it uses the field's actual type. When the type changes to `Cell<NodeId>`, the generated code will automatically change the return type from `&'t NodeId` to `&'t Cell<NodeId>`. This is correct behavior — no generator changes needed.
+
+### 7. Regenerate and fix
+
+Run `just ast` to regenerate all generated files, then fix any compilation errors.
+
+## Verification
+
+1. `just ast` — regenerate all generated code
+2. `just fmt` — format
+3. `cargo build` — verify compilation
+4. `just test` — run tests
+5. `just ready` — full checks
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.claude/projects/-Users-boshen-oxc-oxc4/cbbc5c46-7734-499e-b162-3d8d336cb89b.jsonl
+
+---
+
+<task-notification>
+<task-id>acbe1be</task-id>
+<status>completed</status>
+<summary>Agent "Read AST source files" completed</summary>
+<result>Perfect! Now I have all the information I need. Let me compile a comprehensive report:
+
+## Summary: Node ID Fields Analysis
+
+Based on my exploration of the Oxc codebase, here's a comprehensive report of the `node_id` field structure and all locations requiring modifications:
+
+### 1. **AST Files - Node ID Field Occurrences**
+
+Total occurrences across all 4 AST files: **188 occurrences**
+
+**Breakdown by file:**
+- `/Users/boshen/oxc/oxc4/crates/oxc_ast/src/ast/js.rs` - 94 occurrences
+  - First 5 at lines: 52, 237, 257, 287, 315
+- `/Users/boshen/oxc/oxc4/crates/oxc_ast/src/ast/ts.rs` - 73 occurrences
+  - First 5 at lines: 51, 83, 109, 137, 184
+- `/Users/boshen/oxc/oxc4/crates/oxc_ast/src/ast/jsx.rs` - 15 occurrences
+  - All lines: 39, 74, 102, 122, 140, 151, 187, 216, 273, 310, 352, 375, 449, 486, 508
+- `/Users/boshen/oxc/oxc4/crates/oxc_ast/src/ast/literal.rs` - 6 occurrences
+  - All lines: 29, 45, 59, 85, 117, 146
+
+### 2. **Imports in AST Files**
+**File:** `/Users/boshen/oxc/oxc4/crates/oxc_ast/src/ast/js.rs` (lines 1-50)
+
+Key imports for node_id support:
+- **Line 25:** `use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};`
+- **Line 26:** `use oxc_ast_macros::ast;`
+- **Line 28:** `use oxc_span::{Atom, ContentEq, GetEq, GetSpan, GetSpanMut, Ident, SourceType, Span};`
+- **Lines 29-37:** Imports from `oxc_syntax`:
+  ```rust
+  use oxc_syntax::{
+      node::NodeId,  // <-- NodeId type
+      operator::{...},
+      reference::ReferenceId,
+      scope::ScopeId,
+      symbol::SymbolId,
+  };
+  ```
+
+### 3. **Derive Macro Support - `dummy.rs`**
+**File:** `/Users/boshen/oxc/oxc4/tasks/ast_tools/src/derives/dummy.rs`
+
+**Special handling for `node_id`:**
+- **Lines 198-216:** In `generate_impl_for_struct()`:
+  ```rust
+  fn generate_impl_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+      let fields = struct_def.fields.iter().map(|field| {
+          let field_ident = field.ident();
+          // Special case: node_id uses NodeId::DUMMY instead of Dummy::dummy
+          if field.name() == "node_id" {
+              quote!(#field_ident: oxc_syntax::node::NodeId::DUMMY)
+          } else {
+              quote!(#field_ident: Dummy::dummy(allocator))
+          }
+      });
+      // ... generates Self { #(#fields),* }
+  }
+  ```
+  - **Line 202-203:** Check for `node_id` field name and use `NodeId::DUMMY` instead of allocator-based dummy
+
+### 4. **Clone In Derive - `clone_in.rs`**
+**File:** `/Users/boshen/oxc/oxc4/tasks/ast_tools/src/derives/clone_in.rs`
+
+**Special handling for `node_id` in two contexts:**
+
+A. In `derive_struct()` for regular cloning (lines 76-126):
+  - **Lines 85-95:** Regular `clone_in` body:
+    ```rust
+    let fields = struct_def.fields.iter().map(|field| {
+        let field_ident = field.ident();
+        // Special case: node_id uses NodeId::DUMMY when cloning
+        if field.name() == "node_id" {
+            quote!( #field_ident: oxc_syntax::node::NodeId::DUMMY )
+        } else if struct_field_is_default(field, schema) {
+            quote!( #field_ident: Default::default() )
+        } else {
+            quote!( #field_ident: CloneIn::clone_in(&self.#field_ident, allocator) )
+        }
+    });
+    ```
+
+B. In `clone_in_with_semantic_ids` body (lines 101-114):
+  - **Lines 102-110:** Preserves semantic IDs:
+    ```rust
+    let fields = struct_def.fields.iter().map(|field| {
+        let field_ident = field.ident();
+        // Special case: node_id is copied directly to preserve semantic IDs
+        if field.name() == "node_id" {
+            quote!( #field_ident: self.#field_ident )
+        } else {
+            quote!( #field_ident: CloneIn::clone_in_with_semantic_ids(&self.#field_ident, allocator) )
+        }
+    });
+    ```
+
+### 5. **AST Builder Generator - `ast_builder.rs`**
+**File:** `/Users/boshen/oxc/oxc4/tasks/ast_tools/src/generators/ast_builder.rs`
+
+**Param Structure Definition (lines 155-173):**
+```rust
+pub struct Param<'d> {
+    field: &'d FieldDef,
+    ident: TokenStream,
+    fn_param: TokenStream,
+    is_default: bool,
+    is_comment_node_id: bool,
+    is_node_id: bool,  // <-- Line 166
+    generic_type: Option<GenericType>,
+}
+```
+
+**Detection of `node_id` (lines 450-464):**
+- **Line 454:** `let is_node_id = field.name() == "node_id";`
+- Sets the `is_node_id` flag when field name equals "node_id"
+
+**Usage in builder generation (lines 498-521):**
+```rust
+// Line 500-503: Special case handling
+if param.is_node_id {
+    fields.push(quote!( #param_ident: NodeId::DUMMY ));
+    return None;  // Don't add as parameter
+} else if param.is_default {
+    // ... handle default params
+} else if param.is_comment_node_id {
+    // ... handle comment node IDs
+}
+```
+
+**Filtering node_id from parameters (multiple locations):**
+- **Lines 283, 646, 650, 748:** Filter out `is_node_id` fields when generating function parameters:
+  ```rust
+  .filter(|param| !param.is_comment_node_id && !param.is_node_id)
+  ```
+
+- **Lines 215, 586:** Exclude `node_id` from default parameter lists:
+  ```rust
+  let default_params = params.iter().filter(|param| param.is_default && !param.is_node_id);
+  ```
+
+### 6. **ID Getter/Setter Generator - `get_id.rs`**
+**File:** `/Users/boshen/oxc/oxc4/tasks/ast_tools/src/generators/get_id.rs**
+
+**Purpose:** Generates getter/setter methods for semantic ID fields (ScopeId, SymbolId, ReferenceId)
+
+**Note:** Does NOT handle `node_id` - only semantic IDs in `Cell<Option<...>>` wrappers
+- **Line 18:** Only tracks semantic ID types: `["ScopeId", "SymbolId", "ReferenceId"]`
+- **Lines 60-72:** Filters for `Cell<Option<...>>` wrapped ID types
+
+### 7. **Formatter AST Nodes Generator - `formatter/ast_nodes.rs`**
+**File:** `/Users/boshen/oxc/oxc4/tasks/ast_tools/src/generators/formatter/ast_nodes.rs`
+
+**Lines 210-250 region (field iteration logic):**
+- **Lines 212-244:** Field processing loop that filters out `span` field and processes others
+- Generates formatter methods for all fields except `span`
+- Does not have special handling for `node_id` - treats it like any other field
+
+---
+
+## Key Findings
+
+1. **node_id is consistently:**
+   - A `NodeId` type from `oxc_syntax::node`
+   - Always initialized to `NodeId::DUMMY` in builders and dummy implementations
+   - Preserved when using `clone_in_with_semantic_ids`
+   - Reset to `NodeId::DUMMY` during regular cloning
+   - Never exposed as a builder function parameter
+
+2. **Files requiring modification awareness:**
+   - AST definition files (js.rs, ts.rs, jsx.rs, literal.rs) - Read-only analysis
+   - Derive generators (dummy.rs, clone_in.rs) - Already have special handling
+   - Builder generator (ast_builder.rs) - Already has special handling  
+   - Get ID generator (get_id.rs) - Does NOT handle node_id (by design)
+   - Formatter generator (ast_nodes.rs) - No special handling needed
+
+3. **Total AST nodes with node_id: 188 structs/variants** across all 4 AST files</result>
+<usage>total_tokens: 36397
+tool_uses: 27
+duration_ms: 55474</usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-boshen-oxc-oxc4/tasks/acbe1be.output
+
+---
+
+revert the type-ware snapshots, they are irrelevant
+
+---
+
+in generated files, import the types instead of using full path

@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "ad127ea97f2a",
+  "session_id": "38ba2f83-cf7a-41c2-a3e1-81a536f783ea",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-11T11:06:08.970631Z",
+  "branch": "feat/ast-node-id",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "tasks/ast_tools/src/derives/clone_in.rs",
+    "tasks/ast_tools/src/derives/dummy.rs"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "1010c20d-54c6-4b64-8aff-527647033fa7",
+  "checkpoint_transcript_start": 734,
+  "transcript_lines_at_start": 734,
+  "token_usage": {
+    "input_tokens": 157,
+    "cache_creation_tokens": 8816,
+    "cache_read_tokens": 3223633,
+    "output_tokens": 778,
+    "api_call_count": 24
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-11T11:06:08.799717Z",
+    "agent_lines": 11,
+    "human_added": 2435,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2446,
+    "agent_percentage": 0.44971381847914965
+  }
+}
