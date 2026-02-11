@@ -2,7 +2,7 @@ commit: 95e3aaa9
 
 semantic_typescript Summary:
 AST Parsed     : 5482/5482 (100.00%)
-Positive Passed: 2950/5482 (53.81%)
+Positive Passed: 2951/5482 (53.83%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -30085,11 +30085,6 @@ Bindings mismatch:
 after transform: ScopeId(0): ["from"]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importDefaultNamedType3.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["from"]
-rebuilt        : ScopeId(0): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/mergedWithLocalValue.ts
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | TypeImport)
@@ -30231,7 +30226,7 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsESM.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["CJSy", "CJSy2", "CJSy3", "types"]
+after transform: ScopeId(0): ["CJSy", "CJSy3", "types"]
 rebuilt        : ScopeId(0): ["CJSy"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/functions/functionOverloadCompatibilityWithVoid02.ts
