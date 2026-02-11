@@ -355,8 +355,13 @@ impl Rule for ExhaustiveDeps {
 
                             // Try to find the var in the current scope
                             if let Some(decl) = get_declaration_of_variable(ident, ctx.semantic()) {
-                                // Declared outside component scope (e.g. module-level); stable.
-                                if decl.scope_id() != component_scope_id {
+                                if ctx
+                                    .semantic()
+                                    .scoping()
+                                    .scope_ancestors(component_scope_id)
+                                    .skip(1)
+                                    .contains(&decl.scope_id())
+                                {
                                     return;
                                 }
 
@@ -4153,6 +4158,12 @@ fn test() {
           React.useEffect(() => {
             onStuff();
           }, [onStuff]);
+        }",
+        r"function MyComponent(props) {
+          if (props.ok) {
+            const callback = () => props.value;
+            useMemo(callback, []);
+          }
         }",
     ];
 
