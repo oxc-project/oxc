@@ -69,10 +69,6 @@ impl Default for SuppressionTracking {
 }
 
 impl SuppressionTracking {
-    pub fn new(suppressions: FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>>) -> Self {
-        Self { version: "0.1.0".to_string(), suppressions }
-    }
-
     pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
         let string = read_to_string(path).map_err(|e| {
             OxcDiagnostic::error(format!(
@@ -108,6 +104,36 @@ impl SuppressionTracking {
         Ok(config)
     }
 
+    pub fn update(&mut self, diff: SuppressionDiff) {
+        match diff {
+            SuppressionDiff::Increased { file, rule, from, to } => {
+                self.suppressions.get_mut(&file).unwrap().get_mut(&rule).unwrap().count = to;
+            }
+            SuppressionDiff::Decreased { file, rule, from, to } => {
+                self.suppressions.get_mut(&file).unwrap().get_mut(&rule).unwrap().count = to;
+            }
+            SuppressionDiff::PrunedRuled { file, rule } => {
+                let file_map = self.suppressions.get(&file).unwrap();
+
+                if file_map.len() == 1 {
+                    self.suppressions.remove(&file);
+                } else {
+                    self.suppressions.get_mut(&file).unwrap().remove(&rule);
+                }
+            }
+            SuppressionDiff::Appeared { file, rule, count } => {
+                if let Some(file) = self.suppressions.get_mut(&file) {
+                    file.insert(rule, DiagnosticCounts { count });
+                } else {
+                    let mut file_diagnostic: FxHashMap<RuleName, DiagnosticCounts> =
+                        FxHashMap::default();
+                    file_diagnostic.insert(rule, DiagnosticCounts { count });
+                    self.suppressions.insert(file, file_diagnostic);
+                }
+            }
+        }
+    }
+
     pub fn save(&self, path: &Path) -> Result<(), OxcDiagnostic> {
         let content = serde_json::to_string_pretty(&self).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to serialize suppression file: {err}"))
@@ -138,12 +164,12 @@ pub struct SuppressionManager {
     file_exists: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SuppressionDiff {
     Increased { file: Filename, rule: RuleName, from: usize, to: usize },
     Decreased { file: Filename, rule: RuleName, from: usize, to: usize },
     PrunedRuled { file: Filename, rule: RuleName },
-    Appeared { file: Filename, rule: RuleName },
+    Appeared { file: Filename, rule: RuleName, count: usize },
 }
 
 impl Into<OxcDiagnostic> for SuppressionDiff {
@@ -158,8 +184,8 @@ impl Into<OxcDiagnostic> for SuppressionDiff {
             SuppressionDiff::PrunedRuled { file, rule } => {
                 format!("All {rule} errors has been pruned in {file}.")
             }
-            SuppressionDiff::Appeared { file, rule } => {
-                format!("New errors for {rule} have appeared in {file}.")
+            SuppressionDiff::Appeared { file, rule, count } => {
+                format!("New {rule} error have appeared {count} times in {file}.")
             }
         };
 
@@ -167,14 +193,8 @@ impl Into<OxcDiagnostic> for SuppressionDiff {
     }
 }
 
-pub enum SuppressionFileState<'a> {
-    Ignored,
-    New,
-    Exists { file_suppressions: Option<&'a FxHashMap<RuleName, DiagnosticCounts>> },
-}
-
 #[derive(Debug, Eq, PartialEq)]
-pub enum SuppressionFileStateNew {
+pub enum SuppressionFileState {
     Ignored,
     New,
     Exists,
@@ -182,13 +202,13 @@ pub enum SuppressionFileStateNew {
 
 #[derive(Debug)]
 pub struct SuppressionFile<'a> {
-    state: SuppressionFileStateNew,
+    state: SuppressionFileState,
     suppression_data: Option<&'a FxHashMap<RuleName, DiagnosticCounts>>,
 }
 
 impl<'a> Default for SuppressionFile<'a> {
     fn default() -> Self {
-        Self { state: SuppressionFileStateNew::Ignored, suppression_data: None }
+        Self { state: SuppressionFileState::Ignored, suppression_data: None }
     }
 }
 
@@ -202,17 +222,17 @@ impl<'a> SuppressionFile<'a> {
         'b: 'a,
     {
         if !file_exists && !suppress_all {
-            return Self { state: SuppressionFileStateNew::Ignored, suppression_data: None };
+            return Self { state: SuppressionFileState::Ignored, suppression_data: None };
         }
 
         if !file_exists && suppress_all {
-            return Self { state: SuppressionFileStateNew::New, suppression_data: None };
+            return Self { state: SuppressionFileState::New, suppression_data: None };
         }
 
-        Self { state: SuppressionFileStateNew::Exists, suppression_data }
+        Self { state: SuppressionFileState::Exists, suppression_data }
     }
 
-    pub fn suppression_state(&self) -> &SuppressionFileStateNew {
+    pub fn suppression_state(&self) -> &SuppressionFileState {
         &self.state
     }
 }
@@ -291,23 +311,6 @@ impl SuppressionManager {
         concurrent_papaya
     }
 
-    // TODO: Esto es una propiedad de un nuevo struct
-    pub fn get_suppression_per_file(&self, path: &Path) -> SuppressionFileState<'_> {
-        if !self.file_exists && !self.suppress_all {
-            return SuppressionFileState::Ignored;
-        }
-
-        if !self.file_exists && self.suppress_all {
-            return SuppressionFileState::New;
-        }
-
-        let filename = Filename::new(path);
-
-        SuppressionFileState::Exists {
-            file_suppressions: self.suppressions_by_file.suppressions.get(&filename),
-        }
-    }
-
     pub fn is_updating_file(&self) -> bool {
         self.suppress_all || self.prune_suppression
     }
@@ -316,105 +319,18 @@ impl SuppressionManager {
         self.file_exists
     }
 
-    pub fn write(
-        &self,
-        path: &Path,
-        new_file: FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>>,
-    ) -> Result<(), OxcDiagnostic> {
-        println!("{:?}", self);
+    pub fn update(&mut self, diff: SuppressionDiff) {
+        self.suppressions_by_file.update(diff);
+    }
+
+    pub fn write(&self, path: &Path) -> Result<(), OxcDiagnostic> {
         if !self.file_exists && self.prune_suppression {
             return Err(OxcDiagnostic::error(
                 "You can't prune error messages if a bulk suppression file doesn't exist.",
             ));
         }
 
-        SuppressionTracking::new(new_file).save(path)
-    }
-
-    // TODO
-    pub fn write_diff() {}
-
-    // REMOVE
-    pub fn diff(
-        &self,
-        runtime_suppressions: &FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>>,
-        runtime_set: &FxHashSet<(Filename, RuleName)>,
-    ) -> Vec<SuppressionDiff> {
-        let mut diff: Vec<SuppressionDiff> = vec![];
-
-        if self.suppression_key_set.is_empty() && runtime_set.is_empty() {
-            return diff;
-        }
-
-        if self.suppression_key_set.is_empty() {
-            return runtime_set
-                .iter()
-                .map(|(file_key, rule_key)| SuppressionDiff::Appeared {
-                    file: file_key.clone(),
-                    rule: rule_key.clone(),
-                })
-                .collect();
-        }
-
-        if runtime_set.is_empty() {
-            return self
-                .suppression_key_set
-                .iter()
-                .map(|(file_key, rule_key)| SuppressionDiff::PrunedRuled {
-                    file: file_key.clone(),
-                    rule: rule_key.clone(),
-                })
-                .collect();
-        }
-
-        let mut pruned_rules = self.suppression_key_set.difference(runtime_set);
-        let mut new_violations = runtime_set.difference(&self.suppression_key_set);
-        let mut existing_violations = self.suppression_key_set.intersection(runtime_set);
-
-        println!("pruned {:?}", pruned_rules);
-        println!("new_violations {:?}", new_violations);
-        println!("existing_violations {:?}", existing_violations);
-
-        while let Some((file_key, rule_key)) = pruned_rules.next() {
-            diff.push(SuppressionDiff::PrunedRuled {
-                file: file_key.clone(),
-                rule: rule_key.clone(),
-            });
-        }
-
-        while let Some((file_key, rule_key)) = new_violations.next() {
-            diff.push(SuppressionDiff::Appeared { file: file_key.clone(), rule: rule_key.clone() });
-        }
-
-        while let Some((file_key, rule_key)) = existing_violations.next() {
-            let file_diagnostic = self
-                .suppressions_by_file
-                .suppressions
-                .get(file_key)
-                .unwrap()
-                .get(rule_key)
-                .unwrap();
-            let runtime_diagnostic =
-                runtime_suppressions.get(file_key).unwrap().get(rule_key).unwrap();
-
-            if file_diagnostic.count > runtime_diagnostic.count {
-                diff.push(SuppressionDiff::Decreased {
-                    file: file_key.clone(),
-                    rule: rule_key.clone(),
-                    from: file_diagnostic.count,
-                    to: runtime_diagnostic.count,
-                });
-            } else if file_diagnostic.count < runtime_diagnostic.count {
-                diff.push(SuppressionDiff::Increased {
-                    file: file_key.clone(),
-                    rule: rule_key.clone(),
-                    from: file_diagnostic.count,
-                    to: runtime_diagnostic.count,
-                });
-            }
-        }
-
-        diff
+        self.suppressions_by_file.save(path)
     }
 
     pub fn diff_filename(
@@ -423,9 +339,9 @@ impl SuppressionManager {
         filename: &Filename,
     ) -> Vec<SuppressionDiff> {
         let static_suppression = match suppression_file_state.suppression_state() {
-            SuppressionFileStateNew::Ignored => return vec![],
-            SuppressionFileStateNew::New => FxHashMap::default(),
-            SuppressionFileStateNew::Exists => {
+            SuppressionFileState::Ignored => return vec![],
+            SuppressionFileState::New => FxHashMap::default(),
+            SuppressionFileState::Exists => {
                 if let Some(data) = suppression_file_state.suppression_data {
                     data.to_owned()
                 } else {
@@ -456,9 +372,12 @@ impl SuppressionManager {
         }
 
         while let Some(rule_key) = new_violations.next() {
+            let runtime_diagnostic = runtime_suppression.get(rule_key).unwrap();
+
             diff.push(SuppressionDiff::Appeared {
                 file: filename.clone(),
                 rule: (*rule_key).clone(),
+                count: runtime_diagnostic.count,
             });
         }
 
@@ -509,13 +428,13 @@ impl SuppressionManager {
         };
 
         match suppression_file_state.suppression_state() {
-            SuppressionFileStateNew::Ignored => (lint_diagnostics, None),
-            SuppressionFileStateNew::New => {
+            SuppressionFileState::Ignored => (lint_diagnostics, None),
+            SuppressionFileState::New => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
                 (lint_diagnostics, Some(runtime_suppression_tracking))
             }
-            SuppressionFileStateNew::Exists => {
+            SuppressionFileState::Exists => {
                 let runtime_suppression_tracking = build_suppression_map(&lint_diagnostics);
 
                 let Some(recorded_violations) = suppression_file_state.suppression_data else {

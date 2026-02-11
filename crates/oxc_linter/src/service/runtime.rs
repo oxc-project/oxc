@@ -593,7 +593,7 @@ impl Runtime {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
-        let suppression_manager = SuppressionManager::load(
+        let mut suppression_manager = SuppressionManager::load(
             self.cwd.join("oxlint-suppressions.json").as_path(),
             self.linter.options.suppress_all,
             self.linter.options.prune_suppressions,
@@ -604,10 +604,8 @@ impl Runtime {
         let file_exists = suppression_manager.exists_suppression_file();
         let concurrent_tracking_map = suppression_manager.concurrent_map();
 
-        let (tracking_channel, runtime_suppression_recv) =
-            std::sync::mpsc::channel::<(Filename, RuleName, DiagnosticCounts)>();
-
-        println!("Initial map {:?}", suppression_manager);
+        let (suppression_diff_channel, tx_suppression_diff_channel) =
+            std::sync::mpsc::channel::<SuppressionDiff>();
 
         rayon::scope(|scope| {
             self.resolve_modules(
@@ -617,7 +615,6 @@ impl Runtime {
                 true,
                 Some(tx_error),
                 move |me, mut module_to_lint| {
-                    let runtime_suppression_sender = tracking_channel.clone();
                     module_to_lint.content.with_dependent_mut(|allocator_guard, dep| {
                         // If there are fixes, we will accumulate all of them and write to the file at the end.
                         // This means we do not write multiple times to the same file if there are multiple sources
@@ -710,15 +707,12 @@ impl Runtime {
                                     DiagnosticService::wrap_diagnostics(&me.cwd, path, "", errors);
                                 tx_error.send(diagnostics).unwrap();
                             } else if !diff.is_empty() && is_updating_suppression_file {
-                                // TODO: Send the diff here
-                            }
+                                let diff_suppression_sender = suppression_diff_channel.clone();
 
-                            // TODO TO BE REMOVED
-                            suppression_detected.iter().for_each(|(key, value)| {
-                                runtime_suppression_sender
-                                    .send((filename.clone(), key.clone(), value.clone()))
-                                    .unwrap();
-                            });
+                                diff.iter().for_each(|diff| {
+                                    diff_suppression_sender.send(diff.clone()).unwrap();
+                                });
+                            }
                         }
 
                         if me.linter.options().fix.is_some() {
@@ -762,62 +756,17 @@ impl Runtime {
             );
         });
 
-        let mut runtime_map: FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>> =
-            FxHashMap::default();
-
-        let mut set: FxHashSet<(Filename, RuleName)> = FxHashSet::default();
-
-        while let Ok((file_name, rule_name, diagnostic)) = runtime_suppression_recv.recv() {
-            runtime_map.entry(file_name.clone()).or_insert_with(FxHashMap::default);
-
-            set.insert((file_name.clone(), rule_name.clone()));
-
-            if let Some(entry) = runtime_map.get_mut(&file_name) {
-                entry.insert(rule_name, diagnostic);
-            } else {
-                let mut rule_count: FxHashMap<RuleName, DiagnosticCounts> = FxHashMap::default();
-
-                rule_count.insert(rule_name, diagnostic);
-                runtime_map.insert(file_name, rule_count);
+        let mut have_at_least_one_diff = false;
+        while let Ok(diff) = tx_suppression_diff_channel.recv() {
+            if !have_at_least_one_diff {
+                have_at_least_one_diff = true;
             }
+
+            suppression_manager.update(diff);
         }
 
-        println!("NEW {:?}", runtime_map);
-        println!("SET {:?}", set);
-
-        let diff = suppression_manager.diff(&runtime_map, &set);
-
-        println!("diff {:?}", diff);
-
-        let mut diff_iterator = diff.iter();
-        let mut diagnostics: Vec<OxcDiagnostic> = vec![];
-
-        while let Some(diff) = diff_iterator.next() {
-            let message = match diff {
-                SuppressionDiff::Increased { file, rule, from, to } => {
-                    format!("The {rule} errors in {file} have increased from {from} to {to}.")
-                }
-                SuppressionDiff::Decreased { file, rule, from, to } => {
-                    format!("The {rule} errors in {file} have decreased from {from} to {to}.")
-                }
-                SuppressionDiff::PrunedRuled { file, rule } => {
-                    format!("All {rule} errors has been pruned in {file}.")
-                }
-                SuppressionDiff::Appeared { file, rule } => {
-                    format!("New errors for {rule} have appeared in {file}.")
-                }
-            };
-
-            let diagnostic = OxcDiagnostic::error(message);
-            diagnostics.push(diagnostic);
-        }
-
-        let has_diagnostics = !diagnostics.is_empty();
-
-        if has_diagnostics && suppression_manager.is_updating_file() {
-            suppression_manager
-                .write(self.cwd.join("oxlint-suppressions.json").as_path(), runtime_map)
-                .unwrap();
+        if have_at_least_one_diff && suppression_manager.is_updating_file() {
+            suppression_manager.write(self.cwd.join("oxlint-suppressions.json").as_path()).unwrap();
         }
     }
 

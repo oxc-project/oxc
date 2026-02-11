@@ -6,7 +6,7 @@ arguments:
 working directory: fixtures/suppression_report_one_new_error_but_filter_the_rest
 ----------
 
-  x New errors for eslint/no-debugger have appeared in folder_b/test.js.
+  x New eslint/no-debugger error have appeared 1 times in folder_b/test.js.
 
   x eslint(no-debugger): `debugger` statement is not allowed
    ,-[folder_b/test.js:2:1]
