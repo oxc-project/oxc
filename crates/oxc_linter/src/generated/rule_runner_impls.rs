@@ -1549,8 +1549,9 @@ impl RuleRunner for crate::rules::typescript::no_inferrable_types::NoInferrableT
 }
 
 impl RuleRunner for crate::rules::typescript::no_invalid_void_type::NoInvalidVoidType {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::TSVoidKeyword]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
 impl RuleRunner
