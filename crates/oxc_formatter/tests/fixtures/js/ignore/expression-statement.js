@@ -9,4 +9,4 @@ Object.defineProperties    (    exports    , {
   d
 )
 
-logger({ level: 'debug', message: `Really long debugging message about how ${user} called a certain part of our application with a certain ${payload}` }); // oxfmt-ignore
+logger({ level: 'debug', message: `Really long debugging message about how ${user} called a certain part of our application with a certain ${payload}` }); // prettier-ignore
