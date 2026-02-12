@@ -13,6 +13,8 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
+use crate::multi_index_vec::multi_index_vec;
+
 pub type Bindings<'a> = ArenaIdentHashMap<'a, SymbolId>;
 pub type UnresolvedReferences<'a> = ArenaIdentHashMap<'a, ArenaVec<'a, ReferenceId>>;
 
@@ -37,6 +39,34 @@ impl CloneIn<'_> for Redeclaration {
     }
 }
 
+multi_index_vec! {
+    /// Scope tree stored as struct-of-arrays in a single allocation.
+    ///
+    /// Contains parent IDs, node IDs, and flags for all scopes. Using a single
+    /// allocation with one `len`/`cap` instead of 3 separate `IndexVec`s saves
+    /// memory (no redundant len/cap) and CPU (one bounds check, one capacity
+    /// check on push).
+    struct ScopeTable<ScopeId> {
+        parent_ids => parent_ids_mut: Option<ScopeId>,
+        node_ids => node_ids_mut: NodeId,
+        flags => flags_mut: ScopeFlags,
+    }
+}
+
+multi_index_vec! {
+    /// Symbol table stored as struct-of-arrays in a single allocation.
+    ///
+    /// Contains spans, flags, scope IDs, and declaration node IDs for all symbols.
+    /// Using a single allocation with one `len`/`cap` instead of 4 separate `IndexVec`s
+    /// saves memory and CPU.
+    struct SymbolTable<SymbolId> {
+        symbol_spans => symbol_spans_mut: Span,
+        symbol_flags => symbol_flags_mut: SymbolFlags,
+        symbol_scope_ids => symbol_scope_ids_mut: ScopeId,
+        symbol_declarations => symbol_declarations_mut: NodeId,
+    }
+}
+
 /// # Symbol Table and Scope Tree
 ///
 /// ## Symbol Table
@@ -56,26 +86,16 @@ impl CloneIn<'_> for Redeclaration {
 /// - Scopes can have 0 or more child scopes.
 /// - Nodes that create a scope store the [`ScopeId`] of the scope they create.
 pub struct Scoping {
-    /* Symbol Table Fields */
-    pub(crate) symbol_spans: IndexVec<SymbolId, Span>,
-    pub(crate) symbol_flags: IndexVec<SymbolId, SymbolFlags>,
-    pub(crate) symbol_scope_ids: IndexVec<SymbolId, ScopeId>,
-    /// Pointer to the AST Node where this symbol is declared
-    pub(crate) symbol_declarations: IndexVec<SymbolId, NodeId>,
+    /* Symbol Table - single allocation for all symbol-indexed flat fields */
+    symbol_table: SymbolTable,
 
     pub(crate) references: IndexVec<ReferenceId, Reference>,
 
     /// Function or Variable Symbol IDs that are marked with `@__NO_SIDE_EFFECTS__`.
     pub(crate) no_side_effects: FxHashSet<SymbolId>,
 
-    /* Scope Tree Fields */
-    /// Maps a scope to the parent scope it belongs in.
-    scope_parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
-
-    /// Maps a scope to its node id.
-    scope_node_ids: IndexVec<ScopeId, NodeId>,
-
-    scope_flags: IndexVec<ScopeId, ScopeFlags>,
+    /* Scope Tree - single allocation for all scope-indexed flat fields */
+    scope_table: ScopeTable,
 
     pub(crate) cell: ScopingCell,
 }
@@ -89,15 +109,10 @@ impl fmt::Debug for Scoping {
 impl Default for Scoping {
     fn default() -> Self {
         Self {
-            symbol_spans: IndexVec::new(),
-            symbol_flags: IndexVec::new(),
-            symbol_scope_ids: IndexVec::new(),
-            symbol_declarations: IndexVec::new(),
+            symbol_table: SymbolTable::new(),
             references: IndexVec::new(),
             no_side_effects: FxHashSet::default(),
-            scope_parent_ids: IndexVec::new(),
-            scope_node_ids: IndexVec::new(),
-            scope_flags: IndexVec::new(),
+            scope_table: ScopeTable::new(),
             cell: ScopingCell::new(Allocator::default(), |allocator| ScopingInner {
                 symbol_names: ArenaVec::new_in(allocator),
                 resolved_references: ArenaVec::new_in(allocator),
@@ -272,13 +287,13 @@ impl Scoping {
     /// Returns the number of symbols in this table.
     #[inline]
     pub fn symbols_len(&self) -> usize {
-        self.symbol_spans.len()
+        self.symbol_table.len()
     }
 
     /// Returns `true` if this table contains no symbols.
     #[inline]
     pub fn symbols_is_empty(&self) -> bool {
-        self.symbol_spans.is_empty()
+        self.symbol_table.is_empty()
     }
 
     pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
@@ -296,7 +311,7 @@ impl Scoping {
     ///
     /// [`ScopeTree::iter_bindings_in`]: crate::scoping::Scoping::iter_bindings_in
     pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
-        self.symbol_spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
+        self.symbol_table.iter_ids()
     }
 
     /// Get the [`Span`] of the [`AstNode`] declaring a symbol.
@@ -304,7 +319,7 @@ impl Scoping {
     /// [`AstNode`]: crate::node::AstNode
     #[inline]
     pub fn symbol_span(&self, symbol_id: SymbolId) -> Span {
-        self.symbol_spans[symbol_id]
+        *self.symbol_table.symbol_spans(symbol_id)
     }
 
     /// Get the identifier name a symbol is bound to.
@@ -334,13 +349,13 @@ impl Scoping {
     /// To find how a symbol is used, use [`Scoping::get_resolved_references`].
     #[inline]
     pub fn symbol_flags(&self, symbol_id: SymbolId) -> SymbolFlags {
-        self.symbol_flags[symbol_id]
+        *self.symbol_table.symbol_flags(symbol_id)
     }
 
     /// Get a mutable reference to a symbol's [flags](SymbolFlags).
     #[inline]
     pub fn symbol_flags_mut(&mut self, symbol_id: SymbolId) -> &mut SymbolFlags {
-        &mut self.symbol_flags[symbol_id]
+        self.symbol_table.symbol_flags_mut(symbol_id)
     }
 
     #[inline]
@@ -356,17 +371,17 @@ impl Scoping {
 
     #[inline]
     pub fn union_symbol_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
-        self.symbol_flags[symbol_id] |= includes;
+        *self.symbol_table.symbol_flags_mut(symbol_id) |= includes;
     }
 
     #[inline]
     pub fn set_symbol_scope_id(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
-        self.symbol_scope_ids[symbol_id] = scope_id;
+        *self.symbol_table.symbol_scope_ids_mut(symbol_id) = scope_id;
     }
 
     #[inline]
     pub fn symbol_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
-        self.symbol_scope_ids[symbol_id]
+        *self.symbol_table.symbol_scope_ids(symbol_id)
     }
 
     /// Get the ID of the AST node declaring a symbol.
@@ -381,7 +396,7 @@ impl Scoping {
     /// [`BindingPattern`]: oxc_ast::ast::BindingPattern
     #[inline]
     pub fn symbol_declaration(&self, symbol_id: SymbolId) -> NodeId {
-        self.symbol_declarations[symbol_id]
+        *self.symbol_table.symbol_declarations(symbol_id)
     }
 
     pub fn create_symbol(
@@ -396,10 +411,7 @@ impl Scoping {
             cell.symbol_names.push(name.clone_in(allocator));
             cell.resolved_references.push(ArenaVec::new_in(allocator));
         });
-        self.symbol_spans.push(span);
-        self.symbol_flags.push(flags);
-        self.symbol_scope_ids.push(scope_id);
-        self.symbol_declarations.push(node_id)
+        self.symbol_table.push(span, flags, scope_id, node_id)
     }
 
     pub fn add_symbol_redeclaration(
@@ -495,7 +507,7 @@ impl Scoping {
     /// If symbol is `const`, always returns `false`.
     /// Otherwise, returns `true` if the symbol is assigned to somewhere in AST.
     pub fn symbol_is_mutated(&self, symbol_id: SymbolId) -> bool {
-        if self.symbol_flags[symbol_id].contains(SymbolFlags::ConstVariable) {
+        if self.symbol_table.symbol_flags(symbol_id).contains(SymbolFlags::ConstVariable) {
             false
         } else {
             self.get_resolved_references(symbol_id).any(Reference::is_write)
@@ -538,22 +550,17 @@ impl Scoping {
         additional_references: usize,
         additional_scopes: usize,
     ) {
-        self.symbol_spans.reserve(additional_symbols);
-        self.symbol_flags.reserve(additional_symbols);
-        self.symbol_scope_ids.reserve(additional_symbols);
-        self.symbol_declarations.reserve(additional_symbols);
+        self.symbol_table.reserve(additional_symbols);
         self.cell.with_dependent_mut(|_allocator, cell| {
             cell.symbol_names.reserve_exact(additional_symbols);
             cell.resolved_references.reserve_exact(additional_symbols);
         });
         self.references.reserve(additional_references);
 
-        self.scope_parent_ids.reserve(additional_scopes);
-        self.scope_flags.reserve(additional_scopes);
+        self.scope_table.reserve(additional_scopes);
         self.cell.with_dependent_mut(|_allocator, cell| {
             cell.bindings.reserve(additional_scopes);
         });
-        self.scope_node_ids.reserve(additional_scopes);
     }
 
     pub fn no_side_effects(&self) -> &FxHashSet<SymbolId> {
@@ -569,7 +576,7 @@ impl Scoping {
     /// program scope.
     #[inline]
     pub fn scopes_len(&self) -> usize {
-        self.scope_parent_ids.len()
+        self.scope_table.len()
     }
 
     /// Returns `true` if there are no scopes in the program.
@@ -578,7 +585,7 @@ impl Scoping {
     /// since there is a root scope.
     #[inline]
     pub fn scopes_is_empty(&self) -> bool {
-        self.scope_parent_ids.is_empty()
+        self.scope_table.is_empty()
     }
 
     /// Iterate over the scopes that contain a scope.
@@ -586,11 +593,11 @@ impl Scoping {
     /// The first element of this iterator will be the scope itself. This
     /// guarantees the iterator will have at least 1 element.
     pub fn scope_ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
-        std::iter::successors(Some(scope_id), |&scope_id| self.scope_parent_ids[scope_id])
+        std::iter::successors(Some(scope_id), |&scope_id| *self.scope_table.parent_ids(scope_id))
     }
 
     pub fn scope_descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
-        self.scope_parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
+        self.scope_table.iter_ids()
     }
 
     /// Get the root [`Program`] scope id.
@@ -607,7 +614,7 @@ impl Scoping {
     /// This is a shorthand for `scope.get_flags(scope.root_scope_id())`.
     #[inline]
     pub fn root_scope_flags(&self) -> ScopeFlags {
-        self.scope_flags[self.root_scope_id()]
+        *self.scope_table.flags(self.root_scope_id())
     }
 
     #[inline]
@@ -657,12 +664,12 @@ impl Scoping {
 
     #[inline]
     pub fn scope_flags(&self, scope_id: ScopeId) -> ScopeFlags {
-        self.scope_flags[scope_id]
+        *self.scope_table.flags(scope_id)
     }
 
     #[inline]
     pub fn scope_flags_mut(&mut self, scope_id: ScopeId) -> &mut ScopeFlags {
-        &mut self.scope_flags[scope_id]
+        self.scope_table.flags_mut(scope_id)
     }
 
     /// Get [`ScopeFlags`] for a new child scope under `parent_scope_id`.
@@ -673,18 +680,18 @@ impl Scoping {
 
     #[inline]
     pub fn scope_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
-        self.scope_parent_ids[scope_id]
+        *self.scope_table.parent_ids(scope_id)
     }
 
     pub fn set_scope_parent_id(&mut self, scope_id: ScopeId, parent_id: Option<ScopeId>) {
-        self.scope_parent_ids[scope_id] = parent_id;
+        *self.scope_table.parent_ids_mut(scope_id) = parent_id;
     }
 
     /// Change the parent scope of a scope.
     ///
     /// This will also remove the scope from the child list of the old parent and add it to the new parent.
     pub fn change_scope_parent_id(&mut self, scope_id: ScopeId, new_parent_id: Option<ScopeId>) {
-        self.scope_parent_ids[scope_id] = new_parent_id;
+        *self.scope_table.parent_ids_mut(scope_id) = new_parent_id;
     }
 
     /// Get a variable binding by name that was declared in the top-level scope
@@ -730,7 +737,7 @@ impl Scoping {
             if let Some(symbol_id) = cell.bindings[scope_id].get(&name) {
                 return Some(*symbol_id);
             }
-            let parent_scope_id = self.scope_parent_ids[scope_id]?;
+            let parent_scope_id = (*self.scope_table.parent_ids(scope_id))?;
             scope_id = parent_scope_id;
         }
     }
@@ -746,7 +753,7 @@ impl Scoping {
     /// [`AstNode`]: crate::AstNode
     #[inline]
     pub fn get_node_id(&self, scope_id: ScopeId) -> NodeId {
-        self.scope_node_ids[scope_id]
+        *self.scope_table.node_ids(scope_id)
     }
 
     /// Iterate over all bindings declared in the entire program.
@@ -785,13 +792,10 @@ impl Scoping {
         node_id: NodeId,
         flags: ScopeFlags,
     ) -> ScopeId {
-        let scope_id = self.scope_parent_ids.push(parent_id);
-        self.scope_flags.push(flags);
+        let scope_id = self.scope_table.push(parent_id, node_id, flags);
         self.cell.with_dependent_mut(|allocator, cell| {
             cell.bindings.push(Bindings::new_in(allocator));
         });
-        self.scope_node_ids.push(node_id);
-
         scope_id
     }
 
@@ -872,7 +876,7 @@ impl Scoping {
         self.cell.with_dependent_mut(|_allocator, cell| {
             for bindings in &mut cell.bindings {
                 bindings.retain(|_name, symbol_id| {
-                    let flags = self.symbol_flags[*symbol_id];
+                    let flags = *self.symbol_table.symbol_flags(*symbol_id);
                     !flags.intersects(
                         SymbolFlags::TypeAlias
                             | SymbolFlags::Interface
@@ -892,15 +896,10 @@ impl Scoping {
         let cell = self.cell.borrow_dependent();
 
         Self {
-            symbol_spans: self.symbol_spans.clone(),
-            symbol_flags: self.symbol_flags.clone(),
-            symbol_scope_ids: self.symbol_scope_ids.clone(),
-            symbol_declarations: self.symbol_declarations.clone(),
+            symbol_table: self.symbol_table.clone(),
             references: self.references.clone(),
             no_side_effects: self.no_side_effects.clone(),
-            scope_parent_ids: self.scope_parent_ids.clone(),
-            scope_node_ids: self.scope_node_ids.clone(),
-            scope_flags: self.scope_flags.clone(),
+            scope_table: self.scope_table.clone(),
             cell: {
                 let allocator = Allocator::with_capacity(used_bytes);
                 ScopingCell::new(allocator, |allocator| ScopingInner {
