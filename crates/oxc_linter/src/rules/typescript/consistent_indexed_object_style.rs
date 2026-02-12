@@ -1,7 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{FormalParameters, TSSignature, TSTupleElement, TSType, TSTypeName},
-    match_ts_type,
+    ast::{TSMappedType, TSSignature, TSType, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -294,7 +293,6 @@ impl Rule for ConsistentIndexedObjectStyle {
                     }
                 }
                 AstKind::TSMappedType(mapped) => {
-                    let key_name = &mapped.key;
                     let constraint = &mapped.constraint;
 
                     // Bare `keyof` mapped types preserve structure and can't be converted
@@ -309,7 +307,7 @@ impl Rule for ConsistentIndexedObjectStyle {
 
                     // Can't convert if value type references the key parameter
                     if let Some(type_annotation) = &mapped.type_annotation
-                        && references_identifier(type_annotation, key_name.name.as_str())
+                        && mapped_type_value_references_key(mapped, type_annotation, ctx)
                     {
                         return;
                     }
@@ -426,126 +424,16 @@ fn is_bare_keyof(r#type: &TSType) -> bool {
         if matches!(op.operator, oxc_ast::ast::TSTypeOperatorOperator::Keyof))
 }
 
-fn references_identifier(type_: &TSType, name: &str) -> bool {
-    match type_ {
-        TSType::TSTypeReference(r) => {
-            if let TSTypeName::IdentifierReference(ide) = &r.type_name
-                && ide.name.as_str() == name
-            {
-                return true;
-            }
-            if let Some(type_args) = &r.type_arguments
-                && type_args.params.iter().any(|t| references_identifier(t, name))
-            {
-                return true;
-            }
-            false
-        }
-        TSType::TSUnionType(u) => u.types.iter().any(|t| references_identifier(t, name)),
-        TSType::TSIntersectionType(i) => i.types.iter().any(|t| references_identifier(t, name)),
-        TSType::TSConditionalType(c) => {
-            references_identifier(&c.check_type, name)
-                || references_identifier(&c.extends_type, name)
-                || references_identifier(&c.true_type, name)
-                || references_identifier(&c.false_type, name)
-        }
-        TSType::TSIndexedAccessType(i) => {
-            references_identifier(&i.object_type, name)
-                || references_identifier(&i.index_type, name)
-        }
-        TSType::TSArrayType(a) => references_identifier(&a.element_type, name),
-        TSType::TSFunctionType(f) => {
-            references_identifier_in_formal_parameters(&f.params, name)
-                || references_identifier(&f.return_type.type_annotation, name)
-        }
-        TSType::TSConstructorType(c) => {
-            references_identifier_in_formal_parameters(&c.params, name)
-                || references_identifier(&c.return_type.type_annotation, name)
-        }
-        TSType::TSTupleType(t) => t.element_types.iter().any(|e| match e {
-            TSTupleElement::TSOptionalType(opt) => {
-                references_identifier(&opt.type_annotation, name)
-            }
-            TSTupleElement::TSRestType(rest) => references_identifier(&rest.type_annotation, name),
-            match_ts_type!(TSTupleElement) => references_identifier(e.to_ts_type(), name),
-        }),
-        TSType::TSTypeLiteral(lit) => {
-            lit.members.iter().any(|member| references_identifier_in_signature(member, name))
-        }
-        TSType::TSMappedType(m) => {
-            references_identifier(&m.constraint, name)
-                || m.name_type.as_ref().is_some_and(|t| references_identifier(t, name))
-                || m.type_annotation.as_ref().is_some_and(|t| references_identifier(t, name))
-        }
-        TSType::TSTypePredicate(predicate) => predicate
-            .type_annotation
-            .as_ref()
-            .is_some_and(|annotation| references_identifier(&annotation.type_annotation, name)),
-        TSType::TSInferType(infer) => infer
-            .type_parameter
-            .constraint
-            .as_ref()
-            .is_some_and(|constraint| references_identifier(constraint, name)),
-        TSType::TSTemplateLiteralType(template) => {
-            template.types.iter().any(|t| references_identifier(t, name))
-        }
-        TSType::TSTypeOperatorType(op) => references_identifier(&op.type_annotation, name),
-        TSType::TSParenthesizedType(p) => references_identifier(&p.type_annotation, name),
-        TSType::TSNamedTupleMember(m) => match &m.element_type {
-            TSTupleElement::TSOptionalType(opt) => {
-                references_identifier(&opt.type_annotation, name)
-            }
-            TSTupleElement::TSRestType(rest) => references_identifier(&rest.type_annotation, name),
-            e @ match_ts_type!(TSTupleElement) => references_identifier(e.to_ts_type(), name),
-        },
-        _ => false,
-    }
-}
-
-fn references_identifier_in_formal_parameters(params: &FormalParameters, name: &str) -> bool {
-    params.items.iter().any(|param| {
-        param
-            .type_annotation
-            .as_ref()
-            .is_some_and(|annotation| references_identifier(&annotation.type_annotation, name))
-    }) || params.rest.as_ref().is_some_and(|rest| {
-        rest.type_annotation
-            .as_ref()
-            .is_some_and(|annotation| references_identifier(&annotation.type_annotation, name))
+fn mapped_type_value_references_key(
+    mapped: &TSMappedType,
+    type_annotation: &TSType,
+    ctx: &LintContext,
+) -> bool {
+    let type_annotation_span = type_annotation.span();
+    ctx.symbol_references(mapped.key.symbol_id()).any(|reference| {
+        let reference_span = ctx.nodes().get_node(reference.node_id()).kind().span();
+        type_annotation_span.contains_inclusive(reference_span)
     })
-}
-
-fn references_identifier_in_signature(signature: &TSSignature, name: &str) -> bool {
-    match signature {
-        TSSignature::TSIndexSignature(sig) => {
-            sig.parameters
-                .iter()
-                .any(|param| references_identifier(&param.type_annotation.type_annotation, name))
-                || references_identifier(&sig.type_annotation.type_annotation, name)
-        }
-        TSSignature::TSPropertySignature(sig) => sig
-            .type_annotation
-            .as_ref()
-            .is_some_and(|annotation| references_identifier(&annotation.type_annotation, name)),
-        TSSignature::TSCallSignatureDeclaration(sig) => {
-            references_identifier_in_formal_parameters(&sig.params, name)
-                || sig.return_type.as_ref().is_some_and(|return_type| {
-                    references_identifier(&return_type.type_annotation, name)
-                })
-        }
-        TSSignature::TSConstructSignatureDeclaration(sig) => {
-            references_identifier_in_formal_parameters(&sig.params, name)
-                || sig.return_type.as_ref().is_some_and(|return_type| {
-                    references_identifier(&return_type.type_annotation, name)
-                })
-        }
-        TSSignature::TSMethodSignature(sig) => {
-            references_identifier_in_formal_parameters(&sig.params, name)
-                || sig.return_type.as_ref().is_some_and(|return_type| {
-                    references_identifier(&return_type.type_annotation, name)
-                })
-        }
-    }
 }
 
 fn is_circular_reference(type_: &TSType, parent_name: &str, ctx: &LintContext) -> bool {
