@@ -3,9 +3,8 @@
   "checkpoint_id": "4f93d36a19b7",
   "strategy": "manual-commit",
   "branch": "fix/no-fallthrough-default-not-last",
-  "checkpoints_count": 1,
+  "checkpoints_count": 0,
   "files_touched": [
-    "crates/oxc_linter/src/rules/eslint/no_fallthrough.rs",
     "crates/oxc_transformer/src/common/arrow_function_converter.rs",
     "crates/oxc_transformer/src/common/computed_key.rs",
     "crates/oxc_transformer/src/decorator/legacy/mod.rs",
@@ -34,20 +33,13 @@
       "context": "/4f/93d36a19b7/0/context.md",
       "content_hash": "/4f/93d36a19b7/0/content_hash.txt",
       "prompt": "/4f/93d36a19b7/0/prompt.txt"
-    },
-    {
-      "metadata": "/4f/93d36a19b7/1/metadata.json",
-      "transcript": "/4f/93d36a19b7/1/full.jsonl",
-      "context": "/4f/93d36a19b7/1/context.md",
-      "content_hash": "/4f/93d36a19b7/1/content_hash.txt",
-      "prompt": "/4f/93d36a19b7/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1737,
-    "cache_creation_tokens": 52394,
-    "cache_read_tokens": 2275189,
-    "output_tokens": 3982,
-    "api_call_count": 32
+    "input_tokens": 1712,
+    "cache_creation_tokens": 27128,
+    "cache_read_tokens": 1571458,
+    "output_tokens": 2857,
+    "api_call_count": 11
   }
 }

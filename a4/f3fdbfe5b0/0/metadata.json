@@ -1,0 +1,46 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "a4f3fdbfe5b0",
+  "session_id": "38ba2f83-cf7a-41c2-a3e1-81a536f783ea",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-11T12:14:19.090265Z",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "crates/oxc_ast/src/ast/js.rs",
+    "crates/oxc_ast/src/ast/jsx.rs",
+    "crates/oxc_ast/src/ast/literal.rs",
+    "crates/oxc_ast/src/ast/ts.rs",
+    "crates/oxc_ast/src/ast_kind_impl.rs",
+    "crates/oxc_ast/src/serialize/jsx.rs",
+    "crates/oxc_ast/src/serialize/ts.rs",
+    "crates/oxc_linter/src/rules/typescript/explicit_module_boundary_types.rs",
+    "crates/oxc_transformer_plugins/src/module_runner_transform.rs",
+    "crates/oxc_traverse/src/generated/ancestor.rs",
+    "tasks/ast_tools/src/derives/clone_in.rs",
+    "tasks/ast_tools/src/derives/dummy.rs",
+    "tasks/ast_tools/src/generators/ast_builder.rs",
+    "tasks/ast_tools/src/generators/formatter/ast_nodes.rs",
+    "tasks/ast_tools/src/generators/get_id.rs",
+    "tasks/ast_tools/src/generators/traverse/ancestor.rs"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "1010c20d-54c6-4b64-8aff-527647033fa7",
+  "checkpoint_transcript_start": 879,
+  "transcript_lines_at_start": 879,
+  "token_usage": {
+    "input_tokens": 60,
+    "cache_creation_tokens": 92036,
+    "cache_read_tokens": 5736603,
+    "output_tokens": 769,
+    "api_call_count": 50
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-11T12:14:18.875228Z",
+    "agent_lines": 0,
+    "human_added": 475,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 475,
+    "agent_percentage": 0
+  }
+}
