@@ -409,7 +409,7 @@ fn test_esm_minification_edge_cases() {
     );
 
     // Import.meta (should be preserved mostly)
-    test_same("import.meta.url");
+    test("import.meta.url", "");
     test_same("import.meta.resolve('./module.js')");
     test_same("import.meta.hot");
     test_same("import.meta.env");

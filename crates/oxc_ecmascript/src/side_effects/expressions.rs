@@ -1,8 +1,10 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    ToBigInt, ToIntegerIndex, constant_evaluation::DetermineValueType, to_numeric::ToNumeric,
-    to_primitive::ToPrimitive,
+    ToBigInt, ToIntegerIndex,
+    constant_evaluation::DetermineValueType,
+    to_numeric::ToNumeric,
+    to_primitive::{ToPrimitive, ToPrimitiveResult},
 };
 
 use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
@@ -49,7 +51,13 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             }
             Expression::ArrayExpression(e) => e.may_have_side_effects(ctx),
             Expression::ClassExpression(e) => e.may_have_side_effects(ctx),
-            // NOTE: private in can throw `TypeError`
+            Expression::PrivateInExpression(e) => {
+                if e.right.may_have_side_effects(ctx) {
+                    return true;
+                }
+                // `#x in y` throws when `y` is not an object.
+                !e.right.value_type(ctx).is_object()
+            }
             Expression::ChainExpression(e) => e.expression.may_have_side_effects(ctx),
             match_member_expression!(Expression) => {
                 self.to_member_expression().may_have_side_effects(ctx)
@@ -539,6 +547,8 @@ fn property_access_may_have_side_effects<'a>(
             !(matches!(object, Expression::ArrayExpression(_))
                 || object.value_type(ctx).is_string())
         }
+        // `import.meta.url` is spec-defined and side-effect free.
+        "url" if matches!(object.without_parentheses(), Expression::MetaProperty(_)) => false,
         _ => true,
     }
 }
@@ -584,12 +594,64 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
 
         if let Expression::Identifier(ident) = &self.callee
             && ctx.is_global_reference(ident)
-            && let name = ident.name.as_str()
-            && (is_pure_global_function(name)
-                || is_pure_call(name)
-                || (name == "RegExp" && is_valid_regexp(&self.arguments)))
         {
-            return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+            let name = ident.name.as_str();
+            if name == "String" {
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // String(value) calls ToPrimitive on object-like/unknown values.
+                return self.arguments.first().is_some_and(|arg| {
+                    arg.as_expression()
+                        .is_none_or(|expr| expr.to_primitive(ctx).is_string().is_none())
+                });
+            }
+            if name == "Number" {
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // Number(value) throws on Symbol and can execute user code during ToPrimitive.
+                return self.arguments.first().is_some_and(|arg| {
+                    arg.as_expression()
+                        .is_none_or(|expr| expr.to_primitive(ctx).is_symbol() != Some(false))
+                });
+            }
+            if name == "BigInt" {
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // BigInt(value) throws for missing/invalid values and can execute user code during ToPrimitive.
+                let Some(expr) = self.arguments.first().and_then(Argument::as_expression) else {
+                    return true;
+                };
+                if matches!(
+                    expr.to_primitive(ctx),
+                    ToPrimitiveResult::Undetermined
+                        | ToPrimitiveResult::Undefined
+                        | ToPrimitiveResult::Null
+                        | ToPrimitiveResult::Symbol
+                ) {
+                    return true;
+                }
+                return expr.to_big_int(ctx).is_none();
+            }
+            if name == "Symbol" {
+                if self.arguments.iter().any(|e| e.may_have_side_effects(ctx)) {
+                    return true;
+                }
+                // Symbol(description) applies ToString to non-undefined arguments.
+                // ToString can throw on Symbol and execute user code during ToPrimitive.
+                return self.arguments.first().is_some_and(|arg| {
+                    arg.as_expression()
+                        .is_none_or(|expr| expr.to_primitive(ctx).is_symbol() != Some(false))
+                });
+            }
+            if is_pure_global_function(name)
+                || is_pure_call(name)
+                || (name == "RegExp" && is_valid_regexp(&self.arguments))
+            {
+                return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
+            }
         }
 
         let (object, name) = match &self.callee {
