@@ -96,6 +96,8 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// Panics if `cap` is too large.
     #[inline]
     pub fn with_capacity_in(cap: usize, alloc: &'a A) -> Self {
+        // SAFETY: We compute sizes and layouts from `T` and `cap`, guard against overflow via
+        // `alloc_guard`, and only allocate using a layout derived from those checked values.
         unsafe {
             let elem_size = size_of::<T>();
 
@@ -249,8 +251,8 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
         if self.cap == 0 {
             None
         } else {
-            // We have an allocated chunk of memory, so we can bypass runtime
-            // checks to get our current layout.
+            // SAFETY: `self.cap > 0` implies the allocation exists. Size and alignment are from `T`,
+            // and `self.cap` is bounded by collection invariants, so constructing this layout is valid.
             unsafe {
                 let align = align_of::<T>();
                 // `self.cap as usize` is safe because it's is `u32`
@@ -416,7 +418,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// Returns `Err(AllocError)` if unable to reserve requested space in the `RawVec`.
     pub fn try_reserve_exact(&mut self, len: u32, additional: usize) -> Result<(), AllocError> {
         if self.needs_to_grow(len, additional) {
-            self.grow_exact(len, additional)?
+            self.grow_exact(len, additional)?;
         }
 
         Ok(())
@@ -631,12 +633,16 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
             // ptr::read to sidestep condition against destructuring
             // types that implement Drop.
 
+            // SAFETY: We deallocate the existing buffer then overwrite `self` with a fresh empty
+            // `RawVec` in the same allocator, preserving all `RawVec` invariants.
             unsafe {
                 let a = self.alloc;
                 self.dealloc_buffer();
                 ptr::write(self, RawVec::new_in(a));
             }
         } else if self.cap != amount {
+            // SAFETY: `amount > 0` and `amount <= self.cap` are ensured above. The old and new
+            // layouts are computed from `T` with matching alignment and valid sizes.
             unsafe {
                 // We know here that our `amount` is greater than zero. This
                 // implies, via the assert above, that capacity is also greater
@@ -699,6 +705,8 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
     fn grow_exact(&mut self, len: u32, additional: usize) -> Result<(), AllocError> {
+        // SAFETY: Capacity arithmetic is overflow-checked before layout construction; `finish_grow`
+        // enforces allocation size guards and preserves pointer/layout invariants.
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than u32::MAX" in that case.
@@ -727,6 +735,8 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
     fn grow_amortized(&mut self, len: u32, additional: usize) -> Result<(), AllocError> {
+        // SAFETY: Capacity arithmetic is overflow-checked and converted into a validated layout
+        // before reallocation; `finish_grow` maintains allocation invariants.
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
             // to actually catch "asking for more than u32::MAX" in that case.
@@ -791,6 +801,8 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
         alloc_guard(new_layout.size())?;
 
         let new_ptr = match self.current_layout() {
+            // SAFETY: `current_layout()` returning `Some(layout)` means current allocation exists.
+            // `new_layout` has been size-guarded, and both layouts have matching alignment for `T`.
             Some(layout) => unsafe {
                 // Marking this function as `#[cold]` and `#[inline(never)]` because grow method is
                 // relatively expensive and we want to avoid inlining it into the caller.
@@ -804,6 +816,8 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
                     old_layout: Layout,
                     new_layout: Layout,
                 ) -> NonNull<u8> {
+                    // SAFETY: Caller provides pointer and layouts from the same allocation with
+                    // matching alignment, satisfying allocator `grow` preconditions.
                     unsafe { alloc.grow(ptr, old_layout, new_layout) }
                 }
                 debug_assert!(new_layout.align() == layout.align());
@@ -827,6 +841,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
         if elem_size != 0
             && let Some(layout) = self.current_layout()
         {
+            // SAFETY: `layout` is derived from this allocation and `self.ptr` points to it.
             unsafe { self.alloc.dealloc(self.ptr.cast(), layout) };
         }
     }
