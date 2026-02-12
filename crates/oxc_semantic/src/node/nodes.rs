@@ -164,6 +164,7 @@ impl<'a> AstNodes<'a> {
         flags: NodeFlags,
     ) -> NodeId {
         let node_id = self.parent_ids.push(parent_node_id);
+        kind.set_node_id(node_id);
         let node = AstNode::new(kind, scope_id, node_id);
         self.nodes.push(node);
         self.flags.push(flags);
@@ -191,6 +192,7 @@ impl<'a> AstNodes<'a> {
             matches!(kind, AstKind::Program(_)),
             "Program node must be of kind `AstKind::Program`"
         );
+        kind.set_node_id(NodeId::ROOT);
         self.parent_ids.push(NodeId::ROOT);
         self.nodes.push(AstNode::new(kind, scope_id, NodeId::ROOT));
         self.flags.push(flags);
