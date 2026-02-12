@@ -1,4 +1,4 @@
-import { format as napiFormat } from "./bindings";
+import { format as napiFormat, jsTextToDoc as napiJsTextToDoc } from "./bindings";
 import { resolvePlugins, formatEmbeddedCode, formatFile, sortTailwindClasses } from "./libs/apis";
 import type { Options } from "prettier";
 
@@ -19,6 +19,27 @@ export async function format(fileName: string, sourceText: string, options?: For
     resolvePlugins,
     (options, code) => formatEmbeddedCode({ options, code }),
     (options, code) => formatFile({ options, code }),
+    (options, classes) => sortTailwindClasses({ options, classes }),
+  );
+}
+
+/**
+ * Format a JS/TS snippet for Prettier `textToDoc()` plugin flow.
+ */
+export async function jsTextToDoc(
+  fileName: string,
+  sourceText: string,
+  oxfmtPluginOptionsJson: string,
+  parentContext: string,
+) {
+  return napiJsTextToDoc(
+    fileName,
+    sourceText,
+    oxfmtPluginOptionsJson,
+    parentContext,
+    resolvePlugins,
+    (options, code) => formatEmbeddedCode({ options, code }),
+    (_options, _code) => Promise.reject(/* Unreachable */),
     (options, classes) => sortTailwindClasses({ options, classes }),
   );
 }
