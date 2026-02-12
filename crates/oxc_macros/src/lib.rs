@@ -1,5 +1,4 @@
 //! Macros for declaring lints and secret scanners.
-#![warn(missing_docs)]
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
 

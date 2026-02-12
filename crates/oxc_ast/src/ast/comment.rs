@@ -1,4 +1,3 @@
-#![warn(missing_docs)]
 use bitflags::bitflags;
 
 use oxc_allocator::{Allocator, CloneIn};

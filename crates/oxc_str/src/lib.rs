@@ -2,8 +2,6 @@
 //!
 //! This crate provides [`Atom`], [`Ident`], and [`CompactStr`] types for efficient string handling.
 
-#![warn(missing_docs)]
-
 mod atom;
 mod compact_str;
 pub mod ident;

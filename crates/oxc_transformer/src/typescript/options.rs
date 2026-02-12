@@ -19,6 +19,7 @@ fn default_as_true() -> bool {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+/// TypeScript transform options.
 pub struct TypeScriptOptions {
     /// Replace the function used when compiling JSX expressions.
     /// This is so that we know that the import is not a type import, and should not be removed.
@@ -36,7 +37,7 @@ pub struct TypeScriptOptions {
     /// This should only be used if you are using TypeScript >= 3.8.
     pub only_remove_type_imports: bool,
 
-    // Enables compilation of TypeScript namespaces.
+    /// Enables compilation of TypeScript namespaces.
     #[serde(default = "default_as_true")]
     pub allow_namespaces: bool,
 
@@ -114,6 +115,7 @@ impl Default for TypeScriptOptions {
 }
 
 #[derive(Debug, Clone, Copy, Default)]
+/// Strategy for rewriting TypeScript import/export extensions.
 pub enum RewriteExtensionsMode {
     /// Rewrite `.ts`/`.mts`/`.cts` extensions in import/export declarations to `.js`/`.mjs`/`.cjs`.
     #[default]
@@ -123,6 +125,7 @@ pub enum RewriteExtensionsMode {
 }
 
 impl RewriteExtensionsMode {
+    /// Returns `true` when extensions should be removed instead of rewritten.
     pub fn is_remove(self) -> bool {
         matches!(self, Self::Remove)
     }

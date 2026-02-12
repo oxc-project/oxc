@@ -1,5 +1,3 @@
-#![expect(missing_docs)] // fixme
-
 use unicode_id_start::{is_id_continue_unicode, is_id_start_unicode};
 
 use crate::line_terminator::{CR, LF, LS, PS};

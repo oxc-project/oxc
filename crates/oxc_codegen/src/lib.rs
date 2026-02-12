@@ -3,8 +3,6 @@
 //! Code adapted from
 //! * [esbuild](https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer.go)
 
-#![warn(missing_docs)]
-
 use std::{borrow::Cow, cmp, slice};
 
 use cow_utils::CowUtils;

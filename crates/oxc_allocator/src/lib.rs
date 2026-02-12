@@ -36,8 +36,6 @@
 //! * `disable_track_allocations` - Disables `track_allocations` feature.
 //!   Purpose is to prevent `--all-features` enabling allocation tracking.
 
-#![warn(missing_docs)]
-
 mod accessor;
 mod address;
 mod alloc;
