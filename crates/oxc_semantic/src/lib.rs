@@ -36,6 +36,7 @@ mod is_global_reference;
 #[cfg(feature = "linter")]
 mod jsdoc;
 mod label;
+mod multi_index_vec;
 mod node;
 mod scoping;
 mod stats;
