@@ -124,8 +124,10 @@ impl NoUnmodifiedLoopCondition {
         let mut group_order: Vec<Span> = vec![];
         for symbol in collector.symbols {
             if let Some(group_span) = symbol.group_span {
-                if !grouped_symbols.contains_key(&group_span) {
-                    grouped_symbols.insert(group_span, vec![]);
+                if let std::collections::hash_map::Entry::Vacant(entry) =
+                    grouped_symbols.entry(group_span)
+                {
+                    entry.insert(vec![]);
                     group_order.push(group_span);
                 }
                 let seen = grouped_seen.entry(group_span).or_default();
