@@ -804,7 +804,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
                     old_layout: Layout,
                     new_layout: Layout,
                 ) -> NonNull<u8> {
-                    alloc.grow(ptr, old_layout, new_layout)
+                    unsafe { alloc.grow(ptr, old_layout, new_layout) }
                 }
                 debug_assert!(new_layout.align() == layout.align());
                 grow(self.alloc, self.ptr.cast(), layout, new_layout)
@@ -827,7 +827,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
         if elem_size != 0
             && let Some(layout) = self.current_layout()
         {
-            self.alloc.dealloc(self.ptr.cast(), layout);
+            unsafe { self.alloc.dealloc(self.ptr.cast(), layout) };
         }
     }
 }

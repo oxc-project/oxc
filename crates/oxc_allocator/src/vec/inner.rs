@@ -119,8 +119,7 @@ use oxc_data_structures::assert_unchecked;
 
 use crate::alloc::Alloc;
 
-mod raw_vec;
-use raw_vec::{AllocError, RawVec};
+use super::raw_vec::{AllocError, RawVec};
 
 unsafe fn arith_offset<T>(p: *const T, offset: isize) -> *const T {
     p.offset(offset)

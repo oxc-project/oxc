@@ -62,7 +62,6 @@ mod take_in;
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
 mod tracking;
 mod vec;
-mod vec2;
 
 pub use accessor::AllocatorAccessor;
 pub use address::{Address, GetAddress, UnstableAddress};

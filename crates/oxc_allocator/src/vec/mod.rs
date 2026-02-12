@@ -18,11 +18,17 @@ use std::{
 use serde::{Serialize, Serializer as SerdeSerializer};
 
 #[cfg(any(feature = "serialize", test))]
-use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
+use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 
-use crate::{Allocator, Box, bump::Bump, vec2::Vec as InnerVecGeneric};
+#[cfg(feature = "serialize")]
+use oxc_estree::{ConcatElement, SequenceSerializer};
 
-type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
+use crate::{Allocator, Box, bump::Bump};
+
+mod inner;
+mod raw_vec;
+
+type InnerVec<'a, T> = inner::Vec<'a, T, Bump>;
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
