@@ -1,12 +1,16 @@
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_ast::AstKind;
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, IdentifierReference},
+};
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, NodeId, Reference, SymbolId};
+use oxc_semantic::{NodeId, Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_unmodified_loop_condition_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is not modified in this loop.")).with_label(span)
@@ -48,32 +52,38 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnmodifiedLoopCondition {
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut grouped_conditions: FxHashMap<NodeId, Vec<LoopConditionInfo>> =
-            FxHashMap::default();
-        let scoping = ctx.scoping();
-
-        for symbol_id in scoping.symbol_ids() {
-            Self::check_symbol(symbol_id, ctx, &mut grouped_conditions);
-        }
-
-        for conditions in grouped_conditions.values() {
-            if conditions.iter().all(|condition| !condition.modified) {
-                for condition in conditions {
-                    Self::report_condition(condition, ctx);
-                }
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::WhileStatement(statement) => {
+                let loop_info = LoopInfo { loop_span: statement.span, loop_kind: LoopKind::While };
+                Self::check_loop_condition(&statement.test, &loop_info, ctx);
             }
+            AstKind::DoWhileStatement(statement) => {
+                let loop_info =
+                    LoopInfo { loop_span: statement.span, loop_kind: LoopKind::DoWhile };
+                Self::check_loop_condition(&statement.test, &loop_info, ctx);
+            }
+            AstKind::ForStatement(statement) => {
+                let Some(test) = &statement.test else {
+                    return;
+                };
+                let loop_info = LoopInfo {
+                    loop_span: statement.span,
+                    loop_kind: LoopKind::For {
+                        init_span: statement.init.as_ref().map(GetSpan::span),
+                    },
+                };
+                Self::check_loop_condition(test, &loop_info, ctx);
+            }
+            _ => {}
         }
     }
 }
 
-#[derive(Debug, Clone)]
-struct LoopConditionInfo {
-    reference_node_id: NodeId,
-    group_node_id: Option<NodeId>,
+#[derive(Debug, Clone, Copy)]
+struct LoopInfo {
     loop_span: Span,
     loop_kind: LoopKind,
-    modified: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -83,7 +93,7 @@ enum LoopKind {
     For { init_span: Option<Span> },
 }
 
-impl LoopConditionInfo {
+impl LoopInfo {
     fn is_in_loop(&self, reference: &Reference, ctx: &LintContext<'_>) -> bool {
         let reference_span = ctx.semantic().reference_span(reference);
         if !self.loop_span.contains_inclusive(reference_span) {
@@ -99,69 +109,118 @@ impl LoopConditionInfo {
 }
 
 impl NoUnmodifiedLoopCondition {
-    fn check_symbol(
-        symbol_id: SymbolId,
-        ctx: &LintContext<'_>,
-        grouped_conditions: &mut FxHashMap<NodeId, Vec<LoopConditionInfo>>,
+    fn check_loop_condition<'a>(
+        condition: &Expression<'a>,
+        loop_info: &LoopInfo,
+        ctx: &LintContext<'a>,
     ) {
-        let scoping = ctx.scoping();
-        let mut conditions = vec![];
-        let mut modifiers = vec![];
+        let mut collector = ConditionSymbolsCollector::new(ctx);
+        collector.visit_expression(condition);
 
-        for reference in scoping.get_resolved_references(symbol_id) {
-            if let Some(condition) = Self::to_loop_condition(reference, ctx) {
-                conditions.push(condition);
-            }
-            if reference.is_write() {
-                modifiers.push(reference);
+        let mut standalone_symbols: Vec<(SymbolId, NodeId)> = vec![];
+        let mut standalone_seen: FxHashSet<SymbolId> = FxHashSet::default();
+        let mut grouped_symbols: FxHashMap<Span, Vec<(SymbolId, NodeId)>> = FxHashMap::default();
+        let mut grouped_seen: FxHashMap<Span, FxHashSet<SymbolId>> = FxHashMap::default();
+        let mut group_order: Vec<Span> = vec![];
+        for symbol in collector.symbols {
+            if let Some(group_span) = symbol.group_span {
+                if !grouped_symbols.contains_key(&group_span) {
+                    grouped_symbols.insert(group_span, vec![]);
+                    group_order.push(group_span);
+                }
+                let seen = grouped_seen.entry(group_span).or_default();
+                if seen.insert(symbol.symbol_id) {
+                    grouped_symbols
+                        .entry(group_span)
+                        .or_default()
+                        .push((symbol.symbol_id, symbol.reference_node_id));
+                }
+            } else if standalone_seen.insert(symbol.symbol_id) {
+                standalone_symbols.push((symbol.symbol_id, symbol.reference_node_id));
             }
         }
 
-        if conditions.is_empty() {
-            return;
-        }
+        let mut modified_cache: FxHashMap<SymbolId, bool> = FxHashMap::default();
+        let mut diagnostics: Vec<NodeId> = vec![];
+        let mut reported_symbols: FxHashSet<SymbolId> = FxHashSet::default();
 
-        if !modifiers.is_empty() {
-            Self::update_modified_flags(&mut conditions, &modifiers, ctx);
-        }
-
-        for condition in conditions {
-            if let Some(group_node_id) = condition.group_node_id {
-                grouped_conditions.entry(group_node_id).or_default().push(condition);
-            } else if !condition.modified {
-                Self::report_condition(&condition, ctx);
+        for (symbol_id, reference_node_id) in standalone_symbols {
+            if Self::is_symbol_modified_cached(symbol_id, &mut modified_cache, loop_info, ctx) {
+                continue;
             }
+            if reported_symbols.insert(symbol_id) {
+                diagnostics.push(reference_node_id);
+            }
+        }
+
+        for group_span in group_order {
+            if collector.dynamic_groups.contains(&group_span) {
+                continue;
+            }
+            let Some(symbols) = grouped_symbols.get(&group_span) else {
+                continue;
+            };
+            let has_modified_symbol = symbols.iter().any(|(symbol_id, _)| {
+                Self::is_symbol_modified_cached(*symbol_id, &mut modified_cache, loop_info, ctx)
+            });
+            if has_modified_symbol {
+                continue;
+            }
+            for (symbol_id, reference_node_id) in symbols {
+                if reported_symbols.insert(*symbol_id) {
+                    diagnostics.push(*reference_node_id);
+                }
+            }
+        }
+
+        for reference_node_id in diagnostics {
+            Self::report_condition(reference_node_id, ctx);
         }
     }
 
-    fn report_condition(condition: &LoopConditionInfo, ctx: &LintContext<'_>) {
-        let node = ctx.nodes().get_node(condition.reference_node_id);
+    fn report_condition(reference_node_id: NodeId, ctx: &LintContext<'_>) {
+        let node = ctx.nodes().get_node(reference_node_id);
         let AstKind::IdentifierReference(ident) = node.kind() else {
             return;
         };
         ctx.diagnostic(no_unmodified_loop_condition_diagnostic(ident.name.as_str(), ident.span));
     }
 
-    fn update_modified_flags(
-        conditions: &mut [LoopConditionInfo],
-        modifiers: &[&Reference],
+    fn is_symbol_modified_in_loop(
+        symbol_id: SymbolId,
+        loop_info: &LoopInfo,
         ctx: &LintContext<'_>,
-    ) {
-        for condition in conditions.iter_mut() {
-            for modifier in modifiers {
-                if condition.modified {
-                    break;
-                }
+    ) -> bool {
+        for reference in ctx.scoping().get_resolved_references(symbol_id) {
+            if !reference.is_write() {
+                continue;
+            }
 
-                let in_loop = condition.is_in_loop(modifier, ctx)
-                    || Self::is_modified_via_called_function_declaration(condition, modifier, ctx);
-                condition.modified = in_loop;
+            if loop_info.is_in_loop(reference, ctx)
+                || Self::is_modified_via_called_function_declaration(loop_info, reference, ctx)
+            {
+                return true;
             }
         }
+        false
+    }
+
+    fn is_symbol_modified_cached(
+        symbol_id: SymbolId,
+        modified_cache: &mut FxHashMap<SymbolId, bool>,
+        loop_info: &LoopInfo,
+        ctx: &LintContext<'_>,
+    ) -> bool {
+        if let Some(is_modified) = modified_cache.get(&symbol_id) {
+            return *is_modified;
+        }
+        let is_modified = Self::is_symbol_modified_in_loop(symbol_id, loop_info, ctx);
+        modified_cache.insert(symbol_id, is_modified);
+        is_modified
     }
 
     fn is_modified_via_called_function_declaration(
-        condition: &LoopConditionInfo,
+        loop_info: &LoopInfo,
         modifier: &Reference,
         ctx: &LintContext<'_>,
     ) -> bool {
@@ -172,7 +231,7 @@ impl NoUnmodifiedLoopCondition {
         };
 
         for function_reference in ctx.scoping().get_resolved_references(function_symbol_id) {
-            if condition.is_in_loop(function_reference, ctx) {
+            if loop_info.is_in_loop(function_reference, ctx) {
                 return true;
             }
         }
@@ -199,147 +258,86 @@ impl NoUnmodifiedLoopCondition {
 
         None
     }
+}
 
-    fn to_loop_condition(
-        reference: &Reference,
-        ctx: &LintContext<'_>,
-    ) -> Option<LoopConditionInfo> {
-        let nodes = ctx.nodes();
-        let reference_node = nodes.get_node(reference.node_id());
-        if !matches!(reference_node.kind(), AstKind::IdentifierReference(_)) {
-            return None;
-        }
+struct ConditionSymbolsCollector<'a, 'ctx> {
+    ctx: &'ctx LintContext<'a>,
+    symbols: Vec<ConditionSymbolInfo>,
+    group_stack: Vec<Span>,
+    dynamic_groups: FxHashSet<Span>,
+}
 
-        let mut group_node_id = None;
-        let mut child_id = reference.node_id();
-        let mut current_id = nodes.parent_id(child_id);
-
-        while current_id != NodeId::ROOT {
-            let current_node = nodes.get_node(current_id);
-            let child_span = nodes.get_node(child_id).span();
-
-            if Self::is_sentinel(current_node) {
-                if let Some((loop_span, loop_kind)) =
-                    Self::loop_condition_from_sentinel(current_node, child_span)
-                {
-                    return Some(LoopConditionInfo {
-                        reference_node_id: reference.node_id(),
-                        group_node_id,
-                        loop_span,
-                        loop_kind,
-                        modified: false,
-                    });
-                }
-                break;
-            }
-
-            if matches!(
-                current_node.kind(),
-                AstKind::BinaryExpression(_) | AstKind::ConditionalExpression(_)
-            ) {
-                if Self::has_dynamic_expressions(current_id, ctx) {
-                    break;
-                }
-                group_node_id = Some(current_id);
-            }
-
-            child_id = current_id;
-            current_id = nodes.parent_id(current_id);
-        }
-
-        None
+impl<'a, 'ctx> ConditionSymbolsCollector<'a, 'ctx> {
+    fn new(ctx: &'ctx LintContext<'a>) -> Self {
+        Self { ctx, symbols: vec![], group_stack: vec![], dynamic_groups: FxHashSet::default() }
     }
+}
 
-    fn loop_condition_from_sentinel(
-        node: &AstNode<'_>,
-        child_span: Span,
-    ) -> Option<(Span, LoopKind)> {
-        match node.kind() {
-            AstKind::WhileStatement(statement) if statement.test.span() == child_span => {
-                Some((statement.span, LoopKind::While))
+impl<'a> Visit<'a> for ConditionSymbolsCollector<'a, '_> {
+    fn visit_expression(&mut self, expression: &Expression<'a>) {
+        let is_group_expression = matches!(
+            expression,
+            Expression::BinaryExpression(_) | Expression::ConditionalExpression(_)
+        );
+        if is_group_expression {
+            self.group_stack.push(expression.span());
+        }
+
+        if matches!(
+            expression,
+            Expression::CallExpression(_)
+                | Expression::StaticMemberExpression(_)
+                | Expression::ComputedMemberExpression(_)
+                | Expression::PrivateFieldExpression(_)
+                | Expression::NewExpression(_)
+                | Expression::TaggedTemplateExpression(_)
+                | Expression::YieldExpression(_)
+        ) {
+            if let Some(group_span) = self.group_stack.first().copied() {
+                self.dynamic_groups.insert(group_span);
             }
-            AstKind::DoWhileStatement(statement) if statement.test.span() == child_span => {
-                Some((statement.span, LoopKind::DoWhile))
+            if is_group_expression {
+                self.group_stack.pop();
             }
-            AstKind::ForStatement(statement)
-                if statement.test.as_ref().is_some_and(|test| test.span() == child_span) =>
-            {
-                Some((
-                    statement.span,
-                    LoopKind::For { init_span: statement.init.as_ref().map(GetSpan::span) },
-                ))
+            return;
+        }
+
+        if matches!(
+            expression,
+            Expression::FunctionExpression(_)
+                | Expression::ArrowFunctionExpression(_)
+                | Expression::ClassExpression(_)
+        ) {
+            if is_group_expression {
+                self.group_stack.pop();
             }
-            _ => None,
+            return;
+        }
+
+        walk::walk_expression(self, expression);
+        if is_group_expression {
+            self.group_stack.pop();
         }
     }
 
-    fn is_sentinel(node: &AstNode<'_>) -> bool {
-        match node.kind() {
-            AstKind::CallExpression(_)
-            | AstKind::Class(_)
-            | AstKind::Function(_)
-            | AstKind::StaticMemberExpression(_)
-            | AstKind::ComputedMemberExpression(_)
-            | AstKind::PrivateFieldExpression(_)
-            | AstKind::NewExpression(_)
-            | AstKind::YieldExpression(_) => true,
-            kind if kind.is_statement() || kind.is_declaration() => true,
-            _ => false,
-        }
+    fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
+        let reference_id = identifier.reference_id();
+        let reference = self.ctx.scoping().get_reference(reference_id);
+        let Some(symbol_id) = reference.symbol_id() else {
+            return;
+        };
+        self.symbols.push(ConditionSymbolInfo {
+            symbol_id,
+            reference_node_id: reference.node_id(),
+            group_span: self.group_stack.first().copied(),
+        });
     }
+}
 
-    fn has_dynamic_expressions(group_node_id: NodeId, ctx: &LintContext<'_>) -> bool {
-        for node in ctx.nodes() {
-            if node.id() == group_node_id {
-                continue;
-            }
-
-            let mut current_id = node.id();
-            let mut inside_group = false;
-            let mut skipped_by_boundary = false;
-
-            while current_id != NodeId::ROOT {
-                if current_id == group_node_id {
-                    inside_group = true;
-                    break;
-                }
-
-                let current_node = ctx.nodes().get_node(current_id);
-                if current_id != node.id()
-                    && matches!(
-                        current_node.kind(),
-                        AstKind::ArrowFunctionExpression(_)
-                            | AstKind::Class(_)
-                            | AstKind::Function(_)
-                    )
-                {
-                    skipped_by_boundary = true;
-                    break;
-                }
-
-                current_id = ctx.nodes().parent_id(current_id);
-            }
-
-            if !inside_group || skipped_by_boundary {
-                continue;
-            }
-
-            if matches!(
-                node.kind(),
-                AstKind::CallExpression(_)
-                    | AstKind::StaticMemberExpression(_)
-                    | AstKind::ComputedMemberExpression(_)
-                    | AstKind::PrivateFieldExpression(_)
-                    | AstKind::NewExpression(_)
-                    | AstKind::TaggedTemplateExpression(_)
-                    | AstKind::YieldExpression(_)
-            ) {
-                return true;
-            }
-        }
-
-        false
-    }
+struct ConditionSymbolInfo {
+    symbol_id: SymbolId,
+    reference_node_id: NodeId,
+    group_span: Option<Span>,
 }
 
 #[test]

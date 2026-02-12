@@ -1006,8 +1006,12 @@ impl RuleRunner for crate::rules::eslint::no_unexpected_multiline::NoUnexpectedM
 }
 
 impl RuleRunner for crate::rules::eslint::no_unmodified_loop_condition::NoUnmodifiedLoopCondition {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::DoWhileStatement,
+        AstType::ForStatement,
+        AstType::WhileStatement,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::eslint::no_unneeded_ternary::NoUnneededTernary {
