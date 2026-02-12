@@ -80,6 +80,8 @@ fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
         let fields = struct_def
             .fields
             .iter()
+            // Skip node_id field - it's internal and not part of content equality
+            .filter(|field| field.name() != "node_id")
             .filter(|field| !field.content_eq.skip)
             .filter(|field| {
                 let innermost_type = field.type_def(schema).innermost_type(schema);

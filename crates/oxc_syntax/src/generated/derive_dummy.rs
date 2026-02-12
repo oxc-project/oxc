@@ -1,7 +1,9 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/derives/dummy.rs`.
 
-#![allow(unused_variables, clippy::inline_always)]
+#![allow(unused_imports, unused_variables, clippy::inline_always)]
+
+use std::cell::Cell;
 
 use oxc_allocator::{Allocator, Dummy};
 
