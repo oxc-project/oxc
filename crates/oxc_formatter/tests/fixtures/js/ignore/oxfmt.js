@@ -58,3 +58,38 @@ const response = {
   '_text': 'Turn on the lights',
   intent: 'lights',
 };
+
+import   {foo as bar}   from   "pkg"; // prettier-ignore
+export const item={  a:1,b:2}; // prettier-ignore
+
+const config={  retries:10,timeout:5000}; // prettier-ignore
+let data=[ 1,2,3 ]; // prettier-ignore
+
+function demo() {
+  return   {a:1,b:2}; // prettier-ignore
+}
+
+function fail() {
+  throw   new Error(  "boom"  ); // prettier-ignore
+}
+
+if (ok) logger(  payload  ); // prettier-ignore
+while (keepGoing) tick(  value  ); // prettier-ignore
+
+label  :  for ( ; ; ) { break   label; } // prettier-ignore
+for (let i=0;i<3;i++) step(  i  ); // prettier-ignore
+for (const k in obj) use(  k  ); // prettier-ignore
+for (const v of arr) use(  v  ); // prettier-ignore
+while (ok) run(  x  ); // prettier-ignore
+do run(  x  ); while (ok); // prettier-ignore
+switch (kind) {case 1: act(  ); break;} // prettier-ignore
+try { a(  ); } catch (e) { b(  ); } // prettier-ignore
+with (ctx) run(  x  ); // prettier-ignore
+
+function f() {
+  return   {a:1}; // oxfmt-ignore
+}
+
+function g() {
+  throw   new Error(  "boom"  ); // oxfmt-ignore
+}
