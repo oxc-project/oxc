@@ -161,6 +161,7 @@ pub(crate) mod eslint {
     pub mod no_undef;
     pub mod no_undefined;
     pub mod no_unexpected_multiline;
+    pub mod no_unmodified_loop_condition;
     pub mod no_unneeded_ternary;
     pub mod no_unreachable;
     pub mod no_unsafe_finally;
