@@ -6,7 +6,8 @@ arguments:
 working directory: fixtures/suppression_report_only_from_one_file
 ----------
 
-  x The eslint/no-console errors in folder_a/test.js have increased from 1 to 3.
+  x The number of 'eslint/no-console' errors in folder_a/test.js increased from 1 to 3.
+  help: Update `oxlint-suppressions.json` file running `oxlint --suppress--all`
 
   x eslint(no-console): Unexpected console statement.
    ,-[folder_a/test.js:1:1]
