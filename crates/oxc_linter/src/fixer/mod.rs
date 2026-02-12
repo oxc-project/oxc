@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, path::Path};
 
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
@@ -257,6 +257,19 @@ impl Message {
     #[must_use]
     pub fn with_section_offset(mut self, section_offset: u32) -> Self {
         self.section_offset = section_offset;
+        self
+    }
+
+    #[must_use]
+    pub fn add_suppression_id(
+        mut self,
+        path: &Path,
+        current_plugin_name: &str,
+        current_rule_name: &str,
+    ) -> Self {
+        self.suppression_id =
+            Some(SuppressionId::new(path, current_plugin_name, current_rule_name));
+
         self
     }
 
