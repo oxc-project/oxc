@@ -35,3 +35,6 @@ serde = { workspace = true, optional = true }
 default = []
 serialize = ["compact_str/serde", "dep:serde", "oxc_estree/serialize", "oxc_str/serialize"]
 schemars = ["dep:schemars", "oxc_str/schemars"]
+
+[package.metadata.cargo-shear]
+ignored = ["schemars"]
