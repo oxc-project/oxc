@@ -155,7 +155,7 @@ impl SuppressionManager {
             } else if file_diagnostic.count < runtime_diagnostic.count {
                 diff.push(SuppressionDiff::Increased {
                     file: filename.clone(),
-                    rule: (*rule_key).clone(), // Deref??? es un string por debajo al final
+                    rule: (*rule_key).clone(),
                     from: file_diagnostic.count,
                     to: runtime_diagnostic.count,
                 });

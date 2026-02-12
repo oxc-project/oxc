@@ -6,7 +6,8 @@ arguments:
 working directory: fixtures/suppression_prune_errors_warning
 ----------
 
-  x All eslint/no-console errors has been pruned in folder_b/test.js.
+  x The 'eslint/no-console' rule has been pruned from folder_b/test.js.
+  help: Update `oxlint-suppressions.json` file running `oxlint --prune-suppressions`
 
 Found 0 warnings and 1 error.
 Finished in <variable>ms on 2 files with 55 rules using 1 threads.
