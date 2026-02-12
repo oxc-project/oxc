@@ -216,7 +216,7 @@ pub fn generate_ancestor(schema: &Schema) -> TokenStream {
         ///@@line_break
         use oxc_allocator::{Address, Box, GetAddress, Vec};
         use oxc_ast::ast::*;
-        use oxc_syntax::scope::ScopeId;
+        use oxc_syntax::{node::NodeId, scope::ScopeId};
 
         ///@@line_break
         /// Type of [`Ancestor`].
