@@ -124,11 +124,13 @@ impl<'a> AstNodes<'a> {
     }
 
     #[inline]
+    /// Get a node by [`NodeId`].
     pub fn get_node(&self, node_id: NodeId) -> &AstNode<'a> {
         &self.nodes[node_id]
     }
 
     #[inline]
+    /// Get a mutable node by [`NodeId`].
     pub fn get_node_mut(&mut self, node_id: NodeId) -> &mut AstNode<'a> {
         &mut self.nodes[node_id]
     }

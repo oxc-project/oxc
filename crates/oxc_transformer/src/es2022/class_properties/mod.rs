@@ -228,7 +228,9 @@ type IdentIndexMap<'a, V> = IndexMap<Ident<'a>, V, IdentBuildHasher>;
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
+/// Options for the class properties transform.
 pub struct ClassPropertiesOptions {
+    /// Use loose assignment semantics for class fields.
     pub loose: bool,
 }
 

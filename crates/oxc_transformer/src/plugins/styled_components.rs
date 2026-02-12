@@ -74,6 +74,7 @@ use crate::{context::TraverseCtx, state::TransformState};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+/// Configuration for the styled-components transform.
 pub struct StyledComponentsOptions {
     /// Enhances the attached CSS class name on each component with richer output to help
     /// identify your components in the DOM without React DevTools. It also allows you to

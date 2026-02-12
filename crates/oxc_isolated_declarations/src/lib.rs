@@ -32,6 +32,7 @@ mod signatures;
 mod types;
 
 #[derive(Debug, Default, Clone, Copy)]
+/// Options for isolated declarations generation.
 pub struct IsolatedDeclarationsOptions {
     /// Do not emit declarations for code that has an `@internal` annotation in its JSDoc comment.
     /// This is an internal compiler option; use at your own risk, because the compiler does not
@@ -45,11 +46,15 @@ pub struct IsolatedDeclarationsOptions {
 }
 
 #[non_exhaustive]
+/// Result of an isolated declarations transform.
 pub struct IsolatedDeclarationsReturn<'a> {
+    /// Generated declaration program (`.d.ts` AST).
     pub program: Program<'a>,
+    /// Diagnostics collected while generating declarations.
     pub errors: Vec<OxcDiagnostic>,
 }
 
+/// Transformer that emits declaration-only AST from TypeScript source AST.
 pub struct IsolatedDeclarations<'a> {
     ast: AstBuilder<'a>,
 
@@ -65,6 +70,7 @@ pub struct IsolatedDeclarations<'a> {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
+    /// Create a new isolated declarations transformer.
     pub fn new(allocator: &'a Allocator, options: IsolatedDeclarationsOptions) -> Self {
         let strip_internal = options.strip_internal;
         Self {

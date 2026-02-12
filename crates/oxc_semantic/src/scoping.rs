@@ -296,10 +296,12 @@ impl Scoping {
         self.symbol_table.is_empty()
     }
 
+    /// Iterate all symbol names in insertion order.
     pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
         self.cell.borrow_dependent().symbol_names.iter().map(Ident::as_str)
     }
 
+    /// Iterate resolved reference ID lists for each symbol.
     pub fn resolved_references(&self) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
         self.cell.borrow_dependent().resolved_references.iter()
     }
@@ -359,6 +361,7 @@ impl Scoping {
     }
 
     #[inline]
+    /// Get all redeclarations associated with a symbol.
     pub fn symbol_redeclarations(&self, symbol_id: SymbolId) -> &[Redeclaration] {
         self.cell.borrow_dependent().symbol_redeclarations.get(&symbol_id).map_or_else(
             || {
@@ -370,16 +373,19 @@ impl Scoping {
     }
 
     #[inline]
+    /// Union additional flags into an existing symbol.
     pub fn union_symbol_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
         *self.symbol_table.symbol_flags_mut(symbol_id) |= includes;
     }
 
     #[inline]
+    /// Set the scope that owns `symbol_id`.
     pub fn set_symbol_scope_id(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
         *self.symbol_table.symbol_scope_ids_mut(symbol_id) = scope_id;
     }
 
     #[inline]
+    /// Get the scope that owns `symbol_id`.
     pub fn symbol_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
         *self.symbol_table.symbol_scope_ids(symbol_id)
     }
@@ -399,6 +405,7 @@ impl Scoping {
         *self.symbol_table.symbol_declarations(symbol_id)
     }
 
+    /// Create a new symbol and append symbol metadata to the symbol table.
     pub fn create_symbol(
         &mut self,
         span: Span,
@@ -414,6 +421,7 @@ impl Scoping {
         self.symbol_table.push(span, flags, scope_id, node_id)
     }
 
+    /// Record a redeclaration for an existing symbol.
     pub fn add_symbol_redeclaration(
         &mut self,
         symbol_id: SymbolId,
@@ -451,6 +459,7 @@ impl Scoping {
     }
 
     #[inline]
+    /// Create and store a reference entry.
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
         self.references.push(reference)
     }
@@ -464,6 +473,7 @@ impl Scoping {
     }
 
     #[inline]
+    /// Get mutable access to a reference.
     pub fn get_reference_mut(&mut self, reference_id: ReferenceId) -> &mut Reference {
         &mut self.references[reference_id]
     }
@@ -544,6 +554,7 @@ impl Scoping {
         });
     }
 
+    /// Reserve additional capacity for symbols, references, and scopes.
     pub fn reserve(
         &mut self,
         additional_symbols: usize,
@@ -563,6 +574,7 @@ impl Scoping {
         });
     }
 
+    /// Symbols marked with `@__NO_SIDE_EFFECTS__`.
     pub fn no_side_effects(&self) -> &FxHashSet<SymbolId> {
         &self.no_side_effects
     }
@@ -596,6 +608,7 @@ impl Scoping {
         std::iter::successors(Some(scope_id), |&scope_id| *self.scope_table.parent_ids(scope_id))
     }
 
+    /// Iterate all scope IDs from the root scope through all descendants.
     pub fn scope_descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
         self.scope_table.iter_ids()
     }
@@ -618,10 +631,12 @@ impl Scoping {
     }
 
     #[inline]
+    /// Unresolved references recorded in the root scope.
     pub fn root_unresolved_references(&self) -> &UnresolvedReferences<'_> {
         &self.cell.borrow_dependent().root_unresolved_references
     }
 
+    /// Iterate unresolved reference IDs grouped by unresolved identifier name.
     pub fn root_unresolved_references_ids(
         &self,
     ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + '_ {
@@ -663,11 +678,13 @@ impl Scoping {
     }
 
     #[inline]
+    /// Get scope flags for `scope_id`.
     pub fn scope_flags(&self, scope_id: ScopeId) -> ScopeFlags {
         *self.scope_table.flags(scope_id)
     }
 
     #[inline]
+    /// Get mutable scope flags for `scope_id`.
     pub fn scope_flags_mut(&mut self, scope_id: ScopeId) -> &mut ScopeFlags {
         self.scope_table.flags_mut(scope_id)
     }
@@ -679,10 +696,12 @@ impl Scoping {
     }
 
     #[inline]
+    /// Get the parent scope ID, if any.
     pub fn scope_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
         *self.scope_table.parent_ids(scope_id)
     }
 
+    /// Set the parent scope ID.
     pub fn set_scope_parent_id(&mut self, scope_id: ScopeId, parent_id: Option<ScopeId>) {
         *self.scope_table.parent_ids_mut(scope_id) = parent_id;
     }
@@ -700,6 +719,7 @@ impl Scoping {
         self.get_binding(self.root_scope_id(), name)
     }
 
+    /// Add an unresolved reference to the root scope map.
     pub fn add_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = name.clone_in(allocator);
@@ -872,6 +892,7 @@ impl Scoping {
         });
     }
 
+    /// Remove bindings that exist only in TypeScript type space.
     pub fn delete_typescript_bindings(&mut self) {
         self.cell.with_dependent_mut(|_allocator, cell| {
             for bindings in &mut cell.bindings {

@@ -449,33 +449,19 @@ pub type ArenaIdentHashMap<'alloc, V> =
 /// Hash set of [`Ident`], using precomputed ident hash.
 pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, IdentBuildHasher>;
 
-#[expect(missing_docs)]
 pub const AGGREGATE_ERROR: Ident<'static> = Ident::new_const("AggregateError");
-#[expect(missing_docs)]
 pub const ARGUMENTS: Ident<'static> = Ident::new_const("arguments");
-#[expect(missing_docs)]
 pub const ARRAY: Ident<'static> = Ident::new_const("Array");
-#[expect(missing_docs)]
 pub const ERROR: Ident<'static> = Ident::new_const("Error");
-#[expect(missing_docs)]
 pub const EXPORTS: Ident<'static> = Ident::new_const("exports");
-#[expect(missing_docs)]
 pub const FUNCTION: Ident<'static> = Ident::new_const("Function");
-#[expect(missing_docs)]
 pub const GLOBAL_THIS: Ident<'static> = Ident::new_const("globalThis");
-#[expect(missing_docs)]
 pub const MATH: Ident<'static> = Ident::new_const("Math");
-#[expect(missing_docs)]
 pub const MODULE: Ident<'static> = Ident::new_const("module");
-#[expect(missing_docs)]
 pub const OBJECT: Ident<'static> = Ident::new_const("Object");
-#[expect(missing_docs)]
 pub const PROCESS: Ident<'static> = Ident::new_const("process");
-#[expect(missing_docs)]
 pub const REG_EXP: Ident<'static> = Ident::new_const("RegExp");
-#[expect(missing_docs)]
 pub const REQUIRE: Ident<'static> = Ident::new_const("require");
-#[expect(missing_docs)]
 pub const TYPE_ERROR: Ident<'static> = Ident::new_const("TypeError");
 
 /// Creates an [`Ident`] using interpolation of runtime expressions.

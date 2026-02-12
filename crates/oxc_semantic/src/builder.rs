@@ -117,7 +117,9 @@ pub struct SemanticBuilder<'a> {
 
 /// Data returned by [`SemanticBuilder::build`].
 pub struct SemanticBuilderReturn<'a> {
+    /// Built semantic model.
     pub semantic: Semantic<'a>,
+    /// Diagnostics collected during semantic analysis.
     pub errors: Vec<OxcDiagnostic>,
 }
 
@@ -128,6 +130,7 @@ impl Default for SemanticBuilder<'_> {
 }
 
 impl<'a> SemanticBuilder<'a> {
+    /// Create a new semantic builder with default settings.
     pub fn new() -> Self {
         let scoping = Scoping::default();
         let current_scope_id = scoping.root_scope_id();
@@ -187,6 +190,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[cfg(not(feature = "cfg"))]
     #[must_use]
+    /// No-op when `cfg` feature is disabled.
     pub fn with_cfg(self, _cfg: bool) -> Self {
         self
     }

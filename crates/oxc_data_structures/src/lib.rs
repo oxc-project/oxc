@@ -1,7 +1,5 @@
 //! Data structures used across other oxc crates.
 
-#![warn(missing_docs)]
-
 #[cfg(feature = "assert_unchecked")]
 mod assert_unchecked;
 
