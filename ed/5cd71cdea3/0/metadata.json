@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "ed5cd71cdea3",
+  "session_id": "50f3948c-778b-4f00-ab1f-cf675cdfbaff",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-11T11:32:10.87986Z",
+  "branch": "fix/transformer-object-rest-spread-trailing-expr",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "crates/oxc_transformer/src/es2018/object_rest_spread.rs",
+    "tasks/transform_conformance/overrides/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/assignment-expression/output.js",
+    "tasks/transform_conformance/overrides/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/impure-computed/output.js",
+    "tasks/transform_conformance/overrides/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/template-literal-allLiterals-true-no-hoisting/output.js",
+    "tasks/transform_conformance/tests/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/assignment-expression/output.js"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 69,
+    "cache_creation_tokens": 55262,
+    "cache_read_tokens": 3178523,
+    "output_tokens": 1836,
+    "api_call_count": 63
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-11T11:32:10.841332Z",
+    "agent_lines": 13,
+    "human_added": 2435,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2448,
+    "agent_percentage": 0.5310457516339869
+  }
+}
