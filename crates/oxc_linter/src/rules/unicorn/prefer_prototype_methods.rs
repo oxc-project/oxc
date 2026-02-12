@@ -8,7 +8,7 @@ use crate::{
     ast_util::is_method_call,
     context::LintContext,
     rule::Rule,
-    utils::{is_empty_array_expression, is_empty_object_expression},
+    utils::{is_empty_array_expression, is_empty_object_expression, pad_fix_with_token_boundary},
 };
 
 fn known_method(span: Span, obj_name: &str, method_name: &str) -> OxcDiagnostic {
@@ -116,16 +116,9 @@ impl Rule for PreferPrototypeMethods {
             ),
             |fixer| {
                 let span = object_expr.span();
-                let need_padding = span.start >= 1
-                    && ctx.source_text().as_bytes()[span.start as usize - 1].is_ascii_alphabetic();
-                fixer.replace(
-                    span,
-                    format!(
-                        "{}{}.prototype",
-                        if need_padding { " " } else { "" },
-                        constructor_name
-                    ),
-                )
+                let mut replacement = format!("{constructor_name}.prototype");
+                pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
+                fixer.replace(span, replacement)
             },
         );
     }
