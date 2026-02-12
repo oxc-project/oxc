@@ -9,7 +9,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, ast_util::get_symbol_id_of_variable, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::get_symbol_id_of_variable, context::LintContext, rule::Rule,
+    utils::pad_fix_with_token_boundary,
+};
 
 fn prefer_numeric_literals_diagnostic(span: Span, prefix_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use {prefix_name} literals instead of parseInt()."))
@@ -141,30 +144,13 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
                 ctx.diagnostic_with_fix(
                     prefer_numeric_literals_diagnostic(call_expr.span, name),
                     |fixer| {
-                        let code = {
-                            let span = call_expr.span;
-                            let mut code = String::with_capacity(prefix.len() + argument.len() + 2);
-
-                            if span.start > 1 {
-                                let start = ctx.source_text().as_bytes()[span.start as usize - 1];
-                                if start.is_ascii_alphabetic() || !start.is_ascii() {
-                                    code.push(' ');
-                                }
-                            }
-
-                            code.push_str(prefix);
-                            code.push_str(&argument);
-
-                            if (span.end as usize) < ctx.source_text().len() {
-                                let end = ctx.source_text().as_bytes()[span.end as usize];
-                                if end.is_ascii_alphabetic() || !end.is_ascii() {
-                                    code.push(' ');
-                                }
-                            }
-
-                            code
-                        };
-                        fixer.replace(call_expr.span, code)
+                        let span = call_expr.span;
+                        let mut replacement =
+                            String::with_capacity(prefix.len() + argument.len() + 2);
+                        replacement.push_str(prefix);
+                        replacement.push_str(&argument);
+                        pad_fix_with_token_boundary(ctx.source_text(), span, &mut replacement);
+                        fixer.replace(span, replacement)
                     },
                 );
             }
