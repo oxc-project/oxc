@@ -6,7 +6,8 @@ arguments:
 working directory: fixtures/suppression_report_one_new_error_but_filter_the_rest
 ----------
 
-  x New eslint/no-debugger error have appeared 1 times in folder_b/test.js.
+  x 1 new 'eslint/no-debugger' error appeared in folder_b/test.js.
+  help: Update `oxlint-suppressions.json` file running `oxlint --suppress--all`
 
   x eslint(no-debugger): `debugger` statement is not allowed
    ,-[folder_b/test.js:2:1]

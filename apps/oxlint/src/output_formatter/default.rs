@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::output_formatter::InternalFormatter;
+use crate::output_formatter::{InternalFormatter, OxlintSuppressionFileAction};
 use oxc_diagnostics::{
     Error, GraphicalReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
@@ -28,17 +28,32 @@ impl InternalFormatter for DefaultOutputFormatter {
         let time = Self::get_execution_time(&lint_command_info.start_time);
         let s = if lint_command_info.number_of_files == 1 { "" } else { "s" };
 
-        if let Some(number_of_rules) = lint_command_info.number_of_rules {
-            Some(format!(
+        let mut finished_text = if let Some(number_of_rules) = lint_command_info.number_of_rules {
+            format!(
                 "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
                 lint_command_info.number_of_files, number_of_rules, lint_command_info.threads_count
-            ))
+            )
         } else {
-            Some(format!(
+            format!(
                 "Finished in {time} on {} file{s} using {} threads.\n",
                 lint_command_info.number_of_files, lint_command_info.threads_count
-            ))
-        }
+            )
+        };
+
+        let oxlint_suppression_action_text = match lint_command_info.oxlint_suppression_file_action
+        {
+            OxlintSuppressionFileAction::None => "",
+            OxlintSuppressionFileAction::Created => {
+                "'oxlint-suppressions.json' has been created in the root folder.\n"
+            }
+            OxlintSuppressionFileAction::Updated => {
+                "'oxlint-suppressions.json' has been updated.\n"
+            }
+        };
+
+        finished_text.insert_str(0, oxlint_suppression_action_text);
+
+        Some(finished_text)
     }
 
     #[cfg(not(any(test, feature = "testing")))]
@@ -162,7 +177,7 @@ mod test {
     use std::time::Duration;
 
     use crate::output_formatter::{
-        InternalFormatter, LintCommandInfo,
+        InternalFormatter, LintCommandInfo, OxlintSuppressionFileAction,
         default::{DefaultOutputFormatter, GraphicalReporter},
     };
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
@@ -184,6 +199,7 @@ mod test {
             number_of_rules: Some(10),
             threads_count: 12,
             start_time: Duration::new(1, 0),
+            oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
         });
 
         assert!(result.is_some());
@@ -201,10 +217,47 @@ mod test {
             number_of_rules: None,
             threads_count: 12,
             start_time: Duration::new(1, 0),
+            oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
         });
 
         assert!(result.is_some());
         assert_eq!(result.unwrap(), "Finished in 1.0s on 5 files using 12 threads.\n");
+    }
+
+    #[test]
+    fn lint_command_info_oxlint_suppression_file_created() {
+        let formatter = DefaultOutputFormatter;
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: None,
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+            oxlint_suppression_file_action: OxlintSuppressionFileAction::Created,
+        });
+
+        assert!(result.is_some());
+        assert_eq!(
+            result.unwrap(),
+            "'oxlint-suppressions.json' has been created in the root folder.\nFinished in 1.0s on 5 files using 12 threads.\n"
+        );
+    }
+
+    #[test]
+    fn lint_command_info_oxlint_suppression_file_updated() {
+        let formatter = DefaultOutputFormatter;
+        let result = formatter.lint_command_info(&LintCommandInfo {
+            number_of_files: 5,
+            number_of_rules: None,
+            threads_count: 12,
+            start_time: Duration::new(1, 0),
+            oxlint_suppression_file_action: OxlintSuppressionFileAction::Updated,
+        });
+
+        assert!(result.is_some());
+        assert_eq!(
+            result.unwrap(),
+            "'oxlint-suppressions.json' has been updated.\nFinished in 1.0s on 5 files using 12 threads.\n"
+        );
     }
 
     #[test]

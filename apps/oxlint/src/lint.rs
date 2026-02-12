@@ -22,7 +22,7 @@ use crate::js_config::JsConfigLoaderCb;
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     config_loader::{CliConfigLoadError, ConfigLoadError, ConfigLoader},
-    output_formatter::{LintCommandInfo, OutputFormatter},
+    output_formatter::{LintCommandInfo, OutputFormatter, OxlintSuppressionFileAction},
     walk::Walk,
 };
 use oxc_linter::LintIgnoreMatcher;
@@ -162,6 +162,7 @@ impl CliRunner {
                     number_of_rules: None,
                     threads_count: rayon::current_num_threads(),
                     start_time: now.elapsed(),
+                    oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
                 }) {
                     print_and_flush_stdout(stdout, &end);
                 }
@@ -414,6 +415,23 @@ impl CliRunner {
             }
         };
 
+        // Ideally this information should come from the manager, but the first PR for suppressions is big enough.
+        // Looks this could be tackle at same time the suppression manager should be working with TS lint, it
+        // will require some architecture changes.
+        let oxlint_suppression_file_action = {
+            let suppression_file_path = self.cwd.join("oxlint-suppressions.json");
+
+            if suppression_file_path.exists()
+                && (suppression_options.suppress_all || suppression_options.prune_suppressions)
+            {
+                OxlintSuppressionFileAction::Updated
+            } else if !suppression_file_path.exists() && suppression_options.suppress_all {
+                OxlintSuppressionFileAction::Created
+            } else {
+                OxlintSuppressionFileAction::None
+            }
+        };
+
         match lint_runner.lint_files(&files_to_lint, tx_error.clone()) {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
@@ -433,6 +451,7 @@ impl CliRunner {
             number_of_rules,
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
+            oxlint_suppression_file_action,
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -1574,7 +1593,7 @@ mod suppression {
             "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-expected.json",
         );
         let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-expected.json",
+            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-backup.json",
         );
         let args = &["--suppress-all"];
 
@@ -1604,7 +1623,7 @@ mod suppression {
             "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-expected.json",
         );
         let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-expected.json",
+            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-backup.json",
         );
         let args = &["--prune-suppressions"];
 
@@ -1634,7 +1653,7 @@ mod suppression {
             "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions-expected.json",
         );
         let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions-expected.json",
+            "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions-backup.json",
         );
         let args = &["--suppress-all"];
 
@@ -1666,7 +1685,7 @@ mod suppression {
             "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions-expected.json",
         );
         let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions-expected.json",
+            "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions-backup.json",
         );
         let args = &["--prune-suppressions"];
 
@@ -1698,7 +1717,7 @@ mod suppression {
             "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions-expected.json",
         );
         let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions-expected.json",
+            "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions-backup.json",
         );
         let args = &["--suppress-all"];
 
@@ -1730,7 +1749,7 @@ mod suppression {
             "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions-expected.json",
         );
         let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions-expected.json",
+            "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions-backup.json",
         );
         let args = &["--prune-suppressions"];
 

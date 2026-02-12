@@ -161,22 +161,34 @@ pub enum SuppressionDiff {
 
 impl From<SuppressionDiff> for OxcDiagnostic {
     fn from(val: SuppressionDiff) -> Self {
-        let message = match val {
-            SuppressionDiff::Increased { file, rule, from, to } => {
-                format!("The {rule} errors in {file} have increased from {from} to {to}.")
+        let help = match &val {
+            SuppressionDiff::Increased { file: _, rule: _, from: _, to: _ }
+            | SuppressionDiff::Appeared { file: _, rule: _, count: _ } => {
+                "Update `oxlint-suppressions.json` file running `oxlint --suppress--all`"
             }
-            SuppressionDiff::Decreased { file, rule, from, to } => {
-                format!("The {rule} errors in {file} have decreased from {from} to {to}.")
-            }
-            SuppressionDiff::PrunedRuled { file, rule } => {
-                format!("All {rule} errors has been pruned in {file}.")
-            }
-            SuppressionDiff::Appeared { file, rule, count } => {
-                format!("New {rule} error have appeared {count} times in {file}.")
+            SuppressionDiff::Decreased { file: _, rule: _, from: _, to: _ }
+            | SuppressionDiff::PrunedRuled { file: _, rule: _ } => {
+                "Update `oxlint-suppressions.json` file running `oxlint --prune-suppressions`"
             }
         };
 
-        OxcDiagnostic::error(message)
+        let message = match val {
+            SuppressionDiff::Increased { file, rule, from, to } => {
+                format!("The number of '{rule}' errors in {file} increased from {from} to {to}.")
+            }
+            SuppressionDiff::Decreased { file, rule, from, to } => {
+                format!("The number of '{rule}' errors in {file} decreased from {from} to {to}.")
+            }
+            SuppressionDiff::PrunedRuled { file, rule } => {
+                format!("The '{rule}' rule has been pruned from {file}.")
+            }
+            SuppressionDiff::Appeared { file, rule, count } => {
+                let s = if count == 1 { "" } else { "s" };
+                format!("{count} new '{rule}' error{s} appeared in {file}.")
+            }
+        };
+
+        OxcDiagnostic::error(message).with_help(help)
     }
 }
 

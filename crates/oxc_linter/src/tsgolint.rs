@@ -783,7 +783,14 @@ impl Message {
         #[expect(clippy::from_iter_instead_of_collect)]
         let possible_fixes = PossibleFixes::from_iter(iter::chain(fix, suggestions));
 
-        Self::new(val.into(), possible_fixes)
+        /*
+         * val is moved before the add_suppression_id call and `OxcDiagnostic` lack of path information.
+         * Information that is needed by the suppression manager.
+         */
+        let rule = val.rule.clone();
+        let path = val.file_path.clone();
+
+        Self::new(val.into(), possible_fixes).add_suppression_id(&path, "typescript", &rule)
     }
 }
 

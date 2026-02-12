@@ -3,7 +3,7 @@
   "suppressions": {
     "folder_a/test.js": {
       "eslint/no-console": {
-        "count": 1
+        "count": 3
       }
     }
   }
