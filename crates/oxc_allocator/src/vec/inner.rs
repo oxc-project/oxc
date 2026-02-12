@@ -119,7 +119,7 @@ use oxc_data_structures::assert_unchecked;
 
 use crate::alloc::Alloc;
 
-use super::raw_vec::{AllocError, RawVec};
+use super::raw_vec::RawVec;
 
 unsafe fn arith_offset<T>(p: *const T, offset: isize) -> *const T {
     p.offset(offset)
@@ -774,57 +774,6 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// ```text
     pub fn reserve_exact(&mut self, additional: usize) {
         self.buf.reserve_exact(self.len_u32(), additional);
-    }
-
-    /// Attempts to reserve capacity for at least `additional` more elements to be inserted
-    /// in the given `Vec<'a, T>`. The collection may reserve more space to avoid
-    /// frequent reallocations. After calling `try_reserve`, capacity will be
-    /// greater than or equal to `self.len() + additional`. Does nothing if
-    /// capacity is already sufficient.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err(AllocError)` if unable to reserve requested space in the `Vec`.
-    ///
-    /// # Examples
-    ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let mut vec = Vec::from_iter_in([1], &b);
-    /// vec.try_reserve(10).unwrap();
-    /// assert!(vec.capacity() >= 11);
-    /// ```text
-    pub fn try_reserve(&mut self, additional: usize) -> Result<(), AllocError> {
-        self.buf.try_reserve(self.len_u32(), additional)
-    }
-
-    /// Attempts to reserve the minimum capacity for exactly `additional` more elements to
-    /// be inserted in the given `Vec<'a, T>`. After calling `try_reserve_exact`,
-    /// capacity will be greater than or equal to `self.len() + additional`.
-    /// Does nothing if the capacity is already sufficient.
-    ///
-    /// Note that the allocator may give the collection more space than it
-    /// requests. Therefore capacity can not be relied upon to be precisely
-    /// minimal. Prefer `try_reserve` if future insertions are expected.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err(AllocError)` if unable to reserve requested space in the `Vec`.
-    ///
-    /// # Examples
-    ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let mut vec = Vec::from_iter_in([1], &b);
-    /// vec.try_reserve_exact(10).unwrap();
-    /// assert!(vec.capacity() >= 11);
-    /// ```text
-    pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), AllocError> {
-        self.buf.try_reserve_exact(self.len_u32(), additional)
     }
 
     /// Shrinks the capacity of the vector as much as possible.
