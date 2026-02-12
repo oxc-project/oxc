@@ -192,7 +192,7 @@ impl NoUnmodifiedLoopCondition {
             if let AstKind::Function(function) = current_node.kind()
                 && function.is_declaration()
             {
-                return function.id.as_ref().map(|ident| ident.symbol_id());
+                return function.id.as_ref().map(oxc_ast::ast::BindingIdentifier::symbol_id);
             }
             current_id = nodes.parent_id(current_id);
         }
