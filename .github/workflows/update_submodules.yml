@@ -52,7 +52,7 @@ jobs:
       - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
         with:
           cache-key: conformance
-          tools: just,cargo-shear@1.3.0
+          tools: just,cargo-shear@1.9.1
           components: rustfmt
 
       - name: Get latest SHAs for all submodules
