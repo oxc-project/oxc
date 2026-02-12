@@ -62,10 +62,12 @@ pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 unsafe impl<T: Sync> Sync for Vec<'_, T> {}
 
 impl<'alloc, T> Vec<'alloc, T> {
-    /// Const assertion that `T` is not `Drop`.
+    /// Const assertion that `T` is supported for arena `Vec`.
     /// Must be referenced in all methods which create a `Vec`.
-    const ASSERT_T_IS_NOT_DROP: () =
+    const ASSERT_T_IS_SUPPORTED: () = {
         assert!(!std::mem::needs_drop::<T>(), "Cannot create a Vec<T> where T is a Drop type");
+        assert!(std::mem::size_of::<T>() != 0, "Cannot create a Vec<T> where T is zero-sized");
+    };
 
     /// Constructs a new, empty `Vec<T>`.
     ///
@@ -82,7 +84,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline(always)]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
-        const { Self::ASSERT_T_IS_NOT_DROP };
+        const { Self::ASSERT_T_IS_SUPPORTED };
 
         Self(InnerVec::new_in(allocator.arena()))
     }
@@ -97,8 +99,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// It is important to note that although the returned vector has the
     /// minimum *capacity* specified, the vector will have a zero *length*.
     ///
-    /// For `Vec<T>` where `T` is a zero-sized type, there will be no allocation
-    /// and the capacity will always be `u32::MAX`.
+    /// Zero-sized element types are not supported.
     ///
     /// # Panics
     ///
@@ -128,14 +129,10 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// assert_eq!(vec.len(), 11);
     /// assert!(vec.capacity() >= 11);
     ///
-    /// // A vector of a zero-sized type will always over-allocate, since no
-    /// // allocation is necessary
-    /// let vec_units = Vec::<()>::with_capacity_in(10, &allocator);
-    /// assert_eq!(vec_units.capacity(), usize::MAX);
     /// ```
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        const { Self::ASSERT_T_IS_NOT_DROP };
+        const { Self::ASSERT_T_IS_SUPPORTED };
 
         Self(InnerVec::with_capacity_in(capacity, allocator.arena()))
     }
@@ -146,7 +143,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// This is behaviorially identical to [`FromIterator::from_iter`].
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
-        const { Self::ASSERT_T_IS_NOT_DROP };
+        const { Self::ASSERT_T_IS_SUPPORTED };
 
         let iter = iter.into_iter();
         let hint = iter.size_hint();
@@ -173,7 +170,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// ```
     #[inline]
     pub fn from_array_in<const N: usize>(array: [T; N], allocator: &'alloc Allocator) -> Self {
-        const { Self::ASSERT_T_IS_NOT_DROP };
+        const { Self::ASSERT_T_IS_SUPPORTED };
 
         let boxed = Box::new_in(array, allocator);
         let ptr = Box::into_non_null(boxed).as_ptr().cast::<T>();
