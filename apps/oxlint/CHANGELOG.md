@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.47.0] - 2026-02-12
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 45adda2 oxlint/lsp: Use blocking stdio in Oxlint (#19292) (overlookmotel)
+
 ## [1.44.0] - 2026-02-10
 
 ### 🚀 Features
