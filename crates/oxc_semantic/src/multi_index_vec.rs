@@ -48,13 +48,26 @@ macro_rules! multi_index_vec {
         // SAFETY: All data is fully owned by this struct. The raw pointers do not
         // alias with any other pointers. This is equivalent to Vec's Send/Sync impls
         // which are safe because Vec owns its data.
-        unsafe impl Send for $name {}
+        unsafe impl Send for $name
+        where
+            $( $fty: Send, )*
+        {}
         // SAFETY: Immutable access to the data through `&self` does not allow mutation.
         // Mutable access requires `&mut self` which guarantees exclusive access.
-        unsafe impl Sync for $name {}
+        unsafe impl Sync for $name
+        where
+            $( $fty: Sync, )*
+        {}
 
         #[expect(clippy::allow_attributes, reason = "macro-generated methods may not all be used")]
         impl $name {
+            /// Maximum number of elements this table can hold while still being
+            /// representable by the index type.
+            #[inline(always)]
+            fn max_len() -> usize {
+                <$idx as ::oxc_index::Idx>::MAX.saturating_add(1)
+            }
+
             /// Compute the memory layout for a given capacity.
             /// Returns `None` if `cap == 0`.
             fn compute_layout(cap: usize) -> Option<::core::alloc::Layout> {
@@ -124,6 +137,10 @@ macro_rules! multi_index_vec {
             /// Reserve capacity for at least `additional` more elements.
             $vis fn reserve(&mut self, additional: usize) {
                 let required = (self.len as usize).checked_add(additional).expect("capacity overflow");
+                assert!(
+                    required <= Self::max_len(),
+                    "capacity exceeds index type range"
+                );
                 if required <= self.cap as usize {
                     return;
                 }
@@ -132,11 +149,14 @@ macro_rules! multi_index_vec {
 
             /// Grow the allocation to hold at least `min_cap` elements.
             fn grow_to(&mut self, min_cap: usize) {
+                let max_len = Self::max_len();
+                assert!(min_cap <= max_len, "capacity exceeds index type range");
                 let new_cap = if self.cap == 0 {
                     min_cap.max(4)
                 } else {
                     (self.cap as usize).checked_mul(2).expect("capacity overflow").max(min_cap)
-                };
+                }
+                .min(max_len);
 
                 let old_cap = self.cap as usize;
                 let old_len = self.len as usize;
@@ -195,21 +215,30 @@ macro_rules! multi_index_vec {
                     )*
                 }
                 self.len += 1;
-                <$idx as ::oxc_index::Idx>::from_usize(idx)
+                // SAFETY: `idx < len <= cap <= max_len = Idx::MAX + 1`, so `idx <= Idx::MAX`.
+                unsafe { <$idx as ::oxc_index::Idx>::from_usize_unchecked(idx) }
             }
 
             /// Iterate over all valid indices.
             $vis fn iter_ids(&self) -> impl Iterator<Item = $idx> {
-                (0..self.len).map(|i| <$idx as ::oxc_index::Idx>::from_usize(i as usize))
+                let len = self.len as usize;
+                // SAFETY: Valid indices are `0..len`, and by invariant `len <= Idx::MAX + 1`.
+                (0..len).map(|i| unsafe { <$idx as ::oxc_index::Idx>::from_usize_unchecked(i) })
+            }
+
+            #[inline(always)]
+            fn checked_idx(&self, id: $idx) -> usize {
+                let idx = ::oxc_index::Idx::index(id);
+                assert!(idx < self.len as usize, "index out of bounds");
+                idx
             }
 
             // Per-field accessors.
             $(
                 #[inline]
                 $fvis fn $fname(&self, id: $idx) -> &$fty {
-                    let idx = ::oxc_index::Idx::index(id);
-                    debug_assert!(idx < self.len as usize);
-                    // SAFETY: `idx` is a valid index (checked in debug mode).
+                    let idx = self.checked_idx(id);
+                    // SAFETY: `idx` is validated by `checked_idx`.
                     // The pointer is aligned and valid for reads.
                     unsafe { &*self.$fname.as_ptr().add(idx) }
                 }
@@ -217,16 +246,18 @@ macro_rules! multi_index_vec {
                 #[inline]
                 #[allow(dead_code)]
                 $fvis fn $fname_mut(&mut self, id: $idx) -> &mut $fty {
-                    let idx = ::oxc_index::Idx::index(id);
-                    debug_assert!(idx < self.len as usize);
-                    // SAFETY: `idx` is a valid index (checked in debug mode).
+                    let idx = self.checked_idx(id);
+                    // SAFETY: `idx` is validated by `checked_idx`.
                     // The pointer is aligned and valid. `&mut self` guarantees no aliasing.
                     unsafe { &mut *self.$fname.as_ptr().add(idx) }
                 }
             )*
         }
 
-        impl Clone for $name {
+        impl Clone for $name
+        where
+            $( $fty: Clone, )*
+        {
             fn clone(&self) -> Self {
                 let len = self.len as usize;
                 if len == 0 {
@@ -251,11 +282,19 @@ macro_rules! multi_index_vec {
                     };
                     result.set_pointers(new_base, len);
                     $(
-                        ::core::ptr::copy_nonoverlapping(
-                            self.$fname.as_ptr(),
-                            result.$fname.as_ptr(),
-                            len,
-                        );
+                        if ::core::mem::needs_drop::<$fty>() {
+                            for i in 0..len {
+                                result.$fname.as_ptr().add(i).write(
+                                    (*self.$fname.as_ptr().add(i)).clone(),
+                                );
+                            }
+                        } else {
+                            ::core::ptr::copy_nonoverlapping(
+                                self.$fname.as_ptr(),
+                                result.$fname.as_ptr(),
+                                len,
+                            );
+                        }
                     )*
                     result
                 }
@@ -305,3 +344,91 @@ macro_rules! multi_index_vec {
 }
 
 pub(crate) use multi_index_vec;
+
+#[cfg(test)]
+#[allow(dead_code)]
+mod tests {
+    oxc_index::define_index_type! {
+        struct TestId = usize;
+    }
+
+    multi_index_vec! {
+        struct TestTable<TestId> {
+            values => values_mut: u32,
+        }
+    }
+
+    oxc_index::define_index_type! {
+        struct SmallId = u8;
+        MAX_INDEX = 3;
+    }
+
+    multi_index_vec! {
+        struct SmallTable<SmallId> {
+            values => values_mut: u32,
+        }
+    }
+
+    oxc_index::define_index_type! {
+        struct StringId = usize;
+    }
+
+    multi_index_vec! {
+        struct StringTable<StringId> {
+            values => values_mut: String,
+        }
+    }
+
+    #[test]
+    fn iter_ids_are_valid() {
+        let mut table = TestTable::new();
+        table.push(1);
+        table.push(2);
+        table.push(3);
+
+        let ids = table.iter_ids().collect::<Vec<_>>();
+        assert_eq!(ids.len(), 3);
+        assert_eq!(usize::from(ids[0]), 0);
+        assert_eq!(usize::from(ids[1]), 1);
+        assert_eq!(usize::from(ids[2]), 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "index out of bounds")]
+    fn accessor_panics_on_invalid_index() {
+        let mut table = TestTable::new();
+        table.push(1);
+        let _ = table.values(TestId::from(1usize));
+    }
+
+    #[test]
+    #[should_panic(expected = "capacity exceeds index type range")]
+    fn reserve_panics_when_exceeding_index_range() {
+        let mut table = SmallTable::new();
+        table.reserve(5);
+    }
+
+    #[test]
+    #[should_panic(expected = "capacity exceeds index type range")]
+    fn push_panics_when_exceeding_index_range() {
+        let mut table = SmallTable::new();
+        table.push(1);
+        table.push(2);
+        table.push(3);
+        table.push(4);
+        table.push(5);
+    }
+
+    #[test]
+    fn clone_clones_non_copy_fields() {
+        let mut table = StringTable::new();
+        let id = table.push(String::from("a"));
+        let mut clone = table.clone();
+
+        table.values_mut(id).push('1');
+        clone.values_mut(id).push('2');
+
+        assert_eq!(table.values(id), "a1");
+        assert_eq!(clone.values(id), "a2");
+    }
+}
