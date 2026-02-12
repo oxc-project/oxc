@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "ed5cd71cdea3",
+  "strategy": "manual-commit",
+  "branch": "fix/transformer-object-rest-spread-trailing-expr",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "crates/oxc_transformer/src/es2018/object_rest_spread.rs",
+    "tasks/transform_conformance/overrides/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/assignment-expression/output.js",
+    "tasks/transform_conformance/overrides/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/impure-computed/output.js",
+    "tasks/transform_conformance/overrides/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/template-literal-allLiterals-true-no-hoisting/output.js",
+    "tasks/transform_conformance/tests/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/assignment-expression/output.js"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ed/5cd71cdea3/0/metadata.json",
+      "transcript": "/ed/5cd71cdea3/0/full.jsonl",
+      "context": "/ed/5cd71cdea3/0/context.md",
+      "content_hash": "/ed/5cd71cdea3/0/content_hash.txt",
+      "prompt": "/ed/5cd71cdea3/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 69,
+    "cache_creation_tokens": 55262,
+    "cache_read_tokens": 3178523,
+    "output_tokens": 1836,
+    "api_call_count": 63
+  }
+}
