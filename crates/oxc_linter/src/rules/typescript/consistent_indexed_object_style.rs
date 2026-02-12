@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{TSSignature, TSTupleElement, TSType, TSTypeName},
+    ast::{FormalParameters, TSSignature, TSTupleElement, TSType, TSTypeName},
     match_ts_type,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -302,6 +302,11 @@ impl Rule for ConsistentIndexedObjectStyle {
                         return;
                     }
 
+                    // Key remapping (`as`) cannot be represented with `Record`.
+                    if mapped.name_type.is_some() {
+                        return;
+                    }
+
                     // Can't convert if value type references the key parameter
                     if let Some(type_annotation) = &mapped.type_annotation
                         && references_identifier(type_annotation, key_name.name.as_str())
@@ -449,6 +454,14 @@ fn references_identifier(type_: &TSType, name: &str) -> bool {
                 || references_identifier(&i.index_type, name)
         }
         TSType::TSArrayType(a) => references_identifier(&a.element_type, name),
+        TSType::TSFunctionType(f) => {
+            references_identifier_in_formal_parameters(&f.params, name)
+                || references_identifier(&f.return_type.type_annotation, name)
+        }
+        TSType::TSConstructorType(c) => {
+            references_identifier_in_formal_parameters(&c.params, name)
+                || references_identifier(&c.return_type.type_annotation, name)
+        }
         TSType::TSTupleType(t) => t.element_types.iter().any(|e| match e {
             TSTupleElement::TSOptionalType(opt) => {
                 references_identifier(&opt.type_annotation, name)
@@ -456,14 +469,26 @@ fn references_identifier(type_: &TSType, name: &str) -> bool {
             TSTupleElement::TSRestType(rest) => references_identifier(&rest.type_annotation, name),
             match_ts_type!(TSTupleElement) => references_identifier(e.to_ts_type(), name),
         }),
-        TSType::TSTypeLiteral(lit) => lit.members.iter().any(|m| {
-            if let TSSignature::TSIndexSignature(sig) = m {
-                references_identifier(&sig.type_annotation.type_annotation, name)
-            } else {
-                false
-            }
-        }),
-        TSType::TSFunctionType(f) => references_identifier(&f.return_type.type_annotation, name),
+        TSType::TSTypeLiteral(lit) => {
+            lit.members.iter().any(|member| references_identifier_in_signature(member, name))
+        }
+        TSType::TSMappedType(m) => {
+            references_identifier(&m.constraint, name)
+                || m.name_type.as_ref().is_some_and(|t| references_identifier(t, name))
+                || m.type_annotation.as_ref().is_some_and(|t| references_identifier(t, name))
+        }
+        TSType::TSTypePredicate(predicate) => predicate
+            .type_annotation
+            .as_ref()
+            .is_some_and(|annotation| references_identifier(&annotation.type_annotation, name)),
+        TSType::TSInferType(infer) => infer
+            .type_parameter
+            .constraint
+            .as_ref()
+            .is_some_and(|constraint| references_identifier(constraint, name)),
+        TSType::TSTemplateLiteralType(template) => {
+            template.types.iter().any(|t| references_identifier(t, name))
+        }
         TSType::TSTypeOperatorType(op) => references_identifier(&op.type_annotation, name),
         TSType::TSParenthesizedType(p) => references_identifier(&p.type_annotation, name),
         TSType::TSNamedTupleMember(m) => match &m.element_type {
@@ -474,6 +499,52 @@ fn references_identifier(type_: &TSType, name: &str) -> bool {
             e @ match_ts_type!(TSTupleElement) => references_identifier(e.to_ts_type(), name),
         },
         _ => false,
+    }
+}
+
+fn references_identifier_in_formal_parameters(params: &FormalParameters, name: &str) -> bool {
+    params.items.iter().any(|param| {
+        param
+            .type_annotation
+            .as_ref()
+            .is_some_and(|annotation| references_identifier(&annotation.type_annotation, name))
+    }) || params.rest.as_ref().is_some_and(|rest| {
+        rest.type_annotation
+            .as_ref()
+            .is_some_and(|annotation| references_identifier(&annotation.type_annotation, name))
+    })
+}
+
+fn references_identifier_in_signature(signature: &TSSignature, name: &str) -> bool {
+    match signature {
+        TSSignature::TSIndexSignature(sig) => {
+            sig.parameters
+                .iter()
+                .any(|param| references_identifier(&param.type_annotation.type_annotation, name))
+                || references_identifier(&sig.type_annotation.type_annotation, name)
+        }
+        TSSignature::TSPropertySignature(sig) => sig
+            .type_annotation
+            .as_ref()
+            .is_some_and(|annotation| references_identifier(&annotation.type_annotation, name)),
+        TSSignature::TSCallSignatureDeclaration(sig) => {
+            references_identifier_in_formal_parameters(&sig.params, name)
+                || sig.return_type.as_ref().is_some_and(|return_type| {
+                    references_identifier(&return_type.type_annotation, name)
+                })
+        }
+        TSSignature::TSConstructSignatureDeclaration(sig) => {
+            references_identifier_in_formal_parameters(&sig.params, name)
+                || sig.return_type.as_ref().is_some_and(|return_type| {
+                    references_identifier(&return_type.type_annotation, name)
+                })
+        }
+        TSSignature::TSMethodSignature(sig) => {
+            references_identifier_in_formal_parameters(&sig.params, name)
+                || sig.return_type.as_ref().is_some_and(|return_type| {
+                    references_identifier(&return_type.type_annotation, name)
+                })
+        }
     }
 }
 
@@ -896,6 +967,17 @@ fn test() {
             ",
             None,
         ),
+        ("type Keys = 'A' | 'B'; type Foo = { [K in Keys]: { x: K } };", None),
+        ("type Keys = 'A' | 'B'; type Foo = { [K in Keys]?: { x: K } };", None),
+        (
+            "type Keys = 'A' | 'B'; interface Gen<T> { a: T } type Foo = { [K in Keys]: { x: Gen<K> } };",
+            None,
+        ),
+        (
+            "type Keys = 'A' | 'B'; interface Gen<T> { a: T } type Foo = Partial<{ [K in Keys]: { x: Gen<K> } }>;",
+            None,
+        ),
+        ("type Foo<K extends string> = { [P in K as `x_${P}`]: number };", None),
     ];
 
     let fail = vec![
