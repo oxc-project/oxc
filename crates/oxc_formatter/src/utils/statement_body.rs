@@ -6,10 +6,11 @@ use crate::{
     formatter::{
         Buffer, Format, Formatter,
         prelude::{format_once, soft_line_indent_or_space, space},
-        trivia::FormatTrailingComments,
+        trivia::{FormatTrailingComments, format_leading_comments},
     },
     print::FormatWrite,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    utils::suppressed::FormatSuppressedNode,
     write,
 };
 
@@ -72,7 +73,15 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
                         if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
                     );
                     if is_consequent_of_if_statement_parent {
-                        write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        if f.context()
+                            .comments()
+                            .has_line_suppression_comment_at_end_of_line(body_span.end)
+                        {
+                            write!(f, format_leading_comments(body_span));
+                            write!(f, FormatSuppressedNode(body_span));
+                        } else {
+                            write!(f, FormatNodeWithoutTrailingComments(self.body));
+                        }
                         let comments =
                             f.context().comments().end_of_line_comments_after(body_span.end);
                         FormatTrailingComments::Comments(comments).fmt(f);
