@@ -743,6 +743,8 @@ fn test_class_expression() {
     test("(class { static a = foo() })", true);
     test("(class { accessor [foo()]; })", true);
     test("(class { static accessor [foo()]; })", true);
+    test("(class { #x; static { #x in {}; } })", false);
+    test("(class { #x; static { #x in foo(); } })", true);
 }
 
 #[test]
@@ -780,6 +782,10 @@ fn test_property_access() {
     test("[...[1]][0]", false);
     test("[...'a'][0]", false);
     test("[...'a'][1]", true);
+
+    test("import.meta.url", false);
+    test("import.meta['url']", false);
+    test("import.meta[`url`]", false);
     test("[...'😀'][0]", false);
     test("[...'😀'][1]", true);
     test("[...a, 1][0]", true); // "...a" may have a sideeffect
@@ -837,6 +843,33 @@ fn test_call_expressions() {
     test("Object()", false);
     test("String()", false);
     test("Symbol()", false);
+    test("String({})", false);
+    test("String([1, 2, 3])", false);
+    test("String({ toString() { return 'x' } })", true);
+    test("String(obj)", true);
+    test("Number({})", false);
+    test("Number({ valueOf() { return 1 } })", true);
+    test("Number(Symbol())", true);
+    test("Number(obj)", true);
+    test("Boolean({})", false);
+    test("Boolean(obj)", false);
+    test("BigInt()", true);
+    test("BigInt(123)", false);
+    test("BigInt(123n)", false);
+    test("BigInt(true)", false);
+    test("BigInt(false)", false);
+    test("BigInt('456')", false);
+    test("BigInt('abc')", true);
+    test("BigInt(1.5)", true);
+    test("BigInt(undefined)", true);
+    test("BigInt(null)", true);
+    test("BigInt({})", true);
+    test("BigInt({ valueOf() { return 1 } })", true);
+    test("BigInt(obj)", true);
+    test("Symbol({})", false);
+    test("Symbol({ toString() { return 'x' } })", true);
+    test("Symbol(obj)", true);
+    test("Symbol(Symbol())", true);
 
     test("decodeURI()", false);
     test("decodeURIComponent()", false);
