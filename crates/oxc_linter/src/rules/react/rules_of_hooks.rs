@@ -343,7 +343,7 @@ fn has_conditional_path_accept_throw(
         //         }
         //         _ => None,
         //     })
-        //     .filter(|it| it.id() != to.id())
+        //     .filter(|it| it.node_id() != to.node_id())
         //     .any(|it| {
         //         // TODO: it.may_throw()
         //         matches!(
