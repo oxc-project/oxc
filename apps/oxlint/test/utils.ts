@@ -35,6 +35,9 @@ export interface Fixture {
     // If provided, `cwd` is relative to the fixture's directory.
     // Default: `null`.
     cwd: string | null;
+
+    // Additional arguments to run Oxlint with. Default: `[]`.
+    args: string[];
   };
 }
 
@@ -45,6 +48,7 @@ const DEFAULT_OPTIONS: Fixture["options"] = {
   fixSuggestions: false,
   singleThread: false,
   cwd: null,
+  args: [],
 };
 
 /**
@@ -88,6 +92,9 @@ export function getFixtures(): Fixture[] {
     }
     if (options.cwd !== null && typeof options.cwd !== "string") {
       throw new TypeError("`cwd` property in `options.json` must be a string or null");
+    }
+    if (!Array.isArray(options.args) || !options.args.every((arg) => typeof arg === "string")) {
+      throw new TypeError("`args` property in `options.json` must be an array of strings");
     }
 
     fixtures.push({ name, dirPath, options });
