@@ -191,7 +191,7 @@ impl Allocator {
         // Get pointer to current `ChunkFooter`.
         // SAFETY: We've established the offset of the `current_chunk_footer` field above.
         let current_chunk_footer_field = unsafe {
-            let bump = self.bump();
+            let bump = self.arena();
             let field_ptr = ptr::from_ref(bump)
                 .cast::<Cell<NonNull<ChunkFooter>>>()
                 .add(current_chunk_footer_field_offset);

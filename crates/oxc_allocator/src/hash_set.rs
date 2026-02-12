@@ -81,7 +81,7 @@ impl<'alloc, T, S> HashSet<'alloc, T, S> {
     pub fn with_hasher_in(hasher: S, allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        let inner = InnerHashSet::with_hasher_in(hasher, allocator.bump());
+        let inner = InnerHashSet::with_hasher_in(hasher, allocator.arena());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -98,7 +98,7 @@ impl<'alloc, T, S> HashSet<'alloc, T, S> {
     ) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        let inner = InnerHashSet::with_capacity_and_hasher_in(capacity, hasher, allocator.bump());
+        let inner = InnerHashSet::with_capacity_and_hasher_in(capacity, hasher, allocator.arena());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -161,7 +161,7 @@ impl<'alloc, T> HashSet<'alloc, T> {
         //   e.g. filter iterators.
         let capacity = iter.size_hint().0;
         let set =
-            InnerHashSet::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
+            InnerHashSet::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.arena());
         // Wrap in `ManuallyDrop` *before* calling `for_each`, so compiler doesn't insert unnecessary code
         // to drop the `FxHashSet` in case of a panic in iterator's `next` method
         let mut set = ManuallyDrop::new(set);

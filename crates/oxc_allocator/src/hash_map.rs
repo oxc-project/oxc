@@ -127,7 +127,7 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     pub fn with_hasher_in(hasher: S, allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
-        let inner = InnerHashMap::with_hasher_in(hasher, allocator.bump());
+        let inner = InnerHashMap::with_hasher_in(hasher, allocator.arena());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -144,7 +144,7 @@ impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     ) -> Self {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
-        let inner = InnerHashMap::with_capacity_and_hasher_in(capacity, hasher, allocator.bump());
+        let inner = InnerHashMap::with_capacity_and_hasher_in(capacity, hasher, allocator.arena());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -232,7 +232,7 @@ impl<'alloc, K, V, S: Default> HashMap<'alloc, K, V, S> {
         //   e.g. filter iterators.
         let capacity = iter.size_hint().0;
         let map =
-            InnerHashMap::with_capacity_and_hasher_in(capacity, S::default(), allocator.bump());
+            InnerHashMap::with_capacity_and_hasher_in(capacity, S::default(), allocator.arena());
         // Wrap in `ManuallyDrop` *before* calling `for_each`, so compiler doesn't insert unnecessary code
         // to drop the `FxHashMap` in case of a panic in iterator's `next` method
         let mut map = ManuallyDrop::new(map);

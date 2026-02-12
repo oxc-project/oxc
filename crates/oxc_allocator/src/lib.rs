@@ -41,6 +41,7 @@
 mod accessor;
 mod address;
 mod alloc;
+mod arena;
 mod allocator;
 mod allocator_api2;
 #[cfg(feature = "bitset")]
@@ -65,6 +66,7 @@ mod vec;
 
 pub use accessor::AllocatorAccessor;
 pub use address::{Address, GetAddress, UnstableAddress};
+pub use arena::Arena;
 pub use allocator::Allocator;
 #[cfg(feature = "bitset")]
 pub use bitset::BitSet;

@@ -10,13 +10,13 @@ use allocator_api2::alloc::{AllocError, Allocator};
 unsafe impl Allocator for &crate::Allocator {
     #[inline(always)]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
-        Allocator::allocate(&self.bump(), layout)
+        Allocator::allocate(&self.arena(), layout)
     }
 
     #[inline(always)]
     unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout) {
         unsafe {
-            Allocator::deallocate(&self.bump(), ptr, layout);
+            Allocator::deallocate(&self.arena(), ptr, layout);
         }
     }
 
@@ -27,7 +27,7 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { Allocator::shrink(&self.bump(), ptr, old_layout, new_layout) }
+        unsafe { Allocator::shrink(&self.arena(), ptr, old_layout, new_layout) }
     }
 
     #[inline(always)]
@@ -37,7 +37,7 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { Allocator::grow(&self.bump(), ptr, old_layout, new_layout) }
+        unsafe { Allocator::grow(&self.arena(), ptr, old_layout, new_layout) }
     }
 
     #[inline(always)]
@@ -47,6 +47,6 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { Allocator::grow_zeroed(&self.bump(), ptr, old_layout, new_layout) }
+        unsafe { Allocator::grow_zeroed(&self.arena(), ptr, old_layout, new_layout) }
     }
 }

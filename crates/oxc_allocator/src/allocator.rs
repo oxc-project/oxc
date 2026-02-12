@@ -7,7 +7,7 @@ use std::{
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
 use std::mem::offset_of;
 
-use crate::bump::Bump;
+use crate::{Arena, bump::Bump};
 
 use oxc_data_structures::assert_unchecked;
 
@@ -445,7 +445,7 @@ impl Allocator {
         // Allocate `total_len` bytes.
         // SAFETY: Caller guarantees `total_len <= isize::MAX`.
         let layout = unsafe { Layout::from_size_align_unchecked(total_len, 1) };
-        let start_ptr = self.bump().alloc_layout(layout);
+        let start_ptr = self.arena().alloc_layout(layout);
 
         let mut end_ptr = start_ptr;
         for str in strings {
@@ -613,15 +613,14 @@ impl Allocator {
         bytes
     }
 
-    /// Get inner [`Bump`].
+    /// Get inner [`Arena`].
     ///
-    /// This method is not public. We don't want to expose `Bump` to user.
-    /// The inner `Bump` is an internal implementation detail.
+    /// This method is not public. We don't want to expose the arena internals to user.
     //
     // `#[inline(always)]` because it's a no-op
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(crate) fn bump(&self) -> &Bump {
+    pub(crate) fn arena(&self) -> &Arena {
         &self.bump
     }
 
