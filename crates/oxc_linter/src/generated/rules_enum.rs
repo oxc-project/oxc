@@ -480,6 +480,7 @@ pub use crate::rules::typescript::no_require_imports::NoRequireImports as Typesc
 pub use crate::rules::typescript::no_restricted_types::NoRestrictedTypes as TypescriptNoRestrictedTypes;
 pub use crate::rules::typescript::no_this_alias::NoThisAlias as TypescriptNoThisAlias;
 pub use crate::rules::typescript::no_unnecessary_boolean_literal_compare::NoUnnecessaryBooleanLiteralCompare as TypescriptNoUnnecessaryBooleanLiteralCompare;
+pub use crate::rules::typescript::no_unnecessary_condition::NoUnnecessaryCondition as TypescriptNoUnnecessaryCondition;
 pub use crate::rules::typescript::no_unnecessary_parameter_property_assignment::NoUnnecessaryParameterPropertyAssignment as TypescriptNoUnnecessaryParameterPropertyAssignment;
 pub use crate::rules::typescript::no_unnecessary_template_expression::NoUnnecessaryTemplateExpression as TypescriptNoUnnecessaryTemplateExpression;
 pub use crate::rules::typescript::no_unnecessary_type_arguments::NoUnnecessaryTypeArguments as TypescriptNoUnnecessaryTypeArguments;
@@ -935,6 +936,7 @@ pub enum RuleEnum {
     TypescriptNoRestrictedTypes(TypescriptNoRestrictedTypes),
     TypescriptNoThisAlias(TypescriptNoThisAlias),
     TypescriptNoUnnecessaryBooleanLiteralCompare(TypescriptNoUnnecessaryBooleanLiteralCompare),
+    TypescriptNoUnnecessaryCondition(TypescriptNoUnnecessaryCondition),
     TypescriptNoUnnecessaryParameterPropertyAssignment(
         TypescriptNoUnnecessaryParameterPropertyAssignment,
     ),
@@ -2317,6 +2319,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::NAME
             }
+            Self::TypescriptNoUnnecessaryCondition(_) => TypescriptNoUnnecessaryCondition::NAME,
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
                 TypescriptNoUnnecessaryParameterPropertyAssignment::NAME
             }
@@ -3090,6 +3093,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::CATEGORY
             }
+            Self::TypescriptNoUnnecessaryCondition(_) => TypescriptNoUnnecessaryCondition::CATEGORY,
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
                 TypescriptNoUnnecessaryParameterPropertyAssignment::CATEGORY
             }
@@ -3884,6 +3888,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::FIX
             }
+            Self::TypescriptNoUnnecessaryCondition(_) => TypescriptNoUnnecessaryCondition::FIX,
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
                 TypescriptNoUnnecessaryParameterPropertyAssignment::FIX
             }
@@ -4683,6 +4688,9 @@ impl RuleEnum {
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::documentation(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::documentation()
+            }
+            Self::TypescriptNoUnnecessaryCondition(_) => {
+                TypescriptNoUnnecessaryCondition::documentation()
             }
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
                 TypescriptNoUnnecessaryParameterPropertyAssignment::documentation()
@@ -5975,6 +5983,10 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::config_schema(generator)
                     .or_else(|| TypescriptNoUnnecessaryBooleanLiteralCompare::schema(generator))
+            }
+            Self::TypescriptNoUnnecessaryCondition(_) => {
+                TypescriptNoUnnecessaryCondition::config_schema(generator)
+                    .or_else(|| TypescriptNoUnnecessaryCondition::schema(generator))
             }
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
                 TypescriptNoUnnecessaryParameterPropertyAssignment::config_schema(generator)
@@ -7456,6 +7468,7 @@ impl RuleEnum {
             Self::TypescriptNoRestrictedTypes(_) => "typescript",
             Self::TypescriptNoThisAlias(_) => "typescript",
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => "typescript",
+            Self::TypescriptNoUnnecessaryCondition(_) => "typescript",
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => "typescript",
             Self::TypescriptNoUnnecessaryTemplateExpression(_) => "typescript",
             Self::TypescriptNoUnnecessaryTypeArguments(_) => "typescript",
@@ -8656,6 +8669,11 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 Ok(Self::TypescriptNoUnnecessaryBooleanLiteralCompare(
                     TypescriptNoUnnecessaryBooleanLiteralCompare::from_configuration(value)?,
+                ))
+            }
+            Self::TypescriptNoUnnecessaryCondition(_) => {
+                Ok(Self::TypescriptNoUnnecessaryCondition(
+                    TypescriptNoUnnecessaryCondition::from_configuration(value)?,
                 ))
             }
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
@@ -10279,6 +10297,7 @@ impl RuleEnum {
             Self::TypescriptNoRestrictedTypes(rule) => rule.to_configuration(),
             Self::TypescriptNoThisAlias(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.to_configuration(),
+            Self::TypescriptNoUnnecessaryCondition(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => {
                 rule.to_configuration()
             }
@@ -10958,6 +10977,7 @@ impl RuleEnum {
             Self::TypescriptNoRestrictedTypes(rule) => rule.run(node, ctx),
             Self::TypescriptNoThisAlias(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.run(node, ctx),
+            Self::TypescriptNoUnnecessaryCondition(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryTemplateExpression(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.run(node, ctx),
@@ -11633,6 +11653,7 @@ impl RuleEnum {
             Self::TypescriptNoRestrictedTypes(rule) => rule.run_once(ctx),
             Self::TypescriptNoThisAlias(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.run_once(ctx),
+            Self::TypescriptNoUnnecessaryCondition(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryTemplateExpression(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.run_once(ctx),
@@ -12342,6 +12363,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::TypescriptNoUnnecessaryCondition(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -13073,6 +13095,7 @@ impl RuleEnum {
             Self::TypescriptNoRestrictedTypes(rule) => rule.should_run(ctx),
             Self::TypescriptNoThisAlias(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.should_run(ctx),
+            Self::TypescriptNoUnnecessaryCondition(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryTemplateExpression(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.should_run(ctx),
@@ -13815,6 +13838,9 @@ impl RuleEnum {
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::IS_TSGOLINT_RULE,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::IS_TSGOLINT_RULE
+            }
+            Self::TypescriptNoUnnecessaryCondition(_) => {
+                TypescriptNoUnnecessaryCondition::IS_TSGOLINT_RULE
             }
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
                 TypescriptNoUnnecessaryParameterPropertyAssignment::IS_TSGOLINT_RULE
@@ -14738,6 +14764,9 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::HAS_CONFIG
             }
+            Self::TypescriptNoUnnecessaryCondition(_) => {
+                TypescriptNoUnnecessaryCondition::HAS_CONFIG
+            }
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
                 TypescriptNoUnnecessaryParameterPropertyAssignment::HAS_CONFIG
             }
@@ -15519,6 +15548,7 @@ impl RuleEnum {
             Self::TypescriptNoRestrictedTypes(rule) => rule.types_info(),
             Self::TypescriptNoThisAlias(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.types_info(),
+            Self::TypescriptNoUnnecessaryCondition(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryTemplateExpression(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.types_info(),
@@ -16194,6 +16224,7 @@ impl RuleEnum {
             Self::TypescriptNoRestrictedTypes(rule) => rule.run_info(),
             Self::TypescriptNoThisAlias(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.run_info(),
+            Self::TypescriptNoUnnecessaryCondition(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryTemplateExpression(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.run_info(),
@@ -16921,6 +16952,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptNoUnnecessaryBooleanLiteralCompare(
             TypescriptNoUnnecessaryBooleanLiteralCompare::default(),
         ),
+        RuleEnum::TypescriptNoUnnecessaryCondition(TypescriptNoUnnecessaryCondition::default()),
         RuleEnum::TypescriptNoUnnecessaryParameterPropertyAssignment(
             TypescriptNoUnnecessaryParameterPropertyAssignment::default(),
         ),

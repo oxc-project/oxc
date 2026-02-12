@@ -62,6 +62,18 @@ declare const unknownValue: unknown;
 // This SHOULD error because checkUnknown is true
 const unknownStr = unknownValue.toString();
 
+// Test no-unnecessary-condition with allowConstantLoopConditions option
+declare const alwaysTruthyObject: object;
+// This SHOULD error because this object is always truthy
+if (alwaysTruthyObject) {
+  result += 1;
+}
+
+// This should NOT error because allowConstantLoopConditions is true
+while (true) {
+  break;
+}
+
 // Test only-throw-error with allowRethrowing option
 // When allowRethrowing is false, rethrowing a caught error SHOULD error
 try {
