@@ -1907,6 +1907,7 @@ dependencies = [
 name = "oxc_ecmascript"
 version = "0.113.0"
 dependencies = [
+ "bitflags",
  "cow-utils",
  "num-bigint",
  "num-traits",
@@ -1915,6 +1916,8 @@ dependencies = [
  "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
+ "phf",
+ "rustc-hash",
 ]
 
 [[package]]

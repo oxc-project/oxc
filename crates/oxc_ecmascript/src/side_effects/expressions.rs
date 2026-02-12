@@ -7,7 +7,10 @@ use crate::{
     to_primitive::{ToPrimitive, ToPrimitiveResult},
 };
 
-use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
+use super::{
+    MayHaveSideEffects, PropertyReadSideEffects, SideEffectDetail, SideEffectDetector,
+    context::MayHaveSideEffectsContext,
+};
 
 impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
@@ -67,6 +70,10 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             Expression::TaggedTemplateExpression(e) => e.may_have_side_effects(ctx),
             _ => true,
         }
+    }
+
+    fn side_effect_detail(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> SideEffectDetail {
+        SideEffectDetector::new(ctx).detect_side_effect_of_expr(self)
     }
 }
 
@@ -642,8 +649,16 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
                 // Symbol(description) applies ToString to non-undefined arguments.
                 // ToString can throw on Symbol and execute user code during ToPrimitive.
                 return self.arguments.first().is_some_and(|arg| {
-                    arg.as_expression()
-                        .is_none_or(|expr| expr.to_primitive(ctx).is_symbol() != Some(false))
+                    arg.as_expression().is_none_or(|expr| {
+                        if matches!(
+                            expr,
+                            Expression::ArrowFunctionExpression(_)
+                                | Expression::FunctionExpression(_)
+                        ) {
+                            return false;
+                        }
+                        expr.to_primitive(ctx).is_symbol() != Some(false)
+                    })
                 });
             }
             if is_pure_global_function(name)

@@ -316,6 +316,15 @@ enum Pragma<'a> {
     This(Vec<Atom<'a>>),
     /// `import.meta`, `import.meta.foo`, `import.meta.foo.bar.qux`
     ImportMeta(Vec<Atom<'a>>),
+    /// String literal pragma, e.g. `"]"` used by esbuild tests.
+    StringLiteral {
+        value: Atom<'a>,
+        raw: Atom<'a>,
+    },
+    /// Literal pragma values from `@jsxFrag` comments.
+    NullLiteral,
+    BooleanLiteral(bool),
+    NumericLiteral(f64, Atom<'a>),
 }
 
 impl<'a> Pragma<'a> {
@@ -360,6 +369,10 @@ impl<'a> Pragma<'a> {
     }
 
     fn parse_impl(pragma: &str, ast: AstBuilder<'a>) -> Option<Self> {
+        if let Some(literal) = Self::parse_literal(pragma, ast) {
+            return Some(literal);
+        }
+
         let strs_to_atoms = |parts: &[&str]| parts.iter().map(|part| ast.atom(part)).collect();
 
         let parts = pragma.split('.').collect::<Vec<_>>();
@@ -399,6 +412,40 @@ impl<'a> Pragma<'a> {
             parts => Self::Multiple(strs_to_atoms(parts)),
         })
     }
+
+    fn parse_literal(pragma: &str, ast: AstBuilder<'a>) -> Option<Self> {
+        match pragma {
+            "null" => return Some(Self::NullLiteral),
+            "true" => return Some(Self::BooleanLiteral(true)),
+            "false" => return Some(Self::BooleanLiteral(false)),
+            _ => {}
+        }
+
+        if let Some((value, raw)) = Self::parse_string_literal(pragma) {
+            return Some(Self::StringLiteral { value: ast.atom(value), raw: ast.atom(raw) });
+        }
+
+        let value = pragma.parse::<f64>().ok()?;
+        if value.is_finite() { Some(Self::NumericLiteral(value, ast.atom(pragma))) } else { None }
+    }
+
+    fn parse_string_literal(pragma: &str) -> Option<(&str, &str)> {
+        let bytes = pragma.as_bytes();
+        if bytes.len() < 2 {
+            return None;
+        }
+        let first = bytes[0];
+        let last = bytes[bytes.len() - 1];
+        if (first == b'"' && last == b'"')
+            || (first == b'\'' && last == b'\'')
+            || (first == b'`' && last == b'`')
+        {
+            Some((&pragma[1..pragma.len() - 1], pragma))
+        } else {
+            None
+        }
+    }
+
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let (object, parts) = match self {
             Self::Double(first, second) => {
@@ -430,6 +477,23 @@ impl<'a> Pragma<'a> {
                     ctx.ast.identifier_name(SPAN, Atom::from("meta")),
                 );
                 (object, parts.iter())
+            }
+            Self::StringLiteral { value, raw } => {
+                return ctx.ast.expression_string_literal(Span::new(1, 1), *value, Some(*raw));
+            }
+            Self::NullLiteral => {
+                return ctx.ast.expression_null_literal(SPAN);
+            }
+            Self::BooleanLiteral(value) => {
+                return ctx.ast.expression_boolean_literal(SPAN, *value);
+            }
+            Self::NumericLiteral(value, raw) => {
+                return ctx.ast.expression_numeric_literal(
+                    SPAN,
+                    *value,
+                    Some(*raw),
+                    oxc_syntax::number::NumberBase::Decimal,
+                );
             }
         };
 

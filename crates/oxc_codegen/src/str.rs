@@ -2,6 +2,7 @@ use std::slice;
 
 use oxc_ast::ast::StringLiteral;
 use oxc_data_structures::{assert_unchecked, slice_iter::SliceIter};
+use oxc_span::Span;
 use oxc_syntax::{
     identifier::NBSP,
     line_terminator::{LS_LAST_2_BYTES, PS_LAST_2_BYTES},
@@ -30,6 +31,17 @@ impl Codegen<'_> {
     /// Print a [`StringLiteral`].
     pub(crate) fn print_string_literal(&mut self, s: &StringLiteral<'_>, allow_backtick: bool) {
         self.add_source_mapping(s.span);
+
+        // Preserve explicitly provided raw forms for generated literals.
+        // This keeps JSX pragma literals such as `''`, `'['`, and `` intact.
+        if !self.options.minify
+            && is_pragma_raw_literal_span(s.span)
+            && let Some(raw) = &s.raw
+            && is_quoted_raw_string(raw.as_str())
+        {
+            self.print_str(raw.as_str());
+            return;
+        }
 
         // If `minify` option enabled, quote will be chosen depending on what produces shortest output.
         // What is the best quote to use will be determined when first character needing escape is found.
@@ -89,6 +101,24 @@ impl Codegen<'_> {
         let quote = unsafe { state.quote.unwrap_unchecked() };
         quote.print(self);
     }
+}
+
+#[inline]
+fn is_quoted_raw_string(raw: &str) -> bool {
+    let bytes = raw.as_bytes();
+    if bytes.len() < 2 {
+        return false;
+    }
+    let first = bytes[0];
+    let last = bytes[bytes.len() - 1];
+    (first == b'"' && last == b'"')
+        || (first == b'\'' && last == b'\'')
+        || (first == b'`' && last == b'`')
+}
+
+#[inline]
+fn is_pragma_raw_literal_span(span: Span) -> bool {
+    span.start == 1 && span.end == 1
 }
 
 /// String printer state.
