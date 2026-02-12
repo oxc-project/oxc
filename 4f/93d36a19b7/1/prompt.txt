@@ -1,0 +1,111 @@
+Implement the following plan:
+
+# Fix: no-fallthrough rule misses fallthrough FROM default when not last
+
+## Context
+
+GitHub issue: https://github.com/oxc-project/oxc/issues/11340
+
+When `default` is not the last case in a switch statement, oxlint fails to detect fallthrough FROM the default case to subsequent cases. A previous fix (#12927) corrected `cfg_ids` ordering but didn't address this issue.
+
+**Example - should report error but doesn't:**
+```js
+switch (x) {
+  default:
+    foo();   // falls through to case 1 - NOT detected!
+  case 1:
+    bar();
+}
+```
+
+**Example - should report 2 errors, only reports 1:**
+```js
+switch (x) {
+  case 1: foo();    // falls through to default - detected OK
+  default: bar();   // falls through to case 2 - NOT detected!
+  case 2: baz();
+}
+```
+
+## Root Cause
+
+In `crates/oxc_linter/src/rules/eslint/no_fallthrough.rs`, lines 282-283, the BFS visitor unconditionally **stops** at `default_or_exit`:
+
+```rust
+} else if node == default_or_exit {
+    (last_cond, false)  // STOP - prevents exploring default's body
+}
+```
+
+When `default_or_exit` is the default case's condition block, stopping here means the BFS never visits default's body blocks. So any edge from default's body end to the next case condition is never discovered, and that case is never added to the `fallthroughs` set.
+
+When `default_or_exit` is the switch exit block (no default case), stopping is correct to prevent exploring outside the switch.
+
+## Fix
+
+**File:** `crates/oxc_linter/src/rules/eslint/no_fallthrough.rs`
+
+Change the visitor at line 282-283 from:
+```rust
+} else if node == default_or_exit {
+    (last_cond, false)
+}
+```
+
+To:
+```rust
+} else if node == default_or_exit {
+    if default.is_some() {
+        // Continue past default to detect fallthrough FROM default
+        (last_cond, true)
+    } else {
+        // Stop at exit block to prevent exploring outside switch
+        (last_cond, false)
+    }
+}
+```
+
+**Why this works:**
+- When `default.is_some()`, `default_or_exit` is the default block. Continuing allows the BFS to explore default's body. If the body has no return/break, the path reaches the fallthrough edge to the next case condition, which gets added to `fallthroughs`.
+- When `default.is_none()`, `default_or_exit` is the exit block. Stopping prevents exploring blocks outside the switch statement.
+- Fallthrough detection TO default (from earlier cases) is unaffected because body blocks still find default via `Some(*target) == default` in the `find` check (line 292).
+- When default has a return/break, the Return/Break edge is filtered by the edge_filter, stopping that BFS path. No false fallthrough is detected.
+
+## Test Cases
+
+Add to `pass` cases:
+```rust
+// Default in middle with return (from issue #11340)
+("function f(name) { switch(name) { case 'a': case 'b': default: return 'x'; case 'c': return 'y'; } }", None),
+// Default in middle with break
+("switch(foo) { default: a(); break; case 1: b(); }", None),
+```
+
+Add to `fail` cases:
+```rust
+// Default falls through to next case
+("switch(foo) { default: a(); case 1: b(); }", None),
+// Default in middle, falls through both directions
+("switch(foo) { case 0: a(); default: b(); case 1: c(); }", None),
+```
+
+## Verification
+
+```bash
+# Run the linter tests
+cargo test -p oxc_linter -- no_fallthrough
+
+# Update snapshots
+cargo insta review
+
+# Manual verification with test files
+cargo run -p oxlint -- --deny no-fallthrough /tmp/test_ft_a.js  # should report 1 error
+cargo run -p oxlint -- --deny no-fallthrough /tmp/test_ft_e.js  # should report 2 errors
+```
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.REDACTED.jsonl
+
+---
+
+create pr on top of main

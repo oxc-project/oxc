@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "ef86d95bbf54",
+  "strategy": "manual-commit",
+  "branch": "fix/transformer-sourcemap-spans",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "crates/oxc_transformer/src/common/arrow_function_converter.rs",
+    "crates/oxc_transformer/src/common/computed_key.rs",
+    "crates/oxc_transformer/src/decorator/legacy/mod.rs",
+    "crates/oxc_transformer/src/es2016/exponentiation_operator.rs",
+    "crates/oxc_transformer/src/es2017/async_to_generator.rs",
+    "crates/oxc_transformer/src/es2018/async_generator_functions/for_await.rs",
+    "crates/oxc_transformer/src/es2018/object_rest_spread.rs",
+    "crates/oxc_transformer/src/es2020/optional_chaining.rs",
+    "crates/oxc_transformer/src/es2021/logical_assignment_operators.rs",
+    "crates/oxc_transformer/src/es2022/class_properties/class.rs",
+    "crates/oxc_transformer/src/es2022/class_properties/constructor.rs",
+    "crates/oxc_transformer/src/es2022/class_properties/private_field.rs",
+    "crates/oxc_transformer/src/es2022/class_properties/prop_decl.rs",
+    "crates/oxc_transformer/src/es2022/class_properties/super_converter.rs",
+    "crates/oxc_transformer/src/es2026/explicit_resource_management.rs",
+    "crates/oxc_transformer/src/jsx/jsx_impl.rs",
+    "crates/oxc_transformer/src/jsx/refresh.rs",
+    "crates/oxc_transformer/src/typescript/enum.rs",
+    "crates/oxc_transformer/src/typescript/namespace.rs",
+    "crates/oxc_transformer/src/utils/ast_builder.rs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ef/86d95bbf54/0/metadata.json",
+      "transcript": "/ef/86d95bbf54/0/full.jsonl",
+      "context": "/ef/86d95bbf54/0/context.md",
+      "content_hash": "/ef/86d95bbf54/0/content_hash.txt",
+      "prompt": "/ef/86d95bbf54/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 237,
+    "cache_creation_tokens": 392036,
+    "cache_read_tokens": 21902642,
+    "output_tokens": 18747,
+    "api_call_count": 222
+  }
+}
