@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
@@ -111,28 +112,36 @@ impl Rule for MaxDependencies {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
-        let mut module_count = module_record.import_entries.len();
+        let mut dependency_sources = FxHashSet::default();
+        let mut module_count = 0;
+        let mut first_exceeding_span = None;
 
-        let Some(entry) = module_record.import_entries.get(self.max) else {
-            return;
-        };
+        for entry in &module_record.import_entries {
+            if self.ignore_type_imports && entry.is_type {
+                continue;
+            }
 
-        if self.ignore_type_imports {
-            let type_imports =
-                module_record.import_entries.iter().filter(|entry| entry.is_type).count();
-
-            module_count -= type_imports;
+            if dependency_sources.insert(entry.module_request.name()) {
+                module_count += 1;
+                if module_count > self.max && first_exceeding_span.is_none() {
+                    first_exceeding_span = Some(entry.module_request.span);
+                }
+            }
         }
 
         if module_count <= self.max {
             return;
         }
 
+        let Some(span) = first_exceeding_span else {
+            return;
+        };
+
         let error = format!(
             "File has too many dependencies ({}). Maximum allowed is {}.",
             module_count, self.max,
         );
-        ctx.diagnostic(max_dependencies_diagnostic(error, entry.module_request.span));
+        ctx.diagnostic(max_dependencies_diagnostic(error, span));
     }
 }
 
@@ -174,7 +183,7 @@ fn test() {
             r"
                 import {x, y, z} from './foo';
             ",
-            None,
+            Some(json!([{ "max": 1 }])),
         ),
         (
             r"
@@ -205,15 +214,23 @@ fn test() {
             ",
             Some(json!([2])),
         ),
-        // TODO: Fix this.
-        // (
-        //     r"
-        //     import { w } from './foo';
-        //     // This should only count as one dependency, because it's 3 named imports from the same place.
-        //     import { x, y, z } from './bar';
-        //     ",
-        //     Some(json!([{ "max": 2 }])),
-        // ),
+        (
+            r"
+            import { w } from './foo';
+            // This should only count as one dependency, because it's 3 named imports from the same place.
+            import { x, y, z } from './bar';
+            ",
+            Some(json!([{ "max": 2 }])),
+        ),
+        (
+            r"
+            import { w } from './foo';
+            // This should not count, because both are type imports
+            import { type x, type y } from './bar';
+            import { z } from './baz';
+            ",
+            Some(json!([{ "max": 2, "ignoreTypeImports": true }])),
+        ),
     ];
 
     let fail = vec![
