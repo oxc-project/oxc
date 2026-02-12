@@ -27,6 +27,9 @@ use crate::{
 };
 use oxc_linter::LintIgnoreMatcher;
 
+const DEFAULT_CONFIG_NOTE_MESSAGE: &str =
+    "Using Oxlint's default configuration. Run `oxlint --init` to set up Oxlint in this project.";
+
 pub struct CliRunner {
     options: LintCommand,
     cwd: PathBuf,
@@ -67,6 +70,12 @@ impl CliRunner {
 
     /// # Panics
     pub fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+        let mut stderr = std::io::stderr();
+        self.run_with_stderr(stdout, &mut stderr)
+    }
+
+    /// # Panics
+    fn run_with_stderr(self, stdout: &mut dyn Write, stderr: &mut dyn Write) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
 
@@ -270,6 +279,15 @@ impl CliRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
+
+        if basic_options.config.is_none()
+            && root_config.path.as_os_str().is_empty()
+            && nested_configs.is_empty()
+        {
+            let warning =
+                render_report(&handler, &OxcDiagnostic::warn(DEFAULT_CONFIG_NOTE_MESSAGE));
+            print_and_flush_stdout(stderr, &warning);
+        }
 
         {
             let mut plugins = root_config.plugins.unwrap_or_default();
@@ -540,9 +558,14 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
 
 #[cfg(test)]
 mod test {
-    use std::fs;
+    use std::{fs, path::PathBuf};
 
-    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use super::{CliRunner, DEFAULT_CONFIG_NOTE_MESSAGE};
+    use crate::{
+        DEFAULT_OXLINTRC_NAME,
+        cli::{CliRunResult, lint_command},
+        tester::Tester,
+    };
     use oxc_linter::rules::RULES;
 
     // lints the full directory of fixtures,
@@ -563,6 +586,35 @@ mod test {
     fn cwd() {
         let args = &["debugger.js"];
         Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn default_config_note_when_no_config_found() {
+        let options = lint_command().run_inner(&["debugger.js"]).unwrap();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let result = CliRunner::new(options, None)
+            .with_cwd(PathBuf::from("fixtures/linter"))
+            .run_with_stderr(&mut stdout, &mut stderr);
+
+        let stderr = String::from_utf8(stderr).unwrap();
+        assert!(matches!(result, CliRunResult::LintSucceeded));
+        assert!(stderr.contains(DEFAULT_CONFIG_NOTE_MESSAGE));
+    }
+
+    #[test]
+    fn no_default_config_note_when_auto_config_found() {
+        let options = lint_command().run_inner(&["debugger.js"]).unwrap();
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+
+        let result = CliRunner::new(options, None)
+            .with_cwd(PathBuf::from("fixtures/auto_config_detection"))
+            .run_with_stderr(&mut stdout, &mut stderr);
+
+        assert!(matches!(result, CliRunResult::LintFoundErrors));
+        assert!(stderr.is_empty());
     }
 
     #[test]
