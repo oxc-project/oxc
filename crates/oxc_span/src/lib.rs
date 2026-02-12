@@ -2,8 +2,6 @@
 //!
 //! <https://doc.rust-lang.org/beta/nightly-rustc/rustc_span>
 
-#![warn(missing_docs)]
-
 mod cmp;
 mod source_type;
 mod span;

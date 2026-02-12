@@ -2,6 +2,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+/// Decorator transform options.
 pub struct DecoratorOptions {
     /// Enables experimental support for decorators, which is a version of decorators that predates the TC39 standardization process.
     ///

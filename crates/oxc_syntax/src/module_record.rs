@@ -429,7 +429,6 @@ pub struct DynamicImport {
     pub module_request: Span,
 }
 
-#[expect(missing_docs)]
 pub trait VisitMutModuleRecord {
     fn visit_module_record(&mut self, module_record: &mut ModuleRecord) {
         module_record.requested_modules.values_mut().for_each(|e| {

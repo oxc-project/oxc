@@ -146,8 +146,6 @@ impl Generator for AstKindGenerator {
         let ast_type_max = number_lit(next_index - 1);
 
         let output = quote! {
-            #![expect(missing_docs)] ///@ FIXME (in ast_tools/src/generators/ast_kind.rs)
-
             ///@@line_break
             use std::ptr;
 

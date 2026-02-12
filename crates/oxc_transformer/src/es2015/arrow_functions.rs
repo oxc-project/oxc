@@ -132,6 +132,7 @@ use oxc_traverse::Traverse;
 use crate::state::TransformState;
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
+/// Options for the ES2015 arrow-function transform.
 pub struct ArrowFunctionsOptions {
     /// This option enables the following:
     /// * Wrap the generated function in .bind(this) and keeps uses of this inside the function as-is, instead of using a renamed this.
