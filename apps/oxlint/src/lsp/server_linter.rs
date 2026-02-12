@@ -123,14 +123,19 @@ impl ServerLinterBuilder {
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
-        let config_builder = ConfigStoreBuilder::from_oxlintrc(
+        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
             external_linter,
             &mut external_plugin_store,
             Some(root_uri.as_str()),
-        )
-        .unwrap_or_default();
+        ) {
+            Ok(builder) => builder,
+            Err(e) => {
+                warn!("Failed to build config from oxlintrc: {e}");
+                ConfigStoreBuilder::default()
+            }
+        };
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
