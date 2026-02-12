@@ -49,7 +49,8 @@ declare_oxc_lint!(
 
 impl Rule for NoUnmodifiedLoopCondition {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut grouped_conditions: FxHashMap<NodeId, Vec<LoopConditionInfo>> = FxHashMap::default();
+        let mut grouped_conditions: FxHashMap<NodeId, Vec<LoopConditionInfo>> =
+            FxHashMap::default();
         let scoping = ctx.scoping();
 
         for symbol_id in scoping.symbol_ids() {
@@ -89,7 +90,9 @@ impl LoopConditionInfo {
             return false;
         }
         match self.loop_kind {
-            LoopKind::For { init_span: Some(init_span) } => !init_span.contains_inclusive(reference_span),
+            LoopKind::For { init_span: Some(init_span) } => {
+                !init_span.contains_inclusive(reference_span)
+            }
             _ => true,
         }
     }
@@ -197,7 +200,10 @@ impl NoUnmodifiedLoopCondition {
         None
     }
 
-    fn to_loop_condition(reference: &Reference, ctx: &LintContext<'_>) -> Option<LoopConditionInfo> {
+    fn to_loop_condition(
+        reference: &Reference,
+        ctx: &LintContext<'_>,
+    ) -> Option<LoopConditionInfo> {
         let nodes = ctx.nodes();
         let reference_node = nodes.get_node(reference.node_id());
         if !matches!(reference_node.kind(), AstKind::IdentifierReference(_)) {
@@ -244,7 +250,10 @@ impl NoUnmodifiedLoopCondition {
         None
     }
 
-    fn loop_condition_from_sentinel(node: &AstNode<'_>, child_span: Span) -> Option<(Span, LoopKind)> {
+    fn loop_condition_from_sentinel(
+        node: &AstNode<'_>,
+        child_span: Span,
+    ) -> Option<(Span, LoopKind)> {
         match node.kind() {
             AstKind::WhileStatement(statement) if statement.test.span() == child_span => {
                 Some((statement.span, LoopKind::While))
@@ -252,7 +261,9 @@ impl NoUnmodifiedLoopCondition {
             AstKind::DoWhileStatement(statement) if statement.test.span() == child_span => {
                 Some((statement.span, LoopKind::DoWhile))
             }
-            AstKind::ForStatement(statement) if statement.test.as_ref().is_some_and(|test| test.span() == child_span) => {
+            AstKind::ForStatement(statement)
+                if statement.test.as_ref().is_some_and(|test| test.span() == child_span) =>
+            {
                 Some((
                     statement.span,
                     LoopKind::For { init_span: statement.init.as_ref().map(GetSpan::span) },
