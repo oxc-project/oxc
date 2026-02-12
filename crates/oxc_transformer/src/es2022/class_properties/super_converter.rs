@@ -210,7 +210,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
-        let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
         let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
         let property =
             ctx.ast.expression_string_literal(member.property.span, member.property.name, None);
@@ -238,7 +238,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
-        let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
         let AssignmentTarget::ComputedMemberExpression(member) = left else { unreachable!() };
         let property = member.unbox().expression.into_inner_expression();
         *expr =

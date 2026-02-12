@@ -840,8 +840,11 @@ impl GetAddress for PropertyKeyKind<'_> {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::Cell;
+
     use super::*;
     use oxc_span::Span;
+    use oxc_syntax::node::NodeId;
 
     // Note: These tests verify the logic of the methods.
     // Integration tests using real parsed AST are in the linter crate.
@@ -853,6 +856,7 @@ mod tests {
 
         let num_lit = NumericLiteral {
             span: test_span,
+            node_id: Cell::new(NodeId::DUMMY),
             value: 42.0,
             raw: None,
             base: oxc_syntax::number::NumberBase::Decimal,
@@ -860,7 +864,8 @@ mod tests {
         let num_kind = AstKind::NumericLiteral(&num_lit);
         assert!(!num_kind.has_argument_with_span(test_span));
 
-        let bool_lit = BooleanLiteral { span: test_span, value: true };
+        let bool_lit =
+            BooleanLiteral { span: test_span, node_id: Cell::new(NodeId::DUMMY), value: true };
         let bool_kind = AstKind::BooleanLiteral(&bool_lit);
         assert!(!bool_kind.has_argument_with_span(test_span));
     }
@@ -872,6 +877,7 @@ mod tests {
 
         let num_lit = NumericLiteral {
             span: test_span,
+            node_id: Cell::new(NodeId::DUMMY),
             value: 42.0,
             raw: None,
             base: oxc_syntax::number::NumberBase::Decimal,
@@ -879,7 +885,8 @@ mod tests {
         let num_kind = AstKind::NumericLiteral(&num_lit);
         assert!(!num_kind.is_callee_with_span(test_span));
 
-        let bool_lit = BooleanLiteral { span: test_span, value: true };
+        let bool_lit =
+            BooleanLiteral { span: test_span, node_id: Cell::new(NodeId::DUMMY), value: true };
         let bool_kind = AstKind::BooleanLiteral(&bool_lit);
         assert!(!bool_kind.is_callee_with_span(test_span));
     }
