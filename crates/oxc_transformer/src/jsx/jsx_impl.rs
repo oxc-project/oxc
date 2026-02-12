@@ -95,8 +95,12 @@ use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, Ident, SPAN, Span};
 use oxc_syntax::{
-    identifier::is_white_space_single_line, line_terminator::is_line_terminator,
-    reference::ReferenceFlags, symbol::SymbolFlags, xml_entities::XML_ENTITIES,
+    identifier::{is_identifier_name, is_white_space_single_line},
+    keyword::is_reserved_keyword,
+    line_terminator::is_line_terminator,
+    reference::ReferenceFlags,
+    symbol::SymbolFlags,
+    xml_entities::XML_ENTITIES,
 };
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -328,8 +332,10 @@ impl<'a> Pragma<'a> {
         if let Some(pragma) = pragma {
             if pragma.is_empty() {
                 ctx.error(diagnostics::invalid_pragma());
+            } else if let Some(pragma) = Self::parse_impl(pragma, ast) {
+                return pragma;
             } else {
-                return Self::parse_impl(pragma, ast);
+                ctx.error(diagnostics::invalid_pragma());
             }
         }
 
@@ -345,27 +351,54 @@ impl<'a> Pragma<'a> {
     ) -> Self {
         if let Some(pragma) = pragma
             && !pragma.is_empty()
+            && let Some(pragma) = Self::parse_impl(pragma, ast)
         {
-            return Self::parse_impl(pragma, ast);
+            return pragma;
         }
 
         Self::Double(Atom::from("React"), Atom::from(default_property_name))
     }
 
-    fn parse_impl(pragma: &str, ast: AstBuilder<'a>) -> Self {
+    fn parse_impl(pragma: &str, ast: AstBuilder<'a>) -> Option<Self> {
         let strs_to_atoms = |parts: &[&str]| parts.iter().map(|part| ast.atom(part)).collect();
 
         let parts = pragma.split('.').collect::<Vec<_>>();
-        match &parts[..] {
-            [] => unreachable!(),
-            ["this", rest @ ..] => Self::This(strs_to_atoms(rest)),
-            ["import", "meta", rest @ ..] => Self::ImportMeta(strs_to_atoms(rest)),
+        let [root, tail @ ..] = &parts[..] else {
+            unreachable!();
+        };
+
+        match *root {
+            "this" => {
+                if !tail.iter().all(|part| is_identifier_name(part)) {
+                    return None;
+                }
+                return Some(Self::This(strs_to_atoms(tail)));
+            }
+            "import" => {
+                let ["meta", rest @ ..] = tail else {
+                    return None;
+                };
+                if !rest.iter().all(|part| is_identifier_name(part)) {
+                    return None;
+                }
+                return Some(Self::ImportMeta(strs_to_atoms(rest)));
+            }
+            _ => {
+                if is_reserved_keyword(root) || !is_identifier_name(root) {
+                    return None;
+                }
+                if !tail.iter().all(|part| is_identifier_name(part)) {
+                    return None;
+                }
+            }
+        }
+
+        Some(match &parts[..] {
             [first, second] => Self::Double(ast.atom(first), ast.atom(second)),
             [only] => Self::Single(ast.atom(only)),
             parts => Self::Multiple(strs_to_atoms(parts)),
-        }
+        })
     }
-
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let (object, parts) = match self {
             Self::Double(first, second) => {
@@ -1357,6 +1390,19 @@ mod test {
         assert_eq!(member.property.name, "prop");
     }
 
+    #[test]
+    fn invalid_pragma_falls_back_to_default() {
+        setup!(traverse_ctx, _transform_ctx);
+
+        let pragma = Some("`");
+        let pragma = Pragma::parse_no_ctx(pragma, "Fragment", traverse_ctx.ast);
+        let expr = pragma.create_expression(traverse_ctx);
+
+        let Expression::StaticMemberExpression(member) = &expr else { panic!() };
+        let Expression::Identifier(object) = &member.object else { panic!() };
+        assert_eq!(object.name, "React");
+        assert_eq!(member.property.name, "Fragment");
+    }
     #[test]
     fn entity_after_stray_amp() {
         setup!(traverse_ctx, _transform_ctx);

@@ -13,8 +13,10 @@ pub fn pragma_and_pragma_frag_cannot_be_set() -> OxcDiagnostic {
 #[cold]
 #[cfg_attr(not(test), expect(dead_code))]
 pub fn invalid_pragma() -> OxcDiagnostic {
-    OxcDiagnostic::warn("pragma and pragmaFrag must be of the form `foo` or `foo.bar`.")
-        .with_help("Fix `pragma` and `pragmaFrag` options.")
+    OxcDiagnostic::warn(
+        "pragma and pragmaFrag must be valid member expressions such as `h`, `React.createElement`, `this.h`, or `import.meta.h`.",
+    )
+    .with_help("Fix `pragma` and `pragmaFrag` options.")
 }
 
 #[cold]
