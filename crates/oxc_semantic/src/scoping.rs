@@ -737,7 +737,7 @@ impl Scoping {
             if let Some(symbol_id) = cell.bindings[scope_id].get(&name) {
                 return Some(*symbol_id);
             }
-            let parent_scope_id = self.scope_parent_ids[scope_id]?;
+            let parent_scope_id = (*self.scope_table.parent_ids(scope_id))?;
             scope_id = parent_scope_id;
         }
     }
