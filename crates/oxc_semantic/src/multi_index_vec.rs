@@ -260,44 +260,21 @@ macro_rules! multi_index_vec {
         {
             fn clone(&self) -> Self {
                 let len = self.len as usize;
-                if len == 0 {
-                    return Self::new();
-                }
-                // Clone with exact capacity (no excess).
-                let layout = Self::compute_layout(len)
-                    .expect("len > 0 so layout must exist");
-                // SAFETY: We allocate a fresh buffer and copy `len` elements per field.
-                // All source pointers are valid for `len` reads, and destination pointers
-                // are valid for `len` writes.
-                unsafe {
-                    let new_base = ::std::alloc::alloc(layout);
-                    if new_base.is_null() {
-                        ::std::alloc::handle_alloc_error(layout);
+                let mut result = Self::new();
+                if len > 0 {
+                    result.reserve(len);
+                    for i in 0..len {
+                        // SAFETY: `i < len`, and `len <= max_len = Idx::MAX + 1`,
+                        // so `i <= Idx::MAX`.
+                        let id = unsafe { <$idx as ::oxc_index::Idx>::from_usize_unchecked(i) };
+                        // `push` handles destination initialization and len updates,
+                        // so this remains panic-safe if a field clone panics.
+                        result.push(
+                            $( self.$fname(id).clone() ),*
+                        );
                     }
-                    let mut result = Self {
-                        base: ::core::ptr::NonNull::new_unchecked(new_base),
-                        $( $fname: ::core::ptr::NonNull::dangling(), )*
-                        len: self.len,
-                        cap: self.len, // exact capacity
-                    };
-                    result.set_pointers(new_base, len);
-                    $(
-                        if ::core::mem::needs_drop::<$fty>() {
-                            for i in 0..len {
-                                result.$fname.as_ptr().add(i).write(
-                                    (*self.$fname.as_ptr().add(i)).clone(),
-                                );
-                            }
-                        } else {
-                            ::core::ptr::copy_nonoverlapping(
-                                self.$fname.as_ptr(),
-                                result.$fname.as_ptr(),
-                                len,
-                            );
-                        }
-                    )*
-                    result
                 }
+                result
             }
         }
 
