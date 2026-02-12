@@ -655,16 +655,18 @@ fn get_module_instance_state_for_alias_target<'a>(
             }
         }
 
-        let Some(node) = builder.nodes.ancestors(current_node_id).find(|node| {
-            matches!(
-                node.kind(),
-                AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::BlockStatement(_)
-            )
-        }) else {
+        let Some((node_id, node)) =
+            builder.nodes.ancestors_enumerated(current_node_id).find(|(_, node)| {
+                matches!(
+                    node.kind(),
+                    AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::BlockStatement(_)
+                )
+            })
+        else {
             break;
         };
 
-        current_node_id = node.id();
+        current_node_id = node_id;
         current_block_stmts.clear();
         // Didn't find the declaration whose name matches export specifier
         // in the current block, so we need to check the parent block.

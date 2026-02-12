@@ -212,14 +212,16 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
             };
 
             let parent = ctx.nodes.parent_node(ctx.current_node_id);
+            let parent_id = parent.id();
             let is_ok = match parent.kind() {
                 AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
                 AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => {
-                    is_declare_function(&ctx.nodes.parent_kind(parent.id()))
+                    is_declare_function(&ctx.nodes.parent_kind(parent_id))
                 }
                 AstKind::BindingRestElement(_) => {
-                    let grand_parent = ctx.nodes.parent_node(parent.id());
-                    is_declare_function(&ctx.nodes.parent_kind(grand_parent.id()))
+                    let grand_parent = ctx.nodes.parent_node(parent_id);
+                    let grand_parent_id = grand_parent.id();
+                    is_declare_function(&ctx.nodes.parent_kind(grand_parent_id))
                 }
                 _ => false,
             };

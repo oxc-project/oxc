@@ -42,6 +42,11 @@ impl<'a> AstNodes<'a> {
         self.nodes.iter()
     }
 
+    /// Iterate over all [`AstNode`]s with their [`NodeId`].
+    pub fn iter_enumerated(&self) -> impl Iterator<Item = (NodeId, &AstNode<'a>)> + '_ {
+        self.nodes.iter_enumerated()
+    }
+
     /// Returns the number of node in this AST.
     #[inline]
     pub fn len(&self) -> usize {
@@ -82,6 +87,18 @@ impl<'a> AstNodes<'a> {
     #[inline]
     pub fn ancestors(&self, node_id: NodeId) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
         self.ancestor_ids(node_id).map(|id| self.get_node(id))
+    }
+
+    /// Walk up the AST, iterating over each parent [`NodeId`] and [`AstNode`].
+    ///
+    /// The first node produced by this iterator is the parent of `node_id`.
+    /// The last node will always be [`AstKind::Program`].
+    #[inline]
+    pub fn ancestors_enumerated(
+        &self,
+        node_id: NodeId,
+    ) -> impl Iterator<Item = (NodeId, &AstNode<'a>)> + Clone + '_ {
+        self.ancestor_ids(node_id).map(|id| (id, self.get_node(id)))
     }
 
     /// Access the underlying struct from [`oxc_ast`].
@@ -165,7 +182,7 @@ impl<'a> AstNodes<'a> {
     ) -> NodeId {
         let node_id = self.parent_ids.push(parent_node_id);
         kind.set_node_id(node_id);
-        let node = AstNode::new(kind, scope_id, node_id);
+        let node = AstNode::new(kind, scope_id);
         self.nodes.push(node);
         self.flags.push(flags);
         #[cfg(feature = "cfg")]
@@ -194,7 +211,7 @@ impl<'a> AstNodes<'a> {
         );
         kind.set_node_id(NodeId::ROOT);
         self.parent_ids.push(NodeId::ROOT);
-        self.nodes.push(AstNode::new(kind, scope_id, NodeId::ROOT));
+        self.nodes.push(AstNode::new(kind, scope_id));
         self.flags.push(flags);
         #[cfg(feature = "cfg")]
         self.cfg_ids.push(cfg_id);
