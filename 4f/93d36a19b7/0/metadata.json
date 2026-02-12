@@ -1,0 +1,50 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "4f93d36a19b7",
+  "session_id": "329329ee-a303-44f8-95ca-5475bd2c3f50",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-11T11:57:20.049462Z",
+  "branch": "fix/no-fallthrough-default-not-last",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "crates/oxc_transformer/src/common/arrow_function_converter.rs",
+    "crates/oxc_transformer/src/common/computed_key.rs",
+    "crates/oxc_transformer/src/decorator/legacy/mod.rs",
+    "crates/oxc_transformer/src/es2016/exponentiation_operator.rs",
+    "crates/oxc_transformer/src/es2017/async_to_generator.rs",
+    "crates/oxc_transformer/src/es2018/async_generator_functions/for_await.rs",
+    "crates/oxc_transformer/src/es2018/object_rest_spread.rs",
+    "crates/oxc_transformer/src/es2020/optional_chaining.rs",
+    "crates/oxc_transformer/src/es2021/logical_assignment_operators.rs",
+    "crates/oxc_transformer/src/es2022/class_properties/class.rs",
+    "crates/oxc_transformer/src/es2022/class_properties/constructor.rs",
+    "crates/oxc_transformer/src/es2022/class_properties/private_field.rs",
+    "crates/oxc_transformer/src/es2022/class_properties/prop_decl.rs",
+    "crates/oxc_transformer/src/es2022/class_properties/super_converter.rs",
+    "crates/oxc_transformer/src/es2026/explicit_resource_management.rs",
+    "crates/oxc_transformer/src/jsx/jsx_impl.rs",
+    "crates/oxc_transformer/src/jsx/refresh.rs",
+    "crates/oxc_transformer/src/typescript/enum.rs",
+    "crates/oxc_transformer/src/typescript/namespace.rs",
+    "crates/oxc_transformer/src/utils/ast_builder.rs"
+  ],
+  "agent": "Claude Code",
+  "checkpoint_transcript_start": 1056,
+  "transcript_lines_at_start": 1056,
+  "token_usage": {
+    "input_tokens": 1712,
+    "cache_creation_tokens": 27128,
+    "cache_read_tokens": 1571458,
+    "output_tokens": 2857,
+    "api_call_count": 11
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-11T11:57:19.635916Z",
+    "agent_lines": 0,
+    "human_added": 1894,
+    "human_modified": 11,
+    "human_removed": 0,
+    "total_committed": 1894,
+    "agent_percentage": 0
+  }
+}
