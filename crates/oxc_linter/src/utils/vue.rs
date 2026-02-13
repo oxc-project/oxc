@@ -78,28 +78,23 @@ pub fn check_define_macro_call_expression(
         return None;
     }
 
-    let Some(expression) = call_expr.arguments.first().and_then(|first| first.as_expression())
-    else {
+    if call_expr.arguments.is_empty() {
         // `defineEmits();` is valid when `export default { emits: [] }` is defined
         if !has_export_default_equivalent {
             return Some(DefineMacroProblem::EventsNotDefined);
         }
         return None;
-    };
+    }
 
     if has_export_default_equivalent {
         return Some(DefineMacroProblem::DefineInBoth);
     }
 
-    match expression {
-        Expression::ArrayExpression(_) | Expression::ObjectExpression(_) => None,
-        Expression::Identifier(identifier) => {
-            if !is_non_local_reference(identifier, ctx) {
-                return Some(DefineMacroProblem::ReferencingLocally);
-            }
-            None
+    match call_expr.arguments.first().and_then(|first| first.as_expression()) {
+        Some(Expression::Identifier(identifier)) if !is_non_local_reference(identifier, ctx) => {
+            Some(DefineMacroProblem::ReferencingLocally)
         }
-        _ => Some(DefineMacroProblem::EventsNotDefined),
+        _ => None,
     }
 }
 

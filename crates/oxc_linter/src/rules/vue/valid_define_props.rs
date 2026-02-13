@@ -306,6 +306,17 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        (
+            "
+			      <script setup>
+			      import { PropsSchema } from './validation-schema';
+
+			      defineProps(Object.keys(PropsSchema.entries));
+			      </script>",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
     ];
 
     let fail = vec![
