@@ -94,6 +94,9 @@ Custom groups have a higher priority than any predefined group.
 If you want a predefined group to take precedence over a custom group,
 you must write a custom group definition that does the same as what the predefined group does, and put it first in the list.
 
+If you specify multiple conditions like `elementNamePattern`, `selector`, and `modifiers`,
+all conditions must be met for an import to match the custom group (AND logic).
+
 - Default: `[]`
 
 
@@ -121,6 +124,28 @@ type: `string`
 default: `""`
 
 Name of the custom group, used in the `groups` option.
+
+
+##### experimentalSortImports.customGroups[n].modifiers
+
+type: `string[]`
+
+
+Modifiers to match the import characteristics.
+All specified modifiers must be present (AND logic).
+
+Possible values: `"side-effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
+
+
+##### experimentalSortImports.customGroups[n].selector
+
+type: `string`
+
+
+Selector to match the import kind.
+
+Possible values: `"type"`, `"side-effect-style"`, `"side-effect"`, `"style"`, `"index"`,
+`"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
 
 
 ### experimentalSortImports.groups
@@ -163,10 +188,6 @@ The list of modifiers is sorted from most to least important:
 - `default` — Imports containing the default specifier.
 - `wildcard` — Imports containing the wildcard (`* as`) specifier.
 - `named` — Imports containing at least one named specifier.
-- `multiline` — Imports on multiple lines.
-- `singleline` — Imports on a single line.
-
-See also <https://perfectionist.dev/rules/sort-imports#groups> for details.
 
 - Default: See below
 ```json
@@ -582,6 +603,9 @@ Custom groups have a higher priority than any predefined group.
 If you want a predefined group to take precedence over a custom group,
 you must write a custom group definition that does the same as what the predefined group does, and put it first in the list.
 
+If you specify multiple conditions like `elementNamePattern`, `selector`, and `modifiers`,
+all conditions must be met for an import to match the custom group (AND logic).
+
 - Default: `[]`
 
 
@@ -609,6 +633,28 @@ type: `string`
 default: `""`
 
 Name of the custom group, used in the `groups` option.
+
+
+######## overrides[n].options.experimentalSortImports.customGroups[n].modifiers
+
+type: `string[]`
+
+
+Modifiers to match the import characteristics.
+All specified modifiers must be present (AND logic).
+
+Possible values: `"side-effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
+
+
+######## overrides[n].options.experimentalSortImports.customGroups[n].selector
+
+type: `string`
+
+
+Selector to match the import kind.
+
+Possible values: `"type"`, `"side-effect-style"`, `"side-effect"`, `"style"`, `"index"`,
+`"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
 
 
 ###### overrides[n].options.experimentalSortImports.groups
@@ -651,10 +697,6 @@ The list of modifiers is sorted from most to least important:
 - `default` — Imports containing the default specifier.
 - `wildcard` — Imports containing the wildcard (`* as`) specifier.
 - `named` — Imports containing at least one named specifier.
-- `multiline` — Imports on multiple lines.
-- `singleline` — Imports on a single line.
-
-See also <https://perfectionist.dev/rules/sort-imports#groups> for details.
 
 - Default: See below
 ```json

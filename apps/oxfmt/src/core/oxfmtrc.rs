@@ -6,9 +6,9 @@ use serde_json::Value;
 
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    TailwindcssOptions, TrailingCommas,
+    EmbeddedLanguageFormatting, Expand, FormatOptions, ImportModifier, ImportSelector, IndentStyle,
+    IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
+    SortImportsOptions, SortOrder, TailwindcssOptions, TrailingCommas,
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -428,6 +428,13 @@ impl FormatConfig {
                     .map(|c| CustomGroupDefinition {
                         group_name: c.group_name,
                         element_name_pattern: c.element_name_pattern,
+                        selector: c.selector.as_deref().and_then(ImportSelector::parse),
+                        modifiers: c
+                            .modifiers
+                            .unwrap_or_default()
+                            .iter()
+                            .filter_map(|s| ImportModifier::parse(s))
+                            .collect(),
                     })
                     .collect();
             }
@@ -650,10 +657,6 @@ pub struct SortImportsConfig {
     /// - `default` — Imports containing the default specifier.
     /// - `wildcard` — Imports containing the wildcard (`* as`) specifier.
     /// - `named` — Imports containing at least one named specifier.
-    /// - `multiline` — Imports on multiple lines.
-    /// - `singleline` — Imports on a single line.
-    ///
-    /// See also <https://perfectionist.dev/rules/sort-imports#groups> for details.
     ///
     /// - Default: See below
     /// ```json
@@ -676,6 +679,9 @@ pub struct SortImportsConfig {
     ///
     /// If you want a predefined group to take precedence over a custom group,
     /// you must write a custom group definition that does the same as what the predefined group does, and put it first in the list.
+    ///
+    /// If you specify multiple conditions like `elementNamePattern`, `selector`, and `modifiers`,
+    /// all conditions must be met for an import to match the custom group (AND logic).
     ///
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -712,6 +718,18 @@ pub struct CustomGroupItemConfig {
     pub group_name: String,
     /// List of glob patterns to match import sources for this group.
     pub element_name_pattern: Vec<String>,
+    /// Selector to match the import kind.
+    ///
+    /// Possible values: `"type"`, `"side-effect-style"`, `"side-effect"`, `"style"`, `"index"`,
+    /// `"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selector: Option<String>,
+    /// Modifiers to match the import characteristics.
+    /// All specified modifiers must be present (AND logic).
+    ///
+    /// Possible values: `"side-effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modifiers: Option<Vec<String>>,
 }
 
 // ---

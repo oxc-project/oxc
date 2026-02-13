@@ -13,11 +13,9 @@ pub struct ImportMetadata<'a> {
 pub struct GroupMatcher {
     // Custom groups that are used in `options.groups`
     custom_groups: Vec<(CustomGroupDefinition, usize)>,
-
     // Predefined groups sorted by priority,
     // so that we don't need to enumerate all possible group names of a given import.
     predefined_groups: Vec<(GroupName, usize)>,
-
     // The index of "unknown" in groups or `groups.len()` if absent
     unknown_group_index: usize,
 }
@@ -62,10 +60,21 @@ impl GroupMatcher {
 
     pub fn compute_group_index(&self, import_metadata: &ImportMetadata) -> usize {
         for (custom_group, index) in &self.custom_groups {
-            let is_match = custom_group
-                .element_name_pattern
-                .iter()
-                .any(|pattern| fast_glob::glob_match(pattern, import_metadata.source));
+            let is_match = {
+                let name_matches = custom_group.element_name_pattern.is_empty()
+                    || custom_group
+                        .element_name_pattern
+                        .iter()
+                        .any(|pattern| fast_glob::glob_match(pattern, import_metadata.source));
+                let selector_matches =
+                    custom_group.selector.is_none_or(|s| import_metadata.selectors.contains(&s));
+                let modifiers_match =
+                    custom_group.modifiers.iter().all(|m| import_metadata.modifiers.contains(m));
+
+                // These are AND logic
+                name_matches && selector_matches && modifiers_match
+            };
+
             if is_match {
                 return *index;
             }

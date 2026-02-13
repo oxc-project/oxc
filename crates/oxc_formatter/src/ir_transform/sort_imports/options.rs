@@ -1,6 +1,8 @@
 use std::fmt;
 use std::str::FromStr;
 
+pub use super::group_config::{ImportModifier, ImportSelector};
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SortImportsOptions {
     /// Partition imports by newlines.
@@ -101,6 +103,10 @@ pub struct CustomGroupDefinition {
     pub group_name: String,
     /// List of glob patterns to match import sources for this group.
     pub element_name_pattern: Vec<String>,
+    /// When specified, the import's selectors must contain this selector.
+    pub selector: Option<ImportSelector>,
+    /// When specified, **all** modifiers must be present in the import's modifiers (AND logic).
+    pub modifiers: Vec<ImportModifier>,
 }
 
 /// Returns default prefixes for identifying internal imports: `["~/", "@/"]`.

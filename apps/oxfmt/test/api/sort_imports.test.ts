@@ -27,4 +27,40 @@ import { foo } from "./foo";
     );
     expect(result.errors).toStrictEqual([]);
   });
+
+  it("should sort with customGroups using selector and modifiers", async () => {
+    const input = `import { bar } from "@scope/bar";
+import type { FooType } from "@scope/foo";
+import { foo } from "@scope/foo";
+import type { BarType } from "@scope/bar";
+`;
+    const result = await format("a.ts", input, {
+      experimentalSortImports: {
+        customGroups: [
+          {
+            groupName: "scope-types",
+            elementNamePattern: ["@scope/**"],
+            modifiers: ["type"],
+          },
+          {
+            groupName: "scope-values",
+            elementNamePattern: ["@scope/**"],
+            modifiers: ["value"],
+          },
+        ],
+        groups: ["scope-types", "scope-values", "unknown"],
+      },
+    });
+
+    expect(result.code).toBe(
+      `
+import type { BarType } from "@scope/bar";
+import type { FooType } from "@scope/foo";
+
+import { bar } from "@scope/bar";
+import { foo } from "@scope/foo";
+`.trimStart(),
+    );
+    expect(result.errors).toStrictEqual([]);
+  });
 });

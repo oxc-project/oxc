@@ -197,6 +197,19 @@ impl ImportModifier {
         ImportModifier::Named,
     ];
 
+    /// Parse a string into an ImportModifier.
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "side-effect" => Some(Self::SideEffect),
+            "type" => Some(Self::Type),
+            "value" => Some(Self::Value),
+            "default" => Some(Self::Default),
+            "wildcard" => Some(Self::Wildcard),
+            "named" => Some(Self::Named),
+            _ => None,
+        }
+    }
+
     pub fn name(&self) -> &str {
         match self {
             ImportModifier::SideEffect => "side-effect",
