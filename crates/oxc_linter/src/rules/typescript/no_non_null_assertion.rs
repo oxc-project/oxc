@@ -39,6 +39,7 @@ declare_oxc_lint!(
     NoNonNullAssertion,
     typescript,
     restriction,
+    pending,
 );
 
 fn no_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {

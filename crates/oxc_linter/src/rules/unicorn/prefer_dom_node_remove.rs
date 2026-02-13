@@ -41,7 +41,8 @@ declare_oxc_lint!(
     /// ```
     PreferDomNodeRemove,
     unicorn,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferDomNodeRemove {

@@ -100,6 +100,7 @@ declare_oxc_lint!(
     RequireParam,
     jsdoc,
     pedantic,
+    pending,
     config = RequireParamConfig,
 );
 

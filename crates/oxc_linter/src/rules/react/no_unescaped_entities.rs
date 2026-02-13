@@ -47,7 +47,8 @@ declare_oxc_lint!(
     /// ```
     NoUnescapedEntities,
     react,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoUnescapedEntities {

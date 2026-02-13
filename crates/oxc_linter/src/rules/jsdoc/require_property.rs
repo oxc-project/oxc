@@ -58,7 +58,8 @@ declare_oxc_lint!(
     /// ```
     RequireProperty,
     jsdoc,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for RequireProperty {

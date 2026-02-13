@@ -47,6 +47,7 @@ declare_oxc_lint!(
     RequireParamType,
     jsdoc,
     pedantic,
+    pending,
 );
 
 impl Rule for RequireParamType {

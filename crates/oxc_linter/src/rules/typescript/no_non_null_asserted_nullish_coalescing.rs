@@ -65,6 +65,7 @@ declare_oxc_lint!(
     NoNonNullAssertedNullishCoalescing,
     typescript,
     restriction,
+    pending,
 );
 
 impl Rule for NoNonNullAssertedNullishCoalescing {

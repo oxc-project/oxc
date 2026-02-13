@@ -59,7 +59,8 @@ declare_oxc_lint!(
     /// ```
     PreferTopLevelAwait,
     unicorn,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferTopLevelAwait {

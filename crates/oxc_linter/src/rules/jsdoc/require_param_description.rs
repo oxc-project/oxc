@@ -47,6 +47,7 @@ declare_oxc_lint!(
     RequireParamDescription,
     jsdoc,
     pedantic,
+    pending,
 );
 
 impl Rule for RequireParamDescription {

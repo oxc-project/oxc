@@ -97,6 +97,7 @@ declare_oxc_lint!(
     ValidExpect,
     jest,
     correctness,
+    pending,
     config = ValidExpectConfig,
 );
 

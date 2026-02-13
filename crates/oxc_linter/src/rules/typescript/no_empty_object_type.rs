@@ -159,6 +159,7 @@ declare_oxc_lint!(
     NoEmptyObjectType,
     typescript,
     restriction,
+    pending,
     config = NoEmptyObjectTypeConfig,
 );
 
