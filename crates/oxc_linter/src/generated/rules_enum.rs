@@ -1326,7 +1326,6 @@ pub enum RuleEnum {
     PromisePreferCatch(PromisePreferCatch),
     PromiseSpecOnly(PromiseSpecOnly),
     PromiseValidParams(PromiseValidParams),
-    VitestValidTitle(VitestValidTitle),
     VitestConsistentEachFor(VitestConsistentEachFor),
     VitestConsistentTestFilename(VitestConsistentTestFilename),
     VitestConsistentVitestVi(VitestConsistentVitestVi),
@@ -1343,6 +1342,7 @@ pub enum RuleEnum {
     VitestRequireLocalTestContextForConcurrentSnapshots(
         VitestRequireLocalTestContextForConcurrentSnapshots,
     ),
+    VitestValidTitle(VitestValidTitle),
     VitestWarnTodo(VitestWarnTodo),
     NodeGlobalRequire(NodeGlobalRequire),
     NodeNoExportsAssign(NodeNoExportsAssign),
@@ -2078,8 +2078,7 @@ const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = PROMISE_PREFER_AWAIT_TO_CALLBACKS
 const PROMISE_PREFER_CATCH_ID: usize = PROMISE_PREFER_AWAIT_TO_THEN_ID + 1usize;
 const PROMISE_SPEC_ONLY_ID: usize = PROMISE_PREFER_CATCH_ID + 1usize;
 const PROMISE_VALID_PARAMS_ID: usize = PROMISE_SPEC_ONLY_ID + 1usize;
-const VITEST_VALID_TITLE_ID: usize = PROMISE_VALID_PARAMS_ID + 1usize;
-const VITEST_CONSISTENT_EACH_FOR_ID: usize = VITEST_VALID_TITLE_ID + 1usize;
+const VITEST_CONSISTENT_EACH_FOR_ID: usize = PROMISE_VALID_PARAMS_ID + 1usize;
 const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = VITEST_CONSISTENT_EACH_FOR_ID + 1usize;
 const VITEST_CONSISTENT_VITEST_VI_ID: usize = VITEST_CONSISTENT_TEST_FILENAME_ID + 1usize;
 const VITEST_HOISTED_APIS_ON_TOP_ID: usize = VITEST_CONSISTENT_VITEST_VI_ID + 1usize;
@@ -2094,8 +2093,9 @@ const VITEST_PREFER_TO_BE_OBJECT_ID: usize = VITEST_PREFER_TO_BE_FALSY_ID + 1usi
 const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = VITEST_PREFER_TO_BE_OBJECT_ID + 1usize;
 const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize =
     VITEST_PREFER_TO_BE_TRUTHY_ID + 1usize;
-const VITEST_WARN_TODO_ID: usize =
+const VITEST_VALID_TITLE_ID: usize =
     VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID + 1usize;
+const VITEST_WARN_TODO_ID: usize = VITEST_VALID_TITLE_ID + 1usize;
 const NODE_GLOBAL_REQUIRE_ID: usize = VITEST_WARN_TODO_ID + 1usize;
 const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
 const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
@@ -2849,7 +2849,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PROMISE_PREFER_CATCH_ID,
             Self::PromiseSpecOnly(_) => PROMISE_SPEC_ONLY_ID,
             Self::PromiseValidParams(_) => PROMISE_VALID_PARAMS_ID,
-            Self::VitestValidTitle(_) => VITEST_VALID_TITLE_ID,
             Self::VitestConsistentEachFor(_) => VITEST_CONSISTENT_EACH_FOR_ID,
             Self::VitestConsistentTestFilename(_) => VITEST_CONSISTENT_TEST_FILENAME_ID,
             Self::VitestConsistentVitestVi(_) => VITEST_CONSISTENT_VITEST_VI_ID,
@@ -2866,6 +2865,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID
             }
+            Self::VitestValidTitle(_) => VITEST_VALID_TITLE_ID,
             Self::VitestWarnTodo(_) => VITEST_WARN_TODO_ID,
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
             Self::NodeNoExportsAssign(_) => NODE_NO_EXPORTS_ASSIGN_ID,
@@ -3611,7 +3611,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::NAME,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::NAME,
             Self::PromiseValidParams(_) => PromiseValidParams::NAME,
-            Self::VitestValidTitle(_) => VitestValidTitle::NAME,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::NAME,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::NAME,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::NAME,
@@ -3628,6 +3627,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::NAME
             }
+            Self::VitestValidTitle(_) => VitestValidTitle::NAME,
             Self::VitestWarnTodo(_) => VitestWarnTodo::NAME,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::NAME,
@@ -4413,7 +4413,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::CATEGORY,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::CATEGORY,
             Self::PromiseValidParams(_) => PromiseValidParams::CATEGORY,
-            Self::VitestValidTitle(_) => VitestValidTitle::CATEGORY,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::CATEGORY,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::CATEGORY,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::CATEGORY,
@@ -4432,6 +4431,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::CATEGORY
             }
+            Self::VitestValidTitle(_) => VitestValidTitle::CATEGORY,
             Self::VitestWarnTodo(_) => VitestWarnTodo::CATEGORY,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::CATEGORY,
@@ -5180,7 +5180,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::FIX,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::FIX,
             Self::PromiseValidParams(_) => PromiseValidParams::FIX,
-            Self::VitestValidTitle(_) => VitestValidTitle::FIX,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::FIX,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::FIX,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::FIX,
@@ -5197,6 +5196,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::FIX
             }
+            Self::VitestValidTitle(_) => VitestValidTitle::FIX,
             Self::VitestWarnTodo(_) => VitestWarnTodo::FIX,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::FIX,
@@ -6123,7 +6123,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::documentation(),
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::documentation(),
             Self::PromiseValidParams(_) => PromiseValidParams::documentation(),
-            Self::VitestValidTitle(_) => VitestValidTitle::documentation(),
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::documentation(),
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::documentation(),
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::documentation(),
@@ -6142,6 +6141,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::documentation()
             }
+            Self::VitestValidTitle(_) => VitestValidTitle::documentation(),
             Self::VitestWarnTodo(_) => VitestWarnTodo::documentation(),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::documentation(),
@@ -7968,8 +7968,6 @@ impl RuleEnum {
                 .or_else(|| PromiseSpecOnly::schema(generator)),
             Self::PromiseValidParams(_) => PromiseValidParams::config_schema(generator)
                 .or_else(|| PromiseValidParams::schema(generator)),
-            Self::VitestValidTitle(_) => VitestValidTitle::config_schema(generator)
-                .or_else(|| VitestValidTitle::schema(generator)),
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::config_schema(generator)
                 .or_else(|| VitestConsistentEachFor::schema(generator)),
             Self::VitestConsistentTestFilename(_) => {
@@ -8006,6 +8004,8 @@ impl RuleEnum {
                         VitestRequireLocalTestContextForConcurrentSnapshots::schema(generator)
                     })
             }
+            Self::VitestValidTitle(_) => VitestValidTitle::config_schema(generator)
+                .or_else(|| VitestValidTitle::schema(generator)),
             Self::VitestWarnTodo(_) => VitestWarnTodo::config_schema(generator)
                 .or_else(|| VitestWarnTodo::schema(generator)),
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::config_schema(generator)
@@ -8706,7 +8706,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => "promise",
             Self::PromiseSpecOnly(_) => "promise",
             Self::PromiseValidParams(_) => "promise",
-            Self::VitestValidTitle(_) => "vitest",
             Self::VitestConsistentEachFor(_) => "vitest",
             Self::VitestConsistentTestFilename(_) => "vitest",
             Self::VitestConsistentVitestVi(_) => "vitest",
@@ -8721,6 +8720,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => "vitest",
+            Self::VitestValidTitle(_) => "vitest",
             Self::VitestWarnTodo(_) => "vitest",
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeNoExportsAssign(_) => "node",
@@ -10781,9 +10781,6 @@ impl RuleEnum {
             Self::PromiseValidParams(_) => {
                 Ok(Self::PromiseValidParams(PromiseValidParams::from_configuration(value)?))
             }
-            Self::VitestValidTitle(_) => {
-                Ok(Self::VitestValidTitle(VitestValidTitle::from_configuration(value)?))
-            }
             Self::VitestConsistentEachFor(_) => Ok(Self::VitestConsistentEachFor(
                 VitestConsistentEachFor::from_configuration(value)?,
             )),
@@ -10829,6 +10826,9 @@ impl RuleEnum {
                 Ok(Self::VitestRequireLocalTestContextForConcurrentSnapshots(
                     VitestRequireLocalTestContextForConcurrentSnapshots::from_configuration(value)?,
                 ))
+            }
+            Self::VitestValidTitle(_) => {
+                Ok(Self::VitestValidTitle(VitestValidTitle::from_configuration(value)?))
             }
             Self::VitestWarnTodo(_) => {
                 Ok(Self::VitestWarnTodo(VitestWarnTodo::from_configuration(value)?))
@@ -11537,7 +11537,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.to_configuration(),
             Self::PromiseSpecOnly(rule) => rule.to_configuration(),
             Self::PromiseValidParams(rule) => rule.to_configuration(),
-            Self::VitestValidTitle(rule) => rule.to_configuration(),
             Self::VitestConsistentEachFor(rule) => rule.to_configuration(),
             Self::VitestConsistentTestFilename(rule) => rule.to_configuration(),
             Self::VitestConsistentVitestVi(rule) => rule.to_configuration(),
@@ -11554,6 +11553,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
                 rule.to_configuration()
             }
+            Self::VitestValidTitle(rule) => rule.to_configuration(),
             Self::VitestWarnTodo(rule) => rule.to_configuration(),
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeNoExportsAssign(rule) => rule.to_configuration(),
@@ -12215,7 +12215,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run(node, ctx),
             Self::PromiseSpecOnly(rule) => rule.run(node, ctx),
             Self::PromiseValidParams(rule) => rule.run(node, ctx),
-            Self::VitestValidTitle(rule) => rule.run(node, ctx),
             Self::VitestConsistentEachFor(rule) => rule.run(node, ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run(node, ctx),
             Self::VitestConsistentVitestVi(rule) => rule.run(node, ctx),
@@ -12230,6 +12229,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run(node, ctx),
+            Self::VitestValidTitle(rule) => rule.run(node, ctx),
             Self::VitestWarnTodo(rule) => rule.run(node, ctx),
             Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run(node, ctx),
@@ -12891,7 +12891,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run_once(ctx),
             Self::PromiseSpecOnly(rule) => rule.run_once(ctx),
             Self::PromiseValidParams(rule) => rule.run_once(ctx),
-            Self::VitestValidTitle(rule) => rule.run_once(ctx),
             Self::VitestConsistentEachFor(rule) => rule.run_once(ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run_once(ctx),
             Self::VitestConsistentVitestVi(rule) => rule.run_once(ctx),
@@ -12906,6 +12905,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_once(ctx),
+            Self::VitestValidTitle(rule) => rule.run_once(ctx),
             Self::VitestWarnTodo(rule) => rule.run_once(ctx),
             Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_once(ctx),
@@ -13655,7 +13655,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseSpecOnly(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseValidParams(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentEachFor(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentVitestVi(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13672,6 +13671,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestWarnTodo(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14333,7 +14333,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.should_run(ctx),
             Self::PromiseSpecOnly(rule) => rule.should_run(ctx),
             Self::PromiseValidParams(rule) => rule.should_run(ctx),
-            Self::VitestValidTitle(rule) => rule.should_run(ctx),
             Self::VitestConsistentEachFor(rule) => rule.should_run(ctx),
             Self::VitestConsistentTestFilename(rule) => rule.should_run(ctx),
             Self::VitestConsistentVitestVi(rule) => rule.should_run(ctx),
@@ -14348,6 +14347,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.should_run(ctx),
+            Self::VitestValidTitle(rule) => rule.should_run(ctx),
             Self::VitestWarnTodo(rule) => rule.should_run(ctx),
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeNoExportsAssign(rule) => rule.should_run(ctx),
@@ -15273,7 +15273,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::IS_TSGOLINT_RULE,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::IS_TSGOLINT_RULE,
             Self::PromiseValidParams(_) => PromiseValidParams::IS_TSGOLINT_RULE,
-            Self::VitestValidTitle(_) => VitestValidTitle::IS_TSGOLINT_RULE,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::IS_TSGOLINT_RULE,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::IS_TSGOLINT_RULE,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::IS_TSGOLINT_RULE,
@@ -15292,6 +15291,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::IS_TSGOLINT_RULE
             }
+            Self::VitestValidTitle(_) => VitestValidTitle::IS_TSGOLINT_RULE,
             Self::VitestWarnTodo(_) => VitestWarnTodo::IS_TSGOLINT_RULE,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::IS_TSGOLINT_RULE,
@@ -16104,7 +16104,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::HAS_CONFIG,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::HAS_CONFIG,
             Self::PromiseValidParams(_) => PromiseValidParams::HAS_CONFIG,
-            Self::VitestValidTitle(_) => VitestValidTitle::HAS_CONFIG,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::HAS_CONFIG,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::HAS_CONFIG,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::HAS_CONFIG,
@@ -16123,6 +16122,7 @@ impl RuleEnum {
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
                 VitestRequireLocalTestContextForConcurrentSnapshots::HAS_CONFIG
             }
+            Self::VitestValidTitle(_) => VitestValidTitle::HAS_CONFIG,
             Self::VitestWarnTodo(_) => VitestWarnTodo::HAS_CONFIG,
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::HAS_CONFIG,
@@ -16786,7 +16786,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.types_info(),
             Self::PromiseSpecOnly(rule) => rule.types_info(),
             Self::PromiseValidParams(rule) => rule.types_info(),
-            Self::VitestValidTitle(rule) => rule.types_info(),
             Self::VitestConsistentEachFor(rule) => rule.types_info(),
             Self::VitestConsistentTestFilename(rule) => rule.types_info(),
             Self::VitestConsistentVitestVi(rule) => rule.types_info(),
@@ -16801,6 +16800,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.types_info(),
+            Self::VitestValidTitle(rule) => rule.types_info(),
             Self::VitestWarnTodo(rule) => rule.types_info(),
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeNoExportsAssign(rule) => rule.types_info(),
@@ -17462,7 +17462,6 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run_info(),
             Self::PromiseSpecOnly(rule) => rule.run_info(),
             Self::PromiseValidParams(rule) => rule.run_info(),
-            Self::VitestValidTitle(rule) => rule.run_info(),
             Self::VitestConsistentEachFor(rule) => rule.run_info(),
             Self::VitestConsistentTestFilename(rule) => rule.run_info(),
             Self::VitestConsistentVitestVi(rule) => rule.run_info(),
@@ -17477,6 +17476,7 @@ impl RuleEnum {
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(rule) => rule.run_info(),
+            Self::VitestValidTitle(rule) => rule.run_info(),
             Self::VitestWarnTodo(rule) => rule.run_info(),
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeNoExportsAssign(rule) => rule.run_info(),
@@ -18244,7 +18244,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::PromisePreferCatch(PromisePreferCatch::default()),
         RuleEnum::PromiseSpecOnly(PromiseSpecOnly::default()),
         RuleEnum::PromiseValidParams(PromiseValidParams::default()),
-        RuleEnum::VitestValidTitle(VitestValidTitle::default()),
         RuleEnum::VitestConsistentEachFor(VitestConsistentEachFor::default()),
         RuleEnum::VitestConsistentTestFilename(VitestConsistentTestFilename::default()),
         RuleEnum::VitestConsistentVitestVi(VitestConsistentVitestVi::default()),
@@ -18261,6 +18260,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestRequireLocalTestContextForConcurrentSnapshots(
             VitestRequireLocalTestContextForConcurrentSnapshots::default(),
         ),
+        RuleEnum::VitestValidTitle(VitestValidTitle::default()),
         RuleEnum::VitestWarnTodo(VitestWarnTodo::default()),
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeNoExportsAssign(NodeNoExportsAssign::default()),
