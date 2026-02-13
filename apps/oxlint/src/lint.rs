@@ -674,6 +674,8 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
 mod test {
     use std::{fs, path::PathBuf};
 
+    use oxc_linter::LintPlugins;
+
     use super::CliRunner;
     use crate::tester::Tester;
 
@@ -1358,6 +1360,62 @@ mod test {
             assert!(rule_obj.contains_key("default"), "Rule should contain 'default' field");
             assert!(rule_obj.contains_key("docs_url"), "Rule should contain 'docs_url' field");
         }
+    }
+
+    #[test]
+    fn test_list_rules_headers() {
+        let args: &[&str] = &["--rules"];
+        let output: String = Tester::new().test_output(args);
+        let sanitized_output: String = output.chars().filter(|c| !c.is_whitespace()).collect();
+        const EXPECTED_HEADERS: &str = "|Rulename|Source|Default|Enabled?|Fixable?|";
+
+        let header_count: usize = sanitized_output.matches(EXPECTED_HEADERS).count();
+        let expected_count: usize = oxc_linter::table::RuleTable::default().sections.len();
+
+        assert!(
+            sanitized_output.contains(EXPECTED_HEADERS),
+            "Output should contain the expected table headers"
+        );
+
+        assert_eq!(
+            header_count, expected_count,
+            "Output should contain the table headers for each section. Expected {}, found {}",
+            expected_count, header_count
+        );
+    }
+
+    #[test]
+    fn test_list_rules_sources() {
+        let args: &[&str] = &["--rules"];
+        let output: String = Tester::new().test_output(args);
+
+        for flag in LintPlugins::all().iter_names() {
+            let source_name = flag.0.to_lowercase();
+            assert!(
+                output.contains(&source_name),
+                "Output should contain the source: {}",
+                source_name
+            );
+        }
+    }
+
+    #[test]
+    fn test_rules_respects_type_aware_flag() {
+        let type_aware_args: &[&str] = &["--rules", "--type-aware"];
+        let non_type_aware_args: &[&str] = &["--rules"];
+
+        let type_aware_output: String = Tester::new().test_output(type_aware_args);
+        let non_type_aware_output: String = Tester::new().test_output(non_type_aware_args);
+
+        let type_aware_checkmark_count = type_aware_output.matches("✅").count();
+        let non_type_aware_checkmark_count = non_type_aware_output.matches("✅").count();
+        let difference =
+            type_aware_checkmark_count as isize - non_type_aware_checkmark_count as isize;
+
+        assert!(
+            type_aware_checkmark_count >= non_type_aware_checkmark_count,
+            "Type-aware output should have at least as many enabled rules as non-type-aware output"
+        );
     }
 
     #[test]
