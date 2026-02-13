@@ -56,19 +56,13 @@ impl Rule for NoUnmodifiedLoopCondition {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::WhileStatement(statement) => {
-                let loop_info = LoopInfo {
-                    loop_span: statement.span,
-                    loop_node_id: node.id(),
-                    loop_kind: LoopKind::While,
-                };
+                let loop_info =
+                    LoopInfo { span: statement.span, node_id: node.id(), kind: LoopKind::While };
                 Self::check_loop_condition(&statement.test, &loop_info, ctx);
             }
             AstKind::DoWhileStatement(statement) => {
-                let loop_info = LoopInfo {
-                    loop_span: statement.span,
-                    loop_node_id: node.id(),
-                    loop_kind: LoopKind::DoWhile,
-                };
+                let loop_info =
+                    LoopInfo { span: statement.span, node_id: node.id(), kind: LoopKind::DoWhile };
                 Self::check_loop_condition(&statement.test, &loop_info, ctx);
             }
             AstKind::ForStatement(statement) => {
@@ -76,11 +70,9 @@ impl Rule for NoUnmodifiedLoopCondition {
                     return;
                 };
                 let loop_info = LoopInfo {
-                    loop_span: statement.span,
-                    loop_node_id: node.id(),
-                    loop_kind: LoopKind::For {
-                        init_span: statement.init.as_ref().map(GetSpan::span),
-                    },
+                    span: statement.span,
+                    node_id: node.id(),
+                    kind: LoopKind::For { init_span: statement.init.as_ref().map(GetSpan::span) },
                 };
                 Self::check_loop_condition(test, &loop_info, ctx);
             }
@@ -91,9 +83,9 @@ impl Rule for NoUnmodifiedLoopCondition {
 
 #[derive(Debug, Clone, Copy)]
 struct LoopInfo {
-    loop_span: Span,
-    loop_node_id: NodeId,
-    loop_kind: LoopKind,
+    span: Span,
+    node_id: NodeId,
+    kind: LoopKind,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -106,10 +98,10 @@ enum LoopKind {
 impl LoopInfo {
     fn is_in_loop(&self, reference: &Reference, ctx: &LintContext<'_>) -> bool {
         let reference_span = ctx.semantic().reference_span(reference);
-        if !self.loop_span.contains_inclusive(reference_span) {
+        if !self.span.contains_inclusive(reference_span) {
             return false;
         }
-        let is_in_loop_range = match self.loop_kind {
+        let is_in_loop_range = match self.kind {
             LoopKind::For { init_span: Some(init_span) } => {
                 !init_span.contains_inclusive(reference_span)
             }
@@ -121,7 +113,7 @@ impl LoopInfo {
 
     fn is_in_nested_function_scope(&self, reference: &Reference, ctx: &LintContext<'_>) -> bool {
         for (ancestor_id, ancestor) in ctx.nodes().ancestors_enumerated(reference.node_id()) {
-            if ancestor_id == self.loop_node_id {
+            if ancestor_id == self.node_id {
                 return false;
             }
             if matches!(ancestor.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
