@@ -1774,6 +1774,12 @@ impl RuleRunner for crate::rules::typescript::no_unsafe_unary_minus::NoUnsafeUna
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
+impl RuleRunner for crate::rules::typescript::no_use_before_define::NoUseBeforeDefine {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::IdentifierReference]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::typescript::no_useless_empty_export::NoUselessEmptyExport {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ExportNamedDeclaration]));
