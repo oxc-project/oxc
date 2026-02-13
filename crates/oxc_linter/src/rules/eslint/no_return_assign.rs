@@ -59,7 +59,7 @@ declare_oxc_lint!(
     NoReturnAssign,
     eslint,
     style,
-    pending, // TODO: add a suggestion
+    none,
     config = NoReturnAssignMode,
 );
 
