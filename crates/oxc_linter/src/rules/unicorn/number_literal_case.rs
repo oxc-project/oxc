@@ -44,11 +44,14 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// When both an identifier and a number literal are in lower case, it can be hard to differentiate between them.
+    /// When both an identifier and a numeric literal are in
+    /// lower case, it can be hard to differentiate between them.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
+    ///
+    /// <!-- prettier-ignore-start -->
     /// ```javascript
     /// const foo = 0XFF;
     /// const foo = 0xff;
@@ -72,6 +75,7 @@ declare_oxc_lint!(
     /// const foo = 0xFFn;
     /// const foo = 2e+5;
     /// ```
+    /// <!-- prettier-ignore-end -->
     NumberLiteralCase,
     unicorn,
     style,
