@@ -32,6 +32,7 @@ import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 import { envs, globals, initGlobals } from "./globals.ts";
+import { version as packageVersion } from "../../package.json" with { type: "json" };
 
 import type { Globals, Envs } from "./globals.ts";
 import type { RuleDetails } from "./load.ts";
@@ -91,13 +92,12 @@ const PARSER = Object.freeze({
   /**
    * Parser name.
    */
-  name: "oxc",
+  name: "oxlint",
 
   /**
    * Parser version.
    */
-  // TODO: This can be statically defined, but need it be to be updated when we make a new release.
-  version: "0.0.0",
+  version: packageVersion,
 
   /**
    * Parse code into an AST.
