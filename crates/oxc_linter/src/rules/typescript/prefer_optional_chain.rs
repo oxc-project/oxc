@@ -58,10 +58,6 @@ declare_oxc_lint!(
     /// Enforce using concise optional chain expressions instead of chained logical AND
     /// operators, negated logical OR operators, or empty objects.
     ///
-    /// Note that this rule is in the nursery category while we ensure it is working
-    /// correctly in as many edge-case scenarios as possible. The logic for this is
-    /// complex and the autofix may cause logic changes in some edge-cases.
-    ///
     /// ### Why is this bad?
     ///
     /// TypeScript 3.7 introduced optional chaining (`?.`) which provides a more concise
@@ -93,7 +89,7 @@ declare_oxc_lint!(
     /// ```
     PreferOptionalChain(tsgolint),
     typescript,
-    nursery, // move to style after we've confirmed this works correctly on as many edge-cases as possible.
+    style,
     dangerous_fix_suggestion,
     config = PreferOptionalChainConfig,
 );
