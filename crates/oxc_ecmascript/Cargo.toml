@@ -32,4 +32,3 @@ bitflags = { workspace = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
-rustc-hash = { workspace = true }
