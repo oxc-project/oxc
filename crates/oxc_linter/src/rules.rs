@@ -306,6 +306,7 @@ pub(crate) mod typescript {
     pub mod switch_exhaustiveness_check;
     pub mod triple_slash_reference;
     pub mod unbound_method;
+    pub mod unified_signatures;
     pub mod use_unknown_in_catch_callback_variable;
 }
 

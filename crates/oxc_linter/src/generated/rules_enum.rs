@@ -529,6 +529,7 @@ pub use crate::rules::typescript::strict_boolean_expressions::StrictBooleanExpre
 pub use crate::rules::typescript::switch_exhaustiveness_check::SwitchExhaustivenessCheck as TypescriptSwitchExhaustivenessCheck;
 pub use crate::rules::typescript::triple_slash_reference::TripleSlashReference as TypescriptTripleSlashReference;
 pub use crate::rules::typescript::unbound_method::UnboundMethod as TypescriptUnboundMethod;
+pub use crate::rules::typescript::unified_signatures::UnifiedSignatures as TypescriptUnifiedSignatures;
 pub use crate::rules::typescript::use_unknown_in_catch_callback_variable::UseUnknownInCatchCallbackVariable as TypescriptUseUnknownInCatchCallbackVariable;
 pub use crate::rules::unicorn::catch_error_name::CatchErrorName as UnicornCatchErrorName;
 pub use crate::rules::unicorn::consistent_assert::ConsistentAssert as UnicornConsistentAssert;
@@ -990,6 +991,7 @@ pub enum RuleEnum {
     TypescriptSwitchExhaustivenessCheck(TypescriptSwitchExhaustivenessCheck),
     TypescriptTripleSlashReference(TypescriptTripleSlashReference),
     TypescriptUnboundMethod(TypescriptUnboundMethod),
+    TypescriptUnifiedSignatures(TypescriptUnifiedSignatures),
     TypescriptUseUnknownInCatchCallbackVariable(TypescriptUseUnknownInCatchCallbackVariable),
     JestConsistentTestIt(JestConsistentTestIt),
     JestExpectExpect(JestExpectExpect),
@@ -1707,8 +1709,9 @@ const TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID: usize =
 const TYPESCRIPT_TRIPLE_SLASH_REFERENCE_ID: usize =
     TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID + 1usize;
 const TYPESCRIPT_UNBOUND_METHOD_ID: usize = TYPESCRIPT_TRIPLE_SLASH_REFERENCE_ID + 1usize;
+const TYPESCRIPT_UNIFIED_SIGNATURES_ID: usize = TYPESCRIPT_UNBOUND_METHOD_ID + 1usize;
 const TYPESCRIPT_USE_UNKNOWN_IN_CATCH_CALLBACK_VARIABLE_ID: usize =
-    TYPESCRIPT_UNBOUND_METHOD_ID + 1usize;
+    TYPESCRIPT_UNIFIED_SIGNATURES_ID + 1usize;
 const JEST_CONSISTENT_TEST_IT_ID: usize =
     TYPESCRIPT_USE_UNKNOWN_IN_CATCH_CALLBACK_VARIABLE_ID + 1usize;
 const JEST_EXPECT_EXPECT_ID: usize = JEST_CONSISTENT_TEST_IT_ID + 1usize;
@@ -3152,6 +3155,7 @@ impl RuleEnum {
             }
             Self::TypescriptTripleSlashReference(_) => TypescriptTripleSlashReference::NAME,
             Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::NAME,
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::NAME,
             Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
                 TypescriptUseUnknownInCatchCallbackVariable::NAME
             }
@@ -3940,6 +3944,7 @@ impl RuleEnum {
             }
             Self::TypescriptTripleSlashReference(_) => TypescriptTripleSlashReference::CATEGORY,
             Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::CATEGORY,
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::CATEGORY,
             Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
                 TypescriptUseUnknownInCatchCallbackVariable::CATEGORY
             }
@@ -4731,6 +4736,7 @@ impl RuleEnum {
             }
             Self::TypescriptTripleSlashReference(_) => TypescriptTripleSlashReference::FIX,
             Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::FIX,
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::FIX,
             Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
                 TypescriptUseUnknownInCatchCallbackVariable::FIX
             }
@@ -5580,6 +5586,7 @@ impl RuleEnum {
                 TypescriptTripleSlashReference::documentation()
             }
             Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::documentation(),
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::documentation(),
             Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
                 TypescriptUseUnknownInCatchCallbackVariable::documentation()
             }
@@ -6945,6 +6952,10 @@ impl RuleEnum {
             }
             Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::config_schema(generator)
                 .or_else(|| TypescriptUnboundMethod::schema(generator)),
+            Self::TypescriptUnifiedSignatures(_) => {
+                TypescriptUnifiedSignatures::config_schema(generator)
+                    .or_else(|| TypescriptUnifiedSignatures::schema(generator))
+            }
             Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
                 TypescriptUseUnknownInCatchCallbackVariable::config_schema(generator)
                     .or_else(|| TypescriptUseUnknownInCatchCallbackVariable::schema(generator))
@@ -8319,6 +8330,7 @@ impl RuleEnum {
             Self::TypescriptSwitchExhaustivenessCheck(_) => "typescript",
             Self::TypescriptTripleSlashReference(_) => "typescript",
             Self::TypescriptUnboundMethod(_) => "typescript",
+            Self::TypescriptUnifiedSignatures(_) => "typescript",
             Self::TypescriptUseUnknownInCatchCallbackVariable(_) => "typescript",
             Self::JestConsistentTestIt(_) => "jest",
             Self::JestExpectExpect(_) => "jest",
@@ -9661,6 +9673,9 @@ impl RuleEnum {
             )),
             Self::TypescriptUnboundMethod(_) => Ok(Self::TypescriptUnboundMethod(
                 TypescriptUnboundMethod::from_configuration(value)?,
+            )),
+            Self::TypescriptUnifiedSignatures(_) => Ok(Self::TypescriptUnifiedSignatures(
+                TypescriptUnifiedSignatures::from_configuration(value)?,
             )),
             Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
                 Ok(Self::TypescriptUseUnknownInCatchCallbackVariable(
@@ -11168,6 +11183,7 @@ impl RuleEnum {
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.to_configuration(),
             Self::TypescriptTripleSlashReference(rule) => rule.to_configuration(),
             Self::TypescriptUnboundMethod(rule) => rule.to_configuration(),
+            Self::TypescriptUnifiedSignatures(rule) => rule.to_configuration(),
             Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => rule.to_configuration(),
             Self::JestConsistentTestIt(rule) => rule.to_configuration(),
             Self::JestExpectExpect(rule) => rule.to_configuration(),
@@ -11850,6 +11866,7 @@ impl RuleEnum {
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.run(node, ctx),
             Self::TypescriptTripleSlashReference(rule) => rule.run(node, ctx),
             Self::TypescriptUnboundMethod(rule) => rule.run(node, ctx),
+            Self::TypescriptUnifiedSignatures(rule) => rule.run(node, ctx),
             Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => rule.run(node, ctx),
             Self::JestConsistentTestIt(rule) => rule.run(node, ctx),
             Self::JestExpectExpect(rule) => rule.run(node, ctx),
@@ -12530,6 +12547,7 @@ impl RuleEnum {
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.run_once(ctx),
             Self::TypescriptTripleSlashReference(rule) => rule.run_once(ctx),
             Self::TypescriptUnboundMethod(rule) => rule.run_once(ctx),
+            Self::TypescriptUnifiedSignatures(rule) => rule.run_once(ctx),
             Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => rule.run_once(ctx),
             Self::JestConsistentTestIt(rule) => rule.run_once(ctx),
             Self::JestExpectExpect(rule) => rule.run_once(ctx),
@@ -13266,6 +13284,7 @@ impl RuleEnum {
             }
             Self::TypescriptTripleSlashReference(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptUnboundMethod(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptUnifiedSignatures(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -13980,6 +13999,7 @@ impl RuleEnum {
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.should_run(ctx),
             Self::TypescriptTripleSlashReference(rule) => rule.should_run(ctx),
             Self::TypescriptUnboundMethod(rule) => rule.should_run(ctx),
+            Self::TypescriptUnifiedSignatures(rule) => rule.should_run(ctx),
             Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => rule.should_run(ctx),
             Self::JestConsistentTestIt(rule) => rule.should_run(ctx),
             Self::JestExpectExpect(rule) => rule.should_run(ctx),
@@ -14794,6 +14814,7 @@ impl RuleEnum {
                 TypescriptTripleSlashReference::IS_TSGOLINT_RULE
             }
             Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::IS_TSGOLINT_RULE,
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::IS_TSGOLINT_RULE,
             Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
                 TypescriptUseUnknownInCatchCallbackVariable::IS_TSGOLINT_RULE
             }
@@ -15703,6 +15724,7 @@ impl RuleEnum {
             }
             Self::TypescriptTripleSlashReference(_) => TypescriptTripleSlashReference::HAS_CONFIG,
             Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::HAS_CONFIG,
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::HAS_CONFIG,
             Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
                 TypescriptUseUnknownInCatchCallbackVariable::HAS_CONFIG
             }
@@ -16453,6 +16475,7 @@ impl RuleEnum {
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.types_info(),
             Self::TypescriptTripleSlashReference(rule) => rule.types_info(),
             Self::TypescriptUnboundMethod(rule) => rule.types_info(),
+            Self::TypescriptUnifiedSignatures(rule) => rule.types_info(),
             Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => rule.types_info(),
             Self::JestConsistentTestIt(rule) => rule.types_info(),
             Self::JestExpectExpect(rule) => rule.types_info(),
@@ -17133,6 +17156,7 @@ impl RuleEnum {
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.run_info(),
             Self::TypescriptTripleSlashReference(rule) => rule.run_info(),
             Self::TypescriptUnboundMethod(rule) => rule.run_info(),
+            Self::TypescriptUnifiedSignatures(rule) => rule.run_info(),
             Self::TypescriptUseUnknownInCatchCallbackVariable(rule) => rule.run_info(),
             Self::JestConsistentTestIt(rule) => rule.run_info(),
             Self::JestExpectExpect(rule) => rule.run_info(),
@@ -17887,6 +17911,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::TypescriptTripleSlashReference(TypescriptTripleSlashReference::default()),
         RuleEnum::TypescriptUnboundMethod(TypescriptUnboundMethod::default()),
+        RuleEnum::TypescriptUnifiedSignatures(TypescriptUnifiedSignatures::default()),
         RuleEnum::TypescriptUseUnknownInCatchCallbackVariable(
             TypescriptUseUnknownInCatchCallbackVariable::default(),
         ),
