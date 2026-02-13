@@ -193,14 +193,21 @@ impl Rule for ImgRedundantAlt {
 
 impl ImgRedundantAlt {
     #[inline]
+    fn is_word_boundary(text: &[u8], start: usize, end: usize) -> bool {
+        let starts_boundary = start == 0 || !text[start - 1].is_ascii_alphanumeric();
+        let ends_boundary = end == text.len() || !text[end].is_ascii_alphanumeric();
+        starts_boundary && ends_boundary
+    }
+
+    #[inline]
     fn is_redundant_alt_text(&self, alt_text: &str) -> bool {
         let alt_text = alt_text.cow_to_ascii_lowercase();
+        let alt_text_bytes = alt_text.as_bytes();
+
         for word in &self.words {
-            if let Some(index) = alt_text.find(word.as_ref()) {
-                // check if followed by space or is whole text
-                if index + word.len() == alt_text.len()
-                    || alt_text.as_bytes().get(index + word.len()) == Some(&b' ')
-                {
+            for (index, _) in alt_text.match_indices(word.as_ref()) {
+                let end = index + word.len();
+                if Self::is_word_boundary(alt_text_bytes, index, end) {
                     return true;
                 }
             }
@@ -262,6 +269,7 @@ fn test() {
         (r"<img alt='Doing cool things' aria-hidden={foo?.bar}/>", None, None),
         (r"<img alt='Photography' />;", None, None),
         (r"<img alt='ImageMagick' />;", None, None),
+        (r"<img alt='helloImage' />;", None, None),
         (r"<Image alt='Photo of a friend' />", None, None),
         (r"<Image alt='Foo' />", None, Some(settings())),
     ];
@@ -280,12 +288,11 @@ fn test() {
             Some(serde_json::json!([{ "components": ["PicVersionThree"] }])),
             None,
         ),
-        // TODO: if there is a period immediately after the banned word, it does not get recognized by the current logic.
-        // (
-        //     r"<PicVersionThree alt='this is a photo.' />;",
-        //     Some(serde_json::json!([{ "components": ["PicVersionThree"] }])),
-        //     None,
-        // ),
+        (
+            r"<PicVersionThree alt='this is a photo.' />;",
+            Some(serde_json::json!([{ "components": ["PicVersionThree"] }])),
+            None,
+        ),
         (r"<img alt='PhOtO of friend.' />;", None, None),
         (r"<img alt={'photo'} />;", None, None),
         (r"<img alt='piCTUre of friend.' />;", None, None),
