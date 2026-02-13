@@ -1813,6 +1813,12 @@ impl RuleRunner for crate::rules::typescript::only_throw_error::OnlyThrowError {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
+impl RuleRunner for crate::rules::typescript::parameter_properties::ParameterProperties {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::Class, AstType::MethodDefinition]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::typescript::prefer_as_const::PreferAsConst {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::PropertyDefinition,
