@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// ```
     NewForBuiltins,
     unicorn,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NewForBuiltins {

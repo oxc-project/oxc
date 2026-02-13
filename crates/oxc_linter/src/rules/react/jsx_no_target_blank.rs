@@ -140,6 +140,7 @@ declare_oxc_lint!(
     JsxNoTargetBlank,
     react,
     pedantic,
+    pending,
     config = JsxNoTargetBlank,
 );
 

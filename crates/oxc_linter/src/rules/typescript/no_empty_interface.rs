@@ -61,6 +61,7 @@ declare_oxc_lint!(
     NoEmptyInterface,
     typescript,
     style,
+    pending,
     config = NoEmptyInterface,
 );
 

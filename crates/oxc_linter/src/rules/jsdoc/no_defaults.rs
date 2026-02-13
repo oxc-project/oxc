@@ -49,6 +49,7 @@ declare_oxc_lint!(
     NoDefaults,
     jsdoc,
     correctness,
+    pending,
     config = NoDefaultsConfig,
 );
 

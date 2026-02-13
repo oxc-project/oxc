@@ -65,6 +65,7 @@ declare_oxc_lint!(
     PreferEqualityMatcher,
     jest,
     style,
+    pending,
 );
 
 impl Rule for PreferEqualityMatcher {

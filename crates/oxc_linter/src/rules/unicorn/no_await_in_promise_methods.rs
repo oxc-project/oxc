@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// ```
     NoAwaitInPromiseMethods,
     unicorn,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for NoAwaitInPromiseMethods {

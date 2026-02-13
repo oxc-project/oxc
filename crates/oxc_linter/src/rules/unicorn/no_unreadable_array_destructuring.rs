@@ -37,7 +37,8 @@ declare_oxc_lint!(
     /// ```
     NoUnreadableArrayDestructuring,
     unicorn,
-    style
+    style,
+    pending
 );
 
 fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: Option<&U>) -> bool {
