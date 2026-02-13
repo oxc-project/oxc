@@ -127,7 +127,12 @@ export type SortImportsOptions = {
    */
   groups?: (string | string[])[];
   /** Define custom groups for matching specific imports. */
-  customGroups?: { groupName: string; elementNamePattern: string[] }[];
+  customGroups?: {
+    groupName: string;
+    elementNamePattern?: string[];
+    selector?: string;
+    modifiers?: string[];
+  }[];
 };
 
 /**

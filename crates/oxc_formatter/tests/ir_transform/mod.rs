@@ -1,7 +1,8 @@
 mod sort_imports;
 
 use oxc_formatter::{
-    CustomGroupDefinition, FormatOptions, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
+    CustomGroupDefinition, FormatOptions, ImportModifier, ImportSelector, QuoteStyle, Semicolons,
+    SortImportsOptions, SortOrder,
 };
 use serde::Deserialize;
 
@@ -60,7 +61,10 @@ struct TestConfig {
 #[serde(rename_all = "camelCase")]
 struct TestCustomGroupDefinition {
     group_name: String,
+    #[serde(default)]
     element_name_pattern: Vec<String>,
+    selector: Option<String>,
+    modifiers: Option<Vec<String>>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -158,6 +162,13 @@ fn parse_test_config(json: &str) -> FormatOptions {
                 .map(|value| CustomGroupDefinition {
                     group_name: value.group_name,
                     element_name_pattern: value.element_name_pattern,
+                    selector: value.selector.as_deref().and_then(ImportSelector::parse),
+                    modifiers: value
+                        .modifiers
+                        .unwrap_or_default()
+                        .iter()
+                        .filter_map(|s| ImportModifier::parse(s))
+                        .collect(),
                 })
                 .collect();
         }
