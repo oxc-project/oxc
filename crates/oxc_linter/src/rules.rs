@@ -691,6 +691,7 @@ pub(crate) mod vitest {
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
     pub mod require_local_test_context_for_concurrent_snapshots;
+    pub mod valid_title;
     pub mod warn_todo;
 }
 

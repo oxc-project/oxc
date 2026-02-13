@@ -661,6 +661,7 @@ pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPrefe
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
 pub use crate::rules::vitest::require_local_test_context_for_concurrent_snapshots::RequireLocalTestContextForConcurrentSnapshots as VitestRequireLocalTestContextForConcurrentSnapshots;
+pub use crate::rules::vitest::valid_title::ValidTitle as VitestValidTitle;
 pub use crate::rules::vitest::warn_todo::WarnTodo as VitestWarnTodo;
 pub use crate::rules::vue::define_emits_declaration::DefineEmitsDeclaration as VueDefineEmitsDeclaration;
 pub use crate::rules::vue::define_props_declaration::DefinePropsDeclaration as VueDefinePropsDeclaration;
@@ -1325,6 +1326,7 @@ pub enum RuleEnum {
     PromisePreferCatch(PromisePreferCatch),
     PromiseSpecOnly(PromiseSpecOnly),
     PromiseValidParams(PromiseValidParams),
+    VitestValidTitle(VitestValidTitle),
     VitestConsistentEachFor(VitestConsistentEachFor),
     VitestConsistentTestFilename(VitestConsistentTestFilename),
     VitestConsistentVitestVi(VitestConsistentVitestVi),
@@ -2076,7 +2078,8 @@ const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = PROMISE_PREFER_AWAIT_TO_CALLBACKS
 const PROMISE_PREFER_CATCH_ID: usize = PROMISE_PREFER_AWAIT_TO_THEN_ID + 1usize;
 const PROMISE_SPEC_ONLY_ID: usize = PROMISE_PREFER_CATCH_ID + 1usize;
 const PROMISE_VALID_PARAMS_ID: usize = PROMISE_SPEC_ONLY_ID + 1usize;
-const VITEST_CONSISTENT_EACH_FOR_ID: usize = PROMISE_VALID_PARAMS_ID + 1usize;
+const VITEST_VALID_TITLE_ID: usize = PROMISE_VALID_PARAMS_ID + 1usize;
+const VITEST_CONSISTENT_EACH_FOR_ID: usize = VITEST_VALID_TITLE_ID + 1usize;
 const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = VITEST_CONSISTENT_EACH_FOR_ID + 1usize;
 const VITEST_CONSISTENT_VITEST_VI_ID: usize = VITEST_CONSISTENT_TEST_FILENAME_ID + 1usize;
 const VITEST_HOISTED_APIS_ON_TOP_ID: usize = VITEST_CONSISTENT_VITEST_VI_ID + 1usize;
@@ -2846,6 +2849,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PROMISE_PREFER_CATCH_ID,
             Self::PromiseSpecOnly(_) => PROMISE_SPEC_ONLY_ID,
             Self::PromiseValidParams(_) => PROMISE_VALID_PARAMS_ID,
+            Self::VitestValidTitle(_) => VITEST_VALID_TITLE_ID,
             Self::VitestConsistentEachFor(_) => VITEST_CONSISTENT_EACH_FOR_ID,
             Self::VitestConsistentTestFilename(_) => VITEST_CONSISTENT_TEST_FILENAME_ID,
             Self::VitestConsistentVitestVi(_) => VITEST_CONSISTENT_VITEST_VI_ID,
@@ -3607,6 +3611,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::NAME,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::NAME,
             Self::PromiseValidParams(_) => PromiseValidParams::NAME,
+            Self::VitestValidTitle(_) => VitestValidTitle::NAME,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::NAME,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::NAME,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::NAME,
@@ -4408,6 +4413,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::CATEGORY,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::CATEGORY,
             Self::PromiseValidParams(_) => PromiseValidParams::CATEGORY,
+            Self::VitestValidTitle(_) => VitestValidTitle::CATEGORY,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::CATEGORY,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::CATEGORY,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::CATEGORY,
@@ -5174,6 +5180,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::FIX,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::FIX,
             Self::PromiseValidParams(_) => PromiseValidParams::FIX,
+            Self::VitestValidTitle(_) => VitestValidTitle::FIX,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::FIX,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::FIX,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::FIX,
@@ -6116,6 +6123,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::documentation(),
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::documentation(),
             Self::PromiseValidParams(_) => PromiseValidParams::documentation(),
+            Self::VitestValidTitle(_) => VitestValidTitle::documentation(),
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::documentation(),
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::documentation(),
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::documentation(),
@@ -7960,6 +7968,8 @@ impl RuleEnum {
                 .or_else(|| PromiseSpecOnly::schema(generator)),
             Self::PromiseValidParams(_) => PromiseValidParams::config_schema(generator)
                 .or_else(|| PromiseValidParams::schema(generator)),
+            Self::VitestValidTitle(_) => VitestValidTitle::config_schema(generator)
+                .or_else(|| VitestValidTitle::schema(generator)),
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::config_schema(generator)
                 .or_else(|| VitestConsistentEachFor::schema(generator)),
             Self::VitestConsistentTestFilename(_) => {
@@ -8696,6 +8706,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => "promise",
             Self::PromiseSpecOnly(_) => "promise",
             Self::PromiseValidParams(_) => "promise",
+            Self::VitestValidTitle(_) => "vitest",
             Self::VitestConsistentEachFor(_) => "vitest",
             Self::VitestConsistentTestFilename(_) => "vitest",
             Self::VitestConsistentVitestVi(_) => "vitest",
@@ -10770,6 +10781,9 @@ impl RuleEnum {
             Self::PromiseValidParams(_) => {
                 Ok(Self::PromiseValidParams(PromiseValidParams::from_configuration(value)?))
             }
+            Self::VitestValidTitle(_) => {
+                Ok(Self::VitestValidTitle(VitestValidTitle::from_configuration(value)?))
+            }
             Self::VitestConsistentEachFor(_) => Ok(Self::VitestConsistentEachFor(
                 VitestConsistentEachFor::from_configuration(value)?,
             )),
@@ -11523,6 +11537,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.to_configuration(),
             Self::PromiseSpecOnly(rule) => rule.to_configuration(),
             Self::PromiseValidParams(rule) => rule.to_configuration(),
+            Self::VitestValidTitle(rule) => rule.to_configuration(),
             Self::VitestConsistentEachFor(rule) => rule.to_configuration(),
             Self::VitestConsistentTestFilename(rule) => rule.to_configuration(),
             Self::VitestConsistentVitestVi(rule) => rule.to_configuration(),
@@ -12200,6 +12215,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run(node, ctx),
             Self::PromiseSpecOnly(rule) => rule.run(node, ctx),
             Self::PromiseValidParams(rule) => rule.run(node, ctx),
+            Self::VitestValidTitle(rule) => rule.run(node, ctx),
             Self::VitestConsistentEachFor(rule) => rule.run(node, ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run(node, ctx),
             Self::VitestConsistentVitestVi(rule) => rule.run(node, ctx),
@@ -12875,6 +12891,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run_once(ctx),
             Self::PromiseSpecOnly(rule) => rule.run_once(ctx),
             Self::PromiseValidParams(rule) => rule.run_once(ctx),
+            Self::VitestValidTitle(rule) => rule.run_once(ctx),
             Self::VitestConsistentEachFor(rule) => rule.run_once(ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run_once(ctx),
             Self::VitestConsistentVitestVi(rule) => rule.run_once(ctx),
@@ -13638,6 +13655,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseSpecOnly(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::PromiseValidParams(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentEachFor(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentTestFilename(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestConsistentVitestVi(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14315,6 +14333,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.should_run(ctx),
             Self::PromiseSpecOnly(rule) => rule.should_run(ctx),
             Self::PromiseValidParams(rule) => rule.should_run(ctx),
+            Self::VitestValidTitle(rule) => rule.should_run(ctx),
             Self::VitestConsistentEachFor(rule) => rule.should_run(ctx),
             Self::VitestConsistentTestFilename(rule) => rule.should_run(ctx),
             Self::VitestConsistentVitestVi(rule) => rule.should_run(ctx),
@@ -15254,6 +15273,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::IS_TSGOLINT_RULE,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::IS_TSGOLINT_RULE,
             Self::PromiseValidParams(_) => PromiseValidParams::IS_TSGOLINT_RULE,
+            Self::VitestValidTitle(_) => VitestValidTitle::IS_TSGOLINT_RULE,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::IS_TSGOLINT_RULE,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::IS_TSGOLINT_RULE,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::IS_TSGOLINT_RULE,
@@ -16084,6 +16104,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(_) => PromisePreferCatch::HAS_CONFIG,
             Self::PromiseSpecOnly(_) => PromiseSpecOnly::HAS_CONFIG,
             Self::PromiseValidParams(_) => PromiseValidParams::HAS_CONFIG,
+            Self::VitestValidTitle(_) => VitestValidTitle::HAS_CONFIG,
             Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::HAS_CONFIG,
             Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::HAS_CONFIG,
             Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::HAS_CONFIG,
@@ -16765,6 +16786,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.types_info(),
             Self::PromiseSpecOnly(rule) => rule.types_info(),
             Self::PromiseValidParams(rule) => rule.types_info(),
+            Self::VitestValidTitle(rule) => rule.types_info(),
             Self::VitestConsistentEachFor(rule) => rule.types_info(),
             Self::VitestConsistentTestFilename(rule) => rule.types_info(),
             Self::VitestConsistentVitestVi(rule) => rule.types_info(),
@@ -17440,6 +17462,7 @@ impl RuleEnum {
             Self::PromisePreferCatch(rule) => rule.run_info(),
             Self::PromiseSpecOnly(rule) => rule.run_info(),
             Self::PromiseValidParams(rule) => rule.run_info(),
+            Self::VitestValidTitle(rule) => rule.run_info(),
             Self::VitestConsistentEachFor(rule) => rule.run_info(),
             Self::VitestConsistentTestFilename(rule) => rule.run_info(),
             Self::VitestConsistentVitestVi(rule) => rule.run_info(),
@@ -18221,6 +18244,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::PromisePreferCatch(PromisePreferCatch::default()),
         RuleEnum::PromiseSpecOnly(PromiseSpecOnly::default()),
         RuleEnum::PromiseValidParams(PromiseValidParams::default()),
+        RuleEnum::VitestValidTitle(VitestValidTitle::default()),
         RuleEnum::VitestConsistentEachFor(VitestConsistentEachFor::default()),
         RuleEnum::VitestConsistentTestFilename(VitestConsistentTestFilename::default()),
         RuleEnum::VitestConsistentVitestVi(VitestConsistentVitestVi::default()),
