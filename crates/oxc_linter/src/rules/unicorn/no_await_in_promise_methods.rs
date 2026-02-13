@@ -94,16 +94,13 @@ impl Rule for NoAwaitInPromiseMethods {
             {
                 let property_name =
                     member_expr.static_property_name().expect("callee is a static property");
+                let await_keyword_span = Span::sized(await_expr.span.start, 5);
 
                 ctx.diagnostic_with_suggestion(
-                    no_await_in_promise_methods_diagnostic(
-                        Span::sized(await_expr.span.start, 5),
-                        property_name,
-                    ),
+                    no_await_in_promise_methods_diagnostic(await_keyword_span, property_name),
                     |fixer| {
-                        let await_span = Span::sized(await_expr.span.start, 5);
                         let source = fixer.source_text();
-                        let after_await = &source[(await_span.end as usize)..];
+                        let after_await = &source[(await_keyword_span.end as usize)..];
 
                         let trailing_spaces = after_await
                             .chars()
@@ -114,7 +111,7 @@ impl Rule for NoAwaitInPromiseMethods {
                             })
                             .sum();
 
-                        fixer.delete_range(await_span.expand_right(trailing_spaces))
+                        fixer.delete_range(await_keyword_span.expand_right(trailing_spaces))
                     },
                 );
             }
