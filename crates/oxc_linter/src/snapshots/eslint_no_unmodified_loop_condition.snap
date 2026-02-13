@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
 ---
 
   ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
@@ -65,6 +66,18 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
    ╭─[no_unmodified_loop_condition.tsx:1:21]
  1 │ var foo = 0; while (foo) { update(); } function update(foo) { ++foo; }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:21]
+ 1 │ var foo = 0; while (foo < 10) { function update() { foo++; } }
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(no-unmodified-loop-condition): 'foo' is not modified in this loop.
+   ╭─[no_unmodified_loop_condition.tsx:1:21]
+ 1 │ var foo = 0; while (foo < 10) { const fn = update; } function update() { foo++; }
    ·                     ───
    ╰────
 

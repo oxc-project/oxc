@@ -1,5 +1,6 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{Expression, IdentifierReference},
@@ -55,12 +56,19 @@ impl Rule for NoUnmodifiedLoopCondition {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::WhileStatement(statement) => {
-                let loop_info = LoopInfo { loop_span: statement.span, loop_kind: LoopKind::While };
+                let loop_info = LoopInfo {
+                    loop_span: statement.span,
+                    loop_node_id: node.id(),
+                    loop_kind: LoopKind::While,
+                };
                 Self::check_loop_condition(&statement.test, &loop_info, ctx);
             }
             AstKind::DoWhileStatement(statement) => {
-                let loop_info =
-                    LoopInfo { loop_span: statement.span, loop_kind: LoopKind::DoWhile };
+                let loop_info = LoopInfo {
+                    loop_span: statement.span,
+                    loop_node_id: node.id(),
+                    loop_kind: LoopKind::DoWhile,
+                };
                 Self::check_loop_condition(&statement.test, &loop_info, ctx);
             }
             AstKind::ForStatement(statement) => {
@@ -69,6 +77,7 @@ impl Rule for NoUnmodifiedLoopCondition {
                 };
                 let loop_info = LoopInfo {
                     loop_span: statement.span,
+                    loop_node_id: node.id(),
                     loop_kind: LoopKind::For {
                         init_span: statement.init.as_ref().map(GetSpan::span),
                     },
@@ -83,6 +92,7 @@ impl Rule for NoUnmodifiedLoopCondition {
 #[derive(Debug, Clone, Copy)]
 struct LoopInfo {
     loop_span: Span,
+    loop_node_id: NodeId,
     loop_kind: LoopKind,
 }
 
@@ -99,12 +109,28 @@ impl LoopInfo {
         if !self.loop_span.contains_inclusive(reference_span) {
             return false;
         }
-        match self.loop_kind {
+        let is_in_loop_range = match self.loop_kind {
             LoopKind::For { init_span: Some(init_span) } => {
                 !init_span.contains_inclusive(reference_span)
             }
             _ => true,
+        };
+
+        is_in_loop_range && !self.is_in_nested_function_scope(reference, ctx)
+    }
+
+    fn is_in_nested_function_scope(&self, reference: &Reference, ctx: &LintContext<'_>) -> bool {
+        for (ancestor_id, ancestor) in ctx.nodes().ancestors_enumerated(reference.node_id()) {
+            if ancestor_id == self.loop_node_id {
+                return false;
+            }
+            if matches!(ancestor.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+            {
+                return true;
+            }
         }
+
+        false
     }
 }
 
@@ -233,7 +259,9 @@ impl NoUnmodifiedLoopCondition {
         };
 
         for function_reference in ctx.scoping().get_resolved_references(function_symbol_id) {
-            if loop_info.is_in_loop(function_reference, ctx) {
+            if loop_info.is_in_loop(function_reference, ctx)
+                && Self::is_function_invocation_reference(function_reference, ctx)
+            {
                 return true;
             }
         }
@@ -259,6 +287,24 @@ impl NoUnmodifiedLoopCondition {
         }
 
         None
+    }
+
+    fn is_function_invocation_reference(reference: &Reference, ctx: &LintContext<'_>) -> bool {
+        let reference_node_id = reference.node_id();
+        let reference_node = ctx.nodes().get_node(reference_node_id);
+
+        match ctx.nodes().parent_kind(reference_node_id) {
+            AstKind::CallExpression(call_expression) => {
+                call_expression.callee.address() == reference_node.address()
+            }
+            AstKind::NewExpression(new_expression) => {
+                new_expression.callee.address() == reference_node.address()
+            }
+            AstKind::TaggedTemplateExpression(tagged_template_expression) => {
+                tagged_template_expression.tag.address() == reference_node.address()
+            }
+            _ => false,
+        }
     }
 }
 
@@ -385,6 +431,8 @@ fn test() {
         "var a, b, c; while (a < c && b < c) { ++a; } foo = 1;",
         "var foo = 0; while (foo ? 1 : 0) { } foo = 1;",
         "var foo = 0; while (foo) { update(); } function update(foo) { ++foo; }",
+        "var foo = 0; while (foo < 10) { function update() { foo++; } }",
+        "var foo = 0; while (foo < 10) { const fn = update; } function update() { foo++; }",
         "var foo; do { } while (foo);",
         "for (var foo = 0; foo < 10; ) { } foo = 1;",
     ];
