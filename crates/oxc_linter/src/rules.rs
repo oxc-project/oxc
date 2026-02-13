@@ -280,6 +280,7 @@ pub(crate) mod typescript {
     pub mod no_wrapper_object_types;
     pub mod non_nullable_type_assertion_style;
     pub mod only_throw_error;
+    pub mod parameter_properties;
     pub mod prefer_as_const;
     pub mod prefer_enum_initializers;
     pub mod prefer_for_of;
