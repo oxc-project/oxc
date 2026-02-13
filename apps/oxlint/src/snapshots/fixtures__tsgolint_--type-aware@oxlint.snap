@@ -301,18 +301,20 @@ working directory: fixtures/tsgolint
  10 | }
     `----
 
-  x typescript-eslint(no-unnecessary-condition): This condition will always return the same value since the types have no overlap.
-   ,-[prefer-nullish-coalescing.ts:1:1]
- 1 | declare const nullableString: string | null;
-   : ^
- 2 | const nullishResult = nullableString !== null && nullableString !== undefined ? nullableString : 'default';
-   `----
-
   x typescript-eslint(prefer-nullish-coalescing): Prefer using nullish coalescing operator (`??`) instead of a ternary expression, as it is simpler to read.
    ,-[prefer-nullish-coalescing.ts:2:23]
  1 | declare const nullableString: string | null;
  2 | const nullishResult = nullableString !== null && nullableString !== undefined ? nullableString : 'default';
    :                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x typescript-eslint(no-unnecessary-condition): This condition will always return the same value since the types have no overlap.
+   ,-[prefer-nullish-coalescing.ts:2:49]
+ 1 | declare const nullableString: string | null;
+ 2 | const nullishResult = nullableString !== null && nullableString !== undefined ? nullableString : 'default';
+   :                                                 ^^^^^^^|^^^^^^^    ^^^^^|^^^^
+   :                                                        |                `-- Type: undefined
+   :                                                        `-- Type: string
    `----
 
   x typescript-eslint(prefer-optional-chain): Prefer using an optional chain expression instead, as it's more concise and easier to read.
