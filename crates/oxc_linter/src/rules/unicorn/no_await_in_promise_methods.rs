@@ -49,7 +49,7 @@ declare_oxc_lint!(
     NoAwaitInPromiseMethods,
     unicorn,
     correctness,
-    pending
+    suggestion
 );
 
 impl Rule for NoAwaitInPromiseMethods {
@@ -68,6 +68,18 @@ impl Rule for NoAwaitInPromiseMethods {
             return;
         }
 
+        if call_expr.optional {
+            return;
+        }
+
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
+
+        if member_expr.optional() || member_expr.is_computed() {
+            return;
+        }
+
         let Some(first_argument) = call_expr.arguments[0].as_expression() else {
             return;
         };
@@ -80,17 +92,28 @@ impl Rule for NoAwaitInPromiseMethods {
             if let Some(element_expr) = element.as_expression()
                 && let Expression::AwaitExpression(await_expr) = element_expr.without_parentheses()
             {
-                let property_name = call_expr
-                    .callee
-                    .get_member_expr()
-                    .expect("callee is a member expression")
-                    .static_property_name()
-                    .expect("callee is a static property");
+                let property_name =
+                    member_expr.static_property_name().expect("callee is a static property");
+                let await_keyword_span = Span::sized(await_expr.span.start, 5);
 
-                ctx.diagnostic(no_await_in_promise_methods_diagnostic(
-                    Span::sized(await_expr.span.start, 5),
-                    property_name,
-                ));
+                ctx.diagnostic_with_suggestion(
+                    no_await_in_promise_methods_diagnostic(await_keyword_span, property_name),
+                    |fixer| {
+                        let source = fixer.source_text();
+                        let after_await = &source[(await_keyword_span.end as usize)..];
+
+                        let trailing_spaces = after_await
+                            .chars()
+                            .take_while(|c| c.is_whitespace())
+                            .map(|c| {
+                                u32::try_from(c.len_utf8())
+                                    .expect("Failed to convert char len usize to u32")
+                            })
+                            .sum();
+
+                        fixer.delete_range(await_keyword_span.expand_right(trailing_spaces))
+                    },
+                );
             }
         }
     }
@@ -111,15 +134,14 @@ fn test() {
         "Promise.all(notArrayExpression)",
         "Promise.all([,])",
         "Promise[all]([await promise])",
-        // TODO: Fix these commented-out tests.
-        // "Promise.all?.([await promise])",
-        // "Promise?.all([await promise])",
+        "Promise.all?.([await promise])",
+        "Promise?.all([await promise])",
         "Promise.notListedMethod([await promise])",
         "NotPromise.all([await promise])",
         "Promise.all([(await promise, 0)])",
         "new Promise.all([await promise])",
         "globalThis.Promise.all([await promise])",
-        // r#"Promise["all"]([await promise])"#,
+        r#"Promise["all"]([await promise])"#,
     ];
 
     let fail = vec![
@@ -137,7 +159,26 @@ fn test() {
         "Promise.all([await /* comment*/ promise])",
     ];
 
+    let fix = vec![
+        ("Promise.all([await promise])", "Promise.all([promise])"),
+        ("Promise.allSettled([await promise])", "Promise.allSettled([promise])"),
+        ("Promise.any([await promise])", "Promise.any([promise])"),
+        ("Promise.race([await promise])", "Promise.race([promise])"),
+        ("Promise.all([, await promise])", "Promise.all([, promise])"),
+        ("Promise.all([await promise,])", "Promise.all([promise,])"),
+        ("Promise.all([await promise],)", "Promise.all([promise],)"),
+        ("Promise.all([await (0, promise)],)", "Promise.all([(0, promise)],)"),
+        ("Promise.all([await (( promise ))])", "Promise.all([(( promise ))])"),
+        ("Promise.all([await await promise])", "Promise.all([await promise])"),
+        (
+            "Promise.all([...foo, await promise1, await promise2])",
+            "Promise.all([...foo, promise1, promise2])",
+        ),
+        ("Promise.all([await /* comment*/ promise])", "Promise.all([/* comment*/ promise])"),
+    ];
+
     Tester::new(NoAwaitInPromiseMethods::NAME, NoAwaitInPromiseMethods::PLUGIN, pass, fail)
         .change_rule_path_extension("mjs")
+        .expect_fix(fix)
         .test_and_snapshot();
 }
