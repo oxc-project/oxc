@@ -274,6 +274,7 @@ pub(crate) mod typescript {
     pub mod no_unsafe_return;
     pub mod no_unsafe_type_assertion;
     pub mod no_unsafe_unary_minus;
+    pub mod no_use_before_define;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
     pub mod no_wrapper_object_types;

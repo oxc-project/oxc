@@ -497,6 +497,7 @@ pub use crate::rules::typescript::no_unsafe_member_access::NoUnsafeMemberAccess 
 pub use crate::rules::typescript::no_unsafe_return::NoUnsafeReturn as TypescriptNoUnsafeReturn;
 pub use crate::rules::typescript::no_unsafe_type_assertion::NoUnsafeTypeAssertion as TypescriptNoUnsafeTypeAssertion;
 pub use crate::rules::typescript::no_unsafe_unary_minus::NoUnsafeUnaryMinus as TypescriptNoUnsafeUnaryMinus;
+pub use crate::rules::typescript::no_use_before_define::NoUseBeforeDefine as TypescriptNoUseBeforeDefine;
 pub use crate::rules::typescript::no_useless_empty_export::NoUselessEmptyExport as TypescriptNoUselessEmptyExport;
 pub use crate::rules::typescript::no_var_requires::NoVarRequires as TypescriptNoVarRequires;
 pub use crate::rules::typescript::no_wrapper_object_types::NoWrapperObjectTypes as TypescriptNoWrapperObjectTypes;
@@ -955,6 +956,7 @@ pub enum RuleEnum {
     TypescriptNoUnsafeReturn(TypescriptNoUnsafeReturn),
     TypescriptNoUnsafeTypeAssertion(TypescriptNoUnsafeTypeAssertion),
     TypescriptNoUnsafeUnaryMinus(TypescriptNoUnsafeUnaryMinus),
+    TypescriptNoUseBeforeDefine(TypescriptNoUseBeforeDefine),
     TypescriptNoUselessEmptyExport(TypescriptNoUselessEmptyExport),
     TypescriptNoVarRequires(TypescriptNoVarRequires),
     TypescriptNoWrapperObjectTypes(TypescriptNoWrapperObjectTypes),
@@ -1658,7 +1660,8 @@ const TYPESCRIPT_NO_UNSAFE_MEMBER_ACCESS_ID: usize = TYPESCRIPT_NO_UNSAFE_FUNCTI
 const TYPESCRIPT_NO_UNSAFE_RETURN_ID: usize = TYPESCRIPT_NO_UNSAFE_MEMBER_ACCESS_ID + 1usize;
 const TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID: usize = TYPESCRIPT_NO_UNSAFE_RETURN_ID + 1usize;
 const TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID: usize = TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID + 1usize;
-const TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID: usize = TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID + 1usize;
+const TYPESCRIPT_NO_USE_BEFORE_DEFINE_ID: usize = TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID + 1usize;
+const TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID: usize = TYPESCRIPT_NO_USE_BEFORE_DEFINE_ID + 1usize;
 const TYPESCRIPT_NO_VAR_REQUIRES_ID: usize = TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID + 1usize;
 const TYPESCRIPT_NO_WRAPPER_OBJECT_TYPES_ID: usize = TYPESCRIPT_NO_VAR_REQUIRES_ID + 1usize;
 const TYPESCRIPT_NON_NULLABLE_TYPE_ASSERTION_STYLE_ID: usize =
@@ -2431,6 +2434,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => TYPESCRIPT_NO_UNSAFE_RETURN_ID,
             Self::TypescriptNoUnsafeTypeAssertion(_) => TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID,
             Self::TypescriptNoUnsafeUnaryMinus(_) => TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID,
+            Self::TypescriptNoUseBeforeDefine(_) => TYPESCRIPT_NO_USE_BEFORE_DEFINE_ID,
             Self::TypescriptNoUselessEmptyExport(_) => TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID,
             Self::TypescriptNoVarRequires(_) => TYPESCRIPT_NO_VAR_REQUIRES_ID,
             Self::TypescriptNoWrapperObjectTypes(_) => TYPESCRIPT_NO_WRAPPER_OBJECT_TYPES_ID,
@@ -3204,6 +3208,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::NAME,
             Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::NAME,
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::NAME,
+            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::NAME,
             Self::TypescriptNoUselessEmptyExport(_) => TypescriptNoUselessEmptyExport::NAME,
             Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::NAME,
             Self::TypescriptNoWrapperObjectTypes(_) => TypescriptNoWrapperObjectTypes::NAME,
@@ -3979,6 +3984,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::CATEGORY,
             Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::CATEGORY,
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::CATEGORY,
+            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::CATEGORY,
             Self::TypescriptNoUselessEmptyExport(_) => TypescriptNoUselessEmptyExport::CATEGORY,
             Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::CATEGORY,
             Self::TypescriptNoWrapperObjectTypes(_) => TypescriptNoWrapperObjectTypes::CATEGORY,
@@ -4777,6 +4783,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::FIX,
             Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::FIX,
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::FIX,
+            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::FIX,
             Self::TypescriptNoUselessEmptyExport(_) => TypescriptNoUselessEmptyExport::FIX,
             Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::FIX,
             Self::TypescriptNoWrapperObjectTypes(_) => TypescriptNoWrapperObjectTypes::FIX,
@@ -5591,6 +5598,7 @@ impl RuleEnum {
                 TypescriptNoUnsafeTypeAssertion::documentation()
             }
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::documentation(),
+            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::documentation(),
             Self::TypescriptNoUselessEmptyExport(_) => {
                 TypescriptNoUselessEmptyExport::documentation()
             }
@@ -6914,6 +6922,10 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeUnaryMinus(_) => {
                 TypescriptNoUnsafeUnaryMinus::config_schema(generator)
                     .or_else(|| TypescriptNoUnsafeUnaryMinus::schema(generator))
+            }
+            Self::TypescriptNoUseBeforeDefine(_) => {
+                TypescriptNoUseBeforeDefine::config_schema(generator)
+                    .or_else(|| TypescriptNoUseBeforeDefine::schema(generator))
             }
             Self::TypescriptNoUselessEmptyExport(_) => {
                 TypescriptNoUselessEmptyExport::config_schema(generator)
@@ -8357,6 +8369,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => "typescript",
             Self::TypescriptNoUnsafeTypeAssertion(_) => "typescript",
             Self::TypescriptNoUnsafeUnaryMinus(_) => "typescript",
+            Self::TypescriptNoUseBeforeDefine(_) => "typescript",
             Self::TypescriptNoUselessEmptyExport(_) => "typescript",
             Self::TypescriptNoVarRequires(_) => "typescript",
             Self::TypescriptNoWrapperObjectTypes(_) => "typescript",
@@ -9608,6 +9621,9 @@ impl RuleEnum {
             )),
             Self::TypescriptNoUnsafeUnaryMinus(_) => Ok(Self::TypescriptNoUnsafeUnaryMinus(
                 TypescriptNoUnsafeUnaryMinus::from_configuration(value)?,
+            )),
+            Self::TypescriptNoUseBeforeDefine(_) => Ok(Self::TypescriptNoUseBeforeDefine(
+                TypescriptNoUseBeforeDefine::from_configuration(value)?,
             )),
             Self::TypescriptNoUselessEmptyExport(_) => Ok(Self::TypescriptNoUselessEmptyExport(
                 TypescriptNoUselessEmptyExport::from_configuration(value)?,
@@ -11194,6 +11210,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.to_configuration(),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.to_configuration(),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.to_configuration(),
+            Self::TypescriptNoUseBeforeDefine(rule) => rule.to_configuration(),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.to_configuration(),
             Self::TypescriptNoVarRequires(rule) => rule.to_configuration(),
             Self::TypescriptNoWrapperObjectTypes(rule) => rule.to_configuration(),
@@ -11873,6 +11890,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.run(node, ctx),
+            Self::TypescriptNoUseBeforeDefine(rule) => rule.run(node, ctx),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.run(node, ctx),
             Self::TypescriptNoVarRequires(rule) => rule.run(node, ctx),
             Self::TypescriptNoWrapperObjectTypes(rule) => rule.run(node, ctx),
@@ -12550,6 +12568,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.run_once(ctx),
+            Self::TypescriptNoUseBeforeDefine(rule) => rule.run_once(ctx),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.run_once(ctx),
             Self::TypescriptNoVarRequires(rule) => rule.run_once(ctx),
             Self::TypescriptNoWrapperObjectTypes(rule) => rule.run_once(ctx),
@@ -13273,6 +13292,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptNoUseBeforeDefine(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoVarRequires(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoWrapperObjectTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13994,6 +14014,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.should_run(ctx),
+            Self::TypescriptNoUseBeforeDefine(rule) => rule.should_run(ctx),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.should_run(ctx),
             Self::TypescriptNoVarRequires(rule) => rule.should_run(ctx),
             Self::TypescriptNoWrapperObjectTypes(rule) => rule.should_run(ctx),
@@ -14763,6 +14784,7 @@ impl RuleEnum {
                 TypescriptNoUnsafeTypeAssertion::IS_TSGOLINT_RULE
             }
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::IS_TSGOLINT_RULE,
+            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::IS_TSGOLINT_RULE,
             Self::TypescriptNoUselessEmptyExport(_) => {
                 TypescriptNoUselessEmptyExport::IS_TSGOLINT_RULE
             }
@@ -15685,6 +15707,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::HAS_CONFIG,
             Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::HAS_CONFIG,
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::HAS_CONFIG,
+            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::HAS_CONFIG,
             Self::TypescriptNoUselessEmptyExport(_) => TypescriptNoUselessEmptyExport::HAS_CONFIG,
             Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::HAS_CONFIG,
             Self::TypescriptNoWrapperObjectTypes(_) => TypescriptNoWrapperObjectTypes::HAS_CONFIG,
@@ -16456,6 +16479,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.types_info(),
+            Self::TypescriptNoUseBeforeDefine(rule) => rule.types_info(),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.types_info(),
             Self::TypescriptNoVarRequires(rule) => rule.types_info(),
             Self::TypescriptNoWrapperObjectTypes(rule) => rule.types_info(),
@@ -17133,6 +17157,7 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.run_info(),
+            Self::TypescriptNoUseBeforeDefine(rule) => rule.run_info(),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.run_info(),
             Self::TypescriptNoVarRequires(rule) => rule.run_info(),
             Self::TypescriptNoWrapperObjectTypes(rule) => rule.run_info(),
@@ -17874,6 +17899,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptNoUnsafeReturn(TypescriptNoUnsafeReturn::default()),
         RuleEnum::TypescriptNoUnsafeTypeAssertion(TypescriptNoUnsafeTypeAssertion::default()),
         RuleEnum::TypescriptNoUnsafeUnaryMinus(TypescriptNoUnsafeUnaryMinus::default()),
+        RuleEnum::TypescriptNoUseBeforeDefine(TypescriptNoUseBeforeDefine::default()),
         RuleEnum::TypescriptNoUselessEmptyExport(TypescriptNoUselessEmptyExport::default()),
         RuleEnum::TypescriptNoVarRequires(TypescriptNoVarRequires::default()),
         RuleEnum::TypescriptNoWrapperObjectTypes(TypescriptNoWrapperObjectTypes::default()),
