@@ -556,6 +556,19 @@ expression: json
         "ignore"
       ]
     },
+    "NewlinesBetweenMarker": {
+      "description": "A marker object for overriding `newlinesBetween` at a specific group boundary.",
+      "type": "object",
+      "required": [
+        "newlinesBetween"
+      ],
+      "properties": {
+        "newlinesBetween": {
+          "type": "boolean"
+        }
+      },
+      "markdownDescription": "A marker object for overriding `newlinesBetween` at a specific group boundary."
+    },
     "ObjectWrapConfig": {
       "type": "string",
       "enum": [
@@ -619,13 +632,26 @@ expression: json
     "SortGroupItemConfig": {
       "anyOf": [
         {
-          "type": "string"
+          "description": "A `{ \"newlinesBetween\": bool }` marker object that overrides the global `newlinesBetween`\nsetting for the boundary between the previous and next groups.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/NewlinesBetweenMarker"
+            }
+          ],
+          "markdownDescription": "A `{ \"newlinesBetween\": bool }` marker object that overrides the global `newlinesBetween`\nsetting for the boundary between the previous and next groups."
         },
         {
+          "description": "A single group name string (e.g. `\"value-builtin\"`).",
+          "type": "string",
+          "markdownDescription": "A single group name string (e.g. `\"value-builtin\"`)."
+        },
+        {
+          "description": "Multiple group names treated as one group (e.g. `[\"value-builtin\", \"value-external\"]`).",
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "markdownDescription": "Multiple group names treated as one group (e.g. `[\"value-builtin\", \"value-external\"]`)."
         }
       ]
     },

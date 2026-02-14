@@ -36,6 +36,10 @@ pub struct SortImportsOptions {
     /// Define your own groups for matching very specific imports.
     /// Default is `[]`.
     pub custom_groups: Vec<CustomGroupDefinition>,
+    /// Per-boundary newline overrides.
+    /// `newline_boundary_overrides[i]` = override for boundary between `groups[i]` and `groups[i+1]`.
+    /// `None` means "use global `newlines_between`".
+    pub newline_boundary_overrides: Vec<Option<bool>>,
 }
 
 impl Default for SortImportsOptions {
@@ -50,6 +54,7 @@ impl Default for SortImportsOptions {
             internal_pattern: default_internal_patterns(),
             groups: default_groups(),
             custom_groups: vec![],
+            newline_boundary_overrides: vec![],
         }
     }
 }

@@ -34,6 +34,7 @@ fn main() -> Result<(), String> {
         internal_pattern: default_internal_patterns(),
         groups: default_groups(),
         custom_groups: vec![],
+        newline_boundary_overrides: vec![],
     };
 
     // Read source file

@@ -211,14 +211,6 @@ type: `array | string`
 
 
 
-##### experimentalSortImports.groups[n][n]
-
-type: `string`
-
-
-
-
-
 ### experimentalSortImports.ignoreCase
 
 type: `boolean`
@@ -715,14 +707,6 @@ The list of modifiers is sorted from most to least important:
 ####### overrides[n].options.experimentalSortImports.groups[n]
 
 type: `array | string`
-
-
-
-
-
-######## overrides[n].options.experimentalSortImports.groups[n][n]
-
-type: `string`
 
 
 
