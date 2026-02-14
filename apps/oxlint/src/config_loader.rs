@@ -172,7 +172,7 @@ pub enum ConfigLoadError {
         error: String,
     },
 
-    TypeScriptConfigFileFoundButJsRuntimeNotAvailable,
+    JsConfigFileFoundButJsRuntimeNotAvailable,
 
     Diagnostic(OxcDiagnostic),
 }
@@ -273,12 +273,12 @@ impl<'a> ConfigLoader<'a> {
 
         #[cfg(not(feature = "napi"))]
         {
-            return Err(vec![ConfigLoadError::TypeScriptConfigFileFoundButJsRuntimeNotAvailable]);
+            return Err(vec![ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable]);
         }
 
         #[cfg(feature = "napi")]
         let Some(js_config_loader) = self.js_config_loader else {
-            return Err(vec![ConfigLoadError::TypeScriptConfigFileFoundButJsRuntimeNotAvailable]);
+            return Err(vec![ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable]);
         };
 
         let paths_as_strings: Vec<String> =
@@ -414,7 +414,7 @@ impl<'a> ConfigLoader<'a> {
         }
 
         if ts_exists {
-            return self.load_root_ts_config(&ts_path).map(Some);
+            return self.load_root_js_config(&ts_path).map(Some);
         }
 
         if json_exists {
@@ -431,8 +431,8 @@ impl<'a> ConfigLoader<'a> {
     ) -> Result<Oxlintrc, OxcDiagnostic> {
         if let Some(config_path) = config_path {
             let full_path = cwd.join(config_path);
-            if full_path.file_name() == Some(OsStr::new(DEFAULT_TS_OXLINTRC_NAME)) {
-                return self.load_root_ts_config(&full_path);
+            if is_js_config_path(&full_path) {
+                return self.load_root_js_config(&full_path);
             }
             return Oxlintrc::from_file(&full_path);
         }
@@ -462,8 +462,8 @@ impl<'a> ConfigLoader<'a> {
         // If an explicit config path is provided, use it directly
         if let Some(config_path) = config_path {
             let full_path = cwd.join(config_path);
-            if full_path.file_name() == Some(OsStr::new(DEFAULT_TS_OXLINTRC_NAME)) {
-                return self.load_root_ts_config(&full_path);
+            if is_js_config_path(&full_path) {
+                return self.load_root_js_config(&full_path);
             }
             return Oxlintrc::from_file(&full_path);
         }
@@ -482,14 +482,14 @@ impl<'a> ConfigLoader<'a> {
         Ok(Oxlintrc::default())
     }
 
-    fn load_root_ts_config(&self, path: &Path) -> Result<Oxlintrc, OxcDiagnostic> {
+    fn load_root_js_config(&self, path: &Path) -> Result<Oxlintrc, OxcDiagnostic> {
         match self.load_js_configs(&[path.to_path_buf()]) {
             Ok(mut configs) => Ok(configs.pop().unwrap_or_default()),
             Err(errors) => {
                 if let Some(first) = errors.into_iter().next() {
                     match first {
-                        ConfigLoadError::TypeScriptConfigFileFoundButJsRuntimeNotAvailable => {
-                            Err(ts_config_not_supported_diagnostic(path))
+                        ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
+                            Err(js_config_not_supported_diagnostic(path))
                         }
                         ConfigLoadError::Diagnostic(diag) => Err(diag),
                         // `load_js_configs` only returns the two variants above, but keep this
@@ -498,7 +498,7 @@ impl<'a> ConfigLoader<'a> {
                         ConfigLoadError::Build { error, .. } => Err(OxcDiagnostic::error(error)),
                     }
                 } else {
-                    Err(OxcDiagnostic::error("Failed to load TypeScript config."))
+                    Err(OxcDiagnostic::error("Failed to load JavaScript/TypeScript config."))
                 }
             }
         }
@@ -599,21 +599,28 @@ fn config_conflict_diagnostic(dir: &Path) -> OxcDiagnostic {
     .with_help("Delete one of the configuration files.")
 }
 
-fn ts_config_not_supported_diagnostic(path: &Path) -> OxcDiagnostic {
+fn js_config_not_supported_diagnostic(path: &Path) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
-        "TypeScript config files ({}) found but JS runtime not available.",
+        "JavaScript/TypeScript config file ({}) found but JS runtime not available.",
         path.display()
     ))
     .with_help("Run oxlint via the npm package, or use JSON config files (.oxlintrc.json).")
 }
 
+fn is_js_config_path(path: &Path) -> bool {
+    matches!(
+        path.extension().and_then(OsStr::to_str),
+        Some("js" | "mjs" | "cjs" | "ts" | "cts" | "mts")
+    )
+}
+
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
 
     use oxc_linter::ExternalPluginStore;
 
-    use super::ConfigLoader;
+    use super::{ConfigLoader, is_js_config_path};
 
     #[test]
     fn test_config_path_with_parent_references() {
@@ -681,5 +688,16 @@ mod test {
         let result = loader.load_root_config_with_ancestor_search(&temp_dir, None);
         assert!(result.is_ok(), "Expected default config when no config found");
         std::fs::remove_dir_all(&temp_dir).expect("Failed to cleanup temporary test directory");
+    }
+
+    #[test]
+    fn test_is_js_config_path() {
+        assert!(is_js_config_path(Path::new("my-config.js")));
+        assert!(is_js_config_path(Path::new("my-config.cjs")));
+        assert!(is_js_config_path(Path::new("my-config.mjs")));
+        assert!(is_js_config_path(Path::new("my-config.ts")));
+        assert!(is_js_config_path(Path::new("my-config.cts")));
+        assert!(is_js_config_path(Path::new("my-config.mts")));
+        assert!(!is_js_config_path(Path::new("oxlint.config.json")));
     }
 }
