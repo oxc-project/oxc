@@ -230,6 +230,7 @@ impl ConfigStoreBuilder {
 
             let resolver = Resolver::new(ResolveOptions {
                 condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
+                modules: get_node_path_directories(),
                 ..Default::default()
             });
 
@@ -674,12 +675,140 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
     }
 }
 
+/// Get directories from NODE_PATH environment variable for module resolution.
+///
+/// NODE_PATH is a colon-separated (Unix) or semicolon-separated (Windows) list of directories
+/// that Node.js and other Node tooling use as additional paths for module resolution.
+///
+/// This function parses NODE_PATH and returns a Vec of directory paths that can be used
+/// by the resolver to locate external plugins.
+///
+/// # Returns
+/// A vector of directory paths from NODE_PATH, or an empty vector if NODE_PATH is not set.
+fn get_node_path_directories() -> Vec<String> {
+    std::env::var("NODE_PATH").ok().map_or_else(Vec::new, |node_path| parse_node_path(&node_path))
+}
+
+/// Parse NODE_PATH string into a vector of directory paths.
+///
+/// # Arguments
+/// * `node_path` - The NODE_PATH environment variable value
+///
+/// # Returns
+/// A vector of directory paths, or an empty vector if node_path is empty.
+fn parse_node_path(node_path: &str) -> Vec<String> {
+    if node_path.is_empty() {
+        return Vec::new();
+    }
+
+    // On Unix/Mac, NODE_PATH uses colon as separator
+    // On Windows, NODE_PATH uses semicolon as separator
+    #[cfg(target_family = "unix")]
+    let separator = ':';
+    #[cfg(target_family = "windows")]
+    let separator = ';';
+
+    node_path.split(separator).filter(|path| !path.is_empty()).map(String::from).collect()
+}
+
 impl Debug for ConfigStoreBuilder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ConfigStoreBuilder")
             .field("rules", &self.rules)
             .field("config", &self.config)
             .finish_non_exhaustive()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_node_path_empty() {
+        // Test with empty string
+        let dirs = parse_node_path("");
+        assert!(dirs.is_empty());
+    }
+
+    #[test]
+    fn test_parse_node_path_single_path() {
+        // Test with a single path
+        #[cfg(target_family = "unix")]
+        let test_path = "/usr/local/lib/node_modules";
+        #[cfg(target_family = "windows")]
+        let test_path = "C:\\nodejs\\node_modules";
+
+        let dirs = parse_node_path(test_path);
+        assert_eq!(dirs.len(), 1);
+        assert_eq!(dirs[0], test_path);
+    }
+
+    #[test]
+    fn test_parse_node_path_multiple_paths() {
+        // Test with multiple paths using platform-specific separator
+        #[cfg(target_family = "unix")]
+        {
+            let test_paths =
+                "/usr/local/lib/node_modules:/home/user/.node_modules:/opt/node_modules";
+            let dirs = parse_node_path(test_paths);
+            assert_eq!(dirs.len(), 3);
+            assert_eq!(dirs[0], "/usr/local/lib/node_modules");
+            assert_eq!(dirs[1], "/home/user/.node_modules");
+            assert_eq!(dirs[2], "/opt/node_modules");
+        }
+        #[cfg(target_family = "windows")]
+        {
+            let test_paths =
+                "C:\\nodejs\\node_modules;D:\\project\\node_modules;E:\\global\\node_modules";
+            let dirs = parse_node_path(test_paths);
+            assert_eq!(dirs.len(), 3);
+            assert_eq!(dirs[0], "C:\\nodejs\\node_modules");
+            assert_eq!(dirs[1], "D:\\project\\node_modules");
+            assert_eq!(dirs[2], "E:\\global\\node_modules");
+        }
+    }
+
+    #[test]
+    fn test_parse_node_path_with_empty_entries() {
+        // Test with empty entries (consecutive separators)
+        #[cfg(target_family = "unix")]
+        {
+            let test_paths = "/usr/local/lib/node_modules::/home/user/.node_modules";
+            let dirs = parse_node_path(test_paths);
+            assert_eq!(dirs.len(), 2); // Empty entries should be filtered out
+            assert_eq!(dirs[0], "/usr/local/lib/node_modules");
+            assert_eq!(dirs[1], "/home/user/.node_modules");
+        }
+        #[cfg(target_family = "windows")]
+        {
+            let test_paths = "C:\\nodejs\\node_modules;;D:\\project\\node_modules";
+            let dirs = parse_node_path(test_paths);
+            assert_eq!(dirs.len(), 2); // Empty entries should be filtered out
+            assert_eq!(dirs[0], "C:\\nodejs\\node_modules");
+            assert_eq!(dirs[1], "D:\\project\\node_modules");
+        }
+    }
+
+    #[test]
+    fn test_parse_node_path_trailing_separator() {
+        // Test with trailing separator
+        #[cfg(target_family = "unix")]
+        {
+            let test_paths = "/usr/local/lib/node_modules:/home/user/.node_modules:";
+            let dirs = parse_node_path(test_paths);
+            assert_eq!(dirs.len(), 2);
+            assert_eq!(dirs[0], "/usr/local/lib/node_modules");
+            assert_eq!(dirs[1], "/home/user/.node_modules");
+        }
+        #[cfg(target_family = "windows")]
+        {
+            let test_paths = "C:\\nodejs\\node_modules;D:\\project\\node_modules;";
+            let dirs = parse_node_path(test_paths);
+            assert_eq!(dirs.len(), 2);
+            assert_eq!(dirs[0], "C:\\nodejs\\node_modules");
+            assert_eq!(dirs[1], "D:\\project\\node_modules");
+        }
     }
 }
 
