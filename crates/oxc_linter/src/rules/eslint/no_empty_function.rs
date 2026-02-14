@@ -11,9 +11,14 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use serde_json::Value;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_empty_function_diagnostic<S: AsRef<str>>(
     span: Span,
@@ -31,9 +36,185 @@ fn no_empty_function_diagnostic<S: AsRef<str>>(
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyFunction {
-    /// Locations and kinds of functions that are allowed to be empty.
     allow: Allowed,
 }
+
+impl From<NoEmptyFunctionConfig> for NoEmptyFunction {
+    fn from(config: NoEmptyFunctionConfig) -> Self {
+        let mut flags = Allowed::None;
+        for kind in &config.allow {
+            flags |= Allowed::from(*kind);
+        }
+        Self { allow: flags }
+    }
+}
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(default, deny_unknown_fields)]
+pub struct NoEmptyFunctionConfig {
+    /// Types of functions that are allowed to be empty.
+    ///
+    /// By default, no function kinds are allowed to be empty, but this option can be used to
+    /// permit specific kinds of functions.
+    ///
+    /// Example:
+    /// ```json
+    /// {
+    ///   "no-empty-function": ["error", { "allow": ["constructors"] }]
+    /// }
+    /// ```
+    allow: Vec<AllowKind>,
+}
+
+/// Kinds of functions that can be allowed to be empty.
+// NOTE: typescript-eslint extends options from eslint. Their docs don't list originals.
+// NOTE: typescript-eslint uses kebab-case instead of camelCase for some of its additional options.
+// This is confusing, so we support both kinds.
+#[derive(Debug, Clone, Copy, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum AllowKind {
+    /// Allow empty regular functions.
+    ///
+    /// ```js
+    /// function foo() {}
+    /// ```
+    #[serde(alias = "function")]
+    Functions,
+    /// Allow empty arrow functions.
+    ///
+    /// ```js
+    /// const foo = () => {};
+    /// ```
+    #[serde(alias = "arrow-functions")]
+    ArrowFunctions,
+    /// Allow empty generator functions.
+    ///
+    /// ```js
+    /// function* foo() {}
+    /// ```
+    #[serde(alias = "generator-functions")]
+    GeneratorFunctions,
+    /// Allow empty methods.
+    ///
+    /// ```js
+    /// class Foo {
+    ///   bar() {}
+    /// }
+    /// ```
+    #[serde(alias = "method")]
+    Methods,
+    /// Allow empty generator methods.
+    ///
+    /// ```js
+    /// class Foo {
+    ///   *bar() {}
+    /// }
+    /// ```
+    #[serde(alias = "generator-methods")]
+    GeneratorMethods,
+    /// Allow empty getters.
+    ///
+    /// ```js
+    /// class Foo {
+    ///   get bar() {}
+    /// }
+    /// ```
+    #[serde(alias = "getter")]
+    Getters,
+    /// Allow empty setters.
+    ///
+    /// ```js
+    /// class Foo {
+    ///   set bar(value) {}
+    /// }
+    /// ```
+    #[serde(alias = "setter")]
+    Setters,
+    /// Allow empty constructors.
+    ///
+    /// ```js
+    /// class Foo {
+    ///   constructor() {}
+    /// }
+    /// ```
+    #[serde(alias = "constructor")]
+    Constructors,
+    /// Allow empty async functions.
+    ///
+    /// ```js
+    /// async function foo() {}
+    /// ```
+    #[serde(alias = "async-functions")]
+    AsyncFunctions,
+    /// Allow empty async methods.
+    ///
+    /// ```js
+    /// class Foo {
+    ///   async bar() {}
+    /// }
+    /// ```
+    #[serde(alias = "async-methods")]
+    AsyncMethods,
+    /// Allow empty private constructors.
+    ///
+    /// ```ts
+    /// class Foo {
+    ///   private constructor() {}
+    /// }
+    /// ```
+    #[serde(alias = "private-constructors")]
+    PrivateConstructors,
+    /// Allow empty protected constructors.
+    ///
+    /// ```ts
+    /// class Foo {
+    ///   protected constructor() {}
+    /// }
+    /// ```
+    #[serde(alias = "protected-constructors")]
+    ProtectedConstructors,
+    /// Allow empty decorated functions.
+    ///
+    /// ```js
+    /// class Foo {
+    ///   @decorator()
+    ///   bar() {}
+    /// }
+    /// ```
+    #[serde(alias = "decorated-functions")]
+    DecoratedFunctions,
+    /// Allow empty override methods.
+    ///
+    /// ```ts
+    /// class Foo extends Base {
+    ///   override bar() {}
+    /// }
+    /// ```
+    #[serde(alias = "override-methods")]
+    OverrideMethods,
+}
+
+impl From<AllowKind> for Allowed {
+    fn from(kind: AllowKind) -> Self {
+        match kind {
+            AllowKind::Functions => Allowed::Function,
+            AllowKind::ArrowFunctions => Allowed::ArrowFunction,
+            AllowKind::GeneratorFunctions => Allowed::GeneratorFunctions,
+            AllowKind::Methods => Allowed::Methods,
+            AllowKind::GeneratorMethods => Allowed::GeneratorMethods,
+            AllowKind::Getters => Allowed::Getters,
+            AllowKind::Setters => Allowed::Setters,
+            AllowKind::Constructors => Allowed::Constructors,
+            AllowKind::AsyncFunctions => Allowed::AsyncFunctions,
+            AllowKind::AsyncMethods => Allowed::AsyncMethods,
+            AllowKind::PrivateConstructors => Allowed::PrivateConstructor,
+            AllowKind::ProtectedConstructors => Allowed::ProtectedConstructor,
+            AllowKind::DecoratedFunctions => Allowed::DecoratedFunction,
+            AllowKind::OverrideMethods => Allowed::OverrideMethod,
+        }
+    }
+}
+
 bitflags! {
     #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct Allowed: u16 {
@@ -68,78 +249,16 @@ bitflags! {
         const OverrideMethod = 1 << 13;
     }
 }
-impl TryFrom<&str> for Allowed {
-    type Error = ();
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        // NOTE: typescript-eslint extends options from eslint. Their docs dont list
-        // originals
-        // NOTE: typescript-eslint uses kebab-case instead of camelCase for some of its additional options.
-        // This is confusing, so we support both kinds
-        match value {
-            "functions" | "function" => Ok(Self::Function),
-            "arrowFunctions" | "arrow-functions" => Ok(Self::ArrowFunction),
-            "generatorFunctions" | "generator-functions" => Ok(Self::GeneratorFunctions),
-            "methods" | "method" => Ok(Self::Methods),
-            "generatorMethods" | "generator-methods" => Ok(Self::GeneratorMethods),
-            "getters" | "getter" => Ok(Self::Getters),
-            "setters" | "setter" => Ok(Self::Setters),
-            "constructors" | "constructor" => Ok(Self::Constructors),
-            "asyncFunctions" | "async-functions" => Ok(Self::AsyncFunctions),
-            "asyncMethods" | "async-methods" => Ok(Self::AsyncMethods),
-            "privateConstructors" | "private-constructors" => Ok(Self::PrivateConstructor),
-            "protectedConstructors" | "protected-constructors" => Ok(Self::ProtectedConstructor),
-            "decoratedFunctions" | "decorated-functions" => Ok(Self::DecoratedFunction),
-            "overrideMethods" | "override-methods" => Ok(Self::OverrideMethod),
-            _ => Err(()),
-        }
-    }
-}
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows the usages of empty functions
+    /// Disallows the usage of empty functions.
     ///
     /// ### Why is this bad?
     ///
     /// Empty functions can reduce readability because readers need to guess whether it's
     /// intentional or not. So writing a clear comment for empty functions is a good practice.
-    ///
-    /// ### Options
-    ///
-    /// #### allow
-    ///
-    /// `{ type: string[], default: [] }`
-    ///
-    /// You may pass a list of allowed function kinds, which will allow functions of
-    /// these kinds to be empty.
-    ///
-    /// Example:
-    /// ```json
-    /// {
-    ///   "no-empty-function": [
-    ///     "error",
-    ///     { "allow": ["functions"] }
-    ///   ]
-    /// }
-    /// ```
-    ///
-    /// `allow` accepts the following values:
-    /// - `"functions"`
-    /// - `"arrowFunctions"`
-    /// - `"generatorFunctions"`
-    /// - `"methods"`
-    /// - `"generatorMethods"`
-    /// - `"getters"`
-    /// - `"setters"`
-    /// - `"constructors"`
-    /// - `"privateConstructors"`
-    /// - `"protectedConstructors"`
-    /// - `"asyncFunctions"`
-    /// - `"asyncMethods"`
-    /// - `"decoratedFunctions"`
-    /// - `"overrideMethods"`
     ///
     /// ### Examples
     ///
@@ -182,30 +301,14 @@ declare_oxc_lint!(
     eslint,
     restriction,
     pending,
-    // TODO: Replace this with an actual config struct. This is a dummy value to
-    // indicate that this rule has configuration and avoid errors.
-    config = Value,
+    config = NoEmptyFunctionConfig,
 );
 
 impl Rule for NoEmptyFunction {
-    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let config = match value {
-            Value::Object(ref obj) => Some(obj),
-            Value::Array(ref arr) => arr.first().and_then(Value::as_object),
-            _ => None,
-        };
-        let Some(config) = config else { return Ok(NoEmptyFunction::default()) };
-        let Some(allow) = config.get("allow").and_then(Value::as_array) else {
-            return Ok(NoEmptyFunction::default());
-        };
-        let mut allow_option = Allowed::None;
-        for allowed in allow {
-            let Some(allowed) = allowed.as_str() else { continue };
-            let Some(allowed) = Allowed::try_from(allowed).ok() else { continue };
-            allow_option |= allowed;
-        }
-
-        Ok(Self { allow: allow_option })
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        let config = serde_json::from_value::<DefaultRuleConfig<NoEmptyFunctionConfig>>(value)
+            .map(DefaultRuleConfig::into_inner)?;
+        Ok(NoEmptyFunction::from(config))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -486,10 +589,40 @@ fn test() {
             Some(serde_json::json!([{ "allow": ["arrowFunctions", "functions"] }])),
         ),
         ("function* gen() {}", Some(serde_json::json!([{ "allow": ["generatorFunctions"] }]))),
+        ("function* gen() {}", Some(serde_json::json!([{ "allow": ["generator-functions"] }]))),
         ("async function foo() {}", Some(serde_json::json!([{ "allow": ["asyncFunctions"] }]))),
+        ("async function foo() {}", Some(serde_json::json!([{ "allow": ["async-functions"] }]))),
         ("const foo = async () => {};", Some(serde_json::json!([{ "allow": ["asyncFunctions"] }]))),
         ("class Foo { async bar() {} }", Some(serde_json::json!([{ "allow": ["asyncMethods"] }]))),
+        ("class Foo { async bar() {} }", Some(serde_json::json!([{ "allow": ["async-methods"] }]))),
         ("class Foo { *gen() {} }", Some(serde_json::json!([{ "allow": ["generatorMethods"] }]))),
+        ("class Foo { *gen() {} }", Some(serde_json::json!([{ "allow": ["generator-methods"] }]))),
+        // getters
+        // TODO: Fix these two. They are from the original tests.
+        // ("var obj = {get foo() {}};", Some(serde_json::json!([{ "allow": ["getters"] }]))),
+        // ("var obj = {get foo() {}};", Some(serde_json::json!([{ "allow": ["getter"] }]))),
+        ("class A {get foo() {}}", Some(serde_json::json!([{ "allow": ["getters"] }]))),
+        ("class A {get foo() {}}", Some(serde_json::json!([{ "allow": ["getter"] }]))),
+        ("class A {static get foo() {}}", Some(serde_json::json!([{ "allow": ["getters"] }]))),
+        ("class A {static get foo() {}}", Some(serde_json::json!([{ "allow": ["getter"] }]))),
+        // setters
+        // TODO: Fix these two. They are from the original tests.
+        // ("var obj = {set foo(value) {}};", Some(serde_json::json!([{ "allow": ["setters"] }]))),
+        // ("var obj = {set foo(value) {}};", Some(serde_json::json!([{ "allow": ["setter"] }]))),
+        ("class A {set foo(value) {}}", Some(serde_json::json!([{ "allow": ["setters"] }]))),
+        ("class A {set foo(value) {}}", Some(serde_json::json!([{ "allow": ["setter"] }]))),
+        ("class A {static set foo(value) {}}", Some(serde_json::json!([{ "allow": ["setters"] }]))),
+        ("class A {static set foo(value) {}}", Some(serde_json::json!([{ "allow": ["setter"] }]))),
+        ("var A = class {set foo(value) {}};", Some(serde_json::json!([{ "allow": ["setters"] }]))),
+        ("var A = class {set foo(value) {}};", Some(serde_json::json!([{ "allow": ["setter"] }]))),
+        (
+            "var A = class {static set foo(value) {}};",
+            Some(serde_json::json!([{ "allow": ["setters"] }])),
+        ),
+        (
+            "var A = class {static set foo(value) {}};",
+            Some(serde_json::json!([{ "allow": ["setter"] }])),
+        ),
         // extras added by oxc team
         ("declare function foo(x: number): void;", None),
     ];
