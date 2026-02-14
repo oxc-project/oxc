@@ -133,7 +133,7 @@ function destroyWorkspaceWrapper(workspace: string): undefined {
  * Lazy-loads the js_config module on first call.
  * Uses native Node.js TypeScript support to import config files.
  *
- * @param paths - Array of absolute paths to oxlint.config.ts files
+ * @param paths - Array of absolute paths to JavaScript/TypeScript config files
  * @returns JSON-stringified result with all configs or error
  */
 function loadJsConfigsWrapper(paths: string[]): Promise<string> {

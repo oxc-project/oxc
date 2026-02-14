@@ -114,7 +114,7 @@ pub type JsDestroyWorkspaceCb = ThreadsafeFunction<
 /// JS callback to load JavaScript config files.
 #[napi]
 pub type JsLoadJsConfigsCb = ThreadsafeFunction<
-    // Arguments: Vec of absolute paths to oxlint.config.ts files
+    // Arguments: Vec of absolute paths to JavaScript/TypeScript config files
     Vec<String>,
     // Return value: JSON string containing success/failure result
     Promise<String>,
