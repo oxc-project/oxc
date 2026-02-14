@@ -2736,6 +2736,12 @@ impl RuleRunner for crate::rules::unicorn::consistent_function_scoping::Consiste
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::custom_error_definition::CustomErrorDefinition {
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::AssignmentExpression, AstType::Class]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::unicorn::empty_brace_spaces::EmptyBraceSpaces {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::BlockStatement,
