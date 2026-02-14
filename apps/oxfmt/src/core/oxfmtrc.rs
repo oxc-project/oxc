@@ -420,7 +420,48 @@ impl FormatConfig {
                 sort_imports.internal_pattern = v;
             }
             if let Some(v) = config.groups {
-                sort_imports.groups = v.into_iter().map(SortGroupItemConfig::into_vec).collect();
+                let mut groups = Vec::new();
+                let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
+                let mut pending_override: Option<bool> = None;
+
+                for item in v {
+                    match item {
+                        SortGroupItemConfig::NewlinesBetween(marker) => {
+                            if groups.is_empty() {
+                                return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the start of `groups`".to_string());
+                            }
+                            if pending_override.is_some() {
+                                return Err("Invalid `sortImports` configuration: consecutive `{ \"newlinesBetween\" }` markers are not allowed in `groups`".to_string());
+                            }
+                            pending_override = Some(marker.newlines_between);
+                        }
+                        other => {
+                            if !groups.is_empty() {
+                                // Record the boundary between the previous group and this one.
+                                // `pending_override` is
+                                // - `Some(bool)` if a marker preceded this group
+                                // - or `None` (= use global `newlines_between`) otherwise
+                                // For the very first group (`groups.is_empty()`),
+                                // there is no preceding boundary, so we skip this entirely.
+                                newline_boundary_overrides.push(pending_override.take());
+                            }
+                            groups.push(other.into_vec());
+                        }
+                    }
+                }
+
+                if pending_override.is_some() {
+                    return Err("Invalid `sortImports` configuration: `{ \"newlinesBetween\" }` marker cannot appear at the end of `groups`".to_string());
+                }
+
+                sort_imports.groups = groups;
+                sort_imports.newline_boundary_overrides = newline_boundary_overrides;
+            }
+
+            if sort_imports.partition_by_newline
+                && sort_imports.newline_boundary_overrides.iter().any(Option::is_some)
+            {
+                return Err("Invalid `sortImports` configuration: `partitionByNewline` and per-group `{ \"newlinesBetween\" }` markers cannot be used together".to_string());
             }
             if let Some(v) = config.custom_groups {
                 sort_imports.custom_groups = v
@@ -698,8 +739,20 @@ pub enum SortOrderConfig {
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged)]
 pub enum SortGroupItemConfig {
+    /// A `{ "newlinesBetween": bool }` marker object that overrides the global `newlinesBetween`
+    /// setting for the boundary between the previous and next groups.
+    NewlinesBetween(NewlinesBetweenMarker),
+    /// A single group name string (e.g. `"value-builtin"`).
     Single(String),
+    /// Multiple group names treated as one group (e.g. `["value-builtin", "value-external"]`).
     Multiple(Vec<String>),
+}
+
+/// A marker object for overriding `newlinesBetween` at a specific group boundary.
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct NewlinesBetweenMarker {
+    pub newlines_between: bool,
 }
 
 impl SortGroupItemConfig {
@@ -707,6 +760,9 @@ impl SortGroupItemConfig {
         match self {
             Self::Single(s) => vec![s],
             Self::Multiple(v) => v,
+            Self::NewlinesBetween(_) => {
+                unreachable!("NewlinesBetween markers should be handled before calling into_vec")
+            }
         }
     }
 }
@@ -1206,6 +1262,92 @@ mod tests {
         assert_eq!(sort_imports.groups[0], vec!["builtin".to_string()]);
         assert_eq!(sort_imports.groups[1], vec!["external".to_string(), "internal".to_string()]);
         assert_eq!(sort_imports.groups[4], vec!["index".to_string()]);
+
+        // Test groups with newlinesBetween overrides
+        let config: FormatConfig = serde_json::from_str(
+            r#"{
+                "experimentalSortImports": {
+                    "groups": [
+                        "builtin",
+                        { "newlinesBetween": false },
+                        "external",
+                        "parent"
+                    ]
+                }
+            }"#,
+        )
+        .unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
+        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
+        assert_eq!(sort_imports.groups.len(), 3);
+        assert_eq!(sort_imports.groups[0], vec!["builtin".to_string()]);
+        assert_eq!(sort_imports.groups[1], vec!["external".to_string()]);
+        assert_eq!(sort_imports.groups[2], vec!["parent".to_string()]);
+        assert_eq!(sort_imports.newline_boundary_overrides.len(), 2);
+        assert_eq!(sort_imports.newline_boundary_overrides[0], Some(false));
+        assert_eq!(sort_imports.newline_boundary_overrides[1], None);
+
+        // Test error: newlinesBetween at start of groups
+        let config: FormatConfig = serde_json::from_str(
+            r#"{
+                "experimentalSortImports": {
+                    "groups": [
+                        { "newlinesBetween": false },
+                        "builtin",
+                        "external"
+                    ]
+                }
+            }"#,
+        )
+        .unwrap();
+        assert!(config.into_oxfmt_options().is_err_and(|e| e.contains("start")));
+
+        // Test error: newlinesBetween at end of groups
+        let config: FormatConfig = serde_json::from_str(
+            r#"{
+                "experimentalSortImports": {
+                    "groups": [
+                        "builtin",
+                        "external",
+                        { "newlinesBetween": true }
+                    ]
+                }
+            }"#,
+        )
+        .unwrap();
+        assert!(config.into_oxfmt_options().is_err_and(|e| e.contains("end")));
+
+        // Test error: consecutive newlinesBetween markers
+        let config: FormatConfig = serde_json::from_str(
+            r#"{
+                "experimentalSortImports": {
+                    "groups": [
+                        "builtin",
+                        { "newlinesBetween": false },
+                        { "newlinesBetween": true },
+                        "external"
+                    ]
+                }
+            }"#,
+        )
+        .unwrap();
+        assert!(config.into_oxfmt_options().is_err_and(|e| e.contains("consecutive")));
+
+        // Test error: partitionByNewline with per-group newlinesBetween markers
+        let config: FormatConfig = serde_json::from_str(
+            r#"{
+                "experimentalSortImports": {
+                    "partitionByNewline": true,
+                    "groups": [
+                        "builtin",
+                        { "newlinesBetween": false },
+                        "external"
+                    ]
+                }
+            }"#,
+        )
+        .unwrap();
+        assert!(config.into_oxfmt_options().is_err_and(|e| e.contains("partitionByNewline")));
     }
 }
 

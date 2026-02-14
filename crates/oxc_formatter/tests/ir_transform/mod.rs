@@ -78,43 +78,49 @@ struct TestSortImportsConfig {
     newlines_between: Option<bool>,
     internal_pattern: Option<Vec<String>>,
     #[serde(default, deserialize_with = "deserialize_groups")]
-    groups: Option<Vec<Vec<String>>>,
+    groups: Option<ParsedGroups>,
     custom_groups: Option<Vec<TestCustomGroupDefinition>>,
 }
 
-fn deserialize_groups<'de, D>(deserializer: D) -> Result<Option<Vec<Vec<String>>>, D::Error>
+#[derive(Debug, Default)]
+struct ParsedGroups {
+    groups: Vec<Vec<String>>,
+    newline_boundary_overrides: Vec<Option<bool>>,
+}
+
+fn deserialize_groups<'de, D>(deserializer: D) -> Result<Option<ParsedGroups>, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
-    use serde::de::Error;
     use serde_json::Value;
 
-    let value: Option<Value> = Option::deserialize(deserializer)?;
-    match value {
-        None => Ok(None),
-        Some(Value::Array(arr)) => {
-            let mut groups = Vec::new();
-            for item in arr {
-                match item {
-                    Value::String(s) => groups.push(vec![s]),
-                    Value::Array(group_arr) => {
-                        let mut group = Vec::new();
-                        for g in group_arr {
-                            if let Value::String(s) = g {
-                                group.push(s);
-                            } else {
-                                return Err(D::Error::custom("groups must contain strings"));
-                            }
-                        }
-                        groups.push(group);
-                    }
-                    _ => return Err(D::Error::custom("groups must be strings or arrays")),
-                }
+    let Some(Value::Array(arr)) = Option::deserialize(deserializer)? else {
+        return Ok(None);
+    };
+
+    let mut groups = Vec::new();
+    let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
+    let mut pending_override: Option<bool> = None;
+
+    for item in arr {
+        if let Value::Object(obj) = item {
+            pending_override = obj.get("newlinesBetween").and_then(Value::as_bool);
+        } else {
+            if !groups.is_empty() {
+                newline_boundary_overrides.push(pending_override.take());
             }
-            Ok(Some(groups))
+            let group = match item {
+                Value::String(s) => vec![s],
+                Value::Array(a) => {
+                    a.into_iter().filter_map(|v| v.as_str().map(String::from)).collect()
+                }
+                _ => continue,
+            };
+            groups.push(group);
         }
-        Some(_) => Err(D::Error::custom("groups must be an array")),
     }
+
+    Ok(Some(ParsedGroups { groups, newline_boundary_overrides }))
 }
 
 fn parse_test_config(json: &str) -> FormatOptions {
@@ -154,7 +160,8 @@ fn parse_test_config(json: &str) -> FormatOptions {
             sort_imports.internal_pattern = v;
         }
         if let Some(v) = sort_config.groups {
-            sort_imports.groups = v;
+            sort_imports.groups = v.groups;
+            sort_imports.newline_boundary_overrides = v.newline_boundary_overrides;
         }
         if let Some(v) = sort_config.custom_groups {
             sort_imports.custom_groups = v
