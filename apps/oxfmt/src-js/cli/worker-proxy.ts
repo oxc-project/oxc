@@ -18,6 +18,7 @@ export async function initExternalFormatter(numThreads: number): Promise<string[
     // Not sure why, but when using `worker_threads`,
     // calls from NAPI (CLI) -> worker threads -> NAPI (prettier-plugin-oxfmt) causes a hang...
     runtime: "child_process",
+    env: process.env as Record<string, string>
   });
 
   return resolvePlugins();
