@@ -26,12 +26,8 @@ class MockRuleTester {
   constructor(_options) {}
 
   run(_name, _rule, tests) {
-    const valid = (tests.valid || []).map((t) =>
-      typeof t === "string" ? { code: t } : t,
-    );
-    const invalid = (tests.invalid || []).map((t) =>
-      typeof t === "string" ? { code: t } : t,
-    );
+    const valid = (tests.valid || []).map((t) => (typeof t === "string" ? { code: t } : t));
+    const invalid = (tests.invalid || []).map((t) => (typeof t === "string" ? { code: t } : t));
     global.__capturedTests = { valid, invalid };
   }
 }

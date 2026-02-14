@@ -29,8 +29,7 @@ const PROJECT_ROOT = path.resolve(__dirname, "../..");
 
 const PLUGINS = {
   eslint: {
-    testUrl:
-      "https://raw.githubusercontent.com/eslint/eslint/main/tests/lib/rules",
+    testUrl: "https://raw.githubusercontent.com/eslint/eslint/main/tests/lib/rules",
     ext: ".js",
     rustDir: "eslint",
   },
@@ -47,8 +46,7 @@ const PLUGINS = {
     rustDir: "jest",
   },
   unicorn: {
-    testUrl:
-      "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test",
+    testUrl: "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test",
     ext: ".js",
     rustDir: "unicorn",
   },
@@ -77,8 +75,7 @@ const PLUGINS = {
     rustDir: "jsx_a11y",
   },
   nextjs: {
-    testUrl:
-      "https://raw.githubusercontent.com/vercel/next.js/canary/test/unit/eslint-plugin-next",
+    testUrl: "https://raw.githubusercontent.com/vercel/next.js/canary/test/unit/eslint-plugin-next",
     ext: ".test.ts",
     rustDir: "nextjs",
   },
@@ -102,14 +99,12 @@ const PLUGINS = {
     rustDir: "promise",
   },
   vitest: {
-    testUrl:
-      "https://raw.githubusercontent.com/vitest-dev/eslint-plugin-vitest/main/tests",
+    testUrl: "https://raw.githubusercontent.com/vitest-dev/eslint-plugin-vitest/main/tests",
     ext: ".test.ts",
     rustDir: "vitest",
   },
   vue: {
-    testUrl:
-      "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/tests/lib/rules",
+    testUrl: "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/tests/lib/rules",
     ext: ".js",
     rustDir: "vue",
   },
@@ -122,9 +117,7 @@ const jsonOutput = args.includes("--json");
 const positional = args.filter((a) => !a.startsWith("--"));
 
 if (positional.length < 2) {
-  console.error(
-    "Usage: node tasks/rulegen/compare-tests.mjs <rule-name> <plugin> [--json]",
-  );
+  console.error("Usage: node tasks/rulegen/compare-tests.mjs <rule-name> <plugin> [--json]");
   console.error("  Plugins: " + Object.keys(PLUGINS).join(", "));
   process.exit(1);
 }
@@ -166,9 +159,7 @@ function normalize(code) {
   // Dedent: find minimum indentation of non-empty lines
   const nonEmpty = lines.filter((l) => l.trim().length > 0);
   if (nonEmpty.length > 0) {
-    const minIndent = Math.min(
-      ...nonEmpty.map((l) => l.match(/^(\s*)/)[1].length),
-    );
+    const minIndent = Math.min(...nonEmpty.map((l) => l.match(/^(\s*)/)[1].length));
     if (minIndent > 0) {
       lines = lines.map((l) => l.slice(minIndent));
     }
@@ -205,8 +196,7 @@ async function downloadTestFile(ruleName, plugin) {
  *      type stripping (--experimental-strip-types), then naive regex stripping
  */
 function evaluateTestFile(source, originalUrl) {
-  const isTs =
-    originalUrl.endsWith(".ts") || originalUrl.endsWith(".tsx");
+  const isTs = originalUrl.endsWith(".ts") || originalUrl.endsWith(".tsx");
 
   // Strategy 1: Try esbuild for TypeScript (produces clean CJS)
   if (isTs) {
@@ -262,15 +252,20 @@ function tryEsbuild(source) {
   const tmpTs = path.join(os.tmpdir(), `oxc-compare-test-${Date.now()}.ts`);
   try {
     fs.writeFileSync(tmpTs, source);
-    const result = execSync(
-      `esbuild --bundle=false --loader=ts --format=cjs "${tmpTs}"`,
-      { encoding: "utf8", maxBuffer: 10 * 1024 * 1024, stdio: ["pipe", "pipe", "pipe"] },
-    );
+    const result = execSync(`esbuild --bundle=false --loader=ts --format=cjs "${tmpTs}"`, {
+      encoding: "utf8",
+      maxBuffer: 10 * 1024 * 1024,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
     return result;
   } catch {
     return null;
   } finally {
-    try { fs.unlinkSync(tmpTs); } catch { /* ignore */ }
+    try {
+      fs.unlinkSync(tmpTs);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -298,14 +293,11 @@ function runWithMock(source, ext, extraNodeArgs = []) {
   try {
     const mockPath = path.join(__dirname, "mock-rule-tester.cjs");
     const nodeArgs = [...extraNodeArgs, `--require`, mockPath].join(" ");
-    const result = execSync(
-      `node ${nodeArgs} ${JSON.stringify(tmpRunner)}`,
-      {
-        encoding: "utf8",
-        maxBuffer: 10 * 1024 * 1024,
-        stdio: ["pipe", "pipe", "pipe"],
-      },
-    );
+    const result = execSync(`node ${nodeArgs} ${JSON.stringify(tmpRunner)}`, {
+      encoding: "utf8",
+      maxBuffer: 10 * 1024 * 1024,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
     return JSON.parse(result);
   } catch (err) {
     if (process.env.DEBUG) {
@@ -313,8 +305,16 @@ function runWithMock(source, ext, extraNodeArgs = []) {
     }
     return null;
   } finally {
-    try { fs.unlinkSync(tmpFile); } catch { /* ignore */ }
-    try { fs.unlinkSync(tmpRunner); } catch { /* ignore */ }
+    try {
+      fs.unlinkSync(tmpFile);
+    } catch {
+      /* ignore */
+    }
+    try {
+      fs.unlinkSync(tmpRunner);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -344,10 +344,7 @@ function convertEsmToCjs(source) {
   );
 
   // import 'module' → require('module')
-  result = result.replace(
-    /import\s+['"]([^'"]+)['"]\s*;?/g,
-    (_, mod) => `require('${mod}');`,
-  );
+  result = result.replace(/import\s+['"]([^'"]+)['"]\s*;?/g, (_, mod) => `require('${mod}');`);
 
   // export default → module.exports =
   result = result.replace(/export\s+default\s+/g, "module.exports = ");
@@ -441,9 +438,7 @@ function extractRustTestCases(filePath) {
  */
 function extractVecBlock(content, name) {
   // Match `let pass = vec![` or `let fail = vec![`
-  const pattern = new RegExp(
-    `let\\s+${name}\\s*(?::\\s*Vec<[^>]*>)?\\s*=\\s*vec!\\[`,
-  );
+  const pattern = new RegExp(`let\\s+${name}\\s*(?::\\s*Vec<[^>]*>)?\\s*=\\s*vec!\\[`);
   const match = pattern.exec(content);
   if (!match) return [];
 
@@ -562,7 +557,10 @@ function extractStringLiterals(block) {
     if (block[i] === "r" && block[i + 1] === "#") {
       i++; // skip 'r'
       let hashes = 0;
-      while (block[i] === "#") { hashes++; i++; }
+      while (block[i] === "#") {
+        hashes++;
+        i++;
+      }
       if (block[i] === '"') {
         i++; // skip opening "
         const closer = '"' + "#".repeat(hashes);
@@ -590,10 +588,7 @@ function extractStringLiterals(block) {
   }
 
   function isStringStart(s, pos) {
-    return (
-      s[pos] === '"' ||
-      (s[pos] === "r" && (s[pos + 1] === '"' || s[pos + 1] === "#"))
-    );
+    return s[pos] === '"' || (s[pos] === "r" && (s[pos + 1] === '"' || s[pos + 1] === "#"));
   }
 
   function tryExtractString() {
@@ -604,7 +599,10 @@ function extractStringLiterals(block) {
     if (block[i] === "r" && block[i + 1] === "#") {
       i++; // skip 'r'
       let hashes = 0;
-      while (block[i] === "#") { hashes++; i++; }
+      while (block[i] === "#") {
+        hashes++;
+        i++;
+      }
       if (block[i] !== '"') return null;
       i++; // skip opening "
       const closer = '"' + "#".repeat(hashes);
@@ -633,12 +631,23 @@ function extractStringLiterals(block) {
         if (block[i] === "\\") {
           i++;
           switch (block[i]) {
-            case "n": str += "\n"; break;
-            case "t": str += "\t"; break;
-            case "r": str += "\r"; break;
-            case "\\": str += "\\"; break;
-            case '"': str += '"'; break;
-            default: str += block[i];
+            case "n":
+              str += "\n";
+              break;
+            case "t":
+              str += "\t";
+              break;
+            case "r":
+              str += "\r";
+              break;
+            case "\\":
+              str += "\\";
+              break;
+            case '"':
+              str += '"';
+              break;
+            default:
+              str += block[i];
           }
         } else {
           str += block[i];
@@ -684,14 +693,8 @@ function truncate(str, maxLen = 120) {
 }
 
 function printReport(upstreamResult, rustResult) {
-  const validComparison = compareSets(
-    upstreamResult.valid,
-    rustResult.valid,
-  );
-  const invalidComparison = compareSets(
-    upstreamResult.invalid,
-    rustResult.invalid,
-  );
+  const validComparison = compareSets(upstreamResult.valid, rustResult.valid);
+  const invalidComparison = compareSets(upstreamResult.invalid, rustResult.invalid);
 
   if (jsonOutput) {
     console.log(
@@ -728,37 +731,26 @@ function printReport(upstreamResult, rustResult) {
     `Oxlint (Rust file):           ${rustResult.valid.length} valid, ${rustResult.invalid.length} invalid`,
   );
 
-  if (
-    validComparison.missing.length === 0 &&
-    invalidComparison.missing.length === 0
-  ) {
-    console.log(
-      "\nAll upstream test cases are present in the oxlint rule file.",
-    );
+  if (validComparison.missing.length === 0 && invalidComparison.missing.length === 0) {
+    console.log("\nAll upstream test cases are present in the oxlint rule file.");
   }
 
   if (validComparison.missing.length > 0) {
-    console.log(
-      `\nMissing valid cases (${validComparison.missing.length}):`,
-    );
+    console.log(`\nMissing valid cases (${validComparison.missing.length}):`);
     for (const [i, t] of validComparison.missing.entries()) {
       console.log(`  ${i + 1}. ${truncate(normalize(t.code))}`);
     }
   }
 
   if (invalidComparison.missing.length > 0) {
-    console.log(
-      `\nMissing invalid cases (${invalidComparison.missing.length}):`,
-    );
+    console.log(`\nMissing invalid cases (${invalidComparison.missing.length}):`);
     for (const [i, t] of invalidComparison.missing.entries()) {
       console.log(`  ${i + 1}. ${truncate(normalize(t.code))}`);
     }
   }
 
   if (validComparison.extra.length > 0) {
-    console.log(
-      `\nExtra valid cases in oxlint not in upstream (${validComparison.extra.length}):`,
-    );
+    console.log(`\nExtra valid cases in oxlint not in upstream (${validComparison.extra.length}):`);
     for (const [i, t] of validComparison.extra.entries()) {
       console.log(`  ${i + 1}. ${truncate(normalize(t.code))}`);
     }
@@ -788,10 +780,7 @@ async function main() {
     process.exit(1);
   }
 
-  if (
-    upstreamResult.valid.length === 0 &&
-    upstreamResult.invalid.length === 0
-  ) {
+  if (upstreamResult.valid.length === 0 && upstreamResult.invalid.length === 0) {
     console.error(
       "Warning: No test cases captured from upstream file. " +
         "The test file may use an unsupported pattern.",
