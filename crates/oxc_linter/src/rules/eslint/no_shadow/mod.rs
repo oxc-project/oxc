@@ -456,7 +456,7 @@ impl NoShadow {
                     TSModuleDeclarationName::StringLiteral(string_literal) => {
                         Some(string_literal.value.as_str())
                     }
-                    _ => None,
+                    TSModuleDeclarationName::Identifier(_) => None,
                 }
             } else {
                 None
