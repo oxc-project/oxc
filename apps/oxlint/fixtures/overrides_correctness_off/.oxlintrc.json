@@ -1,0 +1,19 @@
+{
+  "plugins": ["react", "typescript"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "react/no-multi-comp": "error",
+    "@typescript-eslint/no-inferrable-types": "error"
+  },
+  "overrides": [
+    {
+      "files": ["subdir/**/*.ts", "subdir/**/*.tsx"],
+      "plugins": ["node"],
+      "rules": {
+        "node/global-require": "error"
+      }
+    }
+  ]
+}
