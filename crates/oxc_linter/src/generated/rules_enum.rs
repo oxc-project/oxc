@@ -119,6 +119,7 @@ pub use crate::rules::eslint::no_self_assign::NoSelfAssign as EslintNoSelfAssign
 pub use crate::rules::eslint::no_self_compare::NoSelfCompare as EslintNoSelfCompare;
 pub use crate::rules::eslint::no_sequences::NoSequences as EslintNoSequences;
 pub use crate::rules::eslint::no_setter_return::NoSetterReturn as EslintNoSetterReturn;
+pub use crate::rules::eslint::no_shadow::NoShadow as EslintNoShadow;
 pub use crate::rules::eslint::no_shadow_restricted_names::NoShadowRestrictedNames as EslintNoShadowRestrictedNames;
 pub use crate::rules::eslint::no_sparse_arrays::NoSparseArrays as EslintNoSparseArrays;
 pub use crate::rules::eslint::no_template_curly_in_string::NoTemplateCurlyInString as EslintNoTemplateCurlyInString;
@@ -836,6 +837,7 @@ pub enum RuleEnum {
     EslintNoSelfCompare(EslintNoSelfCompare),
     EslintNoSequences(EslintNoSequences),
     EslintNoSetterReturn(EslintNoSetterReturn),
+    EslintNoShadow(EslintNoShadow),
     EslintNoShadowRestrictedNames(EslintNoShadowRestrictedNames),
     EslintNoSparseArrays(EslintNoSparseArrays),
     EslintNoTemplateCurlyInString(EslintNoTemplateCurlyInString),
@@ -1517,7 +1519,8 @@ const ESLINT_NO_SELF_ASSIGN_ID: usize = ESLINT_NO_SCRIPT_URL_ID + 1usize;
 const ESLINT_NO_SELF_COMPARE_ID: usize = ESLINT_NO_SELF_ASSIGN_ID + 1usize;
 const ESLINT_NO_SEQUENCES_ID: usize = ESLINT_NO_SELF_COMPARE_ID + 1usize;
 const ESLINT_NO_SETTER_RETURN_ID: usize = ESLINT_NO_SEQUENCES_ID + 1usize;
-const ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID: usize = ESLINT_NO_SETTER_RETURN_ID + 1usize;
+const ESLINT_NO_SHADOW_ID: usize = ESLINT_NO_SETTER_RETURN_ID + 1usize;
+const ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID: usize = ESLINT_NO_SHADOW_ID + 1usize;
 const ESLINT_NO_SPARSE_ARRAYS_ID: usize = ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID + 1usize;
 const ESLINT_NO_TEMPLATE_CURLY_IN_STRING_ID: usize = ESLINT_NO_SPARSE_ARRAYS_ID + 1usize;
 const ESLINT_NO_TERNARY_ID: usize = ESLINT_NO_TEMPLATE_CURLY_IN_STRING_ID + 1usize;
@@ -2278,6 +2281,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(_) => ESLINT_NO_SELF_COMPARE_ID,
             Self::EslintNoSequences(_) => ESLINT_NO_SEQUENCES_ID,
             Self::EslintNoSetterReturn(_) => ESLINT_NO_SETTER_RETURN_ID,
+            Self::EslintNoShadow(_) => ESLINT_NO_SHADOW_ID,
             Self::EslintNoShadowRestrictedNames(_) => ESLINT_NO_SHADOW_RESTRICTED_NAMES_ID,
             Self::EslintNoSparseArrays(_) => ESLINT_NO_SPARSE_ARRAYS_ID,
             Self::EslintNoTemplateCurlyInString(_) => ESLINT_NO_TEMPLATE_CURLY_IN_STRING_ID,
@@ -3054,6 +3058,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::NAME,
             Self::EslintNoSequences(_) => EslintNoSequences::NAME,
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::NAME,
+            Self::EslintNoShadow(_) => EslintNoShadow::NAME,
             Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::NAME,
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::NAME,
             Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::NAME,
@@ -3822,6 +3827,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::CATEGORY,
             Self::EslintNoSequences(_) => EslintNoSequences::CATEGORY,
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::CATEGORY,
+            Self::EslintNoShadow(_) => EslintNoShadow::CATEGORY,
             Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::CATEGORY,
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::CATEGORY,
             Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::CATEGORY,
@@ -4633,6 +4639,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::FIX,
             Self::EslintNoSequences(_) => EslintNoSequences::FIX,
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::FIX,
+            Self::EslintNoShadow(_) => EslintNoShadow::FIX,
             Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::FIX,
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::FIX,
             Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::FIX,
@@ -5416,6 +5423,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::documentation(),
             Self::EslintNoSequences(_) => EslintNoSequences::documentation(),
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::documentation(),
+            Self::EslintNoShadow(_) => EslintNoShadow::documentation(),
             Self::EslintNoShadowRestrictedNames(_) => {
                 EslintNoShadowRestrictedNames::documentation()
             }
@@ -6569,6 +6577,8 @@ impl RuleEnum {
                 .or_else(|| EslintNoSequences::schema(generator)),
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::config_schema(generator)
                 .or_else(|| EslintNoSetterReturn::schema(generator)),
+            Self::EslintNoShadow(_) => EslintNoShadow::config_schema(generator)
+                .or_else(|| EslintNoShadow::schema(generator)),
             Self::EslintNoShadowRestrictedNames(_) => {
                 EslintNoShadowRestrictedNames::config_schema(generator)
                     .or_else(|| EslintNoShadowRestrictedNames::schema(generator))
@@ -8275,6 +8285,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(_) => "eslint",
             Self::EslintNoSequences(_) => "eslint",
             Self::EslintNoSetterReturn(_) => "eslint",
+            Self::EslintNoShadow(_) => "eslint",
             Self::EslintNoShadowRestrictedNames(_) => "eslint",
             Self::EslintNoSparseArrays(_) => "eslint",
             Self::EslintNoTemplateCurlyInString(_) => "eslint",
@@ -9239,6 +9250,9 @@ impl RuleEnum {
             }
             Self::EslintNoSetterReturn(_) => {
                 Ok(Self::EslintNoSetterReturn(EslintNoSetterReturn::from_configuration(value)?))
+            }
+            Self::EslintNoShadow(_) => {
+                Ok(Self::EslintNoShadow(EslintNoShadow::from_configuration(value)?))
             }
             Self::EslintNoShadowRestrictedNames(_) => Ok(Self::EslintNoShadowRestrictedNames(
                 EslintNoShadowRestrictedNames::from_configuration(value)?,
@@ -11122,6 +11136,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(rule) => rule.to_configuration(),
             Self::EslintNoSequences(rule) => rule.to_configuration(),
             Self::EslintNoSetterReturn(rule) => rule.to_configuration(),
+            Self::EslintNoShadow(rule) => rule.to_configuration(),
             Self::EslintNoShadowRestrictedNames(rule) => rule.to_configuration(),
             Self::EslintNoSparseArrays(rule) => rule.to_configuration(),
             Self::EslintNoTemplateCurlyInString(rule) => rule.to_configuration(),
@@ -11806,6 +11821,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(rule) => rule.run(node, ctx),
             Self::EslintNoSequences(rule) => rule.run(node, ctx),
             Self::EslintNoSetterReturn(rule) => rule.run(node, ctx),
+            Self::EslintNoShadow(rule) => rule.run(node, ctx),
             Self::EslintNoShadowRestrictedNames(rule) => rule.run(node, ctx),
             Self::EslintNoSparseArrays(rule) => rule.run(node, ctx),
             Self::EslintNoTemplateCurlyInString(rule) => rule.run(node, ctx),
@@ -12486,6 +12502,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(rule) => rule.run_once(ctx),
             Self::EslintNoSequences(rule) => rule.run_once(ctx),
             Self::EslintNoSetterReturn(rule) => rule.run_once(ctx),
+            Self::EslintNoShadow(rule) => rule.run_once(ctx),
             Self::EslintNoShadowRestrictedNames(rule) => rule.run_once(ctx),
             Self::EslintNoSparseArrays(rule) => rule.run_once(ctx),
             Self::EslintNoTemplateCurlyInString(rule) => rule.run_once(ctx),
@@ -13170,6 +13187,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoSequences(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoSetterReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoShadow(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoShadowRestrictedNames(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoSparseArrays(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoTemplateCurlyInString(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13936,6 +13954,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(rule) => rule.should_run(ctx),
             Self::EslintNoSequences(rule) => rule.should_run(ctx),
             Self::EslintNoSetterReturn(rule) => rule.should_run(ctx),
+            Self::EslintNoShadow(rule) => rule.should_run(ctx),
             Self::EslintNoShadowRestrictedNames(rule) => rule.should_run(ctx),
             Self::EslintNoSparseArrays(rule) => rule.should_run(ctx),
             Self::EslintNoTemplateCurlyInString(rule) => rule.should_run(ctx),
@@ -14632,6 +14651,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::IS_TSGOLINT_RULE,
             Self::EslintNoSequences(_) => EslintNoSequences::IS_TSGOLINT_RULE,
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::IS_TSGOLINT_RULE,
+            Self::EslintNoShadow(_) => EslintNoShadow::IS_TSGOLINT_RULE,
             Self::EslintNoShadowRestrictedNames(_) => {
                 EslintNoShadowRestrictedNames::IS_TSGOLINT_RULE
             }
@@ -15579,6 +15599,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::HAS_CONFIG,
             Self::EslintNoSequences(_) => EslintNoSequences::HAS_CONFIG,
             Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::HAS_CONFIG,
+            Self::EslintNoShadow(_) => EslintNoShadow::HAS_CONFIG,
             Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::HAS_CONFIG,
             Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::HAS_CONFIG,
             Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::HAS_CONFIG,
@@ -16409,6 +16430,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(rule) => rule.types_info(),
             Self::EslintNoSequences(rule) => rule.types_info(),
             Self::EslintNoSetterReturn(rule) => rule.types_info(),
+            Self::EslintNoShadow(rule) => rule.types_info(),
             Self::EslintNoShadowRestrictedNames(rule) => rule.types_info(),
             Self::EslintNoSparseArrays(rule) => rule.types_info(),
             Self::EslintNoTemplateCurlyInString(rule) => rule.types_info(),
@@ -17089,6 +17111,7 @@ impl RuleEnum {
             Self::EslintNoSelfCompare(rule) => rule.run_info(),
             Self::EslintNoSequences(rule) => rule.run_info(),
             Self::EslintNoSetterReturn(rule) => rule.run_info(),
+            Self::EslintNoShadow(rule) => rule.run_info(),
             Self::EslintNoShadowRestrictedNames(rule) => rule.run_info(),
             Self::EslintNoSparseArrays(rule) => rule.run_info(),
             Self::EslintNoTemplateCurlyInString(rule) => rule.run_info(),
@@ -17791,6 +17814,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoSelfCompare(EslintNoSelfCompare::default()),
         RuleEnum::EslintNoSequences(EslintNoSequences::default()),
         RuleEnum::EslintNoSetterReturn(EslintNoSetterReturn::default()),
+        RuleEnum::EslintNoShadow(EslintNoShadow::default()),
         RuleEnum::EslintNoShadowRestrictedNames(EslintNoShadowRestrictedNames::default()),
         RuleEnum::EslintNoSparseArrays(EslintNoSparseArrays::default()),
         RuleEnum::EslintNoTemplateCurlyInString(EslintNoTemplateCurlyInString::default()),
