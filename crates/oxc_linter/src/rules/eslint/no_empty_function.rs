@@ -4,8 +4,8 @@ use bitflags::bitflags;
 use oxc_ast::{
     AstKind,
     ast::{
-        FormalParameter, IdentifierName, IdentifierReference, MethodDefinition,
-        MethodDefinitionKind, TSAccessibility,
+        Expression, FormalParameter, IdentifierName, IdentifierReference, MethodDefinition,
+        MethodDefinitionKind, ObjectProperty, PropertyKind, TSAccessibility,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -404,6 +404,12 @@ impl NoEmptyFunction {
                     };
                     return (kind, method.key.name()).into();
                 }
+                AstKind::ObjectProperty(property) => {
+                    if self.is_allowed_object_property(property) {
+                        return ViolationInfo::default();
+                    }
+                    return ("function", None).into();
+                }
                 AstKind::VariableDeclarator(decl) => {
                     return ("function", decl.id.get_identifier_name().map(Into::into)).into();
                 }
@@ -450,6 +456,35 @@ impl NoEmptyFunction {
                 }
                 self.allow.contains(Allowed::Methods)
                     || (method.r#override && self.allow.contains(Allowed::OverrideMethod))
+            }
+        }
+    }
+
+    fn is_allowed_object_property(&self, property: &ObjectProperty) -> bool {
+        match property.kind {
+            PropertyKind::Get => self.allow.contains(Allowed::Getters),
+            PropertyKind::Set => self.allow.contains(Allowed::Setters),
+            PropertyKind::Init => {
+                let Expression::FunctionExpression(function) = &property.value else {
+                    return false;
+                };
+                if property.method {
+                    if function.r#async && self.allow.contains(Allowed::AsyncMethods)
+                        || function.generator && self.allow.contains(Allowed::GeneratorMethods)
+                    {
+                        return true;
+                    }
+                    self.allow.contains(Allowed::Methods)
+                } else {
+                    if function.r#async && self.allow.contains(Allowed::AsyncFunctions)
+                        || function.generator && self.allow.contains(Allowed::GeneratorFunctions)
+                    {
+                        return true;
+                    }
+                    !function.r#async
+                        && !function.generator
+                        && self.allow.contains(Allowed::Function)
+                }
             }
         }
     }
@@ -588,14 +623,30 @@ fn test() {
         ),
         // Test allow option for functions and arrow functions
         ("function foo() {}", Some(serde_json::json!([{ "allow": ["functions"] }]))),
+        (
+            "const obj = { foo: function() {} };",
+            Some(serde_json::json!([{ "allow": ["functions"] }])),
+        ),
         ("const bar = () => {};", Some(serde_json::json!([{ "allow": ["arrowFunctions"] }]))),
+        (
+            "const obj = { foo: () => {} };",
+            Some(serde_json::json!([{ "allow": ["arrowFunctions"] }])),
+        ),
         (
             "const foo = () => {}; function bar() {}",
             Some(serde_json::json!([{ "allow": ["arrowFunctions", "functions"] }])),
         ),
         ("function* gen() {}", Some(serde_json::json!([{ "allow": ["generatorFunctions"] }]))),
+        (
+            "const obj = { foo: function*() {} };",
+            Some(serde_json::json!([{ "allow": ["generatorFunctions"] }])),
+        ),
         ("function* gen() {}", Some(serde_json::json!([{ "allow": ["generator-functions"] }]))),
         ("async function foo() {}", Some(serde_json::json!([{ "allow": ["asyncFunctions"] }]))),
+        (
+            "const obj = { foo: async function() {} };",
+            Some(serde_json::json!([{ "allow": ["asyncFunctions"] }])),
+        ),
         ("async function foo() {}", Some(serde_json::json!([{ "allow": ["async-functions"] }]))),
         ("async function foo() {/* Foo */}", None),
         (
@@ -610,17 +661,15 @@ fn test() {
         ("class Foo { *gen() {} }", Some(serde_json::json!([{ "allow": ["generatorMethods"] }]))),
         ("class Foo { *gen() {} }", Some(serde_json::json!([{ "allow": ["generator-methods"] }]))),
         // getters
-        // TODO: Fix these two. They are from the original tests.
-        // ("var obj = {get foo() {}};", Some(serde_json::json!([{ "allow": ["getters"] }]))),
-        // ("var obj = {get foo() {}};", Some(serde_json::json!([{ "allow": ["getter"] }]))),
+        ("var obj = {get foo() {}};", Some(serde_json::json!([{ "allow": ["getters"] }]))),
+        ("var obj = {get foo() {}};", Some(serde_json::json!([{ "allow": ["getter"] }]))),
         ("class A {get foo() {}}", Some(serde_json::json!([{ "allow": ["getters"] }]))),
         ("class A {get foo() {}}", Some(serde_json::json!([{ "allow": ["getter"] }]))),
         ("class A {static get foo() {}}", Some(serde_json::json!([{ "allow": ["getters"] }]))),
         ("class A {static get foo() {}}", Some(serde_json::json!([{ "allow": ["getter"] }]))),
         // setters
-        // TODO: Fix these two. They are from the original tests.
-        // ("var obj = {set foo(value) {}};", Some(serde_json::json!([{ "allow": ["setters"] }]))),
-        // ("var obj = {set foo(value) {}};", Some(serde_json::json!([{ "allow": ["setter"] }]))),
+        ("var obj = {set foo(value) {}};", Some(serde_json::json!([{ "allow": ["setters"] }]))),
+        ("var obj = {set foo(value) {}};", Some(serde_json::json!([{ "allow": ["setter"] }]))),
         ("class A {set foo(value) {}}", Some(serde_json::json!([{ "allow": ["setters"] }]))),
         ("class A {set foo(value) {}}", Some(serde_json::json!([{ "allow": ["setter"] }]))),
         ("class A {static set foo(value) {}}", Some(serde_json::json!([{ "allow": ["setters"] }]))),
@@ -1066,7 +1115,16 @@ fn test() {
         ("function* foo(param: string) {}", None),
         ("const foo = function*(param: string) {};", None),
         ("const obj = {foo: function*(param: string) {}};", None),
+        (
+            "const obj = { foo: function*() {} };",
+            Some(serde_json::json!([{ "allow": ["functions"] }])),
+        ),
         ("const obj = {foo(param: string) {}};", None),
+        (
+            "const obj = { foo: async function() {} };",
+            Some(serde_json::json!([{ "allow": ["functions"] }])),
+        ),
+        ("const obj = { foo: () => {} };", Some(serde_json::json!([{ "allow": ["functions"] }]))),
         ("class A { foo(param: string) {} }", None),
         ("class A { private foo() {} }", None),
         ("class A { protected foo() {} }", None),
