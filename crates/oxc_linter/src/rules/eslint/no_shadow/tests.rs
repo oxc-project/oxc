@@ -3404,6 +3404,32 @@ fn test_typescript_eslint() {
         ),
         (
             "
+            import type { Foo } from 'bar';
+
+            declare module 'bar' {
+              export class Foo {}
+            }
+                  ",
+            Some(serde_json::json!([{ "ignoreTypeValueShadow": false }])),
+            None,
+            None,
+        ),
+        (
+            "
+            import type { Foo } from 'bar';
+
+            module bar {
+              export interface Foo {
+                x: string;
+              }
+            }
+                  ",
+            None,
+            None,
+            None,
+        ),
+        (
+            "
             let x = foo((x, y) => {});
             let y;
                   ",

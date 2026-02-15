@@ -301,6 +301,36 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
 
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             import type { Foo } from 'bar';
+   ·                           ─┬─
+   ·                            ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             declare module 'bar' {
+ 5 │               export class Foo {}
+   ·                            ─┬─
+   ·                             ╰── 'Foo' is declared here
+ 6 │             }
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:27]
+ 1 │ 
+ 2 │             import type { Foo } from 'bar';
+   ·                           ─┬─
+   ·                            ╰── shadowed declaration is here
+ 3 │ 
+ 4 │             module bar {
+ 5 │               export interface Foo {
+   ·                                ─┬─
+   ·                                 ╰── 'Foo' is declared here
+ 6 │                 x: string;
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
   ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
    ╭─[no_shadow.tsx:2:17]
  1 │ 

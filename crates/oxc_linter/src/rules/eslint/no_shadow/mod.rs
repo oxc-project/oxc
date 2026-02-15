@@ -437,6 +437,10 @@ impl NoShadow {
         symbol_id: SymbolId,
         shadowed_symbol_id: SymbolId,
     ) -> bool {
+        if !Self::is_hoisted_type_declaration(ctx, symbol_id) {
+            return false;
+        }
+
         let shadowed_flags = ctx.scoping().symbol_flags(shadowed_symbol_id);
         if !shadowed_flags.is_type_import() {
             return false;
@@ -456,14 +460,14 @@ impl NoShadow {
 
         let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
         let module_name = ctx.nodes().ancestor_kinds(declaration_id).find_map(|kind| {
-            if let AstKind::TSModuleDeclaration(module_decl) = kind {
+            if let AstKind::TSModuleDeclaration(module_decl) = kind
+                && module_decl.declare
+            {
                 match &module_decl.id {
-                    TSModuleDeclarationName::Identifier(identifier) => {
-                        Some(identifier.name.as_str())
-                    }
                     TSModuleDeclarationName::StringLiteral(string_literal) => {
                         Some(string_literal.value.as_str())
                     }
+                    _ => None,
                 }
             } else {
                 None
