@@ -386,7 +386,7 @@ fn test() {
         ),
         (
             "
-                  <script>
+                  <script lang='ts'>
                   export default { emits: [] }
                   </script>
                   <script setup lang='ts'>
