@@ -164,8 +164,6 @@ impl NoShadow {
         shadowed_symbol_id: SymbolId,
     ) -> bool {
         let scoping = ctx.scoping();
-        let symbol_flags = scoping.symbol_flags(symbol_id);
-        let shadowed_flags = scoping.symbol_flags(shadowed_symbol_id);
 
         Self::is_function_name_initializer_exception(ctx, symbol_id, shadowed_symbol_id)
             || (self.ignore_on_initialization
@@ -175,9 +173,9 @@ impl NoShadow {
             || self.should_ignore_shadow(
                 ctx,
                 symbol_id,
-                symbol_flags,
+                scoping.symbol_flags(symbol_id),
                 shadowed_symbol_id,
-                shadowed_flags,
+                scoping.symbol_flags(shadowed_symbol_id),
             )
             || Self::is_external_declaration_merging(ctx, symbol_id, shadowed_symbol_id)
     }
