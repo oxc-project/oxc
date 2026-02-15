@@ -3,12 +3,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
-use serde_json::Value;
+use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::is_react_component_name,
 };
 
@@ -24,30 +25,88 @@ fn forbid_dom_props_diagnostic(
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct ForbidDomPropsConfig {
-    forbid: FxHashMap<CompactStr, ForbidOptions>,
-}
-#[derive(Debug, Clone)]
-enum ForbidOptions {
-    AsStrings(()),
-    AsObjects(ForbidObject),
-}
-
-#[derive(Debug, Clone)]
-pub struct ForbidObject {
+struct ForbidPropOptions {
     disallowed_for: FxHashSet<CompactStr>,
     message: Option<String>,
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct ForbidDomProps(Box<ForbidDomPropsConfig>);
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(from = "ForbidDomPropsConfig")]
+pub struct ForbidDomProps {
+    #[serde(skip)]
+    forbid: Box<FxHashMap<CompactStr, ForbidPropOptions>>,
+}
 
-impl std::ops::Deref for ForbidDomProps {
-    type Target = ForbidDomPropsConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl From<ForbidDomPropsConfig> for ForbidDomProps {
+    fn from(config: ForbidDomPropsConfig) -> Self {
+        let mut forbid = FxHashMap::default();
+        for item in config.forbid {
+            match item {
+                ForbidDomPropsItem::PropName(prop_name) => {
+                    forbid.insert(prop_name, ForbidPropOptions::default());
+                }
+                ForbidDomPropsItem::PropWithOptions(PropWithOptions {
+                    prop_name,
+                    disallowed_for,
+                    message,
+                }) => {
+                    forbid.insert(
+                        prop_name,
+                        ForbidPropOptions {
+                            disallowed_for: disallowed_for
+                                .unwrap_or_default()
+                                .into_iter()
+                                .collect(),
+                            message,
+                        },
+                    );
+                }
+            }
+        }
+        Self { forbid: Box::new(forbid) }
     }
+}
+
+/// A forbidden prop, either as a plain prop name string or with options.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum ForbidDomPropsItem {
+    /// A prop name to forbid on all DOM elements.
+    PropName(CompactStr),
+    /// A prop with optional `disallowedFor` DOM node list and custom `message`.
+    PropWithOptions(PropWithOptions),
+}
+
+/// A prop with optional `disallowedFor` DOM node list and custom `message`.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PropWithOptions {
+    /// The name of the prop to forbid.
+    prop_name: CompactStr,
+    /// A list of DOM element names (e.g. `["div", "span"]`) on which this
+    /// prop is forbidden. If empty or omitted, the prop is forbidden on all
+    /// DOM elements.
+    disallowed_for: Option<Vec<CompactStr>>,
+    /// A custom message to display when this prop is used.
+    message: Option<String>,
+}
+
+/// Configuration for the `forbid-dom-props` rule.
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct ForbidDomPropsConfig {
+    /// An array of prop names or objects that are forbidden on DOM elements.
+    ///
+    /// Each array element can be a string with the property name, or an object
+    /// with `propName`, an optional `disallowedFor` array of DOM node names,
+    /// and an optional custom `message`.
+    ///
+    /// Examples:
+    ///
+    /// - `["error", { "forbid": ["id", "style"] }]`
+    /// - `["error", { "forbid": [{ "propName": "className", "message": "Use class instead" }] }]`
+    /// - `["error", { "forbid": [{ "propName": "style", "disallowedFor": ["div", "span"] }] }]`
+    forbid: Vec<ForbidDomPropsItem>,
 }
 
 declare_oxc_lint!(
@@ -78,65 +137,15 @@ declare_oxc_lint!(
     /// // [1, { "forbid": ["id"] }]
     /// <Hello id={{color: 'red'}} />
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// #### forbid
-    ///
-    /// An array of strings, with the names of props that are forbidden. The default value of this option [].
-    /// Each array element can either be a string with the property name or object specifying the property name, an optional custom message, and a DOM nodes disallowed list (e.g. <div />)
-    ///
-    /// `{"propName": "someProp", "disallowedFor": ["DOMNode", "AnotherDOMNode"], "message": "Avoid using someProp" }`
     ForbidDomProps,
     react,
     restriction,
-    // TODO: Replace this with an actual config struct. This is a dummy value to
-    // indicate that this rule has configuration and avoid errors.
-    config = Value,
+    config = ForbidDomPropsConfig,
 );
 
 impl Rule for ForbidDomProps {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let mut forbid_map: FxHashMap<CompactStr, ForbidOptions> = FxHashMap::default();
-
-        if let Some(config) = value.get(0)
-            && let Some(forbid_array) = config.get("forbid").and_then(Value::as_array)
-        {
-            for item in forbid_array {
-                match item {
-                    Value::String(prop_name) => {
-                        forbid_map.insert(CompactStr::new(prop_name), ForbidOptions::AsStrings(()));
-                    }
-                    Value::Object(obj) => {
-                        if let Some(prop_name) =
-                            obj.get("propName").and_then(Value::as_str).map(CompactStr::from)
-                        {
-                            let message =
-                                obj.get("message").and_then(Value::as_str).map(String::from);
-
-                            let disallowed_for: FxHashSet<CompactStr> = obj
-                                .get("disallowedFor")
-                                .and_then(Value::as_array)
-                                .map(|arr| {
-                                    arr.iter()
-                                        .filter_map(Value::as_str)
-                                        .map(CompactStr::from)
-                                        .collect()
-                                })
-                                .unwrap_or_default();
-
-                            forbid_map.insert(
-                                prop_name,
-                                ForbidOptions::AsObjects(ForbidObject { disallowed_for, message }),
-                            );
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        Ok(Self(Box::new(ForbidDomPropsConfig { forbid: forbid_map })))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -159,31 +168,17 @@ impl Rule for ForbidDomProps {
                 };
 
                 let prop_name = attr_ident.name.as_str();
-                let forbid = self.forbid.get(prop_name);
-
-                if let Some(options) = forbid {
-                    match options {
-                        ForbidOptions::AsStrings(()) => {
-                            ctx.diagnostic(forbid_dom_props_diagnostic(
-                                attr_ident.span,
-                                prop_name,
-                                None,
-                            ));
-                        }
-                        ForbidOptions::AsObjects(forbid_object) => {
-                            if !forbid_object.disallowed_for.is_empty()
-                                && !forbid_object.disallowed_for.contains(tag_name.as_str())
-                            {
-                                continue;
-                            }
-
-                            ctx.diagnostic(forbid_dom_props_diagnostic(
-                                attr_ident.span,
-                                prop_name,
-                                forbid_object.message.as_ref(),
-                            ));
-                        }
+                if let Some(options) = self.forbid.get(prop_name) {
+                    if !options.disallowed_for.is_empty()
+                        && !options.disallowed_for.contains(tag_name.as_str())
+                    {
+                        continue;
                     }
+                    ctx.diagnostic(forbid_dom_props_diagnostic(
+                        attr_ident.span,
+                        prop_name,
+                        options.message.as_ref(),
+                    ));
                 }
             }
         }
