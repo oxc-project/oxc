@@ -418,18 +418,18 @@ function findRustRuleFile(ruleName, plugin) {
 }
 
 /**
- * Extract code strings from `let pass = vec![...]` and `let fail = vec![...]`
- * blocks in a Rust test file.
+ * Extract test cases (code + options) from `let pass = vec![...]` and
+ * `let fail = vec![...]` blocks in a Rust test file.
  */
 function extractRustTestCases(filePath) {
   const content = fs.readFileSync(filePath, "utf8");
 
-  const passStrings = extractVecBlock(content, "pass");
-  const failStrings = extractVecBlock(content, "fail");
+  const passCases = extractVecBlock(content, "pass");
+  const failCases = extractVecBlock(content, "fail");
 
   return {
-    valid: passStrings.map((code) => ({ code })),
-    invalid: failStrings.map((code) => ({ code })),
+    valid: passCases,
+    invalid: failCases,
   };
 }
 
@@ -490,17 +490,16 @@ function extractVecBlock(content, name) {
 }
 
 /**
- * Extract code strings from a vec![...] block.
+ * Extract test cases from a vec![...] block.
  *
  * Test cases come in two forms:
  *   1. Tuple: ("code", None) or ("code", Some(serde_json::json!([...])))
  *   2. Bare string: "code"
  *
- * We only want the FIRST string in each tuple (the code). Config strings
- * like "allow", "constructors" etc. should be skipped.
+ * Returns an array of { code, options } objects.
  */
 function extractStringLiterals(block) {
-  const strings = [];
+  const cases = [];
   let i = 0;
 
   while (i < block.length) {
@@ -508,27 +507,30 @@ function extractStringLiterals(block) {
     if (i >= block.length) break;
 
     if (block[i] === "(") {
-      // Tuple: extract only the first string, then skip to closing )
+      // Tuple: extract first string (code), then try to extract options
+      const tupleStart = i;
       i++; // skip (
       skipWhitespace();
       const codeStr = tryExtractString();
       if (codeStr !== null) {
-        strings.push(codeStr);
+        // Now extract options from the rest of the tuple
+        const options = extractOptionsFromTuple(block, tupleStart);
+        cases.push({ code: codeStr, options });
       }
-      // Skip to the matching closing )
+      // Ensure we're past the closing )
       skipToClosingParen();
     } else if (isStringStart(block, i)) {
       // Bare string at top level
       const codeStr = tryExtractString();
       if (codeStr !== null) {
-        strings.push(codeStr);
+        cases.push({ code: codeStr, options: null });
       }
     } else {
       i++;
     }
   }
 
-  return strings;
+  return cases;
 
   function skipToClosingParen() {
     let depth = 1;
@@ -662,24 +664,180 @@ function extractStringLiterals(block) {
   }
 }
 
+/**
+ * Extract the options/config from a Rust tuple, given the start position of '('.
+ *
+ * Looks for `None` (→ null) or `Some(serde_json::json!(...))` (→ parsed JSON string).
+ * Returns null if no config or if it's `None`.
+ */
+function extractOptionsFromTuple(block, tupleStart) {
+  // Find the full tuple content between ( and matching )
+  let depth = 1;
+  let j = tupleStart + 1;
+  while (j < block.length && depth > 0) {
+    const ch = block[j];
+    if (ch === "(") depth++;
+    else if (ch === ")") depth--;
+    else if (ch === '"') {
+      j++;
+      while (j < block.length && block[j] !== '"') {
+        if (block[j] === "\\") j++;
+        j++;
+      }
+    } else if (ch === "r" && (block[j + 1] === "#" || block[j + 1] === '"')) {
+      // Skip raw string
+      if (block[j + 1] === "#") {
+        j++;
+        let hashes = 0;
+        while (block[j] === "#") {
+          hashes++;
+          j++;
+        }
+        if (block[j] === '"') {
+          j++;
+          const closer = '"' + "#".repeat(hashes);
+          const closeIdx = block.indexOf(closer, j);
+          if (closeIdx !== -1) j = closeIdx + closer.length - 1;
+        }
+      } else {
+        j += 2;
+        const closeIdx = block.indexOf('"', j);
+        if (closeIdx !== -1) j = closeIdx;
+      }
+    }
+    j++;
+  }
+
+  const tupleContent = block.slice(tupleStart + 1, j - 1);
+
+  // Look for `None` or `Some(serde_json::json!(...))` after the first comma
+  const commaIdx = findTopLevelComma(tupleContent);
+  if (commaIdx === -1) return null;
+
+  const afterComma = tupleContent.slice(commaIdx + 1).trim();
+
+  if (afterComma.startsWith("None")) return null;
+
+  // Extract the JSON content from Some(serde_json::json!(...))
+  const jsonMatch = afterComma.match(/Some\s*\(\s*serde_json::json!\s*\(/);
+  if (!jsonMatch) return null;
+
+  // Find the content inside json!(...)
+  const jsonStart = afterComma.indexOf("json!(") + 6;
+  // Find the matching closing paren for json!(...)
+  let parenDepth = 1;
+  let k = jsonStart;
+  while (k < afterComma.length && parenDepth > 0) {
+    const ch = afterComma[k];
+    if (ch === "(") parenDepth++;
+    else if (ch === ")") parenDepth--;
+    else if (ch === '"') {
+      k++;
+      while (k < afterComma.length && afterComma[k] !== '"') {
+        if (afterComma[k] === "\\") k++;
+        k++;
+      }
+    } else if (ch === "[") parenDepth++;
+    else if (ch === "]") parenDepth--;
+    k++;
+  }
+
+  // The JSON-like content (Rust serde_json::json! macro syntax)
+  const jsonContent = afterComma.slice(jsonStart, k - 1).trim();
+
+  // Try to parse it as JSON (serde_json::json! uses JSON-like syntax)
+  try {
+    return JSON.parse(jsonContent);
+  } catch {
+    // Return the raw string if it can't be parsed
+    return jsonContent;
+  }
+}
+
+/**
+ * Find the first comma at the top level of nesting (not inside parens/brackets/strings).
+ * This separates the code string from the config in a Rust tuple.
+ */
+function findTopLevelComma(s) {
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "," && depth === 0) return i;
+    if (ch === "(" || ch === "[" || ch === "{") depth++;
+    else if (ch === ")" || ch === "]" || ch === "}") depth--;
+    else if (ch === '"') {
+      i++;
+      while (i < s.length && s[i] !== '"') {
+        if (s[i] === "\\") i++;
+        i++;
+      }
+    } else if (ch === "r" && (s[i + 1] === "#" || s[i + 1] === '"')) {
+      if (s[i + 1] === "#") {
+        i++;
+        let hashes = 0;
+        while (s[i] === "#") {
+          hashes++;
+          i++;
+        }
+        if (s[i] === '"') {
+          i++;
+          const closer = '"' + "#".repeat(hashes);
+          const closeIdx = s.indexOf(closer, i);
+          if (closeIdx !== -1) i = closeIdx + closer.length - 1;
+        }
+      } else {
+        i += 2;
+        const closeIdx = s.indexOf('"', i);
+        if (closeIdx !== -1) i = closeIdx;
+      }
+    }
+  }
+  return -1;
+}
+
 // ── Step 3: Compare and report ──────────────────────────────────────────
 
+/**
+ * Create a comparison key from a test case.
+ * Uses normalized code + sorted JSON of options for a composite key.
+ */
+function caseKey(t) {
+  const code = normalize(t.code);
+  const options = normalizeOptions(t);
+  return options ? `${code}\0${options}` : code;
+}
+
+/**
+ * Normalize options for comparison. Upstream uses `options` property,
+ * Rust uses the second tuple element (parsed from serde_json::json!).
+ * Returns a canonical JSON string or null.
+ */
+function normalizeOptions(t) {
+  const opts = t.options ?? null;
+  if (opts === null || opts === undefined) return null;
+  try {
+    return JSON.stringify(opts);
+  } catch {
+    return String(opts);
+  }
+}
+
 function compareSets(upstreamCases, rustCases) {
-  const upstreamCodes = new Set(upstreamCases.map((t) => normalize(t.code)));
-  const rustCodes = new Set(rustCases.map((t) => normalize(t.code)));
+  const upstreamKeys = new Set(upstreamCases.map((t) => caseKey(t)));
+  const rustKeys = new Set(rustCases.map((t) => caseKey(t)));
 
   const missing = [];
   for (const t of upstreamCases) {
-    const norm = normalize(t.code);
-    if (norm && !rustCodes.has(norm)) {
+    const key = caseKey(t);
+    if (key && !rustKeys.has(key)) {
       missing.push(t);
     }
   }
 
   const extra = [];
   for (const t of rustCases) {
-    const norm = normalize(t.code);
-    if (norm && !upstreamCodes.has(norm)) {
+    const key = caseKey(t);
+    if (key && !upstreamKeys.has(key)) {
       extra.push(t);
     }
   }
@@ -690,6 +848,33 @@ function compareSets(upstreamCases, rustCases) {
 function truncate(str, maxLen = 120) {
   if (str.length <= maxLen) return str;
   return str.slice(0, maxLen) + "...";
+}
+
+/**
+ * Format a test case for JSON output. Includes options when present.
+ */
+function formatCaseForJson(t) {
+  const opts = t.options ?? null;
+  if (opts !== null && opts !== undefined) {
+    return { code: t.code, options: opts };
+  }
+  return t.code;
+}
+
+/**
+ * Format a test case for human-readable output. Appends options as a short suffix.
+ */
+function formatCaseForDisplay(t) {
+  const code = truncate(normalize(t.code));
+  const opts = t.options ?? null;
+  if (opts !== null && opts !== undefined) {
+    const optsStr = JSON.stringify(opts);
+    if (optsStr.length <= 60) {
+      return `${code}  [options: ${optsStr}]`;
+    }
+    return `${code}  [options: ${truncate(optsStr, 60)}]`;
+  }
+  return code;
 }
 
 function printReport(upstreamResult, rustResult) {
@@ -710,10 +895,10 @@ function printReport(upstreamResult, rustResult) {
             valid: rustResult.valid.length,
             invalid: rustResult.invalid.length,
           },
-          missingValid: validComparison.missing.map((t) => t.code),
-          missingInvalid: invalidComparison.missing.map((t) => t.code),
-          extraValid: validComparison.extra.map((t) => t.code),
-          extraInvalid: invalidComparison.extra.map((t) => t.code),
+          missingValid: validComparison.missing.map(formatCaseForJson),
+          missingInvalid: invalidComparison.missing.map(formatCaseForJson),
+          extraValid: validComparison.extra.map(formatCaseForJson),
+          extraInvalid: invalidComparison.extra.map(formatCaseForJson),
         },
         null,
         2,
@@ -738,21 +923,21 @@ function printReport(upstreamResult, rustResult) {
   if (validComparison.missing.length > 0) {
     console.log(`\nMissing valid cases (${validComparison.missing.length}):`);
     for (const [i, t] of validComparison.missing.entries()) {
-      console.log(`  ${i + 1}. ${truncate(normalize(t.code))}`);
+      console.log(`  ${i + 1}. ${formatCaseForDisplay(t)}`);
     }
   }
 
   if (invalidComparison.missing.length > 0) {
     console.log(`\nMissing invalid cases (${invalidComparison.missing.length}):`);
     for (const [i, t] of invalidComparison.missing.entries()) {
-      console.log(`  ${i + 1}. ${truncate(normalize(t.code))}`);
+      console.log(`  ${i + 1}. ${formatCaseForDisplay(t)}`);
     }
   }
 
   if (validComparison.extra.length > 0) {
     console.log(`\nExtra valid cases in oxlint not in upstream (${validComparison.extra.length}):`);
     for (const [i, t] of validComparison.extra.entries()) {
-      console.log(`  ${i + 1}. ${truncate(normalize(t.code))}`);
+      console.log(`  ${i + 1}. ${formatCaseForDisplay(t)}`);
     }
   }
 
@@ -761,7 +946,7 @@ function printReport(upstreamResult, rustResult) {
       `\nExtra invalid cases in oxlint not in upstream (${invalidComparison.extra.length}):`,
     );
     for (const [i, t] of invalidComparison.extra.entries()) {
-      console.log(`  ${i + 1}. ${truncate(normalize(t.code))}`);
+      console.log(`  ${i + 1}. ${formatCaseForDisplay(t)}`);
     }
   }
 
