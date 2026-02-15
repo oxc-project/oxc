@@ -5,17 +5,7 @@ source: apps/oxlint/src/tester.rs
 arguments: -c .oxlintrc.json
 working directory: fixtures/overrides_correctness_off_constant_binary
 ----------
-
-  ! eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object
-   ,-[subdir/bar.tsx:3:5]
- 2 | const a = 5;
- 3 | if (a === {}) {
-   :     ^^^^^^^^
- 4 |   console.log("foo");
-   `----
-  help: These two values can never be equal
-
-Found 1 warning and 0 errors.
+Found 0 warnings and 0 errors.
 Finished in <variable>ms on 1 file with 0 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
