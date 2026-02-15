@@ -23,16 +23,6 @@ working directory: fixtures/overrides_correctness_off
    `----
   help: Move this component to a separate file.
 
-  ! eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
-   ,-[subdir/foo.tsx:7:7]
- 6 | // But it should NOT trigger no-unused-vars since correctness is off.
- 7 | const a: number = 5;
-   :       |
-   :       `-- 'a' is declared here
- 8 | 
-   `----
-  help: Consider removing this declaration.
-
   x typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ,-[subdir/foo.tsx:7:8]
  6 | // But it should NOT trigger no-unused-vars since correctness is off.
@@ -42,7 +32,7 @@ working directory: fixtures/overrides_correctness_off
    `----
   help: Remove the type annotation
 
-Found 1 warning and 3 errors.
+Found 0 warnings and 3 errors.
 Finished in <variable>ms on 2 files with 2 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
