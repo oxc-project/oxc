@@ -204,9 +204,30 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing this function or adding logic to it.
 
   ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:32]
+ 1 │ const obj = { foo: function*() {} };
+   ·                                ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
    ╭─[no_empty_function.tsx:1:33]
  1 │ const obj = {foo(param: string) {}};
    ·                                 ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:37]
+ 1 │ const obj = { foo: async function() {} };
+   ·                                     ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:26]
+ 1 │ const obj = { foo: () => {} };
+   ·                          ──
    ╰────
   help: Consider removing this function or adding logic to it.
 
