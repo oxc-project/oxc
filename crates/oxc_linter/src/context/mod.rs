@@ -552,7 +552,6 @@ impl<'a> LintContext<'a> {
     }
 
     /// Returns the framework options for the current script block.
-    /// For Vue files, this can be `FrameworkOptions::VueSetup` if we're in a `<script setup>` block.
     pub fn frameworks_options(&self) -> FrameworkOptions {
         self.parent.frameworks_options()
     }
