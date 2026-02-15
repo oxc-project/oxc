@@ -140,9 +140,27 @@ pub fn is_identifier_part_unicode(c: char) -> bool {
     is_id_continue_unicode(c) || c == ZWNJ || c == ZWJ
 }
 
+/// U+30FB KATAKANA MIDDLE DOT
+const KATAKANA_MIDDLE_DOT: char = '・';
+/// U+FF65 HALFWIDTH KATAKANA MIDDLE DOT
+const HALFWIDTH_KATAKANA_MIDDLE_DOT: char = '･';
+
 /// Determine if a string is a valid JS identifier.
-#[expect(clippy::missing_panics_doc)]
 pub fn is_identifier_name(name: &str) -> bool {
+    is_identifier_name_impl::<false>(name)
+}
+
+/// `is_identifier_name` patched with KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT.
+///
+/// Otherwise `({ 'x・': 0 })` gets converted to `({ x・: 0 })`, which breaks in Unicode 4.1 to
+/// 15.
+///
+/// <https://github.com/oxc-project/unicode-id-start/pull/3>
+pub fn is_identifier_name_patched(name: &str) -> bool {
+    is_identifier_name_impl::<true>(name)
+}
+
+fn is_identifier_name_impl<const PATCHED: bool>(name: &str) -> bool {
     // This function contains a fast path for ASCII (common case), iterating over bytes and using
     // the cheap `is_identifier_start_ascii` and `is_identifier_part_ascii` to test bytes.
     // Only if a Unicode char is found, fall back to iterating over `char`s, and using the more
@@ -245,7 +263,13 @@ pub fn is_identifier_name(name: &str) -> bool {
     };
 
     // A Unicode char was found - search rest of string as Unicode
-    chars.all(is_identifier_part)
+    if PATCHED {
+        chars.all(|c| {
+            is_identifier_part(c) && c != KATAKANA_MIDDLE_DOT && c != HALFWIDTH_KATAKANA_MIDDLE_DOT
+        })
+    } else {
+        chars.all(is_identifier_part)
+    }
 }
 
 #[test]
@@ -333,4 +357,26 @@ fn is_identifier_name_false() {
     for str in cases {
         assert!(!is_identifier_name(str));
     }
+}
+
+#[test]
+fn is_identifier_name_patched_rejects_katakana_dots() {
+    // Katakana middle dots are valid identifier parts per Unicode 15+,
+    // but we reject them in the patched version for compat with Unicode 4.1-15.
+    // U+30FB KATAKANA MIDDLE DOT
+    assert!(is_identifier_name("x\u{30FB}"));
+    assert!(!is_identifier_name_patched("x\u{30FB}"));
+    // U+FF65 HALFWIDTH KATAKANA MIDDLE DOT
+    assert!(is_identifier_name("x\u{FF65}"));
+    assert!(!is_identifier_name_patched("x\u{FF65}"));
+    // As start character (neither is a valid start, so both should reject)
+    assert!(!is_identifier_name("\u{30FB}"));
+    assert!(!is_identifier_name_patched("\u{30FB}"));
+    // Normal identifiers still work
+    assert!(is_identifier_name_patched("foo"));
+    assert!(is_identifier_name_patched("_bar"));
+    assert!(is_identifier_name_patched("$baz"));
+    assert!(is_identifier_name_patched("µ"));
+    // Empty string rejected
+    assert!(!is_identifier_name_patched(""));
 }

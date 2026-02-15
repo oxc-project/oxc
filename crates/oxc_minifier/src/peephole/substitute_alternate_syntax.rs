@@ -12,6 +12,7 @@ use oxc_span::GetSpan;
 use oxc_span::SPAN;
 use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
+    identifier::is_identifier_name_patched,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
@@ -1276,7 +1277,7 @@ impl<'a> PeepholeOptimizations {
             }
             PropertyKey::StringLiteral(s) => {
                 let value = s.value.as_str();
-                if TraverseCtx::is_identifier_name_patched(value) {
+                if is_identifier_name_patched(value) {
                     *computed = false;
                     *key = PropertyKey::StaticIdentifier(
                         ctx.ast.alloc_identifier_name(s.span, s.value),
