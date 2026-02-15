@@ -1,12 +1,13 @@
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
+use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
     Buffer, Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
     utils::{
-        string::{FormatLiteralStringToken, StringLiteralParentKind, is_identifier_name_patched},
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
     },
     write,

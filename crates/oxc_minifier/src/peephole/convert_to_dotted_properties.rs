@@ -1,5 +1,6 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
+use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::TraverseCtx;
 
@@ -16,7 +17,7 @@ impl<'a> PeepholeOptimizations {
     pub fn convert_to_dotted_properties(expr: &mut MemberExpression<'a>, ctx: &TraverseCtx<'a>) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
-        if TraverseCtx::is_identifier_name_patched(&s.value) {
+        if is_identifier_name_patched(&s.value) {
             let property = ctx.ast.identifier_name(s.span, s.value);
             *expr =
                 MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
