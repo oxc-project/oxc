@@ -102,6 +102,15 @@ use oxc_span::{GetSpan, Span};
 
 use crate::formatter::SourceText;
 
+/// Snapshot of the comment printed state, used for speculative formatting.
+///
+/// Internal use only - used by `Formatter::will_break`.
+#[derive(Clone, Copy)]
+pub struct CommentStateSnapshot {
+    printed_count: usize,
+    last_handled_type_cast_comment: usize,
+}
+
 #[derive(Debug, Clone)]
 pub struct Comments<'a> {
     source_text: SourceText<'a>,
@@ -277,6 +286,35 @@ impl<'a> Comments<'a> {
     #[inline]
     pub fn increase_printed_count_by(&mut self, count: usize) {
         self.printed_count += count;
+    }
+
+    /// Saves the current printed state for later restoration.
+    ///
+    /// Internal use only - used by `Formatter::will_break` for speculative formatting.
+    pub(crate) fn snapshot_printed_state(&self) -> CommentStateSnapshot {
+        CommentStateSnapshot {
+            printed_count: self.printed_count,
+            last_handled_type_cast_comment: self.last_handled_type_cast_comment,
+        }
+    }
+
+    /// Restores a previously saved printed state.
+    ///
+    /// Internal use only - used by `Formatter::will_break` for speculative formatting.
+    pub(crate) fn restore_printed_state(&mut self, snapshot: CommentStateSnapshot) {
+        self.printed_count = snapshot.printed_count;
+        self.last_handled_type_cast_comment = snapshot.last_handled_type_cast_comment;
+    }
+
+    /// Skips comments that end before the given position.
+    ///
+    /// Internal use only - used by `Formatter::will_break` for speculative formatting.
+    pub(crate) fn skip_comments_before(&mut self, pos: u32) {
+        while self.printed_count < self.inner.len()
+            && self.inner[self.printed_count].span.end <= pos
+        {
+            self.printed_count += 1;
+        }
     }
 
     /// Gets trailing comments for a node based on its context.

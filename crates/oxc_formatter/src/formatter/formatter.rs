@@ -1,6 +1,7 @@
 #![allow(clippy::module_inception)]
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
+use oxc_span::Span;
 
 use crate::options::FormatOptions;
 
@@ -225,6 +226,22 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     /// ```
     pub fn fill<'fmt>(&'fmt mut self) -> FillBuilder<'fmt, 'buf, 'ast> {
         FillBuilder::new(self)
+    }
+
+    /// Checks if `content` would break across multiple lines when formatted,
+    /// without writing to the buffer or permanently advancing the comment cursor.
+    ///
+    /// This method:
+    /// 1. Snapshots the comment state
+    /// 2. Skips comments before `span.start` (so only comments within `content` are processed)
+    /// 3. Formats `content` and checks if it would break
+    /// 4. Restores the comment state
+    pub fn will_break(&mut self, content: &dyn Format<'ast>, span: Span) -> bool {
+        let snapshot = self.context().comments().snapshot_printed_state();
+        self.context_mut().comments_mut().skip_comments_before(span.start);
+        let result = self.intern(content).is_some_and(|e| e.will_break());
+        self.context_mut().comments_mut().restore_printed_state(snapshot);
+        result
     }
 
     /// Formats `content` into an interned element without writing it to the formatter's buffer.
