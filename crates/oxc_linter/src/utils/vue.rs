@@ -1,11 +1,14 @@
 use crate::LintContext;
+use oxc_allocator::Vec;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectPropertyKind, Statement,
+        CallExpression, ExportDefaultDeclarationKind, Expression, JSXChild, ObjectPropertyKind,
+        Statement,
     },
 };
 use oxc_semantic::ScopeId;
+use oxc_span::{GetSpan, Span};
 
 /// Check if any of the other contexts has a default export with the `name` property.
 ///
@@ -101,11 +104,21 @@ pub fn check_define_macro_call_expression(
     }
 }
 
-/// Get the scope ID of the Vue setup block (last top-level BlockStatement).
-///
 /// According to <https://github.com/liangmiQwQ/vue-oxc-toolkit/blob/main/MAPPING.md>,
 /// In vue-oxc-toolkit compiled AST, the last top-level BlockStatement contains
 /// the `<script setup>` code.
+pub fn get_vue_setup_statements<'a>(ctx: &LintContext<'a>) -> &'a [Statement<'a>] {
+    let program = ctx.nodes().program();
+
+    // Find the last top-level BlockStatement
+    let Statement::BlockStatement(block) = program.body.last().unwrap() else {
+        unreachable!();
+    };
+
+    &block.body
+}
+
+/// Get the scope ID of the Vue setup block (last top-level BlockStatement).
 pub fn get_vue_setup_scope_id(ctx: &LintContext<'_>) -> ScopeId {
     let program = ctx.nodes().program();
 
@@ -136,4 +149,28 @@ pub fn is_in_vue_setup(ctx: &LintContext<'_>, scope_id: ScopeId) -> bool {
     }
 
     false
+}
+
+/// The last statement of <script setup> block must be JSXFragment, which includes Vue SFC struct
+pub fn get_vue_sfc_struct<'a>(ctx: &LintContext<'a>) -> &'a Vec<'a, JSXChild<'a>> {
+    let last_statement = get_vue_setup_statements(ctx).last().unwrap();
+    let Statement::ExpressionStatement(expression_statement) = last_statement else {
+        unreachable!();
+    };
+    let Expression::JSXFragment(jsx_fragment) = &expression_statement.expression else {
+        unreachable!();
+    };
+    &jsx_fragment.children
+}
+
+// The start from the first statement, the end from the second to last statement
+pub fn get_script_statements_span(ctx: &LintContext) -> Option<Span> {
+    let statements = &ctx.nodes().program().body;
+    if statements.len() > 1 {
+        let first_statement = statements.first().unwrap();
+        let second_to_last_statement = statements.get(statements.len() - 2).unwrap();
+        Some(Span::new(first_statement.span().start, second_to_last_statement.span().end))
+    } else {
+        None
+    }
 }
