@@ -191,7 +191,6 @@ export const NORMALIZED_REPO_ROOT = normalizeSlashes(REPO_ROOT_PATH);
 // Matches `/path/to/oxc`, `/path/to/oxc/`, `/path/to/oxc/whatever`,
 // when preceded by whitespace, `(`, or a quote, and followed by whitespace, `)`, or a quote.
 export const PATH_REGEXP = new RegExp(
-  // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
   `(?<=^|[\\s\\('"\`])${RegExp.escape(NORMALIZED_REPO_ROOT).replace(/\\\//g, "[\\\\/]")}([\\\\\\\\/][^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
   isWindows ? "gi" : "g",
 );
@@ -277,7 +276,6 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
     // Handle fixture file URLs anywhere else in the line.
     // e.g. `... file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1 ...`
     line = line.replaceAll(
-      // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
       new RegExp(`${RegExp.escape(FIXTURES_URL)}([^\\s\\)'"\`]+)`, isWindows ? "gi" : "g"),
       (_match, subPath) => convertFixturesSubPath(`/${subPath}`, fixtureName),
     );
