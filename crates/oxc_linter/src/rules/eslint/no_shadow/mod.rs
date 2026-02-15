@@ -83,14 +83,6 @@ declare_oxc_lint!(
     ///     var y = 2; // different name, no shadowing
     /// }
     /// ```
-    ///
-    /// ### TypeScript
-    ///
-    /// This rule supports TypeScript-specific options:
-    /// - `ignoreTypeValueShadow`: When `true` (default), ignores cases where a type and a value
-    ///   have the same name (e.g., `type Foo = string; const Foo = 'bar';`).
-    /// - `ignoreFunctionTypeParameterNameValueShadow`: When `true` (default), ignores cases where
-    ///   a function type parameter shadows a value (e.g., `const T = 1; function foo<T>() {}`).
     NoShadow,
     eslint,
     suspicious,
