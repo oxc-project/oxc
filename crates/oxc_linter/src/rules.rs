@@ -285,6 +285,7 @@ pub(crate) mod typescript {
     pub mod parameter_properties;
     pub mod prefer_as_const;
     pub mod prefer_enum_initializers;
+    pub mod prefer_find;
     pub mod prefer_for_of;
     pub mod prefer_function_type;
     pub mod prefer_includes;

@@ -284,6 +284,13 @@ working directory: fixtures/tsgolint
  2 | 
    `----
 
+  x typescript-eslint(prefer-find): Prefer .find(...) instead of .filter(...)[0].
+   ,-[prefer-find.ts:1:13]
+ 1 | const two = [1, 2, 3].filter(item => item === 2)[0];
+   :             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | console.log(two);
+   `----
+
   x typescript-eslint(prefer-includes): Use 'includes()' method instead.
    ,-[prefer-includes.ts:2:5]
  1 | const text = 'hello';
@@ -479,8 +486,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 61 errors.
-Finished in <variable>ms on 50 files with 49 rules using 1 threads.
+Found 0 warnings and 62 errors.
+Finished in <variable>ms on 51 files with 50 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
