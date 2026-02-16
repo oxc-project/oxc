@@ -130,7 +130,7 @@ importers:
         specifier: ^8.54.0
         version: 8.54.0
       ajv:
-        specifier: ^6.12.6
+        specifier: 6.12.6
         version: 6.12.6
       cross-env:
         specifier: 'catalog:'
