@@ -248,25 +248,25 @@ fn test() {
         (
             "
               class Foo {
-            	constructor(a) {}
+                constructor(a) {}
               }
-            	  ",
+                  ",
             None,
         ),
         (
             "
               class Foo {
-            	method(this: void, a, b, c) {}
+                method(this: void, a, b, c) {}
               }
-            	  ",
+                  ",
             None,
         ),
         (
             "
               class Foo {
-            	method(this: Foo, a, b) {}
+                method(this: Foo, a, b) {}
               }
-            	  ",
+                  ",
             None,
         ),
         ("function foo(a, b, c, d) {}", Some(serde_json::json!([{ "max": 4 }]))),
@@ -274,25 +274,25 @@ fn test() {
         (
             "
               class Foo {
-            	method(this: void) {}
+                method(this: void) {}
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "max": 0 }])),
         ),
         (
             "
               class Foo {
-            	method(this: void, a) {}
+                method(this: void, a) {}
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "max": 1 }])),
         ),
         (
             "
               class Foo {
-            	method(this: void, a) {}
+                method(this: void, a) {}
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "countVoidThis": true, "max": 2 }])),
         ),
         ("function testD(this: void, a) {}", Some(serde_json::json!([{ "max": 1 }]))),
@@ -308,13 +308,13 @@ fn test() {
         (
             "
               declare function makeDate(m: number, d: number, y: number): Date;
-            		",
+                    ",
             Some(serde_json::json!([{ "max": 3 }])),
         ),
         (
             "
               type sum = (a: number, b: number) => number;
-            		",
+                    ",
             Some(serde_json::json!([{ "max": 2 }])),
         ),
         (
@@ -350,25 +350,25 @@ fn test() {
         (
             "
               class Foo {
-            	method(this: void, a, b, c, d) {}
+                method(this: void, a, b, c, d) {}
               }
-            		",
+                    ",
             None,
         ),
         (
             "
               class Foo {
-            	method(this: void, a) {}
+                method(this: void, a) {}
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "countVoidThis": true, "max": 1 }])),
         ),
         (
             "
               class Foo {
-            	method(this: void, a) {}
+                method(this: void, a) {}
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "countThis": "always", "max": 1 }])),
         ),
         (
@@ -398,21 +398,21 @@ fn test() {
         (
             "
               class Foo {
-            	method(this: Foo, a, b, c) {}
+                method(this: Foo, a, b, c) {}
               }
-            		",
+                    ",
             None,
         ),
         (
             "
               declare function makeDate(m: number, d: number, y: number): Date;
-            		",
+                    ",
             Some(serde_json::json!([{ "max": 1 }])),
         ),
         (
             "
               type sum = (a: number, b: number) => number;
-            		",
+                    ",
             Some(serde_json::json!([{ "max": 1 }])),
         ),
         (

@@ -1229,7 +1229,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:3:19]
+   ╭─[no_shadow.tsx:3:22]
  2 │               {
  3 │                 type A = 1;
    ·                      ┬
@@ -1243,7 +1243,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:3:24]
+   ╭─[no_shadow.tsx:3:27]
  2 │               {
  3 │                 interface A {}
    ·                           ┬
@@ -1309,7 +1309,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:3:19]
+   ╭─[no_shadow.tsx:3:22]
  2 │               {
  3 │                 type A = 1;
    ·                      ┬
@@ -1323,7 +1323,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:3:24]
+   ╭─[no_shadow.tsx:3:27]
  2 │               {
  3 │                 interface A {}
    ·                           ┬
@@ -1350,7 +1350,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'foo' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:3:21]
+   ╭─[no_shadow.tsx:3:27]
  2 │                 if (true) {
  3 │                     const foo = 6;
    ·                           ─┬─
@@ -1365,7 +1365,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'foo' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:3:23]
+   ╭─[no_shadow.tsx:3:26]
  2 │                 // types
  3 │                 type Bar<Foo> = 1;
    ·                          ─┬─
@@ -1378,7 +1378,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'b' is already declared in the upper scope.
-    ╭─[no_shadow.tsx:8:21]
+    ╭─[no_shadow.tsx:8:27]
   7 │                 if (true) {
   8 │                     const b = 6;
     ·                           ┬
@@ -1393,7 +1393,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'b' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:3:23]
+   ╭─[no_shadow.tsx:3:26]
  2 │                 // types
  3 │                 type Bar<Foo> = 1;
    ·                          ─┬─
@@ -1445,7 +1445,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:3:19]
+   ╭─[no_shadow.tsx:3:22]
  2 │               {
  3 │                 type A = 1;
    ·                      ┬
@@ -1459,7 +1459,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:3:24]
+   ╭─[no_shadow.tsx:3:27]
  2 │               {
  3 │                 interface A {}
    ·                           ┬
@@ -1504,7 +1504,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'has' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:2:22]
+   ╭─[no_shadow.tsx:2:31]
  1 │ 
  2 │                         const A = 2;
    ·                               ┬

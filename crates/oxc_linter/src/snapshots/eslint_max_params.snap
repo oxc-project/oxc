@@ -102,7 +102,7 @@ source: crates/oxc_linter/src/tester.rs
   help: This rule enforces a maximum number of parameters allowed in function definitions.
 
   ⚠ eslint(max-params): Function has too many parameters (4). Maximum allowed is 3.
-   ╭─[max_params.tsx:3:20]
+   ╭─[max_params.tsx:3:23]
  2 │               class Foo {
  3 │                 method(this: void, a, b, c, d) {}
    ·                       ────────────────────────
@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
   help: This rule enforces a maximum number of parameters allowed in function definitions.
 
   ⚠ eslint(max-params): Function has too many parameters (2). Maximum allowed is 1.
-   ╭─[max_params.tsx:3:20]
+   ╭─[max_params.tsx:3:23]
  2 │               class Foo {
  3 │                 method(this: void, a) {}
    ·                       ───────────────
@@ -120,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
   help: This rule enforces a maximum number of parameters allowed in function definitions.
 
   ⚠ eslint(max-params): Function has too many parameters (2). Maximum allowed is 1.
-   ╭─[max_params.tsx:3:20]
+   ╭─[max_params.tsx:3:23]
  2 │               class Foo {
  3 │                 method(this: void, a) {}
    ·                       ───────────────
@@ -171,7 +171,7 @@ source: crates/oxc_linter/src/tester.rs
   help: This rule enforces a maximum number of parameters allowed in function definitions.
 
   ⚠ eslint(max-params): Function has too many parameters (4). Maximum allowed is 3.
-   ╭─[max_params.tsx:3:20]
+   ╭─[max_params.tsx:3:23]
  2 │               class Foo {
  3 │                 method(this: Foo, a, b, c) {}
    ·                       ────────────────────

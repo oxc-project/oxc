@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from `ReactDOM.render`.
-   ╭─[no_render_return_value.tsx:3:26]
+   ╭─[no_render_return_value.tsx:3:29]
  2 │                     var o = {
  3 │                       inst: ReactDOM.render(<div />, document.body)
    ·                             ───────────────
@@ -19,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Using the return value is a legacy feature.
 
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from `ReactDOM.render`.
-   ╭─[no_render_return_value.tsx:3:27]
+   ╭─[no_render_return_value.tsx:3:30]
  2 │                     function render () {
  3 │                       return ReactDOM.render(<div />, document.body)
    ·                              ───────────────

@@ -140,8 +140,7 @@ fn test() {
                 return <div></div>;
                 }
                 export async function getStaticPaths() {};
-                export async function getStaticProps() {};
-           	",
+                export async function getStaticProps() {};",
             None,
             None,
             Some(PathBuf::from("pages/test.tsx")),
@@ -151,8 +150,7 @@ fn test() {
                 export default function Page() {
                 return <div></div>;
                 }
-                export async function getServerSideProps() {};
-        	",
+                export async function getServerSideProps() {};",
             None,
             None,
             Some(PathBuf::from("pages/test.tsx")),
