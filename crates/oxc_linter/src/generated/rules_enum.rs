@@ -527,6 +527,7 @@ pub use crate::rules::typescript::restrict_plus_operands::RestrictPlusOperands a
 pub use crate::rules::typescript::restrict_template_expressions::RestrictTemplateExpressions as TypescriptRestrictTemplateExpressions;
 pub use crate::rules::typescript::return_await::ReturnAwait as TypescriptReturnAwait;
 pub use crate::rules::typescript::strict_boolean_expressions::StrictBooleanExpressions as TypescriptStrictBooleanExpressions;
+pub use crate::rules::typescript::strict_void_return::StrictVoidReturn as TypescriptStrictVoidReturn;
 pub use crate::rules::typescript::switch_exhaustiveness_check::SwitchExhaustivenessCheck as TypescriptSwitchExhaustivenessCheck;
 pub use crate::rules::typescript::triple_slash_reference::TripleSlashReference as TypescriptTripleSlashReference;
 pub use crate::rules::typescript::unbound_method::UnboundMethod as TypescriptUnboundMethod;
@@ -990,6 +991,7 @@ pub enum RuleEnum {
     TypescriptRestrictTemplateExpressions(TypescriptRestrictTemplateExpressions),
     TypescriptReturnAwait(TypescriptReturnAwait),
     TypescriptStrictBooleanExpressions(TypescriptStrictBooleanExpressions),
+    TypescriptStrictVoidReturn(TypescriptStrictVoidReturn),
     TypescriptSwitchExhaustivenessCheck(TypescriptSwitchExhaustivenessCheck),
     TypescriptTripleSlashReference(TypescriptTripleSlashReference),
     TypescriptUnboundMethod(TypescriptUnboundMethod),
@@ -1708,8 +1710,8 @@ const TYPESCRIPT_RESTRICT_TEMPLATE_EXPRESSIONS_ID: usize =
     TYPESCRIPT_RESTRICT_PLUS_OPERANDS_ID + 1usize;
 const TYPESCRIPT_RETURN_AWAIT_ID: usize = TYPESCRIPT_RESTRICT_TEMPLATE_EXPRESSIONS_ID + 1usize;
 const TYPESCRIPT_STRICT_BOOLEAN_EXPRESSIONS_ID: usize = TYPESCRIPT_RETURN_AWAIT_ID + 1usize;
-const TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID: usize =
-    TYPESCRIPT_STRICT_BOOLEAN_EXPRESSIONS_ID + 1usize;
+const TYPESCRIPT_STRICT_VOID_RETURN_ID: usize = TYPESCRIPT_STRICT_BOOLEAN_EXPRESSIONS_ID + 1usize;
+const TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID: usize = TYPESCRIPT_STRICT_VOID_RETURN_ID + 1usize;
 const TYPESCRIPT_TRIPLE_SLASH_REFERENCE_ID: usize =
     TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID + 1usize;
 const TYPESCRIPT_UNBOUND_METHOD_ID: usize = TYPESCRIPT_TRIPLE_SLASH_REFERENCE_ID + 1usize;
@@ -2486,6 +2488,7 @@ impl RuleEnum {
             }
             Self::TypescriptReturnAwait(_) => TYPESCRIPT_RETURN_AWAIT_ID,
             Self::TypescriptStrictBooleanExpressions(_) => TYPESCRIPT_STRICT_BOOLEAN_EXPRESSIONS_ID,
+            Self::TypescriptStrictVoidReturn(_) => TYPESCRIPT_STRICT_VOID_RETURN_ID,
             Self::TypescriptSwitchExhaustivenessCheck(_) => {
                 TYPESCRIPT_SWITCH_EXHAUSTIVENESS_CHECK_ID
             }
@@ -3262,6 +3265,7 @@ impl RuleEnum {
             }
             Self::TypescriptReturnAwait(_) => TypescriptReturnAwait::NAME,
             Self::TypescriptStrictBooleanExpressions(_) => TypescriptStrictBooleanExpressions::NAME,
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::NAME,
             Self::TypescriptSwitchExhaustivenessCheck(_) => {
                 TypescriptSwitchExhaustivenessCheck::NAME
             }
@@ -4052,6 +4056,7 @@ impl RuleEnum {
             Self::TypescriptStrictBooleanExpressions(_) => {
                 TypescriptStrictBooleanExpressions::CATEGORY
             }
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::CATEGORY,
             Self::TypescriptSwitchExhaustivenessCheck(_) => {
                 TypescriptSwitchExhaustivenessCheck::CATEGORY
             }
@@ -4845,6 +4850,7 @@ impl RuleEnum {
             }
             Self::TypescriptReturnAwait(_) => TypescriptReturnAwait::FIX,
             Self::TypescriptStrictBooleanExpressions(_) => TypescriptStrictBooleanExpressions::FIX,
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::FIX,
             Self::TypescriptSwitchExhaustivenessCheck(_) => {
                 TypescriptSwitchExhaustivenessCheck::FIX
             }
@@ -5696,6 +5702,7 @@ impl RuleEnum {
             Self::TypescriptStrictBooleanExpressions(_) => {
                 TypescriptStrictBooleanExpressions::documentation()
             }
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::documentation(),
             Self::TypescriptSwitchExhaustivenessCheck(_) => {
                 TypescriptSwitchExhaustivenessCheck::documentation()
             }
@@ -7062,6 +7069,10 @@ impl RuleEnum {
             Self::TypescriptStrictBooleanExpressions(_) => {
                 TypescriptStrictBooleanExpressions::config_schema(generator)
                     .or_else(|| TypescriptStrictBooleanExpressions::schema(generator))
+            }
+            Self::TypescriptStrictVoidReturn(_) => {
+                TypescriptStrictVoidReturn::config_schema(generator)
+                    .or_else(|| TypescriptStrictVoidReturn::schema(generator))
             }
             Self::TypescriptSwitchExhaustivenessCheck(_) => {
                 TypescriptSwitchExhaustivenessCheck::config_schema(generator)
@@ -8449,6 +8460,7 @@ impl RuleEnum {
             Self::TypescriptRestrictTemplateExpressions(_) => "typescript",
             Self::TypescriptReturnAwait(_) => "typescript",
             Self::TypescriptStrictBooleanExpressions(_) => "typescript",
+            Self::TypescriptStrictVoidReturn(_) => "typescript",
             Self::TypescriptSwitchExhaustivenessCheck(_) => "typescript",
             Self::TypescriptTripleSlashReference(_) => "typescript",
             Self::TypescriptUnboundMethod(_) => "typescript",
@@ -9788,6 +9800,9 @@ impl RuleEnum {
                     TypescriptStrictBooleanExpressions::from_configuration(value)?,
                 ))
             }
+            Self::TypescriptStrictVoidReturn(_) => Ok(Self::TypescriptStrictVoidReturn(
+                TypescriptStrictVoidReturn::from_configuration(value)?,
+            )),
             Self::TypescriptSwitchExhaustivenessCheck(_) => {
                 Ok(Self::TypescriptSwitchExhaustivenessCheck(
                     TypescriptSwitchExhaustivenessCheck::from_configuration(value)?,
@@ -11306,6 +11321,7 @@ impl RuleEnum {
             Self::TypescriptRestrictTemplateExpressions(rule) => rule.to_configuration(),
             Self::TypescriptReturnAwait(rule) => rule.to_configuration(),
             Self::TypescriptStrictBooleanExpressions(rule) => rule.to_configuration(),
+            Self::TypescriptStrictVoidReturn(rule) => rule.to_configuration(),
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.to_configuration(),
             Self::TypescriptTripleSlashReference(rule) => rule.to_configuration(),
             Self::TypescriptUnboundMethod(rule) => rule.to_configuration(),
@@ -11990,6 +12006,7 @@ impl RuleEnum {
             Self::TypescriptRestrictTemplateExpressions(rule) => rule.run(node, ctx),
             Self::TypescriptReturnAwait(rule) => rule.run(node, ctx),
             Self::TypescriptStrictBooleanExpressions(rule) => rule.run(node, ctx),
+            Self::TypescriptStrictVoidReturn(rule) => rule.run(node, ctx),
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.run(node, ctx),
             Self::TypescriptTripleSlashReference(rule) => rule.run(node, ctx),
             Self::TypescriptUnboundMethod(rule) => rule.run(node, ctx),
@@ -12672,6 +12689,7 @@ impl RuleEnum {
             Self::TypescriptRestrictTemplateExpressions(rule) => rule.run_once(ctx),
             Self::TypescriptReturnAwait(rule) => rule.run_once(ctx),
             Self::TypescriptStrictBooleanExpressions(rule) => rule.run_once(ctx),
+            Self::TypescriptStrictVoidReturn(rule) => rule.run_once(ctx),
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.run_once(ctx),
             Self::TypescriptTripleSlashReference(rule) => rule.run_once(ctx),
             Self::TypescriptUnboundMethod(rule) => rule.run_once(ctx),
@@ -13408,6 +13426,7 @@ impl RuleEnum {
             }
             Self::TypescriptReturnAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptStrictBooleanExpressions(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptStrictVoidReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptSwitchExhaustivenessCheck(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -14126,6 +14145,7 @@ impl RuleEnum {
             Self::TypescriptRestrictTemplateExpressions(rule) => rule.should_run(ctx),
             Self::TypescriptReturnAwait(rule) => rule.should_run(ctx),
             Self::TypescriptStrictBooleanExpressions(rule) => rule.should_run(ctx),
+            Self::TypescriptStrictVoidReturn(rule) => rule.should_run(ctx),
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.should_run(ctx),
             Self::TypescriptTripleSlashReference(rule) => rule.should_run(ctx),
             Self::TypescriptUnboundMethod(rule) => rule.should_run(ctx),
@@ -14940,6 +14960,7 @@ impl RuleEnum {
             Self::TypescriptStrictBooleanExpressions(_) => {
                 TypescriptStrictBooleanExpressions::IS_TSGOLINT_RULE
             }
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::IS_TSGOLINT_RULE,
             Self::TypescriptSwitchExhaustivenessCheck(_) => {
                 TypescriptSwitchExhaustivenessCheck::IS_TSGOLINT_RULE
             }
@@ -15853,6 +15874,7 @@ impl RuleEnum {
             Self::TypescriptStrictBooleanExpressions(_) => {
                 TypescriptStrictBooleanExpressions::HAS_CONFIG
             }
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::HAS_CONFIG,
             Self::TypescriptSwitchExhaustivenessCheck(_) => {
                 TypescriptSwitchExhaustivenessCheck::HAS_CONFIG
             }
@@ -16607,6 +16629,7 @@ impl RuleEnum {
             Self::TypescriptRestrictTemplateExpressions(rule) => rule.types_info(),
             Self::TypescriptReturnAwait(rule) => rule.types_info(),
             Self::TypescriptStrictBooleanExpressions(rule) => rule.types_info(),
+            Self::TypescriptStrictVoidReturn(rule) => rule.types_info(),
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.types_info(),
             Self::TypescriptTripleSlashReference(rule) => rule.types_info(),
             Self::TypescriptUnboundMethod(rule) => rule.types_info(),
@@ -17289,6 +17312,7 @@ impl RuleEnum {
             Self::TypescriptRestrictTemplateExpressions(rule) => rule.run_info(),
             Self::TypescriptReturnAwait(rule) => rule.run_info(),
             Self::TypescriptStrictBooleanExpressions(rule) => rule.run_info(),
+            Self::TypescriptStrictVoidReturn(rule) => rule.run_info(),
             Self::TypescriptSwitchExhaustivenessCheck(rule) => rule.run_info(),
             Self::TypescriptTripleSlashReference(rule) => rule.run_info(),
             Self::TypescriptUnboundMethod(rule) => rule.run_info(),
@@ -18043,6 +18067,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::TypescriptReturnAwait(TypescriptReturnAwait::default()),
         RuleEnum::TypescriptStrictBooleanExpressions(TypescriptStrictBooleanExpressions::default()),
+        RuleEnum::TypescriptStrictVoidReturn(TypescriptStrictVoidReturn::default()),
         RuleEnum::TypescriptSwitchExhaustivenessCheck(
             TypescriptSwitchExhaustivenessCheck::default(),
         ),

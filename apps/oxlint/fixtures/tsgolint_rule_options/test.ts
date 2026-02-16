@@ -80,6 +80,14 @@ const exportOnlyValue = 1;
 // This SHOULD error because ExportOnlyType is only used as a type.
 export { ExportOnlyType, exportOnlyValue };
 
+// Test strict-void-return with allowReturnAny option
+declare function takesVoidCallback(cb: () => void): void;
+declare const anyReturnValue: any;
+// This should NOT error because allowReturnAny is true
+takesVoidCallback(() => anyReturnValue);
+// This SHOULD error because returning string is not allowed in a void callback
+takesVoidCallback(() => 'not-void');
+
 // Test only-throw-error with allowRethrowing option
 // When allowRethrowing is false, rethrowing a caught error SHOULD error
 try {

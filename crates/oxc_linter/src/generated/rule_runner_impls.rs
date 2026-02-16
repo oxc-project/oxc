@@ -1950,6 +1950,11 @@ impl RuleRunner for crate::rules::typescript::strict_boolean_expressions::Strict
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
+impl RuleRunner for crate::rules::typescript::strict_void_return::StrictVoidReturn {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner
     for crate::rules::typescript::switch_exhaustiveness_check::SwitchExhaustivenessCheck
 {
