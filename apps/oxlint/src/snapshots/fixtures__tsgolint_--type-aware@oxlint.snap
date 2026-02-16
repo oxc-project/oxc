@@ -383,6 +383,30 @@ working directory: fixtures/tsgolint
  3 | 
    `----
 
+  x typescript-eslint(prefer-regexp-exec): Use the `RegExp#exec()` method instead.
+   ,-[prefer-regexp-exec.ts:4:6]
+ 3 | const text = 'something';
+ 4 | text.match(/thing/); // should prefer RegExp#exec
+   :      ^^^^^
+ 5 | 
+   `----
+
+  x typescript-eslint(prefer-regexp-exec): Use the `RegExp#exec()` method instead.
+   ,-[prefer-regexp-exec.ts:7:6]
+ 6 | const search = 'thing';
+ 7 | text.match(search); // should prefer RegExp#exec
+   :      ^^^^^
+ 8 | 
+   `----
+
+  x typescript-eslint(prefer-readonly-parameter-types): Parameter should be a readonly type.
+    ,-[prefer-regexp-exec.ts:9:36]
+  8 | 
+  9 | function countMatches(str: string, re: RegExp): number {
+    :                                    ^^^^^^^^^^
+ 10 |   return str.match(re)?.length ?? 0; // valid: unknown global flag
+    `----
+
   x typescript-eslint(prefer-return-this-type): Use `this` type instead.
    ,-[prefer-return-this-type.ts:3:28]
  2 |   private value: string = '';
@@ -502,8 +526,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 64 errors.
-Finished in <variable>ms on 53 files with 52 rules using 1 threads.
+Found 0 warnings and 67 errors.
+Finished in <variable>ms on 54 files with 53 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
