@@ -74,6 +74,12 @@
         "treatMethodsAsReadonly": true
       }
     ],
+    "typescript/prefer-readonly": [
+      "error",
+      {
+        "onlyInlineLambdas": true
+      }
+    ],
     "typescript/only-throw-error": [
       "error",
       {
