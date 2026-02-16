@@ -17,7 +17,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Do not use CommonJS `require` calls
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:2:15]
+   ╭─[no_require_imports.ts:2:24]
  1 │ 
  2 │             var lib5 = require('lib5'),
    ·                        ───────────────
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Do not use CommonJS `require` calls
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:3:13]
+   ╭─[no_require_imports.ts:3:22]
  2 │             var lib5 = require('lib5'),
  3 │               lib6 = require('lib6');
    ·                      ───────────────
@@ -56,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Do not use CommonJS `require` calls
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:2:15]
+   ╭─[no_require_imports.ts:2:24]
  1 │ 
  2 │             var lib5 = require?.('lib5'),
    ·                        ─────────────────
@@ -65,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Do not use CommonJS `require` calls
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:3:13]
+   ╭─[no_require_imports.ts:3:22]
  2 │             var lib5 = require?.('lib5'),
  3 │               lib6 = require?.('lib6');
    ·                      ─────────────────
@@ -186,7 +186,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Do not use CommonJS `require` calls
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:2:42]
+   ╭─[no_require_imports.ts:2:51]
  1 │ 
  2 │             const configValidator = new Validator(require('./a.json'));
    ·                                                   ───────────────────
@@ -195,7 +195,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Do not use CommonJS `require` calls
 
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
-   ╭─[no_require_imports.ts:3:30]
+   ╭─[no_require_imports.ts:3:39]
  2 │             const configValidator = new Validator(require('./a.json'));
  3 │             configValidator.addSchema(require('./a.json'));
    ·                                       ───────────────────

@@ -434,44 +434,116 @@ fn test() {
         ("const a: Foo = Foo<string>();", None),
         (
             "
-			class Foo {
-			  a = new Foo<string>();
-			}
-			    ",
+            class Foo {
+              a = new Foo<string>();
+            }
+                ",
             None,
         ),
         (
             "
-			function foo(a: Foo = new Foo<string>()) {}
-			    ",
+            class Foo {
+              accessor a = new Foo<string>();
+            }
+                ",
             None,
         ),
         (
             "
-			function foo({ a }: Foo = new Foo<string>()) {}
-			    ",
+            function foo(a: Foo = new Foo<string>()) {}
+                ",
             None,
         ),
         (
             "
-			function foo([a]: Foo = new Foo<string>()) {}
-			    ",
+            function foo({ a }: Foo = new Foo<string>()) {}
+                ",
             None,
         ),
         (
             "
-			class A {
-			  constructor(a: Foo = new Foo<string>()) {}
-			}
-			    ",
+            function foo([a]: Foo = new Foo<string>()) {}
+                ",
             None,
         ),
         (
             "
-			const a = function (a: Foo = new Foo<string>()) {};
-			    ",
+            class A {
+              constructor(a: Foo = new Foo<string>()) {}
+            }
+                ",
             None,
         ),
+        (
+            "
+            const a = function (a: Foo = new Foo<string>()) {};
+                ",
+            None,
+        ),
+        // TODO: Fix the rule so these pass.
+        // (
+        //     "
+        //     const a: Float32Array<ArrayBufferLike> = new Float32Array();
+        //     export {};
+        //         ",
+        //     None,
+        // ),
+        // (
+        //     "
+        //     const a: Float64Array<ArrayBufferLike> = new Float64Array();
+        //     export {};
+        //         ",
+        //     None,
+        // ),
+        // (
+        //     "
+        //     const a: Int16Array<ArrayBufferLike> = new Int16Array();
+        //     export {};
+        //         ",
+        //     None,
+        // ),
+        // (
+        //     "
+        //     const a: Int8Array<ArrayBufferLike> = new Int8Array();
+        //     export {};
+        //         ",
+        //     None,
+        // ),
+        // (
+        //     "
+        //     const a: Uint16Array<ArrayBufferLike> = new Uint16Array();
+        //     export {};
+        //         ",
+        //     None,
+        // ),
+        // (
+        //     "
+        //     const a: Uint32Array<ArrayBufferLike> = new Uint32Array();
+        //     export {};
+        //         ",
+        //     None,
+        // ),
+        // (
+        //     "
+        //     const a: Uint8Array<ArrayBufferLike> = new Uint8Array();
+        //     export {};
+        //         ",
+        //     None,
+        // ),
+        // (
+        //     "
+        //     const a: Uint8ClampedArray<ArrayBufferLike> = new Uint8ClampedArray();
+        //     export {};
+        //         ",
+        //     None,
+        // ),
+        // TODO: Fix?
+        // (
+        //     "
+        //     const foo: Foo<string> = new Foo();
+        //           ",
+        //     None,
+        // ), // { "parserOptions": { "isolatedDeclarations": true, }, },
         ("const a = new Foo();", Some(serde_json::json!(["type-annotation"]))),
         ("const a: Foo<string> = new Foo();", Some(serde_json::json!(["type-annotation"]))),
         ("const a: Foo<string> = new Foo<string>();", Some(serde_json::json!(["type-annotation"]))),
@@ -484,54 +556,62 @@ fn test() {
         ("const a = new (class C<T> {})<string>();", Some(serde_json::json!(["type-annotation"]))),
         (
             "
-			class Foo {
-			  a: Foo<string> = new Foo();
-			}
-			      ",
+            class Foo {
+              a: Foo<string> = new Foo();
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			function foo(a: Foo<string> = new Foo()) {}
-			      ",
+            class Foo {
+              accessor a: Foo<string> = new Foo();
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			function foo({ a }: Foo<string> = new Foo()) {}
-			      ",
+            function foo(a: Foo<string> = new Foo()) {}
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			function foo([a]: Foo<string> = new Foo()) {}
-			      ",
+            function foo({ a }: Foo<string> = new Foo()) {}
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			class A {
-			  constructor(a: Foo<string> = new Foo()) {}
-			}
-			      ",
+            function foo([a]: Foo<string> = new Foo()) {}
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			const a = function (a: Foo<string> = new Foo()) {};
-			      ",
+            class A {
+              constructor(a: Foo<string> = new Foo()) {}
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			const [a = new Foo<string>()] = [];
-			      ",
+            const a = function (a: Foo<string> = new Foo()) {};
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			function a([a = new Foo<string>()]) {}
-			      ",
+            const [a = new Foo<string>()] = [];
+                  ",
+            Some(serde_json::json!(["type-annotation"])),
+        ),
+        (
+            "
+            function a([a = new Foo<string>()]) {}
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
     ];
@@ -547,56 +627,81 @@ fn test() {
         ("const a: Foo/* comment */ <string> = new Foo /* another */();", None),
         (
             "const a: Foo<string> = new
-			 Foo
-			 ();",
+             Foo
+             ();",
             None,
         ),
         (
             "
-			class Foo {
-			  a: Foo<string> = new Foo();
-			}
-			      ",
+            class Foo {
+              a: Foo<string> = new Foo();
+            }
+                  ",
             None,
         ),
         (
             "
-			class Foo {
-			  [a]: Foo<string> = new Foo();
-			}
-			      ",
+            class Foo {
+              [a]: Foo<string> = new Foo();
+            }
+                  ",
+            None,
+        ),
+        // TODO: Fix these.
+        // (
+        //     "
+        //     class Foo {
+        //       accessor a: Foo<string> = new Foo();
+        //     }
+        //           ",
+        //     None,
+        // ),
+        // (
+        //     "
+        //     class Foo {
+        //       accessor a = new Foo<string>();
+        //     }
+        //           ",
+        //     Some(serde_json::json!(["type-annotation"])),
+        // ),
+        // (
+        //     "
+        //     class Foo {
+        //       accessor [a]: Foo<string> = new Foo();
+        //     }
+        //           ",
+        //     None,
+        // ),
+        (
+            "
+            function foo(a: Foo<string> = new Foo()) {}
+                  ",
             None,
         ),
         (
             "
-			function foo(a: Foo<string> = new Foo()) {}
-			      ",
+            function foo({ a }: Foo<string> = new Foo()) {}
+                  ",
             None,
         ),
         (
             "
-			function foo({ a }: Foo<string> = new Foo()) {}
-			      ",
+            function foo([a]: Foo<string> = new Foo()) {}
+                  ",
             None,
         ),
         (
             "
-			function foo([a]: Foo<string> = new Foo()) {}
-			      ",
+            class A {
+              constructor(a: Foo<string> = new Foo()) {}
+            }
+                  ",
             None,
         ),
         (
             "
-			class A {
-			  constructor(a: Foo<string> = new Foo()) {}
-			}
-			      ",
-            None,
-        ),
-        (
-            "
-			const a = function (a: Foo<string> = new Foo()) {};
-			      ",
+            const a = function (a: Foo<string> = new Foo()) {};
+                  ",
             None,
         ),
         ("const a = new Foo<string>();", Some(serde_json::json!(["type-annotation"]))),
@@ -605,8 +710,8 @@ fn test() {
         ("const a = new Map< string, number >();", Some(serde_json::json!(["type-annotation"]))),
         (
             "const a = new
-			 Foo<string>
-			 ();",
+             Foo<string>
+             ();",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
@@ -619,60 +724,68 @@ fn test() {
         ),
         (
             "
-			class Foo {
-			  a = new Foo<string>();
-			}
-			      ",
+            class Foo {
+              a = new Foo<string>();
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			class Foo {
-			  [a] = new Foo<string>();
-			}
-			      ",
+            class Foo {
+              [a] = new Foo<string>();
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			class Foo {
-			  [a + b] = new Foo<string>();
-			}
-			      ",
+            class Foo {
+              [a + b] = new Foo<string>();
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			function foo(a = new Foo<string>()) {}
-			      ",
+            function foo(a = new Foo<string>()) {}
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			function foo({ a } = new Foo<string>()) {}
-			      ",
+            function foo({ a } = new Foo<string>()) {}
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			function foo([a] = new Foo<string>()) {}
-			      ",
+            function foo([a] = new Foo<string>()) {}
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			class A {
-			  constructor(a = new Foo<string>()) {}
-			}
-			      ",
+            class A {
+              constructor(a = new Foo<string>()) {}
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			const a = function (a = new Foo<string>()) {};
-			      ",
+            const a = function (a = new Foo<string>()) {};
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
+        // (
+        //     "
+        //     class Float32Array<T> {}
+        //     const a: Float32Array<ArrayBufferLike> = new Float32Array();
+        //     export {};
+        //           ",
+        //     None,
+        // ),
     ];
 
     let fix = vec![
@@ -706,86 +819,126 @@ fn test() {
         ),
         (
             "const a: Foo<string> = new
-			 Foo
-			 ();",
+             Foo
+             ();",
             "const a = new
-			 Foo<string>
-			 ();",
+             Foo<string>
+             ();",
             None,
         ),
         (
             "
-			class Foo {
-			  a: Foo<string> = new Foo();
-			}
-			      ",
+            class Foo {
+              a: Foo<string> = new Foo();
+            }
+                  ",
             "
-			class Foo {
-			  a = new Foo<string>();
-			}
-			      ",
+            class Foo {
+              a = new Foo<string>();
+            }
+                  ",
             None,
         ),
         (
             "
-			class Foo {
-			  [a]: Foo<string> = new Foo();
-			}
-			      ",
+            class Foo {
+              [a]: Foo<string> = new Foo();
+            }
+                  ",
             "
-			class Foo {
-			  [a] = new Foo<string>();
-			}
-			      ",
+            class Foo {
+              [a] = new Foo<string>();
+            }
+                  ",
+            None,
+        ),
+        // TODO: Fix these
+        // (
+        //     "
+        //     class Foo {
+        //       accessor a: Foo<string> = new Foo();
+        //     }
+        //           ",
+        //     "
+        //     class Foo {
+        //       accessor a = new Foo<string>();
+        //     }
+        //           ",
+        //     None,
+        // ),
+        // (
+        //     "
+        //     class Foo {
+        //       accessor a = new Foo<string>();
+        //     }
+        //           ",
+        //     "
+        //     class Foo {
+        //       accessor a: Foo<string> = new Foo();
+        //     }
+        //           ",
+        //     Some(serde_json::json!(["type-annotation"])),
+        // ),
+        // (
+        //     "
+        //     class Foo {
+        //       accessor [a]: Foo<string> = new Foo();
+        //     }
+        //           ",
+        //     "
+        //     class Foo {
+        //       accessor [a] = new Foo<string>();
+        //     }
+        //           ",
+        //     None,
+        // ),
+        (
+            "
+            function foo(a: Foo<string> = new Foo()) {}
+                  ",
+            "
+            function foo(a = new Foo<string>()) {}
+                  ",
             None,
         ),
         (
             "
-			function foo(a: Foo<string> = new Foo()) {}
-			      ",
+            function foo({ a }: Foo<string> = new Foo()) {}
+                  ",
             "
-			function foo(a = new Foo<string>()) {}
-			      ",
+            function foo({ a } = new Foo<string>()) {}
+                  ",
             None,
         ),
         (
             "
-			function foo({ a }: Foo<string> = new Foo()) {}
-			      ",
+            function foo([a]: Foo<string> = new Foo()) {}
+                  ",
             "
-			function foo({ a } = new Foo<string>()) {}
-			      ",
+            function foo([a] = new Foo<string>()) {}
+                  ",
             None,
         ),
         (
             "
-			function foo([a]: Foo<string> = new Foo()) {}
-			      ",
+            class A {
+              constructor(a: Foo<string> = new Foo()) {}
+            }
+                  ",
             "
-			function foo([a] = new Foo<string>()) {}
-			      ",
+            class A {
+              constructor(a = new Foo<string>()) {}
+            }
+                  ",
             None,
         ),
         (
             "
-			class A {
-			  constructor(a: Foo<string> = new Foo()) {}
-			}
-			      ",
+            const a = function (a: Foo<string> = new Foo()) {};
+                  ",
             "
-			class A {
-			  constructor(a = new Foo<string>()) {}
-			}
-			      ",
-            None,
-        ),
-        (
-            "
-			const a = function (a: Foo<string> = new Foo()) {};
-			      ",
-            "
-			const a = function (a = new Foo<string>()) {};
-			      ",
+            const a = function (a = new Foo<string>()) {};
+                  ",
             None,
         ),
         (
@@ -810,11 +963,11 @@ fn test() {
         ),
         (
             "const a = new
-			 Foo<string>
-			 ();",
+             Foo<string>
+             ();",
             "const a: Foo<string> = new
-			 Foo
-			 ();",
+             Foo
+             ();",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
@@ -829,90 +982,90 @@ fn test() {
         ),
         (
             "
-			class Foo {
-			  a = new Foo<string>();
-			}
-			      ",
+            class Foo {
+              a = new Foo<string>();
+            }
+                  ",
             "
-			class Foo {
-			  a: Foo<string> = new Foo();
-			}
-			      ",
+            class Foo {
+              a: Foo<string> = new Foo();
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			class Foo {
-			  [a] = new Foo<string>();
-			}
-			      ",
+            class Foo {
+              [a] = new Foo<string>();
+            }
+                  ",
             "
-			class Foo {
-			  [a]: Foo<string> = new Foo();
-			}
-			      ",
+            class Foo {
+              [a]: Foo<string> = new Foo();
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			class Foo {
-			  [a + b] = new Foo<string>();
-			}
-			      ",
+            class Foo {
+              [a + b] = new Foo<string>();
+            }
+                  ",
             "
-			class Foo {
-			  [a + b]: Foo<string> = new Foo();
-			}
-			      ",
+            class Foo {
+              [a + b]: Foo<string> = new Foo();
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			function foo(a = new Foo<string>()) {}
-			      ",
+            function foo(a = new Foo<string>()) {}
+                  ",
             "
-			function foo(a: Foo<string> = new Foo()) {}
-			      ",
+            function foo(a: Foo<string> = new Foo()) {}
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			function foo({ a } = new Foo<string>()) {}
-			      ",
+            function foo({ a } = new Foo<string>()) {}
+                  ",
             "
-			function foo({ a }: Foo<string> = new Foo()) {}
-			      ",
+            function foo({ a }: Foo<string> = new Foo()) {}
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			function foo([a] = new Foo<string>()) {}
-			      ",
+            function foo([a] = new Foo<string>()) {}
+                  ",
             "
-			function foo([a]: Foo<string> = new Foo()) {}
-			      ",
+            function foo([a]: Foo<string> = new Foo()) {}
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			class A {
-			  constructor(a = new Foo<string>()) {}
-			}
-			      ",
+            class A {
+              constructor(a = new Foo<string>()) {}
+            }
+                  ",
             "
-			class A {
-			  constructor(a: Foo<string> = new Foo()) {}
-			}
-			      ",
+            class A {
+              constructor(a: Foo<string> = new Foo()) {}
+            }
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
             "
-			const a = function (a = new Foo<string>()) {};
-			      ",
+            const a = function (a = new Foo<string>()) {};
+                  ",
             "
-			const a = function (a: Foo<string> = new Foo()) {};
-			      ",
+            const a = function (a: Foo<string> = new Foo()) {};
+                  ",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
@@ -925,6 +1078,19 @@ fn test() {
         (
             "const baz /* note: map */ : Map<number, number> = new Map();",
             "const baz /* note: map */ = new Map<number, number>();",
+            None,
+        ),
+        (
+            "
+            class Float32Array<T> {}
+            const a: Float32Array<ArrayBufferLike> = new Float32Array();
+            export {};
+                  ",
+            "
+            class Float32Array<T> {}
+            const a = new Float32Array<ArrayBufferLike>();
+            export {};
+                  ",
             None,
         ),
     ];

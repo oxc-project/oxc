@@ -214,10 +214,10 @@ fn test() {
         ("var lib3 = load?.('not_an_import');", None),
         (
             "
-			import { createRequire } from 'module';
-			const require = createRequire();
-			require('remark-preset-prettier');
-			    ",
+            import { createRequire } from 'module';
+            const require = createRequire();
+            require('remark-preset-prettier');
+                ",
             None,
         ),
         (
@@ -251,60 +251,60 @@ fn test() {
         ("import foo = require('foo');", Some(serde_json::json!([{ "allowAsImport": true }]))),
         (
             "
-			let require = bazz;
-			trick(require('foo'));
-			      ",
+            let require = bazz;
+            trick(require('foo'));
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			const foo = require('./foo.json') as Foo;
-			      ",
+            let require = bazz;
+            const foo = require('./foo.json') as Foo;
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			const foo: Foo = require('./foo.json').default;
-			      ",
+            let require = bazz;
+            const foo: Foo = require('./foo.json').default;
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			const foo = <Foo>require('./foo.json');
-			      ",
+            let require = bazz;
+            const foo = <Foo>require('./foo.json');
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			const configValidator = new Validator(require('./a.json'));
-			configValidator.addSchema(require('./a.json'));
-			      ",
+            let require = bazz;
+            const configValidator = new Validator(require('./a.json'));
+            configValidator.addSchema(require('./a.json'));
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			require('foo');
-			      ",
+            let require = bazz;
+            require('foo');
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			let require = bazz;
-			require?.('foo');
-			      ",
+            let require = bazz;
+            require?.('foo');
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         (
             "
-			import { createRequire } from 'module';
-			const require = createRequire();
-			require('remark-preset-prettier');
-			      ",
+            import { createRequire } from 'module';
+            const require = createRequire();
+            require('remark-preset-prettier');
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
     ];
@@ -314,9 +314,9 @@ fn test() {
         ("let lib2 = require('lib2');", None),
         (
             "
-			var lib5 = require('lib5'),
-			  lib6 = require('lib6');
-			      ",
+            var lib5 = require('lib5'),
+              lib6 = require('lib6');
+                  ",
             None,
         ),
         ("import lib8 = require('lib8');", None),
@@ -324,9 +324,9 @@ fn test() {
         ("let lib2 = require?.('lib2');", None),
         (
             "
-			var lib5 = require?.('lib5'),
-			  lib6 = require?.('lib6');
-			      ",
+            var lib5 = require?.('lib5'),
+              lib6 = require?.('lib6');
+                  ",
             None,
         ),
         ("const pkg = require('./package.json');", None),
@@ -367,9 +367,9 @@ fn test() {
         ),
         (
             "
-			const configValidator = new Validator(require('./a.json'));
-			configValidator.addSchema(require('./a.json'));
-			      ",
+            const configValidator = new Validator(require('./a.json'));
+            configValidator.addSchema(require('./a.json'));
+                  ",
             Some(serde_json::json!([{ "allowAsImport": true }])),
         ),
         ("require('foo');", Some(serde_json::json!([{ "allowAsImport": true }]))),

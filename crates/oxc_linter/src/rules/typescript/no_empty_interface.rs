@@ -94,59 +94,59 @@ fn test() {
     let pass = vec![
         (
             "
-			interface Foo {
-			  name: string;
-			}
-			    ",
+            interface Foo {
+              name: string;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo {
-			  name: string;
-			}
+            interface Foo {
+              name: string;
+            }
 
-			interface Bar {
-			  age: number;
-			}
+            interface Bar {
+              age: number;
+            }
 
-			// valid because extending multiple interfaces can be used instead of a union type
-			interface Baz extends Foo, Bar {}
-			    ",
+            // valid because extending multiple interfaces can be used instead of a union type
+            interface Baz extends Foo, Bar {}
+                ",
             None,
         ),
         (
             "
-			interface Foo {
-			  name: string;
-			}
+            interface Foo {
+              name: string;
+            }
 
-			interface Bar extends Foo {}
-			      ",
+            interface Bar extends Foo {}
+                  ",
             Some(serde_json::json!([{ "allowSingleExtends": true }])),
         ),
         (
             "
-			interface Foo {
-			  props: string;
-			}
+            interface Foo {
+              props: string;
+            }
 
-			interface Bar extends Foo {}
+            interface Bar extends Foo {}
 
-			class Bar {}
-			      ",
+            class Bar {}
+                  ",
             Some(serde_json::json!([{ "allowSingleExtends": true }])),
         ),
         (
             "
-			interface Foo {
-			  props: string;
-			}
+            interface Foo {
+              props: string;
+            }
 
-			interface Bar extends Foo {}
+            interface Bar extends Foo {}
 
-			class Bar {}
-			      ",
+            class Bar {}
+                  ",
             Some(serde_json::json!([{ "allow_single_extends": true }])),
         ),
     ];
@@ -156,93 +156,93 @@ fn test() {
         ("interface Foo extends {}", None),
         (
             "
-			interface Foo {
-			  props: string;
-			}
+            interface Foo {
+              props: string;
+            }
 
-			interface Bar extends Foo {}
+            interface Bar extends Foo {}
 
-			class Baz {}
-			      ",
+            class Baz {}
+                  ",
             Some(serde_json::json!([{ "allowSingleExtends": false }])),
         ),
         (
             "
-			interface Foo {
-			  props: string;
-			}
+            interface Foo {
+              props: string;
+            }
 
-			interface Bar extends Foo {}
+            interface Bar extends Foo {}
 
-			class Bar {}
-			      ",
+            class Bar {}
+                  ",
             Some(serde_json::json!([{ "allowSingleExtends": false }])),
         ),
         (
             "
-			interface Foo {
-			  props: string;
-			}
+            interface Foo {
+              props: string;
+            }
 
-			interface Bar extends Foo {}
+            interface Bar extends Foo {}
 
-			const bar = class Bar {};
-			      ",
+            const bar = class Bar {};
+                  ",
             Some(serde_json::json!([{ "allowSingleExtends": false }])),
         ),
         (
             "
-			interface Foo {
-			  props: string;
-			}
+            interface Foo {
+              props: string;
+            }
 
-			interface Bar extends Foo {}
+            interface Bar extends Foo {}
 
-			const bar = class Bar {};
-			      ",
+            const bar = class Bar {};
+                  ",
             Some(serde_json::json!([{ "allow_single_extends": false }])),
         ),
         (
             "
-			interface Foo {
-			  name: string;
-			}
+            interface Foo {
+              name: string;
+            }
 
-			interface Bar extends Foo {}
-			      ",
+            interface Bar extends Foo {}
+                  ",
             Some(serde_json::json!([{ "allowSingleExtends": false }])),
         ),
         ("interface Foo extends Array<number> {}", None),
         ("interface Foo extends Array<number | {}> {}", None),
         (
             "
-			interface Bar {
-			  bar: string;
-			}
-			interface Foo extends Array<Bar> {}
-			      ",
+            interface Bar {
+              bar: string;
+            }
+            interface Foo extends Array<Bar> {}
+                  ",
             None,
         ),
         (
             "
-			type R = Record<string, unknown>;
-			interface Foo extends R {}
-			      ",
+            type R = Record<string, unknown>;
+            interface Foo extends R {}
+                  ",
             None,
         ),
         (
             "
-			interface Foo<T> extends Bar<T> {}
-			      ",
+            interface Foo<T> extends Bar<T> {}
+                  ",
             None,
         ),
         (
             "
-			declare module FooBar {
-			  type Baz = typeof baz;
-			  export interface Bar extends Baz {}
-			}
-			      ",
+            declare module FooBar {
+              type Baz = typeof baz;
+              export interface Bar extends Baz {}
+            }
+                  ",
             None,
         ),
     ];
