@@ -509,6 +509,7 @@ pub use crate::rules::typescript::only_throw_error::OnlyThrowError as Typescript
 pub use crate::rules::typescript::parameter_properties::ParameterProperties as TypescriptParameterProperties;
 pub use crate::rules::typescript::prefer_as_const::PreferAsConst as TypescriptPreferAsConst;
 pub use crate::rules::typescript::prefer_enum_initializers::PreferEnumInitializers as TypescriptPreferEnumInitializers;
+pub use crate::rules::typescript::prefer_find::PreferFind as TypescriptPreferFind;
 pub use crate::rules::typescript::prefer_for_of::PreferForOf as TypescriptPreferForOf;
 pub use crate::rules::typescript::prefer_function_type::PreferFunctionType as TypescriptPreferFunctionType;
 pub use crate::rules::typescript::prefer_includes::PreferIncludes as TypescriptPreferIncludes;
@@ -975,6 +976,7 @@ pub enum RuleEnum {
     TypescriptParameterProperties(TypescriptParameterProperties),
     TypescriptPreferAsConst(TypescriptPreferAsConst),
     TypescriptPreferEnumInitializers(TypescriptPreferEnumInitializers),
+    TypescriptPreferFind(TypescriptPreferFind),
     TypescriptPreferForOf(TypescriptPreferForOf),
     TypescriptPreferFunctionType(TypescriptPreferFunctionType),
     TypescriptPreferIncludes(TypescriptPreferIncludes),
@@ -1687,7 +1689,8 @@ const TYPESCRIPT_ONLY_THROW_ERROR_ID: usize =
 const TYPESCRIPT_PARAMETER_PROPERTIES_ID: usize = TYPESCRIPT_ONLY_THROW_ERROR_ID + 1usize;
 const TYPESCRIPT_PREFER_AS_CONST_ID: usize = TYPESCRIPT_PARAMETER_PROPERTIES_ID + 1usize;
 const TYPESCRIPT_PREFER_ENUM_INITIALIZERS_ID: usize = TYPESCRIPT_PREFER_AS_CONST_ID + 1usize;
-const TYPESCRIPT_PREFER_FOR_OF_ID: usize = TYPESCRIPT_PREFER_ENUM_INITIALIZERS_ID + 1usize;
+const TYPESCRIPT_PREFER_FIND_ID: usize = TYPESCRIPT_PREFER_ENUM_INITIALIZERS_ID + 1usize;
+const TYPESCRIPT_PREFER_FOR_OF_ID: usize = TYPESCRIPT_PREFER_FIND_ID + 1usize;
 const TYPESCRIPT_PREFER_FUNCTION_TYPE_ID: usize = TYPESCRIPT_PREFER_FOR_OF_ID + 1usize;
 const TYPESCRIPT_PREFER_INCLUDES_ID: usize = TYPESCRIPT_PREFER_FUNCTION_TYPE_ID + 1usize;
 const TYPESCRIPT_PREFER_LITERAL_ENUM_MEMBER_ID: usize = TYPESCRIPT_PREFER_INCLUDES_ID + 1usize;
@@ -3139,6 +3142,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(_) => TypescriptParameterProperties::NAME,
             Self::TypescriptPreferAsConst(_) => TypescriptPreferAsConst::NAME,
             Self::TypescriptPreferEnumInitializers(_) => TypescriptPreferEnumInitializers::NAME,
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::NAME,
             Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::NAME,
             Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::NAME,
             Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::NAME,
@@ -3924,6 +3928,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(_) => TypescriptParameterProperties::CATEGORY,
             Self::TypescriptPreferAsConst(_) => TypescriptPreferAsConst::CATEGORY,
             Self::TypescriptPreferEnumInitializers(_) => TypescriptPreferEnumInitializers::CATEGORY,
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::CATEGORY,
             Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::CATEGORY,
             Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::CATEGORY,
             Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::CATEGORY,
@@ -4732,6 +4737,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(_) => TypescriptParameterProperties::FIX,
             Self::TypescriptPreferAsConst(_) => TypescriptPreferAsConst::FIX,
             Self::TypescriptPreferEnumInitializers(_) => TypescriptPreferEnumInitializers::FIX,
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::FIX,
             Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::FIX,
             Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::FIX,
             Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::FIX,
@@ -5566,6 +5572,7 @@ impl RuleEnum {
             Self::TypescriptPreferEnumInitializers(_) => {
                 TypescriptPreferEnumInitializers::documentation()
             }
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::documentation(),
             Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::documentation(),
             Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::documentation(),
             Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::documentation(),
@@ -6918,6 +6925,8 @@ impl RuleEnum {
                 TypescriptPreferEnumInitializers::config_schema(generator)
                     .or_else(|| TypescriptPreferEnumInitializers::schema(generator))
             }
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::config_schema(generator)
+                .or_else(|| TypescriptPreferFind::schema(generator)),
             Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::config_schema(generator)
                 .or_else(|| TypescriptPreferForOf::schema(generator)),
             Self::TypescriptPreferFunctionType(_) => {
@@ -8362,6 +8371,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(_) => "typescript",
             Self::TypescriptPreferAsConst(_) => "typescript",
             Self::TypescriptPreferEnumInitializers(_) => "typescript",
+            Self::TypescriptPreferFind(_) => "typescript",
             Self::TypescriptPreferForOf(_) => "typescript",
             Self::TypescriptPreferFunctionType(_) => "typescript",
             Self::TypescriptPreferIncludes(_) => "typescript",
@@ -9649,6 +9659,9 @@ impl RuleEnum {
                 Ok(Self::TypescriptPreferEnumInitializers(
                     TypescriptPreferEnumInitializers::from_configuration(value)?,
                 ))
+            }
+            Self::TypescriptPreferFind(_) => {
+                Ok(Self::TypescriptPreferFind(TypescriptPreferFind::from_configuration(value)?))
             }
             Self::TypescriptPreferForOf(_) => {
                 Ok(Self::TypescriptPreferForOf(TypescriptPreferForOf::from_configuration(value)?))
@@ -11233,6 +11246,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(rule) => rule.to_configuration(),
             Self::TypescriptPreferAsConst(rule) => rule.to_configuration(),
             Self::TypescriptPreferEnumInitializers(rule) => rule.to_configuration(),
+            Self::TypescriptPreferFind(rule) => rule.to_configuration(),
             Self::TypescriptPreferForOf(rule) => rule.to_configuration(),
             Self::TypescriptPreferFunctionType(rule) => rule.to_configuration(),
             Self::TypescriptPreferIncludes(rule) => rule.to_configuration(),
@@ -11920,6 +11934,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(rule) => rule.run(node, ctx),
             Self::TypescriptPreferAsConst(rule) => rule.run(node, ctx),
             Self::TypescriptPreferEnumInitializers(rule) => rule.run(node, ctx),
+            Self::TypescriptPreferFind(rule) => rule.run(node, ctx),
             Self::TypescriptPreferForOf(rule) => rule.run(node, ctx),
             Self::TypescriptPreferFunctionType(rule) => rule.run(node, ctx),
             Self::TypescriptPreferIncludes(rule) => rule.run(node, ctx),
@@ -12605,6 +12620,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(rule) => rule.run_once(ctx),
             Self::TypescriptPreferAsConst(rule) => rule.run_once(ctx),
             Self::TypescriptPreferEnumInitializers(rule) => rule.run_once(ctx),
+            Self::TypescriptPreferFind(rule) => rule.run_once(ctx),
             Self::TypescriptPreferForOf(rule) => rule.run_once(ctx),
             Self::TypescriptPreferFunctionType(rule) => rule.run_once(ctx),
             Self::TypescriptPreferIncludes(rule) => rule.run_once(ctx),
@@ -13338,6 +13354,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptPreferAsConst(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptPreferEnumInitializers(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptPreferFind(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptPreferForOf(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptPreferFunctionType(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptPreferIncludes(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14067,6 +14084,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(rule) => rule.should_run(ctx),
             Self::TypescriptPreferAsConst(rule) => rule.should_run(ctx),
             Self::TypescriptPreferEnumInitializers(rule) => rule.should_run(ctx),
+            Self::TypescriptPreferFind(rule) => rule.should_run(ctx),
             Self::TypescriptPreferForOf(rule) => rule.should_run(ctx),
             Self::TypescriptPreferFunctionType(rule) => rule.should_run(ctx),
             Self::TypescriptPreferIncludes(rule) => rule.should_run(ctx),
@@ -14856,6 +14874,7 @@ impl RuleEnum {
             Self::TypescriptPreferEnumInitializers(_) => {
                 TypescriptPreferEnumInitializers::IS_TSGOLINT_RULE
             }
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::IS_TSGOLINT_RULE,
             Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::IS_TSGOLINT_RULE,
             Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::IS_TSGOLINT_RULE,
             Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::IS_TSGOLINT_RULE,
@@ -15784,6 +15803,7 @@ impl RuleEnum {
             Self::TypescriptPreferEnumInitializers(_) => {
                 TypescriptPreferEnumInitializers::HAS_CONFIG
             }
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::HAS_CONFIG,
             Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::HAS_CONFIG,
             Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::HAS_CONFIG,
             Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::HAS_CONFIG,
@@ -16561,6 +16581,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(rule) => rule.types_info(),
             Self::TypescriptPreferAsConst(rule) => rule.types_info(),
             Self::TypescriptPreferEnumInitializers(rule) => rule.types_info(),
+            Self::TypescriptPreferFind(rule) => rule.types_info(),
             Self::TypescriptPreferForOf(rule) => rule.types_info(),
             Self::TypescriptPreferFunctionType(rule) => rule.types_info(),
             Self::TypescriptPreferIncludes(rule) => rule.types_info(),
@@ -17246,6 +17267,7 @@ impl RuleEnum {
             Self::TypescriptParameterProperties(rule) => rule.run_info(),
             Self::TypescriptPreferAsConst(rule) => rule.run_info(),
             Self::TypescriptPreferEnumInitializers(rule) => rule.run_info(),
+            Self::TypescriptPreferFind(rule) => rule.run_info(),
             Self::TypescriptPreferForOf(rule) => rule.run_info(),
             Self::TypescriptPreferFunctionType(rule) => rule.run_info(),
             Self::TypescriptPreferIncludes(rule) => rule.run_info(),
@@ -17997,6 +18019,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptParameterProperties(TypescriptParameterProperties::default()),
         RuleEnum::TypescriptPreferAsConst(TypescriptPreferAsConst::default()),
         RuleEnum::TypescriptPreferEnumInitializers(TypescriptPreferEnumInitializers::default()),
+        RuleEnum::TypescriptPreferFind(TypescriptPreferFind::default()),
         RuleEnum::TypescriptPreferForOf(TypescriptPreferForOf::default()),
         RuleEnum::TypescriptPreferFunctionType(TypescriptPreferFunctionType::default()),
         RuleEnum::TypescriptPreferIncludes(TypescriptPreferIncludes::default()),

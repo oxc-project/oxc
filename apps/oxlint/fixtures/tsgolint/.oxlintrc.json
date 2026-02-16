@@ -32,6 +32,7 @@
     "typescript/no-unsafe-unary-minus": "error",
     "typescript/non-nullable-type-assertion-style": "error",
     "typescript/only-throw-error": "error",
+    "typescript/prefer-find": "error",
     "typescript/prefer-includes": "error",
     "typescript/prefer-nullish-coalescing": "error",
     "typescript/prefer-optional-chain": "error",
