@@ -1,14 +1,15 @@
 use std::path::Path;
 
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    EmbeddedLanguageFormatting, Expand, FormatOptions, ImportModifier, ImportSelector, IndentStyle,
-    IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, TailwindcssOptions, TrailingCommas,
+    EmbeddedLanguageFormatting, Expand, FormatOptions, GroupEntry, GroupName, ImportModifier,
+    ImportSelector, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
+    Semicolons, SortImportsOptions, SortOrder, TailwindcssOptions, TrailingCommas,
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -419,7 +420,46 @@ impl FormatConfig {
             if let Some(v) = config.internal_pattern {
                 sort_imports.internal_pattern = v;
             }
+            // Validate and parse `customGroups` first, since `groups` may refer to custom group names.
+            if let Some(v) = config.custom_groups {
+                let mut custom_groups = Vec::with_capacity(v.len());
+                for cg in v {
+                    let CustomGroupItemConfig { group_name, element_name_pattern, .. } = cg;
+                    let selector = match cg.selector.as_deref() {
+                        Some(s) => match ImportSelector::parse(s) {
+                            Some(parsed) => Some(parsed),
+                            None => {
+                                return Err(format!(
+                                    "Invalid `sortImports` configuration: unknown selector: `{s}` in customGroups: `{group_name}`"
+                                ));
+                            }
+                        },
+                        None => None,
+                    };
+                    let raw_modifiers = cg.modifiers.unwrap_or_default();
+                    let mut modifiers = Vec::with_capacity(raw_modifiers.len());
+                    for m in &raw_modifiers {
+                        match ImportModifier::parse(m) {
+                            Some(parsed) => modifiers.push(parsed),
+                            None => {
+                                return Err(format!(
+                                    "Invalid `sortImports` configuration: unknown modifier: `{m}` in customGroups: `{group_name}`"
+                                ));
+                            }
+                        }
+                    }
+                    custom_groups.push(CustomGroupDefinition {
+                        group_name,
+                        element_name_pattern,
+                        selector,
+                        modifiers,
+                    });
+                }
+                sort_imports.custom_groups = custom_groups;
+            }
             if let Some(v) = config.groups {
+                let custom_group_names: FxHashSet<&str> =
+                    sort_imports.custom_groups.iter().map(|g| g.group_name.as_str()).collect();
                 let mut groups = Vec::new();
                 let mut newline_boundary_overrides: Vec<Option<bool>> = Vec::new();
                 let mut pending_override: Option<bool> = None;
@@ -437,15 +477,24 @@ impl FormatConfig {
                         }
                         other => {
                             if !groups.is_empty() {
-                                // Record the boundary between the previous group and this one.
-                                // `pending_override` is
-                                // - `Some(bool)` if a marker preceded this group
-                                // - or `None` (= use global `newlines_between`) otherwise
-                                // For the very first group (`groups.is_empty()`),
-                                // there is no preceding boundary, so we skip this entirely.
                                 newline_boundary_overrides.push(pending_override.take());
                             }
-                            groups.push(other.into_vec());
+                            let mut entries = Vec::new();
+                            for name in other.into_vec() {
+                                let entry = if name == "unknown" {
+                                    GroupEntry::Unknown
+                                } else if custom_group_names.contains(name.as_str()) {
+                                    GroupEntry::Custom(name)
+                                } else if let Some(group_name) = GroupName::parse(&name) {
+                                    GroupEntry::Predefined(group_name)
+                                } else {
+                                    return Err(format!(
+                                        "Invalid `sortImports` configuration: unknown group name `{name}` in `groups`"
+                                    ));
+                                };
+                                entries.push(entry);
+                            }
+                            groups.push(entries);
                         }
                     }
                 }
@@ -462,22 +511,6 @@ impl FormatConfig {
                 && sort_imports.newline_boundary_overrides.iter().any(Option::is_some)
             {
                 return Err("Invalid `sortImports` configuration: `partitionByNewline` and per-group `{ \"newlinesBetween\" }` markers cannot be used together".to_string());
-            }
-            if let Some(v) = config.custom_groups {
-                sort_imports.custom_groups = v
-                    .into_iter()
-                    .map(|c| CustomGroupDefinition {
-                        group_name: c.group_name,
-                        element_name_pattern: c.element_name_pattern,
-                        selector: c.selector.as_deref().and_then(ImportSelector::parse),
-                        modifiers: c
-                            .modifiers
-                            .unwrap_or_default()
-                            .iter()
-                            .filter_map(|s| ImportModifier::parse(s))
-                            .collect(),
-                    })
-                    .collect();
             }
 
             // `partition_by_newline: true` and `newlines_between: true` cannot be used together
@@ -679,8 +712,8 @@ pub struct SortImportsConfig {
     ///
     /// The list of selectors is sorted from most to least important:
     /// - `type` — TypeScript type imports.
-    /// - `side-effect-style` — Side effect style imports.
-    /// - `side-effect` — Side effect imports.
+    /// - `side_effect_style` — Side effect style imports.
+    /// - `side_effect` — Side effect imports.
     /// - `style` — Style imports.
     /// - `index` — Main file from the current directory.
     /// - `sibling` — Modules from the same directory.
@@ -692,7 +725,7 @@ pub struct SortImportsConfig {
     /// - `import` — Any import.
     ///
     /// The list of modifiers is sorted from most to least important:
-    /// - `side-effect` — Side effect imports.
+    /// - `side_effect` — Side effect imports.
     /// - `type` — TypeScript type imports.
     /// - `value` — Value imports.
     /// - `default` — Imports containing the default specifier.
@@ -776,14 +809,14 @@ pub struct CustomGroupItemConfig {
     pub element_name_pattern: Vec<String>,
     /// Selector to match the import kind.
     ///
-    /// Possible values: `"type"`, `"side-effect-style"`, `"side-effect"`, `"style"`, `"index"`,
+    /// Possible values: `"type"`, `"side_effect_style"`, `"side_effect"`, `"style"`, `"index"`,
     /// `"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub selector: Option<String>,
     /// Modifiers to match the import characteristics.
     /// All specified modifiers must be present (AND logic).
     ///
-    /// Possible values: `"side-effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
+    /// Possible values: `"side_effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub modifiers: Option<Vec<String>>,
 }
@@ -1259,9 +1292,21 @@ mod tests {
         let oxfmt_options = config.into_oxfmt_options().unwrap();
         let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 5);
-        assert_eq!(sort_imports.groups[0], vec!["builtin".to_string()]);
-        assert_eq!(sort_imports.groups[1], vec!["external".to_string(), "internal".to_string()]);
-        assert_eq!(sort_imports.groups[4], vec!["index".to_string()]);
+        assert_eq!(
+            sort_imports.groups[0],
+            vec![GroupEntry::Predefined(GroupName::parse("builtin").unwrap())]
+        );
+        assert_eq!(
+            sort_imports.groups[1],
+            vec![
+                GroupEntry::Predefined(GroupName::parse("external").unwrap()),
+                GroupEntry::Predefined(GroupName::parse("internal").unwrap())
+            ]
+        );
+        assert_eq!(
+            sort_imports.groups[4],
+            vec![GroupEntry::Predefined(GroupName::parse("index").unwrap())]
+        );
 
         // Test groups with newlinesBetween overrides
         let config: FormatConfig = serde_json::from_str(
@@ -1280,9 +1325,18 @@ mod tests {
         let oxfmt_options = config.into_oxfmt_options().unwrap();
         let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 3);
-        assert_eq!(sort_imports.groups[0], vec!["builtin".to_string()]);
-        assert_eq!(sort_imports.groups[1], vec!["external".to_string()]);
-        assert_eq!(sort_imports.groups[2], vec!["parent".to_string()]);
+        assert_eq!(
+            sort_imports.groups[0],
+            vec![GroupEntry::Predefined(GroupName::parse("builtin").unwrap())]
+        );
+        assert_eq!(
+            sort_imports.groups[1],
+            vec![GroupEntry::Predefined(GroupName::parse("external").unwrap())]
+        );
+        assert_eq!(
+            sort_imports.groups[2],
+            vec![GroupEntry::Predefined(GroupName::parse("parent").unwrap())]
+        );
         assert_eq!(sort_imports.newline_boundary_overrides.len(), 2);
         assert_eq!(sort_imports.newline_boundary_overrides[0], Some(false));
         assert_eq!(sort_imports.newline_boundary_overrides[1], None);

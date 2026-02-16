@@ -168,7 +168,7 @@ import "../d";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["external", "side-effect", "unknown"],
+    "groups": ["external", "side_effect", "unknown"],
     "sortSideEffects": false
   }
 }"#,
@@ -191,7 +191,7 @@ import "../d";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["external", "side-effect", "unknown"],
+    "groups": ["external", "side_effect", "unknown"],
     "sortSideEffects": false
   }
 }"#,
@@ -212,7 +212,7 @@ import "aaa";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["external", "side-effect", "unknown"],
+    "groups": ["external", "side_effect", "unknown"],
     "sortSideEffects": true
   }
 }"#,
@@ -258,7 +258,7 @@ import a from "./a";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect", "unknown"]
+    "groups": ["side_effect", "unknown"]
   }
 }"#,
         r#"
@@ -283,7 +283,7 @@ import a from "./a";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": [["side-effect", "side-effect-style"], "unknown"]
+    "groups": [["side_effect", "side_effect_style"], "unknown"]
   }
 }"#,
         r#"
@@ -308,7 +308,7 @@ import a from "./a";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect", "side-effect-style", "unknown"]
+    "groups": ["side_effect", "side_effect_style", "unknown"]
   }
 }"#,
         r#"
@@ -334,7 +334,7 @@ import a from "./a";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect-style", "unknown"]
+    "groups": ["side_effect_style", "unknown"]
   }
 }"#,
         r#"
@@ -395,7 +395,7 @@ import "style.css";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect-style", "side-effect"]
+    "groups": ["side_effect_style", "side_effect"]
   }
 }"#,
         r#"
@@ -413,7 +413,7 @@ import "something";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect", "style"]
+    "groups": ["side_effect", "style"]
   }
 }"#,
         r#"
@@ -449,7 +449,7 @@ import "./z";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect-import", "external", "value-import"],
+    "groups": ["side_effect-import", "external", "value-import"],
     "sortSideEffects": true
   }
 }"#,
@@ -617,7 +617,7 @@ import "~/css/globals.css";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["internal", "side-effect-style", "side-effect"]
+    "groups": ["internal", "side_effect_style", "side_effect"]
   }
 }"#,
         r#"
@@ -639,7 +639,7 @@ import "node:os";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["builtin", "external", "side-effect"]
+    "groups": ["builtin", "external", "side_effect"]
   }
 }"#,
         r#"

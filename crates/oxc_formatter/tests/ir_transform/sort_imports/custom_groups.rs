@@ -13,13 +13,13 @@ import { t } from "t";
 {
     "experimentalSortImports":  {
         "groups": [
-            "side-effect-style",
+            "side_effect_style",
             "type-external",
             "type-internal",
             "type-builtin",
             "type-sibling",
             "type-parent",
-            "side-effect",
+            "side_effect",
             "type-index",
             "internal",
             "external",
@@ -141,7 +141,7 @@ import CartComponentB from "./cart/CartComponentB.vue";
             "assets",
             "parent",
             "sibling",
-            "side-effect",
+            "side_effect",
             "index",
             "style",
             "unknown"
@@ -256,7 +256,7 @@ import ComponentC from "~/components/ComponentC.vue";
             "assets",
             "parent",
             "sibling",
-            "side-effect",
+            "side_effect",
             "index",
             "style",
             "unknown"

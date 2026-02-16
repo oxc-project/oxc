@@ -1,5 +1,16 @@
 use std::cmp::Ordering;
 
+/// A parsed entry in a group configuration.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum GroupEntry {
+    /// A predefined group name (e.g. "type-external", "value-builtin").
+    Predefined(GroupName),
+    /// The special "unknown" catch-all group.
+    Unknown,
+    /// A reference to a user-defined custom group by name.
+    Custom(String),
+}
+
 /// Represents a group name pattern for matching imports.
 /// A group name consists of 1 selector and N modifiers.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -17,38 +28,34 @@ impl GroupName {
     /// Parse a group name string into a GroupName.
     ///
     /// Format: `(modifier-)*selector`
+    ///
+    /// Since no selector or modifier name contains `-`,
+    /// we can simply split by `-`: the last element is the selector,
+    /// and all preceding elements are modifiers.
+    ///
     /// Examples:
     /// - "external" -> modifiers: (empty), selector: External
     /// - "type-external" -> modifiers: Type, selector: External
     /// - "value-builtin" -> modifiers: Value, selector: Builtin
-    /// - "side-effect-import" -> modifiers: SideEffect, selector: Import
-    /// - "side-effect-type-external" -> modifiers: SideEffect, Type, selector: External
-    /// - "named-side-effect-type-builtin" -> modifiers: SideEffect, Type, Named, selector: Builtin
+    /// - "side_effect-import" -> modifiers: SideEffect, selector: Import
+    /// - "side_effect-type-external" -> modifiers: SideEffect, Type, selector: External
     pub fn parse(s: &str) -> Option<Self> {
-        // Try to parse as a selector without modifiers first
-        if let Some(selector) = ImportSelector::parse(s) {
+        let parts: Vec<&str> = s.split('-').collect();
+        let selector = ImportSelector::parse(parts.last()?)?;
+
+        if parts.len() == 1 {
             return Some(Self { modifiers: vec![], selector });
         }
 
-        // Last part should be the selector
-        let selector =
-            *ImportSelector::ALL_SELECTORS.iter().find(|selector| s.ends_with(selector.name()))?;
-
-        // The remaining part represents a sequence of modifiers joined by "-".
-        // Since modifiers themselves may contain "-", splitting by "-" would be ambiguous.
-        // Instead, we iterate over modifiers in a predefined order and check
-        // whether they appear in the remaining string.
-        // This guarantees the extracted modifiers are already ordered
-        // and no additional sorting is required.
-        //
-        // The trade-off is that this approach may tolerate invalid input,
-        // as unmatched or malformed segments are not strictly rejected.
-        let mut modifiers = Vec::with_capacity(ImportModifier::ALL_MODIFIERS.len());
-        for m in ImportModifier::ALL_MODIFIERS {
-            if s.contains(m.name()) {
-                modifiers.push(*m);
-            }
+        let mut modifiers = Vec::with_capacity(parts.len() - 1);
+        for part in &parts[..parts.len() - 1] {
+            modifiers.push(ImportModifier::parse(part)?);
         }
+        // Normalize modifier order so that
+        // "type-value-external" and "value-type-external" are treated as the same.
+        // Also deduplicate in case the user wrote "type-type-external".
+        modifiers.sort_unstable();
+        modifiers.dedup();
 
         Some(Self { selector, modifiers })
     }
@@ -121,8 +128,8 @@ impl ImportSelector {
     pub fn parse(s: &str) -> Option<Self> {
         match s {
             "type" => Some(Self::Type),
-            "side-effect-style" => Some(Self::SideEffectStyle),
-            "side-effect" => Some(Self::SideEffect),
+            "side_effect_style" => Some(Self::SideEffectStyle),
+            "side_effect" => Some(Self::SideEffect),
             "style" => Some(Self::Style),
             "index" => Some(Self::Index),
             "sibling" => Some(Self::Sibling),
@@ -154,8 +161,8 @@ impl ImportSelector {
     pub fn name(&self) -> &str {
         match self {
             ImportSelector::Type => "type",
-            ImportSelector::SideEffectStyle => "side-effect-style",
-            ImportSelector::SideEffect => "side-effect",
+            ImportSelector::SideEffectStyle => "side_effect_style",
+            ImportSelector::SideEffect => "side_effect",
             ImportSelector::Style => "style",
             ImportSelector::Index => "index",
             ImportSelector::Sibling => "sibling",
@@ -200,7 +207,7 @@ impl ImportModifier {
     /// Parse a string into an ImportModifier.
     pub fn parse(s: &str) -> Option<Self> {
         match s {
-            "side-effect" => Some(Self::SideEffect),
+            "side_effect" => Some(Self::SideEffect),
             "type" => Some(Self::Type),
             "value" => Some(Self::Value),
             "default" => Some(Self::Default),
@@ -212,7 +219,7 @@ impl ImportModifier {
 
     pub fn name(&self) -> &str {
         match self {
-            ImportModifier::SideEffect => "side-effect",
+            ImportModifier::SideEffect => "side_effect",
             ImportModifier::Type => "type",
             ImportModifier::Value => "value",
             ImportModifier::Default => "default",

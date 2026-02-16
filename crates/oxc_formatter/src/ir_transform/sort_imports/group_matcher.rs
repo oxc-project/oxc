@@ -1,6 +1,6 @@
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 
-use super::group_config::{GroupName, ImportModifier, ImportSelector};
+use super::group_config::{GroupEntry, GroupName, ImportModifier, ImportSelector};
 use super::options::CustomGroupDefinition;
 
 // Intermediate import metadata that is used for group matching
@@ -21,22 +21,23 @@ pub struct GroupMatcher {
 }
 
 impl GroupMatcher {
-    pub fn new(groups: &[Vec<String>], custom_groups: &[CustomGroupDefinition]) -> Self {
-        let custom_group_name_set =
-            custom_groups.iter().map(|g| g.group_name.clone()).collect::<FxHashSet<_>>();
-
+    pub fn new(groups: &[Vec<GroupEntry>], custom_groups: &[CustomGroupDefinition]) -> Self {
         let mut unknown_group_index: Option<usize> = None;
 
         let mut used_custom_group_index_map = FxHashMap::default();
         let mut predefined_groups = Vec::new();
         for (index, group_union) in groups.iter().enumerate() {
-            for group in group_union {
-                if group == "unknown" {
-                    unknown_group_index = Some(index);
-                } else if custom_group_name_set.contains(group) {
-                    used_custom_group_index_map.insert(group.to_owned(), index);
-                } else if let Some(group_name) = GroupName::parse(group) {
-                    predefined_groups.push((group_name, index));
+            for entry in group_union {
+                match entry {
+                    GroupEntry::Unknown => {
+                        unknown_group_index = Some(index);
+                    }
+                    GroupEntry::Custom(name) => {
+                        used_custom_group_index_map.insert(name.as_str(), index);
+                    }
+                    GroupEntry::Predefined(group_name) => {
+                        predefined_groups.push((group_name.clone(), index));
+                    }
                 }
             }
         }
@@ -44,7 +45,7 @@ impl GroupMatcher {
         let mut used_custom_groups: Vec<(CustomGroupDefinition, usize)> =
             Vec::with_capacity(used_custom_group_index_map.len());
         for custom_group in custom_groups {
-            if let Some(index) = used_custom_group_index_map.get(&custom_group.group_name) {
+            if let Some(index) = used_custom_group_index_map.get(custom_group.group_name.as_str()) {
                 used_custom_groups.push((custom_group.clone(), *index));
             }
         }

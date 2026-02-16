@@ -1,7 +1,7 @@
 use std::fmt;
 use std::str::FromStr;
 
-pub use super::group_config::{ImportModifier, ImportSelector};
+pub use super::group_config::{GroupEntry, GroupName, ImportModifier, ImportSelector};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SortImportsOptions {
@@ -30,9 +30,9 @@ pub struct SortImportsOptions {
     /// Defaults to `["~/", "@/"]`.
     pub internal_pattern: Vec<String>,
     /// Groups configuration for organizing imports.
-    /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
+    /// Each inner `Vec` represents a group, and multiple entries in the same `Vec` are treated as one.
     /// Default is defined by [`default_groups()`] function.
-    pub groups: Vec<Vec<String>>,
+    pub groups: Vec<Vec<GroupEntry>>,
     /// Define your own groups for matching very specific imports.
     /// Default is `[]`.
     pub custom_groups: Vec<CustomGroupDefinition>,
@@ -120,14 +120,16 @@ pub fn default_internal_patterns() -> Vec<String> {
 }
 
 /// Returns default groups configuration for organizing imports.
-pub fn default_groups() -> Vec<Vec<String>> {
+pub fn default_groups() -> Vec<Vec<GroupEntry>> {
+    // Helper to parse a predefined group name, panicking on invalid names.
+    let p = |s: &str| GroupEntry::Predefined(GroupName::parse(s).unwrap());
     vec![
-        vec!["type-import".to_string()],
-        vec!["value-builtin".to_string(), "value-external".to_string()],
-        vec!["type-internal".to_string()],
-        vec!["value-internal".to_string()],
-        vec!["type-parent".to_string(), "type-sibling".to_string(), "type-index".to_string()],
-        vec!["value-parent".to_string(), "value-sibling".to_string(), "value-index".to_string()],
-        vec!["unknown".to_string()],
+        vec![p("type-import")],
+        vec![p("value-builtin"), p("value-external")],
+        vec![p("type-internal")],
+        vec![p("value-internal")],
+        vec![p("type-parent"), p("type-sibling"), p("type-index")],
+        vec![p("value-parent"), p("value-sibling"), p("value-index")],
+        vec![GroupEntry::Unknown],
     ]
 }

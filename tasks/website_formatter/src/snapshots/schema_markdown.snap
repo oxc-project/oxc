@@ -134,7 +134,7 @@ type: `string[]`
 Modifiers to match the import characteristics.
 All specified modifiers must be present (AND logic).
 
-Possible values: `"side-effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
+Possible values: `"side_effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
 
 
 ##### experimentalSortImports.customGroups[n].selector
@@ -144,7 +144,7 @@ type: `string`
 
 Selector to match the import kind.
 
-Possible values: `"type"`, `"side-effect-style"`, `"side-effect"`, `"style"`, `"index"`,
+Possible values: `"type"`, `"side_effect_style"`, `"side_effect"`, `"style"`, `"index"`,
 `"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
 
 
@@ -169,8 +169,8 @@ You may enter modifiers in any order, but the selector must always come at the e
 
 The list of selectors is sorted from most to least important:
 - `type` — TypeScript type imports.
-- `side-effect-style` — Side effect style imports.
-- `side-effect` — Side effect imports.
+- `side_effect_style` — Side effect style imports.
+- `side_effect` — Side effect imports.
 - `style` — Style imports.
 - `index` — Main file from the current directory.
 - `sibling` — Modules from the same directory.
@@ -182,7 +182,7 @@ The list of selectors is sorted from most to least important:
 - `import` — Any import.
 
 The list of modifiers is sorted from most to least important:
-- `side-effect` — Side effect imports.
+- `side_effect` — Side effect imports.
 - `type` — TypeScript type imports.
 - `value` — Value imports.
 - `default` — Imports containing the default specifier.
@@ -635,7 +635,7 @@ type: `string[]`
 Modifiers to match the import characteristics.
 All specified modifiers must be present (AND logic).
 
-Possible values: `"side-effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
+Possible values: `"side_effect"`, `"type"`, `"value"`, `"default"`, `"wildcard"`, `"named"`
 
 
 ######## overrides[n].options.experimentalSortImports.customGroups[n].selector
@@ -645,7 +645,7 @@ type: `string`
 
 Selector to match the import kind.
 
-Possible values: `"type"`, `"side-effect-style"`, `"side-effect"`, `"style"`, `"index"`,
+Possible values: `"type"`, `"side_effect_style"`, `"side_effect"`, `"style"`, `"index"`,
 `"sibling"`, `"parent"`, `"subpath"`, `"internal"`, `"builtin"`, `"external"`, `"import"`
 
 
@@ -670,8 +670,8 @@ You may enter modifiers in any order, but the selector must always come at the e
 
 The list of selectors is sorted from most to least important:
 - `type` — TypeScript type imports.
-- `side-effect-style` — Side effect style imports.
-- `side-effect` — Side effect imports.
+- `side_effect_style` — Side effect style imports.
+- `side_effect` — Side effect imports.
 - `style` — Style imports.
 - `index` — Main file from the current directory.
 - `sibling` — Modules from the same directory.
@@ -683,7 +683,7 @@ The list of selectors is sorted from most to least important:
 - `import` — Any import.
 
 The list of modifiers is sorted from most to least important:
-- `side-effect` — Side effect imports.
+- `side_effect` — Side effect imports.
 - `type` — TypeScript type imports.
 - `value` — Value imports.
 - `default` — Imports containing the default specifier.
