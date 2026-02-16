@@ -24,6 +24,7 @@
     "typescript/no-unnecessary-template-expression": "error",
     "typescript/no-unnecessary-type-arguments": "error",
     "typescript/no-unnecessary-type-assertion": "error",
+    "typescript/no-unnecessary-type-parameters": "error",
     "typescript/no-unsafe-argument": "error",
     "typescript/no-unsafe-assignment": "error",
     "typescript/no-unsafe-call": "error",

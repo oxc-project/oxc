@@ -197,6 +197,31 @@ working directory: fixtures/tsgolint
  3 | 
    `----
 
+  x typescript-eslint(no-unnecessary-type-parameters): Type parameter T is used only once in the function signature.
+   ,-[no-unnecessary-type-parameters.ts:3:20]
+ 2 | 
+ 3 | function parseYAML<T>(input: string): T {
+   :                    ^                  |
+   :                    |                  `-- This is the only usage of type parameter T in the signature.
+ 4 |   return input as any as T;
+   `----
+
+  x typescript-eslint(no-unsafe-type-assertion): Unsafe assertion to `any` detected: consider using a more specific type to ensure safety.
+   ,-[no-unnecessary-type-parameters.ts:4:10]
+ 3 | function parseYAML<T>(input: string): T {
+ 4 |   return input as any as T;
+   :          ^^^^^^^^^^^^
+ 5 | }
+   `----
+
+  x typescript-eslint(no-unsafe-type-assertion): Unsafe assertion from `any` detected: consider using type guards or a safer assertion.
+   ,-[no-unnecessary-type-parameters.ts:4:10]
+ 3 | function parseYAML<T>(input: string): T {
+ 4 |   return input as any as T;
+   :          ^^^^^^^^^^^^^^^^^
+ 5 | }
+   `----
+
   x typescript-eslint(no-unsafe-argument): Unsafe argument of type any assigned to a parameter of type string.
    ,-[no-unsafe-argument.ts:3:13]
  2 | function takesString(str: string): void {}
@@ -564,8 +589,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 71 errors.
-Finished in <variable>ms on 56 files with 55 rules using 1 threads.
+Found 0 warnings and 74 errors.
+Finished in <variable>ms on 57 files with 56 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
