@@ -734,7 +734,11 @@ function extractOptionsFromTuple(block, tupleStart) {
   }
 
   // The JSON-like content (Rust serde_json::json! macro syntax)
-  const jsonContent = afterComma.slice(jsonStart, k - 1).trim();
+  let jsonContent = afterComma.slice(jsonStart, k - 1).trim();
+
+  // Remove trailing commas (valid in Rust json! macro but not in JSON)
+  // Match commas before closing brackets/braces/parens
+  jsonContent = jsonContent.replace(/,(\s*[}\]\)])/g, "$1");
 
   // Try to parse it as JSON (serde_json::json! uses JSON-like syntax)
   try {
