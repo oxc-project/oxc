@@ -55,15 +55,13 @@ pub fn resolve_options_from_value(
     raw_config: Value,
     strategy: &FormatFileStrategy,
 ) -> Result<ResolvedOptions, String> {
-    let mut format_config: FormatConfig = serde_json::from_value(raw_config)
-        .map_err(|err| format!("Failed to deserialize FormatConfig: {err}"))?;
+    let mut format_config: FormatConfig =
+        serde_json::from_value(raw_config).map_err(|err| err.to_string())?;
     format_config.resolve_tailwind_paths(cwd);
 
     let mut external_options =
         serde_json::to_value(&format_config).expect("FormatConfig serialization should not fail");
-    let oxfmt_options = format_config
-        .into_oxfmt_options()
-        .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
+    let oxfmt_options = format_config.into_oxfmt_options()?;
 
     sync_external_options(&oxfmt_options.format_options, &mut external_options);
 
@@ -198,8 +196,8 @@ impl ConfigResolver {
         };
 
         // Parse as raw JSON value
-        let raw_config: Value = serde_json::from_str(&json_string)
-            .map_err(|err| format!("Failed to parse config: {err}"))?;
+        let raw_config: Value =
+            serde_json::from_str(&json_string).map_err(|err| err.to_string())?;
         // Store the config directory for override path resolution
         let config_dir = oxfmtrc_path.and_then(|p| p.parent().map(Path::to_path_buf));
 
@@ -232,8 +230,8 @@ impl ConfigResolver {
     /// Returns error if config deserialization fails.
     #[instrument(level = "debug", name = "oxfmt::config::build_and_validate", skip_all)]
     pub fn build_and_validate(&mut self) -> Result<Vec<String>, String> {
-        let oxfmtrc: Oxfmtrc = serde_json::from_value(self.raw_config.clone())
-            .map_err(|err| format!("Failed to deserialize Oxfmtrc: {err}"))?;
+        let oxfmtrc: Oxfmtrc =
+            serde_json::from_value(self.raw_config.clone()).map_err(|err| err.to_string())?;
 
         // Resolve `overrides` from `Oxfmtrc` for later per-file matching
         let base_dir = self.config_dir.clone();
@@ -266,9 +264,7 @@ impl ConfigResolver {
             .expect("FormatConfig serialization should not fail");
 
         // Convert `FormatConfig` to `OxfmtOptions`, applying defaults where needed
-        let oxfmt_options = format_config
-            .into_oxfmt_options()
-            .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
+        let oxfmt_options = format_config.into_oxfmt_options()?;
 
         // Apply common Prettier mappings for caching.
         // Plugin options will be added later in `resolve()` via `finalize_external_options()`.
