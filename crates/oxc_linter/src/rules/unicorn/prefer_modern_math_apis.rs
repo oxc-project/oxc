@@ -387,13 +387,13 @@ fn test() {
         r"Math.LOG10E * Math.log((( 0,x )))",
         r"Math.log((( 0,x ))) / Math.LN10",
         r"
-			function foo(x) {
-				return (
-					Math.log(x)
-						/ Math.LN10
-				);
-			}
-		",
+            function foo(x) {
+                return (
+                    Math.log(x)
+                        / Math.LN10
+                );
+            }
+        ",
         // Prefer `Math.log2(x)`
         r"Math.log(x) * Math.LOG2E",
         r"Math.LOG2E * Math.log(x)",
@@ -402,13 +402,13 @@ fn test() {
         r"Math.LOG2E * Math.log((( 0,x )))",
         r"Math.log((( 0,x ))) / Math.LN2",
         r"
-			function foo(x) {
-				return (
-					Math.log(x)
-						/ Math.LN2
-				);
-			}
-		",
+            function foo(x) {
+                return (
+                    Math.log(x)
+                        / Math.LN2
+                );
+            }
+        ",
         // TODO: Fix this
         // "Math.sqrt((( a ** 2 )) + (( b ** 2 + c ** 2 )) + (( d )) * (( d )) + (( e )) ** (( 2 )))",
     ];

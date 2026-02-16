@@ -140,34 +140,34 @@ fn test() {
         "!foo == bar",
         "!foo != bar",
         "
-						function x() {
-							return!foo === bar;
-						}
-					",
+                        function x() {
+                            return!foo === bar;
+                        }
+                    ",
         "
-						function x() {
-							return!
-								foo === bar;
-							throw!
-								foo === bar;
-						}
-					",
+                        function x() {
+                            return!
+                                foo === bar;
+                            throw!
+                                foo === bar;
+                        }
+                    ",
         "
-						foo
-						!(a) === b
-					",
+                        foo
+                        !(a) === b
+                    ",
         "
-						foo
-						![a, b].join('') === c
-					",
+                        foo
+                        ![a, b].join('') === c
+                    ",
         "
-						foo
-						! [a, b].join('') === c
-					",
+                        foo
+                        ! [a, b].join('') === c
+                    ",
         "
-						foo
-						!/* comment */[a, b].join('') === c
-					",
+                        foo
+                        !/* comment */[a, b].join('') === c
+                    ",
     ];
 
     let fix = vec![
@@ -177,71 +177,71 @@ fn test() {
         ("!foo != bar", "foo == bar"),
         (
             "
-						function x() {
-							return!foo === bar;
-						}
-					",
+                        function x() {
+                            return!foo === bar;
+                        }
+                    ",
             "
-						function x() {
-							return foo !== bar;
-						}
-					",
+                        function x() {
+                            return foo !== bar;
+                        }
+                    ",
         ),
         (
             "
-						function x() {
-							return!
-								foo === bar;
-							throw!
-								foo === bar;
-						}
-					",
+                        function x() {
+                            return!
+                                foo === bar;
+                            throw!
+                                foo === bar;
+                        }
+                    ",
             "
-						function x() {
-							return foo !== bar;
-							throw foo !== bar;
-						}
-					",
+                        function x() {
+                            return foo !== bar;
+                            throw foo !== bar;
+                        }
+                    ",
         ),
         (
             "
-						foo
-						!(a) === b
-					",
+                        foo
+                        !(a) === b
+                    ",
             "
-						foo
-						;(a) !== b
-					",
+                        foo
+                        ;(a) !== b
+                    ",
         ),
         (
             "
-						foo
-						![a, b].join('') === c
-					",
+                        foo
+                        ![a, b].join('') === c
+                    ",
             "
-						foo
-						;[a, b].join('') !== c
-					",
+                        foo
+                        ;[a, b].join('') !== c
+                    ",
         ),
         (
             "
-						foo
-						! [a, b].join('') === c
-					",
+                        foo
+                        ! [a, b].join('') === c
+                    ",
             "
-						foo
-						;[a, b].join('') !== c
-					",
+                        foo
+                        ;[a, b].join('') !== c
+                    ",
         ),
         (
             "
-						foo
-						!/* comment */[a, b].join('') === c
-					",
+                        foo
+                        !/* comment */[a, b].join('') === c
+                    ",
             "
-						foo
-						;[a, b].join('') !== c
-					",
+                        foo
+                        ;[a, b].join('') !== c
+                    ",
         ),
     ];
 

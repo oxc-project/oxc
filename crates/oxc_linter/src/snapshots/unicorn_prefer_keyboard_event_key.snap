@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:19]
+   ╭─[prefer_keyboard_event_key.tsx:2:31]
  1 │ window.addEventListener('click', e => {
  2 │                 console.log(e.keyCode);
    ·                               ───────
@@ -36,7 +36,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 27) {
    ·                           ───────
@@ -45,7 +45,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo.addEventListener('click', event => {
  2 │                 if (event.keyCode === 65) {}
    ·                           ───────
@@ -54,7 +54,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo.addEventListener('click', event => {
  2 │                 if (event.keyCode === 10) {}
    ·                           ───────
@@ -63,7 +63,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:16]
+   ╭─[prefer_keyboard_event_key.tsx:2:28]
  1 │ foo.addEventListener('click', event => {
  2 │                 if (!event.keyCode) {}
    ·                            ───────
@@ -72,7 +72,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', a => {
  2 │                 if (a.keyCode === 27) {
    ·                       ───────
@@ -81,7 +81,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', (a, b, c) => {
  2 │                 if (a.keyCode === 27) {
    ·                       ───────
@@ -90,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', function(a, b, c) {
  2 │                 if (a.keyCode === 27) {
    ·                       ───────
@@ -99,7 +99,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', function(b) {
  2 │                 if (b.keyCode === 27) {
    ·                       ───────
@@ -108,7 +108,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:12]
+   ╭─[prefer_keyboard_event_key.tsx:2:24]
  1 │ foo.addEventListener('click', e => {
  2 │                 const {keyCode, a, b} = e;
    ·                        ───────
@@ -117,7 +117,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo.addEventListener('click', e => {
  2 │                 const {a: keyCode, a, b} = e;
    ·                           ───────
@@ -126,7 +126,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:3:13]
+   ╭─[prefer_keyboard_event_key.tsx:3:28]
  2 │                 f.addEventList('some', e => {
  3 │                     const {keyCode} = event;
    ·                            ───────
@@ -135,7 +135,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:19]
+   ╭─[prefer_keyboard_event_key.tsx:2:31]
  1 │ window.addEventListener('click', e => {
  2 │                 console.log(e.charCode);
    ·                               ────────
@@ -144,7 +144,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `charCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo11111111.addEventListener('click', event => {
  2 │                 if (event.charCode === 27) {
    ·                           ────────
@@ -153,7 +153,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `charCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', a => {
  2 │                 if (a.charCode === 27) {
    ·                       ────────
@@ -162,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `charCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', (a, b, c) => {
  2 │                 if (a.charCode === 27) {
    ·                       ────────
@@ -171,7 +171,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `charCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', function(a, b, c) {
  2 │                 if (a.charCode === 27) {
    ·                       ────────
@@ -180,7 +180,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `charCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', function(b) {
  2 │                 if (b.charCode === 27) {
    ·                       ────────
@@ -189,7 +189,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `charCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:12]
+   ╭─[prefer_keyboard_event_key.tsx:2:24]
  1 │ foo.addEventListener('click', e => {
  2 │                 const {charCode, a, b} = e;
    ·                        ────────
@@ -198,7 +198,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `charCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo.addEventListener('click', e => {
  2 │                 const {a: charCode, a, b} = e;
    ·                           ────────
@@ -207,7 +207,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `charCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
-   ╭─[prefer_keyboard_event_key.tsx:2:19]
+   ╭─[prefer_keyboard_event_key.tsx:2:31]
  1 │ window.addEventListener('click', e => {
  2 │                 console.log(e.which);
    ·                               ─────
@@ -216,7 +216,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo.addEventListener('click', event => {
  2 │                 if (event.which === 27) {
    ·                           ─────
@@ -225,7 +225,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', a => {
  2 │                 if (a.which === 27) {
    ·                       ─────
@@ -234,7 +234,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', (a, b, c) => {
  2 │                 if (a.which === 27) {
    ·                       ─────
@@ -243,7 +243,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', function(a, b, c) {
  2 │                 if (a.which === 27) {
    ·                       ─────
@@ -252,7 +252,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', function(b) {
  2 │                 if (b.which === 27) {
    ·                       ─────
@@ -261,7 +261,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
-   ╭─[prefer_keyboard_event_key.tsx:2:12]
+   ╭─[prefer_keyboard_event_key.tsx:2:24]
  1 │ foo.addEventListener('click', e => {
  2 │                 const {which, a, b} = e;
    ·                        ─────
@@ -270,7 +270,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo.addEventListener('click', e => {
  2 │                 const {a: which, a, b} = e;
    ·                           ─────
@@ -279,7 +279,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', function(b) {
  2 │                 if (b.which === 27) {
    ·                       ─────
@@ -288,7 +288,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:4:12]
+   ╭─[prefer_keyboard_event_key.tsx:4:24]
  3 │                 }
  4 │                 const {keyCode} = b;
    ·                        ───────
@@ -297,7 +297,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.which`
-   ╭─[prefer_keyboard_event_key.tsx:2:11]
+   ╭─[prefer_keyboard_event_key.tsx:2:23]
  1 │ foo.addEventListener('click', function(b) {
  2 │                 if (b.which > 27) {
    ·                       ─────
@@ -306,7 +306,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:4:12]
+   ╭─[prefer_keyboard_event_key.tsx:4:24]
  3 │                 }
  4 │                 const {keyCode} = b;
    ·                        ───────
@@ -315,7 +315,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.charCode`
-   ╭─[prefer_keyboard_event_key.tsx:7:17]
+   ╭─[prefer_keyboard_event_key.tsx:7:41]
  6 │                             {
  7 │                                 const { charCode } = e;
    ·                                         ────────
@@ -324,7 +324,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `charCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:8:23]
+   ╭─[prefer_keyboard_event_key.tsx:8:47]
  7 │                                 const { charCode } = e;
  8 │                                 console.log(e.keyCode, charCode);
    ·                                               ───────
@@ -333,7 +333,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 13) {
    ·                           ───────
@@ -342,7 +342,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 38) {
    ·                           ───────
@@ -351,7 +351,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 40) {
    ·                           ───────
@@ -360,7 +360,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 37) {
    ·                           ───────
@@ -369,7 +369,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 39) {
    ·                           ───────
@@ -378,7 +378,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 221) {
    ·                           ───────
@@ -387,7 +387,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 186) {
    ·                           ───────
@@ -396,7 +396,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 187) {
    ·                           ───────
@@ -405,7 +405,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 188) {
    ·                           ───────
@@ -414,7 +414,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 189) {
    ·                           ───────
@@ -423,7 +423,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 190) {
    ·                           ───────
@@ -432,7 +432,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 191) {
    ·                           ───────
@@ -441,7 +441,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 219) {
    ·                           ───────
@@ -450,7 +450,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `keyCode` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 222) {
    ·                           ───────
@@ -467,7 +467,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The `which` property is deprecated.
 
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
-   ╭─[prefer_keyboard_event_key.tsx:2:15]
+   ╭─[prefer_keyboard_event_key.tsx:2:27]
  1 │ foo123.addEventListener('click', event => {
  2 │                 if (event.keyCode === 27) {
    ·                           ───────

@@ -474,17 +474,17 @@ fn test() {
         ",
         r"
             class Foo {
-        		get bar() {
-        			return this.bar;
-        		}
-        	}
+                get bar() {
+                    return this.bar;
+                }
+            }
         ",
         r"
             const foo = {
-        		get bar() {
-        			return this.bar.baz;
-        		}
-        	};
+                get bar() {
+                    return this.bar.baz;
+                }
+            };
         ",
         r"
             const foo = {

@@ -31,7 +31,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap the function in an arrow function to explicitly pass only the element argument
 
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
-   ╭─[no_array_callback_reference.tsx:2:5]
+   ╭─[no_array_callback_reference.tsx:2:17]
  1 │     foo.map(
  2 │ ╭─▶                 _
  3 │ │                       ? String // This one should be ignored
@@ -41,7 +41,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap the function in an arrow function to explicitly pass only the element argument
 
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
-   ╭─[no_array_callback_reference.tsx:2:5]
+   ╭─[no_array_callback_reference.tsx:2:17]
  1 │     foo.forEach(
  2 │ ╭─▶                 _
  3 │ │                       ? callbackA
@@ -53,7 +53,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap the function in an arrow function to explicitly pass only the element argument
 
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
-   ╭─[no_array_callback_reference.tsx:3:13]
+   ╭─[no_array_callback_reference.tsx:3:25]
  2 │                 foo.map((0, bar));
  3 │                 foo.map(yield bar);
    ·                         ─────────
@@ -62,7 +62,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap the function in an arrow function to explicitly pass only the element argument
 
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
-   ╭─[no_array_callback_reference.tsx:4:13]
+   ╭─[no_array_callback_reference.tsx:4:25]
  3 │                 foo.map(yield bar);
  4 │                 foo.map(yield* bar);
    ·                         ──────────
@@ -71,7 +71,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap the function in an arrow function to explicitly pass only the element argument
 
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
-   ╭─[no_array_callback_reference.tsx:6:13]
+   ╭─[no_array_callback_reference.tsx:6:25]
  5 │                 foo.map(() => bar);
  6 │                 foo.map(bar &&= baz);
    ·                         ───────────
@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap the function in an arrow function to explicitly pass only the element argument
 
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
-   ╭─[no_array_callback_reference.tsx:7:13]
+   ╭─[no_array_callback_reference.tsx:7:25]
  6 │                 foo.map(bar &&= baz);
  7 │                 foo.map(bar || baz);
    ·                         ──────────
@@ -89,7 +89,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap the function in an arrow function to explicitly pass only the element argument
 
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
-   ╭─[no_array_callback_reference.tsx:8:13]
+   ╭─[no_array_callback_reference.tsx:8:25]
  7 │                 foo.map(bar || baz);
  8 │                 foo.map(bar + bar);
    ·                         ─────────
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap the function in an arrow function to explicitly pass only the element argument
 
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
-    ╭─[no_array_callback_reference.tsx:9:13]
+    ╭─[no_array_callback_reference.tsx:9:25]
   8 │                 foo.map(bar + bar);
   9 │                 foo.map(+ bar);
     ·                         ─────
@@ -107,7 +107,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap the function in an arrow function to explicitly pass only the element argument
 
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
-    ╭─[no_array_callback_reference.tsx:10:13]
+    ╭─[no_array_callback_reference.tsx:10:25]
   9 │                 foo.map(+ bar);
  10 │                 foo.map(++ bar);
     ·                         ──────
@@ -116,7 +116,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Wrap the function in an arrow function to explicitly pass only the element argument
 
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
-    ╭─[no_array_callback_reference.tsx:11:13]
+    ╭─[no_array_callback_reference.tsx:11:25]
  10 │                 foo.map(++ bar);
  11 │                 foo.map(new Function(''));
     ·                         ────────────────

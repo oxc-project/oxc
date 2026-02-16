@@ -642,507 +642,507 @@ fn test() {
 
     let pass = vec![
         "const array = [1, 2];
-			array.notPush(3, 4);",
+            array.notPush(3, 4);",
         "const array = [1, 2];
-			; // Not next to each other
-			array.push(3, 4);",
+            ; // Not next to each other
+            array.push(3, 4);",
         "const array = [1, 2],
-				otherVariable = 1;
-			array.push(3, 4);",
+                otherVariable = 1;
+            array.push(3, 4);",
         "const array = [1, 2];
-			array.push();",
+            array.push();",
         "const {array} = [1, 2];
-			array.push(3, 4);",
+            array.push(3, 4);",
         "const [array] = [1, 2];
-			array.push(3, 4);",
+            array.push(3, 4);",
         "const foo = [1, 2];
-			bar.push(3, 4);",
+            bar.push(3, 4);",
         "const array = [1, 2];
-			array.push(array[0]);",
+            array.push(array[0]);",
         "const array = [1, 2];
-			array.push(((foo) => foo(array.length))());",
+            array.push(((foo) => foo(array.length))());",
         "let array;
-			array.push(3, 4);",
+            array.push(3, 4);",
         "const array = foo;
-			array.push(3, 4);",
+            array.push(3, 4);",
         "const array = [1, 2];
-			array.push?.(3, 4);",
+            array.push?.(3, 4);",
         "const array = [1, 2];
-			array?.push(3, 4);",
+            array?.push(3, 4);",
         "let array;
-			array ??= [1, 2];
-			array.push(3, 4);",
+            array ??= [1, 2];
+            array.push(3, 4);",
         "let foo;
-			foo = [1, 2];
-			bar.push(3, 4);",
+            foo = [1, 2];
+            bar.push(3, 4);",
         "let foo, bar;
-			foo = bar = [1, 2];
-			bar.push(3, 4);",
+            foo = bar = [1, 2];
+            bar.push(3, 4);",
         "const foo = new Foo();
-			foo.bar = [1, 2];
-			foo.bar.push(3, 4);",
+            foo.bar = [1, 2];
+            foo.bar.push(3, 4);",
         "const object = [];
-			object.bar = 2;",
+            object.bar = 2;",
         "const [object] = {foo: 1};
-			object.bar = 2;",
+            object.bar = 2;",
         "const {object} = {foo: 1};
-			object.bar = 2;",
+            object.bar = 2;",
         "const object = {foo: 1};
-			object.bar += 2;",
+            object.bar += 2;",
         "const object = {foo: 1};
-			object.bar = object.baz = 2;",
+            object.bar = object.baz = 2;",
         "const foo = {};
-			bar.bar = 2;",
+            bar.bar = 2;",
         "const object = {foo: 1};
-			anotherObject.baz = object.bar = 2;",
+            anotherObject.baz = object.bar = 2;",
         "const object = {foo: 1};
-			object[object.foo] = 2;",
+            object[object.foo] = 2;",
         "var object;
-			object.bar = 2;",
+            object.bar = 2;",
         "const object = foo;
-			object.bar = 2;",
+            object.bar = 2;",
         "let object;
-			object ??= {foo: 1};
-			object.bar = 2;",
+            object ??= {foo: 1};
+            object.bar = 2;",
         "let foo;
-			foo = {foo: 1};
-			bar.bar = 2;",
+            foo = {foo: 1};
+            bar.bar = 2;",
         "let foo, bar;
-			foo = bar = {foo: 1};
-			bar.bar = 2;",
+            foo = bar = {foo: 1};
+            bar.bar = 2;",
         "const foo = new Foo();
-			foo.bar = {foo: 1};
-			foo.bar.bar = 2;",
+            foo.bar = {foo: 1};
+            foo.bar.bar = 2;",
         "const object = [];
-			Object.assign(object, bar);",
+            Object.assign(object, bar);",
         "const [object] = {foo: 1};
-			Object.assign(object, bar);",
+            Object.assign(object, bar);",
         "const {object} = {foo: 1};
-			Object.assign(object, bar);",
+            Object.assign(object, bar);",
         "const object = {foo: 1};
-			Object.assign?.(object, bar);",
+            Object.assign?.(object, bar);",
         "const object = {foo: 1};
-			Object?.assign(object, bar);",
+            Object?.assign(object, bar);",
         "const object = {foo: 1};
-			Object.assign();",
+            Object.assign();",
         "const object = {foo: 1};
-			Object.assign(object);",
+            Object.assign(object);",
         "const object = {foo: 1};
-			Object.assign(...object);",
+            Object.assign(...object);",
         "const object = {foo: 1};
-			Object.assign(object, ...spread);",
+            Object.assign(object, ...spread);",
         "const object = {foo: 1};
-			Object.assign(object, ...spread, bar);",
+            Object.assign(object, ...spread, bar);",
         "const object = {foo: 1};
-			Object.assign(object, ...bar);",
+            Object.assign(object, ...bar);",
         "const object = {foo: 1};
-			NotObject.notAssign(object, bar);",
+            NotObject.notAssign(object, bar);",
         "const foo = {foo: 1};
-			Object.assign(bar, bar);",
+            Object.assign(bar, bar);",
         "let object;
-			Object.assign(object, bar);",
+            Object.assign(object, bar);",
         "const object = {foo: 1};
-			Object.assign(object, object.foo);",
+            Object.assign(object, object.foo);",
         "const object = {foo: 1};
-			Object.assign(object, {baz(){return object}});",
+            Object.assign(object, {baz(){return object}});",
         "let object;
-			object ??= {foo: 1};
-			Object.assign(object, bar);",
+            object ??= {foo: 1};
+            Object.assign(object, bar);",
         "let foo;
-			foo = {foo: 1};
-			bar.assign(object, baz);",
+            foo = {foo: 1};
+            bar.assign(object, baz);",
         "let foo, bar;
-			foo = bar = {foo: 1};
-			Object.assign(bar, baz);",
+            foo = bar = {foo: 1};
+            Object.assign(bar, baz);",
         "const foo = new Foo();
-			foo.bar = {foo: 1};
-			Object.assign(foo.bar, baz);",
+            foo.bar = {foo: 1};
+            Object.assign(foo.bar, baz);",
         "const set = new Set([1, 2]);
-			set.notAdd(3);",
+            set.notAdd(3);",
         "const set = new NotSet([1, 2]);
-			set.notAdd(3);",
+            set.notAdd(3);",
         "const set = new Set([1, 2]);
-			; // Not next to each other
-			set.add(3);",
+            ; // Not next to each other
+            set.add(3);",
         "const set = new Set([1, 2]),
-				otherVariable = 1;
-			set.add(3);",
+                otherVariable = 1;
+            set.add(3);",
         "const set = new Set([1, 2]);
-			set.add();",
+            set.add();",
         "const set = new Set([1, 2]);
-			set.add(3, 4);",
+            set.add(3, 4);",
         "const set = new Set([1, 2]);
-			set.add(...bar);",
+            set.add(...bar);",
         "const {set} = new Set([1, 2]);
-			set.add(3);",
+            set.add(3);",
         "const [set] = new Set([1, 2]);
-			set.add(3);",
+            set.add(3);",
         "const foo = new Set([1, 2]);
-			bar.add(3);",
+            bar.add(3);",
         "const set = new Set([1, 2]);
-			set.add(set.size);",
+            set.add(set.size);",
         "const set = new Set([1, 2]);
-			set.add(((foo) => foo(set.size))());",
+            set.add(((foo) => foo(set.size))());",
         "let set;
-			set.add(3);",
+            set.add(3);",
         "const set = foo;
-			set.add(3);",
+            set.add(3);",
         "const set = new Set([1, 2]);
-			set.add?.(3);",
+            set.add?.(3);",
         "const set = new Set([1, 2]);
-			set?.add(3);",
+            set?.add(3);",
         "let set;
-			set ??= new Set([1, 2]);
-			set.add(3);",
+            set ??= new Set([1, 2]);
+            set.add(3);",
         "let foo;
-			foo ??= new Set([1, 2]);
-			bar.add(3);",
+            foo ??= new Set([1, 2]);
+            bar.add(3);",
         "let foo, bar;
-			foo = bar = new Set([1, 2]);
-			bar.add(3);",
+            foo = bar = new Set([1, 2]);
+            bar.add(3);",
         "const foo = new Foo();
-			foo.bar = new Set([1, 2]);
-			foo.bar.add(3);",
+            foo.bar = new Set([1, 2]);
+            foo.bar.add(3);",
         r#"const map = new Map([["foo", 1]]);
-			map.notSet("bar", 2);"#,
+            map.notSet("bar", 2);"#,
         r#"const map = new NotMap([["foo", 1]]);
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         // Shadowed Set/Map/Object should not trigger
         "const Set = CustomSet; const s = new Set(); s.add(1);",
         r#"const Map = CustomMap; const m = new Map(); m.set("a", 1);"#,
         "const Object = CustomObject; const o = {}; Object.assign(o, x);",
         r#"const map = new Map([["foo", 1]]);
-			; // Not next to each other
-			map.set("bar", 2);"#,
+            ; // Not next to each other
+            map.set("bar", 2);"#,
         r#"const map = new Map([["foo", 1]]),
-				otherVariable = 1;
-			map.set("bar", 2);"#,
+                otherVariable = 1;
+            map.set("bar", 2);"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set();"#,
+            map.set();"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set("bar");"#,
+            map.set("bar");"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set("bar", 2, extraArgument);"#,
+            map.set("bar", 2, extraArgument);"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set(..."bar", ..."2");"#,
+            map.set(..."bar", ..."2");"#,
         r#"const {map} = new Map([["foo", 1]]);
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"const [map] = new Map([["foo", 1]]);
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"const foo = new Map([["foo", 1]]);
-			bar.set("bar", 2);"#,
+            bar.set("bar", 2);"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set(map.size, 2);"#,
+            map.set(map.size, 2);"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set("bar", map.size);"#,
+            map.set("bar", map.size);"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set("bar", ((foo) => foo(map.size))());"#,
+            map.set("bar", ((foo) => foo(map.size))());"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set(((foo) => foo(map.size))(), 2);"#,
+            map.set(((foo) => foo(map.size))(), 2);"#,
         r#"let map;
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"const map = foo;
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set?.("bar", 2);"#,
+            map.set?.("bar", 2);"#,
         r#"const map = new Map([["foo", 1]]);
-			map?.set("bar", 2);"#,
+            map?.set("bar", 2);"#,
         r#"let map;
-			map ??= new Map([["foo", 1]]);
-			map.set("bar", 2);"#,
+            map ??= new Map([["foo", 1]]);
+            map.set("bar", 2);"#,
         r#"let foo;
-			foo = new Map([["foo", 1]]);
-			bar.set("bar", 2);"#,
+            foo = new Map([["foo", 1]]);
+            bar.set("bar", 2);"#,
         r#"let foo, bar;
-			foo = bar = new Map([["foo", 1]]);
-			bar.set("bar", 2);"#,
+            foo = bar = new Map([["foo", 1]]);
+            bar.set("bar", 2);"#,
         r#"const foo = new Foo();
-			foo.bar = new Map([["foo", 1]]);
-			foo.bar.set("bar", 2);"#,
+            foo.bar = new Map([["foo", 1]]);
+            foo.bar.set("bar", 2);"#,
     ];
 
     let fail = vec![
         "const array = [1, 2];
-			array.push(3, 4);",
+            array.push(3, 4);",
         "let array;
-			array = [1, 2];
-			array.push(3, 4);",
+            array = [1, 2];
+            array.push(3, 4);",
         "const array = [3, 4];
-			array.unshift(1, 2);",
+            array.unshift(1, 2);",
         "const array = [];
-			array.push(3, 4,);",
+            array.push(3, 4,);",
         "const array = [];
-			array.unshift(1, 2,);",
+            array.unshift(1, 2,);",
         "const array = [1, 2,];
-			array.push(3, 4);",
+            array.push(3, 4);",
         "const array = [3, 4,];
-			array.unshift(1, 2);",
+            array.unshift(1, 2);",
         "const otherVariable = 1,
-				array = [1, 2,];
-			array.push(3, 4);",
+                array = [1, 2,];
+            array.push(3, 4);",
         "const array = [1, 2];
-			array.push( (( 0, 3 )), (( 0, 4 )) );",
+            array.push( (( 0, 3 )), (( 0, 4 )) );",
         "const array = [1, 2]; array.push(3, 4); foo()",
         "const array = [1, 2]; array.push(3, 4);",
         "const array = [1, 2];
-			array.push(3, 4); // comment",
+            array.push(3, 4); // comment",
         "const array = [1, 2];
-			array.push(3, 4);
-			array.unshift(1, 2);",
+            array.push(3, 4);
+            array.unshift(1, 2);",
         "const array = [1, 2];
-			array.push(...bar);",
+            array.push(...bar);",
         "const array = [1, 2];
-			array.unshift(...bar);",
+            array.unshift(...bar);",
         "const array = [1, 2];
-			array.unshift(foo());",
+            array.unshift(foo());",
         "const array = [1, 2];
-			array.unshift(...foo());",
+            array.unshift(...foo());",
         "const array = [1, 2];
-			array.unshift([foo()]);",
+            array.unshift([foo()]);",
         "const array = [1, 2];
-			array.push(
-				3,
-				4,
-			);",
+            array.push(
+                3,
+                4,
+            );",
         "const array = [1, 2];
-			array.push(((array) => foo(array.length))());",
+            array.push(((array) => foo(array.length))());",
         "let array= [1, 2];
-			array.push(3, 4);",
+            array.push(3, 4);",
         "var array = [1, 2];
-			array.push(3, 4);",
+            array.push(3, 4);",
         "const array = [1]
-			array.push(2);
-			[0].map()",
+            array.push(2);
+            [0].map()",
         "const array = [1]
-			;(( array.push(2) ))
-			;[0].map()",
+            ;(( array.push(2) ))
+            ;[0].map()",
         "const array = [1]
-			array.push(2);
-			notNeeded.map()",
+            array.push(2);
+            notNeeded.map()",
         "const array = [1]
-			array.push(2);
-			array.push(3);
-			[0].map()",
+            array.push(2);
+            array.push(3);
+            [0].map()",
         "const array = [1]
-			array.push(2);
-			array.push(3);
-			notNeeded.map()",
+            array.push(2);
+            array.push(3);
+            notNeeded.map()",
         "if(1) {
-				const array = [1]
-				array.push(2);
-				[0].map()
-			}",
+                const array = [1]
+                array.push(2);
+                [0].map()
+            }",
         "let array
-			array = [1, 2]
-			array.push(3, 4)
-			;[0].map()",
+            array = [1, 2]
+            array.push(3, 4)
+            ;[0].map()",
         "const object = {foo: 1};
-			object.bar = 2;",
+            object.bar = 2;",
         "let object;
-			object = {foo: 1};
-			object.bar = 2;",
+            object = {foo: 1};
+            object.bar = 2;",
         "const object = {foo: 1};
-			object[bar] = 2;",
+            object[bar] = 2;",
         "const object = {foo: 1};
-			object[(( 0, bar ))] = (( baz ));",
+            object[(( 0, bar ))] = (( baz ));",
         "const object = {};
-			object.bar = 2;",
+            object.bar = 2;",
         "const object = {foo: 1,};
-			object.bar = 2;",
+            object.bar = 2;",
         "const otherVariable = 1,
-				object = {foo: 1};
-			object.bar = 2;",
+                object = {foo: 1};
+            object.bar = 2;",
         "const object = {foo: 1}; object.bar = 2; foo()",
         "const object = {foo: 1}; object.bar = 2;",
         "const object = {foo: 1};
-			object.bar = 2; // comment",
+            object.bar = 2; // comment",
         "const object = {foo: 1};
-			object.bar = 2;
-			object.baz = 2;",
+            object.bar = 2;
+            object.baz = 2;",
         "const object = {foo: 1};
-			object.bar = anotherObject.baz = 2;",
+            object.bar = anotherObject.baz = 2;",
         "const object = {foo: 1};
-			object.bar = (object) => object.foo;",
+            object.bar = (object) => object.foo;",
         "const object = {foo: 1};
-			object.object = 2;",
+            object.object = 2;",
         "const object = {foo: 1}
-			object.bar = 2
-			;[0].map()",
+            object.bar = 2
+            ;[0].map()",
         "const object = {foo: 1}
-			object.bar = 2
-			;notNeeded.map()",
+            object.bar = 2
+            ;notNeeded.map()",
         "let object
-			object = {foo: 1}
-			object.bar = 2
-			;[0].map()",
+            object = {foo: 1}
+            object.bar = 2
+            ;[0].map()",
         "const object = {foo: 1};
-			Object.assign(object, bar);",
+            Object.assign(object, bar);",
         "let object;
-			object = {foo: 1};
-			Object.assign(object, bar);",
+            object = {foo: 1};
+            Object.assign(object, bar);",
         "const object = {foo: 1};
-			Object.assign(object, {bar: 2});",
+            Object.assign(object, {bar: 2});",
         "const object = {foo: 1};
-			Object.assign(object, {bar, baz,});",
+            Object.assign(object, {bar, baz,});",
         "const object = {foo: 1,};
-			Object.assign(object, {bar, baz,});",
+            Object.assign(object, {bar, baz,});",
         "const object = {};
-			Object.assign(object, {bar, baz,});",
+            Object.assign(object, {bar, baz,});",
         "const object = {};
-			Object.assign(object, {});",
+            Object.assign(object, {});",
         "const object = {};
-			Object.assign((( object )), (( 0, bar)));",
+            Object.assign((( object )), (( 0, bar)));",
         "const object = {};
-			Object.assign((( object )), (( {bar: 2} )));",
+            Object.assign((( object )), (( {bar: 2} )));",
         "const otherVariable = 1,
-				object = {foo: 1};
-			Object.assign(object, bar);",
+                object = {foo: 1};
+            Object.assign(object, bar);",
         "const object = {foo: 1}; object.bar = 2; foo()",
         "const object = {foo: 1}; object.bar = 2;",
         "const object = {foo: 1};
-			Object.assign(object, bar) // comment",
+            Object.assign(object, bar) // comment",
         "const object = {foo: 1};
-			Object.assign(object, bar)
-			Object.assign(object, {baz})",
+            Object.assign(object, bar)
+            Object.assign(object, {baz})",
         "const object = {foo: 1};
-			Object.assign(object, {baz(object){return object}})",
+            Object.assign(object, {baz(object){return object}})",
         "const object = {foo: 1};
-			Object.assign(object, bar());",
+            Object.assign(object, bar());",
         "let object = {foo: 1};
-			Object.assign(object, bar);",
+            Object.assign(object, bar);",
         "var object = {foo: 1};
-			Object.assign(object, bar);",
+            Object.assign(object, bar);",
         "const object = {foo: 1};
-			Object.assign(object, bar, baz);",
+            Object.assign(object, bar, baz);",
         "const object = {foo: 1};
-			Object.assign(object, {}, baz);",
+            Object.assign(object, {}, baz);",
         "const object = {foo: 1};
-			Object.assign(object, bar, ...baz, {bar: 2});",
+            Object.assign(object, bar, ...baz, {bar: 2});",
         "const object = {foo: 1}
-			Object.assign(object, bar)
-			;[0].map()",
+            Object.assign(object, bar)
+            ;[0].map()",
         "const object = {foo: 1}
-			Object.assign(object, bar)
-			;notNeeded.map()",
+            Object.assign(object, bar)
+            ;notNeeded.map()",
         "let object
-			object = {foo: 1}
-			Object.assign(object, bar)
-			;[0].map()",
+            object = {foo: 1}
+            Object.assign(object, bar)
+            ;[0].map()",
         "const set = new Set([1, 2]);
-			set.add(3);",
+            set.add(3);",
         "let set;
-			set = new Set([1, 2]);
-			set.add(3);",
+            set = new Set([1, 2]);
+            set.add(3);",
         "const weakSet = new WeakSet([a, b]);
-			weakSet.add(c);",
+            weakSet.add(c);",
         "const set = new Set([]);
-			set.add(3);",
+            set.add(3);",
         "const set = new Set();
-			set.add(3);",
+            set.add(3);",
         "const set = new Set;
-			set.add(3);",
+            set.add(3);",
         "const set = (( new Set ));
-			set.add(3);",
+            set.add(3);",
         "const set = new (( Set ));
-			set.add(3);",
+            set.add(3);",
         "const otherVariable = 1,
-				set = new Set;
-			set.add(3);",
+                set = new Set;
+            set.add(3);",
         "const set = new Set([1, 2]);
-			set.add( ((0, 3)), );",
+            set.add( ((0, 3)), );",
         "const set = new Set([1, 2]); set.add(3); foo()",
         "const set = new Set([1, 2]); set.add(3);",
         "const set = new Set([1, 2]);
-			set.add(3); // comment",
+            set.add(3); // comment",
         "const set = new Set([1, 2]);
-			set.add(foo());",
+            set.add(foo());",
         "const set = new Set([1, 2]);
-			set
-				.add(
-					3,
-			);",
+            set
+                .add(
+                    3,
+            );",
         "let set = new Set([1, 2]);
-			set.add(3);",
+            set.add(3);",
         "var set = new Set([1, 2]);
-			set.add(3);",
+            set.add(3);",
         "const set = new Set([1, 2])
-			set.add(3);
-			[0].map()",
+            set.add(3);
+            [0].map()",
         "const set = new Set([1, 2])
-			set.add(3);
-			notNeeded.map()",
+            set.add(3);
+            notNeeded.map()",
         "const set = new Set
-			set.add(3);
-			[0].map()",
+            set.add(3);
+            [0].map()",
         "const set = new Set
-			set.add(3);
-			notNeeded.map()",
+            set.add(3);
+            notNeeded.map()",
         "let set
-			set = new Set([1, 2])
-			set.add(3)
-			;[0].map()",
+            set = new Set([1, 2])
+            set.add(3)
+            ;[0].map()",
         r#"const map = new Map([["foo", 1]]);
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"let map;
-			map = new Map([["foo", 1]]);
-			map.set("bar", 2);"#,
+            map = new Map([["foo", 1]]);
+            map.set("bar", 2);"#,
         "const weakMap = new WeakMap([[foo, 1]]);
-			weakMap.set(bar, 2);",
+            weakMap.set(bar, 2);",
         r#"const map = new Map([]);
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"const map = new Map();
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"const map = new Map;
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"const map = (( new Map ));
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"const map = new (( Map ));
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"const otherVariable = 1,
-				map = new Map;
-			map.set("bar", 2);"#,
+                map = new Map;
+            map.set("bar", 2);"#,
         r#"const map = new Map([["foo",1]]);
-			map.set( ((0, "bar")), ((0, 2)), );"#,
+            map.set( ((0, "bar")), ((0, 2)), );"#,
         r#"const map = new Map([["foo", 1]]);    map.set("bar", 2);    foo()"#,
         r#"const map = new Map([["foo", 1]]);    map.set("bar", 2);"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set("bar", 2); // comment"#,
+            map.set("bar", 2); // comment"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set("bar", foo());"#,
+            map.set("bar", foo());"#,
         r#"const map = new Map([["foo", 1]]);
-			map.set(bar(), 2);"#,
+            map.set(bar(), 2);"#,
         r#"const map = new Map([["foo", 1]]);
-			map
-				.set(
-					"bar",
-					2,
-			);"#,
+            map
+                .set(
+                    "bar",
+                    2,
+            );"#,
         r#"let map = new Map([["foo", 1]]);
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"var map = new Map([["foo", 1]]);
-			map.set("bar", 2);"#,
+            map.set("bar", 2);"#,
         r#"const map = new Map([["foo", 1]])
-			map.set("bar", 2);
-			[0].map()"#,
+            map.set("bar", 2);
+            [0].map()"#,
         r#"const map = new Map([["foo", 1]])
-			map.set("bar", 2);
-			notNeeded.map()"#,
+            map.set("bar", 2);
+            notNeeded.map()"#,
         r#"const map = new Map
-			map.set("bar", 2);
-			[0].map()"#,
+            map.set("bar", 2);
+            [0].map()"#,
         r#"const map = new Map
-			map.set("bar", 2);
-			notNeeded.map()"#,
+            map.set("bar", 2);
+            notNeeded.map()"#,
         r#"let map
-			map = new Map([["foo", 1]])
-			map.set("bar", 2)
-			;[0].map()"#,
+            map = new Map([["foo", 1]])
+            map.set("bar", 2)
+            ;[0].map()"#,
         "const cellOutputMappers = new Map<OutputType, (output: any) => NotebookCellOutput>();
-			cellOutputMappers.set('display_data', translateDisplayDataOutput);",
+            cellOutputMappers.set('display_data', translateDisplayDataOutput);",
         "const cellOutputMappers = new Map<OutputType, (output: any) => NotebookCellOutput>([]);
-			cellOutputMappers.set('display_data', translateDisplayDataOutput);",
+            cellOutputMappers.set('display_data', translateDisplayDataOutput);",
         "const cellOutputMappers = new Map<OutputType, (output: any) => NotebookCellOutput>;
-			cellOutputMappers.set('display_data', translateDisplayDataOutput);",
+            cellOutputMappers.set('display_data', translateDisplayDataOutput);",
     ];
 
     Tester::new(NoImmediateMutation::NAME, NoImmediateMutation::PLUGIN, pass, fail)

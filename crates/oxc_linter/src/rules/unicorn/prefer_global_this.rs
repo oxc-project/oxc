@@ -266,12 +266,12 @@ fn test() {
         "let global = {}",
         "const global = {}",
         "function foo (window) {
-				window.foo();
-			}",
+                window.foo();
+            }",
         "var window = {};
-			function foo () {
-				window.foo();
-			}",
+            function foo () {
+                window.foo();
+            }",
         "foo.window",
         "foo.global",
         r#"import window from "xxx""#,
@@ -280,7 +280,7 @@ fn test() {
         r#"export { window }  from "xxx""#,
         r#"export * as window from "xxx";"#,
         "try {
-			} catch (window) {}",
+            } catch (window) {}",
         r#"window.name = "foo""#,
         "window.addEventListener",
         "window.innerWidth",
@@ -290,7 +290,7 @@ fn test() {
         r#"window.addEventListener("resize", () => {})"#,
         "window.onresize = function () {}",
         "const {window} = jsdom()
-			window.jQuery = jQuery;",
+            window.jQuery = jQuery;",
         "({ foo: window.name } =  {})",
         "[window.name] = []",
         "window[foo]",
@@ -312,28 +312,28 @@ fn test() {
         "window = 123",
         "obj.a = window",
         "function* gen() {
-			  yield window
-			}",
+              yield window
+            }",
         "async function gen() {
-			  await window
-			}",
+              await window
+            }",
         "window ? foo : bar",
         "foo ? window : bar",
         "foo ? bar : window",
         "function foo() {
-			  return window
-			}",
+              return window
+            }",
         "new window()",
         "const obj = {
-				foo: window.foo,
-				bar: window.bar,
-				window: window
-			}",
+                foo: window.foo,
+                bar: window.bar,
+                window: window
+            }",
         "function sequenceTest() {
-				let x, y;
-				x = (y = 10, y + 5, window);
-				console.log(x, y);
-			}",
+                let x, y;
+                x = (y = 10, y + 5, window);
+                console.log(x, y);
+            }",
         "window`Hello ${42} World`",
         "tag`Hello ${window.foo} World`",
         "var str = `hello ${window.foo} world!`",
@@ -341,30 +341,30 @@ fn test() {
         "++window",
         "++window.foo",
         "for (var attr in window) {
-			}",
+            }",
         "for (window.foo = 0; i < 10; window.foo++) {
-			}",
+            }",
         "for (const item of window.foo) {
-			}",
+            }",
         "for (const item of window) {
-			}",
+            }",
         "switch (window) {}",
         "switch (true) {
-				case window:
-					break;
-			}",
+                case window:
+                    break;
+            }",
         "switch (true) {
-				case window.foo:
-					break;
-			}",
+                case window.foo:
+                    break;
+            }",
         "while (window) {
-			}",
+            }",
         "do {} while (window) {}",
         "if (window) {}",
         "throw window",
         "var foo = window",
         "function foo (name = window) {
-			}",
+            }",
         "self.innerWidth",
         "self.innerHeight",
         "window.crypto",
@@ -401,55 +401,55 @@ fn test() {
         ("obj.a = window", "obj.a = globalThis"),
         (
             "function* gen() {
-			  yield window
-			}",
+              yield window
+            }",
             "function* gen() {
-			  yield globalThis
-			}",
+              yield globalThis
+            }",
         ),
         (
             "async function gen() {
-			  await window
-			}",
+              await window
+            }",
             "async function gen() {
-			  await globalThis
-			}",
+              await globalThis
+            }",
         ),
         ("window ? foo : bar", "globalThis ? foo : bar"),
         ("foo ? window : bar", "foo ? globalThis : bar"),
         ("foo ? bar : window", "foo ? bar : globalThis"),
         (
             "function foo() {
-			  return window
-			}",
+              return window
+            }",
             "function foo() {
-			  return globalThis
-			}",
+              return globalThis
+            }",
         ),
         ("new window()", "new globalThis()"),
         (
             "const obj = {
-				foo: window.foo,
-				bar: window.bar,
-				window: window
-			}",
+                foo: window.foo,
+                bar: window.bar,
+                window: window
+            }",
             "const obj = {
-				foo: globalThis.foo,
-				bar: globalThis.bar,
-				window: globalThis
-			}",
+                foo: globalThis.foo,
+                bar: globalThis.bar,
+                window: globalThis
+            }",
         ),
         (
             "function sequenceTest() {
-				let x, y;
-				x = (y = 10, y + 5, window);
-				console.log(x, y);
-			}",
+                let x, y;
+                x = (y = 10, y + 5, window);
+                console.log(x, y);
+            }",
             "function sequenceTest() {
-				let x, y;
-				x = (y = 10, y + 5, globalThis);
-				console.log(x, y);
-			}",
+                let x, y;
+                x = (y = 10, y + 5, globalThis);
+                console.log(x, y);
+            }",
         ),
         ("window`Hello ${42} World`", "globalThis`Hello ${42} World`"),
         ("tag`Hello ${window.foo} World`", "tag`Hello ${globalThis.foo} World`"),
@@ -459,54 +459,54 @@ fn test() {
         ("++window.foo", "++globalThis.foo"),
         (
             "for (var attr in window) {
-			}",
+            }",
             "for (var attr in globalThis) {
-			}",
+            }",
         ),
         (
             "for (window.foo = 0; i < 10; window.foo++) {
-			}",
+            }",
             "for (globalThis.foo = 0; i < 10; globalThis.foo++) {
-			}",
+            }",
         ),
         (
             "for (const item of window.foo) {
-			}",
+            }",
             "for (const item of globalThis.foo) {
-			}",
+            }",
         ),
         (
             "for (const item of window) {
-			}",
+            }",
             "for (const item of globalThis) {
-			}",
+            }",
         ),
         ("switch (window) {}", "switch (globalThis) {}"),
         (
             "switch (true) {
-				case window:
-					break;
-			}",
+                case window:
+                    break;
+            }",
             "switch (true) {
-				case globalThis:
-					break;
-			}",
+                case globalThis:
+                    break;
+            }",
         ),
         (
             "switch (true) {
-				case window.foo:
-					break;
-			}",
+                case window.foo:
+                    break;
+            }",
             "switch (true) {
-				case globalThis.foo:
-					break;
-			}",
+                case globalThis.foo:
+                    break;
+            }",
         ),
         (
             "while (window) {
-			}",
+            }",
             "while (globalThis) {
-			}",
+            }",
         ),
         ("do {} while (window) {}", "do {} while (globalThis) {}"),
         ("if (window) {}", "if (globalThis) {}"),
@@ -514,9 +514,9 @@ fn test() {
         ("var foo = window", "var foo = globalThis"),
         (
             "function foo (name = window) {
-			}",
+            }",
             "function foo (name = globalThis) {
-			}",
+            }",
         ),
         ("self.innerWidth", "globalThis.innerWidth"),
         ("self.innerHeight", "globalThis.innerHeight"),

@@ -350,267 +350,267 @@ fn test() {
         "const abc = function({ bar } = { bar: 123 }) { }",
         "const abc = function({ bar = 123 } = {}) { }",
         "function abc(foo) {
-				foo = foo || bar();
-			}",
+                foo = foo || bar();
+            }",
         "function abc(foo) {
-				foo = foo || {bar};
-			}",
+                foo = foo || {bar};
+            }",
         "function abc(foo) {
-				const {bar} = foo || 123;
-			}",
+                const {bar} = foo || 123;
+            }",
         "function abc(foo, bar) {
-				bar = foo || 'bar';
-			}",
+                bar = foo || 'bar';
+            }",
         "function abc(foo, bar) {
-				foo = foo || 'bar';
-				baz();
-			}",
+                foo = foo || 'bar';
+                baz();
+            }",
         "function abc(foo) {
-				foo = foo && 'bar';
-			}",
+                foo = foo && 'bar';
+            }",
         "function abc(foo) {
-				foo = foo || 1 && 2 || 3;
-			}",
+                foo = foo || 1 && 2 || 3;
+            }",
         "function abc(foo) {
-				foo = !foo || 'bar';
-			}",
+                foo = !foo || 'bar';
+            }",
         "function abc(foo) {
-				foo = (foo && bar) || baz;
-			}",
+                foo = (foo && bar) || baz;
+            }",
         "function abc(foo = 123) {
-				foo = foo || 'bar';
-			}",
+                foo = foo || 'bar';
+            }",
         "function abc() {
-				let foo = 123;
-				foo = foo || 'bar';
-			}",
+                let foo = 123;
+                foo = foo || 'bar';
+            }",
         "function abc() {
-				let foo = 123;
-				const bar = foo || 'bar';
-			}",
+                let foo = 123;
+                const bar = foo || 'bar';
+            }",
         "const abc = (foo, bar) => {
-				bar = foo || 'bar';
-			};",
+                bar = foo || 'bar';
+            };",
         "const abc = function(foo, bar) {
-				bar = foo || 'bar';
-			}",
+                bar = foo || 'bar';
+            }",
         "const abc = function(foo) {
-				foo = foo || bar();
-			}",
+                foo = foo || bar();
+            }",
         "function abc(foo) {
-				function def(bar) {
-					foo = foo || 'bar';
-				}
-			}",
+                function def(bar) {
+                    foo = foo || 'bar';
+                }
+            }",
         "function abc(foo) {
-				const bar = foo = foo || 123;
-			}",
+                const bar = foo = foo || 123;
+            }",
         "function abc(foo) {
-				bar(foo = foo || 1);
-				baz(foo);
-			}",
+                bar(foo = foo || 1);
+                baz(foo);
+            }",
         "function abc(foo) {
-				console.log(foo);
-				foo = foo || 123;
-			}",
+                console.log(foo);
+                foo = foo || 123;
+            }",
         "function abc(foo) {
-				console.log(foo);
-				foo = foo || 'bar';
-			}",
+                console.log(foo);
+                foo = foo || 'bar';
+            }",
         "function abc(foo) {
-				const bar = foo || 'bar';
-				console.log(foo, bar);
-			}",
+                const bar = foo || 'bar';
+                console.log(foo, bar);
+            }",
         "function abc(foo) {
-				let bar = 123;
-				bar = foo;
-				foo = foo || 123;
-			}",
+                let bar = 123;
+                bar = foo;
+                foo = foo || 123;
+            }",
         "function abc(foo) {
-				bar();
-				foo = foo || 123;
-			}",
+                bar();
+                foo = foo || 123;
+            }",
         "const abc = (foo) => {
-				bar();
-				foo = foo || 123;
-			};",
+                bar();
+                foo = foo || 123;
+            };",
         "const abc = function(foo) {
-				bar();
-				foo = foo || 123;
-			};",
+                bar();
+                foo = foo || 123;
+            };",
         "function abc(foo) {
-				sideEffects();
-				foo = foo || 123;
-				function sideEffects() {
-					foo = 456;
-				}
-			}",
+                sideEffects();
+                foo = foo || 123;
+                function sideEffects() {
+                    foo = 456;
+                }
+            }",
         "function abc(foo) {
-				const bar = sideEffects();
-				foo = foo || 123;
-				function sideEffects() {
-					foo = 456;
-				}
-			}",
+                const bar = sideEffects();
+                foo = foo || 123;
+                function sideEffects() {
+                    foo = 456;
+                }
+            }",
         "function abc(foo) {
-				const bar = sideEffects() + 123;
-				foo = foo || 123;
-				function sideEffects() {
-					foo = 456;
-				}
-			}",
+                const bar = sideEffects() + 123;
+                foo = foo || 123;
+                function sideEffects() {
+                    foo = 456;
+                }
+            }",
         "function abc(foo) {
-				const bar = !sideEffects();
-				foo = foo || 123;
-				function sideEffects() {
-					foo = 456;
-				}
-			}",
+                const bar = !sideEffects();
+                foo = foo || 123;
+                function sideEffects() {
+                    foo = 456;
+                }
+            }",
         "function abc(foo) {
-				const bar = function() {
-					foo = 456;
-				}
-				foo = foo || 123;
-			}",
+                const bar = function() {
+                    foo = 456;
+                }
+                foo = foo || 123;
+            }",
         "function abc(...foo) {
-				foo = foo || 'bar';
-			}",
+                foo = foo || 'bar';
+            }",
         "function abc(foo = 'bar') {
-				foo = foo || 'baz';
-			}",
+                foo = foo || 'baz';
+            }",
         "function abc(foo, bar) {
-				const { baz, ...rest } = bar;
-				foo = foo || 123;
-			}",
+                const { baz, ...rest } = bar;
+                foo = foo || 123;
+            }",
         "function abc(foo, bar) {
-				const baz = foo?.bar;
-				foo = foo || 123;
-			}",
+                const baz = foo?.bar;
+                foo = foo || 123;
+            }",
         "function abc(foo, bar) {
-				import('foo');
-				foo = foo || 123;
-			}",
+                import('foo');
+                foo = foo || 123;
+            }",
     ];
 
     let fail = vec![
         r"function abc(foo) {
-	foo = foo || 123;
+    foo = foo || 123;
 }",
         r"function abc(foo) {
-	foo = foo || true;
+    foo = foo || true;
 }",
         r"function abc(foo) {
-	foo = foo || 123;
-	console.log(foo);
+    foo = foo || 123;
+    console.log(foo);
 }",
         r"function abc(foo) {
-	const bar = foo || 'bar';
+    const bar = foo || 'bar';
 }",
         r"function abc(foo) {
-	let bar = foo || 'bar';
+    let bar = foo || 'bar';
 }",
         r"const abc = function(foo) {
-	foo = foo || 123;
+    foo = foo || 123;
 }",
         r"const abc = (foo) => {
-	foo = foo || 'bar';
+    foo = foo || 'bar';
 };",
         r"const abc = foo => {
-	foo = foo || 'bar';
+    foo = foo || 'bar';
 };",
         r"const abc = (foo) => {
-	const bar = foo || 'bar';
+    const bar = foo || 'bar';
 };",
         r"function abc(foo) {
-	foo = foo || 'bar';
-	bar();
-	baz();
+    foo = foo || 'bar';
+    bar();
+    baz();
 }",
         r"function abc(foo) {
-	foo = foo ?? 123;
+    foo = foo ?? 123;
 }",
         r"function abc(foo) {
-	const bar = foo || 'bar';
-	console.log(bar);
+    const bar = foo || 'bar';
+    console.log(bar);
 }",
         r"const abc = function(foo) {
-	const bar = foo || 'bar';
-	console.log(bar);
+    const bar = foo || 'bar';
+    console.log(bar);
 }",
         r"foo = {
-	abc(foo) {
-		foo = foo || 123;
-	}
+    abc(foo) {
+        foo = foo || 123;
+    }
 };",
         r"foo = {
-	abc(foo) {
-		foo = foo || 123;
-	},
-	def(foo) { }
+    abc(foo) {
+        foo = foo || 123;
+    },
+    def(foo) { }
 };",
         r"class Foo {
-	abc(foo) {
-		foo = foo || 123;
-	}
+    abc(foo) {
+        foo = foo || 123;
+    }
 }",
         r"class Foo {
-	abc(foo) {
-		foo = foo || 123;
-	}
-	def(foo) { }
+    abc(foo) {
+        foo = foo || 123;
+    }
+    def(foo) { }
 }",
         r"function abc(foo) { foo = foo || 'bar'; }",
         r"function abc(foo) { foo = foo || 'bar';}",
         r"const abc = function(foo) { foo = foo || 'bar';}",
         r"function abc(foo) {
-	foo = foo || 'bar'; bar(); baz();
+    foo = foo || 'bar'; bar(); baz();
 }",
         r"function abc(foo) {
-	foo = foo || 'bar';
-	function def(bar) {
-		bar = bar || 'foo';
-	}
+    foo = foo || 'bar';
+    function def(bar) {
+        bar = bar || 'foo';
+    }
 }",
         r"function abc(foo) {
-	foo += 'bar';
-	function def(bar) {
-		bar = bar || 'foo';
-	}
-	function ghi(baz) {
-		const bay = baz || 'bar';
-	}
-	foo = foo || 'bar';
+    foo += 'bar';
+    function def(bar) {
+        bar = bar || 'foo';
+    }
+    function ghi(baz) {
+        const bay = baz || 'bar';
+    }
+    foo = foo || 'bar';
 }",
         r"foo = {
-	abc(foo) {
-		foo = foo || 123;
-	},
-	def(foo) {
-		foo = foo || 123;
-	}
+    abc(foo) {
+        foo = foo || 123;
+    },
+    def(foo) {
+        foo = foo || 123;
+    }
 };",
         r"class Foo {
-	abc(foo) {
-		foo = foo || 123;
-	}
-	def(foo) {
-		foo = foo || 123;
-	}
+    abc(foo) {
+        foo = foo || 123;
+    }
+    def(foo) {
+        foo = foo || 123;
+    }
 }",
         r"function abc(foo) {
-	const noSideEffects = 123;
-	foo = foo || 123;
+    const noSideEffects = 123;
+    foo = foo || 123;
 }",
         r"const abc = function(foo) {
-	let bar = true;
-	bar = false;
+    let bar = true;
+    bar = false;
 
-	foo = foo || 123;
-	console.log(foo);
+    foo = foo || 123;
+    console.log(foo);
 }",
         r"function abc(foo) {
-	const bar = function() {};
-	foo = foo || 123;
+    const bar = function() {};
+    foo = foo || 123;
 }",
     ];
 
@@ -618,151 +618,151 @@ fn test() {
     let _fix = vec![
         (
             r"function abc(foo) {
-	foo = foo || 123;
+    foo = foo || 123;
 }",
             r"function abc(foo = 123) {
 }",
         ),
         (
             r"function abc(foo) {
-	foo = foo || true;
+    foo = foo || true;
 }",
             r"function abc(foo = true) {
 }",
         ),
         (
             r"function abc(foo) {
-	foo = foo || 123;
-	console.log(foo);
+    foo = foo || 123;
+    console.log(foo);
 }",
             r"function abc(foo = 123) {
-	console.log(foo);
+    console.log(foo);
 }",
         ),
         (
             r"function abc(foo) {
-	const bar = foo || 'bar';
+    const bar = foo || 'bar';
 }",
             r"function abc(bar = 'bar') {
 }",
         ),
         (
             r"function abc(foo) {
-	let bar = foo || 'bar';
+    let bar = foo || 'bar';
 }",
             r"function abc(bar = 'bar') {
 }",
         ),
         (
             r"const abc = function(foo) {
-	foo = foo || 123;
+    foo = foo || 123;
 }",
             r"const abc = function(foo = 123) {
 }",
         ),
         (
             r"const abc = (foo) => {
-	foo = foo || 'bar';
+    foo = foo || 'bar';
 };",
             r"const abc = (foo = 'bar') => {
 };",
         ),
         (
             r"const abc = foo => {
-	foo = foo || 'bar';
+    foo = foo || 'bar';
 };",
             r"const abc = (foo = 'bar') => {
 };",
         ),
         (
             r"const abc = (foo) => {
-	const bar = foo || 'bar';
+    const bar = foo || 'bar';
 };",
             r"const abc = (bar = 'bar') => {
 };",
         ),
         (
             r"function abc(foo) {
-	foo = foo || 'bar';
-	bar();
-	baz();
+    foo = foo || 'bar';
+    bar();
+    baz();
 }",
             r"function abc(foo = 'bar') {
-	bar();
-	baz();
+    bar();
+    baz();
 }",
         ),
         (
             r"function abc(foo) {
-	foo = foo ?? 123;
+    foo = foo ?? 123;
 }",
             r"function abc(foo = 123) {
 }",
         ),
         (
             r"function abc(foo) {
-	const bar = foo || 'bar';
-	console.log(bar);
+    const bar = foo || 'bar';
+    console.log(bar);
 }",
             r"function abc(bar = 'bar') {
-	console.log(bar);
+    console.log(bar);
 }",
         ),
         (
             r"const abc = function(foo) {
-	const bar = foo || 'bar';
-	console.log(bar);
+    const bar = foo || 'bar';
+    console.log(bar);
 }",
             r"const abc = function(bar = 'bar') {
-	console.log(bar);
+    console.log(bar);
 }",
         ),
         (
             r"foo = {
-	abc(foo) {
-		foo = foo || 123;
-	}
+    abc(foo) {
+        foo = foo || 123;
+    }
 };",
             r"foo = {
-	abc(foo = 123) {
-	}
+    abc(foo = 123) {
+    }
 };",
         ),
         (
             r"foo = {
-	abc(foo) {
-		foo = foo || 123;
-	},
-	def(foo) { }
+    abc(foo) {
+        foo = foo || 123;
+    },
+    def(foo) { }
 };",
             r"foo = {
-	abc(foo = 123) {
-	},
-	def(foo) { }
+    abc(foo = 123) {
+    },
+    def(foo) { }
 };",
         ),
         (
             r"class Foo {
-	abc(foo) {
-		foo = foo || 123;
-	}
+    abc(foo) {
+        foo = foo || 123;
+    }
 }",
             r"class Foo {
-	abc(foo = 123) {
-	}
+    abc(foo = 123) {
+    }
 }",
         ),
         (
             r"class Foo {
-	abc(foo) {
-		foo = foo || 123;
-	}
-	def(foo) { }
+    abc(foo) {
+        foo = foo || 123;
+    }
+    def(foo) { }
 }",
             r"class Foo {
-	abc(foo = 123) {
-	}
-	def(foo) { }
+    abc(foo = 123) {
+    }
+    def(foo) { }
 }",
         ),
         (r"function abc(foo) { foo = foo || 'bar'; }", r"function abc(foo = 'bar') { }"),
@@ -773,111 +773,111 @@ fn test() {
         ),
         (
             r"function abc(foo) {
-	foo = foo || 'bar'; bar(); baz();
+    foo = foo || 'bar'; bar(); baz();
 }",
             r"function abc(foo = 'bar') {
-	bar(); baz();
+    bar(); baz();
 }",
         ),
         (
             r"function abc(foo) {
-	foo = foo || 'bar';
-	function def(bar) {
-		bar = bar || 'foo';
-	}
+    foo = foo || 'bar';
+    function def(bar) {
+        bar = bar || 'foo';
+    }
 }",
             r"function abc(foo = 'bar') {
-	function def(bar) {
-		bar = bar || 'foo';
-	}
+    function def(bar) {
+        bar = bar || 'foo';
+    }
 }",
         ),
         (
             r"function abc(foo) {
-	foo += 'bar';
-	function def(bar) {
-		bar = bar || 'foo';
-	}
-	function ghi(baz) {
-		const bay = baz || 'bar';
-	}
-	foo = foo || 'bar';
+    foo += 'bar';
+    function def(bar) {
+        bar = bar || 'foo';
+    }
+    function ghi(baz) {
+        const bay = baz || 'bar';
+    }
+    foo = foo || 'bar';
 }",
             r"function abc(foo) {
-	foo += 'bar';
-	function def(bar = 'foo') {
-	}
-	function ghi(baz) {
-		const bay = baz || 'bar';
-	}
-	foo = foo || 'bar';
+    foo += 'bar';
+    function def(bar = 'foo') {
+    }
+    function ghi(baz) {
+        const bay = baz || 'bar';
+    }
+    foo = foo || 'bar';
 }",
         ),
         (
             r"foo = {
-	abc(foo) {
-		foo = foo || 123;
-	},
-	def(foo) {
-		foo = foo || 123;
-	}
+    abc(foo) {
+        foo = foo || 123;
+    },
+    def(foo) {
+        foo = foo || 123;
+    }
 };",
             r"foo = {
-	abc(foo = 123) {
-	},
-	def(foo) {
-		foo = foo || 123;
-	}
+    abc(foo = 123) {
+    },
+    def(foo) {
+        foo = foo || 123;
+    }
 };",
         ),
         (
             r"class Foo {
-	abc(foo) {
-		foo = foo || 123;
-	}
-	def(foo) {
-		foo = foo || 123;
-	}
+    abc(foo) {
+        foo = foo || 123;
+    }
+    def(foo) {
+        foo = foo || 123;
+    }
 }",
             r"class Foo {
-	abc(foo = 123) {
-	}
-	def(foo) {
-		foo = foo || 123;
-	}
+    abc(foo = 123) {
+    }
+    def(foo) {
+        foo = foo || 123;
+    }
 }",
         ),
         (
             r"function abc(foo) {
-	const noSideEffects = 123;
-	foo = foo || 123;
+    const noSideEffects = 123;
+    foo = foo || 123;
 }",
             r"function abc(foo = 123) {
-	const noSideEffects = 123;
+    const noSideEffects = 123;
 }",
         ),
         (
             r"const abc = function(foo) {
-	let bar = true;
-	bar = false;
+    let bar = true;
+    bar = false;
 
-	foo = foo || 123;
-	console.log(foo);
+    foo = foo || 123;
+    console.log(foo);
 }",
             r"const abc = function(foo = 123) {
-	let bar = true;
-	bar = false;
+    let bar = true;
+    bar = false;
 
-	console.log(foo);
+    console.log(foo);
 }",
         ),
         (
             r"function abc(foo) {
-	const bar = function() {};
-	foo = foo || 123;
+    const bar = function() {};
+    foo = foo || 123;
 }",
             r"function abc(foo = 123) {
-	const bar = function() {};
+    const bar = function() {};
 }",
         ),
     ];

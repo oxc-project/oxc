@@ -45,7 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
-   ╭─[prefer_top_level_await.mjs:2:5]
+   ╭─[prefer_top_level_await.mjs:2:17]
  1 │ {
  2 │                 (async () => {})();
    ·                 ──────────────────
@@ -191,7 +191,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over an async function call.
-   ╭─[prefer_top_level_await.mjs:2:4]
+   ╭─[prefer_top_level_await.mjs:2:13]
  1 │ const foo = async () => {};
  2 │             foo();
    ·             ─────
@@ -199,7 +199,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add `await` before the function call.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over an async function call.
-   ╭─[prefer_top_level_await.mjs:2:4]
+   ╭─[prefer_top_level_await.mjs:2:13]
  1 │ const foo = async () => {};
  2 │             foo?.();
    ·             ───────
@@ -207,14 +207,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Add `await` before the function call.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using a promise chain.
-   ╭─[prefer_top_level_await.mjs:2:4]
+   ╭─[prefer_top_level_await.mjs:2:13]
  1 │ const foo = async () => {};
  2 │             foo().then(foo);
    ·             ───────────────
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over an async function call.
-   ╭─[prefer_top_level_await.mjs:2:4]
+   ╭─[prefer_top_level_await.mjs:2:13]
  1 │ const foo = async function () {}, bar = 1;
  2 │             foo(bar);
    ·             ────────
@@ -230,7 +230,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Add `await` before the function call.
 
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over an async function call.
-   ╭─[prefer_top_level_await.mjs:5:5]
+   ╭─[prefer_top_level_await.mjs:5:17]
  4 │             } else {
  5 │                 foo();
    ·                 ─────

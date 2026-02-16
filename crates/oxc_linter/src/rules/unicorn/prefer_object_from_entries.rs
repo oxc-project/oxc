@@ -364,25 +364,25 @@ fn test() {
         ("pairs.reduce(object => ({...object, [((key))] : ((value))}), {});", None),
         (
             "((
-				(( pairs ))
-				.reduce(
-					((
-						(object,) => ((
-							((
-								Object
-							)).assign(
-								((
-									object
-								)),
-								(({
-									[ ((key)) ] : ((value)),
-								}))
-							)
-						))
-					)),
-					Object.create(((null)),)
-				)
-			));",
+                (( pairs ))
+                .reduce(
+                    ((
+                        (object,) => ((
+                            ((
+                                Object
+                            )).assign(
+                                ((
+                                    object
+                                )),
+                                (({
+                                    [ ((key)) ] : ((value)),
+                                }))
+                            )
+                        ))
+                    )),
+                    Object.create(((null)),)
+                )
+            ));",
             None,
         ),
         ("pairs.reduce(object => ({...object, 0: value}), {});", None),

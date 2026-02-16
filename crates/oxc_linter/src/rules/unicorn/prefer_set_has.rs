@@ -290,10 +290,10 @@ fn test() {
 
     let pass = vec![
         "
-        	const foo = new Set([1, 2, 3]);
-        	function unicorn() {
-        		return foo.has(1);
-        	}
+            const foo = new Set([1, 2, 3]);
+            function unicorn() {
+                return foo.has(1);
+            }
         ",
         "
             const foo = [1, 2, 3];
@@ -301,8 +301,8 @@ fn test() {
         ",
         "
             while (a) {
-            	const foo = [1, 2, 3];
-            	const isExists = foo.includes(1);
+                const foo = [1, 2, 3];
+                const isExists = foo.includes(1);
             }
         ",
         "
@@ -312,7 +312,7 @@ fn test() {
         "
             foo = [1, 2, 3];
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
@@ -327,284 +327,284 @@ fn test() {
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo.includes;
+                return foo.includes;
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return includes(foo);
+                return includes(foo);
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return bar.includes(foo);
+                return bar.includes(foo);
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo[includes](1);
+                return foo[includes](1);
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo.indexOf(1) !== -1;
+                return foo.indexOf(1) !== -1;
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	foo.includes(1);
-            	foo.length = 1;
+                foo.includes(1);
+                foo.length = 1;
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	if (foo.includes(1)) {}
-            	return foo;
-            				}
+                if (foo.includes(1)) {}
+                return foo;
+                            }
         ",
         "
             var foo = [1, 2, 3];
             var foo = [4, 5, 6];
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = bar;
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo.includes();
+                return foo.includes();
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo.includes(1, 1);
+                return foo.includes(1, 1);
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo.includes(1, 0);
+                return foo.includes(1, 0);
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo.includes(1, undefined);
+                return foo.includes(1, undefined);
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo.includes(...[1]);
+                return foo.includes(...[1]);
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo?.includes(1);
+                return foo?.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo.includes?.(1);
+                return foo.includes?.(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo?.includes?.(1);
+                return foo?.includes?.(1);
             }
         ",
         "
             function unicorn() {
-            	const foo = [1, 2, 3];
+                const foo = [1, 2, 3];
             }
             function unicorn2() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             export const foo = [1, 2, 3];
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             module.exports = [1, 2, 3];
             function unicorn() {
-            	return module.exports.includes(1);
+                return module.exports.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             export {foo};
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             export default foo;
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             export {foo as bar};
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             module.exports = foo;
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             exports = foo;
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             module.exports.foo = foo;
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = NotArray(1, 2);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = new NotArray(1, 2);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = NotArray.from({length: 1}, (_, index) => index);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = NotArray.of(1, 2);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = Array.notListed();
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = Array[from]({length: 1}, (_, index) => index);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = Array[of](1, 2);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = 'Array'.from({length: 1}, (_, index) => index);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = 'Array'.of(1, 2);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = Array['from']({length: 1}, (_, index) => index);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = Array['of'](1, 2);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = of(1, 2);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = from({length: 1}, (_, index) => index);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = bar.notListed();
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = _.map([1, 2, 3], value => value);
             function unicorn() {
-            	return _.includes(foo, 1);
+                return _.includes(foo, 1);
             }
         ",
         "
             @connect(
-            	state => {
-            		const availableComponents = ['is']
-            		if (nsConfig.enabled) availableComponents.push('ns')
-            		if (jsConfig.enabled) availableComponents.push('js')
-            		if (asConfig.enabled) availableComponents.push('as')
-            		return {
-            			availableComponents,
-            		}
-            	},
+                state => {
+                    const availableComponents = ['is']
+                    if (nsConfig.enabled) availableComponents.push('ns')
+                    if (jsConfig.enabled) availableComponents.push('js')
+                    if (asConfig.enabled) availableComponents.push('as')
+                    return {
+                        availableComponents,
+                    }
+                },
             )
             export default class A {}
         ",
         "
             @connect(
-            	state => {
-            		const availableComponents = ['is']
-            		if (nsConfig.enabled) availableComponents.push('ns')
-            		if (jsConfig.enabled) availableComponents.push('js')
-            		return {
-            			availableComponents,
-            		}
-            	},
+                state => {
+                    const availableComponents = ['is']
+                    if (nsConfig.enabled) availableComponents.push('ns')
+                    if (jsConfig.enabled) availableComponents.push('js')
+                    return {
+                        availableComponents,
+                    }
+                },
             )
             export default class A {}
         ",
@@ -612,11 +612,11 @@ fn test() {
 
     let fail = vec![
         "
-			const foo = [1, 2, 3];
-			function unicorn() {
-				return foo.includes(1);
-			}
-		",
+            const foo = [1, 2, 3];
+            function unicorn() {
+                return foo.includes(1);
+            }
+        ",
         "
             const foo = [1, 2, 3];
             const isExists = foo.includes(1);
@@ -625,75 +625,75 @@ fn test() {
         "
             const foo = [1, 2, 3];
             for (const a of b) {
-            	foo.includes(1);
+                foo.includes(1);
             }
         ",
         "
             async function unicorn() {
-            	const foo = [1, 2, 3];
-            	for await (const a of b) {
-            		foo.includes(1);
-            	}
+                const foo = [1, 2, 3];
+                for await (const a of b) {
+                    foo.includes(1);
+                }
             }
         ",
         "
             const foo = [1, 2, 3];
             for (let i = 0; i < n; i++) {
-            	foo.includes(1);
+                foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             for (let a in b) {
-            	foo.includes(1);
+                foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             while (a)  {
-            	foo.includes(1);
+                foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             do {
-            	foo.includes(1);
+                foo.includes(1);
             } while (a)
         ",
         "
             const foo = [1, 2, 3];
             do {
-            	// …
+                // …
             } while (foo.includes(1))
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             function * unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             async function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             async function * unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             const unicorn = function () {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
@@ -703,104 +703,104 @@ fn test() {
         "
             const foo = [1, 2, 3];
             const a = {
-            	b() {
-            		return foo.includes(1);
-            	}
+                b() {
+                    return foo.includes(1);
+                }
             };
         ",
         "
             const foo = [1, 2, 3];
             class A {
-            	b() {
-            		return foo.includes(1);
-            	}
+                b() {
+                    return foo.includes(1);
+                }
             }
         ",
         "
             const foo = [...bar];
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
             bar.pop();
         ",
         "
             const foo = [1, 2, 3];
             function unicorn() {
-            	const exists = foo.includes(1);
-            	function isExists(find) {
-            		return foo.includes(find);
-            	}
+                const exists = foo.includes(1);
+                function isExists(find) {
+                    return foo.includes(find);
+                }
             }
         ",
         "
             function wrap() {
-            	const foo = [1, 2, 3];
-            	function unicorn() {
-            		return foo.includes(1);
-            	}
+                const foo = [1, 2, 3];
+                function unicorn() {
+                    return foo.includes(1);
+                }
             }
             const bar = [4, 5, 6];
             function unicorn() {
-            	return bar.includes(1);
+                return bar.includes(1);
             }
         ",
         "
             const foo = [1, 2, 3];
             function wrap() {
-            	const exists = foo.includes(1);
-            	const bar = [1, 2, 3];
-            	function outer(find) {
-            		const foo = [1, 2, 3];
-            		while (a) {
-            			foo.includes(1);
-            		}
-            		function inner(find) {
-            			const bar = [1, 2, 3];
-            			while (a) {
-            				const exists = bar.includes(1);
-            			}
-            		}
-            	}
+                const exists = foo.includes(1);
+                const bar = [1, 2, 3];
+                function outer(find) {
+                    const foo = [1, 2, 3];
+                    while (a) {
+                        foo.includes(1);
+                    }
+                    function inner(find) {
+                        const bar = [1, 2, 3];
+                        while (a) {
+                            const exists = bar.includes(1);
+                        }
+                    }
+                }
             }
         ",
         "
             const foo = Array(1, 2);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = new Array(1, 2);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = Array.from({length: 1}, (_, index) => index);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = Array.of(1, 2);
             function unicorn() {
-            	return foo.includes(1);
+                return foo.includes(1);
             }
         ",
         "
             const foo = _([1,2,3]);
             const bar = foo.map(value => value);
             function unicorn() {
-            	return bar.includes(1);
+                return bar.includes(1);
             }
         ",
         "
             const a: Array<'foo' | 'bar'> = ['foo', 'bar']
 
             for (let i = 0; i < 3; i++) {
-            	if (a.includes(someString)) {
-            		console.log(123)
-            	}
+                if (a.includes(someString)) {
+                    console.log(123)
+                }
             }
         ",
     ];
@@ -824,14 +824,14 @@ fn test() {
             "
                 const foo = [...bar];
                 function unicorn() {
-                	return foo.includes(1);
+                    return foo.includes(1);
                 }
                 bar.pop();
             ",
             "
                 const foo = new Set([...bar]);
                 function unicorn() {
-                	return foo.has(1);
+                    return foo.has(1);
                 }
                 bar.pop();
             ",
@@ -840,13 +840,13 @@ fn test() {
             "
                 const foo = Array(1, 2);
                 function unicorn() {
-                	return foo.includes(1);
+                    return foo.includes(1);
                 }
             ",
             "
                 const foo = new Set([1, 2]);
                 function unicorn() {
-                	return foo.has(1);
+                    return foo.has(1);
                 }
             ",
         ),
@@ -854,13 +854,13 @@ fn test() {
             "
                 const foo = new Array(1, 2);
                 function unicorn() {
-                	return foo.includes(1);
+                    return foo.includes(1);
                 }
             ",
             "
                 const foo = new Set([1, 2]);
                 function unicorn() {
-                	return foo.has(1);
+                    return foo.has(1);
                 }
             ",
         ),
@@ -869,14 +869,14 @@ fn test() {
                 const foo = _([1,2,3]);
                 const bar = foo.map(value => value);
                 function unicorn() {
-                	return bar.includes(1);
+                    return bar.includes(1);
                 }
             ",
             "
                 const foo = _([1,2,3]);
                 const bar = new Set(foo.map(value => value));
                 function unicorn() {
-                	return bar.has(1);
+                    return bar.has(1);
                 }
             ",
         ),
