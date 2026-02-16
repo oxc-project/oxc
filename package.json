@@ -14,7 +14,7 @@
     "@napi-rs/cli": "catalog:",
     "oxfmt": "^0.33.0",
     "oxlint": "^1.45.0",
-    "oxlint-tsgolint": "0.13.0"
+    "oxlint-tsgolint": "0.14.0"
   },
   "packageManager": "pnpm@10.28.2"
 }
