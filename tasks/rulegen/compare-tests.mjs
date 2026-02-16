@@ -146,29 +146,14 @@ function toSnakeCase(str) {
 
 /**
  * Normalize a code string for fuzzy comparison.
- * Trims whitespace, normalizes line endings, dedents common indentation.
+ * Collapses all whitespace (including newlines) to single spaces for comparison.
  */
 function normalize(code) {
   if (typeof code !== "string") return "";
-  let lines = code.replace(/\r\n/g, "\n").split("\n");
 
-  // Trim leading/trailing empty lines
-  while (lines.length > 0 && lines[0].trim() === "") lines.shift();
-  while (lines.length > 0 && lines[lines.length - 1].trim() === "") lines.pop();
-
-  // Dedent: find minimum indentation of non-empty lines
-  const nonEmpty = lines.filter((l) => l.trim().length > 0);
-  if (nonEmpty.length > 0) {
-    const minIndent = Math.min(...nonEmpty.map((l) => l.match(/^(\s*)/)[1].length));
-    if (minIndent > 0) {
-      lines = lines.map((l) => l.slice(minIndent));
-    }
-  }
-
-  return lines
-    .map((l) => l.trimEnd())
-    .join("\n")
-    .trim();
+  // Replace all sequences of whitespace (spaces, tabs, newlines) with a single space
+  // Then trim leading/trailing whitespace
+  return code.replace(/\s+/g, " ").trim();
 }
 
 // ── Step 1: Download and evaluate the upstream test file ────────────────
