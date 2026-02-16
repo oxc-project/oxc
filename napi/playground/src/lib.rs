@@ -30,9 +30,9 @@ use oxc::{
 };
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
-    Formatter, GroupEntry, GroupName, IndentStyle, IndentWidth, LineEnding, LineWidth,
-    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas,
-    default_groups, default_internal_patterns, get_parse_options,
+    Formatter, GroupEntry, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties,
+    QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas, default_groups,
+    default_internal_patterns, get_parse_options,
 };
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ExternalPluginStore, LintOptions, Linter,
@@ -530,20 +530,7 @@ impl Oxc {
                 groups: sort_imports_config.groups.as_ref().map_or_else(default_groups, |groups| {
                     groups
                         .iter()
-                        .map(|group| {
-                            group
-                                .iter()
-                                .map(|name| {
-                                    if name == "unknown" {
-                                        GroupEntry::Unknown
-                                    } else if let Some(gn) = GroupName::parse(name) {
-                                        GroupEntry::Predefined(gn)
-                                    } else {
-                                        GroupEntry::Custom(name.clone())
-                                    }
-                                })
-                                .collect()
-                        })
+                        .map(|group| group.iter().map(|name| GroupEntry::parse(name)).collect())
                         .collect()
                 }),
                 custom_groups: vec![],

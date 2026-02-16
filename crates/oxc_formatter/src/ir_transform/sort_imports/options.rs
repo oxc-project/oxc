@@ -42,6 +42,26 @@ pub struct SortImportsOptions {
     pub newline_boundary_overrides: Vec<Option<bool>>,
 }
 
+impl SortImportsOptions {
+    /// Validate option combinations.
+    ///
+    /// # Errors
+    /// Returns an error message if incompatible options are set.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.partition_by_newline && self.newline_boundary_overrides.iter().any(Option::is_some)
+        {
+            return Err("`partitionByNewline` and per-group `{ \"newlinesBetween\" }` markers cannot be used together".to_string());
+        }
+        if self.partition_by_newline && self.newlines_between {
+            return Err(
+                "`partitionByNewline: true` and `newlinesBetween: true` cannot be used together"
+                    .to_string(),
+            );
+        }
+        Ok(())
+    }
+}
+
 impl Default for SortImportsOptions {
     fn default() -> Self {
         Self {

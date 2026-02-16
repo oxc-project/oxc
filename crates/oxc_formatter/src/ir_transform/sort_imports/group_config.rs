@@ -11,6 +11,26 @@ pub enum GroupEntry {
     Custom(String),
 }
 
+impl GroupEntry {
+    /// Parse a group entry string.
+    ///
+    /// - `"unknown"`: `GroupEntry::Unknown`
+    /// - Valid predefined name: `GroupEntry::Predefined(..)`
+    /// - Anything else: `GroupEntry::Custom(..)`
+    ///
+    /// NOTE: This does NOT validate whether custom group names are actually defined.
+    /// That validation should be done at the config layer.
+    pub fn parse(name: &str) -> Self {
+        if name == "unknown" {
+            return Self::Unknown;
+        }
+        if let Some(group_name) = GroupName::parse(name) {
+            return Self::Predefined(group_name);
+        }
+        Self::Custom(name.to_string())
+    }
+}
+
 /// Represents a group name pattern for matching imports.
 /// A group name consists of 1 selector and N modifiers.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
