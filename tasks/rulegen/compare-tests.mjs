@@ -283,11 +283,11 @@ function runWithMock(source, ext, extraNodeArgs = []) {
   fs.writeFileSync(
     tmpRunner,
     `require(${JSON.stringify(tmpFile)});\n` +
-    `if (global.__capturedTests) {\n` +
-    `  process.stdout.write(JSON.stringify(global.__capturedTests));\n` +
-    `} else {\n` +
-    `  process.stdout.write(JSON.stringify({valid: [], invalid: []}));\n` +
-    `}\n`,
+      `if (global.__capturedTests) {\n` +
+      `  process.stdout.write(JSON.stringify(global.__capturedTests));\n` +
+      `} else {\n` +
+      `  process.stdout.write(JSON.stringify({valid: [], invalid: []}));\n` +
+      `}\n`,
   );
 
   try {
@@ -974,7 +974,7 @@ async function main() {
   if (upstreamResult.valid.length === 0 && upstreamResult.invalid.length === 0) {
     console.error(
       "Warning: No test cases captured from upstream file. " +
-      "The test file may use an unsupported pattern.",
+        "The test file may use an unsupported pattern.",
     );
   }
 
