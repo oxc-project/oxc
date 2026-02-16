@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.48.0] - 2026-02-16
+
+### 🚀 Features
+
+- 7a333c1 linter: Support dynamic configs via CLI arguments (#19384) (camc314)
+- be0ce50 linter/tsgolint: Add support for labeled ranges in tsgolint diagnostics (#19201) (camchenry)
+- 1612932 linter: Add typescript/no-unnecessary-condition (#19130) (camc314)
+
+### 🐛 Bug Fixes
+
+- d96d26d linter/plugins: Provide `parser.version` (#19364) (overlookmotel)
+
+### 📚 Documentation
+
+- b069269 linter/plugins: Add comment about deprecated `ScopeManager` methods (#19363) (overlookmotel)
+
 ## [1.47.0] - 2026-02-12
 
 ### 🚀 Features

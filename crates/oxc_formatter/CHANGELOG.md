@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.33.0] - 2026-02-16
+
+### 💥 BREAKING CHANGES
+
+- 00135b5 formatter/sort_imports: [**BREAKING**] Change default `groups` order (#19427) (leaysgur)
+- 9c34f72 formatter/sort_imports: [**BREAKING**] Report invalid group name with renaming `side-effect` > `side_effect` (#19416) (leaysgur)
+
+### 🚀 Features
+
+- 4baebef formatter/sort_imports: Support `{ newlinesBetween: bool }` inside `groups` (#19358) (leaysgur)
+- d1c2fb6 formatter/sort_imports: Support `customGroups` attributes(`selector` and `modifiers`) (#19356) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2bc7a14 formatter: Arrow function body incorrectly broken when return type has comment (#19368) (Dunqing)
+- e9c5b1e formatter: Treat `PrivateFieldExpression` as simple call argument (#19348) (Dunqing)
+- 80643d5 formatter: Match Prettier union indentation with leading comments (#19271) (Dunqing)
+
+### ⚡ Performance
+
+- c169c77 syntax: Optimize `is_identifier_name_patched` (#19386) (sapphi-red)
+
 ## [0.32.0] - 2026-02-12
 
 ### 🚀 Features

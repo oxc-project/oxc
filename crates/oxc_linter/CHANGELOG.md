@@ -4,6 +4,48 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.48.0] - 2026-02-16
+
+### 💥 BREAKING CHANGES
+
+- 7711821 oxlint: [**BREAKING**] `no-shadow-restricted-names` report `globalThis` by default (#19407) (Sysix)
+
+### 🚀 Features
+
+- ce1baa0 linter: Implement eslint/no-shadow (#18979) (Víctor Fernández)
+- 1bf569b linter: Implement typescript/unified-signatures (#19375) (camc314)
+- 6562a9b linter: Implement typescript/parameter-properties (#19374) (camc314)
+- 94d8d74 linter: Implement typescript/no-use-before-define (#19373) (camc314)
+- 80b002a linter: Implement fixer for unicorn/no-instanceof-builtins (#19371) (camc314)
+- 5c3784b linter: Implement eslint/no-unmodified-loop-condition (#19341) (Vincent R)
+- cc00a59 linter/const-comparisons: Improve diagnostics when mixing logical/comparison operators (#19370) (camc314)
+- ea2c401 linter: Add support for no constructed context values (#18067) (Jovi De Croock)
+- f2440eb linter: Mark eslint/no-return-assign as having no fixer (#19327) (camc314)
+- 8588670 linter/unicorn: Implement suggestion for `unicorn/no-await-in-promise-methods` rule (#19359) (Mikhail Baev)
+- f0af965 linter: Move `jsx-a11y/no-static-element-interactions` rule out of the nursery. (#19355) (connorshea)
+- be0ce50 linter/tsgolint: Add support for labeled ranges in tsgolint diagnostics (#19201) (camchenry)
+- b5bc900 linter: Implement fixer for unicorn/no-new-buffer (#19326) (camc314)
+- 1612932 linter: Add typescript/no-unnecessary-condition (#19130) (camc314)
+- 37dc6c5 linter: Implement fixer for unicorn/prefer-includes (#19323) (camc314)
+
+### 🐛 Bug Fixes
+
+- c2b1870 linter: Enforce config options for `react/forbid-dom-props` rule. (#19387) (connorshea)
+- 3d24e44 linter: Honor no-empty-function allow getters/setters for object literals (#19393) (camc314)
+- bbced8d linter: Enforce config options for `eslint/no-empty-function` rule, improve docs. (#19390) (connorshea)
+- 6bc8aec linter: Fix the behavior of `import/extensions` rule for a file that has multiple extensions. (#18919) (connorshea)
+- c62a295 linter/img-redundant-alt: Enforce whole-word matching for redundant alt text (#19367) (camc314)
+- 98956fe linter/describe-function-title: Skip autofix for type-only imports (#19329) (camc314)
+- 81f0039 linter_codegen: Compute rule IDs relative to previous rule (#19350) (camchenry)
+- b7ef0a8 linter/consistent-indexed-object-style: Avoid unsafe Record conversions for mapped types (#19320) (camc314)
+
+### 📚 Documentation
+
+- 3a6059f linter: Improve docs for `eslint/require-await` rule. (#19361) (connorshea)
+- 2d8aaf9 linter: Disable formatting for `eslint/no-unsafe-negation` examples. (#19347) (connorshea)
+- fb87806 linter: Ensure that we do not auto-format the docs for `unicorn/number-literal-case` rule. (#19346) (connorshea)
+- 8d3ae27 linter/typescript: Skip docs for deprecated type aware rule options (#19324) (camc314)
+
 ## [1.47.0] - 2026-02-12
 
 ### 🚀 Features
