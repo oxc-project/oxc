@@ -1,8 +1,8 @@
 mod sort_imports;
 
 use oxc_formatter::{
-    CustomGroupDefinition, FormatOptions, GroupEntry, GroupName, ImportModifier, ImportSelector,
-    QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
+    CustomGroupDefinition, FormatOptions, GroupEntry, ImportModifier, ImportSelector, QuoteStyle,
+    Semicolons, SortImportsOptions, SortOrder,
 };
 use serde::Deserialize;
 
@@ -88,16 +88,6 @@ struct ParsedGroups {
     newline_boundary_overrides: Vec<Option<bool>>,
 }
 
-fn parse_group_name(name: &str) -> GroupEntry {
-    if name == "unknown" {
-        GroupEntry::Unknown
-    } else if let Some(group_name) = GroupName::parse(name) {
-        GroupEntry::Predefined(group_name)
-    } else {
-        GroupEntry::Custom(name.to_string())
-    }
-}
-
 fn deserialize_groups<'de, D>(deserializer: D) -> Result<Option<ParsedGroups>, D::Error>
 where
     D: serde::Deserializer<'de>,
@@ -120,9 +110,9 @@ where
                 newline_boundary_overrides.push(pending_override.take());
             }
             let group = match item {
-                Value::String(s) => vec![parse_group_name(&s)],
+                Value::String(s) => vec![GroupEntry::parse(&s)],
                 Value::Array(a) => {
-                    a.into_iter().filter_map(|v| v.as_str().map(parse_group_name)).collect()
+                    a.into_iter().filter_map(|v| v.as_str().map(GroupEntry::parse)).collect()
                 }
                 _ => continue,
             };

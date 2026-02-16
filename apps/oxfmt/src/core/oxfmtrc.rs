@@ -7,9 +7,9 @@ use serde_json::Value;
 
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
-    EmbeddedLanguageFormatting, Expand, FormatOptions, GroupEntry, GroupName, ImportModifier,
-    ImportSelector, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
-    Semicolons, SortImportsOptions, SortOrder, TailwindcssOptions, TrailingCommas,
+    EmbeddedLanguageFormatting, Expand, FormatOptions, GroupEntry, ImportModifier, ImportSelector,
+    IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
+    SortImportsOptions, SortOrder, TailwindcssOptions, TrailingCommas,
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -481,17 +481,14 @@ impl FormatConfig {
                             }
                             let mut entries = Vec::new();
                             for name in other.into_vec() {
-                                let entry = if name == "unknown" {
-                                    GroupEntry::Unknown
-                                } else if custom_group_names.contains(name.as_str()) {
-                                    GroupEntry::Custom(name)
-                                } else if let Some(group_name) = GroupName::parse(&name) {
-                                    GroupEntry::Predefined(group_name)
-                                } else {
+                                let entry = GroupEntry::parse(&name);
+                                if let GroupEntry::Custom(ref n) = entry
+                                    && !custom_group_names.contains(n.as_str())
+                                {
                                     return Err(format!(
                                         "Invalid `sortImports` configuration: unknown group name `{name}` in `groups`"
                                     ));
-                                };
+                                }
                                 entries.push(entry);
                             }
                             groups.push(entries);
@@ -507,16 +504,9 @@ impl FormatConfig {
                 sort_imports.newline_boundary_overrides = newline_boundary_overrides;
             }
 
-            if sort_imports.partition_by_newline
-                && sort_imports.newline_boundary_overrides.iter().any(Option::is_some)
-            {
-                return Err("Invalid `sortImports` configuration: `partitionByNewline` and per-group `{ \"newlinesBetween\" }` markers cannot be used together".to_string());
-            }
-
-            // `partition_by_newline: true` and `newlines_between: true` cannot be used together
-            if sort_imports.partition_by_newline && sort_imports.newlines_between {
-                return Err("Invalid `sortImports` configuration: `partitionByNewline: true` and `newlinesBetween: true` cannot be used together".to_string());
-            }
+            sort_imports
+                .validate()
+                .map_err(|e| format!("Invalid `sortImports` configuration: {e}"))?;
 
             format_options.experimental_sort_imports = Some(sort_imports);
         }
@@ -1123,6 +1113,8 @@ fn json_deep_merge(base: Value, overlay: Value) -> Value {
 
 #[cfg(test)]
 mod tests {
+    use oxc_formatter::GroupName;
+
     use super::*;
 
     #[test]
