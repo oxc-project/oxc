@@ -56,8 +56,16 @@ working directory: fixtures/tsgolint_rule_options
  82 | 
     `----
 
-Found 0 warnings and 6 errors.
-Finished in <variable>ms on 1 file with 9 rules using 1 threads.
+  x typescript-eslint(strict-void-return): Value returned in a context where a void return is expected.
+    ,-[test.ts:89:25]
+ 88 | // This SHOULD error because returning string is not allowed in a void callback
+ 89 | takesVoidCallback(() => 'not-void');
+    :                         ^^^^^^^^^^
+ 90 | 
+    `----
+
+Found 0 warnings and 7 errors.
+Finished in <variable>ms on 1 file with 10 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

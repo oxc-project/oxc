@@ -305,6 +305,7 @@ pub(crate) mod typescript {
     pub mod restrict_template_expressions;
     pub mod return_await;
     pub mod strict_boolean_expressions;
+    pub mod strict_void_return;
     pub mod switch_exhaustiveness_check;
     pub mod triple_slash_reference;
     pub mod unbound_method;

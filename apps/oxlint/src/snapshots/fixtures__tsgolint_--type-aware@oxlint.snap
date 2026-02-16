@@ -430,6 +430,14 @@ working directory: fixtures/tsgolint
  3 | }
    `----
 
+  x typescript-eslint(strict-void-return): Value returned in a context where a void return is expected.
+   ,-[strict-void-return.ts:2:11]
+ 1 | declare function foo(cb: () => void): void;
+ 2 | foo(() => null);
+   :           ^^^^
+ 3 | 
+   `----
+
   x typescript-eslint(switch-exhaustiveness-check): Switch is not exhaustive
    ,-[switch-exhaustiveness-check.ts:3:11]
  2 | function handleStatus(status: Status) {
@@ -455,8 +463,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 58 errors.
-Finished in <variable>ms on 48 files with 47 rules using 1 threads.
+Found 0 warnings and 59 errors.
+Finished in <variable>ms on 49 files with 48 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
