@@ -104,60 +104,192 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("new Array(x)", None),
-        ("Array(x)", None),
-        ("new Array(9)", None),
-        ("Array(9)", None),
-        ("new foo.Array()", None),
-        ("foo.Array()", None),
-        ("new Array.foo", None),
-        ("new Array.foo();", None),
-        ("Array.foo", None),
-        ("Array.foo()", None),
-        ("new Array<Foo>(1, 2, 3);", None),
-        ("new Array<Foo>();", None),
-        ("Array<Foo>(1, 2, 3);", None),
-        ("Array<Foo>();", None),
-        ("Array?.(x);", None),
-        ("Array?.(9);", None),
-        ("foo?.Array();", None),
-        ("Array?.foo();", None),
-        ("foo.Array?.();", None),
-        ("Array.foo?.();", None),
-        ("Array?.<Foo>(1, 2, 3);", None),
-        ("Array?.<Foo>();", None),
-        ("Array?.(0, 1, 2);", None),
-        ("Array?.(x, y);", None),
-        ("var Array; new Array;", None),
+        "new Array(x)",
+        "Array(x)",
+        "new Array(9)",
+        "Array(9)",
+        "new foo.Array()",
+        "foo.Array()",
+        "new Array.foo",
+        "Array.foo()",
+        "new globalThis.Array",
+        "const createArray = Array => new Array()",
+        "var Array; new Array;",
+        // We do not support globals config in tests:
+        // "new Array()", // { "globals": { "Array": "off", }, },
+        "new Array(x);",
+        "Array(x);",
+        "new Array(9);",
+        "Array(9);",
+        "new foo.Array();",
+        "foo.Array();",
+        "new Array.foo();",
+        "Array.foo();",
+        "new Array<Foo>(1, 2, 3);",
+        "new Array<Foo>();",
+        "Array<Foo>(1, 2, 3);",
+        "Array<Foo>();",
+        "Array<Foo>(3);",
+        "Array?.(x);",
+        "Array?.(9);",
+        "foo?.Array();",
+        "Array?.foo();",
+        "foo.Array?.();",
+        "Array.foo?.();",
+        "Array?.<Foo>(1, 2, 3);",
+        "Array?.<Foo>();",
     ];
 
     let fail = vec![
-        ("new Array()", None),
-        ("new Array", None),
-        ("Array();", None),
-        ("new Array(x, y)", None),
-        ("new Array(0, 1, 2)", None),
-        ("new Array(...args);", None),
-        ("Array(x, y)", None),
-        ("Array(0, 1, 2)", None),
-        ("Array(...args);", None),
-        ("Array(1, 2, ...args);", None),
+        "new Array()",
+        "new Array",
+        "new Array(x, y)",
+        "new Array(0, 1, 2)",
+        // TODO: Catch optional chaining cases:
+        // "const array = Array?.();",
+        // TODO: Fix this case:
+        // "
+        // const array = (Array)(
+        //     /* foo */ a,
+        //     b = c() // bar
+        // );
+        // ",
+        "const array = Array(...args);",
+        "const array = Array(...foo, ...bar);",
+        "const array = new Array(...args);",
+        "const array = Array(5, ...args);",
+        "const array = Array(5, 6, ...args);",
+        // "a = new (Array);",
+        // "a = new (Array) && (foo);",
+        "/*a*/Array()",
+        "/*a*/Array()/*b*/",
+        "Array/*a*/()",
+        "/*a*//*b*/Array/*c*//*d*/()/*e*//*f*/;/*g*//*h*/",
+        "Array(/*a*/ /*b*/)",
+        "Array(/*a*/ x /*b*/, /*c*/ y /*d*/)",
+        "/*a*/Array(/*b*/ x /*c*/, /*d*/ y /*e*/)/*f*/;/*g*/",
+        "/*a*/new Array",
+        "/*a*/new Array/*b*/",
+        "new/*a*/Array",
+        "new/*a*//*b*/Array/*c*//*d*/()/*e*//*f*/;/*g*//*h*/",
+        "new Array(/*a*/ /*b*/)",
+        "new Array(/*a*/ x /*b*/, /*c*/ y /*d*/)",
+        "new/*a*/Array(/*b*/ x /*c*/, /*d*/ y /*e*/)/*f*/;/*g*/",
+        // "new (Array /* a */);",
+        // "(/* a */ Array)(1, 2, 3);",
+        // "(Array /* a */)(1, 2, 3);",
+        // "(Array) /* a */ (1, 2, 3);",
+        // "(/* a */(Array))();",
+        // "Array?.(0, 1, 2).forEach(doSomething);",
+        "new Array();",
+        "Array();",
+        "new Array(x, y);",
+        "Array(x, y);",
+        "new Array(0, 1, 2);",
+        "Array(0, 1, 2);",
+        // "Array?.(0, 1, 2);",
+        // "Array?.(x, y);",
+        // "Array /*a*/ ?.();",
+        // "Array?./*a*/();",
+        r#"
+                        (function () {
+                            Fn
+                            Array() // ";" required
+                        }) as Fn
+                        Array() // ";" not required
+                        "#,
+        r#"
+                        ({
+                            foo() {
+                                Object
+                                Array() // ";" required
+                            }
+                        }) as Object
+                        Array() // ";" not required
+                        "#,
     ];
 
     let fix = vec![
-        ("new Array()", "[]", None),
-        ("new Array", "[]", None),
-        ("Array()", "[]", None),
-        ("new Array(x, y)", "[x, y]", None),
-        ("new Array(0, 1, 2)", "[0, 1, 2]", None),
-        ("Array(x, y)", "[x, y]", None),
-        ("Array(0, 1, 2)", "[0, 1, 2]", None),
-        ("Array(1, 2, ...args)", "[1, 2, ...args]", None),
-        ("new Array(...args)", "new Array(...args)", None),
-        ("Array(...args)", "Array(...args)", None),
-        ("Array(1, /** comment */ 2, 3)", "[1, /** comment */ 2, 3]", None),
-        ("Array(1,  2, 3      )", "[1,  2, 3      ]", None),
-        ("Array        (1,  2, 3      )", "[1,  2, 3      ]", None),
+        ("new Array()", "[]"),
+        ("new Array", "[]"),
+        ("new Array(x, y)", "[x, y]"),
+        ("new Array(0, 1, 2)", "[0, 1, 2]"),
+        // TODO: Catch this case and fix it:
+        // (
+        //     "
+        //                         const array = (Array)(
+        //                             /* foo */ a,
+        //                             b = c() // bar
+        //                         );
+        //                         ",
+        //     "
+        //                         const array = [
+        //                             /* foo */ a,
+        //                             b = c() // bar
+        //                         ];
+        //                         ",
+        // ),
+        ("const array = Array(5, 6, ...args);", "const array = [5, 6, ...args];"),
+        // TODO: Catch this case:
+        // ("a = new (Array);", "a = [];"),
+        // ("a = new (Array) && (foo);", "a = [] && (foo);"),
+        ("/*a*/Array()", "/*a*/[]"),
+        ("/*a*/Array()/*b*/", "/*a*/[]/*b*/"),
+        // TODO: Preserve comments around callee:
+        // ("Array(/*a*/ /*b*/)", "[/*a*/ /*b*/]"),
+        // ("Array(/*a*/ x /*b*/, /*c*/ y /*d*/)", "[/*a*/ x /*b*/, /*c*/ y /*d*/]"),
+        // (
+        //     "/*a*/Array(/*b*/ x /*c*/, /*d*/ y /*e*/)/*f*/;/*g*/",
+        //     "/*a*/[/*b*/ x /*c*/, /*d*/ y /*e*/]/*f*/;/*g*/",
+        // ),
+        ("/*a*/new Array", "/*a*/[]"),
+        ("/*a*/new Array/*b*/", "/*a*/[]/*b*/"),
+        // TODO: Preserve comments:
+        // ("new Array(/*a*/ /*b*/)", "[/*a*/ /*b*/]"),
+        // ("new Array(/*a*/ x /*b*/, /*c*/ y /*d*/)", "[/*a*/ x /*b*/, /*c*/ y /*d*/]"),
+        ("new Array();", "[];"),
+        ("Array();", "[];"),
+        ("new Array(x, y);", "[x, y];"),
+        ("Array(x, y);", "[x, y];"),
+        ("new Array(0, 1, 2);", "[0, 1, 2];"),
+        ("Array(0, 1, 2);", "[0, 1, 2];"),
+        // TODO: These currently produce invalid syntax, need to fix the fixer.
+        // (
+        //     r#"
+        //                 (function () {
+        //                     Fn
+        //                     Array() // ";" required
+        //                 }) as Fn
+        //                 Array() // ";" not required
+        //                 "#,
+        //     r#"
+        //                 (function () {
+        //                     Fn
+        //                     ;[] // ";" required
+        //                 }) as Fn
+        //                 [] // ";" not required
+        //                 "#,
+        // ),
+        // (
+        //     r#"
+        //                 ({
+        //                     foo() {
+        //                         Object
+        //                         Array() // ";" required
+        //                     }
+        //                 }) as Object
+        //                 Array() // ";" not required
+        //                 "#,
+        //     r#"
+        //                 ({
+        //                     foo() {
+        //                         Object
+        //                         ;[] // ";" required
+        //                     }
+        //                 }) as Object
+        //                 [] // ";" not required
+        //                 "#,
+        // ),
     ];
 
     Tester::new(NoArrayConstructor::NAME, NoArrayConstructor::PLUGIN, pass, fail)
