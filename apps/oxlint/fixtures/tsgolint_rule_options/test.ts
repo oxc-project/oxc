@@ -102,6 +102,14 @@ function takesMutableParameter(input: MutableParameter): void {
   console.log(input.value);
 }
 
+// Test prefer-readonly with onlyInlineLambdas option
+class PreferReadonlyOptionExample {
+  private handler = () => 1;
+  getValue() {
+    return this.handler();
+  }
+}
+
 // Test only-throw-error with allowRethrowing option
 // When allowRethrowing is false, rethrowing a caught error SHOULD error
 try {

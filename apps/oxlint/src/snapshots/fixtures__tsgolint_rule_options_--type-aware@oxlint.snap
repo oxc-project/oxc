@@ -80,8 +80,16 @@ working directory: fixtures/tsgolint_rule_options
  102 |   console.log(input.value);
      `----
 
-Found 0 warnings and 9 errors.
-Finished in <variable>ms on 1 file with 11 rules using 1 threads.
+  x typescript-eslint(prefer-readonly): Member 'handler' is never reassigned; mark it as `readonly`.
+     ,-[test.ts:107:3]
+ 106 | class PreferReadonlyOptionExample {
+ 107 |   private handler = () => 1;
+     :   ^^^^^^^^^^^^^^^
+ 108 |   getValue() {
+     `----
+
+Found 0 warnings and 10 errors.
+Finished in <variable>ms on 1 file with 12 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

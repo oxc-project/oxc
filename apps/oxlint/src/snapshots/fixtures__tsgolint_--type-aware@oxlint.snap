@@ -367,6 +367,14 @@ working directory: fixtures/tsgolint
  6 |   input.value = input.value.trim();
    `----
 
+  x typescript-eslint(prefer-readonly): Member 'value' is never reassigned; mark it as `readonly`.
+   ,-[prefer-readonly.ts:2:3]
+ 1 | class Example {
+ 2 |   private value = 1;
+   :   ^^^^^^^^^^^^^
+ 3 |   private readonly ok = 2;
+   `----
+
   x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
    ,-[prefer-reduce-type-parameter.ts:2:13]
  1 | const numbers = [1, 2, 3];
@@ -494,8 +502,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 63 errors.
-Finished in <variable>ms on 52 files with 51 rules using 1 threads.
+Found 0 warnings and 64 errors.
+Finished in <variable>ms on 53 files with 52 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
