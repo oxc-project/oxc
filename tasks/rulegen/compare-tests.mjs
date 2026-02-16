@@ -283,11 +283,11 @@ function runWithMock(source, ext, extraNodeArgs = []) {
   fs.writeFileSync(
     tmpRunner,
     `require(${JSON.stringify(tmpFile)});\n` +
-      `if (global.__capturedTests) {\n` +
-      `  process.stdout.write(JSON.stringify(global.__capturedTests));\n` +
-      `} else {\n` +
-      `  process.stdout.write(JSON.stringify({valid: [], invalid: []}));\n` +
-      `}\n`,
+    `if (global.__capturedTests) {\n` +
+    `  process.stdout.write(JSON.stringify(global.__capturedTests));\n` +
+    `} else {\n` +
+    `  process.stdout.write(JSON.stringify({valid: [], invalid: []}));\n` +
+    `}\n`,
   );
 
   try {
@@ -434,59 +434,65 @@ function extractRustTestCases(filePath) {
 }
 
 /**
- * Find the `let <name> = vec![...]` block and extract all string literals from it.
+ * Find ALL `let <name> = vec![...]` blocks and extract all string literals from them.
+ * This handles files with multiple test functions.
  */
 function extractVecBlock(content, name) {
-  // Match `let pass = vec![` or `let fail = vec![`
-  const pattern = new RegExp(`let\\s+${name}\\s*(?::\\s*Vec<[^>]*>)?\\s*=\\s*vec!\\[`);
-  const match = pattern.exec(content);
-  if (!match) return [];
+  // Match `let pass = vec![` or `let fail = vec![` - use 'g' flag for global search
+  const pattern = new RegExp(`let\\s+${name}\\s*(?::\\s*Vec<[^>]*>)?\\s*=\\s*vec!\\[`, "g");
+  const allCases = [];
 
-  // Find the matching closing `];` by counting brackets
-  let depth = 1;
-  let i = match.index + match[0].length;
-  const start = i;
+  let match;
+  while ((match = pattern.exec(content)) !== null) {
+    // Find the matching closing `];` by counting brackets
+    let depth = 1;
+    let i = match.index + match[0].length;
+    const start = i;
 
-  while (i < content.length && depth > 0) {
-    const ch = content[i];
-    if (ch === "[") depth++;
-    else if (ch === "]") depth--;
-    else if (ch === '"') {
-      // Skip string literal
-      i++;
-      while (i < content.length && content[i] !== '"') {
-        if (content[i] === "\\") i++; // skip escaped char
+    while (i < content.length && depth > 0) {
+      const ch = content[i];
+      if (ch === "[") depth++;
+      else if (ch === "]") depth--;
+      else if (ch === '"') {
+        // Skip string literal
         i++;
-      }
-    } else if (ch === "r" && content[i + 1] === "#") {
-      // Raw string: count #'s
-      const hashStart = i + 1;
-      let hashes = 0;
-      while (content[hashStart + hashes] === "#") hashes++;
-      if (content[hashStart + hashes] === '"') {
-        // Skip to closing "###
-        const closer = '"' + "#".repeat(hashes);
-        const closeIdx = content.indexOf(closer, hashStart + hashes + 1);
-        if (closeIdx !== -1) {
-          i = closeIdx + closer.length - 1;
+        while (i < content.length && content[i] !== '"') {
+          if (content[i] === "\\") i++; // skip escaped char
+          i++;
         }
+      } else if (ch === "r" && content[i + 1] === "#") {
+        // Raw string: count #'s
+        const hashStart = i + 1;
+        let hashes = 0;
+        while (content[hashStart + hashes] === "#") hashes++;
+        if (content[hashStart + hashes] === '"') {
+          // Skip to closing "###
+          const closer = '"' + "#".repeat(hashes);
+          const closeIdx = content.indexOf(closer, hashStart + hashes + 1);
+          if (closeIdx !== -1) {
+            i = closeIdx + closer.length - 1;
+          }
+        }
+      } else if (ch === "r" && content[i + 1] === '"') {
+        // r"..." raw string with no hashes
+        i += 2;
+        const closeIdx = content.indexOf('"', i);
+        if (closeIdx !== -1) {
+          i = closeIdx;
+        }
+      } else if (ch === "/" && content[i + 1] === "/") {
+        // Skip line comment
+        while (i < content.length && content[i] !== "\n") i++;
       }
-    } else if (ch === "r" && content[i + 1] === '"') {
-      // r"..." raw string with no hashes
-      i += 2;
-      const closeIdx = content.indexOf('"', i);
-      if (closeIdx !== -1) {
-        i = closeIdx;
-      }
-    } else if (ch === "/" && content[i + 1] === "/") {
-      // Skip line comment
-      while (i < content.length && content[i] !== "\n") i++;
+      i++;
     }
-    i++;
+
+    const block = content.slice(start, i - 1); // exclude the closing ]
+    const cases = extractStringLiterals(block);
+    allCases.push(...cases);
   }
 
-  const block = content.slice(start, i - 1); // exclude the closing ]
-  return extractStringLiterals(block);
+  return allCases;
 }
 
 /**
@@ -968,7 +974,7 @@ async function main() {
   if (upstreamResult.valid.length === 0 && upstreamResult.invalid.length === 0) {
     console.error(
       "Warning: No test cases captured from upstream file. " +
-        "The test file may use an unsupported pattern.",
+      "The test file may use an unsupported pattern.",
     );
   }
 
