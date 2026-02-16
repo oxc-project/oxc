@@ -301,6 +301,7 @@ pub(crate) mod typescript {
     pub mod prefer_reduce_type_parameter;
     pub mod prefer_regexp_exec;
     pub mod prefer_return_this_type;
+    pub mod prefer_string_starts_ends_with;
     pub mod prefer_ts_expect_error;
     pub mod promise_function_async;
     pub mod related_getter_setter_pairs;

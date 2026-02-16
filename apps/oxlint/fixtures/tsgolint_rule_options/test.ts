@@ -110,6 +110,13 @@ class PreferReadonlyOptionExample {
   }
 }
 
+// Test prefer-string-starts-ends-with with allowSingleElementEquality option
+declare const boundaryText: string;
+// This should NOT error because single element equality is allowed
+const boundaryCharMatch = boundaryText[0] === 'a';
+// This SHOULD error because startsWith is preferred here
+const boundarySliceMatch = boundaryText.slice(0, 3) === 'foo';
+
 // Test only-throw-error with allowRethrowing option
 // When allowRethrowing is false, rethrowing a caught error SHOULD error
 try {

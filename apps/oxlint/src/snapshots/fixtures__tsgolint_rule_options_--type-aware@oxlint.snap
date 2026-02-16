@@ -88,8 +88,16 @@ working directory: fixtures/tsgolint_rule_options
  108 |   getValue() {
      `----
 
-Found 0 warnings and 10 errors.
-Finished in <variable>ms on 1 file with 12 rules using 1 threads.
+  x typescript-eslint(prefer-string-starts-ends-with): Use 'String#startsWith' method instead.
+     ,-[test.ts:118:28]
+ 117 | // This SHOULD error because startsWith is preferred here
+ 118 | const boundarySliceMatch = boundaryText.slice(0, 3) === 'foo';
+     :                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 119 | 
+     `----
+
+Found 0 warnings and 11 errors.
+Finished in <variable>ms on 1 file with 13 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

@@ -43,6 +43,7 @@
     "typescript/prefer-regexp-exec": "error",
     "typescript/prefer-reduce-type-parameter": "error",
     "typescript/prefer-return-this-type": "error",
+    "typescript/prefer-string-starts-ends-with": "error",
     "typescript/promise-function-async": "error",
     "typescript/related-getter-setter-pairs": "error",
     "typescript/require-array-sort-compare": "error",
