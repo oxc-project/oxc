@@ -96,8 +96,16 @@ working directory: fixtures/tsgolint_rule_options
  119 | 
      `----
 
-Found 0 warnings and 11 errors.
-Finished in <variable>ms on 1 file with 13 rules using 1 threads.
+  x typescript-eslint(consistent-return): Function 'maybeReturnValue' expected a return value.
+     ,-[test.ts:126:3]
+ 125 |   // This SHOULD be treated as an unspecified return with the option enabled
+ 126 |   return undefined;
+     :   ^^^^^^^^^^^^^^^^^
+ 127 | }
+     `----
+
+Found 0 warnings and 12 errors.
+Finished in <variable>ms on 1 file with 14 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

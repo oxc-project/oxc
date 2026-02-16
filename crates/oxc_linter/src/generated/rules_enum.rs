@@ -444,6 +444,7 @@ pub use crate::rules::typescript::ban_types::BanTypes as TypescriptBanTypes;
 pub use crate::rules::typescript::class_literal_property_style::ClassLiteralPropertyStyle as TypescriptClassLiteralPropertyStyle;
 pub use crate::rules::typescript::consistent_generic_constructors::ConsistentGenericConstructors as TypescriptConsistentGenericConstructors;
 pub use crate::rules::typescript::consistent_indexed_object_style::ConsistentIndexedObjectStyle as TypescriptConsistentIndexedObjectStyle;
+pub use crate::rules::typescript::consistent_return::ConsistentReturn as TypescriptConsistentReturn;
 pub use crate::rules::typescript::consistent_type_assertions::ConsistentTypeAssertions as TypescriptConsistentTypeAssertions;
 pub use crate::rules::typescript::consistent_type_definitions::ConsistentTypeDefinitions as TypescriptConsistentTypeDefinitions;
 pub use crate::rules::typescript::consistent_type_exports::ConsistentTypeExports as TypescriptConsistentTypeExports;
@@ -912,6 +913,7 @@ pub enum RuleEnum {
     TypescriptClassLiteralPropertyStyle(TypescriptClassLiteralPropertyStyle),
     TypescriptConsistentGenericConstructors(TypescriptConsistentGenericConstructors),
     TypescriptConsistentIndexedObjectStyle(TypescriptConsistentIndexedObjectStyle),
+    TypescriptConsistentReturn(TypescriptConsistentReturn),
     TypescriptConsistentTypeAssertions(TypescriptConsistentTypeAssertions),
     TypescriptConsistentTypeDefinitions(TypescriptConsistentTypeDefinitions),
     TypescriptConsistentTypeExports(TypescriptConsistentTypeExports),
@@ -1604,8 +1606,9 @@ const TYPESCRIPT_CONSISTENT_GENERIC_CONSTRUCTORS_ID: usize =
     TYPESCRIPT_CLASS_LITERAL_PROPERTY_STYLE_ID + 1usize;
 const TYPESCRIPT_CONSISTENT_INDEXED_OBJECT_STYLE_ID: usize =
     TYPESCRIPT_CONSISTENT_GENERIC_CONSTRUCTORS_ID + 1usize;
-const TYPESCRIPT_CONSISTENT_TYPE_ASSERTIONS_ID: usize =
+const TYPESCRIPT_CONSISTENT_RETURN_ID: usize =
     TYPESCRIPT_CONSISTENT_INDEXED_OBJECT_STYLE_ID + 1usize;
+const TYPESCRIPT_CONSISTENT_TYPE_ASSERTIONS_ID: usize = TYPESCRIPT_CONSISTENT_RETURN_ID + 1usize;
 const TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID: usize =
     TYPESCRIPT_CONSISTENT_TYPE_ASSERTIONS_ID + 1usize;
 const TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID: usize =
@@ -2381,6 +2384,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(_) => {
                 TYPESCRIPT_CONSISTENT_INDEXED_OBJECT_STYLE_ID
             }
+            Self::TypescriptConsistentReturn(_) => TYPESCRIPT_CONSISTENT_RETURN_ID,
             Self::TypescriptConsistentTypeAssertions(_) => TYPESCRIPT_CONSISTENT_TYPE_ASSERTIONS_ID,
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID
@@ -3170,6 +3174,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(_) => {
                 TypescriptConsistentIndexedObjectStyle::NAME
             }
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::NAME,
             Self::TypescriptConsistentTypeAssertions(_) => TypescriptConsistentTypeAssertions::NAME,
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TypescriptConsistentTypeDefinitions::NAME
@@ -3955,6 +3960,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(_) => {
                 TypescriptConsistentIndexedObjectStyle::CATEGORY
             }
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::CATEGORY,
             Self::TypescriptConsistentTypeAssertions(_) => {
                 TypescriptConsistentTypeAssertions::CATEGORY
             }
@@ -4775,6 +4781,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(_) => {
                 TypescriptConsistentIndexedObjectStyle::FIX
             }
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::FIX,
             Self::TypescriptConsistentTypeAssertions(_) => TypescriptConsistentTypeAssertions::FIX,
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TypescriptConsistentTypeDefinitions::FIX
@@ -5585,6 +5592,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(_) => {
                 TypescriptConsistentIndexedObjectStyle::documentation()
             }
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::documentation(),
             Self::TypescriptConsistentTypeAssertions(_) => {
                 TypescriptConsistentTypeAssertions::documentation()
             }
@@ -6845,6 +6853,10 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(_) => {
                 TypescriptConsistentIndexedObjectStyle::config_schema(generator)
                     .or_else(|| TypescriptConsistentIndexedObjectStyle::schema(generator))
+            }
+            Self::TypescriptConsistentReturn(_) => {
+                TypescriptConsistentReturn::config_schema(generator)
+                    .or_else(|| TypescriptConsistentReturn::schema(generator))
             }
             Self::TypescriptConsistentTypeAssertions(_) => {
                 TypescriptConsistentTypeAssertions::config_schema(generator)
@@ -8469,6 +8481,7 @@ impl RuleEnum {
             Self::TypescriptClassLiteralPropertyStyle(_) => "typescript",
             Self::TypescriptConsistentGenericConstructors(_) => "typescript",
             Self::TypescriptConsistentIndexedObjectStyle(_) => "typescript",
+            Self::TypescriptConsistentReturn(_) => "typescript",
             Self::TypescriptConsistentTypeAssertions(_) => "typescript",
             Self::TypescriptConsistentTypeDefinitions(_) => "typescript",
             Self::TypescriptConsistentTypeExports(_) => "typescript",
@@ -9583,6 +9596,9 @@ impl RuleEnum {
                     TypescriptConsistentIndexedObjectStyle::from_configuration(value)?,
                 ))
             }
+            Self::TypescriptConsistentReturn(_) => Ok(Self::TypescriptConsistentReturn(
+                TypescriptConsistentReturn::from_configuration(value)?,
+            )),
             Self::TypescriptConsistentTypeAssertions(_) => {
                 Ok(Self::TypescriptConsistentTypeAssertions(
                     TypescriptConsistentTypeAssertions::from_configuration(value)?,
@@ -11358,6 +11374,7 @@ impl RuleEnum {
             Self::TypescriptClassLiteralPropertyStyle(rule) => rule.to_configuration(),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.to_configuration(),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.to_configuration(),
+            Self::TypescriptConsistentReturn(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeExports(rule) => rule.to_configuration(),
@@ -12051,6 +12068,7 @@ impl RuleEnum {
             Self::TypescriptClassLiteralPropertyStyle(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.run(node, ctx),
+            Self::TypescriptConsistentReturn(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeExports(rule) => rule.run(node, ctx),
@@ -12740,6 +12758,7 @@ impl RuleEnum {
             Self::TypescriptClassLiteralPropertyStyle(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.run_once(ctx),
+            Self::TypescriptConsistentReturn(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeExports(rule) => rule.run_once(ctx),
@@ -13441,6 +13460,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::TypescriptConsistentReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptConsistentTypeDefinitions(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -14212,6 +14232,7 @@ impl RuleEnum {
             Self::TypescriptClassLiteralPropertyStyle(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.should_run(ctx),
+            Self::TypescriptConsistentReturn(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeExports(rule) => rule.should_run(ctx),
@@ -14939,6 +14960,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(_) => {
                 TypescriptConsistentIndexedObjectStyle::IS_TSGOLINT_RULE
             }
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::IS_TSGOLINT_RULE,
             Self::TypescriptConsistentTypeAssertions(_) => {
                 TypescriptConsistentTypeAssertions::IS_TSGOLINT_RULE
             }
@@ -15893,6 +15915,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(_) => {
                 TypescriptConsistentIndexedObjectStyle::HAS_CONFIG
             }
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::HAS_CONFIG,
             Self::TypescriptConsistentTypeAssertions(_) => {
                 TypescriptConsistentTypeAssertions::HAS_CONFIG
             }
@@ -16726,6 +16749,7 @@ impl RuleEnum {
             Self::TypescriptClassLiteralPropertyStyle(rule) => rule.types_info(),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.types_info(),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.types_info(),
+            Self::TypescriptConsistentReturn(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeExports(rule) => rule.types_info(),
@@ -17415,6 +17439,7 @@ impl RuleEnum {
             Self::TypescriptClassLiteralPropertyStyle(rule) => rule.run_info(),
             Self::TypescriptConsistentGenericConstructors(rule) => rule.run_info(),
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.run_info(),
+            Self::TypescriptConsistentReturn(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeExports(rule) => rule.run_info(),
@@ -18134,6 +18159,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptConsistentIndexedObjectStyle(
             TypescriptConsistentIndexedObjectStyle::default(),
         ),
+        RuleEnum::TypescriptConsistentReturn(TypescriptConsistentReturn::default()),
         RuleEnum::TypescriptConsistentTypeAssertions(TypescriptConsistentTypeAssertions::default()),
         RuleEnum::TypescriptConsistentTypeDefinitions(
             TypescriptConsistentTypeDefinitions::default(),

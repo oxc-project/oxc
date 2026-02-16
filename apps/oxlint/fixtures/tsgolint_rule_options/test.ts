@@ -117,6 +117,15 @@ const boundaryCharMatch = boundaryText[0] === 'a';
 // This SHOULD error because startsWith is preferred here
 const boundarySliceMatch = boundaryText.slice(0, 3) === 'foo';
 
+// Test consistent-return with treatUndefinedAsUnspecified option
+function maybeReturnValue(flag: boolean): string | undefined {
+  if (flag) {
+    return 'value';
+  }
+  // This SHOULD be treated as an unspecified return with the option enabled
+  return undefined;
+}
+
 // Test only-throw-error with allowRethrowing option
 // When allowRethrowing is false, rethrowing a caught error SHOULD error
 try {
