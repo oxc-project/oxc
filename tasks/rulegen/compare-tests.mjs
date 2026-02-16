@@ -709,8 +709,8 @@ function extractOptionsFromTuple(block, tupleStart) {
 
   if (afterComma.startsWith("None")) return null;
 
-  // Extract the JSON content from Some(serde_json::json!(...))
-  const jsonMatch = afterComma.match(/Some\s*\(\s*serde_json::json!\s*\(/);
+  // Extract the JSON content from Some(serde_json::json!(...)) or Some(json!(...))
+  const jsonMatch = afterComma.match(/Some\s*\(\s*(?:serde_json::)?json!\s*\(/);
   if (!jsonMatch) return null;
 
   // Find the content inside json!(...)
