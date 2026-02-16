@@ -40,9 +40,6 @@ pub struct NoUnnecessaryConditionConfig {
     pub allow_constant_loop_conditions: AllowConstantLoopConditions,
     /// Whether to check type predicate functions.
     pub check_type_predicates: bool,
-    /// DEPRECATED: Allow this rule to run without `strictNullChecks` enabled.
-    #[schemars(skip)]
-    pub allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: bool,
 }
 
 declare_oxc_lint!(

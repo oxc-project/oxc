@@ -42,14 +42,8 @@ impl Default for IgnorePrimitives {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+#[expect(clippy::struct_field_names)]
 pub struct PreferNullishCoalescingConfig {
-    /// Unless this is set to `true`, the rule will error on every file whose
-    /// `tsconfig.json` does _not_ have the `strictNullChecks` compiler option
-    /// (or `strict`) set to `true`.
-    ///
-    /// It is _not_ recommended to enable this config option.
-    #[schemars(skip)]
-    pub allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: bool,
     /// Whether to ignore arguments to the `Boolean` constructor.
     pub ignore_boolean_coercion: bool,
     /// Whether to ignore cases that are located within a conditional test.
@@ -70,7 +64,6 @@ pub struct PreferNullishCoalescingConfig {
 impl Default for PreferNullishCoalescingConfig {
     fn default() -> Self {
         Self {
-            allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: false,
             ignore_boolean_coercion: false,
             ignore_conditional_tests: true,
             ignore_if_statements: false,

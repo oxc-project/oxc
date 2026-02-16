@@ -49,7 +49,6 @@
       {
         "allowConstantLoopConditions": true,
         "checkTypePredicates": false,
-        "allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing": false
       }
     ],
     "typescript/only-throw-error": [
