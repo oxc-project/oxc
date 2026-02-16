@@ -523,6 +523,7 @@ pub use crate::rules::typescript::prefer_readonly_parameter_types::PreferReadonl
 pub use crate::rules::typescript::prefer_reduce_type_parameter::PreferReduceTypeParameter as TypescriptPreferReduceTypeParameter;
 pub use crate::rules::typescript::prefer_regexp_exec::PreferRegexpExec as TypescriptPreferRegexpExec;
 pub use crate::rules::typescript::prefer_return_this_type::PreferReturnThisType as TypescriptPreferReturnThisType;
+pub use crate::rules::typescript::prefer_string_starts_ends_with::PreferStringStartsEndsWith as TypescriptPreferStringStartsEndsWith;
 pub use crate::rules::typescript::prefer_ts_expect_error::PreferTsExpectError as TypescriptPreferTsExpectError;
 pub use crate::rules::typescript::promise_function_async::PromiseFunctionAsync as TypescriptPromiseFunctionAsync;
 pub use crate::rules::typescript::related_getter_setter_pairs::RelatedGetterSetterPairs as TypescriptRelatedGetterSetterPairs;
@@ -992,6 +993,7 @@ pub enum RuleEnum {
     TypescriptPreferReduceTypeParameter(TypescriptPreferReduceTypeParameter),
     TypescriptPreferRegexpExec(TypescriptPreferRegexpExec),
     TypescriptPreferReturnThisType(TypescriptPreferReturnThisType),
+    TypescriptPreferStringStartsEndsWith(TypescriptPreferStringStartsEndsWith),
     TypescriptPreferTsExpectError(TypescriptPreferTsExpectError),
     TypescriptPromiseFunctionAsync(TypescriptPromiseFunctionAsync),
     TypescriptRelatedGetterSetterPairs(TypescriptRelatedGetterSetterPairs),
@@ -1713,7 +1715,10 @@ const TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID: usize =
     TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID + 1usize;
 const TYPESCRIPT_PREFER_REGEXP_EXEC_ID: usize = TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID + 1usize;
 const TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID: usize = TYPESCRIPT_PREFER_REGEXP_EXEC_ID + 1usize;
-const TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID: usize = TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID + 1usize;
+const TYPESCRIPT_PREFER_STRING_STARTS_ENDS_WITH_ID: usize =
+    TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID + 1usize;
+const TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID: usize =
+    TYPESCRIPT_PREFER_STRING_STARTS_ENDS_WITH_ID + 1usize;
 const TYPESCRIPT_PROMISE_FUNCTION_ASYNC_ID: usize = TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID + 1usize;
 const TYPESCRIPT_RELATED_GETTER_SETTER_PAIRS_ID: usize =
     TYPESCRIPT_PROMISE_FUNCTION_ASYNC_ID + 1usize;
@@ -2497,6 +2502,9 @@ impl RuleEnum {
             }
             Self::TypescriptPreferRegexpExec(_) => TYPESCRIPT_PREFER_REGEXP_EXEC_ID,
             Self::TypescriptPreferReturnThisType(_) => TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID,
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TYPESCRIPT_PREFER_STRING_STARTS_ENDS_WITH_ID
+            }
             Self::TypescriptPreferTsExpectError(_) => TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID,
             Self::TypescriptPromiseFunctionAsync(_) => TYPESCRIPT_PROMISE_FUNCTION_ASYNC_ID,
             Self::TypescriptRelatedGetterSetterPairs(_) => {
@@ -3283,6 +3291,9 @@ impl RuleEnum {
             }
             Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::NAME,
             Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::NAME,
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::NAME
+            }
             Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::NAME,
             Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::NAME,
             Self::TypescriptRelatedGetterSetterPairs(_) => TypescriptRelatedGetterSetterPairs::NAME,
@@ -4075,6 +4086,9 @@ impl RuleEnum {
             }
             Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::CATEGORY,
             Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::CATEGORY,
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::CATEGORY
+            }
             Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::CATEGORY,
             Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::CATEGORY,
             Self::TypescriptRelatedGetterSetterPairs(_) => {
@@ -4882,6 +4896,9 @@ impl RuleEnum {
             }
             Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::FIX,
             Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::FIX,
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::FIX
+            }
             Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::FIX,
             Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::FIX,
             Self::TypescriptRelatedGetterSetterPairs(_) => TypescriptRelatedGetterSetterPairs::FIX,
@@ -5730,6 +5747,9 @@ impl RuleEnum {
             Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::documentation(),
             Self::TypescriptPreferReturnThisType(_) => {
                 TypescriptPreferReturnThisType::documentation()
+            }
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::documentation()
             }
             Self::TypescriptPreferTsExpectError(_) => {
                 TypescriptPreferTsExpectError::documentation()
@@ -7105,6 +7125,10 @@ impl RuleEnum {
             Self::TypescriptPreferReturnThisType(_) => {
                 TypescriptPreferReturnThisType::config_schema(generator)
                     .or_else(|| TypescriptPreferReturnThisType::schema(generator))
+            }
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::config_schema(generator)
+                    .or_else(|| TypescriptPreferStringStartsEndsWith::schema(generator))
             }
             Self::TypescriptPreferTsExpectError(_) => {
                 TypescriptPreferTsExpectError::config_schema(generator)
@@ -8524,6 +8548,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(_) => "typescript",
             Self::TypescriptPreferRegexpExec(_) => "typescript",
             Self::TypescriptPreferReturnThisType(_) => "typescript",
+            Self::TypescriptPreferStringStartsEndsWith(_) => "typescript",
             Self::TypescriptPreferTsExpectError(_) => "typescript",
             Self::TypescriptPromiseFunctionAsync(_) => "typescript",
             Self::TypescriptRelatedGetterSetterPairs(_) => "typescript",
@@ -9857,6 +9882,11 @@ impl RuleEnum {
             Self::TypescriptPreferReturnThisType(_) => Ok(Self::TypescriptPreferReturnThisType(
                 TypescriptPreferReturnThisType::from_configuration(value)?,
             )),
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                Ok(Self::TypescriptPreferStringStartsEndsWith(
+                    TypescriptPreferStringStartsEndsWith::from_configuration(value)?,
+                ))
+            }
             Self::TypescriptPreferTsExpectError(_) => Ok(Self::TypescriptPreferTsExpectError(
                 TypescriptPreferTsExpectError::from_configuration(value)?,
             )),
@@ -11409,6 +11439,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.to_configuration(),
             Self::TypescriptPreferRegexpExec(rule) => rule.to_configuration(),
             Self::TypescriptPreferReturnThisType(rule) => rule.to_configuration(),
+            Self::TypescriptPreferStringStartsEndsWith(rule) => rule.to_configuration(),
             Self::TypescriptPreferTsExpectError(rule) => rule.to_configuration(),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.to_configuration(),
             Self::TypescriptRelatedGetterSetterPairs(rule) => rule.to_configuration(),
@@ -12099,6 +12130,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.run(node, ctx),
             Self::TypescriptPreferRegexpExec(rule) => rule.run(node, ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.run(node, ctx),
+            Self::TypescriptPreferStringStartsEndsWith(rule) => rule.run(node, ctx),
             Self::TypescriptPreferTsExpectError(rule) => rule.run(node, ctx),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.run(node, ctx),
             Self::TypescriptRelatedGetterSetterPairs(rule) => rule.run(node, ctx),
@@ -12787,6 +12819,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.run_once(ctx),
             Self::TypescriptPreferRegexpExec(rule) => rule.run_once(ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.run_once(ctx),
+            Self::TypescriptPreferStringStartsEndsWith(rule) => rule.run_once(ctx),
             Self::TypescriptPreferTsExpectError(rule) => rule.run_once(ctx),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.run_once(ctx),
             Self::TypescriptRelatedGetterSetterPairs(rule) => rule.run_once(ctx),
@@ -13529,6 +13562,9 @@ impl RuleEnum {
             }
             Self::TypescriptPreferRegexpExec(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptPreferStringStartsEndsWith(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::TypescriptPreferTsExpectError(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptRelatedGetterSetterPairs(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14255,6 +14291,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.should_run(ctx),
             Self::TypescriptPreferRegexpExec(rule) => rule.should_run(ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.should_run(ctx),
+            Self::TypescriptPreferStringStartsEndsWith(rule) => rule.should_run(ctx),
             Self::TypescriptPreferTsExpectError(rule) => rule.should_run(ctx),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.should_run(ctx),
             Self::TypescriptRelatedGetterSetterPairs(rule) => rule.should_run(ctx),
@@ -15064,6 +15101,9 @@ impl RuleEnum {
             Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::IS_TSGOLINT_RULE,
             Self::TypescriptPreferReturnThisType(_) => {
                 TypescriptPreferReturnThisType::IS_TSGOLINT_RULE
+            }
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::IS_TSGOLINT_RULE
             }
             Self::TypescriptPreferTsExpectError(_) => {
                 TypescriptPreferTsExpectError::IS_TSGOLINT_RULE
@@ -15994,6 +16034,9 @@ impl RuleEnum {
             }
             Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::HAS_CONFIG,
             Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::HAS_CONFIG,
+            Self::TypescriptPreferStringStartsEndsWith(_) => {
+                TypescriptPreferStringStartsEndsWith::HAS_CONFIG
+            }
             Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::HAS_CONFIG,
             Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::HAS_CONFIG,
             Self::TypescriptRelatedGetterSetterPairs(_) => {
@@ -16762,6 +16805,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.types_info(),
             Self::TypescriptPreferRegexpExec(rule) => rule.types_info(),
             Self::TypescriptPreferReturnThisType(rule) => rule.types_info(),
+            Self::TypescriptPreferStringStartsEndsWith(rule) => rule.types_info(),
             Self::TypescriptPreferTsExpectError(rule) => rule.types_info(),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.types_info(),
             Self::TypescriptRelatedGetterSetterPairs(rule) => rule.types_info(),
@@ -17450,6 +17494,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.run_info(),
             Self::TypescriptPreferRegexpExec(rule) => rule.run_info(),
             Self::TypescriptPreferReturnThisType(rule) => rule.run_info(),
+            Self::TypescriptPreferStringStartsEndsWith(rule) => rule.run_info(),
             Self::TypescriptPreferTsExpectError(rule) => rule.run_info(),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.run_info(),
             Self::TypescriptRelatedGetterSetterPairs(rule) => rule.run_info(),
@@ -18210,6 +18255,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::TypescriptPreferRegexpExec(TypescriptPreferRegexpExec::default()),
         RuleEnum::TypescriptPreferReturnThisType(TypescriptPreferReturnThisType::default()),
+        RuleEnum::TypescriptPreferStringStartsEndsWith(
+            TypescriptPreferStringStartsEndsWith::default(),
+        ),
         RuleEnum::TypescriptPreferTsExpectError(TypescriptPreferTsExpectError::default()),
         RuleEnum::TypescriptPromiseFunctionAsync(TypescriptPromiseFunctionAsync::default()),
         RuleEnum::TypescriptRelatedGetterSetterPairs(TypescriptRelatedGetterSetterPairs::default()),

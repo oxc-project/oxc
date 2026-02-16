@@ -415,6 +415,22 @@ working directory: fixtures/tsgolint
  4 |     this.value = value;
    `----
 
+  x typescript-eslint(prefer-string-starts-ends-with): Use 'String#startsWith' method instead.
+   ,-[prefer-string-starts-ends-with.ts:4:10]
+ 3 | function startsCase(s: string): boolean {
+ 4 |   return s[0] === 'a';
+   :          ^^^^^^^^^^^^
+ 5 | }
+   `----
+
+  x typescript-eslint(prefer-string-starts-ends-with): Use 'String#endsWith' method instead.
+   ,-[prefer-string-starts-ends-with.ts:8:10]
+ 7 | function endsCase(s: string): boolean {
+ 8 |   return s.slice(-3) === 'bar';
+   :          ^^^^^^^^^^^^^^^^^^^^^
+ 9 | }
+   `----
+
   x typescript-eslint(promise-function-async): Functions that return promises must be async.
    ,-[promise-function-async.ts:2:1]
  1 |     declare function fetch(url: string): Promise<Response>;
@@ -526,8 +542,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 67 errors.
-Finished in <variable>ms on 54 files with 53 rules using 1 threads.
+Found 0 warnings and 69 errors.
+Finished in <variable>ms on 55 files with 54 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

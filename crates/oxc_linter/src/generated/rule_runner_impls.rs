@@ -1928,6 +1928,13 @@ impl RuleRunner for crate::rules::typescript::prefer_return_this_type::PreferRet
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
+impl RuleRunner
+    for crate::rules::typescript::prefer_string_starts_ends_with::PreferStringStartsEndsWith
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner for crate::rules::typescript::prefer_ts_expect_error::PreferTsExpectError {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
