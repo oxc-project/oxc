@@ -344,6 +344,14 @@ working directory: fixtures/tsgolint
    `----
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
+  x typescript-eslint(prefer-readonly-parameter-types): Parameter should be a readonly type.
+   ,-[prefer-readonly-parameter-types.ts:5:18]
+ 4 | 
+ 5 | function consume(input: MutableInput): void {
+   :                  ^^^^^^^^^^^^^^^^^^^
+ 6 |   input.value = input.value.trim();
+   `----
+
   x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
    ,-[prefer-reduce-type-parameter.ts:2:13]
  1 | const numbers = [1, 2, 3];
@@ -367,6 +375,14 @@ working directory: fixtures/tsgolint
  3 | |     return fetch('/api/data').then(res => res.text());
  4 | `-> }
  5 |     
+   `----
+
+  x typescript-eslint(prefer-readonly-parameter-types): Parameter should be a readonly type.
+   ,-[promise-function-async.ts:3:34]
+ 2 | function fetchData(): Promise<string> {
+ 3 |   return fetch('/api/data').then(res => res.text());
+   :                                  ^^^
+ 4 | }
    `----
 
   x typescript-eslint(promise-function-async): Functions that return promises must be async.
@@ -463,8 +479,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 59 errors.
-Finished in <variable>ms on 49 files with 48 rules using 1 threads.
+Found 0 warnings and 61 errors.
+Finished in <variable>ms on 50 files with 49 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

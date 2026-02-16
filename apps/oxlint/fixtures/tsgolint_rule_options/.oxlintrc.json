@@ -63,6 +63,17 @@
         "allowReturnAny": true
       }
     ],
+    "typescript/prefer-readonly-parameter-types": [
+      "error",
+      {
+        "allow": [
+          { "from": "file", "name": "RegExp" }
+        ],
+        "checkParameterProperties": false,
+        "ignoreInferredTypes": true,
+        "treatMethodsAsReadonly": true
+      }
+    ],
     "typescript/only-throw-error": [
       "error",
       {

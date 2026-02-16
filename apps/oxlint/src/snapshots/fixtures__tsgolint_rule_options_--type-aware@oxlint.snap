@@ -64,8 +64,24 @@ working directory: fixtures/tsgolint_rule_options
  90 | 
     `----
 
-Found 0 warnings and 7 errors.
-Finished in <variable>ms on 1 file with 10 rules using 1 threads.
+  x typescript-eslint(prefer-readonly-parameter-types): Parameter should be a readonly type.
+    ,-[test.ts:92:27]
+ 91 | // Test prefer-readonly-parameter-types options
+ 92 | function takesAllowedType(input: RegExp): void {
+    :                           ^^^^^^^^^^^^^
+ 93 |   console.log(input.source);
+    `----
+
+  x typescript-eslint(prefer-readonly-parameter-types): Parameter should be a readonly type.
+     ,-[test.ts:101:32]
+ 100 | // This SHOULD error because parameter type is mutable
+ 101 | function takesMutableParameter(input: MutableParameter): void {
+     :                                ^^^^^^^^^^^^^^^^^^^^^^^
+ 102 |   console.log(input.value);
+     `----
+
+Found 0 warnings and 9 errors.
+Finished in <variable>ms on 1 file with 11 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
