@@ -39,13 +39,13 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// window.addEventListener('keydown', event => {
-    /// 	if (event.keyCode === 8) {
-    /// 		console.log('Backspace was pressed');
-    /// 	}
+    ///     if (event.keyCode === 8) {
+    ///         console.log('Backspace was pressed');
+    ///     }
     /// });
     ///
     /// window.addEventListener('keydown', event => {
-    /// 	console.log(event.keyCode);
+    ///     console.log(event.keyCode);
     /// });
     /// ```
     ///
@@ -53,12 +53,12 @@ declare_oxc_lint!(
     /// ```js
     /// window.addEventListener('keydown', event => {
     ///     if (event.key === 'Backspace') {
-    ///     	console.log('Backspace was pressed');
+    ///       console.log('Backspace was pressed');
     ///     }
     /// });
     ///
     /// window.addEventListener('click', event => {
-    /// 	console.log(event.key);
+    ///     console.log(event.key);
     /// });
     /// ```
     PreferKeyboardEventKey,

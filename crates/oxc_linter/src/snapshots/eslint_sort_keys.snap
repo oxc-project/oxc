@@ -608,7 +608,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `a:1, _:2, b:3` with `b:3, a:1, _:2`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-   ╭─[sort_keys.tsx:2:36]
+   ╭─[sort_keys.tsx:2:39]
  1 │     
  2 │ ╭─▶                             var obj = {
  3 │ │                                   b: 1,
@@ -618,13 +618,13 @@ source: crates/oxc_linter/src/tester.rs
  7 │                             
    ╰────
   help: Replace `b: 1,
-                	                    c: 2,
-                	                    a: 3` with `a: 3,
-                	                    b: 1,
-                	                    c: 2`.
+                                        c: 2,
+                                        a: 3` with `a: 3,
+                                        b: 1,
+                                        c: 2`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-   ╭─[sort_keys.tsx:2:36]
+   ╭─[sort_keys.tsx:2:39]
  1 │     
  2 │ ╭─▶                             let obj = {
  3 │ │                                   b
@@ -635,12 +635,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `b
         
-                	                    ,a` with `a
+                                        ,a` with `a
         
-                	                    ,b`.
+                                        ,b`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-   ╭─[sort_keys.tsx:2:37]
+   ╭─[sort_keys.tsx:2:40]
  1 │     
  2 │ ╭─▶                              var obj = {
  3 │ │                                   b: 1,
@@ -652,17 +652,17 @@ source: crates/oxc_linter/src/tester.rs
  9 │                              
    ╰────
   help: Replace `b: 1,
-                	                    c () {
+                                        c () {
         
-                	                    },
-                	                    a: 3` with `a: 3,
-                	                    b: 1,
-                	                    c () {
+                                        },
+                                        a: 3` with `a: 3,
+                                        b: 1,
+                                        c () {
         
-                	                    }`.
+                                        }`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-    ╭─[sort_keys.tsx:2:37]
+    ╭─[sort_keys.tsx:2:40]
   1 │     
   2 │ ╭─▶                              var obj = {
   3 │ │                                   a: 1,
@@ -677,7 +677,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-   ╭─[sort_keys.tsx:2:31]
+   ╭─[sort_keys.tsx:2:40]
  1 │     
  2 │ ╭─▶                              var obj = {
  3 │ │                                   b: 1,
@@ -690,7 +690,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-   ╭─[sort_keys.tsx:2:30]
+   ╭─[sort_keys.tsx:2:39]
  1 │     
  2 │ ╭─▶                             var obj = {
  3 │ │                                 b,
@@ -701,7 +701,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-    ╭─[sort_keys.tsx:2:30]
+    ╭─[sort_keys.tsx:2:39]
   1 │     
   2 │ ╭─▶                             var obj = {
   3 │ │                                   c: 1,
@@ -716,7 +716,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-    ╭─[sort_keys.tsx:2:30]
+    ╭─[sort_keys.tsx:2:39]
   1 │     
   2 │ ╭─▶                             var obj = {
   3 │ │                                   c: 1,
@@ -738,7 +738,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-   ╭─[sort_keys.tsx:2:30]
+   ╭─[sort_keys.tsx:2:39]
  1 │     
  2 │ ╭─▶                             var obj = {
  3 │ │                                   b: "/*",
@@ -747,11 +747,11 @@ source: crates/oxc_linter/src/tester.rs
  6 │                             
    ╰────
   help: Replace `b: "/*",
-        			                    a: "*/"` with `a: "*/",
-        			                    b: "/*"`.
+                                        a: "*/"` with `a: "*/",
+                                        b: "/*"`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-   ╭─[sort_keys.tsx:2:30]
+   ╭─[sort_keys.tsx:2:39]
  1 │     
  2 │ ╭─▶                             var obj = {
  3 │ │                                   b: 1
@@ -762,7 +762,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(sort-keys): Object keys should be sorted
-    ╭─[sort_keys.tsx:2:30]
+    ╭─[sort_keys.tsx:2:39]
   1 │     
   2 │ ╭─▶                             let obj = {
   3 │ │                                 b,

@@ -466,10 +466,10 @@ fn test_eslint() {
         (
             "
               function foo<T extends (id: string, ...args: any[]) => any>(
-            	fn: T,
-            	...args: any[]
+                fn: T,
+                ...args: any[]
               ) {}
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -478,7 +478,7 @@ fn test_eslint() {
             "
               type Args = 1;
               function foo<T extends (Args: any) => void>(arg: T) {}
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -486,11 +486,11 @@ fn test_eslint() {
         (
             "
               export type ArrayInput<Func> = Func extends (arg0: Array<infer T>) => any
-            	? T[]
-            	: Func extends (...args: infer T) => any
-            	  ? T
-            	  : never;
-            	  ",
+                ? T[]
+                : Func extends (...args: infer T) => any
+                  ? T
+                  : never;
+                  ",
             None,
             None,
             None,
@@ -498,9 +498,9 @@ fn test_eslint() {
         (
             "
               function foo() {
-            	var Object = 0;
+                var Object = 0;
               }
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -508,9 +508,9 @@ fn test_eslint() {
         (
             "
               function test(this: Foo) {
-            	function test2(this: Bar) {}
+                function test2(this: Bar) {}
               }
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -518,12 +518,12 @@ fn test_eslint() {
         (
             "
               class Foo {
-            	prop = 1;
+                prop = 1;
               }
               namespace Foo {
-            	export const v = 2;
+                export const v = 2;
               }
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -532,9 +532,9 @@ fn test_eslint() {
             "
               function Foo() {}
               namespace Foo {
-            	export const v = 2;
+                export const v = 2;
               }
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -542,12 +542,12 @@ fn test_eslint() {
         (
             "
               class Foo {
-            	prop = 1;
+                prop = 1;
               }
               interface Foo {
-            	prop2: string;
+                prop2: string;
               }
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -557,11 +557,11 @@ fn test_eslint() {
               import type { Foo } from 'bar';
 
               declare module 'bar' {
-            	export interface Foo {
-            	  x: string;
-            	}
+                export interface Foo {
+                  x: string;
+                }
               }
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -570,7 +570,7 @@ fn test_eslint() {
             "
               const x = 1;
               type x = string;
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -579,9 +579,9 @@ fn test_eslint() {
             "
               const x = 1;
               {
-            	type x = string;
+                type x = string;
               }
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -589,7 +589,7 @@ fn test_eslint() {
         (
             "
               type Foo = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreTypeValueShadow": true }])),
             None,
             None,
@@ -597,7 +597,7 @@ fn test_eslint() {
         (
             "
               type Foo = 1;
-            		",
+                    ",
             Some(
                 serde_json::json!([ { "builtinGlobals": false, "ignoreTypeValueShadow": false, }, ]),
             ),
@@ -607,10 +607,10 @@ fn test_eslint() {
         (
             "
               enum Direction {
-            	left = 'left',
-            	right = 'right',
+                left = 'left',
+                right = 'right',
               }
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -619,7 +619,7 @@ fn test_eslint() {
             "
               const test = 1;
               type Fn = (test: string) => typeof test;
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": true }])),
             None,
             None,
@@ -627,7 +627,7 @@ fn test_eslint() {
         (
             "
               type Fn = (Foo: string) => typeof Foo;
-            		",
+                    ",
             Some(
                 serde_json::json!([ { "builtinGlobals": false, "ignoreFunctionTypeParameterNameValueShadow": true, }, ]),
             ),
@@ -639,9 +639,9 @@ fn test_eslint() {
               const arg = 0;
 
               interface Test {
-            	(arg: string): typeof arg;
+                (arg: string): typeof arg;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": true }])),
             None,
             None,
@@ -651,9 +651,9 @@ fn test_eslint() {
               const arg = 0;
 
               interface Test {
-            	p1(arg: string): typeof arg;
+                p1(arg: string): typeof arg;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": true }])),
             None,
             None,
@@ -663,7 +663,7 @@ fn test_eslint() {
               const arg = 0;
 
               declare function test(arg: string): typeof arg;
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": true }])),
             None,
             None,
@@ -673,7 +673,7 @@ fn test_eslint() {
               const arg = 0;
 
               declare const test: (arg: string) => typeof arg;
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": true }])),
             None,
             None,
@@ -683,9 +683,9 @@ fn test_eslint() {
               const arg = 0;
 
               declare class Test {
-            	p1(arg: string): typeof arg;
+                p1(arg: string): typeof arg;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": true }])),
             None,
             None,
@@ -695,9 +695,9 @@ fn test_eslint() {
               const arg = 0;
 
               declare const Test: {
-            	new (arg: string): typeof arg;
+                new (arg: string): typeof arg;
               };
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": true }])),
             None,
             None,
@@ -707,7 +707,7 @@ fn test_eslint() {
               const arg = 0;
 
               type Bar = new (arg: number) => typeof arg;
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": true }])),
             None,
             None,
@@ -717,62 +717,62 @@ fn test_eslint() {
               const arg = 0;
 
               declare namespace Lib {
-            	function test(arg: string): typeof arg;
+                function test(arg: string): typeof arg;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": true }])),
             None,
             None,
         ),
         (
             "
-            		  declare global {
-            			interface ArrayConstructor {}
-            		  }
-            		  export {};
-            		",
+                      declare global {
+                        interface ArrayConstructor {}
+                      }
+                      export {};
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             None,
         ),
         (
             "
-            		declare global {
-            		  const a: string;
+                    declare global {
+                      const a: string;
 
-            		  namespace Foo {
-            			const a: number;
-            		  }
-            		}
-            		export {};
-            	  ",
+                      namespace Foo {
+                        const a: number;
+                      }
+                    }
+                    export {};
+                  ",
             None,
             None,
             None,
         ),
         (
             "
-            		  declare global {
-            			type A = 'foo';
+                      declare global {
+                        type A = 'foo';
 
-            			namespace Foo {
-            			  type A = 'bar';
-            			}
-            		  }
-            		  export {};
-            		",
+                        namespace Foo {
+                          type A = 'bar';
+                        }
+                      }
+                      export {};
+                    ",
             Some(serde_json::json!([{ "ignoreTypeValueShadow": false }])),
             None,
             None,
         ),
         (
             "
-            		  declare global {
-            			const foo: string;
-            			type Fn = (foo: number) => void;
-            		  }
-            		  export {};
-            		",
+                      declare global {
+                        const foo: string;
+                        type Fn = (foo: number) => void;
+                      }
+                      export {};
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": false }])),
             None,
             None,
@@ -780,17 +780,17 @@ fn test_eslint() {
         (
             "
               export class Wrapper<Wrapped> {
-            	private constructor(private readonly wrapped: Wrapped) {}
+                private constructor(private readonly wrapped: Wrapped) {}
 
-            	unwrap(): Wrapped {
-            	  return this.wrapped;
-            	}
+                unwrap(): Wrapped {
+                  return this.wrapped;
+                }
 
-            	static create<Wrapped>(wrapped: Wrapped) {
-            	  return new Wrapper<Wrapped>(wrapped);
-            	}
+                static create<Wrapped>(wrapped: Wrapped) {
+                  return new Wrapper<Wrapped>(wrapped);
+                }
               }
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -798,15 +798,15 @@ fn test_eslint() {
         (
             "
               function makeA() {
-            	return class A<T> {
-            	  constructor(public value: T) {}
+                return class A<T> {
+                  constructor(public value: T) {}
 
-            	  static make<T>(value: T) {
-            		return new A<T>(value);
-            	  }
-            	};
+                  static make<T>(value: T) {
+                    return new A<T>(value);
+                  }
+                };
               }
-            	  ",
+                  ",
             None,
             None,
             None,
@@ -819,7 +819,7 @@ fn test_eslint() {
               // 'foo' is already declared in the upper scope
               // 'bar' is fine
               function doThing(foo: number, bar: number) {}
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreTypeValueShadow": true }])),
             None,
             None,
@@ -830,7 +830,7 @@ fn test_eslint() {
 
               // 'foo' is already declared in the upper scope
               function doThing(foo: number) {}
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreTypeValueShadow": true }])),
             None,
             None,
@@ -844,9 +844,9 @@ fn test_eslint() {
         (
             "
               const a = [].find(function (a) {
-            	return a;
+                return a;
               });
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreOnInitialization": true }])),
             None,
             None,
@@ -873,7 +873,7 @@ fn test_eslint() {
             "
               for (const a in [].find(a => true)) {
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreOnInitialization": true }])),
             None,
             None,
@@ -882,7 +882,7 @@ fn test_eslint() {
             "
               for (const a of [].find(a => true)) {
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreOnInitialization": true }])),
             None,
             None,
@@ -896,10 +896,10 @@ fn test_eslint() {
         (
             "
               const a = []
-            	.map(a => true)
-            	.filter(a => a === 'b')
-            	.find(a => a === 'c');
-            		",
+                .map(a => true)
+                .filter(a => a === 'b')
+                .find(a => a === 'c');
+                    ",
             Some(serde_json::json!([{ "ignoreOnInitialization": true }])),
             None,
             None,
@@ -913,10 +913,10 @@ fn test_eslint() {
         (
             "
               const person = people.find(item => {
-            	const person = item.name;
-            	return person === 'foo';
+                const person = item.name;
+                return person === 'foo';
               });
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreOnInitialization": true }])),
             None,
             None,
@@ -948,10 +948,10 @@ fn test_eslint() {
         (
             "
               var match = function (person) {
-            	return person.name === 'foo';
+                return person.name === 'foo';
               };
               const person = [].find(match);
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreOnInitialization": true }])),
             None,
             None,
@@ -977,11 +977,11 @@ fn test_eslint() {
         (
             "
               const person = {
-            	firstName: people
-            	  .filter(person => person.firstName.startsWith('s'))
-            	  .map(person => person.firstName)[0],
+                firstName: people
+                  .filter(person => person.firstName.startsWith('s'))
+                  .map(person => person.firstName)[0],
               };
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreOnInitialization": true }])),
             None,
             None,
@@ -989,9 +989,9 @@ fn test_eslint() {
         (
             "
               () => {
-            	const y = foo(y => y);
+                const y = foo(y => y);
               };
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreOnInitialization": true }])),
             None,
             None,
@@ -1029,9 +1029,9 @@ fn test_eslint() {
         (
             "
               () => {
-            	const y = (y => y)();
+                const y = (y => y)();
               };
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreOnInitialization": true }])),
             None,
             None,
@@ -1041,7 +1041,7 @@ fn test_eslint() {
             "
               type Foo<A> = 1;
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "never" }])),
             None,
             None,
@@ -1050,7 +1050,7 @@ fn test_eslint() {
             "
               interface Foo<A> {}
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "never" }])),
             None,
             None,
@@ -1059,7 +1059,7 @@ fn test_eslint() {
             "
               interface Foo<A> {}
               interface A {}
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "never" }])),
             None,
             None,
@@ -1068,7 +1068,7 @@ fn test_eslint() {
             "
               type Foo<A> = 1;
               interface A {}
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "never" }])),
             None,
             None,
@@ -1076,10 +1076,10 @@ fn test_eslint() {
         (
             "
               {
-            	type A = 1;
+                type A = 1;
               }
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "never" }])),
             None,
             None,
@@ -1087,10 +1087,10 @@ fn test_eslint() {
         (
             "
               {
-            	interface Foo<A> {}
+                interface Foo<A> {}
               }
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "never" }])),
             None,
             None,
@@ -1099,7 +1099,7 @@ fn test_eslint() {
             "
               type Foo<A> = 1;
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions" }])),
             None,
             None,
@@ -1108,7 +1108,7 @@ fn test_eslint() {
             "
               interface Foo<A> {}
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions" }])),
             None,
             None,
@@ -1117,7 +1117,7 @@ fn test_eslint() {
             "
               interface Foo<A> {}
               interface A {}
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions" }])),
             None,
             None,
@@ -1126,7 +1126,7 @@ fn test_eslint() {
             "
               type Foo<A> = 1;
               interface A {}
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions" }])),
             None,
             None,
@@ -1134,10 +1134,10 @@ fn test_eslint() {
         (
             "
               {
-            	type A = 1;
+                type A = 1;
               }
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions" }])),
             None,
             None,
@@ -1145,10 +1145,10 @@ fn test_eslint() {
         (
             "
               {
-            	interface Foo<A> {}
+                interface Foo<A> {}
               }
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions" }])),
             None,
             None,
@@ -1158,9 +1158,9 @@ fn test_eslint() {
               import type { Foo } from 'bar';
 
               declare module 'bar' {
-            	export type Foo = string;
+                export type Foo = string;
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1170,11 +1170,11 @@ fn test_eslint() {
               import type { Foo } from 'bar';
 
               declare module 'bar' {
-            	interface Foo {
-            	  x: string;
-            	}
+                interface Foo {
+                  x: string;
+                }
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1184,9 +1184,9 @@ fn test_eslint() {
               import { type Foo } from 'bar';
 
               declare module 'bar' {
-            	export type Foo = string;
+                export type Foo = string;
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1196,11 +1196,11 @@ fn test_eslint() {
               import { type Foo } from 'bar';
 
               declare module 'bar' {
-            	export interface Foo {
-            	  x: string;
-            	}
+                export interface Foo {
+                  x: string;
+                }
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1210,9 +1210,9 @@ fn test_eslint() {
               import { type Foo } from 'bar';
 
               declare module 'bar' {
-            	type Foo = string;
+                type Foo = string;
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1222,11 +1222,11 @@ fn test_eslint() {
               import { type Foo } from 'bar';
 
               declare module 'bar' {
-            	interface Foo {
-            	  x: string;
-            	}
+                interface Foo {
+                  x: string;
+                }
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1234,7 +1234,7 @@ fn test_eslint() {
         (
             "
               declare const foo1: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.ts")),
@@ -1242,7 +1242,7 @@ fn test_eslint() {
         (
             "
               declare let foo2: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.ts")),
@@ -1250,7 +1250,7 @@ fn test_eslint() {
         (
             "
               declare var foo3: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.ts")),
@@ -1258,7 +1258,7 @@ fn test_eslint() {
         (
             "
               function foo4(name: string): void;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.ts")),
@@ -1266,9 +1266,9 @@ fn test_eslint() {
         (
             "
               declare class Foopy1 {
-            	name: string;
+                name: string;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.ts")),
@@ -1276,9 +1276,9 @@ fn test_eslint() {
         (
             "
               declare interface Foopy2 {
-            	name: string;
+                name: string;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.ts")),
@@ -1286,9 +1286,9 @@ fn test_eslint() {
         (
             "
               declare type Foopy3 = {
-            	x: number;
+                x: number;
               };
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.ts")),
@@ -1296,9 +1296,9 @@ fn test_eslint() {
         (
             "
               declare enum Foopy4 {
-            	x,
+                x,
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.ts")),
@@ -1306,7 +1306,7 @@ fn test_eslint() {
         (
             "
               declare namespace Foopy5 {}
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.ts")),
@@ -1315,7 +1315,7 @@ fn test_eslint() {
             "
               declare;
               foo5: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.ts")),
@@ -1323,7 +1323,7 @@ fn test_eslint() {
         (
             "
               declare const foo1: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.cts")),
@@ -1331,7 +1331,7 @@ fn test_eslint() {
         (
             "
               declare let foo2: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.cts")),
@@ -1339,7 +1339,7 @@ fn test_eslint() {
         (
             "
               declare var foo3: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.cts")),
@@ -1347,7 +1347,7 @@ fn test_eslint() {
         (
             "
               function foo4(name: string): void;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.cts")),
@@ -1355,9 +1355,9 @@ fn test_eslint() {
         (
             "
               declare class Foopy1 {
-            	name: string;
+                name: string;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.cts")),
@@ -1365,9 +1365,9 @@ fn test_eslint() {
         (
             "
               declare interface Foopy2 {
-            	name: string;
+                name: string;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.cts")),
@@ -1375,9 +1375,9 @@ fn test_eslint() {
         (
             "
               declare type Foopy3 = {
-            	x: number;
+                x: number;
               };
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.cts")),
@@ -1385,9 +1385,9 @@ fn test_eslint() {
         (
             "
               declare enum Foopy4 {
-            	x,
+                x,
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.cts")),
@@ -1395,7 +1395,7 @@ fn test_eslint() {
         (
             "
               declare namespace Foopy5 {}
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.cts")),
@@ -1404,7 +1404,7 @@ fn test_eslint() {
             "
               declare;
               foo5: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.cts")),
@@ -1412,7 +1412,7 @@ fn test_eslint() {
         (
             "
               declare const foo1: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.mts")),
@@ -1420,7 +1420,7 @@ fn test_eslint() {
         (
             "
               declare let foo2: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.mts")),
@@ -1428,7 +1428,7 @@ fn test_eslint() {
         (
             "
               declare var foo3: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.mts")),
@@ -1436,7 +1436,7 @@ fn test_eslint() {
         (
             "
               function foo4(name: string): void;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.mts")),
@@ -1444,9 +1444,9 @@ fn test_eslint() {
         (
             "
               declare class Foopy1 {
-            	name: string;
+                name: string;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.mts")),
@@ -1454,9 +1454,9 @@ fn test_eslint() {
         (
             "
               declare interface Foopy2 {
-            	name: string;
+                name: string;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.mts")),
@@ -1464,9 +1464,9 @@ fn test_eslint() {
         (
             "
               declare type Foopy3 = {
-            	x: number;
+                x: number;
               };
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.mts")),
@@ -1474,9 +1474,9 @@ fn test_eslint() {
         (
             "
               declare enum Foopy4 {
-            	x,
+                x,
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.mts")),
@@ -1484,7 +1484,7 @@ fn test_eslint() {
         (
             "
               declare namespace Foopy5 {}
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.mts")),
@@ -1493,7 +1493,7 @@ fn test_eslint() {
             "
               declare;
               foo5: boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("baz.d.mts")),
@@ -1753,9 +1753,9 @@ fn test_eslint() {
             "
               type T = 1;
               {
-            	type T = 2;
+                type T = 2;
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1764,7 +1764,7 @@ fn test_eslint() {
             "
               type T = 1;
               function foo<T>(arg: T) {}
-            		",
+                    ",
             None,
             None,
             None,
@@ -1772,9 +1772,9 @@ fn test_eslint() {
         (
             "
               function foo<T>() {
-            	return function <T>() {};
+                return function <T>() {};
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1783,7 +1783,7 @@ fn test_eslint() {
             "
               type T = string;
               function foo<T extends (arg: any) => void>(arg: T) {}
-            		",
+                    ",
             None,
             None,
             None,
@@ -1792,9 +1792,9 @@ fn test_eslint() {
             "
               const x = 1;
               {
-            	type x = string;
+                type x = string;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreTypeValueShadow": false }])),
             None,
             None,
@@ -1802,7 +1802,7 @@ fn test_eslint() {
         (
             "
               type Foo = 1;
-            		",
+                    ",
             Some(
                 serde_json::json!([ { "builtinGlobals": true, "ignoreTypeValueShadow": false, }, ]),
             ),
@@ -1813,7 +1813,7 @@ fn test_eslint() {
             "
               const test = 1;
               type Fn = (test: string) => typeof test;
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": false }])),
             None,
             None,
@@ -1821,7 +1821,7 @@ fn test_eslint() {
         (
             "
               type Fn = (Foo: string) => typeof Foo;
-            		",
+                    ",
             Some(
                 serde_json::json!([ { "builtinGlobals": true, "ignoreFunctionTypeParameterNameValueShadow": false, }, ]),
             ),
@@ -1833,9 +1833,9 @@ fn test_eslint() {
               const arg = 0;
 
               interface Test {
-            	(arg: string): typeof arg;
+                (arg: string): typeof arg;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": false }])),
             None,
             None,
@@ -1845,9 +1845,9 @@ fn test_eslint() {
               const arg = 0;
 
               interface Test {
-            	p1(arg: string): typeof arg;
+                p1(arg: string): typeof arg;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": false }])),
             None,
             None,
@@ -1857,7 +1857,7 @@ fn test_eslint() {
               const arg = 0;
 
               declare function test(arg: string): typeof arg;
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": false }])),
             None,
             None,
@@ -1867,7 +1867,7 @@ fn test_eslint() {
               const arg = 0;
 
               declare const test: (arg: string) => typeof arg;
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": false }])),
             None,
             None,
@@ -1877,9 +1877,9 @@ fn test_eslint() {
               const arg = 0;
 
               declare class Test {
-            	p1(arg: string): typeof arg;
+                p1(arg: string): typeof arg;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": false }])),
             None,
             None,
@@ -1889,9 +1889,9 @@ fn test_eslint() {
               const arg = 0;
 
               declare const Test: {
-            	new (arg: string): typeof arg;
+                new (arg: string): typeof arg;
               };
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": false }])),
             None,
             None,
@@ -1901,7 +1901,7 @@ fn test_eslint() {
               const arg = 0;
 
               type Bar = new (arg: number) => typeof arg;
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": false }])),
             None,
             None,
@@ -1911,9 +1911,9 @@ fn test_eslint() {
               const arg = 0;
 
               declare namespace Lib {
-            	function test(arg: string): typeof arg;
+                function test(arg: string): typeof arg;
               }
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreFunctionTypeParameterNameValueShadow": false }])),
             None,
             None,
@@ -1922,7 +1922,7 @@ fn test_eslint() {
             "
               import type { foo } from './foo';
               function doThing(foo: number) {}
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreTypeValueShadow": false }])),
             None,
             None,
@@ -1931,7 +1931,7 @@ fn test_eslint() {
             "
               import { type foo } from './foo';
               function doThing(foo: number) {}
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreTypeValueShadow": false }])),
             None,
             None,
@@ -1940,7 +1940,7 @@ fn test_eslint() {
             "
               import { foo } from './foo';
               function doThing(foo: number, bar: number) {}
-            		",
+                    ",
             Some(serde_json::json!([{ "ignoreTypeValueShadow": true }])),
             None,
             None,
@@ -1950,11 +1950,11 @@ fn test_eslint() {
               interface Foo {}
 
               declare module 'bar' {
-            	export interface Foo {
-            	  x: string;
-            	}
+                export interface Foo {
+                  x: string;
+                }
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1964,11 +1964,11 @@ fn test_eslint() {
               import type { Foo } from 'bar';
 
               declare module 'baz' {
-            	export interface Foo {
-            	  x: string;
-            	}
+                export interface Foo {
+                  x: string;
+                }
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1978,11 +1978,11 @@ fn test_eslint() {
               import { type Foo } from 'bar';
 
               declare module 'baz' {
-            	export interface Foo {
-            	  x: string;
-            	}
+                export interface Foo {
+                  x: string;
+                }
               }
-            		",
+                    ",
             None,
             None,
             None,
@@ -1991,7 +1991,7 @@ fn test_eslint() {
             "
               let x = foo((x, y) => {});
               let y;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "all" }])),
             None,
             None,
@@ -2000,7 +2000,7 @@ fn test_eslint() {
             "
               let x = foo((x, y) => {});
               let y;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions" }])),
             None,
             None,
@@ -2009,7 +2009,7 @@ fn test_eslint() {
             "
               type Foo<A> = 1;
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "types" }])),
             None,
             None,
@@ -2018,7 +2018,7 @@ fn test_eslint() {
             "
               interface Foo<A> {}
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "types" }])),
             None,
             None,
@@ -2027,7 +2027,7 @@ fn test_eslint() {
             "
               interface Foo<A> {}
               interface A {}
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "types" }])),
             None,
             None,
@@ -2036,7 +2036,7 @@ fn test_eslint() {
             "
               type Foo<A> = 1;
               interface A {}
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "types" }])),
             None,
             None,
@@ -2044,10 +2044,10 @@ fn test_eslint() {
         (
             "
               {
-            	type A = 1;
+                type A = 1;
               }
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "types" }])),
             None,
             None,
@@ -2055,10 +2055,10 @@ fn test_eslint() {
         (
             "
               {
-            	interface A {}
+                interface A {}
               }
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "types" }])),
             None,
             None,
@@ -2067,7 +2067,7 @@ fn test_eslint() {
             "
               type Foo<A> = 1;
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "all" }])),
             None,
             None,
@@ -2076,7 +2076,7 @@ fn test_eslint() {
             "
               interface Foo<A> {}
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "all" }])),
             None,
             None,
@@ -2085,7 +2085,7 @@ fn test_eslint() {
             "
               interface Foo<A> {}
               interface A {}
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "all" }])),
             None,
             None,
@@ -2094,7 +2094,7 @@ fn test_eslint() {
             "
               type Foo<A> = 1;
               interface A {}
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "all" }])),
             None,
             None,
@@ -2102,10 +2102,10 @@ fn test_eslint() {
         (
             "
               {
-            	type A = 1;
+                type A = 1;
               }
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "all" }])),
             None,
             None,
@@ -2113,10 +2113,10 @@ fn test_eslint() {
         (
             "
               {
-            	interface A {}
+                interface A {}
               }
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "all" }])),
             None,
             None,
@@ -2125,53 +2125,53 @@ fn test_eslint() {
             "
               type Foo<A> = 1;
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions-and-types" }])),
             None,
             None,
         ),
         (
             "
-            	if (true) {
-            		const foo = 6;
-            	}
+                if (true) {
+                    const foo = 6;
+                }
 
-            	function foo() { }
-            		",
+                function foo() { }
+                    ",
             Some(serde_json::json!([{ "hoist": "functions-and-types" }])),
             None,
             None,
         ),
         (
             "
-            	// types
-            	type Bar<Foo> = 1;
-            	type Foo = 1;
+                // types
+                type Bar<Foo> = 1;
+                type Foo = 1;
 
-            	// functions
-            	if (true) {
-            		const b = 6;
-            	}
+                // functions
+                if (true) {
+                    const b = 6;
+                }
 
-            	function b() { }
-            		",
+                function b() { }
+                    ",
             Some(serde_json::json!([{ "hoist": "functions-and-types" }])),
             None,
             None,
         ),
         (
             "
-            	// types
-            	type Bar<Foo> = 1;
-            	type Foo = 1;
+                // types
+                type Bar<Foo> = 1;
+                type Foo = 1;
 
-            	// functions
-            	if (true) {
-            		const b = 6;
-            	}
+                // functions
+                if (true) {
+                    const b = 6;
+                }
 
-            	function b() { }
-            		",
+                function b() { }
+                    ",
             Some(serde_json::json!([{ "hoist": "types" }])),
             None,
             None,
@@ -2180,7 +2180,7 @@ fn test_eslint() {
             "
               interface Foo<A> {}
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions-and-types" }])),
             None,
             None,
@@ -2189,7 +2189,7 @@ fn test_eslint() {
             "
               interface Foo<A> {}
               interface A {}
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions-and-types" }])),
             None,
             None,
@@ -2198,7 +2198,7 @@ fn test_eslint() {
             "
               type Foo<A> = 1;
               interface A {}
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions-and-types" }])),
             None,
             None,
@@ -2206,10 +2206,10 @@ fn test_eslint() {
         (
             "
               {
-            	type A = 1;
+                type A = 1;
               }
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions-and-types" }])),
             None,
             None,
@@ -2217,10 +2217,10 @@ fn test_eslint() {
         (
             "
               {
-            	interface A {}
+                interface A {}
               }
               type A = 1;
-            		",
+                    ",
             Some(serde_json::json!([{ "hoist": "functions-and-types" }])),
             None,
             None,
@@ -2228,7 +2228,7 @@ fn test_eslint() {
         (
             "
               function foo<T extends (...args: any[]) => any>(fn: T, args: any[]) {}
-            		",
+                    ",
             Some(
                 serde_json::json!([ { "builtinGlobals": true, "ignoreTypeValueShadow": false, }, ]),
             ),
@@ -2238,7 +2238,7 @@ fn test_eslint() {
         (
             "
               declare const has = (environment: 'dev' | 'prod' | 'test') => boolean;
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             Some(serde_json::json!({ "globals": { "has": false } })),
             None,
@@ -2247,19 +2247,19 @@ fn test_eslint() {
             "
               declare const has: (environment: 'dev' | 'prod' | 'test') => boolean;
               const fn = (has: string) => {};
-            		",
+                    ",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
             None,
             Some(PathBuf::from("foo.d.ts")),
         ), // { "globals": { "has": false, }, },
         (
             "
-            			const A = 2;
-            			enum Test {
-            				A = 1,
-            				B = A,
-            			}
-            		",
+                        const A = 2;
+                        enum Test {
+                            A = 1,
+                            B = A,
+                        }
+                    ",
             None,
             None,
             None,

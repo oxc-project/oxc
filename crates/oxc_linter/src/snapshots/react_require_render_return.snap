@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint-plugin-react(require-render-return): Your `render` method should have a `return` statement.
-   ╭─[require_render_return.tsx:4:20]
+   ╭─[require_render_return.tsx:4:23]
  3 │                       displayName: 'Hello',
  4 │                       render: function() {}
    ·                       ──────
@@ -12,7 +12,7 @@ source: crates/oxc_linter/src/tester.rs
   help: When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the `return` statement is missing.
 
   ⚠ eslint-plugin-react(require-render-return): Your `render` method should have a `return` statement.
-   ╭─[require_render_return.tsx:3:20]
+   ╭─[require_render_return.tsx:3:23]
  2 │                     class Hello extends React.Component {
  3 │                       render() {}
    ·                       ──────
@@ -21,7 +21,7 @@ source: crates/oxc_linter/src/tester.rs
   help: When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the `return` statement is missing.
 
   ⚠ eslint-plugin-react(require-render-return): Your `render` method should have a `return` statement.
-   ╭─[require_render_return.tsx:3:20]
+   ╭─[require_render_return.tsx:3:23]
  2 │                     class Hello extends React.Component {
  3 │                       render() {
    ·                       ──────
@@ -30,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
   help: When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the `return` statement is missing.
 
   ⚠ eslint-plugin-react(require-render-return): Your `render` method should have a `return` statement.
-   ╭─[require_render_return.tsx:3:20]
+   ╭─[require_render_return.tsx:3:23]
  2 │                     class Hello extends React.Component {
  3 │                       render = () => {
    ·                       ──────

@@ -862,492 +862,492 @@ fn test() {
     let pass = vec![
         (
             "
-        	        var Hello = createReactClass({
-        	          displayName: 'Hello',
-        	          render: function() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        });
-        	      ",
+                    var Hello = createReactClass({
+                      displayName: 'Hello',
+                      render: function() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    });
+                  ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
         (
             "
-        	        var Hello = React.createClass({
-        	          displayName: 'Hello',
-        	          render: function() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        });
-        	      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            Some(
-                serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
-            ),
-        ),
-        (
-            "
-        	        class Hello extends React.Component {
-        	          render() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        }
-        	        Hello.displayName = 'Hello'
-        	      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            "
-        	        class Hello {
-        	          render() {
-        	            return 'Hello World';
-        	          }
-        	        }
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        class Hello extends Greetings {
-        	          static text = 'Hello World';
-        	          render() {
-        	            return Hello.text;
-        	          }
-        	        }
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        class Hello {
-        	          method;
-        	        }
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        class Hello extends React.Component {
-        	          static get displayName() {
-        	            return 'Hello';
-        	          }
-        	          render() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        }
-        	      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            "
-        	        class Hello extends React.Component {
-        	          static displayName = 'Widget';
-        	          render() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        }
-        	      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            "
-        	        var Hello = createReactClass({
-        	          render: function() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        });
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        class Hello extends React.Component {
-        	          render() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        }
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        export default class Hello {
-        	          render() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        }
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        var Hello;
-        	        Hello = createReactClass({
-        	          render: function() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        });
-        	      ",
-            None,
-            None,
-        ),
-        (
-            r#"
-        	        module.exports = createReactClass({
-        	          "displayName": "Hello",
-        	          "render": function() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        });
-        	      "#,
-            None,
-            None,
-        ),
-        (
-            "
-        	        var Hello = createReactClass({
-        	          displayName: 'Hello',
-        	          render: function() {
-        	            let { a, ...b } = obj;
-        	            let c = { ...d };
-        	            return <div />;
-        	          }
-        	        });
-        	      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            "
-        	        export default class {
-        	          render() {
-        	            return <div>Hello {this.props.name}</div>;
-        	          }
-        	        }
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        export const Hello = React.memo(function Hello() {
-        	          return <p />;
-        	        })
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        var Hello = function() {
-        	          return <div>Hello {this.props.name}</div>;
-        	        }
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        function Hello() {
-        	          return <div>Hello {this.props.name}</div>;
-        	        }
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        var Hello = () => {
-        	          return <div>Hello {this.props.name}</div>;
-        	        }
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        module.exports = function Hello() {
-        	          return <div>Hello {this.props.name}</div>;
-        	        }
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-			        function Hello() {
-			          return <div>Hello {this.props.name}</div>;
-			        }
-			        Hello.displayName = 'Hello';
-			      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            "
-        	        var Hello = () => {
-        	          return <div>Hello {this.props.name}</div>;
-        	        }
-        	        Hello.displayName = 'Hello';
-        	      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            "
-        	        var Hello = function() {
-        	          return <div>Hello {this.props.name}</div>;
-        	        }
-        	        Hello.displayName = 'Hello';
-        	      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            "
-        	        var Mixins = {
-        	          Greetings: {
-        	            Hello: function() {
-        	              return <div>Hello {this.props.name}</div>;
-        	            }
-        	          }
-        	        }
-        	        Mixins.Greetings.Hello.displayName = 'Hello';
-        	      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            "
-        	        var Hello = createReactClass({
-        	          render: function() {
-        	            return <div>{this._renderHello()}</div>;
-        	          },
-        	          _renderHello: function() {
-        	            return <span>Hello {this.props.name}</span>;
-        	          }
-        	        });
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        var Hello = createReactClass({
-        	          displayName: 'Hello',
-        	          render: function() {
-        	            return <div>{this._renderHello()}</div>;
-        	          },
-        	          _renderHello: function() {
-        	            return <span>Hello {this.props.name}</span>;
-        	          }
-        	        });
-        	      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            "
-        	        const Mixin = {
-        	          Button() {
-        	            return (
-        	              <button />
-        	            );
-        	          }
-        	        };
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        var obj = {
-        	          pouf: function() {
-        	            return any
-        	          }
-        	        };
-        	      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            "
-        	        var obj = {
-        	          pouf: function() {
-        	            return any
-        	          }
-        	        };
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        export default {
-        	          renderHello() {
-        	            let {name} = this.props;
-        	            return <div>{name}</div>;
-        	          }
-        	        };
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        import React, { createClass } from 'react';
-        	        export default createClass({
-        	          displayName: 'Foo',
-        	          render() {
-        	            return <h1>foo</h1>;
-        	          }
-        	        });
-        	      ",
+                    var Hello = React.createClass({
+                      displayName: 'Hello',
+                      render: function() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    });
+                  ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             Some(
                 serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
             ),
         ),
         (
-            r#"
-        	        import React, {Component} from "react";
-        	        function someDecorator(ComposedComponent) {
-        	          return class MyDecorator extends Component {
-        	            render() {return <ComposedComponent {...this.props} />;}
-        	          };
-        	        }
-        	        module.exports = someDecorator;
-        	      "#,
-            None,
+            "
+                    class Hello extends React.Component {
+                      render() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                    Hello.displayName = 'Hello'
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
         (
-            r#"
-        	        import React, {createElement} from "react";
-        	        const SomeComponent = (props) => {
-        	          const {foo, bar} = props;
-        	          return someComponentFactory({
-        	            onClick: () => foo(bar("x"))
-        	          });
-        	        };
-        	      "#,
+            "
+                    class Hello {
+                      render() {
+                        return 'Hello World';
+                      }
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-        	        const element = (
-        	          <Media query={query} render={() => {
-        	            renderWasCalled = true
-        	            return <div/>
-        	          }}/>
-        	        )
-        	      ",
+                    class Hello extends Greetings {
+                      static text = 'Hello World';
+                      render() {
+                        return Hello.text;
+                      }
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-        	        const element = (
-        	          <Media query={query} render={function() {
-        	            renderWasCalled = true
-        	            return <div/>
-        	          }}/>
-        	        )
-        	      ",
+                    class Hello {
+                      method;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-        	        module.exports = {
-        	          createElement: tagName => document.createElement(tagName)
-        	        };
-        	      ",
-            None,
+                    class Hello extends React.Component {
+                      static get displayName() {
+                        return 'Hello';
+                      }
+                      render() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
         (
-            r#"
-        	        const { createElement } = document;
-        	        createElement("a");
-        	      "#,
+            "
+                    class Hello extends React.Component {
+                      static displayName = 'Widget';
+                      render() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+                    var Hello = createReactClass({
+                      render: function() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    });
+                  ",
             None,
             None,
         ),
         (
             "
-        	        import React from 'react'
-        	        import { string } from 'prop-types'
-
-        	        function Component({ world }) {
-        	          return <div>Hello {world}</div>
-        	        }
-
-        	        Component.propTypes = {
-        	          world: string,
-        	        }
-
-        	        export default React.memo(Component)
-        	      ",
+                    class Hello extends React.Component {
+                      render() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-        	        import React from 'react'
-
-        	        const ComponentWithMemo = React.memo(function Component({ world }) {
-        	          return <div>Hello {world}</div>
-        	        })
-        	      ",
+                    export default class Hello {
+                      render() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-        	        import React from 'react'
-
-        	        const Hello = React.memo(function Hello() {
-        	          return;
-        	        });
-        	      ",
-            None,
-            None,
-        ),
-        (
-            "
-        	        import React from 'react'
-
-        	        const ForwardRefComponentLike = React.forwardRef(function ComponentLike({ world }, ref) {
-        	          return <div ref={ref}>Hello {world}</div>
-        	        })
-        	      ",
+                    var Hello;
+                    Hello = createReactClass({
+                      render: function() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    });
+                  ",
             None,
             None,
         ),
         (
             r#"
-        	        function F() {
-        	          let items = [];
-        	          let testData = [
-        	            {a: "test1", displayName: "test2"}, {a: "test1", displayName: "test2"}];
-        	          for (let item of testData) {
-        	              items.push({a: item.a, b: item.displayName});
-        	          }
-        	          return <div>{items}</div>;
-        	        }
-        	      "#,
+                    module.exports = createReactClass({
+                      "displayName": "Hello",
+                      "render": function() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    });
+                  "#,
+            None,
+            None,
+        ),
+        (
+            "
+                    var Hello = createReactClass({
+                      displayName: 'Hello',
+                      render: function() {
+                        let { a, ...b } = obj;
+                        let c = { ...d };
+                        return <div />;
+                      }
+                    });
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+                    export default class {
+                      render() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    export const Hello = React.memo(function Hello() {
+                      return <p />;
+                    })
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    var Hello = function() {
+                      return <div>Hello {this.props.name}</div>;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    function Hello() {
+                      return <div>Hello {this.props.name}</div>;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    var Hello = () => {
+                      return <div>Hello {this.props.name}</div>;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    module.exports = function Hello() {
+                      return <div>Hello {this.props.name}</div>;
+                    }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    function Hello() {
+                      return <div>Hello {this.props.name}</div>;
+                    }
+                    Hello.displayName = 'Hello';
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+                    var Hello = () => {
+                      return <div>Hello {this.props.name}</div>;
+                    }
+                    Hello.displayName = 'Hello';
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+                    var Hello = function() {
+                      return <div>Hello {this.props.name}</div>;
+                    }
+                    Hello.displayName = 'Hello';
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+                    var Mixins = {
+                      Greetings: {
+                        Hello: function() {
+                          return <div>Hello {this.props.name}</div>;
+                        }
+                      }
+                    }
+                    Mixins.Greetings.Hello.displayName = 'Hello';
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+                    var Hello = createReactClass({
+                      render: function() {
+                        return <div>{this._renderHello()}</div>;
+                      },
+                      _renderHello: function() {
+                        return <span>Hello {this.props.name}</span>;
+                      }
+                    });
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    var Hello = createReactClass({
+                      displayName: 'Hello',
+                      render: function() {
+                        return <div>{this._renderHello()}</div>;
+                      },
+                      _renderHello: function() {
+                        return <span>Hello {this.props.name}</span>;
+                      }
+                    });
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+                    const Mixin = {
+                      Button() {
+                        return (
+                          <button />
+                        );
+                      }
+                    };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    var obj = {
+                      pouf: function() {
+                        return any
+                      }
+                    };
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+                    var obj = {
+                      pouf: function() {
+                        return any
+                      }
+                    };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    export default {
+                      renderHello() {
+                        let {name} = this.props;
+                        return <div>{name}</div>;
+                      }
+                    };
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    import React, { createClass } from 'react';
+                    export default createClass({
+                      displayName: 'Foo',
+                      render() {
+                        return <h1>foo</h1>;
+                      }
+                    });
+                  ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            Some(
+                serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
+            ),
+        ),
+        (
+            r#"
+                    import React, {Component} from "react";
+                    function someDecorator(ComposedComponent) {
+                      return class MyDecorator extends Component {
+                        render() {return <ComposedComponent {...this.props} />;}
+                      };
+                    }
+                    module.exports = someDecorator;
+                  "#,
+            None,
+            None,
+        ),
+        (
+            r#"
+                    import React, {createElement} from "react";
+                    const SomeComponent = (props) => {
+                      const {foo, bar} = props;
+                      return someComponentFactory({
+                        onClick: () => foo(bar("x"))
+                      });
+                    };
+                  "#,
+            None,
+            None,
+        ),
+        (
+            "
+                    const element = (
+                      <Media query={query} render={() => {
+                        renderWasCalled = true
+                        return <div/>
+                      }}/>
+                    )
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    const element = (
+                      <Media query={query} render={function() {
+                        renderWasCalled = true
+                        return <div/>
+                      }}/>
+                    )
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    module.exports = {
+                      createElement: tagName => document.createElement(tagName)
+                    };
+                  ",
+            None,
+            None,
+        ),
+        (
+            r#"
+                    const { createElement } = document;
+                    createElement("a");
+                  "#,
+            None,
+            None,
+        ),
+        (
+            "
+                    import React from 'react'
+                    import { string } from 'prop-types'
+
+                    function Component({ world }) {
+                      return <div>Hello {world}</div>
+                    }
+
+                    Component.propTypes = {
+                      world: string,
+                    }
+
+                    export default React.memo(Component)
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    import React from 'react'
+
+                    const ComponentWithMemo = React.memo(function Component({ world }) {
+                      return <div>Hello {world}</div>
+                    })
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    import React from 'react'
+
+                    const Hello = React.memo(function Hello() {
+                      return;
+                    });
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                    import React from 'react'
+
+                    const ForwardRefComponentLike = React.forwardRef(function ComponentLike({ world }, ref) {
+                      return <div ref={ref}>Hello {world}</div>
+                    })
+                  ",
+            None,
+            None,
+        ),
+        (
+            r#"
+                    function F() {
+                      let items = [];
+                      let testData = [
+                        {a: "test1", displayName: "test2"}, {a: "test1", displayName: "test2"}];
+                      for (let item of testData) {
+                          items.push({a: item.a, b: item.displayName});
+                      }
+                      return <div>{items}</div>;
+                    }
+                  "#,
             None,
             None,
         ),
@@ -1364,194 +1364,194 @@ fn test() {
         // ),
         (
             r#"
-        	        const x = {
-        	          title: "URL",
-        	          dataIndex: "url",
-        	          key: "url",
-        	          render: url => (
-        	            <a href={url} target="_blank" rel="noopener noreferrer">
-        	              <p>lol</p>
-        	            </a>
-        	          )
-        	        }
-        	      "#,
+                    const x = {
+                      title: "URL",
+                      dataIndex: "url",
+                      key: "url",
+                      render: url => (
+                        <a href={url} target="_blank" rel="noopener noreferrer">
+                          <p>lol</p>
+                        </a>
+                      )
+                    }
+                  "#,
             None,
             None,
         ),
         (
             "
-        	        const renderer = a => function Component(listItem) {
-        	          return <div>{a} {listItem}</div>;
-        	        };
-        	      ",
+                    const renderer = a => function Component(listItem) {
+                      return <div>{a} {listItem}</div>;
+                    };
+                  ",
             None,
             None,
         ),
         (
             "
-        	        const Comp = React.forwardRef((props, ref) => <main />);
-        	        Comp.displayName = 'MyCompName';
-        	      ",
+                    const Comp = React.forwardRef((props, ref) => <main />);
+                    Comp.displayName = 'MyCompName';
+                  ",
             None,
             None,
         ),
         (
             r#"
-        	        const Comp = React.forwardRef((props, ref) => <main data-as="yes" />) as SomeComponent;
-        	        Comp.displayName = 'MyCompNameAs';
-        	      "#,
+                    const Comp = React.forwardRef((props, ref) => <main data-as="yes" />) as SomeComponent;
+                    Comp.displayName = 'MyCompNameAs';
+                  "#,
             None,
             None,
         ),
         (
             "
-        	        function Test() {
-        	          const data = [
-        	            {
-        	              name: 'Bob',
-        	            },
-        	          ];
+                    function Test() {
+                      const data = [
+                        {
+                          name: 'Bob',
+                        },
+                      ];
 
-        	          const columns = [
-        	            {
-        	              Header: 'Name',
-        	              accessor: 'name',
-        	              Cell: ({ value }) => <div>{value}</div>,
-        	            },
-        	          ];
+                      const columns = [
+                        {
+                          Header: 'Name',
+                          accessor: 'name',
+                          Cell: ({ value }) => <div>{value}</div>,
+                        },
+                      ];
 
-        	          return <ReactTable columns={columns} data={data} />;
-        	        }
-        	      ",
+                      return <ReactTable columns={columns} data={data} />;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-        	        const f = (a) => () => {
-        	          if (a) {
-        	            return null;
-        	          }
-        	          return 1;
-        	        };
-        	      ",
+                    const f = (a) => () => {
+                      if (a) {
+                        return null;
+                      }
+                      return 1;
+                    };
+                  ",
             None,
             None,
         ),
         (
             "
-        	        class Test {
-        	          render() {
-        	            const data = [
-        	              {
-        	                name: 'Bob',
-        	                Cell: ({ value }) => <div>{value}</div>,
-        	              },
-        	            ];
+                    class Test {
+                      render() {
+                        const data = [
+                          {
+                            name: 'Bob',
+                            Cell: ({ value }) => <div>{value}</div>,
+                          },
+                        ];
 
-        	            return <ReactTable columns={columns} data={data} />;
-        	          }
-        	        }
-        	      ",
+                        return <ReactTable columns={columns} data={data} />;
+                      }
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-        	        export const demo = (a) => (b) => {
-        	          if (a == null) return null;
-        	          return b;
-        	        }
-        	      ",
+                    export const demo = (a) => (b) => {
+                      if (a == null) return null;
+                      return b;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-        	        let demo = null;
-        	        demo = (a) => {
-        	          if (a == null) return null;
-        	          return f(a);
-        	        };",
+                    let demo = null;
+                    demo = (a) => {
+                      if (a == null) return null;
+                      return f(a);
+                    };",
             None,
             None,
         ),
         (
             "
-        	        obj._property = (a) => {
-        	          if (a == null) return null;
-        	          return f(a);
-        	        };
-        	      ",
+                    obj._property = (a) => {
+                      if (a == null) return null;
+                      return f(a);
+                    };
+                  ",
             None,
             None,
         ),
         (
             "
-        	        _variable = (a) => {
-        	          if (a == null) return null;
-        	          return f(a);
-        	        };
-        	      ",
+                    _variable = (a) => {
+                      if (a == null) return null;
+                      return f(a);
+                    };
+                  ",
             None,
             None,
         ),
         (
             "
-        	        demo = () => () => null;
-        	      ",
+                    demo = () => () => null;
+                  ",
             None,
             None,
         ),
         (
             "
-        	        demo = {
-        	          property: () => () => null
-        	        }
-        	      ",
+                    demo = {
+                      property: () => () => null
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-        	        demo = function() {return function() {return null;};};
-        	      ",
+                    demo = function() {return function() {return null;};};
+                  ",
             None,
             None,
         ),
         (
             "
-        	        demo = {
-        	          property: function() {return function() {return null;};}
-        	        }
-        	      ",
+                    demo = {
+                      property: function() {return function() {return null;};}
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-        	        function MyComponent(props) {
-        	          return <b>{props.name}</b>;
-        	        }
+                    function MyComponent(props) {
+                      return <b>{props.name}</b>;
+                    }
 
-        	        const MemoizedMyComponent = React.memo(
-        	          MyComponent,
-        	          (prevProps, nextProps) => prevProps.name === nextProps.name
-        	        )
-        	      ",
+                    const MemoizedMyComponent = React.memo(
+                      MyComponent,
+                      (prevProps, nextProps) => prevProps.name === nextProps.name
+                    )
+                  ",
             None,
             None,
         ),
         (
             "
-        	        import React from 'react'
+                    import React from 'react'
 
-        	        const MemoizedForwardRefComponentLike = React.memo(
-        	          React.forwardRef(function({ world }, ref) {
-        	            return <div ref={ref}>Hello {world}</div>
-        	          })
-        	        )
-        	      ",
+                    const MemoizedForwardRefComponentLike = React.memo(
+                      React.forwardRef(function({ world }, ref) {
+                        return <div ref={ref}>Hello {world}</div>
+                      })
+                    )
+                  ",
             None,
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "16.14.0",        },      } }),
@@ -1559,14 +1559,14 @@ fn test() {
         ),
         (
             "
-        	        import React from 'react'
+                    import React from 'react'
 
-        	        const MemoizedForwardRefComponentLike = React.memo(
-        	          React.forwardRef(({ world }, ref) => {
-        	            return <div ref={ref}>Hello {world}</div>
-        	          })
-        	        )
-        	      ",
+                    const MemoizedForwardRefComponentLike = React.memo(
+                      React.forwardRef(({ world }, ref) => {
+                        return <div ref={ref}>Hello {world}</div>
+                      })
+                    )
+                  ",
             None,
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "15.7.0",        },      } }),
@@ -1574,14 +1574,14 @@ fn test() {
         ),
         (
             "
-        	        import React from 'react'
+                    import React from 'react'
 
-        	        const MemoizedForwardRefComponentLike = React.memo(
-        	          React.forwardRef(function ComponentLike({ world }, ref) {
-        	            return <div ref={ref}>Hello {world}</div>
-        	          })
-        	        )
-        	      ",
+                    const MemoizedForwardRefComponentLike = React.memo(
+                      React.forwardRef(function ComponentLike({ world }, ref) {
+                        return <div ref={ref}>Hello {world}</div>
+                      })
+                    )
+                  ",
             None,
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "16.12.1",        },      } }),
@@ -1589,12 +1589,12 @@ fn test() {
         ),
         (
             "
-        	        export const ComponentWithForwardRef = React.memo(
-        	          React.forwardRef(function Component({ world }) {
-        	            return <div>Hello {world}</div>
-        	          })
-        	        )
-        	      ",
+                    export const ComponentWithForwardRef = React.memo(
+                      React.forwardRef(function Component({ world }) {
+                        return <div>Hello {world}</div>
+                      })
+                    )
+                  ",
             None,
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "0.14.11",        },      } }),
@@ -1602,14 +1602,14 @@ fn test() {
         ),
         (
             "
-        	        import React from 'react'
+                    import React from 'react'
 
-        	        const MemoizedForwardRefComponentLike = React.memo(
-        	          React.forwardRef(function({ world }, ref) {
-        	            return <div ref={ref}>Hello {world}</div>
-        	          })
-        	        )
-        	      ",
+                    const MemoizedForwardRefComponentLike = React.memo(
+                      React.forwardRef(function({ world }, ref) {
+                        return <div ref={ref}>Hello {world}</div>
+                      })
+                    )
+                  ",
             None,
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "15.7.1",        },      } }),
@@ -1617,66 +1617,66 @@ fn test() {
         ),
         (
             r#"
-        	        import React from 'react';
+                    import React from 'react';
 
-        	        const Hello = React.createContext();
-        	        Hello.displayName = "HelloContext"
-        	      "#,
+                    const Hello = React.createContext();
+                    Hello.displayName = "HelloContext"
+                  "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             r#"
-        	        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-        	        const Hello = createContext();
-        	        Hello.displayName = "HelloContext"
-        	      "#,
+                    const Hello = createContext();
+                    Hello.displayName = "HelloContext"
+                  "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             r#"
-        	        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-        	        const Hello = createContext();
+                    const Hello = createContext();
 
-        	        const obj = {};
-        	        obj.displayName = "False positive";
+                    const obj = {};
+                    obj.displayName = "False positive";
 
-        	        Hello.displayName = "HelloContext"
-        	      "#,
+                    Hello.displayName = "HelloContext"
+                  "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             r#"
-        	        import * as React from 'react';
+                    import * as React from 'react';
 
-        	        const Hello = React.createContext();
+                    const Hello = React.createContext();
 
-        	        const obj = {};
-        	        obj.displayName = "False positive";
+                    const obj = {};
+                    obj.displayName = "False positive";
 
-        	        Hello.displayName = "HelloContext";
-        	      "#,
+                    Hello.displayName = "HelloContext";
+                  "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             r#"
-        	        const obj = {};
-        	        obj.displayName = "False positive";
-        	      "#,
+                    const obj = {};
+                    obj.displayName = "False positive";
+                  "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             "
-        	        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-        	        const Hello = createContext();
-        	      ",
+                    const Hello = createContext();
+                  ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "16.2.0",        },      } }),
@@ -1684,11 +1684,11 @@ fn test() {
         ),
         (
             r#"
-        	        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-        	        const Hello = createContext();
-        	        Hello.displayName = "HelloContext";
-        	      "#,
+                    const Hello = createContext();
+                    Hello.displayName = "HelloContext";
+                  "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "16.4.0",        },      } }),
@@ -1696,21 +1696,21 @@ fn test() {
         ),
         (
             r#"
-        	        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-        	        let Hello;
-        	        Hello = createContext();
-        	        Hello.displayName = "HelloContext";
-        	      "#,
+                    let Hello;
+                    Hello = createContext();
+                    Hello.displayName = "HelloContext";
+                  "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             "
-        	        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-        	        const Hello = createContext();
-        	      ",
+                    const Hello = createContext();
+                  ",
             Some(serde_json::json!([{ "checkContextObjects": false }])),
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "16.4.0",        },      } }),
@@ -1718,23 +1718,23 @@ fn test() {
         ),
         (
             r#"
-        	        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-        	        var Hello;
-        	        Hello = createContext();
-        	        Hello.displayName = "HelloContext";
-        	      "#,
+                    var Hello;
+                    Hello = createContext();
+                    Hello.displayName = "HelloContext";
+                  "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             r#"
-        	        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-        	        var Hello;
-        	        Hello = React.createContext();
-        	        Hello.displayName = "HelloContext";
-        	      "#,
+                    var Hello;
+                    Hello = React.createContext();
+                    Hello.displayName = "HelloContext";
+                  "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
@@ -1743,23 +1743,23 @@ fn test() {
     let fail = vec![
         (
             r#"
-        	        var Hello = createReactClass({
-        	          render: function() {
-        	            return React.createElement("div", {}, "text content");
-        	          }
-        	        });
-        	      "#,
+                    var Hello = createReactClass({
+                      render: function() {
+                        return React.createElement("div", {}, "text content");
+                      }
+                    });
+                  "#,
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
         (
             r#"
-        	        var Hello = React.createClass({
-        	          render: function() {
-        	            return React.createElement("div", {}, "text content");
-        	          }
-        	        });
-        	      "#,
+                    var Hello = React.createClass({
+                      render: function() {
+                        return React.createElement("div", {}, "text content");
+                      }
+                    });
+                  "#,
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             Some(
                 serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
@@ -1767,23 +1767,23 @@ fn test() {
         ),
         (
             "
-			        var Hello = createReactClass({
-			          render: function() {
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
+                    var Hello = createReactClass({
+                      render: function() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    });
+                  ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
         (
             "
-			        class Hello extends React.Component {
-			          render() {
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        }
-			      ",
+                    class Hello extends React.Component {
+                      render() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
@@ -1796,58 +1796,58 @@ fn test() {
         // which adds significant complexity. This is a rare pattern in practice.
         (
             "
-			        module.exports = () => {
-			          return <div>Hello {props.name}</div>;
-			        }
-			      ",
+                    module.exports = () => {
+                      return <div>Hello {props.name}</div>;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        module.exports = function() {
-			          return <div>Hello {props.name}</div>;
-			        }
-			      ",
+                    module.exports = function() {
+                      return <div>Hello {props.name}</div>;
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        module.exports = createReactClass({
-			          render() {
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        });
-			      ",
+                    module.exports = createReactClass({
+                      render() {
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    });
+                  ",
             None,
             None,
         ),
         (
             "
-			        var Hello = createReactClass({
-			          _renderHello: function() {
-			            return <span>Hello {this.props.name}</span>;
-			          },
-			          render: function() {
-			            return <div>{this._renderHello()}</div>;
-			          }
-			        });
-			      ",
+                    var Hello = createReactClass({
+                      _renderHello: function() {
+                        return <span>Hello {this.props.name}</span>;
+                      },
+                      render: function() {
+                        return <div>{this._renderHello()}</div>;
+                      }
+                    });
+                  ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
         (
             "
-			        var Hello = Foo.createClass({
-			          _renderHello: function() {
-			            return <span>Hello {this.props.name}</span>;
-			          },
-			          render: function() {
-			            return <div>{this._renderHello()}</div>;
-			          }
-			        });
-			      ",
+                    var Hello = Foo.createClass({
+                      _renderHello: function() {
+                        return <span>Hello {this.props.name}</span>;
+                      },
+                      render: function() {
+                        return <div>{this._renderHello()}</div>;
+                      }
+                    });
+                  ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             Some(
                 serde_json::json!({ "settings": {        "react": {          "pragma": "Foo",          "createClass": "createClass",        },      } }),
@@ -1855,16 +1855,16 @@ fn test() {
         ),
         (
             "
-			        /** @jsx Foo */
-			        var Hello = Foo.createClass({
-			          _renderHello: function() {
-			            return <span>Hello {this.props.name}</span>;
-			          },
-			          render: function() {
-			            return <div>{this._renderHello()}</div>;
-			          }
-			        });
-			      ",
+                    /** @jsx Foo */
+                    var Hello = Foo.createClass({
+                      _renderHello: function() {
+                        return <span>Hello {this.props.name}</span>;
+                      },
+                      render: function() {
+                        return <div>{this._renderHello()}</div>;
+                      }
+                    });
+                  ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             Some(
                 serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
@@ -1872,92 +1872,92 @@ fn test() {
         ),
         (
             "
-			        const Mixin = {
-			          Button() {
-			            return (
-			              <button />
-			            );
-			          }
-			        };
-			      ",
+                    const Mixin = {
+                      Button() {
+                        return (
+                          <button />
+                        );
+                      }
+                    };
+                  ",
             Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
             None,
         ),
         (
             "
-			        function Hof() {
-			          return function () {
-			            return <div />
-			          }
-			        }
-			      ",
+                    function Hof() {
+                      return function () {
+                        return <div />
+                      }
+                    }
+                  ",
             None,
             None,
         ),
         (
             r#"
-			        import React, { createElement } from "react";
-			        export default (props) => {
-			          return createElement("div", {}, "hello");
-			        };
-			      "#,
+                    import React, { createElement } from "react";
+                    export default (props) => {
+                      return createElement("div", {}, "hello");
+                    };
+                  "#,
             None,
             None,
         ),
         (
             "
-			        import React from 'react'
+                    import React from 'react'
 
-			        const ComponentWithMemo = React.memo(({ world }) => {
-			          return <div>Hello {world}</div>
-			        })
-			      ",
+                    const ComponentWithMemo = React.memo(({ world }) => {
+                      return <div>Hello {world}</div>
+                    })
+                  ",
             None,
             None,
         ),
         (
             "
-			        import React from 'react'
+                    import React from 'react'
 
-			        const ComponentWithMemo = React.memo(function() {
-			          return <div>Hello {world}</div>
-			        })
-			      ",
+                    const ComponentWithMemo = React.memo(function() {
+                      return <div>Hello {world}</div>
+                    })
+                  ",
             None,
             None,
         ),
         (
             "
-			        import React from 'react'
+                    import React from 'react'
 
-			        const ForwardRefComponentLike = React.forwardRef(({ world }, ref) => {
-			          return <div ref={ref}>Hello {world}</div>
-			        })
-			      ",
+                    const ForwardRefComponentLike = React.forwardRef(({ world }, ref) => {
+                      return <div ref={ref}>Hello {world}</div>
+                    })
+                  ",
             None,
             None,
         ),
         (
             "
-			        import React from 'react'
+                    import React from 'react'
 
-			        const ForwardRefComponentLike = React.forwardRef(function({ world }, ref) {
-			          return <div ref={ref}>Hello {world}</div>
-			        })
-			      ",
+                    const ForwardRefComponentLike = React.forwardRef(function({ world }, ref) {
+                      return <div ref={ref}>Hello {world}</div>
+                    })
+                  ",
             None,
             None,
         ),
         (
             "
-			        import React from 'react'
+                    import React from 'react'
 
-			        const MemoizedForwardRefComponentLike = React.memo(
-			          React.forwardRef(({ world }, ref) => {
-			            return <div ref={ref}>Hello {world}</div>
-			          })
-			        )
-			      ",
+                    const MemoizedForwardRefComponentLike = React.memo(
+                      React.forwardRef(({ world }, ref) => {
+                        return <div ref={ref}>Hello {world}</div>
+                      })
+                    )
+                  ",
             None,
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "15.6.0",        },      } }),
@@ -1965,14 +1965,14 @@ fn test() {
         ),
         (
             "
-			        import React from 'react'
+                    import React from 'react'
 
-			        const MemoizedForwardRefComponentLike = React.memo(
-			          React.forwardRef(function({ world }, ref) {
-			            return <div ref={ref}>Hello {world}</div>
-			          })
-			        )
-			      ",
+                    const MemoizedForwardRefComponentLike = React.memo(
+                      React.forwardRef(function({ world }, ref) {
+                        return <div ref={ref}>Hello {world}</div>
+                      })
+                    )
+                  ",
             None,
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "0.14.2",        },      } }),
@@ -1980,14 +1980,14 @@ fn test() {
         ),
         (
             "
-			        import React from 'react'
+                    import React from 'react'
 
-			        const MemoizedForwardRefComponentLike = React.memo(
-			          React.forwardRef(function ComponentLike({ world }, ref) {
-			            return <div ref={ref}>Hello {world}</div>
-			          })
-			        )
-			      ",
+                    const MemoizedForwardRefComponentLike = React.memo(
+                      React.forwardRef(function ComponentLike({ world }, ref) {
+                        return <div ref={ref}>Hello {world}</div>
+                      })
+                    )
+                  ",
             None,
             Some(
                 serde_json::json!({ "settings": {        "react": {          "version": "15.0.1",        },      } }),
@@ -1995,126 +1995,126 @@ fn test() {
         ),
         (
             r#"
-			        import React from "react";
-			        const { createElement } = React;
-			        export default (props) => {
-			          return createElement("div", {}, "hello");
-			        };
-			      "#,
+                    import React from "react";
+                    const { createElement } = React;
+                    export default (props) => {
+                      return createElement("div", {}, "hello");
+                    };
+                  "#,
             None,
             None,
         ),
         (
             r#"
-			        import React from "react";
-			        const createElement = React.createElement;
-			        export default (props) => {
-			          return createElement("div", {}, "hello");
-			        };
-			      "#,
+                    import React from "react";
+                    const createElement = React.createElement;
+                    export default (props) => {
+                      return createElement("div", {}, "hello");
+                    };
+                  "#,
             None,
             None,
         ),
         (
             r#"
-			        module.exports = function () {
-			          function a () {}
-			          const b = function b () {}
-			          const c = function () {}
-			          const d = () => {}
-			          const obj = {
-			            a: function a () {},
-			            b: function b () {},
-			            c () {},
-			            d: () => {},
-			          }
-			          return React.createElement("div", {}, "text content");
-			        }
-			      "#,
+                    module.exports = function () {
+                      function a () {}
+                      const b = function b () {}
+                      const c = function () {}
+                      const d = () => {}
+                      const obj = {
+                        a: function a () {},
+                        b: function b () {},
+                        c () {},
+                        d: () => {},
+                      }
+                      return React.createElement("div", {}, "text content");
+                    }
+                  "#,
             None,
             None,
         ),
         (
             r#"
-			        module.exports = () => {
-			          function a () {}
-			          const b = function b () {}
-			          const c = function () {}
-			          const d = () => {}
-			          const obj = {
-			            a: function a () {},
-			            b: function b () {},
-			            c () {},
-			            d: () => {},
-			          }
+                    module.exports = () => {
+                      function a () {}
+                      const b = function b () {}
+                      const c = function () {}
+                      const d = () => {}
+                      const obj = {
+                        a: function a () {},
+                        b: function b () {},
+                        c () {},
+                        d: () => {},
+                      }
 
-			          return React.createElement("div", {}, "text content");
-			        }
-			      "#,
+                      return React.createElement("div", {}, "text content");
+                    }
+                  "#,
             None,
             None,
         ),
         (
             "
-			        export default class extends React.Component {
-			          render() {
-			            function a () {}
-			            const b = function b () {}
-			            const c = function () {}
-			            const d = () => {}
-			            const obj = {
-			              a: function a () {},
-			              b: function b () {},
-			              c () {},
-			              d: () => {},
-			            }
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        }
-			      ",
+                    export default class extends React.Component {
+                      render() {
+                        function a () {}
+                        const b = function b () {}
+                        const c = function () {}
+                        const d = () => {}
+                        const obj = {
+                          a: function a () {},
+                          b: function b () {},
+                          c () {},
+                          d: () => {},
+                        }
+                        return <div>Hello {this.props.name}</div>;
+                      }
+                    }
+                  ",
             None,
             None,
         ),
         (
             "
-			        export default class extends React.PureComponent {
-			          render() {
-			            return <Card />;
-			          }
-			        }
+                    export default class extends React.PureComponent {
+                      render() {
+                        return <Card />;
+                      }
+                    }
 
-			        const Card = (() => {
-			          return React.memo(({ }) => (
-			            <div />
-			          ));
-			        })();
-			      ",
+                    const Card = (() => {
+                      return React.memo(({ }) => (
+                        <div />
+                      ));
+                    })();
+                  ",
             None,
             None,
         ),
         (
             "
-			        const renderer = a => listItem => (
-			          <div>{a} {listItem}</div>
-			        );
-			      ",
+                    const renderer = a => listItem => (
+                      <div>{a} {listItem}</div>
+                    );
+                  ",
             None,
             None,
         ),
         (
             "
-        	        const processData = (options?: { value: string }) => options?.value || 'no data';
+                    const processData = (options?: { value: string }) => options?.value || 'no data';
 
-        	        export const Component = observer(() => {
-        	          const data = processData({ value: 'data' });
-        	          return <div>{data}</div>;
-        	        });
+                    export const Component = observer(() => {
+                      const data = processData({ value: 'data' });
+                      return <div>{data}</div>;
+                    });
 
-        	        export const Component2 = observer(() => {
-        	          const data = processData();
-        	          return <div>{data}</div>;
-        	        });
-        	      ",
+                    export const Component2 = observer(() => {
+                      const data = processData();
+                      return <div>{data}</div>;
+                    });
+                  ",
             None,
             Some(
                 serde_json::json!({ "settings": { "react": { "componentWrapperFunctions": ["observer"] } } }),
@@ -2122,48 +2122,48 @@ fn test() {
         ),
         (
             "
-			        import React from 'react';
+                    import React from 'react';
 
-			        const Hello = React.createContext();
-			      ",
+                    const Hello = React.createContext();
+                  ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             "
-			        import * as React from 'react';
+                    import * as React from 'react';
 
-			        const Hello = React.createContext();
-			      ",
+                    const Hello = React.createContext();
+                  ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             "
-			        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-			        const Hello = createContext();
-			      ",
+                    const Hello = createContext();
+                  ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             "
-			        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-			        var Hello;
-			        Hello = createContext();
-			      ",
+                    var Hello;
+                    Hello = createContext();
+                  ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
         (
             "
-			        import { createContext } from 'react';
+                    import { createContext } from 'react';
 
-			        var Hello;
-			        Hello = React.createContext();
-			      ",
+                    var Hello;
+                    Hello = React.createContext();
+                  ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),

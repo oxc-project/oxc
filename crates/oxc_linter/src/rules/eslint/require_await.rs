@@ -235,24 +235,24 @@ fn test() {
         "async function foo() { for await (x of xs); }",
         "await foo()",
         "
-        	                for await (let num of asyncIterable) {
-        	                    console.log(num);
-        	                }
-        	            ",
+                            for await (let num of asyncIterable) {
+                                console.log(num);
+                            }
+                        ",
         "async function* run() { yield * anotherAsyncGenerator() }",
         "async function* run() {
-        	                await new Promise(resolve => setTimeout(resolve, 100));
-        	                yield 'Hello';
-        	                console.log('World');
-        	            }
-        	            ",
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            yield 'Hello';
+                            console.log('World');
+                        }
+                        ",
         "
         async function foo() {
             {
                 await doSomething()
             }
         }
-        	            ",
+                        ",
         "async function* run() { }",
         "const foo = async function *(){}",
         r#"const foo = async function *(){ console.log("bar") }"#,

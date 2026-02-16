@@ -101,9 +101,9 @@ fn test() {
         ("ReactDOM.render(<div />, document.body);", None),
         (
             "
-        	        let node;
-        	        ReactDOM.render(<div ref={ref => node = ref}/>, document.body);
-        	      ",
+                    let node;
+                    ReactDOM.render(<div ref={ref => node = ref}/>, document.body);
+                  ",
             None,
         ),
         ("ReactDOM.render(<div ref={ref => this.node = ref}/>, document.body);", None),
@@ -122,18 +122,18 @@ fn test() {
         ("var Hello = ReactDOM.render(<div />, document.body);", None),
         (
             "
-        	        var o = {
-        	          inst: ReactDOM.render(<div />, document.body)
-        	        };
-        	      ",
+                    var o = {
+                      inst: ReactDOM.render(<div />, document.body)
+                    };
+                  ",
             None,
         ),
         (
             "
-        	        function render () {
-        	          return ReactDOM.render(<div />, document.body)
-        	        }
-        	      ",
+                    function render () {
+                      return ReactDOM.render(<div />, document.body)
+                    }
+                  ",
             None,
         ),
         ("var render = (a, b) => ReactDOM.render(a, b)", None),
