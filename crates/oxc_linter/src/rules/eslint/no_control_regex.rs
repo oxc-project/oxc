@@ -169,74 +169,67 @@ mod tests {
     use super::*;
     use crate::tester::Tester;
 
-    #[test] //
+    #[test]
     fn test_hex_literals() {
-        Tester::new(
-            NoControlRegex::NAME,
-            NoControlRegex::PLUGIN,
-            vec![
-                "x1f",                 // not a control sequence
-                r"new RegExp('\x20')", // control sequence in valid range
-                r"new RegExp('\xff')",
-                r"let r = /\xff/",
-            ],
-            vec![r"new RegExp('\x00')", r"/\x00/", r"new RegExp('\x1f')", r"/\x1f/"],
-        )
-        .test();
+        let pass = vec![
+            "x1f",                 // not a control sequence
+            r"new RegExp('\x20')", // control sequence in valid range
+            r"new RegExp('\xff')",
+            r"let r = /\xff/",
+        ];
+
+        let fail = vec![r"new RegExp('\x00')", r"/\x00/", r"new RegExp('\x1f')", r"/\x1f/"];
+        Tester::new(NoControlRegex::NAME, NoControlRegex::PLUGIN, pass, fail).test();
     }
 
     #[test]
     fn test_unicode_literals() {
-        Tester::new(
-            NoControlRegex::NAME,
-            NoControlRegex::PLUGIN,
-            vec![
-                r"u00",    // not a control sequence
-                r"\u00ff", // in valid range
-                // multi byte unicode ctl
-                r"var re = /^([a-zªµºß-öø-ÿāăąćĉċčďđēĕėęěĝğġģĥħĩīĭįıĳĵķ-ĸĺļľŀłńņň-ŉŋōŏőœŕŗřśŝşšţťŧũūŭůűųŵŷźżž-ƀƃƅƈƌ-ƍƒƕƙ-ƛƞơƣƥƨƪ-ƫƭưƴƶƹ-ƺƽ-ƿǆǉǌǎǐǒǔǖǘǚǜ-ǝǟǡǣǥǧǩǫǭǯ-ǰǳǵǹǻǽǿȁȃȅȇȉȋȍȏȑȓȕȗșțȝȟȡȣȥȧȩȫȭȯȱȳ-ȹȼȿ-ɀɂɇɉɋɍɏ-ʓʕ-ʯͱͳͷͻ-ͽΐά-ώϐ-ϑϕ-ϗϙϛϝϟϡϣϥϧϩϫϭϯ-ϳϵϸϻ-ϼа-џѡѣѥѧѩѫѭѯѱѳѵѷѹѻѽѿҁҋҍҏґғҕҗҙқҝҟҡңҥҧҩҫҭүұҳҵҷҹһҽҿӂӄӆӈӊӌӎ-ӏӑӓӕӗәӛӝӟӡӣӥӧөӫӭӯӱӳӵӷӹӻӽӿԁԃԅԇԉԋԍԏԑԓԕԗԙԛԝԟԡԣա-ևᴀ-ᴫᵢ-ᵷᵹ-ᶚḁḃḅḇḉḋḍḏḑḓḕḗḙḛḝḟḡḣḥḧḩḫḭḯḱḳḵḷḹḻḽḿṁṃṅṇṉṋṍṏṑṓṕṗṙṛṝṟṡṣṥṧṩṫṭṯṱṳṵṷṹṻṽṿẁẃẅẇẉẋẍẏẑẓẕ-ẝẟạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹỻỽỿ-ἇἐ-ἕἠ-ἧἰ-ἷὀ-ὅὐ-ὗὠ-ὧὰώᾀ-ᾇᾐ-ᾗᾠ-ᾧᾰ-ᾴᾶ-ᾷιῂ-ῄῆ-ῇῐΐῖ-ῗῠ-ῧῲ-ῴῶ-ῷⁱⁿℊℎ-ℏℓℯℴℹℼ-ℽⅆ-ⅉⅎↄⰰ-ⱞⱡⱥ-ⱦⱨⱪⱬⱱⱳ-ⱴⱶ-ⱼⲁⲃⲅⲇⲉⲋⲍⲏⲑⲓⲕⲗⲙⲛⲝⲟⲡⲣⲥⲧⲩⲫⲭⲯⲱⲳⲵⲷⲹⲻⲽⲿⳁⳃⳅⳇⳉⳋⳍⳏⳑⳓⳕⳗⳙⳛⳝⳟⳡⳣ-ⳤⴀ-ⴥꙁꙃꙅꙇꙉꙋꙍꙏꙑꙓꙕꙗꙙꙛꙝꙟꙣꙥꙧꙩꙫꙭꚁꚃꚅꚇꚉꚋꚍꚏꚑꚓꚕꚗꜣꜥꜧꜩꜫꜭꜯ-ꜱꜳꜵꜷꜹꜻꜽꜿꝁꝃꝅꝇꝉꝋꝍꝏꝑꝓꝕꝗꝙꝛꝝꝟꝡꝣꝥꝧꝩꝫꝭꝯꝱ-ꝸꝺꝼꝿꞁꞃꞅꞇꞌﬀ-ﬆﬓ-ﬗａ-ｚ]|\ud801[\udc28-\udc4f]|\ud835[\udc1a-\udc33\udc4e-\udc54\udc56-\udc67\udc82-\udc9b\udcb6-\udcb9\udcbb\udcbd-\udcc3\udcc5-\udccf\udcea-\udd03\udd1e-\udd37\udd52-\udd6b\udd86-\udd9f\uddba-\uddd3\uddee-\ude07\ude22-\ude3b\ude56-\ude6f\ude8a-\udea5\udec2-\udeda\udedc-\udee1\udefc-\udf14\udf16-\udf1b\udf36-\udf4e\udf50-\udf55\udf70-\udf88\udf8a-\udf8f\udfaa-\udfc2\udfc4-\udfc9\udfcb])$/;",
-            ],
-            vec![
-                // regex literal
-                r"let r = /\u0000/",
-                r"let r = /\u000c/",
-                r"let r = /\u000C/",
-                r"let r = /\u001f/",
-                // invalid utf ctl as literal string
-                r"let r = new RegExp('\u0000');",
-                r"let r = new RegExp('\u000c');",
-                r"let r = new RegExp('\u000C');",
-                r"let r = new RegExp('\u001f');",
-                // invalid utf ctl pattern
-                r"let r = new RegExp('\\u0000');",
-                r"let r = new RegExp('\\u000c');",
-                r"let r = new RegExp('\\u000C');",
-                r"let r = new RegExp('\\u001f');",
-            ],
-        )
-        .test();
+        let pass = vec![
+            r"u00",    // not a control sequence
+            r"\u00ff", // in valid range
+            // multi byte unicode ctl
+            r"var re = /^([a-zªµºß-öø-ÿāăąćĉċčďđēĕėęěĝğġģĥħĩīĭįıĳĵķ-ĸĺļľŀłńņň-ŉŋōŏőœŕŗřśŝşšţťŧũūŭůűųŵŷźżž-ƀƃƅƈƌ-ƍƒƕƙ-ƛƞơƣƥƨƪ-ƫƭưƴƶƹ-ƺƽ-ƿǆǉǌǎǐǒǔǖǘǚǜ-ǝǟǡǣǥǧǩǫǭǯ-ǰǳǵǹǻǽǿȁȃȅȇȉȋȍȏȑȓȕȗșțȝȟȡȣȥȧȩȫȭȯȱȳ-ȹȼȿ-ɀɂɇɉɋɍɏ-ʓʕ-ʯͱͳͷͻ-ͽΐά-ώϐ-ϑϕ-ϗϙϛϝϟϡϣϥϧϩϫϭϯ-ϳϵϸϻ-ϼа-џѡѣѥѧѩѫѭѯѱѳѵѷѹѻѽѿҁҋҍҏґғҕҗҙқҝҟҡңҥҧҩҫҭүұҳҵҷҹһҽҿӂӄӆӈӊӌӎ-ӏӑӓӕӗәӛӝӟӡӣӥӧөӫӭӯӱӳӵӷӹӻӽӿԁԃԅԇԉԋԍԏԑԓԕԗԙԛԝԟԡԣա-ևᴀ-ᴫᵢ-ᵷᵹ-ᶚḁḃḅḇḉḋḍḏḑḓḕḗḙḛḝḟḡḣḥḧḩḫḭḯḱḳḵḷḹḻḽḿṁṃṅṇṉṋṍṏṑṓṕṗṙṛṝṟṡṣṥṧṩṫṭṯṱṳṵṷṹṻṽṿẁẃẅẇẉẋẍẏẑẓẕ-ẝẟạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹỻỽỿ-ἇἐ-ἕἠ-ἧἰ-ἷὀ-ὅὐ-ὗὠ-ὧὰώᾀ-ᾇᾐ-ᾗᾠ-ᾧᾰ-ᾴᾶ-ᾷιῂ-ῄῆ-ῇῐΐῖ-ῗῠ-ῧῲ-ῴῶ-ῷⁱⁿℊℎ-ℏℓℯℴℹℼ-ℽⅆ-ⅉⅎↄⰰ-ⱞⱡⱥ-ⱦⱨⱪⱬⱱⱳ-ⱴⱶ-ⱼⲁⲃⲅⲇⲉⲋⲍⲏⲑⲓⲕⲗⲙⲛⲝⲟⲡⲣⲥⲧⲩⲫⲭⲯⲱⲳⲵⲷⲹⲻⲽⲿⳁⳃⳅⳇⳉⳋⳍⳏⳑⳓⳕⳗⳙⳛⳝⳟⳡⳣ-ⳤⴀ-ⴥꙁꙃꙅꙇꙉꙋꙍꙏꙑꙓꙕꙗꙙꙛꙝꙟꙣꙥꙧꙩꙫꙭꚁꚃꚅꚇꚉꚋꚍꚏꚑꚓꚕꚗꜣꜥꜧꜩꜫꜭꜯ-ꜱꜳꜵꜷꜹꜻꜽꜿꝁꝃꝅꝇꝉꝋꝍꝏꝑꝓꝕꝗꝙꝛꝝꝟꝡꝣꝥꝧꝩꝫꝭꝯꝱ-ꝸꝺꝼꝿꞁꞃꞅꞇꞌﬀ-ﬆﬓ-ﬗａ-ｚ]|\ud801[\udc28-\udc4f]|\ud835[\udc1a-\udc33\udc4e-\udc54\udc56-\udc67\udc82-\udc9b\udcb6-\udcb9\udcbb\udcbd-\udcc3\udcc5-\udccf\udcea-\udd03\udd1e-\udd37\udd52-\udd6b\udd86-\udd9f\uddba-\uddd3\uddee-\ude07\ude22-\ude3b\ude56-\ude6f\ude8a-\udea5\udec2-\udeda\udedc-\udee1\udefc-\udf14\udf16-\udf1b\udf36-\udf4e\udf50-\udf55\udf70-\udf88\udf8a-\udf8f\udfaa-\udfc2\udfc4-\udfc9\udfcb])$/;",
+        ];
+
+        let fail = vec![
+            // regex literal
+            r"let r = /\u0000/",
+            r"let r = /\u000c/",
+            r"let r = /\u000C/",
+            r"let r = /\u001f/",
+            // invalid utf ctl as literal string
+            r"let r = new RegExp('\u0000');",
+            r"let r = new RegExp('\u000c');",
+            r"let r = new RegExp('\u000C');",
+            r"let r = new RegExp('\u001f');",
+            // invalid utf ctl pattern
+            r"let r = new RegExp('\\u0000');",
+            r"let r = new RegExp('\\u000c');",
+            r"let r = new RegExp('\\u000C');",
+            r"let r = new RegExp('\\u001f');",
+        ];
+
+        Tester::new(NoControlRegex::NAME, NoControlRegex::PLUGIN, pass, fail).test();
     }
 
     #[test]
     fn test_unicode_brackets() {
-        Tester::new(
-            NoControlRegex::NAME,
-            NoControlRegex::PLUGIN,
-            vec![
-                r"let r = /\u{0}/", // no unicode flag, this is valid
-                r"let r = /\u{ff}/u",
-                r"let r = /\u{00ff}/u",
-                r"let r = new RegExp('\\u{1F}', flags);", // flags are unknown
-            ],
-            vec![
-                r"let r = /\u{0}/u",
-                r"let r = new RegExp('\\u{0}', 'u');",
-                r"let r = /\u{c}/u",
-                r"let r = /\u{1F}/u",
-                r"let r = new RegExp('\\u{1F}', 'u');", // flags are known & contain u
-            ],
-        )
-        .test();
+        let pass = vec![
+            r"let r = /\u{0}/", // no unicode flag, this is valid
+            r"let r = /\u{ff}/u",
+            r"let r = /\u{00ff}/u",
+            r"let r = new RegExp('\\u{1F}', flags);", // flags are unknown
+        ];
+
+        let fail = vec![
+            r"let r = /\u{0}/u",
+            r"let r = new RegExp('\\u{0}', 'u');",
+            r"let r = /\u{c}/u",
+            r"let r = /\u{1F}/u",
+            r"let r = new RegExp('\\u{1F}', 'u');", // flags are known & contain u
+        ];
+
+        Tester::new(NoControlRegex::NAME, NoControlRegex::PLUGIN, pass, fail).test();
     }
 
     #[test]
@@ -247,12 +240,14 @@ mod tests {
             r"const r = /([a-z])\1/;",
             r"const r = /\1([a-z])/;",
         ];
+
         let fail = vec![
             r"const r = /\0/;",
             r"const r = /[a-z]\1/;",
             r"const r = /([a-z])\2/;",
             r"const r = /([a-z])\0/;",
         ];
+
         Tester::new(NoControlRegex::NAME, NoControlRegex::PLUGIN, pass, fail)
             .with_snapshot_suffix("capture-group-indexing")
             .test_and_snapshot();
@@ -260,79 +255,77 @@ mod tests {
 
     #[test]
     fn test() {
+        let pass = vec![
+            "var regex = /x1f/;",
+            r"var regex = /\\x1f/",
+            "var regex = new RegExp(\"x1f\");",
+            "var regex = RegExp(\"x1f\");",
+            "new RegExp('[')",
+            "RegExp('[')",
+            "new (function foo(){})('\\x1f')",
+            r"/\u{20}/u",
+            r"/\u{1F}/",
+            r"/\u{1F}/g",
+            r"new RegExp('\\u{20}', 'u')",
+            r"new RegExp('\\u{20}', `u`)",
+            r"new RegExp('\\u{1F}')",
+            r"new RegExp(`\\u{1F}`)",
+            r"new RegExp('\\u{1F}', 'g')",
+            r"new RegExp('\\u{1F}', flags)", // unknown flags, we assume no 'u'
+            // https://github.com/oxc-project/oxc/issues/6136
+            r"/---\n([\s\S]+?)\n---/",
+            r"/import \{((?:.|\n)*)\} from '@romejs\/js-ast';/",
+            r"/^\t+/",
+            r"/\n/g",
+            r"/\r\n|\r|\n/",
+            r"/[\n\r\p{Z}\p{P}]/u",
+            r"/[\n\t]+/g",
+            r"/^expected `string`\.\n {2}in Foo \(at (.*)[/\\]debug[/\\]test[/\\]browser[/\\]debug\.test\.js:[0-9]+\)$/",
+            r"/\f/",
+            r"/\v/",
+        ];
+
+        let fail = vec![
+            r"var regex = /\x1f/",
+            r"var regex = /\\\x1f\\x1e/",
+            r"var regex = /\\\x1fFOO\\x00/",
+            r"var regex = /FOO\\\x1fFOO\\x1f/",
+            "var regex = new RegExp('\\x1f\\x1e')",
+            "var regex = new RegExp('\\x1fFOO\\x00')",
+            "var regex = new RegExp('FOO\\x1fFOO\\x1f')",
+            "var regex = RegExp('\\x1f')",
+            "var regex = /(?<a>\\x1f)/",
+            r"var regex = /(?<\u{1d49c}>.)\x1f/",
+            r"new RegExp('\\u{1111}*\\x1F', 'u')",
+            r"/\u{1F}/u",
+            r"/\u{1F}/ugi",
+            r"new RegExp('\\u{1F}', 'u')",
+            r"new RegExp(`\\u{1F}`, 'u')",
+            r"new RegExp('\\u{1F}', `u`)",
+            r"new RegExp('\\u{1F}', 'ugi')",
+            // https://github.com/oxc-project/oxc/issues/6136
+            r"/\u{0a}/u",
+            r"/\x0a/u",
+            r"/\u{0d}/u",
+            r"/\x0d/u",
+            r"/\u{09}/u",
+            r"/\x09/u",
+            r"/\0\1\2/",
+            r"/\x1f\2/",
+            r"/\x1f\0/",
+            r"/\x1f\0\2/",
+            // globalThis
+            "var regex = new globalThis.RegExp('\\x1f\\x1e')",
+            "var regex = globalThis.RegExp('\\x1f')",
+            // inner expressions (parentheses and type expressions)
+            "RegExp(('\\x1f'))",
+            "new RegExp(('\\x1f'))",
+            "new RegExp((('\\x1f')))",
+            "new RegExp('\\x1f' as string)",
+        ];
+
         // test cases taken from eslint. See:
         // https://github.com/eslint/eslint/blob/v9.9.1/tests/lib/rules/no-control-regex.js
-        Tester::new(
-            NoControlRegex::NAME,
-            NoControlRegex::PLUGIN,
-            vec![
-                "var regex = /x1f/;",
-                r"var regex = /\\x1f/",
-                "var regex = new RegExp(\"x1f\");",
-                "var regex = RegExp(\"x1f\");",
-                "new RegExp('[')",
-                "RegExp('[')",
-                "new (function foo(){})('\\x1f')",
-                r"/\u{20}/u",
-                r"/\u{1F}/",
-                r"/\u{1F}/g",
-                r"new RegExp('\\u{20}', 'u')",
-                r"new RegExp('\\u{20}', `u`)",
-                r"new RegExp('\\u{1F}')",
-                r"new RegExp(`\\u{1F}`)",
-                r"new RegExp('\\u{1F}', 'g')",
-                r"new RegExp('\\u{1F}', flags)", // unknown flags, we assume no 'u'
-                // https://github.com/oxc-project/oxc/issues/6136
-                r"/---\n([\s\S]+?)\n---/",
-                r"/import \{((?:.|\n)*)\} from '@romejs\/js-ast';/",
-                r"/^\t+/",
-                r"/\n/g",
-                r"/\r\n|\r|\n/",
-                r"/[\n\r\p{Z}\p{P}]/u",
-                r"/[\n\t]+/g",
-                r"/^expected `string`\.\n {2}in Foo \(at (.*)[/\\]debug[/\\]test[/\\]browser[/\\]debug\.test\.js:[0-9]+\)$/",
-                r"/\f/",
-                r"/\v/",
-            ],
-            vec![
-                r"var regex = /\x1f/",
-                r"var regex = /\\\x1f\\x1e/",
-                r"var regex = /\\\x1fFOO\\x00/",
-                r"var regex = /FOO\\\x1fFOO\\x1f/",
-                "var regex = new RegExp('\\x1f\\x1e')",
-                "var regex = new RegExp('\\x1fFOO\\x00')",
-                "var regex = new RegExp('FOO\\x1fFOO\\x1f')",
-                "var regex = RegExp('\\x1f')",
-                "var regex = /(?<a>\\x1f)/",
-                r"var regex = /(?<\u{1d49c}>.)\x1f/",
-                r"new RegExp('\\u{1111}*\\x1F', 'u')",
-                r"/\u{1F}/u",
-                r"/\u{1F}/ugi",
-                r"new RegExp('\\u{1F}', 'u')",
-                r"new RegExp(`\\u{1F}`, 'u')",
-                r"new RegExp('\\u{1F}', `u`)",
-                r"new RegExp('\\u{1F}', 'ugi')",
-                // https://github.com/oxc-project/oxc/issues/6136
-                r"/\u{0a}/u",
-                r"/\x0a/u",
-                r"/\u{0d}/u",
-                r"/\x0d/u",
-                r"/\u{09}/u",
-                r"/\x09/u",
-                r"/\0\1\2/",
-                r"/\x1f\2/",
-                r"/\x1f\0/",
-                r"/\x1f\0\2/",
-                // globalThis
-                "var regex = new globalThis.RegExp('\\x1f\\x1e')",
-                "var regex = globalThis.RegExp('\\x1f')",
-                // inner expressions (parentheses and type expressions)
-                "RegExp(('\\x1f'))",
-                "new RegExp(('\\x1f'))",
-                "new RegExp((('\\x1f')))",
-                "new RegExp('\\x1f' as string)",
-            ],
-        )
-        .test_and_snapshot();
+        Tester::new(NoControlRegex::NAME, NoControlRegex::PLUGIN, pass, fail).test_and_snapshot();
     }
 }
