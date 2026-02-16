@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- ebb80b3 ast: Add `node_id` field to all AST struct nodes (#18138) (Boshen)
+
 ## [0.111.0] - 2026-01-26
 
 ### 🚀 Features
