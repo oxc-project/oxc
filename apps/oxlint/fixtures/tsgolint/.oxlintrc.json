@@ -40,6 +40,7 @@
     "typescript/prefer-promise-reject-errors": "error",
     "typescript/prefer-readonly": "error",
     "typescript/prefer-readonly-parameter-types": "error",
+    "typescript/prefer-regexp-exec": "error",
     "typescript/prefer-reduce-type-parameter": "error",
     "typescript/prefer-return-this-type": "error",
     "typescript/promise-function-async": "error",

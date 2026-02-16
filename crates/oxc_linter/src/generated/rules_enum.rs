@@ -521,6 +521,7 @@ pub use crate::rules::typescript::prefer_promise_reject_errors::PreferPromiseRej
 pub use crate::rules::typescript::prefer_readonly::PreferReadonly as TypescriptPreferReadonly;
 pub use crate::rules::typescript::prefer_readonly_parameter_types::PreferReadonlyParameterTypes as TypescriptPreferReadonlyParameterTypes;
 pub use crate::rules::typescript::prefer_reduce_type_parameter::PreferReduceTypeParameter as TypescriptPreferReduceTypeParameter;
+pub use crate::rules::typescript::prefer_regexp_exec::PreferRegexpExec as TypescriptPreferRegexpExec;
 pub use crate::rules::typescript::prefer_return_this_type::PreferReturnThisType as TypescriptPreferReturnThisType;
 pub use crate::rules::typescript::prefer_ts_expect_error::PreferTsExpectError as TypescriptPreferTsExpectError;
 pub use crate::rules::typescript::promise_function_async::PromiseFunctionAsync as TypescriptPromiseFunctionAsync;
@@ -989,6 +990,7 @@ pub enum RuleEnum {
     TypescriptPreferReadonly(TypescriptPreferReadonly),
     TypescriptPreferReadonlyParameterTypes(TypescriptPreferReadonlyParameterTypes),
     TypescriptPreferReduceTypeParameter(TypescriptPreferReduceTypeParameter),
+    TypescriptPreferRegexpExec(TypescriptPreferRegexpExec),
     TypescriptPreferReturnThisType(TypescriptPreferReturnThisType),
     TypescriptPreferTsExpectError(TypescriptPreferTsExpectError),
     TypescriptPromiseFunctionAsync(TypescriptPromiseFunctionAsync),
@@ -1709,8 +1711,8 @@ const TYPESCRIPT_PREFER_READONLY_ID: usize = TYPESCRIPT_PREFER_PROMISE_REJECT_ER
 const TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID: usize = TYPESCRIPT_PREFER_READONLY_ID + 1usize;
 const TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID: usize =
     TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID + 1usize;
-const TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID: usize =
-    TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID + 1usize;
+const TYPESCRIPT_PREFER_REGEXP_EXEC_ID: usize = TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID + 1usize;
+const TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID: usize = TYPESCRIPT_PREFER_REGEXP_EXEC_ID + 1usize;
 const TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID: usize = TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID + 1usize;
 const TYPESCRIPT_PROMISE_FUNCTION_ASYNC_ID: usize = TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID + 1usize;
 const TYPESCRIPT_RELATED_GETTER_SETTER_PAIRS_ID: usize =
@@ -2493,6 +2495,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID
             }
+            Self::TypescriptPreferRegexpExec(_) => TYPESCRIPT_PREFER_REGEXP_EXEC_ID,
             Self::TypescriptPreferReturnThisType(_) => TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID,
             Self::TypescriptPreferTsExpectError(_) => TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID,
             Self::TypescriptPromiseFunctionAsync(_) => TYPESCRIPT_PROMISE_FUNCTION_ASYNC_ID,
@@ -3278,6 +3281,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::NAME
             }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::NAME,
             Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::NAME,
             Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::NAME,
             Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::NAME,
@@ -4069,6 +4073,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::CATEGORY
             }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::CATEGORY,
             Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::CATEGORY,
             Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::CATEGORY,
             Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::CATEGORY,
@@ -4875,6 +4880,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::FIX
             }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::FIX,
             Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::FIX,
             Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::FIX,
             Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::FIX,
@@ -5721,6 +5727,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::documentation()
             }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::documentation(),
             Self::TypescriptPreferReturnThisType(_) => {
                 TypescriptPreferReturnThisType::documentation()
             }
@@ -7090,6 +7097,10 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::config_schema(generator)
                     .or_else(|| TypescriptPreferReduceTypeParameter::schema(generator))
+            }
+            Self::TypescriptPreferRegexpExec(_) => {
+                TypescriptPreferRegexpExec::config_schema(generator)
+                    .or_else(|| TypescriptPreferRegexpExec::schema(generator))
             }
             Self::TypescriptPreferReturnThisType(_) => {
                 TypescriptPreferReturnThisType::config_schema(generator)
@@ -8511,6 +8522,7 @@ impl RuleEnum {
             Self::TypescriptPreferReadonly(_) => "typescript",
             Self::TypescriptPreferReadonlyParameterTypes(_) => "typescript",
             Self::TypescriptPreferReduceTypeParameter(_) => "typescript",
+            Self::TypescriptPreferRegexpExec(_) => "typescript",
             Self::TypescriptPreferReturnThisType(_) => "typescript",
             Self::TypescriptPreferTsExpectError(_) => "typescript",
             Self::TypescriptPromiseFunctionAsync(_) => "typescript",
@@ -9839,6 +9851,9 @@ impl RuleEnum {
                     TypescriptPreferReduceTypeParameter::from_configuration(value)?,
                 ))
             }
+            Self::TypescriptPreferRegexpExec(_) => Ok(Self::TypescriptPreferRegexpExec(
+                TypescriptPreferRegexpExec::from_configuration(value)?,
+            )),
             Self::TypescriptPreferReturnThisType(_) => Ok(Self::TypescriptPreferReturnThisType(
                 TypescriptPreferReturnThisType::from_configuration(value)?,
             )),
@@ -11392,6 +11407,7 @@ impl RuleEnum {
             Self::TypescriptPreferReadonly(rule) => rule.to_configuration(),
             Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.to_configuration(),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.to_configuration(),
+            Self::TypescriptPreferRegexpExec(rule) => rule.to_configuration(),
             Self::TypescriptPreferReturnThisType(rule) => rule.to_configuration(),
             Self::TypescriptPreferTsExpectError(rule) => rule.to_configuration(),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.to_configuration(),
@@ -12081,6 +12097,7 @@ impl RuleEnum {
             Self::TypescriptPreferReadonly(rule) => rule.run(node, ctx),
             Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.run(node, ctx),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.run(node, ctx),
+            Self::TypescriptPreferRegexpExec(rule) => rule.run(node, ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.run(node, ctx),
             Self::TypescriptPreferTsExpectError(rule) => rule.run(node, ctx),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.run(node, ctx),
@@ -12768,6 +12785,7 @@ impl RuleEnum {
             Self::TypescriptPreferReadonly(rule) => rule.run_once(ctx),
             Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.run_once(ctx),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.run_once(ctx),
+            Self::TypescriptPreferRegexpExec(rule) => rule.run_once(ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.run_once(ctx),
             Self::TypescriptPreferTsExpectError(rule) => rule.run_once(ctx),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.run_once(ctx),
@@ -13509,6 +13527,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::TypescriptPreferRegexpExec(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptPreferTsExpectError(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14234,6 +14253,7 @@ impl RuleEnum {
             Self::TypescriptPreferReadonly(rule) => rule.should_run(ctx),
             Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.should_run(ctx),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.should_run(ctx),
+            Self::TypescriptPreferRegexpExec(rule) => rule.should_run(ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.should_run(ctx),
             Self::TypescriptPreferTsExpectError(rule) => rule.should_run(ctx),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.should_run(ctx),
@@ -15041,6 +15061,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::IS_TSGOLINT_RULE
             }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::IS_TSGOLINT_RULE,
             Self::TypescriptPreferReturnThisType(_) => {
                 TypescriptPreferReturnThisType::IS_TSGOLINT_RULE
             }
@@ -15971,6 +15992,7 @@ impl RuleEnum {
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::HAS_CONFIG
             }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::HAS_CONFIG,
             Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::HAS_CONFIG,
             Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::HAS_CONFIG,
             Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::HAS_CONFIG,
@@ -16738,6 +16760,7 @@ impl RuleEnum {
             Self::TypescriptPreferReadonly(rule) => rule.types_info(),
             Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.types_info(),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.types_info(),
+            Self::TypescriptPreferRegexpExec(rule) => rule.types_info(),
             Self::TypescriptPreferReturnThisType(rule) => rule.types_info(),
             Self::TypescriptPreferTsExpectError(rule) => rule.types_info(),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.types_info(),
@@ -17425,6 +17448,7 @@ impl RuleEnum {
             Self::TypescriptPreferReadonly(rule) => rule.run_info(),
             Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.run_info(),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.run_info(),
+            Self::TypescriptPreferRegexpExec(rule) => rule.run_info(),
             Self::TypescriptPreferReturnThisType(rule) => rule.run_info(),
             Self::TypescriptPreferTsExpectError(rule) => rule.run_info(),
             Self::TypescriptPromiseFunctionAsync(rule) => rule.run_info(),
@@ -18184,6 +18208,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptPreferReduceTypeParameter(
             TypescriptPreferReduceTypeParameter::default(),
         ),
+        RuleEnum::TypescriptPreferRegexpExec(TypescriptPreferRegexpExec::default()),
         RuleEnum::TypescriptPreferReturnThisType(TypescriptPreferReturnThisType::default()),
         RuleEnum::TypescriptPreferTsExpectError(TypescriptPreferTsExpectError::default()),
         RuleEnum::TypescriptPromiseFunctionAsync(TypescriptPromiseFunctionAsync::default()),
