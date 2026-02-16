@@ -58,7 +58,8 @@ declare_oxc_lint!(
     /// ```
     CheckPropertyNames,
     jsdoc,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for CheckPropertyNames {

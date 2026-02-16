@@ -96,6 +96,14 @@ impl<'a, 'b> SimpleArgument<'a, 'b> {
                     Self::from(&computed_expression.expression).is_simple_impl(depth)
                         && Self::from(&computed_expression.object).is_simple_impl(depth)
                 }
+                // In Prettier's default `typescript` parser (typescript-estree) AST,
+                // `this.#v` is a `MemberExpression` with a `PrivateIdentifier` property.
+                // In oxc's AST, it's a separate type.
+                // The private field name is always simple, so only check the object.
+                // https://github.com/prettier/prettier/blob/093745f0ec429d3db47c1edd823357e0ef24e226/src/language-js/utilities/index.js#L643-L648
+                Expression::PrivateFieldExpression(private_field) => {
+                    Self::from(&private_field.object).is_simple_impl(depth)
+                }
                 Expression::NewExpression(expr) => {
                     Self::is_simple_call_like(&expr.callee, &expr.arguments, depth)
                 }

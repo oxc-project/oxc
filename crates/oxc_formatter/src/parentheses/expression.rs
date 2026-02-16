@@ -232,9 +232,21 @@ impl NeedsParentheses<'_> for AstNode<'_, StringLiteral<'_>> {
             return false;
         }
 
+        // To avoid becoming a directive, wrap in parens only when the expression
+        // statement is directly inside a Program, FunctionBody, or BlockStatement.
+        //
+        // `label: "foo"` -> no parens needed (grandparent is LabeledStatement)
+        // `"foo";` -> parens needed (grandparent is Program)
+        // `() => "foo"` -> no parens needed (arrow function body)
+        //
+        // https://github.com/prettier/prettier/blob/00146ea15c30e16ad6526893c735e35683192efc/src/language-js/parentheses/needs-parentheses.js#L594-L609
         if let AstNodes::ExpressionStatement(stmt) = self.parent() {
             // `() => "foo"`
             !stmt.is_arrow_function_body()
+                && matches!(
+                    stmt.parent(),
+                    AstNodes::Program(_) | AstNodes::FunctionBody(_) | AstNodes::BlockStatement(_)
+                )
         } else {
             false
         }

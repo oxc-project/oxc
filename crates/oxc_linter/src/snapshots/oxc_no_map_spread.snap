@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient

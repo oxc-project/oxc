@@ -133,7 +133,7 @@ function destroyWorkspaceWrapper(workspace: string): undefined {
  * Lazy-loads the js_config module on first call.
  * Uses native Node.js TypeScript support to import config files.
  *
- * @param paths - Array of absolute paths to oxlint.config.ts files
+ * @param paths - Array of absolute paths to JavaScript/TypeScript config files
  * @returns JSON-stringified result with all configs or error
  */
 function loadJsConfigsWrapper(paths: string[]): Promise<string> {
@@ -148,6 +148,21 @@ function loadJsConfigsWrapper(paths: string[]): Promise<string> {
 
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
+
+// Node.js sets non-TTY `stdio` to non-blocking mode, which causes "Resource temporarily unavailable" errors
+// in language server when passing a lot of data via stdin/stdout.
+// https://github.com/oxc-project/oxc/issues/19265
+// See also issue related to this workaround in `oxfmt` CLI:
+// https://github.com/oxc-project/oxc/issues/17939
+//
+// As a workaround, if used with pipe, set blocking mode before calling NAPI bindings.
+// See: https://github.com/napi-rs/napi-rs/issues/1630
+if (!process.stdout.isTTY) {
+  // @ts-expect-error: `_handle` is an internal API
+  process.stdin._handle?.setBlocking?.(true);
+  // @ts-expect-error: `_handle` is an internal API
+  process.stdout._handle?.setBlocking?.(true);
+}
 
 // Call Rust, passing callbacks and CLI arguments
 const success = await lint(

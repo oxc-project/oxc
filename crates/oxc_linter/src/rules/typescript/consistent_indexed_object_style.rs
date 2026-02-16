@@ -1,7 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{TSSignature, TSTupleElement, TSType, TSTypeName},
-    match_ts_type,
+    ast::{TSMappedType, TSSignature, TSType, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -294,7 +293,6 @@ impl Rule for ConsistentIndexedObjectStyle {
                     }
                 }
                 AstKind::TSMappedType(mapped) => {
-                    let key_name = &mapped.key;
                     let constraint = &mapped.constraint;
 
                     // Bare `keyof` mapped types preserve structure and can't be converted
@@ -302,9 +300,14 @@ impl Rule for ConsistentIndexedObjectStyle {
                         return;
                     }
 
+                    // Key remapping (`as`) cannot be represented with `Record`.
+                    if mapped.name_type.is_some() {
+                        return;
+                    }
+
                     // Can't convert if value type references the key parameter
                     if let Some(type_annotation) = &mapped.type_annotation
-                        && references_identifier(type_annotation, key_name.name.as_str())
+                        && mapped_type_value_references_key(mapped, type_annotation, ctx)
                     {
                         return;
                     }
@@ -421,60 +424,16 @@ fn is_bare_keyof(r#type: &TSType) -> bool {
         if matches!(op.operator, oxc_ast::ast::TSTypeOperatorOperator::Keyof))
 }
 
-fn references_identifier(type_: &TSType, name: &str) -> bool {
-    match type_ {
-        TSType::TSTypeReference(r) => {
-            if let TSTypeName::IdentifierReference(ide) = &r.type_name
-                && ide.name.as_str() == name
-            {
-                return true;
-            }
-            if let Some(type_args) = &r.type_arguments
-                && type_args.params.iter().any(|t| references_identifier(t, name))
-            {
-                return true;
-            }
-            false
-        }
-        TSType::TSUnionType(u) => u.types.iter().any(|t| references_identifier(t, name)),
-        TSType::TSIntersectionType(i) => i.types.iter().any(|t| references_identifier(t, name)),
-        TSType::TSConditionalType(c) => {
-            references_identifier(&c.check_type, name)
-                || references_identifier(&c.extends_type, name)
-                || references_identifier(&c.true_type, name)
-                || references_identifier(&c.false_type, name)
-        }
-        TSType::TSIndexedAccessType(i) => {
-            references_identifier(&i.object_type, name)
-                || references_identifier(&i.index_type, name)
-        }
-        TSType::TSArrayType(a) => references_identifier(&a.element_type, name),
-        TSType::TSTupleType(t) => t.element_types.iter().any(|e| match e {
-            TSTupleElement::TSOptionalType(opt) => {
-                references_identifier(&opt.type_annotation, name)
-            }
-            TSTupleElement::TSRestType(rest) => references_identifier(&rest.type_annotation, name),
-            match_ts_type!(TSTupleElement) => references_identifier(e.to_ts_type(), name),
-        }),
-        TSType::TSTypeLiteral(lit) => lit.members.iter().any(|m| {
-            if let TSSignature::TSIndexSignature(sig) = m {
-                references_identifier(&sig.type_annotation.type_annotation, name)
-            } else {
-                false
-            }
-        }),
-        TSType::TSFunctionType(f) => references_identifier(&f.return_type.type_annotation, name),
-        TSType::TSTypeOperatorType(op) => references_identifier(&op.type_annotation, name),
-        TSType::TSParenthesizedType(p) => references_identifier(&p.type_annotation, name),
-        TSType::TSNamedTupleMember(m) => match &m.element_type {
-            TSTupleElement::TSOptionalType(opt) => {
-                references_identifier(&opt.type_annotation, name)
-            }
-            TSTupleElement::TSRestType(rest) => references_identifier(&rest.type_annotation, name),
-            e @ match_ts_type!(TSTupleElement) => references_identifier(e.to_ts_type(), name),
-        },
-        _ => false,
-    }
+fn mapped_type_value_references_key(
+    mapped: &TSMappedType,
+    type_annotation: &TSType,
+    ctx: &LintContext,
+) -> bool {
+    let type_annotation_span = type_annotation.span();
+    ctx.symbol_references(mapped.key.symbol_id()).any(|reference| {
+        let reference_span = ctx.nodes().get_node(reference.node_id()).kind().span();
+        type_annotation_span.contains_inclusive(reference_span)
+    })
 }
 
 fn is_circular_reference(type_: &TSType, parent_name: &str, ctx: &LintContext) -> bool {
@@ -574,28 +533,28 @@ fn test() {
         ("interface Foo {}", None),
         (
             "
-			interface Foo {
-			  bar: string;
-			}
-			    ",
+            interface Foo {
+              bar: string;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo {
-			  bar: string;
-			  [key: string]: any;
-			}
-			    ",
+            interface Foo {
+              bar: string;
+              [key: string]: any;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [key: string]: any;
-			  bar: string;
-			}
-			    ",
+            interface Foo {
+              [key: string]: any;
+              bar: string;
+            }
+                ",
             None,
         ),
         ("type Foo = { [key: string]: string | Foo };", None),
@@ -604,248 +563,248 @@ fn test() {
         ("type Foo = { [key in string]: Foo };", None),
         (
             "
-			interface Foo {
-			  [key: string]: Foo;
-			}
-			    ",
+            interface Foo {
+              [key: string]: Foo;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo<T> {
-			  [key: string]: Foo<T>;
-			}
-			    ",
+            interface Foo<T> {
+              [key: string]: Foo<T>;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo<T> {
-			  [key: string]: Foo<T> | string;
-			}
-			    ",
+            interface Foo<T> {
+              [key: string]: Foo<T> | string;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [s: string]: Foo & {};
-			}
-			    ",
+            interface Foo {
+              [s: string]: Foo & {};
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [s: string]: Foo | string;
-			}
-			    ",
+            interface Foo {
+              [s: string]: Foo | string;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo<T> {
-			  [s: string]: Foo extends T ? string : number;
-			}
-			    ",
+            interface Foo<T> {
+              [s: string]: Foo extends T ? string : number;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo<T> {
-			  [s: string]: T extends Foo ? string : number;
-			}
-			    ",
+            interface Foo<T> {
+              [s: string]: T extends Foo ? string : number;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo<T> {
-			  [s: string]: T extends true ? Foo : number;
-			}
-			    ",
+            interface Foo<T> {
+              [s: string]: T extends true ? Foo : number;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo<T> {
-			  [s: string]: T extends true ? string : Foo;
-			}
-			    ",
+            interface Foo<T> {
+              [s: string]: T extends true ? string : Foo;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [s: string]: Foo[number];
-			}
-			    ",
+            interface Foo {
+              [s: string]: Foo[number];
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [s: string]: {}[Foo];
-			}
-			    ",
+            interface Foo {
+              [s: string]: {}[Foo];
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo1 {
-			  [key: string]: Foo2;
-			}
+            interface Foo1 {
+              [key: string]: Foo2;
+            }
 
-			interface Foo2 {
-			  [key: string]: Foo1;
-			}
-			    ",
+            interface Foo2 {
+              [key: string]: Foo1;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo1 {
-			  [key: string]: Foo2;
-			}
+            interface Foo1 {
+              [key: string]: Foo2;
+            }
 
-			interface Foo2 {
-			  [key: string]: Foo3;
-			}
+            interface Foo2 {
+              [key: string]: Foo3;
+            }
 
-			interface Foo3 {
-			  [key: string]: Foo1;
-			}
-			    ",
+            interface Foo3 {
+              [key: string]: Foo1;
+            }
+                ",
             None,
         ),
         (
             "
-			interface Foo1 {
-			  [key: string]: Foo2;
-			}
+            interface Foo1 {
+              [key: string]: Foo2;
+            }
 
-			interface Foo2 {
-			  [key: string]: Foo3;
-			}
+            interface Foo2 {
+              [key: string]: Foo3;
+            }
 
-			interface Foo3 {
-			  [key: string]: Record<string, Foo1>;
-			}
-			    ",
+            interface Foo3 {
+              [key: string]: Record<string, Foo1>;
+            }
+                ",
             None,
         ),
         (
             "
-			type Foo1 = {
-			  [key: string]: Foo2;
-			};
+            type Foo1 = {
+              [key: string]: Foo2;
+            };
 
-			type Foo2 = {
-			  [key: string]: Foo3;
-			};
+            type Foo2 = {
+              [key: string]: Foo3;
+            };
 
-			type Foo3 = {
-			  [key: string]: Foo1;
-			};
-			    ",
+            type Foo3 = {
+              [key: string]: Foo1;
+            };
+                ",
             None,
         ),
         (
             "
-			interface Foo1 {
-			  [key: string]: Foo2;
-			}
+            interface Foo1 {
+              [key: string]: Foo2;
+            }
 
-			type Foo2 = {
-			  [key: string]: Foo3;
-			};
+            type Foo2 = {
+              [key: string]: Foo3;
+            };
 
-			interface Foo3 {
-			  [key: string]: Foo1;
-			}
-			    ",
+            interface Foo3 {
+              [key: string]: Foo1;
+            }
+                ",
             None,
         ),
         (
             "
-			type Foo1 = {
-			  [key: string]: Foo2;
-			};
+            type Foo1 = {
+              [key: string]: Foo2;
+            };
 
-			interface Foo2 {
-			  [key: string]: Foo3;
-			}
+            interface Foo2 {
+              [key: string]: Foo3;
+            }
 
-			interface Foo3 {
-			  [key: string]: Foo1;
-			}
-			    ",
+            interface Foo3 {
+              [key: string]: Foo1;
+            }
+                ",
             None,
         ),
         (
             "
-			type ExampleUnion = boolean | number;
+            type ExampleUnion = boolean | number;
 
-			type ExampleRoot = ExampleUnion | ExampleObject;
+            type ExampleRoot = ExampleUnion | ExampleObject;
 
-			interface ExampleObject {
-			  [key: string]: ExampleRoot;
-			}
-			    ",
+            interface ExampleObject {
+              [key: string]: ExampleRoot;
+            }
+                ",
             None,
         ),
         (
             "
-			type Bar<K extends string = never> = {
-			  [k in K]: Bar;
-			};
-			    ",
+            type Bar<K extends string = never> = {
+              [k in K]: Bar;
+            };
+                ",
             None,
         ),
         (
             "
-			type Bar<K extends string = never> = {
-			  [k in K]: Foo;
-			};
+            type Bar<K extends string = never> = {
+              [k in K]: Foo;
+            };
 
-			type Foo = Bar;
-			    ",
+            type Foo = Bar;
+                ",
             None,
         ),
         ("type Foo = {};", None),
         (
             "
-			type Foo = {
-			  bar: string;
-			  [key: string]: any;
-			};
-			    ",
+            type Foo = {
+              bar: string;
+              [key: string]: any;
+            };
+                ",
             None,
         ),
         (
             "
-			type Foo = {
-			  bar: string;
-			};
-			    ",
+            type Foo = {
+              bar: string;
+            };
+                ",
             None,
         ),
         (
             "
-			type Foo = {
-			  [key: string]: any;
-			  bar: string;
-			};
-			    ",
+            type Foo = {
+              [key: string]: any;
+              bar: string;
+            };
+                ",
             None,
         ),
         (
             "
-			type Foo = Generic<{
-			  [key: string]: any;
-			  bar: string;
-			}>;
-			    ",
+            type Foo = Generic<{
+              [key: string]: any;
+              bar: string;
+            }>;
+                ",
             None,
         ),
         ("function foo(arg: { [key: string]: any; bar: string }) {}", None),
@@ -875,19 +834,19 @@ fn test() {
         ("type T = { [key in Foo]: key | number };", None),
         (
             "
-			function foo(e: { readonly [key in PropertyKey]-?: key }) {}
-			      ",
+            function foo(e: { readonly [key in PropertyKey]-?: key }) {}
+                  ",
             None,
         ),
         (
             "
-			function f(): {
-			  // intentionally not using a Record to preserve optionals
-			  [k in keyof ParseResult]: unknown;
-			} {
-			  return {};
-			}
-			      ",
+            function f(): {
+              // intentionally not using a Record to preserve optionals
+              [k in keyof ParseResult]: unknown;
+            } {
+              return {};
+            }
+                  ",
             None,
         ),
         (
@@ -896,71 +855,82 @@ fn test() {
             ",
             None,
         ),
+        ("type Keys = 'A' | 'B'; type Foo = { [K in Keys]: { x: K } };", None),
+        ("type Keys = 'A' | 'B'; type Foo = { [K in Keys]?: { x: K } };", None),
+        (
+            "type Keys = 'A' | 'B'; interface Gen<T> { a: T } type Foo = { [K in Keys]: { x: Gen<K> } };",
+            None,
+        ),
+        (
+            "type Keys = 'A' | 'B'; interface Gen<T> { a: T } type Foo = Partial<{ [K in Keys]: { x: Gen<K> } }>;",
+            None,
+        ),
+        ("type Foo<K extends string> = { [P in K as `x_${P}`]: number };", None),
     ];
 
     let fail = vec![
         (
             "
-			interface Foo {
-			  [key: string]: any;
-			}
-			      ",
+            interface Foo {
+              [key: string]: any;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo {
-			  readonly [key: string]: any;
-			}
-			      ",
+            interface Foo {
+              readonly [key: string]: any;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo<A> {
-			  [key: string]: A;
-			}
-			      ",
+            interface Foo<A> {
+              [key: string]: A;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo<A = any> {
-			  [key: string]: A;
-			}
-			      ",
+            interface Foo<A = any> {
+              [key: string]: A;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface B extends A {
-			  [index: number]: unknown;
-			}
-			      ",
+            interface B extends A {
+              [index: number]: unknown;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo<A> {
-			  readonly [key: string]: A;
-			}
-			      ",
+            interface Foo<A> {
+              readonly [key: string]: A;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo<A, B> {
-			  [key: A]: B;
-			}
-			      ",
+            interface Foo<A, B> {
+              [key: A]: B;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo<A, B> {
-			  readonly [key: A]: B;
-			}
-			      ",
+            interface Foo<A, B> {
+              readonly [key: A]: B;
+            }
+                  ",
             None,
         ),
         ("type Foo = { [key: string]: any };", None),
@@ -979,126 +949,126 @@ fn test() {
         ("type Foo = { [key: string]: string } | Foo;", None),
         (
             "
-			interface Foo<T> {
-			  [k: string]: T;
-			}
-			      ",
+            interface Foo<T> {
+              [k: string]: T;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [k: string]: A.Foo;
-			}
-			      ",
+            interface Foo {
+              [k: string]: A.Foo;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [k: string]: { [key: string]: Foo };
-			}
-			      ",
+            interface Foo {
+              [k: string]: { [key: string]: Foo };
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [key: string]: { foo: Foo };
-			}
-			      ",
+            interface Foo {
+              [key: string]: { foo: Foo };
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [key: string]: Foo[];
-			}
-			      ",
+            interface Foo {
+              [key: string]: Foo[];
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [key: string]: () => Foo;
-			}
-			      ",
+            interface Foo {
+              [key: string]: () => Foo;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo {
-			  [s: string]: [Foo];
-			}
-			      ",
+            interface Foo {
+              [s: string]: [Foo];
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo1 {
-			  [key: string]: Foo2;
-			}
+            interface Foo1 {
+              [key: string]: Foo2;
+            }
 
-			interface Foo2 {
-			  [key: string]: Foo3;
-			}
+            interface Foo2 {
+              [key: string]: Foo3;
+            }
 
-			interface Foo3 {
-			  [key: string]: Foo2;
-			}
-			      ",
+            interface Foo3 {
+              [key: string]: Foo2;
+            }
+                  ",
             None,
         ),
         (
             "
-			interface Foo1 {
-			  [key: string]: Record<string, Foo2>;
-			}
+            interface Foo1 {
+              [key: string]: Record<string, Foo2>;
+            }
 
-			interface Foo2 {
-			  [key: string]: Foo3;
-			}
+            interface Foo2 {
+              [key: string]: Foo3;
+            }
 
-			interface Foo3 {
-			  [key: string]: Foo2;
-			}
-			      ",
+            interface Foo3 {
+              [key: string]: Foo2;
+            }
+                  ",
             None,
         ),
         (
             "
-			type Foo1 = {
-			  [key: string]: { foo2: Foo2 };
-			};
+            type Foo1 = {
+              [key: string]: { foo2: Foo2 };
+            };
 
-			type Foo2 = {
-			  [key: string]: Foo3;
-			};
+            type Foo2 = {
+              [key: string]: Foo3;
+            };
 
-			type Foo3 = {
-			  [key: string]: Record<string, Foo1>;
-			};
-			      ",
+            type Foo3 = {
+              [key: string]: Record<string, Foo1>;
+            };
+                  ",
             None,
         ),
         (
             "
-			type Foos<K extends string = never> = {
-			  [k in K]: { foo: Foo };
-			};
+            type Foos<K extends string = never> = {
+              [k in K]: { foo: Foo };
+            };
 
-			type Foo = Foos;
-			      ",
+            type Foo = Foos;
+                  ",
             None,
         ),
         (
             "
-			type Foos<K extends string = never> = {
-			  [k in K]: Foo[];
-			};
+            type Foos<K extends string = never> = {
+              [k in K]: Foo[];
+            };
 
-			type Foo = Foos;
-			      ",
+            type Foo = Foos;
+                  ",
             None,
         ),
         ("type Foo = Generic<Record<string, any>>;", Some(serde_json::json!(["index-signature"]))),
@@ -1117,54 +1087,54 @@ fn test() {
         ("type T = { [key in string]: number };", None),
         (
             "
-			function foo(e: { [key in PropertyKey]?: string }) {}
-			      ",
+            function foo(e: { [key in PropertyKey]?: string }) {}
+                  ",
             None,
         ),
         (
             "
-			function foo(e: { [key in PropertyKey]+?: string }) {}
-			      ",
+            function foo(e: { [key in PropertyKey]+?: string }) {}
+                  ",
             None,
         ),
         (
             "
-			function foo(e: { [key in PropertyKey]-?: string }) {}
-			      ",
+            function foo(e: { [key in PropertyKey]-?: string }) {}
+                  ",
             None,
         ),
         (
             "
-			function foo(e: { readonly [key in PropertyKey]-?: string }) {}
-			      ",
+            function foo(e: { readonly [key in PropertyKey]-?: string }) {}
+                  ",
             None,
         ),
         (
             "
-			type Options = [
-			  { [Type in (typeof optionTesters)[number]['option']]?: boolean } & {
-			    allow?: TypeOrValueSpecifier[];
-			  },
-			];
-			      ",
+            type Options = [
+              { [Type in (typeof optionTesters)[number]['option']]?: boolean } & {
+                allow?: TypeOrValueSpecifier[];
+              },
+            ];
+                  ",
             None,
         ),
         (
             "
-			export type MakeRequired<Base, Key extends keyof Base> = {
-			  [K in Key]-?: NonNullable<Base[Key]>;
-			} & Omit<Base, Key>;
-			      ",
+            export type MakeRequired<Base, Key extends keyof Base> = {
+              [K in Key]-?: NonNullable<Base[Key]>;
+            } & Omit<Base, Key>;
+                  ",
             None,
         ),
         (
             "
-			function f(): {
-			  [k in (keyof ParseResult)]: unknown;
-			} {
-			  return {};
-			}
-			      ",
+            function f(): {
+              [k in (keyof ParseResult)]: unknown;
+            } {
+              return {};
+            }
+                  ",
             None,
         ),
         // (
@@ -1181,81 +1151,81 @@ fn test() {
         // ),
         (
             "
-			type Foo = {
-			  [k in string];
-			};
-			      ",
+            type Foo = {
+              [k in string];
+            };
+                  ",
             None,
         ),
         // export default interface cannot be converted to export default type
         // because TypeScript doesn't allow "export default type"
         (
             "
-			export default interface SchedulerService {
-			  [key: string]: unknown;
-			}
-			      ",
+            export default interface SchedulerService {
+              [key: string]: unknown;
+            }
+                  ",
             None,
         ),
     ];
 
     let fix = vec![
         ("
-			interface Foo {
-			  [key: string]: any;
-			}
-			      ", "
-			type Foo = Record<string, any>;
-			      ", None),
+            interface Foo {
+              [key: string]: any;
+            }
+                  ", "
+            type Foo = Record<string, any>;
+                  ", None),
 ("
-			interface Foo {
-			  readonly [key: string]: any;
-			}
-			      ", "
-			type Foo = Readonly<Record<string, any>>;
-			      ", None),
+            interface Foo {
+              readonly [key: string]: any;
+            }
+                  ", "
+            type Foo = Readonly<Record<string, any>>;
+                  ", None),
 ("
-			interface Foo<A> {
-			  [key: string]: A;
-			}
-			      ", "
-			type Foo<A> = Record<string, A>;
-			      ", None),
+            interface Foo<A> {
+              [key: string]: A;
+            }
+                  ", "
+            type Foo<A> = Record<string, A>;
+                  ", None),
 ("
-			interface Foo<A = any> {
-			  [key: string]: A;
-			}
-			      ", "
-			type Foo<A = any> = Record<string, A>;
-			      ", None),
+            interface Foo<A = any> {
+              [key: string]: A;
+            }
+                  ", "
+            type Foo<A = any> = Record<string, A>;
+                  ", None),
 ("
-			export interface Bar {
-			  [key: string]: any;
-			}
-			      ", "
-			export type Bar = Record<string, any>;
-			      ", None),
+            export interface Bar {
+              [key: string]: any;
+            }
+                  ", "
+            export type Bar = Record<string, any>;
+                  ", None),
 ("
-			interface Foo<A> {
-			  readonly [key: string]: A;
-			}
-			      ", "
-			type Foo<A> = Readonly<Record<string, A>>;
-			      ", None),
+            interface Foo<A> {
+              readonly [key: string]: A;
+            }
+                  ", "
+            type Foo<A> = Readonly<Record<string, A>>;
+                  ", None),
 ("
-			interface Foo<A, B> {
-			  [key: A]: B;
-			}
-			      ", "
-			type Foo<A, B> = Record<A, B>;
-			      ", None),
+            interface Foo<A, B> {
+              [key: A]: B;
+            }
+                  ", "
+            type Foo<A, B> = Record<A, B>;
+                  ", None),
 ("
-			interface Foo<A, B> {
-			  readonly [key: A]: B;
-			}
-			      ", "
-			type Foo<A, B> = Readonly<Record<A, B>>;
-			      ", None),
+            interface Foo<A, B> {
+              readonly [key: A]: B;
+            }
+                  ", "
+            type Foo<A, B> = Readonly<Record<A, B>>;
+                  ", None),
 ("type Foo = { [key: string]: any };", "type Foo = Record<string, any>;", None),
 ("type Foo = { readonly [key: string]: any };", "type Foo = Readonly<Record<string, any>>;", None),
 ("type Foo = Generic<{ [key: string]: any }>;", "type Foo = Generic<Record<string, any>>;", None),
@@ -1271,143 +1241,143 @@ fn test() {
 ("type Foo = { [key: string]: { [key: string]: Foo } };", "type Foo = { [key: string]: Record<string, Foo> };", None),
 ("type Foo = { [key: string]: string } | Foo;", "type Foo = Record<string, string> | Foo;", None),
 ("
-			interface Foo<T> {
-			  [k: string]: T;
-			}
-			      ", "
-			type Foo<T> = Record<string, T>;
-			      ", None),
+            interface Foo<T> {
+              [k: string]: T;
+            }
+                  ", "
+            type Foo<T> = Record<string, T>;
+                  ", None),
 ("
-			interface Foo {
-			  [k: string]: A.Foo;
-			}
-			      ", "
-			type Foo = Record<string, A.Foo>;
-			      ", None),
+            interface Foo {
+              [k: string]: A.Foo;
+            }
+                  ", "
+            type Foo = Record<string, A.Foo>;
+                  ", None),
 ("
-			interface Foo {
-			  [k: string]: { [key: string]: Foo };
-			}
-			      ", "
-			interface Foo {
-			  [k: string]: Record<string, Foo>;
-			}
-			      ", None),
+            interface Foo {
+              [k: string]: { [key: string]: Foo };
+            }
+                  ", "
+            interface Foo {
+              [k: string]: Record<string, Foo>;
+            }
+                  ", None),
 ("
-			interface Foo {
-			  [key: string]: { foo: Foo };
-			}
-			      ", "
-			type Foo = Record<string, { foo: Foo }>;
-			      ", None),
+            interface Foo {
+              [key: string]: { foo: Foo };
+            }
+                  ", "
+            type Foo = Record<string, { foo: Foo }>;
+                  ", None),
 ("
-			interface Foo {
-			  [key: string]: Foo[];
-			}
-			      ", "
-			type Foo = Record<string, Foo[]>;
-			      ", None),
+            interface Foo {
+              [key: string]: Foo[];
+            }
+                  ", "
+            type Foo = Record<string, Foo[]>;
+                  ", None),
 ("
-			interface Foo {
-			  [key: string]: () => Foo;
-			}
-			      ", "
-			type Foo = Record<string, () => Foo>;
-			      ", None),
+            interface Foo {
+              [key: string]: () => Foo;
+            }
+                  ", "
+            type Foo = Record<string, () => Foo>;
+                  ", None),
 ("
-			interface Foo {
-			  [s: string]: [Foo];
-			}
-			      ", "
-			type Foo = Record<string, [Foo]>;
-			      ", None),
+            interface Foo {
+              [s: string]: [Foo];
+            }
+                  ", "
+            type Foo = Record<string, [Foo]>;
+                  ", None),
 ("
-			interface Foo1 {
-			  [key: string]: Foo2;
-			}
+            interface Foo1 {
+              [key: string]: Foo2;
+            }
 
-			interface Foo2 {
-			  [key: string]: Foo3;
-			}
+            interface Foo2 {
+              [key: string]: Foo3;
+            }
 
-			interface Foo3 {
-			  [key: string]: Foo2;
-			}
-			      ", "
-			type Foo1 = Record<string, Foo2>;
+            interface Foo3 {
+              [key: string]: Foo2;
+            }
+                  ", "
+            type Foo1 = Record<string, Foo2>;
 
-			interface Foo2 {
-			  [key: string]: Foo3;
-			}
+            interface Foo2 {
+              [key: string]: Foo3;
+            }
 
-			interface Foo3 {
-			  [key: string]: Foo2;
-			}
-			      ", None),
+            interface Foo3 {
+              [key: string]: Foo2;
+            }
+                  ", None),
 ("
-			interface Foo1 {
-			  [key: string]: Record<string, Foo2>;
-			}
+            interface Foo1 {
+              [key: string]: Record<string, Foo2>;
+            }
 
-			interface Foo2 {
-			  [key: string]: Foo3;
-			}
+            interface Foo2 {
+              [key: string]: Foo3;
+            }
 
-			interface Foo3 {
-			  [key: string]: Foo2;
-			}
-			      ", "
-			type Foo1 = Record<string, Record<string, Foo2>>;
+            interface Foo3 {
+              [key: string]: Foo2;
+            }
+                  ", "
+            type Foo1 = Record<string, Record<string, Foo2>>;
 
-			interface Foo2 {
-			  [key: string]: Foo3;
-			}
+            interface Foo2 {
+              [key: string]: Foo3;
+            }
 
-			interface Foo3 {
-			  [key: string]: Foo2;
-			}
-			      ", None),
+            interface Foo3 {
+              [key: string]: Foo2;
+            }
+                  ", None),
 ("
-			type Foo1 = {
-			  [key: string]: { foo2: Foo2 };
-			};
+            type Foo1 = {
+              [key: string]: { foo2: Foo2 };
+            };
 
-			type Foo2 = {
-			  [key: string]: Foo3;
-			};
+            type Foo2 = {
+              [key: string]: Foo3;
+            };
 
-			type Foo3 = {
-			  [key: string]: Record<string, Foo1>;
-			};
-			      ", "
-			type Foo1 = Record<string, { foo2: Foo2 }>;
+            type Foo3 = {
+              [key: string]: Record<string, Foo1>;
+            };
+                  ", "
+            type Foo1 = Record<string, { foo2: Foo2 }>;
 
-			type Foo2 = Record<string, Foo3>;
+            type Foo2 = Record<string, Foo3>;
 
-			type Foo3 = Record<string, Record<string, Foo1>>;
-			      ", None),
+            type Foo3 = Record<string, Record<string, Foo1>>;
+                  ", None),
 ("
-			type Foos<K extends string = never> = {
-			  [k in K]: { foo: Foo };
-			};
+            type Foos<K extends string = never> = {
+              [k in K]: { foo: Foo };
+            };
 
-			type Foo = Foos;
-			      ", "
-			type Foos<K extends string = never> = Record<K, { foo: Foo }>;
+            type Foo = Foos;
+                  ", "
+            type Foos<K extends string = never> = Record<K, { foo: Foo }>;
 
-			type Foo = Foos;
-			      ", None),
+            type Foo = Foos;
+                  ", None),
 ("
-			type Foos<K extends string = never> = {
-			  [k in K]: Foo[];
-			};
+            type Foos<K extends string = never> = {
+              [k in K]: Foo[];
+            };
 
-			type Foo = Foos;
-			      ", "
-			type Foos<K extends string = never> = Record<K, Foo[]>;
+            type Foo = Foos;
+                  ", "
+            type Foos<K extends string = never> = Record<K, Foo[]>;
 
-			type Foo = Foos;
-			      ", None),
+            type Foo = Foos;
+                  ", None),
 ("type Foo = Generic<Record<string, any>>;", "type Foo = Generic<{ [key: string]: any }>;", Some(serde_json::json!(["index-signature"]))),
 ("type Foo = Record<number, any>;", "type Foo = { [key: number]: any };", Some(serde_json::json!(["index-signature"]))),
 ("type Foo = Record<symbol, any>;", "type Foo = { [key: symbol]: any };", Some(serde_json::json!(["index-signature"]))),
@@ -1417,78 +1387,78 @@ fn test() {
 ("type T = { +readonly [key in string]: number };", "type T = Readonly<Record<string, number>>;", None),
 ("type T = { [key in string]: number };", "type T = Record<string, number>;", None),
 ("
-			function foo(e: { [key in PropertyKey]?: string }) {}
-			      ", "
-			function foo(e: Partial<Record<PropertyKey, string>>) {}
-			      ", None),
+            function foo(e: { [key in PropertyKey]?: string }) {}
+                  ", "
+            function foo(e: Partial<Record<PropertyKey, string>>) {}
+                  ", None),
 ("
-			function foo(e: { [key in PropertyKey]+?: string }) {}
-			      ", "
-			function foo(e: Partial<Record<PropertyKey, string>>) {}
-			      ", None),
+            function foo(e: { [key in PropertyKey]+?: string }) {}
+                  ", "
+            function foo(e: Partial<Record<PropertyKey, string>>) {}
+                  ", None),
 ("
-			function foo(e: { [key in PropertyKey]-?: string }) {}
-			      ", "
-			function foo(e: Required<Record<PropertyKey, string>>) {}
-			      ", None),
-("
-			function foo(e: { readonly [key in PropertyKey]-?: string }) {}
-			      ", "
-			function foo(e: Readonly<Required<Record<PropertyKey, string>>>) {}
-			      ", None),
-("
-			type Options = [
-			  { [Type in (typeof optionTesters)[number]['option']]?: boolean } & {
-			    allow?: TypeOrValueSpecifier[];
-			  },
-			];
-			      ", "
-			type Options = [
-			  Partial<Record<(typeof optionTesters)[number]['option'], boolean>> & {
-			    allow?: TypeOrValueSpecifier[];
-			  },
-			];
-			      ", None),
-("
-			export type MakeRequired<Base, Key extends keyof Base> = {
-			  [K in Key]-?: NonNullable<Base[Key]>;
-			} & Omit<Base, Key>;
-			      ", "
-			export type MakeRequired<Base, Key extends keyof Base> = Required<Record<Key, NonNullable<Base[Key]>>> & Omit<Base, Key>;
-			      ", None),
-("
-			function f(): {
-			  [k in (keyof ParseResult)]: unknown;
-			} {
-			  return {};
-			}
-			      ", "
-			function f(): Record<keyof ParseResult, unknown> {
-			  return {};
-			}
-			      ", None),
+            function foo(e: { [key in PropertyKey]-?: string }) {}
+                  ", "
+            function foo(e: Required<Record<PropertyKey, string>>) {}
+                  ", None),
+        ("
+            function foo(e: { readonly [key in PropertyKey]-?: string }) {}
+                  ", "
+            function foo(e: Readonly<Required<Record<PropertyKey, string>>>) {}
+                  ", None),
+        ("
+            type Options = [
+              { [Type in (typeof optionTesters)[number]['option']]?: boolean } & {
+                allow?: TypeOrValueSpecifier[];
+              },
+            ];
+                  ", "
+            type Options = [
+              Partial<Record<(typeof optionTesters)[number]['option'], boolean>> & {
+                allow?: TypeOrValueSpecifier[];
+              },
+            ];
+                  ", None),
+        ("
+            export type MakeRequired<Base, Key extends keyof Base> = {
+              [K in Key]-?: NonNullable<Base[Key]>;
+            } & Omit<Base, Key>;
+                  ", "
+            export type MakeRequired<Base, Key extends keyof Base> = Required<Record<Key, NonNullable<Base[Key]>>> & Omit<Base, Key>;
+                  ", None),
+        ("
+            function f(): {
+              [k in (keyof ParseResult)]: unknown;
+            } {
+              return {};
+            }
+                  ", "
+            function f(): Record<keyof ParseResult, unknown> {
+              return {};
+            }
+                  ", None),
 // ("
-// 			interface Foo {
-// 			  [key: string]: Bar;
-// 			}
-//
-// 			interface Bar {
-// 			  [key: string];
-// 			}
-// 			      ", "
-// 			type Foo = Record<string, Bar>;
-//
-// 			interface Bar {
-// 			  [key: string];
-// 			}
-// 			      ", None),
-("
-			type Foo = {
-			  [k in string];
-			};
-			      ", "
-			type Foo = Record<string, any>;
-			      ", None)
+//             interface Foo {
+//               [key: string]: Bar;
+//             }
+
+//             interface Bar {
+//               [key: string];
+//             }
+//                   ", "
+//             type Foo = Record<string, Bar>;
+
+//             interface Bar {
+//               [key: string];
+//             }
+//                   ", None),
+        ("
+            type Foo = {
+              [k in string];
+            };
+                  ", "
+            type Foo = Record<string, any>;
+                  ", None)
     ];
     Tester::new(
         ConsistentIndexedObjectStyle::NAME,

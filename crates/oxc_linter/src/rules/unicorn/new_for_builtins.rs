@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// ```
     NewForBuiltins,
     unicorn,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NewForBuiltins {
@@ -187,16 +188,16 @@ fn test() {
             const m = Map();
         ",
         r"
-        	const {Map} = require('immutable');
-        	const foo = Map();
+            const {Map} = require('immutable');
+            const foo = Map();
         ",
         r"
-        	const {String} = require('guitar');
-        	const lowE = new String();
+            const {String} = require('guitar');
+            const lowE = new String();
         ",
         r"
-        	import {String} from 'guitar';
-        	const lowE = new String();
+            import {String} from 'guitar';
+            const lowE = new String();
         ",
         "new Foo();Bar();",
         "Foo();new Bar();",
@@ -252,25 +253,25 @@ fn test() {
         "const foo = new String()",
         "const foo = new Symbol()",
         r"
-			function varCheck() {
-				{
-					var WeakMap = function() {};
-				}
-				// This should not reported
-				return WeakMap()
-			}
-			function constCheck() {
-				{
-					const Array = function() {};
-				}
-				return Array()
-			}
-			function letCheck() {
-				{
-					let Map = function() {};
-				}
-				return Map()
-			}
+            function varCheck() {
+                {
+                    var WeakMap = function() {};
+                }
+                // This should not reported
+                return WeakMap()
+            }
+            function constCheck() {
+                {
+                    const Array = function() {};
+                }
+                return Array()
+            }
+            function letCheck() {
+                {
+                    let Map = function() {};
+                }
+                return Map()
+            }
         ",
     ];
 

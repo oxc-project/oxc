@@ -1,5 +1,4 @@
 use std::ffi::OsString;
-use std::path::PathBuf;
 
 use napi_derive::napi;
 
@@ -7,11 +6,11 @@ use oxc_napi::OxcError;
 use serde_json::Value;
 
 use crate::{
+    api::{format_api, text_to_doc_api},
     cli::{FormatRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
-        ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
-        JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
-        SourceFormatter, resolve_options_from_value, utils,
+        ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
+        JsSortTailwindClassesCb, utils,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -37,17 +36,11 @@ pub async fn run_cli(
     args: Vec<String>,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
-    #[napi(
-        ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[]>")]
     sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
 ) -> (String, Option<u8>) {
     // Convert `String` args to `OsString` for compatibility with `bpaf`
@@ -135,6 +128,9 @@ pub struct FormatResult {
 /// NAPI based format API entry point.
 ///
 /// Since it internally uses `await prettier.format()` in JS side, `formatSync()` cannot be provided.
+///
+/// # Panics
+/// Panics if the current working directory cannot be determined.
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
@@ -144,81 +140,71 @@ pub async fn format(
     options: Option<Value>,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
-    #[napi(
-        ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
-    #[napi(
-        ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
-    )]
+    #[napi(ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[]>")]
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> FormatResult {
-    let num_of_threads = 1;
-
-    let external_formatter = ExternalFormatter::new(
+    let format_api::ApiFormatResult { code, errors } = format_api::run(
+        &filename,
+        source_text,
+        options,
         init_external_formatter_cb,
         format_embedded_cb,
         format_file_cb,
         sort_tailwind_classes_cb,
     );
 
-    // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
-        // TODO: Plugins support
-        Ok(_) => {}
-        Err(err) => {
-            external_formatter.cleanup();
-            return FormatResult {
-                code: source_text,
-                errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
-            };
-        }
+    FormatResult { code, errors }
+}
+
+// ---
+
+#[napi(object)]
+pub struct TextToDocResult {
+    /// The formatted code.
+    pub doc: String,
+    /// Parse and format errors.
+    pub errors: Vec<OxcError>,
+}
+
+/// NAPI based `textToDoc` API entry point for `prettier-plugin-oxfmt`.
+///
+/// This API is specialized for JS/TS snippets embedded in non-JS files.
+/// Unlike `format()`, it is called only for JS/TS-in-xxx `textToDoc` flow.
+///
+/// # Panics
+/// Panics if the current working directory cannot be determined.
+#[expect(clippy::allow_attributes)]
+#[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
+#[napi]
+pub async fn js_text_to_doc(
+    filename: String,
+    source_text: String,
+    oxfmt_plugin_options_json: String,
+    parent_context: String,
+    #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
+    init_external_formatter_cb: JsInitExternalFormatterCb,
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
+    format_embedded_cb: JsFormatEmbeddedCb,
+    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
+    format_file_cb: JsFormatFileCb,
+    #[napi(ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[]>")]
+    sort_tailwind_classes_cb: JsSortTailwindClassesCb,
+) -> TextToDocResult {
+    match text_to_doc_api::run(
+        &filename,
+        &source_text,
+        &oxfmt_plugin_options_json,
+        &parent_context,
+        init_external_formatter_cb,
+        format_embedded_cb,
+        format_file_cb,
+        sort_tailwind_classes_cb,
+    ) {
+        Ok(doc) => TextToDocResult { doc, errors: vec![] },
+        Err(errors) => TextToDocResult { doc: String::new(), errors },
     }
-
-    // Determine format strategy from file path
-    let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(&filename)) else {
-        external_formatter.cleanup();
-        return FormatResult {
-            code: source_text,
-            errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
-        };
-    };
-
-    // Resolve format options directly from the provided options
-    let resolved_options = match resolve_options_from_value(options.unwrap_or_default(), &strategy)
-    {
-        Ok(options) => options,
-        Err(err) => {
-            external_formatter.cleanup();
-            return FormatResult {
-                code: source_text,
-                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
-            };
-        }
-    };
-
-    // Create formatter and format
-    let formatter = SourceFormatter::new(num_of_threads)
-        .with_external_formatter(Some(external_formatter.clone()));
-
-    // Use `block_in_place()` to avoid nested async runtime access
-    let result = match tokio::task::block_in_place(|| {
-        formatter.format(&strategy, &source_text, resolved_options)
-    }) {
-        CoreFormatResult::Success { code, .. } => FormatResult { code, errors: vec![] },
-        CoreFormatResult::Error(diagnostics) => {
-            let errors = OxcError::from_diagnostics(&filename, &source_text, diagnostics);
-            FormatResult { code: source_text, errors }
-        }
-    };
-
-    // Explicitly drop ThreadsafeFunctions before returning to prevent
-    // use-after-free during V8 cleanup (Node.js issue with TSFN cleanup timing)
-    external_formatter.cleanup();
-
-    result
 }

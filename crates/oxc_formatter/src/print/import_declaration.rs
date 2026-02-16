@@ -1,6 +1,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
+use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
     Format, FormatTrailingCommas, JsLabels, TrailingSeparator,
@@ -10,9 +11,7 @@ use crate::{
         Formatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
     },
     print::semicolon::OptionalSemicolon,
-    utils::string::{
-        FormatLiteralStringToken, StringLiteralParentKind, is_identifier_name_patched,
-    },
+    utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
     write,
 };
 

@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.113.0] - 2026-02-10
+
+### 🚀 Features
+
+- 142a1be parser: Detect binary files with TS1490 error (#19047) (Boshen)
+- 0eff6be parser: Error JSX-like type assertions and generics in `.mts`/`.cts` (#18910) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 56c086b parser: Add modifier ordering validation (TS1029) (#19024) (Boshen)
+- 57917ee parser: Parse decorators on rest parameters (#18938) (Boshen)
+- 1f6b193 parser: Validate TypeScript import type options (#18889) (Boshen)
+- 1663184 parser: Allow conditional types in function type parameters (#18886) (Boshen)
+- 5758046 parser: Error on property access after instantiation expression (#18887) (Boshen)
+- 5eb4a94 parser: Handle `<<` as two `<` tokens in type argument contexts (#18885) (Boshen)
+
+### ⚡ Performance
+
+- ed8c054 oxc_str: Add precomputed hash to Ident for fast HashMap lookups (#19143) (Boshen)
+- f78c525 parser: Try hybrid parsing for jsx children and closing element/fragments (#18789) (camchenry)
+
 ## [0.112.0] - 2026-02-02
 
 ### 🚀 Features

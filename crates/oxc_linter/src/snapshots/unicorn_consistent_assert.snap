@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:2:10]
+   ╭─[consistent_assert.tsx:2:13]
  1 │ import assert from 'assert';
  2 │             assert(foo)
    ·             ──────
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer assert.ok(...) over assert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:2:10]
+   ╭─[consistent_assert.tsx:2:13]
  1 │ import assert from 'node:assert';
  2 │             assert(foo)
    ·             ──────
@@ -19,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer assert.ok(...) over assert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:2:10]
+   ╭─[consistent_assert.tsx:2:13]
  1 │ import assert from 'assert/strict';
  2 │             assert(foo)
    ·             ──────
@@ -27,7 +27,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer assert.ok(...) over assert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:2:10]
+   ╭─[consistent_assert.tsx:2:13]
  1 │ import assert from 'node:assert/strict';
  2 │             assert(foo)
    ·             ──────
@@ -35,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer assert.ok(...) over assert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:2:10]
+   ╭─[consistent_assert.tsx:2:13]
  1 │ import customAssert from 'assert';
  2 │             customAssert(foo)
    ·             ────────────
@@ -43,7 +43,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer customAssert.ok(...) over customAssert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:2:10]
+   ╭─[consistent_assert.tsx:2:13]
  1 │ import customAssert from 'node:assert';
  2 │             customAssert(foo)
    ·             ────────────
@@ -51,7 +51,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer customAssert.ok(...) over customAssert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:2:10]
+   ╭─[consistent_assert.tsx:2:13]
  1 │ import assert from 'assert';
  2 │             assert(foo)
    ·             ──────
@@ -60,7 +60,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer assert.ok(...) over assert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:3:10]
+   ╭─[consistent_assert.tsx:3:13]
  2 │             assert(foo)
  3 │             assert(bar)
    ·             ──────
@@ -69,7 +69,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer assert.ok(...) over assert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:4:10]
+   ╭─[consistent_assert.tsx:4:13]
  3 │             assert(bar)
  4 │             assert(baz)
    ·             ──────
@@ -77,7 +77,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer assert.ok(...) over assert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:2:10]
+   ╭─[consistent_assert.tsx:2:13]
  1 │ import {strict} from 'assert';
  2 │             strict(foo)
    ·             ──────
@@ -85,7 +85,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer strict.ok(...) over strict(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:2:10]
+   ╭─[consistent_assert.tsx:2:13]
  1 │ import {strict as assert} from 'assert';
  2 │             assert(foo)
    ·             ──────
@@ -93,7 +93,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer assert.ok(...) over assert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:5:10]
+   ╭─[consistent_assert.tsx:5:13]
  4 │             import i, {default as j} from 'assert/strict';
  5 │             a(foo);
    ·             ─
@@ -102,7 +102,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer a.ok(...) over a(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:6:10]
+   ╭─[consistent_assert.tsx:6:13]
  5 │             a(foo);
  6 │             b(foo);
    ·             ─
@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer b.ok(...) over b(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:7:10]
+   ╭─[consistent_assert.tsx:7:13]
  6 │             b(foo);
  7 │             c(foo);
    ·             ─
@@ -120,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer c.ok(...) over c(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:8:10]
+   ╭─[consistent_assert.tsx:8:13]
  7 │             c(foo);
  8 │             d(foo);
    ·             ─
@@ -129,7 +129,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer d.ok(...) over d(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-    ╭─[consistent_assert.tsx:9:10]
+    ╭─[consistent_assert.tsx:9:13]
   8 │             d(foo);
   9 │             e(foo);
     ·             ─
@@ -138,7 +138,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer e.ok(...) over e(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-    ╭─[consistent_assert.tsx:10:10]
+    ╭─[consistent_assert.tsx:10:13]
   9 │             e(foo);
  10 │             f(foo);
     ·             ─
@@ -147,7 +147,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer f.ok(...) over f(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-    ╭─[consistent_assert.tsx:11:10]
+    ╭─[consistent_assert.tsx:11:13]
  10 │             f(foo);
  11 │             g(foo);
     ·             ─
@@ -156,7 +156,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer g.ok(...) over g(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-    ╭─[consistent_assert.tsx:12:10]
+    ╭─[consistent_assert.tsx:12:13]
  11 │             g(foo);
  12 │             h(foo);
     ·             ─
@@ -165,7 +165,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer h.ok(...) over h(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-    ╭─[consistent_assert.tsx:13:10]
+    ╭─[consistent_assert.tsx:13:13]
  12 │             h(foo);
  13 │             i(foo);
     ·             ─
@@ -174,7 +174,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer i.ok(...) over i(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-    ╭─[consistent_assert.tsx:14:10]
+    ╭─[consistent_assert.tsx:14:13]
  13 │             i(foo);
  14 │             j(foo);
     ·             ─
@@ -182,7 +182,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer j.ok(...) over j(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:2:10]
+   ╭─[consistent_assert.tsx:2:13]
  1 │ import assert from 'node:assert';
  2 │             assert?.(foo)
    ·             ──────
@@ -190,7 +190,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer assert.ok(...) over assert(...)
 
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
-   ╭─[consistent_assert.tsx:5:6]
+   ╭─[consistent_assert.tsx:5:21]
  4 │                     /* comment */
  5 │                     assert
    ·                     ──────

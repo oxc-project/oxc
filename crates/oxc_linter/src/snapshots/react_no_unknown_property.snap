@@ -189,7 +189,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div onLoad={this.load} />
    ·      ──────
    ╰────
-  help: Property 'onLoad' is only allowed on: link, source, picture, script, iframe, img, object
+  help: Property 'onLoad' is only allowed on: source, body, img, link, script, picture, object, iframe
 
   ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
    ╭─[no_unknown_property.tsx:1:6]

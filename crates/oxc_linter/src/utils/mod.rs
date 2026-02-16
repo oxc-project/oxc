@@ -8,6 +8,8 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
+use oxc_span::Span;
+use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 mod comment;
 mod config;
@@ -137,6 +139,30 @@ pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
 /// For these rules, we use the corresponding eslint rules with some adjustments for compatibility.
 pub fn is_eslint_rule_adapted_to_typescript(rule_name: &str) -> bool {
     TYPESCRIPT_COMPATIBLE_ESLINT_RULES.binary_search(&rule_name).is_ok()
+}
+
+/// Pads replacement text with spaces when needed to preserve token boundaries
+/// with neighboring source characters.
+pub fn pad_fix_with_token_boundary(source_text: &str, span: Span, replacement: &mut String) {
+    if replacement.is_empty() {
+        return;
+    }
+
+    let source_bytes = source_text.as_bytes();
+    let replacement_bytes = replacement.as_bytes();
+    let needs_pad_start = span.start > 0
+        && is_identifier_part(source_bytes[span.start as usize - 1] as char)
+        && is_identifier_part(replacement.chars().next().unwrap());
+    let needs_pad_end = (span.end as usize) < source_bytes.len()
+        && is_identifier_start(source_bytes[span.end as usize] as char)
+        && !replacement_bytes.last().unwrap().is_ascii_whitespace();
+
+    if needs_pad_start {
+        replacement.insert(0, ' ');
+    }
+    if needs_pad_end {
+        replacement.push(' ');
+    }
 }
 
 /// Reads the content of a path and returns it.

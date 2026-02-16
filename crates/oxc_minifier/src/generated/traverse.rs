@@ -1,0 +1,2488 @@
+// Auto-generated code, DO NOT EDIT DIRECTLY!
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/minifier_traverse/mod.rs`.
+
+use oxc_allocator::Vec;
+use oxc_ast::ast::*;
+
+use crate::TraverseCtx;
+
+#[expect(unused_variables)]
+pub trait Traverse<'a> {
+    #[inline]
+    fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_expression(&mut self, node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_identifier_name(&mut self, node: &mut IdentifierName<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_identifier_name(&mut self, node: &mut IdentifierName<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_identifier_reference(
+        &mut self,
+        node: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_identifier_reference(
+        &mut self,
+        node: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_binding_identifier(
+        &mut self,
+        node: &mut BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_binding_identifier(
+        &mut self,
+        node: &mut BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_label_identifier(
+        &mut self,
+        node: &mut LabelIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_label_identifier(&mut self, node: &mut LabelIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_this_expression(&mut self, node: &mut ThisExpression, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_this_expression(&mut self, node: &mut ThisExpression, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_array_expression(
+        &mut self,
+        node: &mut ArrayExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_array_expression(&mut self, node: &mut ArrayExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_array_expression_element(
+        &mut self,
+        node: &mut ArrayExpressionElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_array_expression_element(
+        &mut self,
+        node: &mut ArrayExpressionElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_elision(&mut self, node: &mut Elision, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_elision(&mut self, node: &mut Elision, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_object_expression(
+        &mut self,
+        node: &mut ObjectExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_object_expression(
+        &mut self,
+        node: &mut ObjectExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_object_property_kind(
+        &mut self,
+        node: &mut ObjectPropertyKind<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_object_property_kind(
+        &mut self,
+        node: &mut ObjectPropertyKind<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_object_property(&mut self, node: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_object_property(&mut self, node: &mut ObjectProperty<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_property_key(&mut self, node: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_property_key(&mut self, node: &mut PropertyKey<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_template_literal(
+        &mut self,
+        node: &mut TemplateLiteral<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_template_literal(&mut self, node: &mut TemplateLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_tagged_template_expression(
+        &mut self,
+        node: &mut TaggedTemplateExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_tagged_template_expression(
+        &mut self,
+        node: &mut TaggedTemplateExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_template_element(
+        &mut self,
+        node: &mut TemplateElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_template_element(&mut self, node: &mut TemplateElement<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_member_expression(
+        &mut self,
+        node: &mut MemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_member_expression(
+        &mut self,
+        node: &mut MemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_computed_member_expression(
+        &mut self,
+        node: &mut ComputedMemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_computed_member_expression(
+        &mut self,
+        node: &mut ComputedMemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_static_member_expression(
+        &mut self,
+        node: &mut StaticMemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_static_member_expression(
+        &mut self,
+        node: &mut StaticMemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_private_field_expression(
+        &mut self,
+        node: &mut PrivateFieldExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_private_field_expression(
+        &mut self,
+        node: &mut PrivateFieldExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_call_expression(&mut self, node: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_call_expression(&mut self, node: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_new_expression(&mut self, node: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_new_expression(&mut self, node: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_meta_property(&mut self, node: &mut MetaProperty<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_meta_property(&mut self, node: &mut MetaProperty<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_spread_element(&mut self, node: &mut SpreadElement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_spread_element(&mut self, node: &mut SpreadElement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_argument(&mut self, node: &mut Argument<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_argument(&mut self, node: &mut Argument<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_update_expression(
+        &mut self,
+        node: &mut UpdateExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_update_expression(
+        &mut self,
+        node: &mut UpdateExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_unary_expression(
+        &mut self,
+        node: &mut UnaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_unary_expression(&mut self, node: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_binary_expression(
+        &mut self,
+        node: &mut BinaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_binary_expression(
+        &mut self,
+        node: &mut BinaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_private_in_expression(
+        &mut self,
+        node: &mut PrivateInExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_private_in_expression(
+        &mut self,
+        node: &mut PrivateInExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_logical_expression(
+        &mut self,
+        node: &mut LogicalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_logical_expression(
+        &mut self,
+        node: &mut LogicalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_conditional_expression(
+        &mut self,
+        node: &mut ConditionalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_conditional_expression(
+        &mut self,
+        node: &mut ConditionalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_assignment_expression(
+        &mut self,
+        node: &mut AssignmentExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_expression(
+        &mut self,
+        node: &mut AssignmentExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_assignment_target(
+        &mut self,
+        node: &mut AssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_target(
+        &mut self,
+        node: &mut AssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_simple_assignment_target(
+        &mut self,
+        node: &mut SimpleAssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_simple_assignment_target(
+        &mut self,
+        node: &mut SimpleAssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_assignment_target_pattern(
+        &mut self,
+        node: &mut AssignmentTargetPattern<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_target_pattern(
+        &mut self,
+        node: &mut AssignmentTargetPattern<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_array_assignment_target(
+        &mut self,
+        node: &mut ArrayAssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_array_assignment_target(
+        &mut self,
+        node: &mut ArrayAssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_object_assignment_target(
+        &mut self,
+        node: &mut ObjectAssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_object_assignment_target(
+        &mut self,
+        node: &mut ObjectAssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_assignment_target_rest(
+        &mut self,
+        node: &mut AssignmentTargetRest<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_target_rest(
+        &mut self,
+        node: &mut AssignmentTargetRest<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_assignment_target_maybe_default(
+        &mut self,
+        node: &mut AssignmentTargetMaybeDefault<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_target_maybe_default(
+        &mut self,
+        node: &mut AssignmentTargetMaybeDefault<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_assignment_target_with_default(
+        &mut self,
+        node: &mut AssignmentTargetWithDefault<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_target_with_default(
+        &mut self,
+        node: &mut AssignmentTargetWithDefault<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_assignment_target_property(
+        &mut self,
+        node: &mut AssignmentTargetProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_target_property(
+        &mut self,
+        node: &mut AssignmentTargetProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_assignment_target_property_identifier(
+        &mut self,
+        node: &mut AssignmentTargetPropertyIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_target_property_identifier(
+        &mut self,
+        node: &mut AssignmentTargetPropertyIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_assignment_target_property_property(
+        &mut self,
+        node: &mut AssignmentTargetPropertyProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_target_property_property(
+        &mut self,
+        node: &mut AssignmentTargetPropertyProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_sequence_expression(
+        &mut self,
+        node: &mut SequenceExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_sequence_expression(
+        &mut self,
+        node: &mut SequenceExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_super(&mut self, node: &mut Super, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_super(&mut self, node: &mut Super, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_await_expression(
+        &mut self,
+        node: &mut AwaitExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_await_expression(&mut self, node: &mut AwaitExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_chain_expression(
+        &mut self,
+        node: &mut ChainExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_chain_expression(&mut self, node: &mut ChainExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_chain_element(&mut self, node: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_chain_element(&mut self, node: &mut ChainElement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_parenthesized_expression(
+        &mut self,
+        node: &mut ParenthesizedExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_parenthesized_expression(
+        &mut self,
+        node: &mut ParenthesizedExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_statement(&mut self, node: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_statement(&mut self, node: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_directive(&mut self, node: &mut Directive<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_directive(&mut self, node: &mut Directive<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_hashbang(&mut self, node: &mut Hashbang<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_hashbang(&mut self, node: &mut Hashbang<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_block_statement(&mut self, node: &mut BlockStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_block_statement(&mut self, node: &mut BlockStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_declaration(&mut self, node: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_declaration(&mut self, node: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_variable_declaration(
+        &mut self,
+        node: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_variable_declaration(
+        &mut self,
+        node: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_variable_declarator(
+        &mut self,
+        node: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_variable_declarator(
+        &mut self,
+        node: &mut VariableDeclarator<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_empty_statement(&mut self, node: &mut EmptyStatement, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_empty_statement(&mut self, node: &mut EmptyStatement, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_expression_statement(
+        &mut self,
+        node: &mut ExpressionStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_expression_statement(
+        &mut self,
+        node: &mut ExpressionStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_if_statement(&mut self, node: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_if_statement(&mut self, node: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_do_while_statement(
+        &mut self,
+        node: &mut DoWhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_do_while_statement(
+        &mut self,
+        node: &mut DoWhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_while_statement(&mut self, node: &mut WhileStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_while_statement(&mut self, node: &mut WhileStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_for_statement(&mut self, node: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_for_statement(&mut self, node: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_for_statement_init(
+        &mut self,
+        node: &mut ForStatementInit<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_for_statement_init(
+        &mut self,
+        node: &mut ForStatementInit<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_for_in_statement(&mut self, node: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_for_in_statement(&mut self, node: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_for_statement_left(
+        &mut self,
+        node: &mut ForStatementLeft<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_for_statement_left(
+        &mut self,
+        node: &mut ForStatementLeft<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_continue_statement(
+        &mut self,
+        node: &mut ContinueStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_continue_statement(
+        &mut self,
+        node: &mut ContinueStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_break_statement(&mut self, node: &mut BreakStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_break_statement(&mut self, node: &mut BreakStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_return_statement(
+        &mut self,
+        node: &mut ReturnStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_return_statement(&mut self, node: &mut ReturnStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_with_statement(&mut self, node: &mut WithStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_with_statement(&mut self, node: &mut WithStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_switch_statement(
+        &mut self,
+        node: &mut SwitchStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_switch_statement(&mut self, node: &mut SwitchStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_switch_case(&mut self, node: &mut SwitchCase<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_switch_case(&mut self, node: &mut SwitchCase<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_labeled_statement(
+        &mut self,
+        node: &mut LabeledStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_labeled_statement(
+        &mut self,
+        node: &mut LabeledStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_throw_statement(&mut self, node: &mut ThrowStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_throw_statement(&mut self, node: &mut ThrowStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_try_statement(&mut self, node: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_try_statement(&mut self, node: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_catch_clause(&mut self, node: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_catch_clause(&mut self, node: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_catch_parameter(&mut self, node: &mut CatchParameter<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_catch_parameter(&mut self, node: &mut CatchParameter<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_debugger_statement(
+        &mut self,
+        node: &mut DebuggerStatement,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_debugger_statement(&mut self, node: &mut DebuggerStatement, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_binding_pattern(&mut self, node: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_binding_pattern(&mut self, node: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_assignment_pattern(
+        &mut self,
+        node: &mut AssignmentPattern<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_assignment_pattern(
+        &mut self,
+        node: &mut AssignmentPattern<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_object_pattern(&mut self, node: &mut ObjectPattern<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_object_pattern(&mut self, node: &mut ObjectPattern<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_binding_property(
+        &mut self,
+        node: &mut BindingProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_binding_property(&mut self, node: &mut BindingProperty<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_array_pattern(&mut self, node: &mut ArrayPattern<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_array_pattern(&mut self, node: &mut ArrayPattern<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_binding_rest_element(
+        &mut self,
+        node: &mut BindingRestElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_binding_rest_element(
+        &mut self,
+        node: &mut BindingRestElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_formal_parameters(
+        &mut self,
+        node: &mut FormalParameters<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_formal_parameters(
+        &mut self,
+        node: &mut FormalParameters<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_formal_parameter(
+        &mut self,
+        node: &mut FormalParameter<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_formal_parameter(&mut self, node: &mut FormalParameter<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_formal_parameter_rest(
+        &mut self,
+        node: &mut FormalParameterRest<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_formal_parameter_rest(
+        &mut self,
+        node: &mut FormalParameterRest<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_function_body(&mut self, node: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_function_body(&mut self, node: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_arrow_function_expression(
+        &mut self,
+        node: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_arrow_function_expression(
+        &mut self,
+        node: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_yield_expression(
+        &mut self,
+        node: &mut YieldExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_yield_expression(&mut self, node: &mut YieldExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_class_body(&mut self, node: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_class_body(&mut self, node: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_class_element(&mut self, node: &mut ClassElement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_class_element(&mut self, node: &mut ClassElement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_method_definition(
+        &mut self,
+        node: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_method_definition(
+        &mut self,
+        node: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_property_definition(
+        &mut self,
+        node: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_property_definition(
+        &mut self,
+        node: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_private_identifier(
+        &mut self,
+        node: &mut PrivateIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_private_identifier(
+        &mut self,
+        node: &mut PrivateIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_static_block(&mut self, node: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_static_block(&mut self, node: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_module_declaration(
+        &mut self,
+        node: &mut ModuleDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_module_declaration(
+        &mut self,
+        node: &mut ModuleDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_accessor_property(
+        &mut self,
+        node: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_accessor_property(
+        &mut self,
+        node: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_import_expression(
+        &mut self,
+        node: &mut ImportExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_import_expression(
+        &mut self,
+        node: &mut ImportExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_import_declaration(
+        &mut self,
+        node: &mut ImportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_import_declaration(
+        &mut self,
+        node: &mut ImportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_import_declaration_specifier(
+        &mut self,
+        node: &mut ImportDeclarationSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_import_declaration_specifier(
+        &mut self,
+        node: &mut ImportDeclarationSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_import_specifier(
+        &mut self,
+        node: &mut ImportSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_import_specifier(&mut self, node: &mut ImportSpecifier<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_import_default_specifier(
+        &mut self,
+        node: &mut ImportDefaultSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_import_default_specifier(
+        &mut self,
+        node: &mut ImportDefaultSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_import_namespace_specifier(
+        &mut self,
+        node: &mut ImportNamespaceSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_import_namespace_specifier(
+        &mut self,
+        node: &mut ImportNamespaceSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_with_clause(&mut self, node: &mut WithClause<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_with_clause(&mut self, node: &mut WithClause<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_import_attribute(
+        &mut self,
+        node: &mut ImportAttribute<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_import_attribute(&mut self, node: &mut ImportAttribute<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_import_attribute_key(
+        &mut self,
+        node: &mut ImportAttributeKey<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_import_attribute_key(
+        &mut self,
+        node: &mut ImportAttributeKey<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_export_named_declaration(
+        &mut self,
+        node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_named_declaration(
+        &mut self,
+        node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_export_default_declaration(
+        &mut self,
+        node: &mut ExportDefaultDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_default_declaration(
+        &mut self,
+        node: &mut ExportDefaultDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_export_all_declaration(
+        &mut self,
+        node: &mut ExportAllDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_all_declaration(
+        &mut self,
+        node: &mut ExportAllDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_export_specifier(
+        &mut self,
+        node: &mut ExportSpecifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_specifier(&mut self, node: &mut ExportSpecifier<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_export_default_declaration_kind(
+        &mut self,
+        node: &mut ExportDefaultDeclarationKind<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_export_default_declaration_kind(
+        &mut self,
+        node: &mut ExportDefaultDeclarationKind<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_module_export_name(
+        &mut self,
+        node: &mut ModuleExportName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_module_export_name(
+        &mut self,
+        node: &mut ModuleExportName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_v8_intrinsic_expression(
+        &mut self,
+        node: &mut V8IntrinsicExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_v8_intrinsic_expression(
+        &mut self,
+        node: &mut V8IntrinsicExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_boolean_literal(&mut self, node: &mut BooleanLiteral, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_boolean_literal(&mut self, node: &mut BooleanLiteral, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_null_literal(&mut self, node: &mut NullLiteral, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_null_literal(&mut self, node: &mut NullLiteral, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_numeric_literal(&mut self, node: &mut NumericLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_numeric_literal(&mut self, node: &mut NumericLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_string_literal(&mut self, node: &mut StringLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_string_literal(&mut self, node: &mut StringLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_big_int_literal(&mut self, node: &mut BigIntLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_reg_exp_literal(&mut self, node: &mut RegExpLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_reg_exp_literal(&mut self, node: &mut RegExpLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_jsx_opening_element(
+        &mut self,
+        node: &mut JSXOpeningElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_opening_element(
+        &mut self,
+        node: &mut JSXOpeningElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_closing_element(
+        &mut self,
+        node: &mut JSXClosingElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_closing_element(
+        &mut self,
+        node: &mut JSXClosingElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_fragment(&mut self, node: &mut JSXFragment<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_jsx_fragment(&mut self, node: &mut JSXFragment<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_jsx_opening_fragment(
+        &mut self,
+        node: &mut JSXOpeningFragment,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_opening_fragment(
+        &mut self,
+        node: &mut JSXOpeningFragment,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_closing_fragment(
+        &mut self,
+        node: &mut JSXClosingFragment,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_closing_fragment(
+        &mut self,
+        node: &mut JSXClosingFragment,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_element_name(&mut self, node: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_jsx_element_name(&mut self, node: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_jsx_namespaced_name(
+        &mut self,
+        node: &mut JSXNamespacedName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_namespaced_name(
+        &mut self,
+        node: &mut JSXNamespacedName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_member_expression(
+        &mut self,
+        node: &mut JSXMemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_member_expression(
+        &mut self,
+        node: &mut JSXMemberExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_member_expression_object(
+        &mut self,
+        node: &mut JSXMemberExpressionObject<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_member_expression_object(
+        &mut self,
+        node: &mut JSXMemberExpressionObject<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_expression_container(
+        &mut self,
+        node: &mut JSXExpressionContainer<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_expression_container(
+        &mut self,
+        node: &mut JSXExpressionContainer<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_expression(&mut self, node: &mut JSXExpression<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_jsx_expression(&mut self, node: &mut JSXExpression<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_jsx_empty_expression(
+        &mut self,
+        node: &mut JSXEmptyExpression,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_empty_expression(
+        &mut self,
+        node: &mut JSXEmptyExpression,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_attribute_item(
+        &mut self,
+        node: &mut JSXAttributeItem<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_attribute_item(
+        &mut self,
+        node: &mut JSXAttributeItem<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_attribute(&mut self, node: &mut JSXAttribute<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_jsx_attribute(&mut self, node: &mut JSXAttribute<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_jsx_spread_attribute(
+        &mut self,
+        node: &mut JSXSpreadAttribute<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_spread_attribute(
+        &mut self,
+        node: &mut JSXSpreadAttribute<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_attribute_name(
+        &mut self,
+        node: &mut JSXAttributeName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_attribute_name(
+        &mut self,
+        node: &mut JSXAttributeName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_attribute_value(
+        &mut self,
+        node: &mut JSXAttributeValue<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_jsx_attribute_value(
+        &mut self,
+        node: &mut JSXAttributeValue<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_jsx_identifier(&mut self, node: &mut JSXIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_jsx_identifier(&mut self, node: &mut JSXIdentifier<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_jsx_child(&mut self, node: &mut JSXChild<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_jsx_child(&mut self, node: &mut JSXChild<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_jsx_spread_child(&mut self, node: &mut JSXSpreadChild<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_jsx_spread_child(&mut self, node: &mut JSXSpreadChild<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_jsx_text(&mut self, node: &mut JSXText<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_jsx_text(&mut self, node: &mut JSXText<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_this_parameter(
+        &mut self,
+        node: &mut TSThisParameter<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_this_parameter(
+        &mut self,
+        node: &mut TSThisParameter<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_enum_declaration(
+        &mut self,
+        node: &mut TSEnumDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_enum_declaration(
+        &mut self,
+        node: &mut TSEnumDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_enum_body(&mut self, node: &mut TSEnumBody<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_enum_body(&mut self, node: &mut TSEnumBody<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_enum_member(&mut self, node: &mut TSEnumMember<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_enum_member(&mut self, node: &mut TSEnumMember<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_enum_member_name(
+        &mut self,
+        node: &mut TSEnumMemberName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_enum_member_name(
+        &mut self,
+        node: &mut TSEnumMemberName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_type_annotation(
+        &mut self,
+        node: &mut TSTypeAnnotation<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_annotation(
+        &mut self,
+        node: &mut TSTypeAnnotation<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_literal_type(&mut self, node: &mut TSLiteralType<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_literal_type(&mut self, node: &mut TSLiteralType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_literal(&mut self, node: &mut TSLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_literal(&mut self, node: &mut TSLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_type(&mut self, node: &mut TSType<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_type(&mut self, node: &mut TSType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_conditional_type(
+        &mut self,
+        node: &mut TSConditionalType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_conditional_type(
+        &mut self,
+        node: &mut TSConditionalType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_union_type(&mut self, node: &mut TSUnionType<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_union_type(&mut self, node: &mut TSUnionType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_intersection_type(
+        &mut self,
+        node: &mut TSIntersectionType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_intersection_type(
+        &mut self,
+        node: &mut TSIntersectionType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_parenthesized_type(
+        &mut self,
+        node: &mut TSParenthesizedType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_parenthesized_type(
+        &mut self,
+        node: &mut TSParenthesizedType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_type_operator(&mut self, node: &mut TSTypeOperator<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_ts_type_operator(&mut self, node: &mut TSTypeOperator<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_array_type(&mut self, node: &mut TSArrayType<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_array_type(&mut self, node: &mut TSArrayType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_indexed_access_type(
+        &mut self,
+        node: &mut TSIndexedAccessType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_indexed_access_type(
+        &mut self,
+        node: &mut TSIndexedAccessType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_tuple_type(&mut self, node: &mut TSTupleType<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_tuple_type(&mut self, node: &mut TSTupleType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_named_tuple_member(
+        &mut self,
+        node: &mut TSNamedTupleMember<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_named_tuple_member(
+        &mut self,
+        node: &mut TSNamedTupleMember<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_optional_type(&mut self, node: &mut TSOptionalType<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_ts_optional_type(&mut self, node: &mut TSOptionalType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_rest_type(&mut self, node: &mut TSRestType<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_rest_type(&mut self, node: &mut TSRestType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_tuple_element(&mut self, node: &mut TSTupleElement<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_ts_tuple_element(&mut self, node: &mut TSTupleElement<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_any_keyword(&mut self, node: &mut TSAnyKeyword, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_any_keyword(&mut self, node: &mut TSAnyKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_string_keyword(&mut self, node: &mut TSStringKeyword, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_string_keyword(&mut self, node: &mut TSStringKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_boolean_keyword(&mut self, node: &mut TSBooleanKeyword, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_ts_boolean_keyword(&mut self, node: &mut TSBooleanKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_number_keyword(&mut self, node: &mut TSNumberKeyword, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_number_keyword(&mut self, node: &mut TSNumberKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_never_keyword(&mut self, node: &mut TSNeverKeyword, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_never_keyword(&mut self, node: &mut TSNeverKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_intrinsic_keyword(
+        &mut self,
+        node: &mut TSIntrinsicKeyword,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_intrinsic_keyword(
+        &mut self,
+        node: &mut TSIntrinsicKeyword,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_unknown_keyword(&mut self, node: &mut TSUnknownKeyword, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_ts_unknown_keyword(&mut self, node: &mut TSUnknownKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_null_keyword(&mut self, node: &mut TSNullKeyword, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_null_keyword(&mut self, node: &mut TSNullKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_undefined_keyword(
+        &mut self,
+        node: &mut TSUndefinedKeyword,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_undefined_keyword(
+        &mut self,
+        node: &mut TSUndefinedKeyword,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_void_keyword(&mut self, node: &mut TSVoidKeyword, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_void_keyword(&mut self, node: &mut TSVoidKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_symbol_keyword(&mut self, node: &mut TSSymbolKeyword, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_symbol_keyword(&mut self, node: &mut TSSymbolKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_this_type(&mut self, node: &mut TSThisType, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_this_type(&mut self, node: &mut TSThisType, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_object_keyword(&mut self, node: &mut TSObjectKeyword, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_object_keyword(&mut self, node: &mut TSObjectKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_big_int_keyword(&mut self, node: &mut TSBigIntKeyword, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_big_int_keyword(&mut self, node: &mut TSBigIntKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_type_reference(
+        &mut self,
+        node: &mut TSTypeReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_reference(
+        &mut self,
+        node: &mut TSTypeReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_type_name(&mut self, node: &mut TSTypeName<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_type_name(&mut self, node: &mut TSTypeName<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_qualified_name(
+        &mut self,
+        node: &mut TSQualifiedName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_qualified_name(
+        &mut self,
+        node: &mut TSQualifiedName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_type_parameter_instantiation(
+        &mut self,
+        node: &mut TSTypeParameterInstantiation<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_parameter_instantiation(
+        &mut self,
+        node: &mut TSTypeParameterInstantiation<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_type_parameter(
+        &mut self,
+        node: &mut TSTypeParameter<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_parameter(
+        &mut self,
+        node: &mut TSTypeParameter<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_type_parameter_declaration(
+        &mut self,
+        node: &mut TSTypeParameterDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_parameter_declaration(
+        &mut self,
+        node: &mut TSTypeParameterDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_type_alias_declaration(
+        &mut self,
+        node: &mut TSTypeAliasDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_alias_declaration(
+        &mut self,
+        node: &mut TSTypeAliasDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_class_implements(
+        &mut self,
+        node: &mut TSClassImplements<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_class_implements(
+        &mut self,
+        node: &mut TSClassImplements<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_interface_declaration(
+        &mut self,
+        node: &mut TSInterfaceDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_interface_declaration(
+        &mut self,
+        node: &mut TSInterfaceDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_interface_body(
+        &mut self,
+        node: &mut TSInterfaceBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_interface_body(
+        &mut self,
+        node: &mut TSInterfaceBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_property_signature(
+        &mut self,
+        node: &mut TSPropertySignature<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_property_signature(
+        &mut self,
+        node: &mut TSPropertySignature<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_signature(&mut self, node: &mut TSSignature<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_signature(&mut self, node: &mut TSSignature<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_index_signature(
+        &mut self,
+        node: &mut TSIndexSignature<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_index_signature(
+        &mut self,
+        node: &mut TSIndexSignature<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_call_signature_declaration(
+        &mut self,
+        node: &mut TSCallSignatureDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_call_signature_declaration(
+        &mut self,
+        node: &mut TSCallSignatureDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_method_signature(
+        &mut self,
+        node: &mut TSMethodSignature<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_method_signature(
+        &mut self,
+        node: &mut TSMethodSignature<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_construct_signature_declaration(
+        &mut self,
+        node: &mut TSConstructSignatureDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_construct_signature_declaration(
+        &mut self,
+        node: &mut TSConstructSignatureDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_index_signature_name(
+        &mut self,
+        node: &mut TSIndexSignatureName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_index_signature_name(
+        &mut self,
+        node: &mut TSIndexSignatureName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_interface_heritage(
+        &mut self,
+        node: &mut TSInterfaceHeritage<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_interface_heritage(
+        &mut self,
+        node: &mut TSInterfaceHeritage<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_type_predicate(
+        &mut self,
+        node: &mut TSTypePredicate<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_predicate(
+        &mut self,
+        node: &mut TSTypePredicate<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_type_predicate_name(
+        &mut self,
+        node: &mut TSTypePredicateName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_predicate_name(
+        &mut self,
+        node: &mut TSTypePredicateName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_module_declaration(
+        &mut self,
+        node: &mut TSModuleDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_module_declaration(
+        &mut self,
+        node: &mut TSModuleDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_module_declaration_name(
+        &mut self,
+        node: &mut TSModuleDeclarationName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_module_declaration_name(
+        &mut self,
+        node: &mut TSModuleDeclarationName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_module_declaration_body(
+        &mut self,
+        node: &mut TSModuleDeclarationBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_module_declaration_body(
+        &mut self,
+        node: &mut TSModuleDeclarationBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_global_declaration(
+        &mut self,
+        node: &mut TSGlobalDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_global_declaration(
+        &mut self,
+        node: &mut TSGlobalDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_module_block(&mut self, node: &mut TSModuleBlock<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_module_block(&mut self, node: &mut TSModuleBlock<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_type_literal(&mut self, node: &mut TSTypeLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_type_literal(&mut self, node: &mut TSTypeLiteral<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_infer_type(&mut self, node: &mut TSInferType<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_infer_type(&mut self, node: &mut TSInferType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_type_query(&mut self, node: &mut TSTypeQuery<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_type_query(&mut self, node: &mut TSTypeQuery<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_type_query_expr_name(
+        &mut self,
+        node: &mut TSTypeQueryExprName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_query_expr_name(
+        &mut self,
+        node: &mut TSTypeQueryExprName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_import_type(&mut self, node: &mut TSImportType<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_import_type(&mut self, node: &mut TSImportType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_import_type_qualifier(
+        &mut self,
+        node: &mut TSImportTypeQualifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_import_type_qualifier(
+        &mut self,
+        node: &mut TSImportTypeQualifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_import_type_qualified_name(
+        &mut self,
+        node: &mut TSImportTypeQualifiedName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_import_type_qualified_name(
+        &mut self,
+        node: &mut TSImportTypeQualifiedName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_function_type(&mut self, node: &mut TSFunctionType<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_ts_function_type(&mut self, node: &mut TSFunctionType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_constructor_type(
+        &mut self,
+        node: &mut TSConstructorType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_constructor_type(
+        &mut self,
+        node: &mut TSConstructorType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_mapped_type(&mut self, node: &mut TSMappedType<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_ts_mapped_type(&mut self, node: &mut TSMappedType<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_template_literal_type(
+        &mut self,
+        node: &mut TSTemplateLiteralType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_template_literal_type(
+        &mut self,
+        node: &mut TSTemplateLiteralType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_as_expression(&mut self, node: &mut TSAsExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_ts_as_expression(&mut self, node: &mut TSAsExpression<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_satisfies_expression(
+        &mut self,
+        node: &mut TSSatisfiesExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_satisfies_expression(
+        &mut self,
+        node: &mut TSSatisfiesExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_type_assertion(
+        &mut self,
+        node: &mut TSTypeAssertion<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_type_assertion(
+        &mut self,
+        node: &mut TSTypeAssertion<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_import_equals_declaration(
+        &mut self,
+        node: &mut TSImportEqualsDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_import_equals_declaration(
+        &mut self,
+        node: &mut TSImportEqualsDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_module_reference(
+        &mut self,
+        node: &mut TSModuleReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_module_reference(
+        &mut self,
+        node: &mut TSModuleReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_external_module_reference(
+        &mut self,
+        node: &mut TSExternalModuleReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_external_module_reference(
+        &mut self,
+        node: &mut TSExternalModuleReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_non_null_expression(
+        &mut self,
+        node: &mut TSNonNullExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_non_null_expression(
+        &mut self,
+        node: &mut TSNonNullExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_decorator(&mut self, node: &mut Decorator<'a>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_decorator(&mut self, node: &mut Decorator<'a>, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_export_assignment(
+        &mut self,
+        node: &mut TSExportAssignment<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_export_assignment(
+        &mut self,
+        node: &mut TSExportAssignment<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_namespace_export_declaration(
+        &mut self,
+        node: &mut TSNamespaceExportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_namespace_export_declaration(
+        &mut self,
+        node: &mut TSNamespaceExportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_ts_instantiation_expression(
+        &mut self,
+        node: &mut TSInstantiationExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_instantiation_expression(
+        &mut self,
+        node: &mut TSInstantiationExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_js_doc_nullable_type(
+        &mut self,
+        node: &mut JSDocNullableType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_js_doc_nullable_type(
+        &mut self,
+        node: &mut JSDocNullableType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_js_doc_non_nullable_type(
+        &mut self,
+        node: &mut JSDocNonNullableType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_js_doc_non_nullable_type(
+        &mut self,
+        node: &mut JSDocNonNullableType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_js_doc_unknown_type(
+        &mut self,
+        node: &mut JSDocUnknownType,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_js_doc_unknown_type(&mut self, node: &mut JSDocUnknownType, ctx: &mut TraverseCtx<'a>) {
+    }
+
+    #[inline]
+    fn enter_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {}
+    #[inline]
+    fn exit_statements(&mut self, node: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {}
+}

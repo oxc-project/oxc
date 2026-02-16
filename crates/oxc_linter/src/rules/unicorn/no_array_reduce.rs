@@ -340,19 +340,19 @@ fn test() {
         (r#"array.reduce((str, item) => str += item, "")"#, None),
         (
             r"
-			array.reduce((obj, item) => {
-				obj[item] = null;
-				return obj;
-			}, {})
-			",
+            array.reduce((obj, item) => {
+                obj[item] = null;
+                return obj;
+            }, {})
+            ",
             None,
         ),
         (r"array.reduce((obj, item) => ({ [item]: null }), {})", None),
         (
             r#"
-			const hyphenate = (str, char) => `${str}-${char}`;
-			["a", "b", "c"].reduce(hyphenate);
-			"#,
+            const hyphenate = (str, char) => `${str}-${char}`;
+            ["a", "b", "c"].reduce(hyphenate);
+            "#,
             None,
         ),
         (r"[].reduce.call(array, (s, i) => s + i)", None),
@@ -366,13 +366,13 @@ fn test() {
         (r"Array.prototype.reduce.apply(array, [sum]);", None),
         (
             r"
-			array.reduce((total, item) => {
-				return total + doComplicatedThings(item);
-				function doComplicatedThings(item) {
-					return item + 1;
-				}
-			}, 0);
-			",
+            array.reduce((total, item) => {
+                return total + doComplicatedThings(item);
+                function doComplicatedThings(item) {
+                    return item + 1;
+                }
+            }, 0);
+            ",
             None,
         ),
         // Option: allowSimpleOperations
@@ -402,28 +402,28 @@ fn test() {
         ),
         (
             r"
-				array.reduce((total, item) => {
-					return (total / item) * 100;
-				}, 0);
-		",
+                array.reduce((total, item) => {
+                    return (total / item) * 100;
+                }, 0);
+        ",
             Some(json!([{ "allowSimpleOperations": false }])),
         ),
         (r#"array.reduceRight((str, item) => str += item, "")"#, None),
         (
             r"
-			array.reduceRight((obj, item) => {
-				obj[item] = null;
-				return obj;
-			}, {})
-			",
+            array.reduceRight((obj, item) => {
+                obj[item] = null;
+                return obj;
+            }, {})
+            ",
             None,
         ),
         (r"array.reduceRight((obj, item) => ({ [item]: null }), {})", None),
         (
             r#"
-			const hyphenate = (str, char) => `${str}-${char}`;
-			["a", "b", "c"].reduceRight(hyphenate);
-			"#,
+            const hyphenate = (str, char) => `${str}-${char}`;
+            ["a", "b", "c"].reduceRight(hyphenate);
+            "#,
             None,
         ),
         (r"[].reduceRight.call(array, (s, i) => s + i)", None),
@@ -437,13 +437,13 @@ fn test() {
         (r"Array.prototype.reduceRight.apply(array, [sum]);", None),
         (
             r"
-			array.reduceRight((total, item) => {
-				return total + doComplicatedThings(item);
-				function doComplicatedThings(item) {
-					return item + 1;
-				}
-			}, 0);
-			",
+            array.reduceRight((total, item) => {
+                return total + doComplicatedThings(item);
+                function doComplicatedThings(item) {
+                    return item + 1;
+                }
+            }, 0);
+            ",
             None,
         ),
         // Option: allowSimpleOperations
@@ -473,10 +473,10 @@ fn test() {
         ),
         (
             r"
-				array.reduceRight((total, item) => {
-					return (total / item) * 100;
-				}, 0);
-		",
+                array.reduceRight((total, item) => {
+                    return (total / item) * 100;
+                }, 0);
+        ",
             Some(json!([{ "allowSimpleOperations": false }])),
         ),
     ];

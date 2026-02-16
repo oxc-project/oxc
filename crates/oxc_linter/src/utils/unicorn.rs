@@ -32,20 +32,16 @@ pub const BUILT_IN_ERRORS: [&str; 9] = [
     "AggregateError",
 ];
 
-/// Returns `true` when `ident` resolves to a named import with the given source module and
-/// imported symbol name.
+/// Returns `true` when `ident` resolves to any import binding from `module_name`.
 ///
 /// This checks semantic resolution first (`reference_id` -> `symbol_id`) and then validates:
 /// - the symbol is an import binding,
-/// - the enclosing declaration source matches `module_name`,
-/// - one of the declaration's `ImportSpecifier`s maps to this symbol and `imported_name`.
+/// - the enclosing declaration source matches `module_name`.
 ///
-/// Aliased named imports are supported (`import { Foo as Bar }` matches `Bar` for `"Foo"`).
-/// Namespace/default imports are intentionally ignored.
-pub fn is_import_symbol(
+/// Named, default, and namespace imports are all supported.
+pub fn is_import_from_module(
     ident: &IdentifierReference,
     module_name: &str,
-    imported_name: &str,
     ctx: &LintContext,
 ) -> bool {
     let reference = ctx.scoping().get_reference(ident.reference_id());
@@ -62,9 +58,37 @@ pub fn is_import_symbol(
         return false;
     };
 
-    if import_decl.source.value.as_str() != module_name {
+    import_decl.source.value.as_str() == module_name
+}
+
+/// Returns `true` when `ident` resolves to a named import with the given source module and
+/// imported symbol name.
+///
+/// This checks semantic resolution first (`reference_id` -> `symbol_id`) and then validates:
+/// - the symbol is an import binding,
+/// - the enclosing declaration source matches `module_name`,
+/// - one of the declaration's `ImportSpecifier`s maps to this symbol and `imported_name`.
+///
+/// Aliased named imports are supported (`import { Foo as Bar }` matches `Bar` for `"Foo"`).
+/// Namespace/default imports are intentionally ignored.
+pub fn is_import_symbol(
+    ident: &IdentifierReference,
+    module_name: &str,
+    imported_name: &str,
+    ctx: &LintContext,
+) -> bool {
+    if !is_import_from_module(ident, module_name, ctx) {
         return false;
     }
+
+    let reference = ctx.scoping().get_reference(ident.reference_id());
+    let Some(symbol_id) = reference.symbol_id() else {
+        return false;
+    };
+    let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+    let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id) else {
+        return false;
+    };
 
     import_decl.specifiers.iter().flatten().any(|specifier| match specifier {
         ImportDeclarationSpecifier::ImportSpecifier(import_specifier) => {

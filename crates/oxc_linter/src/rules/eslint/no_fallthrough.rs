@@ -280,6 +280,16 @@ impl Rule for NoFallthrough {
                 if node == switch_id {
                     (last_cond, true)
                 } else if node == default_or_exit {
+                    if default.is_some() {
+                        // Continue past default to detect fallthrough FROM default
+                        (last_cond, true)
+                    } else {
+                        // Stop at exit block to prevent exploring outside switch
+                        (last_cond, false)
+                    }
+                } else if default.is_some() && Some(node) == exit {
+                    // When a default exists, stop at the shared end-of-switch block
+                    // to avoid traversing beyond the switch body.
                     (last_cond, false)
                 } else if tests.contains_key(&node) {
                     (last_cond, true)
@@ -581,6 +591,13 @@ fn test() {
                 "reportUnusedFallthroughComment": false
             }])),
         ),
+        // Issue #11340: default in middle with return
+        (
+            "function f(name) { switch(name) { case 'a': case 'b': default: return 'x'; case 'c': return 'y'; } }",
+            None,
+        ),
+        // Default in middle with break
+        ("switch(foo) { default: a(); break; case 1: b(); }", None),
         // Issue #6417: switch with logical operators should work correctly with break
         ("switch(true) { case x === 1 || x === 2: a(); break; case x === 3: b(); }", None),
         ("switch(true) { case x === 1 && y: a(); break; case x === 3: b(); }", None),
@@ -656,6 +673,10 @@ fn test() {
                 "reportUnusedFallthroughComment": true
             }])),
         ),
+        // Issue #11340: default falls through to next case
+        ("switch(foo) { default: a(); case 1: b(); }", None),
+        // Issue #11340: default in middle, falls through both directions
+        ("switch(foo) { case 0: a(); default: b(); case 1: c(); }", None),
         // Issue #6417: switch with logical operators should detect fallthrough
         ("switch(true) { case x === 1 || x === 2: a(); case x === 3: b(); }", None),
         ("switch(true) { case x === 1 && y: a(); case x === 3: b(); }", None),

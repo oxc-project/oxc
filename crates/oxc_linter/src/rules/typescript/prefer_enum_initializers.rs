@@ -100,51 +100,51 @@ fn test() {
 
     let pass = vec![
         "
-			enum Direction {}
-			    ",
+            enum Direction {}
+                ",
         "
-			enum Direction {
-			  Up = 1,
-			}
-			    ",
+            enum Direction {
+              Up = 1,
+            }
+                ",
         "
-			enum Direction {
-			  Up = 1,
-			  Down = 2,
-			}
-			    ",
+            enum Direction {
+              Up = 1,
+              Down = 2,
+            }
+                ",
         "
-			enum Direction {
-			  Up = 'Up',
-			  Down = 'Down',
-			}
-			    ",
+            enum Direction {
+              Up = 'Up',
+              Down = 'Down',
+            }
+                ",
     ];
 
     let fail = vec![
         "
-			enum Direction {
-			  Up,
-			}
-			      ",
+            enum Direction {
+              Up,
+            }
+                  ",
         "
-			enum Direction {
-			  Up,
-			  Down,
-			}
-			      ",
+            enum Direction {
+              Up,
+              Down,
+            }
+                  ",
         "
-			enum Direction {
-			  Up = 'Up',
-			  Down,
-			}
-			      ",
+            enum Direction {
+              Up = 'Up',
+              Down,
+            }
+                  ",
         "
-			enum Direction {
-			  Up,
-			  Down = 'Down',
-			}
-			      ",
+            enum Direction {
+              Up,
+              Down = 'Down',
+            }
+                  ",
     ];
 
     // Each test case provides 3 suggestions: index, index+1, and member name as string

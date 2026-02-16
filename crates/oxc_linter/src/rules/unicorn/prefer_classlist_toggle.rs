@@ -428,84 +428,84 @@ fn test() {
         r#"element.classList.toggle("className", condition)"#,
         r#"element.classList.toggle("className")"#,
         "if (condition) {
-				element.classList.add('className');
-			} else if (other) {
-				element.classList.remove('className');
-			}",
+                element.classList.add('className');
+            } else if (other) {
+                element.classList.remove('className');
+            }",
         "if (condition) {
-				element.classList.notAdd('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                element.classList.notAdd('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "if (condition) {
-				element.classList.remove('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "if (condition) {
-				element.classList.add('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.add('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (condition) {
-				element.classList.add('className1');
-			} else {
-				element.classList.remove('className2');
-			}",
+                element.classList.add('className1');
+            } else {
+                element.classList.remove('className2');
+            }",
         "element.classList.add('className');
-			element.classList.remove('className');",
+            element.classList.remove('className');",
         "if (condition) {
-				element.classList.add?.('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                element.classList.add?.('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "if (condition) {
-				element.classList?.add('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                element.classList?.add('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "if (condition) {
-				a.add('className');
-			} else {
-				a.remove('className');
-			}",
+                a.add('className');
+            } else {
+                a.remove('className');
+            }",
         "if (condition) {
-				element.notClassList.add('className');
-			} else {
-				element.notClassList.remove('className');
-			}",
+                element.notClassList.add('className');
+            } else {
+                element.notClassList.remove('className');
+            }",
         "if (condition) {
-				element.classList.add('className');
-				foo();
-			} else {
-				element.classList.remove('className');
-			}",
+                element.classList.add('className');
+                foo();
+            } else {
+                element.classList.remove('className');
+            }",
         "if (condition) {
-				{
-					element.classList.add('className');
-				}
-			} else {
-				element.classList.remove('className');
-			}",
+                {
+                    element.classList.add('className');
+                }
+            } else {
+                element.classList.remove('className');
+            }",
         "if (condition) {
-				element1.classList.add('className');
-			} else {
-				element2.classList.remove('className');
-			}",
+                element1.classList.add('className');
+            } else {
+                element2.classList.remove('className');
+            }",
         "if (condition) {
-				element.classList.add('className', extraArgument);
-			} else {
-				element.classList.remove('className', extraArgument);
-			}",
+                element.classList.add('className', extraArgument);
+            } else {
+                element.classList.remove('className', extraArgument);
+            }",
         "if (condition) {
-				element.classList.add();
-			} else {
-				element.classList.remove();
-			}",
+                element.classList.add();
+            } else {
+                element.classList.remove();
+            }",
         "if (condition) {
-				element.classList.remove('className');
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+                element.classList.add('className');
+            }",
         "condition ? element.classList.add(className1) : element.classList.remove(className2)",
         "condition ? element.classList.add?.(className) : element.classList.remove(className)",
         "condition ? element.classList?.add(className) : element.classList.remove(className)",
@@ -526,168 +526,168 @@ fn test() {
 
     let fail = vec![
         "if (condition) {
-				element.classList.add('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                element.classList.add('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "if (condition)
-				element.classList.add('className');
-			else
-				element.classList.remove('className');",
+                element.classList.add('className');
+            else
+                element.classList.remove('className');",
         "if (condition)
-				element.classList.add('className');
-			else {
-				element.classList.remove('className');
-			}",
+                element.classList.add('className');
+            else {
+                element.classList.remove('className');
+            }",
         "if (condition) {
-				element?.classList.add('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                element?.classList.add('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "if (condition)
-				element.classList.add('className');
-			else
-				element?.classList.remove('className');",
+                element.classList.add('className');
+            else
+                element?.classList.remove('className');",
         "if (condition) {
-				element.classList.add('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                element.classList.add('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "if (condition) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (condition) {
-				(( element )).classList.add('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                (( element )).classList.add('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "if (0, condition) {
-				element.classList.add('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                element.classList.add('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "if (0, condition) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (condition) {
-				element.classList.remove(((className)));
-			} else {
-				element.classList.add(((className)));
-			}",
+                element.classList.remove(((className)));
+            } else {
+                element.classList.add(((className)));
+            }",
         "foo
-			if (condition) {
-				(( element )).classList.add('className')
-			} else {
-				element.classList.remove('className')
-			}",
+            if (condition) {
+                (( element )).classList.add('className')
+            } else {
+                element.classList.remove('className')
+            }",
         "if (condition) {
-				(( element )).classList.add('className')
-			} else {
-				element.classList.remove('className')
-			}
-			[].forEach(foo);",
+                (( element )).classList.add('className')
+            } else {
+                element.classList.remove('className')
+            }
+            [].forEach(foo);",
         "if (element.classList.contains('className')) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (element?.classList.contains('className')) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (element.classList.contains?.('className')) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (element.classList?.contains('className')) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (element.classList.notContains('className')) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (element.classList.contains('not-same-class-name')) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (element.notClassList.contains('className')) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (contains('className')) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (notSameElement.classList.contains('className')) {
-				element.classList.remove('className');
-			} else {
-				element.classList.add('className');
-			}",
+                element.classList.remove('className');
+            } else {
+                element.classList.add('className');
+            }",
         "if (element.classList.contains('className')) {
-				element.classList.add('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                element.classList.add('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "if (!element.classList.contains('className')) {
-				element.classList.add('className');
-			} else {
-				element.classList.remove('className');
-			}",
+                element.classList.add('className');
+            } else {
+                element.classList.remove('className');
+            }",
         "condition ? element.classList.add(className) : element.classList.remove(className)",
         "condition ? element?.classList.add(className) : element.classList.remove(className)",
         "condition ? element.classList.add(className) : element?.classList.remove(className)",
         "condition ? element.classList.remove(className) : element.classList.add(className)",
         "if (condition ? element.classList.add(className) : element.classList.remove(className));",
         "function foo() {
-				return!foo ? element.classList.add(className) : element.classList.remove(className)
-			}",
+                return!foo ? element.classList.add(className) : element.classList.remove(className)
+            }",
         "foo
-			condition ? (( element )).classList.add(className) : element.classList.remove(className);",
+            condition ? (( element )).classList.add(className) : element.classList.remove(className);",
         "element.classList.contains('className')
-				? element.classList.remove('className')
-				: element.classList.add('className')",
+                ? element.classList.remove('className')
+                : element.classList.add('className')",
         "element?.classList.contains('className')
-				? element.classList.remove('className')
-				: element.classList.add('className')",
+                ? element.classList.remove('className')
+                : element.classList.add('className')",
         "element.classList.contains?.('className')
-				? element.classList.remove('className')
-				: element.classList.add('className')",
+                ? element.classList.remove('className')
+                : element.classList.add('className')",
         "element.classList?.contains('className')
-				? element.classList.remove('className')
-				: element.classList.add('className')",
+                ? element.classList.remove('className')
+                : element.classList.add('className')",
         "element.classList.notContains('className')
-				? element.classList.remove('className')
-				: element.classList.add('className')",
+                ? element.classList.remove('className')
+                : element.classList.add('className')",
         "element.classList.contains('not-same-class-name')
-				? element.classList.remove('className')
-				: element.classList.add('className')",
+                ? element.classList.remove('className')
+                : element.classList.add('className')",
         "element.notClassList.contains('className')
-				? element.classList.remove('className')
-				: element.classList.add('className')",
+                ? element.classList.remove('className')
+                : element.classList.add('className')",
         "contains('className')
-				? element.classList.remove('className')
-				: element.classList.add('className')",
+                ? element.classList.remove('className')
+                : element.classList.add('className')",
         "notSameElement.classList.contains('className')
-				? element.classList.remove('className')
-				: element.classList.add('className')",
+                ? element.classList.remove('className')
+                : element.classList.add('className')",
         "element.classList.contains('className')
-				? element.classList.add('className')
-				: element.classList.remove('className')",
+                ? element.classList.add('className')
+                : element.classList.remove('className')",
         "!element.classList.contains('className')
-				? element.classList.add('className')
-				: element.classList.remove('className')",
+                ? element.classList.add('className')
+                : element.classList.remove('className')",
         r#"element.classList[condition ? "add" : "remove"](className)"#,
         r#"element.classList[condition ? "remove": "add"](className)"#,
         r#"element?.classList[condition ? "add" : "remove"](className)"#,

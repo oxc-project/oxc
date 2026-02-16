@@ -1,7 +1,8 @@
 //! Generator for ID getter/setter methods on all structs with semantic ID fields
-//! (`scope_id`, `symbol_id`, `reference_id`).
+//! (`scope_id`, `symbol_id`, `reference_id`) and `node_id`.
 //!
 //! e.g. Generates `scope_id` and `set_scope_id` methods on all types with a `scope_id` field.
+//! Also generates `node_id` and `set_node_id` methods on all types with a `node_id` field.
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -36,7 +37,7 @@ impl Generator for GetIdGenerator {
             .filter_map(|type_def| generate_for_type(type_def, &semantic_id_type_ids, schema));
 
         let output = quote! {
-            use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
+            use oxc_syntax::{node::NodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 
             ///@@line_break
             use crate::ast::*;
@@ -57,7 +58,8 @@ fn generate_for_type(
 
     let struct_name = struct_def.name();
 
-    let methods = struct_def
+    // Generate semantic ID getters/setters (scope_id, symbol_id, reference_id)
+    let semantic_methods = struct_def
         .fields
         .iter()
         .filter_map(|field| {
@@ -110,6 +112,36 @@ fn generate_for_type(
             })
         })
         .collect::<TokenStream>();
+
+    // Generate node_id getter/setter
+    let node_id_methods = struct_def
+        .fields
+        .iter()
+        .find(|field| field.name() == "node_id" && field.type_def(schema).as_cell().is_some())
+        .map(|field| {
+            let field_ident = field.ident();
+            let get_doc = format!(" Get [`NodeId`] of [`{struct_name}`].");
+            let set_doc = format!(" Set [`NodeId`] of [`{struct_name}`].");
+
+            quote! {
+                ///@@line_break
+                #[doc = #get_doc]
+                #[inline]
+                pub fn #field_ident(&self) -> NodeId {
+                    self.#field_ident.get()
+                }
+
+                ///@@line_break
+                #[doc = #set_doc]
+                #[inline]
+                pub fn set_node_id(&self, node_id: NodeId) {
+                    self.node_id.set(node_id);
+                }
+            }
+        })
+        .unwrap_or_default();
+
+    let methods = quote! { #semantic_methods #node_id_methods };
 
     if methods.is_empty() {
         return None;

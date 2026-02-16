@@ -3,7 +3,7 @@
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, Span};
 use oxc_traverse::{Ancestor, BoundIdentifier};
 
 use crate::{
@@ -45,6 +45,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             return;
         }
 
+        let for_of_span = for_of.span;
         let allow_multiple_statements = Self::is_multiple_statements_allowed(ctx);
         let parent_scope_id = if allow_multiple_statements {
             ctx.current_scope_id()
@@ -59,7 +60,8 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         // 1. Use the last statement as the new statement.
         // 2. insert the rest of the statements before the current statement.
         // TODO: Once we have a method to replace the current statement, we can simplify this logic.
-        let mut statements = self.transform_for_of_statement(for_of, parent_scope_id, ctx);
+        let mut statements =
+            self.transform_for_of_statement(for_of, parent_scope_id, for_of_span, ctx);
         let mut new_stmt = statements.pop().unwrap();
 
         // If it's a labeled statement, we need to wrap the ForStatement with a labeled statement.
@@ -72,7 +74,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             let try_statement_block_body = &mut try_statement.block.body;
             let for_statement = try_statement_block_body.pop().unwrap();
             try_statement_block_body.push(ctx.ast.statement_labeled(
-                SPAN,
+                for_of_span,
                 label.clone(),
                 for_statement,
             ));
@@ -97,6 +99,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         &self,
         stmt: &mut ForOfStatement<'a>,
         parent_scope_id: ScopeId,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
         let step_key =
@@ -153,7 +156,15 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             ctx.ast.vec1(Argument::from(iterator)),
             ctx,
         );
-        Self::build_for_await(iterator, &step_key, body, stmt.scope_id(), parent_scope_id, ctx)
+        Self::build_for_await(
+            iterator,
+            &step_key,
+            body,
+            stmt.scope_id(),
+            parent_scope_id,
+            span,
+            ctx,
+        )
     }
 
     /// Build a `for` statement used to replace the `for await` statement.
@@ -195,6 +206,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
         body: ArenaVec<'a, Statement<'a>>,
         for_of_scope_id: ScopeId,
         parent_scope_id: ScopeId,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
         let var_scope_id = ctx.current_scope_id();
@@ -258,7 +270,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
                 ctx.create_child_scope(block_scope_id, ScopeFlags::empty());
 
             let for_statement = ctx.ast.statement_for_with_scope_id(
-                SPAN,
+                span,
                 Some(ctx.ast.for_statement_init_variable_declaration(
                     SPAN,
                     VariableDeclarationKind::Var,
@@ -477,7 +489,7 @@ impl<'a> AsyncGeneratorFunctions<'a> {
             Some(block_statement)
         };
 
-        let try_statement = ctx.ast.statement_try(SPAN, block, catch_clause, finally);
+        let try_statement = ctx.ast.statement_try(span, block, catch_clause, finally);
 
         items.push(try_statement);
         items

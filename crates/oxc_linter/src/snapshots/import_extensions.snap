@@ -693,3 +693,24 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────────
    ╰────
   help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "tsx" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import Component from './Component.stories.tsx';
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "ts" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import Component from './Component.test.ts';
+   · ────────────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.
+
+  ⚠ eslint-plugin-import(extensions): File extension "js" should not be included in the import declaration.
+   ╭─[extensions.tsx:1:1]
+ 1 │ import utils from './utils.spec.js';
+   · ────────────────────────────────────
+   ╰────
+  help: Remove the file extension from this import.

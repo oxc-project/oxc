@@ -177,6 +177,24 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:29]
+ 1 │ switch(foo) { default: a(); case 1: b(); }
+   ·                             ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `default`.
+   ╭─[no_fallthrough.tsx:1:28]
+ 1 │ switch(foo) { case 0: a(); default: b(); case 1: c(); }
+   ·                            ─────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
+   ╭─[no_fallthrough.tsx:1:42]
+ 1 │ switch(foo) { case 0: a(); default: b(); case 1: c(); }
+   ·                                          ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
    ╭─[no_fallthrough.tsx:1:46]
  1 │ switch(true) { case x === 1 || x === 2: a(); case x === 3: b(); }
    ·                                              ──────────────────

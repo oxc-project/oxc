@@ -16,7 +16,7 @@
 
   x language-options-plugin(lang): parser:
   | object keys: name,version,parse,VisitorKeys,Syntax,latestEcmaVersion,supportedEcmaVersions
-  | name: oxc
+  | name: oxlint
   | typeof version: string
   | typeof parse: function
   | latestEcmaVersion: 17

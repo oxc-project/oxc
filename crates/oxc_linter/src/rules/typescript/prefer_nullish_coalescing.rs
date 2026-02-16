@@ -48,6 +48,7 @@ pub struct PreferNullishCoalescingConfig {
     /// (or `strict`) set to `true`.
     ///
     /// It is _not_ recommended to enable this config option.
+    #[schemars(skip)]
     pub allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: bool,
     /// Whether to ignore arguments to the `Boolean` constructor.
     pub ignore_boolean_coercion: bool,

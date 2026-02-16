@@ -920,10 +920,20 @@ impl Backend {
     ///
     /// For example, if we have workspaces `[workspace, workspace/deeper]` and the URI is
     /// `workspace/deeper/file.js`, both workers match, but `workspace/deeper` is more specific.
+    ///
+    /// For `untitled://` URIs (unsaved files), returns the first workspace worker.
+    /// This matches the behavior of other LSP servers like rust-analyzer and typescript-language-server.
     fn find_worker_for_uri<'a>(
         workers: &'a [WorkspaceWorker],
         uri: &Uri,
     ) -> Option<&'a WorkspaceWorker> {
+        // Handle untitled:// URIs - use first workspace
+        // These are in-memory files that don't have a file path
+        if uri.as_str().starts_with("untitled:") {
+            return workers.first();
+        }
+
+        // Handle file:// URIs - use path-based matching
         let file_path = uri.to_file_path()?;
 
         workers
@@ -1052,5 +1062,79 @@ mod tests {
         let non_file_uri: Uri = "https://example.com/file.js".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &non_file_uri);
         assert!(worker.is_none());
+    }
+
+    #[test]
+    fn test_find_worker_for_uri_untitled_single_workspace() {
+        let workspace = WorkspaceWorker::new(
+            "file:///path/to/workspace".parse().unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
+        let workers = vec![workspace];
+
+        // Untitled file should use first workspace
+        let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
+        assert!(worker.is_some());
+        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
+    }
+
+    #[test]
+    fn test_find_worker_for_uri_untitled_multiple_workspaces() {
+        let workspace1 = WorkspaceWorker::new(
+            "file:///path/to/workspace1".parse().unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
+        let workspace2 = WorkspaceWorker::new(
+            "file:///path/to/workspace2".parse().unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
+        let workers = vec![workspace1, workspace2];
+
+        // Untitled file should use first workspace (not second)
+        let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
+        assert!(worker.is_some());
+        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace1");
+    }
+
+    #[test]
+    fn test_find_worker_for_uri_untitled_no_workspace() {
+        let workers: Vec<WorkspaceWorker> = vec![];
+
+        // Untitled file with no workspaces should return None
+        let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
+        assert!(worker.is_none());
+    }
+
+    #[test]
+    fn test_find_worker_for_uri_untitled_with_nested_workspaces() {
+        let workspace = WorkspaceWorker::new(
+            "file:///path/to/workspace".parse().unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
+        let workspace_deeper = WorkspaceWorker::new(
+            "file:///path/to/workspace/deeper".parse().unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
+        let workers = vec![workspace, workspace_deeper];
+
+        // Untitled file should use first workspace (not nested one)
+        let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
+        assert!(worker.is_some());
+        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
+
+        // File URIs should still use path-based matching
+        let file_in_deeper: Uri = "file:///path/to/workspace/deeper/file.js".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &file_in_deeper);
+        assert!(worker.is_some());
+        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace/deeper");
     }
 }

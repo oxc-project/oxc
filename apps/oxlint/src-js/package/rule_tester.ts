@@ -1492,7 +1492,9 @@ function setupOptions(test: TestCase, cwd: string): number {
       workspaceUri: null,
     });
   } catch (err) {
-    throw new Error(`Failed to serialize options: ${err}`);
+    throw new Error(
+      `Failed to serialize options: ${err as (typeof globalThis)["Error"]["prototype"]}`,
+    );
   }
   setOptions(allOptionsJson);
 

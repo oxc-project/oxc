@@ -968,63 +968,7 @@ x Output mismatch
 
 # babel-plugin-transform-object-rest-spread (27/40)
 * object-rest/for-x/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref", "a", "b"]
-rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref", "_ref2", "_ref3", "a"]
-Bindings mismatch:
-after transform: ScopeId(2): []
-rebuilt        : ScopeId(2): ["a", "b"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_ref2"]
-rebuilt        : ScopeId(3): []
-Bindings mismatch:
-after transform: ScopeId(4): ["_ref3"]
-rebuilt        : ScopeId(4): []
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(5): ["_ref4", "_ref5"]
-Bindings mismatch:
-after transform: ScopeId(6): ["_ref4"]
-rebuilt        : ScopeId(6): []
-Bindings mismatch:
-after transform: ScopeId(7): ["_ref5"]
-rebuilt        : ScopeId(7): []
-Symbol flags mismatch for "a":
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
-rebuilt        : SymbolId(8): SymbolFlags(Function)
-Symbol span mismatch for "a":
-after transform: SymbolId(0): Span { start: 27, end: 28 }
-rebuilt        : SymbolId(8): Span { start: 86, end: 87 }
-Symbol scope ID mismatch for "a":
-after transform: SymbolId(0): ScopeId(2)
-rebuilt        : SymbolId(8): ScopeId(0)
-Symbol redeclarations mismatch for "a":
-after transform: SymbolId(0): [Span { start: 27, end: 28 }, Span { start: 86, end: 87 }, Span { start: 189, end: 190 }, Span { start: 274, end: 275 }]
-rebuilt        : SymbolId(8): [Span { start: 86, end: 87 }, Span { start: 189, end: 190 }, Span { start: 274, end: 275 }]
-Symbol reference IDs mismatch for "b":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3)]
-rebuilt        : SymbolId(5): []
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(4): ScopeId(3)
-rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref3":
-after transform: SymbolId(5): ScopeId(4)
-rebuilt        : SymbolId(7): ScopeId(0)
-Symbol scope ID mismatch for "_ref4":
-after transform: SymbolId(7): ScopeId(6)
-rebuilt        : SymbolId(9): ScopeId(5)
-Symbol scope ID mismatch for "_ref5":
-after transform: SymbolId(8): ScopeId(7)
-rebuilt        : SymbolId(10): ScopeId(5)
-Reference symbol mismatch for "b":
-after transform: SymbolId(1) "b"
-rebuilt        : <None>
-Reference symbol mismatch for "b":
-after transform: SymbolId(1) "b"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["babelHelpers"]
-rebuilt        : ["b", "babelHelpers"]
+x Output mismatch
 
 * object-rest/for-x-array-pattern/input.js
 x Output mismatch
@@ -1036,21 +980,7 @@ x Output mismatch
 x Output mismatch
 
 * object-rest/for-x-completion-record/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_excluded"]
-rebuilt        : ScopeId(0): ["_excluded", "_ref", "_ref2"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_ref"]
-rebuilt        : ScopeId(1): []
-Bindings mismatch:
-after transform: ScopeId(2): ["_ref2"]
-rebuilt        : ScopeId(2): []
-Symbol scope ID mismatch for "_ref":
-after transform: SymbolId(0): ScopeId(1)
-rebuilt        : SymbolId(1): ScopeId(0)
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(1): ScopeId(2)
-rebuilt        : SymbolId(2): ScopeId(0)
+x Output mismatch
 
 * object-rest/for-x-declaration-shadowed-block-scoped-bindings/input.js
 x Output mismatch
@@ -1146,33 +1076,7 @@ after transform: ["b", "babelHelpers", "f", "q"]
 rebuilt        : ["R", "Y", "b", "babelHelpers", "f", "q"]
 
 * object-rest/symbol/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_Symbol$for", "_Symbol$for2", "_Symbol$for3", "_ref", "_ref2", "_ref3", "foo", "rest"]
-rebuilt        : ScopeId(0): ["_Symbol$for", "_Symbol$for2", "_ref", "_ref2", "foo", "rest"]
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_Symbol$for3":
-after transform: SymbolId(7) "_Symbol$for3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Reference symbol mismatch for "_Symbol$for3":
-after transform: SymbolId(7) "_Symbol$for3"
-rebuilt        : <None>
-Reference symbol mismatch for "_ref3":
-after transform: SymbolId(6) "_ref3"
-rebuilt        : <None>
-Unresolved references mismatch:
-after transform: ["Symbol", "babelHelpers"]
-rebuilt        : ["Symbol", "_Symbol$for3", "_ref3", "babelHelpers"]
-Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
-rebuilt        : [ReferenceId(0), ReferenceId(7)]
+x Output mismatch
 
 * regression/gh-17274/input.js
 x Output mismatch

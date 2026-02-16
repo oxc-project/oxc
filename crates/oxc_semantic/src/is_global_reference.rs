@@ -26,7 +26,9 @@ use crate::{ReferenceId, Scoping};
 ///
 /// See: <https://github.com/oxc-project/oxc/issues/8365>
 pub trait IsGlobalReference {
+    /// Returns `true` when this reference has no local symbol binding.
     fn is_global_reference(&self, scoping: &Scoping) -> bool;
+    /// Returns `true` when this reference matches `name` and is global.
     fn is_global_reference_name(&self, name: Ident<'_>, scoping: &Scoping) -> bool;
 }
 

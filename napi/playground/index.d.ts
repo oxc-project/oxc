@@ -63,6 +63,17 @@ export interface OxcControlFlowOptions {
   verbose?: boolean
 }
 
+export interface OxcCustomGroupDefinition {
+  /** The identifier used in groups representing this custom group */
+  groupName?: string
+  /** List of glob patterns to match import sources */
+  elementNamePattern?: Array<string>
+  /** Import selector filter (e.g. "type", "external", "builtin") */
+  selector?: string
+  /** Import modifier filters - all must match */
+  modifiers?: Array<string>
+}
+
 export interface OxcDefineOptions {
   /** Map of variable name to value for replacement */
   define: Record<string, string>
@@ -119,6 +130,10 @@ export interface OxcMangleOptions {
   keepNames: boolean
 }
 
+export interface OxcNewlinesBetweenMarker {
+  newlinesBetween?: boolean
+}
+
 export interface OxcOptions {
   run: OxcRunOptions
   parser: OxcParserOptions
@@ -170,8 +185,14 @@ export interface OxcSortImportsOptions {
   newlinesBetween?: boolean
   /** Pattern prefixes for internal imports */
   internalPattern?: Array<string>
-  /** Custom groups of imports */
-  groups?: Array<Array<string>>
+  /**
+   * Groups configuration matching oxfmtrc format.
+   * Each element can be a single group name string, an array of group names,
+   * or a `{ newlinesBetween: bool }` marker object.
+   */
+  groups?: Array<string | string[] | { newlinesBetween: boolean }> | undefined
+  /** User-defined custom group definitions */
+  customGroups?: Array<OxcCustomGroupDefinition>
 }
 
 export interface OxcTransformerOptions {

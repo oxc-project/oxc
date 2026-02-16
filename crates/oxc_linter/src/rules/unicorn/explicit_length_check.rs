@@ -13,7 +13,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{get_boolean_ancestor, is_boolean_call, is_boolean_node},
+    utils::{get_boolean_ancestor, is_boolean_call, is_boolean_node, pad_fix_with_token_boundary},
 };
 
 fn non_zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {
@@ -209,19 +209,9 @@ impl ExplicitLengthCheck {
             }
             _ => node.span(),
         };
-        let mut need_pad_start = false;
-        let mut need_pad_end = false;
         let parent = ctx.nodes().parent_kind(node.id());
         let need_paren = matches!(kind, AstKind::UnaryExpression(_))
             && matches!(parent, AstKind::UnaryExpression(_) | AstKind::AwaitExpression(_));
-        if span.start > 1 {
-            let start = ctx.source_text().as_bytes()[span.start as usize - 1];
-            need_pad_start = start.is_ascii_alphabetic() || !start.is_ascii();
-        }
-        if (span.end as usize) < ctx.source_text().len() {
-            let end = ctx.source_text().as_bytes()[span.end as usize];
-            need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
-        }
 
         // Pre-compute source text to avoid repeated calls
         let source_text = static_member_expr.span.source_text(ctx.source_text());
@@ -230,9 +220,6 @@ impl ExplicitLengthCheck {
         let estimated_capacity = source_text.len() + check_code.len() + 6; // +6 for spaces and parens
         let mut fixed = String::with_capacity(estimated_capacity);
 
-        if need_pad_start {
-            fixed.push(' ');
-        }
         if need_paren {
             fixed.push('(');
         }
@@ -242,9 +229,7 @@ impl ExplicitLengthCheck {
         if need_paren {
             fixed.push(')');
         }
-        if need_pad_end {
-            fixed.push(' ');
-        }
+        pad_fix_with_token_boundary(ctx.source_text(), span, &mut fixed);
         let property = static_member_expr.property.name;
         let help = if auto_fix {
             None
@@ -411,12 +396,12 @@ fn test() {
         // Space after keywords
         ("function foo() {return!foo.length}", "function foo() {return foo.length === 0}", None),
         ("function foo() {throw!foo.length}", "function foo() {throw foo.length === 0}", None),
-        ("async function foo() {await!foo.length}", "async function foo() {await (foo.length === 0)}", None),
+        ("async function foo() {await!foo.length}", "async function foo() {await(foo.length === 0)}", None),
         ("function * foo() {yield!foo.length}", "function * foo() {yield foo.length === 0}", None),
         ("function * foo() {yield*!foo.length}", "function * foo() {yield*foo.length === 0}", None),
-        ("delete!foo.length", "delete (foo.length === 0)", None),
-        ("typeof!foo.length", "typeof (foo.length === 0)", None),
-        ("void!foo.length", "void (foo.length === 0)", None),
+        ("delete!foo.length", "delete(foo.length === 0)", None),
+        ("typeof!foo.length", "typeof(foo.length === 0)", None),
+        ("void!foo.length", "void(foo.length === 0)", None),
         ("a instanceof!foo.length", "a instanceof foo.length === 0", None),
         ("a in!foo.length", "a in foo.length === 0", None),
         ("export default!foo.length", "export default foo.length === 0", None),

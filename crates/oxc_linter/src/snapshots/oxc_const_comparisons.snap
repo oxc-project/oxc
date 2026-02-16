@@ -349,3 +349,19 @@ source: crates/oxc_linter/src/tester.rs
    ·  ╰── If this expression evaluates to true
    ╰────
   help: This logical expression will always evaluate to true
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to false
+   ╭─[const_comparisons.tsx:1:67]
+ 1 │ let numOrUndefined: number | undefined = 6; if (numOrUndefined || 0 > 0) {}
+   ·                                                                   ─────
+   ╰────
+  help: Because `0` will never be greater than itself
+  note: It looks like you're mixing logical and comparison operators without parentheses. Comparison operators have higher precedence than logical operators, so this is parsed as `numOrUndefined || (0 > 0)`. If you intended to compare the result of the logical expression, add parentheses: `(numOrUndefined || 0) > 0`.
+
+  ⚠ oxc(const-comparisons): This comparison will always evaluate to false
+   ╭─[const_comparisons.tsx:1:67]
+ 1 │ let numOrUndefined: number | undefined = 6; if (numOrUndefined ?? 0 > 0) {}
+   ·                                                                   ─────
+   ╰────
+  help: Because `0` will never be greater than itself
+  note: It looks like you're mixing logical and comparison operators without parentheses. Comparison operators have higher precedence than logical operators, so this is parsed as `numOrUndefined ?? (0 > 0)`. If you intended to compare the result of the logical expression, add parentheses: `(numOrUndefined ?? 0) > 0`.

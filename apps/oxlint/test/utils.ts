@@ -35,6 +35,9 @@ export interface Fixture {
     // If provided, `cwd` is relative to the fixture's directory.
     // Default: `null`.
     cwd: string | null;
+
+    // Additional arguments to run Oxlint with. Default: `[]`.
+    args: string[];
   };
 }
 
@@ -45,6 +48,7 @@ const DEFAULT_OPTIONS: Fixture["options"] = {
   fixSuggestions: false,
   singleThread: false,
   cwd: null,
+  args: [],
 };
 
 /**
@@ -67,7 +71,7 @@ export function getFixtures(): Fixture[] {
     try {
       options = JSON.parse(readFileSync(pathJoin(dirPath, "options.json"), "utf8"));
     } catch (err) {
-      if (err?.code !== "ENOENT") throw err;
+      if ((err as NodeJS.ErrnoException)?.code !== "ENOENT") throw err;
       options = DEFAULT_OPTIONS;
     }
 
@@ -88,6 +92,9 @@ export function getFixtures(): Fixture[] {
     }
     if (options.cwd !== null && typeof options.cwd !== "string") {
       throw new TypeError("`cwd` property in `options.json` must be a string or null");
+    }
+    if (!Array.isArray(options.args) || !options.args.every((arg) => typeof arg === "string")) {
+      throw new TypeError("`args` property in `options.json` must be an array of strings");
     }
 
     fixtures.push({ name, dirPath, options });
@@ -184,7 +191,6 @@ export const NORMALIZED_REPO_ROOT = normalizeSlashes(REPO_ROOT_PATH);
 // Matches `/path/to/oxc`, `/path/to/oxc/`, `/path/to/oxc/whatever`,
 // when preceded by whitespace, `(`, or a quote, and followed by whitespace, `)`, or a quote.
 export const PATH_REGEXP = new RegExp(
-  // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
   `(?<=^|[\\s\\('"\`])${RegExp.escape(NORMALIZED_REPO_ROOT).replace(/\\\//g, "[\\\\/]")}([\\\\\\\\/][^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
   isWindows ? "gi" : "g",
 );
@@ -255,7 +261,6 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
 
       // Some stack traces can use file paths instead of file URLs on Windows.
       // Keep frames in fixtures, drop everything else.
-      // oxlint-disable-next-line oxc/bad-replace-all-arg
       const normalizedAt = at.replaceAll(PATH_REGEXP, (_, subPath) => {
         if (subPath === undefined) return "<root>";
         return convertSubPath(normalizeSlashes(subPath), fixtureName);
@@ -270,15 +275,12 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
 
     // Handle fixture file URLs anywhere else in the line.
     // e.g. `... file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1 ...`
-    // oxlint-disable-next-line oxc/bad-replace-all-arg
     line = line.replaceAll(
-      // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
       new RegExp(`${RegExp.escape(FIXTURES_URL)}([^\\s\\)'"\`]+)`, isWindows ? "gi" : "g"),
       (_match, subPath) => convertFixturesSubPath(`/${subPath}`, fixtureName),
     );
 
     // Handle paths anywhere else in the line
-    // oxlint-disable-next-line oxc/bad-replace-all-arg
     line = line.replaceAll(PATH_REGEXP, (_, subPath) => {
       if (subPath === undefined) return "<root>";
       return convertSubPath(normalizeSlashes(subPath), fixtureName);

@@ -117,7 +117,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log10(x)` over `Math.log(x) / Math.LN10`
-   ╭─[prefer_modern_math_apis.tsx:4:6]
+   ╭─[prefer_modern_math_apis.tsx:4:21]
  3 │                     return (
  4 │ ╭─▶                     Math.log(x)
  5 │ ╰─▶                         / Math.LN10
@@ -161,7 +161,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.log2(x)` over `Math.log(x) / Math.LN2`
-   ╭─[prefer_modern_math_apis.tsx:4:6]
+   ╭─[prefer_modern_math_apis.tsx:4:21]
  3 │                     return (
  4 │ ╭─▶                     Math.log(x)
  5 │ ╰─▶                         / Math.LN2

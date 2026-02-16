@@ -2,6 +2,7 @@
 
 use oxc_ast::ast::Expression;
 use oxc_semantic::SymbolFlags;
+use oxc_span::SPAN;
 
 use crate::{context::TraverseCtx, utils::ast_builder::create_assignment};
 
@@ -67,7 +68,7 @@ pub fn create_computed_key_temp_var<'a>(
 
     ctx.state.var_declarations.insert_let(&binding, None, ctx.ast);
 
-    let assignment = create_assignment(&binding, key, ctx);
+    let assignment = create_assignment(&binding, key, SPAN, ctx);
     let ident = binding.create_read_expression(ctx);
 
     (assignment, ident)

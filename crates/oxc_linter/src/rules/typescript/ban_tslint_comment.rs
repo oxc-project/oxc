@@ -78,23 +78,23 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"let a: readonly any[] = [];",
-        r"let a = new Array();",
-        r"// some other comment",
-        r"// TODO: this is a comment that mentions tslint",
-        r"/* another comment that mentions tslint */",
-        r"someCode(); // This is a comment that just happens to mention tslint",
+        "let a: readonly any[] = [];",
+        "let a = new Array();",
+        "// some other comment",
+        "// TODO: this is a comment that mentions tslint",
+        "/* another comment that mentions tslint */",
+        "someCode(); // This is a comment that just happens to mention tslint",
     ];
 
     let fail = vec![
-        r"/* tslint:disable */",
-        r"/* tslint:enable */",
-        r"/* tslint:disable:rule1 rule2 rule3... */",
-        r"/* tslint:enable:rule1 rule2 rule3... */",
-        r"// tslint:disable-next-line",
-        r"someCode(); // tslint:disable-line",
-        r"// tslint:disable-next-line:rule1 rule2 rule3...",
-        r"const woah = doSomeStuff();
+        "/* tslint:disable */",
+        "/* tslint:enable */",
+        "/* tslint:disable:rule1 rule2 rule3... */",
+        "/* tslint:enable:rule1 rule2 rule3... */",
+        "// tslint:disable-next-line",
+        "someCode(); // tslint:disable-line",
+        "// tslint:disable-next-line:rule1 rule2 rule3...",
+        "const woah = doSomeStuff();
         // tslint:disable-line
         console.log(woah);
         ",
@@ -102,22 +102,22 @@ fn test() {
 
     let fix = vec![
         (
-            r"const woah = doSomeStuff();
+            "const woah = doSomeStuff();
         // tslint:disable-line
         console.log(woah);",
-            r"const woah = doSomeStuff();
+            "const woah = doSomeStuff();
                 console.log(woah);",
             None,
         ),
         (
-            r"const woah = doSomeStuff();
+            "const woah = doSomeStuff();
         /* tslint:disable-line */
         console.log(woah);",
-            r"const woah = doSomeStuff();
+            "const woah = doSomeStuff();
                 console.log(woah);",
             None,
         ),
-        (r"/* tslint:disable-line */", r"", None),
+        ("/* tslint:disable-line */", "", None),
         // Issue: <https://github.com/oxc-project/oxc/issues/8090>
         (r"/*tslint:disable*/É", r"É", None),
     ];

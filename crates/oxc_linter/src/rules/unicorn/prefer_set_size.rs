@@ -141,33 +141,66 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"new Set(foo).size",
-        r"for (const foo of bar) console.log([...foo].length)",
-        r"[...new Set(array), foo].length",
-        r"[foo, ...new Set(array), ].length",
-        r"[...new Set(array)].notLength",
-        r"[...new Set(array)]?.length",
-        r"[...new Set(array)][length]",
+        "new Set(foo).size",
+        "for (const foo of bar) console.log([...foo].length)",
+        "[...new Set(array), foo].length",
+        "[foo, ...new Set(array), ].length",
+        "[...new Set(array)].notLength",
+        "[...new Set(array)]?.length",
+        "[...new Set(array)][length]",
         r#"[...new Set(array)]["length"]"#,
-        r"[...new NotSet(array)].length",
-        r"[...Set(array)].length",
-        r"const foo = new NotSet([]);[...foo].length;",
-        r"let foo = new Set([]);[...foo].length;",
-        r"const {foo} = new Set([]);[...foo].length;",
-        r"const [foo] = new Set([]);[...foo].length;",
-        r"[...foo].length",
-        r"var foo = new Set(); var foo = new Set(); [...foo].length",
-        r"[,].length",
+        "[...new NotSet(array)].length",
+        "[...Set(array)].length",
+        "const foo = new NotSet([]);[...foo].length;",
+        "let foo = new Set([]);[...foo].length;",
+        "const {foo} = new Set([]);[...foo].length;",
+        "const [foo] = new Set([]);[...foo].length;",
+        "[...foo].length",
+        "var foo = new Set(); var foo = new Set(); [...foo].length",
+        "[,].length",
+        "Array.from(foo).length",
+        "Array.from(new NotSet(array)).length",
+        "Array.from(Set(array)).length",
+        "Array.from(new Set(array)).notLength",
+        "Array.from(new Set(array))?.length",
+        "Array.from(new Set(array))[length]",
+        r#"Array.from(new Set(array))["length"]"#,
+        "Array.from(new Set(array), mapFn).length",
+        "Array?.from(new Set(array)).length",
+        "Array.from?.(new Set(array)).length",
+        "const foo = new NotSet([]);Array.from(foo).length;",
+        "let foo = new Set([]);Array.from(foo).length;",
+        "const {foo} = new Set([]);Array.from(foo).length;",
+        "const [foo] = new Set([]);Array.from(foo).length;",
+        "var foo = new Set(); var foo = new Set(); Array.from(foo).length",
+        "NotArray.from(new Set(array)).length",
     ];
 
     let fail = vec![
-        r"[...new Set(array)].length",
-        r"[...new Set(array),].length",
-        r"[...(( new Set(array) ))].length",
-        r"(( [...new Set(array)] )).length",
-        r"[/* comment */...new Set(array)].length",
-        r"const foo = new Set([]); [...foo].length;",
-        r"[...new /* comment */ Set(array)].length",
+        "[...new Set(array)].length",
+        "const foo = new Set([]);
+            console.log([...foo].length);",
+        "function isUnique(array) {
+                return[...new Set(array)].length === array.length
+            }",
+        "[...new Set(array),].length",
+        "[...(( new Set(array) ))].length",
+        "(( [...new Set(array)] )).length",
+        "foo
+            ;[...new Set(array)].length",
+        "[/* comment */...new Set(array)].length",
+        "[...new /* comment */ Set(array)].length",
+        // TODO: Update the rule to handle Array.from cases.
+        // "Array.from(new Set(array)).length",
+        // "const foo = new Set([]);
+        //     console.log(Array.from(foo).length);",
+        // "Array.from((( new Set(array) ))).length",
+        // "(( Array.from(new Set(array)) )).length",
+        // "Array.from(/* comment */ new Set(array)).length",
+        // "Array.from(new /* comment */ Set(array)).length",
+        // "function isUnique(array) {
+        //         return Array.from(new Set(array)).length === array.length
+        //     }",
     ];
 
     let fix = vec![

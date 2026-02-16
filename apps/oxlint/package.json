@@ -1,6 +1,6 @@
 {
   "name": "oxlint-app",
-  "version": "1.43.0",
+  "version": "1.47.0",
   "private": true,
   "description": "Internal development package for oxlint. For the published package.json template, see `npm/oxlint/package.json`.",
   "license": "MIT",
@@ -47,7 +47,7 @@
     "@types/node": "catalog:",
     "@typescript-eslint/parser": "^8.54.0",
     "@typescript-eslint/scope-manager": "^8.54.0",
-    "ajv": "^6.12.6",
+    "ajv": "6.12.6",
     "cross-env": "catalog:",
     "eslint": "catalog:",
     "eslint-vitest-rule-tester": "^3.0.1",
@@ -62,7 +62,8 @@
     "type-fest": "^5.2.0",
     "typescript": "catalog:",
     "vitest": "catalog:",
-    "vscode-languageserver-protocol": "^3.17.5"
+    "vscode-languageserver-protocol": "^3.17.5",
+    "vscode-languageserver-textdocument": "^1.0.12"
   },
   "napi": {
     "binaryName": "oxlint",

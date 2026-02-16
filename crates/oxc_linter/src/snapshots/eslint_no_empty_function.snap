@@ -181,3 +181,661 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ──
    ╰────
   help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty generator function `foo`
+   ╭─[no_empty_function.tsx:1:30]
+ 1 │ function* foo(param: string) {}
+   ·                              ──
+   ╰────
+  help: Consider removing this generator function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function `foo`
+   ╭─[no_empty_function.tsx:1:38]
+ 1 │ const foo = function*(param: string) {};
+   ·                                      ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:44]
+ 1 │ const obj = {foo: function*(param: string) {}};
+   ·                                            ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:32]
+ 1 │ const obj = { foo: function*() {} };
+   ·                                ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:33]
+ 1 │ const obj = {foo(param: string) {}};
+   ·                                 ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:37]
+ 1 │ const obj = { foo: async function() {} };
+   ·                                     ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:26]
+ 1 │ const obj = { foo: () => {} };
+   ·                          ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:30]
+ 1 │ class A { foo(param: string) {} }
+   ·                              ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:25]
+ 1 │ class A { private foo() {} }
+   ·                         ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:27]
+ 1 │ class A { protected foo() {} }
+   ·                           ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty static method `foo`
+   ╭─[no_empty_function.tsx:1:37]
+ 1 │ class A { static foo(param: string) {} }
+   ·                                     ──
+   ╰────
+  help: Consider removing this static method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty static method `foo`
+   ╭─[no_empty_function.tsx:1:32]
+ 1 │ class A { private static foo() {} }
+   ·                                ──
+   ╰────
+  help: Consider removing this static method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty static method `foo`
+   ╭─[no_empty_function.tsx:1:34]
+ 1 │ class A { protected static foo() {} }
+   ·                                  ──
+   ╰────
+  help: Consider removing this static method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:37]
+ 1 │ const A = class {foo(param: string) {}};
+   ·                                     ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty static method `foo`
+   ╭─[no_empty_function.tsx:1:44]
+ 1 │ const A = class {static foo(param: string) {}};
+   ·                                            ──
+   ╰────
+  help: Consider removing this static method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty static method `foo`
+   ╭─[no_empty_function.tsx:1:39]
+ 1 │ const A = class {private static foo() {}};
+   ·                                       ──
+   ╰────
+  help: Consider removing this static method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty static method `foo`
+   ╭─[no_empty_function.tsx:1:41]
+ 1 │ const A = class {protected static foo() {}};
+   ·                                         ──
+   ╰────
+  help: Consider removing this static method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:30]
+ 1 │ class B { @decorator() foo() {} }
+   ·                              ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:38]
+ 1 │ const B = class { @decorator() foo() {} }
+   ·                                      ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:36]
+ 1 │ class B extends C { override foo() {} }
+   ·                                    ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:49]
+ 1 │ class B extends C { @decorator() override foo() {} }
+   ·                                                 ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:34]
+ 1 │ const obj = {*foo(param: string) {}};
+   ·                                  ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:31]
+ 1 │ class A { *foo(param: string) {} }
+   ·                               ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty static method `foo`
+   ╭─[no_empty_function.tsx:1:37]
+ 1 │ class A {static *foo(param: string) {}}
+   ·                                     ──
+   ╰────
+  help: Consider removing this static method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty static method `foo`
+   ╭─[no_empty_function.tsx:1:32]
+ 1 │ class A {private static *foo() {}}
+   ·                                ──
+   ╰────
+  help: Consider removing this static method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty static method `foo`
+   ╭─[no_empty_function.tsx:1:34]
+ 1 │ class A {protected static *foo() {}}
+   ·                                  ──
+   ╰────
+  help: Consider removing this static method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:38]
+ 1 │ const A = class {*foo(param: string) {}};
+   ·                                      ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty static method `foo`
+   ╭─[no_empty_function.tsx:1:45]
+ 1 │ const A = class {static *foo(param: string) {}};
+   ·                                             ──
+   ╰────
+  help: Consider removing this static method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:32]
+ 1 │ const obj = {get foo(): string {}};
+   ·                                ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:28]
+ 1 │ class A {get foo(): string {}}
+   ·                            ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:35]
+ 1 │ class A {static get foo(): string {}}
+   ·                                   ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:36]
+ 1 │ const A = class {get foo(): string {}};
+   ·                                    ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:43]
+ 1 │ const A = class {static get foo(): string {}};
+   ·                                           ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:41]
+ 1 │ class A {@decorator() get foo(): string {}}
+   ·                                         ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:48]
+ 1 │ class A {@decorator() static get foo(): string {}}
+   ·                                                ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:49]
+ 1 │ const A = class {@decorator() get foo(): string {}};
+   ·                                                 ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:56]
+ 1 │ const A = class {@decorator() static get foo(): string {}};
+   ·                                                        ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:47]
+ 1 │ class A extends B {override get foo(): string {}}
+   ·                                               ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:54]
+ 1 │ class A extends B {static override get foo(): string {}}
+   ·                                                      ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:55]
+ 1 │ const A = class extends B {override get foo(): string {}};
+   ·                                                       ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:62]
+ 1 │ const A = class extends B {static override get foo(): string {}};
+   ·                                                              ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:37]
+ 1 │ const obj = {set foo(value: string) {}};
+   ·                                     ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:33]
+ 1 │ class A {set foo(value: string) {}}
+   ·                                 ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:40]
+ 1 │ class A {static set foo(value: string) {}}
+   ·                                        ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:41]
+ 1 │ const A = class {set foo(value: string) {}};
+   ·                                         ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:48]
+ 1 │ const A = class {static set foo(value: string) {}};
+   ·                                                ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:46]
+ 1 │ class A {@decorator() set foo(value: string) {}}
+   ·                                              ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:53]
+ 1 │ class A {@decorator() static set foo(value: string) {}}
+   ·                                                     ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:54]
+ 1 │ const A = class {@decorator() set foo(value: string) {}};
+   ·                                                      ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:61]
+ 1 │ const A = class {@decorator() static set foo(value: string) {}};
+   ·                                                             ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:52]
+ 1 │ class A extends B {override set foo(value: string) {}}
+   ·                                                    ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:59]
+ 1 │ class A extends B {static override set foo(value: string) {}}
+   ·                                                           ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:60]
+ 1 │ const A = class extends B {override set foo(value: string) {}};
+   ·                                                            ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:67]
+ 1 │ const A = class extends B {static override set foo(value: string) {}};
+   ·                                                                   ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:38]
+ 1 │ class A { constructor(param: string) {} }
+   ·                                      ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:33]
+ 1 │ class B { private constructor() {} }
+   ·                                 ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:35]
+ 1 │ class B { protected constructor() {} }
+   ·                                   ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:45]
+ 1 │ const A = class {constructor(param: string) {}};
+   ·                                             ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:41]
+ 1 │ const B = class { private constructor() {} }
+   ·                                         ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:43]
+ 1 │ const B = class { protected constructor() {} }
+   ·                                           ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function
+   ╭─[no_empty_function.tsx:1:43]
+ 1 │ const foo = { async method(param: string) {} }
+   ·                                           ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty async function `a`
+   ╭─[no_empty_function.tsx:1:32]
+ 1 │ async function a(param: string){}
+   ·                                ──
+   ╰────
+  help: Consider removing this async function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function `foo`
+   ╭─[no_empty_function.tsx:1:43]
+ 1 │ const foo = async function(param: string) {}
+   ·                                           ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:36]
+ 1 │ class A { async foo(param: string) {} }
+   ·                                    ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:49]
+ 1 │ class A { @decorator() async foo(param: string) {} }
+   ·                                                 ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:55]
+ 1 │ class A extends B { override async foo(param: string) {} }
+   ·                                                       ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function `foo`
+   ╭─[no_empty_function.tsx:1:40]
+ 1 │ const foo = async (): Promise<void> => {};
+   ·                                        ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:33]
+ 1 │ class A { private constructor() {} }
+   ·                                 ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:41]
+ 1 │ const A = class { private constructor() {} };
+   ·                                         ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:35]
+ 1 │ class A { protected constructor() {} }
+   ·                                   ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:43]
+ 1 │ const A = class { protected constructor() {} };
+   ·                                           ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:30]
+ 1 │ class A { @decorator() foo() {} }
+   ·                              ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:38]
+ 1 │ const A = class { @decorator() foo() {} }
+   ·                                      ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:41]
+ 1 │ class B {@decorator() get foo(): string {}}
+   ·                                         ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:48]
+ 1 │ class B {@decorator() static get foo(): string {}}
+   ·                                                ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:49]
+ 1 │ const B = class {@decorator() get foo(): string {}};
+   ·                                                 ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:56]
+ 1 │ const B = class {@decorator() static get foo(): string {}};
+   ·                                                        ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:46]
+ 1 │ class B {@decorator() set foo(value: string) {}}
+   ·                                              ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:53]
+ 1 │ class B {@decorator() static set foo(value: string) {}}
+   ·                                                     ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:54]
+ 1 │ const B = class {@decorator() set foo(value: string) {}};
+   ·                                                      ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:61]
+ 1 │ const B = class {@decorator() static set foo(value: string) {}};
+   ·                                                             ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:49]
+ 1 │ class B { @decorator() async foo(param: string) {} }
+   ·                                                 ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:49]
+ 1 │ class A extends B { @decorator() override foo() {} }
+   ·                                                 ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:47]
+ 1 │ class B extends C {override get foo(): string {}}
+   ·                                               ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:54]
+ 1 │ class B extends C {static override get foo(): string {}}
+   ·                                                      ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:55]
+ 1 │ const B = class extends C {override get foo(): string {}};
+   ·                                                       ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty getter `foo`
+   ╭─[no_empty_function.tsx:1:62]
+ 1 │ const B = class extends C {static override get foo(): string {}};
+   ·                                                              ──
+   ╰────
+  help: Consider removing this getter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:52]
+ 1 │ class B extends C {override set foo(value: string) {}}
+   ·                                                    ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:59]
+ 1 │ class B extends C {static override set foo(value: string) {}}
+   ·                                                           ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:60]
+ 1 │ const B = class extends C {override set foo(value: string) {}};
+   ·                                                            ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty setter `foo`
+   ╭─[no_empty_function.tsx:1:67]
+ 1 │ const B = class extends C {static override set foo(value: string) {}};
+   ·                                                                   ──
+   ╰────
+  help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:55]
+ 1 │ class B extends C { override async foo(param: string) {} }
+   ·                                                       ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:49]
+ 1 │ class C extends D { @decorator() override foo() {} }
+   ·                                                 ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:36]
+ 1 │ class A extends B { override foo() {} }
+   ·                                    ──
+   ╰────
+  help: Consider removing this method or adding logic to it.

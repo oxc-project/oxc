@@ -466,11 +466,11 @@ fn test() {
         // "lodash.flatten(array)",
         // "underscore.flatten(array)",
         "before()
-			Array.prototype.concat.apply([], [array].concat(array))",
+            Array.prototype.concat.apply([], [array].concat(array))",
         "before()
-			Array.prototype.concat.apply([], +1)",
+            Array.prototype.concat.apply([], +1)",
         "before()
-			Array.prototype.concat.call([], +1)",
+            Array.prototype.concat.call([], +1)",
         "Array.prototype.concat.apply([], (0, array))",
         "Array.prototype.concat.call([], (0, array))",
         "async function a() { return [].concat(await getArray()); }",
@@ -478,21 +478,21 @@ fn test() {
         // "async function a() { return _.flatten(await getArray()); }",
         // "async function a() { return _.flatten((await getArray())); }",
         "before()
-			Array.prototype.concat.apply([], 1)",
+            Array.prototype.concat.apply([], 1)",
         "before()
-			Array.prototype.concat.call([], 1)",
+            Array.prototype.concat.call([], 1)",
         "before()
-			Array.prototype.concat.apply([], 1.)",
+            Array.prototype.concat.apply([], 1.)",
         "before()
-			Array.prototype.concat.call([], 1.)",
+            Array.prototype.concat.call([], 1.)",
         "before()
-			Array.prototype.concat.apply([], .1)",
+            Array.prototype.concat.apply([], .1)",
         "before()
-			Array.prototype.concat.call([], .1)",
+            Array.prototype.concat.call([], .1)",
         "before()
-			Array.prototype.concat.apply([], 1.0)",
+            Array.prototype.concat.apply([], 1.0)",
         "before()
-			Array.prototype.concat.call([], 1.0)",
+            Array.prototype.concat.call([], 1.0)",
         "[].concat(some./**/array)",
         "[/**/].concat(some./**/array)",
         "[/**/].concat(some.array)",

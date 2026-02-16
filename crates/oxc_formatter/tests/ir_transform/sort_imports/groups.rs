@@ -23,92 +23,89 @@ import type { H } from "./index.d.ts";
 
 import a from ".";
 import type { T } from "t";
-import "./style.css";
 import { j } from "../j";
 import { K, L, M } from "../k";
+import "./style.css";
 "#,
         r#"{ "experimentalSortImports": {} }"#,
         r#"
-import type { T } from "t";
+import fs from "fs";
+import path from "path";
 
 import { c1, c2, c3, c4 } from "c";
 import { e1 } from "e/a";
 import { e2 } from "e/b";
-import fs from "fs";
-import path from "path";
-
-import type { I } from "~/i";
+import type { T } from "t";
 
 import { b1, b2 } from "~/b";
 import { c1 } from "~/c";
+import type { I } from "~/i";
 import { i1, i2, i3 } from "~/i";
 
 import type { A } from ".";
+import a from ".";
+import h from "../../h";
 import type { F } from "../f";
+import { j } from "../j";
+import { K, L, M } from "../k";
 import type { D } from "./d";
 import type { H } from "./index.d.ts";
 
-import a from ".";
-import h from "../../h";
 import "./style.css";
-import { j } from "../j";
-import { K, L, M } from "../k";
 "#,
     );
     // Input is already in the correct order, should remain unchanged
     assert_format(
         r#"
-import type { T } from "t";
+import fs from "fs";
+import path from "path";
 
 import { c1, c2, c3, c4 } from "c";
 import { e1 } from "e/a";
 import { e2 } from "e/b";
-import fs from "fs";
-import path from "path";
-
-import type { I } from "~/i";
+import type { T } from "t";
 
 import { b1, b2 } from "~/b";
 import { c1 } from "~/c";
+import type { I } from "~/i";
 import { i1, i2, i3 } from "~/i";
 
 import type { A } from ".";
+import a from ".";
+import h from "../../h";
 import type { F } from "../f";
+import { j } from "../j";
+import { K, L, M } from "../k";
 import type { D } from "./d";
 import type { H } from "./index.d.ts";
 
-import a from ".";
-import h from "../../h";
 import "./style.css";
-import { j } from "../j";
-import { K, L, M } from "../k";
 "#,
         r#"{ "experimentalSortImports": {} }"#,
         r#"
-import type { T } from "t";
+import fs from "fs";
+import path from "path";
 
 import { c1, c2, c3, c4 } from "c";
 import { e1 } from "e/a";
 import { e2 } from "e/b";
-import fs from "fs";
-import path from "path";
-
-import type { I } from "~/i";
+import type { T } from "t";
 
 import { b1, b2 } from "~/b";
 import { c1 } from "~/c";
+import type { I } from "~/i";
 import { i1, i2, i3 } from "~/i";
 
 import type { A } from ".";
+import a from ".";
+import h from "../../h";
 import type { F } from "../f";
+import { j } from "../j";
+import { K, L, M } from "../k";
 import type { D } from "./d";
 import type { H } from "./index.d.ts";
 
-import a from ".";
-import h from "../../h";
 import "./style.css";
-import { j } from "../j";
-import { K, L, M } from "../k";
 "#,
     );
     // Ignore comments
@@ -122,7 +119,6 @@ import { t } from "t";
         r#"{ "experimentalSortImports": {} }"#,
         r#"
 import type { T } from "t";
-
 // @ts-expect-error missing types
 import { t } from "t";
 "#,
@@ -168,7 +164,7 @@ import "../d";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["external", "side-effect", "unknown"],
+    "groups": ["external", "side_effect", "unknown"],
     "sortSideEffects": false
   }
 }"#,
@@ -191,7 +187,7 @@ import "../d";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["external", "side-effect", "unknown"],
+    "groups": ["external", "side_effect", "unknown"],
     "sortSideEffects": false
   }
 }"#,
@@ -212,7 +208,7 @@ import "aaa";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["external", "side-effect", "unknown"],
+    "groups": ["external", "side_effect", "unknown"],
     "sortSideEffects": true
   }
 }"#,
@@ -258,7 +254,7 @@ import a from "./a";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect", "unknown"]
+    "groups": ["side_effect", "unknown"]
   }
 }"#,
         r#"
@@ -283,7 +279,7 @@ import a from "./a";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": [["side-effect", "side-effect-style"], "unknown"]
+    "groups": [["side_effect", "side_effect_style"], "unknown"]
   }
 }"#,
         r#"
@@ -308,7 +304,7 @@ import a from "./a";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect", "side-effect-style", "unknown"]
+    "groups": ["side_effect", "side_effect_style", "unknown"]
   }
 }"#,
         r#"
@@ -334,7 +330,7 @@ import a from "./a";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect-style", "unknown"]
+    "groups": ["side_effect_style", "unknown"]
   }
 }"#,
         r#"
@@ -395,7 +391,7 @@ import "style.css";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect-style", "side-effect"]
+    "groups": ["side_effect_style", "side_effect"]
   }
 }"#,
         r#"
@@ -413,7 +409,7 @@ import "something";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect", "style"]
+    "groups": ["side_effect", "style"]
   }
 }"#,
         r#"
@@ -449,7 +445,7 @@ import "./z";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["side-effect-import", "external", "value-import"],
+    "groups": ["side_effect-import", "external", "value-import"],
     "sortSideEffects": true
   }
 }"#,
@@ -617,7 +613,7 @@ import "~/css/globals.css";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["internal", "side-effect-style", "side-effect"]
+    "groups": ["internal", "side_effect_style", "side_effect"]
   }
 }"#,
         r#"
@@ -639,7 +635,7 @@ import "node:os";
 "#,
         r#"{
   "experimentalSortImports": {
-    "groups": ["builtin", "external", "side-effect"]
+    "groups": ["builtin", "external", "side_effect"]
   }
 }"#,
         r#"

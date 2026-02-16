@@ -59,7 +59,8 @@ declare_oxc_lint!(
     /// ```
     PreferTopLevelAwait,
     unicorn,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferTopLevelAwait {
@@ -191,10 +192,10 @@ fn test() {
         ("(async function *() {})()", None, None, None),
         (
             "function foo() {
-				if (foo) {
-					(async () => {})()
-				}
-			}",
+                if (foo) {
+                    (async () => {})()
+                }
+            }",
             None,
             None,
             None,
@@ -208,36 +209,36 @@ fn test() {
         ("await foo.then(bar)?.catch?.(bar)", None, None, None),
         (
             "class Example {
-				property = promise.then(bar)
-			}",
+                property = promise.then(bar)
+            }",
             None,
             None,
             None,
         ),
         (
             "const Example = class Example {
-				property = promise.then(bar)
-			}",
+                property = promise.then(bar)
+            }",
             None,
             None,
             None,
         ),
         (
             "class Example {
-				static {
-					promise.then(bar)
-				}
-			}",
+                static {
+                    promise.then(bar)
+                }
+            }",
             None,
             None,
             None,
         ),
         (
             "const Example = class Example {
-				static {
-					promise.then(bar)
-				}
-			}",
+                static {
+                    promise.then(bar)
+                }
+            }",
             None,
             None,
             None,
@@ -247,81 +248,81 @@ fn test() {
         ("foo.bar()", None, None, None),
         (
             "function foo() {
-				return async () => {};
-			}
-			foo()();",
+                return async () => {};
+            }
+            foo()();",
             None,
             None,
             None,
         ),
         (
             "const [foo] = [async () => {}];
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "function foo() {}
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "async function * foo() {}
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "var foo = async () => {};
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "let foo = async () => {};
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "const foo = 1, bar = async () => {};
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "async function foo() {}
-			const bar = foo;
-			bar();",
+            const bar = foo;
+            bar();",
             None,
             None,
             None,
         ),
         (
             "const program = {async run () {}};
-			program.run()",
+            program.run()",
             None,
             None,
             None,
         ),
         (
             "const program = {async run () {}};
-			const {run} = program;
-			run()",
+            const {run} = program;
+            run()",
             None,
             None,
             None,
         ),
         (
             "const foo = async () => {};
-			await foo();",
+            await foo();",
             None,
             None,
             None,
@@ -329,29 +330,29 @@ fn test() {
         ("for (const statement of statements) { statement() };", None, None, None),
         (
             "const foo = async () => {};
-			await Promise.all([
-				(async () => {})(),
-				/* hole */,
-				foo(),
-				foo.then(bar),
-				foo.catch(bar),
-			]);
-			await Promise.allSettled([foo()]);
-			await Promise?.any([foo()]);
-			await Promise.race?.([foo()]);",
+            await Promise.all([
+                (async () => {})(),
+                /* hole */,
+                foo(),
+                foo.then(bar),
+                foo.catch(bar),
+            ]);
+            await Promise.allSettled([foo()]);
+            await Promise?.any([foo()]);
+            await Promise.race?.([foo()]);",
             None,
             None,
             None,
         ),
         (
             "const foo = async () => {};
-			const promise = Promise.all([
-				(async () => {})(),
-				foo(),
-				foo.then(bar),
-				foo.catch(bar),
-			]);
-			await promise;",
+            const promise = Promise.all([
+                (async () => {})(),
+                foo(),
+                foo.then(bar),
+                foo.catch(bar),
+            ]);
+            await promise;",
             None,
             None,
             None,
@@ -360,10 +361,10 @@ fn test() {
         ("await foo()", None, None, None),
         (
             "try {
-				await run()
-			} catch {
-				process.exit(1)
-			}",
+                await run()
+            } catch {
+                process.exit(1)
+            }",
             None,
             None,
             None,
@@ -380,8 +381,8 @@ fn test() {
         ("if (foo) (async () => {})()", None, None, None),
         (
             "{
-				(async () => {})();
-			}",
+                (async () => {})();
+            }",
             None,
             None,
             None,
@@ -409,46 +410,46 @@ fn test() {
         ("foo.then(bar).catch(bar).finally(bar)", None, None, None),
         (
             "const foo = async () => {};
-			foo();",
+            foo();",
             None,
             None,
             None,
         ),
         (
             "const foo = async () => {};
-			foo?.();",
+            foo?.();",
             None,
             None,
             None,
         ),
         (
             "const foo = async () => {};
-			foo().then(foo);",
+            foo().then(foo);",
             None,
             None,
             None,
         ),
         (
             "const foo = async function () {}, bar = 1;
-			foo(bar);",
+            foo(bar);",
             None,
             None,
             None,
         ),
         (
             "foo();
-			async function foo() {}",
+            async function foo() {}",
             None,
             None,
             None,
         ),
         (
             "const foo = async () => {};
-			if (true) {
-				alert();
-			} else {
-				foo();
-			}",
+            if (true) {
+                alert();
+            } else {
+                foo();
+            }",
             None,
             None,
             None,

@@ -81,6 +81,7 @@ declare_oxc_lint!(
     CheckTagNames,
     jsdoc,
     correctness,
+    pending,
     config = CheckTagNamesConfig,
 );
 

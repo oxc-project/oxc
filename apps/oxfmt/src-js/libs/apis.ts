@@ -46,7 +46,6 @@ export async function resolvePlugins(): Promise<string[]> {
 
 export type FormatEmbeddedCodeParam = {
   code: string;
-  parserName: string;
   options: Options;
 };
 
@@ -59,13 +58,9 @@ export type FormatEmbeddedCodeParam = {
  */
 export async function formatEmbeddedCode({
   code,
-  parserName,
   options,
 }: FormatEmbeddedCodeParam): Promise<string> {
   const prettier = await loadPrettier();
-
-  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  options.parser = parserName;
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   await setupTailwindPlugin(options);
@@ -81,8 +76,6 @@ export async function formatEmbeddedCode({
 
 export type FormatFileParam = {
   code: string;
-  parserName: string;
-  fileName: string;
   options: Options;
 };
 
@@ -91,19 +84,8 @@ export type FormatFileParam = {
  *
  * @returns Formatted code
  */
-export async function formatFile({
-  code,
-  parserName,
-  fileName,
-  options,
-}: FormatFileParam): Promise<string> {
+export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
   const prettier = await loadPrettier();
-
-  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  // We specify `parser` to skip parser inference for performance
-  options.parser = parserName;
-  // But some plugins rely on `filepath`, so we set it too
-  options.filepath = fileName;
 
   // Enable Tailwind CSS plugin for non-JS files if needed
   await setupTailwindPlugin(options);
@@ -119,7 +101,6 @@ export async function formatFile({
 // ---
 
 // Import types only to avoid runtime error if plugin is not installed
-import type { TransformerEnv } from "prettier-plugin-tailwindcss";
 
 // Shared cache for prettier-plugin-tailwindcss
 let tailwindPluginCache: typeof import("prettier-plugin-tailwindcss");
@@ -151,42 +132,36 @@ async function setupTailwindPlugin(options: Options): Promise<void> {
 // ---
 
 export interface SortTailwindClassesArgs {
-  filepath: string;
   classes: string[];
-  options?: Record<string, unknown>;
+  options: {
+    filepath?: string;
+    tailwindStylesheet?: string;
+    tailwindConfig?: string;
+    tailwindPreserveWhitespace?: boolean;
+    tailwindPreserveDuplicates?: boolean;
+  };
 }
 
 /**
  * Process Tailwind CSS classes found in JS/TS files in batch.
- * @param args - Object containing filepath, classes, and options
+ * @param args - Object containing classes and options (filepath is in options.filepath)
  * @returns Array of sorted class strings (same order/length as input)
  */
 export async function sortTailwindClasses({
-  filepath,
   classes,
-  options = {},
+  options,
 }: SortTailwindClassesArgs): Promise<string[]> {
-  const tailwindPlugin = await loadTailwindPlugin();
+  const { createSorter } = await import("prettier-plugin-tailwindcss/sorter");
 
-  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
-  options.filepath = filepath;
-
-  // Load Tailwind context
-  const context = await tailwindPlugin.getTailwindConfig(options);
-  if (!context) return classes;
-
-  // Create transformer env with options
-  const env: TransformerEnv = { context, options };
-
-  // Sort all classes
-  return classes.map((classStr) => {
-    try {
-      return tailwindPlugin.sortClasses(classStr, { env });
-    } catch {
-      // Failed to sort, return original
-      return classStr;
-    }
+  const sorter = await createSorter({
+    filepath: options.filepath,
+    stylesheetPath: options.tailwindStylesheet,
+    configPath: options.tailwindConfig,
+    preserveWhitespace: options.tailwindPreserveWhitespace,
+    preserveDuplicates: options.tailwindPreserveDuplicates,
   });
+
+  return sorter.sortClassAttributes(classes);
 }
 
 // ---

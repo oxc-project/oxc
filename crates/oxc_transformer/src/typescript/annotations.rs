@@ -1,7 +1,7 @@
 use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::SymbolFlags;
+use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN, Span};
 use oxc_syntax::{
     operator::AssignmentOperator,
@@ -362,19 +362,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
     fn enter_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        // Remove TypeScript type-only declarations (interfaces, type aliases, etc.)
-        // but NOT declarations with `declare` keyword - those will be handled
-        // by their respective enter_* methods which will remove the `declare` flag
-        stmts.retain(|stmt| {
-            if let Some(decl) = stmt.as_declaration() {
-                // Only remove pure TypeScript type declarations
-                // Keep all other declarations including those with `declare`
-                !decl.is_type()
-            } else {
-                true
+        // Remove TS-only statements early to avoid traversing their children
+        stmts.retain(|stmt| match stmt {
+            match_declaration!(Statement) => {
+                self.should_keep_declaration(stmt.to_declaration(), ctx)
             }
+            _ => true,
         });
     }
 
@@ -397,39 +392,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
             .collect();
         ctx.state.statement_injector.insert_many_after(stmt, assignments);
         self.has_super_call = true;
-    }
-
-    fn exit_statements(
-        &mut self,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        // Remove TS specific statements
-        stmts.retain_mut(|stmt| match stmt {
-            Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
-            match_declaration!(Statement) => {
-                let decl = stmt.to_declaration_mut();
-                match decl {
-                    Declaration::VariableDeclaration(var_decl) => {
-                        // Remove declare variable declarations entirely
-                        !var_decl.declare
-                    }
-                    Declaration::FunctionDeclaration(func_decl) => {
-                        // Remove declare function declarations and function overload signatures entirely
-                        // Keep only function implementations (those with a body)
-                        !func_decl.declare && func_decl.body.is_some()
-                    }
-                    Declaration::ClassDeclaration(class_decl) => {
-                        // Remove declare class declarations entirely
-                        !class_decl.declare
-                    }
-                    // Remove type-only declarations
-                    _ => !decl.is_typescript_syntax(),
-                }
-            }
-            // Ignore ModuleDeclaration as it's handled in the program
-            _ => true,
-        });
     }
 
     /// Transform if statement's consequent and alternate to block statements if they are super calls
@@ -535,6 +497,51 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a> {
 }
 
 impl<'a> TypeScriptAnnotations<'a> {
+    #[inline]
+    fn should_keep_declaration(&self, decl: &Declaration<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+        match decl {
+            // Remove type aliases, interfaces, and `declare global {}`
+            Declaration::TSTypeAliasDeclaration(_)
+            | Declaration::TSInterfaceDeclaration(_)
+            | Declaration::TSGlobalDeclaration(_) => false,
+            // Remove `declare var/let/const`
+            Declaration::VariableDeclaration(var_decl) => !var_decl.declare,
+            // Remove `declare function` and function overload signatures (no body)
+            Declaration::FunctionDeclaration(func_decl) => {
+                !func_decl.declare && func_decl.body.is_some()
+            }
+            // Remove `declare class`
+            Declaration::ClassDeclaration(class_decl) => !class_decl.declare,
+            // Remove `declare module` or uninstantiated namespace declarations.
+            // Keep instantiated `module` declarations — they have runtime
+            // representation and need to be transformed.
+            Declaration::TSModuleDeclaration(module_decl) => {
+                !module_decl.declare
+                    && !matches!(
+                        &module_decl.id,
+                        TSModuleDeclarationName::Identifier(ident)
+                            if ctx.scoping().symbol_flags(ident.symbol_id()).is_namespace_module()
+                    )
+            }
+            // Remove `declare enum`
+            Declaration::TSEnumDeclaration(enum_decl) => !enum_decl.declare,
+            // Remove unused import-equals (used ones are transformed by module transform)
+            Declaration::TSImportEqualsDeclaration(import_equals) => {
+                let keep = import_equals.import_kind.is_value()
+                    && (self.only_remove_type_imports
+                        || !ctx
+                            .scoping()
+                            .get_resolved_references(import_equals.id.symbol_id())
+                            .all(Reference::is_type));
+                if !keep {
+                    let scope_id = ctx.current_scope_id();
+                    ctx.scoping_mut().remove_binding(scope_id, import_equals.id.name);
+                }
+                keep
+            }
+        }
+    }
+
     /// Check if the given name is a JSX pragma or fragment pragma import
     /// and if the file contains JSX elements or fragments
     fn is_jsx_imports(&self, name: &str) -> bool {

@@ -229,16 +229,16 @@ fn test() {
         "
         await Promise.all([(x,y)])
         [0].toString()
-		",
+        ",
         "Promise.all([promise,],)",
         "
-		foo
-		Promise.all([(0, promise),],)
-		",
+        foo
+        Promise.all([(0, promise),],)
+        ",
         "
         foo
         Promise.all([[array][0],],)
-		",
+        ",
         "Promise.all([promise]).then()",
         "Promise.all([1]).then()",
         "Promise.all([1.]).then()",

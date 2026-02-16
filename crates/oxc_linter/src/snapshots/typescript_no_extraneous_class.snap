@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Delete this class
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
-   ╭─[no_extraneous_class.tsx:5:14]
+   ╭─[no_extraneous_class.tsx:5:23]
  4 │               constructor() {
  5 │                 class Bar {
    ·                       ───
@@ -19,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try using standalone functions instead of static methods
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
-    ╭─[no_extraneous_class.tsx:10:17]
+    ╭─[no_extraneous_class.tsx:10:26]
   9 │             }
  10 │             export class Bar {
     ·                          ───
@@ -35,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try replacing this class with a standalone function or deleting it entirely
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
-   ╭─[no_extraneous_class.tsx:8:8]
+   ╭─[no_extraneous_class.tsx:8:17]
  7 │               constructor() {
  8 │                 class nestedClass {}
    ·                 ────────────────────
@@ -51,7 +51,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Try using standalone functions instead of static methods
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
-   ╭─[no_extraneous_class.tsx:3:4]
+   ╭─[no_extraneous_class.tsx:3:13]
  2 │             @FooDecorator
  3 │             class Foo {}
    ·             ────────────
@@ -60,7 +60,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Set "allowWithDecorator": true in your config to allow empty decorated classes
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
-   ╭─[no_extraneous_class.tsx:6:4]
+   ╭─[no_extraneous_class.tsx:6:13]
  5 │             })
  6 │             class Foo {}
    ·             ────────────
@@ -69,7 +69,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Set "allowWithDecorator": true in your config to allow empty decorated classes
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only a constructor.
-   ╭─[no_extraneous_class.tsx:3:10]
+   ╭─[no_extraneous_class.tsx:3:19]
  2 │             @FooDecorator
  3 │             class Foo {
    ·                   ───

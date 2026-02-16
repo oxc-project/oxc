@@ -10,6 +10,23 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove spread and replace with `Set.size`
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
+   ╭─[prefer_set_size.tsx:2:34]
+ 1 │ const foo = new Set([]);
+ 2 │             console.log([...foo].length);
+   ·                                  ──────
+   ╰────
+  help: Remove spread and replace with `Set.size`
+
+  ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
+   ╭─[prefer_set_size.tsx:2:43]
+ 1 │ function isUnique(array) {
+ 2 │                 return[...new Set(array)].length === array.length
+   ·                                           ──────
+ 3 │             }
+   ╰────
+  help: Remove spread and replace with `Set.size`
+
+  ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
    ╭─[prefer_set_size.tsx:1:22]
  1 │ [...new Set(array),].length
    ·                      ──────
@@ -31,16 +48,17 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove spread and replace with `Set.size`
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
-   ╭─[prefer_set_size.tsx:1:34]
- 1 │ [/* comment */...new Set(array)].length
+   ╭─[prefer_set_size.tsx:2:34]
+ 1 │ foo
+ 2 │             ;[...new Set(array)].length
    ·                                  ──────
    ╰────
   help: Remove spread and replace with `Set.size`
 
   ⚠ eslint-plugin-unicorn(prefer-set-size): Use `Set#size` instead of converting a `Set` to an array and using its `length` property.
-   ╭─[prefer_set_size.tsx:1:35]
- 1 │ const foo = new Set([]); [...foo].length;
-   ·                                   ──────
+   ╭─[prefer_set_size.tsx:1:34]
+ 1 │ [/* comment */...new Set(array)].length
+   ·                                  ──────
    ╰────
   help: Remove spread and replace with `Set.size`
 

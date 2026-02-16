@@ -343,7 +343,7 @@ fn has_conditional_path_accept_throw(
         //         }
         //         _ => None,
         //     })
-        //     .filter(|it| it.id() != to.id())
+        //     .filter(|it| it.node_id() != to.node_id())
         //     .any(|it| {
         //         // TODO: it.may_throw()
         //         matches!(
@@ -566,6 +566,22 @@ fn test() {
         "
             function useHookWithHook() {
               useHook();
+            }
+        ",
+        // Valid because 'use' followed by a digit is a valid hook name (/^use[A-Z0-9]/).
+        "
+            function use2FAMutation() {
+              return useState(null);
+            }
+        ",
+        "
+            function Component() {
+              use2FAMutation();
+            }
+        ",
+        "
+            function use3DEngine() {
+              useEffect(() => {}, []);
             }
         ",
         // Valid because hooks can use hooks.

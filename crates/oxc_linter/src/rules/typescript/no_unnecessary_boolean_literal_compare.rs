@@ -18,6 +18,7 @@ pub struct NoUnnecessaryBooleanLiteralCompareConfig {
     pub allow_comparing_nullable_booleans_to_true: bool,
     /// Whether to allow this rule to run without `strictNullChecks` enabled.
     /// This is not recommended as the rule may produce incorrect results.
+    #[schemars(skip)]
     pub allow_rule_to_run_without_strict_null_checks_i_know_what_i_am_doing: bool,
 }
 
@@ -86,6 +87,7 @@ declare_oxc_lint!(
     NoUnnecessaryBooleanLiteralCompare(tsgolint),
     typescript,
     suspicious,
+    pending,
     config = NoUnnecessaryBooleanLiteralCompareConfig,
 );
 

@@ -148,7 +148,7 @@ fn test() {
         r#"document[CONSTANTS_COOKIE] = "foo=bar""#,
         r#"document[cookie] = "foo=bar""#,
         r#"const CONSTANTS_COOKIE = "cookie";
-			document[CONSTANTS_COOKIE] = "foo=bar";"#,
+            document[CONSTANTS_COOKIE] = "foo=bar";"#,
     ];
 
     let fail = vec![

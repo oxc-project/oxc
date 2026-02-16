@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
+    /// <!-- prettier-ignore-start -->
     /// ```javascript
     /// if (!key in object) {}
     ///
@@ -64,6 +65,7 @@ declare_oxc_lint!(
     ///
     /// if (!(obj instanceof Ctor)) {}
     /// ```
+    /// <!-- prettier-ignore-end -->
     NoUnsafeNegation,
     eslint,
     correctness,

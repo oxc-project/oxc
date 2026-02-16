@@ -7,7 +7,8 @@ format/formatted.ts
 const x = 1;
 
 --- AFTER ----------
-null
+const x = 1;
+
 --------------------"
 `;
 
@@ -58,7 +59,8 @@ format/test.txt
 hello   world
 
 --- AFTER ----------
-null
+hello   world
+
 --------------------"
 `;
 
@@ -202,7 +204,8 @@ ignore-config/file.generated.ts
 const   x   =   1
 
 --- AFTER ----------
-null
+const   x   =   1
+
 --------------------"
 `;
 
@@ -213,29 +216,7 @@ ignore-prettierignore/ignored.ts
 const   x   =   1
 
 --- AFTER ----------
-null
---------------------"
-`;
-
-exports[`LSP formatting > ignore patterns > should respect .gitignore 1`] = `
-"--- FILE -----------
-ignore-gitignore/ignored.ts
---- BEFORE ---------
 const   x   =   1
-
---- AFTER ----------
-null
---------------------"
-`;
-
-exports[`LSP formatting > ignore patterns > should respect .gitignore 2`] = `
-"--- FILE -----------
-ignore-gitignore/not-ignored.ts
---- BEFORE ---------
-const   x   =   1
-
---- AFTER ----------
-const x = 1;
 
 --------------------"
 `;

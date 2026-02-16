@@ -74,6 +74,7 @@ use crate::{context::TraverseCtx, state::TransformState};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+/// Configuration for the styled-components transform.
 pub struct StyledComponentsOptions {
     /// Enhances the attached CSS class name on each component with richer output to help
     /// identify your components in the DOM without React DevTools. It also allows you to
@@ -401,8 +402,9 @@ impl<'a> StyledComponents<'a> {
         let TaggedTemplateExpression {
             span,
             tag,
-            quasi: TemplateLiteral { span: quasi_span, quasis, expressions },
+            quasi: TemplateLiteral { span: quasi_span, quasis, expressions, .. },
             type_arguments,
+            ..
         } = expr.take_in(ctx.ast);
 
         let quasis_elements = ctx.ast.vec_from_iter(quasis.into_iter().map(|quasi| {

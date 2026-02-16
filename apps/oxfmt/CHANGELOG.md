@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.29.0] - 2026-02-10
+
+### 💥 BREAKING CHANGES
+
+- 856a01f formatter/sort_imports: [**BREAKING**] Replace prefix match with glob pattern in `customGroups.elementNamePattern` (#19066) (leaysgur)
+
+### 🚀 Features
+
+- 91e67f3 oxfmt/lsp: Do not refer `.gitignore` (#19206) (leaysgur)
+- 23c0753 oxfmt: Better Tailwind CSS intergration (#19000) (Dunqing)
+- 87a920d ci: Add riscv64 and s390x napi targets for oxlint and oxfmt (#19039) (Boshen)
+- 8536dce oxfmt: Support glob for CLI paths (#18976) (leaysgur)
+- 6ee2d59 oxfmt: Use `oxc_formatter` in js-in-xxx part (#18373) (leaysgur)
+- 9788a96 oxlint,oxfmt: Add more native builds (#18853) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 119348b oxfmt: Resolve relative -> absolute path for other usages (#19207) (leaysgur)
+- 5f4cf30 oxfmt: Fix relative -> absolute path resolution with refactoring (#19202) (leaysgur)
+- dc335d1 oxfmt: Temporarily disable the override for js-in-xxx (not ready yet) (#19043) (leaysgur)
+- 5ea5bda oxfmt: Handle `isSingleJsxExpressionStatementInMarkdown()` check for js-in-md (#19042) (leaysgur)
+- 9b205b3 formatter: Fallback to formatting when package.json sorting fails (#19097) (Boshen)
+- f39c96c oxfmt: Do not override `babel-ts` for now (#19030) (leaysgur)
+- ef5bfab oxfmt: Workaround Node.js ThreadsafeFunction cleanup race condition (#18980) (Boshen)
+
+### ⚡ Performance
+
+- 467724f oxfmt: Collect glob paths in parallel (#19209) (leaysgur)
+- 61e0efa oxfmt: Use RwLock instead of Mutex for TSFN handles (#18888) (Boshen)
+
 ## [0.28.0] - 2026-02-02
 
 ### 🚀 Features

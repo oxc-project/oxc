@@ -35,13 +35,14 @@ working directory: fixtures/tsgolint
  3 | 
    `----
 
-  x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden. Move it to its own statement instead.
+  x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden.
    ,-[no-confusing-void-expression.ts:2:24]
  1 | declare function bar(): void;
  2 | const foo = () => void bar();
    :                        ^^^^^
  3 | 
    `----
+  help: Move it to its own statement instead.
 
   x typescript-eslint(no-deprecated): `getVersion` is deprecated. Use apiV2 instead.
    ,-[no-deprecated.ts:8:1]
@@ -57,12 +58,13 @@ working directory: fixtures/tsgolint
  2 | 
    `----
 
-  x typescript-eslint(no-confusing-void-expression): Returning a void expression from an arrow function shorthand is forbidden. Please add braces to the arrow function.
+  x typescript-eslint(no-confusing-void-expression): Returning a void expression from an arrow function shorthand is forbidden.
    ,-[no-floating-promises.ts:1:51]
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
    :                                                   ^^^^^^^^^^^^^^^^
  2 | promise;
    `----
+  help: Add braces to the arrow function.
 
   x typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
    ,-[no-floating-promises.ts:2:1]
@@ -73,14 +75,14 @@ working directory: fixtures/tsgolint
    `----
   help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
-  x typescript-eslint(no-for-in-array): For-in loops over arrays skips holes, returns indices as strings, and may visit the prototype chain or other enumerable properties. Use a more robust
-  | iteration method such as for-of or array.forEach instead.
+  x typescript-eslint(no-for-in-array): For-in loops over arrays skips holes, returns indices as strings, and may visit the prototype chain or other enumerable properties.
    ,-[no-for-in-array.ts:2:1]
  1 | const arr = [1, 2, 3];
  2 | for (const i in arr) {
    : ^^^^^^^^^^^^^^^^^^^^
  3 |   console.log(arr[i]);
    `----
+  help: Use a more robust iteration method such as for-of or array.forEach instead.
 
   x typescript-eslint(no-implied-eval): Implied eval. Consider passing a function.
    ,-[no-implied-eval.ts:1:12]
@@ -96,13 +98,14 @@ working directory: fixtures/tsgolint
  5 | 
    `----
 
-  x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden. Move it to its own statement instead.
+  x typescript-eslint(no-confusing-void-expression): Placing a void expression inside another expression is forbidden.
    ,-[no-meaningless-void-operator.ts:4:6]
  3 | }
  4 | void foo();
    :      ^^^^^
  5 | 
    `----
+  help: Move it to its own statement instead.
 
   x typescript-eslint(no-misused-spread): Using the spread operator on Promise in an object can cause unexpected behavior.
    ,-[no-misused-spread.ts:2:25]
@@ -132,6 +135,20 @@ working directory: fixtures/tsgolint
  2 | if (someCondition === true) {
    :     ^^^^^^^^^^^^^^^^^^^^^^
  3 | }
+   `----
+
+  x typescript-eslint(no-unnecessary-condition): Unnecessary conditional, value is always truthy.
+   ,-[no-unnecessary-condition.ts:3:19]
+ 2 | declare const b2: boolean;
+ 3 | export const t1 = b1 && b2;
+   :                   ^^
+   `----
+
+  x typescript-eslint(strict-boolean-expressions): Unexpected object value in conditional. An object is always truthy.
+   ,-[no-unnecessary-condition.ts:3:19]
+ 2 | declare const b2: boolean;
+ 3 | export const t1 = b1 && b2;
+   :                   ^^
    `----
 
   x typescript-eslint(no-unnecessary-template-expression): Template literal expression is unnecessary and can be simplified.
@@ -180,6 +197,14 @@ working directory: fixtures/tsgolint
    : ^^^^^^^^
  3 | 
    `----
+
+  x typescript-eslint(no-unnecessary-condition): Unnecessary comparison between literal values.
+    ,-[no-unsafe-enum-comparison.ts:9:20]
+  8 | }
+  9 | const comparison = Status.Open === Color.Red;
+    :                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | 
+    `----
 
   x typescript-eslint(no-unsafe-enum-comparison): The two values in this comparison do not have a shared enum type.
     ,-[no-unsafe-enum-comparison.ts:9:20]
@@ -283,6 +308,15 @@ working directory: fixtures/tsgolint
    :                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
+  x typescript-eslint(no-unnecessary-condition): This condition will always return the same value since the types have no overlap.
+   ,-[prefer-nullish-coalescing.ts:2:49]
+ 1 | declare const nullableString: string | null;
+ 2 | const nullishResult = nullableString !== null && nullableString !== undefined ? nullableString : 'default';
+   :                                                 ^^^^^^^|^^^^^^^    ^^^^^|^^^^
+   :                                                        |                `-- Type: undefined
+   :                                                        `-- Type: string
+   `----
+
   x typescript-eslint(prefer-optional-chain): Prefer using an optional chain expression instead, as it's more concise and easier to read.
    ,-[prefer-optional-chain.ts:3:1]
  2 | declare const fooOptC: { bar: number } | null | undefined;
@@ -381,6 +415,14 @@ working directory: fixtures/tsgolint
  3 | 
    `----
 
+  x typescript-eslint(no-unnecessary-condition): Unnecessary conditional, value is always truthy.
+   ,-[strict-boolean-expressions.ts:2:5]
+ 1 | const str = 'hello';
+ 2 | if (str) {
+   :     ^^^
+ 3 | }
+   `----
+
   x typescript-eslint(switch-exhaustiveness-check): Switch is not exhaustive
    ,-[switch-exhaustiveness-check.ts:3:11]
  2 | function handleStatus(status: Status) {
@@ -399,15 +441,15 @@ working directory: fixtures/tsgolint
   help: Remove the debugger statement
 
   x typescript-eslint(unbound-method): Avoid referencing unbound methods which may cause unintentional scoping of `this`.
-  | If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
    ,-[unbound-method.ts:9:19]
  8 | const calc = new Calculator();
  9 | const addMethod = calc.add;
    :                   ^^^^^^^^
    `----
+  help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 52 errors.
-Finished in <variable>ms on 46 files with 45 rules using 1 threads.
+Found 0 warnings and 57 errors.
+Finished in <variable>ms on 47 files with 46 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

@@ -198,9 +198,10 @@
 //! * Class properties TC39 proposal: <https://github.com/tc39/proposal-class-fields>
 
 use indexmap::IndexMap;
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
+use oxc_allocator::IdentBuildHasher;
 use oxc_ast::ast::*;
 use oxc_span::Ident;
 use oxc_syntax::symbol::SymbolId;
@@ -223,11 +224,13 @@ mod utils;
 use class_bindings::ClassBindings;
 use class_details::{ClassDetails, ClassesStack, PrivateProp, ResolvedPrivateProp};
 
-type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
+type IdentIndexMap<'a, V> = IndexMap<Ident<'a>, V, IdentBuildHasher>;
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
+/// Options for the class properties transform.
 pub struct ClassPropertiesOptions {
+    /// Use loose assignment semantics for class fields.
     pub loose: bool,
 }
 

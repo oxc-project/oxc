@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 use std::borrow::Cow;
 
 use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};

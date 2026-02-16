@@ -484,18 +484,17 @@ pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
 ///
 /// Identifies `use(...)` as a valid hook.
 ///
-/// Hook names must start with use followed by a capital letter,
-/// like useState (built-in) or useOnlineStatus (custom).
+/// Hook names must start with use followed by a capital letter or digit,
+/// like useState (built-in), useOnlineStatus (custom), or use2FAMutation.
+/// Matches ESLint's `/^use[A-Z0-9]/`.
 pub fn is_react_hook_name(name: &str) -> bool {
-    name.starts_with("use") && name.chars().nth(3).is_none_or(char::is_uppercase)
+    name.starts_with("use")
+        && name.chars().nth(3).is_none_or(|c| c.is_uppercase() || c.is_ascii_digit())
 }
 
 /// Checks whether the `name` follows the official conventions of React Hooks.
 ///
 /// Identifies `use(...)` as a valid hook.
-///
-/// Hook names must start with use followed by a capital letter,
-/// like useState (built-in) or useOnlineStatus (custom).
 pub fn is_react_hook(expr: &Expression) -> bool {
     match expr {
         Expression::StaticMemberExpression(static_expr) => {
@@ -780,6 +779,8 @@ mod test {
         assert!(is_react_hook_name("useFooBar"));
         assert!(is_react_hook_name("useEffect"));
         assert!(is_react_hook_name("use"));
+        assert!(is_react_hook_name("use2FAMutation"));
+        assert!(is_react_hook_name("use3DEngine"));
         // Bad names:
         assert!(!is_react_hook_name("userError"));
         assert!(!is_react_hook_name("notAHook"));

@@ -76,7 +76,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                             // avoid same symbols appear in multi-scopes
                             builder.scoping.remove_binding(scope_id, name);
                             builder.scoping.add_binding(target_scope_id, name, symbol_id);
-                            builder.scoping.symbol_scope_ids[symbol_id] = target_scope_id;
+                            builder.scoping.set_symbol_scope_id(symbol_id, target_scope_id);
                         }
                         break;
                     }
@@ -389,9 +389,14 @@ impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
 
 impl<'a> Binder<'a> for TSEnumMember<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
+        // Extract Ident directly from Identifier variant to preserve precomputed hash.
+        let name = match &self.id {
+            TSEnumMemberName::Identifier(ident) => ident.name,
+            _ => Ident::from(self.id.static_name()),
+        };
         builder.declare_symbol(
             self.span,
-            Ident::from(self.id.static_name()),
+            name,
             SymbolFlags::EnumMember,
             SymbolFlags::EnumMemberExcludes,
         );
@@ -650,16 +655,18 @@ fn get_module_instance_state_for_alias_target<'a>(
             }
         }
 
-        let Some(node) = builder.nodes.ancestors(current_node_id).find(|node| {
-            matches!(
-                node.kind(),
-                AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::BlockStatement(_)
-            )
-        }) else {
+        let Some((node_id, node)) =
+            builder.nodes.ancestors_enumerated(current_node_id).find(|(_, node)| {
+                matches!(
+                    node.kind(),
+                    AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::BlockStatement(_)
+                )
+            })
+        else {
             break;
         };
 
-        current_node_id = node.id();
+        current_node_id = node_id;
         current_block_stmts.clear();
         // Didn't find the declaration whose name matches export specifier
         // in the current block, so we need to check the parent block.

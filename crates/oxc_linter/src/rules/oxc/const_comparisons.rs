@@ -37,10 +37,18 @@ fn impossible(span: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagn
     ])
 }
 
-fn constant_comparison_diagnostic(span: Span, evaluates_to: bool, help: String) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("This comparison will always evaluate to {evaluates_to}"))
-        .with_help(help)
-        .with_label(span)
+fn constant_comparison_diagnostic(
+    span: Span,
+    evaluates_to: bool,
+    help: String,
+    precedence_note: Option<String>,
+) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::warn(format!("This comparison will always evaluate to {evaluates_to}"))
+            .with_help(help)
+            .with_label(span);
+
+    if let Some(note) = precedence_note { diagnostic.with_note(note) } else { diagnostic }
 }
 
 fn identical_expressions_logical_operator(left_span: Span, right_span: Span) -> OxcDiagnostic {
@@ -116,7 +124,7 @@ impl Rule for ConstComparisons {
                 Self::check_logical_expression(logical_expr, ctx);
             }
             AstKind::BinaryExpression(bin_expr) => {
-                Self::check_binary_expression(bin_expr, ctx);
+                Self::check_binary_expression(node, bin_expr, ctx);
             }
             _ => {}
         }
@@ -259,7 +267,11 @@ impl ConstComparisons {
         }
     }
 
-    fn check_binary_expression<'a>(bin_expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
+    fn check_binary_expression<'a>(
+        node: &AstNode<'a>,
+        bin_expr: &BinaryExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) {
         if matches!(
             bin_expr.operator,
             BinaryOperator::LessEqualThan
@@ -276,6 +288,7 @@ impl ConstComparisons {
                 BinaryOperator::LessEqualThan | BinaryOperator::GreaterEqualThan
             );
 
+            let precedence_note = Self::logical_precedence_note(node, bin_expr, ctx);
             ctx.diagnostic(constant_comparison_diagnostic(
                 bin_expr.span,
                 is_const_truthy,
@@ -291,8 +304,38 @@ impl ConstComparisons {
                         _ => unreachable!(),
                     },
                 ),
+                precedence_note,
             ));
         }
+    }
+
+    fn logical_precedence_note<'a>(
+        node: &AstNode<'a>,
+        bin_expr: &BinaryExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) -> Option<String> {
+        let AstKind::LogicalExpression(logical_expr) = ctx.nodes().parent_kind(node.id()) else {
+            return None;
+        };
+
+        if !matches!(logical_expr.operator, LogicalOperator::Or | LogicalOperator::Coalesce) {
+            return None;
+        }
+
+        if logical_expr.right.get_inner_expression().span() != bin_expr.span {
+            return None;
+        }
+
+        let logical_operator = logical_expr.operator.as_str();
+
+        let logical_left = logical_expr.left.span().source_text(ctx.source_text());
+        let comparison_left = bin_expr.left.span().source_text(ctx.source_text());
+        let comparison_right = bin_expr.right.span().source_text(ctx.source_text());
+        let comparison_operator = bin_expr.operator.as_str();
+
+        Some(format!(
+            "It looks like you're mixing logical and comparison operators without parentheses. Comparison operators have higher precedence than logical operators, so this is parsed as `{logical_left} {logical_operator} ({comparison_left} {comparison_operator} {comparison_right})`. If you intended to compare the result of the logical expression, add parentheses: `({logical_left} {logical_operator} {comparison_left}) {comparison_operator} {comparison_right}`.",
+        ))
     }
 }
 
@@ -554,6 +597,8 @@ fn test() {
         "foo && !foo",
         "!foo || foo",
         "foo || !foo",
+        "let numOrUndefined: number | undefined = 6; if (numOrUndefined || 0 > 0) {}",
+        "let numOrUndefined: number | undefined = 6; if (numOrUndefined ?? 0 > 0) {}",
     ];
 
     Tester::new(ConstComparisons::NAME, ConstComparisons::PLUGIN, pass, fail).test_and_snapshot();

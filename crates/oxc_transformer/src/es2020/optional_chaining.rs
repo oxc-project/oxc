@@ -51,7 +51,7 @@ use std::mem;
 
 use oxc_allocator::{CloneIn, TakeIn};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
 
 use crate::{
@@ -234,6 +234,7 @@ impl<'a> OptionalChaining<'a> {
         is_delete: bool,
         test: Expression<'a>,
         alternate: Expression<'a>,
+        span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
         let consequent = if is_delete {
@@ -241,7 +242,7 @@ impl<'a> OptionalChaining<'a> {
         } else {
             ctx.ast.void_0(SPAN)
         };
-        ctx.ast.expression_conditional(SPAN, test, consequent, alternate)
+        ctx.ast.expression_conditional(span, test, consequent, alternate)
     }
 
     /// Convert chain expression to expression
@@ -317,6 +318,7 @@ impl<'a> OptionalChaining<'a> {
         chain_expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
+        let span = chain_expr.span();
         let mut chain_expr = Self::convert_chain_expression_to_expression(chain_expr, ctx);
         //      ^^^^^^^^^^ After the recursive transformation, the chain_expr will be transformed into
         //                 a pure non-optional expression and it's the last part of the chain expression.
@@ -349,7 +351,7 @@ impl<'a> OptionalChaining<'a> {
         self.temp_binding = None;
         self.call_context = CallContext::None;
 
-        Self::create_conditional_expression(is_delete, left, chain_expr, ctx)
+        Self::create_conditional_expression(is_delete, left, chain_expr, span, ctx)
     }
 
     /// Transform an expression to bind a proper context

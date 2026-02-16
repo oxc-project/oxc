@@ -76,10 +76,11 @@ impl ServerLinterBuilder {
             }
         };
         let root_path = root_uri.to_file_path().unwrap();
-        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
+        let mut external_linter = self.external_linter.as_ref();
+        let mut external_plugin_store = ExternalPluginStore::new(external_linter.is_some());
 
         // Setup JS workspace. This must be done before loading any configs
-        if let Some(external_linter) = &self.external_linter {
+        if let Some(external_linter) = external_linter {
             let res = (external_linter.create_workspace)(root_uri.as_str().to_string());
 
             if let Err(err) = res {
@@ -103,7 +104,7 @@ impl ServerLinterBuilder {
 
         let config_path = options.config_path.as_ref().filter(|p| !p.is_empty()).map(PathBuf::from);
         let loader = ConfigLoader::new(
-            self.external_linter.as_ref(),
+            external_linter,
             &mut external_plugin_store,
             &[],
             Some(root_uri.as_str()),
@@ -122,14 +123,19 @@ impl ServerLinterBuilder {
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
-        let config_builder = ConfigStoreBuilder::from_oxlintrc(
+        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
-            self.external_linter.as_ref(),
+            external_linter,
             &mut external_plugin_store,
             Some(root_uri.as_str()),
-        )
-        .unwrap_or_default();
+        ) {
+            Ok(builder) => builder,
+            Err(e) => {
+                warn!("Failed to build config from oxlintrc: {e}");
+                ConfigStoreBuilder::default()
+            }
+        };
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
@@ -154,14 +160,15 @@ impl ServerLinterBuilder {
             },
             ..Default::default()
         };
-        let external_linter =
-            if external_plugin_store.is_empty() { None } else { self.external_linter.as_ref() };
+        if external_plugin_store.is_empty() {
+            external_linter = None;
+        }
 
         let config_store = ConfigStore::new(base_config, nested_configs, external_plugin_store);
         let config_store_clone = config_store.clone();
 
         // Send JS plugins config to JS side
-        if let Some(external_linter) = &external_linter {
+        if let Some(external_linter) = external_linter {
             let res = config_store.external_plugin_store().setup_rule_configs(
                 root_path.to_string_lossy().into_owned(),
                 Some(root_uri.as_str()),

@@ -662,7 +662,12 @@ impl<'a> LegacyDecorator<'a> {
                     // `_Class = this`;
                     let class_alias_with_this_assignment = ctx.ast.statement_expression(
                         SPAN,
-                        create_assignment(class_alias_binding, ctx.ast.expression_this(SPAN), ctx),
+                        create_assignment(
+                            class_alias_binding,
+                            ctx.ast.expression_this(SPAN),
+                            SPAN,
+                            ctx,
+                        ),
                     );
                     let body = ctx.ast.vec1(class_alias_with_this_assignment);
                     let scope_id = ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
@@ -1051,7 +1056,7 @@ impl<'a> LegacyDecorator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let ident = class_binding.create_read_expression(ctx);
-        if is_static { ident } else { create_prototype_member(ident, ctx) }
+        if is_static { ident } else { create_prototype_member(ident, SPAN, ctx) }
     }
 
     /// Get the name of the property key.

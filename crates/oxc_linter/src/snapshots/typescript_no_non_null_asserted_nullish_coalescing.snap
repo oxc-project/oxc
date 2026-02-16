@@ -59,7 +59,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
   ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:10]
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:13]
  2 │             let x!: string;
  3 │             x! ?? '';
    ·             ──
@@ -68,7 +68,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
   ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:10]
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:13]
  3 │             x = foo();
  4 │             x! ?? '';
    ·             ──
@@ -77,7 +77,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
   ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:10]
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:13]
  3 │             x = foo();
  4 │             x! ?? '';
    ·             ──
@@ -86,7 +86,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
   ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:10]
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:13]
  2 │             let x = foo();
  3 │             x! ?? '';
    ·             ──
@@ -95,7 +95,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
   ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:19]
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:22]
  3 │               let x!: string;
  4 │               return x! ?? '';
    ·                      ──
@@ -104,7 +104,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
   ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:19]
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:4:22]
  3 │             function foo() {
  4 │               return x! ?? '';
    ·                      ──
@@ -113,7 +113,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.
 
   ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
-   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:10]
+   ╭─[no_non_null_asserted_nullish_coalescing.tsx:3:13]
  2 │             let x = foo();
  3 │             x  ! ?? '';
    ·             ────

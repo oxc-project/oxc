@@ -280,7 +280,7 @@ impl<'a> TypeScript<'a> {
     ) -> Statement<'a> {
         let member = match key {
             PropertyKey::StaticIdentifier(ident) => {
-                create_this_property_access(SPAN, ident.name.into(), ctx)
+                create_this_property_access(SPAN, ident.name, ctx)
             }
             PropertyKey::PrivateIdentifier(_) => {
                 unreachable!("PrivateIdentifier is skipped in transform_class_fields");
@@ -386,7 +386,7 @@ impl<'a> TypeScript<'a> {
             .filter(|param| param.has_modifier())
             .filter_map(|param| param.pattern.get_binding_identifier())
             .map(|id| {
-                let target = create_this_property_assignment(id.span, id.name.into(), ctx);
+                let target = create_this_property_assignment(id.span, id.name, ctx);
                 let value = BoundIdentifier::from_binding_ident(id).create_read_expression(ctx);
                 Self::create_assignment(target, value, ctx)
             })

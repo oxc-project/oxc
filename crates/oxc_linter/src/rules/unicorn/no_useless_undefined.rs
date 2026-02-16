@@ -567,15 +567,15 @@ fn test() {
         (r"function foo([bar = undefined] = []) {}", None),
         (
             r"
-			foo(
-				undefined,
-				bar,
-				undefined,
-				undefined,
-				undefined,
-				undefined,
-			)
-		",
+            foo(
+                undefined,
+                bar,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+            )
+        ",
             None,
         ),
         ("function foo([bar = undefined] = []) {}", None),
@@ -682,21 +682,21 @@ fn test() {
         (
             r"
             function foo():undefined {
-					function nested() {
-						return undefined;
-					}
+                    function nested() {
+                        return undefined;
+                    }
 
-					return nested();
-				}
+                    return nested();
+                }
         ",
             r"
             function foo():undefined {
-					function nested() {
-						return;
-					}
+                    function nested() {
+                        return;
+                    }
 
-					return nested();
-				}
+                    return nested();
+                }
         ",
             None,
         ),

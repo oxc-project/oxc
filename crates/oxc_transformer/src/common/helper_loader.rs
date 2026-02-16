@@ -124,6 +124,7 @@ pub struct HelperLoaderOptions {
     /// The module name to import helper functions from.
     /// Default: `@oxc-project/runtime`
     pub module_name: Cow<'static, str>,
+    /// Strategy used to resolve helper calls.
     pub mode: HelperLoaderMode,
 }
 
@@ -140,38 +141,68 @@ fn default_as_module_name() -> Cow<'static, str> {
 /// Available helpers.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Helper {
+    /// Runtime helper `awaitAsyncGenerator`.
     AwaitAsyncGenerator,
+    /// Runtime helper `asyncGeneratorDelegate`.
     AsyncGeneratorDelegate,
+    /// Runtime helper `asyncIterator`.
     AsyncIterator,
+    /// Runtime helper `asyncToGenerator`.
     AsyncToGenerator,
+    /// Runtime helper `objectSpread2`.
     ObjectSpread2,
+    /// Runtime helper `wrapAsyncGenerator`.
     WrapAsyncGenerator,
+    /// Runtime helper `extends`.
     Extends,
+    /// Runtime helper `objectDestructuringEmpty`.
     ObjectDestructuringEmpty,
+    /// Runtime helper `objectWithoutProperties`.
     ObjectWithoutProperties,
+    /// Runtime helper `toPropertyKey`.
     ToPropertyKey,
+    /// Runtime helper `defineProperty`.
     DefineProperty,
+    /// Runtime helper `classPrivateFieldInitSpec`.
     ClassPrivateFieldInitSpec,
+    /// Runtime helper `classPrivateMethodInitSpec`.
     ClassPrivateMethodInitSpec,
+    /// Runtime helper `classPrivateFieldGet2`.
     ClassPrivateFieldGet2,
+    /// Runtime helper `classPrivateFieldSet2`.
     ClassPrivateFieldSet2,
+    /// Runtime helper `assertClassBrand`.
     AssertClassBrand,
+    /// Runtime helper `toSetter`.
     ToSetter,
+    /// Runtime helper `classPrivateFieldLooseKey`.
     ClassPrivateFieldLooseKey,
+    /// Runtime helper `classPrivateFieldLooseBase`.
     ClassPrivateFieldLooseBase,
+    /// Runtime helper `superPropGet`.
     SuperPropGet,
+    /// Runtime helper `superPropSet`.
     SuperPropSet,
+    /// Runtime helper `readOnlyError`.
     ReadOnlyError,
+    /// Runtime helper `writeOnlyError`.
     WriteOnlyError,
+    /// Runtime helper `checkInRHS`.
     CheckInRHS,
+    /// Runtime helper `decorate`.
     Decorate,
+    /// Runtime helper `decorateParam`.
     DecorateParam,
+    /// Runtime helper `decorateMetadata`.
     DecorateMetadata,
+    /// Runtime helper `usingCtx`.
     UsingCtx,
+    /// Runtime helper `taggedTemplateLiteral`.
     TaggedTemplateLiteral,
 }
 
 impl Helper {
+    /// Canonical helper export name used by runtime/external helper loaders.
     pub const fn name(self) -> &'static str {
         match self {
             Self::AwaitAsyncGenerator => "awaitAsyncGenerator",
@@ -206,6 +237,7 @@ impl Helper {
         }
     }
 
+    /// Whether calling this helper is side-effect free.
     pub const fn pure(self) -> bool {
         matches!(self, Self::ClassPrivateFieldLooseKey)
     }

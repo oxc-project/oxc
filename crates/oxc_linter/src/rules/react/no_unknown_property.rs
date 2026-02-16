@@ -67,28 +67,28 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// You can use unknown property name that has no effect.
+    /// DOM properties should only be used if they are valid for a given HTML element.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    ///  // Unknown properties
-    ///  const Hello = <div class="hello">Hello World</div>;
-    ///  const Alphabet = <div abc="something">Alphabet</div>;
+    /// // Unknown properties
+    /// const Hello = <div class="hello">Hello World</div>;
+    /// const Alphabet = <div abc="something">Alphabet</div>;
     ///
-    ///  // Invalid aria-* attribute
-    ///  const IconButton = <div aria-foo="bar" />;
+    /// // Invalid aria-* attribute
+    /// const IconButton = <div aria-foo="bar" />;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
-    ///  // Unknown properties
-    ///  const Hello = <div className="hello">Hello World</div>;
-    ///  const Alphabet = <div>Alphabet</div>;
+    /// // Unknown properties
+    /// const Hello = <div className="hello">Hello World</div>;
+    /// const Alphabet = <div>Alphabet</div>;
     ///
-    ///  // Invalid aria-* attribute
-    ///  const IconButton = <div aria-label="bar" />;
+    /// // Invalid aria-* attribute
+    /// const IconButton = <div aria-label="bar" />;
     /// ```
     NoUnknownProperty,
     react,
@@ -101,6 +101,8 @@ const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "abbr" => phf_set! {"th", "td"},
     "charset" => phf_set! {"meta"},
     "checked" => phf_set! {"input"},
+    // Intentionally lowercased, per the react types.
+    "closedby" => phf_set! {"dialog"},
     // image is required for SVG support, all other tags are HTML.
     "crossOrigin" => phf_set! {"script", "img", "video", "audio", "link", "image"},
     "displaystyle" => phf_set! {"math"},
@@ -161,7 +163,7 @@ const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "onEncrypted" => phf_set! {"audio", "video"},
     "onEnded" => phf_set! {"audio", "video"},
     "onError" => phf_set! {"audio", "video", "img", "link", "source", "script", "picture", "iframe"},
-    "onLoad" => phf_set! {"script", "img", "link", "picture", "iframe", "object", "source"},
+    "onLoad" => phf_set! {"script", "img", "link", "picture", "iframe", "object", "source", "body"},
     "onLoadedData" => phf_set! {"audio", "video"},
     "onLoadedMetadata" => phf_set! {"audio", "video"},
     "onLoadStart" => phf_set! {"audio", "video"},
@@ -194,6 +196,11 @@ const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "scrolling" => phf_set! {"iframe"},
     "returnValue" => phf_set! {"dialog"},
     "webkitDirectory" => phf_set! {"input"},
+    "shadowrootmode" => phf_set! {"template"},
+    "shadowrootclonable" => phf_set! {"template"},
+    "shadowrootdelegatesfocus" => phf_set! {"template"},
+    "shadowrootserializable" => phf_set! {"template"},
+    "transform-origin" => phf_set! {"rect"},
 };
 
 const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
@@ -247,8 +254,8 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onCompositionUpdate", "onCut", "onDoubleClick", "onDrag", "onDragEnd", "onDragEnter", "onDragExit", "onDragLeave",
     "onError", "onFocus", "onInput", "onKeyDown", "onKeyPress", "onKeyUp", "onLoad", "onWheel", "onDragOver",
     "onDragStart", "onDrop", "onMouseDown", "onMouseEnter", "onMouseLeave", "onMouseMove", "onMouseOut", "onMouseOver",
-    "onMouseUp", "onPaste", "onScroll", "onSelect", "onSubmit", "onToggle", "onTransitionEnd", "radioGroup", "readOnly", "referrerPolicy",
-    "rowSpan", "srcDoc", "srcLang", "srcSet", "useMap",
+    "onMouseUp", "onPaste", "onScroll", "onSelect", "onSubmit", "onBeforeToggle", "onToggle", "onTransitionEnd", "radioGroup",
+    "readOnly", "referrerPolicy", "rowSpan", "srcDoc", "srcLang", "srcSet", "useMap",
     // SVG attributes
     // See https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute
     "crossOrigin", "accentHeight", "alignmentBaseline", "arabicForm", "attributeName",
@@ -676,7 +683,7 @@ fn test() {
         (r#"<applet align="top" />"#, None),
         (r#"<marker fill="\#000" />"#, None),
         (
-            r#"<dialog onClose={handler} open id="dialog" returnValue="something" onCancel={handler2} />"#,
+            r#"<dialog closedby="something" onClose={handler} open id="dialog" returnValue="something" onCancel={handler2} />"#,
             None,
         ),
         (r#"<div popover="auto" />"#, None),
@@ -713,6 +720,20 @@ fn test() {
 			          Hello, world!
 			        </div>
 			      "#,
+            None,
+        ),
+        (r#"<rect transform-origin="center" />"#, None),
+        (
+            r#"<template shadowrootmode="open" shadowrootclonable shadowrootdelegatesfocus shadowrootserializable />"#,
+            None,
+        ),
+        (
+            r#"
+                <div>
+                  <button popoverTarget="my-popover" popoverTargetAction="toggle">Open Popover</button>
+                  <div id="my-popover" onBeforeToggle={this.onBeforeToggle} popover>Greetings, one and all!</div>
+                </div>
+            "#,
             None,
         ),
     ];

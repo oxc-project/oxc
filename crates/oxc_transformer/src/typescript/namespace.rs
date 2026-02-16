@@ -1,7 +1,7 @@
 use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_span::SPAN;
+use oxc_span::{SPAN, Span};
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
     scope::{ScopeFlags, ScopeId},
@@ -280,10 +280,10 @@ impl<'a> TypeScriptNamespace {
         }
 
         if !Self::is_redeclaration_namespace(&ident, ctx) {
-            let declaration = Self::create_variable_declaration(&binding, ctx);
+            let declaration = Self::create_variable_declaration(&binding, span, ctx);
             if is_export {
                 let export_named_decl =
-                    ctx.ast.plain_export_named_declaration_declaration(SPAN, declaration);
+                    ctx.ast.plain_export_named_declaration_declaration(span, declaration);
                 let stmt = Statement::ExportNamedDeclaration(export_named_decl);
                 parent_stmts.push(stmt);
             } else {
@@ -307,15 +307,16 @@ impl<'a> TypeScriptNamespace {
     //                         ^^^^^^^
     fn create_variable_declaration(
         binding: &BoundIdentifier<'a>,
+        span: Span,
         ctx: &TraverseCtx<'a>,
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
             let pattern = binding.create_binding_pattern(ctx);
-            let decl = ctx.ast.variable_declarator(SPAN, kind, pattern, NONE, None, false);
+            let decl = ctx.ast.variable_declarator(span, kind, pattern, NONE, None, false);
             ctx.ast.vec1(decl)
         };
-        ctx.ast.declaration_variable(SPAN, kind, declarations, false)
+        ctx.ast.declaration_variable(span, kind, declarations, false)
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -339,7 +340,7 @@ impl<'a> TypeScriptNamespace {
             let function_expr =
                 Expression::FunctionExpression(ctx.ast.alloc_plain_function_with_scope_id(
                     FunctionType::FunctionExpression,
-                    SPAN,
+                    span,
                     None,
                     params,
                     func_body,
@@ -347,7 +348,7 @@ impl<'a> TypeScriptNamespace {
                 ));
             *ctx.scoping_mut().scope_flags_mut(scope_id) =
                 ScopeFlags::Function | ScopeFlags::StrictMode;
-            ctx.ast.expression_parenthesized(SPAN, function_expr)
+            ctx.ast.expression_parenthesized(span, function_expr)
         };
 
         // (function (_N) { var M; (function (_M) { var x; })(M || (M = _N.M || (_N.M = {})));})(N || (N = {}));
@@ -403,7 +404,7 @@ impl<'a> TypeScriptNamespace {
             ctx.ast.vec1(Argument::from(expr))
         };
 
-        let expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
+        let expr = ctx.ast.expression_call(span, callee, NONE, arguments, false);
         ctx.ast.statement_expression(span, expr)
     }
 

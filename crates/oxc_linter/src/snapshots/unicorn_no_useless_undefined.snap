@@ -25,7 +25,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing `undefined` or using `null` instead.
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
-   ╭─[no_useless_undefined.tsx:5:5]
+   ╭─[no_useless_undefined.tsx:5:17]
  4 │                 bar,
  5 │                 undefined,
    ·                 ─────────

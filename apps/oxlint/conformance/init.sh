@@ -1,12 +1,14 @@
 #!/bin/bash
 set -e
 
-ESLINT_SHA="8f360ad6a7a743d33a83eed8973ee4a50731e55b" # 10.0.0-rc.0
+ESLINT_SHA="4e6c4ac042e321da8fc29ce53ed03c86dcaa44a7" # 10.0.0
 REACT_SHA="612e371fb215498edde4c853bd1e0c8e9203808f" # 19.2.3
 STYLISTIC_SHA="5c4b512a225a314fa5f41eead9fdc4d51fc243d7" # 5.7.1
 SONAR_SHA="8852e2593390e00f9d9aea764b0b0b9a503d1f08" # 3.0.6
+E18E_SHA="1dc399be6eb9dcee207e5cd63ef184bd6c902492" # 0.1.4
+TESTING_LIBRARY_SHA="b8ef3772487a32c886cb5c338da2a144560a437b" # 7.15.4
 
-# Shallow clone a repo at a specific commit.
+# Shallow clone a repo at a specific commit, and `cd` into the cloned directory.
 # Git commands copied from `.github/scripts/clone-parallel.mjs`.
 clone() {
   local dir="$1"
@@ -35,16 +37,8 @@ clone eslint https://github.com/eslint/eslint.git "$ESLINT_SHA"
 # Install dependencies
 pnpm install --ignore-workspace
 
-# Copy TS-ESLint parser shim into `node_modules/@typescript-eslint/parser`
-rm node_modules/@typescript-eslint/parser
-cp -r tools/typescript-eslint-parser node_modules/@typescript-eslint/parser
-cd node_modules/@typescript-eslint/parser
-
-# Install dependencies of TS-ESLint parser shim
-pnpm install --ignore-workspace
-
 # Return to `submodules` directory
-cd ../../../..
+cd ..
 
 ###############################################################################
 # React
@@ -164,6 +158,32 @@ if [[ "$OSTYPE" == darwin* ]]; then
 else
   sed -i "$PATTERN3" "$CHECKER_PATH"
 fi
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# E18E
+###############################################################################
+
+# Clone E18E ESLint plugin repo into `submodules/e18e`
+clone e18e https://github.com/e18e/eslint-plugin.git "$E18E_SHA"
+
+# Install dependencies
+pnpm install --ignore-workspace
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# Testing Library
+###############################################################################
+
+# Clone `eslint-plugin-testing-library` repo into `submodules/testing_library`
+clone testing_library https://github.com/testing-library/eslint-plugin-testing-library.git "$TESTING_LIBRARY_SHA"
+
+# Install dependencies
+pnpm install --ignore-workspace
 
 # Return to `submodules` directory
 cd ..

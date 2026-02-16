@@ -34,6 +34,10 @@ jobs:
   miri:
     name: Miri
     runs-on: ubuntu-latest
+    env:
+      # FIXME: cargo-miri is broken on nightly-2026-02-12.
+      # https://github.com/rust-lang/miri/issues/4855
+      MIRI_TOOLCHAIN: nightly-2026-02-11
     steps:
       - name: Checkout
         uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
@@ -45,13 +49,12 @@ jobs:
 
       - name: Install Miri
         run: |
-          rustup toolchain install nightly --component miri
-          rustup override set nightly
-          cargo miri setup
+          rustup toolchain install "${MIRI_TOOLCHAIN}" --component miri
+          cargo +"${MIRI_TOOLCHAIN}" miri setup
 
       # `--lib --bins --tests` omits doctests, which Miri can't run
       # https://github.com/oxc-project/oxc/pull/11092
       - name: Test with Miri
         run: |
-          cargo miri test --lib --bins --tests --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
-          cargo miri test --lib --bins --tests -p oxc_parser -p oxc_transformer
+          cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests --all-features -p oxc_allocator -p oxc_ast -p oxc_data_structures
+          cargo +"${MIRI_TOOLCHAIN}" miri test --lib --bins --tests -p oxc_parser -p oxc_transformer

@@ -83,15 +83,21 @@ pub use crate::{
     typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
 
+/// Result of running [`Transformer::build_with_scoping`].
 #[non_exhaustive]
 pub struct TransformerReturn {
+    /// Diagnostics produced during transformation.
     pub errors: std::vec::Vec<OxcDiagnostic>,
+    /// Updated semantic scoping after all transforms have run.
     pub scoping: Scoping,
     /// Helpers used by this transform.
     #[deprecated = "Internal usage only"]
     pub helpers_used: FxHashMap<Helper, String>,
 }
 
+/// JavaScript/TypeScript transformer pipeline.
+///
+/// Create with [`Transformer::new`] and run with [`Transformer::build_with_scoping`].
 pub struct Transformer<'a> {
     state: TransformState<'a>,
     allocator: &'a Allocator,
@@ -106,6 +112,7 @@ pub struct Transformer<'a> {
 }
 
 impl<'a> Transformer<'a> {
+    /// Create a transformer with source path and transform options.
     pub fn new(allocator: &'a Allocator, source_path: &Path, options: &TransformOptions) -> Self {
         let state = TransformState::new(source_path, options);
         Self {
@@ -120,6 +127,7 @@ impl<'a> Transformer<'a> {
         }
     }
 
+    /// Run all configured transforms on `program` and return diagnostics and updated scoping.
     pub fn build_with_scoping(
         mut self,
         scoping: Scoping,
@@ -597,9 +605,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         stmts: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.exit_statements(stmts, ctx);
-        }
         self.common.exit_statements(stmts, ctx);
     }
 

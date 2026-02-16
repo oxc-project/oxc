@@ -210,7 +210,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
-        let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
         let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
         let property =
             ctx.ast.expression_string_literal(member.property.span, member.property.name, None);
@@ -238,7 +238,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
         let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
-        let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
         let AssignmentTarget::ComputedMemberExpression(member) = left else { unreachable!() };
         let property = member.unbox().expression.into_inner_expression();
         *expr =
@@ -501,7 +501,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
 
         // `_super$prop = _superPropGet(_Class, prop, _Class)`
         let temp_binding = VarDeclarationsStore::create_uid_var(temp_var_name_base, ctx);
-        let assignment = create_assignment(&temp_binding, get_call, ctx);
+        let assignment = create_assignment(&temp_binding, get_call, SPAN, ctx);
 
         // `++_super$prop` / `_super$prop++` (reusing existing `UpdateExpression`)
         let span = update_expr.span;
@@ -522,7 +522,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
             // Source = `super.prop++` (postfix `++`)
             // `_super$prop2 = _super$prop++`
             let temp_binding2 = VarDeclarationsStore::create_uid_var(temp_var_name_base, ctx);
-            let assignment2 = create_assignment(&temp_binding2, update_expr, ctx);
+            let assignment2 = create_assignment(&temp_binding2, update_expr, SPAN, ctx);
 
             // `(_super$prop = _superPropGet(_Class, prop, _Class), _super$prop2 = _super$prop++, _super$prop)`
             let value = ctx.ast.expression_sequence(
@@ -617,7 +617,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_> {
                 // TODO(improve-on-babel): `superPropGet` and `superPropSet` helper function has a flag
                 // to use `class.prototype` rather than `class`. We should consider using that flag here.
                 // <https://github.com/babel/babel/blob/1fbdb64a7fcc3488797e312506dbacff746d4e41/packages/babel-helpers/src/helpers/superPropGet.ts>
-                class = create_prototype_member(class, ctx);
+                class = create_prototype_member(class, SPAN, ctx);
                 ctx.ast.expression_this(SPAN)
             }
             ClassPropertiesSuperConverterMode::StaticPrivateMethod => ctx.ast.expression_this(SPAN),

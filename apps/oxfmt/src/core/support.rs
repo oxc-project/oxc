@@ -5,6 +5,8 @@ use phf::phf_set;
 use oxc_formatter::get_supported_source_type;
 use oxc_span::SourceType;
 
+use super::utils;
+
 pub enum FormatFileStrategy {
     OxcFormatter {
         path: PathBuf,
@@ -16,13 +18,11 @@ pub enum FormatFileStrategy {
     },
     ExternalFormatter {
         path: PathBuf,
-        #[cfg_attr(not(feature = "napi"), expect(dead_code))]
         parser_name: &'static str,
     },
     /// `package.json` is special: sorted by `sort-package-json` then formatted by external formatter.
     ExternalFormatterPackageJson {
         path: PathBuf,
-        #[cfg_attr(not(feature = "napi"), expect(dead_code))]
         parser_name: &'static str,
     },
 }
@@ -80,6 +80,21 @@ impl FormatFileStrategy {
             | Self::ExternalFormatter { path, .. }
             | Self::ExternalFormatterPackageJson { path, .. } => path,
         }
+    }
+
+    /// Resolve the stored path to an absolute path using the given `cwd`.
+    /// CLI file walk already provides absolute paths,
+    /// but stdin and NAPI entry points may receive relative paths from user input.
+    pub fn resolve_relative_path(mut self, cwd: &Path) -> Self {
+        match &mut self {
+            Self::OxcFormatter { path, .. }
+            | Self::OxfmtToml { path }
+            | Self::ExternalFormatter { path, .. }
+            | Self::ExternalFormatterPackageJson { path, .. } => {
+                *path = utils::normalize_relative_path(cwd, path);
+            }
+        }
+        self
     }
 }
 

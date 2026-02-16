@@ -1,3 +1,5 @@
+#[cfg(feature = "napi")]
+mod api;
 pub mod cli;
 mod core;
 

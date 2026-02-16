@@ -1,4 +1,4 @@
-import { format as napiFormat } from "./bindings";
+import { format as napiFormat, jsTextToDoc as napiJsTextToDoc } from "./bindings";
 import { resolvePlugins, formatEmbeddedCode, formatFile, sortTailwindClasses } from "./libs/apis";
 import type { Options } from "prettier";
 
@@ -17,9 +17,30 @@ export async function format(fileName: string, sourceText: string, options?: For
     sourceText,
     options ?? {},
     resolvePlugins,
-    (options, parserName, code) => formatEmbeddedCode({ options, parserName, code }),
-    (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
-    (filepath, options, classes) => sortTailwindClasses({ filepath, classes, options }),
+    (options, code) => formatEmbeddedCode({ options, code }),
+    (options, code) => formatFile({ options, code }),
+    (options, classes) => sortTailwindClasses({ options, classes }),
+  );
+}
+
+/**
+ * Format a JS/TS snippet for Prettier `textToDoc()` plugin flow.
+ */
+export async function jsTextToDoc(
+  fileName: string,
+  sourceText: string,
+  oxfmtPluginOptionsJson: string,
+  parentContext: string,
+) {
+  return napiJsTextToDoc(
+    fileName,
+    sourceText,
+    oxfmtPluginOptionsJson,
+    parentContext,
+    resolvePlugins,
+    (options, code) => formatEmbeddedCode({ options, code }),
+    (_options, _code) => Promise.reject(/* Unreachable */),
+    (options, classes) => sortTailwindClasses({ options, classes }),
   );
 }
 
@@ -102,11 +123,17 @@ export type SortImportsOptions = {
   /**
    * Groups configuration for organizing imports.
    * Each array element represents a group, and multiple group names in the same array are treated as one.
-   * Accepts both `string` and `string[]` as group elements.
+   * Accepts `string`, `string[]`, or `{ newlinesBetween: boolean }` marker objects.
+   * Marker objects override the global `newlinesBetween` setting for the boundary between the adjacent groups.
    */
-  groups?: (string | string[])[];
+  groups?: (string | string[] | { newlinesBetween: boolean })[];
   /** Define custom groups for matching specific imports. */
-  customGroups?: { groupName: string; elementNamePattern: string[] }[];
+  customGroups?: {
+    groupName: string;
+    elementNamePattern?: string[];
+    selector?: string;
+    modifiers?: string[];
+  }[];
 };
 
 /**

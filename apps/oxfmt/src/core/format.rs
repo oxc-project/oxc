@@ -120,6 +120,7 @@ impl SourceFormatter {
     }
 
     /// Format JS/TS source code using oxc_formatter.
+    #[cfg_attr(not(feature = "napi"), expect(unused_mut))]
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter", skip_all)]
     fn format_by_oxc_formatter(
         &self,
@@ -127,7 +128,7 @@ impl SourceFormatter {
         path: &Path,
         source_type: SourceType,
         format_options: FormatOptions,
-        external_options: Value,
+        mut external_options: Value,
     ) -> Result<String, OxcDiagnostic> {
         let source_type = enable_jsx_source_type(source_type);
         let allocator = self.allocator_pool.get();
@@ -147,7 +148,16 @@ impl SourceFormatter {
                 .as_ref()
                 .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-            Some(external_formatter.to_external_callbacks(path, &format_options, external_options))
+            // Set `filepath` on options for Prettier plugins that depend on it,
+            // and for the Tailwind sorter to resolve config.
+            if let Value::Object(ref mut map) = external_options {
+                map.insert(
+                    "filepath".to_string(),
+                    Value::String(path.to_string_lossy().to_string()),
+                );
+            }
+
+            Some(external_formatter.to_external_callbacks(&format_options, external_options))
         };
 
         #[cfg(not(feature = "napi"))]
@@ -187,36 +197,33 @@ impl SourceFormatter {
 
     /// Format non-JS/TS file using external formatter (Prettier).
     #[cfg(feature = "napi")]
-    #[expect(clippy::needless_pass_by_value)]
     #[instrument(level = "debug", name = "oxfmt::format::external_formatter", skip_all, fields(parser = %parser_name))]
     fn format_by_external_formatter(
         &self,
         source_text: &str,
         path: &Path,
         parser_name: &str,
-        external_options: Value,
+        mut external_options: Value,
     ) -> Result<String, OxcDiagnostic> {
         let external_formatter = self
             .external_formatter
             .as_ref()
             .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-        // NOTE: To call Prettier, we need to either:
-        // - let Prettier infer the parser from `filepath`
-        // - or specify the `parser`
-        //
-        // We are specifying the `parser` for perf, so `filepath` is not actually necessary,
-        // but since some plugins might depend on `filepath`, we pass the actual file name as well.
-        let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+        // Set `parser` and `filepath` on options for Prettier.
+        // We specify `parser` to skip parser inference for perf,
+        // and `filepath` because some plugins depend on it.
+        if let Value::Object(ref mut map) = external_options {
+            map.insert("parser".to_string(), Value::String(parser_name.to_string()));
+            map.insert("filepath".to_string(), Value::String(path.to_string_lossy().to_string()));
+        }
 
-        external_formatter
-            .format_file(&external_options, parser_name, file_name, source_text)
-            .map_err(|err| {
-                OxcDiagnostic::error(format!(
-                    "Failed to format file with external formatter: {}\n{err}",
-                    path.display()
-                ))
-            })
+        external_formatter.format_file(external_options, source_text).map_err(|err| {
+            OxcDiagnostic::error(format!(
+                "Failed to format file with external formatter: {}\n{err}",
+                path.display()
+            ))
+        })
     }
 
     /// Format `package.json`: optionally sort then format by external formatter.

@@ -2,7 +2,7 @@
 //! Transform of class property declarations (instance or static properties).
 
 use oxc_ast::{NONE, ast::*};
-use oxc_span::SPAN;
+use oxc_span::{SPAN, Span};
 use oxc_syntax::reference::ReferenceFlags;
 
 use crate::{
@@ -29,9 +29,10 @@ impl<'a> ClassProperties<'a> {
         // Get value
         let value = prop.value.take();
 
+        let span = prop.span;
         let init_expr = if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
             let value = value.unwrap_or_else(|| ctx.ast.void_0(SPAN));
-            self.create_private_instance_init_assignment(ident, value, ctx)
+            self.create_private_instance_init_assignment(ident, value, span, ctx)
         } else {
             let value = match value {
                 Some(value) => value,
@@ -62,13 +63,14 @@ impl<'a> ClassProperties<'a> {
         &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         if self.private_fields_as_properties {
             let this = ctx.ast.expression_this(SPAN);
-            self.create_private_init_assignment_loose(ident, value, this, ctx)
+            self.create_private_init_assignment_loose(ident, value, this, span, ctx)
         } else {
-            self.create_private_instance_init_assignment_not_loose(ident, value, ctx)
+            self.create_private_instance_init_assignment_not_loose(ident, value, span, ctx)
         }
     }
 
@@ -77,17 +79,17 @@ impl<'a> ClassProperties<'a> {
         &self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let private_props = self.current_class().private_props.as_ref().unwrap();
-        let prop = &private_props[&Atom::from(ident.name)];
+        let prop = &private_props[&ident.name];
         let arguments = ctx.ast.vec_from_array([
             Argument::from(ctx.ast.expression_this(SPAN)),
             Argument::from(prop.binding.create_read_expression(ctx)),
             Argument::from(value),
         ]);
-        // TODO: Should this have span of original `PropertyDefinition`?
-        helper_call_expr(Helper::ClassPrivateFieldInitSpec, SPAN, arguments, ctx)
+        helper_call_expr(Helper::ClassPrivateFieldInitSpec, span, arguments, ctx)
     }
 }
 
@@ -108,9 +110,10 @@ impl<'a> ClassProperties<'a> {
             value
         });
 
+        let span = prop.span;
         if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
             let value = value.unwrap_or_else(|| ctx.ast.void_0(SPAN));
-            self.insert_private_static_init_assignment(ident, value, ctx);
+            self.insert_private_static_init_assignment(ident, value, span, ctx);
         } else {
             let value = match value {
                 Some(value) => value,
@@ -155,10 +158,11 @@ impl<'a> ClassProperties<'a> {
         &mut self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if self.private_fields_as_properties {
-            self.insert_private_static_init_assignment_loose(ident, value, ctx);
+            self.insert_private_static_init_assignment_loose(ident, value, span, ctx);
         } else {
             self.insert_private_static_init_assignment_not_loose(ident, value, ctx);
         }
@@ -170,6 +174,7 @@ impl<'a> ClassProperties<'a> {
         &mut self,
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // TODO: This logic appears elsewhere. De-duplicate it.
@@ -184,7 +189,8 @@ impl<'a> ClassProperties<'a> {
         };
 
         let assignee = class_binding.create_read_expression(ctx);
-        let assignment = self.create_private_init_assignment_loose(ident, value, assignee, ctx);
+        let assignment =
+            self.create_private_init_assignment_loose(ident, value, assignee, span, ctx);
         self.insert_expr_after_class(assignment, ctx);
     }
 
@@ -213,7 +219,7 @@ impl<'a> ClassProperties<'a> {
         // Insert after class
         let class_details = self.current_class();
         let private_props = class_details.private_props.as_ref().unwrap();
-        let prop_binding = &private_props[&Atom::from(ident.name)].binding;
+        let prop_binding = &private_props[&ident.name].binding;
 
         if class_details.is_declaration {
             // `var _prop = {_: value};`
@@ -221,7 +227,7 @@ impl<'a> ClassProperties<'a> {
             self.insert_after_stmts.push(var_decl);
         } else {
             // `_prop = {_: value}`
-            let assignment = create_assignment(prop_binding, obj, ctx);
+            let assignment = create_assignment(prop_binding, obj, SPAN, ctx);
             self.insert_after_exprs.push(assignment);
         }
     }
@@ -289,9 +295,8 @@ impl<'a> ClassProperties<'a> {
             }
         };
 
-        // TODO: Should this have span of the original `PropertyDefinition`?
         ctx.ast.expression_assignment(
-            SPAN,
+            prop.span,
             AssignmentOperator::Assign,
             AssignmentTarget::from(left),
             value,
@@ -330,8 +335,7 @@ impl<'a> ClassProperties<'a> {
             Argument::from(key),
             Argument::from(value),
         ]);
-        // TODO: Should this have span of the original `PropertyDefinition`?
-        helper_call_expr(Helper::DefineProperty, SPAN, arguments, ctx)
+        helper_call_expr(Helper::DefineProperty, prop.span, arguments, ctx)
     }
 
     /// `Object.defineProperty(<assignee>, _prop, {writable: true, value: value})`
@@ -340,6 +344,7 @@ impl<'a> ClassProperties<'a> {
         ident: &PrivateIdentifier<'a>,
         value: Expression<'a>,
         assignee: Expression<'a>,
+        span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // `Object.defineProperty`
@@ -377,13 +382,12 @@ impl<'a> ClassProperties<'a> {
         );
 
         let private_props = self.current_class().private_props.as_ref().unwrap();
-        let prop_binding = &private_props[&Atom::from(ident.name)].binding;
+        let prop_binding = &private_props[&ident.name].binding;
         let arguments = ctx.ast.vec_from_array([
             Argument::from(assignee),
             Argument::from(prop_binding.create_read_expression(ctx)),
             Argument::from(prop_def),
         ]);
-        // TODO: Should this have span of original `PropertyDefinition`?
-        ctx.ast.expression_call(SPAN, callee, NONE, arguments, false)
+        ctx.ast.expression_call(span, callee, NONE, arguments, false)
     }
 }

@@ -16,7 +16,8 @@ const NODE_BIN_PATH = process.execPath;
  *
  * Oxlint is run with:
  * - CWD set to the fixture directory.
- * - `files` as the only argument (so only lints the files in the fixture's `files` directory).
+ * - `files` as the first argument (so only lints the files in the fixture's `files` directory).
+ * - Additional arguments from `options.json` file in fixture directory, if it exists.
  *
  * Fixtures with an `options.json` file containing `"fix": true` are also run with `--fix` CLI option.
  * Fixtures with an `options.json` file containing `"fixSuggestions": true` are also run with `--fix-suggestions` CLI option.
@@ -45,7 +46,12 @@ describe("oxlint CLI", { concurrent: process.platform !== "win32" }, () => {
 async function runFixture(fixture: Fixture, expect: ExpectStatic): Promise<void> {
   const { options } = fixture;
 
-  const args = [CLI_PATH, ...(options.singleThread ? ["--threads", "1"] : []), "files"];
+  const args = [
+    CLI_PATH,
+    ...(options.singleThread ? ["--threads", "1"] : []),
+    "files",
+    ...options.args,
+  ];
   const testOptions = {
     command: NODE_BIN_PATH,
     args,

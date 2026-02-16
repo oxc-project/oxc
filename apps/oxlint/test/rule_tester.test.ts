@@ -42,13 +42,13 @@ RuleTester.it = itHook;
  * @returns Array containing errors for each test case
  */
 function runCases(): (Error | null)[] {
-  const errors = [];
+  const errors: (Error | null)[] = [];
   for (const testCase of cases) {
     let error = null;
     try {
       testCase.fn();
     } catch (err) {
-      error = err;
+      error = err as Error;
     }
     errors.push(error);
   }

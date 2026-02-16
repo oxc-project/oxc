@@ -149,6 +149,7 @@ declare_oxc_lint!(
     ArrayCallbackReturn,
     eslint,
     pedantic,
+    pending,
     config = ArrayCallbackReturn
 );
 

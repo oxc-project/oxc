@@ -66,7 +66,8 @@ declare_oxc_lint!(
     /// ```
     NoExtraNonNullAssertion,
     typescript,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for NoExtraNonNullAssertion {

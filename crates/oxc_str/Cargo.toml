@@ -1,6 +1,6 @@
 [package]
 name = "oxc_str"
-version = "0.112.0"
+version = "0.113.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -25,7 +25,6 @@ oxc_estree = { workspace = true }
 
 compact_str = { workspace = true }
 hashbrown = { workspace = true }
-rustc-hash = { workspace = true }
 
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }

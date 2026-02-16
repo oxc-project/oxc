@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
-   ╭─[no_unsafe_declaration_merging.tsx:2:14]
+   ╭─[no_unsafe_declaration_merging.tsx:2:23]
  1 │ 
  2 │             interface Foo {}
    ·                       ───
@@ -14,23 +14,23 @@ source: crates/oxc_linter/src/tester.rs
   help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
 
   ⚠ typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
-   ╭─[no_unsafe_declaration_merging.tsx:2:19]
+   ╭─[no_unsafe_declaration_merging.tsx:2:28]
  1 │ 
- 2 │                     class Foo {}
-   ·                           ───
- 3 │                     interface Foo {}
-   ·                               ───
- 4 │                           
+ 2 │                      class Foo {}
+   ·                            ───
+ 3 │                      interface Foo {}
+   ·                                ───
+ 4 │                            
    ╰────
   help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
 
   ⚠ typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
-   ╭─[no_unsafe_declaration_merging.tsx:3:25]
- 2 │                     declare global {
- 3 │                       interface Foo {}
-   ·                                 ───
- 4 │                       class Foo {}
-   ·                             ───
- 5 │                     }
+   ╭─[no_unsafe_declaration_merging.tsx:3:34]
+ 2 │                      declare global {
+ 3 │                        interface Foo {}
+   ·                                  ───
+ 4 │                        class Foo {}
+   ·                              ───
+ 5 │                      }
    ╰────
   help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.

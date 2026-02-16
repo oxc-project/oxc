@@ -12,6 +12,19 @@ export default defineConfig({
   outDir: "dist",
   shims: false,
   fixedExtension: false,
+  // Optional peer plugins that `prettier-plugin-tailwindcss` tries to dynamic import.
+  // They are not installed and not needed for us,
+  // mark as external to suppress "UNRESOLVED_IMPORT" warnings.
+  external: [
+    "@prettier/plugin-oxc",
+    "@prettier/plugin-hermes",
+    "@prettier/plugin-pug",
+    "@shopify/prettier-plugin-liquid",
+    "@zackad/prettier-plugin-twig",
+    "prettier-plugin-astro",
+    "prettier-plugin-marko",
+    "prettier-plugin-svelte",
+  ],
   noExternal: [
     // Bundle it to control version
     "prettier",
@@ -19,6 +32,7 @@ export default defineConfig({
     // We are using patched version, so we must bundle it
     // Also, it internally loads plugins dynamically, so they also must be bundled
     "prettier-plugin-tailwindcss",
+    "prettier-plugin-tailwindcss/sorter",
     /^prettier\/plugins\//,
 
     // Cannot bundle: `cli-worker.js` runs in separate thread and can't resolve bundled chunks

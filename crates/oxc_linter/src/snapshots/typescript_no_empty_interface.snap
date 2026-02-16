@@ -14,7 +14,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:6:4]
+   ╭─[no_empty_interface.tsx:6:13]
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
@@ -22,7 +22,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:6:4]
+   ╭─[no_empty_interface.tsx:6:13]
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
@@ -30,7 +30,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:6:4]
+   ╭─[no_empty_interface.tsx:6:13]
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
@@ -38,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:6:4]
+   ╭─[no_empty_interface.tsx:6:13]
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
@@ -46,7 +46,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:6:4]
+   ╭─[no_empty_interface.tsx:6:13]
  5 │ 
  6 │             interface Bar extends Foo {}
    ·             ────────────────────────────
@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:5:4]
+   ╭─[no_empty_interface.tsx:5:13]
  4 │             }
  5 │             interface Foo extends Array<Bar> {}
    ·             ───────────────────────────────────
@@ -74,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:3:4]
+   ╭─[no_empty_interface.tsx:3:13]
  2 │             type R = Record<string, unknown>;
  3 │             interface Foo extends R {}
    ·             ──────────────────────────
@@ -82,7 +82,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:2:4]
+   ╭─[no_empty_interface.tsx:2:13]
  1 │ 
  2 │             interface Foo<T> extends Bar<T> {}
    ·             ──────────────────────────────────
@@ -90,7 +90,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
-   ╭─[no_empty_interface.tsx:4:13]
+   ╭─[no_empty_interface.tsx:4:22]
  3 │               type Baz = typeof baz;
  4 │               export interface Bar extends Baz {}
    ·                      ────────────────────────────

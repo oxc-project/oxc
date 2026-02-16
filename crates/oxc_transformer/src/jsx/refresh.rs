@@ -256,9 +256,10 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
                 Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
         }
 
+        let span = expr.span();
         arguments.insert(0, Argument::from(expr.take_in(ctx.ast)));
         *expr = ctx.ast.expression_call(
-            SPAN,
+            span,
             binding.create_read_expression(ctx),
             NONE,
             arguments,
@@ -288,8 +289,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a> {
 
         let binding = BoundIdentifier::from_binding_ident(&binding_identifier);
         let callee = binding.create_read_expression(ctx);
-        let expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
-        let statement = ctx.ast.statement_expression(SPAN, expr);
+        let expr = ctx.ast.expression_call(func.span, callee, NONE, arguments, false);
+        let statement = ctx.ast.statement_expression(func.span, expr);
 
         // Get the address of the statement containing this `FunctionDeclaration`
         let address = match ctx.parent() {

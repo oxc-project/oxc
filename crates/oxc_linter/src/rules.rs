@@ -151,6 +151,7 @@ pub(crate) mod eslint {
     pub mod no_self_compare;
     pub mod no_sequences;
     pub mod no_setter_return;
+    pub mod no_shadow;
     pub mod no_shadow_restricted_names;
     pub mod no_sparse_arrays;
     pub mod no_template_curly_in_string;
@@ -161,6 +162,7 @@ pub(crate) mod eslint {
     pub mod no_undef;
     pub mod no_undefined;
     pub mod no_unexpected_multiline;
+    pub mod no_unmodified_loop_condition;
     pub mod no_unneeded_ternary;
     pub mod no_unreachable;
     pub mod no_unsafe_finally;
@@ -216,6 +218,7 @@ pub(crate) mod typescript {
     pub mod ban_ts_comment;
     pub mod ban_tslint_comment;
     pub mod ban_types;
+    pub mod class_literal_property_style;
     pub mod consistent_generic_constructors;
     pub mod consistent_indexed_object_style;
     pub mod consistent_type_assertions;
@@ -241,6 +244,7 @@ pub(crate) mod typescript {
     pub mod no_implied_eval;
     pub mod no_import_type_side_effects;
     pub mod no_inferrable_types;
+    pub mod no_invalid_void_type;
     pub mod no_meaningless_void_operator;
     pub mod no_misused_new;
     pub mod no_misused_promises;
@@ -255,6 +259,7 @@ pub(crate) mod typescript {
     pub mod no_restricted_types;
     pub mod no_this_alias;
     pub mod no_unnecessary_boolean_literal_compare;
+    pub mod no_unnecessary_condition;
     pub mod no_unnecessary_parameter_property_assignment;
     pub mod no_unnecessary_template_expression;
     pub mod no_unnecessary_type_arguments;
@@ -270,11 +275,13 @@ pub(crate) mod typescript {
     pub mod no_unsafe_return;
     pub mod no_unsafe_type_assertion;
     pub mod no_unsafe_unary_minus;
+    pub mod no_use_before_define;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
     pub mod no_wrapper_object_types;
     pub mod non_nullable_type_assertion_style;
     pub mod only_throw_error;
+    pub mod parameter_properties;
     pub mod prefer_as_const;
     pub mod prefer_enum_initializers;
     pub mod prefer_for_of;
@@ -299,6 +306,7 @@ pub(crate) mod typescript {
     pub mod switch_exhaustiveness_check;
     pub mod triple_slash_reference;
     pub mod unbound_method;
+    pub mod unified_signatures;
     pub mod use_unknown_in_catch_callback_variable;
 }
 
@@ -375,6 +383,7 @@ pub(crate) mod react {
     pub mod jsx_key;
     pub mod jsx_max_depth;
     pub mod jsx_no_comment_textnodes;
+    pub mod jsx_no_constructed_context_values;
     pub mod jsx_no_duplicate_props;
     pub mod jsx_no_script_url;
     pub mod jsx_no_target_blank;

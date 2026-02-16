@@ -152,18 +152,19 @@ impl FileExtension {
     /// - `index.mts` -> false
     /// - `index.d.css.ts` -> true
     /// - `index.d.css.mts` -> false
+    /// - `d.ts` -> false
+    /// - `d.d.ts` -> true
+    /// - `d.css.mts` -> false
     pub fn is_ts_declaration(self, file_name: &str) -> bool {
         match self {
             // https://www.typescriptlang.org/tsconfig/#allowArbitraryExtensions
             // `{file basename}.d.{extension}.ts`
             // https://github.com/microsoft/TypeScript/issues/50133
-            FileExtension::Ts => {
-                file_name[..file_name.len() - 3].split('.').rev().take(2).any(|c| c == "d")
-            }
-            FileExtension::Mts | FileExtension::Cts =>
-            {
-                #[expect(clippy::case_sensitive_file_extension_comparisons)]
-                file_name[..file_name.len() - 4].ends_with(".d")
+            FileExtension::Ts => file_name.rfind(".d.").is_some_and(|i| i != 0),
+            #[expect(clippy::case_sensitive_file_extension_comparisons)]
+            FileExtension::Mts | FileExtension::Cts => {
+                let base_file_name = &file_name[..file_name.len() - 4];
+                base_file_name.len() > 2 && base_file_name.ends_with(".d")
             }
             _ => false,
         }
@@ -802,10 +803,16 @@ mod file_extension_tests {
         let cases = vec![
             ("index.d.ts", true),
             ("index.ts", false),
+            ("d.ts", false),
+            (".d.ts", false),
             ("index.d.mts", true),
             ("index.mts", false),
+            ("d.mts", false),
+            (".d.mts", false),
             ("index.d.cts", true),
             ("index.cts", false),
+            ("d.cts", false),
+            (".d.cts", false),
             ("index.d.js", false),
             ("index.js", false),
             ("index.d.jsx", false),

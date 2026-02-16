@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::identifier::is_identifier_start;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{AstNode, ast_util, context::LintContext, rule::Rule};
@@ -100,8 +101,7 @@ impl Rule for NoNegationInEqualityCheck {
                     } else {
                         None
                     };
-                    let needs_space_before = char_before
-                        .is_some_and(|c| c.is_ascii_alphabetic() || c == '_' || c == '$');
+                    let needs_space_before = char_before.is_some_and(is_identifier_start);
 
                     let fixed_expr =
                         format!("{argument_text} {} {right_text}", suggested_operator.as_str());
@@ -140,34 +140,34 @@ fn test() {
         "!foo == bar",
         "!foo != bar",
         "
-						function x() {
-							return!foo === bar;
-						}
-					",
+                        function x() {
+                            return!foo === bar;
+                        }
+                    ",
         "
-						function x() {
-							return!
-								foo === bar;
-							throw!
-								foo === bar;
-						}
-					",
+                        function x() {
+                            return!
+                                foo === bar;
+                            throw!
+                                foo === bar;
+                        }
+                    ",
         "
-						foo
-						!(a) === b
-					",
+                        foo
+                        !(a) === b
+                    ",
         "
-						foo
-						![a, b].join('') === c
-					",
+                        foo
+                        ![a, b].join('') === c
+                    ",
         "
-						foo
-						! [a, b].join('') === c
-					",
+                        foo
+                        ! [a, b].join('') === c
+                    ",
         "
-						foo
-						!/* comment */[a, b].join('') === c
-					",
+                        foo
+                        !/* comment */[a, b].join('') === c
+                    ",
     ];
 
     let fix = vec![
@@ -177,71 +177,71 @@ fn test() {
         ("!foo != bar", "foo == bar"),
         (
             "
-						function x() {
-							return!foo === bar;
-						}
-					",
+                        function x() {
+                            return!foo === bar;
+                        }
+                    ",
             "
-						function x() {
-							return foo !== bar;
-						}
-					",
+                        function x() {
+                            return foo !== bar;
+                        }
+                    ",
         ),
         (
             "
-						function x() {
-							return!
-								foo === bar;
-							throw!
-								foo === bar;
-						}
-					",
+                        function x() {
+                            return!
+                                foo === bar;
+                            throw!
+                                foo === bar;
+                        }
+                    ",
             "
-						function x() {
-							return foo !== bar;
-							throw foo !== bar;
-						}
-					",
+                        function x() {
+                            return foo !== bar;
+                            throw foo !== bar;
+                        }
+                    ",
         ),
         (
             "
-						foo
-						!(a) === b
-					",
+                        foo
+                        !(a) === b
+                    ",
             "
-						foo
-						;(a) !== b
-					",
+                        foo
+                        ;(a) !== b
+                    ",
         ),
         (
             "
-						foo
-						![a, b].join('') === c
-					",
+                        foo
+                        ![a, b].join('') === c
+                    ",
             "
-						foo
-						;[a, b].join('') !== c
-					",
+                        foo
+                        ;[a, b].join('') !== c
+                    ",
         ),
         (
             "
-						foo
-						! [a, b].join('') === c
-					",
+                        foo
+                        ! [a, b].join('') === c
+                    ",
             "
-						foo
-						;[a, b].join('') !== c
-					",
+                        foo
+                        ;[a, b].join('') !== c
+                    ",
         ),
         (
             "
-						foo
-						!/* comment */[a, b].join('') === c
-					",
+                        foo
+                        !/* comment */[a, b].join('') === c
+                    ",
             "
-						foo
-						;[a, b].join('') !== c
-					",
+                        foo
+                        ;[a, b].join('') !== c
+                    ",
         ),
     ];
 

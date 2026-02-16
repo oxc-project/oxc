@@ -405,7 +405,7 @@ impl<'a> ClassProperties<'a> {
         let init = if self.current_class().is_declaration {
             Some(super_func)
         } else {
-            let assignment = create_assignment(super_binding, super_func, ctx);
+            let assignment = create_assignment(super_binding, super_func, SPAN, ctx);
             // TODO: Why does this end up before class, not after?
             // TODO: This isn't right. Should not be adding to `insert_after_exprs` in entry phase.
             self.insert_after_exprs.push(assignment);

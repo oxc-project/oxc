@@ -1,9 +1,8 @@
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_span::Atom;
 use oxc_traverse::BoundIdentifier;
 
-use super::{ClassBindings, ClassProperties, FxIndexMap};
+use super::{ClassBindings, ClassProperties, IdentIndexMap};
 
 /// Details of a class.
 ///
@@ -17,7 +16,7 @@ pub(super) struct ClassDetails<'a> {
     /// Mapping private prop name to binding for temp var.
     /// This is then used as lookup when transforming e.g. `this.#x`.
     /// `None` if class has no private properties.
-    pub private_props: Option<FxIndexMap<Atom<'a>, PrivateProp<'a>>>,
+    pub private_props: Option<IdentIndexMap<'a, PrivateProp<'a>>>,
     /// Bindings for class name and temp var for class
     pub bindings: ClassBindings<'a>,
 }
@@ -130,7 +129,7 @@ impl<'a> ClassesStack<'a> {
         // TODO: Check there are tests for bindings in enclosing classes.
         for class in self.stack[1..].iter_mut().rev() {
             if let Some(private_props) = &mut class.private_props
-                && let Some(prop) = private_props.get(&Atom::from(ident.name))
+                && let Some(prop) = private_props.get(&ident.name)
             {
                 return ret_fn(prop, &mut class.bindings, class.is_declaration);
             }

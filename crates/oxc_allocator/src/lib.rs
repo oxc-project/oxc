@@ -36,8 +36,6 @@
 //! * `disable_track_allocations` - Disables `track_allocations` feature.
 //!   Purpose is to prevent `--all-features` enabling allocation tracking.
 
-#![warn(missing_docs)]
-
 mod accessor;
 mod address;
 mod alloc;
@@ -54,7 +52,7 @@ mod convert;
 mod from_raw_parts;
 pub mod hash_map;
 pub mod hash_set;
-mod passthrough_hasher;
+pub mod ident_hasher;
 #[cfg(feature = "pool")]
 mod pool;
 mod string_builder;
@@ -74,7 +72,7 @@ pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::HashMap;
 pub use hash_set::HashSet;
-pub use passthrough_hasher::{PassthroughBuildHasher, PassthroughHasher};
+pub use ident_hasher::{IdentBuildHasher, ident_hash, pack_len_hash};
 #[cfg(feature = "pool")]
 pub use pool::*;
 pub use string_builder::StringBuilder;

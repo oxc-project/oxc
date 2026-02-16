@@ -275,10 +275,15 @@ impl<'a> ObjectRestSpread<'a> {
             }
         }
 
-        // Insert final read `_foo`.
-        // TODO: remove this if the assignment is not a read reference.
-        // e.g. remove for `({ a2, ...b2 } = c2)`, keep `(x, ({ a2, ...b2 } = c2)`.
-        expressions.push(reference_builder.create_read_expression(ctx));
+        // Insert final read `_foo` only if the expression result is consumed.
+        // e.g. remove for `({ a2, ...b2 } = c2)`, keep for `(x, ({ a2, ...b2 } = c2))`.
+        let is_expression_statement = ctx
+            .ancestors()
+            .find(|a| !matches!(a, Ancestor::ParenthesizedExpressionExpression(_)))
+            .is_some_and(|a| matches!(a, Ancestor::ExpressionStatementExpression(_)));
+        if !is_expression_statement {
+            expressions.push(reference_builder.create_read_expression(ctx));
+        }
 
         *expr = ctx.ast.expression_sequence(assign_expr.span, expressions);
     }
@@ -491,6 +496,7 @@ impl<'a> ObjectRestSpread<'a> {
             return;
         }
 
+        let span = obj_expr.span;
         let mut call_expr: Option<ArenaBox<'a, CallExpression<'a>>> = None;
         let mut props = ctx.ast.vec_with_capacity(obj_expr.properties.len());
 
@@ -508,7 +514,9 @@ impl<'a> ObjectRestSpread<'a> {
             Self::make_object_spread(&mut call_expr, &mut props, ctx);
         }
 
-        *expr = Expression::CallExpression(call_expr.unwrap());
+        let mut final_call = call_expr.unwrap();
+        final_call.span = span;
+        *expr = Expression::CallExpression(final_call);
     }
 
     fn make_object_spread(

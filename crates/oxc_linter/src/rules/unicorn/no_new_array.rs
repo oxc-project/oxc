@@ -79,9 +79,9 @@ fn test() {
     let fail = vec![
         "const array = new Array(1)",
         "const zero = 0;
-			const array = new Array(zero);",
+            const array = new Array(zero);",
         "const length = 1;
-			const array = new Array(length);",
+            const array = new Array(length);",
         "const array = new Array(1.5)",
         r#"const array = new Array(Number("1"))"#,
         r#"const array = new Array("1")"#,
@@ -89,7 +89,7 @@ fn test() {
         r#"const array = new Array(("1"))"#,
         "const array = new Array((0, 1))",
         r#"const foo = []
-			new Array("bar").forEach(baz)"#,
+            new Array("bar").forEach(baz)"#,
         "new Array(0xff)",
         "new Array(Math.PI | foo)",
         "new Array(Math.min(foo, bar))",
@@ -140,9 +140,9 @@ fn test() {
         "const array = new Array(foo)",
         "const array = new Array(length)",
         "const foo = []
-			new Array(bar).forEach(baz)",
+            new Array(bar).forEach(baz)",
         "const foo = []
-			new Array(...bar).forEach(baz)",
+            new Array(...bar).forEach(baz)",
     ];
 
     Tester::new(NoNewArray::NAME, NoNewArray::PLUGIN, pass, fail).test_and_snapshot();
