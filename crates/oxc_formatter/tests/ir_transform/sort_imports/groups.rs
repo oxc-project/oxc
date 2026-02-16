@@ -23,92 +23,89 @@ import type { H } from "./index.d.ts";
 
 import a from ".";
 import type { T } from "t";
-import "./style.css";
 import { j } from "../j";
 import { K, L, M } from "../k";
+import "./style.css";
 "#,
         r#"{ "experimentalSortImports": {} }"#,
         r#"
-import type { T } from "t";
+import fs from "fs";
+import path from "path";
 
 import { c1, c2, c3, c4 } from "c";
 import { e1 } from "e/a";
 import { e2 } from "e/b";
-import fs from "fs";
-import path from "path";
-
-import type { I } from "~/i";
+import type { T } from "t";
 
 import { b1, b2 } from "~/b";
 import { c1 } from "~/c";
+import type { I } from "~/i";
 import { i1, i2, i3 } from "~/i";
 
 import type { A } from ".";
+import a from ".";
+import h from "../../h";
 import type { F } from "../f";
+import { j } from "../j";
+import { K, L, M } from "../k";
 import type { D } from "./d";
 import type { H } from "./index.d.ts";
 
-import a from ".";
-import h from "../../h";
 import "./style.css";
-import { j } from "../j";
-import { K, L, M } from "../k";
 "#,
     );
     // Input is already in the correct order, should remain unchanged
     assert_format(
         r#"
-import type { T } from "t";
+import fs from "fs";
+import path from "path";
 
 import { c1, c2, c3, c4 } from "c";
 import { e1 } from "e/a";
 import { e2 } from "e/b";
-import fs from "fs";
-import path from "path";
-
-import type { I } from "~/i";
+import type { T } from "t";
 
 import { b1, b2 } from "~/b";
 import { c1 } from "~/c";
+import type { I } from "~/i";
 import { i1, i2, i3 } from "~/i";
 
 import type { A } from ".";
+import a from ".";
+import h from "../../h";
 import type { F } from "../f";
+import { j } from "../j";
+import { K, L, M } from "../k";
 import type { D } from "./d";
 import type { H } from "./index.d.ts";
 
-import a from ".";
-import h from "../../h";
 import "./style.css";
-import { j } from "../j";
-import { K, L, M } from "../k";
 "#,
         r#"{ "experimentalSortImports": {} }"#,
         r#"
-import type { T } from "t";
+import fs from "fs";
+import path from "path";
 
 import { c1, c2, c3, c4 } from "c";
 import { e1 } from "e/a";
 import { e2 } from "e/b";
-import fs from "fs";
-import path from "path";
-
-import type { I } from "~/i";
+import type { T } from "t";
 
 import { b1, b2 } from "~/b";
 import { c1 } from "~/c";
+import type { I } from "~/i";
 import { i1, i2, i3 } from "~/i";
 
 import type { A } from ".";
+import a from ".";
+import h from "../../h";
 import type { F } from "../f";
+import { j } from "../j";
+import { K, L, M } from "../k";
 import type { D } from "./d";
 import type { H } from "./index.d.ts";
 
-import a from ".";
-import h from "../../h";
 import "./style.css";
-import { j } from "../j";
-import { K, L, M } from "../k";
 "#,
     );
     // Ignore comments
@@ -122,7 +119,6 @@ import { t } from "t";
         r#"{ "experimentalSortImports": {} }"#,
         r#"
 import type { T } from "t";
-
 // @ts-expect-error missing types
 import { t } from "t";
 "#,

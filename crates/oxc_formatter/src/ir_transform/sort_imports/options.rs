@@ -141,15 +141,16 @@ pub fn default_internal_patterns() -> Vec<String> {
 
 /// Returns default groups configuration for organizing imports.
 pub fn default_groups() -> Vec<Vec<GroupEntry>> {
-    // Helper to parse a predefined group name, panicking on invalid names.
+    // Helper to parse a predefined group name
     let p = |s: &str| GroupEntry::Predefined(GroupName::parse(s).unwrap());
+    // Our policy: far to near, built-in to local.
+    // Do not include side effects by default, it may break some code if moved around.
     vec![
-        vec![p("type-import")],
-        vec![p("value-builtin"), p("value-external")],
-        vec![p("type-internal")],
-        vec![p("value-internal")],
-        vec![p("type-parent"), p("type-sibling"), p("type-index")],
-        vec![p("value-parent"), p("value-sibling"), p("value-index")],
+        vec![p("builtin")],
+        vec![p("external")],
+        vec![p("internal"), p("subpath")],
+        vec![p("parent"), p("sibling"), p("index")],
+        vec![p("style")],
         vec![GroupEntry::Unknown],
     ]
 }

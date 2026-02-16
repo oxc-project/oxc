@@ -1051,11 +1051,9 @@ import { d } from "../d";
         r##"{ "experimentalSortImports": { "internalPattern": ["#"] } }"##,
         r##"
 import type { T } from "a";
-
 import { a } from "a";
 
 import type { S } from "#b";
-
 import { b1, b2 } from "#b";
 import c from "#c";
 
@@ -1078,12 +1076,11 @@ import type { Hello } from "pkg"
 "#,
         r#"{ "experimentalSortImports": {} }"#,
         r#"
-import type { Hello } from "pkg";
-
 /*
  * hi
  */
 import cn from "classnames";
+import type { Hello } from "pkg";
 "#,
     );
     assert_format(
@@ -1211,8 +1208,8 @@ import { b1, b2 } from "~/b";
 "#,
         r#"{ "experimentalSortImports": { "newlinesBetween": false } }"#,
         r#"
-import type { T } from "t";
 import { a1, a2, a3 } from "a";
+import type { T } from "t";
 import { b1, b2 } from "~/b";
 import { c1, c2, c3 } from "~/c";
 import d from ".";
@@ -1234,9 +1231,8 @@ import { b1, b2 } from "~/b";
 "#,
         r#"{ "experimentalSortImports": { "newlinesBetween": true } }"#,
         r#"
-import type { T } from "t";
-
 import { a1, a2, a3 } from "a";
+import type { T } from "t";
 
 import { b1, b2 } from "~/b";
 import { c1, c2, c3 } from "~/c";
