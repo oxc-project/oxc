@@ -785,7 +785,7 @@ impl<'a> Codegen<'a> {
 
     fn print_non_negative_float(&mut self, num: f64) {
         // Inline the buffer here to avoid heap allocation on `buffer.format(*self).to_string()`.
-        let mut buffer = dragonbox_ecma::Buffer::new();
+        let mut buffer = zmij_ecma::Buffer::new();
         if num < 1000.0 && num.fract() == 0.0 {
             self.print_str(buffer.format(num));
             self.need_space_before_dot = self.code_len();
@@ -806,7 +806,7 @@ impl<'a> Codegen<'a> {
     // Instead of building all candidates and finding the shortest, we track the shortest as we go
     // and use self.print_str directly instead of returning intermediate strings
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-    fn print_minified_number(&mut self, num: f64, buffer: &mut dragonbox_ecma::Buffer) {
+    fn print_minified_number(&mut self, num: f64, buffer: &mut zmij_ecma::Buffer) {
         if num < 1000.0 && num.fract() == 0.0 {
             self.print_str(buffer.format(num));
             self.need_space_before_dot = self.code_len();

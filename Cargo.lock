@@ -602,12 +602,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dragonbox_ecma"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a5577f010d4e1bb3f3c4d6081e05718eb6992cf20119cab4d3abadff198b5ae"
-
-[[package]]
 name = "dtor"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1812,7 +1806,6 @@ version = "0.113.0"
 dependencies = [
  "bitflags",
  "cow-utils",
- "dragonbox_ecma",
  "insta",
  "itoa",
  "oxc_allocator",
@@ -1826,6 +1819,7 @@ dependencies = [
  "oxc_syntax",
  "pico-args",
  "rustc-hash",
+ "zmij_ecma",
 ]
 
 [[package]]
@@ -1912,9 +1906,9 @@ dependencies = [
 name = "oxc_estree"
 version = "0.113.0"
 dependencies = [
- "dragonbox_ecma",
  "itoa",
  "oxc_data_structures",
+ "zmij_ecma",
 ]
 
 [[package]]
@@ -2357,7 +2351,6 @@ version = "0.113.0"
 dependencies = [
  "bitflags",
  "cow-utils",
- "dragonbox_ecma",
  "nonmax",
  "oxc_allocator",
  "oxc_ast_macros",
@@ -2367,6 +2360,7 @@ dependencies = [
  "phf",
  "serde",
  "unicode-id-start",
+ "zmij_ecma",
 ]
 
 [[package]]
@@ -4206,3 +4200,9 @@ name = "zmij"
 version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ff05f8caa9038894637571ae6b9e29466c1f4f829d26c9b28f869a29cbe3445"
+
+[[package]]
+name = "zmij_ecma"
+version = "1.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd49ba5db5c57c0a1139f1ffe31311f38b027d6c88cf73c2c65768172e8ebdf2"

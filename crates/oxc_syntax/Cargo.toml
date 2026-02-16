@@ -32,10 +32,10 @@ nonmax = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 unicode-id-start = { workspace = true }
 
-dragonbox_ecma = { workspace = true, optional = true }
+zmij_ecma = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"], optional = true }
 
 [features]
 default = []
-to_js_string = ["dep:dragonbox_ecma"]
+to_js_string = ["dep:zmij_ecma"]
 serialize = ["bitflags/serde", "dep:serde", "oxc_estree/serialize"]
