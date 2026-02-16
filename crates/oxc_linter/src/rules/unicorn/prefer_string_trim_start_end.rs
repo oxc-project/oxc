@@ -98,38 +98,38 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"foo.trimStart()",
-        r"foo.trimStart?.()",
-        r"foo.trimEnd()",
-        r"new foo.trimLeft();",
-        r"trimLeft();",
-        r"foo['trimLeft']();",
-        r"foo[trimLeft]();",
-        r"foo.bar();",
-        r"foo.trimLeft(extra);",
-        r"foo.trimLeft(...argumentsArray)",
-        r"foo.bar(trimLeft)",
-        r"foo.bar(foo.trimLeft)",
-        r"trimLeft.foo()",
-        r"foo.trimLeft.bar()",
+        "foo.trimStart()",
+        "foo.trimStart?.()",
+        "foo.trimEnd()",
+        "new foo.trimLeft();",
+        "trimLeft();",
+        "foo['trimLeft']();",
+        "foo[trimLeft]();",
+        "foo.bar();",
+        "foo.trimLeft(extra);",
+        "foo.trimLeft(...argumentsArray)",
+        "foo.bar(trimLeft)",
+        "foo.bar(foo.trimLeft)",
+        "trimLeft.foo()",
+        "foo.trimLeft.bar()",
     ];
 
     let fail = vec![
-        r"foo.trimLeft()",
-        r"foo.trimRight()",
-        r"trimLeft.trimRight()",
-        r"foo.trimLeft.trimRight()",
+        "foo.trimLeft()",
+        "foo.trimRight()",
+        "trimLeft.trimRight()",
+        "foo.trimLeft.trimRight()",
         r#""foo".trimLeft()"#,
-        r"foo?.trimLeft()",
+        "foo?.trimLeft()",
     ];
 
     let fix = vec![
-        (r"foo.trimLeft()", r"foo.trimStart()"),
-        (r"foo.trimRight()", r"foo.trimEnd()"),
-        (r"trimLeft.trimRight()", r"trimLeft.trimEnd()"),
-        (r"foo.trimLeft.trimRight()", r"foo.trimLeft.trimEnd()"),
+        ("foo.trimLeft()", "foo.trimStart()"),
+        ("foo.trimRight()", "foo.trimEnd()"),
+        ("trimLeft.trimRight()", "trimLeft.trimEnd()"),
+        ("foo.trimLeft.trimRight()", "foo.trimLeft.trimEnd()"),
         (r#""foo".trimLeft()"#, r#""foo".trimStart()"#),
-        (r"foo?.trimLeft()", r"foo?.trimStart()"),
+        ("foo?.trimLeft()", "foo?.trimStart()"),
     ];
 
     Tester::new(PreferStringTrimStartEnd::NAME, PreferStringTrimStartEnd::PLUGIN, pass, fail)

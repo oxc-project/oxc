@@ -814,7 +814,6 @@ fn test() {
                 if (event.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', event => {
@@ -823,7 +822,6 @@ fn test() {
             "foo.addEventListener('click', event => {
                 if (event.key === 'A') {}
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', event => {
@@ -832,7 +830,6 @@ fn test() {
             r"foo.addEventListener('click', event => {
                 if (event.key === '\n') {}
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', a => {
@@ -843,7 +840,6 @@ fn test() {
                 if (a.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', (a, b, c) => {
@@ -854,7 +850,6 @@ fn test() {
                 if (a.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', function(a, b, c) {
@@ -865,7 +860,6 @@ fn test() {
                 if (a.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', function(b) {
@@ -876,7 +870,6 @@ fn test() {
                 if (b.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo11111111.addEventListener('click', event => {
@@ -887,7 +880,6 @@ fn test() {
                 if (event.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', a => {
@@ -898,7 +890,6 @@ fn test() {
                 if (a.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', (a, b, c) => {
@@ -909,7 +900,6 @@ fn test() {
                 if (a.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', function(a, b, c) {
@@ -920,7 +910,6 @@ fn test() {
                 if (a.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', function(b) {
@@ -931,7 +920,6 @@ fn test() {
                 if (b.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', event => {
@@ -942,7 +930,6 @@ fn test() {
                 if (event.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', a => {
@@ -953,7 +940,6 @@ fn test() {
                 if (a.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', (a, b, c) => {
@@ -964,7 +950,6 @@ fn test() {
                 if (a.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', function(a, b, c) {
@@ -975,7 +960,6 @@ fn test() {
                 if (a.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', function(b) {
@@ -986,7 +970,6 @@ fn test() {
                 if (b.key === 'Escape') {
                 }
             });",
-            None,
         ),
         (
             "foo.addEventListener('click', function(b) {
@@ -1001,7 +984,6 @@ fn test() {
                 const {keyCode} = b;
                 if (keyCode === 32) return 4;
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1012,7 +994,6 @@ fn test() {
                 if (event.key === 'Enter') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1023,7 +1004,6 @@ fn test() {
                 if (event.key === 'ArrowUp') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1034,7 +1014,6 @@ fn test() {
                 if (event.key === 'ArrowDown') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1045,7 +1024,6 @@ fn test() {
                 if (event.key === 'ArrowLeft') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1056,7 +1034,6 @@ fn test() {
                 if (event.key === 'ArrowRight') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1067,7 +1044,6 @@ fn test() {
                 if (event.key === ']') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1078,7 +1054,6 @@ fn test() {
                 if (event.key === ';') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1089,7 +1064,6 @@ fn test() {
                 if (event.key === '=') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1100,7 +1074,6 @@ fn test() {
                 if (event.key === ',') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1111,7 +1084,6 @@ fn test() {
                 if (event.key === '-') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1122,7 +1094,6 @@ fn test() {
                 if (event.key === '.') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1133,7 +1104,6 @@ fn test() {
                 if (event.key === '/') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1144,7 +1114,6 @@ fn test() {
                 if (event.key === '[') {
                 }
             });",
-            None,
         ),
         (
             "foo123.addEventListener('click', event => {
@@ -1155,7 +1124,6 @@ fn test() {
                 if (event.key === '\\'') {
                 }
             });",
-            None,
         ),
     ];
     Tester::new(PreferKeyboardEventKey::NAME, PreferKeyboardEventKey::PLUGIN, pass, fail)

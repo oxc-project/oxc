@@ -98,42 +98,26 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (
-            "
+        "
             interface Foo {}
             class Bar implements Foo {}
                 ",
-            None,
-        ),
-        (
-            "
+        "
                      namespace Foo {}
                      namespace Foo {}
                          ",
-            None,
-        ),
-        (
-            "
+        "
                      enum Foo {}
                      namespace Foo {}
                          ",
-            None,
-        ),
-        (
-            "
+        "
                      namespace Fooo {}
                      function Foo() {}
                          ",
-            None,
-        ),
-        (
-            "
+        "
                      const Foo = class {};
                          ",
-            None,
-        ),
-        (
-            "
+        "
                      interface Foo {
                        props: string;
                      }
@@ -142,10 +126,7 @@ fn test() {
                        return class Foo {};
                      }
                          ",
-            None,
-        ),
-        (
-            "
+        "
                      interface Foo {
                        props: string;
                      }
@@ -154,44 +135,30 @@ fn test() {
                        class Foo {}
                      })();
                          ",
-            None,
-        ),
-        (
-            "
+        "
                      declare global {
                        interface Foo {}
                      }
 
                      class Foo {}
                          ",
-            None,
-        ),
     ];
 
     let fail = vec![
-        (
-            "
+        "
             interface Foo {}
             class Foo {}
                   ",
-            None,
-        ),
-        (
-            "
+        "
                      class Foo {}
                      interface Foo {}
                            ",
-            None,
-        ),
-        (
-            "
+        "
                      declare global {
                        interface Foo {}
                        class Foo {}
                      }
                            ",
-            None,
-        ),
     ];
 
     Tester::new(NoUnsafeDeclarationMerging::NAME, NoUnsafeDeclarationMerging::PLUGIN, pass, fail)

@@ -354,62 +354,50 @@ fn test() {
         (
             r"const index = foo.indexOf('bar'); if (index < 0) {}",
             r"const index = foo.indexOf('bar'); if (index === -1) {}",
-            None,
         ),
         (
             r"const index = foo.lastIndexOf('bar'); if (index < 0) {}",
             r"const index = foo.lastIndexOf('bar'); if (index === -1) {}",
-            None,
         ),
         (
             r"const index = foo.findIndex('bar'); if (index < 0) {}",
             r"const index = foo.findIndex('bar'); if (index === -1) {}",
-            None,
         ),
         (
             r"const index = foo.findLastIndex('bar'); if (index < 0) {}",
             r"const index = foo.findLastIndex('bar'); if (index === -1) {}",
-            None,
         ),
         (
             r"const index = foo.indexOf('bar'); if (index >= 0) {}",
             r"const index = foo.indexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.lastIndexOf('bar'); if (index >= 0) {}",
             r"const index = foo.lastIndexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findIndex('bar'); if (index >= 0) {}",
             r"const index = foo.findIndex('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findLastIndex('bar'); if (index >= 0) {}",
             r"const index = foo.findLastIndex('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.indexOf('bar'); if (index > -1) {}",
             r"const index = foo.indexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.lastIndexOf('bar'); if (index > -1) {}",
             r"const index = foo.lastIndexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findIndex('bar'); if (index > -1) {}",
             r"const index = foo.findIndex('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findLastIndex('bar'); if (index > -1) {}",
             r"const index = foo.findLastIndex('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"
@@ -426,7 +414,6 @@ fn test() {
                         if (index === -1) {}
                     }
                     ",
-            None,
         ),
         (
             r"
@@ -441,7 +428,6 @@ fn test() {
                     index1 === -1;
                     index2 !== -1;
                     ",
-            None,
         ),
         (
             r"
@@ -484,7 +470,6 @@ fn test() {
                         /* comment 8 */
                     ));
                     ",
-            None,
         ),
         (
             r"
@@ -523,17 +508,14 @@ fn test() {
                     ))
                 ));
             ",
-            None,
         ),
         (
             r"const index = _.indexOf([1, 2, 1, 2], 2); index < 0;",
             r"const index = _.indexOf([1, 2, 1, 2], 2); index === -1;",
-            None,
         ),
         (
             r"const i = foo.indexOf('bar'); if (i /* < */ < 0) {}",
             r"const i = foo.indexOf('bar'); if (i /* < */ === -1) {}",
-            None,
         ),
         // make sure to not replace the wrong operator
         (
@@ -555,7 +537,6 @@ fn test() {
                     -1
                   ) {}
             ",
-            None,
         ),
         // make sure to not replace the wrong operator
         (
@@ -577,7 +558,6 @@ fn test() {
                     -1
                   ) {}
             ",
-            None,
         ),
         (
             r"
@@ -620,27 +600,22 @@ fn test() {
                    /* comment 8 */
                ));
             ",
-            None,
         ),
         (
             r"const index = foo.indexOf('bar'); if (index >= 0) {}",
             r"const index = foo.indexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.lastIndexOf('bar'); if (index >= 0) {}",
             r"const index = foo.lastIndexOf('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findIndex('bar'); if (index >= 0) {}",
             r"const index = foo.findIndex('bar'); if (index !== -1) {}",
-            None,
         ),
         (
             r"const index = foo.findLastIndex('bar'); if (index >= 0) {}",
             r"const index = foo.findLastIndex('bar'); if (index !== -1) {}",
-            None,
         ),
     ];
 

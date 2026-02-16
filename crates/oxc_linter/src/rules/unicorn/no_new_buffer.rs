@@ -109,35 +109,35 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"const buffer = Buffer",
-        r"const buffer = new NotBuffer(1)",
-        r"const buffer = Buffer.from('buf')",
-        r"const buffer = Buffer.from('7468697320697320612074c3a97374', 'hex')",
-        r"const buffer = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
-        r"const buffer = Buffer.alloc(10)",
-        r"const Buffer = function () {}; new Buffer(10);",
+        "const buffer = Buffer",
+        "const buffer = new NotBuffer(1)",
+        "const buffer = Buffer.from('buf')",
+        "const buffer = Buffer.from('7468697320697320612074c3a97374', 'hex')",
+        "const buffer = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
+        "const buffer = Buffer.alloc(10)",
+        "const Buffer = function () {}; new Buffer(10);",
     ];
 
     let fail = vec![
-        r"const buffer = new Buffer([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
-        r"const buffer = new Buffer([0x62, bar])",
-        r"const buffer = new Buffer(10);",
-        r"new Buffer(foo.length)",
-        r"new Buffer(Math.min(foo, bar))",
+        "const buffer = new Buffer([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
+        "const buffer = new Buffer([0x62, bar])",
+        "const buffer = new Buffer(10);",
+        "new Buffer(foo.length)",
+        "new Buffer(Math.min(foo, bar))",
         r#"const buffer = new Buffer("string");"#,
         r#"const buffer = new Buffer("7468697320697320612074c3a97374", "hex")"#,
-        r"const buffer = new Buffer(`${unknown}`)",
-        r"const buffer = new (Buffer)(unknown)",
-        r"const buffer = new Buffer(unknown, 2)",
-        r"const buffer = new Buffer(...unknown)",
-        r"const buffer = new /* comment */ Buffer()",
-        r"const buffer = new /* comment */ Buffer",
-        r"new Buffer(input, encoding);",
+        "const buffer = new Buffer(`${unknown}`)",
+        "const buffer = new (Buffer)(unknown)",
+        "const buffer = new Buffer(unknown, 2)",
+        "const buffer = new Buffer(...unknown)",
+        "const buffer = new /* comment */ Buffer()",
+        "const buffer = new /* comment */ Buffer",
+        "new Buffer(input, encoding);",
     ];
 
     let fix = vec![
         // Numeric argument → Buffer.alloc
-        (r"const buffer = new Buffer(10);", r"const buffer = Buffer.alloc(10);"),
+        ("const buffer = new Buffer(10);", "const buffer = Buffer.alloc(10);"),
         // String argument → Buffer.from
         (r#"const buffer = new Buffer("string");"#, r#"const buffer = Buffer.from("string");"#),
         (
@@ -146,12 +146,12 @@ fn test() {
         ),
         // Array argument → Buffer.from
         (
-            r"const buffer = new Buffer([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
-            r"const buffer = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
+            "const buffer = new Buffer([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
+            "const buffer = Buffer.from([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
         ),
-        (r"const buffer = new Buffer([0x62, bar])", r"const buffer = Buffer.from([0x62, bar])"),
+        ("const buffer = new Buffer([0x62, bar])", "const buffer = Buffer.from([0x62, bar])"),
         // Template literal → Buffer.from
-        (r"const buffer = new Buffer(`${unknown}`)", r"const buffer = Buffer.from(`${unknown}`)"),
+        ("const buffer = new Buffer(`${unknown}`)", "const buffer = Buffer.from(`${unknown}`)"),
     ];
 
     Tester::new(NoNewBuffer::NAME, NoNewBuffer::PLUGIN, pass, fail)
