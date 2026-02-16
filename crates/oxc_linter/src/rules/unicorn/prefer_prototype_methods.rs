@@ -158,6 +158,16 @@ fn test() {
         "foo.bar.bind(bar)",
         "foo[{}].call(bar)",
         "Object.hasOwn(bar)",
+        "const foo = [].push.notApply(bar, elements);",
+        "const push = [].push.notBind(foo)",
+        "[].forEach.notCall(foo, () => {})",
+        // "/* globals foo: readonly */ foo.call(bar)",
+        "const toString = () => {}; toString.call(bar)",
+        // "/* globals toString: off */ toString.call(bar)",
+        "const _hasOwnProperty = globalThis.hasOwnProperty; _hasOwnProperty.call(bar)",
+        "const _globalThis = globalThis; globalThis[hasOwnProperty].call(bar)",
+        r#"const _ = globalThis, TO_STRING = "toString"; _[TO_STRING].call(bar)"#,
+        "const _ = [globalThis.toString]; _[0].call(bar)",
     ];
 
     let fail = vec![
@@ -184,6 +194,19 @@ fn test() {
         "[][Symbol.iterator].call(foo)", // TODO: Improve error message for this case.
         "const foo = [].at.call(bar)",
         "const foo = [].findLast.call(bar)",
+        // "/* globals hasOwnProperty: readonly */ hasOwnProperty.call(bar)",
+        // "/* globals toString: readonly */ toString.apply(bar, [])",
+        // "/* globals toString: readonly */ Reflect.apply(toString, baz, [])",
+        // TODO: Fix the rule so these tests pass.
+        // "globalThis.toString.call(bar)",
+        // "const _ = globalThis; _.hasOwnProperty.call(bar)",
+        // r#"const _ = globalThis; _["hasOwnProperty"].call(bar)"#,
+        // r#"const _ = globalThis; _["hasOwn" + "Property"].call(bar)"#,
+        // "Reflect.apply(globalThis.toString, baz, [])",
+        // "Reflect.apply(window.toString, baz, [])",
+        // "Reflect.apply(global.toString, baz, [])",
+        // "/* globals toString: readonly */ Reflect.apply(toString, baz, [])", // Inline globals are not supported.
+        // r#"Reflect.apply(globalThis["toString"], baz, [])"#,
     ];
 
     let fix = vec![

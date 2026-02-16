@@ -245,6 +245,41 @@ fn test() {
         ),
         ("abstract class Foo { abstract property: string; }", None),
         ("abstract class Foo { abstract method(): string; }", None),
+        (
+            "
+            class Foo {
+              accessor prop: string;
+            }
+                ",
+            None,
+        ),
+        (
+            "
+            class Foo {
+              accessor prop = 'bar';
+              static bar() {
+                return false;
+              }
+            }
+                ",
+            None,
+        ),
+        (
+            "
+            abstract class Foo {
+              accessor prop: string;
+            }
+                ",
+            None,
+        ),
+        (
+            "
+            abstract class Foo {
+              abstract accessor prop: string;
+            }
+                ",
+            None,
+        ),
     ];
 
     let fail = vec![

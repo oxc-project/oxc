@@ -140,6 +140,103 @@ fn test() {
         "function foo(bar?: { n: number }) { return (bar!)?.(); }",
     ];
 
+    // TODO: Implement fixer.
+    #[expect(clippy::useless_vec)]
+    let _fix = vec![
+        (
+            "
+            const foo: { bar: number } | null = null;
+            const bar = foo!!.bar;
+                  ",
+            "
+            const foo: { bar: number } | null = null;
+            const bar = foo!.bar;
+                  ",
+        ),
+        (
+            "
+            function foo(bar: number | undefined) {
+              const bar: number = bar!!;
+            }
+                  ",
+            "
+            function foo(bar: number | undefined) {
+              const bar: number = bar!;
+            }
+                  ",
+        ),
+        (
+            "
+            function foo(bar?: { n: number }) {
+              return bar!?.n;
+            }
+                  ",
+            "
+            function foo(bar?: { n: number }) {
+              return bar?.n;
+            }
+                  ",
+        ),
+        (
+            "
+            function foo(bar?: { n: number }) {
+              return bar!?.();
+            }
+                  ",
+            "
+            function foo(bar?: { n: number }) {
+              return bar?.();
+            }
+                  ",
+        ),
+        (
+            "
+            const foo: { bar: number } | null = null;
+            const bar = (foo!)!.bar;
+                  ",
+            "
+            const foo: { bar: number } | null = null;
+            const bar = (foo)!.bar;
+                  ",
+        ),
+        (
+            "
+            function foo(bar?: { n: number }) {
+              return (bar!)?.n;
+            }
+                  ",
+            "
+            function foo(bar?: { n: number }) {
+              return (bar)?.n;
+            }
+                  ",
+        ),
+        (
+            "
+            function foo(bar?: { n: number }) {
+              return (bar)!?.n;
+            }
+                  ",
+            "
+            function foo(bar?: { n: number }) {
+              return (bar)?.n;
+            }
+                  ",
+        ),
+        (
+            "
+            function foo(bar?: { n: number }) {
+              return (bar!)?.();
+            }
+                  ",
+            "
+            function foo(bar?: { n: number }) {
+              return (bar)?.();
+            }
+                  ",
+        ),
+    ];
+
     Tester::new(NoExtraNonNullAssertion::NAME, NoExtraNonNullAssertion::PLUGIN, pass, fail)
         .test_and_snapshot();
 }

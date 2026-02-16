@@ -159,6 +159,9 @@ fn test() {
             assert(foo);",
         "import assert from 'node:assert/strict';
             console.log(assert)",
+        // TODO: Fix this rule so this test passes.
+        // "import {'strict' as assert} from 'assert';
+        //     assert(foo)",
     ];
 
     let fail = vec![
