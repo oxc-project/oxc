@@ -139,10 +139,10 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("sorted = [...array].toSorted()", None),
-        ("sorted = array.toSorted()", None),
-        ("sorted = [...array].sort", None),
-        ("sorted = [...array].sort?.()", None),
+        ("sorted =[...array].toSorted()", None),
+        ("sorted =array.toSorted()", None),
+        ("sorted =[...array].sort", None),
+        ("sorted =[...array].sort?.()", None),
         ("array.sort()", None),
         ("array.sort?.()", None),
         ("array?.sort()", None),
@@ -152,6 +152,20 @@ fn test() {
         ("sorted = array.sort(compareFn, extraArgument)", None),
         (r#"import { Chunk } from "effect"; const sorted = Chunk.sort(compareFn)"#, None),
         (r#"import { Chunk as C } from "effect"; const sorted = C.sort(compareFn)"#, None),
+        // TODO: Get these passing?
+        // ("sorted = collection.sort({field: 1})", None),
+        // (r#"sorted = query.sort("field")"#, None),
+        // ("sorted = query.sort(1)", None),
+        // ("sorted = query.sort(-1)", None),
+        // ("sorted = query.sort(+1)", None),
+        // ("sorted = query.sort(`field`)", None),
+        // ("sorted = query.sort([criteria])", None),
+        // ("const docs = collection.find({id}).sort({expireAt: -1}).limit(1).toArray()", None),
+        // ("[...array].sort({field: 1})", None),
+        // (
+        //     "collection.sort({field: 1})",
+        //     Some(serde_json::json!([{ "allowExpressionStatement": false }])),
+        // ),
     ];
 
     let fail = vec![

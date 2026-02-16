@@ -138,82 +138,82 @@ fn test() {
         "assert(foo)",
         r#"import assert from "assert";"#,
         "import assert from 'node:assert';
-			assert;",
+            assert;",
         "import customAssert from 'node:assert';
-			assert(foo);",
+            assert(foo);",
         "function foo (assert) {
-				assert(bar);
-			}",
+                assert(bar);
+            }",
         "import assert from 'node:assert';
-			function foo (assert) {
-				assert(bar);
-			}",
+            function foo (assert) {
+                assert(bar);
+            }",
         "import {strict} from 'node:assert/strict';
-			strict(foo);",
+            strict(foo);",
         "import * as assert from 'node:assert';
-			assert(foo);",
+            assert(foo);",
         "export * as assert from 'node:assert';
-			assert(foo);",
+            assert(foo);",
         "export {default as assert} from 'node:assert';
-			export {assert as strict} from 'node:assert';
-			assert(foo);",
+            export {assert as strict} from 'node:assert';
+            assert(foo);",
         "import assert from 'node:assert/strict';
-			console.log(assert)",
+            console.log(assert)",
     ];
 
     let fail = vec![
         "import assert from 'assert';
-        	assert(foo)",
+            assert(foo)",
         "import assert from 'node:assert';
-        	assert(foo)",
+            assert(foo)",
         "import assert from 'assert/strict';
-        	assert(foo)",
+            assert(foo)",
         "import assert from 'node:assert/strict';
-        	assert(foo)",
+            assert(foo)",
         "import customAssert from 'assert';
-        	customAssert(foo)",
+            customAssert(foo)",
         "import customAssert from 'node:assert';
-        	customAssert(foo)",
+            customAssert(foo)",
         "import assert from 'assert';
-        	assert(foo)
-        	assert(bar)
-        	assert(baz)",
+            assert(foo)
+            assert(bar)
+            assert(baz)",
         "import {strict} from 'assert';
-        	strict(foo)",
+            strict(foo)",
         "import {strict as assert} from 'assert';
-        	assert(foo)",
+            assert(foo)",
         "import a, {strict as b, default as c} from 'node:assert';
-        	import d, {strict as e, default as f} from 'assert';
-        	import g, {default as h} from 'node:assert/strict';
-        	import i, {default as j} from 'assert/strict';
-        	a(foo);
-        	b(foo);
-        	c(foo);
-        	d(foo);
-        	e(foo);
-        	f(foo);
-        	g(foo);
-        	h(foo);
-        	i(foo);
-        	j(foo);",
+            import d, {strict as e, default as f} from 'assert';
+            import g, {default as h} from 'node:assert/strict';
+            import i, {default as j} from 'assert/strict';
+            a(foo);
+            b(foo);
+            c(foo);
+            d(foo);
+            e(foo);
+            f(foo);
+            g(foo);
+            h(foo);
+            i(foo);
+            j(foo);",
         "import assert from 'node:assert';
-        	assert?.(foo)",
+            assert?.(foo)",
         "import assert from 'assert';
-			((
-				/* comment */ ((
-					/* comment */
-					assert
-					/* comment */
-					)) /* comment */
-					(/* comment */ typeof foo === 'string', 'foo must be a string' /** after comment */)
-			));",
+            ((
+                /* comment */ ((
+                    /* comment */
+                    assert
+                    /* comment */
+                    )) /* comment */
+                    (/* comment */ typeof foo === 'string', 'foo must be a string' /** after comment */)
+            ));",
     ];
 
     let fix = vec![(
         "import assert from 'assert';
-			assert(foo)",
+            assert(foo)",
         "import assert from 'assert';
-			assert.ok(foo)",
+            assert.ok(foo)",
     ), (
         "import assert from 'node:assert';
             assert(foo)",

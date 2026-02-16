@@ -113,15 +113,8 @@ source: crates/oxc_linter/src/tester.rs
 
   × Invalid Unicode escape sequence
    ╭─[prefer_spread.tsx:1:14]
- 1 │ const foo = \`bar\`
+ 1 │ const foo = \\`bar\\`
    ·              ─
- 2 │             Array.from(arrayLike).forEach(doSomething)
-   ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[prefer_spread.tsx:1:19]
- 1 │ const foo = \`bar\`
-   ·                   ─
  2 │             Array.from(arrayLike).forEach(doSomething)
    ╰────
 
@@ -847,13 +840,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
    ╭─[prefer_spread.tsx:1:1]
- 1 │ new Uint8Array([10, 20, 30, 40, 50]).slice()
-   · ────────────────────────────────────────────
-   ╰────
-  help: The spread operator (`...`) is more concise and readable.
-
-  ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
-   ╭─[prefer_spread.tsx:1:1]
  1 │ array.slice(0)
    · ──────────────
    ╰────
@@ -916,10 +902,10 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.toSpliced()
-   ╭─[prefer_spread.tsx:2:9]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ bar()
- 2 │         foo.toSpliced()
-   ·         ───────────────
+ 2 │             foo.toSpliced()
+   ·             ───────────────
    ╰────
   help: The spread operator (`...`) is more concise and readable.
 
@@ -973,10 +959,10 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over string.split()
-   ╭─[prefer_spread.tsx:2:9]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ bar()
- 2 │         foo.split("")
-   ·         ─────────────
+ 2 │             foo.split("")
+   ·             ─────────────
    ╰────
   help: The spread operator (`...`) is more concise and readable.
 
