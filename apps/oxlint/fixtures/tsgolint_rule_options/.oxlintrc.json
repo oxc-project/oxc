@@ -63,6 +63,12 @@
         "allowReturnAny": true
       }
     ],
+    "typescript/consistent-return": [
+      "error",
+      {
+        "treatUndefinedAsUnspecified": true
+      }
+    ],
     "typescript/prefer-readonly-parameter-types": [
       "error",
       {

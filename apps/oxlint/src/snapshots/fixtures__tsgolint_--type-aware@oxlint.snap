@@ -13,6 +13,14 @@ working directory: fixtures/tsgolint
  2 | 
    `----
 
+  x typescript-eslint(consistent-return): Function 'maybe' expected a return value.
+   ,-[consistent-return.ts:5:3]
+ 4 |   }
+ 5 |   return;
+   :   ^^^^^^^
+ 6 | }
+   `----
+
   x typescript-eslint(consistent-type-exports): Type export LocalType is not a value and should be exported using `export type`.
    ,-[consistent-type-exports.ts:7:1]
  6 | 
@@ -517,6 +525,20 @@ working directory: fixtures/tsgolint
  3 | 
    `----
 
+  x typescript-eslint(consistent-return): Function 'handleStatus' expected a return value.
+    ,-[switch-exhaustiveness-check.ts:2:1]
+  1 |     type Status = 'pending' | 'approved' | 'rejected';
+  2 | ,-> function handleStatus(status: Status) {
+  3 | |     switch (status) {
+  4 | |       case 'pending':
+  5 | |         return 'Waiting for approval';
+  6 | |       case 'approved':
+  7 | |         return 'Request approved';
+  8 | |     }
+  9 | `-> }
+ 10 |     
+    `----
+
   x typescript-eslint(switch-exhaustiveness-check): Switch is not exhaustive
    ,-[switch-exhaustiveness-check.ts:3:11]
  2 | function handleStatus(status: Status) {
@@ -542,8 +564,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 69 errors.
-Finished in <variable>ms on 55 files with 54 rules using 1 threads.
+Found 0 warnings and 71 errors.
+Finished in <variable>ms on 56 files with 55 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
