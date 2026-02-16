@@ -365,31 +365,31 @@ fn test() {
         ("function foo(){return[]instanceof Array}", None),
         (
             "(
-				// comment
-				((
-					// comment
-					(
-						// comment
-						foo
-						// comment
-					)
-					// comment
-				))
-				// comment
-			)
-			// comment before instanceof
+                // comment
+                ((
+                    // comment
+                    (
+                        // comment
+                        foo
+                        // comment
+                    )
+                    // comment
+                ))
+                // comment
+            )
+            // comment before instanceof
             instanceof
-			// comment after instanceof
-			(
-				// comment
-				(
-					// comment
-					Array
-					// comment
-				)
-					// comment
-			)
-				// comment",
+            // comment after instanceof
+            (
+                // comment
+                (
+                    // comment
+                    Array
+                    // comment
+                )
+                    // comment
+            )
+                // comment",
             None,
         ),
     ];

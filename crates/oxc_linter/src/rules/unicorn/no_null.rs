@@ -390,23 +390,23 @@ fn test() {
         ("() => { return null as any as typeof Array }", "() => { return  }", None),
         (
             r"const newDecorations = enabled ?
-	this._debugService.getModel().getBreakpoints().map(breakpoint => {
-		const parsed = test()
-		if (!parsed ) {
-			return null;
-		}
-		return { handle: parsed.handle};
-	}).filter(x => !!x) as INotebookDeltaDecoration[]
-	: [];",
+    this._debugService.getModel().getBreakpoints().map(breakpoint => {
+        const parsed = test()
+        if (!parsed ) {
+            return null;
+        }
+        return { handle: parsed.handle};
+    }).filter(x => !!x) as INotebookDeltaDecoration[]
+    : [];",
             r"const newDecorations = enabled ?
-	this._debugService.getModel().getBreakpoints().map(breakpoint => {
-		const parsed = test()
-		if (!parsed ) {
-			return ;
-		}
-		return { handle: parsed.handle};
-	}).filter(x => !!x) as INotebookDeltaDecoration[]
-	: [];",
+    this._debugService.getModel().getBreakpoints().map(breakpoint => {
+        const parsed = test()
+        if (!parsed ) {
+            return ;
+        }
+        return { handle: parsed.handle};
+    }).filter(x => !!x) as INotebookDeltaDecoration[]
+    : [];",
             None,
         ),
     ];

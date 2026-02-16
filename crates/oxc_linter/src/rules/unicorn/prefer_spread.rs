@@ -308,7 +308,7 @@ fn test() {
         r#""foo".concat("bar")"#,
         r#"`${foo}`.concat("bar")"#,
         r#"const string = 'foo';
-			foo = string.concat("bar");"#,
+            foo = string.concat("bar");"#,
         "const bufA = Buffer.concat([buf1, buf2, buf3], totalLength);",
         "Foo.concat(1)",
         "FooBar.concat(1)",
@@ -386,42 +386,42 @@ fn test() {
         "Array.from(new Set([1, 2])).map(() => {});",
         r#"Array.from(document.querySelectorAll("*")).map(() => {});"#,
         "const foo = []
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         r#"const foo = "1"
-			Array.from(arrayLike).forEach(doSomething)"#,
+            Array.from(arrayLike).forEach(doSomething)"#,
         "const foo = null
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = true
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = 1
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = /./
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = /./g
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = bar
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = bar.baz
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "function* foo() {
-				yield Array.from(arrayLike).forEach(doSomething)
-			}",
+                yield Array.from(arrayLike).forEach(doSomething)
+            }",
         "const foo = \\`bar\\`
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = [];
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "for (const key of Array.from(arrayLike)) {
-			}",
+            }",
         "for (const key in Array.from(arrayLike)) {
-			}",
+            }",
         "const foo = `${Array.from(arrayLike)}`",
         "async function foo(){
-				return await Array.from(arrayLike)
-			}",
+                return await Array.from(arrayLike)
+            }",
         "foo()
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "const foo = {}
-			Array.from(arrayLike).forEach(doSomething)",
+            Array.from(arrayLike).forEach(doSomething)",
         "(Array).from(foo)",
         "(Array.from)(foo)",
         "((Array).from)(foo)",
@@ -451,13 +451,13 @@ fn test() {
         "(( (( ((foo)).concat ))( (([2, 3])) ,) ))",
         "(( (( ((foo)).concat ))( (([2, 3])) , bar ) ))",
         "bar()
-			foo.concat(2)",
+            foo.concat(2)",
         "const foo = foo.concat(2)",
         "const foo = () => foo.concat(2)",
         "const five = 2 + 3;
-			foo.concat(five);",
+            foo.concat(five);",
         "const array = [2 + 3];
-			foo.concat(array);",
+            foo.concat(array);",
         "foo.concat([bar])",
         "foo.concat(bar)",
         "Array.from(set).concat([2, 3])",
@@ -485,17 +485,17 @@ fn test() {
         "[1,].concat([2,,], [3,,])",
         "[].concat([], [])",
         r#"const EMPTY_STRING = ""
-			const EMPTY_STRING_IN_ARRAY = ""
-			const EMPTY_STRING_IN_ARRAY_OF_ARRAY = ""
-			const array = [].concat(
-				undefined,
-				null,
-				EMPTY_STRING,
-				false,
-				0,
-				[EMPTY_STRING_IN_ARRAY],
-				[[EMPTY_STRING_IN_ARRAY_OF_ARRAY]]
-			)"#,
+            const EMPTY_STRING_IN_ARRAY = ""
+            const EMPTY_STRING_IN_ARRAY_OF_ARRAY = ""
+            const array = [].concat(
+                undefined,
+                null,
+                EMPTY_STRING,
+                false,
+                0,
+                [EMPTY_STRING_IN_ARRAY],
+                [[EMPTY_STRING_IN_ARRAY_OF_ARRAY]]
+            )"#,
         "[].concat((a.b.c), 2)",
         "[].concat(a.b(), 2)",
         "foo.concat(bar, 2, [3, 4], baz, 5, [6, 7])",
@@ -516,7 +516,7 @@ fn test() {
         "do foo.concat(1); while (test)",
         "with (foo) foo.concat(1)", // {"parserOptions": {"ecmaVersion": 6, "sourceType": "script"}},
         "const baz = [2];
-			call(foo, ...[bar].concat(baz));",
+            call(foo, ...[bar].concat(baz));",
         r#"foo.join(foo, bar).concat("...")"#,
         "array.slice()",
         "array.slice().slice()",
@@ -526,7 +526,7 @@ fn test() {
         "(( (( (( array )).slice ))() ))",
         "(scopeManager?.scopes).slice()",
         "bar()
-			foo.slice()",
+            foo.slice()",
         r#""".slice()"#,
         "new Uint8Array([10, 20, 30, 40, 50]).slice()",
         "array.slice(0)",

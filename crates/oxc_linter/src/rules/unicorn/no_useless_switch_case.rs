@@ -29,20 +29,20 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// switch (foo) {
-    /// 	case 1:
-    /// 	default:
-    /// 		handleDefaultCase();
-    /// 		break;
+    ///     case 1:
+    ///     default:
+    ///         handleDefaultCase();
+    ///         break;
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// switch (foo) {
-    ///	case 1:
-    ///	case 2:
-    ///		handleCase1And2();
-    ///		break;
+    ///     case 1:
+    ///     case 2:
+    ///         handleCase1And2();
+    ///         break;
     /// }
     /// ```
     NoUselessSwitchCase,

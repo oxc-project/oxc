@@ -31,7 +31,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = []
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = "1"
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = null
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -55,7 +55,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = true
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -63,7 +63,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = 1
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -71,7 +71,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = /./
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -79,7 +79,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = /./g
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -87,7 +87,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = bar
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -95,7 +95,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = bar.baz
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -103,7 +103,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:11]
+   ╭─[prefer_spread.tsx:2:23]
  1 │ function* foo() {
  2 │                 yield Array.from(arrayLike).forEach(doSomething)
    ·                       ─────────────────────
@@ -126,7 +126,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = [];
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -157,7 +157,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:18]
+   ╭─[prefer_spread.tsx:2:30]
  1 │ async function foo(){
  2 │                 return await Array.from(arrayLike)
    ·                              ─────────────────────
@@ -166,7 +166,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ foo()
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -174,7 +174,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const foo = {}
  2 │             Array.from(arrayLike).forEach(doSomething)
    ·             ─────────────────────
@@ -378,7 +378,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ bar()
  2 │             foo.concat(2)
    ·             ─────────────
@@ -400,7 +400,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const five = 2 + 3;
  2 │             foo.concat(five);
    ·             ────────────────
@@ -408,7 +408,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ const array = [2 + 3];
  2 │             foo.concat(array);
    ·             ─────────────────
@@ -612,7 +612,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
-    ╭─[prefer_spread.tsx:4:18]
+    ╭─[prefer_spread.tsx:4:27]
   3 │                 const EMPTY_STRING_IN_ARRAY_OF_ARRAY = ""
   4 │ ╭─▶             const array = [].concat(
   5 │ │                   undefined,
@@ -760,7 +760,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.concat()
-   ╭─[prefer_spread.tsx:2:17]
+   ╭─[prefer_spread.tsx:2:26]
  1 │ const baz = [2];
  2 │             call(foo, ...[bar].concat(baz));
    ·                          ─────────────────
@@ -831,7 +831,7 @@ source: crates/oxc_linter/src/tester.rs
   help: The spread operator (`...`) is more concise and readable.
 
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over array.slice()
-   ╭─[prefer_spread.tsx:2:4]
+   ╭─[prefer_spread.tsx:2:13]
  1 │ bar()
  2 │             foo.slice()
    ·             ───────────

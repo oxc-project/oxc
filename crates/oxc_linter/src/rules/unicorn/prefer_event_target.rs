@@ -211,9 +211,9 @@ fn test() {
         "class Foo extends EventEmitter { someMethod() {} }",
         "const Foo = class extends EventEmitter {}",
         "class Foo extends EventEmitter {
-				addListener() {}
-				removeListener() {}
-			}",
+                addListener() {}
+                removeListener() {}
+            }",
         "new EventEmitter",
         "const emitter = new EventEmitter;",
         "for (const {EventEmitter} of []) {new EventEmitter}",

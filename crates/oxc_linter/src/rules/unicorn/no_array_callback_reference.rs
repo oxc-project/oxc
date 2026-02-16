@@ -279,21 +279,21 @@ fn test() {
         "foo.map(function bar() {})",
         "foo.map(function (a) {}.bind(bar))",
         "async function foo() {
-				const clientId = 20
-				const client = await oidc.Client.find(clientId)
-			}",
+                const clientId = 20
+                const client = await oidc.Client.find(clientId)
+            }",
         "const results = collection
-				.find({
-					$and: [cursorQuery, params.query]
-				}, {
-					projection: params.projection
-				})
-				.sort($sort)
-				.limit(params.limit + 1)
-				.toArray()",
+                .find({
+                    $and: [cursorQuery, params.query]
+                }, {
+                    projection: params.projection
+                })
+                .sort($sort)
+                .limit(params.limit + 1)
+                .toArray()",
         "const EventsStore = types.model('EventsStore', {
-				events: types.optional(types.map(Event), {}),
-			})",
+                events: types.optional(types.map(Event), {}),
+            })",
         "foo.map(_ ? () => {} : _ ? () => {} : () => {})",
         "foo.reduce(_ ? () => {} : _ ? () => {} : () => {})",
         "foo.every(_ ? Boolean : _ ? Boolean : Boolean)",
@@ -306,29 +306,29 @@ fn test() {
         "foo.map(lib.fn)",
         "foo.reduce(lib.fn)",
         "foo.map(
-				_
-					? String // This one should be ignored
-					: callback
-			);",
+                _
+                    ? String // This one should be ignored
+                    : callback
+            );",
         "foo.forEach(
-				_
-					? callbackA
-					: _
-							? callbackB
-							: callbackC
-			);",
+                _
+                    ? callbackA
+                    : _
+                            ? callbackB
+                            : callbackC
+            );",
         "async function * foo () {
-				foo.map((0, bar));
-				foo.map(yield bar);
-				foo.map(yield* bar);
-				foo.map(() => bar);
-				foo.map(bar &&= baz);
-				foo.map(bar || baz);
-				foo.map(bar + bar);
-				foo.map(+ bar);
-				foo.map(++ bar);
-				foo.map(new Function(''));
-			}",
+                foo.map((0, bar));
+                foo.map(yield bar);
+                foo.map(yield* bar);
+                foo.map(() => bar);
+                foo.map(bar &&= baz);
+                foo.map(bar || baz);
+                foo.map(bar + bar);
+                foo.map(+ bar);
+                foo.map(++ bar);
+                foo.map(new Function(''));
+            }",
     ];
 
     Tester::new(NoArrayCallbackReference::NAME, NoArrayCallbackReference::PLUGIN, pass, fail)

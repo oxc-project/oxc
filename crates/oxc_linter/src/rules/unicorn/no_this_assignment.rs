@@ -32,9 +32,9 @@ declare_oxc_lint!(
     /// ```javascript
     /// const foo = this;
     /// class Bar {
-    /// 	method() {
-    /// 		foo.baz();
-    /// 	}
+    ///     method() {
+    ///         foo.baz();
+    ///     }
     /// }
     ///
     /// new Bar().method();
@@ -43,12 +43,12 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// class Bar {
-    /// 	constructor(fooInstance) {
-    /// 		this.fooInstance = fooInstance;
-    /// 	}
-    /// 	method() {
-    /// 		this.fooInstance.baz();
-    /// 	}
+    ///     constructor(fooInstance) {
+    ///         this.fooInstance = fooInstance;
+    ///     }
+    ///     method() {
+    ///         this.fooInstance.baz();
+    ///     }
     /// }
     ///
     /// new Bar(this).method();

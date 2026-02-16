@@ -171,12 +171,12 @@ fn test() {
         ("export default class{}"),
         ("export default class {}"),
         ("let Foo, Foo_, foo, foo_
-			export default class {}"),
+            export default class {}"),
         ("let Foo, Foo_, foo, foo_
-			export default (class{})"),
+            export default (class{})"),
         ("export default (class extends class {} {})"),
         ("let Exports, Exports_, exports, exports_
-			exports = class {}"),
+            exports = class {}"),
         ("module.exports = class {}"),
         ("export default function () {}"),
         ("export default function* () {}"),
@@ -186,13 +186,13 @@ fn test() {
         ("export default async function   *   () {}"),
         ("export default async function * /* comment */ () {}"),
         ("export default async function * // comment
-			() {}"),
+            () {}"),
         ("let Foo, Foo_, foo, foo_
-			export default async function * () {}"),
+            export default async function * () {}"),
         ("let Foo, Foo_, foo, foo_
-			export default (async function * () {})"),
+            export default (async function * () {})"),
         ("let Exports, Exports_, exports, exports_
-			exports = function() {}"),
+            exports = function() {}"),
         ("module.exports = function() {}"),
         ("export default () => {}"),
         ("export default async () => {}"),
@@ -202,23 +202,23 @@ fn test() {
         ("export default (( () => {} ))"),
         ("/* comment 1 */ export /* comment 2 */ default /* comment 3 */  () => {}"),
         ("// comment 1
-			export
-			// comment 2
-			default
-			// comment 3
-			() => {}"),
+            export
+            // comment 2
+            default
+            // comment 3
+            () => {}"),
         ("let Foo, Foo_, foo, foo_
-			export default async () => {}"),
+            export default async () => {}"),
         ("let Exports, Exports_, exports, exports_
-			exports = (( () => {} ))"),
+            exports = (( () => {} ))"),
         ("// comment 1
-			module
-			// comment 2
-			.exports
-			// comment 3
-			=
-			// comment 4
-			() => {};"),
+            module
+            // comment 2
+            .exports
+            // comment 3
+            =
+            // comment 4
+            () => {};"),
         ("(( exports = (( () => {} )) ))"),
         ("(( module.exports = (( () => {} )) ))"),
         ("(( exports = (( () => {} )) ));"),

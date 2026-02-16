@@ -278,28 +278,28 @@ fn test() {
         (
             r#"const parseInt = function() {};
 function inner() {
-	return parseInt("10", 2);
+    return parseInt("10", 2);
 }"#,
             None,
         ),
         (
             r#"const parseFloat = function() {};
 function inner() {
-	return parseFloat("10.5");
+    return parseFloat("10.5");
 }"#,
             None,
         ),
         (
             r"const isNaN = function() {};
 function inner() {
-	return isNaN(10);
+    return isNaN(10);
 }",
             None,
         ),
         (
             r"const isFinite = function() {};
 function inner() {
-	return isFinite(10);
+    return isFinite(10);
 }",
             None,
         ),
@@ -346,11 +346,11 @@ function inner() {
         (r"class Foo {#NaN = 1}", None),
         (
             r"NaN: for (const foo of bar) {
-	if (a) {
-		continue NaN;
-	} else {
-		break NaN;
-	}
+    if (a) {
+        continue NaN;
+    } else {
+        break NaN;
+    }
 }",
             None,
         ),
@@ -372,8 +372,8 @@ function inner() {
         (r#"const foo = "-Infinity";"#, None),
         (
             r"function foo () {
-	const Infinity = 2
-	return Infinity
+    const Infinity = 2
+    return Infinity
 }",
             None,
         ),
@@ -387,15 +387,15 @@ function inner() {
         (r"class Foo2 {NaN = 1}", None),
         (
             r"export enum NumberSymbol {
-	Decimal,
-	NaN,
+    Decimal,
+    NaN,
 }",
             None,
         ),
         (r"declare var NaN: number;", None),
         (
             r"interface NumberConstructor {
-	readonly NaN: number;
+    readonly NaN: number;
 }",
             None,
         ),
@@ -495,13 +495,13 @@ function inner() {
     let fix = vec![
         (
             r#"const a = parseInt("10", 2);
-			const b = parseFloat("10.5");
-			const c = isNaN(10);
-			const d = isFinite(10);"#,
+            const b = parseFloat("10.5");
+            const c = isNaN(10);
+            const d = isFinite(10);"#,
             r#"const a = Number.parseInt("10", 2);
-			const b = Number.parseFloat("10.5");
-			const c = Number.isNaN(10);
-			const d = Number.isFinite(10);"#,
+            const b = Number.parseFloat("10.5");
+            const c = Number.isNaN(10);
+            const d = Number.isFinite(10);"#,
             None::<serde_json::Value>,
         ),
         ("const foo = NaN;", "const foo = Number.NaN;", None),
