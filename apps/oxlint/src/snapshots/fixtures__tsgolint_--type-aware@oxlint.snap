@@ -158,6 +158,14 @@ working directory: fixtures/tsgolint
    :                   ^^
    `----
 
+  x typescript-eslint(no-unnecessary-qualifier): Qualifier is unnecessary since 'B' is in scope.
+   ,-[no-unnecessary-qualifier.ts:5:12]
+ 4 |   export type B = number;
+ 5 |   const x: A.B = 3;
+   :            ^
+ 6 | }
+   `----
+
   x typescript-eslint(no-unnecessary-template-expression): Template literal expression is unnecessary and can be simplified.
    ,-[no-unnecessary-template-expression.ts:2:18]
  1 | const text = 'hello';
@@ -486,8 +494,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 62 errors.
-Finished in <variable>ms on 51 files with 50 rules using 1 threads.
+Found 0 warnings and 63 errors.
+Finished in <variable>ms on 52 files with 51 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
