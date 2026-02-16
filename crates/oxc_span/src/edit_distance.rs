@@ -35,6 +35,10 @@ pub fn best_match<'a>(
     let mut best: Option<(&'a str, usize)> = None;
 
     for candidate in candidates {
+        // no need to calculate distance if length difference exceeds threshold
+        if candidate.len().abs_diff(needle.len()) > threshold {
+            continue;
+        }
         let distance = min_edit_distance(candidate, needle);
         if distance == 0 {
             return None;

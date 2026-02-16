@@ -825,20 +825,8 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
                     |label| {
-                        let labels = available_labels.get_or_insert_with(|| {
-                            let mut labels = Vec::new();
-                            for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-                                if let AstKind::LabeledStatement(labeled_statement) = node_kind {
-                                    labels.push(labeled_statement.label.name.as_str());
-                                } else if matches!(
-                                    node_kind,
-                                    AstKind::Function(_) | AstKind::StaticBlock(_)
-                                ) {
-                                    break;
-                                }
-                            }
-                            labels
-                        });
+                        let labels =
+                            available_labels.get_or_insert_with(|| collect_label_names(ctx));
                         let suggestion =
                             best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
                         ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
@@ -881,20 +869,8 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
                     |label| {
-                        let labels = available_labels.get_or_insert_with(|| {
-                            let mut labels = Vec::new();
-                            for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-                                if let AstKind::LabeledStatement(labeled_statement) = node_kind {
-                                    labels.push(labeled_statement.label.name.as_str());
-                                } else if matches!(
-                                    node_kind,
-                                    AstKind::Function(_) | AstKind::StaticBlock(_)
-                                ) {
-                                    break;
-                                }
-                            }
-                            labels
-                        });
+                        let labels =
+                            available_labels.get_or_insert_with(|| collect_label_names(ctx));
                         let suggestion =
                             best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
                         ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
@@ -932,6 +908,18 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
             _ => {}
         }
     }
+}
+
+fn collect_label_names<'a>(ctx: &'_ SemanticBuilder<'a>) -> Vec<&'a str> {
+    let mut labels = Vec::new();
+    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+        if let AstKind::LabeledStatement(labeled_statement) = node_kind {
+            labels.push(labeled_statement.label.name.as_str());
+        } else if matches!(node_kind, AstKind::Function(_) | AstKind::StaticBlock(_)) {
+            break;
+        }
+    }
+    labels
 }
 
 pub fn check_labeled_statement(stmt: &LabeledStatement, ctx: &SemanticBuilder<'_>) {
