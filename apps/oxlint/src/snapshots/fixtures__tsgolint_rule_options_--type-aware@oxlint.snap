@@ -48,8 +48,16 @@ working directory: fixtures/tsgolint_rule_options
  69 |   result += 1;
     `----
 
-Found 0 warnings and 5 errors.
-Finished in <variable>ms on 1 file with 8 rules using 1 threads.
+  x typescript-eslint(consistent-type-exports): Type export ExportOnlyType is not a value and should be exported using `export type`.
+    ,-[test.ts:81:1]
+ 80 | // This SHOULD error because ExportOnlyType is only used as a type.
+ 81 | export { ExportOnlyType, exportOnlyValue };
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 82 | 
+    `----
+
+Found 0 warnings and 6 errors.
+Finished in <variable>ms on 1 file with 9 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

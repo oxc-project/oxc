@@ -74,6 +74,12 @@ while (true) {
   break;
 }
 
+// Test consistent-type-exports with fixMixedExportsWithInlineTypeSpecifier option
+type ExportOnlyType = { value: number };
+const exportOnlyValue = 1;
+// This SHOULD error because ExportOnlyType is only used as a type.
+export { ExportOnlyType, exportOnlyValue };
+
 // Test only-throw-error with allowRethrowing option
 // When allowRethrowing is false, rethrowing a caught error SHOULD error
 try {

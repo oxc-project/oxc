@@ -224,6 +224,7 @@ pub(crate) mod typescript {
     pub mod consistent_indexed_object_style;
     pub mod consistent_type_assertions;
     pub mod consistent_type_definitions;
+    pub mod consistent_type_exports;
     pub mod consistent_type_imports;
     pub mod explicit_function_return_type;
     pub mod explicit_module_boundary_types;

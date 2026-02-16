@@ -13,6 +13,13 @@ working directory: fixtures/tsgolint
  2 | 
    `----
 
+  x typescript-eslint(consistent-type-exports): Type export LocalType is not a value and should be exported using `export type`.
+   ,-[consistent-type-exports.ts:7:1]
+ 6 | 
+ 7 | export { LocalType, localValue };
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
   x typescript-eslint(no-array-delete): Using the `delete` operator with an array expression is unsafe.
    ,-[no-array-delete.ts:2:1]
  1 | declare const arr: number[];
@@ -448,8 +455,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 57 errors.
-Finished in <variable>ms on 47 files with 46 rules using 1 threads.
+Found 0 warnings and 58 errors.
+Finished in <variable>ms on 48 files with 47 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

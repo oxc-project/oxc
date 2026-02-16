@@ -51,6 +51,12 @@
         "checkTypePredicates": false,
       }
     ],
+    "typescript/consistent-type-exports": [
+      "error",
+      {
+        "fixMixedExportsWithInlineTypeSpecifier": true
+      }
+    ],
     "typescript/only-throw-error": [
       "error",
       {
