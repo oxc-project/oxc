@@ -146,14 +146,50 @@ function toSnakeCase(str) {
 
 /**
  * Normalize a code string for fuzzy comparison.
- * Collapses all whitespace (including newlines) to single spaces for comparison.
+ * 1. Normalizes CommonJS and ESM syntax to be equivalent
+ * 2. Collapses all whitespace (including newlines) to single spaces
  */
 function normalize(code) {
   if (typeof code !== "string") return "";
 
+  let normalized = code;
+
+  // Normalize CommonJS to ESM for comparison
+  // const mod = require('module') → import mod from 'module'
+  normalized = normalized.replace(
+    /const\s+(\w+)\s*=\s*require\s*\(\s*(['"][^'"]+['"])\s*\)\s*;?/g,
+    "import $1 from $2;",
+  );
+
+  // const { a, b } = require('module') → import { a, b } from 'module'
+  normalized = normalized.replace(
+    /const\s*\{([^}]+)\}\s*=\s*require\s*\(\s*(['"][^'"]+['"])\s*\)\s*;?/g,
+    "import {$1} from $2;",
+  );
+
+  // let mod = require('module') → import mod from 'module'
+  normalized = normalized.replace(
+    /let\s+(\w+)\s*=\s*require\s*\(\s*(['"][^'"]+['"])\s*\)\s*;?/g,
+    "import $1 from $2;",
+  );
+
+  // var mod = require('module') → import mod from 'module'
+  normalized = normalized.replace(
+    /var\s+(\w+)\s*=\s*require\s*\(\s*(['"][^'"]+['"])\s*\)\s*;?/g,
+    "import $1 from $2;",
+  );
+
+  // require('module') → import 'module' (side effect import)
+  normalized = normalized.replace(/require\s*\(\s*(['"][^'"]+['"])\s*\)\s*;?/g, "import $1;");
+
+  // module.exports = x → export default x
+  normalized = normalized.replace(/module\.exports\s*=\s*/g, "export default ");
+
+  // export { x }; ... → export { x };... (keep exports as-is, just normalize spacing)
+
   // Replace all sequences of whitespace (spaces, tabs, newlines) with a single space
   // Then trim leading/trailing whitespace
-  return code.replace(/\s+/g, " ").trim();
+  return normalized.replace(/\s+/g, " ").trim();
 }
 
 // ── Step 1: Download and evaluate the upstream test file ────────────────
