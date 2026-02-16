@@ -345,6 +345,8 @@ fn test() {
         ("_.fromPairs()", None),
         ("new _.fromPairs(pairs)", None),
         ("_.fromPairs(...[pairs])", None),
+        // TODO: Fix this rule so this test passes.
+        // ("_?.fromPairs(pairs)", None),
         ("_.foo(pairs)", Some(serde_json::json!([{"functions": ["foo"]}]))),
         ("foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
         ("object.foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
@@ -417,6 +419,10 @@ fn test() {
         ),
         ("pairs.reduce(object => ({...object, method: async () => {}}), {});", None),
         ("pairs.reduce(object => ({...object, method: async function * (){}}), {});", None),
+        (
+            "array.reduce<Record<string, Data & {b?: string}>>((result, entry) => ({...result, [entry.id]: entry.data}), {});",
+            None,
+        ),
         ("_.fromPairs(pairs)", None),
         ("lodash.fromPairs(pairs)", None),
         (
