@@ -150,7 +150,6 @@ fn test() {
                 delete element;
                 console.log(element)
             }",
-            None::<()>,
         ),
         (
             "staticPages.forEach((pg) => allStaticPages.add(pg))
@@ -161,21 +160,18 @@ fn test() {
             pageInfos.forEach((info: PageInfo, key: string) => {
                 allPageInfos.set(key, info)
             })",
-            None,
         ),
         (
             "const cloakVals: string[] = [];
             elements.forEach(element => cloakVals.push(cloakElement(element)));",
             "const cloakVals: string[] = [];
             for (const element of elements) cloakVals.push(cloakElement(element));",
-            None,
         ),
         (
             "while (true) return;
             foo.forEach(element => bar(element));",
             "while (true) return;
             for (const element of foo) bar(element);",
-            None,
         ),
         (
             "foo.forEach(_ => {
@@ -184,7 +180,6 @@ fn test() {
             "for (const _ of foo) {
                 with (a)  { ({}); continue; }
             }",
-            None,
         ),
     ];
 

@@ -91,16 +91,16 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"blob.arrayBuffer()",
-        r"blob.text()",
-        r"new Response(blob).arrayBuffer()",
-        r"new Response(blob).text()",
-        r"fileReader.readAsDataURL(blob)",
-        r"fileReader.readAsBinaryString(blob)",
+        "blob.arrayBuffer()",
+        "blob.text()",
+        "new Response(blob).arrayBuffer()",
+        "new Response(blob).text()",
+        "fileReader.readAsDataURL(blob)",
+        "fileReader.readAsBinaryString(blob)",
         r#"fileReader.readAsText(blob, "ascii")"#,
     ];
 
-    let fail = vec![r"fileReader.readAsArrayBuffer(blob)", r"fileReader.readAsText(blob)"];
+    let fail = vec!["fileReader.readAsArrayBuffer(blob)", "fileReader.readAsText(blob)"];
 
     Tester::new(PreferBlobReadingMethods::NAME, PreferBlobReadingMethods::PLUGIN, pass, fail)
         .test_and_snapshot();
