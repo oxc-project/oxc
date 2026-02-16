@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.114.0] - 2026-02-16
+
+### 🚀 Features
+
+- 429d876 semantic: Assign ast node ids during semantic build (#19263) (Boshen)
+
+### 🐛 Bug Fixes
+
+- bfb15a3 semantic: Make multi_index_vec clone panic-safe (#19299) (Boshen)
+
+### ⚡ Performance
+
+- 5b90d46 semantic: Improve SoA with multi index vec (#19138) (Boshen)
+
+### 📚 Documentation
+
+- 569aa61 rust: Add missing rustdocs and remove missing_docs lint attrs (#19306) (Boshen)
+
 ## [0.113.0] - 2026-02-10
 
 ### 🐛 Bug Fixes
