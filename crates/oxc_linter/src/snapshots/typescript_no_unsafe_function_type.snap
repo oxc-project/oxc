@@ -24,7 +24,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer explicitly defining any function parameters and return type.
 
   ⚠ typescript-eslint(no-unsafe-function-type): The `Function` type accepts any function-like value.
-   ╭─[no_unsafe_function_type.tsx:2:35]
+   ╭─[no_unsafe_function_type.tsx:2:44]
  1 │ 
  2 │                     class Weird implements Function {
    ·                                            ────────
@@ -33,7 +33,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Prefer explicitly defining any function parameters and return type.
 
   ⚠ typescript-eslint(no-unsafe-function-type): The `Function` type accepts any function-like value.
-   ╭─[no_unsafe_function_type.tsx:2:36]
+   ╭─[no_unsafe_function_type.tsx:2:45]
  1 │ 
  2 │                     interface Weird extends Function {
    ·                                             ────────

@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
-   ╭─[prefer_enum_initializers.tsx:3:6]
+   ╭─[prefer_enum_initializers.tsx:3:15]
  2 │             enum Direction {
  3 │               Up,
    ·               ──
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
-   ╭─[prefer_enum_initializers.tsx:3:6]
+   ╭─[prefer_enum_initializers.tsx:3:15]
  2 │             enum Direction {
  3 │               Up,
    ·               ──
@@ -19,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Down" should be explicitly defined.
-   ╭─[prefer_enum_initializers.tsx:4:6]
+   ╭─[prefer_enum_initializers.tsx:4:15]
  3 │               Up,
  4 │               Down,
    ·               ────
@@ -27,7 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Down" should be explicitly defined.
-   ╭─[prefer_enum_initializers.tsx:4:6]
+   ╭─[prefer_enum_initializers.tsx:4:15]
  3 │               Up = 'Up',
  4 │               Down,
    ·               ────
@@ -35,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
-   ╭─[prefer_enum_initializers.tsx:3:6]
+   ╭─[prefer_enum_initializers.tsx:3:15]
  2 │             enum Direction {
  3 │               Up,
    ·               ──

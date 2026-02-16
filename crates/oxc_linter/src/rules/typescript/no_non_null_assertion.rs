@@ -83,25 +83,31 @@ fn test() {
         "x!?.y.z;",
         "x.y.z!?.();",
         "
-        	x!
-        	.y
-        	      ",
+            x!
+            .y
+                  ",
         "
-        	x!
-        	// comment
-        	.y
-        	      ",
+            x!
+            // comment
+            .y
+                  ",
         "
-        	x!
-        	 // comment
-        	    . /* comment */
-        	      y
-        	      ",
+            x!
+             // comment
+                . /* comment */
+                  y
+                  ",
         "
-        	x!
-        	 // comment
-        	     /* comment */ ['y']
-        	      ",
+            x!
+             // comment
+                 /* comment */ ['y']
+                  ",
+        "
+            document.querySelector('input')!.files = new FileList();
+                  ",
+        "
+            hoge.files = document.querySelector('input')!.files;
+                  ",
     ];
 
     Tester::new(NoNonNullAssertion::NAME, NoNonNullAssertion::PLUGIN, pass, fail)

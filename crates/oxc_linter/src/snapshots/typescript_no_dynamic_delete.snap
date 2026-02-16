@@ -3,7 +3,7 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
-   ╭─[no_dynamic_delete.tsx:3:10]
+   ╭─[no_dynamic_delete.tsx:3:13]
  2 │             const container: { [i: string]: 0 } = {};
  3 │             delete container['aa' + 'b'];
    ·             ────────────────────────────
@@ -11,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
-   ╭─[no_dynamic_delete.tsx:3:10]
+   ╭─[no_dynamic_delete.tsx:3:13]
  2 │             const container: { [i: string]: 0 } = {};
  3 │             delete container[+7];
    ·             ────────────────────
@@ -19,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
-   ╭─[no_dynamic_delete.tsx:3:10]
+   ╭─[no_dynamic_delete.tsx:3:13]
  2 │             const container: { [i: string]: 0 } = {};
  3 │             delete container[-Infinity];
    ·             ───────────────────────────
@@ -27,7 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
-   ╭─[no_dynamic_delete.tsx:3:10]
+   ╭─[no_dynamic_delete.tsx:3:13]
  2 │             const container: { [i: string]: 0 } = {};
  3 │             delete container[+Infinity];
    ·             ───────────────────────────
@@ -35,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
-   ╭─[no_dynamic_delete.tsx:3:10]
+   ╭─[no_dynamic_delete.tsx:3:13]
  2 │             const container: { [i: string]: 0 } = {};
  3 │             delete container[NaN];
    ·             ─────────────────────
@@ -43,7 +43,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
-   ╭─[no_dynamic_delete.tsx:4:10]
+   ╭─[no_dynamic_delete.tsx:4:13]
  3 │             const name = 'name';
  4 │             delete container[name];
    ·             ──────────────────────
@@ -51,7 +51,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
-   ╭─[no_dynamic_delete.tsx:4:10]
+   ╭─[no_dynamic_delete.tsx:4:13]
  3 │             const getName = () => 'aaa';
  4 │             delete container[getName()];
    ·             ───────────────────────────
@@ -59,7 +59,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
-   ╭─[no_dynamic_delete.tsx:4:10]
+   ╭─[no_dynamic_delete.tsx:4:13]
  3 │             const name = { foo: { bar: 'bar' } };
  4 │             delete container[name.foo.bar];
    ·             ──────────────────────────────
@@ -67,7 +67,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
-   ╭─[no_dynamic_delete.tsx:3:10]
+   ╭─[no_dynamic_delete.tsx:3:13]
  2 │             const container: { [i: string]: 0 } = {};
  3 │             delete container[+'Infinity'];
    ·             ─────────────────────────────
@@ -75,7 +75,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
-   ╭─[no_dynamic_delete.tsx:3:10]
+   ╭─[no_dynamic_delete.tsx:3:13]
  2 │             const container: { [i: string]: 0 } = {};
  3 │             delete container[typeof 1];
    ·             ──────────────────────────

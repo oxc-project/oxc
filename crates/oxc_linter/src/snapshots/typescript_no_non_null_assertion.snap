@@ -150,7 +150,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
 
   ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
-   ╭─[no_non_null_assertion.tsx:2:10]
+   ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
    ·             ──
@@ -159,7 +159,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
 
   ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
-   ╭─[no_non_null_assertion.tsx:2:10]
+   ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
    ·             ──
@@ -168,7 +168,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
 
   ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
-   ╭─[no_non_null_assertion.tsx:2:10]
+   ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
    ·             ──
@@ -177,10 +177,28 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
 
   ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
-   ╭─[no_non_null_assertion.tsx:2:10]
+   ╭─[no_non_null_assertion.tsx:2:13]
  1 │ 
  2 │             x!
    ·             ──
  3 │              // comment
+   ╰────
+  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+
+  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+   ╭─[no_non_null_assertion.tsx:2:13]
+ 1 │ 
+ 2 │             document.querySelector('input')!.files = new FileList();
+   ·             ────────────────────────────────
+ 3 │                   
+   ╰────
+  help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.
+
+  ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
+   ╭─[no_non_null_assertion.tsx:2:26]
+ 1 │ 
+ 2 │             hoge.files = document.querySelector('input')!.files;
+   ·                          ────────────────────────────────
+ 3 │                   
    ╰────
   help: Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.

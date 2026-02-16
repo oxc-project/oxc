@@ -148,7 +148,6 @@ fn test() {
         "import { type T, U } from 'mod';",
         "import { T, type U } from 'mod';",
         "import type T from 'mod';",
-        // "import type T, { U } from 'mod';", ts error 1363
         "import T, { type U } from 'mod';",
         "import type * as T from 'mod';",
         "import 'mod';",
@@ -162,15 +161,15 @@ fn test() {
     ];
 
     let fix = vec![
-        ("import { type A } from 'mod';", "import type { A } from 'mod';", None),
-        ("import { type A as AA } from 'mod';", "import type { A as AA } from 'mod';", None),
-        ("import { type A, type B } from 'mod';", "import type { A, B } from 'mod';", None),
+        ("import { type A } from 'mod';", "import type { A } from 'mod';"),
+        ("import { type A as AA } from 'mod';", "import type { A as AA } from 'mod';"),
+        ("import { type A, type B } from 'mod';", "import type { A, B } from 'mod';"),
         (
             "import { type A as AA, type B as BB } from 'mod';",
             "import type { A as AA, B as BB } from 'mod';",
-            None,
         ),
     ];
+
     Tester::new(NoImportTypeSideEffects::NAME, NoImportTypeSideEffects::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
