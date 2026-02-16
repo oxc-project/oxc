@@ -88,6 +88,20 @@ takesVoidCallback(() => anyReturnValue);
 // This SHOULD error because returning string is not allowed in a void callback
 takesVoidCallback(() => 'not-void');
 
+// Test prefer-readonly-parameter-types options
+function takesAllowedType(input: RegExp): void {
+  console.log(input.source);
+}
+
+interface MutableParameter {
+  value: string;
+}
+
+// This SHOULD error because parameter type is mutable
+function takesMutableParameter(input: MutableParameter): void {
+  console.log(input.value);
+}
+
 // Test only-throw-error with allowRethrowing option
 // When allowRethrowing is false, rethrowing a caught error SHOULD error
 try {

@@ -516,6 +516,7 @@ pub use crate::rules::typescript::prefer_namespace_keyword::PreferNamespaceKeywo
 pub use crate::rules::typescript::prefer_nullish_coalescing::PreferNullishCoalescing as TypescriptPreferNullishCoalescing;
 pub use crate::rules::typescript::prefer_optional_chain::PreferOptionalChain as TypescriptPreferOptionalChain;
 pub use crate::rules::typescript::prefer_promise_reject_errors::PreferPromiseRejectErrors as TypescriptPreferPromiseRejectErrors;
+pub use crate::rules::typescript::prefer_readonly_parameter_types::PreferReadonlyParameterTypes as TypescriptPreferReadonlyParameterTypes;
 pub use crate::rules::typescript::prefer_reduce_type_parameter::PreferReduceTypeParameter as TypescriptPreferReduceTypeParameter;
 pub use crate::rules::typescript::prefer_return_this_type::PreferReturnThisType as TypescriptPreferReturnThisType;
 pub use crate::rules::typescript::prefer_ts_expect_error::PreferTsExpectError as TypescriptPreferTsExpectError;
@@ -980,6 +981,7 @@ pub enum RuleEnum {
     TypescriptPreferNullishCoalescing(TypescriptPreferNullishCoalescing),
     TypescriptPreferOptionalChain(TypescriptPreferOptionalChain),
     TypescriptPreferPromiseRejectErrors(TypescriptPreferPromiseRejectErrors),
+    TypescriptPreferReadonlyParameterTypes(TypescriptPreferReadonlyParameterTypes),
     TypescriptPreferReduceTypeParameter(TypescriptPreferReduceTypeParameter),
     TypescriptPreferReturnThisType(TypescriptPreferReturnThisType),
     TypescriptPreferTsExpectError(TypescriptPreferTsExpectError),
@@ -1694,8 +1696,10 @@ const TYPESCRIPT_PREFER_NULLISH_COALESCING_ID: usize =
 const TYPESCRIPT_PREFER_OPTIONAL_CHAIN_ID: usize = TYPESCRIPT_PREFER_NULLISH_COALESCING_ID + 1usize;
 const TYPESCRIPT_PREFER_PROMISE_REJECT_ERRORS_ID: usize =
     TYPESCRIPT_PREFER_OPTIONAL_CHAIN_ID + 1usize;
-const TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID: usize =
+const TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID: usize =
     TYPESCRIPT_PREFER_PROMISE_REJECT_ERRORS_ID + 1usize;
+const TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID: usize =
+    TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID + 1usize;
 const TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID: usize =
     TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID + 1usize;
 const TYPESCRIPT_PREFER_TS_EXPECT_ERROR_ID: usize = TYPESCRIPT_PREFER_RETURN_THIS_TYPE_ID + 1usize;
@@ -2470,6 +2474,9 @@ impl RuleEnum {
             Self::TypescriptPreferOptionalChain(_) => TYPESCRIPT_PREFER_OPTIONAL_CHAIN_ID,
             Self::TypescriptPreferPromiseRejectErrors(_) => {
                 TYPESCRIPT_PREFER_PROMISE_REJECT_ERRORS_ID
+            }
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TYPESCRIPT_PREFER_READONLY_PARAMETER_TYPES_ID
             }
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TYPESCRIPT_PREFER_REDUCE_TYPE_PARAMETER_ID
@@ -3249,6 +3256,9 @@ impl RuleEnum {
             Self::TypescriptPreferOptionalChain(_) => TypescriptPreferOptionalChain::NAME,
             Self::TypescriptPreferPromiseRejectErrors(_) => {
                 TypescriptPreferPromiseRejectErrors::NAME
+            }
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::NAME
             }
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::NAME
@@ -4034,6 +4044,9 @@ impl RuleEnum {
             Self::TypescriptPreferOptionalChain(_) => TypescriptPreferOptionalChain::CATEGORY,
             Self::TypescriptPreferPromiseRejectErrors(_) => {
                 TypescriptPreferPromiseRejectErrors::CATEGORY
+            }
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::CATEGORY
             }
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::CATEGORY
@@ -4834,6 +4847,9 @@ impl RuleEnum {
             Self::TypescriptPreferOptionalChain(_) => TypescriptPreferOptionalChain::FIX,
             Self::TypescriptPreferPromiseRejectErrors(_) => {
                 TypescriptPreferPromiseRejectErrors::FIX
+            }
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::FIX
             }
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::FIX
@@ -5672,6 +5688,9 @@ impl RuleEnum {
             }
             Self::TypescriptPreferPromiseRejectErrors(_) => {
                 TypescriptPreferPromiseRejectErrors::documentation()
+            }
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::documentation()
             }
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::documentation()
@@ -7029,6 +7048,10 @@ impl RuleEnum {
             Self::TypescriptPreferPromiseRejectErrors(_) => {
                 TypescriptPreferPromiseRejectErrors::config_schema(generator)
                     .or_else(|| TypescriptPreferPromiseRejectErrors::schema(generator))
+            }
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::config_schema(generator)
+                    .or_else(|| TypescriptPreferReadonlyParameterTypes::schema(generator))
             }
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::config_schema(generator)
@@ -8449,6 +8472,7 @@ impl RuleEnum {
             Self::TypescriptPreferNullishCoalescing(_) => "typescript",
             Self::TypescriptPreferOptionalChain(_) => "typescript",
             Self::TypescriptPreferPromiseRejectErrors(_) => "typescript",
+            Self::TypescriptPreferReadonlyParameterTypes(_) => "typescript",
             Self::TypescriptPreferReduceTypeParameter(_) => "typescript",
             Self::TypescriptPreferReturnThisType(_) => "typescript",
             Self::TypescriptPreferTsExpectError(_) => "typescript",
@@ -9755,6 +9779,11 @@ impl RuleEnum {
             Self::TypescriptPreferPromiseRejectErrors(_) => {
                 Ok(Self::TypescriptPreferPromiseRejectErrors(
                     TypescriptPreferPromiseRejectErrors::from_configuration(value)?,
+                ))
+            }
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                Ok(Self::TypescriptPreferReadonlyParameterTypes(
+                    TypescriptPreferReadonlyParameterTypes::from_configuration(value)?,
                 ))
             }
             Self::TypescriptPreferReduceTypeParameter(_) => {
@@ -11310,6 +11339,7 @@ impl RuleEnum {
             Self::TypescriptPreferNullishCoalescing(rule) => rule.to_configuration(),
             Self::TypescriptPreferOptionalChain(rule) => rule.to_configuration(),
             Self::TypescriptPreferPromiseRejectErrors(rule) => rule.to_configuration(),
+            Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.to_configuration(),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.to_configuration(),
             Self::TypescriptPreferReturnThisType(rule) => rule.to_configuration(),
             Self::TypescriptPreferTsExpectError(rule) => rule.to_configuration(),
@@ -11995,6 +12025,7 @@ impl RuleEnum {
             Self::TypescriptPreferNullishCoalescing(rule) => rule.run(node, ctx),
             Self::TypescriptPreferOptionalChain(rule) => rule.run(node, ctx),
             Self::TypescriptPreferPromiseRejectErrors(rule) => rule.run(node, ctx),
+            Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.run(node, ctx),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.run(node, ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.run(node, ctx),
             Self::TypescriptPreferTsExpectError(rule) => rule.run(node, ctx),
@@ -12678,6 +12709,7 @@ impl RuleEnum {
             Self::TypescriptPreferNullishCoalescing(rule) => rule.run_once(ctx),
             Self::TypescriptPreferOptionalChain(rule) => rule.run_once(ctx),
             Self::TypescriptPreferPromiseRejectErrors(rule) => rule.run_once(ctx),
+            Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.run_once(ctx),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.run_once(ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.run_once(ctx),
             Self::TypescriptPreferTsExpectError(rule) => rule.run_once(ctx),
@@ -13411,6 +13443,9 @@ impl RuleEnum {
             Self::TypescriptPreferPromiseRejectErrors(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::TypescriptPreferReadonlyParameterTypes(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::TypescriptPreferReduceTypeParameter(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -14134,6 +14169,7 @@ impl RuleEnum {
             Self::TypescriptPreferNullishCoalescing(rule) => rule.should_run(ctx),
             Self::TypescriptPreferOptionalChain(rule) => rule.should_run(ctx),
             Self::TypescriptPreferPromiseRejectErrors(rule) => rule.should_run(ctx),
+            Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.should_run(ctx),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.should_run(ctx),
             Self::TypescriptPreferReturnThisType(rule) => rule.should_run(ctx),
             Self::TypescriptPreferTsExpectError(rule) => rule.should_run(ctx),
@@ -14930,6 +14966,9 @@ impl RuleEnum {
             }
             Self::TypescriptPreferPromiseRejectErrors(_) => {
                 TypescriptPreferPromiseRejectErrors::IS_TSGOLINT_RULE
+            }
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::IS_TSGOLINT_RULE
             }
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::IS_TSGOLINT_RULE
@@ -15853,6 +15892,9 @@ impl RuleEnum {
             Self::TypescriptPreferPromiseRejectErrors(_) => {
                 TypescriptPreferPromiseRejectErrors::HAS_CONFIG
             }
+            Self::TypescriptPreferReadonlyParameterTypes(_) => {
+                TypescriptPreferReadonlyParameterTypes::HAS_CONFIG
+            }
             Self::TypescriptPreferReduceTypeParameter(_) => {
                 TypescriptPreferReduceTypeParameter::HAS_CONFIG
             }
@@ -16618,6 +16660,7 @@ impl RuleEnum {
             Self::TypescriptPreferNullishCoalescing(rule) => rule.types_info(),
             Self::TypescriptPreferOptionalChain(rule) => rule.types_info(),
             Self::TypescriptPreferPromiseRejectErrors(rule) => rule.types_info(),
+            Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.types_info(),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.types_info(),
             Self::TypescriptPreferReturnThisType(rule) => rule.types_info(),
             Self::TypescriptPreferTsExpectError(rule) => rule.types_info(),
@@ -17301,6 +17344,7 @@ impl RuleEnum {
             Self::TypescriptPreferNullishCoalescing(rule) => rule.run_info(),
             Self::TypescriptPreferOptionalChain(rule) => rule.run_info(),
             Self::TypescriptPreferPromiseRejectErrors(rule) => rule.run_info(),
+            Self::TypescriptPreferReadonlyParameterTypes(rule) => rule.run_info(),
             Self::TypescriptPreferReduceTypeParameter(rule) => rule.run_info(),
             Self::TypescriptPreferReturnThisType(rule) => rule.run_info(),
             Self::TypescriptPreferTsExpectError(rule) => rule.run_info(),
@@ -18051,6 +18095,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptPreferOptionalChain(TypescriptPreferOptionalChain::default()),
         RuleEnum::TypescriptPreferPromiseRejectErrors(
             TypescriptPreferPromiseRejectErrors::default(),
+        ),
+        RuleEnum::TypescriptPreferReadonlyParameterTypes(
+            TypescriptPreferReadonlyParameterTypes::default(),
         ),
         RuleEnum::TypescriptPreferReduceTypeParameter(
             TypescriptPreferReduceTypeParameter::default(),

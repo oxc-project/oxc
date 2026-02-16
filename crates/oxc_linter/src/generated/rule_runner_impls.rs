@@ -1890,6 +1890,13 @@ impl RuleRunner
 }
 
 impl RuleRunner
+    for crate::rules::typescript::prefer_readonly_parameter_types::PreferReadonlyParameterTypes
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
+impl RuleRunner
     for crate::rules::typescript::prefer_reduce_type_parameter::PreferReduceTypeParameter
 {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
