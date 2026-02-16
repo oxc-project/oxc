@@ -6,8 +6,8 @@ arguments: --type-aware --silent
 working directory: fixtures/tsgolint
 ----------
 
-Found 0 warnings and 57 errors.
-Finished in <variable>ms on 47 files with 46 rules using 1 threads.
+Found 0 warnings and 58 errors.
+Finished in <variable>ms on 48 files with 47 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

@@ -446,6 +446,7 @@ pub use crate::rules::typescript::consistent_generic_constructors::ConsistentGen
 pub use crate::rules::typescript::consistent_indexed_object_style::ConsistentIndexedObjectStyle as TypescriptConsistentIndexedObjectStyle;
 pub use crate::rules::typescript::consistent_type_assertions::ConsistentTypeAssertions as TypescriptConsistentTypeAssertions;
 pub use crate::rules::typescript::consistent_type_definitions::ConsistentTypeDefinitions as TypescriptConsistentTypeDefinitions;
+pub use crate::rules::typescript::consistent_type_exports::ConsistentTypeExports as TypescriptConsistentTypeExports;
 pub use crate::rules::typescript::consistent_type_imports::ConsistentTypeImports as TypescriptConsistentTypeImports;
 pub use crate::rules::typescript::explicit_function_return_type::ExplicitFunctionReturnType as TypescriptExplicitFunctionReturnType;
 pub use crate::rules::typescript::explicit_module_boundary_types::ExplicitModuleBoundaryTypes as TypescriptExplicitModuleBoundaryTypes;
@@ -906,6 +907,7 @@ pub enum RuleEnum {
     TypescriptConsistentIndexedObjectStyle(TypescriptConsistentIndexedObjectStyle),
     TypescriptConsistentTypeAssertions(TypescriptConsistentTypeAssertions),
     TypescriptConsistentTypeDefinitions(TypescriptConsistentTypeDefinitions),
+    TypescriptConsistentTypeExports(TypescriptConsistentTypeExports),
     TypescriptConsistentTypeImports(TypescriptConsistentTypeImports),
     TypescriptExplicitFunctionReturnType(TypescriptExplicitFunctionReturnType),
     TypescriptExplicitModuleBoundaryTypes(TypescriptExplicitModuleBoundaryTypes),
@@ -1592,8 +1594,9 @@ const TYPESCRIPT_CONSISTENT_TYPE_ASSERTIONS_ID: usize =
     TYPESCRIPT_CONSISTENT_INDEXED_OBJECT_STYLE_ID + 1usize;
 const TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID: usize =
     TYPESCRIPT_CONSISTENT_TYPE_ASSERTIONS_ID + 1usize;
-const TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID: usize =
+const TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID: usize =
     TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID + 1usize;
+const TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID + 1usize;
 const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize =
     TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID + 1usize;
 const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
@@ -2360,6 +2363,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID
             }
+            Self::TypescriptConsistentTypeExports(_) => TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID,
             Self::TypescriptConsistentTypeImports(_) => TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID
@@ -3137,6 +3141,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TypescriptConsistentTypeDefinitions::NAME
             }
+            Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::NAME,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::NAME,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::NAME
@@ -3912,6 +3917,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TypescriptConsistentTypeDefinitions::CATEGORY
             }
+            Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::CATEGORY,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::CATEGORY,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::CATEGORY
@@ -4718,6 +4724,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TypescriptConsistentTypeDefinitions::FIX
             }
+            Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::FIX,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::FIX,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::FIX
@@ -5517,6 +5524,9 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TypescriptConsistentTypeDefinitions::documentation()
+            }
+            Self::TypescriptConsistentTypeExports(_) => {
+                TypescriptConsistentTypeExports::documentation()
             }
             Self::TypescriptConsistentTypeImports(_) => {
                 TypescriptConsistentTypeImports::documentation()
@@ -6764,6 +6774,10 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TypescriptConsistentTypeDefinitions::config_schema(generator)
                     .or_else(|| TypescriptConsistentTypeDefinitions::schema(generator))
+            }
+            Self::TypescriptConsistentTypeExports(_) => {
+                TypescriptConsistentTypeExports::config_schema(generator)
+                    .or_else(|| TypescriptConsistentTypeExports::schema(generator))
             }
             Self::TypescriptConsistentTypeImports(_) => {
                 TypescriptConsistentTypeImports::config_schema(generator)
@@ -8354,6 +8368,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(_) => "typescript",
             Self::TypescriptConsistentTypeAssertions(_) => "typescript",
             Self::TypescriptConsistentTypeDefinitions(_) => "typescript",
+            Self::TypescriptConsistentTypeExports(_) => "typescript",
             Self::TypescriptConsistentTypeImports(_) => "typescript",
             Self::TypescriptExplicitFunctionReturnType(_) => "typescript",
             Self::TypescriptExplicitModuleBoundaryTypes(_) => "typescript",
@@ -9468,6 +9483,9 @@ impl RuleEnum {
                     TypescriptConsistentTypeDefinitions::from_configuration(value)?,
                 ))
             }
+            Self::TypescriptConsistentTypeExports(_) => Ok(Self::TypescriptConsistentTypeExports(
+                TypescriptConsistentTypeExports::from_configuration(value)?,
+            )),
             Self::TypescriptConsistentTypeImports(_) => Ok(Self::TypescriptConsistentTypeImports(
                 TypescriptConsistentTypeImports::from_configuration(value)?,
             )),
@@ -11205,6 +11223,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.to_configuration(),
+            Self::TypescriptConsistentTypeExports(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeImports(rule) => rule.to_configuration(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.to_configuration(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.to_configuration(),
@@ -11890,6 +11909,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run(node, ctx),
+            Self::TypescriptConsistentTypeExports(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run(node, ctx),
@@ -12571,6 +12591,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run_once(ctx),
+            Self::TypescriptConsistentTypeExports(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_once(ctx),
@@ -13266,6 +13287,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::TypescriptConsistentTypeExports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -14023,6 +14045,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.should_run(ctx),
+            Self::TypescriptConsistentTypeExports(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.should_run(ctx),
@@ -14745,6 +14768,9 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TypescriptConsistentTypeDefinitions::IS_TSGOLINT_RULE
+            }
+            Self::TypescriptConsistentTypeExports(_) => {
+                TypescriptConsistentTypeExports::IS_TSGOLINT_RULE
             }
             Self::TypescriptConsistentTypeImports(_) => {
                 TypescriptConsistentTypeImports::IS_TSGOLINT_RULE
@@ -15684,6 +15710,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(_) => {
                 TypescriptConsistentTypeDefinitions::HAS_CONFIG
             }
+            Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::HAS_CONFIG,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::HAS_CONFIG,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::HAS_CONFIG
@@ -16499,6 +16526,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.types_info(),
+            Self::TypescriptConsistentTypeExports(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeImports(rule) => rule.types_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.types_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.types_info(),
@@ -17180,6 +17208,7 @@ impl RuleEnum {
             Self::TypescriptConsistentIndexedObjectStyle(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeAssertions(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run_info(),
+            Self::TypescriptConsistentTypeExports(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeImports(rule) => rule.run_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_info(),
@@ -17893,6 +17922,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptConsistentTypeDefinitions(
             TypescriptConsistentTypeDefinitions::default(),
         ),
+        RuleEnum::TypescriptConsistentTypeExports(TypescriptConsistentTypeExports::default()),
         RuleEnum::TypescriptConsistentTypeImports(TypescriptConsistentTypeImports::default()),
         RuleEnum::TypescriptExplicitFunctionReturnType(
             TypescriptExplicitFunctionReturnType::default(),
