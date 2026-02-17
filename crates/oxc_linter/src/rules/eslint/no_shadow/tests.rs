@@ -1719,28 +1719,31 @@ fn test_eslint() {
             None,
             None,
         ), // { "ecmaVersion": 6 },
-        (
-            "let x = false; export const a = wrap(function a() { if (!x) { x = true; a(); } });",
-            Some(serde_json::json!([{ "hoist": "all" }])),
-            None,
-            None,
-        ), // { "ecmaVersion": 6, "sourceType": "module" },
-        ("const a = wrap(function a() {});", None, None, None), // { "ecmaVersion": 6 },
-        ("const a = foo || wrap(function a() {});", None, None, None), // { "ecmaVersion": 6 },
-        ("const { a = wrap(function a() {}) } = obj;", None, None, None), // { "ecmaVersion": 6 },
-        ("const { a = foo || wrap(function a() {}) } = obj;", None, None, None), // { "ecmaVersion": 6 },
+        // The following tests are disabled as the behaviour of eslint vs typescript-eslint
+        // differs. We are following typescript-eslint's behaviour, but these tests are left
+        // here for clarity.
+        // (
+        //     "let x = false; export const a = wrap(function a() { if (!x) { x = true; a(); } });",
+        //     Some(serde_json::json!([{ "hoist": "all" }])),
+        //     None,
+        //     None,
+        // ), // { "ecmaVersion": 6, "sourceType": "module" },
+        // ("const a = wrap(function a() {});", None, None, None), // { "ecmaVersion": 6 },
+        // ("const a = foo || wrap(function a() {});", None, None, None), // { "ecmaVersion": 6 },
+        // ("const { a = wrap(function a() {}) } = obj;", None, None, None), // { "ecmaVersion": 6 },
+        // ("const { a = foo || wrap(function a() {}) } = obj;", None, None, None), // { "ecmaVersion": 6 },
         ("const { a = foo, b = function a() {} } = {}", None, None, None), // { "ecmaVersion": 6 },
         ("const { A = Foo, B = class A {} } = {}", None, None, None),      // { "ecmaVersion": 6 },
         ("function foo(a = wrap(function a() {})) {}", None, None, None),  // { "ecmaVersion": 6 },
         ("function foo(a = foo || wrap(function a() {})) {}", None, None, None), // { "ecmaVersion": 6 },
-        ("const A = wrap(class A {});", None, None, None), // { "ecmaVersion": 6 },
-        ("const A = foo || wrap(class A {});", None, None, None), // { "ecmaVersion": 6 },
-        ("const { A = wrap(class A {}) } = obj;", None, None, None), // { "ecmaVersion": 6 },
-        ("const { A = foo || wrap(class A {}) } = obj;", None, None, None), // { "ecmaVersion": 6 },
+        // ("const A = wrap(class A {});", None, None, None), // { "ecmaVersion": 6 },
+        // ("const A = foo || wrap(class A {});", None, None, None), // { "ecmaVersion": 6 },
+        // ("const { A = wrap(class A {}) } = obj;", None, None, None), // { "ecmaVersion": 6 },
+        // ("const { A = foo || wrap(class A {}) } = obj;", None, None, None), // { "ecmaVersion": 6 },
         ("function foo(A = wrap(class A {})) {}", None, None, None), // { "ecmaVersion": 6 },
         ("function foo(A = foo || wrap(class A {})) {}", None, None, None), // { "ecmaVersion": 6 },
-        ("var a = function a() {} ? foo : bar", None, None, None),
-        ("var A = class A {} ? foo : bar", None, None, None), // { "ecmaVersion": 6, },
+        // ("var a = function a() {} ? foo : bar", None, None, None),
+        // ("var A = class A {} ? foo : bar", None, None, None), // { "ecmaVersion": 6, },
         (
             "(function Array() {})",
             Some(serde_json::json!([{ "builtinGlobals": true }])),
@@ -2303,6 +2306,18 @@ fn test_typescript_eslint() {
             None,
             None,
             None,
+        ),
+        (
+            "
+            import { memo } from 'react';
+
+            const FooBarComponent = memo(function FooBarComponent() {
+              return <div>Foo</div>;
+            });
+                ",
+            None,
+            None,
+            Some(PathBuf::from("test.tsx")),
         ),
         (
             "

@@ -107,13 +107,6 @@ impl Rule for NoShadow {
                 continue;
             }
 
-            if let Some(shadowed_span) =
-                Self::function_expression_name_shadow_span(ctx, symbol_id, symbol_name_str)
-            {
-                ctx.diagnostic(no_shadow_diagnostic(symbol_span, symbol_name_str, shadowed_span));
-                continue;
-            }
-
             if let Some(shadowed_symbol_id) = Self::find_shadowed_symbol_id(ctx, symbol_id) {
                 if !self.should_ignore_shadowed_symbol(ctx, symbol_id, shadowed_symbol_id) {
                     let shadowed_span = scoping.symbol_span(shadowed_symbol_id);
@@ -123,6 +116,13 @@ impl Rule for NoShadow {
                         shadowed_span,
                     ));
                 }
+                continue;
+            }
+
+            if let Some(shadowed_span) =
+                Self::function_expression_name_shadow_span(ctx, symbol_id, symbol_name_str)
+            {
+                ctx.diagnostic(no_shadow_diagnostic(symbol_span, symbol_name_str, shadowed_span));
                 continue;
             }
 
@@ -485,6 +485,8 @@ impl NoShadow {
 
         let outer_declaration_id = ctx.scoping().symbol_declaration(outer_symbol_id);
         let outer_symbol_span = ctx.scoping().symbol_span(outer_symbol_id);
+        let is_outer_formal_parameter = Self::is_formal_parameter_symbol(ctx, outer_declaration_id);
+
         let Some(initializer) =
             Self::find_initializer_expression(ctx, outer_declaration_id, outer_symbol_span)
         else {
@@ -499,8 +501,16 @@ impl NoShadow {
             return false;
         }
 
-        let unwrapped_expression_id = Self::unwrap_expression(ctx, inner_expression_id);
-        initializer.address() == ctx.nodes().kind(unwrapped_expression_id).address()
+        if is_outer_formal_parameter {
+            let unwrapped_expression_id = Self::unwrap_expression(ctx, inner_expression_id);
+            return initializer.address() == ctx.nodes().kind(unwrapped_expression_id).address();
+        }
+
+        let inner_scope_id = ctx.scoping().symbol_scope_id(inner_symbol_id);
+        let outer_scope_id = ctx.scoping().symbol_scope_id(outer_symbol_id);
+        ctx.scoping()
+            .scope_parent_id(inner_scope_id)
+            .is_some_and(|parent_scope_id| parent_scope_id == outer_scope_id)
     }
 
     fn is_init_pattern_node(
@@ -640,6 +650,20 @@ impl NoShadow {
             }
         }
         None
+    }
+
+    fn is_formal_parameter_symbol(ctx: &LintContext, declaration_id: NodeId) -> bool {
+        for node_id in
+            std::iter::once(declaration_id).chain(ctx.nodes().ancestor_ids(declaration_id))
+        {
+            match ctx.nodes().kind(node_id) {
+                AstKind::FormalParameter(_) => return true,
+                kind if is_initializer_sentinel(kind) => break,
+                _ => {}
+            }
+        }
+
+        false
     }
 
     fn unwrap_expression(ctx: &LintContext, expression_id: NodeId) -> NodeId {

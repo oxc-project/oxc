@@ -665,51 +665,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'a' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:29]
- 1 │ let x = false; export const a = wrap(function a() { if (!x) { x = true; a(); } });
-   ·                             ┬                 ┬
-   ·                             │                 ╰── 'a' is declared here
-   ·                             ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'a' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'a' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:7]
- 1 │ const a = wrap(function a() {});
-   ·       ┬                 ┬
-   ·       │                 ╰── 'a' is declared here
-   ·       ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'a' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'a' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:7]
- 1 │ const a = foo || wrap(function a() {});
-   ·       ┬                        ┬
-   ·       │                        ╰── 'a' is declared here
-   ·       ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'a' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'a' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:9]
- 1 │ const { a = wrap(function a() {}) } = obj;
-   ·         ┬                 ┬
-   ·         │                 ╰── 'a' is declared here
-   ·         ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'a' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'a' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:9]
- 1 │ const { a = foo || wrap(function a() {}) } = obj;
-   ·         ┬                        ┬
-   ·         │                        ╰── 'a' is declared here
-   ·         ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'a' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'a' is already declared in the upper scope.
    ╭─[no_shadow.tsx:1:9]
  1 │ const { a = foo, b = function a() {} } = {}
    ·         ┬                     ┬
@@ -746,42 +701,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider renaming 'a' to avoid shadowing the variable from the outer scope.
 
   ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:7]
- 1 │ const A = wrap(class A {});
-   ·       ┬              ┬
-   ·       │              ╰── 'A' is declared here
-   ·       ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:7]
- 1 │ const A = foo || wrap(class A {});
-   ·       ┬                     ┬
-   ·       │                     ╰── 'A' is declared here
-   ·       ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:9]
- 1 │ const { A = wrap(class A {}) } = obj;
-   ·         ┬              ┬
-   ·         │              ╰── 'A' is declared here
-   ·         ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:9]
- 1 │ const { A = foo || wrap(class A {}) } = obj;
-   ·         ┬                     ┬
-   ·         │                     ╰── 'A' is declared here
-   ·         ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
    ╭─[no_shadow.tsx:1:14]
  1 │ function foo(A = wrap(class A {})) {}
    ·              ┬              ┬
@@ -796,24 +715,6 @@ source: crates/oxc_linter/src/tester.rs
    ·              ┬                     ┬
    ·              │                     ╰── 'A' is declared here
    ·              ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'a' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:5]
- 1 │ var a = function a() {} ? foo : bar
-   ·     ┬            ┬
-   ·     │            ╰── 'a' is declared here
-   ·     ╰── shadowed declaration is here
-   ╰────
-  help: Consider renaming 'a' to avoid shadowing the variable from the outer scope.
-
-  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
-   ╭─[no_shadow.tsx:1:5]
- 1 │ var A = class A {} ? foo : bar
-   ·     ┬         ┬
-   ·     │         ╰── 'A' is declared here
-   ·     ╰── shadowed declaration is here
    ╰────
   help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
 
