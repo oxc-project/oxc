@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectPropertyKind, PropertyKind, Statement},
+    ast::{Expression, MemberExpression, ObjectPropertyKind, PropertyKind, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -89,6 +89,8 @@ impl Rule for PreferObjectFromEntries {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
         if call_expr.arguments.len() == 1
+            && !call_expr.optional
+            && !call_expr.callee.as_member_expression().is_some_and(MemberExpression::optional)
             && call_expr.arguments[0].is_expression()
             && does_expr_match_any_path(
                 &call_expr.callee,
@@ -345,8 +347,7 @@ fn test() {
         ("_.fromPairs()", None),
         ("new _.fromPairs(pairs)", None),
         ("_.fromPairs(...[pairs])", None),
-        // TODO: Fix this rule so this test passes.
-        // ("_?.fromPairs(pairs)", None),
+        ("_?.fromPairs(pairs)", None),
         ("_.foo(pairs)", Some(serde_json::json!([{"functions": ["foo"]}]))),
         ("foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
         ("object.foo(pairs)", Some(serde_json::json!([{"functions": ["utils.object.foo"]}]))),
