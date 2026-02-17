@@ -138,9 +138,10 @@ fn template_element_starts_with_path_separator(temp_lit: &TemplateLiteral, i: us
     let text = quasi.value.raw.as_str();
 
     if let Some(c) = text.chars().next()
-        && is_path_separator(c) {
-            return true;
-        }
+        && is_path_separator(c)
+    {
+        return true;
+    }
 
     temp_lit.expressions.get(i).is_some_and(|expr| starts_with_path_separator(expr))
 }
