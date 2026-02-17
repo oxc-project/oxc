@@ -8,9 +8,10 @@ use napi_derive::napi;
 
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
+use oxc_estree_tokens::{EstreeTokenOptions, collect_token_context, to_estree_tokens_json};
 use oxc_linter::RawTransferMetadata2 as RawTransferMetadata;
 use oxc_napi::get_source_type;
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::SemanticBuilder;
 
 use crate::generated::raw_transfer_constants::{BLOCK_ALIGN as BUFFER_ALIGN, BUFFER_SIZE};
@@ -122,7 +123,7 @@ unsafe fn parse_raw_impl(
 
     // Get offsets and size of data region to be managed by arena allocator.
     // Leave space for source before it, and space for metadata after it.
-    // Metadata actually only takes 5 bytes, but round everything up to multiple of 16,
+    // Metadata is rounded up to multiple of 16,
     // as the arena allocator requires that alignment.
     const RAW_METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
     const {
@@ -157,7 +158,7 @@ unsafe fn parse_raw_impl(
 
     // Parse source.
     // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator` exist after this.
-    let (program_offset, has_bom) = {
+    let (program_offset, has_bom, tokens_offset, tokens_len) = {
         // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
         let source_text = unsafe {
             let source_end = source_start as usize + source_len as usize;
@@ -170,13 +171,14 @@ unsafe fn parse_raw_impl(
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,
+                collect_tokens: true,
                 ..ParseOptions::default()
             })
             .parse();
-        let program = allocator.alloc(parser_ret.program);
+        let ParserReturn { program: parsed_program, errors, tokens, panicked, .. } = parser_ret;
+        let program = allocator.alloc(parsed_program);
 
-        let mut parsing_failed =
-            parser_ret.panicked || (!parser_ret.errors.is_empty() && !ignore_non_fatal_errors);
+        let mut parsing_failed = panicked || (!errors.is_empty() && !ignore_non_fatal_errors);
 
         // Check for semantic errors.
         // If `ignore_non_fatal_errors` is `true`, skip running semantic, as any errors will be ignored anyway.
@@ -187,7 +189,7 @@ unsafe fn parse_raw_impl(
 
         if parsing_failed {
             // Use sentinel value for program offset to indicate that parsing failed
-            (PARSE_FAIL_SENTINEL, false)
+            (PARSE_FAIL_SENTINEL, false, 0, 0)
         } else {
             // If has BOM, remove it
             const BOM: &str = "\u{feff}";
@@ -212,10 +214,29 @@ unsafe fn parse_raw_impl(
             span_converter.convert_program(program);
             span_converter.convert_comments(&mut program.comments);
 
+            let (tokens_offset, tokens_len) = if has_bom {
+                // Fallback to TypeScript token parsing in JS for BOM files.
+                (0, 0)
+            } else {
+                let token_context = collect_token_context(program);
+                let tokens_json = to_estree_tokens_json(
+                    source_text,
+                    &tokens,
+                    &token_context,
+                    EstreeTokenOptions::linter(),
+                );
+                let tokens_json = allocator.alloc_str(&tokens_json);
+                #[expect(clippy::cast_possible_truncation)]
+                let tokens_offset = tokens_json.as_ptr() as u32;
+                #[expect(clippy::cast_possible_truncation)]
+                let tokens_len = tokens_json.len() as u32;
+                (tokens_offset, tokens_len)
+            };
+
             // Return offset of `Program` within buffer (bottom 32 bits of pointer)
             let program_offset = ptr::from_ref(program) as u32;
 
-            (program_offset, has_bom)
+            (program_offset, has_bom, tokens_offset, tokens_len)
         }
     };
 
@@ -226,6 +247,8 @@ unsafe fn parse_raw_impl(
         source_type.is_typescript(),
         source_type.is_jsx(),
         has_bom,
+        tokens_offset,
+        tokens_len,
     );
     // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.
     // `RAW_METADATA_OFFSET` is aligned on 16.

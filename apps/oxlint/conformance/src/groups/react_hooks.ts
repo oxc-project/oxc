@@ -21,9 +21,10 @@ const group: TestGroup = {
   },
 
   prepare(require: NodeJS.Require, mock: MockFn) {
-    // Add `default` export to `eslint-plugin-react-hooks` module
-    const plugin = require("eslint-plugin-react-hooks") as any;
+    // Use published plugin build to avoid requiring React compiler workspace artifacts.
+    const plugin = require("eslint-plugin-react-hooks-published") as any;
     plugin.default = plugin;
+    mock("eslint-plugin-react-hooks", plugin);
 
     // Mock `react/packages/eslint-plugin-react-hooks/src/shared/ReactCompiler.ts`
     // to use actual `eslint-plugin-react-hooks` package.

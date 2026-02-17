@@ -50,12 +50,17 @@ clone react https://github.com/facebook/react.git "$REACT_SHA"
 # Install dependencies
 yarn
 
-# Install `eslint-plugin-react-hooks` dependency
-cd packages/eslint-plugin-react-hooks
-yarn add eslint-plugin-react-hooks
+# Ensure `eslint-plugin-react-hooks` can be resolved from the React tests directory.
+# In recent React workspace setups this is already satisfied after `yarn`, and forcing
+# `yarn add` here can fail with workspace invariant errors.
+if ! node -e "require.resolve('eslint-plugin-react-hooks/package.json')" >/dev/null 2>&1; then
+  cd packages/eslint-plugin-react-hooks
+  yarn add eslint-plugin-react-hooks
+  cd ../..
+fi
 
 # Return to `submodules` directory
-cd ../../..
+cd ..
 
 ###############################################################################
 # Stylistic

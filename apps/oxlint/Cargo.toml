@@ -31,6 +31,7 @@ oxc_allocator = { workspace = true, features = ["fixed_size"] }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
+oxc_estree_tokens = { workspace = true }
 oxc_language_server = { workspace = true }
 oxc_linter = { workspace = true }
 oxc_napi = { workspace = true }
