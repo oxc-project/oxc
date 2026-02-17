@@ -58,10 +58,11 @@ impl Context {
         let default = if *turned_on_by_default { "true" } else { "false" };
         let type_aware = if *is_tsgolint_rule { "true" } else { "false" };
         let fix = autofix.to_string();
-        #[cfg(windows)]
-        let file = file!().replace('\\', "/");
-        #[cfg(not(windows))]
+
         let file = file!();
+        #[cfg(windows)]
+        #[expect(clippy::disallowed_methods, reason = "file path always contains slashes")]
+        let file = &*file.replace('\\', "/");
 
         writeln!(
             self.page,
