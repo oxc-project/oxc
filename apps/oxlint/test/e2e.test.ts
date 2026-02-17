@@ -32,8 +32,15 @@ describe("oxlint CLI", { concurrent: process.platform !== "win32" }, () => {
     if (!fixture.options.oxlint) continue;
 
     // oxlint-disable-next-line jest/expect-expect
-    it(`fixture: ${fixture.name}`, { concurrent: process.platform !== "win32" }, ({ expect }) =>
-      runFixture(fixture, expect),
+    it(
+      `fixture: ${fixture.name}`,
+      {
+        concurrent: process.platform !== "win32",
+        // Windows can be flaky due to memory allocation failures
+        // Ref: https://github.com/oxc-project/oxc/issues/19395
+        retry: process.platform === "win32" ? 2 : 0,
+      },
+      ({ expect }) => runFixture(fixture, expect),
     );
   }
 });
