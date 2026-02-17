@@ -21,7 +21,7 @@ impl Lexer<'_> {
                 },
         );
         let (pattern_end, flags, flags_error) = self.read_regex();
-        let token = self.finish_next(Kind::RegExp);
+        let token = self.finish_next_retokenized(Kind::RegExp);
         (token, pattern_end, flags, flags_error)
     }
 

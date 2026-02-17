@@ -93,10 +93,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
+pub use crate::lexer::{Kind, Token};
 use crate::{
     context::{Context, StatementContext},
     error_handler::FatalError,
-    lexer::{Lexer, Token},
+    lexer::Lexer,
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
@@ -166,6 +167,11 @@ pub struct ParserReturn<'a> {
     /// Irregular whitespaces for `Oxlint`
     pub irregular_whitespaces: Box<[Span]>,
 
+    /// Lexed tokens in source order.
+    ///
+    /// Tokens are only collected when [`ParseOptions::collect_tokens`] is enabled.
+    pub tokens: oxc_allocator::Vec<'a, Token>,
+
     /// Whether the parser panicked and terminated early.
     ///
     /// This will be `false` if parsing was successful, or if parsing was able to recover from a
@@ -219,6 +225,11 @@ pub struct ParseOptions {
     ///
     /// [`V8IntrinsicExpression`]: oxc_ast::ast::V8IntrinsicExpression
     pub allow_v8_intrinsics: bool,
+
+    /// Collect lexer tokens and return them in [`ParserReturn::tokens`].
+    ///
+    /// Default: `false`
+    pub collect_tokens: bool,
 }
 
 impl Default for ParseOptions {
@@ -229,6 +240,7 @@ impl Default for ParseOptions {
             allow_return_outside_function: false,
             preserve_parens: true,
             allow_v8_intrinsics: false,
+            collect_tokens: false,
         }
     }
 }
@@ -413,7 +425,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Self {
         Self {
             options,
-            lexer: Lexer::new(allocator, source_text, source_type, unique),
+            lexer: Lexer::new(allocator, source_text, source_type, options.collect_tokens, unique),
             source_type,
             source_text,
             errors: vec![],
@@ -470,16 +482,16 @@ impl<'a> ParserImpl<'a> {
             is_flow_language = true;
             errors.push(error);
         }
-        let (module_record, module_record_errors) = self.module_record_builder.build();
+        let (module_record, mut module_record_errors) = self.module_record_builder.build();
         if errors.len() != 1 {
             errors
                 .reserve(self.lexer.errors.len() + self.errors.len() + module_record_errors.len());
-            errors.extend(self.lexer.errors);
-            errors.extend(self.errors);
-            errors.extend(module_record_errors);
+            errors.append(&mut self.lexer.errors);
+            errors.append(&mut self.errors);
+            errors.append(&mut module_record_errors);
         }
         let irregular_whitespaces =
-            self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
+            std::mem::take(&mut self.lexer.trivia_builder.irregular_whitespaces).into_boxed_slice();
 
         let source_type = program.source_type;
         if source_type.is_unambiguous() {
@@ -501,6 +513,7 @@ impl<'a> ParserImpl<'a> {
             module_record,
             errors,
             irregular_whitespaces,
+            tokens: self.lexer.take_tokens(),
             panicked,
             is_flow_language,
         }
@@ -564,6 +577,11 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         statements: &mut oxc_allocator::Vec<'a, oxc_ast::ast::Statement<'a>>,
     ) {
+        // Token stream is already complete from the first parse.
+        // Reparsing here is only to patch AST nodes, so keep the original token stream.
+        let original_tokens =
+            if self.options.collect_tokens { Some(self.lexer.take_tokens()) } else { None };
+
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
         for (stmt_index, checkpoint) in checkpoints {
             // Rewind to the checkpoint
@@ -578,6 +596,11 @@ impl<'a> ParserImpl<'a> {
             if stmt_index < statements.len() {
                 statements[stmt_index] = stmt;
             }
+        }
+
+        if let Some(tokens) = original_tokens {
+            self.lexer.take_tokens();
+            self.lexer.set_tokens(tokens);
         }
     }
 
