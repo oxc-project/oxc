@@ -159,15 +159,21 @@ impl Rule for ArrayCallbackReturn {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_body, always_explicit_return) = match node.kind() {
+        let (function_body, always_explicit_return, is_async_empty) = match node.kind() {
             // Async, generator, and single expression arrow functions
             // always have explicit return value
-            AstKind::ArrowFunctionExpression(arrow) => {
-                (&arrow.body, arrow.r#async || arrow.expression)
-            }
+            AstKind::ArrowFunctionExpression(arrow) => (
+                &arrow.body,
+                arrow.r#async || arrow.expression,
+                arrow.r#async && arrow.body.statements.is_empty(),
+            ),
             AstKind::Function(function) => {
                 if let Some(body) = &function.body {
-                    (body, function.r#async || function.generator)
+                    (
+                        body,
+                        function.r#async || function.generator,
+                        function.r#async && body.statements.is_empty(),
+                    )
                 } else {
                     return;
                 }
@@ -195,6 +201,19 @@ impl Rule for ArrayCallbackReturn {
                             &full_array_method_name(array_method),
                             array_method_span,
                             return_span,
+                        ));
+                    }
+                }
+                ("fromAsync", _, false) => {
+                    if !return_status.must_return()
+                        || return_status.may_return_implicit()
+                        || is_async_empty
+                    {
+                        ctx.diagnostic(expect_return(
+                            &full_array_method_name(array_method),
+                            array_method_span,
+                            function_body,
+                            self.allow_implicit,
                         ));
                     }
                 }
@@ -286,6 +305,17 @@ pub fn get_array_method_info<'a>(
                     }
                 }
 
+                // Array.fromAsync
+                if callee.is_specific_member_access("Array", "fromAsync") {
+                    // Check that current node is parent's second argument
+                    if call.arguments.len() == 2
+                        && let Some(call_arg) = call.arguments[1].as_expression()
+                        && call_arg.span() == current_node.kind().span()
+                    {
+                        return Some((callee.span(), "fromAsync"));
+                    }
+                }
+
                 // "methods",
                 let (array_method_span, array_method) = callee.static_property_info()?;
 
@@ -330,6 +360,7 @@ const TARGET_METHODS: [&str; 14] = [
 fn full_array_method_name(array_method: &str) -> Cow<'static, str> {
     match array_method {
         "from" => Cow::Borrowed("Array.from"),
+        "fromAsync" => Cow::Borrowed("Array.fromAsync"),
         s => Cow::Owned(format!("Array.prototype.{s}")),
     }
 }
@@ -497,6 +528,26 @@ fn test() {
             "foo.every(function() { return; })",
             Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
         ),
+        /*(
+            "foo.forEach((x) => void x)",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => void bar(x))",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(function (x) { return void bar(x); })",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { return void bar(x); })",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { if (a === b) { return void a; } bar(x) })",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),*/
         ("Arrow.from(x, function() {})", None),
         ("foo.abc(function() {})", None),
         ("every(function() {})", None),
@@ -509,6 +560,16 @@ fn test() {
             "array.map((node) => { if (isTaskNode(node)) { return someObj; } else if (isOtherNode(node)) { return otherObj; } else { throw new Error('Unsupported'); } })",
             None,
         ),
+        ("Array.fromAsync(x, function() { return true; })", None),
+        ("Array.fromAsync(x, async function() { return true; })", None),
+        (
+            "Array.fromAsync(x, function() { return; })",
+            Some(serde_json::json!([{"allowImplicit": true}])),
+        ),
+        ("Array.fromAsync(x, async () => true)", None),
+        ("Array.fromAsync(x, function * () {})", None),
+        ("Float64Array.fromAsync(x, function() {})", None),
+        ("Array.fromAsync(function() {})", None),
     ];
 
     let fail = vec![
@@ -610,6 +671,42 @@ const _test = fruits.map((fruit) => {
             Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
         ),
         (
+            "foo.forEach(x => !x)",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => (x))",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { return x; })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { return !x; })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { return(x); })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { return (x + 1); })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { if (a === b) { return x; } })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { if (a === b) { return !x; } })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { if (a === b) { return (x + a); } })",
+            Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
+        ),
+        (
             "foo.forEach(function(x) { if (a == b) {return x;}})",
             Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
         ),
@@ -631,10 +728,6 @@ const _test = fruits.map((fruit) => {
         ),
         (
             "foo.forEach(function(x) { if (a == b) {return undefined;}})",
-            Some(serde_json::json!([{"checkForEach": true}])),
-        ),
-        (
-            "foo.forEach(function bar(x) { return x;})",
             Some(serde_json::json!([{"checkForEach": true}])),
         ),
         (
@@ -676,6 +769,17 @@ const _test = fruits.map((fruit) => {
             "foo.forEach((bar) => { if (bar) { return; } else { return bar ; } })",
             Some(serde_json::json!([{"checkForEach": true}])),
         ),
+        ("foo.forEach(x => (x))", Some(serde_json::json!([{"checkForEach": true}]))),
+        ("foo.forEach((x) => void x)", Some(serde_json::json!([{"checkForEach": true}]))),
+        ("foo.forEach((x) => void bar(x))", Some(serde_json::json!([{"checkForEach": true}]))),
+        (
+            "foo.forEach((x) => { return void bar(x); })",
+            Some(serde_json::json!([{"checkForEach": true}])),
+        ),
+        (
+            "foo.forEach((x) => { if (a === b) { return void a; } bar(x) })",
+            Some(serde_json::json!([{"checkForEach": true}])),
+        ),
         ("foo.filter(function(){})", None),
         ("foo.filter(function (){})", None),
         ("foo.filter(function\n(){})", None),
@@ -689,11 +793,23 @@ const _test = fruits.map((fruit) => {
             "foo.forEach(function () { \nif (baz) return bar\nelse return\n })",
             Some(serde_json::json!([{"checkForEach": true}])),
         ),
+        (
+            r"Array.fromAsync(x,
+            async	function \\u0066oo // bar
+               () {})",
+            None,
+        ),
         ("foo?.filter(() => { console.log('hello') })", None),
         ("(foo?.filter)(() => { console.log('hello') })", None),
         ("Array?.from([], () => { console.log('hello') })", None),
         ("(Array?.from)([], () => { console.log('hello') })", None),
         ("foo?.filter((function() { return () => { console.log('hello') } })?.())", None),
+        ("Array.fromAsync(x, function() {})", None),
+        ("Array.fromAsync(x, function() {})", Some(serde_json::json!([{"allowImplicit": true}]))),
+        ("Array.fromAsync(x, () => {})", None),
+        ("Array.fromAsync(x, function foo() {})", None),
+        ("Array.fromAsync(x, async function() {})", None),
+        ("Array.fromAsync(x, async () => {})", None),
     ];
 
     Tester::new(ArrayCallbackReturn::NAME, ArrayCallbackReturn::PLUGIN, pass, fail)
