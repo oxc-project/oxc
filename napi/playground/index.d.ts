@@ -109,7 +109,7 @@ export interface OxcFormatterOptions {
   /** Put each attribute on its own line (default: false) */
   singleAttributePerLine?: boolean
   /** Sort imports configuration (default: None) */
-  experimentalSortImports?: OxcSortImportsOptions
+  sortImports?: OxcSortImportsOptions
 }
 
 export interface OxcInjectOptions {

@@ -11,7 +11,7 @@ import { t } from "t";
 "#,
         r#"
 {
-    "experimentalSortImports":  {
+    "sortImports":  {
         "groups": [
             "side_effect_style",
             "type-external",
@@ -78,7 +78,7 @@ import CartComponentB from "./cart/CartComponentB.vue";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "elementNamePattern": ["~/validators/**"],
@@ -193,7 +193,7 @@ import ComponentC from "~/components/ComponentC.vue";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "elementNamePattern": ["~/validators/**"],
@@ -296,7 +296,7 @@ import { a } from "./a.ts";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "mocks",
@@ -328,7 +328,7 @@ import Vuetify from "vuetify";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "frameworks",
@@ -360,7 +360,7 @@ import Vuetify from "vuetify";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "vue-core",
@@ -394,7 +394,7 @@ import type { Qux } from "qux";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "types",
@@ -430,7 +430,7 @@ import type { Qux } from "qux";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "type-imports",
@@ -466,7 +466,7 @@ import { externalUtil } from "ext-lib";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "internal-types",
@@ -504,7 +504,7 @@ import { externalUtil } from "ext-lib";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "internal-type-imports",
@@ -541,7 +541,7 @@ import { bar } from "bar";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "types-only",
@@ -574,7 +574,7 @@ import { regular } from "regular";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "type-named",
@@ -610,7 +610,7 @@ import e from "e";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "externalImports",
@@ -651,7 +651,7 @@ import { c } from "c";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "primary",
@@ -698,7 +698,7 @@ import { baz } from "./sibling";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "internalPattern": ["~/"],
         "customGroups": [
             {
@@ -747,7 +747,7 @@ import { bar } from "@scope/bar";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "scope-types",
@@ -791,7 +791,7 @@ import e from "e";
 "#,
         r#"
 {
-    "experimentalSortImports": {
+    "sortImports": {
         "customGroups": [
             {
                 "groupName": "typeSiblings",

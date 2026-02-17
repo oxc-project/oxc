@@ -510,7 +510,7 @@ impl Oxc {
             }
         }
 
-        if let Some(ref sort_imports_config) = options.experimental_sort_imports {
+        if let Some(ref sort_imports_config) = options.sort_imports {
             let order = sort_imports_config
                 .order
                 .as_ref()
@@ -580,7 +580,7 @@ impl Oxc {
                     },
                 );
 
-            format_options.experimental_sort_imports = Some(SortImportsOptions {
+            format_options.sort_imports = Some(SortImportsOptions {
                 partition_by_newline: sort_imports_config.partition_by_newline.unwrap_or(false),
                 partition_by_comment: sort_imports_config.partition_by_comment.unwrap_or(false),
                 sort_side_effects: sort_imports_config.sort_side_effects.unwrap_or(false),

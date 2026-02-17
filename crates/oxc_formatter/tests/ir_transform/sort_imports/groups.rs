@@ -27,7 +27,7 @@ import { j } from "../j";
 import { K, L, M } from "../k";
 import "./style.css";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import fs from "fs";
 import path from "path";
@@ -81,7 +81,7 @@ import type { H } from "./index.d.ts";
 
 import "./style.css";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import fs from "fs";
 import path from "path";
@@ -116,7 +116,7 @@ import type { T } from "t";
 // @ts-expect-error missing types
 import { t } from "t";
 "#,
-        r#"{ "experimentalSortImports": {} }"#,
+        r#"{ "sortImports": {} }"#,
         r#"
 import type { T } from "t";
 // @ts-expect-error missing types
@@ -138,7 +138,7 @@ import type { U } from "~/u";
 import type { V } from "v";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": [
         "type",
         ["builtin", "external"],
@@ -163,7 +163,7 @@ import "./cc";
 import "../d";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["external", "side_effect", "unknown"],
     "sortSideEffects": false
   }
@@ -186,7 +186,7 @@ import a from "aaaa";
 import "../d";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["external", "side_effect", "unknown"],
     "sortSideEffects": false
   }
@@ -207,7 +207,7 @@ import "bb";
 import "aaa";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["external", "side_effect", "unknown"],
     "sortSideEffects": true
   }
@@ -229,7 +229,7 @@ import "./a-side-effect";
 import a from "./a";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["unknown"]
   }
 }"#,
@@ -253,7 +253,7 @@ import "./a-side-effect";
 import a from "./a";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["side_effect", "unknown"]
   }
 }"#,
@@ -278,7 +278,7 @@ import "./a-side-effect";
 import a from "./a";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": [["side_effect", "side_effect_style"], "unknown"]
   }
 }"#,
@@ -303,7 +303,7 @@ import "./a-side-effect";
 import a from "./a";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["side_effect", "side_effect_style", "unknown"]
   }
 }"#,
@@ -329,7 +329,7 @@ import "./a-side-effect.css";
 import a from "./a";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["side_effect_style", "unknown"]
   }
 }"#,
@@ -352,7 +352,7 @@ import { a } from "./a"; // Comment after
 import { c } from "c";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["unknown", "external"],
     "newlinesBetween": true
   }
@@ -372,7 +372,7 @@ import a from "./a";
 import b from "./index";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["index", "sibling"]
   }
 }"#,
@@ -390,7 +390,7 @@ import "something";
 import "style.css";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["side_effect_style", "side_effect"]
   }
 }"#,
@@ -408,7 +408,7 @@ import style from "style.css";
 import "something";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["side_effect", "style"]
   }
 }"#,
@@ -426,7 +426,7 @@ import a from "./a";
 import b from "b";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["external", "import"]
   }
 }"#,
@@ -444,7 +444,7 @@ import f from "f";
 import "./z";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["side_effect-import", "external", "value-import"],
     "sortSideEffects": true
   }
@@ -463,7 +463,7 @@ import f from "f";
 import z, { z } from "./z";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["default-import", "external", "named-import"]
   }
 }"#,
@@ -481,7 +481,7 @@ import f from "f";
 import * as z from "./z";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["wildcard-import", "external", "named-import"]
   }
 }"#,
@@ -498,7 +498,7 @@ import { b } from "b";
 import { a } from "@/a";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["external", "internal"],
     "newlinesBetween": true
   }
@@ -522,7 +522,7 @@ import d from "d";
 import style from "style.css";
 "##,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": [
         "style",
         [
@@ -557,7 +557,7 @@ import * as c from "c";
 import { b1, type b2, b3 as b33 } from "b";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": []
   }
 }"#,
@@ -576,7 +576,7 @@ import * as c from "c";
 import { b1, type b2, b3 as b33 } from "b";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": [[], []]
   }
 }"#,
@@ -594,7 +594,7 @@ import { writeFile } from "node:fs/promises";
 import { useEffect } from "react";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["builtin", "external"]
   }
 }"#,
@@ -612,7 +612,7 @@ import "~/data";
 import "~/css/globals.css";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["internal", "side_effect_style", "side_effect"]
   }
 }"#,
@@ -634,7 +634,7 @@ import { c } from "c";
 import "node:os";
 "#,
         r#"{
-  "experimentalSortImports": {
+  "sortImports": {
     "groups": ["builtin", "external", "side_effect"]
   }
 }"#,
