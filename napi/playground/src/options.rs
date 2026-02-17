@@ -149,7 +149,7 @@ pub struct OxcFormatterOptions {
     /// Put each attribute on its own line (default: false)
     pub single_attribute_per_line: Option<bool>,
     /// Sort imports configuration (default: None)
-    pub experimental_sort_imports: Option<OxcSortImportsOptions>,
+    pub sort_imports: Option<OxcSortImportsOptions>,
 }
 
 #[napi(object)]

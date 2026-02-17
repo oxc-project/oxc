@@ -73,7 +73,7 @@ pub struct FormatOptions {
     pub embedded_language_formatting: EmbeddedLanguageFormatting,
 
     /// Sort import statements. By default disabled.
-    pub experimental_sort_imports: Option<SortImportsOptions>,
+    pub sort_imports: Option<SortImportsOptions>,
 
     /// Enable Tailwind CSS class sorting in JSX class/className attributes.
     /// When enabled, class strings will be collected and passed to a callback for sorting.
@@ -146,7 +146,7 @@ impl FormatOptions {
             experimental_operator_position: OperatorPosition::default(),
             experimental_ternaries: false,
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
-            experimental_sort_imports: None,
+            sort_imports: None,
             experimental_tailwindcss: None,
         }
     }
@@ -174,7 +174,7 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Expand lists: {}", self.expand)?;
         writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
         writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
-        writeln!(f, "Experimental sort imports: {:?}", self.experimental_sort_imports)?;
+        writeln!(f, "Sort imports: {:?}", self.sort_imports)?;
         writeln!(f, "Experimental tailwindcss: {:?}", self.experimental_tailwindcss)
     }
 }

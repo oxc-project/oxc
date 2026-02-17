@@ -56,10 +56,8 @@ fn main() -> Result<(), String> {
     }
 
     // Format the parsed code
-    let options = FormatOptions {
-        experimental_sort_imports: Some(sort_imports_options.clone()),
-        ..Default::default()
-    };
+    let options =
+        FormatOptions { sort_imports: Some(sort_imports_options.clone()), ..Default::default() };
 
     let formatter = Formatter::new(&allocator, options);
     let formatted = formatter.format(&ret.program);

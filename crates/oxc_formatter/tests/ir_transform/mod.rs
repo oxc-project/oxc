@@ -54,7 +54,7 @@ pub fn assert_format(code: &str, config_json: &str, expected: &str) {
 struct TestConfig {
     single_quote: Option<bool>,
     semi: Option<bool>,
-    experimental_sort_imports: Option<TestSortImportsConfig>,
+    sort_imports: Option<TestSortImportsConfig>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -133,7 +133,7 @@ fn parse_test_config(json: &str) -> FormatOptions {
     if let Some(semi) = config.semi {
         options.semicolons = if semi { Semicolons::Always } else { Semicolons::AsNeeded };
     }
-    if let Some(sort_config) = config.experimental_sort_imports {
+    if let Some(sort_config) = config.sort_imports {
         let mut sort_imports = SortImportsOptions::default();
         if let Some(v) = sort_config.partition_by_newline {
             sort_imports.partition_by_newline = v;
@@ -179,7 +179,7 @@ fn parse_test_config(json: &str) -> FormatOptions {
                 })
                 .collect();
         }
-        options.experimental_sort_imports = Some(sort_imports);
+        options.sort_imports = Some(sort_imports);
     }
 
     options

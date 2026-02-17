@@ -12,7 +12,7 @@ import { bar } from "./bar";
 import { baz } from "baz";
 "#,
         r#"{
-            "experimentalSortImports": {
+            "sortImports": {
                 "newlinesBetween": true,
                 "groups": [
                     ["value-builtin", "value-external"],
@@ -44,7 +44,7 @@ import { bar } from "./bar";
 import { baz } from "baz";
 "#,
         r#"{
-            "experimentalSortImports": {
+            "sortImports": {
                 "newlinesBetween": false,
                 "groups": [
                     ["value-builtin", "value-external"],
@@ -76,7 +76,7 @@ import { bar } from "./bar";
 import { baz } from "baz";
 "#,
         r#"{
-            "experimentalSortImports": {
+            "sortImports": {
                 "newlinesBetween": true,
                 "groups": [
                     "type-import",
@@ -110,7 +110,7 @@ import { bar } from "./bar";
 import { baz } from "baz";
 "#,
         r#"{
-            "experimentalSortImports": {
+            "sortImports": {
                 "newlinesBetween": false,
                 "groups": [
                     ["value-builtin", "value-external"],
@@ -140,7 +140,7 @@ import { bar } from "./bar";
 import { baz } from "baz";
 "#,
         r#"{
-            "experimentalSortImports": {
+            "sortImports": {
                 "newlinesBetween": true,
                 "groups": [
                     ["value-builtin", "value-external"],
@@ -171,7 +171,7 @@ import { foo } from "../foo";
 import { baz } from "baz";
 "#,
         r#"{
-            "experimentalSortImports": {
+            "sortImports": {
                 "newlinesBetween": true,
                 "groups": [
                     "type-import",
@@ -203,7 +203,7 @@ import { foo } from "../foo";
 import type { T } from "t";
 "#,
         r#"{
-            "experimentalSortImports": {
+            "sortImports": {
                 "newlinesBetween": true,
                 "groups": [
                     "type-import",
@@ -237,7 +237,7 @@ import { foo } from "../foo";
 import type { T } from "t";
 "#,
         r#"{
-            "experimentalSortImports": {
+            "sortImports": {
                 "newlinesBetween": false,
                 "groups": [
                     "type-import",

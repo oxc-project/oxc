@@ -508,7 +508,7 @@ impl FormatConfig {
                 .validate()
                 .map_err(|e| format!("Invalid `sortImports` configuration: {e}"))?;
 
-            format_options.experimental_sort_imports = Some(sort_imports);
+            format_options.sort_imports = Some(sort_imports);
         }
 
         if let Some(config) = self.experimental_tailwindcss {
@@ -1142,7 +1142,7 @@ mod tests {
         assert!(!oxfmt_options.format_options.quote_style.is_double());
         assert!(oxfmt_options.format_options.semicolons.is_as_needed());
 
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
+        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
         assert!(sort_imports.partition_by_newline);
         assert!(sort_imports.order.is_desc());
         assert!(!sort_imports.ignore_case);
@@ -1164,7 +1164,7 @@ mod tests {
         assert!(oxfmt_options.format_options.indent_style.is_space());
         assert_eq!(oxfmt_options.format_options.indent_width.value(), 2);
         assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
-        assert_eq!(oxfmt_options.format_options.experimental_sort_imports, None);
+        assert_eq!(oxfmt_options.format_options.sort_imports, None);
     }
 
     #[test]
@@ -1176,7 +1176,7 @@ mod tests {
         assert!(oxfmt_options.format_options.indent_style.is_space());
         assert_eq!(oxfmt_options.format_options.indent_width.value(), 2);
         assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
-        assert_eq!(oxfmt_options.format_options.experimental_sort_imports, None);
+        assert_eq!(oxfmt_options.format_options.sort_imports, None);
     }
 
     #[test]
@@ -1214,7 +1214,7 @@ mod tests {
         )
         .unwrap();
         let oxfmt_options = config.into_oxfmt_options().unwrap();
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
+        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -1228,7 +1228,7 @@ mod tests {
         )
         .unwrap();
         let oxfmt_options = config.into_oxfmt_options().unwrap();
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
+        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
         assert!(!sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -1242,7 +1242,7 @@ mod tests {
         )
         .unwrap();
         let oxfmt_options = config.into_oxfmt_options().unwrap();
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
+        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -1282,7 +1282,7 @@ mod tests {
         )
         .unwrap();
         let oxfmt_options = config.into_oxfmt_options().unwrap();
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
+        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 5);
         assert_eq!(
             sort_imports.groups[0],
@@ -1315,7 +1315,7 @@ mod tests {
         )
         .unwrap();
         let oxfmt_options = config.into_oxfmt_options().unwrap();
-        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
+        let sort_imports = oxfmt_options.format_options.sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 3);
         assert_eq!(
             sort_imports.groups[0],
