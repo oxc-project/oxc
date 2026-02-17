@@ -461,10 +461,7 @@ fn is_circular_reference_impl(
                 {
                     return true;
                 }
-                let Some(reference_id) = ide.reference_id.get() else {
-                    return false;
-                };
-                let reference = ctx.scoping().get_reference(reference_id);
+                let reference = ctx.scoping().get_reference(ide.reference_id());
                 let Some(symbol_id) = reference.symbol_id() else {
                     return false;
                 };
