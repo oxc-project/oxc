@@ -4,6 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
@@ -444,7 +445,7 @@ fn is_circular_reference_impl(
     type_: &TSType,
     parent_name: &str,
     ctx: &LintContext,
-    visited: &mut FxHashSet<String>,
+    visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
     match type_ {
         TSType::TSTypeReference(r) => {
@@ -460,38 +461,22 @@ fn is_circular_reference_impl(
                 {
                     return true;
                 }
-                let name_str = ide.name.to_string();
-                if visited.contains(&name_str) {
+                let Some(reference_id) = ide.reference_id.get() else {
+                    return false;
+                };
+                let reference = ctx.scoping().get_reference(reference_id);
+                let Some(symbol_id) = reference.symbol_id() else {
+                    return false;
+                };
+                if !visited.insert(symbol_id) {
                     return false;
                 }
-                visited.insert(name_str);
 
-                for node in ctx.nodes().iter() {
-                    if let AstKind::TSTypeAliasDeclaration(dec) = node.kind()
-                        && dec.id.name == ide.name
-                    {
-                        if let TSType::TSTypeLiteral(lit) = &dec.type_annotation
-                            && lit.members.len() == 1
-                            && let Some(TSSignature::TSIndexSignature(sig)) = lit.members.first()
-                        {
-                            return is_circular_reference_impl(
-                                &sig.type_annotation.type_annotation,
-                                parent_name,
-                                ctx,
-                                visited,
-                            );
-                        }
-                        return is_circular_reference_impl(
-                            &dec.type_annotation,
-                            parent_name,
-                            ctx,
-                            visited,
-                        );
-                    }
-                    if let AstKind::TSInterfaceDeclaration(dec) = node.kind()
-                        && dec.id.name == ide.name
-                        && dec.body.body.len() == 1
-                        && let Some(TSSignature::TSIndexSignature(sig)) = dec.body.body.first()
+                let declaration = ctx.symbol_declaration(symbol_id);
+                if let AstKind::TSTypeAliasDeclaration(dec) = declaration.kind() {
+                    if let TSType::TSTypeLiteral(lit) = &dec.type_annotation
+                        && lit.members.len() == 1
+                        && let Some(TSSignature::TSIndexSignature(sig)) = lit.members.first()
                     {
                         return is_circular_reference_impl(
                             &sig.type_annotation.type_annotation,
@@ -500,6 +485,23 @@ fn is_circular_reference_impl(
                             visited,
                         );
                     }
+                    return is_circular_reference_impl(
+                        &dec.type_annotation,
+                        parent_name,
+                        ctx,
+                        visited,
+                    );
+                }
+                if let AstKind::TSInterfaceDeclaration(dec) = declaration.kind()
+                    && dec.body.body.len() == 1
+                    && let Some(TSSignature::TSIndexSignature(sig)) = dec.body.body.first()
+                {
+                    return is_circular_reference_impl(
+                        &sig.type_annotation.type_annotation,
+                        parent_name,
+                        ctx,
+                        visited,
+                    );
                 }
             }
             false
