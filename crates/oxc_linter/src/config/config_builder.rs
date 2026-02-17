@@ -1484,6 +1484,31 @@ mod test {
     }
 
     #[test]
+    fn test_extends_path_like_specifier_resolved_non_json_package_errors() {
+        let invalid_config = {
+            let mut external_plugin_store = ExternalPluginStore::default();
+            ConfigStoreBuilder::from_oxlintrc(
+                true,
+                Oxlintrc::from_file(&PathBuf::from(
+                    "fixtures/extends_config/path_like_extends_non_json_error/.oxlintrc.json",
+                ))
+                .unwrap(),
+                None,
+                &mut external_plugin_store,
+                None,
+            )
+        };
+
+        let err = invalid_config.unwrap_err();
+        assert!(matches!(err, ConfigBuilderError::InvalidConfigFile { .. }));
+        if let ConfigBuilderError::InvalidConfigFile { file, reason } = err {
+            assert_eq!(file, "configs/recommended.json");
+            assert!(reason.contains("recommended.js"));
+            assert!(reason.contains("Only JSON configuration files are supported."));
+        }
+    }
+
+    #[test]
     fn test_not_extends_named_configs() {
         // Named configs are unsupported and should be ignored, even if they resolve in node_modules.
         let config = config_store_from_path(
