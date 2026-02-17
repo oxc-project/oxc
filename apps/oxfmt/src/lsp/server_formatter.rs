@@ -5,7 +5,7 @@ use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, T
 use tracing::{debug, error, warn};
 
 use oxc_data_structures::rope::{Rope, get_line_column};
-use oxc_language_server::{Capabilities, Tool, ToolBuilder, ToolRestartChanges};
+use oxc_language_server::{Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges};
 
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
@@ -243,7 +243,12 @@ impl Tool for ServerFormatter {
         }
     }
 
-    fn run_format(&self, uri: &Uri, content: Option<&str>) -> Result<Vec<TextEdit>, String> {
+    fn run_format(
+        &self,
+        uri: &Uri,
+        _language_id: &LanguageId,
+        content: Option<&str>,
+    ) -> Result<Vec<TextEdit>, String> {
         let Some(path) = uri.to_file_path() else { return Err("Invalid file URI".to_string()) };
 
         if self.is_ignored(&path) {

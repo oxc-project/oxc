@@ -13,7 +13,7 @@ use tower_lsp_server::{
 use tracing::debug;
 
 use crate::{
-    ToolRestartChanges,
+    LanguageId, ToolRestartChanges,
     capabilities::DiagnosticMode,
     file_system::LSPFileSystem,
     tool::{DiagnosticResult, Tool, ToolBuilder},
@@ -191,10 +191,11 @@ impl WorkspaceWorker {
     pub async fn format_file(
         &self,
         uri: &Uri,
+        language_id: &LanguageId,
         content: Option<&str>,
     ) -> Result<Vec<TextEdit>, String> {
         for tool in self.tools.read().await.iter() {
-            let edits = tool.run_format(uri, content)?;
+            let edits = tool.run_format(uri, language_id, content)?;
             // If no edits are made, continue to the next tool
             if edits.is_empty() {
                 continue;

@@ -826,8 +826,13 @@ impl LanguageServer for Backend {
         let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
             return Ok(None);
         };
-        let content = self.file_system.read().await.get(uri).map(|(_, content)| content);
-        match worker.format_file(uri, content.as_deref()).await {
+
+        let fs_entry = self.file_system.read().await.get(uri);
+        let (language_id, content) = match fs_entry {
+            Some((id, content)) => (id, Some(content)),
+            None => (LanguageId::default(), None),
+        };
+        match worker.format_file(uri, &language_id, content.as_deref()).await {
             Ok(edits) => {
                 if edits.is_empty() {
                     return Ok(None);
