@@ -116,6 +116,10 @@ fn check_unicorn_prefer_spread<'a>(
                 return;
             }
 
+            if is_typed_array_or_buffer_construction(member_expr_obj) {
+                return;
+            }
+
             if let Expression::Identifier(ident) = member_expr_obj
                 && IGNORED_SLICE_CALLEE.contains(&ident.name.as_str())
             {
@@ -194,6 +198,31 @@ fn check_unicorn_prefer_spread<'a>(
 }
 
 const IGNORED_SLICE_CALLEE: [&str; 5] = ["arrayBuffer", "blob", "buffer", "file", "this"];
+
+/// Check if an expression is `new TypedArray(...)`, `new ArrayBuffer(...)`,
+/// or `new SharedArrayBuffer(...)`. Spreading these either fails (ArrayBuffer
+/// has no iterator) or changes the type (TypedArray → number[]).
+fn is_typed_array_or_buffer_construction(expr: &Expression) -> bool {
+    let Expression::NewExpression(new_expr) = expr else { return false };
+    let Expression::Identifier(ident) = &new_expr.callee else { return false };
+    matches!(
+        ident.name.as_str(),
+        "ArrayBuffer"
+            | "SharedArrayBuffer"
+            | "Int8Array"
+            | "Uint8Array"
+            | "Uint8ClampedArray"
+            | "Int16Array"
+            | "Uint16Array"
+            | "Int32Array"
+            | "Uint32Array"
+            | "Float16Array"
+            | "Float32Array"
+            | "Float64Array"
+            | "BigInt64Array"
+            | "BigUint64Array"
+    )
+}
 
 fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
     if matches!(
@@ -338,25 +367,26 @@ fn test() {
         "buffer.slice()",
         "file.slice()",
         "class A {foo() {this.slice()}}",
-        // TODO: Fix.
+        // TODO: Handle optional chaining case.
         // "scopeManager?.scopes.slice()",
-        // "new ArrayBuffer(10).slice()",
-        // "new ArrayBuffer(10).slice(0)",
-        // "new SharedArrayBuffer(10).slice()",
-        // "new SharedArrayBuffer(10).slice(0)",
-        // "new Int8Array([1, 2, 3]).slice()",
-        // "new Int8Array([1, 2, 3]).slice(0)",
-        // "new Uint8Array([10, 20, 30, 40, 50]).slice()",
-        // "new Uint8Array([10, 20, 30, 40, 50]).slice(0)",
-        // "new Uint8ClampedArray([1, 2, 3]).slice()",
-        // "new Int16Array([1, 2, 3]).slice()",
-        // "new Uint16Array([1, 2, 3]).slice()",
-        // "new Int32Array([1, 2, 3]).slice()",
-        // "new Uint32Array([1, 2, 3]).slice()",
-        // "new Float32Array([1, 2, 3]).slice()",
-        // "new Float64Array([1, 2, 3]).slice()",
-        // "new BigInt64Array([1n, 2n, 3n]).slice()",
-        // "new BigUint64Array([1n, 2n, 3n]).slice()",
+        // TypedArray/ArrayBuffer constructors - spreading doesn't work or changes type
+        "new ArrayBuffer(10).slice()",
+        "new ArrayBuffer(10).slice(0)",
+        "new SharedArrayBuffer(10).slice()",
+        "new SharedArrayBuffer(10).slice(0)",
+        "new Int8Array([1, 2, 3]).slice()",
+        "new Int8Array([1, 2, 3]).slice(0)",
+        "new Uint8Array([10, 20, 30, 40, 50]).slice()",
+        "new Uint8Array([10, 20, 30, 40, 50]).slice(0)",
+        "new Uint8ClampedArray([1, 2, 3]).slice()",
+        "new Int16Array([1, 2, 3]).slice()",
+        "new Uint16Array([1, 2, 3]).slice()",
+        "new Int32Array([1, 2, 3]).slice()",
+        "new Uint32Array([1, 2, 3]).slice()",
+        "new Float32Array([1, 2, 3]).slice()",
+        "new Float64Array([1, 2, 3]).slice()",
+        "new BigInt64Array([1n, 2n, 3n]).slice()",
+        "new BigUint64Array([1n, 2n, 3n]).slice()",
         "new Array.toSpliced()",
         "toSpliced()",
         "array[toSpliced]()",
