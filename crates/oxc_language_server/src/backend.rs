@@ -21,7 +21,7 @@ use tower_lsp_server::{
 use tracing::{debug, error, info, warn};
 
 use crate::{
-    ConcurrentHashMap, ToolBuilder,
+    ConcurrentHashMap, LanguageId, ToolBuilder,
     capabilities::{Capabilities, DiagnosticMode, server_capabilities},
     file_system::LSPFileSystem,
     options::WorkspaceOption,
@@ -242,7 +242,8 @@ impl LanguageServer for Backend {
                     if responsible_worker.is_none_or(|w| !std::ptr::eq(w, worker)) {
                         continue;
                     }
-                    let content = self.file_system.read().await.get(uri);
+                    let content =
+                        self.file_system.read().await.get(uri).map(|(_, content)| content);
                     let diagnostics = worker.run_diagnostic(uri, content.as_deref()).await;
                     match diagnostics {
                         Err(err) => {
@@ -659,7 +660,11 @@ impl LanguageServer for Backend {
 
         let content = params.text_document.text;
 
-        self.file_system.write().await.set(uri.clone(), content.clone());
+        self.file_system.write().await.set_with_language(
+            uri.clone(),
+            LanguageId::new(params.text_document.language_id),
+            content.clone(),
+        );
 
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic(&uri, Some(&content)).await {
@@ -757,8 +762,9 @@ impl LanguageServer for Backend {
                 RelatedFullDocumentDiagnosticReport::default(),
             )));
         };
-        let diagnostics =
-            worker.run_diagnostic(uri, self.file_system.read().await.get(uri).as_deref()).await;
+
+        let content = self.file_system.read().await.get(uri).map(|(_, content)| content);
+        let diagnostics = worker.run_diagnostic(uri, content.as_deref()).await;
 
         let diagnostics = match diagnostics {
             Err(err) => {
@@ -820,7 +826,8 @@ impl LanguageServer for Backend {
         let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
             return Ok(None);
         };
-        match worker.format_file(uri, self.file_system.read().await.get(uri).as_deref()).await {
+        let content = self.file_system.read().await.get(uri).map(|(_, content)| content);
+        match worker.format_file(uri, content.as_deref()).await {
             Ok(edits) => {
                 if edits.is_empty() {
                     return Ok(None);
