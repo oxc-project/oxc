@@ -148,7 +148,25 @@ impl ConfigStoreBuilder {
         fn resolve_oxlintrc_config(
             config: Oxlintrc,
             in_object_extends: bool,
+            resolver: &Resolver,
         ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
+            fn is_path_like_extends_specifier(path: &Path, specifier: &str) -> bool {
+                path.is_absolute()
+                    || specifier.starts_with("./")
+                    || specifier.starts_with("../")
+                    || specifier.starts_with(".\\")
+                    || specifier.starts_with("..\\")
+                    || specifier.ends_with(".json")
+            }
+
+            fn is_explicit_filesystem_path(path: &Path, specifier: &str) -> bool {
+                path.is_absolute()
+                    || specifier.starts_with("./")
+                    || specifier.starts_with("../")
+                    || specifier.starts_with(".\\")
+                    || specifier.starts_with("..\\")
+            }
+
             if in_object_extends {
                 check_no_relative_js_plugins_in_extends(&config)?;
             }
@@ -162,28 +180,60 @@ impl ConfigStoreBuilder {
             let mut oxlintrc = config;
 
             for config in extends_configs.into_iter().rev() {
-                let (extends, extends_paths) = resolve_oxlintrc_config(config, true)?;
+                let (extends, extends_paths) = resolve_oxlintrc_config(config, true, resolver)?;
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
             }
 
             for path in extends.iter().rev() {
-                if path.starts_with("eslint:") || path.starts_with("plugin:") {
+                let specifier = path.to_string_lossy();
+
+                if specifier.starts_with("eslint:") || specifier.starts_with("plugin:") {
                     // `eslint:` and `plugin:` named configs are not supported
                     continue;
                 }
-                // if path does not include a ".", then we will heuristically skip it since it
-                // kind of looks like it might be a named config
-                if !path.to_string_lossy().contains('.') {
-                    continue;
-                }
 
-                let path = match root_path {
-                    Some(p) => &p.join(path),
-                    None => path,
+                let resolve_dir = root_path.unwrap_or_else(|| Path::new("."));
+                let is_path_like = is_path_like_extends_specifier(path, specifier.as_ref());
+                let path = if is_path_like {
+                    let explicit_filesystem_path =
+                        is_explicit_filesystem_path(path, specifier.as_ref());
+                    let filesystem_path = match root_path {
+                        Some(p) => p.join(path),
+                        None => path.clone(),
+                    };
+
+                    // Preserve legacy behavior: for path-like specifiers, resolve local files first.
+                    if filesystem_path.is_file() || explicit_filesystem_path {
+                        filesystem_path
+                    } else if let Ok(resolved) = resolver.resolve(resolve_dir, specifier.as_ref()) {
+                        let resolved_path = resolved.full_path();
+                        // Oxlint config files are JSON-only.
+                        if resolved_path.extension().and_then(|ext| ext.to_str()) != Some("json") {
+                            return Err(ConfigBuilderError::InvalidConfigFile {
+                                file: specifier.to_string(),
+                                reason: format!(
+                                    "Resolved to '{}'. Only JSON configuration files are supported.",
+                                    resolved_path.display()
+                                ),
+                            });
+                        }
+                        resolved_path.to_path_buf()
+                    } else {
+                        filesystem_path
+                    }
+                } else if let Ok(resolved) = resolver.resolve(resolve_dir, specifier.as_ref()) {
+                    let resolved_path = resolved.full_path();
+                    // Keep legacy behavior for unsupported named configs.
+                    if resolved_path.extension().and_then(|ext| ext.to_str()) != Some("json") {
+                        continue;
+                    }
+                    resolved_path.to_path_buf()
+                } else {
+                    continue;
                 };
 
-                let extends_oxlintrc = Oxlintrc::from_file(path).map_err(|e| {
+                let extends_oxlintrc = Oxlintrc::from_file(&path).map_err(|e| {
                     ConfigBuilderError::InvalidConfigFile {
                         file: path.display().to_string(),
                         reason: e.to_string(),
@@ -192,7 +242,8 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
-                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, false)?;
+                let (extends, extends_paths) =
+                    resolve_oxlintrc_config(extends_oxlintrc, false, resolver)?;
 
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
@@ -201,7 +252,12 @@ impl ConfigStoreBuilder {
             Ok((oxlintrc, extended_paths))
         }
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false)?;
+        let resolver = Resolver::new(ResolveOptions {
+            condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
+            ..Default::default()
+        });
+
+        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false, &resolver)?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
@@ -227,11 +283,6 @@ impl ConfigStoreBuilder {
                     plugin_specifier: first_plugin.specifier.clone(),
                 });
             };
-
-            let resolver = Resolver::new(ResolveOptions {
-                condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
-                ..Default::default()
-            });
 
             for entry in &external_plugins {
                 Self::load_external_plugin(
@@ -1364,16 +1415,78 @@ mod test {
     }
 
     #[test]
+    fn test_extends_node_modules_packages() {
+        let config =
+            config_store_from_path("fixtures/extends_config/node_modules_extends/.oxlintrc.json");
+
+        assert!(
+            config
+                .rules()
+                .iter()
+                .any(|(r, severity)| r.name() == "no-debugger" && *severity == AllowWarnDeny::Warn)
+        );
+        assert!(
+            config
+                .rules()
+                .iter()
+                .any(|(r, severity)| r.name() == "no-console" && *severity == AllowWarnDeny::Warn)
+        );
+        assert!(
+            config
+                .rules()
+                .iter()
+                .any(|(r, severity)| r.name() == "no-alert" && *severity == AllowWarnDeny::Warn)
+        );
+        assert!(
+            config
+                .rules()
+                .iter()
+                .any(|(r, severity)| r.name() == "no-var" && *severity == AllowWarnDeny::Warn)
+        );
+    }
+
+    #[test]
+    fn test_extends_node_modules_non_json_package_is_ignored() {
+        let config = config_store_from_path(
+            "fixtures/extends_config/node_modules_extends_non_json/.oxlintrc.json",
+        );
+
+        assert_eq!(config.plugins(), LintPlugins::default());
+        assert!(config.rules().is_empty());
+    }
+
+    #[test]
+    fn test_extends_path_like_specifier_prefers_filesystem_path() {
+        let config = config_store_from_path(
+            "fixtures/extends_config/path_like_extends_precedence/.oxlintrc.json",
+        );
+
+        assert!(
+            config
+                .rules()
+                .iter()
+                .any(|(r, severity)| r.name() == "no-debugger" && *severity == AllowWarnDeny::Warn)
+        );
+    }
+
+    #[test]
     fn test_not_extends_named_configs() {
-        // For now, test that extending named configs is just ignored
+        // Named configs are unsupported and should be ignored, even if they resolve in node_modules.
+        let config = config_store_from_path(
+            "fixtures/extends_config/named_config_with_node_modules/.oxlintrc.json",
+        );
+        assert_eq!(config.plugins(), LintPlugins::default());
+        assert!(config.rules().is_empty());
+    }
+
+    #[test]
+    fn test_not_extends_named_configs_with_prefixes() {
         let config = config_store_from_str(
             r#"
         {
             "extends": [
-                "next/core-web-vitals",
                 "eslint:recommended",
                 "plugin:@typescript-eslint/strict-type-checked",
-                "prettier",
                 "plugin:unicorn/recommended"
             ]
         }
