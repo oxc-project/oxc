@@ -188,20 +188,18 @@ fn is_children_from_react<'a>(ident: &IdentifierReference<'a>, ctx: &LintContext
     // e.g., const { Children } = React; or const { Children } = Act;
     if name == CHILDREN {
         // Get the symbol ID from the reference
-        if let Some(reference_id) = ident.reference_id.get() {
-            let reference = ctx.scoping().get_reference(reference_id);
-            if let Some(symbol_id) = reference.symbol_id() {
-                // Get the declaration node
-                let decl_id = ctx.scoping().symbol_declaration(symbol_id);
-                let decl_node = ctx.nodes().get_node(decl_id);
+        let reference = ctx.scoping().get_reference(ident.reference_id());
+        if let Some(symbol_id) = reference.symbol_id() {
+            // Get the declaration node
+            let decl_id = ctx.scoping().symbol_declaration(symbol_id);
+            let decl_node = ctx.nodes().get_node(decl_id);
 
-                // Check if this is a VariableDeclarator with ObjectPattern
-                if let AstKind::VariableDeclarator(var_decl) = decl_node.kind() {
-                    // Check if init is an identifier imported from React
-                    if let Some(Expression::Identifier(init_ident)) = var_decl.init.as_ref() {
-                        // Check if the init identifier is imported from 'react' module
-                        return import_matcher(ctx, init_ident.name.as_str(), REACT_MODULE);
-                    }
+            // Check if this is a VariableDeclarator with ObjectPattern
+            if let AstKind::VariableDeclarator(var_decl) = decl_node.kind() {
+                // Check if init is an identifier imported from React
+                if let Some(Expression::Identifier(init_ident)) = var_decl.init.as_ref() {
+                    // Check if the init identifier is imported from 'react' module
+                    return import_matcher(ctx, init_ident.name.as_str(), REACT_MODULE);
                 }
             }
         }
