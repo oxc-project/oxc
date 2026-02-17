@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ImportDeclaration, ImportDeclarationSpecifier},
+    ast::{Expression, ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -87,6 +87,10 @@ fn find_assert_imports(import_decl: &ImportDeclaration<'_>) -> Vec<SymbolId> {
                 }
                 ImportDeclarationSpecifier::ImportSpecifier(named_specifier) => {
                     let imported = &named_specifier.imported;
+                    // Skip string literal imports (e.g. `import { 'strict' as assert }`)
+                    if matches!(imported, ModuleExportName::StringLiteral(_)) {
+                        continue;
+                    }
                     if imported.name() == "default"
                         || (is_assert_module(import_decl) && imported.name() == "strict")
                     {
@@ -159,9 +163,9 @@ fn test() {
             assert(foo);",
         "import assert from 'node:assert/strict';
             console.log(assert)",
-        // TODO: Fix this rule so this test passes.
-        // "import {'strict' as assert} from 'assert';
-        //     assert(foo)",
+        // Intentionally skip checking this.
+        "import {'strict' as assert} from 'assert';
+            assert(foo)",
     ];
 
     let fail = vec![
