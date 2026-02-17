@@ -373,9 +373,8 @@ impl WorkspaceWorker {
                 };
 
                 for uri in file_system.keys() {
-                    let Ok(mut reports) =
-                        tool.run_diagnostic(&uri, file_system.get(&uri).as_deref())
-                    else {
+                    let content = file_system.get(&uri).map(|(_, content)| content);
+                    let Ok(mut reports) = tool.run_diagnostic(&uri, content.as_deref()) else {
                         // If diagnostics could not be run, skip this URI, but continue with others
                         // TODO: Should we aggregate errors instead? One by one, or all together?
                         continue;

@@ -4,6 +4,7 @@ use tower_lsp_server::{LspService, Server, ls_types::ServerInfo};
 mod backend;
 mod capabilities;
 mod file_system;
+mod language_id;
 mod options;
 #[cfg(test)]
 mod tests;
@@ -11,6 +12,7 @@ mod tool;
 mod worker;
 
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
+pub use crate::language_id::LanguageId;
 pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
