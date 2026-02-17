@@ -294,6 +294,16 @@ working directory: fixtures/tsgolint
  3 | 
    `----
 
+  x typescript-eslint(no-useless-default-assignment): Default value is useless because the parameter has type `number` (not nullish). This default assignment will never be used.
+   ,-[no-useless-default-assignment.ts:1:20]
+ 1 | [1, 2, 3].map((a = 42) => a + 1);
+   :                |   ^|^
+   :                |    `-- Default value
+   :                `-- parameter type `number` is not nullish
+ 2 | 
+   `----
+  help: Remove the default assignment
+
   x typescript-eslint(no-unsafe-type-assertion): Unsafe type assertion: type 'string' is more narrow than the original type.
    ,-[non-nullable-type-assertion-style.ts:2:17]
  1 | declare const value: string | null;
@@ -589,8 +599,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 74 errors.
-Finished in <variable>ms on 57 files with 56 rules using 1 threads.
+Found 0 warnings and 75 errors.
+Finished in <variable>ms on 58 files with 57 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

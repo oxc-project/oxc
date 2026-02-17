@@ -1803,6 +1803,13 @@ impl RuleRunner for crate::rules::typescript::no_use_before_define::NoUseBeforeD
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner
+    for crate::rules::typescript::no_useless_default_assignment::NoUselessDefaultAssignment
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner for crate::rules::typescript::no_useless_empty_export::NoUselessEmptyExport {
     const NODE_TYPES: Option<&AstTypesBitset> =
         Some(&AstTypesBitset::from_types(&[AstType::ExportNamedDeclaration]));
