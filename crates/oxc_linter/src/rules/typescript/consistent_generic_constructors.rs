@@ -7,6 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -114,6 +115,11 @@ impl Rule for ConsistentGenericConstructors {
                 let init = property_definition.value.as_ref();
                 self.check(node, type_ann, init, ctx);
             }
+            AstKind::AccessorProperty(accessor_property) => {
+                let type_ann = accessor_property.type_annotation.as_ref();
+                let init = accessor_property.value.as_ref();
+                self.check(node, type_ann, init, ctx);
+            }
             _ => {}
         }
     }
@@ -148,6 +154,11 @@ impl ConsistentGenericConstructors {
         let Expression::Identifier(identifier) = &new_expression.callee else {
             return;
         };
+        if is_built_in_typed_array(&identifier.name)
+            && identifier.is_global_reference_name(identifier.name, ctx.scoping())
+        {
+            return;
+        }
         if let Some(type_annotation) = type_annotation {
             if let TSType::TSTypeReference(type_annotation) = &type_annotation.type_annotation {
                 if let TSTypeName::IdentifierReference(ident) = &type_annotation.type_name {
@@ -368,6 +379,7 @@ impl ConsistentGenericConstructors {
             AstKind::VariableDeclarator(var_decl) => Some(var_decl.id.span().end),
             AstKind::FormalParameter(param) => Some(param.pattern.span().end),
             AstKind::PropertyDefinition(prop_def) => Some(prop_def.key.span().end),
+            AstKind::AccessorProperty(accessor) => Some(accessor.key.span().end),
             _ => {
                 debug_assert!(false, "Unexpected node kind in find_binding_end_position");
                 None
@@ -411,9 +423,32 @@ impl ConsistentGenericConstructors {
                     Some(prop_def.key.span().end)
                 }
             }
+            AstKind::AccessorProperty(accessor) => {
+                if accessor.computed {
+                    let key_end = accessor.key.span().end;
+                    ctx.find_next_token_from(key_end, "]").map(|offset| key_end + offset + 1)
+                } else {
+                    Some(accessor.key.span().end)
+                }
+            }
             _ => None,
         }
     }
+}
+
+fn is_built_in_typed_array(name: &str) -> bool {
+    matches!(
+        name,
+        "Float32Array"
+            | "Float64Array"
+            | "Int16Array"
+            | "Int32Array"
+            | "Int8Array"
+            | "Uint16Array"
+            | "Uint32Array"
+            | "Uint8Array"
+            | "Uint8ClampedArray"
+    )
 }
 
 #[test]
@@ -480,63 +515,62 @@ fn test() {
                 ",
             None,
         ),
-        // TODO: Fix the rule so these pass.
-        // (
-        //     "
-        //     const a: Float32Array<ArrayBufferLike> = new Float32Array();
-        //     export {};
-        //         ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     const a: Float64Array<ArrayBufferLike> = new Float64Array();
-        //     export {};
-        //         ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     const a: Int16Array<ArrayBufferLike> = new Int16Array();
-        //     export {};
-        //         ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     const a: Int8Array<ArrayBufferLike> = new Int8Array();
-        //     export {};
-        //         ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     const a: Uint16Array<ArrayBufferLike> = new Uint16Array();
-        //     export {};
-        //         ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     const a: Uint32Array<ArrayBufferLike> = new Uint32Array();
-        //     export {};
-        //         ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     const a: Uint8Array<ArrayBufferLike> = new Uint8Array();
-        //     export {};
-        //         ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     const a: Uint8ClampedArray<ArrayBufferLike> = new Uint8ClampedArray();
-        //     export {};
-        //         ",
-        //     None,
-        // ),
+        (
+            "
+            const a: Float32Array<ArrayBufferLike> = new Float32Array();
+            export {};
+                ",
+            None,
+        ),
+        (
+            "
+            const a: Float64Array<ArrayBufferLike> = new Float64Array();
+            export {};
+                ",
+            None,
+        ),
+        (
+            "
+            const a: Int16Array<ArrayBufferLike> = new Int16Array();
+            export {};
+                ",
+            None,
+        ),
+        (
+            "
+            const a: Int8Array<ArrayBufferLike> = new Int8Array();
+            export {};
+                ",
+            None,
+        ),
+        (
+            "
+            const a: Uint16Array<ArrayBufferLike> = new Uint16Array();
+            export {};
+                ",
+            None,
+        ),
+        (
+            "
+            const a: Uint32Array<ArrayBufferLike> = new Uint32Array();
+            export {};
+                ",
+            None,
+        ),
+        (
+            "
+            const a: Uint8Array<ArrayBufferLike> = new Uint8Array();
+            export {};
+                ",
+            None,
+        ),
+        (
+            "
+            const a: Uint8ClampedArray<ArrayBufferLike> = new Uint8ClampedArray();
+            export {};
+                ",
+            None,
+        ),
         // TODO: Fix?
         // (
         //     "
@@ -647,31 +681,30 @@ fn test() {
                   ",
             None,
         ),
-        // TODO: Fix these.
-        // (
-        //     "
-        //     class Foo {
-        //       accessor a: Foo<string> = new Foo();
-        //     }
-        //           ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     class Foo {
-        //       accessor a = new Foo<string>();
-        //     }
-        //           ",
-        //     Some(serde_json::json!(["type-annotation"])),
-        // ),
-        // (
-        //     "
-        //     class Foo {
-        //       accessor [a]: Foo<string> = new Foo();
-        //     }
-        //           ",
-        //     None,
-        // ),
+        (
+            "
+            class Foo {
+              accessor a: Foo<string> = new Foo();
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Foo {
+              accessor a = new Foo<string>();
+            }
+                  ",
+            Some(serde_json::json!(["type-annotation"])),
+        ),
+        (
+            "
+            class Foo {
+              accessor [a]: Foo<string> = new Foo();
+            }
+                  ",
+            None,
+        ),
         (
             "
             function foo(a: Foo<string> = new Foo()) {}
@@ -852,46 +885,45 @@ fn test() {
                   ",
             None,
         ),
-        // TODO: Fix these
-        // (
-        //     "
-        //     class Foo {
-        //       accessor a: Foo<string> = new Foo();
-        //     }
-        //           ",
-        //     "
-        //     class Foo {
-        //       accessor a = new Foo<string>();
-        //     }
-        //           ",
-        //     None,
-        // ),
-        // (
-        //     "
-        //     class Foo {
-        //       accessor a = new Foo<string>();
-        //     }
-        //           ",
-        //     "
-        //     class Foo {
-        //       accessor a: Foo<string> = new Foo();
-        //     }
-        //           ",
-        //     Some(serde_json::json!(["type-annotation"])),
-        // ),
-        // (
-        //     "
-        //     class Foo {
-        //       accessor [a]: Foo<string> = new Foo();
-        //     }
-        //           ",
-        //     "
-        //     class Foo {
-        //       accessor [a] = new Foo<string>();
-        //     }
-        //           ",
-        //     None,
-        // ),
+        (
+            "
+            class Foo {
+              accessor a: Foo<string> = new Foo();
+            }
+                  ",
+            "
+            class Foo {
+              accessor a = new Foo<string>();
+            }
+                  ",
+            None,
+        ),
+        (
+            "
+            class Foo {
+              accessor a = new Foo<string>();
+            }
+                  ",
+            "
+            class Foo {
+              accessor a: Foo<string> = new Foo();
+            }
+                  ",
+            Some(serde_json::json!(["type-annotation"])),
+        ),
+        (
+            "
+            class Foo {
+              accessor [a]: Foo<string> = new Foo();
+            }
+                  ",
+            "
+            class Foo {
+              accessor [a] = new Foo<string>();
+            }
+                  ",
+            None,
+        ),
         (
             "
             function foo(a: Foo<string> = new Foo()) {}

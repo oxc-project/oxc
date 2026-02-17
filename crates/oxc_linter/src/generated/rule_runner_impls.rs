@@ -1396,6 +1396,7 @@ impl RuleRunner
     for crate::rules::typescript::consistent_generic_constructors::ConsistentGenericConstructors
 {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AccessorProperty,
         AstType::FormalParameter,
         AstType::PropertyDefinition,
         AstType::VariableDeclarator,
