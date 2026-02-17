@@ -6,7 +6,6 @@ use crate::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -123,7 +122,13 @@ impl Rule for NoBarrelFile {
         let threshold = self.threshold;
         if total > threshold {
             if labels.is_empty() {
-                labels.push(Span::new(0, 0).label("File defined here."));
+                // Use the file span for diagnostics when there are no specific module spans.
+                // We limit to 100 characters to avoid huge diagnostic messages and ensure
+                // disable directives at the beginning of the file are respected.
+                let program = ctx.nodes().program();
+                let mut span = program.span;
+                span.end = std::cmp::min(span.end, 100);
+                labels.push(span.label("File defined here."));
             }
 
             ctx.diagnostic(no_barrel_file(total, threshold, labels));
@@ -162,19 +167,47 @@ fn test() {
             export const other = 1;",
             Some(serde_json::json!([{"threshold": 0}])),
         ),
+        // Test disable directives work with threshold 0
+        (
+            r"/* eslint-disable oxc/no-barrel-file */
+export * from './a';",
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
+        (
+            r"/* oxlint-disable oxc/no-barrel-file */
+export * from './a';",
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
+        (
+            r"// eslint-disable-next-line oxc/no-barrel-file
+export * from './a';",
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
+        (
+            r"// oxlint-disable-next-line oxc/no-barrel-file
+export * from './a';",
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
     ];
 
     let settings = Some(serde_json::json!([{"threshold": 1}]));
 
-    let fail = vec![(
-        r#"
+    let fail = vec![
+        (
+            r#"
 export * from "./deep/a.js";
 export * from "./deep/b.js";
 export * from "./deep/c.js";
 export * from "./deep/d.js";
         "#,
-        settings,
-    )];
+            settings.clone(),
+        ),
+        // Test that rule still triggers without disable directive when threshold is 0
+        (
+            r"export * from './a';",
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
+    ];
 
     Tester::new(NoBarrelFile::NAME, NoBarrelFile::PLUGIN, pass, fail)
         .change_rule_path("index.ts")
