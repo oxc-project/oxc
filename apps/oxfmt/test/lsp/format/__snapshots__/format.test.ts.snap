@@ -234,3 +234,81 @@ debugger
 
 --------------------"
 `;
+
+exports[`LSP formatting > unsaved document > should format unsaved file format/formatted.ts 1`] = `
+"--- FILE -----------
+format/formatted.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1;
+
+--------------------"
+`;
+
+exports[`LSP formatting > unsaved document > should format unsaved file format/test.json 1`] = `
+"--- FILE -----------
+format/test.json
+--- BEFORE ---------
+{"name":"test","version":"1.0.0"}
+
+--- AFTER ----------
+{ "name": "test", "version": "1.0.0" }
+
+--------------------"
+`;
+
+exports[`LSP formatting > unsaved document > should format unsaved file format/test.toml 1`] = `
+"--- FILE -----------
+format/test.toml
+--- BEFORE ---------
+[package]
+name="test"
+version="1.0.0"
+
+--- AFTER ----------
+[package]
+name = "test"
+version = "1.0.0"
+
+--------------------"
+`;
+
+exports[`LSP formatting > unsaved document > should format unsaved file format/test.tsx 1`] = `
+"--- FILE -----------
+format/test.tsx
+--- BEFORE ---------
+const   App:   React.FC   =   ()   =>   <div>Hello</div>
+
+--- AFTER ----------
+const App: React.FC = () => <div>Hello</div>;
+
+--------------------"
+`;
+
+exports[`LSP formatting > unsaved document > should format unsaved file format/test.txt 1`] = `
+"--- FILE -----------
+format/test.txt
+--- BEFORE ---------
+hello   world
+
+--- AFTER ----------
+hello   world
+
+--------------------"
+`;
+
+exports[`LSP formatting > unsaved document > should format unsaved file format/test.vue 1`] = `
+"--- FILE -----------
+format/test.vue
+--- BEFORE ---------
+<script>const   x   =   1;</script>
+
+--- AFTER ----------
+<script>
+const x = 1;
+</script>
+
+--------------------"
+`;
