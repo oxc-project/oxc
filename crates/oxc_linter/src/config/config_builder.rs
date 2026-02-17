@@ -150,6 +150,8 @@ impl ConfigStoreBuilder {
             in_object_extends: bool,
             resolver: &Resolver,
         ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
+            // Check if given "extends" specifier is "path-like" or not, to determine whether to
+            // apply the legacy "filesystem-first resolution" semantics.
             fn is_path_like_extends_specifier(path: &Path, specifier: &str) -> bool {
                 path.is_absolute()
                     || specifier.starts_with("./")
@@ -159,6 +161,9 @@ impl ConfigStoreBuilder {
                     || specifier.ends_with(".json")
             }
 
+            // Check if given "extends" specifier is an explicit filesystem path, to avoid falling
+            // back to package resolution for "path-like" specifiers that are clearly intended as
+            // filesystem paths.
             fn is_explicit_filesystem_path(path: &Path, specifier: &str) -> bool {
                 path.is_absolute()
                     || specifier.starts_with("./")
@@ -179,20 +184,24 @@ impl ConfigStoreBuilder {
 
             let mut oxlintrc = config;
 
+            // Merge inline/object extends first. Reverse iteration will preserve "last entry wins"
+            // merge semantics.
             for config in extends_configs.into_iter().rev() {
                 let (extends, extends_paths) = resolve_oxlintrc_config(config, true, resolver)?;
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
             }
 
+            // Then resolve string-based extends entries from the current config file.
             for path in extends.iter().rev() {
                 let specifier = path.to_string_lossy();
 
                 if specifier.starts_with("eslint:") || specifier.starts_with("plugin:") {
-                    // `eslint:` and `plugin:` named configs are not supported
+                    // `eslint:` and `plugin:` named configs are not supported, ignoring
                     continue;
                 }
 
+                // Package resolution should start from the directory of the current config file.
                 let resolve_dir = root_path.unwrap_or_else(|| Path::new("."));
                 let is_path_like = is_path_like_extends_specifier(path, specifier.as_ref());
                 let path = if is_path_like {
@@ -203,12 +212,13 @@ impl ConfigStoreBuilder {
                         None => path.clone(),
                     };
 
-                    // Preserve legacy behavior: for path-like specifiers, resolve local files first.
+                    // Keep legacy behavior: for path-like specifiers, resolve local files first.
                     if filesystem_path.is_file() || explicit_filesystem_path {
                         filesystem_path
                     } else if let Ok(resolved) = resolver.resolve(resolve_dir, specifier.as_ref()) {
                         let resolved_path = resolved.full_path();
-                        // Oxlint config files are JSON-only.
+                        // Path-like extends still represent config files, and Oxlint accepts JSON only.
+                        // If fallback package resolution points to non-JSON, raise an explicit error.
                         if resolved_path.extension().and_then(|ext| ext.to_str()) != Some("json") {
                             return Err(ConfigBuilderError::InvalidConfigFile {
                                 file: specifier.to_string(),
@@ -224,12 +234,14 @@ impl ConfigStoreBuilder {
                     }
                 } else if let Ok(resolved) = resolver.resolve(resolve_dir, specifier.as_ref()) {
                     let resolved_path = resolved.full_path();
-                    // Keep legacy behavior for unsupported named configs.
+                    // Keep legacy behavior for unsupported named configs (e.g. `prettier`):
+                    // if package target is not JSON, ignore this extends entry.
                     if resolved_path.extension().and_then(|ext| ext.to_str()) != Some("json") {
                         continue;
                     }
                     resolved_path.to_path_buf()
                 } else {
+                    // Unresolvable named configs are unsupported and intentionally ignored.
                     continue;
                 };
 
@@ -242,6 +254,7 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
+                // Recursively resolve nested extends.
                 let (extends, extends_paths) =
                     resolve_oxlintrc_config(extends_oxlintrc, false, resolver)?;
 
@@ -252,6 +265,7 @@ impl ConfigStoreBuilder {
             Ok((oxlintrc, extended_paths))
         }
 
+        // Share one resolver between extends resolution and external plugin loading.
         let resolver = Resolver::new(ResolveOptions {
             condition_names: vec!["module-sync".into(), "node".into(), "import".into()],
             ..Default::default()
