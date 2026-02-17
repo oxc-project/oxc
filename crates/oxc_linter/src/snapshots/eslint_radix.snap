@@ -1,13 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-
-  ⚠ eslint(radix): Missing parameters.
-   ╭─[radix.tsx:1:1]
- 1 │ parseInt();
-   · ──────────
-   ╰────
-
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:1]
  1 │ parseInt();
@@ -96,12 +89,6 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
 
-  ⚠ eslint(radix): Missing parameters.
-   ╭─[radix.tsx:1:1]
- 1 │ Number.parseInt();
-   · ─────────────────
-   ╰────
-
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
  1 │ Number.parseInt("10");
@@ -125,12 +112,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[radix.tsx:1:23]
  1 │ Number.parseInt("10", 10.5);
    ·                       ────
-   ╰────
-
-  ⚠ eslint(radix): Redundant radix parameter.
-   ╭─[radix.tsx:1:16]
- 1 │ parseInt("10", 10);
-   ·                ──
    ╰────
 
   ⚠ eslint(radix): Missing radix parameter.
@@ -162,25 +143,51 @@ source: crates/oxc_linter/src/tester.rs
   help: Add radix parameter `10` for parsing decimal numbers.
 
   ⚠ eslint(radix): Missing parameters.
-   ╭─[radix.tsx:1:21]
- 1 │ function *f(){ yield(Number).parseInt() }
-   ·                     ───────────────────
+   ╭─[radix.tsx:1:1]
+ 1 │ parseInt();
+   · ──────────
    ╰────
 
   ⚠ eslint(radix): Missing parameters.
-   ╭─[radix.tsx:1:19]
- 1 │ { let parseInt; } parseInt();
-   ·                   ──────────
+   ╭─[radix.tsx:1:1]
+ 1 │ parseInt();
+   · ──────────
+   ╰────
+
+  ⚠ eslint(radix): Missing radix parameter.
+   ╭─[radix.tsx:1:1]
+ 1 │ parseInt("10");
+   · ──────────────
+   ╰────
+  help: Add radix parameter `10` for parsing decimal numbers.
+
+  ⚠ eslint(radix): Missing radix parameter.
+   ╭─[radix.tsx:1:1]
+ 1 │ parseInt("10");
+   · ──────────────
+   ╰────
+  help: Add radix parameter `10` for parsing decimal numbers.
+
+  ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
+   ╭─[radix.tsx:1:16]
+ 1 │ parseInt("10", 1);
+   ·                ─
+   ╰────
+
+  ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
+   ╭─[radix.tsx:1:16]
+ 1 │ parseInt("10", 1);
+   ·                ─
    ╰────
 
   ⚠ eslint(radix): Missing parameters.
-   ╭─[radix.tsx:1:17]
- 1 │ { let Number; } Number.parseInt();
-   ·                 ─────────────────
+   ╭─[radix.tsx:1:1]
+ 1 │ Number.parseInt();
+   · ─────────────────
    ╰────
 
   ⚠ eslint(radix): Missing parameters.
-   ╭─[radix.tsx:1:17]
- 1 │ { let Number; } (Number?.parseInt)();
-   ·                 ────────────────────
+   ╭─[radix.tsx:1:1]
+ 1 │ Number.parseInt();
+   · ─────────────────
    ╰────
