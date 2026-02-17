@@ -67,7 +67,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
         // Extract context entry before mutating f
         let tailwind_ctx_to_push = f
             .options()
-            .experimental_tailwindcss
+            .sort_tailwindcss
             .as_ref()
             .filter(|opts| is_tailwind_function_call(&self.tag, opts))
             .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace));

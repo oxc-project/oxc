@@ -78,7 +78,7 @@ pub struct FormatOptions {
     /// Enable Tailwind CSS class sorting in JSX class/className attributes.
     /// When enabled, class strings will be collected and passed to a callback for sorting.
     /// Defaults to None (disabled).
-    pub experimental_tailwindcss: Option<TailwindcssOptions>,
+    pub sort_tailwindcss: Option<TailwindcssOptions>,
 }
 
 /// Options for Tailwind CSS class sorting.
@@ -147,7 +147,7 @@ impl FormatOptions {
             experimental_ternaries: false,
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
             sort_imports: None,
-            experimental_tailwindcss: None,
+            sort_tailwindcss: None,
         }
     }
 
@@ -175,7 +175,7 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
         writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
         writeln!(f, "Sort imports: {:?}", self.sort_imports)?;
-        writeln!(f, "Experimental tailwindcss: {:?}", self.experimental_tailwindcss)
+        writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)
     }
 }
 
