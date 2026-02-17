@@ -21,10 +21,10 @@ source: crates/oxc_linter/src/tester.rs
   note: See: https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7
 
   ⚠ oxc(no-barrel-file): Barrel file detected, 1 modules are loaded which exceeds the threshold of 0.
-   ╭─[index.ts:1:1]
+   ╭─[index.ts:1:15]
  1 │ export * from './a';
-   · ──────────┬─────────
-   ·           ╰── File defined here.
+   ·               ──┬──
+   ·                 ╰── Barrel file detected here.
    ╰────
   help: Consider importing directly from the specific modules instead of using `export *` or `import *`.
         Loading 1 modules may be slow for runtimes and bundlers.

@@ -102,6 +102,7 @@ impl Rule for NoBarrelFile {
 
         let mut labels = vec![];
         let mut total: usize = 0;
+        let first_module_request_span = module_requests.first().map(|m| m.span);
 
         for module_request in module_requests {
             // the own module is counted as well
@@ -122,13 +123,12 @@ impl Rule for NoBarrelFile {
         let threshold = self.threshold;
         if total > threshold {
             if labels.is_empty() {
-                // Use the file span for diagnostics when there are no specific module spans.
-                // We limit to 100 characters to avoid huge diagnostic messages and ensure
-                // disable directives at the beginning of the file are respected.
-                let program = ctx.nodes().program();
-                let mut span = program.span;
-                span.end = std::cmp::min(span.end, 100);
-                labels.push(span.label("File defined here."));
+                // Use the first module request span as fallback. This ensures that
+                // disable directives placed anywhere before the first export statement
+                // will work correctly, regardless of file position or comment length.
+                if let Some(span) = first_module_request_span {
+                    labels.push(span.label("Barrel file detected here."));
+                }
             }
 
             ctx.diagnostic(no_barrel_file(total, threshold, labels));
@@ -185,6 +185,17 @@ export * from './a';",
         ),
         (
             r"// oxlint-disable-next-line oxc/no-barrel-file
+export * from './a';",
+            Some(serde_json::json!([{"threshold": 0}])),
+        ),
+        // Test disable directive after long comment (>100 bytes)
+        (
+            r"/**
+ * This is a very long file header comment that exceeds 100 bytes.
+ * It contains important copyright information and licensing details.
+ * This ensures the disable directive works even after lengthy headers.
+ */
+/* eslint-disable oxc/no-barrel-file */
 export * from './a';",
             Some(serde_json::json!([{"threshold": 0}])),
         ),
