@@ -512,7 +512,7 @@ impl FormatConfig {
         }
 
         if let Some(config) = self.experimental_tailwindcss {
-            format_options.experimental_tailwindcss = Some(TailwindcssOptions {
+            format_options.sort_tailwindcss = Some(TailwindcssOptions {
                 config: config.config,
                 stylesheet: config.stylesheet,
                 functions: config.functions.unwrap_or_default(),

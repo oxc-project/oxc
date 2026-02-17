@@ -240,7 +240,7 @@ impl ExternalFormatter {
             None
         };
 
-        let needs_tailwind = format_options.experimental_tailwindcss.is_some();
+        let needs_tailwind = format_options.sort_tailwindcss.is_some();
         let tailwind_callback: Option<TailwindCallback> = if needs_tailwind {
             let sort_tailwindcss_classes = Arc::clone(&self.sort_tailwindcss_classes);
             Some(Arc::new(move |classes: Vec<String>| {
