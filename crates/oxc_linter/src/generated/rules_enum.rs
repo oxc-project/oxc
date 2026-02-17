@@ -207,6 +207,7 @@ pub use crate::rules::import::no_relative_parent_imports::NoRelativeParentImport
 pub use crate::rules::import::no_self_import::NoSelfImport as ImportNoSelfImport;
 pub use crate::rules::import::no_unassigned_import::NoUnassignedImport as ImportNoUnassignedImport;
 pub use crate::rules::import::no_webpack_loader_syntax::NoWebpackLoaderSyntax as ImportNoWebpackLoaderSyntax;
+pub use crate::rules::import::prefer_alias_import::PreferAliasImport as ImportPreferAliasImport;
 pub use crate::rules::import::prefer_default_export::PreferDefaultExport as ImportPreferDefaultExport;
 pub use crate::rules::import::unambiguous::Unambiguous as ImportUnambiguous;
 pub use crate::rules::jest::consistent_test_it::ConsistentTestIt as JestConsistentTestIt;
@@ -704,6 +705,7 @@ use crate::{
 use oxc_semantic::AstTypesBitset;
 #[derive(Debug, Clone)]
 pub enum RuleEnum {
+    ImportPreferAliasImport(ImportPreferAliasImport),
     ImportConsistentTypeSpecifierStyle(ImportConsistentTypeSpecifierStyle),
     ImportDefault(ImportDefault),
     ImportExport(ImportExport),
@@ -1396,7 +1398,8 @@ pub enum RuleEnum {
     VueValidDefineEmits(VueValidDefineEmits),
     VueValidDefineProps(VueValidDefineProps),
 }
-const IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID: usize = 0usize;
+const IMPORT_PREFER_ALIAS_IMPORT_ID: usize = 0usize;
+const IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID: usize = IMPORT_PREFER_ALIAS_IMPORT_ID + 1usize;
 const IMPORT_DEFAULT_ID: usize = IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID + 1usize;
 const IMPORT_EXPORT_ID: usize = IMPORT_DEFAULT_ID + 1usize;
 const IMPORT_EXPORTS_LAST_ID: usize = IMPORT_EXPORT_ID + 1usize;
@@ -2168,6 +2171,7 @@ const VUE_VALID_DEFINE_PROPS_ID: usize = VUE_VALID_DEFINE_EMITS_ID + 1usize;
 impl RuleEnum {
     pub fn id(&self) -> usize {
         match self {
+            Self::ImportPreferAliasImport(_) => IMPORT_PREFER_ALIAS_IMPORT_ID,
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 IMPORT_CONSISTENT_TYPE_SPECIFIER_STYLE_ID
             }
@@ -2963,6 +2967,7 @@ impl RuleEnum {
     }
     pub fn name(&self) -> &'static str {
         match self {
+            Self::ImportPreferAliasImport(_) => ImportPreferAliasImport::NAME,
             Self::ImportConsistentTypeSpecifierStyle(_) => ImportConsistentTypeSpecifierStyle::NAME,
             Self::ImportDefault(_) => ImportDefault::NAME,
             Self::ImportExport(_) => ImportExport::NAME,
@@ -3746,6 +3751,7 @@ impl RuleEnum {
     }
     pub fn category(&self) -> RuleCategory {
         match self {
+            Self::ImportPreferAliasImport(_) => ImportPreferAliasImport::CATEGORY,
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 ImportConsistentTypeSpecifierStyle::CATEGORY
             }
@@ -4576,6 +4582,7 @@ impl RuleEnum {
     #[doc = r" This [`Rule`]'s auto-fix capabilities."]
     pub fn fix(&self) -> RuleFixMeta {
         match self {
+            Self::ImportPreferAliasImport(_) => ImportPreferAliasImport::FIX,
             Self::ImportConsistentTypeSpecifierStyle(_) => ImportConsistentTypeSpecifierStyle::FIX,
             Self::ImportDefault(_) => ImportDefault::FIX,
             Self::ImportExport(_) => ImportExport::FIX,
@@ -5360,6 +5367,7 @@ impl RuleEnum {
     #[cfg(feature = "ruledocs")]
     pub fn documentation(&self) -> Option<&'static str> {
         match self {
+            Self::ImportPreferAliasImport(_) => ImportPreferAliasImport::documentation(),
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 ImportConsistentTypeSpecifierStyle::documentation()
             }
@@ -6341,6 +6349,8 @@ impl RuleEnum {
         generator: &mut schemars::SchemaGenerator,
     ) -> Option<schemars::schema::Schema> {
         match self {
+            Self::ImportPreferAliasImport(_) => ImportPreferAliasImport::config_schema(generator)
+                .or_else(|| ImportPreferAliasImport::schema(generator)),
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 ImportConsistentTypeSpecifierStyle::config_schema(generator)
                     .or_else(|| ImportConsistentTypeSpecifierStyle::schema(generator))
@@ -8294,6 +8304,7 @@ impl RuleEnum {
     }
     pub fn plugin_name(&self) -> &'static str {
         match self {
+            Self::ImportPreferAliasImport(_) => "import",
             Self::ImportConsistentTypeSpecifierStyle(_) => "import",
             Self::ImportDefault(_) => "import",
             Self::ImportExport(_) => "import",
@@ -8988,6 +8999,9 @@ impl RuleEnum {
         value: serde_json::Value,
     ) -> Result<Self, serde_json::error::Error> {
         match self {
+            Self::ImportPreferAliasImport(_) => Ok(Self::ImportPreferAliasImport(
+                ImportPreferAliasImport::from_configuration(value)?,
+            )),
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 Ok(Self::ImportConsistentTypeSpecifierStyle(
                     ImportConsistentTypeSpecifierStyle::from_configuration(value)?,
@@ -11193,6 +11207,7 @@ impl RuleEnum {
     }
     pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
         match self {
+            Self::ImportPreferAliasImport(rule) => rule.to_configuration(),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.to_configuration(),
             Self::ImportDefault(rule) => rule.to_configuration(),
             Self::ImportExport(rule) => rule.to_configuration(),
@@ -11888,6 +11903,7 @@ impl RuleEnum {
     }
     pub(crate) fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match self {
+            Self::ImportPreferAliasImport(rule) => rule.run(node, ctx),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run(node, ctx),
             Self::ImportDefault(rule) => rule.run(node, ctx),
             Self::ImportExport(rule) => rule.run(node, ctx),
@@ -12579,6 +12595,7 @@ impl RuleEnum {
     }
     pub(crate) fn run_once(&self, ctx: &LintContext<'_>) {
         match self {
+            Self::ImportPreferAliasImport(rule) => rule.run_once(ctx),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run_once(ctx),
             Self::ImportDefault(rule) => rule.run_once(ctx),
             Self::ImportExport(rule) => rule.run_once(ctx),
@@ -13274,6 +13291,7 @@ impl RuleEnum {
         ctx: &'c LintContext<'a>,
     ) {
         match self {
+            Self::ImportPreferAliasImport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportExport(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14057,6 +14075,7 @@ impl RuleEnum {
     }
     pub(crate) fn should_run(&self, ctx: &ContextHost) -> bool {
         match self {
+            Self::ImportPreferAliasImport(rule) => rule.should_run(ctx),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.should_run(ctx),
             Self::ImportDefault(rule) => rule.should_run(ctx),
             Self::ImportExport(rule) => rule.should_run(ctx),
@@ -14748,6 +14767,7 @@ impl RuleEnum {
     }
     pub fn is_tsgolint_rule(&self) -> bool {
         match self {
+            Self::ImportPreferAliasImport(_) => ImportPreferAliasImport::IS_TSGOLINT_RULE,
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 ImportConsistentTypeSpecifierStyle::IS_TSGOLINT_RULE
             }
@@ -15726,6 +15746,7 @@ impl RuleEnum {
     #[doc = r" Whether this rule declares a configuration type."]
     pub fn has_config(&self) -> bool {
         match self {
+            Self::ImportPreferAliasImport(_) => ImportPreferAliasImport::HAS_CONFIG,
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 ImportConsistentTypeSpecifierStyle::HAS_CONFIG
             }
@@ -16581,6 +16602,7 @@ impl RuleEnum {
     }
     pub fn types_info(&self) -> Option<&'static AstTypesBitset> {
         match self {
+            Self::ImportPreferAliasImport(rule) => rule.types_info(),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.types_info(),
             Self::ImportDefault(rule) => rule.types_info(),
             Self::ImportExport(rule) => rule.types_info(),
@@ -17272,6 +17294,7 @@ impl RuleEnum {
     }
     pub fn run_info(&self) -> RuleRunFunctionsImplemented {
         match self {
+            Self::ImportPreferAliasImport(rule) => rule.run_info(),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run_info(),
             Self::ImportDefault(rule) => rule.run_info(),
             Self::ImportExport(rule) => rule.run_info(),
@@ -17985,6 +18008,7 @@ impl PartialOrd for RuleEnum {
 }
 pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(|| {
     vec![
+        RuleEnum::ImportPreferAliasImport(ImportPreferAliasImport::default()),
         RuleEnum::ImportConsistentTypeSpecifierStyle(ImportConsistentTypeSpecifierStyle::default()),
         RuleEnum::ImportDefault(ImportDefault::default()),
         RuleEnum::ImportExport(ImportExport::default()),
