@@ -192,8 +192,8 @@ fn is_referencing_class(
     match expr {
         Expression::Identifier(ident) => {
             if let Some(expected_symbol) = class_id
-                && let Some(reference_id) = ident.reference_id.get()
-                && let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
+                && let Some(symbol_id) =
+                    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
             {
                 return symbol_id == expected_symbol;
             }
