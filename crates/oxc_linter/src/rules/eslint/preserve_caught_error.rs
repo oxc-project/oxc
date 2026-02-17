@@ -244,11 +244,7 @@ fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &Lin
         return false;
     };
 
-    let Some(reference_id) = ident.reference_id.get() else {
-        return false;
-    };
-
-    let reference = ctx.scoping().get_reference(reference_id);
+    let reference = ctx.scoping().get_reference(ident.reference_id());
     let Some(symbol_id) = reference.symbol_id() else {
         return false;
     };
