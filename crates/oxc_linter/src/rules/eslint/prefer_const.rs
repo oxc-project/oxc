@@ -314,9 +314,8 @@ impl PreferConst {
         for target in array_target.elements.iter().flatten() {
             if let AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) = target {
                 // Get the symbol for this identifier
-                if let Some(reference_id) = ident.reference_id.get()
-                    && let Some(symbol_id) =
-                        ctx.semantic().scoping().get_reference(reference_id).symbol_id()
+                if let Some(symbol_id) =
+                    ctx.semantic().scoping().get_reference(ident.reference_id()).symbol_id()
                     && !self.can_identifier_be_const(symbol_id, symbol_table, ctx)
                 {
                     return false;
@@ -341,9 +340,11 @@ impl PreferConst {
             match prop {
                 AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
                     // Get the symbol for this identifier
-                    if let Some(reference_id) = ident.binding.reference_id.get()
-                        && let Some(symbol_id) =
-                            ctx.semantic().scoping().get_reference(reference_id).symbol_id()
+                    if let Some(symbol_id) = ctx
+                        .semantic()
+                        .scoping()
+                        .get_reference(ident.binding.reference_id())
+                        .symbol_id()
                         && !self.can_identifier_be_const(symbol_id, symbol_table, ctx)
                     {
                         return false;
