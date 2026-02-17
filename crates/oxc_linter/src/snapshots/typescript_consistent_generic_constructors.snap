@@ -85,6 +85,33 @@ source: crates/oxc_linter/src/tester.rs
   help: Move the type annotation to the constructor
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
+   ╭─[consistent_generic_constructors.tsx:3:25]
+ 2 │             class Foo {
+ 3 │               accessor a: Foo<string> = new Foo();
+   ·                         ─────────────
+ 4 │             }
+   ╰────
+  help: Move the type annotation to the constructor
+
+  ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
+   ╭─[consistent_generic_constructors.tsx:3:35]
+ 2 │             class Foo {
+ 3 │               accessor a = new Foo<string>();
+   ·                                   ────────
+ 4 │             }
+   ╰────
+  help: Move the generic type to the type annotation
+
+  ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
+   ╭─[consistent_generic_constructors.tsx:3:27]
+ 2 │             class Foo {
+ 3 │               accessor [a]: Foo<string> = new Foo();
+   ·                           ─────────────
+ 4 │             }
+   ╰────
+  help: Move the type annotation to the constructor
+
+  ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:2:27]
  1 │ 
  2 │             function foo(a: Foo<string> = new Foo()) {}
