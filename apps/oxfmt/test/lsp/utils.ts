@@ -27,7 +27,9 @@ import type {
 const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 
 export function createLspConnection() {
-  const proc = spawn("node", [CLI_PATH, "--lsp"]);
+  const proc = spawn("node", [CLI_PATH, "--lsp"], {
+    // env: { ...process.env, OXC_LOG: "info" }, for debugging
+  });
 
   const connection = createMessageConnection(
     new StreamMessageReader(proc.stdout),
@@ -107,8 +109,26 @@ export async function formatFixture(
   initializationOptions?: OxfmtLSPConfig,
 ): Promise<string> {
   const filePath = join(fixturesDir, fixturePath);
-  const dirPath = dirname(filePath);
   const fileUri = pathToFileURL(filePath).href;
+
+  return await formatFixtureContent(
+    fixturesDir,
+    fixturePath,
+    fileUri,
+    languageId,
+    initializationOptions,
+  );
+}
+
+export async function formatFixtureContent(
+  fixturesDir: string,
+  fixturePath: string,
+  fileUri: string,
+  languageId: string,
+  initializationOptions?: OxfmtLSPConfig,
+): Promise<string> {
+  const filePath = join(fixturesDir, fixturePath);
+  const dirPath = dirname(filePath);
   const content = await fs.readFile(filePath, "utf-8");
 
   await using client = createLspConnection();

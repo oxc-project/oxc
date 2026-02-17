@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { formatFixture } from "../utils";
+import { formatFixture, formatFixtureContent } from "../utils";
 
 const FIXTURES_DIR = join(import.meta.dirname, "fixtures");
 
@@ -30,6 +30,26 @@ describe("LSP formatting", () => {
       ["editorconfig/test.ts", "typescript"],
     ])("should apply config from %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
+    });
+  });
+
+  describe("unsaved document", () => {
+    it.each([
+      ["format/test.tsx", "typescriptreact"],
+      ["format/test.json", "json"],
+      ["format/test.vue", "vue"],
+      ["format/test.toml", "toml"],
+      ["format/formatted.ts", "typescript"],
+      ["format/test.txt", "plaintext"],
+    ])("should format unsaved file %s", async (path, languageId) => {
+      expect(
+        await formatFixtureContent(
+          FIXTURES_DIR,
+          path,
+          "untitled://Untitled-" + languageId,
+          languageId,
+        ),
+      ).toMatchSnapshot();
     });
   });
 
