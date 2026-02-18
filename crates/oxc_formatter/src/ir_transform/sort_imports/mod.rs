@@ -5,6 +5,7 @@ pub mod options;
 mod partitioned_chunk;
 mod sortable_imports;
 mod source_line;
+mod merge_imports;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 
