@@ -15,10 +15,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use console::Style;
 use oxc::{span::SourceType, transformer::BabelOptions};
 use oxc_tasks_common::{Snapshot, normalize_path, project_root};
-use similar::{ChangeTag, TextDiff};
+use similar::TextDiff;
 
 pub use driver::Driver;
 use test262::MetaData as Test262Meta;
@@ -218,14 +217,7 @@ fn print_result(r: &CoverageResult) {
 
 fn print_diff(actual: &str, expected: &str) {
     let diff = TextDiff::from_lines(expected, actual);
-    for change in diff.iter_all_changes() {
-        let (sign, style) = match change.tag() {
-            ChangeTag::Delete => ("-", Style::new().red()),
-            ChangeTag::Insert => ("+", Style::new().green()),
-            ChangeTag::Equal => continue,
-        };
-        print!("{}{}", style.apply_to(sign).bold(), style.apply_to(change));
-    }
+    oxc_tasks_common::print_text_diff(&diff);
 }
 
 pub fn snapshot_results(name: &str, test_root: &Path, results: &[CoverageResult]) {
