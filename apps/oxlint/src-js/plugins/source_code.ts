@@ -4,8 +4,6 @@ import {
   SOURCE_LEN_OFFSET,
   IS_JSX_FLAG_POS,
   IS_TS_FLAG_POS,
-  TOKENS_OFFSET_POS_32,
-  TOKENS_LEN_POS_32,
 } from "../generated/constants.ts";
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
@@ -31,10 +29,10 @@ import type { BufferWithArrays, Comment, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
 
 // Text decoder, for decoding source text from buffer
-const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
+export const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
-let buffer: BufferWithArrays | null = null;
+export let buffer: BufferWithArrays | null = null;
 
 // Indicates if the original source text has a BOM. Set before linting a file by `setupSourceForFile`.
 let hasBOM = false;
@@ -159,18 +157,6 @@ export function fileIsTs(): boolean {
   debugAssertIsNonNull(buffer);
   // Flag is `bool` in Rust, so 0 = false, 1 = true
   return buffer[IS_TS_FLAG_POS] === 1;
-}
-
-/**
- * Get serialized ESTree tokens JSON from buffer, if present.
- */
-export function getSerializedTokensJSON(): string | null {
-  debugAssertIsNonNull(buffer);
-  const tokensLen = buffer.uint32[TOKENS_LEN_POS_32];
-  if (tokensLen === 0) return null;
-
-  const tokensOffset = buffer.uint32[TOKENS_OFFSET_POS_32];
-  return textDecoder.decode(buffer.subarray(tokensOffset, tokensOffset + tokensLen));
 }
 
 // `SourceCode` object.
