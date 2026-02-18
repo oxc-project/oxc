@@ -1,8 +1,8 @@
-commit: dd6138f9
+commit: 3180f5a9
 
 parser_test262 Summary:
-AST Parsed     : 46746/46746 (100.00%)
-Positive Passed: 46746/46746 (100.00%)
+AST Parsed     : 46777/46777 (100.00%)
+Positive Passed: 46777/46777 (100.00%)
 Negative Passed: 4588/4588 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -26679,13 +26679,12 @@ Negative Passed: 4588/4588 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
-    ╭─[test262/test/language/statements/await-using/redeclaration-error-from-within-strict-mode-function-await-using.js:15:49]
- 14 │ $DONOTEVALUATE();
- 15 │ (async function() { 'use strict'; { await using f = null; var f; } })
+    ╭─[test262/test/language/statements/await-using/redeclaration-error-from-within-strict-mode-function-await-using.js:16:49]
+ 15 │ $DONOTEVALUATE();
+ 16 │ (async function() { 'use strict'; { await using f = null; var f; } })
     ·                                                 ┬             ┬
     ·                                                 │             ╰── It can not be redeclared here
     ·                                                 ╰── `f` has already been declared here
- 16 │ 
     ╰────
 
   × Using declarations may not have binding patterns.
@@ -39328,13 +39327,12 @@ Negative Passed: 4588/4588 (100.00%)
     ╰────
 
   × Identifier `f` has already been declared
-    ╭─[test262/test/language/statements/using/redeclaration-error-from-within-strict-mode-function-using.js:15:37]
- 14 │ $DONOTEVALUATE();
- 15 │ (function() { 'use strict'; { using f = null; var f; } })
+    ╭─[test262/test/language/statements/using/redeclaration-error-from-within-strict-mode-function-using.js:16:37]
+ 15 │ $DONOTEVALUATE();
+ 16 │ (function() { 'use strict'; { using f = null; var f; } })
     ·                                     ┬             ┬
     ·                                     │             ╰── It can not be redeclared here
     ·                                     ╰── `f` has already been declared here
- 16 │ 
     ╰────
 
   × Cannot use `await` as an identifier in an async context
