@@ -589,7 +589,6 @@ impl Linter {
                 (0, 0)
             } else {
                 let tokens_json = allocator.alloc_str(&tokens_json);
-                #[expect(clippy::cast_possible_truncation)]
                 let tokens_offset = tokens_json.as_ptr() as u32;
                 #[expect(clippy::cast_possible_truncation)]
                 let tokens_len = tokens_json.len() as u32;
@@ -778,6 +777,7 @@ impl RawTransferMetadata {
         tokens_offset: u32,
         tokens_len: u32,
     ) -> Self {
+        #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro reorders fields
         Self { data_offset, is_ts, is_jsx, has_bom, tokens_offset, tokens_len }
     }
 }

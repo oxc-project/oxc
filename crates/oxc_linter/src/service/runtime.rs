@@ -1017,6 +1017,7 @@ impl Runtime {
         section_module_records
     }
 
+    #[expect(clippy::type_complexity)]
     fn process_source_section<'a>(
         &self,
         path: &Path,
