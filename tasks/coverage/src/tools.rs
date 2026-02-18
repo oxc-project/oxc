@@ -947,20 +947,20 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
                 .with_extension(format!("{ext}.md"));
 
             let estree_content = fs::read_to_string(&estree_path).unwrap_or_default();
-            let estree_ast_units = parse_estree_json_blocks(&estree_content, "AST");
+            let estree_units = parse_estree_json_blocks(&estree_content, "AST");
 
-            if estree_ast_units.len() != f.units.len() {
+            if estree_units.len() != f.units.len() {
                 return CoverageResult {
                     path: f.path.clone(),
                     should_fail: false,
                     result: TestResult::GenericError(
                         "Unexpected estree file",
-                        format!("{} != {}", estree_ast_units.len(), f.units.len()),
+                        format!("{} != {}", estree_units.len(), f.units.len()),
                     ),
                 };
             }
 
-            for (unit, expected_ast) in f.units.iter().zip(estree_ast_units.iter()) {
+            for (unit, expected) in f.units.iter().zip(estree_units.iter()) {
                 let allocator = Allocator::new();
                 let options = ParseOptions { preserve_parens: false, ..Default::default() };
                 let ret = Parser::new(&allocator, &unit.content, unit.source_type)
@@ -984,15 +984,11 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
                     .convert_program_with_ascending_order_checks(&mut program);
                 let oxc_json = program.to_pretty_estree_ts_json(false);
 
-                if oxc_json != *expected_ast {
+                if oxc_json != *expected {
                     return CoverageResult {
                         path: f.path.clone(),
                         should_fail: false,
-                        result: TestResult::Mismatch(
-                            "Mismatch",
-                            oxc_json,
-                            expected_ast.to_string(),
-                        ),
+                        result: TestResult::Mismatch("Mismatch", oxc_json, expected.to_string()),
                     };
                 }
             }
