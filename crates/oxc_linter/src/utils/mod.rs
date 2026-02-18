@@ -321,8 +321,10 @@ mod test {
     fn test_typescript_compatible_rules_not_misrouted() {
         use crate::rules::RULES;
         for rule_name in TYPESCRIPT_COMPATIBLE_ESLINT_RULES {
-            let in_typescript = RULES.iter().any(|r| r.plugin_name() == "typescript" && r.name() == rule_name);
-            let in_eslint = RULES.iter().any(|r| r.plugin_name() == "eslint" && r.name() == rule_name);
+            let in_typescript =
+                RULES.iter().any(|r| r.plugin_name() == "typescript" && r.name() == rule_name);
+            let in_eslint =
+                RULES.iter().any(|r| r.plugin_name() == "eslint" && r.name() == rule_name);
             assert!(
                 !in_typescript || in_eslint,
                 "Rule '{rule_name}' exists in the typescript plugin but not eslint. \
