@@ -783,6 +783,9 @@ fn test() {
         (r#"<div popoverTarget="locale-switcher" />"#, None),
         (r#"<div popoverTargetAction="show" />"#, None),
         (r#"<div fetchPriority="high" />"#, None),
+        (r#"<img fetchpriority="high" src="foo.jpg" />"#, None),
+        (r#"<link fetchpriority="high" href="style.css" rel="stylesheet" />"#, None),
+        (r#"<script fetchpriority="high" src="script.js" />"#, None),
         (r#"<div data-xml-anything="invalid" />"#, None),
         (
             r#"<div data-testID="bar" data-under_sCoRe="bar" />;"#,

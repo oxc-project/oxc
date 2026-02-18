@@ -277,6 +277,27 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
    ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <img fetchpriority="high" src="foo.jpg" />
+   ·      ─────────────
+   ╰────
+  help: Use 'fetchPriority' instead
+
+  ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:7]
+ 1 │ <link fetchpriority="high" href="style.css" rel="stylesheet" />
+   ·       ─────────────
+   ╰────
+  help: Use 'fetchPriority' instead
+
+  ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:9]
+ 1 │ <script fetchpriority="high" src="script.js" />
+   ·         ─────────────
+   ╰────
+  help: Use 'fetchPriority' instead
+
+  ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:6]
  1 │ <div data-xml-anything="invalid" />
    ·      ─────────────────
    ╰────
