@@ -130,11 +130,7 @@ fn extract_for_mode(formatted_code: &str, mode: TextToDocMode, source_text: &str
             // Count the number of params in the original source to determine bracket wrapping.
             // The original source is `function _(PARAMS) {}` where PARAMS was extracted from the v-for.
             let needs_parens = count_vue_for_params(source_text) > 1;
-            if needs_parens {
-                format!("({params})")
-            } else {
-                params
-            }
+            if needs_parens { format!("({params})") } else { params }
         }
         TextToDocMode::VueBindings => extract_function_params(formatted_code),
         TextToDocMode::VueGeneric => extract_type_params(formatted_code),
