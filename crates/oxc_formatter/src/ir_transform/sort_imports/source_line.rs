@@ -25,6 +25,9 @@ pub enum SourceLine<'a> {
     CommentOnly(Range<usize>, LineMode),
     /// Other lines, always a boundary.
     Others(Range<usize>, LineMode),
+    /// A merged import constructed from multiple duplicate imports.
+    /// Unlike `Import`, this variant owns its FormatElements instead of referencing the original
+    MergedImport(Vec<FormatElement<'a>>),
 }
 
 impl<'a> SourceLine<'a> {
@@ -144,6 +147,7 @@ impl<'a> SourceLine<'a> {
                     has_default_specifier,
                     has_namespace_specifier,
                     has_named_specifier,
+                    specifiers: vec![],
                 },
             );
         }
@@ -176,6 +180,12 @@ impl<'a> SourceLine<'a> {
                 // Always use hard line break after import statement.
                 next_elements.push(FormatElement::Line(LineMode::Hard));
             }
+            SourceLine::MergedImport(elements) => {
+                for el in elements {
+                    next_elements.push(el.clone());
+                }
+                next_elements.push(FormatElement::Line(LineMode::Hard));
+            }
             SourceLine::CommentOnly(range, mode) | SourceLine::Others(range, mode) => {
                 for idx in range.clone() {
                     next_elements.push(prev_elements[idx].clone());
@@ -202,4 +212,19 @@ pub struct ImportLineMetadata<'a> {
     pub has_namespace_specifier: bool,
     /// Whether this import has named specifiers (e.g., `import { foo } from "foo"`).
     pub has_named_specifier: bool,
+    /// Individual named specifiers extracted from the import.
+    /// Empty if this import has no named specifiers (e.g., side-effect or namespace imports).
+    pub specifiers: Vec<SpecifierInfo<'a>>
+}
+
+/// Information about single import specifier, extracted from IR elements
+/// Used for merging duplicate imports
+#[derive(Debug, Clone)]
+pub struct SpecifierInfo<'a> {
+    /// The imported name (e.g. `join` in `import { join } from path'`)
+    pub imported: &'a str,
+    /// The local alias, if different from imported (e.g., `j` in `import { join as j }`)
+    pub local: Option<&'a str>,
+    /// Whether this specifier has a per-specifier `type` annotation (e.g., `import { type Foo }`)
+    pub is_type: bool,
 }

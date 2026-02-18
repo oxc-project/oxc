@@ -146,6 +146,13 @@ impl<'a> PartitionedChunk<'a> {
                         "`PartitionedChunk::Imports` must not contain `SourceLine::Others`."
                     );
                 }
+                // `MergedImport` is only created later during the merge phase,
+                // after partitioning is already complete.
+                SourceLine::MergedImport(_) => {
+                    unreachable!(
+                        "`MergedImport` cannot appear during partitioning."
+                    );
+                }
             }
         }
 
