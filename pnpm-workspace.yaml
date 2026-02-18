@@ -18,7 +18,6 @@ catalog:
   publint: 0.3.17
   rolldown: 1.0.0-rc.5
   tsdown: 0.20.3
-  typescript: 5.9.3
   vitest: 4.0.18
 
 onlyBuiltDependencies:
