@@ -901,26 +901,26 @@ pub fn run_estree_acorn_jsx_tokens(files: &[AcornJsxFile]) -> Vec<CoverageResult
         .collect()
 }
 
-pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
-    // Skip paths for TypeScript ESTree tests
-    const SKIP_PATHS: &[&str] = &[
-        // Skip cases which are failing in parser conformance tests
-        "typescript/tests/cases/compiler/arrayFromAsync.ts",
-        "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
-        "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
-        "typescript/tests/cases/compiler/sourceMapValidationDecorators.ts",
-        "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
-        // Skip tests where TS-ESLint is incorrect
-        "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
-        // Skip tests with hashbangs (we have different handling)
-        "typescript/tests/cases/compiler/emitBundleWithShebang1.ts",
-        "typescript/tests/cases/compiler/emitBundleWithShebang2.ts",
-        "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives1.ts",
-        "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives2.ts",
-        "typescript/tests/cases/compiler/shebang.ts",
-        "typescript/tests/cases/compiler/shebangBeforeReferences.ts",
-    ];
+// Skip paths for TypeScript ESTree tests
+static TS_SKIP_PATHS: &[&str] = &[
+    // Skip cases which are failing in parser conformance tests
+    "typescript/tests/cases/compiler/arrayFromAsync.ts",
+    "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
+    "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
+    "typescript/tests/cases/compiler/sourceMapValidationDecorators.ts",
+    "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
+    // Skip tests where TS-ESLint is incorrect
+    "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
+    // Skip tests with hashbangs (we have different handling)
+    "typescript/tests/cases/compiler/emitBundleWithShebang1.ts",
+    "typescript/tests/cases/compiler/emitBundleWithShebang2.ts",
+    "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives1.ts",
+    "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives2.ts",
+    "typescript/tests/cases/compiler/shebang.ts",
+    "typescript/tests/cases/compiler/shebangBeforeReferences.ts",
+];
 
+pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
     files
         .par_iter()
         .filter(|f| {
@@ -928,7 +928,7 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
                 return false;
             }
             // Skip ignored paths
-            if f.path.to_str().is_some_and(|p| SKIP_PATHS.contains(&p)) {
+            if f.path.to_str().is_some_and(|p| TS_SKIP_PATHS.contains(&p)) {
                 return false;
             }
             // Skip tests where no expected ESTree file exists
@@ -1003,29 +1003,13 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
 }
 
 pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
-    // Keep skip paths in sync with `run_estree_typescript`.
-    const SKIP_PATHS: &[&str] = &[
-        "typescript/tests/cases/compiler/arrayFromAsync.ts",
-        "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
-        "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
-        "typescript/tests/cases/compiler/sourceMapValidationDecorators.ts",
-        "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
-        "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
-        "typescript/tests/cases/compiler/emitBundleWithShebang1.ts",
-        "typescript/tests/cases/compiler/emitBundleWithShebang2.ts",
-        "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives1.ts",
-        "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives2.ts",
-        "typescript/tests/cases/compiler/shebang.ts",
-        "typescript/tests/cases/compiler/shebangBeforeReferences.ts",
-    ];
-
     files
         .par_iter()
         .filter(|f| {
             if f.should_fail {
                 return false;
             }
-            if f.path.to_str().is_some_and(|p| SKIP_PATHS.contains(&p)) {
+            if f.path.to_str().is_some_and(|p| TS_SKIP_PATHS.contains(&p)) {
                 return false;
             }
             let ext = f.path.extension().and_then(|e| e.to_str()).unwrap_or("");
