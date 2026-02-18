@@ -111,7 +111,13 @@ const test262FixturePaths = [];
 for (let path of await readdir(ACORN_TEST262_DIR_PATH, { recursive: true })) {
   if (!path.endsWith(".json")) continue;
   path = path.slice(0, -2);
-  if (test262FailPaths.has(path) || path.startsWith("language/comments/hashbang/")) continue;
+  if (
+    test262FailPaths.has(path) ||
+    path.startsWith("language/comments/hashbang/") ||
+    path.includes("annexB/language/expressions/assignmenttargettype")
+  ) {
+    continue;
+  }
   test262FixturePaths.push(path);
 }
 

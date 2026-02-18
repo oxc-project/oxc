@@ -1,14 +1,19 @@
-commit: 92c052dc
+commit: ad32683b
 
 node: v24.12.0
 
-Passed: 324 of 412 (78.64%)
+Passed: 324 of 413 (78.45%)
 
 Failures:
 
 ./fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js
 Parse failure: 'eval' and 'arguments' cannot be used as a binding identifier in strict mode
 At file: /fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js:4:5
+
+./fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js
+AssertionError: expected { value: 2, done: true } to deeply equal { value: 4, done: false }
+    at test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js:28:44)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
 
 ./fixtures/babel/babel-plugin-transform-async-to-generator-test-fixtures-async-to-generator-async-complex-params-exec.test.js
 TypeError: Cannot destructure property 'b' of 'undefined' as it is undefined.
