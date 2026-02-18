@@ -576,12 +576,14 @@ impl Linter {
             // Keep JS fallback path for BOM sources.
             (0, 0)
         } else if let Some(parser_tokens) = ctx_host.current_sub_host().parser_tokens() {
-            let token_context = collect_token_context(program);
+            let token_options = EstreeTokenOptions::linter();
+            let token_context = collect_token_context(program, token_options);
             let tokens_json = to_estree_tokens_json(
+                allocator,
                 source_text,
                 parser_tokens,
                 &token_context,
-                EstreeTokenOptions::linter(),
+                token_options,
             );
             if tokens_json.is_empty() {
                 (0, 0)

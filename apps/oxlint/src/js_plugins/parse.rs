@@ -218,12 +218,14 @@ unsafe fn parse_raw_impl(
                 // Fallback to TypeScript token parsing in JS for BOM files.
                 (0, 0)
             } else {
-                let token_context = collect_token_context(program);
+                let token_options = EstreeTokenOptions::linter();
+                let token_context = collect_token_context(program, token_options);
                 let tokens_json = to_estree_tokens_json(
+                    &allocator,
                     source_text,
                     &tokens,
                     &token_context,
-                    EstreeTokenOptions::linter(),
+                    token_options,
                 );
                 let tokens_json = allocator.alloc_str(&tokens_json);
                 #[expect(clippy::cast_possible_truncation)]
