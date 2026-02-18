@@ -27,48 +27,27 @@ pub struct EstreeToken<'a> {
     pub value: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub regex: Option<EstreeRegExpToken<'a>>,
-    // TODO: remove option wrapped once https://github.com/oxc-project/estree-conformance/pull/172 is merged & submodule updated
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub start: Option<u32>,
-    // TODO: remove option wrapped once https://github.com/oxc-project/estree-conformance/pull/172 is merged & submodule updated
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub end: Option<u32>,
+    pub start: u32,
+    pub end: u32,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct EstreeTokenOptions {
-    // TODO: remove me once https://github.com/oxc-project/estree-conformance/pull/172 is merged & submodule updated
-    pub include_template_spans: bool,
     pub exclude_legacy_keyword_identifiers: bool,
     pub decode_identifier_escapes: bool,
 }
 
 impl EstreeTokenOptions {
     pub const fn test262() -> Self {
-        Self {
-            // TODO: remove me once https://github.com/oxc-project/estree-conformance/pull/172 is merged & submodule updated
-            include_template_spans: false,
-            exclude_legacy_keyword_identifiers: true,
-            decode_identifier_escapes: true,
-        }
+        Self { exclude_legacy_keyword_identifiers: true, decode_identifier_escapes: true }
     }
 
     pub const fn typescript() -> Self {
-        Self {
-            // TODO: remove me once https://github.com/oxc-project/estree-conformance/pull/172 is merged & submodule updated
-            include_template_spans: true,
-            exclude_legacy_keyword_identifiers: false,
-            decode_identifier_escapes: false,
-        }
+        Self { exclude_legacy_keyword_identifiers: false, decode_identifier_escapes: false }
     }
 
     pub const fn linter() -> Self {
-        Self {
-            // TODO: remove me once https://github.com/oxc-project/estree-conformance/pull/172 is merged & submodule updated
-            include_template_spans: true,
-            exclude_legacy_keyword_identifiers: true,
-            decode_identifier_escapes: false,
-        }
+        Self { exclude_legacy_keyword_identifiers: true, decode_identifier_escapes: false }
     }
 }
 
@@ -424,24 +403,7 @@ pub fn to_estree_tokens<'a>(
             None
         };
 
-        // TODO: remove me once https://github.com/oxc-project/estree-conformance/pull/172 is merged & submodule updated
-        let is_template_token = matches!(
-            kind,
-            Kind::NoSubstitutionTemplate
-                | Kind::TemplateHead
-                | Kind::TemplateMiddle
-                | Kind::TemplateTail
-        );
-        // TODO: remove me once https://github.com/oxc-project/estree-conformance/pull/172 is merged & submodule updated
-        let include_spans = options.include_template_spans || !is_template_token;
-
-        estree_tokens.push(EstreeToken {
-            token_type,
-            value,
-            regex,
-            start: include_spans.then_some(start),
-            end: include_spans.then_some(end),
-        });
+        estree_tokens.push(EstreeToken { token_type, value, regex, start, end });
     }
 
     estree_tokens
