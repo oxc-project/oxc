@@ -68,10 +68,25 @@ impl EstreeTokenOptions {
     }
 }
 
-pub fn collect_token_context(
+/// Serialize tokens to JSON.
+pub fn to_estree_tokens_json(
+    tokens: &[Token],
     program: &Program<'_>,
     options: EstreeTokenOptions,
-) -> EstreeTokenContext {
+    allocator: &Allocator,
+) -> String {
+    let estree_tokens = to_estree_tokens(tokens, program, options, allocator);
+    serde_json::to_string_pretty(&estree_tokens).unwrap_or_default()
+}
+
+/// Convert `Token`s to `EstreeToken`s.
+fn to_estree_tokens<'a>(
+    tokens: &[Token],
+    program: &Program<'a>,
+    options: EstreeTokenOptions,
+    allocator: &'a Allocator,
+) -> ArenaVec<'a, EstreeToken<'a>> {
+    // Traverse AST to collect details of tokens requiring correction, depending on provided options
     let mut context = EstreeTokenContext {
         jsx_namespace_jsx_identifiers: options.jsx_namespace_jsx_identifiers,
         member_expr_in_jsx_expression_jsx_identifiers: options
@@ -79,30 +94,13 @@ pub fn collect_token_context(
         ..Default::default()
     };
     context.visit_program(program);
-    context
-}
 
-pub fn to_estree_tokens_json(
-    allocator: &Allocator,
-    source_text: &str,
-    tokens: &[Token],
-    context: &EstreeTokenContext,
-    options: EstreeTokenOptions,
-) -> String {
-    let estree_tokens = to_estree_tokens(allocator, source_text, tokens, context, options);
-    serde_json::to_string_pretty(&estree_tokens).unwrap_or_default()
-}
-
-pub fn to_estree_tokens<'a>(
-    allocator: &'a Allocator,
-    source_text: &'a str,
-    tokens: &[Token],
-    context: &EstreeTokenContext,
-    options: EstreeTokenOptions,
-) -> ArenaVec<'a, EstreeToken<'a>> {
+    // Create UTF-8 to UTF-16 conversion table
+    let source_text = program.source_text;
     let utf8_to_utf16 = Utf8ToUtf16::new(source_text);
     let mut converter = utf8_to_utf16.converter();
 
+    // Convert tokens to `EstreeToken`s
     let mut estree_tokens = ArenaVec::with_capacity_in(tokens.len(), allocator);
     for token in tokens {
         let kind = token.kind();
