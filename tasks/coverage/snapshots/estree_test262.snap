@@ -2,7 +2,39 @@ commit: dd6138f9
 
 estree_test262 Summary:
 AST Parsed     : 46490/46490 (100.00%)
-Positive Passed: 46481/46490 (99.98%)
+Positive Passed: 46465/46490 (99.95%)
+Mismatch: tasks/coverage/test262/test/intl402/DateTimeFormat/prototype/formatToParts/era.js
+
+Mismatch: tasks/coverage/test262/test/intl402/PluralRules/prototype/selectRange/argument-tonumber-throws.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/chinese-30-day-leap-months.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/chinese-leap-month-codes-common.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/chinese-month-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/coptic-month-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/dangi-leap-month-codes-common.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/dangi-month-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/ethioaa-month-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/ethiopic-month-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/hebrew-month-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/indian-month-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/islamic-civil-month-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/islamic-tbla-month-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/islamic-umalqura-month-codes.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Temporal/PlainMonthDay/from/persian-month-codes.js
+
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/target-cover-id.js

@@ -1,8 +1,16 @@
-commit: 95e3aaa9
+commit: ad04bf74
 
 estree_typescript Summary:
-AST Parsed     : 9773/9773 (100.00%)
-Positive Passed: 9755/9773 (99.82%)
+AST Parsed     : 9761/9761 (100.00%)
+Positive Passed: 9738/9761 (99.76%)
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambientWithStatements.ts
+A 'return' statement can only be used within a function body.
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts
+Lexical declaration cannot appear in a single-statement context
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-scopes.ts
+Lexical declaration cannot appear in a single-statement context
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-validContexts.ts
+Lexical declaration cannot appear in a single-statement context
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleDetectionIsolatedModulesCjsFileScope.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleNodeImportRequireEmit.ts
@@ -39,3 +47,5 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExport
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFilesForNodeNativeModules.ts
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts
+A 'return' statement can only be used within a function body.

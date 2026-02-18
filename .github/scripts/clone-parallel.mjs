@@ -13,9 +13,9 @@ import { dirname, join } from "node:path";
 // NOTE: Prettier version is now pinned to `v3.8.0` (not updated by workflow above), Update manually as needed
 const TEST262_SHA = "dd6138f9bc1aa2c3ba9cbf54452049b9a92c4e13";
 const BABEL_SHA = "92c052dc449eeb7d9562d5852d1ea295d6c86eca";
-const TYPESCRIPT_SHA = "95e3aaa90341b516e868bf2300b1da5d07103f1e";
+const TYPESCRIPT_SHA = "ad04bf7488384a5dcdf7d250ccb8e5263021a8ff";
 const PRETTIER_SHA = "812a4d0071270f61a7aa549d625b618be7e09d71";
-const ESTREE_CONFORMANCE_SHA = "32501475c99fc022a93c80bc6ce1a607f21ecc66";
+const ESTREE_CONFORMANCE_SHA = "a12445bbce745fc422d83cf9da23a6c47950f252";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
 
 const repoRoot = join(import.meta.dirname, "..", "..");
@@ -95,7 +95,16 @@ async function cloneRepo(shouldClone, repo, path, ref, name) {
     } else {
       // Directory doesn't exist - clone it
       await runGit(
-        ["clone", "--quiet", "--no-progress", "--single-branch", "--depth", "1", repoUrl, fullPath],
+        [
+          "clone",
+          "--quiet",
+          "--no-progress",
+          "--single-branch",
+          "--depth",
+          "1",
+          repoUrl,
+          fullPath,
+        ],
         repoRoot,
       );
     }
@@ -115,7 +124,9 @@ async function cloneRepo(shouldClone, repo, path, ref, name) {
     console.log(`[OK] Completed clone of ${name}`);
     return { success: true, name };
   } catch (error) {
-    console.error(`[FAILED] Clone operation failed for ${name}: ${error.message}`);
+    console.error(
+      `[FAILED] Clone operation failed for ${name}: ${error.message}`,
+    );
     return { success: false, name, error: error.message };
   }
 }
@@ -125,7 +136,13 @@ async function main() {
 
   // Start all clone operations in parallel
   const results = await Promise.all([
-    cloneRepo(TEST262, "tc39/test262", "tasks/coverage/test262", TEST262_SHA, "test262"),
+    cloneRepo(
+      TEST262,
+      "tc39/test262",
+      "tasks/coverage/test262",
+      TEST262_SHA,
+      "test262",
+    ),
     cloneRepo(BABEL, "babel/babel", "tasks/coverage/babel", BABEL_SHA, "babel"),
     cloneRepo(
       TYPESCRIPT,
