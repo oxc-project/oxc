@@ -35,24 +35,43 @@ pub struct EstreeToken<'a> {
 pub struct EstreeTokenOptions {
     pub exclude_legacy_keyword_identifiers: bool,
     pub decode_identifier_escapes: bool,
+    pub jsx_namespace_jsx_identifiers: bool,
+    pub member_expr_in_jsx_expression_jsx_identifiers: bool,
 }
 
 impl EstreeTokenOptions {
     pub const fn test262() -> Self {
-        Self { exclude_legacy_keyword_identifiers: true, decode_identifier_escapes: true }
+        Self {
+            exclude_legacy_keyword_identifiers: true,
+            decode_identifier_escapes: true,
+            jsx_namespace_jsx_identifiers: true,
+            member_expr_in_jsx_expression_jsx_identifiers: false,
+        }
     }
 
     pub const fn typescript() -> Self {
-        Self { exclude_legacy_keyword_identifiers: false, decode_identifier_escapes: false }
+        Self {
+            exclude_legacy_keyword_identifiers: false,
+            decode_identifier_escapes: false,
+            jsx_namespace_jsx_identifiers: false,
+            member_expr_in_jsx_expression_jsx_identifiers: true,
+        }
     }
 
     pub const fn linter() -> Self {
-        Self { exclude_legacy_keyword_identifiers: true, decode_identifier_escapes: false }
+        Self {
+            exclude_legacy_keyword_identifiers: true,
+            decode_identifier_escapes: false,
+            jsx_namespace_jsx_identifiers: true,
+            member_expr_in_jsx_expression_jsx_identifiers: false,
+        }
     }
 }
 
 #[derive(Default)]
 pub struct EstreeTokenContext {
+    jsx_namespace_jsx_identifiers: bool,
+    member_expr_in_jsx_expression_jsx_identifiers: bool,
     ast_identifier_spans: FxHashSet<Span>,
     force_keyword_spans: FxHashSet<Span>,
     jsx_identifier_spans: FxHashSet<Span>,
@@ -115,7 +134,8 @@ impl<'a> Visit<'a> for EstreeTokenContext {
 
     fn visit_identifier_name(&mut self, identifier: &IdentifierName<'a>) {
         self.ast_identifier_spans.insert(identifier.span);
-        if self.jsx_expression_depth > 0
+        if self.member_expr_in_jsx_expression_jsx_identifiers
+            && self.jsx_expression_depth > 0
             && self.jsx_member_expression_depth > 0
             && self.jsx_computed_member_depth == 0
         {
@@ -125,7 +145,8 @@ impl<'a> Visit<'a> for EstreeTokenContext {
 
     fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
         self.ast_identifier_spans.insert(identifier.span);
-        if self.jsx_expression_depth > 0
+        if self.member_expr_in_jsx_expression_jsx_identifiers
+            && self.jsx_expression_depth > 0
             && self.jsx_member_expression_depth > 0
             && self.jsx_computed_member_depth == 0
         {
@@ -178,9 +199,13 @@ impl<'a> Visit<'a> for EstreeTokenContext {
     }
 
     fn visit_jsx_namespaced_name(&mut self, name: &JSXNamespacedName<'a>) {
-        self.non_jsx_identifier_spans.insert(name.namespace.span);
-        self.non_jsx_identifier_spans.insert(name.name.span);
-        walk::walk_jsx_namespaced_name(self, name);
+        if self.jsx_namespace_jsx_identifiers {
+            self.jsx_identifier_spans.insert(name.namespace.span);
+            self.jsx_identifier_spans.insert(name.name.span);
+        } else {
+            self.non_jsx_identifier_spans.insert(name.namespace.span);
+            self.non_jsx_identifier_spans.insert(name.name.span);
+        }
     }
 
     fn visit_jsx_expression_container(&mut self, container: &JSXExpressionContainer<'a>) {
@@ -225,8 +250,16 @@ impl<'a> Visit<'a> for EstreeTokenContext {
     }
 }
 
-pub fn collect_token_context(program: &Program<'_>) -> EstreeTokenContext {
-    let mut context = EstreeTokenContext::default();
+pub fn collect_token_context(
+    program: &Program<'_>,
+    options: EstreeTokenOptions,
+) -> EstreeTokenContext {
+    let mut context = EstreeTokenContext {
+        jsx_namespace_jsx_identifiers: options.jsx_namespace_jsx_identifiers,
+        member_expr_in_jsx_expression_jsx_identifiers: options
+            .member_expr_in_jsx_expression_jsx_identifiers,
+        ..Default::default()
+    };
     context.visit_program(program);
     context
 }
