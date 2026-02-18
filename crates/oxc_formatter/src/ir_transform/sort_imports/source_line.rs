@@ -76,6 +76,10 @@ impl<'a> SourceLine<'a> {
         let mut has_default_specifier = false;
         let mut has_namespace_specifier = false;
         let mut has_named_specifier = false;
+        let mut specifiers: Vec<SpecifierInfo<'a>> = vec![];
+        let mut inside_braces = false;
+        let mut current_is_type = false;
+        let mut current_imported: Option<&'a str> = None;
 
         for idx in range.clone() {
             let element = &elements[idx];
@@ -108,11 +112,58 @@ impl<'a> SourceLine<'a> {
                                 FormatElement::Token { text } => match *text {
                                     "type" if first_token => is_type_import = true,
                                     "*" => has_namespace_specifier = true,
-                                    "{" => has_named_specifier = true,
+                                    "{" => {
+                                        has_named_specifier = true;
+                                        inside_braces = true;
+                                    }
+                                    "}" if inside_braces => {
+                                        // Closing bracket – flush last specifier
+                                        if let Some(imported) = current_imported.take() {
+                                            specifiers.push(SpecifierInfo {
+                                                imported,
+                                                local: None,
+                                                is_type: current_is_type,
+                                            });
+                                            current_is_type = false;
+                                        }
+                                        inside_braces = false;
+                                    }
+                                    "," if inside_braces => {
+                                        if let Some(imported) = current_imported.take() {
+                                            specifiers.push(SpecifierInfo {
+                                                imported,
+                                                local: None,
+                                                is_type: current_is_type,
+                                            });
+                                            current_is_type = false;
+                                        }
+                                    }
+                                    "as" if inside_braces => {
+                                        // Nothing – local would be picked up in Text below
+                                    }
+                                    "type" if inside_braces => {
+                                        current_is_type = true;
+                                    }
                                     "from" => break, // Stop when we reach "from"
                                     _ => {}
                                 },
-                                FormatElement::Text { .. } => {
+                                FormatElement::Text { text, .. } => {
+                                    if inside_braces {
+                                        if current_imported.is_some() {
+                                            // Already has `imported` -> that's local (after `as`)
+                                            let imported = current_imported.take().unwrap();
+                                            specifiers.push(SpecifierInfo {
+                                                imported,
+                                                local: Some(text),
+                                                is_type: current_is_type,
+                                            });
+                                            current_is_type = false;
+                                        } else {
+                                            current_imported = Some(text);
+                                        }
+                                    } else if source.is_none() {
+                                        source = Some(text);
+                                    }
                                     has_default_specifier = true;
                                 }
                                 _ => {}
@@ -147,7 +198,7 @@ impl<'a> SourceLine<'a> {
                     has_default_specifier,
                     has_namespace_specifier,
                     has_named_specifier,
-                    specifiers: vec![],
+                    specifiers,
                 },
             );
         }
