@@ -725,15 +725,17 @@ pub struct SortImportsConfig {
     /// - Default: See below
     /// ```json
     /// [
-    ///   "type-import",
-    ///   ["value-builtin", "value-external"],
-    ///   "type-internal",
-    ///   "value-internal",
-    ///   ["type-parent", "type-sibling", "type-index"],
-    ///   ["value-parent", "value-sibling", "value-index"],
-    ///   "unknown",
+    ///   "builtin",
+    ///   "external",
+    ///   ["internal", "subpath"],
+    ///   ["parent", "sibling", "index"],
+    ///   "style",
+    ///   "unknown"
     /// ]
     /// ```
+    ///
+    /// Also, you can override the global `newlinesBetween` setting for specific group boundaries
+    /// by including a `{ "newlinesBetween": boolean }` marker object in the `groups` list at the desired position.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub groups: Option<Vec<SortGroupItemConfig>>,
     /// Define your own groups for matching very specific imports.
