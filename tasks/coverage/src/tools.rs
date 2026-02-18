@@ -700,18 +700,6 @@ pub fn run_minifier_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
 // ESTree
 // ================================
 
-fn parse_estree_json_blocks<'a>(content: &'a str, section_kind: &str) -> Vec<&'a str> {
-    let prefix = format!(":{section_kind}:\n```json\n");
-    content
-        .split("__ESTREE_TEST__")
-        .skip(1)
-        .filter_map(|section| {
-            let json = section.strip_prefix(&prefix)?;
-            json.strip_suffix("\n```\n").or_else(|| json.strip_suffix("\n```"))
-        })
-        .collect()
-}
-
 pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
     files
         .par_iter()
@@ -1102,6 +1090,18 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
             }
 
             CoverageResult { path: f.path.clone(), should_fail: false, result: TestResult::Passed }
+        })
+        .collect()
+}
+
+fn parse_estree_json_blocks<'a>(content: &'a str, section_kind: &str) -> Vec<&'a str> {
+    let prefix = format!(":{section_kind}:\n```json\n");
+    content
+        .split("__ESTREE_TEST__")
+        .skip(1)
+        .filter_map(|section| {
+            let json = section.strip_prefix(&prefix)?;
+            json.strip_suffix("\n```\n").or_else(|| json.strip_suffix("\n```"))
         })
         .collect()
 }
