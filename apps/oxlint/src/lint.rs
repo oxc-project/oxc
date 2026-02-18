@@ -1271,6 +1271,16 @@ mod test {
 
     #[cfg(not(target_endian = "big"))]
     #[test]
+    fn test_tsgolint_unused_bare_disable_directives() {
+        // Test that bare eslint-disable blocks work correctly with type-aware rules
+        let args = &["--type-aware", "--report-unused-disable-directives", "unused_bare.ts"];
+        Tester::new()
+            .with_cwd("fixtures/tsgolint_disable_directives".into())
+            .test_and_snapshot(args);
+    }
+
+    #[cfg(not(target_endian = "big"))]
+    #[test]
     fn test_tsgolint_disable_directives() {
         // Test that disable directives work with type-aware rules
         let args = &["--type-aware", "test.ts"];
