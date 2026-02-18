@@ -1,9 +1,9 @@
-commit: 95e3aaa9
+commit: ad04bf74
 
 parser_typescript Summary:
-AST Parsed     : 9840/9840 (100.00%)
-Positive Passed: 9840/9840 (100.00%)
-Negative Passed: 1530/2558 (59.81%)
+AST Parsed     : 9831/9834 (99.97%)
+Positive Passed: 9820/9834 (99.86%)
+Negative Passed: 1518/2578 (58.88%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -32,7 +32,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/amdDependenc
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/anyIdenticalToItself.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsReferenceInObjectLiteral_Js.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/arrayConcatMap.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatFunctionsWithOptionalArgs.ts
 
@@ -67,10 +67,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/binaryArithm
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/binaryArithmatic4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/bindingPatternCannotBeOnlyInferenceSource.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/blockScopedSameNameFunctionDeclarationES5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/blockScopedSameNameFunctionDeclarationES6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/callOverloads1.ts
 
@@ -131,12 +127,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/cloduleWithD
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/cloduleWithDuplicateMember2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/cloduleWithPriorInstantiatedModule.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/collisionArgumentsArrowFunctions.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/collisionArgumentsFunction.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/collisionArgumentsFunctionExpressions.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndAlias.ts
 
@@ -243,6 +233,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/destructurin
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfFunctionBody1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/detachedCommentAtStartOfFunctionBody2.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/didYouMeanSuggestionErrors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/downlevelLetConst16.ts
 
@@ -472,6 +464,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAndVar
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict4.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importAssertionsDeprecated.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithClassModifiers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importWithTrailingSlash.ts
@@ -485,6 +479,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/indexedAcces
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/inexistentPropertyInsideToStringType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/inferFromGenericFunctionReturnTypes1.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/inferentiallyTypingAnEmptyArray.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/innerAliases.ts
 
@@ -525,6 +521,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/intersection
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/invalidStaticField.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/invokingNonGenericMethodWithTypeArguments1.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isArray.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isLiteral1.ts
 
@@ -578,6 +576,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/lambdaPropSe
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/lastPropertyInLiteralWins.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letAsIdentifier2.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-scopes-duplicates2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-scopes-duplicates3.ts
@@ -590,11 +590,21 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letDeclarati
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-scopes-duplicates7.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letInVarDeclOfForIn_ES5.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letInVarDeclOfForIn_ES6.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letInVarDeclOfForOf_ES5.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letInVarDeclOfForOf_ES6.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/longObjectInstantiationChain1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/longObjectInstantiationChain2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/longObjectInstantiationChain3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mapUpsert.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/maxNodeModuleJsDepthDefaultsToZero.ts
 
@@ -617,6 +627,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mergedClassW
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarationExports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/metadataImportType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingDomElement_UsingDomLib.ts
 
@@ -713,6 +725,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/omitTypeTest
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/omittedExpressionForOfLoop.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/operationsAvailableOnPromisedType.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/operatorAddNullUndefined.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/optionalParamReferencingOtherParams2.ts
 
@@ -820,6 +834,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reservedName
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reservedNameOnModuleImportWithInterface.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/restUnion.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/returnValueInSetter.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/scopeCheckExtendedClassInsideStaticMethod1.ts
@@ -834,7 +850,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/setterWithRe
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/shorthandPropertyUndefined.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationLabeled.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/spyComparisonChecking.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticAnonymousTypeNotReferencingTypeParameter.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/staticClassMemberError.ts
 
@@ -871,6 +893,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/systemModule
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/targetTypeTest1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/templateLiteralsInTypes.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/temporal.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/thisBinding.ts
 
@@ -910,6 +934,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeParamete
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeParameterWithInvalidConstraintType.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typePredicateStructuralMatch.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeValueConflict1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeValueConflict2.ts
@@ -941,8 +967,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unknownSymbo
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unknownSymbols1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_classDecorators.2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useUnknownInCatchVariables01.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/varNameConflictsWithImportInDifferentPartOfModule.ts
 
@@ -1096,7 +1120,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorator
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor2.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/decoratorOnClassConstructor3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/constructor/parameter/decoratorOnClassConstructorParameter1.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod11.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumConstantMembers.ts
 
@@ -1156,29 +1188,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrow
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments02.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments03.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments04.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments05.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments06.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments07.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments09.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments10.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments11.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments14.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments15.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments16.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments17.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/arrowFunction/emitArrowFunctionWhenUsingArguments18.ts
 
@@ -1191,8 +1203,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/class
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/superCallBeforeThisAccessing6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/superCallBeforeThisAccessing7.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/classExpressions/typeArgumentInferenceWithClassExpression2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames15_ES5.ts
 
@@ -1256,6 +1266,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destr
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration1ES5iterable.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration8.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringSpread.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/missingAndExcessProperties.ts
@@ -1272,7 +1284,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destr
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/restElementWithBindingPattern2.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration11_es6.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration13_es6.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration3_es6.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration4_es6.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration8_es6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/defaultExportsCannotMerge04.ts
 
@@ -1293,6 +1313,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/templ
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringInDeleteExpression.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringInDeleteExpressionES6.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression1_es6.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression8_es6.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldStarExpression1_es6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorInAmbientContext1.ts
 
@@ -1338,9 +1364,25 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorat
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/asOperator/asOperatorAmbiguity.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/assignmentOperator/compoundAdditionAssignmentLHSCanBeAssigned.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/assignmentOperator/compoundAdditionAssignmentWithInvalidOperands.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/assignmentOperator/compoundArithmeticAssignmentLHSCanBeAssigned.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/assignmentOperator/compoundArithmeticAssignmentWithInvalidOperands.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithNullValueAndInvalidOperator.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithNullValueAndValidOperator.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithOnlyNullValueOrUndefinedValue.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithTypeParameter.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithUndefinedValueAndInvalidOperands.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithUndefinedValueAndValidOperator.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/arithmeticOperator/arithmeticOperatorWithNullValueAndInvalidOperands.ts
 
@@ -1357,6 +1399,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithOneOperandIsNull.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/inOperator/inOperatorWithInvalidOperands.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/overloadResolutionClassConstructors.ts
 
@@ -1392,11 +1436,17 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunctionOfFormThisErrors.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormInstanceOf.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardRedundancy.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInIfStatement.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInRightOperandOfOrOrOperator.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithAny.ts
 
@@ -1418,8 +1468,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/decrementOperator/decrementOperatorWithEnumType.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithBooleanType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithEnumType.ts
@@ -1428,9 +1476,15 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/deleteOperator/deleteOperatorWithStringType.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/logicalNotOperator/logicalNotOperatorWithAnyOtherType.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/negateOperator/negateOperatorWithAnyOtherType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/plusOperator/plusOperatorWithAnyOtherType.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/typeofOperator/typeofOperatorWithAnyOtherType.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithAnyOtherType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/circularReference.ts
 
@@ -1515,6 +1569,14 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interface
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/declarationMerging/twoInterfacesDifferentRootModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/declarationMerging/twoInterfacesDifferentRootModule2.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface01.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface02.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface03.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface04.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfacesExtendingClasses/implementingAnInterfaceExtendingClassWithPrivates2.ts
 
@@ -1682,14 +1744,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/node
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesGeneratedNameCollisions.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAssertions.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportModeDeclarationEmit1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportModeDeclarationEmit2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportModeDeclarationEmitErrors1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesJson.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesNoDirectoryModule.ts
@@ -1725,6 +1779,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration3.d.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserCommaInTypeMemberList2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock1.ts
 
@@ -1828,7 +1884,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserWhileStatement1.d.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode1.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode16.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode3-negative.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/StrictMode/parserStrictMode6-negative.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/SuperExpressions/parserSuperExpression1.ts
 
@@ -1851,6 +1913,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserRealSource6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/parserRealSource8.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName37.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName4.ts
 
@@ -1927,8 +1991,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statement
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of27.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of29.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of31.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of35.ts
 
@@ -2026,6 +2088,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tup
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/unionsOfTupleTypes1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/interfaceDoesNotDependOnBaseTypes.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/intrinsicKeyword.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/intrinsicTypes.ts
@@ -2059,6 +2123,345 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/uni
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/uniqueSymbol/uniqueSymbolsPropertyNames.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/witness/witness.ts
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambientWithStatements.ts
+
+  × TS(1108): A 'return' statement can only be used within a function body.
+    ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:11:5]
+ 10 │     L: var y;
+ 11 │     return;
+    ·     ──────
+ 12 │     switch (x) {
+    ╰────
+
+  × Illegal break statement
+   ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:2:5]
+ 1 │ declare namespace M {
+ 2 │     break;
+   ·     ──────
+ 3 │     continue;
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:3:5]
+ 2 │     break;
+ 3 │     continue;
+   ·     ─────────
+ 4 │     debugger;
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:25:5]
+ 24 │     }
+ 25 │     with (x) {
+    ·     ────
+ 26 │     }
+    ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:3:5]
+ 2 │ if (true) 
+ 3 │     const c1 = 0;
+   ·     ─────────────
+ 4 │ else 
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:5:5]
+ 4 │ else 
+ 5 │     const c2 = 0;
+   ·     ─────────────
+ 6 │ 
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:8:5]
+ 7 │ while (true) 
+ 8 │     const c3 = 0;
+   ·     ─────────────
+ 9 │ 
+   ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:11:5]
+ 10 │ do 
+ 11 │     const c4 = 0;
+    ·     ─────────────
+ 12 │ while (true);
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:16:5]
+ 15 │ with (obj) 
+ 16 │     const c5 = 0;  // No  Error will be reported here since we turn off all type checking
+    ·     ─────────────
+ 17 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:19:5]
+ 18 │ for (var i = 0; i < 10; i++)
+ 19 │     const c6 = 0;
+    ·     ─────────────
+ 20 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:22:5]
+ 21 │ for (var i2 in {}) 
+ 22 │     const c7 = 0;
+    ·     ─────────────
+ 23 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:25:12]
+ 24 │ if (true) 
+ 25 │     label: const c8 = 0;
+    ·            ─────────────
+ 26 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:28:29]
+ 27 │ while (false)
+ 28 │     label2: label3: label4: const c9 = 0;
+    ·                             ─────────────
+ 29 │ 
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:15:1]
+ 14 │ var obj;
+ 15 │ with (obj) 
+    · ────
+ 16 │     const c5 = 0;  // No  Error will be reported here since we turn off all type checking
+    ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-scopes.ts
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:43:12]
+ 42 │ if (true) {
+ 43 │     label: const c = 0;
+    ·            ────────────
+ 44 │     n = c;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:48:29]
+ 47 │ while (false) {
+ 48 │     label2: label3: label4: const c = 0;
+    ·                             ────────────
+ 49 │     n = c;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:27:1]
+ 26 │ var obj;
+ 27 │ with (obj) {
+    · ────
+ 28 │     const c = 0;
+    ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-validContexts.ts
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:31:12]
+ 30 │ if (true) {
+ 31 │     label: const c8 = 0;
+    ·            ─────────────
+ 32 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:35:29]
+ 34 │ while (false) {
+ 35 │     label2: label3: label4: const c9 = 0;
+    ·                             ─────────────
+ 36 │ }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:64:18]
+ 63 │         const c16 = 0
+ 64 │         label17: const c17 = 0;
+    ·                  ──────────────
+ 65 │     }
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:18:1]
+ 17 │ var obj;
+ 18 │ with (obj) {
+    · ────
+ 19 │     const c5 = 0;
+    ╰────
+
+Panicked: tasks/coverage/typescript/tests/cases/compiler/convertKeywordsYes.ts
+
+  × Classes can't have a field named 'constructor'
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:175:12]
+ 174 │ class bigClass {
+ 175 │     public "constructor" = 0;
+     ·            ─────────────
+ 176 │     public any = 0;
+     ╰────
+
+  × Unexpected token
+     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:292:22]
+ 291 │     class constructor { }
+ 292 │     class implements { }
+     ·                      ─
+ 293 │     class interface { }
+     ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts
+
+  × 'with' statements are not allowed
+   ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:4:5]
+ 3 │ async function withStatement0() {
+ 4 │     with (x) {
+   ·     ────
+ 5 │         y;
+   ╰────
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:10:5]
+  9 │ async function withStatement1() {
+ 10 │     with (await x) {
+    ·     ────
+ 11 │         y;
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:16:5]
+ 15 │ async function withStatement2() {
+ 16 │     with (x) {
+    ·     ────
+ 17 │         a;
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:25:9]
+ 24 │     with (x) {
+ 25 │         with (z) {
+    ·         ────
+ 26 │             a;
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:24:5]
+ 23 │ async function withStatement3() {
+ 24 │     with (x) {
+    ·     ────
+ 25 │         with (z) {
+    ╰────
+
+Panicked: tasks/coverage/typescript/tests/cases/compiler/missingCloseParenStatements.ts
+
+  × Expected `)` but found `{`
+   ╭─[typescript/tests/cases/compiler/missingCloseParenStatements.ts:2:26]
+ 1 │ var a1, a2, a3 = 0;
+ 2 │ if ( a1 && (a2 + a3 > 0) {
+   ·    ┬                     ┬
+   ·    │                     ╰── `)` expected
+   ·    ╰── Opened here
+ 3 │     while( (a2 > 0) && a1
+   ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts
+
+  × 'with' statements are not allowed
+   ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:2:1]
+ 1 │ // Arrow function used in with statement
+ 2 │ with (window) {
+   · ────
+ 3 │     var p = () => this;
+   ╰────
+
+  × 'with' statements are not allowed
+    ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:43:5]
+ 42 │     // Arrow function used in with statement
+ 43 │     with (window) {
+    ·     ────
+ 44 │         var p = () => this;
+    ╰────
+
+Panicked: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts:2:8]
+ 1 │ namespace Inner {
+ 2 │     var;
+   ·        ─
+ 3 │     let;
+   ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:2:15]
+ 1 │ class C4 {
+ 2 │     async * f(await) {
+   ·               ─────
+ 3 │     }
+   ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:21]
+ 1 │ async function * f4(await) {
+   ·                     ─────
+ 2 │ }
+   ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:1:29]
+ 1 │ const f2 = async function * await() {
+   ·                             ─────
+ 2 │ };
+   ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts:2:15]
+ 1 │ const o4 = {
+ 2 │     async * f(await) {
+   ·               ─────
+ 3 │     }
+   ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts
+
+  × TS(1108): A 'return' statement can only be used within a function body.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts:1:1]
+ 1 │ return {
+   · ──────
+ 2 │ 
+   ╰────
 
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
@@ -2543,40 +2946,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·                 ╰── `;` expected
  7 │ 
    ╰────
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-    ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:11:5]
- 10 │     L: var y;
- 11 │     return;
-    ·     ──────
- 12 │     switch (x) {
-    ╰────
-
-  × Illegal break statement
-   ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:2:5]
- 1 │ declare namespace M {
- 2 │     break;
-   ·     ──────
- 3 │     continue;
-   ╰────
-  help: A `break` statement can only be used within an enclosing iteration or switch statement.
-
-  × Illegal continue statement: no surrounding iteration statement
-   ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:3:5]
- 2 │     break;
- 3 │     continue;
-   ·     ─────────
- 4 │     debugger;
-   ╰────
-  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/ambientWithStatements.ts:25:5]
- 24 │     }
- 25 │     with (x) {
-    ·     ────
- 26 │     }
-    ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/ambiguousGenericAssertion1.ts:4:10]
@@ -4248,156 +4617,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
-  × Lexical declaration cannot appear in a single-statement context
-   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:3:5]
- 2 │ if (true) 
- 3 │     const c1 = 0;
-   ·     ─────────────
- 4 │ else 
-   ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:5:5]
- 4 │ else 
- 5 │     const c2 = 0;
-   ·     ─────────────
- 6 │ 
-   ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-   ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:8:5]
- 7 │ while (true) 
- 8 │     const c3 = 0;
-   ·     ─────────────
- 9 │ 
-   ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:11:5]
- 10 │ do 
- 11 │     const c4 = 0;
-    ·     ─────────────
- 12 │ while (true);
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:16:5]
- 15 │ with (obj) 
- 16 │     const c5 = 0;  // No  Error will be reported here since we turn off all type checking
-    ·     ─────────────
- 17 │ 
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:19:5]
- 18 │ for (var i = 0; i < 10; i++)
- 19 │     const c6 = 0;
-    ·     ─────────────
- 20 │ 
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:22:5]
- 21 │ for (var i2 in {}) 
- 22 │     const c7 = 0;
-    ·     ─────────────
- 23 │ 
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:25:12]
- 24 │ if (true) 
- 25 │     label: const c8 = 0;
-    ·            ─────────────
- 26 │ 
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:28:29]
- 27 │ while (false)
- 28 │     label2: label3: label4: const c9 = 0;
-    ·                             ─────────────
- 29 │ 
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts:15:1]
- 14 │ var obj;
- 15 │ with (obj) 
-    · ────
- 16 │     const c5 = 0;  // No  Error will be reported here since we turn off all type checking
-    ╰────
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:43:12]
- 42 │ if (true) {
- 43 │     label: const c = 0;
-    ·            ────────────
- 44 │     n = c;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:48:29]
- 47 │ while (false) {
- 48 │     label2: label3: label4: const c = 0;
-    ·                             ────────────
- 49 │     n = c;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/constDeclarations-scopes.ts:27:1]
- 26 │ var obj;
- 27 │ with (obj) {
-    · ────
- 28 │     const c = 0;
-    ╰────
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:31:12]
- 30 │ if (true) {
- 31 │     label: const c8 = 0;
-    ·            ─────────────
- 32 │ }
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:35:29]
- 34 │ while (false) {
- 35 │     label2: label3: label4: const c9 = 0;
-    ·                             ─────────────
- 36 │ }
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:64:18]
- 63 │         const c16 = 0
- 64 │         label17: const c17 = 0;
-    ·                  ──────────────
- 65 │     }
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/constDeclarations-validContexts.ts:18:1]
- 17 │ var obj;
- 18 │ with (obj) {
-    · ────
- 19 │     const c5 = 0;
-    ╰────
-
   × Identifier `E` has already been declared
    ╭─[typescript/tests/cases/compiler/constEnumErrors.ts:1:12]
  1 │ const enum E {
@@ -4577,21 +4796,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  3 │ }
    ╰────
 
-  × Classes can't have a field named 'constructor'
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:175:12]
- 174 │ class bigClass {
- 175 │     public "constructor" = 0;
-     ·            ─────────────
- 176 │     public any = 0;
-     ╰────
-
-  × Unexpected token
-     ╭─[typescript/tests/cases/compiler/convertKeywordsYes.ts:292:22]
- 291 │     class constructor { }
- 292 │     class implements { }
-     ·                      ─
- 293 │     class interface { }
-     ╰────
+  × Missing initializer in const declaration
+   ╭─[typescript/tests/cases/compiler/controlFlowFunctionLikeCircular1.ts:2:7]
+ 1 │ unionOfDifferentReturnType1(true);
+ 2 │ const unionOfDifferentReturnType1: { (a: any): number; } | { (a: number): typeof Date; };
+   ·       ───────────────────────────
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × TS(1490): File appears to be binary.
 
@@ -4701,6 +4912,86 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ }
    · ─
    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/compiler/declarationEmitNestedBindingPattern.ts:3:17]
+ 2 │ export class C1 {
+ 3 │     constructor(public [[x]]: any[]) {}
+   ·                 ───────────────────
+ 4 │ }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/compiler/declarationEmitNestedBindingPattern.ts:8:17]
+ 7 │ export class C2 {
+ 8 │     constructor(public [{y}]: any[]) {}
+   ·                 ───────────────────
+ 9 │ }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitNestedBindingPattern.ts:13:17]
+ 12 │ export class C3 {
+ 13 │     constructor(public [[[z]]]: any[]) {}
+    ·                 ─────────────────────
+ 14 │ }
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitNestedBindingPattern.ts:18:17]
+ 17 │ export class C4 {
+ 18 │     constructor(public [{a: [b]}]: any[]) {}
+    ·                 ────────────────────────
+ 19 │ }
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitNestedBindingPattern.ts:23:17]
+ 22 │ export class C5 {
+ 23 │     constructor(public {prop: [c]}: any) {}
+    ·                 ───────────────────────
+ 24 │ }
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitNestedBindingPattern.ts:28:17]
+ 27 │ export class C6 {
+ 28 │     constructor(public {prop: {nested: [d]}}: any) {}
+    ·                 ─────────────────────────────────
+ 29 │ }
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitNestedBindingPattern.ts:34:9]
+ 33 │     constructor(
+ 34 │         public [[e]]: any[],
+    ·         ───────────────────
+ 35 │         public [{f}]: any[]
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitNestedBindingPattern.ts:35:9]
+ 34 │         public [[e]]: any[],
+ 35 │         public [{f}]: any[]
+    ·         ───────────────────
+ 36 │     ) {}
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitNestedBindingPattern.ts:41:17]
+ 40 │ export class C8 {
+ 41 │     constructor(public [[g, ...rest]]: any[]) {}
+    ·                 ────────────────────────────
+ 42 │ }
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitNestedBindingPattern.ts:46:17]
+ 45 │ export class C9 {
+ 46 │     constructor(public [[h, i], {j, k: [l]}]: any) {}
+    ·                 ─────────────────────────────────
+ 47 │ }
+    ╰────
 
   × Expected `from` but found `Identifier`
    ╭─[typescript/tests/cases/compiler/declarationEmitUnknownImport2.ts:1:12]
@@ -5579,46 +5870,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  10 │ 
  11 │ let y = <   Baz >Hello
     ·                  ─────
-    ╰────
-
-  × 'with' statements are not allowed
-   ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:4:5]
- 3 │ async function withStatement0() {
- 4 │     with (x) {
-   ·     ────
- 5 │         y;
-   ╰────
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:10:5]
-  9 │ async function withStatement1() {
- 10 │     with (await x) {
-    ·     ────
- 11 │         y;
-    ╰────
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:16:5]
- 15 │ async function withStatement2() {
- 16 │     with (x) {
-    ·     ────
- 17 │         a;
-    ╰────
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:25:9]
- 24 │     with (x) {
- 25 │         with (z) {
-    ·         ────
- 26 │             a;
-    ╰────
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/es5-asyncFunctionWithStatements.ts:24:5]
- 23 │ async function withStatement3() {
- 24 │     with (x) {
-    ·     ────
- 25 │         with (z) {
     ╰────
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
@@ -6553,9 +6804,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Only string literals are allowed as module attribute values.
-   ╭─[typescript/tests/cases/compiler/importAssertionNonstring.ts:1:52]
- 1 │ import * as thing1 from "./mod.mjs" assert {field: 0};
-   ·                                                    ─
+   ╭─[typescript/tests/cases/compiler/importAssertionNonstring.ts:1:50]
+ 1 │ import * as thing1 from "./mod.mjs" with {field: 0};
+   ·                                                  ─
  2 │ 
    ╰────
   help: Wrap this with quotes
@@ -7862,16 +8113,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
   × Expected `]` but found `EOF`
    ╭─[typescript/tests/cases/compiler/missingCloseBracketInArray.ts:1:48]
  1 │ var alphas:string[] = alphas = ["1","2","3","4"
-   ╰────
-
-  × Expected `)` but found `{`
-   ╭─[typescript/tests/cases/compiler/missingCloseParenStatements.ts:2:26]
- 1 │ var a1, a2, a3 = 0;
- 2 │ if ( a1 && (a2 + a3 > 0) {
-   ·    ┬                     ┬
-   ·    │                     ╰── `)` expected
-   ·    ╰── Opened here
- 3 │     while( (a2 > 0) && a1
    ╰────
 
   × TS(2391): Function implementation is missing or not immediately following the declaration.
@@ -19404,22 +19645,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
     ╰────
   help: Remove the trailing comma here
 
-  × 'with' statements are not allowed
-   ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:2:1]
- 1 │ // Arrow function used in with statement
- 2 │ with (window) {
-   · ────
- 3 │     var p = () => this;
-   ╰────
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/conformance/expressions/functions/arrowFunctionContexts.ts:43:5]
- 42 │     // Arrow function used in with statement
- 43 │     with (window) {
-    ·     ────
- 44 │         var p = () => this;
-    ╰────
-
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[typescript/tests/cases/conformance/expressions/literals/strictModeOctalLiterals.ts:2:14]
  1 │ export enum E {
@@ -20316,13 +20541,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ╰────
 
   × Expected `{` but found `EOF`
-   ╭─[typescript/tests/cases/conformance/importAssertion/importAssertion4.ts:1:36]
- 1 │ import * as f from "./first" assert
+   ╭─[typescript/tests/cases/conformance/importAssertion/importAssertion4.ts:1:34]
+ 1 │ import * as f from "./first" with
    ╰────
 
   × Expected `}` but found `EOF`
-   ╭─[typescript/tests/cases/conformance/importAssertion/importAssertion5.ts:1:38]
- 1 │ import * as f from "./first" assert {
+   ╭─[typescript/tests/cases/conformance/importAssertion/importAssertion5.ts:1:36]
+ 1 │ import * as f from "./first" with {
    ╰────
 
   × import() requires a specifier.
@@ -20506,14 +20731,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  14 │         };
  15 │     }
     ╰────
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts:2:8]
- 1 │ namespace Inner {
- 2 │     var;
-   ·        ─
- 3 │     let;
-   ╰────
 
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:4:5]
@@ -21509,36 +21726,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  26 │ }
     ╰────
   help: No modifiers are allowed here.
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:2:15]
- 1 │ class C4 {
- 2 │     async * f(await) {
-   ·               ─────
- 3 │     }
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:21]
- 1 │ async function * f4(await) {
-   ·                     ─────
- 2 │ }
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:1:29]
- 1 │ const f2 = async function * await() {
-   ·                             ─────
- 2 │ };
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts:2:15]
- 1 │ const o4 = {
- 2 │     async * f(await) {
-   ·               ─────
- 3 │     }
-   ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/forAwait/parser.forAwait.es2018.ts:1:5]
@@ -22543,13 +22730,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
    ·       ▲
    ╰────
   help: Try inserting a semicolon here
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts:1:1]
- 1 │ return {
-   · ──────
- 2 │ 
-   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserUnfinishedTypeNameBeforeKeyword1.ts:2:10]

@@ -1,6 +1,6 @@
-commit: 92c052dc
+commit: ad32683b
 
-Passed: 695/1160
+Passed: 698/1163
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -9,7 +9,7 @@ Passed: 695/1160
 * babel-plugin-transform-react-display-name
 
 
-# babel-preset-env (30/82)
+# babel-preset-env (33/85)
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 x Output mismatch
 
