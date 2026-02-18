@@ -87,7 +87,7 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 42] = [
 // When adding a new rule to this list, please ensure oxlint-migrate is also updated.
 // See https://github.com/oxc-project/oxlint-migrate/blob/659b461eaf5b2f8a7283822ae84a5e619c86fca3/src/constants.ts#L24
 // NOTE: Ensure this list is always alphabetized, otherwise the binary_search won't work.
-const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: [&str; 18] = [
+const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: [&str; 17] = [
     "class-methods-use-this",
     "default-param-last",
     "init-declarations",
@@ -104,7 +104,6 @@ const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: [&str; 18] = [
     "no-shadow",
     "no-unused-expressions",
     "no-unused-vars",
-    "no-use-before-define",
     "no-useless-constructor",
     // these rules are equivalents, but not supported
     // "block-spacing",
@@ -312,6 +311,26 @@ mod test {
     #[test]
     fn test_typescript_rules_list_is_alphabetized() {
         assert!(TYPESCRIPT_COMPATIBLE_ESLINT_RULES.is_sorted());
+    }
+
+    /// Rules in `TYPESCRIPT_COMPATIBLE_ESLINT_RULES` cause `typescript/<rule>` config
+    /// entries to be redirected to `eslint/<rule>`. If a rule exists in the typescript
+    /// plugin but NOT in eslint, the redirect silently drops it — that's a bug.
+    /// Rules that exist in neither plugin are intentionally unsupported and fine to list.
+    #[test]
+    fn test_typescript_compatible_rules_not_misrouted() {
+        use crate::rules::RULES;
+        for rule_name in TYPESCRIPT_COMPATIBLE_ESLINT_RULES {
+            let in_typescript = RULES.iter().any(|r| r.plugin_name() == "typescript" && r.name() == rule_name);
+            let in_eslint = RULES.iter().any(|r| r.plugin_name() == "eslint" && r.name() == rule_name);
+            assert!(
+                !in_typescript || in_eslint,
+                "Rule '{rule_name}' exists in the typescript plugin but not eslint. \
+                 TYPESCRIPT_COMPATIBLE_ESLINT_RULES would redirect typescript/{rule_name} to \
+                 a nonexistent eslint/{rule_name}, silently dropping the rule. \
+                 Remove it from the list."
+            );
+        }
     }
 
     #[test]
