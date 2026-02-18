@@ -2,14 +2,14 @@
 
 exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sort-imports 1`] = `
 "<script lang="ts">
-  import z from "z";
   import a from "a";
   import m from "m";
+  import z from "z";
 </script>
 <script lang="ts" setup>
-  import z from "z";
   import a from "a";
   import m from "m";
+  import z from "z";
 </script>
 <template>
   <div>{{ a + m + z }}</div>
@@ -19,8 +19,8 @@ exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sor
 
 exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sort-tailwindcss 1`] = `
 "<script setup>
-  import { ref } from "vue";
   import clsx from "clsx";
+  import { ref } from "vue";
 
   const count = ref(0);
   const cls = clsx("flex p-4");

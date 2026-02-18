@@ -11,6 +11,26 @@ use crate::{
     write,
 };
 
+/// Specifies how `oxc_formatter` should format text for `textToDoc` in embedded contexts.
+///
+/// When `Full` (the default), the entire formatted output is used.
+/// Other variants trigger labelled region extraction for Vue SFC embedded patterns.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum TextToDocMode {
+    /// Format the entire program as-is.
+    #[default]
+    Full,
+    /// Vue `v-for` left-hand side: extract `FormalParameters` content.
+    /// Wrapped as `function _(PARAMS) {}` by Prettier.
+    VueForBindingLeft,
+    /// Vue `v-slot` / slot bindings: extract `FormalParameters` content.
+    /// Wrapped as `function _(PARAMS) {}` by Prettier.
+    VueBindings,
+    /// Vue `<script generic="...">`: extract `TSTypeParameterDeclaration` content.
+    /// Wrapped as `type T<PARAMS> = any` by Prettier.
+    VueGeneric,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct FormatOptions {
     /// The indent style.

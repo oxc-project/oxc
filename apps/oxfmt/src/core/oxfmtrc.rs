@@ -986,7 +986,7 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
 #[cfg(feature = "napi")]
 static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     // "html",
-    // "vue",
+    "vue",
     // "markdown",
     // "mdx",
 };
