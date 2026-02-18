@@ -4,30 +4,42 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
+/// Initialize global tracing subscriber for `oxfmt`.
+///
+/// Safe to call multiple times from different NAPI entry points
+/// (`run_cli()` or `format()` -> `js_text_to_doc()`) and worker processes.
+///
 /// To debug `oxc_formatter`:
 /// `OXC_LOG=oxc_formatter oxfmt`
+///
 /// # Panics
+/// Panics when `OXC_LOG` is set but cannot be parsed as a valid
+/// `tracing_subscriber::filter::Targets` expression.
 pub fn init_tracing() {
+    use std::sync::OnceLock;
     use tracing_subscriber::{filter::Targets, fmt::format::FmtSpan, prelude::*};
 
-    // Usage without the `regex` feature.
-    // <https://github.com/tokio-rs/tracing/issues/1436#issuecomment-918528013>
-    tracing_subscriber::registry()
-        .with(std::env::var("OXC_LOG").map_or_else(
-            |_| Targets::new(),
-            |env_var| {
-                use std::str::FromStr;
-                Targets::from_str(&env_var).unwrap()
-            },
-        ))
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_thread_names(true)
-                .with_span_events(FmtSpan::CLOSE)
-                // https://github.com/tokio-rs/tracing/issues/2492
-                .with_writer(std::io::stderr),
-        )
-        .init();
+    static TRACING_INIT: OnceLock<()> = OnceLock::new();
+    TRACING_INIT.get_or_init(|| {
+        // Usage without the `regex` feature.
+        // <https://github.com/tokio-rs/tracing/issues/1436#issuecomment-918528013>
+        let _ = tracing_subscriber::registry()
+            .with(std::env::var("OXC_LOG").map_or_else(
+                |_| Targets::new(),
+                |env_var| {
+                    use std::str::FromStr;
+                    Targets::from_str(&env_var).unwrap()
+                },
+            ))
+            .with(
+                tracing_subscriber::fmt::layer()
+                    .with_thread_names(true)
+                    .with_span_events(FmtSpan::CLOSE)
+                    // https://github.com/tokio-rs/tracing/issues/2492
+                    .with_writer(std::io::stderr),
+            )
+            .try_init();
+    });
 }
 
 pub fn read_to_string(path: &Path) -> io::Result<String> {

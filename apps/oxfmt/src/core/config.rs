@@ -49,15 +49,19 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
 ///
 /// This is the simplified path for the NAPI `format()` API,
 /// which doesn't need `.oxfmtrc` overrides, `.editorconfig`, or ignore patterns.
+///
+/// If `cwd` is provided, relative Tailwind paths are resolved against it.
 #[cfg(feature = "napi")]
 pub fn resolve_options_from_value(
-    cwd: &Path,
     raw_config: Value,
     strategy: &FormatFileStrategy,
+    cwd: Option<&Path>,
 ) -> Result<ResolvedOptions, String> {
     let mut format_config: FormatConfig =
         serde_json::from_value(raw_config).map_err(|err| err.to_string())?;
-    format_config.resolve_tailwind_paths(cwd);
+    if let Some(cwd) = cwd {
+        format_config.resolve_tailwind_paths(cwd);
+    }
 
     let mut external_options =
         serde_json::to_value(&format_config).expect("FormatConfig serialization should not fail");
@@ -77,8 +81,14 @@ pub enum ResolvedOptions {
     /// For JS/TS files formatted by oxc_formatter.
     OxcFormatter {
         format_options: Box<FormatOptions>,
-        /// For embedded language formatting (e.g., CSS in template literals)
+        /// For embedded language (xxx-in-js) formatting
         external_options: Value,
+        /// Optional filepath override for external callbacks (e.g., Tailwind sorter).
+        /// When set, this path is used instead of `FormatFileStrategy::path`
+        /// as the `options.filepath` passed to external callbacks.
+        /// Needed for js-in-xxx where the strategy path is a dummy,
+        /// but callbacks need the parent file path to resolve their config.
+        filepath_override: Option<PathBuf>,
         insert_final_newline: bool,
     },
     /// For TOML files.
@@ -117,6 +127,7 @@ impl ResolvedOptions {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
                 format_options: Box::new(format_options),
                 external_options,
+                filepath_override: None,
                 insert_final_newline,
             },
             FormatFileStrategy::OxfmtToml { .. } => {
@@ -139,6 +150,16 @@ impl ResolvedOptions {
                 unreachable!("If `napi` feature is disabled, this should not be passed here")
             }
         }
+    }
+
+    /// Set the filepath override for js-in-xxx flows.
+    /// See [`ResolvedOptions::OxcFormatter::filepath_override`] for details.
+    #[cfg(feature = "napi")]
+    pub fn set_filepath_override(&mut self, filepath: PathBuf) {
+        let ResolvedOptions::OxcFormatter { filepath_override, .. } = self else {
+            unreachable!("`filepath_override` is only applicable for `OxcFormatter` options");
+        };
+        *filepath_override = Some(filepath);
     }
 }
 
