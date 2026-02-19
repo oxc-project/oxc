@@ -7,7 +7,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_new_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use 'new' for side effects.").with_label(span)
+    OxcDiagnostic::warn("Do not use 'new' for side effects.")
+        .with_help("Assign the result of 'new' to a variable or compare it to a reference.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
