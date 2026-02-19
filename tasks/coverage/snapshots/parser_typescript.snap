@@ -2625,7 +2625,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
-  × TS(2414): Interface name cannot be 'string'
+  × TS(2427): Interface name cannot be 'string'
    ╭─[typescript/tests/cases/compiler/InterfaceDeclaration8.ts:1:11]
  1 │ interface string {
    ·           ──────
@@ -5759,14 +5759,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ╰── `,` or `)` expected
    ╰────
 
-  × TS(2414): Enum name cannot be 'string'
+  × TS(2431): Enum name cannot be 'string'
    ╭─[typescript/tests/cases/compiler/enumWithPrimitiveName.ts:1:6]
  1 │ enum string { }
    ·      ──────
  2 │ enum number { }
    ╰────
 
-  × TS(2414): Enum name cannot be 'number'
+  × TS(2431): Enum name cannot be 'number'
    ╭─[typescript/tests/cases/compiler/enumWithPrimitiveName.ts:2:6]
  1 │ enum string { }
  2 │ enum number { }
@@ -5774,7 +5774,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ enum any { }
    ╰────
 
-  × TS(2414): Enum name cannot be 'any'
+  × TS(2431): Enum name cannot be 'any'
    ╭─[typescript/tests/cases/compiler/enumWithPrimitiveName.ts:3:6]
  2 │ enum number { }
  3 │ enum any { }
@@ -6688,7 +6688,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ f<number,string>.
    ╰────
 
-  × TS(2414): Type parameter name cannot be 'string'
+  × TS(2368): Type parameter name cannot be 'string'
    ╭─[typescript/tests/cases/compiler/genericSpecializations2.ts:8:9]
  7 │ class IntFooBad implements IFoo<number> {
  8 │     foo<string>(x: string): string { return null; }
@@ -6696,7 +6696,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ }
    ╰────
 
-  × TS(2414): Type parameter name cannot be 'string'
+  × TS(2368): Type parameter name cannot be 'string'
     ╭─[typescript/tests/cases/compiler/genericSpecializations2.ts:12:9]
  11 │ class StringFoo2 implements IFoo<string> {
  12 │     foo<string>(x: string): string { return null; }
@@ -9857,13 +9857,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·       ───
    ╰────
 
-  × TS(2414): Interface name cannot be 'number'
+  × TS(2427): Interface name cannot be 'number'
    ╭─[typescript/tests/cases/compiler/primitiveTypeAsInterfaceName.ts:1:11]
  1 │ interface number {}
    ·           ──────
    ╰────
 
-  × TS(2414): Interface name cannot be 'number'
+  × TS(2427): Interface name cannot be 'number'
    ╭─[typescript/tests/cases/compiler/primitiveTypeAsInterfaceNameGeneric.ts:1:11]
  1 │ interface number<T> {}
    ·           ──────
@@ -12207,7 +12207,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try inserting a semicolon here
 
-  × TS(2414): Type alias name cannot be 'undefined'
+  × TS(2457): Type alias name cannot be 'undefined'
    ╭─[typescript/tests/cases/compiler/typeNamedUndefined1.ts:3:17]
  2 │     const s = Symbol();
  3 │     export type undefined = typeof s;
@@ -12215,14 +12215,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │     export function x(p: undefined): undefined { // global undefined
    ╰────
 
-  × TS(2414): Type alias name cannot be 'undefined'
+  × TS(2457): Type alias name cannot be 'undefined'
     ╭─[typescript/tests/cases/compiler/typeNamedUndefined1.ts:13:13]
  12 │ 
  13 │ export type undefined = "";
     ·             ─────────
     ╰────
 
-  × TS(2414): Type alias name cannot be 'undefined'
+  × TS(2457): Type alias name cannot be 'undefined'
    ╭─[typescript/tests/cases/compiler/typeNamedUndefined2.ts:4:21]
  3 │         export const s = Symbol();
  4 │         export type undefined = typeof s;
@@ -12230,7 +12230,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │     };
    ╰────
 
-  × TS(2414): Type alias name cannot be 'undefined'
+  × TS(2457): Type alias name cannot be 'undefined'
     ╭─[typescript/tests/cases/compiler/typeNamedUndefined2.ts:17:17]
  16 │     export const s = Symbol();
  17 │     export type undefined = typeof s;
@@ -12327,7 +12327,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ╰── `,` or `}` expected
    ╰────
 
-  × TS(2414): Type alias name cannot be 'undefined'
+  × TS(2457): Type alias name cannot be 'undefined'
    ╭─[typescript/tests/cases/compiler/undefinedTypeAssignment1.ts:1:6]
  1 │ type undefined = string;
    ·      ─────────
@@ -12341,7 +12341,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │     foo: string;
    ╰────
 
-  × TS(2414): Interface name cannot be 'undefined'
+  × TS(2427): Interface name cannot be 'undefined'
    ╭─[typescript/tests/cases/compiler/undefinedTypeAssignment4.ts:4:11]
  3 │ }
  4 │ interface undefined {
@@ -16239,7 +16239,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × TS(2414): Interface name cannot be 'symbol'
+  × TS(2427): Interface name cannot be 'symbol'
    ╭─[typescript/tests/cases/conformance/es6/Symbols/symbolType20.ts:1:11]
  1 │ interface symbol { }
    ·           ──────
@@ -23156,7 +23156,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(2414): Interface name cannot be 'string'
+  × TS(2427): Interface name cannot be 'string'
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration8.ts:1:11]
  1 │ interface string {
    ·           ──────

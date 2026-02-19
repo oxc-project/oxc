@@ -364,7 +364,18 @@ pub fn function_implementation_missing(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
-    ts_error("2414", format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
+    let code = match syntax_name {
+        "Type parameter" => "2368",
+        "Class" => "2414",
+        "Interface" => "2427",
+        "Enum" => "2431",
+        "Type alias" => "2457",
+        _ => {
+            debug_assert!(false, "all syntax_name should have a corresponding match arm");
+            "2414"
+        }
+    };
+    ts_error(code, format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
 }
 
 /// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
