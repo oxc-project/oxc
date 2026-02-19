@@ -161,10 +161,12 @@ impl<'a> SourceLine<'a> {
                                         } else {
                                             current_imported = Some(text);
                                         }
-                                    } else if source.is_none() {
-                                        source = Some(text);
+                                    } else {
+                                        if source.is_none() {
+                                            source = Some(text);
+                                        }
+                                        has_default_specifier = true;
                                     }
-                                    has_default_specifier = true;
                                 }
                                 _ => {}
                             }

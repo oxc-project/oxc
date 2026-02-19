@@ -17,8 +17,12 @@ use crate::{
         tag::{LabelId, Tag},
     },
     ir_transform::sort_imports::{
-        group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine,
+        group_matcher::GroupMatcher, 
+        partitioned_chunk::PartitionedChunk, 
+        source_line::SourceLine, 
+        merge_imports::merge_adjacent_duplicates,
     },
+    options::Semicolons
 };
 
 /// An IR transform that sorts import statements according to specified options.
@@ -36,6 +40,8 @@ impl SortImportsTransform {
     pub fn transform<'a>(
         document: &Document<'a>,
         options: &SortImportsOptions,
+        bracket_spacing: bool,
+        semicolons: Semicolons,
         allocator: &'a Allocator,
     ) -> Option<ArenaVec<'a, FormatElement<'a>>> {
         // Early return for empty files
@@ -246,6 +252,7 @@ impl SortImportsTransform {
                     // ```
                     let (sorted_imports, orphan_contents, trailing_lines) =
                         chunk.into_sorted_import_units(&group_matcher, options);
+                    let sorted_imports = merge_adjacent_duplicates(sorted_imports, bracket_spacing, semicolons);
 
                     // Output leading orphan content (after_slot: None)
                     for orphan in &orphan_contents {

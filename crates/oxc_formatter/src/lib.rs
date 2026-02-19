@@ -80,6 +80,8 @@ impl<'a> Formatter<'a> {
             && let Some(transformed_elements) = SortImportsTransform::transform(
                 formatted.document(),
                 sort_imports_options,
+                formatted.context().options().bracket_spacing.value(),
+                formatted.context().options().semicolons,
                 self.allocator,
             )
         {

@@ -63,4 +63,25 @@ import { foo } from "@scope/foo";
     );
     expect(result.errors).toStrictEqual([]);
   });
+  
+  it("should merge duplicate imports from same source", async () => {
+    const input = `
+import { join } from "node:path";
+import { styleText } from "node:util";
+import { join, resolve } from "node:path";
+    `;
+    
+    const result = await format("a.ts", input, {
+      experimentalSortImports: {},
+    });
+    
+    expect(result.code).toStrictEqual(
+      `
+import { join, resolve } from "node:path";
+import { styleText } from "node:util";
+`.trimStart(),
+    );
+    
+    expect(result.errors).toStrictEqual([]);
+  })
 });

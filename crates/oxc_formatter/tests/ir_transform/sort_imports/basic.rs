@@ -134,9 +134,7 @@ import { x } from "a";
 "#,
         r#"{ "sortImports": {} }"#,
         r#"
-import { z } from "a";
-import { y } from "a";
-import { x } from "a";
+import { z, y, x } from "a";
 "#,
     );
 }
