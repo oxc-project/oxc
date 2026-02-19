@@ -241,27 +241,26 @@ impl<'a> SourcemapBuilder<'a> {
 
         macro_rules! handle_byte {
             ($byte:ident) => {
-                match $byte {
-                    b'\n' => {}
+                let line_break_byte_len = match $byte {
+                    b'\n' => 1,
                     b'\r' => {
                         // Handle Windows-specific "\r\n" newlines
-                        if output.get(idx + 1) == Some(&b'\n') {
-                            idx += 1;
-                        }
+                        if output.get(idx + 1) == Some(&b'\n') { 2 } else { 1 }
                     }
                     _ if $byte.is_ascii() => {
                         idx += 1;
                         continue;
                     }
                     LS_OR_PS_FIRST_BYTE => {
-                        let next_byte = output[idx + 1];
-                        let next_next_byte = output[idx + 2];
-                        if !matches!([next_byte, next_next_byte], LS_LAST_2_BYTES | PS_LAST_2_BYTES)
+                        let next_two_bytes = output.get(idx + 1..idx + 3);
+                        if next_two_bytes != Some(&LS_LAST_2_BYTES[..])
+                            && next_two_bytes != Some(&PS_LAST_2_BYTES[..])
                         {
                             last_line_is_ascii = false;
                             idx += 1;
                             continue;
                         }
+                        3
                     }
                     _ => {
                         // Unicode char
@@ -269,15 +268,15 @@ impl<'a> SourcemapBuilder<'a> {
                         idx += 1;
                         continue;
                     }
-                }
+                };
 
                 // Line break found.
                 // `iter` is now positioned after line break.
-                line_start_index = idx + 1;
+                line_start_index = idx + line_break_byte_len;
                 self.generated_line += 1;
                 self.generated_column = 0;
                 last_line_is_ascii = true;
-                idx += 1;
+                idx += line_break_byte_len;
             };
         }
 
@@ -543,6 +542,12 @@ mod test {
         create_mappings("\r\nabc", 1, 3);
         create_mappings("abc\r\n", 1, 0);
         create_mappings("ÖÖ\nÖ\nÖÖÖ", 2, 3);
+        create_mappings("\u{2028}", 1, 0);
+        create_mappings("\u{2029}", 1, 0);
+        create_mappings("a\u{2028}b", 1, 1);
+        create_mappings("a\u{2029}b", 1, 1);
+        create_mappings("`\u{2028}`", 1, 1);
+        create_mappings("`\u{2029}`", 1, 1);
     }
 
     #[test]
