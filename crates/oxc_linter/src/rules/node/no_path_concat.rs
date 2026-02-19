@@ -135,9 +135,7 @@ fn template_element_starts_with_path_separator(temp_lit: &TemplateLiteral, i: us
         return false;
     };
 
-    let text = quasi.value.raw.as_str();
-
-    if let Some(c) = text.chars().next()
+    if let Some(c) = quasi.value.cooked.as_ref().and_then(|cooked| cooked.chars().next())
         && is_path_separator(c)
     {
         return true;
@@ -161,6 +159,7 @@ fn test() {
         "var fullPath = `${__filename}.map`;",
         r#"var fullPath = __filename + (test ? ".js" : ".ts");"#,
         r#"var fullPath = __filename + (ext || ".js");"#,
+        r"var fullPath = `${__dirname}\nfoo.js`;",
     ];
 
     let fail = vec![
