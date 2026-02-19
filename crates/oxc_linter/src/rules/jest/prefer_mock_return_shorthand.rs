@@ -143,14 +143,9 @@ impl Rule for PreferMockReturnShorthand {
                 new_property_name,
             ),
             |fixer| {
-                let return_text = {
-                    let source = ctx.source_range(GetSpan::span(return_expression));
-
-                    source
-                        .strip_prefix("(")
-                        .and_then(|source| source.strip_suffix(")"))
-                        .map_or(source.to_owned(), std::borrow::ToOwned::to_owned)
-                };
+                let return_text = ctx
+                    .source_range(GetSpan::span(return_expression.without_parentheses()))
+                    .to_owned();
                 let argument_span = GetSpan::span(expr);
 
                 let mut multifixer = fixer.for_multifix().new_fix_with_capacity(2);
@@ -580,6 +575,7 @@ fn test() {
               .mockImplementationOnce(() => Promise.reject(42))
               .mockImplementation(() => "hello sunshine")
               .mockReturnValueOnce(Promise.reject(42))"#,
+        "jest.fn().mockImplementation(() => (input: number | Record<string, number[]>) => typeof input === 'number' ? input.toFixed(2) : JSON.stringify(input))",
         "jest.fn().mockImplementation(() => [], xyz)",
         r#"jest.spyOn(fs, "readFile").mockImplementation(() => new Error("oh noes!"))"#,
         "aVariable.mockImplementation(() => {
@@ -844,6 +840,10 @@ fn test() {
               .mockReturnValueOnce(Promise.reject(42))
               .mockReturnValue("hello sunshine")
               .mockReturnValueOnce(Promise.reject(42))"#,
+        ),
+        (
+            "jest.fn().mockImplementation(() => (input: number | Record<string, number[]>) => typeof input === 'number' ? input.toFixed(2) : JSON.stringify(input))",
+            "jest.fn().mockReturnValue((input: number | Record<string, number[]>) => typeof input === 'number' ? input.toFixed(2) : JSON.stringify(input))",
         ),
         ("jest.fn().mockImplementation(() => [], xyz)", "jest.fn().mockReturnValue([], xyz)"),
         (
