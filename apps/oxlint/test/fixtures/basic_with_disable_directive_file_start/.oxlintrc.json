@@ -3,6 +3,7 @@
   "categories": { "correctness": "off" },
   "rules": {
     "basic-custom-plugin/rule-point": "error",
-    "basic-custom-plugin/rule-wide": "error"
+    "basic-custom-plugin/rule-wide": "error",
+    "no-console": "error"
   }
 }
