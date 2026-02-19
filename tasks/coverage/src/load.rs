@@ -14,17 +14,22 @@ use rayon::prelude::*;
 use walkdir::WalkDir;
 
 use crate::{
-    BabelFile, MiscFile, Test262File, TestData, TypeScriptFile, babel, test262, typescript,
-    workspace_root,
+    AcornJsxFile, BabelFile, MiscFile, Test262File, TestData, TypeScriptFile, babel, test262,
+    typescript, workspace_root,
 };
 
 impl TestData {
     pub fn load(filter: Option<&str>) -> Self {
-        let ((test262, babel), (typescript, misc)) = rayon::join(
+        let ((test262, babel), (typescript, (misc, acorn_jsx))) = rayon::join(
             || rayon::join(|| load_test262(filter), || load_babel(filter)),
-            || rayon::join(|| load_typescript(filter), || load_misc(filter)),
+            || {
+                rayon::join(
+                    || load_typescript(filter),
+                    || rayon::join(|| load_misc(filter), || load_acorn_jsx(filter)),
+                )
+            },
         );
-        Self { test262, babel, typescript, misc }
+        Self { test262, babel, typescript, misc, acorn_jsx }
     }
 }
 
@@ -255,4 +260,17 @@ fn load_misc(filter: Option<&str>) -> Vec<MiscFile> {
     }
 
     files
+}
+
+fn load_acorn_jsx(filter: Option<&str>) -> Vec<AcornJsxFile> {
+    let skip_path = |path: &Path| path.extension().is_none_or(|ext| ext != "jsx");
+
+    walk_and_read(Path::new("estree-conformance/tests/acorn-jsx"), filter, skip_path)
+        .into_par_iter()
+        .map(|(path, code)| {
+            let should_fail =
+                path.parent().and_then(Path::file_name).is_some_and(|name| name == "fail");
+            AcornJsxFile { path, code, should_fail }
+        })
+        .collect()
 }

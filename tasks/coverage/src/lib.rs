@@ -69,11 +69,18 @@ pub struct MiscFile {
     pub should_fail: bool,
 }
 
+pub struct AcornJsxFile {
+    pub path: PathBuf,
+    pub code: String,
+    pub should_fail: bool,
+}
+
 pub struct TestData {
     pub test262: Vec<Test262File>,
     pub babel: Vec<BabelFile>,
     pub typescript: Vec<TypeScriptFile>,
     pub misc: Vec<MiscFile>,
+    pub acorn_jsx: Vec<AcornJsxFile>,
 }
 
 // ================================
@@ -298,6 +305,7 @@ const TEST262_PATH: &str = "test262/test";
 const BABEL_PATH: &str = "babel/packages/babel-parser/test/fixtures";
 const TYPESCRIPT_PATH: &str = "typescript/tests/cases";
 const MISC_PATH: &str = "misc";
+const ESTREE_ACORN_JSX_PATH: &str = "estree-conformance/tests/acorn-jsx";
 
 impl AppArgs {
     pub fn run_all(&self) {
@@ -407,6 +415,12 @@ impl AppArgs {
 
     pub fn run_estree(&self, data: &TestData) {
         self.run_tool("estree_test262", TEST262_PATH, &data.test262, tools::run_estree_test262);
+        self.run_tool(
+            "estree_acorn_jsx",
+            ESTREE_ACORN_JSX_PATH,
+            &data.acorn_jsx,
+            tools::run_estree_acorn_jsx,
+        );
         self.run_tool(
             "estree_typescript",
             TYPESCRIPT_PATH,
