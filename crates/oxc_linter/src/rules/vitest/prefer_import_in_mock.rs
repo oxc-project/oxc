@@ -94,7 +94,7 @@ impl PreferImportInMock {
             return;
         };
 
-        if call_expr.callee_name().is_some_and(|callee| callee != "mock") {
+        if call_expr.callee_name() != Some("mock") {
             return;
         }
 
@@ -134,6 +134,13 @@ fn test() {
         (r#"vi.mock(import("node:fs/promises"))"#, None),
         (r#"vi.mock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#, None),
         (r#"vi.mock(import("./foo.js"), { spy: true });"#, None),
+        (
+            "
+                    describe.each(['webpack', 'turbopack'])('DevAppRouteRouteMatcher %s', (bundler) => {})
+                    it.each([1])(\"matches the '$route.page' route specified with the provided files\", () => {})
+                  ",
+            None,
+        ),
         (r#"vi.mock(import("foo"))"#, None),
         (r#"vi.mock(import("node:fs/promises"))"#, None),
         (r#"vi.mock(import("./foo.js"), () => ({ Foo: vi.fn() }))"#, None),
