@@ -1449,6 +1449,11 @@ impl RuleRunner for crate::rules::typescript::consistent_type_imports::Consisten
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::typescript::dot_notation::DotNotation {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner
     for crate::rules::typescript::explicit_function_return_type::ExplicitFunctionReturnType
 {

@@ -227,6 +227,7 @@ pub(crate) mod typescript {
     pub mod consistent_type_definitions;
     pub mod consistent_type_exports;
     pub mod consistent_type_imports;
+    pub mod dot_notation;
     pub mod explicit_function_return_type;
     pub mod explicit_module_boundary_types;
     pub mod no_array_delete;

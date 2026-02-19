@@ -452,6 +452,7 @@ pub use crate::rules::typescript::consistent_type_assertions::ConsistentTypeAsse
 pub use crate::rules::typescript::consistent_type_definitions::ConsistentTypeDefinitions as TypescriptConsistentTypeDefinitions;
 pub use crate::rules::typescript::consistent_type_exports::ConsistentTypeExports as TypescriptConsistentTypeExports;
 pub use crate::rules::typescript::consistent_type_imports::ConsistentTypeImports as TypescriptConsistentTypeImports;
+pub use crate::rules::typescript::dot_notation::DotNotation as TypescriptDotNotation;
 pub use crate::rules::typescript::explicit_function_return_type::ExplicitFunctionReturnType as TypescriptExplicitFunctionReturnType;
 pub use crate::rules::typescript::explicit_module_boundary_types::ExplicitModuleBoundaryTypes as TypescriptExplicitModuleBoundaryTypes;
 pub use crate::rules::typescript::no_array_delete::NoArrayDelete as TypescriptNoArrayDelete;
@@ -925,6 +926,7 @@ pub enum RuleEnum {
     TypescriptConsistentTypeDefinitions(TypescriptConsistentTypeDefinitions),
     TypescriptConsistentTypeExports(TypescriptConsistentTypeExports),
     TypescriptConsistentTypeImports(TypescriptConsistentTypeImports),
+    TypescriptDotNotation(TypescriptDotNotation),
     TypescriptExplicitFunctionReturnType(TypescriptExplicitFunctionReturnType),
     TypescriptExplicitModuleBoundaryTypes(TypescriptExplicitModuleBoundaryTypes),
     TypescriptNoArrayDelete(TypescriptNoArrayDelete),
@@ -1627,8 +1629,8 @@ const TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID: usize =
 const TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID: usize =
     TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID + 1usize;
 const TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID + 1usize;
-const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize =
-    TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID + 1usize;
+const TYPESCRIPT_DOT_NOTATION_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID + 1usize;
+const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize = TYPESCRIPT_DOT_NOTATION_ID + 1usize;
 const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
     TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID + 1usize;
 const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
@@ -2413,6 +2415,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(_) => TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID,
             Self::TypescriptConsistentTypeImports(_) => TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID,
+            Self::TypescriptDotNotation(_) => TYPESCRIPT_DOT_NOTATION_ID,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID
             }
@@ -3213,6 +3216,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::NAME,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::NAME,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::NAME,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::NAME
             }
@@ -4011,6 +4015,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::CATEGORY,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::CATEGORY,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::CATEGORY,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::CATEGORY
             }
@@ -4840,6 +4845,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::FIX,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::FIX,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::FIX,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::FIX
             }
@@ -5667,6 +5673,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(_) => {
                 TypescriptConsistentTypeImports::documentation()
             }
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::documentation(),
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::documentation()
             }
@@ -6951,6 +6958,8 @@ impl RuleEnum {
                 TypescriptConsistentTypeImports::config_schema(generator)
                     .or_else(|| TypescriptConsistentTypeImports::schema(generator))
             }
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::config_schema(generator)
+                .or_else(|| TypescriptDotNotation::schema(generator)),
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::config_schema(generator)
                     .or_else(|| TypescriptExplicitFunctionReturnType::schema(generator))
@@ -8580,6 +8589,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(_) => "typescript",
             Self::TypescriptConsistentTypeExports(_) => "typescript",
             Self::TypescriptConsistentTypeImports(_) => "typescript",
+            Self::TypescriptDotNotation(_) => "typescript",
             Self::TypescriptExplicitFunctionReturnType(_) => "typescript",
             Self::TypescriptExplicitModuleBoundaryTypes(_) => "typescript",
             Self::TypescriptNoArrayDelete(_) => "typescript",
@@ -9717,6 +9727,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(_) => Ok(Self::TypescriptConsistentTypeImports(
                 TypescriptConsistentTypeImports::from_configuration(value)?,
             )),
+            Self::TypescriptDotNotation(_) => {
+                Ok(Self::TypescriptDotNotation(TypescriptDotNotation::from_configuration(value)?))
+            }
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 Ok(Self::TypescriptExplicitFunctionReturnType(
                     TypescriptExplicitFunctionReturnType::from_configuration(value)?,
@@ -11501,6 +11514,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeExports(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeImports(rule) => rule.to_configuration(),
+            Self::TypescriptDotNotation(rule) => rule.to_configuration(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.to_configuration(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.to_configuration(),
             Self::TypescriptNoArrayDelete(rule) => rule.to_configuration(),
@@ -12201,6 +12215,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeExports(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.run(node, ctx),
+            Self::TypescriptDotNotation(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run(node, ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run(node, ctx),
@@ -12897,6 +12912,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeExports(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.run_once(ctx),
+            Self::TypescriptDotNotation(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_once(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run_once(ctx),
@@ -13607,6 +13623,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptDotNotation(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -14387,6 +14404,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeExports(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.should_run(ctx),
+            Self::TypescriptDotNotation(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.should_run(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.should_run(ctx),
@@ -15129,6 +15147,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(_) => {
                 TypescriptConsistentTypeImports::IS_TSGOLINT_RULE
             }
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::IS_TSGOLINT_RULE,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::IS_TSGOLINT_RULE
             }
@@ -16094,6 +16113,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::HAS_CONFIG,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::HAS_CONFIG,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::HAS_CONFIG,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::HAS_CONFIG
             }
@@ -16934,6 +16954,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeExports(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeImports(rule) => rule.types_info(),
+            Self::TypescriptDotNotation(rule) => rule.types_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.types_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.types_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.types_info(),
@@ -17630,6 +17651,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeExports(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeImports(rule) => rule.run_info(),
+            Self::TypescriptDotNotation(rule) => rule.run_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.run_info(),
@@ -18358,6 +18380,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::TypescriptConsistentTypeExports(TypescriptConsistentTypeExports::default()),
         RuleEnum::TypescriptConsistentTypeImports(TypescriptConsistentTypeImports::default()),
+        RuleEnum::TypescriptDotNotation(TypescriptDotNotation::default()),
         RuleEnum::TypescriptExplicitFunctionReturnType(
             TypescriptExplicitFunctionReturnType::default(),
         ),
