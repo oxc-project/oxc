@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
 ---
 
   ⚠ eslint(prefer-rest-params): Use the rest parameters instead of `arguments`.
@@ -7,21 +8,25 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() { arguments; }
    ·                  ─────────
    ╰────
+  help: Replace `arguments` with rest parameters (`...args`).
 
   ⚠ eslint(prefer-rest-params): Use the rest parameters instead of `arguments`.
    ╭─[prefer_rest_params.tsx:1:18]
  1 │ function foo() { arguments[0]; }
    ·                  ─────────
    ╰────
+  help: Replace `arguments` with rest parameters (`...args`).
 
   ⚠ eslint(prefer-rest-params): Use the rest parameters instead of `arguments`.
    ╭─[prefer_rest_params.tsx:1:18]
  1 │ function foo() { arguments[1]; }
    ·                  ─────────
    ╰────
+  help: Replace `arguments` with rest parameters (`...args`).
 
   ⚠ eslint(prefer-rest-params): Use the rest parameters instead of `arguments`.
    ╭─[prefer_rest_params.tsx:1:18]
  1 │ function foo() { arguments[Symbol.iterator]; }
    ·                  ─────────
    ╰────
+  help: Replace `arguments` with rest parameters (`...args`).
