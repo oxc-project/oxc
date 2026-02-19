@@ -337,6 +337,7 @@ pub use crate::rules::nextjs::no_unwanted_polyfillio::NoUnwantedPolyfillio as Ne
 pub use crate::rules::node::global_require::GlobalRequire as NodeGlobalRequire;
 pub use crate::rules::node::no_exports_assign::NoExportsAssign as NodeNoExportsAssign;
 pub use crate::rules::node::no_new_require::NoNewRequire as NodeNoNewRequire;
+pub use crate::rules::node::no_path_concat::NoPathConcat as NodeNoPathConcat;
 pub use crate::rules::node::no_process_env::NoProcessEnv as NodeNoProcessEnv;
 pub use crate::rules::oxc::approx_constant::ApproxConstant as OxcApproxConstant;
 pub use crate::rules::oxc::bad_array_method_on_arguments::BadArrayMethodOnArguments as OxcBadArrayMethodOnArguments;
@@ -1381,6 +1382,7 @@ pub enum RuleEnum {
     NodeGlobalRequire(NodeGlobalRequire),
     NodeNoExportsAssign(NodeNoExportsAssign),
     NodeNoNewRequire(NodeNoNewRequire),
+    NodeNoPathConcat(NodeNoPathConcat),
     NodeNoProcessEnv(NodeNoProcessEnv),
     VueDefineEmitsDeclaration(VueDefineEmitsDeclaration),
     VueDefinePropsDeclaration(VueDefinePropsDeclaration),
@@ -2155,7 +2157,8 @@ const VITEST_WARN_TODO_ID: usize =
 const NODE_GLOBAL_REQUIRE_ID: usize = VITEST_WARN_TODO_ID + 1usize;
 const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
 const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
-const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
+const NODE_NO_PATH_CONCAT_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
+const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_PATH_CONCAT_ID + 1usize;
 const VUE_DEFINE_EMITS_DECLARATION_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
 const VUE_DEFINE_PROPS_DECLARATION_ID: usize = VUE_DEFINE_EMITS_DECLARATION_ID + 1usize;
 const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID + 1usize;
@@ -2953,6 +2956,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
             Self::NodeNoExportsAssign(_) => NODE_NO_EXPORTS_ASSIGN_ID,
             Self::NodeNoNewRequire(_) => NODE_NO_NEW_REQUIRE_ID,
+            Self::NodeNoPathConcat(_) => NODE_NO_PATH_CONCAT_ID,
             Self::NodeNoProcessEnv(_) => NODE_NO_PROCESS_ENV_ID,
             Self::VueDefineEmitsDeclaration(_) => VUE_DEFINE_EMITS_DECLARATION_ID,
             Self::VueDefinePropsDeclaration(_) => VUE_DEFINE_PROPS_DECLARATION_ID,
@@ -3740,6 +3744,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::NAME,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::NAME,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::NAME,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::NAME,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::NAME,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::NAME,
@@ -4571,6 +4576,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::CATEGORY,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::CATEGORY,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::CATEGORY,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::CATEGORY,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::CATEGORY,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::CATEGORY,
@@ -5361,6 +5367,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::FIX,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::FIX,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::FIX,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FIX,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FIX,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FIX,
@@ -6343,6 +6350,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::documentation(),
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::documentation(),
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::documentation(),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::documentation(),
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::documentation(),
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::documentation(),
@@ -8273,6 +8281,8 @@ impl RuleEnum {
                 .or_else(|| NodeNoExportsAssign::schema(generator)),
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::config_schema(generator)
                 .or_else(|| NodeNoNewRequire::schema(generator)),
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::config_schema(generator)
+                .or_else(|| NodeNoPathConcat::schema(generator)),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::config_schema(generator)
                 .or_else(|| NodeNoProcessEnv::schema(generator)),
             Self::VueDefineEmitsDeclaration(_) => {
@@ -9001,6 +9011,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeNoExportsAssign(_) => "node",
             Self::NodeNoNewRequire(_) => "node",
+            Self::NodeNoPathConcat(_) => "node",
             Self::NodeNoProcessEnv(_) => "node",
             Self::VueDefineEmitsDeclaration(_) => "vue",
             Self::VueDefinePropsDeclaration(_) => "vue",
@@ -11181,6 +11192,9 @@ impl RuleEnum {
             Self::NodeNoNewRequire(_) => {
                 Ok(Self::NodeNoNewRequire(NodeNoNewRequire::from_configuration(value)?))
             }
+            Self::NodeNoPathConcat(_) => {
+                Ok(Self::NodeNoPathConcat(NodeNoPathConcat::from_configuration(value)?))
+            }
             Self::NodeNoProcessEnv(_) => {
                 Ok(Self::NodeNoProcessEnv(NodeNoProcessEnv::from_configuration(value)?))
             }
@@ -11914,6 +11928,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeNoExportsAssign(rule) => rule.to_configuration(),
             Self::NodeNoNewRequire(rule) => rule.to_configuration(),
+            Self::NodeNoPathConcat(rule) => rule.to_configuration(),
             Self::NodeNoProcessEnv(rule) => rule.to_configuration(),
             Self::VueDefineEmitsDeclaration(rule) => rule.to_configuration(),
             Self::VueDefinePropsDeclaration(rule) => rule.to_configuration(),
@@ -12607,6 +12622,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run(node, ctx),
             Self::NodeNoNewRequire(rule) => rule.run(node, ctx),
+            Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
             Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
@@ -13300,6 +13316,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_once(ctx),
             Self::NodeNoNewRequire(rule) => rule.run_once(ctx),
+            Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
             Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
@@ -14091,6 +14108,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14784,6 +14802,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeNoExportsAssign(rule) => rule.should_run(ctx),
             Self::NodeNoNewRequire(rule) => rule.should_run(ctx),
+            Self::NodeNoPathConcat(rule) => rule.should_run(ctx),
             Self::NodeNoProcessEnv(rule) => rule.should_run(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.should_run(ctx),
@@ -15765,6 +15784,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::IS_TSGOLINT_RULE,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::IS_TSGOLINT_RULE,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::IS_TSGOLINT_RULE,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::IS_TSGOLINT_RULE,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::IS_TSGOLINT_RULE,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::IS_TSGOLINT_RULE,
@@ -16625,6 +16645,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::HAS_CONFIG,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::HAS_CONFIG,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::HAS_CONFIG,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::HAS_CONFIG,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::HAS_CONFIG,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::HAS_CONFIG,
@@ -17320,6 +17341,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeNoExportsAssign(rule) => rule.types_info(),
             Self::NodeNoNewRequire(rule) => rule.types_info(),
+            Self::NodeNoPathConcat(rule) => rule.types_info(),
             Self::NodeNoProcessEnv(rule) => rule.types_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.types_info(),
@@ -18013,6 +18035,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeNoExportsAssign(rule) => rule.run_info(),
             Self::NodeNoNewRequire(rule) => rule.run_info(),
+            Self::NodeNoPathConcat(rule) => rule.run_info(),
             Self::NodeNoProcessEnv(rule) => rule.run_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.run_info(),
@@ -18822,6 +18845,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeNoExportsAssign(NodeNoExportsAssign::default()),
         RuleEnum::NodeNoNewRequire(NodeNoNewRequire::default()),
+        RuleEnum::NodeNoPathConcat(NodeNoPathConcat::default()),
         RuleEnum::NodeNoProcessEnv(NodeNoProcessEnv::default()),
         RuleEnum::VueDefineEmitsDeclaration(VueDefineEmitsDeclaration::default()),
         RuleEnum::VueDefinePropsDeclaration(VueDefinePropsDeclaration::default()),
