@@ -278,7 +278,7 @@ importers:
   npm/oxlint:
     dependencies:
       oxlint-tsgolint:
-        specifier: '>=0.12.2'
+        specifier: '>=0.14.1'
         version: 0.14.1
 
   npm/oxlint-plugins: {}
