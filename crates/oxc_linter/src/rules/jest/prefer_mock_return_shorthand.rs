@@ -87,70 +87,6 @@ declare_oxc_lint!(
     fix,
 );
 
-fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
-    match argument_expression {
-        Expression::ArrowFunctionExpression(arrow_func) => {
-            if arrow_func.r#async {
-                return None;
-            }
-
-            if arrow_func.body.statements.len() > 1 {
-                return None;
-            }
-
-            if !arrow_func.params.is_empty() {
-                return None;
-            }
-
-            let stmt = arrow_func.body.statements.first()?;
-
-            match stmt {
-                Statement::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
-                Statement::ReturnStatement(return_statement) => {
-                    let Some(arg_expr) = &return_statement.argument else {
-                        return None;
-                    };
-
-                    Some(arg_expr)
-                }
-                _ => None,
-            }
-        }
-        Expression::FunctionExpression(function) => {
-            if function.r#async {
-                return None;
-            }
-
-            if !function.params.is_empty() {
-                return None;
-            }
-
-            let Some(body) = &function.body else {
-                return None;
-            };
-
-            if body.statements.len() > 1 {
-                return None;
-            }
-
-            let stmt = body.statements.first()?;
-
-            match stmt {
-                Statement::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
-                Statement::ReturnStatement(return_statement) => {
-                    let Some(arg_expr) = &return_statement.argument else {
-                        return None;
-                    };
-
-                    Some(arg_expr)
-                }
-                _ => None,
-            }
-        }
-        _ => None,
-    }
-}
-
 impl Rule for PreferMockReturnShorthand {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
@@ -247,6 +183,61 @@ impl PreferMockReturnShorthand {
     }
 }
 
+fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
+    match argument_expression {
+        Expression::ArrowFunctionExpression(arrow_func) => {
+            if arrow_func.r#async
+                || arrow_func.body.statements.len() > 1
+                || !arrow_func.params.is_empty()
+            {
+                return None;
+            }
+
+            let stmt = arrow_func.body.statements.first()?;
+
+            match stmt {
+                Statement::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
+                Statement::ReturnStatement(return_statement) => {
+                    let Some(arg_expr) = &return_statement.argument else {
+                        return None;
+                    };
+
+                    Some(arg_expr)
+                }
+                _ => None,
+            }
+        }
+        Expression::FunctionExpression(function) => {
+            if function.r#async || !function.params.is_empty() {
+                return None;
+            }
+
+            let Some(body) = &function.body else {
+                return None;
+            };
+
+            if body.statements.len() > 1 {
+                return None;
+            }
+
+            let stmt = body.statements.first()?;
+
+            match stmt {
+                Statement::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
+                Statement::ReturnStatement(return_statement) => {
+                    let Some(arg_expr) = &return_statement.argument else {
+                        return None;
+                    };
+
+                    Some(arg_expr)
+                }
+                _ => None,
+            }
+        }
+        _ => None,
+    }
+}
+
 struct IdentifierCollectorVisitor {
     references: FxHashSet<ReferenceId>,
 }
@@ -259,8 +250,7 @@ impl IdentifierCollectorVisitor {
 
 impl<'a> Visit<'a> for IdentifierCollectorVisitor {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        let id = ident.reference_id();
-        self.references.insert(id);
+        self.references.insert(ident.reference_id());
     }
 }
 
