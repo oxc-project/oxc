@@ -117,9 +117,10 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
     errors.extend(diff_block_comments(&before.block_comments, &after.block_comments));
     errors.extend(diff_line_comments(&before.line_comments, &after.line_comments));
     errors.extend(diff_counts(&before.node_counts, &after.node_counts).unwrap_or_default());
-    
+
     if before.import_specifiers != after.import_specifiers {
-        let missing: Vec<_> = before.import_specifiers.difference(&after.import_specifiers).collect();
+        let missing: Vec<_> =
+            before.import_specifiers.difference(&after.import_specifiers).collect();
         let added: Vec<_> = after.import_specifiers.difference(&before.import_specifiers).collect();
         if !missing.is_empty() {
             errors.push(format!("Import specifiers removed: {missing:?}"));
@@ -208,7 +209,7 @@ impl StatsCollector {
         ) {
             return;
         }
-        
+
         if let AstKind::ImportDeclaration(decl) = kind {
             let source = &decl.source.value;
             if let Some(specifiers) = &decl.specifiers {
@@ -217,7 +218,9 @@ impl StatsCollector {
                         ast::ImportDeclarationSpecifier::ImportSpecifier(s) => {
                             format!(
                                 "IMPORT_SPEC({},{},{})",
-                                source, s.imported.name(), s.local.name
+                                source,
+                                s.imported.name(),
+                                s.local.name
                             )
                         }
                         ast::ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
@@ -235,7 +238,7 @@ impl StatsCollector {
             }
             return;
         }
-        
+
         // Skip children of ImportDeclaration – already handled above.
         if matches!(
             kind,
@@ -427,10 +430,7 @@ mod tests {
                 "import { join, path } from 'node:path';",
             ),
             // Import merging: different specifiers from same source
-            (
-                "import { a } from 'x';\nimport { b } from 'x';",
-                "import { a, b } from 'x';",
-            ),
+            ("import { a } from 'x';\nimport { b } from 'x';", "import { a, b } from 'x';"),
             // Import merging: aliased specifier preserved
             (
                 "import { a as b } from 'x';\nimport { c } from 'x';",

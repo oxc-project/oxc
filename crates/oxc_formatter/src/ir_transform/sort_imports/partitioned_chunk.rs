@@ -149,9 +149,7 @@ impl<'a> PartitionedChunk<'a> {
                 // `MergedImport` is only created later during the merge phase,
                 // after partitioning is already complete.
                 SourceLine::MergedImport(_) => {
-                    unreachable!(
-                        "`MergedImport` cannot appear during partitioning."
-                    );
+                    unreachable!("`MergedImport` cannot appear during partitioning.");
                 }
             }
         }

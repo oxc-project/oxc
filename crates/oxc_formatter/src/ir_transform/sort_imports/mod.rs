@@ -1,11 +1,11 @@
 mod compute_metadata;
 mod group_config;
 mod group_matcher;
+mod merge_imports;
 pub mod options;
 mod partitioned_chunk;
 mod sortable_imports;
 mod source_line;
-mod merge_imports;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 
@@ -17,12 +17,10 @@ use crate::{
         tag::{LabelId, Tag},
     },
     ir_transform::sort_imports::{
-        group_matcher::GroupMatcher, 
-        partitioned_chunk::PartitionedChunk, 
-        source_line::SourceLine, 
-        merge_imports::merge_adjacent_duplicates,
+        group_matcher::GroupMatcher, merge_imports::merge_adjacent_duplicates,
+        partitioned_chunk::PartitionedChunk, source_line::SourceLine,
     },
-    options::Semicolons
+    options::Semicolons,
 };
 
 /// An IR transform that sorts import statements according to specified options.
@@ -252,7 +250,8 @@ impl SortImportsTransform {
                     // ```
                     let (sorted_imports, orphan_contents, trailing_lines) =
                         chunk.into_sorted_import_units(&group_matcher, options);
-                    let sorted_imports = merge_adjacent_duplicates(sorted_imports, bracket_spacing, semicolons);
+                    let sorted_imports =
+                        merge_adjacent_duplicates(sorted_imports, bracket_spacing, semicolons);
 
                     // Output leading orphan content (after_slot: None)
                     for orphan in &orphan_contents {

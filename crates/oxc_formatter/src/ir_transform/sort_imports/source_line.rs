@@ -267,7 +267,7 @@ pub struct ImportLineMetadata<'a> {
     pub has_named_specifier: bool,
     /// Individual named specifiers extracted from the import.
     /// Empty if this import has no named specifiers (e.g., side-effect or namespace imports).
-    pub specifiers: Vec<SpecifierInfo<'a>>
+    pub specifiers: Vec<SpecifierInfo<'a>>,
 }
 
 /// Information about single import specifier, extracted from IR elements
