@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
 
   ⚠ eslint(symbol-description): Expected Symbol to have a description.
