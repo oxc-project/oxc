@@ -117,6 +117,17 @@ fn diff(before: &StatsCollector, after: &StatsCollector) -> Option<String> {
     errors.extend(diff_block_comments(&before.block_comments, &after.block_comments));
     errors.extend(diff_line_comments(&before.line_comments, &after.line_comments));
     errors.extend(diff_counts(&before.node_counts, &after.node_counts).unwrap_or_default());
+    
+    if before.import_specifiers != after.import_specifiers {
+        let missing: Vec<_> = before.import_specifiers.difference(&after.import_specifiers).collect();
+        let added: Vec<_> = after.import_specifiers.difference(&before.import_specifiers).collect();
+        if !missing.is_empty() {
+            errors.push(format!("Import specifiers removed: {missing:?}"));
+        }
+        if !added.is_empty() {
+            errors.push(format!("Import specifiers added: {added:?}"));
+        }
+    }
 
     (!errors.is_empty()).then_some(errors.join("\n"))
 }
@@ -127,6 +138,7 @@ type Counter = FxHashMap<String, usize>;
 struct StatsCollector {
     has_parse_error: bool,
     block_comments: Vec<String>,
+    import_specifiers: FxHashSet<String>,
     line_comments: Vec<String>,
     node_counts: Counter,
 }
@@ -196,11 +208,58 @@ impl StatsCollector {
         ) {
             return;
         }
-
+        
+        if let AstKind::ImportDeclaration(decl) = kind {
+            let source = &decl.source.value;
+            if let Some(specifiers) = &decl.specifiers {
+                for spec in specifiers {
+                    let key = match spec {
+                        ast::ImportDeclarationSpecifier::ImportSpecifier(s) => {
+                            format!(
+                                "IMPORT_SPEC({},{},{})",
+                                source, s.imported.name(), s.local.name
+                            )
+                        }
+                        ast::ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
+                            format!("IMPORT_DEFAULT({},{})", source, s.local.name)
+                        }
+                        ast::ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
+                            format!("IMPORT_NAMESPACE({},{})", source, s.local.name)
+                        }
+                    };
+                    self.import_specifiers.insert(key);
+                }
+            } else {
+                // Side-effect import: `import 'foo'`
+                self.import_specifiers.insert(format!("IMPORT_SIDE_EFFECT({source})"));
+            }
+            return;
+        }
+        
+        // Skip children of ImportDeclaration – already handled above.
+        if matches!(
+            kind,
+            AstKind::ImportSpecifier(_)
+                | AstKind::ImportDefaultSpecifier(_)
+                | AstKind::ImportNamespaceSpecifier(_)
+        ) {
+            return;
+        }
         // Count by `debug_name` which contains the node type and its details.
         // If this is too strict, we can relax it later.
         let node_name = kind.debug_name().to_string();
         let parent_kind = semantic.nodes().parent_kind(node.id());
+
+        // Skip all children of import-related nodes — already handled via set.
+        if matches!(
+            parent_kind,
+            AstKind::ImportDeclaration(_)
+                | AstKind::ImportSpecifier(_)
+                | AstKind::ImportDefaultSpecifier(_)
+                | AstKind::ImportNamespaceSpecifier(_)
+        ) {
+            return;
+        }
 
         // Object-like keys can be formatted differently based on quote options.
         // e.g. `{ "key": value }` -> `{ key: value }`
@@ -318,6 +377,8 @@ mod tests {
             ("const a = 1;", "const b = 1;"),
             ("const a = 1; // variable a", "const a = 1;"),
             ("/* block comment */ const b = 2;", "const b = 2;"),
+            // Import specifier actually removed
+            ("import { a, b } from 'x';", "import { a } from 'x';"),
         ] {
             let source_type = SourceType::default().with_typescript(true).with_jsx(true);
 
@@ -360,6 +421,21 @@ mod tests {
             (r#"<div className="flex flex p-4" />"#, r#"<div className="flex p-4" />"#),
             // Single class should still be tracked normally
             (r#"const a = "flex";"#, r#"const a = "flex";"#),
+            // Import merging: duplicates merged into one
+            (
+                "import { join } from 'node:path';\nimport { join, path } from 'node:path';",
+                "import { join, path } from 'node:path';",
+            ),
+            // Import merging: different specifiers from same source
+            (
+                "import { a } from 'x';\nimport { b } from 'x';",
+                "import { a, b } from 'x';",
+            ),
+            // Import merging: aliased specifier preserved
+            (
+                "import { a as b } from 'x';\nimport { c } from 'x';",
+                "import { a as b, c } from 'x';",
+            ),
         ] {
             let source_type = SourceType::default().with_typescript(true).with_jsx(true);
 
