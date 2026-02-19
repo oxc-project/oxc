@@ -10,7 +10,7 @@ pub struct NoUndefined;
 
 fn no_undefined_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected use of `undefined`")
-        .with_help("Avoid using `undefined` directly as an identifier. Use `null` instead.")
+        .with_help("Use `void 0` instead of `undefined`.")
         .with_label(span)
 }
 
