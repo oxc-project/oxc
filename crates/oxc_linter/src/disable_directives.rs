@@ -517,7 +517,10 @@ impl DisableDirectivesBuilder {
                         self.add_interval(
                             start,
                             comment_span.start,
-                            DisabledRule::All { comment_span: disable_comment_span, is_next_line: false },
+                            DisabledRule::All {
+                                comment_span: disable_comment_span,
+                                is_next_line: false,
+                            },
                         );
                     } else {
                         // collect as unused enable (see more at note comments in beginning of this method)
