@@ -262,6 +262,8 @@ impl<'a> SourcemapBuilder<'a> {
                             idx += 1;
                             continue;
                         }
+                        // 3-byte line break. Add 2 to `idx` here, as 1 more is added below.
+                        idx += 2;
                     }
                     _ => {
                         // Unicode char
@@ -543,6 +545,12 @@ mod test {
         create_mappings("\r\nabc", 1, 3);
         create_mappings("abc\r\n", 1, 0);
         create_mappings("ÖÖ\nÖ\nÖÖÖ", 2, 3);
+        create_mappings("\u{2028}", 1, 0);
+        create_mappings("\u{2029}", 1, 0);
+        create_mappings("a\u{2028}b", 1, 1);
+        create_mappings("a\u{2029}b", 1, 1);
+        create_mappings("`\u{2028}`", 1, 1);
+        create_mappings("`\u{2029}`", 1, 1);
     }
 
     #[test]

@@ -91,15 +91,18 @@ export type FormatOptions = Pick<
   printWidth?: number;
   /** Whether to insert a final newline at the end of the file. (Default: `true`) */
   insertFinalNewline?: boolean;
-  /** Experimental: Sort import statements. Disabled by default. */
+  /** Sort import statements. Disabled by default. */
+  sortImports?: SortImportsOptions;
+  /** @deprecated Use `sortImports` instead. */
   experimentalSortImports?: SortImportsOptions;
-  /** Experimental: Sort `package.json` keys. (Default: `true`) */
-  experimentalSortPackageJson?: boolean;
-  /**
-   * Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
-   * (Default: disabled)
-   */
-  experimentalTailwindcss?: TailwindcssOptions;
+  /** Sort `package.json` keys. (Default: `true`) */
+  sortPackageJson?: boolean | SortPackageJsonOptions;
+  /** @deprecated Use `sortPackageJson` instead. */
+  experimentalSortPackageJson?: boolean | SortPackageJsonOptions;
+  /** Enable Tailwind CSS class sorting. (Default: disabled) */
+  sortTailwindcss?: SortTailwindcssOptions;
+  /** @deprecated Use `sortTailwindcss` instead. */
+  experimentalTailwindcss?: SortTailwindcssOptions;
 } & Record<string, unknown>; // Also allow additional options for we don't have typed yet.
 
 /**
@@ -137,10 +140,18 @@ export type SortImportsOptions = {
 };
 
 /**
+ * Configuration options for sort package.json.
+ */
+export type SortPackageJsonOptions = {
+  /** Sort the `scripts` field alphabetically. (Default: `false`) */
+  sortScripts?: boolean;
+};
+
+/**
  * Configuration options for Tailwind CSS class sorting.
  * See https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
  */
-export type TailwindcssOptions = {
+export type SortTailwindcssOptions = {
   /** Path to Tailwind config file (v3). e.g., `"./tailwind.config.js"` */
   config?: string;
   /** Path to Tailwind stylesheet (v4). e.g., `"./src/app.css"` */
@@ -160,3 +171,6 @@ export type TailwindcssOptions = {
   /** Preserve duplicate classes. (Default: `false`) */
   preserveDuplicates?: boolean;
 };
+
+/** @deprecated Use `SortTailwindcssOptions` instead. */
+export type TailwindcssOptions = SortTailwindcssOptions;

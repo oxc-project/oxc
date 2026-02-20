@@ -7,249 +7,291 @@ source: crates/oxc_linter/src/tester.rs
  1 │ ({ set a(val){ return val + 1; } })
    ·                ───────────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:17]
  1 │ ({ set a(val) { return 1; } })
    ·                 ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:24]
  1 │ class A { set a(val) { return 1; } }
    ·                        ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:31]
  1 │ class A { static set a(val) { return 1; } }
    ·                               ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:23]
  1 │ (class { set a(val) { return 1; } })
    ·                       ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:17]
  1 │ ({ set a(val) { return val; } })
    ·                 ───────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:24]
  1 │ class A { set a(val) { return undefined; } }
    ·                        ─────────────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:23]
  1 │ (class { set a(val) { return null; } })
    ·                       ────────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:17]
  1 │ ({ set a(val) { return x + y; } })
    ·                 ─────────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:24]
  1 │ class A { set a(val) { return foo(); } }
    ·                        ─────────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:23]
  1 │ (class { set a(val) { return this._a; } })
    ·                       ───────────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:17]
  1 │ ({ set a(val) { return this.a; } })
    ·                 ──────────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:28]
  1 │ ({ set a(val) { if (foo) { return 1; }; } })
    ·                            ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:30]
  1 │ class A { set a(val) { try { return 1; } catch(e) {} } }
    ·                              ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:57]
  1 │ (class { set a(val) { while (foo){ if (bar) break; else return 1; } } })
    ·                                                         ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:17]
  1 │ ({ set a(val) { return 1; }, set b(val) { return 1; } })
    ·                 ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:43]
  1 │ ({ set a(val) { return 1; }, set b(val) { return 1; } })
    ·                                           ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:24]
  1 │ class A { set a(val) { return 1; } set b(val) { return 1; } }
    ·                        ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:49]
  1 │ class A { set a(val) { return 1; } set b(val) { return 1; } }
    ·                                                 ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:23]
  1 │ (class { set a(val) { return 1; } static set b(val) { return 1; } })
    ·                       ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:55]
  1 │ (class { set a(val) { return 1; } static set b(val) { return 1; } })
    ·                                                       ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:27]
  1 │ ({ set a(val) { if(val) { return 1; } else { return 2 }; } })
    ·                           ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:46]
  1 │ ({ set a(val) { if(val) { return 1; } else { return 2 }; } })
    ·                                              ────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:46]
  1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return y; default: return z } } }
    ·                                              ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:64]
  1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return y; default: return z } } }
    ·                                                                ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:83]
  1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return y; default: return z } } }
    ·                                                                                   ────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:62]
  1 │ (class { static set a(val) { if (val > 0) { this._val = val; return val; } return false; } })
    ·                                                              ───────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:76]
  1 │ (class { static set a(val) { if (val > 0) { this._val = val; return val; } return false; } })
    ·                                                                            ─────────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:27]
  1 │ ({ set a(val) { if(val) { return 1; } else { return; }; } })
    ·                           ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:46]
  1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return; default: return z } } }
    ·                                              ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:81]
  1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return; default: return z } } }
    ·                                                                                 ────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:72]
  1 │ (class { static set a(val) { if (val > 0) { this._val = val; return; } return false; } })
    ·                                                                        ─────────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:32]
  1 │ ({ set a(val) { function b(){} return b(); } })
    ·                                ───────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:24]
  1 │ class A { set a(val) { return () => {}; } }
    ·                        ────────────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:49]
  1 │ (class { set a(val) { function b(){ return 1; } return 2; } })
    ·                                                 ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:41]
  1 │ ({ set a(val) { function b(){ return; } return 1; } })
    ·                                         ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:58]
  1 │ class A { set a(val) { var x = function() { return 1; }; return 2; } }
    ·                                                          ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:50]
  1 │ (class { set a(val) { var x = () => { return; }; return 2; } })
    ·                                                  ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:33]
  1 │ function f(){}; ({ set a(val) { return 1; } });
    ·                                 ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:44]
  1 │ x = function f(){}; class A { set a(val) { return 1; } };
    ·                                            ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:40]
  1 │ x = () => {}; A = class { set a(val) { return 1; } };
    ·                                        ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.
 
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:25]
  1 │ return; ({ set a(val) { return 1; } }); return 2;
    ·                         ─────────
    ╰────
+  help: Remove the return statement or ensure it does not return a value.

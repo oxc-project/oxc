@@ -256,7 +256,7 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onCompositionUpdate", "onCut", "onDoubleClick", "onDrag", "onDragEnd", "onDragEnter", "onDragExit", "onDragLeave",
     "onError", "onFocus", "onInput", "onKeyDown", "onKeyPress", "onKeyUp", "onLoad", "onWheel", "onDragOver",
     "onDragStart", "onDrop", "onMouseDown", "onMouseEnter", "onMouseLeave", "onMouseMove", "onMouseOut", "onMouseOver",
-    "onMouseUp", "onPaste", "onScroll", "onSelect", "onSubmit", "onBeforeToggle", "onToggle", "onTransitionEnd", "radioGroup",
+    "onMouseUp", "onPaste", "onScroll", "onScrollEnd", "onSelect", "onSubmit", "onBeforeToggle", "onToggle", "onTransitionEnd", "radioGroup",
     "readOnly", "referrerPolicy", "rowSpan", "srcDoc", "srcLang", "srcSet", "useMap",
     // SVG attributes
     // See https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute
@@ -306,7 +306,7 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onEndedCapture", "onLoadedDataCapture", "onLoadedMetadataCapture", "onLoadStartCapture", "onPauseCapture", "onPlayCapture",
     "onPlayingCapture", "onProgressCapture", "onRateChangeCapture", "onSeekedCapture", "onSeekingCapture", "onStalledCapture", "onSuspendCapture",
     "onTimeUpdateCapture", "onVolumeChangeCapture", "onWaitingCapture", "onSelectCapture", "onTouchCancelCapture", "onTouchEndCapture",
-    "onTouchMoveCapture", "onTouchStartCapture", "onScrollCapture", "onWheelCapture", "onAnimationEndCapture",
+    "onTouchMoveCapture", "onTouchStartCapture", "onScrollCapture", "onScrollEndCapture", "onWheelCapture", "onAnimationEndCapture",
     "onAnimationStartCapture", "onTransitionEndCapture",
     "onAuxClick", "onAuxClickCapture", "onClickCapture", "onContextMenuCapture", "onDoubleClickCapture",
     "onDragCapture", "onDragEndCapture", "onDragEnterCapture", "onDragExitCapture", "onDragLeaveCapture",
@@ -591,6 +591,8 @@ fn test() {
         (r#"<App clip-path="bar" />;"#, None),
         (r#"<div className="bar"></div>;"#, None),
         (r"<div onMouseDown={this._onMouseDown}></div>;", None),
+        (r"<div onScrollEnd={this._onScrollEnd}></div>;", None),
+        (r"<div onScrollEndCapture={this._onScrollEndCapture}></div>;", None),
         (r#"<a href="someLink" download="foo">Read more</a>"#, None),
         (r#"<area download="foo" />"#, None),
         (r#"<img src="cat_keyboard.jpeg" alt="A cat sleeping on a keyboard" align="top" />"#, None),

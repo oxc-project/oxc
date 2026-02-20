@@ -28,6 +28,14 @@ working directory: fixtures/tsgolint
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
+  x typescript-eslint(dot-notation): ["bar"] is better written in dot notation.
+   ,-[dot-notation.ts:4:5]
+ 3 | declare const foo: { bar: number };
+ 4 | foo['bar'];
+   :     ^^^^^
+ 5 | 
+   `----
+
   x typescript-eslint(no-array-delete): Using the `delete` operator with an array expression is unsafe.
    ,-[no-array-delete.ts:2:1]
  1 | declare const arr: number[];
@@ -190,10 +198,11 @@ working directory: fixtures/tsgolint
    `----
 
   x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
-   ,-[no-unnecessary-type-assertion.ts:2:19]
+   ,-[no-unnecessary-type-assertion.ts:2:23]
  1 | const str: string = 'hello';
  2 | const redundant = str as string;
-   :                   ^^^^^^^^^^^^^
+   :                  ^^|^ ^^^^^^^^^
+   :                    `-- This expression already has the type 'string'
  3 | 
    `----
 
@@ -419,10 +428,11 @@ working directory: fixtures/tsgolint
    `----
 
   x typescript-eslint(no-unnecessary-type-assertion): This assertion is unnecessary since it does not change the type of the expression.
-   ,-[prefer-reduce-type-parameter.ts:2:13]
+   ,-[prefer-reduce-type-parameter.ts:2:56]
  1 | const numbers = [1, 2, 3];
  2 | const sum = numbers.reduce((acc, val) => acc + val, 0) as number;
-   :             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   :            ^^^^^^^^^^^^^^^^^^^^^|^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^
+   :                                 `-- This expression already has the type 'number'
  3 | 
    `----
 
@@ -599,8 +609,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 75 errors.
-Finished in <variable>ms on 58 files with 57 rules using 1 threads.
+Found 0 warnings and 76 errors.
+Finished in <variable>ms on 59 files with 58 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

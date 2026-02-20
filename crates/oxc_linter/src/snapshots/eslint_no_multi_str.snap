@@ -8,6 +8,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─
  2 │              Line 2'
    ╰────
+  help: Multiline strings are not allowed. Use template literals or string concatenation instead.
 
   ⚠ eslint(no-multi-str): Unexpected multi string.
    ╭─[no_multi_str.tsx:1:14]
@@ -15,27 +16,32 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─
  2 │              Line 2');
    ╰────
+  help: Multiline strings are not allowed. Use template literals or string concatenation instead.
 
   ⚠ eslint(no-multi-str): Unexpected multi string.
    ╭─[no_multi_str.tsx:1:5]
  1 │ 'foo\bar';
    ·     ─
    ╰────
+  help: Multiline strings are not allowed. Use template literals or string concatenation instead.
 
   ⚠ eslint(no-multi-str): Unexpected multi string.
    ╭─[no_multi_str.tsx:1:5]
  1 │ 'foo\ bar';
    ·     ─
    ╰────
+  help: Multiline strings are not allowed. Use template literals or string concatenation instead.
 
   ⚠ eslint(no-multi-str): Unexpected multi string.
    ╭─[no_multi_str.tsx:1:5]
  1 │ 'foo\ ar';
    ·     ─
    ╰────
+  help: Multiline strings are not allowed. Use template literals or string concatenation instead.
 
   ⚠ eslint(no-multi-str): Unexpected multi string.
    ╭─[no_multi_str.tsx:1:2]
  1 │ '\ still fails';
    ·  ─
    ╰────
+  help: Multiline strings are not allowed. Use template literals or string concatenation instead.
