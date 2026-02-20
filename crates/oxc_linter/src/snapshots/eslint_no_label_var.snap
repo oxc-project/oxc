@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     │                         ╰── Label with the same name.
    ·     ╰── Identifier 'x' found here.
    ╰────
+  help: Rename either the variable or the label to avoid confusion.
 
   ⚠ eslint(no-label-var): Found identifier 'x' with the same name as a label.
    ╭─[no_label_var.tsx:1:22]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      │        ╰── Label with the same name.
    ·                      ╰── Identifier 'x' found here.
    ╰────
+  help: Rename either the variable or the label to avoid confusion.
 
   ⚠ eslint(no-label-var): Found identifier 'x' with the same name as a label.
    ╭─[no_label_var.tsx:1:14]
@@ -25,3 +27,4 @@ source: crates/oxc_linter/src/tester.rs
    ·              │    ╰── Label with the same name.
    ·              ╰── Identifier 'x' found here.
    ╰────
+  help: Rename either the variable or the label to avoid confusion.

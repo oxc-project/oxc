@@ -8,6 +8,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─┬─
    ·                     ╰── foo is re-assigned here
    ╰────
+  help: Do not re-assign a function declared as a FunctionDeclaration.
 
   ⚠ eslint(no-func-assign): 'foo' is a function.
    ╭─[no_func_assign.tsx:1:18]
@@ -15,6 +16,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ─┬─
    ·                   ╰── foo is re-assigned here
    ╰────
+  help: Do not re-assign a function declared as a FunctionDeclaration.
 
   ⚠ eslint(no-func-assign): 'foo' is a function.
    ╭─[no_func_assign.tsx:1:1]
@@ -22,6 +24,7 @@ source: crates/oxc_linter/src/tester.rs
    · ─┬─
    ·  ╰── foo is re-assigned here
    ╰────
+  help: Do not re-assign a function declared as a FunctionDeclaration.
 
   ⚠ eslint(no-func-assign): 'foo' is a function.
    ╭─[no_func_assign.tsx:1:2]
@@ -29,6 +32,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─┬─
    ·   ╰── foo is re-assigned here
    ╰────
+  help: Do not re-assign a function declared as a FunctionDeclaration.
 
   ⚠ eslint(no-func-assign): 'foo' is a function.
    ╭─[no_func_assign.tsx:1:6]
@@ -36,6 +40,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─┬─
    ·       ╰── foo is re-assigned here
    ╰────
+  help: Do not re-assign a function declared as a FunctionDeclaration.
 
   ⚠ eslint(no-func-assign): 'foo' is a function.
    ╭─[no_func_assign.tsx:1:19]
@@ -43,6 +48,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─┬─
    ·                    ╰── foo is re-assigned here
    ╰────
+  help: Do not re-assign a function declared as a FunctionDeclaration.
 
   ⚠ eslint(no-func-assign): 'foo' is a function.
    ╭─[no_func_assign.tsx:1:20]
@@ -50,6 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─┬─
    ·                     ╰── foo is re-assigned here
    ╰────
+  help: Do not re-assign a function declared as a FunctionDeclaration.
 
   ⚠ eslint(no-func-assign): 'foo' is a function.
    ╭─[no_func_assign.tsx:1:26]
@@ -57,6 +64,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─┬─
    ·                           ╰── foo is re-assigned here
    ╰────
+  help: Do not re-assign a function declared as a FunctionDeclaration.
 
   ⚠ eslint(no-func-assign): 'hello' is a function.
    ╭─[no_func_assign.tsx:1:28]
@@ -64,3 +72,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ──┬──
    ·                              ╰── hello is re-assigned here
    ╰────
+  help: Do not re-assign a function declared as a FunctionDeclaration.
