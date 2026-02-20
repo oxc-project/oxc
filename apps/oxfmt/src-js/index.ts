@@ -96,9 +96,9 @@ export type FormatOptions = Pick<
   /** @deprecated Use `sortImports` instead. */
   experimentalSortImports?: SortImportsOptions;
   /** Sort `package.json` keys. (Default: `true`) */
-  sortPackageJson?: boolean;
+  sortPackageJson?: boolean | SortPackageJsonOptions;
   /** @deprecated Use `sortPackageJson` instead. */
-  experimentalSortPackageJson?: boolean;
+  experimentalSortPackageJson?: boolean | SortPackageJsonOptions;
   /** Enable Tailwind CSS class sorting. (Default: disabled) */
   sortTailwindcss?: SortTailwindcssOptions;
   /** @deprecated Use `sortTailwindcss` instead. */
@@ -137,6 +137,14 @@ export type SortImportsOptions = {
     selector?: string;
     modifiers?: string[];
   }[];
+};
+
+/**
+ * Configuration options for sort package.json.
+ */
+export type SortPackageJsonOptions = {
+  /** Sort the `scripts` field alphabetically. (Default: `false`) */
+  sortScripts?: boolean;
 };
 
 /**
