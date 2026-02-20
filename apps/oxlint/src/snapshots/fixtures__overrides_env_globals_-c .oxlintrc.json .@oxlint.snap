@@ -14,6 +14,7 @@ working directory: fixtures/overrides_env_globals
    :      `-- Read-only global 'globalThis' should not be modified.
  3 | $ = 'abc';
    `----
+  help: Use a local variable instead of modifying the global 'globalThis'.
 
   ! eslint(no-global-assign): Read-only global 'globalThis' should not be modified.
    ,-[test.js:2:1]
@@ -23,6 +24,7 @@ working directory: fixtures/overrides_env_globals
    :      `-- Read-only global 'globalThis' should not be modified.
  3 | $ = 'abc';
    `----
+  help: Use a local variable instead of modifying the global 'globalThis'.
 
   ! eslint(no-global-assign): Read-only global '$' should not be modified.
    ,-[test.js:3:1]
@@ -32,6 +34,7 @@ working directory: fixtures/overrides_env_globals
    : `-- Read-only global '$' should not be modified.
  4 | 
    `----
+  help: Use a local variable instead of modifying the global '$'.
 
   ! eslint(no-global-assign): Read-only global 'Foo' should not be modified.
    ,-[test.js:6:1]
@@ -40,6 +43,7 @@ working directory: fixtures/overrides_env_globals
    : ^|^
    :  `-- Read-only global 'Foo' should not be modified.
    `----
+  help: Use a local variable instead of modifying the global 'Foo'.
 
   ! eslint(no-global-assign): Read-only global 'globalThis' should not be modified.
    ,-[test.ts:2:1]
@@ -49,6 +53,7 @@ working directory: fixtures/overrides_env_globals
    :      `-- Read-only global 'globalThis' should not be modified.
  3 | $ = 'abc';
    `----
+  help: Use a local variable instead of modifying the global 'globalThis'.
 
 Found 5 warnings and 0 errors.
 Finished in <variable>ms on 3 files with 1 rules using 1 threads.
