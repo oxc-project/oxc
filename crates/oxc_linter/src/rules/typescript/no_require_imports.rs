@@ -212,6 +212,25 @@ fn test() {
         ("import lib9 = lib2.anotherSubImport;", None),
         ("import lib10 from 'lib10';", None),
         ("var lib3 = load?.('not_an_import');", None),
+        // locally-defined require with dynamic arg — root scope
+        (
+            "
+            import { createRequire } from 'module';
+            const require = createRequire();
+            require(someModule);
+                ",
+            None,
+        ),
+        // locally-defined require with dynamic arg — nested scope
+        (
+            "
+            function foo() {
+                let require = bazz;
+                require(someModule);
+            }
+                ",
+            None,
+        ),
         (
             "
             import { createRequire } from 'module';
