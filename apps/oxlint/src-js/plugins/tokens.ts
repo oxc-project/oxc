@@ -3,7 +3,8 @@
  */
 
 import { ast, initAst } from "./source_code.ts";
-import { parseTokens } from "./tokens_parse.ts";
+import { getSerializedTokensJSON } from "./source_code.ts";
+import { getNodeLoc } from "./location.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
@@ -125,6 +126,17 @@ type TokenOrComment = Token | Comment;
 // This object is reused over and over to avoid creating a new options object on each call.
 const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip: 0 };
 
+// Prototype for `Token` objects, which calculates `loc` property lazily.
+const TokenProto = Object.create(Object.prototype, {
+  loc: {
+    // Note: Not configurable
+    get() {
+      return getNodeLoc(this);
+    },
+    enumerable: true,
+  },
+});
+
 // Tokens for the current file parsed by TS-ESLint.
 // Created lazily only when needed.
 export let tokens: Token[] | null = null;
@@ -137,11 +149,35 @@ export let tokensAndComments: TokenOrComment[] | null = null;
  * Caller must ensure `filePath` and `sourceText` are initialized before calling this function.
  */
 export function initTokens() {
-  // Use TypeScript parser to get tokens
-  tokens = parseTokens();
+  const serializedTokens = getSerializedTokensJSON();
+  debugAssertIsNonNull(
+    serializedTokens,
+    "Serialized tokens should be provided by Rust parser transfer",
+  );
+  tokens = parseSerializedTokens(serializedTokens);
 
   // Check `tokens` have valid ranges and are in ascending order
   debugCheckValidRanges(tokens, "token");
+}
+
+/**
+ * Deserialize serialized ESTree tokens from Rust and hydrate ESLint-compatible token fields.
+ */
+function parseSerializedTokens(serializedTokens: string): Token[] {
+  const parsed = JSON.parse(serializedTokens) as Token[];
+  for (const token of parsed) {
+    const { start, end } = token;
+    debugAssert(
+      typeof start === "number" && typeof end === "number",
+      "Precomputed tokens should include `start` and `end`",
+    );
+
+    // `TokenProto` provides getter for `loc`
+    // @ts-expect-error - TS doesn't understand `__proto__`
+    token.__proto__ = TokenProto;
+    token.range = [start, end];
+  }
+  return parsed;
 }
 
 /**

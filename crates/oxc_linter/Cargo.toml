@@ -33,6 +33,7 @@ oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true, default-features = false }
 oxc_data_structures = { workspace = true, features = ["box_macros"] }
 oxc_diagnostics = { workspace = true }
+oxc_estree_tokens = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
 oxc_macros = { workspace = true, features = ["ruledocs"] }
