@@ -219,10 +219,23 @@ impl SourceFormatter {
         }
 
         external_formatter.format_file(external_options, source_text).map_err(|err| {
-            OxcDiagnostic::error(format!(
-                "Failed to format file with external formatter: {}\n{err}",
-                path.display()
-            ))
+            // NOTE: We are trying to make the error from oxc_formatter and external_formatter (Prettier) look similar.
+            // Ideally, we would unify them into `OxcDiagnostic`,
+            // which would eliminate the need for relative path conversion.
+            // However, doing so would require:
+            // - Parsing Prettier's error messages
+            // - Converting span information from UTF-16 to UTF-8
+            // This is a non-trivial amount of work, so for now, just leave this as a best effort.
+            let relative = std::env::current_dir()
+                .ok()
+                .and_then(|cwd| path.strip_prefix(cwd).ok().map(Path::to_path_buf));
+            let display_path = relative.as_deref().unwrap_or(path).to_string_lossy();
+            let message = if let Some((first, rest)) = err.split_once('\n') {
+                format!("{first}\n[{display_path}]\n{rest}")
+            } else {
+                format!("{err}\n[{display_path}]")
+            };
+            OxcDiagnostic::error(message)
         })
     }
 

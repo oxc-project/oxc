@@ -108,6 +108,8 @@ const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "displaystyle" => phf_set! {"math"},
     // https://html.spec.whatwg.org/multipage/links.html#downloading-resources
     "download" => phf_set! {"a", "area"},
+    // https://html.spec.whatwg.org/multipage/urls-and-fetching.html#fetch-priority-attributes
+    "fetchPriority" => phf_set! {"img", "link", "script"},
     "fill" => phf_set! {
          // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/fill
          // Fill color
@@ -254,7 +256,7 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onCompositionUpdate", "onCut", "onDoubleClick", "onDrag", "onDragEnd", "onDragEnter", "onDragExit", "onDragLeave",
     "onError", "onFocus", "onInput", "onKeyDown", "onKeyPress", "onKeyUp", "onLoad", "onWheel", "onDragOver",
     "onDragStart", "onDrop", "onMouseDown", "onMouseEnter", "onMouseLeave", "onMouseMove", "onMouseOut", "onMouseOver",
-    "onMouseUp", "onPaste", "onScroll", "onSelect", "onSubmit", "onBeforeToggle", "onToggle", "onTransitionEnd", "radioGroup",
+    "onMouseUp", "onPaste", "onScroll", "onScrollEnd", "onSelect", "onSubmit", "onBeforeToggle", "onToggle", "onTransitionEnd", "radioGroup",
     "readOnly", "referrerPolicy", "rowSpan", "srcDoc", "srcLang", "srcSet", "useMap",
     // SVG attributes
     // See https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute
@@ -304,7 +306,7 @@ const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     "onEndedCapture", "onLoadedDataCapture", "onLoadedMetadataCapture", "onLoadStartCapture", "onPauseCapture", "onPlayCapture",
     "onPlayingCapture", "onProgressCapture", "onRateChangeCapture", "onSeekedCapture", "onSeekingCapture", "onStalledCapture", "onSuspendCapture",
     "onTimeUpdateCapture", "onVolumeChangeCapture", "onWaitingCapture", "onSelectCapture", "onTouchCancelCapture", "onTouchEndCapture",
-    "onTouchMoveCapture", "onTouchStartCapture", "onScrollCapture", "onWheelCapture", "onAnimationEndCapture",
+    "onTouchMoveCapture", "onTouchStartCapture", "onScrollCapture", "onScrollEndCapture", "onWheelCapture", "onAnimationEndCapture",
     "onAnimationStartCapture", "onTransitionEndCapture",
     "onAuxClick", "onAuxClickCapture", "onClickCapture", "onContextMenuCapture", "onDoubleClickCapture",
     "onDragCapture", "onDragEndCapture", "onDragEnterCapture", "onDragExitCapture", "onDragLeaveCapture",
@@ -340,6 +342,7 @@ const DOM_ATTRIBUTES_TO_CAMEL: Map<&'static str, &'static str> = phf_map! {
     "class" => "className",
     "http-equiv" => "httpEquiv",
     "crossorigin" => "crossOrigin",
+    "fetchpriority" => "fetchPriority",
     "for" => "htmlFor",
     "nomodule" => "noModule",
     "popovertarget" => "popoverTarget",
@@ -588,6 +591,8 @@ fn test() {
         (r#"<App clip-path="bar" />;"#, None),
         (r#"<div className="bar"></div>;"#, None),
         (r"<div onMouseDown={this._onMouseDown}></div>;", None),
+        (r"<div onScrollEnd={this._onScrollEnd}></div>;", None),
+        (r"<div onScrollEndCapture={this._onScrollEndCapture}></div>;", None),
         (r#"<a href="someLink" download="foo">Read more</a>"#, None),
         (r#"<area download="foo" />"#, None),
         (r#"<img src="cat_keyboard.jpeg" alt="A cat sleeping on a keyboard" align="top" />"#, None),
@@ -692,6 +697,12 @@ fn test() {
             r#"<input type="button" popoverTarget="locale-switcher" popoverTargetAction="show" />"#,
             None,
         ),
+        // https://html.spec.whatwg.org/multipage/urls-and-fetching.html#fetch-priority-attributes
+        (r#"<img fetchPriority="high" src="foo.jpg" />"#, None),
+        (r#"<img fetchPriority="low" src="foo.jpg" />"#, None),
+        (r#"<img fetchPriority="auto" src="foo.jpg" />"#, None),
+        (r#"<link fetchPriority="high" href="style.css" rel="stylesheet" />"#, None),
+        (r#"<script fetchPriority="high" src="script.js" />"#, None),
         (
             r#"
 			        <table align="top">
@@ -773,6 +784,10 @@ fn test() {
         (r#"<div imageSizes="someImageSizes" />"#, None),
         (r#"<div popoverTarget="locale-switcher" />"#, None),
         (r#"<div popoverTargetAction="show" />"#, None),
+        (r#"<div fetchPriority="high" />"#, None),
+        (r#"<img fetchpriority="high" src="foo.jpg" />"#, None),
+        (r#"<link fetchpriority="high" href="style.css" rel="stylesheet" />"#, None),
+        (r#"<script fetchpriority="high" src="script.js" />"#, None),
         (r#"<div data-xml-anything="invalid" />"#, None),
         (
             r#"<div data-testID="bar" data-under_sCoRe="bar" />;"#,

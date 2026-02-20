@@ -1,0 +1,115 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = __dirname + "/foo.js";
+   ·                ─────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = __filename + "/foo.js";
+   ·                ──────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = `${__dirname}/foo.js`;
+   ·                ─────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = `${__filename}/foo.js`;
+   ·                ──────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:44]
+ 1 │ var path = require("path"); var fullPath = `${__dirname}${path.sep}foo.js`;
+   ·                                            ───────────────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:44]
+ 1 │ var path = require("path"); var fullPath = `${__filename}${path.sep}foo.js`;
+   ·                                            ────────────────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:44]
+ 1 │ var path = require("path"); var fullPath = __dirname + path.sep + `foo.js`;
+   ·                                            ────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = __dirname + "/" + "foo.js";
+   ·                ───────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = __dirname + ("/" + "foo.js");
+   ·                ────────────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = __dirname + (test ? "/foo.js" : "/bar.js");
+   ·                ──────────────────────────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = __dirname + (extraPath || "/default.js");
+   ·                ────────────────────────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = __dirname + "\\foo.js";
+   ·                ──────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = __dirname + "\\${path.sep}foo.js";
+   ·                ─────────────────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = __filename + "\\${path.sep}foo.js";
+   ·                ──────────────────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = `${__dirname}\\${path.sep}foo.js`;
+   ·                ─────────────────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.
+
+  ⚠ eslint-plugin-node(no-path-concat): Use `path.join()` or `path.resolve()` instead of string concatenation
+   ╭─[no_path_concat.tsx:1:16]
+ 1 │ var fullPath = `${__filename}\\${path.sep}foo.js`;
+   ·                ──────────────────────────────────
+   ╰────
+  help: Replace string concatenation of `__dirname` or `__filename` with `path.join()` or `path.resolve()`.

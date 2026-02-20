@@ -118,7 +118,7 @@ async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tail
  * Load Tailwind CSS plugin lazily when `options._useTailwindPlugin` flag is set.
  * The flag is added by Rust side only for relevant parsers.
  *
- * Option mapping (experimentalTailwindcss.xxx → tailwindXxx) is also done in Rust side.
+ * Option mapping (sortTailwindcss.xxx → tailwindXxx) is also done in Rust side.
  */
 async function setupTailwindPlugin(options: Options): Promise<void> {
   if ("_useTailwindPlugin" in options === false) return;

@@ -1,6 +1,7 @@
+use oxc_allocator::Vec as AllocatorVec;
 use oxc_ast::ast::{
-    ArrowFunctionExpression, BlockStatement, Function, FunctionBody, ReturnStatement, Statement,
-    SwitchCase,
+    ArrowFunctionExpression, BlockStatement, Expression, Function, FunctionBody, ReturnStatement,
+    Statement, SwitchCase, UnaryOperator,
 };
 use oxc_ast_visit::Visit;
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
@@ -128,18 +129,44 @@ pub fn check_function_body(function: &FunctionBody) -> StatementReturnStatus {
 /// returned value(s) which are ignored by `forEach`.
 pub fn get_explicit_return_spans(function: &FunctionBody) -> Vec<Span> {
     let mut finder = ReturnStatementFinder::default();
+
     finder.visit_function_body(function);
     finder.spans
+}
+
+/// Collect spans of **explicit** return values (`return <expr>`) in the given function body.
+///
+/// This is used by `array-callback-return` when `checkForEach` and `allowVoid` is enabled to highlight the
+/// returned value(s) which are not prefixed with void by `forEach`.
+/// This method returns a boolean to know if the empty return span is due a filtering or not.
+/// For example arrow functions like this () => x, returns 0 entries.
+pub fn get_no_voided_return_spans(function: &FunctionBody, allow_void: bool) -> (Vec<Span>, bool) {
+    let mut finder = ReturnStatementFinder { allow_void, ..Default::default() };
+
+    finder.visit_function_body(function);
+    (finder.spans, finder.has_void_expression)
 }
 
 #[derive(Default)]
 struct ReturnStatementFinder {
     spans: Vec<Span>,
+    allow_void: bool,
+    has_void_expression: bool,
 }
 
 impl Visit<'_> for ReturnStatementFinder {
     fn visit_return_statement(&mut self, return_statement: &ReturnStatement) {
-        if let Some(argument) = &return_statement.argument {
+        let Some(argument) = &return_statement.argument else {
+            return;
+        };
+
+        if !self.allow_void || !is_expression_void(argument) {
+            self.spans.push(argument.span());
+        }
+
+        if is_expression_void(argument) {
+            self.has_void_expression = true;
+        } else {
             self.spans.push(argument.span());
         }
     }
@@ -147,6 +174,35 @@ impl Visit<'_> for ReturnStatementFinder {
     fn visit_function(&mut self, _func: &Function<'_>, _flags: ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'_>) {}
+}
+
+pub fn is_void_arrow_return(statements: &AllocatorVec<'_, Statement>) -> bool {
+    if statements.is_empty() {
+        return false;
+    }
+
+    if statements.len() > 1 {
+        return false;
+    }
+
+    let Some(statement_return) = statements.first() else {
+        return false;
+    };
+
+    let Statement::ExpressionStatement(expression_return) = statement_return else {
+        return false;
+    };
+
+    is_expression_void(&expression_return.expression)
+}
+
+fn is_expression_void(statement_expression: &Expression<'_>) -> bool {
+    match statement_expression {
+        Expression::UnaryExpression(void_expression) => {
+            void_expression.operator == UnaryOperator::Void
+        }
+        _ => false,
+    }
 }
 
 /// Return checkers runs a Control Flow-like Analysis on a statement to see if it

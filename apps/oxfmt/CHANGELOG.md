@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.34.0] - 2026-02-19
+
+### 🚀 Features
+
+- 652c346 oxfmt/lsp: Support `untitled://` schema (#19287) (Sysix)
+
+### 🐛 Bug Fixes
+
+- 6c61b70 oxfmt: Fix outdated `sortImports.groups` doc comments (#19513) (leaysgur)
+
 ## [0.33.0] - 2026-02-16
 
 ### 💥 BREAKING CHANGES
