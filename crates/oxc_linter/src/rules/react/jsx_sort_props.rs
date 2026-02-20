@@ -1,6 +1,5 @@
 use std::cmp::Ordering;
 
-use cow_utils::CowUtils;
 use icu_collator::options::{CollatorOptions, Strength};
 use icu_collator::{Collator, CollatorBorrowed};
 use icu_locale::Locale;
@@ -254,14 +253,8 @@ impl Rule for JsxSortProps {
                 continue;
             }
 
-            // Build the original / sorted PropInfo slices for diagnostic
-            // selection (operates on sortable items only).
-            let original_sortable: Vec<PropInfo> =
-                sortable_idx.iter().map(|&i| prop_infos[i].clone()).collect();
-            let sorted_sortable: Vec<PropInfo> =
-                sorted_order.iter().map(|&pos| prop_infos[sortable_idx[pos]].clone()).collect();
-
-            let diagnostic_fn = find_first_violation(&original_sortable, &sorted_sortable, config);
+            let diagnostic_fn =
+                find_first_violation(&prop_infos, &sortable_idx, &sorted_order, config);
 
             // Determine the replacement span — from first sortable attr to
             // the furthest extended_end among all sortable items.
@@ -283,32 +276,21 @@ impl Rule for JsxSortProps {
             if has_unhandled_comments {
                 ctx.diagnostic(diagnostic);
             } else {
-                // Collect separators between consecutive sortable items.
-                let mut separators: Vec<&str> = Vec::with_capacity(sortable_idx.len());
-                for i in 0..sortable_idx.len() {
-                    if i + 1 < sortable_idx.len() {
-                        let curr_ext = cg[sortable_idx[i]].extended_end;
-                        let next_start = attr_span(group[sortable_idx[i + 1]]).start;
-                        separators.push(ctx.source_range(Span::new(curr_ext, next_start)));
-                    } else {
-                        separators.push("");
-                    }
-                }
-
                 // Build the sorted replacement text.
-                let mut sorted_text = String::new();
+                // Pre-allocate with estimated capacity to avoid reallocation.
+                let mut sorted_text = String::with_capacity((max_ext_end - first_start) as usize);
                 for (pos, &orig_pos) in sorted_order.iter().enumerate() {
                     let idx = sortable_idx[orig_pos];
                     let start = attr_span(group[idx]).start;
                     let end = cg[idx].extended_end;
                     sorted_text.push_str(ctx.source_range(Span::new(start, end)));
                     if pos + 1 < sorted_order.len() {
-                        let sep = if pos < separators.len() && !separators[pos].is_empty() {
-                            separators[pos]
-                        } else {
-                            " "
-                        };
-                        sorted_text.push_str(sep);
+                        // Compute separator inline from the original position's
+                        // gap — avoids a separate `separators` Vec allocation.
+                        let curr_ext = cg[sortable_idx[pos]].extended_end;
+                        let next_start = attr_span(group[sortable_idx[pos + 1]]).start;
+                        let sep = ctx.source_range(Span::new(curr_ext, next_start));
+                        sorted_text.push_str(if sep.is_empty() { " " } else { sep });
                     }
                 }
 
@@ -349,14 +331,12 @@ fn collect_groups<'a, 'b>(
 }
 
 /// Information about a single JSX prop used for sorting.
-#[derive(Clone)]
 struct PropInfo {
     name: String,
-    /// The sort key (potentially lowercased).
-    sort_key: String,
     group_rank: u8,
     /// Index in the `sortFirst` list, if this prop is in that list.
-    sort_first_index: Option<usize>,
+    /// `u8` is sufficient — sortFirst lists are tiny (typically 0–3 items).
+    sort_first_index: Option<u8>,
 }
 
 /// Classify a prop into its group rank and extract its name.
@@ -414,10 +394,7 @@ fn classify_prop(
         3 // regular
     };
 
-    let sort_key =
-        if config.ignore_case { name.cow_to_ascii_lowercase().into_owned() } else { name.clone() };
-
-    PropInfo { name, sort_key, group_rank, sort_first_index }
+    PropInfo { name, group_rank, sort_first_index: sort_first_index.map(|i| i as u8) }
 }
 
 /// Check if a prop name is a callback (starts with "on" followed by uppercase).
@@ -470,13 +447,20 @@ fn compare_props(
 
     // When an explicit locale is configured, use ICU collation.
     // The collator already handles case sensitivity via Strength settings.
-    // When no collator (locale "auto"/empty), use byte-order on sort_key
-    // (which is already lowercased when ignore_case is true).
+    // When no collator (locale "auto"/empty), use byte-order comparison.
     if let Some(collator) = collator {
         collator.compare(&a.name, &b.name)
+    } else if config.ignore_case {
+        cmp_ignore_ascii_case(&a.name, &b.name)
     } else {
-        a.sort_key.cmp(&b.sort_key)
+        a.name.cmp(&b.name)
     }
+}
+
+/// Zero-allocation case-insensitive byte-order comparison.
+/// Only folds ASCII characters, matching `cow_to_ascii_lowercase` behavior.
+fn cmp_ignore_ascii_case(a: &str, b: &str) -> Ordering {
+    a.bytes().map(|b| b.to_ascii_lowercase()).cmp(b.bytes().map(|b| b.to_ascii_lowercase()))
 }
 
 /// Create an ICU collator for the given locale string.
@@ -550,12 +534,11 @@ fn extended_end_with_next_trailing(
 ) -> u32 {
     let source = ctx.source_text();
     let after_next_end = group.get(next_idx + 1).map_or(elem_end, |na| attr_span(na).start);
-    let next_comments: Vec<_> = ctx.comments_range(next_span.end..after_next_end).collect();
+    let mut iter = ctx.comments_range(next_span.end..after_next_end);
 
-    if next_comments.len() == 1 {
-        let nc = next_comments[0];
-        let nc_newlines = count_newlines(source, next_span.start, nc.span.start);
-        if nc_newlines == 0 {
+    if let Some(nc) = iter.next() {
+        // Only extend for exactly one comment (check no second exists).
+        if iter.next().is_none() && count_newlines(source, next_span.start, nc.span.start) == 0 {
             // Same-line trailing comment on the consumed attribute.
             return nc.span.end;
         }
@@ -582,23 +565,50 @@ fn compute_comment_grouping(
         let next_attr = group.get(i + 1);
         let search_end = next_attr.map_or(elem_end, |na| attr_span(na).start);
 
-        let comments: Vec<_> = ctx.comments_range(span.end..search_end).collect();
+        // Use iterator directly — avoids collecting comments into a Vec.
+        let mut comment_iter = ctx.comments_range(span.end..search_end);
 
-        if comments.is_empty() {
+        let Some(first) = comment_iter.next() else {
             // No trailing comments — plain attribute.
             result.push(CommentGrouping::default_for(span.end));
             i += 1;
             continue;
-        }
+        };
 
-        let first = comments[0];
         // Count newlines from the attribute START to match ESLint's
         // `attribute.loc.start.line` comparison.
         let first_nl = count_newlines(source, span.start, first.span.start);
         let first_same_line = first_nl == 0;
         let first_next_line = first_nl == 1;
 
-        if comments.len() == 1 {
+        if let Some(second) = comment_iter.next() {
+            // Two or more comments after this attribute.
+            let second_nl = count_newlines(source, span.start, second.span.start);
+            let second_next_line = second_nl == 1;
+
+            if second_next_line && next_attr.is_some() {
+                let next = next_attr.unwrap();
+                let next_span = attr_span(next);
+                let ext = extended_end_with_next_trailing(group, i + 1, elem_end, next_span, ctx);
+                result.push(CommentGrouping {
+                    extended_end: ext,
+                    has_comment: true,
+                    consumed: false,
+                });
+                result.push(CommentGrouping {
+                    extended_end: ext,
+                    has_comment: false,
+                    consumed: true,
+                });
+                i += 2;
+            } else {
+                // Default for multiple comments that don't match the
+                // next-line pattern — no extension.
+                result.push(CommentGrouping::default_for(span.end));
+                i += 1;
+            }
+        } else {
+            // Exactly one comment.
             if first_same_line && first.is_block() {
                 // Same-line block comment `/* ... */`.
                 if let Some(next) = next_attr {
@@ -656,32 +666,6 @@ fn compute_comment_grouping(
                 result.push(CommentGrouping::default_for(span.end));
                 i += 1;
             }
-        } else {
-            // Two or more comments after this attribute.
-            let second_nl = count_newlines(source, span.start, comments[1].span.start);
-            let second_next_line = second_nl == 1;
-
-            if second_next_line && next_attr.is_some() {
-                let next = next_attr.unwrap();
-                let next_span = attr_span(next);
-                let ext = extended_end_with_next_trailing(group, i + 1, elem_end, next_span, ctx);
-                result.push(CommentGrouping {
-                    extended_end: ext,
-                    has_comment: true,
-                    consumed: false,
-                });
-                result.push(CommentGrouping {
-                    extended_end: ext,
-                    has_comment: false,
-                    consumed: true,
-                });
-                i += 2;
-            } else {
-                // Default for multiple comments that don't match the
-                // next-line pattern — no extension.
-                result.push(CommentGrouping::default_for(span.end));
-                i += 1;
-            }
         }
     }
 
@@ -689,12 +673,16 @@ fn compute_comment_grouping(
 }
 
 /// Find the first violation and return the appropriate diagnostic function.
+/// Uses index-based access to avoid cloning PropInfo into separate Vecs.
 fn find_first_violation(
-    original: &[PropInfo],
-    sorted: &[PropInfo],
+    prop_infos: &[PropInfo],
+    sortable_idx: &[usize],
+    sorted_order: &[usize],
     config: &JsxSortPropsConfig,
 ) -> fn(Span) -> OxcDiagnostic {
-    for (orig, sort) in original.iter().zip(sorted.iter()) {
+    for (pos, &sorted_pos) in sorted_order.iter().enumerate() {
+        let orig = &prop_infos[sortable_idx[pos]];
+        let sort = &prop_infos[sortable_idx[sorted_pos]];
         if orig.name == sort.name && orig.group_rank == sort.group_rank {
             continue;
         }
