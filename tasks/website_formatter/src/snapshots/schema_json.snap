@@ -208,7 +208,7 @@ expression: json
       "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled",
       "anyOf": [
         {
-          "$ref": "#/definitions/TailwindcssConfig"
+          "$ref": "#/definitions/SortTailwindcssConfig"
         },
         {
           "type": "null"
@@ -500,7 +500,7 @@ expression: json
           "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled",
           "anyOf": [
             {
-              "$ref": "#/definitions/TailwindcssConfig"
+              "$ref": "#/definitions/SortTailwindcssConfig"
             },
             {
               "type": "null"
@@ -775,7 +775,7 @@ expression: json
         }
       ]
     },
-    "TailwindcssConfig": {
+    "SortTailwindcssConfig": {
       "type": "object",
       "properties": {
         "attributes": {

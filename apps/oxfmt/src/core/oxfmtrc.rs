@@ -9,7 +9,7 @@ use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
     EmbeddedLanguageFormatting, Expand, FormatOptions, GroupEntry, ImportModifier, ImportSelector,
     IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, TailwindcssOptions, TrailingCommas,
+    SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -231,7 +231,7 @@ pub struct FormatConfig {
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
-    pub sort_tailwindcss: Option<TailwindcssConfig>,
+    pub sort_tailwindcss: Option<SortTailwindcssConfig>,
 }
 
 impl FormatConfig {
@@ -515,7 +515,7 @@ impl FormatConfig {
         }
 
         if let Some(config) = self.sort_tailwindcss {
-            format_options.sort_tailwindcss = Some(TailwindcssOptions {
+            format_options.sort_tailwindcss = Some(SortTailwindcssOptions {
                 config: config.config,
                 stylesheet: config.stylesheet,
                 functions: config.functions.unwrap_or_default(),
@@ -867,7 +867,7 @@ impl SortPackageJsonConfig {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-pub struct TailwindcssConfig {
+pub struct SortTailwindcssConfig {
     /// Path to your Tailwind CSS configuration file (v3).
     ///
     /// NOTE: Paths are resolved relative to the Oxfmt configuration file.
