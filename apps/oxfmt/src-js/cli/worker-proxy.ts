@@ -44,9 +44,25 @@ export async function formatFile(
   options: FormatFileParam["options"],
   code: string,
 ): Promise<string> {
-  return pool!.run({ options, code } satisfies FormatFileParam, {
-    name: "formatFile",
-  });
+  return (
+    pool!
+      .run({ options, code } satisfies FormatFileParam, { name: "formatFile" })
+      // `tinypool` with `runtime: "child_process"` serializes Error as plain objects via IPC.
+      // (e.g. `{ name, message, stack, ... }`)
+      // And napi-rs converts unknown JS values to Rust Error by calling `String()` on them,
+      // which yields `"[object Object]"` for plain objects...
+      // So, this function reconstructs a proper `Error` instance so napi-rs can extract the message.
+      .catch((err) => {
+        if (err instanceof Error) throw err;
+        if (err !== null && typeof err === "object") {
+          const obj = err as { name: string; message: string };
+          const newErr = new Error(obj.message);
+          newErr.name = obj.name;
+          throw newErr;
+        }
+        throw new Error(String(err));
+      })
+  );
 }
 
 export async function sortTailwindClasses(

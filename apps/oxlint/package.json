@@ -1,6 +1,6 @@
 {
   "name": "oxlint-app",
-  "version": "1.48.0",
+  "version": "1.49.0",
   "private": true,
   "description": "Internal development package for oxlint. For the published package.json template, see `npm/oxlint/package.json`.",
   "license": "MIT",

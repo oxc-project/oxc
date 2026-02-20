@@ -172,6 +172,7 @@ pub(crate) mod eslint {
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
+    pub mod no_use_before_define;
     pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
@@ -226,6 +227,7 @@ pub(crate) mod typescript {
     pub mod consistent_type_definitions;
     pub mod consistent_type_exports;
     pub mod consistent_type_imports;
+    pub mod dot_notation;
     pub mod explicit_function_return_type;
     pub mod explicit_module_boundary_types;
     pub mod no_array_delete;
@@ -279,7 +281,6 @@ pub(crate) mod typescript {
     pub mod no_unsafe_return;
     pub mod no_unsafe_type_assertion;
     pub mod no_unsafe_unary_minus;
-    pub mod no_use_before_define;
     pub mod no_useless_default_assignment;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
@@ -361,6 +362,7 @@ pub(crate) mod jest {
     pub mod prefer_jest_mocked;
     pub mod prefer_lowercase_title;
     pub mod prefer_mock_promise_shorthand;
+    pub mod prefer_mock_return_shorthand;
     pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
@@ -700,10 +702,12 @@ pub(crate) mod vitest {
     pub mod hoisted_apis_on_top;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
+    pub mod no_importing_vitest_globals;
     pub mod prefer_called_once;
     pub mod prefer_called_times;
     pub mod prefer_describe_function_title;
     pub mod prefer_expect_type_of;
+    pub mod prefer_import_in_mock;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
@@ -715,6 +719,7 @@ pub(crate) mod node {
     pub mod global_require;
     pub mod no_exports_assign;
     pub mod no_new_require;
+    pub mod no_path_concat;
     pub mod no_process_env;
 }
 

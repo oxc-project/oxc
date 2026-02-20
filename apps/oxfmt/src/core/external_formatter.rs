@@ -327,9 +327,9 @@ fn wrap_init_external_formatter(
             match status {
                 Ok(promise) => match promise.await {
                     Ok(languages) => Ok(languages),
-                    Err(err) => Err(format!("JS initExternalFormatter promise rejected: {err}")),
+                    Err(err) => Err(err.reason.clone()),
                 },
-                Err(err) => Err(format!("Failed to call JS initExternalFormatter callback: {err}")),
+                Err(err) => Err(err.reason.clone()),
             }
         });
         drop(guard);
@@ -352,9 +352,9 @@ fn wrap_format_embedded(
             match status {
                 Ok(promise) => match promise.await {
                     Ok(formatted_code) => Ok(formatted_code),
-                    Err(err) => Err(format!("JS formatEmbeddedCode promise rejected: {err}")),
+                    Err(err) => Err(err.reason.clone()),
                 },
-                Err(err) => Err(format!("Failed to call JS formatEmbeddedCode callback: {err}")),
+                Err(err) => Err(err.reason.clone()),
             }
         });
         drop(guard);
@@ -377,9 +377,9 @@ fn wrap_format_file(
             match status {
                 Ok(promise) => match promise.await {
                     Ok(formatted_code) => Ok(formatted_code),
-                    Err(err) => Err(format!("JS formatFile promise rejected: {err}")),
+                    Err(err) => Err(err.reason.clone()),
                 },
-                Err(err) => Err(format!("Failed to call JS formatFile callback: {err}")),
+                Err(err) => Err(err.reason.clone()),
             }
         });
         drop(guard);

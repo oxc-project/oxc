@@ -60,42 +60,6 @@ expression: json
       ],
       "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
     },
-    "experimentalSortImports": {
-      "description": "Experimental: Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/SortImportsConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "markdownDescription": "Experimental: Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled"
-    },
-    "experimentalSortPackageJson": {
-      "description": "Experimental: Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/SortPackageJsonUserConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "markdownDescription": "Experimental: Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`"
-    },
-    "experimentalTailwindcss": {
-      "description": "Experimental: Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/TailwindcssConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "markdownDescription": "Experimental: Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
-    },
     "htmlWhitespaceSensitivity": {
       "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`",
       "anyOf": [
@@ -215,6 +179,42 @@ expression: json
         "null"
       ],
       "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+    },
+    "sortImports": {
+      "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SortImportsConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled"
+    },
+    "sortPackageJson": {
+      "description": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SortPackageJsonUserConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`"
+    },
+    "sortTailwindcss": {
+      "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SortTailwindcssConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
     },
     "tabWidth": {
       "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",
@@ -374,42 +374,6 @@ expression: json
           ],
           "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
         },
-        "experimentalSortImports": {
-          "description": "Experimental: Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/SortImportsConfig"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "markdownDescription": "Experimental: Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled"
-        },
-        "experimentalSortPackageJson": {
-          "description": "Experimental: Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/SortPackageJsonUserConfig"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "markdownDescription": "Experimental: Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`"
-        },
-        "experimentalTailwindcss": {
-          "description": "Experimental: Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled",
-          "anyOf": [
-            {
-              "$ref": "#/definitions/TailwindcssConfig"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "markdownDescription": "Experimental: Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
-        },
         "htmlWhitespaceSensitivity": {
           "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`",
           "anyOf": [
@@ -507,6 +471,42 @@ expression: json
             "null"
           ],
           "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+        },
+        "sortImports": {
+          "description": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SortImportsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "markdownDescription": "Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled"
+        },
+        "sortPackageJson": {
+          "description": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SortPackageJsonUserConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "markdownDescription": "Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`"
+        },
+        "sortTailwindcss": {
+          "description": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SortTailwindcssConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
         },
         "tabWidth": {
           "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",
@@ -775,7 +775,7 @@ expression: json
         }
       ]
     },
-    "TailwindcssConfig": {
+    "SortTailwindcssConfig": {
       "type": "object",
       "properties": {
         "attributes": {
