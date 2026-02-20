@@ -405,6 +405,7 @@ pub(crate) mod react {
     pub mod jsx_pascal_case;
     pub mod jsx_props_no_spread_multi;
     pub mod jsx_props_no_spreading;
+    pub mod jsx_sort_props;
     pub mod no_array_index_key;
     pub mod no_children_prop;
     pub mod no_danger;
