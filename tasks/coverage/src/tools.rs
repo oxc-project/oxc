@@ -857,8 +857,14 @@ pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
             let span_converter = Utf8ToUtf16::new(source_text);
             span_converter.convert_program_with_ascending_order_checks(&mut program);
 
-            let oxc_tokens_json =
-                to_estree_tokens_json(&tokens, &program, EstreeTokenOptions::test262(), &allocator);
+            let oxc_tokens_json = to_estree_tokens_json(
+                &tokens,
+                &program,
+                source_text,
+                &span_converter,
+                EstreeTokenOptions::test262(),
+                &allocator,
+            );
 
             let token_path = workspace_root()
                 .join("estree-conformance/tests/test262-tokens")
@@ -901,8 +907,14 @@ pub fn run_estree_acorn_jsx_tokens(files: &[AcornJsxFile]) -> Vec<CoverageResult
             let span_converter = Utf8ToUtf16::new(source_text);
             span_converter.convert_program_with_ascending_order_checks(&mut program);
 
-            let oxc_tokens_json =
-                to_estree_tokens_json(&tokens, &program, EstreeTokenOptions::test262(), &allocator);
+            let oxc_tokens_json = to_estree_tokens_json(
+                &tokens,
+                &program,
+                source_text,
+                &span_converter,
+                EstreeTokenOptions::test262(),
+                &allocator,
+            );
 
             let token_path = workspace_root().join(f.path.with_extension("tokens.json"));
             let expected_tokens_json = fs::read_to_string(&token_path).unwrap_or_default();
@@ -1084,6 +1096,8 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
                 let oxc_tokens_json = to_estree_tokens_json(
                     &tokens,
                     &program,
+                    source_text,
+                    &span_converter,
                     EstreeTokenOptions::typescript(),
                     &allocator,
                 );

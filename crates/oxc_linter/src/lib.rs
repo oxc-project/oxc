@@ -572,28 +572,24 @@ impl Linter {
         span_converter.convert_program(program);
         span_converter.convert_comments(&mut program.comments);
 
-        let (tokens_offset, tokens_len) = if has_bom {
-            // Keep JS fallback path for BOM sources.
-            (0, 0)
-        } else if let Some(parser_tokens) = ctx_host.current_sub_host().parser_tokens() {
-            let tokens_json = to_estree_tokens_json(
-                parser_tokens,
-                program,
-                EstreeTokenOptions::linter(),
-                allocator,
-            );
-            if tokens_json.is_empty() {
-                (0, 0)
-            } else {
+        let (tokens_offset, tokens_len) =
+            if let Some(tokens) = ctx_host.current_sub_host().parser_tokens() {
+                let tokens_json = to_estree_tokens_json(
+                    tokens,
+                    program,
+                    original_source_text,
+                    &span_converter,
+                    EstreeTokenOptions::linter(),
+                    allocator,
+                );
                 let tokens_json = allocator.alloc_str(&tokens_json);
                 let tokens_offset = tokens_json.as_ptr() as u32;
                 #[expect(clippy::cast_possible_truncation)]
                 let tokens_len = tokens_json.len() as u32;
                 (tokens_offset, tokens_len)
-            }
-        } else {
-            (0, 0)
-        };
+            } else {
+                (0, 0)
+            };
 
         // Get offset of `Program` within buffer (bottom 32 bits of pointer)
         let program_offset = ptr::from_ref(program) as u32;
