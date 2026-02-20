@@ -1,8 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
-
   ⚠ eslint-plugin-react(jsx-sort-props): Props should be sorted alphabetically
    ╭─[jsx_sort_props.tsx:1:6]
  1 │ <App b a />;
@@ -351,6 +349,13 @@ assertion_line: 444
    ╰────
   help: Replace `onBar z` with `z onBar`.
 
+  ⚠ eslint-plugin-react(jsx-sort-props): Reserved props must be listed before all other props
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <Box as="span" key={index} />
+   ·      ─────────────────────
+   ╰────
+  help: Replace `as="span" key={index}` with `key={index} as="span"`.
+
   ⚠ eslint-plugin-react(jsx-sort-props): Multiline props must be listed before all other props
    ╭─[jsx_sort_props.tsx:3:23]
  2 │                         <App
@@ -579,3 +584,234 @@ assertion_line: 444
    ·      ───
    ╰────
   help: Replace `d č` with `č d`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props in sortFirst must be listed before all other props
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <App name="John" className="test" />
+   ·      ────────────────────────────
+   ╰────
+  help: Replace `name="John" className="test"` with `className="test" name="John"`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props in sortFirst must be listed before all other props
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <App id="test" className="test" name="John" />
+   ·      ──────────────────────────────────────
+   ╰────
+  help: Replace `id="test" className="test" name="John"` with `className="test" id="test" name="John"`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props in sortFirst must be listed before all other props
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <App a className="test" b />
+   ·      ────────────────────
+   ╰────
+  help: Replace `a className="test" b` with `className="test" a b`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props in sortFirst must be listed before all other props
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <App key={0} className="test" name="John" />
+   ·      ────────────────────────────────────
+   ╰────
+  help: Replace `key={0} className="test" name="John"` with `className="test" key={0} name="John"`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props in sortFirst must be listed before all other props
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <App a className="test" name="John" />
+   ·      ──────────────────────────────
+   ╰────
+  help: Replace `a className="test" name="John"` with `className="test" a name="John"`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props in sortFirst must be listed before all other props
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <App name="John" onClick={handleClick} className="test" />
+   ·      ──────────────────────────────────────────────────
+   ╰────
+  help: Replace `name="John" onClick={handleClick} className="test"` with `className="test" name="John" onClick={handleClick}`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props in sortFirst must be listed before all other props
+   ╭─[jsx_sort_props.tsx:3:23]
+ 2 │                         <App
+ 3 │ ╭─▶                       name="John"
+ 4 │ │                         className="test"
+ 5 │ │                         data={{
+ 6 │ │                           test: 1,
+ 7 │ ╰─▶                       }}
+ 8 │                         />
+   ╰────
+  help: Replace `name="John"
+                              className="test"
+                              data={{
+                                test: 1,
+                              }}` with `className="test"
+                              data={{
+                                test: 1,
+                              }}
+                              name="John"`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props in sortFirst must be listed before all other props
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <App name="John" classname="test" />
+   ·      ────────────────────────────
+   ╰────
+  help: Replace `name="John" classname="test"` with `classname="test" name="John"`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props should be sorted alphabetically
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <App className="test" id="test" tel={5555555} name="John" />
+   ·      ────────────────────────────────────────────────────
+   ╰────
+  help: Replace `className="test" id="test" tel={5555555} name="John"` with `className="test" id="test" name="John" tel={5555555}`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props in sortFirst must be listed before all other props
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <App id="test" className="test" id="test2" />
+   ·      ─────────────────────────────────────
+   ╰────
+  help: Replace `id="test" className="test" id="test2"` with `className="test" id="test" id="test2"`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props should be sorted alphabetically
+    ╭─[jsx_sort_props.tsx:2:3]
+  1 │     <foo
+  2 │ ╭─▶   m={0}
+  3 │ │     n={0} // this is n
+  4 │ │     o={0}
+  5 │ │     c={0} // this is c
+  6 │ │     // fofof
+  7 │ │     f={0} // this is f
+  8 │ │     a={0}
+  9 │ │     b={0}
+ 10 │ ╰─▶   d={0}
+ 11 │     />
+    ╰────
+  help: Replace `m={0}
+          n={0} // this is n
+          o={0}
+          c={0} // this is c
+          // fofof
+          f={0} // this is f
+          a={0}
+          b={0}
+          d={0}` with `a={0}
+          b={0}
+          d={0}
+          m={0}
+          n={0} // this is n
+          o={0}
+          c={0} // this is c
+          // fofof
+          f={0} // this is f`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props should be sorted alphabetically
+    ╭─[jsx_sort_props.tsx:2:3]
+  1 │     <foo
+  2 │ ╭─▶   m={0}
+  3 │ │     n={0} // this is n
+  4 │ │     o={0}
+  5 │ │     c={0} // this is c
+  6 │ │     f={0} // this is f
+  7 │ │     e={0}
+  8 │ │     a={0}
+  9 │ │     b={0}
+ 10 │ ╰─▶   d={0}
+ 11 │     />
+    ╰────
+  help: Replace `m={0}
+          n={0} // this is n
+          o={0}
+          c={0} // this is c
+          f={0} // this is f
+          e={0}
+          a={0}
+          b={0}
+          d={0}` with `a={0}
+          b={0}
+          c={0} // this is c
+          d={0}
+          e={0}
+          f={0} // this is f
+          m={0}
+          n={0} // this is n
+          o={0}`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props should be sorted alphabetically
+    ╭─[jsx_sort_props.tsx:2:3]
+  1 │     <foo
+  2 │ ╭─▶   a1={0}
+  3 │ │     g={0}
+  4 │ │     d={0} // comment for d
+  5 │ │     // comment for d and aa
+  6 │ │     aa={0}
+  7 │ │     c={0} // comment for c
+  8 │ │     // comment for c and e
+  9 │ │     e={1}
+ 10 │ │     ab={1} // comment for ab
+ 11 │ ╰─▶   f={0}
+ 12 │     />
+    ╰────
+  help: Replace `a1={0}
+          g={0}
+          d={0} // comment for d
+          // comment for d and aa
+          aa={0}
+          c={0} // comment for c
+          // comment for c and e
+          e={1}
+          ab={1} // comment for ab
+          f={0}` with `a1={0}
+          ab={1} // comment for ab
+          f={0}
+          g={0}
+          c={0} // comment for c
+          // comment for c and e
+          e={1}
+          d={0} // comment for d
+          // comment for d and aa
+          aa={0}`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props should be sorted alphabetically
+    ╭─[jsx_sort_props.tsx:2:3]
+  1 │     <foo
+  2 │ ╭─▶   a1={0}
+  3 │ │     ab={1}
+  4 │ │     // comment for ab and f
+  5 │ │     f={0}
+  6 │ │     g={0}
+  7 │ │     c={0} // comment for c
+  8 │ │     // comment for c and e
+  9 │ │     e={1}
+ 10 │ │     d={0}
+ 11 │ ╰─▶   aa={1} // comment for aa
+ 12 │     />
+    ╰────
+  help: Replace `a1={0}
+          ab={1}
+          // comment for ab and f
+          f={0}
+          g={0}
+          c={0} // comment for c
+          // comment for c and e
+          e={1}
+          d={0}
+          aa={1} // comment for aa` with `a1={0}
+          aa={1} // comment for aa
+          d={0}
+          g={0}
+          ab={1}
+          // comment for ab and f
+          f={0}
+          c={0} // comment for c
+          // comment for c and e
+          e={1}`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props should be sorted alphabetically
+   ╭─[jsx_sort_props.tsx:1:6]
+ 1 │ <foo a={0} b={1} /* comment for b and ab */ ab={1} aa={0} />
+   ·      ────────────────────────────────────────────────────
+   ╰────
+  help: Replace `a={0} b={1} /* comment for b and ab */ ab={1} aa={0}` with `a={0} aa={0} b={1} /* comment for b and ab */ ab={1}`.
+
+  ⚠ eslint-plugin-react(jsx-sort-props): Props should be sorted alphabetically
+   ╭─[jsx_sort_props.tsx:1:12]
+ 1 │ <ReactJson src={rowResult} name="data" collapsed={4} collapseStringsAfterLength={60} onEdit={onEdit} /* onDelete={onEdit} */ />
+   ·            ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: Replace `src={rowResult} name="data" collapsed={4} collapseStringsAfterLength={60} onEdit={onEdit} /* onDelete={onEdit} */` with `collapseStringsAfterLength={60} collapsed={4} name="data" src={rowResult} onEdit={onEdit} /* onDelete={onEdit} */`.

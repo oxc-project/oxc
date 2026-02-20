@@ -44,6 +44,10 @@ fn reserved_first_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Reserved props must be listed before all other props").with_label(span)
 }
 
+fn sort_first_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Props in sortFirst must be listed before all other props").with_label(span)
+}
+
 fn alphabetical_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Props should be sorted alphabetically").with_label(span)
 }
@@ -94,6 +98,7 @@ pub struct JsxSortPropsConfig {
     no_sort_alphabetically: bool,
     multiline: MultilineOption,
     reserved_first: ReservedFirst,
+    sort_first: Vec<String>,
     locale: String,
 }
 
@@ -216,68 +221,88 @@ impl Rule for JsxSortProps {
                 .map(|&attr| classify_prop(attr, config, &reserved_list, ctx))
                 .collect();
 
-            // Check if the group is sorted.
-            let mut sorted_infos = prop_infos.clone();
-            sorted_infos.sort_by(|a, b| compare_props(a, b, config, collator.as_ref()));
+            // ── Comment-aware sorting ───────────────────────────────
+            // Build a per-attribute map that extends each attribute's
+            // source range to include trailing comments (and possibly a
+            // consumed next attribute), following ESLint's algorithm.
+            let cg = compute_comment_grouping(group, jsx_opening_elem.span.end, ctx);
 
-            let is_sorted = prop_infos
-                .iter()
-                .zip(sorted_infos.iter())
-                .all(|(a, b)| a.name == b.name && a.group_rank == b.group_rank);
+            // Sortable items are those NOT consumed by a preceding attribute.
+            let sortable_idx: Vec<usize> =
+                cg.iter().enumerate().filter(|(_, c)| !c.consumed).map(|(i, _)| i).collect();
 
+            if sortable_idx.len() < 2 {
+                continue;
+            }
+
+            // Sort the sortable items with has_comment awareness:
+            // items with has_comment go to the END of the group.
+            let mut sorted_order: Vec<usize> = (0..sortable_idx.len()).collect();
+            sorted_order.sort_by(|&a, &b| {
+                let ai = sortable_idx[a];
+                let bi = sortable_idx[b];
+                match (cg[ai].has_comment, cg[bi].has_comment) {
+                    (true, false) => Ordering::Greater,
+                    (false, true) => Ordering::Less,
+                    _ => compare_props(&prop_infos[ai], &prop_infos[bi], config, collator.as_ref()),
+                }
+            });
+
+            // Check if the group is already sorted.
+            let is_sorted = sorted_order.iter().enumerate().all(|(pos, &orig)| pos == orig);
             if is_sorted {
                 continue;
             }
 
-            // Find the first violation and produce a specific diagnostic.
-            let diagnostic_fn = find_first_violation(&prop_infos, &sorted_infos, config);
+            // Build the original / sorted PropInfo slices for diagnostic
+            // selection (operates on sortable items only).
+            let original_sortable: Vec<PropInfo> =
+                sortable_idx.iter().map(|&i| prop_infos[i].clone()).collect();
+            let sorted_sortable: Vec<PropInfo> =
+                sorted_order.iter().map(|&pos| prop_infos[sortable_idx[pos]].clone()).collect();
 
-            // Produce fix: reorder the attributes in this group.
-            let first_span = attr_span(group.first().unwrap());
-            let last_span = attr_span(group.last().unwrap());
-            let group_span = Span::new(first_span.start, last_span.end);
+            let diagnostic_fn = find_first_violation(&original_sortable, &sorted_sortable, config);
 
-            // Check if there are comments between any adjacent attributes.
-            // If so, we cannot safely reorder because comments might become
-            // semantically misplaced. This follows the same pattern as
-            // sort_keys and sort_imports in oxc.
-            let has_comments = group.windows(2).any(|pair| {
-                let between = Span::new(attr_span(pair[0]).end, attr_span(pair[1]).start);
-                ctx.has_comments_between(between)
-            });
+            // Determine the replacement span — from first sortable attr to
+            // the furthest extended_end among all sortable items.
+            let first_start = attr_span(group[*sortable_idx.first().unwrap()]).start;
+            let max_ext_end = sortable_idx.iter().map(|&i| cg[i].extended_end).max().unwrap();
+            let group_span = Span::new(first_start, max_ext_end);
 
             let diagnostic = diagnostic_fn(group_span);
 
-            if has_comments {
-                // Emit diagnostic without fix when comments are present.
+            // Check whether any unhandled comments remain in the gaps
+            // between sortable items (i.e. comments that were NOT absorbed
+            // into an extended range).  If so, we cannot safely reorder.
+            let has_unhandled_comments = (0..sortable_idx.len().saturating_sub(1)).any(|i| {
+                let curr_ext = cg[sortable_idx[i]].extended_end;
+                let next_start = attr_span(group[sortable_idx[i + 1]]).start;
+                curr_ext < next_start && ctx.has_comments_between(Span::new(curr_ext, next_start))
+            });
+
+            if has_unhandled_comments {
                 ctx.diagnostic(diagnostic);
             } else {
-                // Build sorted indices: sorted_infos[i] came from some original index.
-                let sorted_indices: Vec<usize> = sorted_infos
-                    .iter()
-                    .map(|si| {
-                        prop_infos.iter().position(|pi| std::ptr::eq(pi.attr, si.attr)).unwrap()
-                    })
-                    .collect();
-
-                // Collect separators between consecutive attributes.
-                let mut separators: Vec<&str> = Vec::with_capacity(group.len());
-                for i in 0..group.len() {
-                    if i + 1 < group.len() {
-                        let sep_span =
-                            Span::new(attr_span(group[i]).end, attr_span(group[i + 1]).start);
-                        separators.push(ctx.source_range(sep_span));
+                // Collect separators between consecutive sortable items.
+                let mut separators: Vec<&str> = Vec::with_capacity(sortable_idx.len());
+                for i in 0..sortable_idx.len() {
+                    if i + 1 < sortable_idx.len() {
+                        let curr_ext = cg[sortable_idx[i]].extended_end;
+                        let next_start = attr_span(group[sortable_idx[i + 1]]).start;
+                        separators.push(ctx.source_range(Span::new(curr_ext, next_start)));
                     } else {
                         separators.push("");
                     }
                 }
 
-                // Build the sorted text.
+                // Build the sorted replacement text.
                 let mut sorted_text = String::new();
-                for (pos, &idx) in sorted_indices.iter().enumerate() {
-                    sorted_text.push_str(ctx.source_range(attr_span(group[idx])));
-                    if pos + 1 < sorted_indices.len() {
-                        // Use the separator from the original position `pos`.
+                for (pos, &orig_pos) in sorted_order.iter().enumerate() {
+                    let idx = sortable_idx[orig_pos];
+                    let start = attr_span(group[idx]).start;
+                    let end = cg[idx].extended_end;
+                    sorted_text.push_str(ctx.source_range(Span::new(start, end)));
+                    if pos + 1 < sorted_order.len() {
                         let sep = if pos < separators.len() && !separators[pos].is_empty() {
                             separators[pos]
                         } else {
@@ -325,21 +350,22 @@ fn collect_groups<'a, 'b>(
 
 /// Information about a single JSX prop used for sorting.
 #[derive(Clone)]
-struct PropInfo<'a, 'b> {
+struct PropInfo {
     name: String,
     /// The sort key (potentially lowercased).
     sort_key: String,
     group_rank: u8,
-    attr: &'b JSXAttributeItem<'a>,
+    /// Index in the `sortFirst` list, if this prop is in that list.
+    sort_first_index: Option<usize>,
 }
 
 /// Classify a prop into its group rank and extract its name.
-fn classify_prop<'a, 'b>(
-    attr: &'b JSXAttributeItem<'a>,
+fn classify_prop(
+    attr: &JSXAttributeItem,
     config: &JsxSortPropsConfig,
     reserved_list: &[&str],
-    ctx: &LintContext<'a>,
-) -> PropInfo<'a, 'b> {
+    ctx: &LintContext,
+) -> PropInfo {
     let JSXAttributeItem::Attribute(jsx_attr) = attr else {
         unreachable!("spread attributes are filtered out before calling classify_prop");
     };
@@ -356,11 +382,22 @@ fn classify_prop<'a, 'b>(
     let is_multiline = is_multiline_prop(attr_span(attr), ctx);
     let is_reserved = !reserved_list.is_empty() && reserved_list.contains(&name.as_str());
 
+    // Check if this prop is in the sortFirst list.
+    let sort_first_index = if config.sort_first.is_empty() {
+        None
+    } else {
+        config.sort_first.iter().position(|s| {
+            if config.ignore_case { s.eq_ignore_ascii_case(&name) } else { s == &name }
+        })
+    };
+
     // Assign group rank based on config.
     // Lower rank = appears first. Different "last" groups get distinct ranks
     // so they sort in the correct relative order:
     //   reserved(0) < shorthandFirst(1) < multilineFirst(2) < regular(3)
     //   < multilineLast(4) < shorthandLast(5) < callbacksLast(6)
+    // Note: sortFirst takes priority over all group ranks and is handled
+    // separately in compare_props via sort_first_index.
     let group_rank = if is_reserved {
         0
     } else if config.shorthand_first && is_shorthand && !is_callback {
@@ -380,7 +417,7 @@ fn classify_prop<'a, 'b>(
     let sort_key =
         if config.ignore_case { name.cow_to_ascii_lowercase().into_owned() } else { name.clone() };
 
-    PropInfo { name, sort_key, group_rank, attr }
+    PropInfo { name, sort_key, group_rank, sort_first_index }
 }
 
 /// Check if a prop name is a callback (starts with "on" followed by uppercase).
@@ -404,7 +441,23 @@ fn compare_props(
     config: &JsxSortPropsConfig,
     collator: Option<&CollatorBorrowed<'_>>,
 ) -> Ordering {
-    // First compare by group rank.
+    // sortFirst takes highest priority: props in sortFirst come before all others,
+    // and within sortFirst they maintain the order specified in the config array.
+    match (a.sort_first_index, b.sort_first_index) {
+        (Some(ai), Some(bi)) => {
+            let cmp = ai.cmp(&bi);
+            if cmp != Ordering::Equal {
+                return cmp;
+            }
+            // Same sortFirst index (duplicate prop names) — treat as equal.
+            return Ordering::Equal;
+        }
+        (Some(_), None) => return Ordering::Less,
+        (None, Some(_)) => return Ordering::Greater,
+        (None, None) => {}
+    }
+
+    // Then compare by group rank.
     let rank_cmp = a.group_rank.cmp(&b.group_rank);
     if rank_cmp != Ordering::Equal {
         return rank_cmp;
@@ -456,6 +509,185 @@ fn is_dom_component(jsx_opening_elem: &JSXOpeningElement) -> bool {
     matches!(jsx_opening_elem.name, JSXElementName::Identifier(_))
 }
 
+// ---------------------------------------------------------------------------
+// Comment-grouping support (ESLint-compatible)
+// ---------------------------------------------------------------------------
+
+/// Tracks how an attribute's text range is extended to include trailing
+/// comments and potentially the next consumed attribute.
+struct CommentGrouping {
+    /// End of the extended source range (may exceed `attr.span.end` when
+    /// trailing comments or a consumed next attribute are included).
+    extended_end: u32,
+    /// When `true` the attribute sorts to the **end** of its group.
+    /// This is set when a block comment or next-line comment bridges to the
+    /// next attribute (ESLint's `hasComment` flag).
+    has_comment: bool,
+    /// When `true` this attribute was absorbed into the previous attribute's
+    /// extended range and should **not** appear as a standalone sortable item.
+    consumed: bool,
+}
+
+impl CommentGrouping {
+    fn default_for(end: u32) -> Self {
+        Self { extended_end: end, has_comment: false, consumed: false }
+    }
+}
+
+/// Count the number of newline characters (`\n`) between two byte offsets.
+fn count_newlines(source: &str, from: u32, to: u32) -> usize {
+    source[from as usize..to as usize].bytes().filter(|&b| b == b'\n').count()
+}
+
+/// For a consumed next attribute, check whether it has a single same-line
+/// trailing comment and, if so, extend the range to include that comment.
+fn extended_end_with_next_trailing(
+    group: &[&JSXAttributeItem],
+    next_idx: usize,
+    elem_end: u32,
+    next_span: Span,
+    ctx: &LintContext,
+) -> u32 {
+    let source = ctx.source_text();
+    let after_next_end = group.get(next_idx + 1).map_or(elem_end, |na| attr_span(na).start);
+    let next_comments: Vec<_> = ctx.comments_range(next_span.end..after_next_end).collect();
+
+    if next_comments.len() == 1 {
+        let nc = next_comments[0];
+        let nc_newlines = count_newlines(source, next_span.start, nc.span.start);
+        if nc_newlines == 0 {
+            // Same-line trailing comment on the consumed attribute.
+            return nc.span.end;
+        }
+    }
+    next_span.end
+}
+
+/// Build the comment-grouping map for every attribute in `group`.
+///
+/// The algorithm mirrors ESLint's `getGroupsOfSortableAttributes` logic:
+/// it inspects trailing comments after each attribute and decides whether
+/// to consume the next attribute into the current one's extended range.
+fn compute_comment_grouping(
+    group: &[&JSXAttributeItem],
+    elem_end: u32,
+    ctx: &LintContext,
+) -> Vec<CommentGrouping> {
+    let source = ctx.source_text();
+    let mut result = Vec::with_capacity(group.len());
+    let mut i = 0;
+
+    while i < group.len() {
+        let span = attr_span(group[i]);
+        let next_attr = group.get(i + 1);
+        let search_end = next_attr.map_or(elem_end, |na| attr_span(na).start);
+
+        let comments: Vec<_> = ctx.comments_range(span.end..search_end).collect();
+
+        if comments.is_empty() {
+            // No trailing comments — plain attribute.
+            result.push(CommentGrouping::default_for(span.end));
+            i += 1;
+            continue;
+        }
+
+        let first = comments[0];
+        // Count newlines from the attribute START to match ESLint's
+        // `attribute.loc.start.line` comparison.
+        let first_nl = count_newlines(source, span.start, first.span.start);
+        let first_same_line = first_nl == 0;
+        let first_next_line = first_nl == 1;
+
+        if comments.len() == 1 {
+            if first_same_line && first.is_block() {
+                // Same-line block comment `/* ... */`.
+                if let Some(next) = next_attr {
+                    let next_span = attr_span(next);
+                    let ext =
+                        extended_end_with_next_trailing(group, i + 1, elem_end, next_span, ctx);
+                    result.push(CommentGrouping {
+                        extended_end: ext,
+                        has_comment: true,
+                        consumed: false,
+                    });
+                    result.push(CommentGrouping {
+                        extended_end: ext,
+                        has_comment: false,
+                        consumed: true,
+                    });
+                    i += 2;
+                } else {
+                    // Block comment after the last attribute.
+                    result.push(CommentGrouping {
+                        extended_end: first.span.end,
+                        has_comment: true,
+                        consumed: false,
+                    });
+                    i += 1;
+                }
+            } else if first_same_line {
+                // Same-line line comment `// ...` — travels with the
+                // attribute but does NOT force sort-to-end.
+                result.push(CommentGrouping {
+                    extended_end: first.span.end,
+                    has_comment: false,
+                    consumed: false,
+                });
+                i += 1;
+            } else if first_next_line && next_attr.is_some() {
+                // Comment on the next line, with a following attribute.
+                let next = next_attr.unwrap();
+                let next_span = attr_span(next);
+                let ext = extended_end_with_next_trailing(group, i + 1, elem_end, next_span, ctx);
+                result.push(CommentGrouping {
+                    extended_end: ext,
+                    has_comment: true,
+                    consumed: false,
+                });
+                result.push(CommentGrouping {
+                    extended_end: ext,
+                    has_comment: false,
+                    consumed: true,
+                });
+                i += 2;
+            } else {
+                // Comment is ≥2 lines away, or next-line with no following
+                // attribute — do not extend.
+                result.push(CommentGrouping::default_for(span.end));
+                i += 1;
+            }
+        } else {
+            // Two or more comments after this attribute.
+            let second_nl = count_newlines(source, span.start, comments[1].span.start);
+            let second_next_line = second_nl == 1;
+
+            if second_next_line && next_attr.is_some() {
+                let next = next_attr.unwrap();
+                let next_span = attr_span(next);
+                let ext = extended_end_with_next_trailing(group, i + 1, elem_end, next_span, ctx);
+                result.push(CommentGrouping {
+                    extended_end: ext,
+                    has_comment: true,
+                    consumed: false,
+                });
+                result.push(CommentGrouping {
+                    extended_end: ext,
+                    has_comment: false,
+                    consumed: true,
+                });
+                i += 2;
+            } else {
+                // Default for multiple comments that don't match the
+                // next-line pattern — no extension.
+                result.push(CommentGrouping::default_for(span.end));
+                i += 1;
+            }
+        }
+    }
+
+    result
+}
+
 /// Find the first violation and return the appropriate diagnostic function.
 fn find_first_violation(
     original: &[PropInfo],
@@ -468,6 +700,12 @@ fn find_first_violation(
         }
 
         // Determine what kind of violation this is.
+
+        // Check sortFirst violations: a non-sortFirst prop appears where a
+        // sortFirst prop should be, or two sortFirst props are in wrong order.
+        if sort.sort_first_index.is_some() && orig.sort_first_index != sort.sort_first_index {
+            return sort_first_diagnostic;
+        }
 
         // Check if a non-reserved prop appears where a reserved prop should be.
         if sort.group_rank == 0 && orig.group_rank != 0 {
@@ -542,6 +780,18 @@ fn test() {
         serde_json::json!([{ "reservedFirst": true, "callbacksLast": true }]);
     let reserved_first_with_shorthand_last =
         serde_json::json!([{ "reservedFirst": true, "shorthandLast": true }]);
+    let sort_first_args = serde_json::json!([{ "sortFirst": ["className"] }]);
+    let sort_first_multiple_args = serde_json::json!([{ "sortFirst": ["className", "id"] }]);
+    let sort_first_with_ignore_case_args =
+        serde_json::json!([{ "sortFirst": ["className"], "ignoreCase": true }]);
+    let sort_first_with_reserved_first_args =
+        serde_json::json!([{ "sortFirst": ["className"], "reservedFirst": true }]);
+    let sort_first_with_shorthand_first_args =
+        serde_json::json!([{ "sortFirst": ["className"], "shorthandFirst": true }]);
+    let sort_first_with_callbacks_last_args =
+        serde_json::json!([{ "sortFirst": ["className"], "callbacksLast": true }]);
+    let sort_first_with_multiline_first_args =
+        serde_json::json!([{ "sortFirst": ["className"], "multiline": "first" }]);
 
     let pass = vec![
         ("<App />;", None),
@@ -731,6 +981,51 @@ fn test() {
         // Multiple consecutive spreads create empty groups (valid).
         ("<App a {...x} {...y} b />;", None),
         ("<App c {...x} {...y} {...z} a />;", None),
+        // Reserved prop `key` listed before regular prop `as` on non-DOM component.
+        (r#"<Box key={index} as="span" />"#, Some(reserved_first_as_boolean_args.clone())),
+        // sortFirst: single prop listed first.
+        (r#"<App className="test" name="John" />"#, Some(sort_first_args.clone())),
+        // sortFirst: multiple props listed first in order.
+        (
+            r#"<App className="test" id="test" name="John" />"#,
+            Some(sort_first_multiple_args.clone()),
+        ),
+        // sortFirst: only sortFirst props.
+        (r#"<App className="test" id="test" />"#, Some(sort_first_multiple_args.clone())),
+        // sortFirst: followed by alphabetical regular props.
+        (r#"<App className="test" a b c />"#, Some(sort_first_args.clone())),
+        // sortFirst: multiple, followed by alphabetical regular props.
+        (r#"<App className="test" id="test" a b c />"#, Some(sort_first_multiple_args.clone())),
+        // sortFirst + reservedFirst: sortFirst before reserved before regular.
+        (
+            r#"<App className="test" key={0} name="John" />"#,
+            Some(sort_first_with_reserved_first_args.clone()),
+        ),
+        // sortFirst + shorthandFirst: sortFirst before shorthand before regular.
+        (
+            r#"<App className="test" a name="John" />"#,
+            Some(sort_first_with_shorthand_first_args.clone()),
+        ),
+        // sortFirst + callbacksLast: sortFirst before regular, callbacks last.
+        (
+            r#"<App className="test" name="John" onClick={handleClick} />"#,
+            Some(sort_first_with_callbacks_last_args.clone()),
+        ),
+        // sortFirst + multiline first.
+        (
+            r#"
+                    <App
+                      className="test"
+                      data={{
+                        test: 1,
+                      }}
+                      name="John"
+                    />
+                  "#,
+            Some(sort_first_with_multiline_first_args.clone()),
+        ),
+        // sortFirst + ignoreCase: case-insensitive matching of sortFirst list.
+        (r#"<App classname="test" a="test2" />"#, Some(sort_first_with_ignore_case_args.clone())),
     ];
 
     let fail = vec![
@@ -856,6 +1151,8 @@ fn test() {
         // Invalid reservedFirst array → report noUnreservedProps error on every prop
         ("<App key={5} />", Some(reserved_first_as_invalid_array_args)),
         ("<App onBar z />;", Some(reserved_first_and_callbacks_last_args.clone())),
+        // Reserved prop `key` after regular prop `as` on non-DOM component.
+        (r#"<Box as="span" key={index} />"#, Some(reserved_first_as_boolean_args.clone())),
         (
             "
                     <App
@@ -980,6 +1277,125 @@ fn test() {
         (r"<App b ä />", Some(serde_json::json!([{ "locale": "sk" }]))),
         // In Slovak, č sorts between c and d. So "d č" is wrong under sk collation.
         (r"<App d č />", Some(serde_json::json!([{ "locale": "sk" }]))),
+        // sortFirst: className should be listed first.
+        (r#"<App name="John" className="test" />"#, Some(sort_first_args.clone())),
+        // sortFirst: multiple — className before id.
+        (
+            r#"<App id="test" className="test" name="John" />"#,
+            Some(sort_first_multiple_args.clone()),
+        ),
+        // sortFirst: className should be before regular prop a.
+        (r#"<App a className="test" b />"#, Some(sort_first_args.clone())),
+        // sortFirst + reservedFirst: sortFirst takes priority over reserved.
+        (
+            r#"<App key={0} className="test" name="John" />"#,
+            Some(sort_first_with_reserved_first_args.clone()),
+        ),
+        // sortFirst + shorthandFirst: sortFirst takes priority.
+        (
+            r#"<App a className="test" name="John" />"#,
+            Some(sort_first_with_shorthand_first_args.clone()),
+        ),
+        // sortFirst + callbacksLast: className should be first.
+        (
+            r#"<App name="John" onClick={handleClick} className="test" />"#,
+            Some(sort_first_with_callbacks_last_args.clone()),
+        ),
+        // sortFirst + multiline first.
+        (
+            r#"
+                    <App
+                      name="John"
+                      className="test"
+                      data={{
+                        test: 1,
+                      }}
+                    />
+                  "#,
+            Some(sort_first_with_multiline_first_args.clone()),
+        ),
+        // sortFirst + ignoreCase: classname matches className case-insensitively.
+        (r#"<App name="John" classname="test" />"#, Some(sort_first_with_ignore_case_args.clone())),
+        // sortFirst: regular props after sortFirst should still be alphabetical.
+        (
+            r#"<App className="test" id="test" tel={5555555} name="John" />"#,
+            Some(sort_first_multiple_args.clone()),
+        ),
+        // sortFirst: duplicate prop name with wrong order.
+        (
+            r#"<App id="test" className="test" id="test2" />"#,
+            Some(sort_first_multiple_args.clone()),
+        ),
+        // ── Comment-handling fail tests ──────────────────────────
+        // Test 1: same-line line comments + standalone comment between attrs.
+        (
+            r#"<foo
+  m={0}
+  n={0} // this is n
+  o={0}
+  c={0} // this is c
+  // fofof
+  f={0} // this is f
+  a={0}
+  b={0}
+  d={0}
+/>"#,
+            None,
+        ),
+        // Test 2: all same-line line comments (no grouping needed).
+        (
+            r#"<foo
+  m={0}
+  n={0} // this is n
+  o={0}
+  c={0} // this is c
+  f={0} // this is f
+  e={0}
+  a={0}
+  b={0}
+  d={0}
+/>"#,
+            None,
+        ),
+        // Test 3: mixed same-line and next-line comments consuming attrs.
+        (
+            r#"<foo
+  a1={0}
+  g={0}
+  d={0} // comment for d
+  // comment for d and aa
+  aa={0}
+  c={0} // comment for c
+  // comment for c and e
+  e={1}
+  ab={1} // comment for ab
+  f={0}
+/>"#,
+            None,
+        ),
+        // Test 4: next-line comment consuming following attr.
+        (
+            r#"<foo
+  a1={0}
+  ab={1}
+  // comment for ab and f
+  f={0}
+  g={0}
+  c={0} // comment for c
+  // comment for c and e
+  e={1}
+  d={0}
+  aa={1} // comment for aa
+/>"#,
+            None,
+        ),
+        // Test 5: inline block comment /* */ between attrs on same line.
+        ("<foo a={0} b={1} /* comment for b and ab */ ab={1} aa={0} />", None),
+        // Test 6: block comment at end of attribute list (callbacksLast).
+        (
+            r#"<ReactJson src={rowResult} name="data" collapsed={4} collapseStringsAfterLength={60} onEdit={onEdit} /* onDelete={onEdit} */ />"#,
+            Some(callbacks_last_args.clone()),
+        ),
     ];
 
     let fix = vec![
@@ -1159,7 +1575,7 @@ fn test() {
             Some(reserved_first_with_shorthand_last),
         ),
         ("<App a z onFoo onBar />;", "<App a z onBar onFoo />;", Some(callbacks_last_args.clone())),
-        ("<App a onBar onFoo z />;", "<App a z onBar onFoo />;", Some(callbacks_last_args)),
+        ("<App a onBar onFoo z />;", "<App a z onBar onFoo />;", Some(callbacks_last_args.clone())),
         (r#"<App a="a" b />;"#, r#"<App b a="a" />;"#, Some(shorthand_first_args.clone())),
         (r#"<App z x a="a" />;"#, r#"<App x z a="a" />;"#, Some(shorthand_first_args)),
         (r#"<App b a="a" />;"#, r#"<App a="a" b />;"#, Some(shorthand_last_args.clone())),
@@ -1189,7 +1605,7 @@ fn test() {
         (
             r#"<App dangerouslySetInnerHTML={{__html: "EPR"}} e key={2} b />"#,
             r#"<App key={2} b dangerouslySetInnerHTML={{__html: "EPR"}} e />"#,
-            Some(reserved_first_as_boolean_args),
+            Some(reserved_first_as_boolean_args.clone()),
         ),
         (
             "<App key={3} children={<App />} />",
@@ -1202,6 +1618,12 @@ fn test() {
             Some(reserved_first_with_no_sort_alphabetically_args),
         ),
         ("<App onBar z />;", "<App z onBar />;", Some(reserved_first_and_callbacks_last_args)),
+        // Reserved prop `key` after regular prop `as` on non-DOM component.
+        (
+            r#"<Box as="span" key={index} />"#,
+            r#"<Box key={index} as="span" />"#,
+            Some(reserved_first_as_boolean_args),
+        ),
         (
             "
                     <App
@@ -1371,6 +1793,209 @@ fn test() {
         (r"<App b ä />", r"<App ä b />", Some(serde_json::json!([{ "locale": "sk" }]))),
         // Slovak: č sorts between c and d, so "d č" → "č d".
         (r"<App d č />", r"<App č d />", Some(serde_json::json!([{ "locale": "sk" }]))),
+        // sortFirst: move className before name.
+        (
+            r#"<App name="John" className="test" />"#,
+            r#"<App className="test" name="John" />"#,
+            Some(sort_first_args.clone()),
+        ),
+        // sortFirst: multiple — reorder className before id.
+        (
+            r#"<App id="test" className="test" name="John" />"#,
+            r#"<App className="test" id="test" name="John" />"#,
+            Some(sort_first_multiple_args.clone()),
+        ),
+        // sortFirst: move className to front.
+        (
+            r#"<App a className="test" b />"#,
+            r#"<App className="test" a b />"#,
+            Some(sort_first_args.clone()),
+        ),
+        // sortFirst + reservedFirst: sortFirst takes priority over reserved.
+        (
+            r#"<App key={0} className="test" name="John" />"#,
+            r#"<App className="test" key={0} name="John" />"#,
+            Some(sort_first_with_reserved_first_args),
+        ),
+        // sortFirst + shorthandFirst: sortFirst takes priority.
+        (
+            r#"<App a className="test" name="John" />"#,
+            r#"<App className="test" a name="John" />"#,
+            Some(sort_first_with_shorthand_first_args),
+        ),
+        // sortFirst + callbacksLast: className first, callbacks still last.
+        (
+            r#"<App name="John" onClick={handleClick} className="test" />"#,
+            r#"<App className="test" name="John" onClick={handleClick} />"#,
+            Some(sort_first_with_callbacks_last_args),
+        ),
+        // sortFirst + multiline first.
+        (
+            r#"
+                    <App
+                      name="John"
+                      className="test"
+                      data={{
+                        test: 1,
+                      }}
+                    />
+                  "#,
+            r#"
+                    <App
+                      className="test"
+                      data={{
+                        test: 1,
+                      }}
+                      name="John"
+                    />
+                  "#,
+            Some(sort_first_with_multiline_first_args),
+        ),
+        // sortFirst + ignoreCase: classname matches className.
+        (
+            r#"<App name="John" classname="test" />"#,
+            r#"<App classname="test" name="John" />"#,
+            Some(sort_first_with_ignore_case_args),
+        ),
+        // sortFirst: regular props after sortFirst still sorted alphabetically.
+        (
+            r#"<App className="test" id="test" tel={5555555} name="John" />"#,
+            r#"<App className="test" id="test" name="John" tel={5555555} />"#,
+            Some(sort_first_multiple_args.clone()),
+        ),
+        // sortFirst: duplicate prop with wrong sortFirst order.
+        (
+            r#"<App id="test" className="test" id="test2" />"#,
+            r#"<App className="test" id="test" id="test2" />"#,
+            Some(sort_first_multiple_args),
+        ),
+        // ── Comment-handling fix tests ───────────────────────────
+        // Test 1: standalone comment between c and f → c absorbs fofof+f,
+        // has_comment=true so c(+group) sorts to end.
+        (
+            r#"<foo
+  m={0}
+  n={0} // this is n
+  o={0}
+  c={0} // this is c
+  // fofof
+  f={0} // this is f
+  a={0}
+  b={0}
+  d={0}
+/>"#,
+            r#"<foo
+  a={0}
+  b={0}
+  d={0}
+  m={0}
+  n={0} // this is n
+  o={0}
+  c={0} // this is c
+  // fofof
+  f={0} // this is f
+/>"#,
+            None,
+        ),
+        // Test 2: same-line line comments travel with their attribute,
+        // no grouping needed, pure alphabetical sort.
+        (
+            r#"<foo
+  m={0}
+  n={0} // this is n
+  o={0}
+  c={0} // this is c
+  f={0} // this is f
+  e={0}
+  a={0}
+  b={0}
+  d={0}
+/>"#,
+            r#"<foo
+  a={0}
+  b={0}
+  c={0} // this is c
+  d={0}
+  e={0}
+  f={0} // this is f
+  m={0}
+  n={0} // this is n
+  o={0}
+/>"#,
+            None,
+        ),
+        // Test 3: d absorbs (// comment for d and aa + aa),
+        // c absorbs (// comment for c and e + e).
+        (
+            r#"<foo
+  a1={0}
+  g={0}
+  d={0} // comment for d
+  // comment for d and aa
+  aa={0}
+  c={0} // comment for c
+  // comment for c and e
+  e={1}
+  ab={1} // comment for ab
+  f={0}
+/>"#,
+            r#"<foo
+  a1={0}
+  ab={1} // comment for ab
+  f={0}
+  g={0}
+  c={0} // comment for c
+  // comment for c and e
+  e={1}
+  d={0} // comment for d
+  // comment for d and aa
+  aa={0}
+/>"#,
+            None,
+        ),
+        // Test 4: ab absorbs (// comment for ab and f + f),
+        // c absorbs (// comment for c and e + e).
+        (
+            r#"<foo
+  a1={0}
+  ab={1}
+  // comment for ab and f
+  f={0}
+  g={0}
+  c={0} // comment for c
+  // comment for c and e
+  e={1}
+  d={0}
+  aa={1} // comment for aa
+/>"#,
+            r#"<foo
+  a1={0}
+  aa={1} // comment for aa
+  d={0}
+  g={0}
+  ab={1}
+  // comment for ab and f
+  f={0}
+  c={0} // comment for c
+  // comment for c and e
+  e={1}
+/>"#,
+            None,
+        ),
+        // Test 5: inline block comment → b absorbs /* comment */ + ab,
+        // has_comment=true so b(+group) sorts to end.
+        (
+            "<foo a={0} b={1} /* comment for b and ab */ ab={1} aa={0} />",
+            "<foo a={0} aa={0} b={1} /* comment for b and ab */ ab={1} />",
+            None,
+        ),
+        // Test 6: block comment after last attr (callbacksLast),
+        // onEdit absorbs /* onDelete={onEdit} */, sorts to end.
+        (
+            r#"<ReactJson src={rowResult} name="data" collapsed={4} collapseStringsAfterLength={60} onEdit={onEdit} /* onDelete={onEdit} */ />"#,
+            r#"<ReactJson collapseStringsAfterLength={60} collapsed={4} name="data" src={rowResult} onEdit={onEdit} /* onDelete={onEdit} */ />"#,
+            Some(callbacks_last_args),
+        ),
     ];
 
     Tester::new(JsxSortProps::NAME, JsxSortProps::PLUGIN, pass, fail)
