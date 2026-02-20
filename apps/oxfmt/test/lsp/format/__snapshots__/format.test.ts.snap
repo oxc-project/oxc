@@ -197,6 +197,62 @@ if (true) {
 --------------------"
 `;
 
+exports[`LSP formatting > config options in nested workspace folders > should respect nested oxfmt config with nested workspace folders nested-workspaces/test.ts 1`] = `
+"--- FILE -----------
+nested-workspaces/test.ts
+--- BEFORE ---------
+// { "semi": true, "singleQuote": true }
+const x = "1";
+
+--- AFTER ----------
+// { "semi": true, "singleQuote": true }
+const x = '1';
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options in nested workspace folders > should respect nested oxfmt config with nested workspace folders nested-workspaces/test.ts 2`] = `
+"--- FILE -----------
+nested-workspaces/second/test.ts
+--- BEFORE ---------
+// { "semi": true, "singleQuote": true }
+const x = "1";
+
+--- AFTER ----------
+// { "semi": true, "singleQuote": true }
+const x = '1';
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options in nested workspace folders > should respect nested oxfmt config with nested workspace folders nested-workspaces-with-config/test.ts 1`] = `
+"--- FILE -----------
+nested-workspaces-with-config/test.ts
+--- BEFORE ---------
+// { "semi": true, "singleQuote": true }
+const x = "1";
+
+--- AFTER ----------
+// { "semi": true, "singleQuote": true }
+const x = '1';
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options in nested workspace folders > should respect nested oxfmt config with nested workspace folders nested-workspaces-with-config/test.ts 2`] = `
+"--- FILE -----------
+nested-workspaces-with-config/second/test.ts
+--- BEFORE ---------
+// { "semi": false, "singleQuote": false }
+const x = "1";
+
+--- AFTER ----------
+// { "semi": false, "singleQuote": false }
+const x = "1"
+
+--------------------"
+`;
+
 exports[`LSP formatting > ignore patterns > should handle ignore-config/file.generated.ts 1`] = `
 "--- FILE -----------
 ignore-config/file.generated.ts

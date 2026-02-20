@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.49.0] - 2026-02-19
+
+### 💥 BREAKING CHANGES
+
+- d4c7af3 linter: [**BREAKING**] Remove `allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing` option (#19451) (camc314)
+
+### 🚀 Features
+
+- 82ca5c3 linter: Add typescript/dot-notation rule (#19442) (camc314)
+- 735d0e4 linter: Implement typescript/no-useless-default-assignment (#19488) (camc314)
+- 31c3a93 linter: Add typescript/no-unnecessary-type-parameters rule (#19450) (camc314)
+- c948090 linter: Add typescript/consistent-return rule (#19449) (camc314)
+- 9f87df0 linter: Add typescript/prefer-string-starts-ends-with rule (#19448) (camc314)
+- 04536be linter: Add typescript/prefer-regexp-exec rule (#19447) (camc314)
+- 56a7feb linter: Add typescript/prefer-readonly rule (#19446) (camc314)
+- a1cea63 linter: Add typescript/no-unnecessary-qualifier rule (#19445) (camc314)
+- e3144d2 linter: Add typescript/prefer-find rule (#19444) (camc314)
+- 13c7408 linter: Add typescript/prefer-readonly-parameter-types rule (#19443) (camc314)
+- 9b17d44 linter: Add typescript/strict-void-return rule (#19441) (camc314)
+- ed821b4 linter: Add typescript/consistent-type-exports rule (#19440) (camc314)
+
 ## [1.48.0] - 2026-02-16
 
 ### 🚀 Features

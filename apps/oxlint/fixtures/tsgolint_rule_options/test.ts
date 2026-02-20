@@ -126,6 +126,24 @@ function maybeReturnValue(flag: boolean): string | undefined {
   return undefined;
 }
 
+// Test dot-notation options
+class DotNotationExample {
+  [key: string]: number;
+  private privateProp = 1;
+  protected protectedProp = 2;
+  public snake_case = 3;
+}
+const dotNotationExample = new DotNotationExample();
+// This should NOT error because private access is allowed
+dotNotationExample['privateProp'];
+// This should NOT error because protected access is allowed
+dotNotationExample['protectedProp'];
+// This should NOT error because pattern is allowed
+dotNotationExample['snake_case'];
+declare const dotNotationSimple: { name: string };
+// This SHOULD error because static property access should use dot notation
+dotNotationSimple['name'];
+
 // Test only-throw-error with allowRethrowing option
 // When allowRethrowing is false, rethrowing a caught error SHOULD error
 try {

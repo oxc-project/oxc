@@ -1,0 +1,758 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementation(() => "hello sunshine")
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementation(() => ({}))
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementation(() => x)
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementation(() => true ? x : y)
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementation(function () {
+   ·           ──────────────────
+ 2 │               return "hello world";
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementation(() => "hello world")
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementation(() => {
+   ·           ──────────────────
+ 2 │               return "hello world";
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(() => "hello world")
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(() => {
+   ·           ──────────────────
+ 2 │               return "hello world";
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementationOnce(() => "hello world")
+   ·           ──────────────────────
+   ╰────
+  help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementationOnce(() => "hello world")
+   ·           ──────────────────────
+   ╰────
+  help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(() => ({
+   ·           ──────────────────
+ 2 │               target: 'world',
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:4:16]
+ 3 │               .mockImplementation(async () => 42)
+ 4 │               .mockImplementation(() => Promise.resolve(42))
+   ·                ──────────────────
+ 5 │               .mockReturnValue("hello world")
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:16]
+ 1 │ aVariable
+ 2 │               .mockImplementation(() => 42)
+   ·                ──────────────────
+ 3 │               .mockImplementation(async () => 42)
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:3:16]
+ 2 │               .mockImplementationOnce(() => Promise.reject(42))
+ 3 │               .mockImplementation(() => "hello sunshine")
+   ·                ──────────────────
+ 4 │               .mockReturnValueOnce(Promise.reject(42))
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:16]
+ 1 │ aVariable
+ 2 │               .mockImplementationOnce(() => Promise.reject(42))
+   ·                ──────────────────────
+ 3 │               .mockImplementation(() => "hello sunshine")
+   ╰────
+  help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementation(() => (input: number | Record<string, number[]>) => typeof input === 'number' ? input.toFixed(2) : JSON.stringify(input))
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ jest.fn().mockImplementation(() => [], xyz)
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:28]
+ 1 │ jest.spyOn(fs, "readFile").mockImplementation(() => new Error("oh noes!"))
+   ·                            ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(() => {
+   ·           ──────────────────
+ 2 │               return Promise.resolve(value)
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(() => {
+   ·           ──────────────────
+ 2 │               return Promise.all([1, 2, 3]);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:37]
+ 1 │ const currentX = 0;
+ 2 │             jest.spyOn(X, getCount).mockImplementation(() => currentX);
+   ·                                     ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:37]
+ 1 │ import { currentX } from './elsewhere';
+ 2 │             jest.spyOn(X, getCount).mockImplementation(() => currentX);
+   ·                                     ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:4:41]
+ 3 │               it('works', () => {
+ 4 │                 jest.spyOn(X, getCount).mockImplementation(() => currentX);
+   ·                                         ──────────────────
+ 5 │               });
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:37]
+ 1 │ function doSomething() {};
+ 2 │             jest.spyOn(X, getCount).mockImplementation(() => doSomething);
+   ·                                     ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:37]
+ 1 │ const doSomething = () => {};
+ 2 │             jest.spyOn(X, getCount).mockImplementation(() => doSomething);
+   ·                                     ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementation(() => [value]);
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementation(() => [0, value, 2]);
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementation(() => [0,, value, 2]);
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             jest.fn().mockImplementation(() => ({ value }));
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementation(() => ({ items: [value] }));
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementation(() => {
+   ·                       ──────────────────
+ 3 │               return {
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:4:22]
+ 3 │             getPoint.mockImplementation(() => vX + vY);
+ 4 │             getPoint.mockImplementation(() => {
+   ·                      ──────────────────
+ 5 │               return { x: vX, y: 1 }
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementation(() => value & 0);
+   ·                       ──────────────────
+ 3 │             aVariable.mockImplementation(() => 0 & value);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:3:23]
+ 2 │             aVariable.mockImplementation(() => value & 0);
+ 3 │             aVariable.mockImplementation(() => 0 & value);
+   ·                       ──────────────────
+ 4 │             aVariable.mockImplementation(() => value | 1);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:4:23]
+ 3 │             aVariable.mockImplementation(() => 0 & value);
+ 4 │             aVariable.mockImplementation(() => value | 1);
+   ·                       ──────────────────
+ 5 │             aVariable.mockImplementation(() => 1 | value);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:5:23]
+ 4 │             aVariable.mockImplementation(() => value | 1);
+ 5 │             aVariable.mockImplementation(() => 1 | value);
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementation(() => ~value);
+   ·                       ──────────────────
+ 3 │             aVariable.mockImplementation(() => !value);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:3:23]
+ 2 │             aVariable.mockImplementation(() => ~value);
+ 3 │             aVariable.mockImplementation(() => !value);
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementation(() => value + 1);
+   ·                       ──────────────────
+ 3 │             aVariable.mockImplementation(() => 1 + value);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:3:23]
+ 2 │             aVariable.mockImplementation(() => value + 1);
+ 3 │             aVariable.mockImplementation(() => 1 + value);
+   ·                       ──────────────────
+ 4 │             aVariable.mockImplementation(() => value * value + 1);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:4:23]
+ 3 │             aVariable.mockImplementation(() => 1 + value);
+ 4 │             aVariable.mockImplementation(() => value * value + 1);
+   ·                       ──────────────────
+ 5 │             aVariable.mockImplementation(() => 1 + value / 2);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:5:23]
+ 4 │             aVariable.mockImplementation(() => value * value + 1);
+ 5 │             aVariable.mockImplementation(() => 1 + value / 2);
+   ·                       ──────────────────
+ 6 │             aVariable.mockImplementation(() => (1 + value) / 2);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:6:23]
+ 5 │             aVariable.mockImplementation(() => 1 + value / 2);
+ 6 │             aVariable.mockImplementation(() => (1 + value) / 2);
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementation(() => {
+   ·                       ──────────────────
+ 3 │               return {
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const obj = {};
+ 2 │             aVariable.mockImplementation(() => {
+   ·                       ──────────────────
+ 3 │               return {
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             jest.fn().mockImplementationOnce(() => {
+   ·                       ──────────────────────
+ 3 │               return [
+   ╰────
+  help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             jest.fn().mockImplementationOnce(() => {
+   ·                       ──────────────────────
+ 3 │               return [
+   ╰────
+  help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementationOnce(() => {
+   ·                       ──────────────────────
+ 3 │               return {
+   ╰────
+  help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             aVariable.mockImplementationOnce(() => {
+   ·                       ──────────────────────
+ 3 │               return {
+   ╰────
+  help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             jest.fn().mockImplementation(() => {
+   ·                       ──────────────────
+ 3 │               return {
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             jest.fn().mockImplementation(() => {
+   ·                       ──────────────────
+ 3 │               return [{
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:4:23]
+ 3 │             aVariable.mockImplementation(() => mx || my);
+ 4 │             aVariable.mockImplementation(() => mx || 0);
+   ·                       ──────────────────
+ 5 │             aVariable.mockImplementation(() => my && mx);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:7:23]
+ 6 │             aVariable.mockImplementation(() => mx ?? (7 && my));
+ 7 │             aVariable.mockImplementation(() => mx ?? (7 && 0));
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             jest.fn().mockImplementation(() => new Mx(value));
+   ·                       ──────────────────
+ 3 │             jest.fn().mockImplementation(() => new Mx(() => value));
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:3:23]
+ 2 │             jest.fn().mockImplementation(() => new Mx(value));
+ 3 │             jest.fn().mockImplementation(() => new Mx(() => value));
+   ·                       ──────────────────
+ 4 │             jest.fn().mockImplementation(() => new Mx(() => { return value }));
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:4:23]
+ 3 │             jest.fn().mockImplementation(() => new Mx(() => value));
+ 4 │             jest.fn().mockImplementation(() => new Mx(() => { return value }));
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const value = 1;
+ 2 │             jest.fn().mockImplementation(() => mx(value));
+   ·                       ──────────────────
+ 3 │             jest.fn().mockImplementation(() => mx?.(value));
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:3:23]
+ 2 │             jest.fn().mockImplementation(() => mx(value));
+ 3 │             jest.fn().mockImplementation(() => mx?.(value));
+   ·                       ──────────────────
+ 4 │             jest.fn().mockImplementation(() => mx().my());
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:4:23]
+ 3 │             jest.fn().mockImplementation(() => mx?.(value));
+ 4 │             jest.fn().mockImplementation(() => mx().my());
+   ·                       ──────────────────
+ 5 │             jest.fn().mockImplementation(() => mx().my);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:5:23]
+ 4 │             jest.fn().mockImplementation(() => mx().my());
+ 5 │             jest.fn().mockImplementation(() => mx().my);
+   ·                       ──────────────────
+ 6 │             jest.fn().mockImplementation(() => mx.my());
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:6:23]
+ 5 │             jest.fn().mockImplementation(() => mx().my);
+ 6 │             jest.fn().mockImplementation(() => mx.my());
+   ·                       ──────────────────
+ 7 │             jest.fn().mockImplementation(() => mx?.my());
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:7:23]
+ 6 │             jest.fn().mockImplementation(() => mx.my());
+ 7 │             jest.fn().mockImplementation(() => mx?.my());
+   ·                       ──────────────────
+ 8 │             jest.fn().mockImplementation(() => mx.my);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:8:23]
+ 7 │             jest.fn().mockImplementation(() => mx?.my());
+ 8 │             jest.fn().mockImplementation(() => mx.my);
+   ·                       ──────────────────
+ 9 │             jest.fn().mockImplementation(() => mx(value).my());
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:9:23]
+  8 │             jest.fn().mockImplementation(() => mx.my);
+  9 │             jest.fn().mockImplementation(() => mx(value).my());
+    ·                       ──────────────────
+ 10 │             jest.fn().mockImplementation(() => mx(value)?.my());
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:10:23]
+  9 │             jest.fn().mockImplementation(() => mx(value).my());
+ 10 │             jest.fn().mockImplementation(() => mx(value)?.my());
+    ·                       ──────────────────
+ 11 │             jest.fn().mockImplementation(() => mx(value).my);
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:11:23]
+ 10 │             jest.fn().mockImplementation(() => mx(value)?.my());
+ 11 │             jest.fn().mockImplementation(() => mx(value).my);
+    ·                       ──────────────────
+ 12 │             jest.fn().mockImplementation(() => mx.my(value));
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:12:23]
+ 11 │             jest.fn().mockImplementation(() => mx(value).my);
+ 12 │             jest.fn().mockImplementation(() => mx.my(value));
+    ·                       ──────────────────
+ 13 │             jest.fn().mockImplementation(() => mx().my(value));
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:13:23]
+ 12 │             jest.fn().mockImplementation(() => mx.my(value));
+ 13 │             jest.fn().mockImplementation(() => mx().my(value));
+    ·                       ──────────────────
+ 14 │             jest.fn().mockImplementation(() => mx.my(value));
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:14:23]
+ 13 │             jest.fn().mockImplementation(() => mx().my(value));
+ 14 │             jest.fn().mockImplementation(() => mx.my(value));
+    ·                       ──────────────────
+ 15 │             jest.fn().mockImplementation(() => mx.my?.(value));
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:15:23]
+ 14 │             jest.fn().mockImplementation(() => mx.my(value));
+ 15 │             jest.fn().mockImplementation(() => mx.my?.(value));
+    ·                       ──────────────────
+ 16 │             jest.fn().mockImplementation(() => mx(value).my(value));
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:16:23]
+ 15 │             jest.fn().mockImplementation(() => mx.my?.(value));
+ 16 │             jest.fn().mockImplementation(() => mx(value).my(value));
+    ·                       ──────────────────
+ 17 │             jest.fn().mockImplementation(() => mx?.(value)?.my?.(value));
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:17:23]
+ 16 │             jest.fn().mockImplementation(() => mx(value).my(value));
+ 17 │             jest.fn().mockImplementation(() => mx?.(value)?.my?.(value));
+    ·                       ──────────────────
+ 18 │             jest.fn().mockImplementation(() => new Mx().add(value));
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:18:23]
+ 17 │             jest.fn().mockImplementation(() => mx?.(value)?.my?.(value));
+ 18 │             jest.fn().mockImplementation(() => new Mx().add(value));
+    ·                       ──────────────────
+ 19 │             jest.fn().mockImplementation(() => {
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+    ╭─[prefer_mock_return_shorthand.tsx:19:23]
+ 18 │             jest.fn().mockImplementation(() => new Mx().add(value));
+ 19 │             jest.fn().mockImplementation(() => {
+    ·                       ──────────────────
+ 20 │               return mx([{
+    ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:2:23]
+ 1 │ const propName = 'world';
+ 2 │             aVariable.mockImplementation(() => mx[propName]());
+   ·                       ──────────────────
+ 3 │             aVariable.mockImplementation(() => mx[propName]);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:3:23]
+ 2 │             aVariable.mockImplementation(() => mx[propName]());
+ 3 │             aVariable.mockImplementation(() => mx[propName]);
+   ·                       ──────────────────
+ 4 │             aVariable.mockImplementation(() => ({ [propName]: 1 }));
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:4:23]
+ 3 │             aVariable.mockImplementation(() => mx[propName]);
+ 4 │             aVariable.mockImplementation(() => ({ [propName]: 1 }));
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:4:23]
+ 3 │             aVariable.mockImplementation(() => value ? true : false);
+ 4 │             aVariable.mockImplementation(() => x ? true : false);
+   ·                       ──────────────────
+ 5 │             aVariable.mockImplementation(() => x ? true : value);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:8:23]
+ 7 │             aVariable.mockImplementation(() => true ? true : true ? value : false);
+ 8 │             aVariable.mockImplementation(() => true ? true : true ? x : false);
+   ·                       ──────────────────
+ 9 │             aVariable.mockImplementation(() => true ? true : true ? true : false);
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:9:23]
+ 8 │             aVariable.mockImplementation(() => true ? true : true ? x : false);
+ 9 │             aVariable.mockImplementation(() => true ? true : true ? true : false);
+   ·                       ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:9]
+ 1 │ vi.fn().mockImplementation(() => "hello sunshine")
+   ·         ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:9]
+ 1 │ vi.fn().mockImplementation(() => ({}))
+   ·         ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:9]
+ 1 │ vi.fn().mockImplementation(() => x)
+   ·         ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:9]
+ 1 │ vi.fn().mockImplementation(() => true ? x : y)
+   ·         ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:9]
+ 1 │ vi.fn().mockImplementation(() => "hello world")
+   ·         ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementation(() => "hello world")
+   ·           ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:9]
+ 1 │ vi.fn().mockImplementationOnce(() => "hello world")
+   ·         ──────────────────────
+   ╰────
+  help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:11]
+ 1 │ aVariable.mockImplementationOnce(() => "hello world")
+   ·           ──────────────────────
+   ╰────
+  help: Replace `mockImplementationOnce` with `mockReturnValueOnce`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:9]
+ 1 │ vi.fn().mockImplementation(() => [], xyz)
+   ·         ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
+
+  ⚠ eslint-plugin-jest(prefer-mock-return-shorthand): Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.
+   ╭─[prefer_mock_return_shorthand.tsx:1:26]
+ 1 │ vi.spyOn(fs, "readFile").mockImplementation(() => new Error("oh noes!"))
+   ·                          ──────────────────
+   ╰────
+  help: Replace `mockImplementation` with `mockReturnValue`.
