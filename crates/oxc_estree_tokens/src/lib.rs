@@ -15,12 +15,6 @@ use oxc_parser::{Kind, Token};
 use oxc_span::Span;
 
 #[derive(Serialize)]
-pub struct EstreeRegExpToken<'a> {
-    pub flags: &'a str,
-    pub pattern: &'a str,
-}
-
-#[derive(Serialize)]
 pub struct EstreeToken<'a> {
     #[serde(rename = "type")]
     pub token_type: &'static str,
@@ -29,6 +23,12 @@ pub struct EstreeToken<'a> {
     pub regex: Option<EstreeRegExpToken<'a>>,
     pub start: u32,
     pub end: u32,
+}
+
+#[derive(Serialize)]
+pub struct EstreeRegExpToken<'a> {
+    pub flags: &'a str,
+    pub pattern: &'a str,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -66,6 +66,99 @@ impl EstreeTokenOptions {
             member_expr_in_jsx_expression_jsx_identifiers: false,
         }
     }
+}
+
+pub fn collect_token_context(
+    program: &Program<'_>,
+    options: EstreeTokenOptions,
+) -> EstreeTokenContext {
+    let mut context = EstreeTokenContext {
+        jsx_namespace_jsx_identifiers: options.jsx_namespace_jsx_identifiers,
+        member_expr_in_jsx_expression_jsx_identifiers: options
+            .member_expr_in_jsx_expression_jsx_identifiers,
+        ..Default::default()
+    };
+    context.visit_program(program);
+    context
+}
+
+pub fn to_estree_tokens_json(
+    allocator: &Allocator,
+    source_text: &str,
+    tokens: &[Token],
+    context: &EstreeTokenContext,
+    options: EstreeTokenOptions,
+) -> String {
+    let estree_tokens = to_estree_tokens(allocator, source_text, tokens, context, options);
+    serde_json::to_string_pretty(&estree_tokens).unwrap_or_default()
+}
+
+pub fn to_estree_tokens<'a>(
+    allocator: &'a Allocator,
+    source_text: &'a str,
+    tokens: &[Token],
+    context: &EstreeTokenContext,
+    options: EstreeTokenOptions,
+) -> ArenaVec<'a, EstreeToken<'a>> {
+    let utf8_to_utf16 = Utf8ToUtf16::new(source_text);
+    let mut converter = utf8_to_utf16.converter();
+
+    let mut estree_tokens = ArenaVec::with_capacity_in(tokens.len(), allocator);
+    for token in tokens {
+        let kind = token.kind();
+        let source_value = &source_text[token.start() as usize..token.end() as usize];
+
+        let mut start = token.start();
+        let mut end = token.end();
+        if let Some(converter) = converter.as_mut() {
+            converter.convert_offset(&mut start);
+            converter.convert_offset(&mut end);
+        }
+        let span_utf16 = Span::new(start, end);
+
+        // TS estree token streams may already contain the second `<` as a
+        // standalone token here; skip the overlapping `<<` token.
+        if kind == Kind::ShiftLeft
+            && context.ts_type_parameter_starts.contains(&(span_utf16.start + 1))
+        {
+            continue;
+        }
+
+        let is_ast_identifier = context.ast_identifier_spans.contains(&span_utf16);
+        let is_ast_identifier = if options.exclude_legacy_keyword_identifiers {
+            is_ast_identifier && !matches!(kind, Kind::Yield | Kind::Let | Kind::Static)
+        } else {
+            is_ast_identifier
+        };
+        let token_type = token_type(
+            kind,
+            is_ast_identifier,
+            context.force_keyword_spans.contains(&span_utf16),
+            context.jsx_identifier_spans.contains(&span_utf16)
+                && !context.non_jsx_identifier_spans.contains(&span_utf16),
+            context.jsx_text_spans.contains(&span_utf16),
+        );
+
+        let source_value =
+            if kind == Kind::PrivateIdentifier { &source_value[1..] } else { source_value };
+        let value = if options.decode_identifier_escapes
+            && token.escaped()
+            && (kind.is_identifier_name() || kind == Kind::PrivateIdentifier)
+        {
+            decode_js_unicode_escapes(allocator, source_value)
+        } else {
+            source_value
+        };
+        let regex = if kind == Kind::RegExp {
+            regex_parts(source_value).map(|(pattern, flags)| EstreeRegExpToken { flags, pattern })
+        } else {
+            None
+        };
+
+        estree_tokens.push(EstreeToken { token_type, value, regex, start, end });
+    }
+
+    estree_tokens
 }
 
 #[derive(Default)]
@@ -250,18 +343,43 @@ impl<'a> Visit<'a> for EstreeTokenContext {
     }
 }
 
-pub fn collect_token_context(
-    program: &Program<'_>,
-    options: EstreeTokenOptions,
-) -> EstreeTokenContext {
-    let mut context = EstreeTokenContext {
-        jsx_namespace_jsx_identifiers: options.jsx_namespace_jsx_identifiers,
-        member_expr_in_jsx_expression_jsx_identifiers: options
-            .member_expr_in_jsx_expression_jsx_identifiers,
-        ..Default::default()
-    };
-    context.visit_program(program);
-    context
+fn token_type(
+    kind: Kind,
+    is_ast_identifier: bool,
+    is_forced_keyword: bool,
+    is_jsx_identifier: bool,
+    is_jsx_text: bool,
+) -> &'static str {
+    if is_jsx_identifier {
+        return "JSXIdentifier";
+    }
+    if is_jsx_text {
+        return "JSXText";
+    }
+    if is_forced_keyword {
+        return "Keyword";
+    }
+    if is_ast_identifier {
+        return "Identifier";
+    }
+
+    match kind {
+        Kind::Ident | Kind::Await => "Identifier",
+        Kind::PrivateIdentifier => "PrivateIdentifier",
+        Kind::JSXText => "JSXText",
+        Kind::Str => "String",
+        Kind::RegExp => "RegularExpression",
+        Kind::NoSubstitutionTemplate
+        | Kind::TemplateHead
+        | Kind::TemplateMiddle
+        | Kind::TemplateTail => "Template",
+        Kind::True | Kind::False => "Boolean",
+        Kind::Null => "Null",
+        _ if kind.is_number() => "Numeric",
+        _ if kind.is_contextual_keyword() => "Identifier",
+        _ if kind.is_any_keyword() => "Keyword",
+        _ => "Punctuator",
+    }
 }
 
 fn regex_parts(raw: &str) -> Option<(&str, &str)> {
@@ -333,122 +451,4 @@ fn decode_js_unicode_escapes<'a>(allocator: &'a Allocator, raw: &'a str) -> &'a 
     }
 
     allocator.alloc_str(&output)
-}
-
-fn token_type(
-    kind: Kind,
-    is_ast_identifier: bool,
-    is_forced_keyword: bool,
-    is_jsx_identifier: bool,
-    is_jsx_text: bool,
-) -> &'static str {
-    if is_jsx_identifier {
-        return "JSXIdentifier";
-    }
-    if is_jsx_text {
-        return "JSXText";
-    }
-    if is_forced_keyword {
-        return "Keyword";
-    }
-    if is_ast_identifier {
-        return "Identifier";
-    }
-
-    match kind {
-        Kind::Ident | Kind::Await => "Identifier",
-        Kind::PrivateIdentifier => "PrivateIdentifier",
-        Kind::JSXText => "JSXText",
-        Kind::Str => "String",
-        Kind::RegExp => "RegularExpression",
-        Kind::NoSubstitutionTemplate
-        | Kind::TemplateHead
-        | Kind::TemplateMiddle
-        | Kind::TemplateTail => "Template",
-        Kind::True | Kind::False => "Boolean",
-        Kind::Null => "Null",
-        _ if kind.is_number() => "Numeric",
-        _ if kind.is_contextual_keyword() => "Identifier",
-        _ if kind.is_any_keyword() => "Keyword",
-        _ => "Punctuator",
-    }
-}
-
-pub fn to_estree_tokens<'a>(
-    allocator: &'a Allocator,
-    source_text: &'a str,
-    tokens: &[Token],
-    context: &EstreeTokenContext,
-    options: EstreeTokenOptions,
-) -> ArenaVec<'a, EstreeToken<'a>> {
-    let utf8_to_utf16 = Utf8ToUtf16::new(source_text);
-    let mut converter = utf8_to_utf16.converter();
-
-    let mut estree_tokens = ArenaVec::with_capacity_in(tokens.len(), allocator);
-    for token in tokens {
-        let kind = token.kind();
-        let source_value = &source_text[token.start() as usize..token.end() as usize];
-
-        let mut start = token.start();
-        let mut end = token.end();
-        if let Some(converter) = converter.as_mut() {
-            converter.convert_offset(&mut start);
-            converter.convert_offset(&mut end);
-        }
-        let span_utf16 = Span::new(start, end);
-
-        // TS estree token streams may already contain the second `<` as a
-        // standalone token here; skip the overlapping `<<` token.
-        if kind == Kind::ShiftLeft
-            && context.ts_type_parameter_starts.contains(&(span_utf16.start + 1))
-        {
-            continue;
-        }
-
-        let is_ast_identifier = context.ast_identifier_spans.contains(&span_utf16);
-        let is_ast_identifier = if options.exclude_legacy_keyword_identifiers {
-            is_ast_identifier && !matches!(kind, Kind::Yield | Kind::Let | Kind::Static)
-        } else {
-            is_ast_identifier
-        };
-        let token_type = token_type(
-            kind,
-            is_ast_identifier,
-            context.force_keyword_spans.contains(&span_utf16),
-            context.jsx_identifier_spans.contains(&span_utf16)
-                && !context.non_jsx_identifier_spans.contains(&span_utf16),
-            context.jsx_text_spans.contains(&span_utf16),
-        );
-
-        let source_value =
-            if kind == Kind::PrivateIdentifier { &source_value[1..] } else { source_value };
-        let value = if options.decode_identifier_escapes
-            && token.escaped()
-            && (kind.is_identifier_name() || kind == Kind::PrivateIdentifier)
-        {
-            decode_js_unicode_escapes(allocator, source_value)
-        } else {
-            source_value
-        };
-        let regex = if kind == Kind::RegExp {
-            regex_parts(source_value).map(|(pattern, flags)| EstreeRegExpToken { flags, pattern })
-        } else {
-            None
-        };
-
-        estree_tokens.push(EstreeToken { token_type, value, regex, start, end });
-    }
-
-    estree_tokens
-}
-
-pub fn to_estree_tokens_json(
-    allocator: &Allocator,
-    source_text: &str,
-    tokens: &[Token],
-    context: &EstreeTokenContext,
-    options: EstreeTokenOptions,
-) -> String {
-    let estree_tokens = to_estree_tokens(allocator, source_text, tokens, context, options);
-    serde_json::to_string_pretty(&estree_tokens).unwrap_or_default()
 }
