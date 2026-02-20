@@ -131,47 +131,49 @@ impl Rule for NoRequireImports {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
+                // Must be called on the bare `require` identifier (not a member expression)
+                let Some(id) = call_expr.callee.get_identifier_reference() else {
+                    return;
+                };
+                if id.name != REQUIRE {
+                    return;
+                }
+
+                // If `require` is shadowed by a local binding, skip
                 if node.scope_id() != ctx.scoping().root_scope_id()
-                    && let Some(id) = call_expr.callee.get_identifier_reference()
                     && !id.is_global_reference_name(REQUIRE, ctx.scoping())
                 {
                     return;
                 }
 
-                if !call_expr.is_require_call() {
-                    return;
-                }
-
-                if !self.allow.is_empty() {
-                    let Some(argument) = call_expr.arguments.first() else {
-                        return;
-                    };
-
-                    match argument {
-                        Argument::TemplateLiteral(template_literal) => {
-                            let Some(quasi) = template_literal.quasis.first() else {
-                                return;
-                            };
-
-                            if match_argument_value_with_regex(&self.allow, &quasi.value.raw) {
-                                return;
-                            }
-
-                            ctx.diagnostic(no_require_imports_diagnostic(quasi.span));
-                        }
-                        Argument::StringLiteral(string_literal) => {
-                            if match_argument_value_with_regex(&self.allow, &string_literal.value) {
-                                return;
-                            }
-
-                            ctx.diagnostic(no_require_imports_diagnostic(string_literal.span));
-                        }
-                        _ => {}
-                    }
-                }
-
+                // If `require` is defined at the root scope (e.g. via `createRequire`), skip
                 if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), REQUIRE).is_some() {
                     return;
+                }
+
+                // Check `allow` patterns against static string/template literal arguments
+                if !self.allow.is_empty() {
+                    if let Some(argument) = call_expr.arguments.first() {
+                        match argument {
+                            Argument::TemplateLiteral(template_literal) => {
+                                let Some(quasi) = template_literal.quasis.first() else {
+                                    return;
+                                };
+                                if match_argument_value_with_regex(&self.allow, &quasi.value.raw) {
+                                    return;
+                                }
+                            }
+                            Argument::StringLiteral(string_literal) => {
+                                if match_argument_value_with_regex(
+                                    &self.allow,
+                                    &string_literal.value,
+                                ) {
+                                    return;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
                 }
 
                 ctx.diagnostic(no_require_imports_diagnostic(call_expr.span));
@@ -186,8 +188,6 @@ impl Rule for NoRequireImports {
                         if match_argument_value_with_regex(&self.allow, &mod_ref.expression.value) {
                             return;
                         }
-
-                        ctx.diagnostic(no_require_imports_diagnostic(mod_ref.span));
                     }
 
                     ctx.diagnostic(no_require_imports_diagnostic(decl.span));
@@ -378,6 +378,26 @@ fn test() {
         (
             r"function foo() {
             require('foo')
+            }",
+            None,
+        ),
+        // Bug 1: dynamic argument
+        ("const m = require(someVariable);", None),
+        ("const m = require(path.join(dir, file));", None),
+        // Bug 2: class method named require
+        (
+            r"class Foo {
+            require(module: string) {
+                return require(module);
+            }
+            }",
+            None,
+        ),
+        (
+            r"class Foo {
+            require(module: string) {
+                return require('foo');
+            }
             }",
             None,
         ),
