@@ -1,0 +1,143 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:15]
+ 1 │ function test(err) {}
+   ·               ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:15]
+ 1 │ function test(err, data) {}
+   ·               ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:15]
+ 1 │ function test(err) {errorLookingWord();}
+   ·               ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:15]
+ 1 │ function test(err) {try{} catch(err) {}}
+   ·               ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:15]
+ 1 │ function test(err, callback) { foo(function(err, callback) {}); }
+   ·               ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:45]
+ 1 │ function test(err, callback) { foo(function(err, callback) {}); }
+   ·                                             ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:13]
+ 1 │ var test = (err) => {};
+   ·             ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:21]
+ 1 │ var test = function(err) {};
+   ·                     ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:26]
+ 1 │ var test = function test(err, data) {};
+   ·                          ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:26]
+ 1 │ var test = function test(err) {/* if(err){} */};
+   ·                          ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:15]
+ 1 │ function test(err) {doSomethingHere(function(err){console.log(err);})}
+   ·               ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:15]
+ 1 │ function test(error) {}
+   ·               ─────
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:18]
+ 1 │ getData(function(err, data) {getMoreDataWith(data, function(err, moreData) {if (err) {}getEvenMoreDataWith(moreData, function(err, allOfTheThings) {if (err) {}});}); });
+   ·                  ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:18]
+ 1 │ getData(function(err, data) {getMoreDataWith(data, function(err, moreData) {getEvenMoreDataWith(moreData, function(err, allOfTheThings) {if (err) {}});}); });
+   ·                  ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:61]
+ 1 │ getData(function(err, data) {getMoreDataWith(data, function(err, moreData) {getEvenMoreDataWith(moreData, function(err, allOfTheThings) {if (err) {}});}); });
+   ·                                                             ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:22]
+ 1 │ function userHandler(err) {logThisAction(function(err) {if (err) { console.log(err); } })}
+   ·                      ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:40]
+ 1 │ function help() { function userHandler(err) {function tester(err) { err; process.nextTick(function() { err; }); } } }
+   ·                                        ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:21]
+ 1 │ var test = function(anyError) { console.log(otherError); };
+   ·                     ────────
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:21]
+ 1 │ var test = function(anyError) { };
+   ·                     ────────
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
+
+  ⚠ eslint-plugin-node(handle-callback-err): Expected error to be handled.
+   ╭─[handle_callback_err.tsx:1:21]
+ 1 │ var test = function(err) { console.log(error); };
+   ·                     ───
+   ╰────
+  help: Handle the error or rename the parameter if it's not an error.
