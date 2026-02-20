@@ -165,6 +165,7 @@ working directory: fixtures/tsgolint
  2 | declare const b2: boolean;
  3 | export const t1 = b1 && b2;
    :                   ^^
+ 4 | 
    `----
 
   x typescript-eslint(strict-boolean-expressions): Unexpected object value in conditional. An object is always truthy.
@@ -172,6 +173,7 @@ working directory: fixtures/tsgolint
  2 | declare const b2: boolean;
  3 | export const t1 = b1 && b2;
    :                   ^^
+ 4 | 
    `----
 
   x typescript-eslint(no-unnecessary-qualifier): Qualifier is unnecessary since 'B' is in scope.
