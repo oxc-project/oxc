@@ -165,7 +165,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 )));
 
                 current_id = if_term.fallthrough;
-                continue;
             }
             Terminal::Switch(switch_term) => {
                 let cases: Vec<ReactiveSwitchCase> = switch_term
@@ -193,7 +192,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 )));
 
                 current_id = switch_term.fallthrough;
-                continue;
             }
             Terminal::While(while_term) => {
                 let test_block = traverse_block(cx, while_term.test);
@@ -216,7 +214,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 )));
 
                 current_id = while_term.fallthrough;
-                continue;
             }
             Terminal::DoWhile(do_while) => {
                 let loop_body = traverse_block(cx, do_while.r#loop);
@@ -239,7 +236,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 )));
 
                 current_id = do_while.fallthrough;
-                continue;
             }
             Terminal::For(for_term) => {
                 let init_block = traverse_block(cx, for_term.init);
@@ -270,7 +266,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 )));
 
                 current_id = for_term.fallthrough;
-                continue;
             }
             Terminal::ForOf(for_of) => {
                 let init_block = traverse_block(cx, for_of.init);
@@ -296,7 +291,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 )));
 
                 current_id = for_of.fallthrough;
-                continue;
             }
             Terminal::ForIn(for_in) => {
                 let init_block = traverse_block(cx, for_in.init);
@@ -319,7 +313,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 )));
 
                 current_id = for_in.fallthrough;
-                continue;
             }
             Terminal::Label(label) => {
                 let block_body = traverse_block(cx, label.block);
@@ -339,7 +332,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 )));
 
                 current_id = label.fallthrough;
-                continue;
             }
             Terminal::Try(try_term) => {
                 let block_body = traverse_block(cx, try_term.block);
@@ -362,12 +354,10 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 )));
 
                 current_id = try_term.fallthrough;
-                continue;
             }
             Terminal::MaybeThrow(mt) => {
                 // Continue to the continuation block
                 current_id = mt.continuation;
-                continue;
             }
             Terminal::Scope(scope) => {
                 let block_body = traverse_block(cx, scope.block);
@@ -378,7 +368,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                     },
                 ));
                 current_id = scope.fallthrough;
-                continue;
             }
             Terminal::PrunedScope(scope) => {
                 let block_body = traverse_block(cx, scope.block);
@@ -389,7 +378,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                     },
                 ));
                 current_id = scope.fallthrough;
-                continue;
             }
             // Terminals that end the block without continuation
             Terminal::Unreachable(_) | Terminal::Unsupported(_) => {
@@ -403,25 +391,21 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 // For now, emit as-is
                 current_id = logical.fallthrough;
                 // Logical test lowering handled in full implementation
-                continue;
             }
             Terminal::Ternary(ternary) => {
                 let test_block = traverse_block(cx, ternary.test);
                 let _test_value = block_to_reactive_value(&test_block, ternary.loc);
                 current_id = ternary.fallthrough;
-                continue;
             }
             Terminal::Optional(optional) => {
                 let test_block = traverse_block(cx, optional.test);
                 let _test_value = block_to_reactive_value(&test_block, optional.loc);
                 current_id = optional.fallthrough;
-                continue;
             }
             Terminal::Sequence(seq) => {
                 let block_body = traverse_block(cx, seq.block);
                 statements.extend(block_body);
                 current_id = seq.fallthrough;
-                continue;
             }
             Terminal::Branch(branch) => {
                 let consequent = traverse_block(cx, branch.consequent);
@@ -445,7 +429,6 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 )));
 
                 current_id = branch.fallthrough;
-                continue;
             }
         }
     }
