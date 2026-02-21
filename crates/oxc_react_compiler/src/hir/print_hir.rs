@@ -381,8 +381,7 @@ pub fn print_instruction_value(value: &InstructionValue) -> String {
             format!("ObjectMethod ({})", print_place(&v.lowered_func.func.returns))
         }
         InstructionValue::TemplateLiteral(v) => {
-            let exprs: Vec<String> = v.subexprs.iter().map(print_place).collect();
-            format!("TemplateLiteral({} expressions)", exprs.len())
+            format!("TemplateLiteral({} expressions)", v.subexprs.len())
         }
         InstructionValue::TaggedTemplateExpression(v) => {
             format!("TaggedTemplate {}", print_place(&v.tag))
