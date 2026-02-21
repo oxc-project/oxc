@@ -435,6 +435,10 @@ pub(crate) mod react {
     pub mod void_dom_elements_no_children;
 }
 
+pub(crate) mod react_compiler {
+    pub mod react_compiler_rule;
+}
+
 pub(crate) mod react_perf {
     pub mod jsx_no_jsx_as_prop;
     pub mod jsx_no_new_array_as_prop;

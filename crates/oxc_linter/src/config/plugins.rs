@@ -94,6 +94,8 @@ bitflags! {
         const NODE = 1 << 12;
         /// `eslint-plugin-vue`
         const VUE = 1 << 13;
+        /// `eslint-plugin-react-compiler`
+        const REACT_COMPILER = 1 << 14;
     }
 }
 
@@ -155,6 +157,7 @@ impl TryFrom<&str> for LintPlugins {
             "jsx-a11y" | "jsx_a11y" => Ok(LintPlugins::JSX_A11Y),
             "nextjs" => Ok(LintPlugins::NEXTJS),
             "react-perf" | "react_perf" => Ok(LintPlugins::REACT_PERF),
+            "react-compiler" | "react_compiler" => Ok(LintPlugins::REACT_COMPILER),
             "promise" => Ok(LintPlugins::PROMISE),
             "node" => Ok(LintPlugins::NODE),
             "vue" => Ok(LintPlugins::VUE),
@@ -180,6 +183,7 @@ impl From<LintPlugins> for &'static str {
             LintPlugins::JSX_A11Y => "jsx-a11y",
             LintPlugins::NEXTJS => "nextjs",
             LintPlugins::REACT_PERF => "react-perf",
+            LintPlugins::REACT_COMPILER => "react-compiler",
             LintPlugins::PROMISE => "promise",
             LintPlugins::NODE => "node",
             LintPlugins::VUE => "vue",
