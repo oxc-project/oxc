@@ -30,7 +30,7 @@ pub fn validate_no_capitalized_calls(func: &HIRFunction) -> Result<(), CompilerE
                     let name = v.binding.name().to_string();
                     if !name.is_empty()
                         && name.starts_with(|c: char| c.is_ascii_uppercase())
-                        && name != name.to_ascii_uppercase()
+                        && !name.chars().all(|c| c.is_ascii_uppercase() || !c.is_alphabetic())
                     {
                         capital_load_globals.insert(instr.lvalue.identifier.id, name);
                     }
