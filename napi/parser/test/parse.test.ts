@@ -969,7 +969,7 @@ let z = 3;`;
       const returnStmt = functionDecl.body.body[0];
       expect(returnStmt.loc).toEqual({
         start: { line: 2, column: 2 },
-        end: { line: 2, column: 11 },
+        end: { line: 2, column: 12 },
       });
     });
 
@@ -984,12 +984,15 @@ let z = 3;`;
     });
 
     it('should handle Unicode characters correctly', () => {
-      const code = 'let 🤨 = "hello";';
+      // 🤨 (U+1F928) takes 2 UTF-16 code units, so column positions after it are shifted by 1
+      // compared to byte offsets. End column should reflect UTF-16 length, not UTF-8 byte length.
+      const code = 'const x = "\u{1F928}";';
       const ret = parseSync('test.js', code, { loc: true });
 
+      // UTF-16 length: 'const x = "' (11) + '🤨' (2 code units) + '";' (2) = 15
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
-        end: { line: 1, column: 17 },
+        end: { line: 1, column: 15 },
       });
     });
 
@@ -1104,16 +1107,18 @@ let z = 3;`;
       const varDecl = ret.program.body[0];
       const declarator = varDecl.declarations[0];
 
-      // Object expression
+      // Object expression: { foo: bar.baz().qux, hello: "world" }
+      // starts at col 12 ({), ends exclusive at col 50 (after })
       expect(declarator.init.loc).toEqual({
         start: { line: 1, column: 12 },
-        end: { line: 1, column: 51 },
+        end: { line: 1, column: 50 },
       });
 
-      // First property
+      // First property: foo: bar.baz().qux
+      // starts at col 14 (f), ends exclusive at col 32 (after x)
       expect(declarator.init.properties[0].loc).toEqual({
         start: { line: 1, column: 14 },
-        end: { line: 1, column: 33 },
+        end: { line: 1, column: 32 },
       });
     });
 
@@ -1163,11 +1168,12 @@ const fn2 = (x) => {
 };`;
       const ret = parseSync('test.js', code, { loc: true });
 
-      // First arrow function (single expression)
+      // First arrow function (single expression): () => 42
+      // starts at col 12 ((), ends exclusive at col 20 (after 2)
       const firstDecl = ret.program.body[0];
       expect(firstDecl.declarations[0].init.loc).toEqual({
         start: { line: 1, column: 12 },
-        end: { line: 1, column: 21 },
+        end: { line: 1, column: 20 },
       });
 
       // Second arrow function (block body)
@@ -1188,17 +1194,18 @@ const fn2 = (x) => {
         end: { line: 3, column: 1 },
       });
 
-      // Return statement with await expression
+      // Return statement with await expression: return await fetch("/api");
+      // starts at col 2 (r), ends exclusive at col 29 (after ;)
       const returnStmt = asyncFn.body.body[0];
       expect(returnStmt.loc).toEqual({
         start: { line: 2, column: 2 },
-        end: { line: 2, column: 26 },
+        end: { line: 2, column: 29 },
       });
     });
 
     it('should work with parseAsync as well', async () => {
       const code = 'let x = 1;\nlet y = 2;';
-      const ret = await parseAsync('test.js', code, { loc: true });
+      const ret = await parse('test.js', code, { loc: true });
 
       expect(ret.program.body[0].loc).toEqual({
         start: { line: 1, column: 0 },
