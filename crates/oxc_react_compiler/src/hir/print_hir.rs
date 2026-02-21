@@ -448,6 +448,9 @@ fn print_mutable_range(id: &Identifier) -> String {
 }
 
 /// Print a Type.
+///
+/// # Panics
+/// Panics if an Object or Function type has shape_id set to Some but is None (impossible state).
 pub fn print_type(ty: &Type) -> String {
     match ty {
         Type::Var(_) => String::new(),

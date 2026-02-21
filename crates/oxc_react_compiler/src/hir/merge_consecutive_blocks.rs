@@ -17,6 +17,9 @@ use super::hir_builder::mark_predecessors;
 use super::visitors::terminal_fallthrough;
 
 /// Merge consecutive blocks in the function's HIR.
+///
+/// # Panics
+/// Panics if predecessor data is inconsistent.
 pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
     let mut merged = MergedBlocks::new();
     let mut fallthrough_blocks = FxHashSet::default();

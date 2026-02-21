@@ -132,7 +132,7 @@ fn test_parse_fixture_pragmas() {
             // Parse the pragma
             let options = oxc_react_compiler::utils::test_utils::parse_config_pragma_for_tests(
                 first_line,
-                oxc_react_compiler::utils::test_utils::PragmaDefaults {
+                &oxc_react_compiler::utils::test_utils::PragmaDefaults {
                     compilation_mode: oxc_react_compiler::entrypoint::options::CompilationMode::All,
                 },
             );
