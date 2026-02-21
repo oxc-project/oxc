@@ -36,7 +36,7 @@ pub fn is_eslint_suppression(
 
     let directive = if let Some(rest) = text.strip_prefix("eslint-disable-next-line") {
         Some(rest)
-    } else { text.strip_prefix("eslint-disable").map(|rest| rest) };
+    } else { text.strip_prefix("eslint-disable") };
 
     let directive = directive?;
     let rules_text = directive.trim();
