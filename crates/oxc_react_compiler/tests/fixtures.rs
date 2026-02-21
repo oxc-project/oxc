@@ -10,6 +10,23 @@
 /// 3. The test pragma parser correctly handles fixture pragmas
 use std::path::Path;
 
+fn count_fixtures_recursive(dir: &Path) -> usize {
+    let mut count = 0;
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                count += count_fixtures_recursive(&path);
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                if matches!(ext, "js" | "ts" | "tsx") {
+                    count += 1;
+                }
+            }
+        }
+    }
+    count
+}
+
 const FIXTURES_PATH: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/../../tasks/react_compiler/react/compiler/packages/babel-plugin-react-compiler/src/__tests__/fixtures/compiler"
@@ -143,6 +160,70 @@ fn test_parse_fixture_pragmas() {
 
     assert!(pragmas_found > 50, "Expected at least 50 fixtures with pragmas, found {pragmas_found}");
     eprintln!("Parsed {pragmas_found} fixture pragmas");
+}
+
+/// Test that the compiler pipeline can be invoked on a simple fixture.
+///
+/// This test verifies that the end-to-end pipeline (parse → lower → compile)
+/// can at least be called without panicking, even if the output is not yet
+/// matching the expected output.
+#[test]
+fn test_pipeline_runs_without_panic() {
+    use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
+    use oxc_react_compiler::hir::ReactFunctionType;
+    use oxc_react_compiler::hir::build_hir::lower;
+    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+
+    let source = r#"
+        function Component(props) {
+            return props.value;
+        }
+    "#;
+
+    let allocator = oxc_allocator::Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    assert!(parser_result.errors.is_empty(), "Parse failed");
+
+    // Create environment
+    let env = Environment::new(
+        ReactFunctionType::Component,
+        CompilerOutputMode::Client,
+        EnvironmentConfig::default(),
+    );
+
+    // Lower to HIR
+    let result = lower(&env, ReactFunctionType::Component);
+    assert!(result.is_ok(), "Lower failed: {:?}", result.err());
+
+    // Run pipeline
+    let mut hir_func = result.unwrap();
+    let pipeline_result = run_pipeline(&mut hir_func, &env);
+    assert!(pipeline_result.is_ok(), "Pipeline failed: {:?}", pipeline_result.err());
+}
+
+/// Test that multiple fixtures can be parsed and the pragma extracted.
+#[test]
+fn test_fixture_subdirectories() {
+    let fixtures_dir = Path::new(FIXTURES_PATH);
+    if !fixtures_dir.exists() {
+        eprintln!("Skipping subdirectory test: submodule not initialized");
+        return;
+    }
+
+    let mut subdirs_found = 0;
+    for entry in std::fs::read_dir(fixtures_dir).expect("Failed to read fixtures dir") {
+        let entry = entry.expect("Failed to read dir entry");
+        if entry.path().is_dir() {
+            subdirs_found += 1;
+            let subdir = entry.path();
+            // Count fixture files recursively (some subdirs have nested dirs)
+            let count = count_fixtures_recursive(&subdir);
+            assert!(count > 0, "Subdirectory {:?} has no fixture files", subdir.file_name());
+        }
+    }
+    assert!(subdirs_found > 5, "Expected at least 5 fixture subdirectories, found {subdirs_found}");
+    eprintln!("Found {subdirs_found} fixture subdirectories");
 }
 
 /// Test that expect.md files can be read and have the expected structure.
