@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c config-type-aware-false.json no-floating-promises.ts
+working directory: fixtures/tsgolint
+----------
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+   ,-[no-floating-promises.ts:2:1]
+ 1 | const promise = new Promise((resolve, _reject) => resolve("value"));
+ 2 | promise;
+   : ^^^^^^^^
+ 3 | 
+   `----
+  help: Consider using this expression or removing it
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 93 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

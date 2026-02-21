@@ -33,6 +33,8 @@ pub struct LintConfig {
     pub(crate) globals: OxlintGlobals,
     /// Absolute path to the configuration file (may be `None` if there is no file).
     pub(crate) path: Option<PathBuf>,
+    /// Whether type-aware linting is enabled from config.
+    pub(crate) type_aware: Option<bool>,
 }
 
 impl From<Oxlintrc> for LintConfig {
@@ -43,6 +45,7 @@ impl From<Oxlintrc> for LintConfig {
             env: config.env,
             globals: config.globals,
             path: Some(config.path),
+            type_aware: config.options.type_aware,
         }
     }
 }
