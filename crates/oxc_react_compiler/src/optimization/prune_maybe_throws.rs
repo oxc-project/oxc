@@ -18,7 +18,7 @@ use crate::hir::{
 /// Prune maybe-throw terminals for blocks that cannot throw.
 pub fn prune_maybe_throws(func: &mut HIRFunction) {
     let terminal_mapping = prune_maybe_throws_impl(func);
-    if let Some(mapping) = terminal_mapping {
+    if let Some(_mapping) = terminal_mapping {
         // If terminals have changed, blocks may have become newly unreachable.
         // Re-run minification passes.
         remove_unnecessary_try_catch(&mut func.body);
@@ -26,7 +26,7 @@ pub fn prune_maybe_throws(func: &mut HIRFunction) {
 
         // Rewrite phi operands to reference the updated predecessor blocks
         // (simplified — full implementation would also handle reversePostorderBlocks, etc.)
-        let _ = mapping;
+        // Terminal mapping applied in full implementation
     }
 }
 

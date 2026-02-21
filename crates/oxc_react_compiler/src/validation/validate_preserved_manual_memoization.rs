@@ -34,13 +34,13 @@ fn validate_block(block: &ReactiveBlock, errors: &mut CompilerError) {
             ReactiveStatement::Instruction(instr) => {
                 if let ReactiveValue::Instruction(value) = &instr.instruction.value {
                     match value.as_ref() {
-                        InstructionValue::StartMemoize(v) => {
+                        InstructionValue::StartMemoize(_v) => {
                             // Track the start of a manual memoization
-                            let _ = v.manual_memo_id;
+                            // Memo ID tracking handled in full implementation
                         }
-                        InstructionValue::FinishMemoize(v) => {
+                        InstructionValue::FinishMemoize(_v) => {
                             // Validate that this memoization is preserved
-                            let _ = v.manual_memo_id;
+                            // Memo ID tracking handled in full implementation
                         }
                         _ => {}
                     }
