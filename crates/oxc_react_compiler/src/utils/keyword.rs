@@ -3,7 +3,7 @@
 /// Port of `Utils/Keyword.ts` from the React Compiler.
 ///
 /// <https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#sec-keywords-and-reserved-words>
-
+///
 /// Note: `await` and `yield` are contextually allowed as identifiers.
 ///   await: reserved inside async functions and modules
 ///   yield: reserved inside generator functions

@@ -17,18 +17,13 @@ pub const GENERATED_SOURCE: SourceLocation = SourceLocation::Generated;
 /// A source location, either from source code or generated.
 ///
 /// Replaces `t.SourceLocation | typeof GeneratedSource` from the TS version.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum SourceLocation {
     /// A real source location with a span.
     Source(Span),
     /// A generated/synthetic location with no corresponding source.
+    #[default]
     Generated,
-}
-
-impl Default for SourceLocation {
-    fn default() -> Self {
-        SourceLocation::Generated
-    }
 }
 
 impl From<Span> for SourceLocation {
@@ -223,12 +218,14 @@ impl CompilerDiagnostic {
     }
 
     /// Add details to this diagnostic.
+    #[must_use]
     pub fn with_details(mut self, details: Vec<CompilerDiagnosticDetail>) -> Self {
         self.options.details.extend(details);
         self
     }
 
     /// Add a single detail to this diagnostic.
+    #[must_use]
     pub fn with_detail(mut self, detail: CompilerDiagnosticDetail) -> Self {
         self.options.details.push(detail);
         self
@@ -367,6 +364,9 @@ impl CompilerError {
     }
 
     /// Check an invariant condition. Returns `Err(CompilerError)` if the condition is false.
+    ///
+    /// # Errors
+    /// Returns a `CompilerError` with category `Invariant` if `condition` is false.
     pub fn invariant_result(
         condition: bool,
         reason: &str,
@@ -487,6 +487,9 @@ impl CompilerError {
     }
 
     /// Convert to a `Result`. Returns `Err(self)` if there are errors, `Ok(())` otherwise.
+    ///
+    /// # Errors
+    /// Returns `Err(self)` when there are any active errors in this aggregate.
     pub fn into_result(self) -> Result<(), CompilerError> {
         if self.has_any_errors() { Err(self) } else { Ok(()) }
     }
@@ -801,34 +804,33 @@ fn print_error_summary(category: ErrorCategory, message: &str) -> String {
 
 /// Get all lint rules for all error categories.
 pub fn all_lint_rules() -> Vec<LintRule> {
-    use ErrorCategory::*;
     let categories = [
-        Hooks,
-        CapitalizedCalls,
-        StaticComponents,
-        UseMemo,
-        VoidUseMemo,
-        PreserveManualMemo,
-        MemoDependencies,
-        IncompatibleLibrary,
-        Immutability,
-        Globals,
-        Refs,
-        EffectDependencies,
-        EffectExhaustiveDependencies,
-        EffectSetState,
-        EffectDerivationsOfState,
-        ErrorBoundaries,
-        Purity,
-        RenderSetState,
-        Invariant,
-        Todo,
-        Syntax,
-        UnsupportedSyntax,
-        Config,
-        Gating,
-        Suppression,
-        Fbt,
+        ErrorCategory::Hooks,
+        ErrorCategory::CapitalizedCalls,
+        ErrorCategory::StaticComponents,
+        ErrorCategory::UseMemo,
+        ErrorCategory::VoidUseMemo,
+        ErrorCategory::PreserveManualMemo,
+        ErrorCategory::MemoDependencies,
+        ErrorCategory::IncompatibleLibrary,
+        ErrorCategory::Immutability,
+        ErrorCategory::Globals,
+        ErrorCategory::Refs,
+        ErrorCategory::EffectDependencies,
+        ErrorCategory::EffectExhaustiveDependencies,
+        ErrorCategory::EffectSetState,
+        ErrorCategory::EffectDerivationsOfState,
+        ErrorCategory::ErrorBoundaries,
+        ErrorCategory::Purity,
+        ErrorCategory::RenderSetState,
+        ErrorCategory::Invariant,
+        ErrorCategory::Todo,
+        ErrorCategory::Syntax,
+        ErrorCategory::UnsupportedSyntax,
+        ErrorCategory::Config,
+        ErrorCategory::Gating,
+        ErrorCategory::Suppression,
+        ErrorCategory::Fbt,
     ];
     categories.into_iter().map(get_rule_for_category).collect()
 }

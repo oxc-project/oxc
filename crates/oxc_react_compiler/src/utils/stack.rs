@@ -57,12 +57,14 @@ impl<T> Stack<T> {
 
 impl<T: Clone> Stack<T> {
     /// Pushes a new value onto the stack, returning a new stack.
+    #[must_use]
     pub fn push(&self, value: T) -> Self {
         Stack::Node { value, next: Arc::new(self.clone()) }
     }
 
     /// Pops the top value from the stack, returning the rest.
     /// If the stack is empty, returns an empty stack.
+    #[must_use]
     pub fn pop(&self) -> Self {
         match self {
             Stack::Empty => Stack::Empty,
