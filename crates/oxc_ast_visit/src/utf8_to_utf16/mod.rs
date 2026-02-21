@@ -1,5 +1,7 @@
 //! Convert UTF-8 span offsets to UTF-16.
 
+use std::cell::Cell;
+
 use oxc_ast::ast::{Comment, Program};
 use oxc_span::Span;
 use oxc_syntax::module_record::{ModuleRecord, VisitMutModuleRecord};
@@ -157,10 +159,22 @@ impl Utf8ToUtf16 {
         *utf16_offset = result;
     }
 
-    /// Convert [`Span`] from UTF-16 offsets to UTF-8 offsets.  
+    /// Convert [`Span`] from UTF-16 offsets to UTF-8 offsets.
     pub fn convert_span_back(&self, span: &mut Span) {
         self.convert_offset_back(&mut span.start);
         self.convert_offset_back(&mut span.end);
+    }
+
+    /// Create a cursor-based loc converter for efficient sequential offset-to-line-column lookups.
+    ///
+    /// The returned [`Utf8ToUtf16LocCursor`] maintains a cursor position that advances linearly
+    /// through the lines table, giving O(1) amortized time for the forward advances typical
+    /// during AST serialization — compared to O(log n) binary search per call.
+    ///
+    /// Returns `None` if line tracking was not enabled when this table was built
+    /// (i.e., `include_lines` was `false` in [`Self::new_with_lines`]).
+    pub fn loc_cursor(&self) -> Option<Utf8ToUtf16LocCursor<'_>> {
+        self.lines.as_deref().map(|lines| Utf8ToUtf16LocCursor { lines, cursor: Cell::new(0) })
     }
 
     /// Convert UTF-8 offset to line and column (UTF-8 byte column).
@@ -221,6 +235,96 @@ impl Utf8ToUtf16 {
     }
 }
 
+/// Cursor-based loc converter. Created by [`Utf8ToUtf16::loc_cursor`].
+///
+/// Avoids a binary search per call by maintaining a line cursor. Forward advances use a
+/// short linear scan; backward jumps fall back to binary search.
+pub struct Utf8ToUtf16LocCursor<'a> {
+    lines: &'a [LineTranslation],
+    /// Uses `Cell` for interior mutability so the cursor satisfies the `Fn` bound
+    /// required by [`oxc_estree::DynamicLocProvider`].
+    cursor: Cell<usize>,
+}
+
+impl<'a> Utf8ToUtf16LocCursor<'a> {
+    /// Convert a UTF-16 offset to `(line, column)` in UTF-16 code units.
+    ///
+    /// Returns `(line, column)` where `line` is 0-based and `column` is in UTF-16 code units.
+    pub fn offset_to_line_column_from_utf16(&self, utf16_offset: u32) -> Option<(u32, u32)> {
+        if self.lines.is_empty() {
+            return Some((0, utf16_offset));
+        }
+
+        let cursor = self.cursor.get();
+
+        let current = &self.lines[cursor];
+        let current_start = current.utf8_offset.wrapping_sub(current.utf16_difference);
+
+        let new_cursor = if utf16_offset >= current_start {
+            let next = cursor + 1;
+            if next < self.lines.len() {
+                let next_start =
+                    self.lines[next].utf8_offset.wrapping_sub(self.lines[next].utf16_difference);
+                if utf16_offset < next_start {
+                    cursor
+                } else {
+                    self.advance_forward(utf16_offset, next)
+                }
+            } else {
+                cursor
+            }
+        } else {
+            self.binary_search(utf16_offset)
+        };
+
+        self.cursor.set(new_cursor);
+
+        let line = &self.lines[new_cursor];
+        let line_start_utf16 = line.utf8_offset.wrapping_sub(line.utf16_difference);
+        let column_utf16 = utf16_offset.wrapping_sub(line_start_utf16);
+
+        #[expect(clippy::cast_possible_truncation)]
+        Some((new_cursor as u32, column_utf16))
+    }
+
+    #[cold]
+    fn advance_forward(&self, utf16_offset: u32, start: usize) -> usize {
+        const LINEAR_ITERATIONS: usize = 8;
+
+        let mut cursor = start;
+        let linear_end = (start + LINEAR_ITERATIONS).min(self.lines.len());
+
+        while cursor + 1 < linear_end {
+            let next = cursor + 1;
+            let next_start =
+                self.lines[next].utf8_offset.wrapping_sub(self.lines[next].utf16_difference);
+            if utf16_offset >= next_start {
+                cursor = next;
+            } else {
+                return cursor;
+            }
+        }
+
+        if cursor + 1 >= self.lines.len() {
+            return cursor;
+        }
+
+        let search = &self.lines[cursor + 1..];
+        let rel = search.partition_point(|line| {
+            line.utf8_offset.wrapping_sub(line.utf16_difference) <= utf16_offset
+        });
+        cursor + rel
+    }
+
+    fn binary_search(&self, utf16_offset: u32) -> usize {
+        self.lines
+            .partition_point(|line| {
+                line.utf8_offset.wrapping_sub(line.utf16_difference) <= utf16_offset
+            })
+            .saturating_sub(1)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
@@ -231,6 +335,44 @@ mod test {
     use oxc_span::{GetSpan, SourceType, Span};
 
     use super::Utf8ToUtf16;
+
+    #[test]
+    fn test_loc_cursor() {
+        let source = "hello\nworld\nfoo\nbar";
+        let table = Utf8ToUtf16::new_with_lines(source, true);
+        let cursor = table.loc_cursor().expect("lines table present");
+
+        let offsets: &[u32] = &[0, 5, 6, 11, 12, 15, 16, 19];
+        for &off in offsets {
+            assert_eq!(
+                cursor.offset_to_line_column_from_utf16(off),
+                table.offset_to_line_column_from_utf16(off),
+                "cursor mismatch at forward offset {off}",
+            );
+        }
+
+        let mixed: &[u32] = &[19, 0, 12, 6, 18, 5, 11];
+        for &off in mixed {
+            assert_eq!(
+                cursor.offset_to_line_column_from_utf16(off),
+                table.offset_to_line_column_from_utf16(off),
+                "cursor mismatch at mixed offset {off}",
+            );
+        }
+
+        let source2 = "hi\n\u{1F928}\nend";
+        let table2 = Utf8ToUtf16::new_with_lines(source2, true);
+        let cursor2 = table2.loc_cursor().expect("lines table present");
+
+        let len2: u32 = source2.chars().map(|c| c.len_utf16() as u32).sum();
+        for off in 0..=len2 {
+            assert_eq!(
+                cursor2.offset_to_line_column_from_utf16(off),
+                table2.offset_to_line_column_from_utf16(off),
+                "cursor2 mismatch at offset {off}",
+            );
+        }
+    }
 
     #[test]
     fn translate_ast() {

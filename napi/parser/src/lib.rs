@@ -124,8 +124,11 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
         // Build a loc provider that converts UTF-16 offsets (from the AST, which has already
         // been converted from UTF-8 to UTF-16 in the pre-pass) to ESTree line/column.
         // The column is expressed in UTF-16 code units as required by the ESTree spec.
-        let provider = DynamicLocProvider::new(|utf16_offset: u32| {
-            span_converter.offset_to_line_column_from_utf16(utf16_offset)
+        let loc_cursor = span_converter
+            .loc_cursor()
+            .expect("lines table is present when `loc = true`");
+        let provider = DynamicLocProvider::new(move |utf16_offset: u32| {
+            loc_cursor.offset_to_line_column_from_utf16(utf16_offset)
         });
 
         match ast_type {
