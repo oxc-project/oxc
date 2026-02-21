@@ -554,6 +554,7 @@ pub(crate) mod unicorn {
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
     pub mod prefer_structured_clone;
+    pub mod prefer_ternary;
     pub mod prefer_top_level_await;
     pub mod prefer_type_error;
     pub mod relative_url_style;

@@ -656,6 +656,7 @@ pub use crate::rules::unicorn::prefer_string_slice::PreferStringSlice as Unicorn
 pub use crate::rules::unicorn::prefer_string_starts_ends_with::PreferStringStartsEndsWith as UnicornPreferStringStartsEndsWith;
 pub use crate::rules::unicorn::prefer_string_trim_start_end::PreferStringTrimStartEnd as UnicornPreferStringTrimStartEnd;
 pub use crate::rules::unicorn::prefer_structured_clone::PreferStructuredClone as UnicornPreferStructuredClone;
+pub use crate::rules::unicorn::prefer_ternary::PreferTernary as UnicornPreferTernary;
 pub use crate::rules::unicorn::prefer_top_level_await::PreferTopLevelAwait as UnicornPreferTopLevelAwait;
 pub use crate::rules::unicorn::prefer_type_error::PreferTypeError as UnicornPreferTypeError;
 pub use crate::rules::unicorn::relative_url_style::RelativeUrlStyle as UnicornRelativeUrlStyle;
@@ -1243,6 +1244,7 @@ pub enum RuleEnum {
     UnicornPreferStringStartsEndsWith(UnicornPreferStringStartsEndsWith),
     UnicornPreferStringTrimStartEnd(UnicornPreferStringTrimStartEnd),
     UnicornPreferStructuredClone(UnicornPreferStructuredClone),
+    UnicornPreferTernary(UnicornPreferTernary),
     UnicornPreferTopLevelAwait(UnicornPreferTopLevelAwait),
     UnicornPreferTypeError(UnicornPreferTypeError),
     UnicornRelativeUrlStyle(UnicornRelativeUrlStyle),
@@ -2008,7 +2010,8 @@ const UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = UNICORN_PREFER_STRING_S
 const UNICORN_PREFER_STRING_TRIM_START_END_ID: usize =
     UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID + 1usize;
 const UNICORN_PREFER_STRUCTURED_CLONE_ID: usize = UNICORN_PREFER_STRING_TRIM_START_END_ID + 1usize;
-const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = UNICORN_PREFER_STRUCTURED_CLONE_ID + 1usize;
+const UNICORN_PREFER_TERNARY_ID: usize = UNICORN_PREFER_STRUCTURED_CLONE_ID + 1usize;
+const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = UNICORN_PREFER_TERNARY_ID + 1usize;
 const UNICORN_PREFER_TYPE_ERROR_ID: usize = UNICORN_PREFER_TOP_LEVEL_AWAIT_ID + 1usize;
 const UNICORN_RELATIVE_URL_STYLE_ID: usize = UNICORN_PREFER_TYPE_ERROR_ID + 1usize;
 const UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID: usize = UNICORN_RELATIVE_URL_STYLE_ID + 1usize;
@@ -2812,6 +2815,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID,
             Self::UnicornPreferStringTrimStartEnd(_) => UNICORN_PREFER_STRING_TRIM_START_END_ID,
             Self::UnicornPreferStructuredClone(_) => UNICORN_PREFER_STRUCTURED_CLONE_ID,
+            Self::UnicornPreferTernary(_) => UNICORN_PREFER_TERNARY_ID,
             Self::UnicornPreferTopLevelAwait(_) => UNICORN_PREFER_TOP_LEVEL_AWAIT_ID,
             Self::UnicornPreferTypeError(_) => UNICORN_PREFER_TYPE_ERROR_ID,
             Self::UnicornRelativeUrlStyle(_) => UNICORN_RELATIVE_URL_STYLE_ID,
@@ -3605,6 +3609,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => UnicornPreferStringStartsEndsWith::NAME,
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::NAME,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::NAME,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::NAME,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::NAME,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::NAME,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::NAME,
@@ -4434,6 +4439,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::CATEGORY,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::CATEGORY,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::CATEGORY,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::CATEGORY,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::CATEGORY,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::CATEGORY,
@@ -5234,6 +5240,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => UnicornPreferStringStartsEndsWith::FIX,
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::FIX,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::FIX,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::FIX,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::FIX,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::FIX,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::FIX,
@@ -6184,6 +6191,7 @@ impl RuleEnum {
                 UnicornPreferStringTrimStartEnd::documentation()
             }
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::documentation(),
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::documentation(),
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::documentation(),
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::documentation(),
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::documentation(),
@@ -7928,6 +7936,8 @@ impl RuleEnum {
                 UnicornPreferStructuredClone::config_schema(generator)
                     .or_else(|| UnicornPreferStructuredClone::schema(generator))
             }
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::config_schema(generator)
+                .or_else(|| UnicornPreferTernary::schema(generator)),
             Self::UnicornPreferTopLevelAwait(_) => {
                 UnicornPreferTopLevelAwait::config_schema(generator)
                     .or_else(|| UnicornPreferTopLevelAwait::schema(generator))
@@ -8904,6 +8914,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => "unicorn",
             Self::UnicornPreferStringTrimStartEnd(_) => "unicorn",
             Self::UnicornPreferStructuredClone(_) => "unicorn",
+            Self::UnicornPreferTernary(_) => "unicorn",
             Self::UnicornPreferTopLevelAwait(_) => "unicorn",
             Self::UnicornPreferTypeError(_) => "unicorn",
             Self::UnicornRelativeUrlStyle(_) => "unicorn",
@@ -10790,6 +10801,9 @@ impl RuleEnum {
             Self::UnicornPreferStructuredClone(_) => Ok(Self::UnicornPreferStructuredClone(
                 UnicornPreferStructuredClone::from_configuration(value)?,
             )),
+            Self::UnicornPreferTernary(_) => {
+                Ok(Self::UnicornPreferTernary(UnicornPreferTernary::from_configuration(value)?))
+            }
             Self::UnicornPreferTopLevelAwait(_) => Ok(Self::UnicornPreferTopLevelAwait(
                 UnicornPreferTopLevelAwait::from_configuration(value)?,
             )),
@@ -11831,6 +11845,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.to_configuration(),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.to_configuration(),
             Self::UnicornPreferStructuredClone(rule) => rule.to_configuration(),
+            Self::UnicornPreferTernary(rule) => rule.to_configuration(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.to_configuration(),
             Self::UnicornPreferTypeError(rule) => rule.to_configuration(),
             Self::UnicornRelativeUrlStyle(rule) => rule.to_configuration(),
@@ -12530,6 +12545,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run(node, ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run(node, ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.run(node, ctx),
+            Self::UnicornPreferTernary(rule) => rule.run(node, ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run(node, ctx),
             Self::UnicornPreferTypeError(rule) => rule.run(node, ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run(node, ctx),
@@ -13227,6 +13243,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_once(ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run_once(ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.run_once(ctx),
+            Self::UnicornPreferTernary(rule) => rule.run_once(ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_once(ctx),
             Self::UnicornPreferTypeError(rule) => rule.run_once(ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_once(ctx),
@@ -14012,6 +14029,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferTypeError(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14719,6 +14737,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.should_run(ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.should_run(ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.should_run(ctx),
+            Self::UnicornPreferTernary(rule) => rule.should_run(ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.should_run(ctx),
             Self::UnicornPreferTypeError(rule) => rule.should_run(ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.should_run(ctx),
@@ -15658,6 +15677,7 @@ impl RuleEnum {
                 UnicornPreferStringTrimStartEnd::IS_TSGOLINT_RULE
             }
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::IS_TSGOLINT_RULE,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::IS_TSGOLINT_RULE,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::IS_TSGOLINT_RULE,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::IS_TSGOLINT_RULE,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::IS_TSGOLINT_RULE,
@@ -16550,6 +16570,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::HAS_CONFIG,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::HAS_CONFIG,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::HAS_CONFIG,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::HAS_CONFIG,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::HAS_CONFIG,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::HAS_CONFIG,
@@ -17269,6 +17290,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.types_info(),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.types_info(),
             Self::UnicornPreferStructuredClone(rule) => rule.types_info(),
+            Self::UnicornPreferTernary(rule) => rule.types_info(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.types_info(),
             Self::UnicornPreferTypeError(rule) => rule.types_info(),
             Self::UnicornRelativeUrlStyle(rule) => rule.types_info(),
@@ -17966,6 +17988,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_info(),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run_info(),
             Self::UnicornPreferStructuredClone(rule) => rule.run_info(),
+            Self::UnicornPreferTernary(rule) => rule.run_info(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_info(),
             Self::UnicornPreferTypeError(rule) => rule.run_info(),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_info(),
@@ -18769,6 +18792,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferStringStartsEndsWith(UnicornPreferStringStartsEndsWith::default()),
         RuleEnum::UnicornPreferStringTrimStartEnd(UnicornPreferStringTrimStartEnd::default()),
         RuleEnum::UnicornPreferStructuredClone(UnicornPreferStructuredClone::default()),
+        RuleEnum::UnicornPreferTernary(UnicornPreferTernary::default()),
         RuleEnum::UnicornPreferTopLevelAwait(UnicornPreferTopLevelAwait::default()),
         RuleEnum::UnicornPreferTypeError(UnicornPreferTypeError::default()),
         RuleEnum::UnicornRelativeUrlStyle(UnicornRelativeUrlStyle::default()),
