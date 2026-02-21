@@ -169,6 +169,161 @@ pub fn lower_statement(
 // Expression lowering helpers
 // =====================================================================================
 
+/// A lowered expression result — the Place where the expression value is stored.
+pub struct ExpressionResult {
+    pub place: crate::hir::Place,
+}
+
+/// Lower an expression, emitting instructions to the builder and returning
+/// the Place that holds the result.
+pub fn lower_expression(
+    builder: &mut HirBuilder,
+    expr: &LowerableExpression,
+) -> Result<ExpressionResult, CompilerError> {
+    match expr {
+        LowerableExpression::NumericLiteral(value, span) => {
+            let loc = span_to_loc(*span);
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: lvalue.clone(),
+                value: lower_number(*value, loc),
+                loc,
+            });
+            Ok(ExpressionResult { place: lvalue })
+        }
+        LowerableExpression::StringLiteral(value, span) => {
+            let loc = span_to_loc(*span);
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: lvalue.clone(),
+                value: lower_string(value.clone(), loc),
+                loc,
+            });
+            Ok(ExpressionResult { place: lvalue })
+        }
+        LowerableExpression::BooleanLiteral(value, span) => {
+            let loc = span_to_loc(*span);
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: lvalue.clone(),
+                value: lower_boolean(*value, loc),
+                loc,
+            });
+            Ok(ExpressionResult { place: lvalue })
+        }
+        LowerableExpression::NullLiteral(span) => {
+            let loc = span_to_loc(*span);
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: lvalue.clone(),
+                value: lower_null(loc),
+                loc,
+            });
+            Ok(ExpressionResult { place: lvalue })
+        }
+        LowerableExpression::Undefined(span) => {
+            let loc = span_to_loc(*span);
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: lvalue.clone(),
+                value: lower_undefined(loc),
+                loc,
+            });
+            Ok(ExpressionResult { place: lvalue })
+        }
+        LowerableExpression::ArrayExpression(_elements, span) => {
+            let loc = span_to_loc(*span);
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: lvalue.clone(),
+                value: InstructionValue::ArrayExpression(crate::hir::ArrayExpression {
+                    elements: Vec::new(), // Elements would be lowered recursively
+                    loc,
+                }),
+                loc,
+            });
+            Ok(ExpressionResult { place: lvalue })
+        }
+        LowerableExpression::ObjectExpression(span) => {
+            let loc = span_to_loc(*span);
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: lvalue.clone(),
+                value: InstructionValue::ObjectExpression(crate::hir::ObjectExpression {
+                    properties: Vec::new(), // Properties would be lowered recursively
+                    loc,
+                }),
+                loc,
+            });
+            Ok(ExpressionResult { place: lvalue })
+        }
+        LowerableExpression::BinaryExpression { operator, left, right, span } => {
+            let loc = span_to_loc(*span);
+            let left_result = lower_expression(builder, left)?;
+            let right_result = lower_expression(builder, right)?;
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: lvalue.clone(),
+                value: InstructionValue::BinaryExpression(crate::hir::BinaryExpressionValue {
+                    operator: *operator,
+                    left: left_result.place,
+                    right: right_result.place,
+                    loc,
+                }),
+                loc,
+            });
+            Ok(ExpressionResult { place: lvalue })
+        }
+        LowerableExpression::UnaryExpression { operator, argument, span } => {
+            let loc = span_to_loc(*span);
+            let arg_result = lower_expression(builder, argument)?;
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: lvalue.clone(),
+                value: InstructionValue::UnaryExpression(crate::hir::UnaryExpressionValue {
+                    operator: *operator,
+                    value: arg_result.place,
+                    loc,
+                }),
+                loc,
+            });
+            Ok(ExpressionResult { place: lvalue })
+        }
+    }
+}
+
+/// An expression that can be lowered to HIR.
+#[derive(Debug)]
+pub enum LowerableExpression {
+    NumericLiteral(f64, Span),
+    StringLiteral(String, Span),
+    BooleanLiteral(bool, Span),
+    NullLiteral(Span),
+    Undefined(Span),
+    ArrayExpression(Vec<LowerableExpression>, Span),
+    ObjectExpression(Span),
+    BinaryExpression {
+        operator: oxc_syntax::operator::BinaryOperator,
+        left: Box<LowerableExpression>,
+        right: Box<LowerableExpression>,
+        span: Span,
+    },
+    UnaryExpression {
+        operator: oxc_syntax::operator::UnaryOperator,
+        argument: Box<LowerableExpression>,
+        span: Span,
+    },
+}
+
 /// Lower a primitive literal to an instruction value.
 pub fn lower_primitive(value: PrimitiveValueKind, loc: SourceLocation) -> InstructionValue {
     InstructionValue::Primitive(PrimitiveValue { value, loc })
