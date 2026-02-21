@@ -243,6 +243,11 @@ impl Environment {
         }
     }
 
+    /// Get the next block ID value without incrementing.
+    pub fn next_block_id_value(&self) -> u32 {
+        self.next_block_id
+    }
+
     /// Generate a fresh block ID.
     pub fn next_block_id(&mut self) -> super::hir_types::BlockId {
         let id = self.next_block_id;
