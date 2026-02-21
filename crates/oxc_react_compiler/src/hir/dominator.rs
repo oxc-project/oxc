@@ -244,25 +244,7 @@ fn build_reverse_graph(func: &HIRFunction, include_throws_as_exit: bool) -> Grap
     // Put nodes into RPO form via DFS
     let mut visited = FxHashSet::default();
     let mut postorder: Vec<BlockId> = Vec::new();
-
-    fn visit(
-        id: BlockId,
-        nodes: &FxHashMap<BlockId, Node>,
-        visited: &mut FxHashSet<BlockId>,
-        postorder: &mut Vec<BlockId>,
-    ) {
-        if !visited.insert(id) {
-            return;
-        }
-        if let Some(node) = nodes.get(&id) {
-            for &succ in &node.succs {
-                visit(succ, nodes, visited, postorder);
-            }
-        }
-        postorder.push(id);
-    }
-
-    visit(exit_id, &nodes, &mut visited, &mut postorder);
+    dfs_visit(exit_id, &nodes, &mut visited, &mut postorder);
     postorder.reverse();
 
     let mut rpo_nodes = FxHashMap::default();
@@ -274,4 +256,21 @@ fn build_reverse_graph(func: &HIRFunction, include_throws_as_exit: bool) -> Grap
     }
 
     Graph { entry: exit_id, nodes: rpo_nodes }
+}
+
+fn dfs_visit(
+    id: BlockId,
+    nodes: &FxHashMap<BlockId, Node>,
+    visited: &mut FxHashSet<BlockId>,
+    postorder: &mut Vec<BlockId>,
+) {
+    if !visited.insert(id) {
+        return;
+    }
+    if let Some(node) = nodes.get(&id) {
+        for &succ in &node.succs {
+            dfs_visit(succ, nodes, visited, postorder);
+        }
+    }
+    postorder.push(id);
 }
