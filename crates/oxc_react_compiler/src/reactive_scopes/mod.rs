@@ -1,5 +1,6 @@
 pub mod align_scopes;
 pub mod build_reactive_function;
+pub mod codegen_reactive_function;
 pub mod extract_scope_declarations;
 pub mod flatten;
 pub mod infer_reactive_scope_variables;
