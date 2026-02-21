@@ -1,4 +1,4 @@
-use super::StyledComponentsOptions;
+use super::{StyledComponentsOptions, ReactCompilerOptions};
 
 #[derive(Default, Debug, Clone)]
 /// Plugin-specific transform options.
@@ -7,4 +7,6 @@ pub struct PluginsOptions {
     pub styled_components: Option<StyledComponentsOptions>,
     /// Enable tagged template transform plugin.
     pub tagged_template_transform: bool,
+    /// Options for the React Compiler transform.
+    pub react_compiler: Option<ReactCompilerOptions>,
 }
