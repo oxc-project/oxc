@@ -262,7 +262,7 @@ fn count_memo_slots(
             ReactiveStatement::Scope(scope) => {
                 *memo_blocks += 1;
                 // Each declaration in the scope needs a cache slot
-                *memo_values += scope.scope.declarations.len() as u32;
+                *memo_values += u32::try_from(scope.scope.declarations.len()).unwrap_or(u32::MAX);
                 // Plus one for the cache validity check
                 *memo_values += 1;
                 count_memo_slots(
@@ -275,7 +275,7 @@ fn count_memo_slots(
             }
             ReactiveStatement::PrunedScope(scope) => {
                 *pruned_blocks += 1;
-                *pruned_values += scope.scope.declarations.len() as u32;
+                *pruned_values += u32::try_from(scope.scope.declarations.len()).unwrap_or(u32::MAX);
                 count_memo_slots(
                     &scope.instructions,
                     memo_blocks,

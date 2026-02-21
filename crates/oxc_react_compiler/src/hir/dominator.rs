@@ -205,7 +205,7 @@ fn build_graph(func: &HIRFunction) -> Graph {
 }
 
 fn build_reverse_graph(func: &HIRFunction, include_throws_as_exit: bool) -> Graph {
-    let exit_id = BlockId(func.body.blocks.len() as u32 + 1000); // synthetic exit block
+    let exit_id = BlockId(u32::try_from(func.body.blocks.len()).unwrap_or(u32::MAX).saturating_add(1000)); // synthetic exit block
 
     let mut nodes: FxHashMap<BlockId, Node> = FxHashMap::default();
     let mut exit_node = Node {
