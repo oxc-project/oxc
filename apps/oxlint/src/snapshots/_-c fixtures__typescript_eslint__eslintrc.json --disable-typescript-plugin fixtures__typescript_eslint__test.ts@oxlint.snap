@@ -21,6 +21,9 @@ working directory:
  4 | 9007199254740993 // no-loss-of-precision
    : ^^^^^^^^^^^^^^^^
    `----
+  help: Use a number literal representable by a 64-bit floating-point number, or use a `BigInt` literal (for example, `9007199254740993n`) for exact large integers.
+  note: In JavaScript, `Number` values exactly represent integers only in the range -9007199254740991 to 9007199254740991 (`Number.MIN_SAFE_INTEGER` to `Number.MAX_SAFE_INTEGER`). `BigInt`
+           supports arbitrarily large integers.
 
   ! eslint(no-unused-expressions): Expected expression to be used
    ,-[fixtures/typescript_eslint/test.ts:4:1]
