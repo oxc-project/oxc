@@ -310,6 +310,8 @@ enum Pragma<'a> {
     Double(Atom<'a>, Atom<'a>),
     /// `createElement`
     Single(Atom<'a>),
+    /// `'div'`
+    String(Atom<'a>),
     /// `foo.bar.qux`
     Multiple(Vec<Atom<'a>>),
     /// `this`, `this.foo`, `this.foo.bar.qux`
@@ -359,6 +361,21 @@ impl<'a> Pragma<'a> {
         Self::Double(Atom::from("React"), Atom::from(default_property_name))
     }
 
+    fn parse_fragment_no_ctx(pragma: Option<&str>, ast: AstBuilder<'a>) -> Self {
+        if let Some(pragma) = pragma
+            && !pragma.is_empty()
+        {
+            if let Some(pragma) = Self::parse_impl(pragma, ast) {
+                return pragma;
+            }
+            if let Some(pragma) = Self::parse_string_literal(pragma, ast) {
+                return Self::String(pragma);
+            }
+        }
+
+        Self::Double(Atom::from("React"), Atom::from("Fragment"))
+    }
+
     fn parse_impl(pragma: &str, ast: AstBuilder<'a>) -> Option<Self> {
         let strs_to_atoms = |parts: &[&str]| parts.iter().map(|part| ast.atom(part)).collect();
 
@@ -399,6 +416,18 @@ impl<'a> Pragma<'a> {
             parts => Self::Multiple(strs_to_atoms(parts)),
         })
     }
+
+    fn parse_string_literal(pragma: &str, ast: AstBuilder<'a>) -> Option<Atom<'a>> {
+        let bytes = pragma.as_bytes();
+        if bytes.len() >= 2 {
+            let quote = bytes[0];
+            if matches!(quote, b'\'' | b'"') && bytes[bytes.len() - 1] == quote {
+                return Some(ast.atom(&pragma[1..pragma.len() - 1]));
+            }
+        }
+        None
+    }
+
     fn create_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         let (object, parts) = match self {
             Self::Double(first, second) => {
@@ -412,6 +441,9 @@ impl<'a> Pragma<'a> {
             }
             Self::Single(single) => {
                 return get_read_identifier_reference(SPAN, *single, ctx);
+            }
+            Self::String(literal) => {
+                return ctx.ast.expression_string_literal(SPAN, *literal, None);
             }
             Self::Multiple(parts) => {
                 let mut parts = parts.iter();
@@ -455,7 +487,7 @@ impl<'a> JsxImpl<'a> {
             JsxRuntime::Classic => {
                 let pragma = Pragma::parse_no_ctx(options.pragma.as_deref(), "createElement", ast);
                 let pragma_frag =
-                    Pragma::parse_no_ctx(options.pragma_frag.as_deref(), "Fragment", ast);
+                    Pragma::parse_fragment_no_ctx(options.pragma_frag.as_deref(), ast);
                 Bindings::Classic(ClassicBindings { pragma, pragma_frag })
             }
             JsxRuntime::Automatic => {
@@ -1403,6 +1435,19 @@ mod test {
         assert_eq!(object.name, "React");
         assert_eq!(member.property.name, "Fragment");
     }
+
+    #[test]
+    fn quoted_fragment_pragma_is_string_literal() {
+        setup!(traverse_ctx, _transform_ctx);
+
+        let pragma = Some("'['");
+        let pragma = Pragma::parse_fragment_no_ctx(pragma, traverse_ctx.ast);
+        let expr = pragma.create_expression(traverse_ctx);
+
+        let Expression::StringLiteral(literal) = &expr else { panic!() };
+        assert_eq!(literal.value, "[");
+    }
+
     #[test]
     fn entity_after_stray_amp() {
         setup!(traverse_ctx, _transform_ctx);
