@@ -23,7 +23,7 @@ pub fn flatten_reactive_loops_hir(func: &HIRFunction) {
 ///
 /// Hooks must be called unconditionally and in consistent order, so they
 /// cannot be inside conditionally-executed reactive scopes.
-pub fn flatten_scopes_with_hooks_or_use_hir(func: &mut HIRFunction) {
+pub fn flatten_scopes_with_hooks_or_use_hir(func: &HIRFunction) {
     // The full implementation checks each reactive scope for hook calls
     // and flattens (prunes) those scopes.
     let _block_ids: Vec<_> = func.body.blocks.keys().copied().collect();

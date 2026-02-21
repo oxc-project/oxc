@@ -16,7 +16,7 @@ use crate::{
 /// # Errors
 /// Returns a `CompilerError` if lowering fails due to unsupported syntax.
 pub fn lower(
-    env: &mut Environment,
+    env: &Environment,
     fn_type: ReactFunctionType,
 ) -> Result<HIRFunction, CompilerError> {
     let mut builder = HirBuilder::new(env.clone(), None);
