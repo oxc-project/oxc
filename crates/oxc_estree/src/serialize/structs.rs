@@ -423,16 +423,21 @@ pub trait ESTreeSpan: Copy {
 /// Trait for providing location information (line/column) from offsets.
 /// This allows serializers to optionally access translation tables without circular dependencies.
 pub trait LocProvider {
-    /// Convert UTF-8 offset to (line, column) where both are 0-based.
-    /// Returns None if no translation is available.
-    fn offset_to_line_column(&self, utf8_offset: u32) -> Option<(u32, u32)>;
+    /// Convert a UTF-16 offset to (line, column) where line is 0-based and column is in UTF-16
+    /// code units.
+    ///
+    /// Note: The offset received here is a UTF-16 offset, not a UTF-8 byte offset.
+    /// Spans in the AST have already been converted from UTF-8 to UTF-16 before serialization.
+    ///
+    /// Returns `None` if no translation table is available.
+    fn offset_to_line_column(&self, utf16_offset: u32) -> Option<(u32, u32)>;
 }
 
 /// Dummy implementation for when no translation is needed
 pub struct NoLocProvider;
 
 impl LocProvider for NoLocProvider {
-    fn offset_to_line_column(&self, _utf8_offset: u32) -> Option<(u32, u32)> {
+    fn offset_to_line_column(&self, _utf16_offset: u32) -> Option<(u32, u32)> {
         None
     }
 }

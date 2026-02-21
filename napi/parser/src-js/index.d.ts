@@ -7,7 +7,6 @@ import type { VisitorObject } from "./generated/visit/visitor.d.ts";
 export * from "@oxc-project/types";
 
 export { VisitorObject };
-export type { SourceLocation } from '@oxc-project/types';
 
 export const visitorKeys: Record<string, string[]>;
 
@@ -41,6 +40,16 @@ export declare const enum Severity {
   Error = 'Error',
   Warning = 'Warning',
   Advice = 'Advice'
+}
+
+export interface SourceLocation {
+  start: SourcePosition
+  end: SourcePosition
+}
+
+export interface SourcePosition {
+  line: number
+  column: number
 }
 export declare class ParseResult {
   get program(): import("@oxc-project/types").Program

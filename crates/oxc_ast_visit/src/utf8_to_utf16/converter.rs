@@ -261,38 +261,7 @@ impl<'t> Utf8ToUtf16Converter<'t> {
             // so `next_index` is in bounds
             let translation = unsafe { self.translations.get_unchecked(next_index) };
 
-            // For the problematic case "_ऊ_ऊ_", we have:
-            // - First ऊ (3-byte) at offsets 1-3, translation.utf8_offset=4
-            // - Second ऊ (3-byte) at offsets 5-7, translation.utf8_offset=8
-            // When looking for offset 5, we need to realize that the second ऊ starts at offset 5
-
-            // The key insight: translation.utf8_offset is the position AFTER the Unicode character
-            // So for the Unicode character, we need to find where it starts
-            let prev_end = if next_index > 0 {
-                // SAFETY: `next_index > 0` ensures `next_index - 1` is a valid index.
-                // `next_index` comes from `partition_point` which returns a value in range `0..=len`,
-                // so `next_index - 1` is in range `0..len`, which is valid for `get_unchecked`.
-                let prev_translation = unsafe { self.translations.get_unchecked(next_index - 1) };
-                prev_translation.utf8_offset
-            } else {
-                0
-            };
-
-            // The Unicode character spans from prev_end to translation.utf8_offset
-            // So any offset < translation.utf8_offset and >= prev_end is within this Unicode char
-            // But we want to find the ASCII range that comes BEFORE this Unicode char
-
-            // Actually, let's think differently. The issue is that we need to find the correct range.
-            // For offset 5 in "_ऊ_ऊ_":
-            // - We're currently in range ending at offset 4 (after first ऊ)
-            // - Offset 5 is the start of the second ऊ
-            // - So offset 5 should be in a Unicode range, not ASCII range
-            // - The correct behavior should be to find that offset 5 is within the Unicode char at offsets 5-7
-
-            // Let's check if utf8_offset is within the span of this Unicode character
-            if utf8_offset >= prev_end && utf8_offset < translation.utf8_offset {
-                // The offset is within this Unicode character
-                // We should return this as the range boundary
+            if utf8_offset < translation.utf8_offset {
                 return (next_index, translation.utf8_offset);
             }
             next_index += 1;

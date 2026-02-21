@@ -22,7 +22,7 @@ impl<F> LocProvider for DynamicLocProvider<F>
 where
     F: Fn(u32) -> Option<(u32, u32)>,
 {
-    fn offset_to_line_column(&self, utf8_offset: u32) -> Option<(u32, u32)> {
-        (self.converter)(utf8_offset)
+    fn offset_to_line_column(&self, utf16_offset: u32) -> Option<(u32, u32)> {
+        (self.converter)(utf16_offset)
     }
 }

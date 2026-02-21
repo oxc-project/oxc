@@ -20,9 +20,8 @@ pub struct Translation {
 pub struct LineTranslation {
     /// UTF-8 byte offset of the start of the line.
     pub utf8_offset: u32,
-    /// UTF-16 offset difference at the start of this line.
-    /// Note: Currently unused but kept for potential future use and struct layout compatibility
-    #[expect(dead_code)]
+    /// Cumulative UTF-16 difference at the start of this line.
+    /// Used to compute UTF-16 column numbers: `line_start_utf16 = utf8_offset - utf16_difference`.
     pub utf16_difference: u32,
 }
 

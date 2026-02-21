@@ -3,9 +3,9 @@ mod error;
 
 pub use comment::*;
 pub use error::*;
+pub use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 
 use oxc_ast::{CommentKind, ast::Program};
-use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_span::SourceType;
 use oxc_syntax::module_record::ModuleRecord;
 
@@ -16,17 +16,22 @@ pub fn convert_utf8_to_utf16(
     module_record: &mut ModuleRecord,
     errors: &mut [OxcError],
 ) -> Vec<Comment> {
-    convert_utf8_to_utf16_with_loc(source_text, program, module_record, errors, false)
+    let (comments, _) =
+        convert_utf8_to_utf16_with_loc(source_text, program, module_record, errors, false);
+    comments
 }
 
-/// Convert spans to UTF-16, optionally with line information
+/// Convert spans to UTF-16, optionally with line information.
+///
+/// Returns the converted comments and the translation table.
+/// When `include_lines` is `true`, the table has line information for loc computation.
 pub fn convert_utf8_to_utf16_with_loc(
     source_text: &str,
     program: &mut Program,
     module_record: &mut ModuleRecord,
     errors: &mut [OxcError],
     include_lines: bool,
-) -> Vec<Comment> {
+) -> (Vec<Comment>, Utf8ToUtf16) {
     let span_converter = Utf8ToUtf16::new_with_lines(source_text, include_lines);
     span_converter.convert_program(program);
 
@@ -41,6 +46,17 @@ pub fn convert_utf8_to_utf16_with_loc(
             if let Some(converter) = offset_converter.as_mut() {
                 converter.convert_span(&mut span);
             }
+            let loc = if include_lines {
+                span_converter
+                    .offset_to_line_column_from_utf16(span.start)
+                    .zip(span_converter.offset_to_line_column_from_utf16(span.end))
+                    .map(|((sl, sc), (el, ec))| SourceLocation {
+                        start: SourcePosition { line: sl + 1, column: sc },
+                        end: SourcePosition { line: el + 1, column: ec },
+                    })
+            } else {
+                None
+            };
             Comment {
                 r#type: match comment.kind {
                     CommentKind::Line => String::from("Line"),
@@ -51,6 +67,7 @@ pub fn convert_utf8_to_utf16_with_loc(
                 value,
                 start: span.start,
                 end: span.end,
+                loc,
             }
         })
         .collect::<Vec<_>>();
@@ -68,7 +85,7 @@ pub fn convert_utf8_to_utf16_with_loc(
         }
     }
 
-    comments
+    (comments, span_converter)
 }
 
 pub fn get_source_type(

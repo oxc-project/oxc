@@ -163,9 +163,9 @@ impl Utf8ToUtf16 {
         self.convert_offset_back(&mut span.end);
     }
 
-    /// Convert UTF-8 offset to line and column.
-    /// Returns (line, column) where both are 0-based.
-    /// This method expects UTF-8 byte offset as input.
+    /// Convert UTF-8 offset to line and column (UTF-8 byte column).
+    /// Returns (line, column) where both are 0-based and column is in UTF-8 bytes.
+    /// This method expects a UTF-8 byte offset as input.
     pub fn offset_to_line_column(&self, utf8_offset: u32) -> Option<(u32, u32)> {
         let lines = self.lines.as_ref()?;
 
@@ -181,12 +181,43 @@ impl Utf8ToUtf16 {
         let line = &lines[line_index];
         let column_utf8_bytes = utf8_offset - line.utf8_offset;
 
-        // Column is just the byte difference from line start
-        // Since we're dealing with UTF-8 positions within a line,
-        // we don't need to convert to UTF-16 for column calculation here
         #[expect(clippy::cast_possible_truncation)]
         let line_index_u32 = line_index as u32;
         Some((line_index_u32, column_utf8_bytes))
+    }
+
+    /// Convert a UTF-16 offset to (line, column) in UTF-16.
+    ///
+    /// Returns (line, column) where line is 0-based and column is in UTF-16 code units.
+    ///
+    /// This is more efficient than calling [`Self::convert_offset_back`] followed by
+    /// [`Self::offset_to_line_column`], because it avoids the back-conversion step entirely.
+    /// It works by binary-searching the lines table using the UTF-16 line start offset,
+    /// which is derived from `line.utf8_offset - line.utf16_difference`.
+    pub fn offset_to_line_column_from_utf16(&self, utf16_offset: u32) -> Option<(u32, u32)> {
+        let lines = self.lines.as_ref()?;
+
+        if lines.is_empty() {
+            return Some((0, utf16_offset));
+        }
+
+        // Binary search for the last line whose UTF-16 start offset is <= utf16_offset.
+        // Each line's UTF-16 start is: line.utf8_offset - line.utf16_difference.
+        // `partition_point` returns the first index where the predicate is false,
+        // so subtracting 1 gives the last line that starts at or before the offset.
+        let line_index = lines
+            .partition_point(|line| {
+                line.utf8_offset.wrapping_sub(line.utf16_difference) <= utf16_offset
+            })
+            .saturating_sub(1);
+
+        let line = &lines[line_index];
+        let line_start_utf16 = line.utf8_offset.wrapping_sub(line.utf16_difference);
+        let column_utf16 = utf16_offset.wrapping_sub(line_start_utf16);
+
+        #[expect(clippy::cast_possible_truncation)]
+        let line_index_u32 = line_index as u32;
+        Some((line_index_u32, column_utf16))
     }
 }
 
@@ -246,6 +277,34 @@ mod test {
         assert_eq!(convert_back(4), 6);
         assert_eq!(convert_back(9), 11);
         assert_eq!(convert_back(11), 15);
+    }
+
+    #[test]
+    fn test_loc_functionality_utf16() {
+        // "let 🤨 = 1;" - 🤨 is 4 UTF-8 bytes but 2 UTF-16 code units
+        // UTF-8:  l(0) e(1) t(2) " "(3) 🤨(4-7) " "(8) =(9) " "(10) 1(11) ;(12)
+        // UTF-16: l(0) e(1) t(2) " "(3) 🤨(4-5) " "(6) =(7) " "(8)  1(9)  ;(10)
+        let source = "let \u{1F928} = 1;";
+        let table = Utf8ToUtf16::new_with_lines(source, true);
+        let len_utf16: u32 = source.chars().map(|c| c.len_utf16() as u32).sum();
+
+        // Start of statement (line 0, col 0)
+        assert_eq!(table.offset_to_line_column_from_utf16(0), Some((0, 0)));
+        // After emoji at UTF-16 offset 6 (space after emoji)
+        assert_eq!(table.offset_to_line_column_from_utf16(6), Some((0, 6)));
+        // End of statement
+        assert_eq!(table.offset_to_line_column_from_utf16(len_utf16), Some((0, len_utf16)));
+
+        // Two-line source: "hello\nworld"
+        let source2 = "hello\nworld";
+        let table2 = Utf8ToUtf16::new_with_lines(source2, true);
+
+        // Line 0, column 5 (end of "hello") - UTF-8 and UTF-16 offsets are the same (ASCII only)
+        assert_eq!(table2.offset_to_line_column_from_utf16(5), Some((0, 5)));
+        // Line 1, column 0 (start of "world") - UTF-16 offset 6 = past the \n
+        assert_eq!(table2.offset_to_line_column_from_utf16(6), Some((1, 0)));
+        // Line 1, column 5 (end of "world")
+        assert_eq!(table2.offset_to_line_column_from_utf16(11), Some((1, 5)));
     }
 
     #[test]

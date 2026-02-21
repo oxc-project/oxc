@@ -69,10 +69,90 @@ impl<P: LocProvider> Config for ConfigJSWithLoc<P> {
     }
 }
 
+/// Config for TypeScript serialization with fixes and dynamic location provider
+pub struct ConfigFixesTSWithLoc<P: LocProvider> {
+    ranges: bool,
+    loc: bool,
+    loc_provider: P,
+}
+
+impl<P: LocProvider> ConfigFixesTSWithLoc<P> {
+    pub fn new(ranges: bool, loc: bool, provider: P) -> Self {
+        Self { ranges, loc, loc_provider: provider }
+    }
+}
+
+impl<P: LocProvider> Config for ConfigFixesTSWithLoc<P> {
+    const INCLUDE_TS_FIELDS: bool = true;
+    const FIXES: bool = true;
+
+    type LocProvider = P;
+
+    fn new(_ranges: bool, _loc: bool) -> Self {
+        panic!("Use new_with_loc_provider for ConfigFixesTSWithLoc")
+    }
+
+    fn new_with_loc_provider(ranges: bool, loc: bool, provider: Self::LocProvider) -> Self {
+        Self { ranges, loc, loc_provider: provider }
+    }
+
+    fn ranges(&self) -> bool {
+        self.ranges
+    }
+
+    fn loc(&self) -> bool {
+        self.loc
+    }
+
+    fn loc_provider(&self) -> &Self::LocProvider {
+        &self.loc_provider
+    }
+}
+
+/// Config for JavaScript serialization with fixes and dynamic location provider
+pub struct ConfigFixesJSWithLoc<P: LocProvider> {
+    ranges: bool,
+    loc: bool,
+    loc_provider: P,
+}
+
+impl<P: LocProvider> ConfigFixesJSWithLoc<P> {
+    pub fn new(ranges: bool, loc: bool, provider: P) -> Self {
+        Self { ranges, loc, loc_provider: provider }
+    }
+}
+
+impl<P: LocProvider> Config for ConfigFixesJSWithLoc<P> {
+    const INCLUDE_TS_FIELDS: bool = false;
+    const FIXES: bool = true;
+
+    type LocProvider = P;
+
+    fn new(_ranges: bool, _loc: bool) -> Self {
+        panic!("Use new_with_loc_provider for ConfigFixesJSWithLoc")
+    }
+
+    fn new_with_loc_provider(ranges: bool, loc: bool, provider: Self::LocProvider) -> Self {
+        Self { ranges, loc, loc_provider: provider }
+    }
+
+    fn ranges(&self) -> bool {
+        self.ranges
+    }
+
+    fn loc(&self) -> bool {
+        self.loc
+    }
+
+    fn loc_provider(&self) -> &Self::LocProvider {
+        &self.loc_provider
+    }
+}
+
 /// Type aliases for common configurations with dynamic location providers
 pub type TSSerializerWithLoc<F, P> = super::ESTreeSerializer<ConfigTSWithLoc<P>, F>;
 pub type JSSerializerWithLoc<F, P> = super::ESTreeSerializer<ConfigJSWithLoc<P>, F>;
 
-/// Convenient type aliases for function-based location providers  
+/// Convenient type aliases for function-based location providers
 pub type TSSerializerWithFn<F, Fn> = TSSerializerWithLoc<F, DynamicLocProvider<Fn>>;
 pub type JSSerializerWithFn<F, Fn> = JSSerializerWithLoc<F, DynamicLocProvider<Fn>>;

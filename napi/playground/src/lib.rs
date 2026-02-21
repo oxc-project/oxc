@@ -368,6 +368,7 @@ impl Oxc {
                         value: hashbang.value.to_string(),
                         start: hashbang.span.start,
                         end: hashbang.span.end,
+                        loc: None,
                     },
                 );
             }

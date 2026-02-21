@@ -2,9 +2,10 @@ use std::cmp;
 
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
-    CompactFixesJSSerializer, CompactFixesTSSerializer, CompactJSSerializer, CompactTSSerializer,
-    Concat2, ESTree, JsonSafeString, PrettyFixesJSSerializer, PrettyFixesTSSerializer,
-    PrettyJSSerializer, PrettyTSSerializer, Serializer, StructSerializer,
+    CompactFixesJSSerializer, CompactFixesTSSerializer, CompactFormatter, CompactJSSerializer,
+    CompactTSSerializer, Concat2, ConfigFixesJSWithLoc, ConfigFixesTSWithLoc, ESTree,
+    ESTreeSerializer, JsonSafeString, LocProvider, PrettyFixesJSSerializer,
+    PrettyFixesTSSerializer, PrettyJSSerializer, PrettyTSSerializer, Serializer, StructSerializer,
 };
 use oxc_span::GetSpan;
 
@@ -103,6 +104,36 @@ impl Program<'_> {
     pub fn to_pretty_estree_js_json_with_fixes(&self, ranges: bool, loc: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
         let serializer = PrettyFixesJSSerializer::with_capacity_and_loc(capacity, ranges, loc);
+        serializer.serialize_with_fixes(self)
+    }
+
+    /// Serialize AST to ESTree JSON, including TypeScript fields, with fixes and loc provider.
+    pub fn to_estree_ts_json_with_fixes_and_loc<P: LocProvider>(
+        &self,
+        ranges: bool,
+        provider: P,
+    ) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
+        let config = ConfigFixesTSWithLoc::new(ranges, true, provider);
+        let serializer =
+            ESTreeSerializer::<ConfigFixesTSWithLoc<P>, CompactFormatter>::new_with_config(
+                capacity, config,
+            );
+        serializer.serialize_with_fixes(self)
+    }
+
+    /// Serialize AST to ESTree JSON, without TypeScript fields, with fixes and loc provider.
+    pub fn to_estree_js_json_with_fixes_and_loc<P: LocProvider>(
+        &self,
+        ranges: bool,
+        provider: P,
+    ) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
+        let config = ConfigFixesJSWithLoc::new(ranges, true, provider);
+        let serializer =
+            ESTreeSerializer::<ConfigFixesJSWithLoc<P>, CompactFormatter>::new_with_config(
+                capacity, config,
+            );
         serializer.serialize_with_fixes(self)
     }
 }
