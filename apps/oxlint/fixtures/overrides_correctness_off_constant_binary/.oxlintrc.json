@@ -1,0 +1,15 @@
+{
+  "plugins": ["typescript"],
+  "categories": {
+    "correctness": "off"
+  },
+  "overrides": [
+    {
+      "files": ["subdir/**/*.ts", "subdir/**/*.tsx"],
+      "plugins": ["promise"],
+      "rules": {
+        "typescript/no-inferrable-types": "error"
+      }
+    }
+  ]
+}
