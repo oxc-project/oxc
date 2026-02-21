@@ -99,11 +99,11 @@ fn prune_non_reactive_deps_block(block: &mut ReactiveBlock) {
 
 /// Prune always-invalidating scopes — removes scopes whose dependencies always
 /// change, making the memoization pointless.
-pub fn prune_always_invalidating_scopes(func: &mut ReactiveFunction) {
+pub fn prune_always_invalidating_scopes(_func: &mut ReactiveFunction) {
     // The full implementation checks if a scope's dependencies include values
     // that change on every render (like new object/array literals), making
     // the scope's cache always invalidate.
-    let _ = &func.body;
+    // Analysis handled in full implementation
 }
 
 /// Prune all reactive scopes — used in no-memo mode to strip all memoization.
@@ -135,8 +135,8 @@ fn prune_all_scopes_block(block: &mut ReactiveBlock) {
 
 /// Prune hoisted contexts — removes context variable declarations that
 /// were hoisted but are no longer needed after optimization.
-pub fn prune_hoisted_contexts(func: &mut ReactiveFunction) {
+pub fn prune_hoisted_contexts(_func: &mut ReactiveFunction) {
     // The full implementation removes DeclareContext instructions where
     // the variable was hoisted for a scope that was later pruned.
-    let _ = &func.body;
+    // Analysis handled in full implementation
 }
