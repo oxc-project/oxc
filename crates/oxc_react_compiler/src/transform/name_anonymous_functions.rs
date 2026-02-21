@@ -12,7 +12,7 @@ use crate::hir::{
 };
 
 /// Name anonymous functions in the given HIR function.
-pub fn name_anonymous_functions(func: &mut HIRFunction) {
+pub fn name_anonymous_functions(func: &HIRFunction) {
     let parent_name = match &func.id {
         Some(name) => name.clone(),
         None => return,
@@ -56,13 +56,7 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
         for instr in &block.instructions {
             match &instr.value {
                 InstructionValue::LoadGlobal(v) => {
-                    let name = match &v.binding {
-                        crate::hir::NonLocalBinding::Global { name } => name.clone(),
-                        crate::hir::NonLocalBinding::ModuleLocal { name } => name.clone(),
-                        crate::hir::NonLocalBinding::ImportDefault { name, .. } => name.clone(),
-                        crate::hir::NonLocalBinding::ImportNamespace { name, .. } => name.clone(),
-                        crate::hir::NonLocalBinding::ImportSpecifier { name, .. } => name.clone(),
-                    };
+                    let name = v.binding.name().to_string();
                     names.insert(instr.lvalue.identifier.id, name);
                 }
                 InstructionValue::LoadLocal(v) => {

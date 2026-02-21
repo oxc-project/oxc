@@ -11,7 +11,7 @@ use crate::hir::HIRFunction;
 
 /// Align method call scopes — ensures method calls share the same reactive scope
 /// as their receiver object.
-pub fn align_method_call_scopes(func: &mut HIRFunction) {
+pub fn align_method_call_scopes(func: &HIRFunction) {
     // The full implementation iterates instructions looking for MethodCall values
     // and ensures the receiver and property are in the same reactive scope.
     // This is needed because method calls like `obj.method()` need the receiver

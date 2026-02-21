@@ -26,7 +26,7 @@ pub fn is_mutable(identifier: &Identifier, at_instruction: InstructionId) -> boo
 }
 
 /// Infer reactive scope variables for the function.
-pub fn infer_reactive_scope_variables(func: &mut HIRFunction) {
+pub fn infer_reactive_scope_variables(func: &HIRFunction) {
     // Phase 1: Find groups of co-mutating identifiers using disjoint sets
     let mut co_mutations: DisjointSet<IdentifierId> = DisjointSet::new();
 
