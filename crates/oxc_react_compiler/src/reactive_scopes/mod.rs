@@ -1,8 +1,11 @@
 pub mod align_scopes;
 pub mod build_reactive_function;
+pub mod extract_scope_declarations;
 pub mod flatten;
 pub mod infer_reactive_scope_variables;
 pub mod print_reactive_function;
+pub mod promote_used_temporaries;
+pub mod propagate_early_returns;
 pub mod prune;
 pub mod rename_variables;
 pub mod stabilize_block_ids;
