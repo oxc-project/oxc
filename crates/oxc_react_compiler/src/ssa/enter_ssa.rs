@@ -203,7 +203,7 @@ impl SsaBuilder {
 ///
 /// # Errors
 /// Returns a `CompilerError` if the function has invalid structure.
-pub fn enter_ssa(func: &mut HIRFunction, env: &mut Environment) -> Result<(), CompilerError> {
+pub fn enter_ssa(func: &mut HIRFunction, env: &Environment) -> Result<(), CompilerError> {
     let entry = func.body.entry;
     let mut builder = SsaBuilder::new(env.clone(), &func.body.blocks);
     enter_ssa_impl(func, &mut builder, entry)?;
