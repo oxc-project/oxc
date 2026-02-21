@@ -3301,6 +3301,15 @@ impl RuleRunner for crate::rules::unicorn::prefer_modern_math_apis::PreferModern
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner for crate::rules::unicorn::prefer_module::PreferModule {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::Directive,
+        AstType::IdentifierReference,
+        AstType::ReturnStatement,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner
     for crate::rules::unicorn::prefer_native_coercion_functions::PreferNativeCoercionFunctions
 {

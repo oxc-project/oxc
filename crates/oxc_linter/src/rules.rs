@@ -534,6 +534,7 @@ pub(crate) mod unicorn {
     pub mod prefer_math_trunc;
     pub mod prefer_modern_dom_apis;
     pub mod prefer_modern_math_apis;
+    pub mod prefer_module;
     pub mod prefer_native_coercion_functions;
     pub mod prefer_negative_index;
     pub mod prefer_node_protocol;

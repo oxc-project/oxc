@@ -636,6 +636,7 @@ pub use crate::rules::unicorn::prefer_math_min_max::PreferMathMinMax as UnicornP
 pub use crate::rules::unicorn::prefer_math_trunc::PreferMathTrunc as UnicornPreferMathTrunc;
 pub use crate::rules::unicorn::prefer_modern_dom_apis::PreferModernDomApis as UnicornPreferModernDomApis;
 pub use crate::rules::unicorn::prefer_modern_math_apis::PreferModernMathApis as UnicornPreferModernMathApis;
+pub use crate::rules::unicorn::prefer_module::PreferModule as UnicornPreferModule;
 pub use crate::rules::unicorn::prefer_native_coercion_functions::PreferNativeCoercionFunctions as UnicornPreferNativeCoercionFunctions;
 pub use crate::rules::unicorn::prefer_negative_index::PreferNegativeIndex as UnicornPreferNegativeIndex;
 pub use crate::rules::unicorn::prefer_node_protocol::PreferNodeProtocol as UnicornPreferNodeProtocol;
@@ -1224,6 +1225,7 @@ pub enum RuleEnum {
     UnicornPreferMathTrunc(UnicornPreferMathTrunc),
     UnicornPreferModernDomApis(UnicornPreferModernDomApis),
     UnicornPreferModernMathApis(UnicornPreferModernMathApis),
+    UnicornPreferModule(UnicornPreferModule),
     UnicornPreferNativeCoercionFunctions(UnicornPreferNativeCoercionFunctions),
     UnicornPreferNegativeIndex(UnicornPreferNegativeIndex),
     UnicornPreferNodeProtocol(UnicornPreferNodeProtocol),
@@ -1985,8 +1987,8 @@ const UNICORN_PREFER_MATH_MIN_MAX_ID: usize =
 const UNICORN_PREFER_MATH_TRUNC_ID: usize = UNICORN_PREFER_MATH_MIN_MAX_ID + 1usize;
 const UNICORN_PREFER_MODERN_DOM_APIS_ID: usize = UNICORN_PREFER_MATH_TRUNC_ID + 1usize;
 const UNICORN_PREFER_MODERN_MATH_APIS_ID: usize = UNICORN_PREFER_MODERN_DOM_APIS_ID + 1usize;
-const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize =
-    UNICORN_PREFER_MODERN_MATH_APIS_ID + 1usize;
+const UNICORN_PREFER_MODULE_ID: usize = UNICORN_PREFER_MODERN_MATH_APIS_ID + 1usize;
+const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = UNICORN_PREFER_MODULE_ID + 1usize;
 const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize =
     UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID + 1usize;
 const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = UNICORN_PREFER_NEGATIVE_INDEX_ID + 1usize;
@@ -2793,6 +2795,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UNICORN_PREFER_MATH_TRUNC_ID,
             Self::UnicornPreferModernDomApis(_) => UNICORN_PREFER_MODERN_DOM_APIS_ID,
             Self::UnicornPreferModernMathApis(_) => UNICORN_PREFER_MODERN_MATH_APIS_ID,
+            Self::UnicornPreferModule(_) => UNICORN_PREFER_MODULE_ID,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID
             }
@@ -3587,6 +3590,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::NAME,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::NAME,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::NAME,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::NAME,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::NAME
             }
@@ -4413,6 +4417,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::CATEGORY,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::CATEGORY,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::CATEGORY,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::CATEGORY,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::CATEGORY
             }
@@ -5218,6 +5223,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::FIX,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::FIX,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::FIX,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::FIX,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::FIX
             }
@@ -6153,6 +6159,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::documentation(),
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::documentation(),
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::documentation(),
+            Self::UnicornPreferModule(_) => UnicornPreferModule::documentation(),
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::documentation()
             }
@@ -7868,6 +7875,8 @@ impl RuleEnum {
                 UnicornPreferModernMathApis::config_schema(generator)
                     .or_else(|| UnicornPreferModernMathApis::schema(generator))
             }
+            Self::UnicornPreferModule(_) => UnicornPreferModule::config_schema(generator)
+                .or_else(|| UnicornPreferModule::schema(generator)),
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::config_schema(generator)
                     .or_else(|| UnicornPreferNativeCoercionFunctions::schema(generator))
@@ -8894,6 +8903,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => "unicorn",
             Self::UnicornPreferModernDomApis(_) => "unicorn",
             Self::UnicornPreferModernMathApis(_) => "unicorn",
+            Self::UnicornPreferModule(_) => "unicorn",
             Self::UnicornPreferNativeCoercionFunctions(_) => "unicorn",
             Self::UnicornPreferNegativeIndex(_) => "unicorn",
             Self::UnicornPreferNodeProtocol(_) => "unicorn",
@@ -10735,6 +10745,9 @@ impl RuleEnum {
             Self::UnicornPreferModernMathApis(_) => Ok(Self::UnicornPreferModernMathApis(
                 UnicornPreferModernMathApis::from_configuration(value)?,
             )),
+            Self::UnicornPreferModule(_) => {
+                Ok(Self::UnicornPreferModule(UnicornPreferModule::from_configuration(value)?))
+            }
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 Ok(Self::UnicornPreferNativeCoercionFunctions(
                     UnicornPreferNativeCoercionFunctions::from_configuration(value)?,
@@ -11825,6 +11838,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.to_configuration(),
             Self::UnicornPreferModernDomApis(rule) => rule.to_configuration(),
             Self::UnicornPreferModernMathApis(rule) => rule.to_configuration(),
+            Self::UnicornPreferModule(rule) => rule.to_configuration(),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.to_configuration(),
             Self::UnicornPreferNegativeIndex(rule) => rule.to_configuration(),
             Self::UnicornPreferNodeProtocol(rule) => rule.to_configuration(),
@@ -12525,6 +12539,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run(node, ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.run(node, ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.run(node, ctx),
+            Self::UnicornPreferModule(rule) => rule.run(node, ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run(node, ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.run(node, ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.run(node, ctx),
@@ -13223,6 +13238,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run_once(ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.run_once(ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.run_once(ctx),
+            Self::UnicornPreferModule(rule) => rule.run_once(ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_once(ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.run_once(ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_once(ctx),
@@ -14007,6 +14023,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferModule(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -14717,6 +14734,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.should_run(ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.should_run(ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.should_run(ctx),
+            Self::UnicornPreferModule(rule) => rule.should_run(ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.should_run(ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.should_run(ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.should_run(ctx),
@@ -15639,6 +15657,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::IS_TSGOLINT_RULE,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::IS_TSGOLINT_RULE,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::IS_TSGOLINT_RULE,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::IS_TSGOLINT_RULE,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::IS_TSGOLINT_RULE
             }
@@ -16544,6 +16563,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::HAS_CONFIG,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::HAS_CONFIG,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::HAS_CONFIG,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::HAS_CONFIG,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::HAS_CONFIG
             }
@@ -17270,6 +17290,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.types_info(),
             Self::UnicornPreferModernDomApis(rule) => rule.types_info(),
             Self::UnicornPreferModernMathApis(rule) => rule.types_info(),
+            Self::UnicornPreferModule(rule) => rule.types_info(),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.types_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.types_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.types_info(),
@@ -17968,6 +17989,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run_info(),
             Self::UnicornPreferModernDomApis(rule) => rule.run_info(),
             Self::UnicornPreferModernMathApis(rule) => rule.run_info(),
+            Self::UnicornPreferModule(rule) => rule.run_info(),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.run_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_info(),
@@ -18770,6 +18792,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferMathTrunc(UnicornPreferMathTrunc::default()),
         RuleEnum::UnicornPreferModernDomApis(UnicornPreferModernDomApis::default()),
         RuleEnum::UnicornPreferModernMathApis(UnicornPreferModernMathApis::default()),
+        RuleEnum::UnicornPreferModule(UnicornPreferModule::default()),
         RuleEnum::UnicornPreferNativeCoercionFunctions(
             UnicornPreferNativeCoercionFunctions::default(),
         ),
