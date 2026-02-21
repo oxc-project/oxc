@@ -16,10 +16,7 @@ use crate::hir::{
 pub fn optimize_props_method_calls(func: &mut HIRFunction) {
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
-        let block = match func.body.blocks.get_mut(&block_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
         for instr in &mut block.instructions {
             if let InstructionValue::MethodCall(method) = &instr.value
                 && is_props_type(&method.receiver.identifier.type_) {

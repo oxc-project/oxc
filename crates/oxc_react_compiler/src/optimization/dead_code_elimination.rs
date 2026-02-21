@@ -69,10 +69,7 @@ pub fn dead_code_elimination(func: &mut HIRFunction) {
     // Phase 2: Prune unreferenced instructions
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
-        let block = match func.body.blocks.get_mut(&block_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
 
         // Retain only instructions whose lvalue is referenced
         block.instructions.retain(|instr| state.is_id_or_name_used(&instr.lvalue.identifier));
@@ -93,10 +90,7 @@ fn find_referenced_identifiers(func: &HIRFunction) -> DceState {
     let mut size = state.count();
     loop {
         for &block_id in &reversed_block_ids {
-            let block = match func.body.blocks.get(&block_id) {
-                Some(b) => b,
-                None => continue,
-            };
+            let Some(block) = func.body.blocks.get(&block_id) else { continue };
 
             // Terminal operands are always referenced
             for operand in each_terminal_operand(&block.terminal) {

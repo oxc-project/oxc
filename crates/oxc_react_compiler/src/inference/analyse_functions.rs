@@ -16,10 +16,7 @@ use rustc_hash::FxHashSet;
 pub fn analyse_functions(func: &mut HIRFunction) {
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
-        let block = match func.body.blocks.get_mut(&block_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
 
         for instr in &mut block.instructions {
             match &mut instr.value {

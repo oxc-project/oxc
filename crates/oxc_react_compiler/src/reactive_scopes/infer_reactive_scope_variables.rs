@@ -32,10 +32,7 @@ pub fn infer_reactive_scope_variables(func: &mut HIRFunction) {
 
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     for &block_id in &block_ids {
-        let block = match func.body.blocks.get(&block_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(block) = func.body.blocks.get(&block_id) else { continue };
 
         for instr in &block.instructions {
             // Collect all mutable operands at this instruction

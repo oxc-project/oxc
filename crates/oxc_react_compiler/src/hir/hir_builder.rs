@@ -406,10 +406,7 @@ pub fn mark_predecessors(func: &mut Hir) {
         if !visited.insert(block_id) {
             continue;
         }
-        let block = match func.blocks.get(&block_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(block) = func.blocks.get(&block_id) else { continue };
         for successor in each_terminal_successor(&block.terminal) {
             pred_edges.push((successor, block_id));
             stack.push(successor);
