@@ -91,6 +91,7 @@ impl TransformOptions {
             plugins: PluginsOptions {
                 styled_components: Some(StyledComponentsOptions::default()),
                 tagged_template_transform: true,
+                react_compiler: None,
             },
             helper_loader: HelperLoaderOptions {
                 mode: HelperLoaderMode::Runtime,
