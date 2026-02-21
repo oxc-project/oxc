@@ -7,23 +7,8 @@
 /// used when the `enableForest` environment config flag is enabled.
 /// This is an experimental feature for more precise type tracking.
 ///
-/// Since this is an optional feature (disabled by default), this module
-/// provides type stubs. The full implementation would include:
-/// - `FlowTypeEnv` — the type environment for Flow type inference
-/// - Type checking rules for Flow types
-/// - Error reporting for type violations
-/// The Flow type environment (stub for optional enableForest feature).
-#[derive(Debug, Clone, Default)]
-pub struct FlowTypeEnv {
-    // The full implementation would contain:
-    // - Type bindings for variables
-    // - Constraint solver state
-    // - Error accumulator
-}
+/// The full implementation is in `flood_types.rs`, `flood_flow_types.rs`,
+/// `flood_type_errors.rs`, and `flood_type_utils.rs`.
 
-impl FlowTypeEnv {
-    /// Create an empty Flow type environment.
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
+// Re-export the key types
+pub use super::flood_types::FloodTypeEnv;
