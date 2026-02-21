@@ -61,7 +61,7 @@ pub enum CompilerPipelineValue {
 /// Returns a `CompilerError` if any pass fails.
 pub fn run_pipeline(
     func: &mut HIRFunction,
-    env: &mut Environment,
+    env: &Environment,
 ) -> Result<(), CompilerError> {
     // Phase 1: HIR-level optimizations and analysis
 
