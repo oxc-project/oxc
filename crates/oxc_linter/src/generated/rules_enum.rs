@@ -468,6 +468,7 @@ pub use crate::rules::react::self_closing_comp::SelfClosingComp as ReactSelfClos
 pub use crate::rules::react::state_in_constructor::StateInConstructor as ReactStateInConstructor;
 pub use crate::rules::react::style_prop_object::StylePropObject as ReactStylePropObject;
 pub use crate::rules::react::void_dom_elements_no_children::VoidDomElementsNoChildren as ReactVoidDomElementsNoChildren;
+pub use crate::rules::react_compiler::react_compiler_rule::ReactCompilerRule as ReactCompilerReactCompilerRule;
 pub use crate::rules::react_perf::jsx_no_jsx_as_prop::JsxNoJsxAsProp as ReactPerfJsxNoJsxAsProp;
 pub use crate::rules::react_perf::jsx_no_new_array_as_prop::JsxNoNewArrayAsProp as ReactPerfJsxNoNewArrayAsProp;
 pub use crate::rules::react_perf::jsx_no_new_function_as_prop::JsxNoNewFunctionAsProp as ReactPerfJsxNoNewFunctionAsProp;
@@ -1260,6 +1261,7 @@ pub enum RuleEnum {
     ReactStateInConstructor(ReactStateInConstructor),
     ReactStylePropObject(ReactStylePropObject),
     ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren),
+    ReactCompilerReactCompilerRule(ReactCompilerReactCompilerRule),
     ReactPerfJsxNoJsxAsProp(ReactPerfJsxNoJsxAsProp),
     ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp),
     ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp),
@@ -2112,7 +2114,9 @@ const REACT_SELF_CLOSING_COMP_ID: usize = REACT_RULES_OF_HOOKS_ID + 1usize;
 const REACT_STATE_IN_CONSTRUCTOR_ID: usize = REACT_SELF_CLOSING_COMP_ID + 1usize;
 const REACT_STYLE_PROP_OBJECT_ID: usize = REACT_STATE_IN_CONSTRUCTOR_ID + 1usize;
 const REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID: usize = REACT_STYLE_PROP_OBJECT_ID + 1usize;
-const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID + 1usize;
+const REACT_COMPILER_REACT_COMPILER_RULE_ID: usize =
+    REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID + 1usize;
+const REACT_PERF_JSX_NO_JSX_AS_PROP_ID: usize = REACT_COMPILER_REACT_COMPILER_RULE_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID: usize = REACT_PERF_JSX_NO_JSX_AS_PROP_ID + 1usize;
 const REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID: usize =
     REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID + 1usize;
@@ -3040,6 +3044,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => REACT_STATE_IN_CONSTRUCTOR_ID,
             Self::ReactStylePropObject(_) => REACT_STYLE_PROP_OBJECT_ID,
             Self::ReactVoidDomElementsNoChildren(_) => REACT_VOID_DOM_ELEMENTS_NO_CHILDREN_ID,
+            Self::ReactCompilerReactCompilerRule(_) => REACT_COMPILER_REACT_COMPILER_RULE_ID,
             Self::ReactPerfJsxNoJsxAsProp(_) => REACT_PERF_JSX_NO_JSX_AS_PROP_ID,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => REACT_PERF_JSX_NO_NEW_ARRAY_AS_PROP_ID,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => REACT_PERF_JSX_NO_NEW_FUNCTION_AS_PROP_ID,
@@ -3961,6 +3966,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::NAME,
             Self::ReactStylePropObject(_) => ReactStylePropObject::NAME,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::NAME,
+            Self::ReactCompilerReactCompilerRule(_) => ReactCompilerReactCompilerRule::NAME,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::NAME,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::NAME,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::NAME,
@@ -4898,6 +4904,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::CATEGORY,
             Self::ReactStylePropObject(_) => ReactStylePropObject::CATEGORY,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::CATEGORY,
+            Self::ReactCompilerReactCompilerRule(_) => ReactCompilerReactCompilerRule::CATEGORY,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::CATEGORY,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::CATEGORY,
@@ -5840,6 +5847,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::FIX,
             Self::ReactStylePropObject(_) => ReactStylePropObject::FIX,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::FIX,
+            Self::ReactCompilerReactCompilerRule(_) => ReactCompilerReactCompilerRule::FIX,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::FIX,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::FIX,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::FIX,
@@ -6859,6 +6867,9 @@ impl RuleEnum {
             Self::ReactStylePropObject(_) => ReactStylePropObject::documentation(),
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::documentation()
+            }
+            Self::ReactCompilerReactCompilerRule(_) => {
+                ReactCompilerReactCompilerRule::documentation()
             }
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::documentation(),
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::documentation(),
@@ -8645,6 +8656,10 @@ impl RuleEnum {
                 ReactVoidDomElementsNoChildren::config_schema(generator)
                     .or_else(|| ReactVoidDomElementsNoChildren::schema(generator))
             }
+            Self::ReactCompilerReactCompilerRule(_) => {
+                ReactCompilerReactCompilerRule::config_schema(generator)
+                    .or_else(|| ReactCompilerReactCompilerRule::schema(generator))
+            }
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::config_schema(generator)
                 .or_else(|| ReactPerfJsxNoJsxAsProp::schema(generator)),
             Self::ReactPerfJsxNoNewArrayAsProp(_) => {
@@ -10133,6 +10148,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => "react",
             Self::ReactStylePropObject(_) => "react",
             Self::ReactVoidDomElementsNoChildren(_) => "react",
+            Self::ReactCompilerReactCompilerRule(_) => "react_compiler",
             Self::ReactPerfJsxNoJsxAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewArrayAsProp(_) => "react_perf",
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => "react_perf",
@@ -11915,6 +11931,9 @@ impl RuleEnum {
             Self::ReactVoidDomElementsNoChildren(_) => Ok(Self::ReactVoidDomElementsNoChildren(
                 ReactVoidDomElementsNoChildren::from_configuration(value)?,
             )),
+            Self::ReactCompilerReactCompilerRule(_) => Ok(Self::ReactCompilerReactCompilerRule(
+                ReactCompilerReactCompilerRule::from_configuration(value)?,
+            )),
             Self::ReactPerfJsxNoJsxAsProp(_) => Ok(Self::ReactPerfJsxNoJsxAsProp(
                 ReactPerfJsxNoJsxAsProp::from_configuration(value)?,
             )),
@@ -13512,6 +13531,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(rule) => rule.to_configuration(),
             Self::ReactStylePropObject(rule) => rule.to_configuration(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.to_configuration(),
+            Self::ReactCompilerReactCompilerRule(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.to_configuration(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.to_configuration(),
@@ -14323,6 +14343,7 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run(node, ctx),
                 Self::ReactStylePropObject(rule) => rule.run(node, ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run(node, ctx),
+                Self::ReactCompilerReactCompilerRule(rule) => rule.run(node, ctx),
                 Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run(node, ctx),
                 Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
                 Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run(node, ctx),
@@ -15127,6 +15148,7 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run(node, ctx),
                 Self::ReactStylePropObject(rule) => rule.run(node, ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run(node, ctx),
+                Self::ReactCompilerReactCompilerRule(rule) => rule.run(node, ctx),
                 Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run(node, ctx),
                 Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run(node, ctx),
                 Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run(node, ctx),
@@ -15938,6 +15960,7 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run_once(ctx),
                 Self::ReactStylePropObject(rule) => rule.run_once(ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run_once(ctx),
+                Self::ReactCompilerReactCompilerRule(rule) => rule.run_once(ctx),
                 Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_once(ctx),
                 Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
                 Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_once(ctx),
@@ -16742,6 +16765,7 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run_once(ctx),
                 Self::ReactStylePropObject(rule) => rule.run_once(ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run_once(ctx),
+                Self::ReactCompilerReactCompilerRule(rule) => rule.run_once(ctx),
                 Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_once(ctx),
                 Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_once(ctx),
                 Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_once(ctx),
@@ -17684,6 +17708,7 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactStylePropObject(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactCompilerReactCompilerRule(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPerfJsxNoNewFunctionAsProp(rule) => {
@@ -18738,6 +18763,7 @@ impl RuleEnum {
                 Self::ReactStateInConstructor(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactStylePropObject(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactVoidDomElementsNoChildren(rule) => rule.run_on_jest_node(jest_node, ctx),
+                Self::ReactCompilerReactCompilerRule(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_on_jest_node(jest_node, ctx),
                 Self::ReactPerfJsxNoNewFunctionAsProp(rule) => {
@@ -19662,6 +19688,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(rule) => rule.should_run(ctx),
             Self::ReactStylePropObject(rule) => rule.should_run(ctx),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.should_run(ctx),
+            Self::ReactCompilerReactCompilerRule(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.should_run(ctx),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.should_run(ctx),
@@ -20640,6 +20667,9 @@ impl RuleEnum {
             Self::ReactStylePropObject(_) => ReactStylePropObject::IS_TSGOLINT_RULE,
             Self::ReactVoidDomElementsNoChildren(_) => {
                 ReactVoidDomElementsNoChildren::IS_TSGOLINT_RULE
+            }
+            Self::ReactCompilerReactCompilerRule(_) => {
+                ReactCompilerReactCompilerRule::IS_TSGOLINT_RULE
             }
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::IS_TSGOLINT_RULE,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::IS_TSGOLINT_RULE,
@@ -21716,6 +21746,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::VERSION,
             Self::ReactStylePropObject(_) => ReactStylePropObject::VERSION,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::VERSION,
+            Self::ReactCompilerReactCompilerRule(_) => ReactCompilerReactCompilerRule::VERSION,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::VERSION,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::VERSION,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::VERSION,
@@ -22700,6 +22731,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(_) => ReactStateInConstructor::HAS_CONFIG,
             Self::ReactStylePropObject(_) => ReactStylePropObject::HAS_CONFIG,
             Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::HAS_CONFIG,
+            Self::ReactCompilerReactCompilerRule(_) => ReactCompilerReactCompilerRule::HAS_CONFIG,
             Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::HAS_CONFIG,
             Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::HAS_CONFIG,
@@ -23591,6 +23623,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(rule) => rule.types_info(),
             Self::ReactStylePropObject(rule) => rule.types_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.types_info(),
+            Self::ReactCompilerReactCompilerRule(rule) => rule.types_info(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.types_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.types_info(),
@@ -24392,6 +24425,7 @@ impl RuleEnum {
             Self::ReactStateInConstructor(rule) => rule.run_info(),
             Self::ReactStylePropObject(rule) => rule.run_info(),
             Self::ReactVoidDomElementsNoChildren(rule) => rule.run_info(),
+            Self::ReactCompilerReactCompilerRule(rule) => rule.run_info(),
             Self::ReactPerfJsxNoJsxAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewArrayAsProp(rule) => rule.run_info(),
             Self::ReactPerfJsxNoNewFunctionAsProp(rule) => rule.run_info(),
@@ -25285,6 +25319,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactStateInConstructor(ReactStateInConstructor::default()),
         RuleEnum::ReactStylePropObject(ReactStylePropObject::default()),
         RuleEnum::ReactVoidDomElementsNoChildren(ReactVoidDomElementsNoChildren::default()),
+        RuleEnum::ReactCompilerReactCompilerRule(ReactCompilerReactCompilerRule::default()),
         RuleEnum::ReactPerfJsxNoJsxAsProp(ReactPerfJsxNoJsxAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewArrayAsProp(ReactPerfJsxNoNewArrayAsProp::default()),
         RuleEnum::ReactPerfJsxNoNewFunctionAsProp(ReactPerfJsxNoNewFunctionAsProp::default()),
