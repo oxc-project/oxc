@@ -151,34 +151,17 @@ impl Rule for DisplayName {
 
         // Phase 1: Iterate symbols to find components with declarations
         for symbol_id in ctx.scoping().symbol_ids() {
-            let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
-            let mut component_info = None;
-
-            if redeclarations.is_empty() {
-                let declaration = ctx.scoping().symbol_declaration(symbol_id);
-                let decl_node = ctx.nodes().get_node(declaration);
-                component_info = is_react_component_node(
-                    decl_node,
-                    ctx,
-                    &mut version_cache,
-                    ignore_transpiler_name,
-                    check_context_objects,
-                );
-            } else {
-                for redeclaration in redeclarations {
-                    let decl_node = ctx.nodes().get_node(redeclaration.declaration);
-                    component_info = is_react_component_node(
+            let component_info =
+                ctx.scoping().symbol_declarations(symbol_id).find_map(|declaration| {
+                    let decl_node = ctx.nodes().get_node(declaration);
+                    is_react_component_node(
                         decl_node,
                         ctx,
                         &mut version_cache,
                         ignore_transpiler_name,
                         check_context_objects,
-                    );
-                    if component_info.is_some() {
-                        break;
-                    }
-                }
-            }
+                    )
+                });
 
             // First check if the declaration itself is a component
             if let Some(component_info) = component_info {
@@ -198,22 +181,11 @@ impl Rule for DisplayName {
             } else if check_context_objects {
                 // If the declaration isn't a component, check if any write references assign createContext()
                 // This handles: var Hello; Hello = createContext();
-                let mut context_assignment_info = None;
-                if redeclarations.is_empty() {
-                    let declaration = ctx.scoping().symbol_declaration(symbol_id);
-                    let decl_node = ctx.nodes().get_node(declaration);
-                    context_assignment_info =
-                        check_context_assignment_references(symbol_id, decl_node, ctx);
-                } else {
-                    for redeclaration in redeclarations {
-                        let decl_node = ctx.nodes().get_node(redeclaration.declaration);
-                        context_assignment_info =
-                            check_context_assignment_references(symbol_id, decl_node, ctx);
-                        if context_assignment_info.is_some() {
-                            break;
-                        }
-                    }
-                }
+                let context_assignment_info =
+                    ctx.scoping().symbol_declarations(symbol_id).find_map(|declaration| {
+                        let decl_node = ctx.nodes().get_node(declaration);
+                        check_context_assignment_references(symbol_id, decl_node, ctx)
+                    });
 
                 if let Some(component_info) = context_assignment_info {
                     // Check if this symbol has a displayName assignment
