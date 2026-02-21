@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:17]
  1 │ export function test(a: number, b: number) { return; }
@@ -111,6 +112,22 @@ source: crates/oxc_linter/src/tester.rs
  8 │               static e = function () {};
    ·                      ─
  9 │             }
+   ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:3:25]
+ 2 │             export class Test {
+ 3 │               protected method(one: string) {
+   ·                         ──────
+ 4 │                 return one;
+   ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:6:25]
+ 5 │               }
+ 6 │               protected arrow = (one: string) => one;
+   ·                         ─────
+ 7 │             }
    ╰────
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function

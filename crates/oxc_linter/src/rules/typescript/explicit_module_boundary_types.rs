@@ -579,8 +579,8 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
     }
 
     fn visit_class_element(&mut self, el: &ClassElement<'a>) {
-        // dont check non-public members
-        if el.accessibility().is_some_and(|a| a != TSAccessibility::Public)
+        // only skip private members
+        if el.accessibility().is_some_and(|a| a == TSAccessibility::Private)
             || el.property_key().is_some_and(|key| matches!(key, PropertyKey::PrivateIdentifier(_)))
         {
             return;
@@ -804,6 +804,17 @@ mod test {
               }
               private arrow = one => 'arrow';
               private abstract abs(one);
+            }
+            ",
+                None,
+            ),
+            (
+                "
+            export class Test {
+              protected method(one: string): string {
+                return one;
+              }
+              protected arrow = (one: string): string => one;
             }
             ",
                 None,
@@ -1555,6 +1566,17 @@ mod test {
 
               static d = () => {};
               static e = function () {};
+            }
+            ",
+                None,
+            ),
+            (
+                "
+            export class Test {
+              protected method(one: string) {
+                return one;
+              }
+              protected arrow = (one: string) => one;
             }
             ",
                 None,
