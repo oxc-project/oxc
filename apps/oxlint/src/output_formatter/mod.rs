@@ -186,8 +186,20 @@ mod test {
     // were being truncated to just the character after the first colon.
     #[test]
     fn test_output_formatter_diagnostic_formats_with_parser_error() {
-        let formats: Vec<&str> =
-            vec!["checkstyle", "default", "github", "gitlab", "json", "junit", "stylish", "unix"];
+        let mut formats: Vec<&str> =
+            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
+
+        // disabled for windows
+        // json will output the offset which will be different for windows
+        // when there are multiple lines (`\r\n` vs `\n`)
+        if cfg!(not(target_os = "windows")) {
+            formats.push("json");
+        }
+
+        // Exclude `gitlab` on big-endian systems because fingerprints differ there
+        if cfg!(not(target_endian = "big")) {
+            formats.push("gitlab");
+        }
 
         for fmt in &formats {
             let args_vec = [format!("--format={fmt}"), "parser-error.js".to_string()];
