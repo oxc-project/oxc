@@ -435,8 +435,7 @@ pub fn print_identifier(id: &Identifier) -> String {
 fn print_name(name: &Option<IdentifierName>) -> String {
     match name {
         None => String::new(),
-        Some(IdentifierName::Named(n)) => n.clone(),
-        Some(IdentifierName::Promoted(n)) => n.clone(),
+        Some(n) => n.value().to_string(),
     }
 }
 
