@@ -215,7 +215,7 @@ pub fn infer_mutation_aliasing_effects(
 
             // Process instructions
             for instr in &block.instructions {
-                infer_instruction_effects(&mut state, instr, &options);
+                infer_instruction_effects(&mut state, instr, options);
             }
 
             // Store the state for this block
