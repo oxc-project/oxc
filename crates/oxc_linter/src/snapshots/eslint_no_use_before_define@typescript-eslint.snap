@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             a++;
@@ -15,7 +15,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             a++;
@@ -28,7 +28,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             a++;
@@ -41,7 +41,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             a();
@@ -54,7 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:19]
  1 │ 
  2 │             alert(a[1]);
@@ -67,7 +67,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             a();
@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'b' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'b' was used before it was defined.
    ╭─[no_use_before_define.tsx:4:21]
  3 │             function a() {
  4 │               alert(b);
@@ -93,7 +93,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             a();
@@ -106,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:21]
  2 │             (() => {
  3 │               alert(a);
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:20]
  1 │ 
  2 │             (() => a())();
@@ -132,7 +132,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             a();
@@ -149,7 +149,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:27]
  1 │ 
  2 │             var f = () => a;
@@ -162,7 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'A' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:17]
  1 │ 
  2 │             new A();
@@ -175,7 +175,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'A' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:19]
  2 │             function foo() {
  3 │               new A();
@@ -189,7 +189,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'A' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:17]
  1 │ 
  2 │             new A();
@@ -202,7 +202,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'A' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:19]
  2 │             function foo() {
  3 │               new A();
@@ -216,7 +216,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             a++;
@@ -230,7 +230,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:4:15]
  3 │             {
  4 │               a();
@@ -243,7 +243,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:15]
  2 │             {
  3 │               a;
@@ -256,7 +256,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:4:17]
  3 │               case 1:
  4 │                 a();
@@ -270,7 +270,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:4:17]
  3 │               function foo() {
  4 │                 a;
@@ -284,7 +284,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             a();
@@ -297,7 +297,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'A' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:17]
  1 │ 
  2 │             new A();
@@ -310,7 +310,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'A' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'A' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:19]
  2 │             function foo() {
  3 │               new A();
@@ -324,7 +324,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:1:9]
  1 │ var a = a;
    ·     ┬   ┬
@@ -333,7 +333,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:1:9]
  1 │ let a = a + b;
    ·     ┬   ┬
@@ -342,7 +342,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:1:15]
  1 │ const a = foo(a);
    ·       ┬       ┬
@@ -351,7 +351,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:1:18]
  1 │ function foo(a = a) {}
    ·              ┬   ┬
@@ -360,7 +360,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:1:11]
  1 │ var { a = a } = [];
    ·       ┬   ┬
@@ -369,7 +369,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:1:10]
  1 │ var [a = a] = [];
    ·      ┬   ┬
@@ -378,7 +378,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:1:11]
  1 │ var { b = a, a } = {};
    ·           ┬  ┬
@@ -387,7 +387,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:1:10]
  1 │ var [b = a, a] = {};
    ·          ┬  ┬
@@ -396,7 +396,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:1:17]
  1 │ var { a = 0 } = a;
    ·       ┬         ┬
@@ -405,7 +405,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:1:15]
  1 │ var [a = 0] = a;
    ·      ┬        ┬
@@ -414,7 +414,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:27]
  1 │ 
  2 │             for (var a in a) {
@@ -425,7 +425,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:27]
  1 │ 
  2 │             for (var a of a) {
@@ -436,7 +436,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'Foo' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:28]
  2 │             interface Bar {
  3 │               type: typeof Foo;
@@ -451,7 +451,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'Foo' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:28]
  2 │             interface Bar {
  3 │               type: typeof Foo.FOO;
@@ -466,7 +466,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'Foo' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:28]
  2 │             interface Bar {
  3 │               type: typeof Foo.Bar.Baz;
@@ -481,7 +481,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'baz' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'baz' was used before it was defined.
    ╭─[no_use_before_define.tsx:5:27]
  4 │             } satisfies {
  5 │               bar: typeof baz;
@@ -496,7 +496,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'bar' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'bar' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:15]
  2 │             function foo() {
  3 │               bar;
@@ -509,7 +509,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'Foo' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
    ╭─[no_use_before_define.tsx:4:24]
  3 │               foo(args: Foo): Foo {
  4 │                 return Foo.FOO;
@@ -525,7 +525,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'Foo' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:22]
  2 │             function foo(): Foo {
  3 │               return Foo.FOO;
@@ -540,7 +540,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'Foo' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:25]
  1 │ 
  2 │             const foo = Foo.Foo;
@@ -554,7 +554,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { a };
@@ -567,7 +567,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { a };
@@ -580,7 +580,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { a };
@@ -593,7 +593,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { a };
@@ -606,7 +606,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { a as b };
@@ -619,7 +619,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { a, b };
@@ -632,7 +632,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'b' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'b' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:25]
  1 │ 
  2 │             export { a, b };
@@ -645,7 +645,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { a };
@@ -658,7 +658,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'f' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'f' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { f };
@@ -671,7 +671,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'C' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'C' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { C };
@@ -684,7 +684,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:32]
  1 │ 
  2 │             export const foo = a;
@@ -697,7 +697,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:3:22]
  2 │             export function foo() {
  3 │               return a;
@@ -711,7 +711,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:4:24]
  3 │               foo() {
  4 │                 return a;
@@ -726,7 +726,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'Foo' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { Foo };
@@ -740,7 +740,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'Foo' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { Foo };
@@ -754,7 +754,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'Foo' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'Foo' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:22]
  1 │ 
  2 │             export { Foo, baz };
@@ -768,7 +768,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'baz' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'baz' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:27]
  1 │ 
  2 │             export { Foo, baz };
@@ -785,7 +785,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'f' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'f' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             f();
@@ -798,7 +798,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:19]
  1 │ 
  2 │             alert(a);
@@ -811,7 +811,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'f' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'f' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:13]
  1 │ 
  2 │             f()?.();
@@ -824,7 +824,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the declaration before any references to it, or remove the reference if it is not needed.
 
-  ⚠ typescript-eslint(no-use-before-define): 'a' was used before it was defined.
+  ⚠ eslint(no-use-before-define): 'a' was used before it was defined.
    ╭─[no_use_before_define.tsx:2:19]
  1 │ 
  2 │             alert(a?.b);

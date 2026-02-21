@@ -9,7 +9,7 @@ use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
     EmbeddedLanguageFormatting, Expand, FormatOptions, GroupEntry, ImportModifier, ImportSelector,
     IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, TailwindcssOptions, TrailingCommas,
+    SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -201,16 +201,17 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_final_newline: Option<bool>,
 
-    /// Experimental: Sort import statements.
+    /// Sort import statements.
     ///
     /// Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
     /// For details, see each field's documentation.
     ///
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_sort_imports: Option<SortImportsConfig>,
+    #[serde(alias = "experimentalSortImports")]
+    pub sort_imports: Option<SortImportsConfig>,
 
-    /// Experimental: Sort `package.json` keys.
+    /// Sort `package.json` keys.
     ///
     /// The algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).
     /// But we believe it is clearer and easier to navigate.
@@ -218,9 +219,10 @@ pub struct FormatConfig {
     ///
     /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_sort_package_json: Option<SortPackageJsonUserConfig>,
+    #[serde(alias = "experimentalSortPackageJson")]
+    pub sort_package_json: Option<SortPackageJsonUserConfig>,
 
-    /// Experimental: Sort Tailwind CSS classes.
+    /// Sort Tailwind CSS classes.
     ///
     /// Using the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
     /// Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
@@ -228,7 +230,8 @@ pub struct FormatConfig {
     ///
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_tailwindcss: Option<TailwindcssConfig>,
+    #[serde(alias = "experimentalTailwindcss")]
+    pub sort_tailwindcss: Option<SortTailwindcssConfig>,
 }
 
 impl FormatConfig {
@@ -236,7 +239,7 @@ impl FormatConfig {
     /// Otherwise, the plugin tries to resolve the Prettier's configuration file, not Oxfmt's.
     /// <https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/125a8bc77639529a5a0c7e4e8a02174d7ed2d70b/src/config.ts#L50-L54>
     pub fn resolve_tailwind_paths(&mut self, base_dir: &Path) {
-        let Some(ref mut tw) = self.experimental_tailwindcss else {
+        let Some(ref mut tw) = self.sort_tailwindcss else {
             return;
         };
 
@@ -393,7 +396,7 @@ impl FormatConfig {
 
         // Below are our own extensions
 
-        if let Some(config) = self.experimental_sort_imports {
+        if let Some(config) = self.sort_imports {
             let mut sort_imports = SortImportsOptions::default();
 
             if let Some(v) = config.partition_by_newline {
@@ -511,8 +514,8 @@ impl FormatConfig {
             format_options.sort_imports = Some(sort_imports);
         }
 
-        if let Some(config) = self.experimental_tailwindcss {
-            format_options.sort_tailwindcss = Some(TailwindcssOptions {
+        if let Some(config) = self.sort_tailwindcss {
+            format_options.sort_tailwindcss = Some(SortTailwindcssOptions {
                 config: config.config,
                 stylesheet: config.stylesheet,
                 functions: config.functions.unwrap_or_default(),
@@ -525,7 +528,7 @@ impl FormatConfig {
         // Currently, there is a no options for TOML formatter
         let toml_options = build_toml_options(&format_options);
 
-        let sort_package_json = self.experimental_sort_package_json.map_or_else(
+        let sort_package_json = self.sort_package_json.map_or_else(
             || Some(SortPackageJsonConfig::default().to_sort_options()),
             |c| c.to_sort_options(),
         );
@@ -864,7 +867,7 @@ impl SortPackageJsonConfig {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-pub struct TailwindcssConfig {
+pub struct SortTailwindcssConfig {
     /// Path to your Tailwind CSS configuration file (v3).
     ///
     /// NOTE: Paths are resolved relative to the Oxfmt configuration file.
@@ -1006,7 +1009,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
     };
 
     // Determine if Tailwind plugin should be used based on config and strategy
-    let use_tailwind = obj.contains_key("experimentalTailwindcss")
+    let use_tailwind = obj.contains_key("sortTailwindcss")
         && match strategy {
             FormatFileStrategy::OxcFormatter { .. } => true,
             #[cfg(feature = "napi")]
@@ -1019,9 +1022,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
     // Add Tailwind plugin flag and map options
     // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
     if use_tailwind {
-        if let Some(tailwind) =
-            obj.get("experimentalTailwindcss").and_then(|v| v.as_object()).cloned()
-        {
+        if let Some(tailwind) = obj.get("sortTailwindcss").and_then(|v| v.as_object()).cloned() {
             for (src, dst) in [
                 ("config", "tailwindConfig"),
                 ("stylesheet", "tailwindStylesheet"),
@@ -1058,8 +1059,8 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
             "arrowParens",
             "quoteProps",
             "jsxSingleQuote",
-            "experimentalSortImports",
-            "experimentalTailwindcss",
+            "sortImports",
+            "sortTailwindcss",
         ] {
             if let Some(value) = obj.get(key) {
                 oxfmt_plugin_options.insert(key.to_string(), value.clone());
@@ -1076,9 +1077,9 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
 
     // To minimize payload size, remove Prettier unaware options
     for key in [
-        "experimentalSortImports",
-        "experimentalTailwindcss",
-        "experimentalSortPackageJson",
+        "sortImports",
+        "sortTailwindcss",
+        "sortPackageJson",
         "insertFinalNewline",
         "overrides",
         "ignorePatterns",
@@ -1504,7 +1505,7 @@ mod tests_sync_external_options {
                 { "files": ["*.test.js"], "options": { "tabWidth": 4 } }
             ],
             "ignorePatterns": ["*.min.js"],
-            "experimentalSortImports": { "order": "asc" }
+            "sortImports": { "order": "asc" }
         }"#;
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
 
@@ -1518,7 +1519,7 @@ mod tests_sync_external_options {
         // oxfmt extensions are removed by finalize_external_options
         assert!(!obj.contains_key("overrides"));
         assert!(!obj.contains_key("ignorePatterns"));
-        assert!(!obj.contains_key("experimentalSortImports"));
+        assert!(!obj.contains_key("sortImports"));
     }
 }
 

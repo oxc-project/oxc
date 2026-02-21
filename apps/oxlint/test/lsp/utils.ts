@@ -5,12 +5,15 @@ import { pathToFileURL } from "node:url";
 import {
   CodeActionRequest,
   createMessageConnection,
+  DiagnosticRefreshRequest,
   DiagnosticSeverity,
   DidChangeConfigurationNotification,
   DidChangeTextDocumentNotification,
+  DidChangeWatchedFilesNotification,
   DidOpenTextDocumentNotification,
   DocumentDiagnosticRequest,
   ExitNotification,
+  FileChangeType,
   InitializedNotification,
   InitializeRequest,
   RegistrationRequest,
@@ -80,6 +83,12 @@ export function createLspConnection() {
       await connection.sendNotification(DidChangeConfigurationNotification.type, { settings });
     },
 
+    async didChangeWatchedFiles(uris: string[]) {
+      await connection.sendNotification(DidChangeWatchedFilesNotification.type, {
+        changes: uris.map((uri) => ({ uri, type: FileChangeType.Changed })),
+      });
+    },
+
     async didOpen(uri: string, languageId: string, text: string) {
       await connection.sendNotification(DidOpenTextDocumentNotification.type, {
         textDocument: { uri, languageId, version: 1, text },
@@ -115,6 +124,15 @@ export function createLspConnection() {
       return await new Promise((resolve) => {
         const disposer = connection.onRequest(RegistrationRequest.type, (params) => {
           resolve(params.registrations);
+          disposer.dispose();
+        });
+      });
+    },
+
+    getWorkspaceRefresh(): Promise<void> {
+      return new Promise((resolve) => {
+        const disposer = connection.onRequest(DiagnosticRefreshRequest.type, () => {
+          resolve();
           disposer.dispose();
         });
       });
@@ -167,6 +185,118 @@ export async function lintMultiWorkspaceFixture(
   );
 
   const snapshots = [];
+  for (const fixturePath of fixturePaths) {
+    snapshots.push(
+      // oxlint-disable-next-line no-await-in-loop -- for snapshot consistency
+      await getDiagnosticSnapshot(
+        fixturePath.path,
+        join(fixturesDir, fixturePath.path),
+        fixturePath.languageId,
+        client,
+      ),
+    );
+  }
+
+  return snapshots.join("\n\n");
+}
+
+export async function lintFixtureWithFileContentChange(
+  fixturesDir: string,
+  fixturePath: string,
+  languageId: string,
+  oldConfigPath: string,
+  newConfigPath: string,
+  initializationOptions?: OxlintLSPConfig,
+): Promise<string> {
+  return lintMultiWorkspaceFixtureWithFileContentChange(
+    fixturesDir,
+    [{ path: fixturePath, languageId }],
+    oldConfigPath,
+    newConfigPath,
+    initializationOptions ? [initializationOptions] : undefined,
+  );
+}
+
+export async function lintMultiWorkspaceFixtureWithFileContentChange(
+  fixturesDir: string,
+  fixturePaths: {
+    path: string;
+    languageId: string;
+  }[],
+  oldConfigPath: string,
+  newConfigPath: string,
+  initializationOptions?: OxlintLSPConfig[],
+): Promise<string> {
+  const workspaceUris = fixturePaths.map(
+    ({ path }) => pathToFileURL(dirname(join(fixturesDir, path))).href,
+  );
+  await using client = createLspConnection();
+
+  // in theory we should support dynamic registration for the watcher
+  // but the server does not care if you request `workspace/didChangeWatchedFiles` without the capability.
+  // Avoid the complexity of dynamic registration in tests. This should be done in a separate test if needed.
+  await client.initialize(
+    workspaceUris.map((uri, index) => ({ uri, name: `workspace-${index}` })),
+    PULL_DIAGNOSTICS_CAPABILITY,
+    workspaceUris.map((workspaceUri, index) => ({
+      workspaceUri,
+      options: initializationOptions?.[index] ?? null,
+    })),
+  );
+
+  const snapshots = [];
+  snapshots.push("=== Before Config Change ===");
+  for (const fixturePath of fixturePaths) {
+    snapshots.push(
+      // oxlint-disable-next-line no-await-in-loop -- for snapshot consistency
+      await getDiagnosticSnapshot(
+        fixturePath.path,
+        join(fixturesDir, fixturePath.path),
+        fixturePath.languageId,
+        client,
+      ),
+    );
+  }
+
+  const oldContent = await Promise.all(
+    fixturePaths.map(({ path }) => {
+      const dir = dirname(join(fixturesDir, path));
+      const oldFilePath = join(dir, oldConfigPath);
+      return fs.readFile(oldFilePath, "utf-8");
+    }),
+  );
+
+  try {
+    const refreshedUris = await Promise.all(
+      fixturePaths.map(async ({ path }) => {
+        const dir = dirname(join(fixturesDir, path));
+        const filePath = join(dir, newConfigPath);
+        const oldFilePath = join(dir, oldConfigPath);
+        const newContent = await fs.readFile(filePath, "utf-8");
+        await fs.writeFile(oldFilePath, newContent);
+
+        return pathToFileURL(oldFilePath).href;
+      }),
+    );
+
+    const workspaceRefreshPromise = client.getWorkspaceRefresh();
+    await client.didChangeWatchedFiles(refreshedUris);
+    // Wait for the server to process the file change and ask for refreshed diagnostics
+    await workspaceRefreshPromise;
+
+    // restore old config content to avoid affecting other tests
+
+    snapshots.push("=== After Config Change ===");
+  } finally {
+    await Promise.all(
+      fixturePaths.map(({ path }, index) => {
+        const dir = dirname(join(fixturesDir, path));
+        const oldFilePath = join(dir, oldConfigPath);
+        return fs.writeFile(oldFilePath, oldContent[index]);
+      }),
+    );
+  }
+
   for (const fixturePath of fixturePaths) {
     snapshots.push(
       // oxlint-disable-next-line no-await-in-loop -- for snapshot consistency

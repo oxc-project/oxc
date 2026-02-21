@@ -1122,3 +1122,93 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: "Array.fromAsync" uses the callback's return value. Add a `return` on every possible code path.
         Return a value on each path (or enable `allowImplicit` to allow `return;`).
+
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(x => x);
+   ·     ───┬───      ┬
+   ·        │         ╰── Prepend `void` to the expression.
+   ·        ╰── "Array.prototype.forEach" is called here.
+   ╰────
+  help: Expected the return expression to be started with `void`
+
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(x => !x);
+   ·     ───┬───      ─┬
+   ·        │          ╰── Prepend `void` to the expression.
+   ·        ╰── "Array.prototype.forEach" is called here.
+   ╰────
+  help: Expected the return expression to be started with `void`
+
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(x => (x));
+   ·     ───┬───      ─┬─
+   ·        │          ╰── Prepend `void` to the expression.
+   ·        ╰── "Array.prototype.forEach" is called here.
+   ╰────
+  help: Expected the return expression to be started with `void`
+
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(x => { return x; });
+   ·     ───┬───               ┬
+   ·        │                  ╰── Prepend `void` to the expression.
+   ·        ╰── "Array.prototype.forEach" is called here.
+   ╰────
+  help: Expected the return expression to be started with `void`
+
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(x => { return !x; });
+   ·     ───┬───               ─┬
+   ·        │                   ╰── Prepend `void` to the expression.
+   ·        ╰── "Array.prototype.forEach" is called here.
+   ╰────
+  help: Expected the return expression to be started with `void`
+
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(x => { return (x); });
+   ·     ───┬───               ─┬─
+   ·        │                   ╰── Prepend `void` to the expression.
+   ·        ╰── "Array.prototype.forEach" is called here.
+   ╰────
+  help: Expected the return expression to be started with `void`
+
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(x => { return x + 1; });
+   ·     ───┬───               ──┬──
+   ·        │                    ╰── Prepend `void` to the expression.
+   ·        ╰── "Array.prototype.forEach" is called here.
+   ╰────
+  help: Expected the return expression to be started with `void`
+
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(x => { if (a === b) { return x; } });
+   ·     ───┬───                              ┬
+   ·        │                                 ╰── Prepend `void` to the expression.
+   ·        ╰── "Array.prototype.forEach" is called here.
+   ╰────
+  help: Expected the return expression to be started with `void`
+
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(x => { if (a === b) { return !x; } });
+   ·     ───┬───                              ─┬
+   ·        │                                  ╰── Prepend `void` to the expression.
+   ·        ╰── "Array.prototype.forEach" is called here.
+   ╰────
+  help: Expected the return expression to be started with `void`
+
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(x => { if (a === b) { return (x + a); } });
+   ·     ───┬───                              ───┬───
+   ·        │                                    ╰── Prepend `void` to the expression.
+   ·        ╰── "Array.prototype.forEach" is called here.
+   ╰────
+  help: Expected the return expression to be started with `void`

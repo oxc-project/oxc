@@ -6,7 +6,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_setter_return_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Setter cannot return a value").with_label(span)
+    OxcDiagnostic::warn("Setter cannot return a value")
+        .with_help("Remove the return statement or ensure it does not return a value.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

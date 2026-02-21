@@ -4,6 +4,55 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.49.0] - 2026-02-19
+
+### 💥 BREAKING CHANGES
+
+- 4315594 oxlint: [**BREAKING**] Deprecate `"always"` and `"as-needed"` options of the radix rule (#19408) (Sysix)
+- d4c7af3 linter: [**BREAKING**] Remove `allowRuleToRunWithoutStrictNullChecksIKnowWhatIAmDoing` option (#19451) (camc314)
+
+### 🚀 Features
+
+- 82ca5c3 linter: Add typescript/dot-notation rule (#19442) (camc314)
+- 6db0811 linter: Implement eslint-plugin-vitest/no-importing-vitest-globals (#18694) (Said Atrahouch)
+- c7fe8ae linter: Implement eslint-plugin-vitest/prefer-import-in-mock (#17966) (Said Atrahouch)
+- 0abb39a linter: Implement eslint-vitest-jest-plugin/prefer-mock-return-shorthand (#18002) (Said Atrahouch)
+- 2b95537 linter: Implement `n/no-path-concat` rule (#19502) (Mikhail Baev)
+- 735d0e4 linter: Implement typescript/no-useless-default-assignment (#19488) (camc314)
+- 31c3a93 linter: Add typescript/no-unnecessary-type-parameters rule (#19450) (camc314)
+- c948090 linter: Add typescript/consistent-return rule (#19449) (camc314)
+- 9f87df0 linter: Add typescript/prefer-string-starts-ends-with rule (#19448) (camc314)
+- 04536be linter: Add typescript/prefer-regexp-exec rule (#19447) (camc314)
+- 56a7feb linter: Add typescript/prefer-readonly rule (#19446) (camc314)
+- a1cea63 linter: Add typescript/no-unnecessary-qualifier rule (#19445) (camc314)
+- e3144d2 linter: Add typescript/prefer-find rule (#19444) (camc314)
+- 13c7408 linter: Add typescript/prefer-readonly-parameter-types rule (#19443) (camc314)
+- 9b17d44 linter: Add typescript/strict-void-return rule (#19441) (camc314)
+- ed821b4 linter: Add typescript/consistent-type-exports rule (#19440) (camc314)
+
+### 🐛 Bug Fixes
+
+- daad7bc linter/array-callback-return: Check `allowVoid` option (#19506) (Said Atrahouch)
+- 638cf94 linter: Add help text to eslint rule diagnostics (#19508) (Kyle Tse)
+- 79fc6d7 linter: Move no-use-before-define to eslint plugin (#19438) (camc314)
+- c832a9f linter: Add `onScrollEnd` and `onScrollEndCapture` to `react/no-unknown-property`. (#19536) (connorshea)
+- 999a0db linter: Add help text to `symbol-description` diagnostics (#19538) (Anthony Amaro)
+- f064482 linter: Add help text to eslint rule diagnostics (#19539) (Anthony Amaro)
+- fd11073 linter/react/no-unknown-property: Add missing `fetchPriority` prop (#19525) (João Pedro Schmitz)
+- a9bb604 linter/no-shadow: Align initializer shadow handling with typescript-eslint (#19462) (camc314)
+- 32e6eb9 linter: Handle typed arrays/array buffers in `prefer-spread` rule. (#19478) (connorshea)
+- e309f84 linter: Handle additional cases in `typescript/consistent-generic-constructors` rule. (#19477) (connorshea)
+- 71db91a linter/array-callback-return: Check `fromAsync`, update test cases (#19483) (Said Atrahouch)
+- 2a12d74 linter: Handle optional chaining in `no-array-method-this-argument` rule. (#19476) (connorshea)
+- f65310b linter: Handle optional chaining in `prefer-object-from-entries` rule. (#19475) (connorshea)
+- 840acf4 linter: Handle optional chain in `no-unnecessary-array-flat-depth` rule. (#19471) (connorshea)
+- 85a19e9 linter: Skip string literal imports in `consistent-assert` rule. (#19474) (connorshea)
+
+### ⚡ Performance
+
+- 6155ac4 linter/constructor-super: Use node_id over nodes loop (#19489) (camc314)
+- a02496d linter/consistent-index-object-style: Resolve circular type refs semantically (#19490) (camc314)
+
 ## [1.48.0] - 2026-02-16
 
 ### 💥 BREAKING CHANGES

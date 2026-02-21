@@ -10,7 +10,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_constructor_return_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected return statement in constructor.").with_label(span)
+    OxcDiagnostic::warn("Unexpected return statement in constructor.")
+        .with_help("Remove the return statement from the constructor. If you need early exit, use a bare `return;` with no value.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

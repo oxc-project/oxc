@@ -115,9 +115,25 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
-   ╭─[explicit_module_boundary_types.tsx:1:30]
+   ╭─[explicit_module_boundary_types.tsx:3:25]
+ 2 │             export class Test {
+ 3 │               protected method(one: string) {
+   ·                         ──────
+ 4 │                 return one;
+   ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:6:25]
+ 5 │               }
+ 6 │               protected arrow = (one: string) => one;
+   ·                         ─────
+ 7 │             }
+   ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:1:16]
  1 │ export default () => (true ? () => {} : (): void => {});
-   ·                              ──
+   ·                ──
    ╰────
 
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
@@ -716,4 +732,25 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[explicit_module_boundary_types.tsx:1:10]
  1 │ function App() { return 42; } export default App
    ·          ───
+   ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+    ╭─[explicit_module_boundary_types.tsx:2:28]
+  1 │     
+  2 │ ╭─▶             export default ({
+  3 │ │                   a,
+  4 │ │                   b,
+  5 │ │                   c,
+  6 │ │               }: {
+  7 │ │                   a: string;
+  8 │ │                   b: string;
+  9 │ │                   c: string;
+ 10 │ ╰─▶             }) => {
+ 11 │                     return `${a} ${b} ${c}`;
+    ╰────
+
+  ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
+   ╭─[explicit_module_boundary_types.tsx:1:17]
+ 1 │ export default (function() { return 'test'; });
+   ·                 ────────
    ╰────
