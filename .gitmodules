@@ -1,0 +1,3 @@
+[submodule "tasks/react_compiler/react"]
+	path = tasks/react_compiler/react
+	url = https://github.com/facebook/react.git
