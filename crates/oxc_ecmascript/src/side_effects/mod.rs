@@ -1,11 +1,16 @@
 mod context;
+mod detector;
+mod detector_utils;
 mod expressions;
 mod pure_function;
+mod side_effect_detail;
 mod statements;
 
-pub use context::{MayHaveSideEffectsContext, PropertyReadSideEffects};
+pub use context::{MayHaveSideEffectsContext, PropertyReadSideEffects, PropertyWriteSideEffects};
+pub use detector::SideEffectDetector;
 pub use expressions::is_valid_regexp;
 pub use pure_function::is_pure_function;
+pub use side_effect_detail::SideEffectDetail;
 
 /// Returns true if subtree changes application state.
 ///
@@ -20,10 +25,18 @@ pub use pure_function::is_pure_function;
 /// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
 pub trait MayHaveSideEffects<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool;
+
+    fn side_effect_detail(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> SideEffectDetail {
+        self.may_have_side_effects(ctx).into()
+    }
 }
 
 impl<'a, T: MayHaveSideEffects<'a>> MayHaveSideEffects<'a> for Option<T> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         self.as_ref().is_some_and(|t| t.may_have_side_effects(ctx))
+    }
+
+    fn side_effect_detail(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> SideEffectDetail {
+        self.as_ref().map_or_else(SideEffectDetail::empty, |t| t.side_effect_detail(ctx))
     }
 }

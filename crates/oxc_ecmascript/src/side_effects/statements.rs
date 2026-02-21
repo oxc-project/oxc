@@ -2,7 +2,10 @@ use oxc_ast::ast::*;
 
 use crate::constant_evaluation::{DetermineValueType, ValueType};
 
-use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
+use super::{
+    MayHaveSideEffects, PropertyReadSideEffects, SideEffectDetail, SideEffectDetector,
+    context::MayHaveSideEffectsContext,
+};
 
 impl<'a> MayHaveSideEffects<'a> for Statement<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
@@ -31,6 +34,10 @@ impl<'a> MayHaveSideEffects<'a> for Statement<'a> {
             #[expect(clippy::match_same_arms)]
             match_module_declaration!(Statement) => true,
         }
+    }
+
+    fn side_effect_detail(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> SideEffectDetail {
+        SideEffectDetector::new(ctx).detect_side_effect_of_stmt(self)
     }
 }
 
