@@ -58,6 +58,14 @@ working directory: fixtures/tsgolint_disable_directives
     `----
   help: Consider using this expression or removing it
 
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[unused.ts:22:3]
+ 21 | // This disable directive is UNUSED (no floating promise here)
+ 22 | /* eslint-disable @typescript-eslint/no-floating-promises */
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 23 | const x = 1 + 2
+    `----
+
   ! eslint(no-unused-vars): Variable 'x' is declared but never used. Unused variables should start with a '_'.
     ,-[unused.ts:23:7]
  22 | /* eslint-disable @typescript-eslint/no-floating-promises */
@@ -67,14 +75,6 @@ working directory: fixtures/tsgolint_disable_directives
  24 | /* eslint-enable @typescript-eslint/no-floating-promises */
     `----
   help: Consider removing this declaration.
-
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[unused.ts:24:3]
- 23 | const x = 1 + 2
- 24 | /* eslint-enable @typescript-eslint/no-floating-promises */
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 25 | 
-    `----
 
 Found 8 warnings and 0 errors.
 Finished in <variable>ms on 1 file with 107 rules using 1 threads.
