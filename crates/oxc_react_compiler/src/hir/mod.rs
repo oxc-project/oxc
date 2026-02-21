@@ -4,6 +4,7 @@ pub mod assertions;
 pub mod compute_unconditional_blocks;
 pub mod dominator;
 pub mod environment;
+pub mod globals;
 pub mod hir_builder;
 pub mod merge_consecutive_blocks;
 pub mod object_shape;
