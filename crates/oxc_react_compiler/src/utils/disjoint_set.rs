@@ -4,13 +4,12 @@
 ///
 /// This is a union-find data structure with path compression.
 /// Items of type `T` must implement `Hash + Eq + Clone`.
-use std::{
-    collections::{HashMap, HashSet},
-    hash::Hash,
-};
+use std::hash::Hash;
+
+use rustc_hash::{FxHashMap, FxHashSet};
 
 pub struct DisjointSet<T: Hash + Eq + Clone> {
-    entries: HashMap<T, T>,
+    entries: FxHashMap<T, T>,
 }
 
 impl<T: Hash + Eq + Clone> Default for DisjointSet<T> {
@@ -21,7 +20,7 @@ impl<T: Hash + Eq + Clone> Default for DisjointSet<T> {
 
 impl<T: Hash + Eq + Clone> DisjointSet<T> {
     pub fn new() -> Self {
-        Self { entries: HashMap::new() }
+        Self { entries: FxHashMap::default() }
     }
 
     /// Updates the graph to reflect that the given `items` form a set,
@@ -38,12 +37,11 @@ impl<T: Hash + Eq + Clone> DisjointSet<T> {
         // Determine an arbitrary "root" for this set: if the first
         // item already has a root then use that, otherwise the first item
         // will be the new root.
-        let root = match self.find(first) {
-            Some(r) => r,
-            None => {
-                self.entries.insert(first.clone(), first.clone());
-                first.clone()
-            }
+        let root = if let Some(r) = self.find(first) {
+            r
+        } else {
+            self.entries.insert(first.clone(), first.clone());
+            first.clone()
         };
 
         // Update remaining items (which may already be part of other sets)
@@ -79,6 +77,9 @@ impl<T: Hash + Eq + Clone> DisjointSet<T> {
     /// Note that the returned value may be any item in the set to which the input
     /// belongs: the only guarantee is that all items in a set will return the same
     /// value in between calls to `union()`.
+    ///
+    /// # Panics
+    /// Panics if internal data is inconsistent (parent entry missing).
     pub fn find(&mut self, item: &T) -> Option<T> {
         if !self.entries.contains_key(item) {
             return None;
@@ -102,9 +103,12 @@ impl<T: Hash + Eq + Clone> DisjointSet<T> {
 
     /// Forces the set into canonical form, ie with all items pointing directly to
     /// their root, and returns a map representing the mapping of items to their roots.
-    pub fn canonicalize(&mut self) -> HashMap<T, T> {
+    ///
+    /// # Panics
+    /// Panics if internal data is inconsistent.
+    pub fn canonicalize(&mut self) -> FxHashMap<T, T> {
         let keys: Vec<T> = self.entries.keys().cloned().collect();
-        let mut result = HashMap::new();
+        let mut result = FxHashMap::default();
         for item in keys {
             let root = self.find(&item).expect("item must exist in entries");
             result.insert(item, root);
@@ -114,6 +118,9 @@ impl<T: Hash + Eq + Clone> DisjointSet<T> {
 
     /// Calls the provided callback once for each item in the disjoint set,
     /// passing the item and the group to which it belongs.
+    ///
+    /// # Panics
+    /// Panics if internal data is inconsistent.
     pub fn for_each(&mut self, mut f: impl FnMut(&T, &T)) {
         let keys: Vec<T> = self.entries.keys().cloned().collect();
         for item in &keys {
@@ -123,9 +130,12 @@ impl<T: Hash + Eq + Clone> DisjointSet<T> {
     }
 
     /// Builds non-overlapping sets from the disjoint set.
-    pub fn build_sets(&mut self) -> Vec<HashSet<T>> {
-        let mut ids: HashMap<T, usize> = HashMap::new();
-        let mut sets: HashMap<usize, HashSet<T>> = HashMap::new();
+    ///
+    /// # Panics
+    /// Panics if internal data is inconsistent.
+    pub fn build_sets(&mut self) -> Vec<FxHashSet<T>> {
+        let mut ids: FxHashMap<T, usize> = FxHashMap::default();
+        let mut sets: FxHashMap<usize, FxHashSet<T>> = FxHashMap::default();
 
         let keys: Vec<T> = self.entries.keys().cloned().collect();
         for item in keys {
@@ -234,9 +244,9 @@ mod tests {
         assert_eq!(sets.len(), 2);
 
         // Verify one set contains {a, b, c} and the other {x, y, z}
-        let set_abc: HashSet<TestIdentifier> =
+        let set_abc: FxHashSet<TestIdentifier> =
             [a.clone(), b.clone(), c.clone()].into_iter().collect();
-        let set_xyz: HashSet<TestIdentifier> =
+        let set_xyz: FxHashSet<TestIdentifier> =
             [x.clone(), y.clone(), z.clone()].into_iter().collect();
 
         let found_abc = sets.iter().any(|s| *s == set_abc);
