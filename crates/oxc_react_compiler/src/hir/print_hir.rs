@@ -1,10 +1,3 @@
-/// Pretty-printer for the HIR.
-///
-/// Port of `HIR/PrintHIR.ts` from the React Compiler.
-///
-/// Provides functions for printing the HIR to a human-readable string format,
-/// useful for debugging and test output.
-use std::fmt::Write;
 
 use crate::compiler_error::SourceLocation;
 
@@ -28,7 +21,8 @@ pub fn print_function(func: &HIRFunction) -> String {
     }
 
     if let Some(hint) = &func.name_hint {
-        write!(definition, " {hint}").ok();
+        definition.push(' ');
+        definition.push_str(hint);
     }
 
     if func.params.is_empty() {
@@ -47,7 +41,8 @@ pub fn print_function(func: &HIRFunction) -> String {
         definition.push(')');
     }
 
-    write!(definition, ": {}", print_place(&func.returns)).ok();
+    definition.push_str(": ");
+    definition.push_str(&print_place(&func.returns));
     output.push_str(&definition);
     output.push('\n');
 
