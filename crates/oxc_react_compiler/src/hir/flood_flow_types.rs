@@ -5,7 +5,6 @@
 /// TypeScript definitions for Flow type JSON representations, based on the
 /// output of Flow's internal type converter. These represent the serialized
 /// form of Flow's type system that the compiler can consume.
-
 /// Polarity of a type parameter.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Polarity {
