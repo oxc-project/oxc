@@ -2,7 +2,7 @@
 use crate::hir::HIRFunction;
 
 /// Propagate scope dependencies through the HIR.
-pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
+pub fn propagate_scope_dependencies_hir(func: &HIRFunction) {
     // The full implementation:
     // 1. For each reactive scope, identifies all values read inside the scope
     // 2. Filters to keep only values defined outside the scope

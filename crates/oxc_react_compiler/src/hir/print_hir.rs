@@ -334,13 +334,7 @@ pub fn print_instruction_value(value: &InstructionValue) -> String {
             format!("ComputedDelete {}[{}]", print_place(&v.object), print_place(&v.property))
         }
         InstructionValue::LoadGlobal(v) => {
-            let name = match &v.binding {
-                super::hir_types::NonLocalBinding::Global { name } => name.clone(),
-                super::hir_types::NonLocalBinding::ModuleLocal { name } => name.clone(),
-                super::hir_types::NonLocalBinding::ImportDefault { name, .. } => name.clone(),
-                super::hir_types::NonLocalBinding::ImportNamespace { name, .. } => name.clone(),
-                super::hir_types::NonLocalBinding::ImportSpecifier { name, .. } => name.clone(),
-            };
+            let name = v.binding.name().to_string();
             format!("LoadGlobal {name}")
         }
         InstructionValue::StoreGlobal(v) => {

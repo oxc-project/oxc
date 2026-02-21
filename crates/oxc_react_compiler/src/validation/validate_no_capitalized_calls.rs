@@ -27,13 +27,7 @@ pub fn validate_no_capitalized_calls(func: &HIRFunction) -> Result<(), CompilerE
         for instr in &block.instructions {
             match &instr.value {
                 InstructionValue::LoadGlobal(v) => {
-                    let name = match &v.binding {
-                        crate::hir::NonLocalBinding::Global { name } => name.clone(),
-                        crate::hir::NonLocalBinding::ModuleLocal { name } => name.clone(),
-                        crate::hir::NonLocalBinding::ImportDefault { name, .. } => name.clone(),
-                        crate::hir::NonLocalBinding::ImportNamespace { name, .. } => name.clone(),
-                        crate::hir::NonLocalBinding::ImportSpecifier { name, .. } => name.clone(),
-                    };
+                    let name = v.binding.name().to_string();
                     if !name.is_empty()
                         && name.starts_with(|c: char| c.is_ascii_uppercase())
                         && name != name.to_ascii_uppercase()

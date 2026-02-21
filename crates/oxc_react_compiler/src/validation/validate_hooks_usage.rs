@@ -57,13 +57,7 @@ pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
         for instr in &block.instructions {
             match &instr.value {
                 InstructionValue::LoadGlobal(v) => {
-                    let name = match &v.binding {
-                        crate::hir::NonLocalBinding::Global { name } => name.clone(),
-                        crate::hir::NonLocalBinding::ModuleLocal { name } => name.clone(),
-                        crate::hir::NonLocalBinding::ImportDefault { name, .. } => name.clone(),
-                        crate::hir::NonLocalBinding::ImportNamespace { name, .. } => name.clone(),
-                        crate::hir::NonLocalBinding::ImportSpecifier { name, .. } => name.clone(),
-                    };
+                    let name = v.binding.name().to_string();
                     if is_hook_name(&name) {
                         kinds.insert(instr.lvalue.identifier.id, Kind::KnownHook);
                     } else {
