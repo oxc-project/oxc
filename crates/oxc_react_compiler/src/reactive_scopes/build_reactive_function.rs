@@ -61,8 +61,7 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
     let mut statements: ReactiveBlock = Vec::new();
     let mut current_id = block_id;
 
-    loop {
-        let Some(block) = cx.block(current_id) else { break };
+    while let Some(block) = cx.block(current_id) {
 
         // Add instructions as reactive statements
         for instr in &block.instructions {

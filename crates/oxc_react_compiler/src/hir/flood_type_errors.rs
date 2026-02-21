@@ -36,7 +36,7 @@ pub fn raise_unification_errors(
 ) -> Result<(), CompilerError> {
     match errors {
         None => Ok(()),
-        Some(errs) if errs.is_empty() => Err(CompilerError::invariant(
+        Some([]) => Err(CompilerError::invariant(
             "Should not have array of zero errors",
             None,
             loc,
