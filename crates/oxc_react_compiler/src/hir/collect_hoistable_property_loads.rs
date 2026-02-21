@@ -64,10 +64,7 @@ pub fn collect_hoistable_property_loads(func: &HIRFunction) -> HoistableProperty
         changed = false;
         let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
         for &block_id in &block_ids {
-            let block = match func.body.blocks.get(&block_id) {
-                Some(b) => b,
-                None => continue,
-            };
+            let Some(block) = func.body.blocks.get(&block_id) else { continue };
 
             if block.preds.is_empty() {
                 continue;

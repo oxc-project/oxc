@@ -70,10 +70,7 @@ fn apply_constant_propagation(func: &mut HIRFunction, constants: &mut Constants)
 
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
-        let block = match func.body.blocks.get_mut(&block_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
 
         // Initialize phi values if all operands have the same known constant value
         // Note: In the full implementation, we would iterate over actual Phi objects here.
