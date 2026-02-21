@@ -51,10 +51,7 @@ pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
     // Process blocks for merging
     for &block_id in &block_ids {
         let (should_merge, predecessor_id) = {
-            let block = match func.body.blocks.get(&block_id) {
-                Some(b) => b,
-                None => continue,
-            };
+            let Some(block) = func.body.blocks.get(&block_id) else { continue };
 
             // Can only merge blocks with a single predecessor
             if block.preds.len() != 1 {
@@ -72,10 +69,7 @@ pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
             let original_pred_id = *block.preds.iter().next().expect("preds is non-empty");
             let pred_id = merged.get(original_pred_id);
 
-            let pred = match func.body.blocks.get(&pred_id) {
-                Some(p) => p,
-                None => continue,
-            };
+            let Some(pred) = func.body.blocks.get(&pred_id) else { continue };
 
             // The predecessor must be a goto to this block and be a 'block' kind
             if !matches!(pred.terminal, Terminal::Goto(_)) || pred.kind != BlockKind::Block {

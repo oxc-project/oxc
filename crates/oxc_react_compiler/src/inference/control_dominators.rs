@@ -25,10 +25,7 @@ pub fn create_control_dominators<'a>(
     move |block_id: BlockId| -> bool {
         let control_blocks = post_dominator_frontier(func, &post_dominators, block_id);
         for &control_block_id in &control_blocks {
-            let control_block = match func.body.blocks.get(&control_block_id) {
-                Some(b) => b,
-                None => continue,
-            };
+            let Some(control_block) = func.body.blocks.get(&control_block_id) else { continue };
             match &control_block.terminal {
                 Terminal::If(t) => {
                     if is_control_variable(&t.test) {
@@ -81,10 +78,7 @@ fn post_dominator_frontier(
         if !visited.insert(block_id) {
             continue;
         }
-        let block = match func.body.blocks.get(&block_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(block) = func.body.blocks.get(&block_id) else { continue };
         for &pred in &block.preds {
             if !target_post_dominators.contains(&pred) {
                 frontier.insert(pred);
@@ -109,10 +103,7 @@ fn post_dominators_of(
         if !visited.insert(current_id) {
             continue;
         }
-        let current = match func.body.blocks.get(&current_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(current) = func.body.blocks.get(&current_id) else { continue };
         for &pred in &current.preds {
             let pred_post_dom = post_dominators.get(pred).unwrap_or(pred);
             if pred_post_dom == target_id || result.contains(&pred_post_dom) {

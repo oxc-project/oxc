@@ -37,10 +37,7 @@ pub fn infer_reactive_places(func: &mut HIRFunction) {
     while changed {
         changed = false;
         for &block_id in &block_ids {
-            let block = match func.body.blocks.get(&block_id) {
-                Some(b) => b,
-                None => continue,
-            };
+            let Some(block) = func.body.blocks.get(&block_id) else { continue };
 
             for instr in &block.instructions {
                 let lvalue_id = instr.lvalue.identifier.id;
@@ -59,10 +56,7 @@ pub fn infer_reactive_places(func: &mut HIRFunction) {
 
     // Phase 3: Mark reactive places on identifiers
     for block_id in &block_ids {
-        let block = match func.body.blocks.get_mut(block_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(block) = func.body.blocks.get_mut(block_id) else { continue };
 
         for instr in &mut block.instructions {
             instr.lvalue.reactive = reactive_ids.contains(&instr.lvalue.identifier.id);
