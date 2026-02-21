@@ -34,13 +34,9 @@ pub fn is_eslint_suppression(
 ) -> Option<Vec<String>> {
     let text = comment_text.trim();
 
-    let directive = if text.starts_with("eslint-disable-next-line") {
-        Some(&text["eslint-disable-next-line".len()..])
-    } else if text.starts_with("eslint-disable") {
-        Some(&text["eslint-disable".len()..])
-    } else {
-        None
-    };
+    let directive = if let Some(rest) = text.strip_prefix("eslint-disable-next-line") {
+        Some(rest)
+    } else { text.strip_prefix("eslint-disable").map(|rest| rest) };
 
     let directive = directive?;
     let rules_text = directive.trim();
