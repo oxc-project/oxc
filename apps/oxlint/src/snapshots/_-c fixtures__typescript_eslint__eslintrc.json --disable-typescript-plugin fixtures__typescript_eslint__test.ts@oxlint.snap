@@ -21,6 +21,7 @@ working directory:
  4 | 9007199254740993 // no-loss-of-precision
    : ^^^^^^^^^^^^^^^^
    `----
+  help: Use a number literal that can be represented accurately by a 64-bit floating-point number.
 
   ! eslint(no-unused-expressions): Expected expression to be used
    ,-[fixtures/typescript_eslint/test.ts:4:1]
