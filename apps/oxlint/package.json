@@ -47,7 +47,7 @@
     "@types/node": "catalog:",
     "@typescript-eslint/parser": "^8.54.0",
     "@typescript-eslint/scope-manager": "^8.54.0",
-    "ajv": "6.12.6",
+    "ajv": "6.14.0",
     "cross-env": "catalog:",
     "eslint": "catalog:",
     "eslint-vitest-rule-tester": "^3.0.1",
