@@ -16,7 +16,7 @@ fn missing_parameters(span: Span) -> OxcDiagnostic {
 
 fn missing_radix(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing radix parameter.")
-        .with_help("Add radix parameter `10` for parsing decimal numbers.")
+        .with_help("Add radix parameter `10` for parsing decimal numbers, or specify the appropriate radix for other number formats.")
         .with_label(span)
 }
 
@@ -25,8 +25,8 @@ fn invalid_radix(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// `RadixType` has no affect, it only here for backward compatibility.
-/// Without it, the linter will report unknown rule configuration error.
+// `RadixType` has no effect, it is only here for backward compatibility.
+// Without it, the linter will report unknown rule configuration error.
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct Radix(RadixType);
@@ -50,7 +50,8 @@ enum RadixType {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce the consistent use of the radix argument when using `parseInt()`.
+    /// Enforce the consistent use of the radix argument when using `parseInt()`,
+    /// which specifies what base to use for parsing the number.
     ///
     /// ### Why is this bad?
     ///
@@ -59,18 +60,29 @@ declare_oxc_lint!(
     ///
     /// See the
     /// [MDN documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseInt#radix)
-    /// for more information.
+    /// for more information on how `parseInt()` handles certain edge-cases.
+    ///
+    /// ### Configuration
+    ///
+    /// Note that passing an option to this rule has no effect on its behavior.
+    /// In v1.49.0, the config option for this rule was removed and made a no-op.
+    /// This matches the behavior change made in ESLint v10, and the rule now
+    /// always enforces that a radix parameter is provided to `parseInt()`.
+    ///
+    /// If you receive new violations due to this change, you may either opt
+    /// to disable this rule, or add the radix parameter to all usages of
+    /// `parseInt()` in your codebase.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// var num = parseInt("071");      // 57
+    /// let num = parseInt("071");      // 57
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// var num = parseInt("071", 10);  // 71
+    /// let num = parseInt("071", 10);  // 71
     /// ```
     Radix,
     eslint,
