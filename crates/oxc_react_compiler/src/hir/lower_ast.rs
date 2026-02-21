@@ -195,8 +195,8 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
             // Lower logical expressions as binary for now
             let operator = match logical.operator {
                 oxc_syntax::operator::LogicalOperator::And => BinaryOperator::BitwiseAnd,
-                oxc_syntax::operator::LogicalOperator::Or => BinaryOperator::BitwiseOR,
-                oxc_syntax::operator::LogicalOperator::Coalesce => BinaryOperator::BitwiseOR,
+                oxc_syntax::operator::LogicalOperator::Or
+                | oxc_syntax::operator::LogicalOperator::Coalesce => BinaryOperator::BitwiseOR,
             };
             LowerableExpression::BinaryExpression {
                 operator,
@@ -265,7 +265,7 @@ pub fn convert_statement<'a>(stmt: &'a ast::Statement<'a>) -> LowerableStatement
         ast::Statement::BreakStatement(_) => LowerableStatement::BreakStatement,
         ast::Statement::ContinueStatement(_) => LowerableStatement::ContinueStatement,
         ast::Statement::DebuggerStatement(_) => LowerableStatement::DebuggerStatement,
-        ast::Statement::EmptyStatement(_) => LowerableStatement::EmptyStatement,
+        // Empty statements and unsupported statement types
         _ => LowerableStatement::EmptyStatement,
     }
 }
