@@ -385,10 +385,8 @@ fn test() {
             }",
             None,
         ),
-        // Bug 1: dynamic argument
         ("const m = require(someVariable);", None),
         ("const m = require(path.join(dir, file));", None),
-        // Bug 2: class method named require
         (
             r"class Foo {
             require(module: string) {
