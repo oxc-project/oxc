@@ -96,10 +96,10 @@ impl Renderer {
         self.handlebars.render("root", &root).unwrap()
     }
 
-    fn get_schema_object(schema: &Schema) -> &SchemaObject {
+    fn get_schema_object(schema: &Schema) -> Option<&SchemaObject> {
         match schema {
-            Schema::Object(schema_object) => schema_object,
-            Schema::Bool(_) => panic!("definition must be an object."),
+            Schema::Object(schema_object) => Some(schema_object),
+            Schema::Bool(_) => None,
         }
     }
 
@@ -107,7 +107,10 @@ impl Renderer {
         if let Some(reference) = &object.reference {
             let definitions = &self.root_schema.definitions;
             let definition = definitions.get(reference.trim_start_matches("#/definitions/"));
-            definition.map(Self::get_schema_object).unwrap()
+            if let Some(Schema::Object(schema_object)) = definition {
+                return schema_object;
+            }
+            object
         } else {
             object
         }
@@ -138,19 +141,20 @@ impl Renderer {
                 .iter()
                 .flat_map(|item| match item {
                     // array
-                    SingleOrVec::Single(schema) => {
-                        let schema_object = Self::get_schema_object(schema);
-                        let key = parent_key.map_or_else(String::new, |k| format!("{k}[n]"));
-                        vec![self.render_schema_impl(depth + 1, &key, schema_object)]
-                    }
+                    SingleOrVec::Single(schema) => Self::get_schema_object(schema)
+                        .map(|schema_object| {
+                            let key = parent_key.map_or_else(String::new, |k| format!("{k}[n]"));
+                            vec![self.render_schema_impl(depth + 1, &key, schema_object)]
+                        })
+                        .unwrap_or_default(),
                     // tuple
                     SingleOrVec::Vec(schema) => schema
                         .iter()
                         .enumerate()
-                        .map(|(i, schema)| {
-                            let schema_object = Self::get_schema_object(schema);
+                        .filter_map(|(i, schema)| {
+                            let schema_object = Self::get_schema_object(schema)?;
                             let key = parent_key.map_or_else(String::new, |k| format!("{k}[{i}]"));
-                            self.render_schema_impl(depth + 1, &key, schema_object)
+                            Some(self.render_schema_impl(depth + 1, &key, schema_object))
                         })
                         .collect(),
                 })
@@ -166,7 +170,9 @@ impl Renderer {
                         Some(parent) if !parent.is_empty() => format!("{parent}.{key}"),
                         _ => key.clone(),
                     };
-                    let schema_object = Self::get_schema_object(schema);
+                    let Some(schema_object) = Self::get_schema_object(schema) else {
+                        return vec![];
+                    };
 
                     if let Some(subschemas) = &schema_object.subschemas {
                         return self.render_sub_schema(depth + 1, &key, subschemas, schema_object);
@@ -193,15 +199,15 @@ impl Renderer {
         if let Some(schemas) = &subschemas.all_of {
             return schemas
                 .iter()
-                .map(|subschema| {
-                    let subschema = Self::get_schema_object(subschema);
+                .filter_map(|subschema| {
+                    let subschema = Self::get_schema_object(subschema)?;
                     let subschema = self.get_referenced_schema(subschema);
                     let mut section = self.render_schema_impl(depth, key, subschema);
                     if section.default.is_none() && !subschema.has_type(InstanceType::Object) {
                         section.default = Self::render_default(schema);
                     }
                     section.sanitize();
-                    section
+                    Some(section)
                 })
                 .collect::<Vec<Section>>();
         }
@@ -213,7 +219,9 @@ impl Renderer {
             // Collect schemas, flattening nested anyOf from $ref
             let mut flattened_schemas: Vec<&SchemaObject> = vec![];
             for subschema in schemas {
-                let subschema = Self::get_schema_object(subschema);
+                let Some(subschema) = Self::get_schema_object(subschema) else {
+                    continue;
+                };
                 let subschema = self.get_referenced_schema(subschema);
 
                 // If the resolved schema has its own anyOf, flatten it
@@ -221,7 +229,9 @@ impl Renderer {
                     && let Some(nested_any_of) = &nested_subschemas.any_of
                 {
                     for nested in nested_any_of {
-                        let nested = Self::get_schema_object(nested);
+                        let Some(nested) = Self::get_schema_object(nested) else {
+                            continue;
+                        };
                         let nested = self.get_referenced_schema(nested);
                         flattened_schemas.push(nested);
                     }
@@ -342,7 +352,7 @@ impl Renderer {
                 let enum_variants: Vec<_> = one_of
                     .iter()
                     .filter_map(|variant| {
-                        let obj = Self::get_schema_object(variant);
+                        let obj = Self::get_schema_object(variant)?;
                         let obj = self.get_referenced_schema(obj);
                         // Check if this is an enum variant (single enum value)
                         obj.enum_values
@@ -516,7 +526,7 @@ fn as_mapped_type(schema: &SchemaObject) -> Option<&SchemaObject> {
         .is_empty()
         .then_some(obj.additional_properties.as_ref())
         .flatten()
-        .map(|ap| Renderer::get_schema_object(ap))
+        .and_then(|ap| Renderer::get_schema_object(ap.as_ref()))
 }
 
 /// If `schema` is an array of primitive data types, returns [`Some`] with the

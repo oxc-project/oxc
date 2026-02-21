@@ -31,6 +31,7 @@ oxc_ast_macros = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_cfg = { workspace = true }
 oxc_codegen = { workspace = true, default-features = false }
+oxc_compat = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["box_macros"] }
 oxc_diagnostics = { workspace = true }
 oxc_ecmascript = { workspace = true }
