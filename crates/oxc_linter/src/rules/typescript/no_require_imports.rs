@@ -169,10 +169,10 @@ impl Rule for NoRequireImports {
                         return;
                     }
 
-                    if !self.allow.is_empty() {
-                        if match_argument_value_with_regex(&self.allow, &mod_ref.expression.value) {
-                            return;
-                        }
+                    if !self.allow.is_empty()
+                        && match_argument_value_with_regex(&self.allow, &mod_ref.expression.value)
+                    {
+                        return;
                     }
 
                     ctx.diagnostic(no_require_imports_diagnostic(decl.span));
