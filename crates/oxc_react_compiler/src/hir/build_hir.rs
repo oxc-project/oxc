@@ -60,6 +60,9 @@ pub fn lower(
 // =====================================================================================
 
 /// Lower a block statement into the HIR builder.
+///
+/// # Errors
+/// Returns a `CompilerError` if any statement in the block cannot be lowered.
 pub fn lower_block_statement(
     builder: &mut HirBuilder,
     stmts: &[LowerableStatement],
@@ -90,6 +93,8 @@ pub enum LowerableStatement<'a> {
     EmptyStatement,
 }
 
+/// # Errors
+/// Returns a `CompilerError` if the statement cannot be lowered.
 pub fn lower_statement(
     builder: &mut HirBuilder,
     stmt: &LowerableStatement,
@@ -176,6 +181,9 @@ pub struct ExpressionResult {
 
 /// Lower an expression, emitting instructions to the builder and returning
 /// the Place that holds the result.
+///
+/// # Errors
+/// Returns a `CompilerError` if the expression cannot be lowered.
 pub fn lower_expression(
     builder: &mut HirBuilder,
     expr: &LowerableExpression,

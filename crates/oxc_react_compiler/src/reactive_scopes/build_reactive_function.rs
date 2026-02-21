@@ -62,10 +62,7 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
     let mut current_id = block_id;
 
     loop {
-        let block = match cx.block(current_id) {
-            Some(b) => b,
-            None => break,
-        };
+        let Some(block) = cx.block(current_id) else { break };
 
         // Add instructions as reactive statements
         for instr in &block.instructions {
