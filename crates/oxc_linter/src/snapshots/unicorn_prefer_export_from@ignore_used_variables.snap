@@ -1,0 +1,91 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `default`.
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import defaultExport from 'foo';
+ 2 │             export {defaultExport as default};
+   ·                     ────────────────────────
+ 3 │             export {defaultExport as named};
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `named`.
+   ╭─[prefer_export_from.tsx:3:21]
+ 2 │             export {defaultExport as default};
+ 3 │             export {defaultExport as named};
+   ·                     ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `default`.
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {named} from 'foo';
+ 2 │             export {named as default};
+   ·                     ────────────────
+ 3 │             export {named as named};
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `named`.
+   ╭─[prefer_export_from.tsx:3:21]
+ 2 │             export {named as default};
+ 3 │             export {named as named};
+   ·                     ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `default`.
+   ╭─[prefer_export_from.tsx:2:13]
+ 1 │ import {named} from 'foo';
+ 2 │             export default named;
+   ·             ─────────────────────
+ 3 │             export {named as named};
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `named`.
+   ╭─[prefer_export_from.tsx:3:21]
+ 2 │             export default named;
+ 3 │             export {named as named};
+   ·                     ──────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `default`.
+   ╭─[prefer_export_from.tsx:2:13]
+ 1 │ import defaultExport, {named} from 'foo';
+ 2 │             export default defaultExport;
+   ·             ─────────────────────────────
+ 3 │             export {named};
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `named`.
+   ╭─[prefer_export_from.tsx:3:21]
+ 2 │             export default defaultExport;
+ 3 │             export {named};
+   ·                     ─────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `default`.
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import defaultExport, {named} from 'foo';
+ 2 │             export {defaultExport as default, named};
+   ·                     ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `named`.
+   ╭─[prefer_export_from.tsx:2:47]
+ 1 │ import defaultExport, {named} from 'foo';
+ 2 │             export {defaultExport as default, named};
+   ·                                               ─────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `variable`.
+   ╭─[prefer_export_from.tsx:2:13]
+ 1 │ import defaultExport from 'foo';
+ 2 │             export const variable = defaultExport;
+   ·             ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-export-from): Use `export…from` to re-export `exported`.
+   ╭─[prefer_export_from.tsx:2:21]
+ 1 │ import {notUsedNotExported, exported} from 'foo';
+ 2 │             export {exported};
+   ·                     ────────
+   ╰────
