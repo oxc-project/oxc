@@ -16,6 +16,7 @@ pub mod object_shape;
 pub mod print_hir;
 pub mod propagate_scope_dependencies_hir;
 pub mod prune_unused_labels_hir;
+pub mod scope_dependency_utils;
 pub mod types;
 pub mod visitors;
 
