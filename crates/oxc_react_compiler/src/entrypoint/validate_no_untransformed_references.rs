@@ -5,7 +5,6 @@
 /// After compilation, validates that the program does not contain any
 /// references that should have been transformed but weren't. This catches
 /// cases where the compiler missed transforming a function that it should have.
-
 /// Validate that no untransformed references remain in the program.
 ///
 /// In the Babel version, this walks the Babel AST after compilation to check
