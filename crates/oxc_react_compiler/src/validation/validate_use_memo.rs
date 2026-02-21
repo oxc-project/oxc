@@ -39,13 +39,7 @@ pub fn validate_use_memo(func: &HIRFunction) -> Result<(), CompilerError> {
 
             match &instr.value {
                 InstructionValue::LoadGlobal(v) => {
-                    let name = match &v.binding {
-                        crate::hir::NonLocalBinding::Global { name } => name.as_str(),
-                        crate::hir::NonLocalBinding::ModuleLocal { name } => name.as_str(),
-                        crate::hir::NonLocalBinding::ImportDefault { name, .. } => name.as_str(),
-                        crate::hir::NonLocalBinding::ImportNamespace { name, .. } => name.as_str(),
-                        crate::hir::NonLocalBinding::ImportSpecifier { name, .. } => name.as_str(),
-                    };
+                    let name = v.binding.name();
                     match name {
                         "useMemo" | "useCallback" => {
                             use_memos.insert(instr.lvalue.identifier.id);

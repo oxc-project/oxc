@@ -12,7 +12,7 @@ use crate::hir::HIRFunction;
 ///
 /// Loops may execute their body multiple times, so reactive scopes inside loops
 /// cannot be correctly memoized with a single cache slot.
-pub fn flatten_reactive_loops_hir(func: &mut HIRFunction) {
+pub fn flatten_reactive_loops_hir(func: &HIRFunction) {
     // The full implementation removes ReactiveScope terminals that are inside
     // loop bodies, converting them to PrunedScope terminals.
     let _block_ids: Vec<_> = func.body.blocks.keys().copied().collect();

@@ -8,7 +8,7 @@
 use crate::hir::HIRFunction;
 
 /// Outline JSX elements from reactive scopes.
-pub fn outline_jsx(func: &mut HIRFunction) {
+pub fn outline_jsx(func: &HIRFunction) {
     // The full implementation identifies JSX elements within reactive scopes
     // that have stable props, and outlines them as separate component functions.
     // This allows React to skip re-rendering those subtrees when the parent
