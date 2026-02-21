@@ -1,11 +1,14 @@
 mod hir_types;
 
+pub mod assert_valid_block_nesting;
+pub mod assert_valid_mutable_ranges;
 pub mod assertions;
 pub mod build_hir;
 pub mod build_reactive_scope_terminals_hir;
 pub mod collect_hoistable_property_loads;
 pub mod collect_optional_chain_dependencies;
 pub mod compute_unconditional_blocks;
+pub mod default_module_type_provider;
 pub mod derive_minimal_dependencies_hir;
 pub mod dominator;
 pub mod environment;
@@ -21,6 +24,7 @@ pub mod print_hir;
 pub mod propagate_scope_dependencies_hir;
 pub mod prune_unused_labels_hir;
 pub mod scope_dependency_utils;
+pub mod type_schema;
 pub mod types;
 pub mod visitors;
 
