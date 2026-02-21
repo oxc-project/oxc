@@ -13,11 +13,11 @@ use crate::{
 #[derive(Debug)]
 pub struct ProgramCompilationResult {
     /// Number of functions that were successfully compiled.
-    pub compiled_count: u32,
+    pub compiled: u32,
     /// Number of functions that were skipped.
-    pub skipped_count: u32,
+    pub skipped: u32,
     /// Number of functions that errored.
-    pub error_count: u32,
+    pub errored: u32,
 }
 
 /// Determine if a function should be compiled based on the compilation mode.
