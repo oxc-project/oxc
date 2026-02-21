@@ -2216,6 +2216,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_react_compiler"
+version = "0.0.0"
+dependencies = [
+ "bitflags",
+ "insta",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_codegen",
+ "oxc_diagnostics",
+ "oxc_index",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_regular_expression"
 version = "0.114.0"
 dependencies = [
