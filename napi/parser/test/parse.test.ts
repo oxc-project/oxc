@@ -371,8 +371,186 @@ describe("parse", () => {
       });
     });
 
-    it("lossy replacement character", () => {
-      const ret = parseSync("test.js", "`�\\u{FFFD}${x}�\\u{FFFD}`;");
+    describe('`ImportDeclaration`', () => {
+      describe('import defer', () => {
+        it('ESTree', () => {
+          const ret = parseSync('test.js', 'import defer * as ns from "x";');
+          expect(ret.errors.length).toBe(0);
+          expect(ret.program.body.length).toBe(1);
+          expect(ret.program.body[0]).toEqual({
+            type: 'ImportDeclaration',
+            start: 0,
+            end: 30,
+            specifiers: [
+              {
+                type: 'ImportNamespaceSpecifier',
+                start: 13,
+                end: 20,
+                local: { type: 'Identifier', start: 18, end: 20, name: 'ns' },
+              },
+            ],
+            source: { type: 'Literal', start: 26, end: 29, value: 'x', raw: '"x"' },
+            attributes: [],
+            phase: 'defer',
+          });
+        });
+
+        it('TS-ESTree', () => {
+          const ret = parseSync('test.ts', 'import defer * as ns from "x";');
+          expect(ret.errors.length).toBe(0);
+          expect(ret.program.body.length).toBe(1);
+          expect(ret.program.body[0]).toEqual({
+            type: 'ImportDeclaration',
+            start: 0,
+            end: 30,
+            specifiers: [
+              {
+                type: 'ImportNamespaceSpecifier',
+                start: 13,
+                end: 20,
+                local: {
+                  type: 'Identifier',
+                  start: 18,
+                  end: 20,
+                  decorators: [],
+                  name: 'ns',
+                  optional: false,
+                  typeAnnotation: null,
+                },
+              },
+            ],
+            source: { type: 'Literal', start: 26, end: 29, value: 'x', raw: '"x"' },
+            attributes: [],
+            phase: 'defer',
+            importKind: 'value',
+          });
+        });
+      });
+
+      describe('import source', () => {
+        it('ESTree', () => {
+          const ret = parseSync('test.js', 'import source src from "x";');
+          expect(ret.errors.length).toBe(0);
+          expect(ret.program.body.length).toBe(1);
+          expect(ret.program.body[0]).toEqual({
+            type: 'ImportDeclaration',
+            start: 0,
+            end: 27,
+            specifiers: [
+              {
+                type: 'ImportDefaultSpecifier',
+                start: 14,
+                end: 17,
+                local: { type: 'Identifier', start: 14, end: 17, name: 'src' },
+              },
+            ],
+            source: { type: 'Literal', start: 23, end: 26, value: 'x', raw: '"x"' },
+            attributes: [],
+            phase: 'source',
+          });
+        });
+
+        it('TS-ESTree', () => {
+          const ret = parseSync('test.ts', 'import source src from "x";');
+          expect(ret.errors.length).toBe(0);
+          expect(ret.program.body.length).toBe(1);
+          expect(ret.program.body[0]).toEqual({
+            type: 'ImportDeclaration',
+            start: 0,
+            end: 27,
+            specifiers: [
+              {
+                type: 'ImportDefaultSpecifier',
+                start: 14,
+                end: 17,
+                local: {
+                  type: 'Identifier',
+                  start: 14,
+                  end: 17,
+                  decorators: [],
+                  name: 'src',
+                  optional: false,
+                  typeAnnotation: null,
+                },
+              },
+            ],
+            source: { type: 'Literal', start: 23, end: 26, value: 'x', raw: '"x"' },
+            attributes: [],
+            phase: 'source',
+            importKind: 'value',
+          });
+        });
+      });
+
+      describe('`ImportExpression`', () => {
+        describe('import.defer()', () => {
+          it('ESTree', () => {
+            const ret = parseSync('test.js', 'import.defer("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            expect(ret.program.body[0].expression).toEqual({
+              type: 'ImportExpression',
+              start: 0,
+              end: 17,
+              source: { type: 'Literal', start: 13, end: 16, value: 'x', raw: '"x"' },
+              options: null,
+              phase: 'defer',
+            });
+          });
+
+          // This does *not* align with TS-ESLint.
+          // See https://github.com/oxc-project/oxc/pull/11193.
+          it('TS-ESTree', () => {
+            const ret = parseSync('test.ts', 'import.defer("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            expect(ret.program.body[0].expression).toEqual({
+              type: 'ImportExpression',
+              start: 0,
+              end: 17,
+              source: { type: 'Literal', start: 13, end: 16, value: 'x', raw: '"x"' },
+              options: null,
+              phase: 'defer',
+            });
+          });
+        });
+
+        describe('import.source()', () => {
+          it('ESTree', () => {
+            const ret = parseSync('test.js', 'import.source("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            expect(ret.program.body[0].expression).toEqual({
+              type: 'ImportExpression',
+              start: 0,
+              end: 18,
+              source: { type: 'Literal', start: 14, end: 17, value: 'x', raw: '"x"' },
+              options: null,
+              phase: 'source',
+            });
+          });
+
+          // This does *not* align with TS-ESLint.
+          // See https://github.com/oxc-project/oxc/pull/11193.
+          it('TS-ESTree', () => {
+            const ret = parseSync('test.ts', 'import.source("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            expect(ret.program.body[0].expression).toEqual({
+              type: 'ImportExpression',
+              start: 0,
+              end: 18,
+              source: { type: 'Literal', start: 14, end: 17, value: 'x', raw: '"x"' },
+              options: null,
+              phase: 'source',
+            });
+          });
+        });
+      });
+    });
+
+    it('lossy replacement character', () => {
+      const ret = parseSync('test.js', '`�\\u{FFFD}${x}�\\u{FFFD}`;');
       expect(ret.errors.length).toBe(0);
       expect(ret.program.body.length).toBe(1);
       expect(ret.program.body[0]).toEqual({
@@ -721,14 +899,323 @@ describe("parse", () => {
       expect(ret.program.body[0].range).toEqual([0, 3]);
     });
 
-    it("should not include range when false", () => {
-      const ret = parseSync("test.js", "(x)", { range: false });
+    it('should not include range when false', () => {
+      const ret = parseSync('test.js', '(x)', { range: false });
       expect(ret.program.body[0].range).toBeUndefined();
     });
 
-    it("should not include range by default", () => {
-      const ret = parseSync("test.js", "(x)");
+    it('should not include range by default', () => {
+      const ret = parseSync('test.js', '(x)');
       expect(ret.program.body[0].range).toBeUndefined();
+    });
+  });
+
+  describe('loc', () => {
+    it('should include loc when true', () => {
+      const ret = parseSync('test.js', 'let x = 1;', { loc: true });
+      expect(ret.program.body[0].start).toBe(0);
+      expect(ret.program.body[0].end).toBe(10);
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 },
+      });
+    });
+
+    it('should not include loc when false', () => {
+      const ret = parseSync('test.js', 'let x = 1;', { loc: false });
+      expect(ret.program.body[0].loc).toBeUndefined();
+    });
+
+    it('should not include loc by default', () => {
+      const ret = parseSync('test.js', 'let x = 1;');
+      expect(ret.program.body[0].loc).toBeUndefined();
+    });
+
+    it('should handle multiline code correctly', () => {
+      const code = `let x = 1;
+let y = 2;
+let z = 3;`;
+      const ret = parseSync('test.js', code, { loc: true });
+
+      // First declaration: let x = 1;
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 },
+      });
+
+      // Second declaration: let y = 2;
+      expect(ret.program.body[1].loc).toEqual({
+        start: { line: 2, column: 0 },
+        end: { line: 2, column: 10 },
+      });
+
+      // Third declaration: let z = 3;
+      expect(ret.program.body[2].loc).toEqual({
+        start: { line: 3, column: 0 },
+        end: { line: 3, column: 10 },
+      });
+    });
+
+    it('should handle nested nodes correctly', () => {
+      const code = 'function foo() {\n  return 42;\n}';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const functionDecl = ret.program.body[0];
+      expect(functionDecl.loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 3, column: 1 },
+      });
+
+      const returnStmt = functionDecl.body.body[0];
+      expect(returnStmt.loc).toEqual({
+        start: { line: 2, column: 2 },
+        end: { line: 2, column: 12 },
+      });
+    });
+
+    it('should work with both range and loc options', () => {
+      const ret = parseSync('test.js', 'let x = 1;', { range: true, loc: true });
+
+      expect(ret.program.body[0].range).toEqual([0, 10]);
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 },
+      });
+    });
+
+    it('should handle Unicode characters correctly', () => {
+      // 🤨 (U+1F928) takes 2 UTF-16 code units, so column positions after it are shifted by 1
+      // compared to byte offsets. End column should reflect UTF-16 length, not UTF-8 byte length.
+      const code = 'const x = "\u{1F928}";';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      // UTF-16 length: 'const x = "' (11) + '🤨' (2 code units) + '";' (2) = 15
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 15 },
+      });
+    });
+
+    it('should handle different line endings', () => {
+      // Test with \r\n line endings
+      const codeWindows = 'let x = 1;\r\nlet y = 2;';
+      const retWindows = parseSync('test.js', codeWindows, { loc: true });
+
+      expect(retWindows.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 },
+      });
+      expect(retWindows.program.body[1].loc).toEqual({
+        start: { line: 2, column: 0 },
+        end: { line: 2, column: 10 },
+      });
+
+      // Test with \r line endings (old Mac)
+      const codeMac = 'let x = 1;\rlet y = 2;';
+      const retMac = parseSync('test.js', codeMac, { loc: true });
+
+      expect(retMac.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 },
+      });
+      expect(retMac.program.body[1].loc).toEqual({
+        start: { line: 2, column: 0 },
+        end: { line: 2, column: 10 },
+      });
+    });
+
+    it('should handle expressions and identifiers correctly', () => {
+      const code = 'const result = foo + bar;';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const varDecl = ret.program.body[0];
+      const declarator = varDecl.declarations[0];
+
+      // Identifier 'result'
+      expect(declarator.id.loc).toEqual({
+        start: { line: 1, column: 6 },
+        end: { line: 1, column: 12 },
+      });
+
+      // Binary expression 'foo + bar'
+      expect(declarator.init.loc).toEqual({
+        start: { line: 1, column: 15 },
+        end: { line: 1, column: 24 },
+      });
+
+      // Left identifier 'foo'
+      expect(declarator.init.left.loc).toEqual({
+        start: { line: 1, column: 15 },
+        end: { line: 1, column: 18 },
+      });
+
+      // Right identifier 'bar'
+      expect(declarator.init.right.loc).toEqual({
+        start: { line: 1, column: 21 },
+        end: { line: 1, column: 24 },
+      });
+    });
+
+    it('should handle empty lines correctly', () => {
+      const code = 'let x = 1;\n\nlet y = 2;';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 },
+      });
+
+      // Second statement should be on line 3 (skipping empty line 2)
+      expect(ret.program.body[1].loc).toEqual({
+        start: { line: 3, column: 0 },
+        end: { line: 3, column: 10 },
+      });
+    });
+
+    it('should handle comments with loc', () => {
+      const code = '/* comment */ let x = 1;';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      // Variable declaration should start after the comment
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 14 },
+        end: { line: 1, column: 24 },
+      });
+
+      // Comment should also have loc
+      expect(ret.comments[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 13 },
+      });
+    });
+
+    it('should handle TypeScript specific nodes with loc', () => {
+      const code = 'interface User {\n  name: string;\n  age: number;\n}';
+      const ret = parseSync('test.ts', code, { loc: true });
+
+      const interfaceDecl = ret.program.body[0];
+      expect(interfaceDecl.loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 4, column: 1 },
+      });
+    });
+
+    it('should handle complex expressions with correct column positions', () => {
+      const code = 'const obj = { foo: bar.baz().qux, hello: "world" };';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const varDecl = ret.program.body[0];
+      const declarator = varDecl.declarations[0];
+
+      // Object expression: { foo: bar.baz().qux, hello: "world" }
+      // starts at col 12 ({), ends exclusive at col 50 (after })
+      expect(declarator.init.loc).toEqual({
+        start: { line: 1, column: 12 },
+        end: { line: 1, column: 50 },
+      });
+
+      // First property: foo: bar.baz().qux
+      // starts at col 14 (f), ends exclusive at col 32 (after x)
+      expect(declarator.init.properties[0].loc).toEqual({
+        start: { line: 1, column: 14 },
+        end: { line: 1, column: 32 },
+      });
+    });
+
+    it('should handle string literals with escapes', () => {
+      const code = 'const str = "hello\\nworld";';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const varDecl = ret.program.body[0];
+      const declarator = varDecl.declarations[0];
+
+      // String literal
+      expect(declarator.init.loc).toEqual({
+        start: { line: 1, column: 12 },
+        end: { line: 1, column: 26 },
+      });
+    });
+
+    it('should handle template literals across multiple lines', () => {
+      const code = 'const template = `line1\nline2\nline3`;';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const varDecl = ret.program.body[0];
+      const declarator = varDecl.declarations[0];
+
+      // Template literal spanning multiple lines
+      expect(declarator.init.loc).toEqual({
+        start: { line: 1, column: 17 },
+        end: { line: 3, column: 6 },
+      });
+    });
+
+    it('should handle zero-length nodes correctly', () => {
+      const code = 'for (;;) {}';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const forStmt = ret.program.body[0];
+      expect(forStmt.loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 11 },
+      });
+    });
+
+    it('should handle arrow functions with different syntaxes', () => {
+      const code = `const fn1 = () => 42;
+const fn2 = (x) => {
+  return x * 2;
+};`;
+      const ret = parseSync('test.js', code, { loc: true });
+
+      // First arrow function (single expression): () => 42
+      // starts at col 12 ((), ends exclusive at col 20 (after 2)
+      const firstDecl = ret.program.body[0];
+      expect(firstDecl.declarations[0].init.loc).toEqual({
+        start: { line: 1, column: 12 },
+        end: { line: 1, column: 20 },
+      });
+
+      // Second arrow function (block body)
+      const secondDecl = ret.program.body[1];
+      expect(secondDecl.declarations[0].init.loc).toEqual({
+        start: { line: 2, column: 12 },
+        end: { line: 4, column: 1 },
+      });
+    });
+
+    it('should handle async functions correctly', () => {
+      const code = 'async function fetchData() {\n  return await fetch("/api");\n}';
+      const ret = parseSync('test.js', code, { loc: true });
+
+      const asyncFn = ret.program.body[0];
+      expect(asyncFn.loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 3, column: 1 },
+      });
+
+      // Return statement with await expression: return await fetch("/api");
+      // starts at col 2 (r), ends exclusive at col 29 (after ;)
+      const returnStmt = asyncFn.body.body[0];
+      expect(returnStmt.loc).toEqual({
+        start: { line: 2, column: 2 },
+        end: { line: 2, column: 29 },
+      });
+    });
+
+    it('should work with parseAsync as well', async () => {
+      const code = 'let x = 1;\nlet y = 2;';
+      const ret = await parse('test.js', code, { loc: true });
+
+      expect(ret.program.body[0].loc).toEqual({
+        start: { line: 1, column: 0 },
+        end: { line: 1, column: 10 },
+      });
+
+      expect(ret.program.body[1].loc).toEqual({
+        start: { line: 2, column: 0 },
+        end: { line: 2, column: 10 },
+      });
     });
   });
 });

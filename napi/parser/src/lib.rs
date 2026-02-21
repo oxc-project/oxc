@@ -9,7 +9,11 @@ use oxc::{
     semantic::SemanticBuilder,
     span::SourceType,
 };
-use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
+use oxc_estree::DynamicLocProvider;
+use oxc_napi::{
+    Comment, OxcError, SourceLocation, SourcePosition, convert_utf8_to_utf16_with_loc,
+    get_source_type,
+};
 
 mod convert;
 mod types;
@@ -94,6 +98,7 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
     let ranges = options.range.unwrap_or(false);
+    let loc = options.loc.unwrap_or(false);
     let ret = parse_impl(&allocator, source_type, source_text, options);
 
     let mut program = ret.program;
@@ -107,32 +112,81 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
 
     let mut errors = OxcError::from_diagnostics(filename, source_text, diagnostics);
 
-    let mut comments =
-        convert_utf8_to_utf16(source_text, &mut program, &mut module_record, &mut errors);
+    let (mut comments, span_converter) = convert_utf8_to_utf16_with_loc(
+        source_text,
+        &mut program,
+        &mut module_record,
+        &mut errors,
+        loc,
+    );
 
-    let program_and_fixes = match ast_type {
-        AstType::JavaScript => {
-            // Add hashbang to start of comments
-            if let Some(hashbang) = &program.hashbang {
-                comments.insert(
-                    0,
-                    Comment {
-                        r#type: "Line".to_string(),
-                        value: hashbang.value.to_string(),
-                        start: hashbang.span.start,
-                        end: hashbang.span.end,
-                    },
-                );
+    let program_and_fixes = if loc {
+        // Build a loc provider that converts UTF-16 offsets (from the AST, which has already
+        // been converted from UTF-8 to UTF-16 in the pre-pass) to ESTree line/column.
+        // The column is expressed in UTF-16 code units as required by the ESTree spec.
+        let loc_cursor = span_converter
+            .loc_cursor()
+            .expect("lines table is present when `loc = true`");
+        let provider = DynamicLocProvider::new(move |utf16_offset: u32| {
+            loc_cursor.offset_to_line_column_from_utf16(utf16_offset)
+        });
+
+        match ast_type {
+            AstType::JavaScript => {
+                // Add hashbang to start of comments
+                if let Some(hashbang) = &program.hashbang {
+                    let hashbang_loc = span_converter
+                        .offset_to_line_column_from_utf16(hashbang.span.start)
+                        .zip(span_converter.offset_to_line_column_from_utf16(hashbang.span.end))
+                        .map(|((sl, sc), (el, ec))| SourceLocation {
+                            start: SourcePosition { line: sl + 1, column: sc },
+                            end: SourcePosition { line: el + 1, column: ec },
+                        });
+                    comments.insert(
+                        0,
+                        Comment {
+                            r#type: "Line".to_string(),
+                            value: hashbang.value.to_string(),
+                            start: hashbang.span.start,
+                            end: hashbang.span.end,
+                            loc: hashbang_loc,
+                        },
+                    );
+                }
+                program.to_estree_js_json_with_fixes_and_loc(ranges, provider)
             }
-
-            program.to_estree_js_json_with_fixes(ranges)
+            AstType::TypeScript => {
+                // Note: `@typescript-eslint/parser` ignores hashbangs.
+                // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
+                program.to_estree_ts_json_with_fixes_and_loc(ranges, provider)
+            }
         }
-        AstType::TypeScript => {
-            // Note: `@typescript-eslint/parser` ignores hashbangs,
-            // despite appearances to the contrary in AST explorers.
-            // So we ignore them too.
-            // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            program.to_estree_ts_json_with_fixes(ranges)
+    } else {
+        match ast_type {
+            AstType::JavaScript => {
+                // Add hashbang to start of comments
+                if let Some(hashbang) = &program.hashbang {
+                    comments.insert(
+                        0,
+                        Comment {
+                            r#type: "Line".to_string(),
+                            value: hashbang.value.to_string(),
+                            start: hashbang.span.start,
+                            end: hashbang.span.end,
+                            loc: None,
+                        },
+                    );
+                }
+
+                program.to_estree_js_json_with_fixes(ranges, loc)
+            }
+            AstType::TypeScript => {
+                // Note: `@typescript-eslint/parser` ignores hashbangs,
+                // despite appearances to the contrary in AST explorers.
+                // So we ignore them too.
+                // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
+                program.to_estree_ts_json_with_fixes(ranges, loc)
+            }
         }
     };
 

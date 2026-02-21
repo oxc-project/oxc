@@ -744,7 +744,7 @@ pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
                 .join(&f.path)
                 .with_extension("json");
             let acorn_json = fs::read_to_string(&acorn_path).unwrap_or_default();
-            let oxc_json = program.to_pretty_estree_js_json(false);
+            let oxc_json = program.to_pretty_estree_js_json(false, false);
 
             let result = if oxc_json == acorn_json {
                 TestResult::Passed
@@ -802,7 +802,7 @@ pub fn run_estree_acorn_jsx(files: &[AcornJsxFile]) -> Vec<CoverageResult> {
                     };
                 }
             };
-            let oxc_json = program.to_pretty_estree_js_json(false);
+            let oxc_json = program.to_pretty_estree_js_json(false, false);
 
             let result = if oxc_json == acorn_json {
                 TestResult::Passed
@@ -903,7 +903,7 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
                 let mut program = ret.program;
                 Utf8ToUtf16::new(&unit.content)
                     .convert_program_with_ascending_order_checks(&mut program);
-                let oxc_json = program.to_pretty_estree_ts_json(false);
+                let oxc_json = program.to_pretty_estree_ts_json(false, false);
 
                 if oxc_json != *expected {
                     return CoverageResult {
