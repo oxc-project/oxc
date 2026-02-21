@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, IdentifierReference, Statement, VariableDeclarationKind},
+    ast::{
+        Argument, CallExpression, Expression, IdentifierReference, ImportExpression, NewExpression,
+        Statement, TaggedTemplateExpression, VariableDeclarationKind,
+    },
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
@@ -136,26 +139,29 @@ impl Rule for PreferMockReturnShorthand {
         }
 
         let new_property_name = if is_once { "mockReturnValueOnce" } else { "mockReturnValue" };
-        ctx.diagnostic_with_fix(
-            prefer_mock_return_shorthand_diagnostic(
-                property_span,
-                property_name,
-                new_property_name,
-            ),
-            |fixer| {
-                let return_text = ctx
-                    .source_range(GetSpan::span(return_expression.without_parentheses()))
-                    .to_owned();
-                let argument_span = GetSpan::span(expr);
-
-                let mut multifixer = fixer.for_multifix().new_fix_with_capacity(2);
-
-                multifixer.push(fixer.replace(property_span, new_property_name));
-                multifixer.push(fixer.replace(argument_span, return_text));
-
-                multifixer.with_message("Replaced successfully")
-            },
+        let diagnostic = prefer_mock_return_shorthand_diagnostic(
+            property_span,
+            property_name,
+            new_property_name,
         );
+
+        if contains_call_like_expression(return_expression) {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
+
+        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            let return_text =
+                ctx.source_range(GetSpan::span(return_expression.without_parentheses())).to_owned();
+            let argument_span = GetSpan::span(expr);
+
+            let mut multifixer = fixer.for_multifix().new_fix_with_capacity(2);
+
+            multifixer.push(fixer.replace(property_span, new_property_name));
+            multifixer.push(fixer.replace(argument_span, return_text));
+
+            multifixer.with_message("Replaced successfully")
+        });
     }
 }
 
@@ -183,7 +189,7 @@ fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Ex
         Expression::ArrowFunctionExpression(arrow_func) => {
             if arrow_func.r#async
                 || arrow_func.body.statements.len() > 1
-                || !arrow_func.params.is_empty()
+                || arrow_func.params.has_parameter()
             {
                 return None;
             }
@@ -203,7 +209,7 @@ fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Ex
             }
         }
         Expression::FunctionExpression(function) => {
-            if function.r#async || !function.params.is_empty() {
+            if function.r#async || function.params.has_parameter() {
                 return None;
             }
 
@@ -230,6 +236,35 @@ fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Ex
             }
         }
         _ => None,
+    }
+}
+
+fn contains_call_like_expression(expr: &Expression<'_>) -> bool {
+    let mut visitor = CallLikeExpressionVisitor::default();
+    visitor.visit_expression(expr);
+    visitor.contains_call_like_expression
+}
+
+#[derive(Default)]
+struct CallLikeExpressionVisitor {
+    contains_call_like_expression: bool,
+}
+
+impl<'a> Visit<'a> for CallLikeExpressionVisitor {
+    fn visit_call_expression(&mut self, _it: &CallExpression<'a>) {
+        self.contains_call_like_expression = true;
+    }
+
+    fn visit_new_expression(&mut self, _it: &NewExpression<'a>) {
+        self.contains_call_like_expression = true;
+    }
+
+    fn visit_tagged_template_expression(&mut self, _it: &TaggedTemplateExpression<'a>) {
+        self.contains_call_like_expression = true;
+    }
+
+    fn visit_import_expression(&mut self, _it: &ImportExpression<'a>) {
+        self.contains_call_like_expression = true;
     }
 }
 
@@ -278,6 +313,7 @@ fn test() {
         "jest.fn().mockImplementation(async function () {
               return 42;
             });",
+        "jest.fn().mockImplementation((...args) => console.log(...args));",
         "aVariable.mockImplementation(() => {
               if (true) {
                 return 1;
@@ -552,6 +588,7 @@ fn test() {
         r#"jest.fn().mockImplementation(function () {
               return "hello world";
             })"#,
+        "jest.fn().mockImplementation(() => console.log(123));",
         r#"jest.fn().mockImplementation(() => "hello world")"#,
         r#"jest.fn().mockImplementation(() => {
               return "hello world";
@@ -819,51 +856,7 @@ fn test() {
               message: 'hello'
             })",
         ),
-        (
-            r#"aVariable
-              .mockImplementation(() => 42)
-              .mockImplementation(async () => 42)
-              .mockImplementation(() => Promise.resolve(42))
-              .mockReturnValue("hello world")"#,
-            r#"aVariable
-              .mockReturnValue(42)
-              .mockImplementation(async () => 42)
-              .mockReturnValue(Promise.resolve(42))
-              .mockReturnValue("hello world")"#,
-        ),
-        (
-            r#"aVariable
-              .mockImplementationOnce(() => Promise.reject(42))
-              .mockImplementation(() => "hello sunshine")
-              .mockReturnValueOnce(Promise.reject(42))"#,
-            r#"aVariable
-              .mockReturnValueOnce(Promise.reject(42))
-              .mockReturnValue("hello sunshine")
-              .mockReturnValueOnce(Promise.reject(42))"#,
-        ),
-        (
-            "jest.fn().mockImplementation(() => (input: number | Record<string, number[]>) => typeof input === 'number' ? input.toFixed(2) : JSON.stringify(input))",
-            "jest.fn().mockReturnValue((input: number | Record<string, number[]>) => typeof input === 'number' ? input.toFixed(2) : JSON.stringify(input))",
-        ),
         ("jest.fn().mockImplementation(() => [], xyz)", "jest.fn().mockReturnValue([], xyz)"),
-        (
-            r#"jest.spyOn(fs, "readFile").mockImplementation(() => new Error("oh noes!"))"#,
-            r#"jest.spyOn(fs, "readFile").mockReturnValue(new Error("oh noes!"))"#,
-        ),
-        (
-            "aVariable.mockImplementation(() => {
-              return Promise.resolve(value)
-                .then(value => value + 1);
-            });",
-            "aVariable.mockReturnValue(Promise.resolve(value)
-                .then(value => value + 1));",
-        ),
-        (
-            "aVariable.mockImplementation(() => {
-              return Promise.all([1, 2, 3]);
-            });",
-            "aVariable.mockReturnValue(Promise.all([1, 2, 3]));",
-        ),
         (
             "const currentX = 0;
             jest.spyOn(X, getCount).mockImplementation(() => currentX);",
@@ -1157,82 +1150,6 @@ fn test() {
             aVariable.mockReturnValue(mx ?? (7 && 0));",
         ),
         (
-            "const value = 1;
-            jest.fn().mockImplementation(() => new Mx(value));
-            jest.fn().mockImplementation(() => new Mx(() => value));
-            jest.fn().mockImplementation(() => new Mx(() => { return value }));",
-            "const value = 1;
-            jest.fn().mockReturnValue(new Mx(value));
-            jest.fn().mockReturnValue(new Mx(() => value));
-            jest.fn().mockReturnValue(new Mx(() => { return value }));",
-        ),
-        (
-            "const value = 1;
-            jest.fn().mockImplementation(() => mx(value));
-            jest.fn().mockImplementation(() => mx?.(value));
-            jest.fn().mockImplementation(() => mx().my());
-            jest.fn().mockImplementation(() => mx().my);
-            jest.fn().mockImplementation(() => mx.my());
-            jest.fn().mockImplementation(() => mx?.my());
-            jest.fn().mockImplementation(() => mx.my);
-            jest.fn().mockImplementation(() => mx(value).my());
-            jest.fn().mockImplementation(() => mx(value)?.my());
-            jest.fn().mockImplementation(() => mx(value).my);
-            jest.fn().mockImplementation(() => mx.my(value));
-            jest.fn().mockImplementation(() => mx().my(value));
-            jest.fn().mockImplementation(() => mx.my(value));
-            jest.fn().mockImplementation(() => mx.my?.(value));
-            jest.fn().mockImplementation(() => mx(value).my(value));
-            jest.fn().mockImplementation(() => mx?.(value)?.my?.(value));
-            jest.fn().mockImplementation(() => new Mx().add(value));
-            jest.fn().mockImplementation(() => {
-              return mx([{
-                type: 'object',
-                with: {
-                  inner: {
-                    items: [1, 2, value],
-                  },
-                },
-              }])
-            });",
-            "const value = 1;
-            jest.fn().mockReturnValue(mx(value));
-            jest.fn().mockReturnValue(mx?.(value));
-            jest.fn().mockReturnValue(mx().my());
-            jest.fn().mockReturnValue(mx().my);
-            jest.fn().mockReturnValue(mx.my());
-            jest.fn().mockReturnValue(mx?.my());
-            jest.fn().mockReturnValue(mx.my);
-            jest.fn().mockReturnValue(mx(value).my());
-            jest.fn().mockReturnValue(mx(value)?.my());
-            jest.fn().mockReturnValue(mx(value).my);
-            jest.fn().mockReturnValue(mx.my(value));
-            jest.fn().mockReturnValue(mx().my(value));
-            jest.fn().mockReturnValue(mx.my(value));
-            jest.fn().mockReturnValue(mx.my?.(value));
-            jest.fn().mockReturnValue(mx(value).my(value));
-            jest.fn().mockReturnValue(mx?.(value)?.my?.(value));
-            jest.fn().mockReturnValue(new Mx().add(value));
-            jest.fn().mockReturnValue(mx([{
-                type: 'object',
-                with: {
-                  inner: {
-                    items: [1, 2, value],
-                  },
-                },
-              }]));",
-        ),
-        (
-            "const propName = 'world';
-            aVariable.mockImplementation(() => mx[propName]());
-            aVariable.mockImplementation(() => mx[propName]);
-            aVariable.mockImplementation(() => ({ [propName]: 1 }));",
-            "const propName = 'world';
-            aVariable.mockReturnValue(mx[propName]());
-            aVariable.mockReturnValue(mx[propName]);
-            aVariable.mockReturnValue({ [propName]: 1 });",
-        ),
-        (
             "const x = true;
             let value = 1;
             aVariable.mockImplementation(() => value ? true : false);
@@ -1281,6 +1198,7 @@ fn test() {
                       return 42;
                     });
                   ", // { "parserOptions": { "ecmaVersion": 2017 } },
+        "vi.fn().mockImplementation((...args) => console.log(...args));",
         "
                   aVariable.mockImplementation(() => {
                     if (true) {
@@ -1399,6 +1317,7 @@ fn test() {
         r#"aVariable.mockImplementation(() => "hello world")"#,
         r#"vi.fn().mockImplementationOnce(() => "hello world")"#,
         r#"aVariable.mockImplementationOnce(() => "hello world")"#,
+        "vi.fn().mockImplementation(() => console.log(123));",
         "vi.fn().mockImplementation(() => [], xyz)",
         r#"vi.spyOn(fs, "readFile").mockImplementation(() => new Error("oh noes!"))"#,
     ];
@@ -1428,10 +1347,6 @@ fn test() {
             r#"aVariable.mockReturnValueOnce("hello world")"#,
         ),
         ("vi.fn().mockImplementation(() => [], xyz)", "vi.fn().mockReturnValue([], xyz)"),
-        (
-            r#"vi.spyOn(fs, "readFile").mockImplementation(() => new Error("oh noes!"))"#,
-            r#"vi.spyOn(fs, "readFile").mockReturnValue(new Error("oh noes!"))"#,
-        ),
     ];
 
     pass.extend(vitest_pass);
