@@ -1,6 +1,7 @@
 mod hir_types;
 
 pub mod assertions;
+pub mod compute_unconditional_blocks;
 pub mod dominator;
 pub mod environment;
 pub mod hir_builder;
