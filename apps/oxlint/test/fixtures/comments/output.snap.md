@@ -86,7 +86,16 @@
  4 | 
    `----
 
-  x test-comments(test-comments): commentsExistBetween(topLevelFunction, topLevelVariable2): false
+  x test-comments(test-comments): FunctionDeclaration(topLevelFunction):
+  | getCommentsBefore: 0 comments
+  | getCommentsInside: 5 comments
+  |   [0] Line: " Line comment 2" at [163, 180]
+  |   [1] Block: " Block comment 2 " at [183, 204]
+  |   [2] Block: "*\n   * JSDoc comment 2\n   " at [256, 286]
+  |   [3] Line: " Line comment 3" at [321, 338]
+  |   [4] Line: " Line comment 4" at [405, 422]
+  | getCommentsAfter: 1 comment
+  |   [0] Block: " Block comment 3 " at [426, 447]
     ,-[files/comments.js:8:8]
   7 |      */
   8 | ,-> export function topLevelFunction() {
@@ -105,16 +114,7 @@
  21 |     
     `----
 
-  x test-comments(test-comments): FunctionDeclaration(topLevelFunction):
-  | getCommentsBefore: 0 comments
-  | getCommentsInside: 5 comments
-  |   [0] Line: " Line comment 2" at [163, 180]
-  |   [1] Block: " Block comment 2 " at [183, 204]
-  |   [2] Block: "*\n   * JSDoc comment 2\n   " at [256, 286]
-  |   [3] Line: " Line comment 3" at [321, 338]
-  |   [4] Line: " Line comment 4" at [405, 422]
-  | getCommentsAfter: 1 comment
-  |   [0] Block: " Block comment 3 " at [426, 447]
+  x test-comments(test-comments): commentsExistBetween(topLevelFunction, topLevelVariable2): false
     ,-[files/comments.js:8:8]
   7 |      */
   8 | ,-> export function topLevelFunction() {
@@ -255,14 +255,6 @@
  7 | `-> export function topLevelFunction() {}
    `----
 
-  x test-comments(test-comments): commentsExistBetween(topLevelVariable2, topLevelFunction): false
-   ,-[files/hashbang.js:5:1]
- 4 | const topLevelVariable1 = 1;
- 5 | const topLevelVariable2 = 2;
-   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 6 | 
-   `----
-
   x test-comments(test-comments): VariableDeclaration(topLevelVariable2):
   | getCommentsBefore: 0 comments
   | getCommentsInside: 0 comments
@@ -275,17 +267,25 @@
  6 | 
    `----
 
-  x test-comments(test-comments): commentsExistBetween(topLevelFunction, topLevelVariable2): false
-   ,-[files/hashbang.js:7:8]
+  x test-comments(test-comments): commentsExistBetween(topLevelVariable2, topLevelFunction): false
+   ,-[files/hashbang.js:5:1]
+ 4 | const topLevelVariable1 = 1;
+ 5 | const topLevelVariable2 = 2;
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  6 | 
- 7 | export function topLevelFunction() {}
-   :        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
   x test-comments(test-comments): FunctionDeclaration(topLevelFunction):
   | getCommentsBefore: 0 comments
   | getCommentsInside: 0 comments
   | getCommentsAfter: 0 comments
+   ,-[files/hashbang.js:7:8]
+ 6 | 
+ 7 | export function topLevelFunction() {}
+   :        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x test-comments(test-comments): commentsExistBetween(topLevelFunction, topLevelVariable2): false
    ,-[files/hashbang.js:7:8]
  6 | 
  7 | export function topLevelFunction() {}
@@ -323,14 +323,6 @@
  16 | `-> const topLevelVariable7 = 7;
     `----
 
-  x test-comments(test-comments): commentsExistBetween(topLevelVariable2, topLevelFunction): false
-   ,-[files/no_comments.js:2:1]
- 1 | const topLevelVariable1 = 1;
- 2 | const topLevelVariable2 = 2;
-   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 3 | 
-   `----
-
   x test-comments(test-comments): VariableDeclaration(topLevelVariable2):
   | getCommentsBefore: 0 comments
   | getCommentsInside: 0 comments
@@ -343,7 +335,18 @@
  3 | 
    `----
 
-  x test-comments(test-comments): commentsExistBetween(topLevelFunction, topLevelVariable2): false
+  x test-comments(test-comments): commentsExistBetween(topLevelVariable2, topLevelFunction): false
+   ,-[files/no_comments.js:2:1]
+ 1 | const topLevelVariable1 = 1;
+ 2 | const topLevelVariable2 = 2;
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 3 | 
+   `----
+
+  x test-comments(test-comments): FunctionDeclaration(topLevelFunction):
+  | getCommentsBefore: 0 comments
+  | getCommentsInside: 0 comments
+  | getCommentsAfter: 0 comments
     ,-[files/no_comments.js:4:8]
   3 |     
   4 | ,-> export function topLevelFunction() {
@@ -356,10 +359,7 @@
  11 |     
     `----
 
-  x test-comments(test-comments): FunctionDeclaration(topLevelFunction):
-  | getCommentsBefore: 0 comments
-  | getCommentsInside: 0 comments
-  | getCommentsAfter: 0 comments
+  x test-comments(test-comments): commentsExistBetween(topLevelFunction, topLevelVariable2): false
     ,-[files/no_comments.js:4:8]
   3 |     
   4 | ,-> export function topLevelFunction() {
