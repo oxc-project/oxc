@@ -193,7 +193,7 @@ pub enum CompilerOutputMode {
 /// The compilation environment, holding all context needed during compilation.
 ///
 /// This is the central context object threaded through all compiler passes.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Environment {
     pub fn_type: ReactFunctionType,
     pub output_mode: CompilerOutputMode,
