@@ -5,7 +5,7 @@
 /// Utilities for working with reactive scope dependencies, including
 /// merging, comparing, and minimizing dependency sets.
 use crate::hir::{
-    DependencyPath, DependencyPathEntry, IdentifierId, ReactiveScopeDependency,
+    ReactiveScopeDependency,
     are_equal_paths, is_sub_path,
 };
 use rustc_hash::FxHashSet;
