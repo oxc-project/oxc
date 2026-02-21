@@ -232,7 +232,10 @@ impl ExplicitModuleBoundaryTypes {
                 Self::run_on_identifier_reference(ctx, id, &mut checker);
             }
             Expression::ArrowFunctionExpression(arrow) => {
-                walk::walk_arrow_function_expression(&mut checker, arrow);
+                checker.visit_arrow_function_expression(arrow);
+            }
+            Expression::FunctionExpression(func) => {
+                checker.visit_function(func, ScopeFlags::Function);
             }
             // const foo = arg => arg;
             // export default [foo];
@@ -2000,6 +2003,23 @@ mod test {
                 None,
             ),
             ("function App() { return 42; } export default App", None),
+            (
+                "
+            export default ({
+                a,
+                b,
+                c,
+            }: {
+                a: string;
+                b: string;
+                c: string;
+            }) => {
+                return `${a} ${b} ${c}`;
+            };
+            ",
+                None,
+            ),
+            ("export default (function() { return 'test'; });", None),
         ];
 
         Tester::new(
