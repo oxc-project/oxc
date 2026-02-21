@@ -251,9 +251,9 @@ pub fn infer_mutation_aliasing_effects(
         if let Some(state) = states_by_block.get(&block_id) {
             if let Some(block) = func.body.blocks.get_mut(&block_id) {
                 for instr in &mut block.instructions {
-                    let effects = compute_instruction_effects(state, instr);
+                    let _effects = compute_instruction_effects(state, instr);
                     // In the full implementation, we'd store these on instr.effects
-                    let _ = effects;
+                    // Effect annotation handled in full implementation
                 }
             }
         }

@@ -401,11 +401,11 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
             // Terminals handled specially (Logical, Ternary, Optional, etc.)
             Terminal::Logical(logical) => {
                 let test_block = traverse_block(cx, logical.test);
-                let test_value = block_to_reactive_value(&test_block, logical.loc);
+                let _test_value = block_to_reactive_value(&test_block, logical.loc);
                 // The logical expression is lowered into the fallthrough
                 // For now, emit as-is
                 current_id = logical.fallthrough;
-                let _ = test_value;
+                // Logical test lowering handled in full implementation
                 continue;
             }
             Terminal::Ternary(ternary) => {

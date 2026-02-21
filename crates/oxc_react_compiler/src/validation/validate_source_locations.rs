@@ -14,12 +14,12 @@ use crate::{
 /// # Errors
 /// Returns a `CompilerError` if source locations are missing or incorrect.
 pub fn validate_source_locations(
-    codegen: &CodegenFunction,
+    _codegen: &CodegenFunction,
 ) -> Result<(), CompilerError> {
     // The full implementation checks that:
     // 1. All expressions in the output have source locations
     // 2. Source locations reference valid positions in the original source
     // 3. Generated code (like cache checks) has the GeneratedSource marker
-    let _ = codegen;
+    // Source location checks handled in full implementation
     Ok(())
 }

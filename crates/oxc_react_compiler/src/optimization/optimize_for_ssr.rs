@@ -20,10 +20,10 @@ pub fn optimize_for_ssr(func: &mut HIRFunction) {
             match &instr.value {
                 // In SSR mode, useEffect/useLayoutEffect callbacks are never called.
                 // We can simplify or remove the callback setup.
-                InstructionValue::CallExpression(v) => {
+                InstructionValue::CallExpression(_v) => {
                     // In the full implementation, we'd check if the callee is
                     // a useEffect/useLayoutEffect hook and strip the callback.
-                    let _ = v;
+                    // Hook detection handled in full implementation
                 }
                 _ => {}
             }

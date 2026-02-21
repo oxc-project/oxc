@@ -18,14 +18,14 @@ pub fn validate_no_impure_functions_in_render(func: &HIRFunction) -> Result<(), 
     for block in func.body.blocks.values() {
         for instr in &block.instructions {
             match &instr.value {
-                InstructionValue::CallExpression(v) => {
+                InstructionValue::CallExpression(_v) => {
                     // Check if callee is marked as impure via type info
                     // In the full implementation, this would check the function signature
                     // from the environment's shape registry
-                    let _ = v;
+                    // Impurity check handled in full implementation
                 }
-                InstructionValue::MethodCall(v) => {
-                    let _ = v;
+                InstructionValue::MethodCall(_v) => {
+                    // Impurity check handled in full implementation
                 }
                 _ => {}
             }
