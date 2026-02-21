@@ -12,7 +12,6 @@
 /// - `FlowTypeEnv` — the type environment for Flow type inference
 /// - Type checking rules for Flow types
 /// - Error reporting for type violations
-
 /// The Flow type environment (stub for optional enableForest feature).
 #[derive(Debug, Clone, Default)]
 pub struct FlowTypeEnv {

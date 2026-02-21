@@ -3,7 +3,6 @@
 /// Port of `Utils/RuntimeDiagnosticConstants.ts` from the React Compiler.
 ///
 /// Constants synced with the react-compiler-runtime GuardKind enum.
-
 /// Guard kinds for hook runtime diagnostics.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
