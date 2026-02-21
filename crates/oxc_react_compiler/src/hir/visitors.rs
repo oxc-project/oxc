@@ -341,3 +341,287 @@ pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
 pub fn terminal_fallthrough(terminal: &Terminal) -> Option<BlockId> {
     terminal.fallthrough()
 }
+
+// =====================================================================================
+// Mutable mapping functions (replace Places in-place)
+// =====================================================================================
+
+/// Map all operand Places of an instruction in-place using the provided function.
+pub fn map_instruction_operands(instr: &mut Instruction, f: &mut impl FnMut(Place) -> Place) {
+    map_instruction_value_operands(&mut instr.value, f);
+}
+
+/// Map all operand Places of an instruction value in-place.
+pub fn map_instruction_value_operands(
+    value: &mut InstructionValue,
+    f: &mut impl FnMut(Place) -> Place,
+) {
+    match value {
+        InstructionValue::BinaryExpression(v) => {
+            v.left = f(v.left.clone());
+            v.right = f(v.right.clone());
+        }
+        InstructionValue::UnaryExpression(v) => {
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::LoadLocal(v) => {
+            v.place = f(v.place.clone());
+        }
+        InstructionValue::LoadContext(v) => {
+            v.place = f(v.place.clone());
+        }
+        InstructionValue::StoreLocal(v) => {
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::StoreContext(v) => {
+            v.lvalue_place = f(v.lvalue_place.clone());
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::StoreGlobal(v) => {
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::Destructure(v) => {
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::PropertyLoad(v) => {
+            v.object = f(v.object.clone());
+        }
+        InstructionValue::PropertyStore(v) => {
+            v.object = f(v.object.clone());
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::PropertyDelete(v) => {
+            v.object = f(v.object.clone());
+        }
+        InstructionValue::ComputedLoad(v) => {
+            v.object = f(v.object.clone());
+            v.property = f(v.property.clone());
+        }
+        InstructionValue::ComputedStore(v) => {
+            v.object = f(v.object.clone());
+            v.property = f(v.property.clone());
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::ComputedDelete(v) => {
+            v.object = f(v.object.clone());
+            v.property = f(v.property.clone());
+        }
+        InstructionValue::CallExpression(v) => {
+            v.callee = f(v.callee.clone());
+            map_call_args(&mut v.args, f);
+        }
+        InstructionValue::NewExpression(v) => {
+            v.callee = f(v.callee.clone());
+            map_call_args(&mut v.args, f);
+        }
+        InstructionValue::MethodCall(v) => {
+            v.receiver = f(v.receiver.clone());
+            v.property = f(v.property.clone());
+            map_call_args(&mut v.args, f);
+        }
+        InstructionValue::TypeCastExpression(v) => {
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::JsxExpression(v) => {
+            if let JsxTag::Place(ref mut p) = v.tag {
+                *p = f(p.clone());
+            }
+            for attr in &mut v.props {
+                match attr {
+                    JsxAttribute::Attribute { place, .. } => *place = f(place.clone()),
+                    JsxAttribute::Spread { argument } => *argument = f(argument.clone()),
+                }
+            }
+            if let Some(children) = &mut v.children {
+                for child in children.iter_mut() {
+                    *child = f(child.clone());
+                }
+            }
+        }
+        InstructionValue::JsxFragment(v) => {
+            for child in &mut v.children {
+                *child = f(child.clone());
+            }
+        }
+        InstructionValue::ObjectExpression(v) => {
+            for prop in &mut v.properties {
+                match prop {
+                    ObjectPatternProperty::Property(p) => {
+                        if let ObjectPropertyKey::Computed(ref mut place) = p.key {
+                            *place = f(place.clone());
+                        }
+                        p.place = f(p.place.clone());
+                    }
+                    ObjectPatternProperty::Spread(s) => s.place = f(s.place.clone()),
+                }
+            }
+        }
+        InstructionValue::ArrayExpression(v) => {
+            for elem in &mut v.elements {
+                match elem {
+                    ArrayExpressionElement::Place(p) => *p = f(p.clone()),
+                    ArrayExpressionElement::Spread(s) => s.place = f(s.place.clone()),
+                    ArrayExpressionElement::Hole => {}
+                }
+            }
+        }
+        InstructionValue::FunctionExpression(v) => {
+            for ctx in &mut v.lowered_func.func.context {
+                *ctx = f(ctx.clone());
+            }
+        }
+        InstructionValue::ObjectMethod(v) => {
+            for ctx in &mut v.lowered_func.func.context {
+                *ctx = f(ctx.clone());
+            }
+        }
+        InstructionValue::TaggedTemplateExpression(v) => {
+            v.tag = f(v.tag.clone());
+        }
+        InstructionValue::TemplateLiteral(v) => {
+            for subexpr in &mut v.subexprs {
+                *subexpr = f(subexpr.clone());
+            }
+        }
+        InstructionValue::Await(v) => {
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::GetIterator(v) => {
+            v.collection = f(v.collection.clone());
+        }
+        InstructionValue::IteratorNext(v) => {
+            v.iterator = f(v.iterator.clone());
+            v.collection = f(v.collection.clone());
+        }
+        InstructionValue::NextPropertyOf(v) => {
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::PrefixUpdate(v) => {
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::PostfixUpdate(v) => {
+            v.value = f(v.value.clone());
+        }
+        InstructionValue::StartMemoize(v) => {
+            if let Some(deps) = &mut v.deps {
+                for dep in deps {
+                    if let super::hir_types::ManualMemoDependencyRoot::NamedLocal {
+                        ref mut value,
+                        ..
+                    } = dep.root
+                    {
+                        *value = f(value.clone());
+                    }
+                }
+            }
+        }
+        InstructionValue::FinishMemoize(v) => {
+            v.decl = f(v.decl.clone());
+        }
+        InstructionValue::LoadGlobal(_)
+        | InstructionValue::DeclareLocal(_)
+        | InstructionValue::DeclareContext(_)
+        | InstructionValue::Primitive(_)
+        | InstructionValue::JsxText(_)
+        | InstructionValue::RegExpLiteral(_)
+        | InstructionValue::MetaProperty(_)
+        | InstructionValue::Debugger(_)
+        | InstructionValue::UnsupportedNode(_) => {}
+    }
+}
+
+/// Map all lvalue Places of an instruction in-place using the provided function.
+pub fn map_instruction_lvalues(instr: &mut Instruction, f: &mut impl FnMut(Place) -> Place) {
+    match &mut instr.value {
+        InstructionValue::DeclareLocal(v) => {
+            v.lvalue.place = f(v.lvalue.place.clone());
+        }
+        InstructionValue::StoreLocal(v) => {
+            v.lvalue.place = f(v.lvalue.place.clone());
+        }
+        InstructionValue::Destructure(v) => {
+            map_pattern_operands(&mut v.lvalue.pattern, f);
+        }
+        InstructionValue::PrefixUpdate(v) => {
+            v.lvalue = f(v.lvalue.clone());
+        }
+        InstructionValue::PostfixUpdate(v) => {
+            v.lvalue = f(v.lvalue.clone());
+        }
+        _ => {}
+    }
+    instr.lvalue = f(instr.lvalue.clone());
+}
+
+/// Map all Places in a pattern in-place.
+pub fn map_pattern_operands(pattern: &mut Pattern, f: &mut impl FnMut(Place) -> Place) {
+    match pattern {
+        Pattern::Array(arr) => {
+            for item in &mut arr.items {
+                match item {
+                    super::hir_types::ArrayPatternElement::Place(p) => *p = f(p.clone()),
+                    super::hir_types::ArrayPatternElement::Spread(s) => {
+                        s.place = f(s.place.clone());
+                    }
+                    super::hir_types::ArrayPatternElement::Hole => {}
+                }
+            }
+        }
+        Pattern::Object(obj) => {
+            for prop in &mut obj.properties {
+                match prop {
+                    ObjectPatternProperty::Property(p) => p.place = f(p.place.clone()),
+                    ObjectPatternProperty::Spread(s) => s.place = f(s.place.clone()),
+                }
+            }
+        }
+    }
+}
+
+/// Map all operand Places of a terminal in-place.
+pub fn map_terminal_operands(terminal: &mut Terminal, f: &mut impl FnMut(Place) -> Place) {
+    match terminal {
+        Terminal::Throw(t) => t.value = f(t.value.clone()),
+        Terminal::Return(t) => t.value = f(t.value.clone()),
+        Terminal::If(t) => t.test = f(t.test.clone()),
+        Terminal::Branch(t) => t.test = f(t.test.clone()),
+        Terminal::Switch(t) => {
+            t.test = f(t.test.clone());
+            for case in &mut t.cases {
+                if let Some(ref mut test) = case.test {
+                    *test = f(test.clone());
+                }
+            }
+        }
+        Terminal::Try(t) => {
+            if let Some(ref mut binding) = t.handler_binding {
+                *binding = f(binding.clone());
+            }
+        }
+        Terminal::Unsupported(_)
+        | Terminal::Unreachable(_)
+        | Terminal::Goto(_)
+        | Terminal::For(_)
+        | Terminal::ForOf(_)
+        | Terminal::ForIn(_)
+        | Terminal::DoWhile(_)
+        | Terminal::While(_)
+        | Terminal::Logical(_)
+        | Terminal::Ternary(_)
+        | Terminal::Optional(_)
+        | Terminal::Label(_)
+        | Terminal::Sequence(_)
+        | Terminal::MaybeThrow(_)
+        | Terminal::Scope(_)
+        | Terminal::PrunedScope(_) => {}
+    }
+}
+
+fn map_call_args(args: &mut Vec<CallArg>, f: &mut impl FnMut(Place) -> Place) {
+    for arg in args.iter_mut() {
+        match arg {
+            CallArg::Place(p) => *p = f(p.clone()),
+            CallArg::Spread(s) => s.place = f(s.place.clone()),
+        }
+    }
+}
