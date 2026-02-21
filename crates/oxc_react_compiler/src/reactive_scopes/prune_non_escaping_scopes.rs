@@ -36,31 +36,27 @@ fn find_escaping_in_block(block: &ReactiveBlock, escaping: &mut FxHashSet<Identi
         match stmt {
             ReactiveStatement::Instruction(instr) => {
                 // JSX children and props escape
-                if let ReactiveValue::Instruction(value) = &instr.instruction.value {
-                    match value.as_ref() {
-                        InstructionValue::JsxExpression(jsx) => {
-                            if let crate::hir::JsxTag::Place(p) = &jsx.tag {
-                                escaping.insert(p.identifier.id);
-                            }
-                            for attr in &jsx.props {
-                                match attr {
-                                    crate::hir::JsxAttribute::Attribute { place, .. } => {
-                                        escaping.insert(place.identifier.id);
-                                    }
-                                    crate::hir::JsxAttribute::Spread { argument } => {
-                                        escaping.insert(argument.identifier.id);
-                                    }
+                if let ReactiveValue::Instruction(value) = &instr.instruction.value
+                    && let InstructionValue::JsxExpression(jsx) = value.as_ref() {
+                        if let crate::hir::JsxTag::Place(p) = &jsx.tag {
+                            escaping.insert(p.identifier.id);
+                        }
+                        for attr in &jsx.props {
+                            match attr {
+                                crate::hir::JsxAttribute::Attribute { place, .. } => {
+                                    escaping.insert(place.identifier.id);
                                 }
-                            }
-                            if let Some(children) = &jsx.children {
-                                for child in children {
-                                    escaping.insert(child.identifier.id);
+                                crate::hir::JsxAttribute::Spread { argument } => {
+                                    escaping.insert(argument.identifier.id);
                                 }
                             }
                         }
-                        _ => {}
+                        if let Some(children) = &jsx.children {
+                            for child in children {
+                                escaping.insert(child.identifier.id);
+                            }
+                        }
                     }
-                }
             }
             ReactiveStatement::Terminal(term) => {
                 // Return values escape

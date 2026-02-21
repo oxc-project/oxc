@@ -21,18 +21,15 @@ pub fn validate_no_freezing_known_mutable_functions(func: &HIRFunction) -> Resul
         for instr in &block.instructions {
             // Check for function expressions that capture mutable values
             // and are then frozen (passed to JSX, hooks, etc.)
-            match &instr.value {
-                InstructionValue::FunctionExpression(v) => {
-                    // Check if any captured context variable has a Freeze effect
-                    // when the function itself mutates its captures
-                    for ctx in &v.lowered_func.func.context {
-                        if ctx.effect == Effect::Freeze {
-                            // In the full implementation, we'd check if the function
-                            // actually mutates this capture, and if so, emit an error
-                        }
+            if let InstructionValue::FunctionExpression(v) = &instr.value {
+                // Check if any captured context variable has a Freeze effect
+                // when the function itself mutates its captures
+                for ctx in &v.lowered_func.func.context {
+                    if ctx.effect == Effect::Freeze {
+                        // In the full implementation, we'd check if the function
+                        // actually mutates this capture, and if so, emit an error
                     }
                 }
-                _ => {}
             }
         }
     }

@@ -27,13 +27,11 @@ pub fn validate_no_set_state_in_effects(func: &HIRFunction) -> CompilerError {
             match &instr.value {
                 // Track useEffect/useLayoutEffect calls and their callback arguments
                 InstructionValue::CallExpression(v) => {
-                    if is_effect_hook_type(&v.callee.identifier.type_) {
-                        if let Some(first_arg) = v.args.first() {
-                            if let crate::hir::CallArg::Place(p) = first_arg {
+                    if is_effect_hook_type(&v.callee.identifier.type_)
+                        && let Some(first_arg) = v.args.first()
+                            && let crate::hir::CallArg::Place(p) = first_arg {
                                 effect_callback_ids.insert(p.identifier.id);
                             }
-                        }
-                    }
 
                     // Check if setState is called inside an effect
                     if is_set_state_type(&v.callee.identifier.type_)

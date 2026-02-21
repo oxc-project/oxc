@@ -105,11 +105,10 @@ impl SsaBuilder {
         let old_id = old_place.identifier.id;
 
         // Check if Place is defined locally
-        if let Some(state) = self.states.get(&block_id) {
-            if let Some(id) = state.defs.get(&old_id) {
+        if let Some(state) = self.states.get(&block_id)
+            && let Some(id) = state.defs.get(&old_id) {
                 return id.clone();
             }
-        }
 
         let block = self.blocks.get(&block_id).cloned();
         let block = match block {
@@ -286,8 +285,7 @@ fn enter_ssa_impl(
                 let output_preds_size = builder
                     .blocks
                     .get(output_id)
-                    .map(|b| b.preds.len())
-                    .unwrap_or(0);
+                    .map_or(0, |b| b.preds.len());
 
                 let count = if let Some(&existing) = builder.unsealed_preds.get(output_id) {
                     existing.saturating_sub(1)

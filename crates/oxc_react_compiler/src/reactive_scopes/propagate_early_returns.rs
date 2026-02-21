@@ -103,10 +103,10 @@ fn terminal_contains_return(terminal: &ReactiveTerminal) -> bool {
     match terminal {
         ReactiveTerminal::If(t) => {
             contains_return(&t.consequent)
-                || t.alternate.as_ref().is_some_and(|a| contains_return(a))
+                || t.alternate.as_ref().is_some_and(contains_return)
         }
         ReactiveTerminal::Switch(t) => {
-            t.cases.iter().any(|c| c.block.as_ref().is_some_and(|b| contains_return(b)))
+            t.cases.iter().any(|c| c.block.as_ref().is_some_and(contains_return))
         }
         ReactiveTerminal::While(t) => contains_return(&t.r#loop),
         ReactiveTerminal::DoWhile(t) => contains_return(&t.r#loop),

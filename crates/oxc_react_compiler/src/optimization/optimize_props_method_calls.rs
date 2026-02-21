@@ -21,8 +21,8 @@ pub fn optimize_props_method_calls(func: &mut HIRFunction) {
             None => continue,
         };
         for instr in &mut block.instructions {
-            if let InstructionValue::MethodCall(method) = &instr.value {
-                if is_props_type(&method.receiver.identifier.type_) {
+            if let InstructionValue::MethodCall(method) = &instr.value
+                && is_props_type(&method.receiver.identifier.type_) {
                     let callee = method.property.clone();
                     let args = method.args.clone();
                     let loc = method.loc;
@@ -30,7 +30,6 @@ pub fn optimize_props_method_calls(func: &mut HIRFunction) {
                         crate::hir::CallExpression { callee, args, loc },
                     );
                 }
-            }
         }
     }
 }

@@ -468,11 +468,10 @@ fn block_to_reactive_value(block: &ReactiveBlock, loc: SourceLocation) -> Reacti
     }
 
     // If there's a single instruction, return its value
-    if block.len() == 1 {
-        if let ReactiveStatement::Instruction(stmt) = &block[0] {
+    if block.len() == 1
+        && let ReactiveStatement::Instruction(stmt) = &block[0] {
             return stmt.instruction.value.clone();
         }
-    }
 
     // Otherwise wrap in a sequence
     let instructions: Vec<ReactiveInstruction> = block
