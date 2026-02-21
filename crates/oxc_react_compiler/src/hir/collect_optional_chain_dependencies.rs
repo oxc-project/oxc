@@ -33,22 +33,19 @@ pub fn collect_optional_chain_dependencies(func: &HIRFunction) -> OptionalChainD
             // Collect the property path from the test block
             if let Some(test_block) = func.body.blocks.get(&opt.test) {
                 for instr in &test_block.instructions {
-                    match &instr.value {
-                        InstructionValue::PropertyLoad(v) => {
-                            // This is part of the optional chain path
-                            let dep = ReactiveScopeDependency {
-                                identifier_id: v.object.identifier.id,
-                                reactive: false,
-                                path: vec![DependencyPathEntry {
-                                    property: v.property.clone(),
-                                    optional: opt.optional,
-                                    loc: v.loc,
-                                }],
+                    if let InstructionValue::PropertyLoad(v) = &instr.value {
+                        // This is part of the optional chain path
+                        let dep = ReactiveScopeDependency {
+                            identifier_id: v.object.identifier.id,
+                            reactive: false,
+                            path: vec![DependencyPathEntry {
+                                property: v.property.clone(),
+                                optional: opt.optional,
                                 loc: v.loc,
-                            };
-                            dependencies.insert(instr.lvalue.identifier.id, dep);
-                        }
-                        _ => {}
+                            }],
+                            loc: v.loc,
+                        };
+                        dependencies.insert(instr.lvalue.identifier.id, dep);
                     }
                 }
             }

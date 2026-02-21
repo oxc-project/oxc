@@ -337,11 +337,10 @@ impl HirBuilder {
     /// Returns an error if no loop is in scope.
     pub fn lookup_continue(&self, label: Option<&str>) -> Result<BlockId, CompilerError> {
         for scope in self.scopes.iter().rev() {
-            if let Scope::Loop(s) = scope {
-                if label.is_none() || label == s.label.as_deref() {
+            if let Scope::Loop(s) = scope
+                && (label.is_none() || label == s.label.as_deref()) {
                     return Ok(s.continue_block);
                 }
-            }
         }
         Err(CompilerError::invariant(
             "Expected a loop to be in scope for continue",
@@ -439,8 +438,8 @@ pub fn remove_unnecessary_try_catch(func: &mut Hir) {
 
         if should_convert {
             let block = func.blocks.get_mut(&block_id);
-            if let Some(block) = block {
-                if let Terminal::Try(ref t) = block.terminal {
+            if let Some(block) = block
+                && let Terminal::Try(ref t) = block.terminal {
                     let target = t.block;
                     let loc = t.loc;
                     block.terminal = Terminal::Goto(super::hir_types::GotoTerminal {
@@ -450,7 +449,6 @@ pub fn remove_unnecessary_try_catch(func: &mut Hir) {
                         loc,
                     });
                 }
-            }
         }
     }
 }

@@ -54,11 +54,10 @@ fn prune_maybe_throws_impl(func: &mut HIRFunction) -> Option<FxHashMap<BlockId, 
             terminal_mapping.insert(continuation, source);
 
             // Null out the handler
-            if let Some(block) = func.body.blocks.get_mut(&block_id) {
-                if let Terminal::MaybeThrow(ref mut t) = block.terminal {
+            if let Some(block) = func.body.blocks.get_mut(&block_id)
+                && let Terminal::MaybeThrow(ref mut t) = block.terminal {
                     t.handler = None;
                 }
-            }
         }
     }
 

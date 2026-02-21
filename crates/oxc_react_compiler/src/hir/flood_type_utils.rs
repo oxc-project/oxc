@@ -21,11 +21,10 @@ pub fn substitute(
     }
 
     let substituted = map_type(&|t: &FloodType| -> FloodType {
-        if let FloodType::Concrete { ty: ConcreteType::Generic { id, .. }, .. } = t {
-            if let Some(substituted) = subst_map.get(id) {
+        if let FloodType::Concrete { ty: ConcreteType::Generic { id, .. }, .. } = t
+            && let Some(substituted) = subst_map.get(id) {
                 return substituted.clone();
             }
-        }
         t.clone()
     }, ty);
 

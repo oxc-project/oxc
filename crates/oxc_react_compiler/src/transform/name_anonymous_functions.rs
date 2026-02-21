@@ -95,40 +95,32 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
                     }
                 }
                 InstructionValue::StoreLocal(v) => {
-                    if let Some(&idx) = functions.get(&v.value.identifier.id) {
-                        if let Some(IdentifierName::Named(name)) = &v.lvalue.place.identifier.name
-                        {
-                            if nodes[idx].generated_name.is_none() {
+                    if let Some(&idx) = functions.get(&v.value.identifier.id)
+                        && let Some(IdentifierName::Named(name)) = &v.lvalue.place.identifier.name
+                            && nodes[idx].generated_name.is_none() {
                                 nodes[idx].generated_name = Some(name.clone());
                                 functions.remove(&v.value.identifier.id);
                             }
-                        }
-                    }
                 }
                 InstructionValue::StoreContext(v) => {
-                    if let Some(&idx) = functions.get(&v.value.identifier.id) {
-                        if let Some(IdentifierName::Named(name)) = &v.lvalue_place.identifier.name
-                        {
-                            if nodes[idx].generated_name.is_none() {
+                    if let Some(&idx) = functions.get(&v.value.identifier.id)
+                        && let Some(IdentifierName::Named(name)) = &v.lvalue_place.identifier.name
+                            && nodes[idx].generated_name.is_none() {
                                 nodes[idx].generated_name = Some(name.clone());
                                 functions.remove(&v.value.identifier.id);
                             }
-                        }
-                    }
                 }
                 InstructionValue::CallExpression(v) => {
                     let callee_name = names.get(&v.callee.identifier.id).cloned();
                     if let Some(callee_name) = callee_name {
-                        for (_i, arg) in v.args.iter().enumerate() {
-                            if let crate::hir::CallArg::Place(place) = arg {
-                                if let Some(&idx) = functions.get(&place.identifier.id) {
-                                    if nodes[idx].generated_name.is_none() {
+                        for arg in &v.args {
+                            if let crate::hir::CallArg::Place(place) = arg
+                                && let Some(&idx) = functions.get(&place.identifier.id)
+                                    && nodes[idx].generated_name.is_none() {
                                         nodes[idx].generated_name =
                                             Some(format!("{callee_name}()"));
                                         functions.remove(&place.identifier.id);
                                     }
-                                }
-                            }
                         }
                     }
                 }
@@ -138,9 +130,9 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
                         JsxTag::Place(p) => names.get(&p.identifier.id).cloned(),
                     };
                     for attr in &v.props {
-                        if let JsxAttribute::Attribute { name: attr_name, place } = attr {
-                            if let Some(&idx) = functions.get(&place.identifier.id) {
-                                if nodes[idx].generated_name.is_none() {
+                        if let JsxAttribute::Attribute { name: attr_name, place } = attr
+                            && let Some(&idx) = functions.get(&place.identifier.id)
+                                && nodes[idx].generated_name.is_none() {
                                     let prop_name = match &element_name {
                                         Some(el) => format!("<{el}>.{attr_name}"),
                                         None => attr_name.clone(),
@@ -148,8 +140,6 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
                                     nodes[idx].generated_name = Some(prop_name);
                                     functions.remove(&place.identifier.id);
                                 }
-                            }
-                        }
                     }
                 }
                 _ => {}

@@ -23,15 +23,14 @@ fn collect_names_from_block(block: &ReactiveBlock, names: &mut FxHashSet<String>
     for stmt in block {
         match stmt {
             ReactiveStatement::Instruction(instr) => {
-                if let Some(ref place) = instr.instruction.lvalue {
-                    if let Some(name) = &place.identifier.name {
+                if let Some(ref place) = instr.instruction.lvalue
+                    && let Some(name) = &place.identifier.name {
                         let name_str = match name {
                             IdentifierName::Named(n) => n.clone(),
                             IdentifierName::Promoted(n) => n.clone(),
                         };
                         names.insert(name_str);
                     }
-                }
             }
             ReactiveStatement::Terminal(term) => {
                 collect_names_from_terminal(&term.terminal, names);

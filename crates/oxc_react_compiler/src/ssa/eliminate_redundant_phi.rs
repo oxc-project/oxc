@@ -25,12 +25,9 @@ pub fn eliminate_redundant_phi(
     shared_rewrites: Option<&mut FxHashMap<IdentifierId, Identifier>>,
 ) {
     let mut owned_rewrites;
-    let rewrites: &mut FxHashMap<IdentifierId, Identifier> = match shared_rewrites {
-        Some(r) => r,
-        None => {
-            owned_rewrites = FxHashMap::default();
-            &mut owned_rewrites
-        }
+    let rewrites: &mut FxHashMap<IdentifierId, Identifier> = if let Some(r) = shared_rewrites { r } else {
+        owned_rewrites = FxHashMap::default();
+        &mut owned_rewrites
     };
 
     let ir = &mut func.body;

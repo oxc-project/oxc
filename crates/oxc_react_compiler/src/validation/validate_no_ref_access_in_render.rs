@@ -35,36 +35,31 @@ pub fn validate_no_ref_access_in_render(func: &HIRFunction) -> Result<(), Compil
             }
 
             // Track .current access on refs
-            if let InstructionValue::PropertyLoad(v) = &instr.value {
-                if ref_ids.contains(&v.object.identifier.id) {
+            if let InstructionValue::PropertyLoad(v) = &instr.value
+                && ref_ids.contains(&v.object.identifier.id) {
                     let prop = v.property.to_string();
                     if prop == "current" {
                         ref_value_ids.insert(instr.lvalue.identifier.id);
                     }
                 }
-            }
 
             // Check for reads of ref.current values during render
-            match &instr.value {
-                InstructionValue::LoadLocal(v) => {
-                    if ref_value_ids.contains(&v.place.identifier.id) {
-                        errors.push_diagnostic(
-                            CompilerDiagnostic::create(
-                                ErrorCategory::Refs,
-                                "Ref values (the `current` property) may not be accessed during render"
-                                    .to_string(),
-                                Some("Reading a ref during render breaks React's rendering model".to_string()),
-                                None,
-                            )
-                            .with_detail(CompilerDiagnosticDetail::Error {
-                                loc: Some(v.loc),
-                                message: Some("ref.current accessed during render".to_string()),
-                            }),
-                        );
-                    }
+            if let InstructionValue::LoadLocal(v) = &instr.value
+                && ref_value_ids.contains(&v.place.identifier.id) {
+                    errors.push_diagnostic(
+                        CompilerDiagnostic::create(
+                            ErrorCategory::Refs,
+                            "Ref values (the `current` property) may not be accessed during render"
+                                .to_string(),
+                            Some("Reading a ref during render breaks React's rendering model".to_string()),
+                            None,
+                        )
+                        .with_detail(CompilerDiagnosticDetail::Error {
+                            loc: Some(v.loc),
+                            message: Some("ref.current accessed during render".to_string()),
+                        }),
+                    );
                 }
-                _ => {}
-            }
         }
     }
 
