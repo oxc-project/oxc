@@ -4,6 +4,7 @@ pub mod validate_hooks_usage;
 pub mod validate_locals_not_reassigned_after_render;
 pub mod validate_no_capitalized_calls;
 pub mod validate_no_derived_computations_in_effects;
+pub mod validate_no_derived_computations_in_effects_exp;
 pub mod validate_no_freezing_known_mutable_functions;
 pub mod validate_no_impure_functions_in_render;
 pub mod validate_no_jsx_in_try_statement;
