@@ -14,6 +14,7 @@ pub mod dominator;
 pub mod environment;
 pub mod find_context_identifiers;
 pub mod flood;
+pub mod flood_types;
 pub mod globals;
 pub mod hir_builder;
 pub mod lower_ast;
