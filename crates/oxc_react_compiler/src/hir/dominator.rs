@@ -167,18 +167,14 @@ fn intersect(
         let idx1 = block1.map_or(0, |n| n.index);
         let idx2 = block2.map_or(0, |n| n.index);
 
-        while idx1 > idx2 {
+        if idx1 > idx2 {
             let dom = nodes.get(&block1.map_or(BlockId(0), |n| n.id));
             block1 = dom.and_then(|d| graph.nodes.get(d));
-            break;
-        }
-        while idx2 > idx1 {
+        } else if idx2 > idx1 {
             let dom = nodes.get(&block2.map_or(BlockId(0), |n| n.id));
             block2 = dom.and_then(|d| graph.nodes.get(d));
-            break;
-        }
-        // Safety: if indices are equal but nodes different, we should break too
-        if block1.map(|n| n.index) == block2.map(|n| n.index) {
+        } else {
+            // Indices are equal but nodes different — shouldn't happen in a valid dominator tree
             break;
         }
     }
