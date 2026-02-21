@@ -110,12 +110,143 @@ pub struct CodegenOptions {
 
 pub struct CodegenContext {
     pub next_cache_index: u32,
+    pub cache_var_name: String,
+    pub statements: Vec<CodegenStatement>,
+}
+
+/// A generated statement in the output.
+#[derive(Debug)]
+pub enum CodegenStatement {
+    /// A variable declaration: `const x = expr;` or `let x;`
+    VariableDeclaration { kind: VarKind, name: String, init: Option<String> },
+    /// An expression statement: `expr;`
+    ExpressionStatement(String),
+    /// A block: `{ ... }`
+    Block(Vec<CodegenStatement>),
+    /// An if statement
+    If { test: String, consequent: Vec<CodegenStatement>, alternate: Option<Vec<CodegenStatement>> },
+    /// A return statement
+    Return(Option<String>),
+    /// A raw code string (for complex output)
+    Raw(String),
+}
+
+/// Kind of variable declaration.
+#[derive(Debug, Clone, Copy)]
+pub enum VarKind {
+    Const,
+    Let,
 }
 
 impl CodegenContext {
     fn new() -> Self {
-        Self { next_cache_index: 0 }
+        Self {
+            next_cache_index: 0,
+            cache_var_name: "$".to_string(),
+            statements: Vec::new(),
+        }
     }
+
+    /// Allocate the next cache index.
+    pub fn alloc_cache_index(&mut self) -> u32 {
+        let idx = self.next_cache_index;
+        self.next_cache_index += 1;
+        idx
+    }
+
+    /// Generate a cache read expression: `$[idx]`
+    pub fn cache_read(&self, idx: u32) -> String {
+        format!("{}[{}]", self.cache_var_name, idx)
+    }
+
+    /// Generate a cache sentinel check: `$[idx] === Symbol.for("react.memo_cache_sentinel")`
+    pub fn cache_sentinel_check(&self, idx: u32) -> String {
+        format!(
+            "{}[{}] === Symbol.for(\"{}\")",
+            self.cache_var_name, idx, MEMO_CACHE_SENTINEL
+        )
+    }
+
+    /// Generate a cache write: `$[idx] = value`
+    pub fn cache_write(&self, idx: u32, value: &str) -> String {
+        format!("{}[{}] = {}", self.cache_var_name, idx, value)
+    }
+
+    /// Emit the useMemoCache initialization: `const $ = _c(N);`
+    pub fn emit_cache_init(&self, memo_cache_import: &str) -> CodegenStatement {
+        CodegenStatement::VariableDeclaration {
+            kind: VarKind::Const,
+            name: self.cache_var_name.clone(),
+            init: Some(format!("{}({})", memo_cache_import, self.next_cache_index)),
+        }
+    }
+}
+
+/// Generate code for a reactive scope block.
+///
+/// The output pattern for each scope is:
+/// ```js
+/// if ($[idx] === Symbol.for("react.memo_cache_sentinel")) {
+///   // ... instructions ...
+///   $[idx] = result;
+///   $[idx + 1] = otherResult;
+/// } else {
+///   result = $[idx];
+///   otherResult = $[idx + 1];
+/// }
+/// ```
+pub fn codegen_scope_block(
+    cx: &mut CodegenContext,
+    scope: &crate::hir::ReactiveScope,
+    _instructions: &ReactiveBlock,
+) -> Vec<CodegenStatement> {
+    let mut stmts = Vec::new();
+
+    // Allocate a sentinel check index
+    let sentinel_idx = cx.alloc_cache_index();
+
+    // Allocate indices for each declaration
+    let mut decl_indices: Vec<(String, u32)> = Vec::new();
+    for (id, _decl) in &scope.declarations {
+        let idx = cx.alloc_cache_index();
+        let name = format!("t{}", id.0);
+        decl_indices.push((name, idx));
+    }
+
+    // Generate the sentinel check
+    let check = cx.cache_sentinel_check(sentinel_idx);
+
+    // Consequent: compute + store
+    let mut consequent = Vec::new();
+    // In the full implementation, we'd codegen all the instructions inside the scope
+    consequent.push(CodegenStatement::Raw("// ... scope instructions ...".to_string()));
+
+    // Store each declaration into the cache
+    for (name, idx) in &decl_indices {
+        consequent.push(CodegenStatement::ExpressionStatement(
+            cx.cache_write(*idx, name),
+        ));
+    }
+    // Store the sentinel
+    consequent.push(CodegenStatement::ExpressionStatement(
+        cx.cache_write(sentinel_idx, &format!("\"{}\"", MEMO_CACHE_SENTINEL)),
+    ));
+
+    // Alternate: load from cache
+    let mut alternate = Vec::new();
+    for (name, idx) in &decl_indices {
+        alternate.push(CodegenStatement::ExpressionStatement(
+            format!("{name} = {}", cx.cache_read(*idx)),
+        ));
+    }
+
+    stmts.push(CodegenStatement::If {
+        test: check,
+        consequent,
+        alternate: Some(alternate),
+    });
+
+    stmts
 }
 
 /// Count the number of memo slots needed for the reactive function.
