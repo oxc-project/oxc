@@ -1,1 +1,1 @@
-// TODO: Port TypeInference module
+pub mod infer_types;
