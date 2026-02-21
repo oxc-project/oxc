@@ -22,6 +22,7 @@ use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
 mod ast_util;
 mod config;
@@ -37,6 +38,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod suppression;
 mod tsgolint;
 mod utils;
 
@@ -92,6 +94,7 @@ use crate::{
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
+    suppression::{DiagnosticCounts, RuleName, SuppressionFile, SuppressionManager},
     utils::iter_possible_jest_call_node,
 };
 
@@ -144,6 +147,18 @@ impl Linter {
         self
     }
 
+    #[must_use]
+    pub fn with_suppress_all(mut self, suppress_all: bool) -> Self {
+        self.options.suppress_all = suppress_all;
+        self
+    }
+
+    #[must_use]
+    pub fn with_prune_suppressions(mut self, prune_suppressions: bool) -> Self {
+        self.options.prune_suppressions = prune_suppressions;
+        self
+    }
+
     pub(crate) fn options(&self) -> &LintOptions {
         &self.options
     }
@@ -168,7 +183,15 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message> {
-        self.run_with_disable_directives(path, context_sub_hosts, allocator, None).0
+        //TODO Inside LintRunner::run, we should check self.options.suppression_options, to handle each setting correctly
+        self.run_with_disable_directives(
+            path,
+            context_sub_hosts,
+            allocator,
+            None,
+            &SuppressionFile::default(),
+        )
+        .0
     }
 
     /// Same as `run` but also returns the disable directives for the file
@@ -186,7 +209,9 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
-    ) -> (Vec<Message>, Option<DisableDirectives>) {
+        suppression_file_state: &SuppressionFile,
+    ) -> (Vec<Message>, Option<DisableDirectives>, Option<FxHashMap<RuleName, DiagnosticCounts>>)
+    {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
 
         let mut ctx_host = Rc::new(ContextHost::new(path, context_sub_hosts, self.options, config));
@@ -411,7 +436,10 @@ impl Linter {
             Rc::try_unwrap(ctx_host).unwrap().into_disable_directives()
         };
 
-        (diagnostics, disable_directives)
+        let (filtered_diagnostics, runtime_suppression_tracking) =
+            SuppressionManager::suppress_lint_diagnostics(suppression_file_state, diagnostics);
+
+        (filtered_diagnostics, disable_directives, runtime_suppression_tracking)
     }
 
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
@@ -583,12 +611,12 @@ impl Linter {
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
         unsafe { metadata_ptr.write(metadata) };
 
-        let path = path.to_string_lossy();
-        let path = path.as_ref();
+        let path_string = path.to_string_lossy();
+        let path_string = path_string.as_ref();
 
         let settings_json = match &ctx_host.settings().json {
             Some(json) => serde_json::to_string(&json).unwrap_or_else(|e| {
-                let message = format!("Error serializing settings.\nFile path: {path}\n{e}");
+                let message = format!("Error serializing settings.\nFile path: {path_string}\n{e}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,
@@ -600,7 +628,7 @@ impl Linter {
 
         let globals_and_envs = GlobalsAndEnvs::new(ctx_host);
         let globals_json = serde_json::to_string(&globals_and_envs).unwrap_or_else(|e| {
-            let message = format!("Error serializing globals.\nFile path: {path}\n{e}");
+            let message = format!("Error serializing globals.\nFile path: {path_string}\n{e}");
             ctx_host
                 .push_diagnostic(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
             "{}".to_string()
@@ -611,7 +639,7 @@ impl Linter {
 
         // Pass AST and rule IDs + options IDs to JS
         let result = (external_linter.lint_file)(
-            path.to_owned(),
+            path_string.to_owned(),
             external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
@@ -656,7 +684,7 @@ impl Linter {
                                 "fixes"
                             };
                             let message = format!(
-                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path}\n{err}"
+                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path_string}\n{err}"
                             );
                             ctx_host.push_diagnostic(Message::new(
                                 OxcDiagnostic::error(message),
@@ -689,17 +717,20 @@ impl Linter {
                         PossibleFixes::from(fix)
                     };
 
-                    ctx_host.push_diagnostic(Message::new(
-                        OxcDiagnostic::error(diagnostic.message)
-                            .with_label(span)
-                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                            .with_severity(severity.into()),
-                        possible_fixes,
-                    ));
+                    ctx_host.push_diagnostic(
+                        Message::new(
+                            OxcDiagnostic::error(diagnostic.message)
+                                .with_label(span)
+                                .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                                .with_severity(severity.into()),
+                            possible_fixes,
+                        )
+                        .add_suppression_id(path, plugin_name, rule_name),
+                    );
                 }
             }
             Err(err) => {
-                let message = format!("Error running JS plugin.\nFile path: {path}\n{err}");
+                let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,

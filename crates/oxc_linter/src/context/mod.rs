@@ -19,6 +19,7 @@ use crate::{
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
+    suppression::SuppressionId,
 };
 
 mod host;
@@ -285,6 +286,13 @@ impl<'a> LintContext<'a> {
         if self.parent.disable_directives().contains(self.current_rule_name, message.span) {
             return;
         }
+
+        message.suppression_id = Some(SuppressionId::new(
+            self.file_path(),
+            self.current_plugin_name,
+            self.current_rule_name,
+        ));
+
         message.error = message
             .error
             .with_error_code(self.current_plugin_prefix, self.current_rule_name)

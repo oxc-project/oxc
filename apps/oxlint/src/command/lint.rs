@@ -61,9 +61,23 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
+    #[bpaf(external)]
+    pub suppression_options: SuppressionOptions,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Clone, Bpaf)]
+pub struct SuppressionOptions {
+    /// Generate suppressions for all current violations
+    #[bpaf(switch, hide_usage)]
+    pub suppress_all: bool,
+
+    /// Remove entries for violations that no longer exist
+    #[bpaf(switch, hide_usage)]
+    pub prune_suppressions: bool,
 }
 
 impl LintCommand {
@@ -626,6 +640,27 @@ mod lint_options {
         assert!(options.type_check);
         let options = get_lint_options(".");
         assert!(!options.type_check);
+    }
+
+    #[test]
+    fn suppress_rules() {
+        let options = get_lint_options("--suppress-all");
+        assert!(options.suppression_options.suppress_all);
+        assert!(!options.suppression_options.prune_suppressions);
+    }
+
+    #[test]
+    fn prune_suppressions() {
+        let options = get_lint_options("--prune-suppressions");
+        assert!(options.suppression_options.prune_suppressions);
+        assert!(!options.suppression_options.suppress_all);
+    }
+
+    #[test]
+    fn suppress_and_prune() {
+        let options = get_lint_options("--suppress-all --prune-suppressions");
+        assert!(options.suppression_options.prune_suppressions);
+        assert!(options.suppression_options.suppress_all);
     }
 }
 
