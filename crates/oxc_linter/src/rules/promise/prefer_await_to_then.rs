@@ -13,7 +13,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_promise,
+    utils::is_promise_with_context,
 };
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -82,7 +82,7 @@ impl Rule for PreferAwaitToThen {
             return;
         };
 
-        if is_promise(call_expr).is_none_or(|v| v == "withResolvers") {
+        if is_promise_with_context(call_expr, ctx).is_none_or(|v| v == "withResolvers") {
             return;
         }
 
@@ -134,6 +134,13 @@ fn test() {
         (
             "function isThenable(obj) {
                 return obj && typeof obj.then === 'function';
+            }",
+            None,
+        ),
+        (
+            "function foo() {
+                const globalExceptionFilter = new GlobalExceptionFilter();
+                globalExceptionFilter.catch(error, host);
             }",
             None,
         ),
