@@ -9,10 +9,10 @@ use rustc_hash::FxHashSet;
 use crate::hir::{HIRFunction, IdentifierId};
 
 /// Outline function expressions from reactive scopes.
-pub fn outline_functions(func: &mut HIRFunction, fbt_operands: &FxHashSet<IdentifierId>) {
+pub fn outline_functions(func: &mut HIRFunction, _fbt_operands: &FxHashSet<IdentifierId>) {
     // The full implementation moves FunctionExpression instructions out of
     // reactive scopes when the function's captures are all available outside
     // the scope. This reduces the number of values the scope needs to produce.
-    let _ = fbt_operands;
+    // Fbt operand tracking used in full implementation
     let _block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
 }

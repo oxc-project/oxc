@@ -60,12 +60,12 @@ pub fn eliminate_redundant_phi(
 
             // Find redundant phis
             // We need to collect phi IDs to process since we can't mutably borrow block while iterating
-            let phi_ids: Vec<u32> = block.phis.iter().copied().collect();
+            let _phi_ids: Vec<u32> = block.phis.iter().copied().collect();
             // Note: In the TS version, phis are full Phi objects stored in a Set.
             // In our Rust port, phis is a FxHashSet<PhiId> where PhiId = u32.
             // The actual Phi data would need to be stored separately.
             // For now, this is a structural placeholder.
-            let _ = phi_ids;
+            // Phi processing handled in full implementation
         }
 
         // Rewrite instruction lvalues and operands
@@ -119,11 +119,11 @@ pub fn eliminate_redundant_phi(
 
 /// Rewrite a place's identifier if it has a mapping in the rewrites table.
 fn rewrite_place_id(place: &Place, rewrites: &FxHashMap<IdentifierId, Identifier>) {
-    if let Some(rewrite) = rewrites.get(&place.identifier.id) {
+    if let Some(_rewrite) = rewrites.get(&place.identifier.id) {
         // In the TS version, this mutates place.identifier directly.
         // In Rust, we need interior mutability or to restructure.
         // For now, this is a read-only check; the actual rewriting
         // is done through the mutable mapping functions in the main loop.
-        let _ = rewrite;
+        // Place rewriting handled through mutable mapping in main loop
     }
 }
