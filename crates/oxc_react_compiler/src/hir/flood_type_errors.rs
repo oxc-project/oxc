@@ -27,6 +27,9 @@ pub enum UnificationError {
 }
 
 /// Report unification errors.
+///
+/// # Errors
+/// Returns a `CompilerError` if there are any unification errors.
 pub fn raise_unification_errors(
     errors: Option<&[UnificationError]>,
     loc: SourceLocation,
@@ -83,6 +86,9 @@ pub fn unsupported_type_annotation(desc: &str, loc: SourceLocation) -> CompilerE
 }
 
 /// Check type argument arity.
+///
+/// # Errors
+/// Returns a `CompilerError` if the expected and actual arity don't match.
 pub fn check_type_argument_arity(
     desc: &str,
     expected: usize,

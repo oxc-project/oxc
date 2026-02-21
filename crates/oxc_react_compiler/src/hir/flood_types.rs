@@ -144,7 +144,10 @@ impl FloodTypeEnv {
         }
     }
 
-    /// Unify two types. Returns an error string if types are incompatible.
+    /// Unify two types.
+    ///
+    /// # Errors
+    /// Returns an error string if the types are incompatible.
     pub fn unify(&mut self, a: &FloodType, b: &FloodType) -> Result<(), String> {
         let a = self.resolve(a);
         let b = self.resolve(b);
