@@ -131,48 +131,33 @@ impl Rule for NoRequireImports {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
-                // Must be called on the bare `require` identifier (not a member expression)
                 let Some(id) = call_expr.callee.get_identifier_reference() else {
                     return;
                 };
-                if id.name != REQUIRE {
-                    return;
-                }
 
-                // If `require` is shadowed by a local binding, skip
-                if node.scope_id() != ctx.scoping().root_scope_id()
-                    && !id.is_global_reference_name(REQUIRE, ctx.scoping())
-                {
-                    return;
-                }
-
-                // If `require` is defined at the root scope (e.g. via `createRequire`), skip
-                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), REQUIRE).is_some() {
+                if id.name != REQUIRE || !id.is_global_reference_name(REQUIRE, ctx.scoping()) {
                     return;
                 }
 
                 // Check `allow` patterns against static string/template literal arguments
-                if !self.allow.is_empty() {
-                    if let Some(argument) = call_expr.arguments.first() {
-                        match argument {
-                            Argument::TemplateLiteral(template_literal) => {
-                                let Some(quasi) = template_literal.quasis.first() else {
-                                    return;
-                                };
-                                if match_argument_value_with_regex(&self.allow, &quasi.value.raw) {
-                                    return;
-                                }
+                if !self.allow.is_empty()
+                    && let Some(argument) = call_expr.arguments.first()
+                {
+                    match argument {
+                        Argument::TemplateLiteral(template_literal) => {
+                            let Some(quasi) = template_literal.quasis.first() else {
+                                return;
+                            };
+                            if match_argument_value_with_regex(&self.allow, &quasi.value.raw) {
+                                return;
                             }
-                            Argument::StringLiteral(string_literal) => {
-                                if match_argument_value_with_regex(
-                                    &self.allow,
-                                    &string_literal.value,
-                                ) {
-                                    return;
-                                }
-                            }
-                            _ => {}
                         }
+                        Argument::StringLiteral(string_literal) => {
+                            if match_argument_value_with_regex(&self.allow, &string_literal.value) {
+                                return;
+                            }
+                        }
+                        _ => {}
                     }
                 }
 
