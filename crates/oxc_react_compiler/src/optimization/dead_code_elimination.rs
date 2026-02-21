@@ -8,7 +8,7 @@
 use rustc_hash::FxHashSet;
 
 use crate::hir::{
-    BlockKind, HIRFunction, Identifier, IdentifierId, IdentifierName,
+    BlockKind, HIRFunction, Identifier, IdentifierId,
     InstructionKind, InstructionValue,
     visitors::{each_instruction_value_operand, each_terminal_operand},
 };
@@ -28,10 +28,7 @@ impl DceState {
     fn reference(&mut self, identifier: &Identifier) {
         self.identifiers.insert(identifier.id);
         if let Some(name) = &identifier.name {
-            let name_str = match name {
-                IdentifierName::Named(n) => n.clone(),
-                IdentifierName::Promoted(n) => n.clone(),
-            };
+            let name_str = name.value().to_string();
             self.named.insert(name_str);
         }
     }
@@ -42,10 +39,7 @@ impl DceState {
             return true;
         }
         if let Some(name) = &identifier.name {
-            let name_str = match name {
-                IdentifierName::Named(n) => n.as_str(),
-                IdentifierName::Promoted(n) => n.as_str(),
-            };
+            let name_str = name.value();
             return self.named.contains(name_str);
         }
         false
