@@ -1,5 +1,6 @@
 mod hir_types;
 
+pub mod assertions;
 pub mod environment;
 pub mod hir_builder;
 pub mod merge_consecutive_blocks;
