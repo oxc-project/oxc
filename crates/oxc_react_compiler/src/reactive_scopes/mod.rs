@@ -1,1 +1,1 @@
-// TODO: Port ReactiveScopes module
+pub mod infer_reactive_scope_variables;
