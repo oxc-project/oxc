@@ -91,8 +91,8 @@ pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
                 }
                 InstructionValue::MethodCall(v) => {
                     let property_kind = kinds.get(&v.property.identifier.id).copied();
-                    if matches!(property_kind, Some(Kind::KnownHook | Kind::PotentialHook)) {
-                        if !is_unconditional {
+                    if matches!(property_kind, Some(Kind::KnownHook | Kind::PotentialHook))
+                        && !is_unconditional {
                             errors.push_diagnostic(CompilerDiagnostic::create(
                                 ErrorCategory::Hooks,
                                 "Hooks must be called unconditionally".to_string(),
@@ -105,7 +105,6 @@ pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
                                 message: Some("hook called conditionally".to_string()),
                             }));
                         }
-                    }
                 }
                 InstructionValue::LoadLocal(v) => {
                     // Propagate kind from loaded variable
@@ -117,11 +116,10 @@ pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
                 InstructionValue::PropertyLoad(v) => {
                     // If loading from a hook-like object, mark as potential hook
                     let obj_kind = kinds.get(&v.object.identifier.id).copied();
-                    if matches!(obj_kind, Some(Kind::KnownHook | Kind::PotentialHook | Kind::Global)) {
-                        if is_hook_name(&v.property.to_string()) {
+                    if matches!(obj_kind, Some(Kind::KnownHook | Kind::PotentialHook | Kind::Global))
+                        && is_hook_name(&v.property.to_string()) {
                             kinds.insert(instr.lvalue.identifier.id, Kind::PotentialHook);
                         }
-                    }
                 }
                 _ => {}
             }

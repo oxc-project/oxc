@@ -39,7 +39,7 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
             let quasis = tpl
                 .quasis
                 .iter()
-                .map(|q| (q.value.raw.to_string(), q.value.cooked.as_ref().map(|c| c.to_string())))
+                .map(|q| (q.value.raw.to_string(), q.value.cooked.as_ref().map(std::string::ToString::to_string)))
                 .collect();
             let expressions = tpl.expressions.iter().map(convert_expression).collect();
             LowerableExpression::TemplateLiteral {

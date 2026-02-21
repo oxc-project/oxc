@@ -54,7 +54,7 @@ pub fn raise_unification_errors(
 /// Error for unresolvable type variables.
 pub fn unresolvable_type_variable(id: VariableId, loc: SourceLocation) -> CompilerError {
     CompilerError::invalid_js(
-        &format!("Unable to resolve free variable {:?} to a concrete type", id),
+        &format!("Unable to resolve free variable {id:?} to a concrete type"),
         None,
         loc,
     )
@@ -89,14 +89,14 @@ pub fn check_type_argument_arity(
     actual: usize,
     loc: SourceLocation,
 ) -> Result<(), CompilerError> {
-    if expected != actual {
+    if expected == actual {
+        Ok(())
+    } else {
         Err(CompilerError::invalid_js(
             &format!("Expected {desc} to have {expected} type parameters, got {actual}"),
             None,
             loc,
         ))
-    } else {
-        Ok(())
     }
 }
 

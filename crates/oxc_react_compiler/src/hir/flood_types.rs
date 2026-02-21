@@ -184,7 +184,7 @@ impl FloodTypeEnv {
             (ConcreteType::Array { element: a }, ConcreteType::Array { element: b }) => {
                 self.unify(a, b)
             }
-            _ => Err(format!("Cannot unify {:?} with {:?}", a, b)),
+            _ => Err(format!("Cannot unify {a:?} with {b:?}")),
         }
     }
 }

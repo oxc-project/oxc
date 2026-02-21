@@ -207,7 +207,7 @@ pub fn codegen_scope_block(
 
     // Allocate indices for each declaration
     let mut decl_indices: Vec<(String, u32)> = Vec::new();
-    for (id, _decl) in &scope.declarations {
+    for id in scope.declarations.keys() {
         let idx = cx.alloc_cache_index();
         let name = format!("t{}", id.0);
         decl_indices.push((name, idx));
@@ -229,7 +229,7 @@ pub fn codegen_scope_block(
     }
     // Store the sentinel
     consequent.push(CodegenStatement::ExpressionStatement(
-        cx.cache_write(sentinel_idx, &format!("\"{}\"", MEMO_CACHE_SENTINEL)),
+        cx.cache_write(sentinel_idx, &format!("\"{MEMO_CACHE_SENTINEL}\"")),
     ));
 
     // Alternate: load from cache

@@ -90,24 +90,21 @@ impl InferenceState {
         let mut changed = false;
 
         for (&id, other_value) in &other.values {
-            match self.values.get(&id) {
-                Some(existing) => {
-                    // Merge value kinds — take the more conservative one
-                    let merged_kind = merge_value_kinds(existing.kind, other_value.kind);
-                    if merged_kind != existing.kind {
-                        let mut merged_reasons = existing.reason.clone();
-                        merged_reasons.extend(other_value.reason.iter().copied());
-                        self.values.insert(
-                            id,
-                            AbstractValue { kind: merged_kind, reason: merged_reasons },
-                        );
-                        changed = true;
-                    }
-                }
-                None => {
-                    self.values.insert(id, other_value.clone());
+            if let Some(existing) = self.values.get(&id) {
+                // Merge value kinds — take the more conservative one
+                let merged_kind = merge_value_kinds(existing.kind, other_value.kind);
+                if merged_kind != existing.kind {
+                    let mut merged_reasons = existing.reason.clone();
+                    merged_reasons.extend(other_value.reason.iter().copied());
+                    self.values.insert(
+                        id,
+                        AbstractValue { kind: merged_kind, reason: merged_reasons },
+                    );
                     changed = true;
                 }
+            } else {
+                self.values.insert(id, other_value.clone());
+                changed = true;
             }
         }
 
@@ -206,11 +203,10 @@ pub fn infer_mutation_aliasing_effects(
 
         for (block_id, mut state) in blocks_to_process {
             // Check if state has changed since last visit
-            if let Some(prev_state) = states_by_block.get(&block_id) {
-                if !state.merge(prev_state) {
+            if let Some(prev_state) = states_by_block.get(&block_id)
+                && !state.merge(prev_state) {
                     continue; // No changes, skip
                 }
-            }
 
             let block = match func.body.blocks.get(&block_id) {
                 Some(b) => b.clone(),
@@ -248,15 +244,14 @@ pub fn infer_mutation_aliasing_effects(
     // Annotate effects on instructions
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
-        if let Some(state) = states_by_block.get(&block_id) {
-            if let Some(block) = func.body.blocks.get_mut(&block_id) {
+        if let Some(state) = states_by_block.get(&block_id)
+            && let Some(block) = func.body.blocks.get_mut(&block_id) {
                 for instr in &mut block.instructions {
                     let _effects = compute_instruction_effects(state, instr);
                     // In the full implementation, we'd store these on instr.effects
                     // Effect annotation handled in full implementation
                 }
             }
-        }
     }
 
     Ok(())
@@ -264,15 +259,11 @@ pub fn infer_mutation_aliasing_effects(
 
 /// Options for the inference pass.
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct InferOptions {
     pub is_function_expression: bool,
 }
 
-impl Default for InferOptions {
-    fn default() -> Self {
-        Self { is_function_expression: false }
-    }
-}
 
 /// Infer effects of a single instruction on the abstract state.
 fn infer_instruction_effects(

@@ -45,11 +45,10 @@ pub fn create_control_dominators<'a>(
                         return true;
                     }
                     for case in &t.cases {
-                        if let Some(test) = &case.test {
-                            if is_control_variable(test) {
+                        if let Some(test) = &case.test
+                            && is_control_variable(test) {
                                 return true;
                             }
-                        }
                     }
                 }
                 _ => {}

@@ -48,8 +48,8 @@ fn merge_in_block(block: &mut ReactiveBlock) {
 
         if should_merge {
             // Merge scope at i+1 into scope at i
-            if let ReactiveStatement::Scope(scope_b) = block.remove(i + 1) {
-                if let ReactiveStatement::Scope(scope_a) = &mut block[i] {
+            if let ReactiveStatement::Scope(scope_b) = block.remove(i + 1)
+                && let ReactiveStatement::Scope(scope_a) = &mut block[i] {
                     // Move instructions from b into a
                     scope_a.instructions.extend(scope_b.instructions);
                     // Merge declarations
@@ -63,7 +63,6 @@ fn merge_in_block(block: &mut ReactiveBlock) {
                     // Track merged scope
                     scope_a.scope.merged.insert(scope_b.scope.id);
                 }
-            }
             // Don't increment — check for more consecutive scopes to merge
         } else {
             i += 1;

@@ -24,11 +24,10 @@ pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
     // Collect fallthrough block IDs
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
     for &block_id in &block_ids {
-        if let Some(block) = func.body.blocks.get(&block_id) {
-            if let Some(ft) = terminal_fallthrough(&block.terminal) {
+        if let Some(block) = func.body.blocks.get(&block_id)
+            && let Some(ft) = terminal_fallthrough(&block.terminal) {
                 fallthrough_blocks.insert(ft);
             }
-        }
     }
 
     // Recursively merge in nested functions

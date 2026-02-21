@@ -42,11 +42,10 @@ pub fn validate_no_derived_computations_in_effects_exp(
                         state_ids.insert(instr.lvalue.identifier.id);
                     }
                     // Track useEffect callbacks
-                    if is_use_effect_type(&v.callee.identifier.type_) {
-                        if let Some(crate::hir::CallArg::Place(callback)) = v.args.first() {
+                    if is_use_effect_type(&v.callee.identifier.type_)
+                        && let Some(crate::hir::CallArg::Place(callback)) = v.args.first() {
                             effect_callback_ids.insert(callback.identifier.id);
                         }
-                    }
                 }
                 // Track destructured setState functions
                 InstructionValue::Destructure(_v) => {

@@ -97,7 +97,7 @@ pub fn assert_terminal_successors_exist(func: &HIRFunction) -> Result<(), Compil
             if !func.body.blocks.contains_key(&successor) {
                 return Err(CompilerError::invariant(
                     "Terminal successor references unknown block",
-                    Some(&format!("Block {} does not exist", successor)),
+                    Some(&format!("Block {successor} does not exist")),
                     block.terminal.loc(),
                 ));
             }

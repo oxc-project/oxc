@@ -96,28 +96,25 @@ fn apply_constant_propagation(func: &mut HIRFunction, constants: &mut Constants)
         }
 
         // Evaluate terminal for constant conditions
-        match &block.terminal {
-            Terminal::If(if_term) => {
-                let test_value = read(constants, &if_term.test);
-                if let Some(Constant::Primitive(prim)) = test_value {
-                    let is_truthy = primitive_is_truthy(&prim);
-                    let target_block_id = if is_truthy {
-                        if_term.consequent
-                    } else {
-                        if_term.alternate
-                    };
-                    has_changes = true;
-                    let id = if_term.id;
-                    let loc = if_term.loc;
-                    block.terminal = Terminal::Goto(GotoTerminal {
-                        id,
-                        block: target_block_id,
-                        variant: GotoVariant::Break,
-                        loc,
-                    });
-                }
+        if let Terminal::If(if_term) = &block.terminal {
+            let test_value = read(constants, &if_term.test);
+            if let Some(Constant::Primitive(prim)) = test_value {
+                let is_truthy = primitive_is_truthy(&prim);
+                let target_block_id = if is_truthy {
+                    if_term.consequent
+                } else {
+                    if_term.alternate
+                };
+                has_changes = true;
+                let id = if_term.id;
+                let loc = if_term.loc;
+                block.terminal = Terminal::Goto(GotoTerminal {
+                    id,
+                    block: target_block_id,
+                    variant: GotoVariant::Break,
+                    loc,
+                });
             }
-            _ => {}
         }
     }
 

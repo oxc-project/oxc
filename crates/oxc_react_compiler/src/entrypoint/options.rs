@@ -37,22 +37,19 @@ pub enum CompilationMode {
 
 /// The minimum major version of React the compiler targets.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default)]
 pub enum CompilerReactTarget {
     /// React 17
     React17,
     /// React 18
     React18,
     /// React 19
+    #[default]
     React19,
     /// Meta-internal target (re-exports useMemoCache from react directly).
     MetaInternal { runtime_module: String },
 }
 
-impl Default for CompilerReactTarget {
-    fn default() -> Self {
-        CompilerReactTarget::React19
-    }
-}
 
 /// The parsed (validated) plugin options for the React Compiler.
 #[derive(Debug, Clone)]

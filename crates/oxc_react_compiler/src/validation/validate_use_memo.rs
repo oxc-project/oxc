@@ -76,7 +76,7 @@ pub fn validate_use_memo(func: &HIRFunction) -> Result<(), CompilerError> {
     }
 
     // Report unused useMemo results
-    for (_id, loc) in &unused_use_memos {
+    for loc in unused_use_memos.values() {
         errors.push_diagnostic(
             CompilerDiagnostic::create(
                 ErrorCategory::VoidUseMemo,
