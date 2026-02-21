@@ -1,4 +1,5 @@
 mod es_target;
+mod jsx_pragmas;
 mod targets;
 
 use std::path::Path;
@@ -27,7 +28,14 @@ pub(crate) fn test(
     source_text: &str,
     options: &TransformOptions,
 ) -> Result<String, Vec<OxcDiagnostic>> {
-    let source_type = SourceType::default();
+    test_with_source_type(source_text, SourceType::default(), options)
+}
+
+pub(crate) fn test_with_source_type(
+    source_text: &str,
+    source_type: SourceType,
+    options: &TransformOptions,
+) -> Result<String, Vec<OxcDiagnostic>> {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
