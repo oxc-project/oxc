@@ -9,7 +9,9 @@ use oxc_span::Span;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_loss_of_precision_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("This number literal will lose precision at runtime.").with_label(span)
+    OxcDiagnostic::warn("This number literal will lose precision at runtime.")
+        .with_help("Use a number literal that can be represented accurately by a 64-bit floating-point number.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
