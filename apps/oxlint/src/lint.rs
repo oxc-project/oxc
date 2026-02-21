@@ -916,14 +916,15 @@ mod test {
 
     #[test]
     fn test_init_config() {
-        assert!(!fs::exists(DEFAULT_OXLINTRC_NAME).unwrap());
+        let temp_dir = tempfile::tempdir().unwrap();
+        let config_path = temp_dir.path().join(DEFAULT_OXLINTRC_NAME);
+
+        assert!(!fs::exists(&config_path).unwrap());
 
         let args = &["--init"];
-        Tester::new().with_cwd("fixtures".into()).test(args);
+        Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
 
-        assert!(fs::exists(DEFAULT_OXLINTRC_NAME).unwrap());
-
-        fs::remove_file(DEFAULT_OXLINTRC_NAME).unwrap();
+        assert!(fs::exists(config_path).unwrap());
     }
 
     #[test]
