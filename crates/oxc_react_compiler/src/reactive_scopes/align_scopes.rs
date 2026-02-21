@@ -21,7 +21,7 @@ pub fn align_method_call_scopes(func: &HIRFunction) {
 
 /// Align object method scopes — ensures object methods share the same reactive scope
 /// as their containing object.
-pub fn align_object_method_scopes(func: &mut HIRFunction) {
+pub fn align_object_method_scopes(func: &HIRFunction) {
     // The full implementation ensures ObjectMethod values are in the same scope
     // as the ObjectExpression they belong to.
     let _block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
@@ -33,7 +33,7 @@ pub fn align_object_method_scopes(func: &mut HIRFunction) {
 /// This is critical because reactive scopes must correspond to valid JS blocks
 /// in the output code. A reactive scope cannot start in the middle of an if-else
 /// and end after it, for example.
-pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HIRFunction) {
+pub fn align_reactive_scopes_to_block_scopes_hir(func: &HIRFunction) {
     // The full implementation uses dominator tree analysis to ensure reactive
     // scopes align with block scopes. It may split or extend reactive scopes
     // to ensure they form valid block boundaries.
