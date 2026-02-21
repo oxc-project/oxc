@@ -138,7 +138,9 @@ fn read(constants: &Constants, place: &Place) -> Option<Constant> {
 pub fn constants_equal(a: &Constant, b: &Constant) -> bool {
     match (a, b) {
         (Constant::Primitive(pa), Constant::Primitive(pb)) => match (pa, pb) {
-            (PrimitiveValueKind::Number(a), PrimitiveValueKind::Number(b)) => a == b,
+            (PrimitiveValueKind::Number(a), PrimitiveValueKind::Number(b)) => {
+                (a - b).abs() < f64::EPSILON
+            }
             (PrimitiveValueKind::Boolean(a), PrimitiveValueKind::Boolean(b)) => a == b,
             (PrimitiveValueKind::String(a), PrimitiveValueKind::String(b)) => a == b,
             (PrimitiveValueKind::Null, PrimitiveValueKind::Null) => true,
