@@ -187,6 +187,7 @@ pub struct FixOptions {
     /// Fix as many issues as possible. Only unfixed issues are reported in the output.
     #[bpaf(switch, hide_usage)]
     pub fix: bool,
+
     /// Apply auto-fixable suggestions. May change program behavior.
     #[bpaf(switch, hide_usage)]
     pub fix_suggestions: bool,
@@ -209,10 +210,7 @@ impl FixOptions {
         }
 
         if self.fix_dangerously {
-            if kind.is_none() {
-                kind.set(FixKind::Fix, true);
-            }
-            kind.set(FixKind::Dangerous, true);
+            kind.set(FixKind::DangerousFixOrSuggestion, true);
         }
 
         kind
