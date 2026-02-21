@@ -1,6 +1,7 @@
 mod hir_types;
 
 pub mod assertions;
+pub mod build_hir;
 pub mod build_reactive_scope_terminals_hir;
 pub mod compute_unconditional_blocks;
 pub mod dominator;
