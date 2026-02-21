@@ -5,7 +5,6 @@
 /// The compiler has customized support for react-native-reanimated, intended
 /// as a temporary workaround. This module detects the library and activates
 /// the support when detected.
-
 use super::options::PluginOptions;
 
 /// Check if the project uses react-native-reanimated.
