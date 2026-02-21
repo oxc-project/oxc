@@ -110,6 +110,9 @@ pub fn assert_terminal_successors_exist(func: &HIRFunction) -> Result<(), Compil
 ///
 /// # Errors
 /// Returns a `CompilerError` if predecessor references are inconsistent.
+///
+/// # Panics
+/// Panics if predecessor block data is inconsistent (should not happen with valid HIR).
 pub fn assert_terminal_preds_exist(func: &HIRFunction) -> Result<(), CompilerError> {
     for block in func.body.blocks.values() {
         for &pred_id in &block.preds {

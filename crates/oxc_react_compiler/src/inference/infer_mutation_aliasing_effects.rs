@@ -143,7 +143,7 @@ fn merge_value_kinds(a: ValueKind, b: ValueKind) -> ValueKind {
 /// Returns a `CompilerError` if invalid mutations are detected.
 pub fn infer_mutation_aliasing_effects(
     func: &mut HIRFunction,
-    options: InferOptions,
+    options: &InferOptions,
 ) -> Result<(), CompilerError> {
     let mut initial_state = InferenceState::empty();
 
