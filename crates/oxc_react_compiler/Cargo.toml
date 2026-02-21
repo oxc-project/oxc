@@ -1,0 +1,33 @@
+[package]
+name = "oxc_react_compiler"
+version = "0.0.0"
+publish = false
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "React Compiler port — automatic memoization for React components"
+
+[lints]
+workspace = true
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_codegen = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_span = { workspace = true }
+oxc_syntax = { workspace = true }
+oxc_index = { workspace = true }
+
+rustc-hash = { workspace = true }
+bitflags = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
