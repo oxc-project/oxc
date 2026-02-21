@@ -36,10 +36,7 @@ fn prune_maybe_throws_impl(func: &mut HIRFunction) -> Option<FxHashMap<BlockId, 
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
         let (is_maybe_throw, continuation, can_throw) = {
-            let block = match func.body.blocks.get(&block_id) {
-                Some(b) => b,
-                None => continue,
-            };
+            let Some(block) = func.body.blocks.get(&block_id) else { continue };
             match &block.terminal {
                 Terminal::MaybeThrow(t) => {
                     let can_throw = block.instructions.iter().any(instruction_may_throw);

@@ -40,10 +40,7 @@ pub fn eliminate_redundant_phi(
     loop {
         let block_ids: Vec<BlockId> = ir.blocks.keys().copied().collect();
         for block_id in &block_ids {
-            let block = match ir.blocks.get(block_id) {
-                Some(b) => b,
-                None => continue,
-            };
+            let Some(block) = ir.blocks.get(block_id) else { continue };
 
             // On the first iteration, check for back-edges
             if !has_back_edge {
@@ -67,10 +64,7 @@ pub fn eliminate_redundant_phi(
 
         // Rewrite instruction lvalues and operands
         for block_id in &block_ids {
-            let block = match ir.blocks.get_mut(block_id) {
-                Some(b) => b,
-                None => continue,
-            };
+            let Some(block) = ir.blocks.get_mut(block_id) else { continue };
 
             for instr in &mut block.instructions {
                 // Rewrite lvalues

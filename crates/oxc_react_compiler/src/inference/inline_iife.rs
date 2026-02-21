@@ -19,10 +19,7 @@ pub fn inline_immediately_invoked_function_expressions(func: &mut HIRFunction) {
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
 
     for block_id in block_ids {
-        let block = match func.body.blocks.get(&block_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(block) = func.body.blocks.get(&block_id) else { continue };
 
         // Only process statement blocks (not expression blocks)
         if !block.kind.is_statement() {

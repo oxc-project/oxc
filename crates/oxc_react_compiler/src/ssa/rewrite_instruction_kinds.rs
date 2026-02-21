@@ -51,10 +51,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
         let block_kind = func.body.blocks.get(&block_id).map(|b| b.kind);
-        let block = match func.body.blocks.get_mut(&block_id) {
-            Some(b) => b,
-            None => continue,
-        };
+        let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
 
         for instr in &mut block.instructions {
             match &mut instr.value {
