@@ -7,7 +7,7 @@
 use rustc_hash::FxHashSet;
 
 use crate::hir::{
-    IdentifierName, ReactiveBlock, ReactiveFunction, ReactiveStatement,
+    ReactiveBlock, ReactiveFunction, ReactiveStatement,
 };
 
 /// Rename variables in the reactive function to ensure uniqueness.
@@ -25,10 +25,7 @@ fn collect_names_from_block(block: &ReactiveBlock, names: &mut FxHashSet<String>
             ReactiveStatement::Instruction(instr) => {
                 if let Some(ref place) = instr.instruction.lvalue
                     && let Some(name) = &place.identifier.name {
-                        let name_str = match name {
-                            IdentifierName::Named(n) => n.clone(),
-                            IdentifierName::Promoted(n) => n.clone(),
-                        };
+                        let name_str = name.value().to_string();
                         names.insert(name_str);
                     }
             }
