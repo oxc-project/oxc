@@ -1013,6 +1013,19 @@ pub enum NonLocalBinding {
     Global { name: String },
 }
 
+impl NonLocalBinding {
+    /// Get the local name of this binding.
+    pub fn name(&self) -> &str {
+        match self {
+            NonLocalBinding::ImportDefault { name, .. }
+            | NonLocalBinding::ImportNamespace { name, .. }
+            | NonLocalBinding::ImportSpecifier { name, .. }
+            | NonLocalBinding::ModuleLocal { name }
+            | NonLocalBinding::Global { name } => name,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LoadGlobal {
     pub binding: NonLocalBinding,
@@ -1167,6 +1180,16 @@ pub enum IdentifierName {
     Named(ValidIdentifierName),
     /// A promoted temporary (e.g., `#t0`).
     Promoted(String),
+}
+
+impl IdentifierName {
+    /// Get the string value of this identifier name.
+    pub fn value(&self) -> &str {
+        match self {
+            IdentifierName::Named(n) => n,
+            IdentifierName::Promoted(n) => n,
+        }
+    }
 }
 
 /// A validated identifier name (not a reserved word, valid JS identifier).

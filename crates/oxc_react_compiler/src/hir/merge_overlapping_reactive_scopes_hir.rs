@@ -8,7 +8,7 @@
 use crate::hir::HIRFunction;
 
 /// Merge overlapping reactive scopes.
-pub fn merge_overlapping_reactive_scopes_hir(func: &mut HIRFunction) {
+pub fn merge_overlapping_reactive_scopes_hir(func: &HIRFunction) {
     // The full implementation:
     // 1. Iterates blocks looking for scope terminals
     // 2. Detects overlapping scopes (where one starts before another ends)

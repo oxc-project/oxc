@@ -13,7 +13,7 @@ use crate::hir::{
 /// Rename variables in the reactive function to ensure uniqueness.
 ///
 /// Returns the set of all unique variable names after renaming.
-pub fn rename_variables(func: &mut ReactiveFunction) -> FxHashSet<String> {
+pub fn rename_variables(func: &ReactiveFunction) -> FxHashSet<String> {
     let mut used_names = FxHashSet::default();
     collect_names_from_block(&func.body, &mut used_names);
     used_names

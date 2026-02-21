@@ -25,13 +25,7 @@ pub fn collect_maybe_memo_dependencies(
 ) -> Option<ManualMemoDependency> {
     match value {
         InstructionValue::LoadGlobal(v) => {
-            let name = match &v.binding {
-                crate::hir::NonLocalBinding::Global { name } => name.clone(),
-                crate::hir::NonLocalBinding::ModuleLocal { name } => name.clone(),
-                crate::hir::NonLocalBinding::ImportDefault { name, .. } => name.clone(),
-                crate::hir::NonLocalBinding::ImportNamespace { name, .. } => name.clone(),
-                crate::hir::NonLocalBinding::ImportSpecifier { name, .. } => name.clone(),
-            };
+            let name = v.binding.name().to_string();
             Some(ManualMemoDependency {
                 root: ManualMemoDependencyRoot::Global { identifier_name: name },
                 path: Vec::new(),
@@ -168,13 +162,7 @@ fn collect_temporaries(instr: &Instruction, sidemap: &mut IdentifierSidemap) {
     let lvalue_id = instr.lvalue.identifier.id;
     match &instr.value {
         InstructionValue::LoadGlobal(v) => {
-            let name = match &v.binding {
-                crate::hir::NonLocalBinding::Global { name } => name.as_str(),
-                crate::hir::NonLocalBinding::ModuleLocal { name } => name.as_str(),
-                crate::hir::NonLocalBinding::ImportDefault { name, .. } => name.as_str(),
-                crate::hir::NonLocalBinding::ImportNamespace { name, .. } => name.as_str(),
-                crate::hir::NonLocalBinding::ImportSpecifier { name, .. } => name.as_str(),
-            };
+            let name = v.binding.name();
             match name {
                 "useMemo" => {
                     sidemap.manual_memos.insert(lvalue_id, ManualMemoKind::UseMemo);

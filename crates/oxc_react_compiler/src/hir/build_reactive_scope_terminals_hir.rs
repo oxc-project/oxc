@@ -2,7 +2,7 @@
 use crate::hir::HIRFunction;
 
 /// Build reactive scope terminals in the HIR.
-pub fn build_reactive_scope_terminals_hir(func: &mut HIRFunction) {
+pub fn build_reactive_scope_terminals_hir(func: &HIRFunction) {
     // The full implementation:
     // 1. Collects all reactive scopes from identifier annotations
     // 2. For each scope, finds the start and end instructions
