@@ -12,6 +12,7 @@ pub mod environment;
 pub mod find_context_identifiers;
 pub mod globals;
 pub mod hir_builder;
+pub mod lower_ast;
 pub mod memoize_fbt_operands;
 pub mod merge_consecutive_blocks;
 pub mod merge_overlapping_reactive_scopes_hir;
