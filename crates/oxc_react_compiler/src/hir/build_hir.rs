@@ -469,13 +469,13 @@ pub fn lower_expression(
             let _consequent_result = lower_expression(builder, consequent)?;
             let _alternate_result = lower_expression(builder, alternate)?;
             // Full implementation creates a TernaryTerminal here.
-            Ok(ExpressionResult { place: test_result.place })
+            Ok(test_result)
         }
         LowerableExpression::AssignmentExpression { left: _, right, span } => {
             let _loc = span_to_loc(*span);
             let right_result = lower_expression(builder, right)?;
             // Full implementation handles different LHS types
-            Ok(ExpressionResult { place: right_result.place })
+            Ok(right_result)
         }
         LowerableExpression::SpreadElement { argument, span: _ } => {
             lower_expression(builder, argument)

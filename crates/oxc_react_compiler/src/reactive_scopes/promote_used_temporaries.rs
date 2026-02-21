@@ -20,7 +20,7 @@ fn promote_in_block(block: &mut ReactiveBlock) {
         match stmt {
             ReactiveStatement::Scope(scope) => {
                 // Check declarations — promote unnamed identifiers
-                for (_id, decl) in &scope.scope.declarations {
+                for decl in scope.scope.declarations.values() {
                     if decl.identifier.name.is_none() {
                         // In the full implementation, we'd set the identifier name
                         // to a promoted temporary name like "#t0"

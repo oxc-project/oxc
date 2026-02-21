@@ -31,7 +31,9 @@ pub fn print_function(func: &HIRFunction) -> String {
         write!(definition, " {hint}").ok();
     }
 
-    if !func.params.is_empty() {
+    if func.params.is_empty() {
+        definition.push_str("()");
+    } else {
         definition.push('(');
         let params: Vec<String> = func
             .params
@@ -43,8 +45,6 @@ pub fn print_function(func: &HIRFunction) -> String {
             .collect();
         definition.push_str(&params.join(", "));
         definition.push(')');
-    } else {
-        definition.push_str("()");
     }
 
     write!(definition, ": {}", print_place(&func.returns)).ok();

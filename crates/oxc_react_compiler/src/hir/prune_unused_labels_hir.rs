@@ -23,13 +23,12 @@ pub fn prune_unused_labels_hir(func: &mut HIRFunction) {
 
             if let (Some(next), Some(fallthrough)) = (next, fallthrough) {
                 // Check if the next block is a simple goto to the fallthrough
-                if let Terminal::Goto(goto) = &next.terminal {
-                    if goto.variant == GotoVariant::Break && goto.block == fallthrough_id
+                if let Terminal::Goto(goto) = &next.terminal
+                    && goto.variant == GotoVariant::Break && goto.block == fallthrough_id
                         && next.kind == BlockKind::Block && fallthrough.kind == BlockKind::Block
                     {
                         merged.push((block_id, next_id, fallthrough_id));
                     }
-                }
             }
         }
     }
