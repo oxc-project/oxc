@@ -20,19 +20,13 @@ pub fn validate_no_derived_computations_in_effects_exp(
     for block in func.body.blocks.values() {
         for instr in &block.instructions {
             match &instr.value {
-                InstructionValue::CallExpression(v) => {
-                    // Track useState return values
-                    if is_use_state_type(&v.callee.identifier.type_) {
-                    }
-                    // Track useEffect callbacks
-                    if is_use_effect_type(&v.callee.identifier.type_)
-                        && let Some(crate::hir::CallArg::Place(_callback)) = v.args.first() {
-                        }
+                InstructionValue::CallExpression(_v) => {
+                    // Track useState return values and useEffect callbacks
+                    // in the full implementation
                 }
-                // Track destructured setState functions
                 InstructionValue::Destructure(_v) => {
-                    // In the full implementation, track array destructuring of useState
-                    // results to identify the setState function
+                    // Track array destructuring of useState results
+                    // to identify the setState function
                 }
                 _ => {}
             }
@@ -48,7 +42,7 @@ pub fn validate_no_derived_computations_in_effects_exp(
     errors
 }
 
-fn is_use_state_type(ty: &Type) -> bool {
+pub fn is_use_state_type(ty: &Type) -> bool {
     matches!(
         ty,
         Type::Function(FunctionType { shape_id: Some(id), .. })
@@ -56,7 +50,7 @@ fn is_use_state_type(ty: &Type) -> bool {
     )
 }
 
-fn is_use_effect_type(ty: &Type) -> bool {
+pub fn is_use_effect_type(ty: &Type) -> bool {
     matches!(
         ty,
         Type::Function(FunctionType { shape_id: Some(id), .. })
