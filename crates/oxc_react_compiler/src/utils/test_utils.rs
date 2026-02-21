@@ -14,7 +14,7 @@ use crate::hir::environment::EnvironmentConfig;
 /// Example: `@enableForest @validateNoSetStateInEffects:true @validateNoSetStateInRender:false`
 pub fn parse_config_pragma_for_tests(
     pragma: &str,
-    defaults: PragmaDefaults,
+    defaults: &PragmaDefaults,
 ) -> PluginOptions {
     let mut options = PluginOptions {
         compilation_mode: defaults.compilation_mode,
@@ -158,7 +158,7 @@ mod tests {
     fn test_parse_empty_pragma() {
         let options = parse_config_pragma_for_tests(
             "",
-            PragmaDefaults { compilation_mode: CompilationMode::All },
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
         );
         assert_eq!(options.compilation_mode, CompilationMode::All);
         assert_eq!(options.panic_threshold, PanicThreshold::AllErrors);
@@ -168,7 +168,7 @@ mod tests {
     fn test_parse_enable_flags() {
         let options = parse_config_pragma_for_tests(
             "@enableForest @validateNoSetStateInEffects:true @validateNoSetStateInRender:false",
-            PragmaDefaults { compilation_mode: CompilationMode::All },
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
         );
         assert!(options.environment.enable_forest);
         assert!(options.environment.validate_no_set_state_in_effects);
@@ -179,7 +179,7 @@ mod tests {
     fn test_parse_compilation_mode() {
         let options = parse_config_pragma_for_tests(
             "@compilationMode:infer",
-            PragmaDefaults { compilation_mode: CompilationMode::All },
+            &PragmaDefaults { compilation_mode: CompilationMode::All },
         );
         assert_eq!(options.compilation_mode, CompilationMode::Infer);
     }
