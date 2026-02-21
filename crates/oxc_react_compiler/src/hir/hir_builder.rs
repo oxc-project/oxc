@@ -486,8 +486,10 @@ fn set_terminal_id(terminal: &mut Terminal, id: InstructionId) {
 pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
     let mut successors = Vec::new();
     match terminal {
-        Terminal::Unsupported(_) | Terminal::Unreachable(_) | Terminal::Throw(_) => {}
-        Terminal::Return(_) => {}
+        Terminal::Unsupported(_)
+        | Terminal::Unreachable(_)
+        | Terminal::Throw(_)
+        | Terminal::Return(_) => {}
         Terminal::Goto(t) => {
             successors.push(t.block);
         }

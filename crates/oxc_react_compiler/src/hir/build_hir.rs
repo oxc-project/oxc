@@ -159,13 +159,8 @@ pub fn lower_statement(
                 loc: GENERATED_SOURCE,
             });
         }
-        LowerableStatement::EmptyStatement => {
-            // No-op
-        }
-        // Other statement types would be handled here in the full implementation
-        _ => {
-            // For unhandled statements, create a placeholder
-        }
+        // Empty statements and unhandled statement types are no-ops
+        _ => {}
     }
     Ok(())
 }
