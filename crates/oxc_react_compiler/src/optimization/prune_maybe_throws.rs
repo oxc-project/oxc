@@ -62,10 +62,10 @@ fn prune_maybe_throws_impl(func: &mut HIRFunction) -> Option<FxHashMap<BlockId, 
 }
 
 fn instruction_may_throw(instr: &Instruction) -> bool {
-    match &instr.value {
+    !matches!(
+        &instr.value,
         InstructionValue::Primitive(_)
-        | InstructionValue::ArrayExpression(_)
-        | InstructionValue::ObjectExpression(_) => false,
-        _ => true,
-    }
+            | InstructionValue::ArrayExpression(_)
+            | InstructionValue::ObjectExpression(_)
+    )
 }
