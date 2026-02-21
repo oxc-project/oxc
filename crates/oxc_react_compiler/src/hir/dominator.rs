@@ -167,15 +167,19 @@ fn intersect(
         let idx1 = block1.map_or(0, |n| n.index);
         let idx2 = block2.map_or(0, |n| n.index);
 
-        if idx1 > idx2 {
-            let dom = nodes.get(&block1.map_or(BlockId(0), |n| n.id));
-            block1 = dom.and_then(|d| graph.nodes.get(d));
-        } else if idx2 > idx1 {
-            let dom = nodes.get(&block2.map_or(BlockId(0), |n| n.id));
-            block2 = dom.and_then(|d| graph.nodes.get(d));
-        } else {
-            // Indices are equal but nodes different — shouldn't happen in a valid dominator tree
-            break;
+        match idx1.cmp(&idx2) {
+            std::cmp::Ordering::Greater => {
+                let dom = nodes.get(&block1.map_or(BlockId(0), |n| n.id));
+                block1 = dom.and_then(|d| graph.nodes.get(d));
+            }
+            std::cmp::Ordering::Less => {
+                let dom = nodes.get(&block2.map_or(BlockId(0), |n| n.id));
+                block2 = dom.and_then(|d| graph.nodes.get(d));
+            }
+            std::cmp::Ordering::Equal => {
+                // Indices are equal but nodes different — shouldn't happen
+                break;
+            }
         }
     }
 
@@ -188,8 +192,7 @@ fn intersect(
 
 fn build_graph(func: &HIRFunction) -> Graph {
     let mut nodes = FxHashMap::default();
-    let mut index = 0;
-    for (&id, block) in &func.body.blocks {
+    for (index, (&id, block)) in func.body.blocks.iter().enumerate() {
         nodes.insert(
             id,
             Node {
@@ -199,7 +202,6 @@ fn build_graph(func: &HIRFunction) -> Graph {
                 succs: each_terminal_successor(&block.terminal).into_iter().collect(),
             },
         );
-        index += 1;
     }
     Graph { entry: func.body.entry, nodes }
 }
