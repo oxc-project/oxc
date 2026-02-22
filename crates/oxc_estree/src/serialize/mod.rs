@@ -5,7 +5,10 @@ use std::mem;
 
 use itoa::Buffer as ItoaBuffer;
 
-use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack};
+use oxc_data_structures::{
+    code_buffer::{CodeBuffer, IndentChar},
+    stack::NonEmptyStack,
+};
 
 mod blanket;
 mod concat;
@@ -110,7 +113,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`].
     pub fn new(ranges: bool) -> Self {
         Self {
-            buffer: CodeBuffer::new(),
+            buffer: CodeBuffer::with_indent(IndentChar::Space, 2),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
@@ -121,7 +124,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`] with specified buffer capacity.
     pub fn with_capacity(capacity: usize, ranges: bool) -> Self {
         Self {
-            buffer: CodeBuffer::with_capacity(capacity),
+            buffer: CodeBuffer::with_capacity_and_indent(capacity, IndentChar::Space, 2),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
