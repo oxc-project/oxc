@@ -9,9 +9,7 @@
 use rustc_hash::FxHashMap;
 
 use crate::{
-    compiler_error::{
-        CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
-    },
+    compiler_error::{CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory},
     hir::{
         HIRFunction, IdentifierId, InstructionValue,
         compute_unconditional_blocks::compute_unconditional_blocks,
@@ -69,51 +67,65 @@ pub fn validate_hooks_usage(func: &HIRFunction) -> Result<(), CompilerError> {
                     if matches!(callee_kind, Some(Kind::KnownHook | Kind::PotentialHook)) {
                         // Hook call — check if it's unconditional
                         if !is_unconditional {
-                            errors.push_diagnostic(CompilerDiagnostic::create(
-                                ErrorCategory::Hooks,
-                                "Hooks must be called unconditionally".to_string(),
-                                Some(
-                                    "This hook call is inside a conditional or loop".to_string(),
+                            errors.push_diagnostic(
+                                CompilerDiagnostic::create(
+                                    ErrorCategory::Hooks,
+                                    "Hooks must be called unconditionally".to_string(),
+                                    Some(
+                                        "This hook call is inside a conditional or loop"
+                                            .to_string(),
+                                    ),
+                                    None,
+                                )
+                                .with_detail(
+                                    CompilerDiagnosticDetail::Error {
+                                        loc: Some(v.loc),
+                                        message: Some("hook called conditionally".to_string()),
+                                    },
                                 ),
-                                None,
-                            ).with_detail(CompilerDiagnosticDetail::Error {
-                                loc: Some(v.loc),
-                                message: Some("hook called conditionally".to_string()),
-                            }));
+                            );
                         }
                     }
                 }
                 InstructionValue::MethodCall(v) => {
                     let property_kind = kinds.get(&v.property.identifier.id).copied();
                     if matches!(property_kind, Some(Kind::KnownHook | Kind::PotentialHook))
-                        && !is_unconditional {
-                            errors.push_diagnostic(CompilerDiagnostic::create(
+                        && !is_unconditional
+                    {
+                        errors.push_diagnostic(
+                            CompilerDiagnostic::create(
                                 ErrorCategory::Hooks,
                                 "Hooks must be called unconditionally".to_string(),
-                                Some(
-                                    "This hook call is inside a conditional or loop".to_string(),
-                                ),
+                                Some("This hook call is inside a conditional or loop".to_string()),
                                 None,
-                            ).with_detail(CompilerDiagnosticDetail::Error {
-                                loc: Some(v.loc),
-                                message: Some("hook called conditionally".to_string()),
-                            }));
-                        }
+                            )
+                            .with_detail(
+                                CompilerDiagnosticDetail::Error {
+                                    loc: Some(v.loc),
+                                    message: Some("hook called conditionally".to_string()),
+                                },
+                            ),
+                        );
+                    }
                 }
                 InstructionValue::LoadLocal(v) => {
                     // Propagate kind from loaded variable
                     if let Some(&kind) = kinds.get(&v.place.identifier.id) {
-                        let existing = kinds.get(&instr.lvalue.identifier.id).copied().unwrap_or(Kind::Local);
+                        let existing =
+                            kinds.get(&instr.lvalue.identifier.id).copied().unwrap_or(Kind::Local);
                         kinds.insert(instr.lvalue.identifier.id, join_kinds(existing, kind));
                     }
                 }
                 InstructionValue::PropertyLoad(v) => {
                     // If loading from a hook-like object, mark as potential hook
                     let obj_kind = kinds.get(&v.object.identifier.id).copied();
-                    if matches!(obj_kind, Some(Kind::KnownHook | Kind::PotentialHook | Kind::Global))
-                        && is_hook_name(&v.property.to_string()) {
-                            kinds.insert(instr.lvalue.identifier.id, Kind::PotentialHook);
-                        }
+                    if matches!(
+                        obj_kind,
+                        Some(Kind::KnownHook | Kind::PotentialHook | Kind::Global)
+                    ) && is_hook_name(&v.property.to_string())
+                    {
+                        kinds.insert(instr.lvalue.identifier.id, Kind::PotentialHook);
+                    }
                 }
                 _ => {}
             }

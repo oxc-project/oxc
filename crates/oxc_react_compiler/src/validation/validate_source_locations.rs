@@ -4,22 +4,13 @@
 ///
 /// Validates that the compiled output preserves source locations from the
 /// original code, which is important for source maps and debugging.
-use crate::{
-    compiler_error::CompilerError,
-    reactive_scopes::codegen_reactive_function::CodegenFunction,
-};
+use crate::reactive_scopes::codegen_reactive_function::CodegenFunction;
 
 /// Validate that source locations are preserved in the output.
-///
-/// # Errors
-/// Returns a `CompilerError` if source locations are missing or incorrect.
-pub fn validate_source_locations(
-    _codegen: &CodegenFunction,
-) -> Result<(), CompilerError> {
+pub fn validate_source_locations(_codegen: &CodegenFunction) {
     // The full implementation checks that:
     // 1. All expressions in the output have source locations
     // 2. Source locations reference valid positions in the original source
     // 3. Generated code (like cache checks) has the GeneratedSource marker
     // Source location checks handled in full implementation
-    Ok(())
 }

@@ -12,21 +12,41 @@ use rustc_hash::FxHashMap;
 
 use crate::hir::{
     BlockId, HIRFunction, Instruction, InstructionValue, Terminal,
-    hir_builder::{mark_instruction_ids, remove_unnecessary_try_catch},
+    hir_builder::{mark_instruction_ids, mark_predecessors, remove_unnecessary_try_catch},
+    merge_consecutive_blocks::merge_consecutive_blocks,
 };
 
 /// Prune maybe-throw terminals for blocks that cannot throw.
 pub fn prune_maybe_throws(func: &mut HIRFunction) {
     let terminal_mapping = prune_maybe_throws_impl(func);
-    if let Some(_mapping) = terminal_mapping {
+    if let Some(mapping) = terminal_mapping {
         // If terminals have changed, blocks may have become newly unreachable.
-        // Re-run minification passes.
+        // Re-run minification passes (incl reordering instruction ids).
         remove_unnecessary_try_catch(&mut func.body);
         mark_instruction_ids(&mut func.body);
+        mark_predecessors(&mut func.body);
+        merge_consecutive_blocks(func);
 
         // Rewrite phi operands to reference the updated predecessor blocks
-        // (simplified — full implementation would also handle reversePostorderBlocks, etc.)
-        // Terminal mapping applied in full implementation
+        let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+        for block_id in block_ids {
+            let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
+            for phi in &mut block.phis {
+                let stale_preds: Vec<BlockId> = phi
+                    .operands
+                    .keys()
+                    .copied()
+                    .filter(|pred| !block.preds.contains(pred))
+                    .collect();
+                for predecessor in stale_preds {
+                    if let Some(&mapped_terminal) = mapping.get(&predecessor)
+                        && let Some(operand) = phi.operands.remove(&predecessor)
+                    {
+                        phi.operands.insert(mapped_terminal, operand);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -52,9 +72,10 @@ fn prune_maybe_throws_impl(func: &mut HIRFunction) -> Option<FxHashMap<BlockId, 
 
             // Null out the handler
             if let Some(block) = func.body.blocks.get_mut(&block_id)
-                && let Terminal::MaybeThrow(ref mut t) = block.terminal {
-                    t.handler = None;
-                }
+                && let Terminal::MaybeThrow(ref mut t) = block.terminal
+            {
+                t.handler = None;
+            }
         }
     }
 

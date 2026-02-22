@@ -19,16 +19,9 @@ pub fn print_reactive_function(func: &ReactiveFunction) -> String {
 
 /// Print a summary of a reactive scope (used in terminal printing).
 pub fn print_reactive_scope_summary(scope: &ReactiveScope) -> String {
-    let deps: Vec<String> = scope
-        .dependencies
-        .iter()
-        .map(|dep| format!("#{}", dep.identifier_id.0))
-        .collect();
-    let decls: Vec<String> = scope
-        .declarations
-        .keys()
-        .map(|id| format!("#{}", id.0))
-        .collect();
+    let deps: Vec<String> =
+        scope.dependencies.iter().map(|dep| format!("#{}", dep.identifier_id.0)).collect();
+    let decls: Vec<String> = scope.declarations.keys().map(|id| format!("#{}", id.0)).collect();
     format!(
         "scope({}) deps=[{}] decls=[{}] range=[{}:{}]",
         scope.id.0,
@@ -100,10 +93,8 @@ fn write_reactive_statement(writer: &mut Writer, stmt: &ReactiveStatement) {
         }
         ReactiveStatement::Terminal(term) => {
             if let Some(label) = &term.label {
-                writer.write_line(&format!(
-                    "label bb{} (implicit={}):",
-                    label.id.0, label.implicit
-                ));
+                writer
+                    .write_line(&format!("label bb{} (implicit={}):", label.id.0, label.implicit));
             }
             write_reactive_terminal(writer, &term.terminal);
         }

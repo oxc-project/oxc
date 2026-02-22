@@ -55,7 +55,13 @@ fn is_keyword(name: &str) -> bool {
 fn is_strict_mode_reserved_word(name: &str) -> bool {
     matches!(
         name,
-        "let" | "static" | "implements" | "interface" | "package" | "private" | "protected"
+        "let"
+            | "static"
+            | "implements"
+            | "interface"
+            | "package"
+            | "private"
+            | "protected"
             | "public"
     )
 }

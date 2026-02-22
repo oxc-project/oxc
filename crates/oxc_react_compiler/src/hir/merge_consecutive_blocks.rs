@@ -12,8 +12,13 @@
 /// that reference them.
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use super::hir_types::{BlockId, BlockKind, HIRFunction, Terminal};
+use crate::compiler_error::GENERATED_SOURCE;
+
 use super::hir_builder::mark_predecessors;
+use super::hir_types::{
+    BlockId, BlockKind, Effect, HIRFunction, Instruction, InstructionValue, LoadLocal, Place,
+    Terminal,
+};
 use super::visitors::terminal_fallthrough;
 
 /// Merge consecutive blocks in the function's HIR.
@@ -24,26 +29,42 @@ pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
     let mut merged = MergedBlocks::new();
     let mut fallthrough_blocks = FxHashSet::default();
 
-    // Collect fallthrough block IDs
+    // Collect fallthrough block IDs and recursively merge nested functions
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
     for &block_id in &block_ids {
-        if let Some(block) = func.body.blocks.get(&block_id)
-            && let Some(ft) = terminal_fallthrough(&block.terminal) {
-                fallthrough_blocks.insert(ft);
-            }
-    }
+        let Some(block) = func.body.blocks.get(&block_id) else { continue };
+        if let Some(ft) = terminal_fallthrough(&block.terminal) {
+            fallthrough_blocks.insert(ft);
+        }
 
-    // Recursively merge in nested functions
-    for block_id in &block_ids {
-        if let Some(block) = func.body.blocks.get(block_id) {
-            for instr in &block.instructions {
-                match &instr.value {
-                    super::hir_types::InstructionValue::FunctionExpression(_v) => {
-                        // We need to clone and re-insert due to borrow checker
-                        // Recursive merge for nested functions handled in full implementation
+        // Collect indices of instructions that have nested functions
+        let nested_indices: Vec<usize> = block
+            .instructions
+            .iter()
+            .enumerate()
+            .filter(|(_, instr)| {
+                matches!(
+                    &instr.value,
+                    InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_)
+                )
+            })
+            .map(|(i, _)| i)
+            .collect();
+
+        if nested_indices.is_empty() {
+            continue;
+        }
+
+        // Extract nested functions, merge them recursively, then put back
+        let block = func.body.blocks.get_mut(&block_id);
+        if let Some(block) = block {
+            for idx in nested_indices {
+                match &mut block.instructions[idx].value {
+                    InstructionValue::FunctionExpression(v) => {
+                        merge_consecutive_blocks(&mut v.lowered_func.func);
                     }
-                    super::hir_types::InstructionValue::ObjectMethod(_v) => {
-                        // Recursive merge for nested functions handled in full implementation
+                    InstructionValue::ObjectMethod(v) => {
+                        merge_consecutive_blocks(&mut v.lowered_func.func);
                     }
                     _ => {}
                 }
@@ -52,6 +73,7 @@ pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
     }
 
     // Process blocks for merging
+    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
     for &block_id in &block_ids {
         let (should_merge, predecessor_id) = {
             let Some(block) = func.body.blocks.get(&block_id) else { continue };
@@ -90,6 +112,31 @@ pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
         let block = func.body.blocks.remove(&block_id);
         if let Some(block) = block {
             if let Some(predecessor) = func.body.blocks.get_mut(&predecessor_id) {
+                // Replace phis in the merged block with canonical assignments to the
+                // single operand value (since there is only one predecessor)
+                let terminal_id = predecessor.terminal.id();
+                for phi in &block.phis {
+                    if let Some(operand) = phi.operands.values().next() {
+                        let lvalue = Place {
+                            identifier: phi.place.identifier.clone(),
+                            effect: Effect::ConditionallyMutate,
+                            reactive: false,
+                            loc: GENERATED_SOURCE,
+                        };
+                        let instr = Instruction {
+                            id: terminal_id,
+                            lvalue: lvalue.clone(),
+                            value: InstructionValue::LoadLocal(LoadLocal {
+                                place: operand.clone(),
+                                loc: GENERATED_SOURCE,
+                            }),
+                            effects: None,
+                            loc: GENERATED_SOURCE,
+                        };
+                        predecessor.instructions.push(instr);
+                    }
+                }
+
                 predecessor.instructions.extend(block.instructions);
                 predecessor.terminal = block.terminal;
             }
@@ -99,10 +146,23 @@ pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
 
     // Update phi operands with merged block IDs
     let all_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
-    for _block_id in &all_ids {
-        // We need to update phis — but since Phi is stored as a HashSet of IDs,
-        // we'd need to rework the phi handling. For now, skip phi remapping.
-        // Phi remapping handled in full implementation
+    for block_id in &all_ids {
+        let Some(block) = func.body.blocks.get_mut(block_id) else { continue };
+        for phi in &mut block.phis {
+            let remapped: Vec<(BlockId, BlockId)> = phi
+                .operands
+                .keys()
+                .filter_map(|&predecessor_id| {
+                    let mapped = merged.get(predecessor_id);
+                    if mapped == predecessor_id { None } else { Some((predecessor_id, mapped)) }
+                })
+                .collect();
+            for (old_id, new_id) in remapped {
+                if let Some(operand) = phi.operands.remove(&old_id) {
+                    phi.operands.insert(new_id, operand);
+                }
+            }
+        }
     }
 
     // Re-mark predecessors

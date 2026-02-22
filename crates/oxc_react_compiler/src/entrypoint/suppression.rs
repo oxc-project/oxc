@@ -22,10 +22,8 @@ pub enum SuppressionSource {
 }
 
 /// Default ESLint rules that indicate React rule suppressions.
-pub const DEFAULT_ESLINT_SUPPRESSION_RULES: &[&str] = &[
-    "react-hooks/rules-of-hooks",
-    "react-hooks/exhaustive-deps",
-];
+pub const DEFAULT_ESLINT_SUPPRESSION_RULES: &[&str] =
+    &["react-hooks/rules-of-hooks", "react-hooks/exhaustive-deps"];
 
 /// Check if a comment text contains an eslint-disable directive for relevant rules.
 pub fn is_eslint_suppression(
@@ -36,7 +34,9 @@ pub fn is_eslint_suppression(
 
     let directive = if let Some(rest) = text.strip_prefix("eslint-disable-next-line") {
         Some(rest)
-    } else { text.strip_prefix("eslint-disable") };
+    } else {
+        text.strip_prefix("eslint-disable")
+    };
 
     let directive = directive?;
     let rules_text = directive.trim();

@@ -8,8 +8,7 @@
 use rustc_hash::FxHashSet;
 
 use crate::hir::{
-    BlockKind, HIRFunction, Identifier, IdentifierId,
-    InstructionKind, InstructionValue,
+    BlockKind, HIRFunction, Identifier, IdentifierId, InstructionKind, InstructionValue,
     visitors::{each_instruction_value_operand, each_terminal_operand},
 };
 

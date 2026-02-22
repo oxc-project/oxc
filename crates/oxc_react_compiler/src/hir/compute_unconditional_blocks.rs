@@ -7,8 +7,8 @@
 use rustc_hash::FxHashSet;
 
 use super::{
-    hir_types::{BlockId, HIRFunction},
     dominator::compute_post_dominator_tree,
+    hir_types::{BlockId, HIRFunction},
 };
 
 /// Compute the set of blocks that unconditionally execute from the entry block.

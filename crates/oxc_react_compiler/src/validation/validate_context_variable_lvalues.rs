@@ -28,27 +28,51 @@ pub fn validate_context_variable_lvalues(func: &HIRFunction) -> Result<(), Compi
         for instr in &block.instructions {
             match &instr.value {
                 InstructionValue::DeclareContext(v) => {
-                    visit(&mut identifier_kinds, v.lvalue_place.identifier.id, IdentifierKindTag::Context)?;
+                    visit(
+                        &mut identifier_kinds,
+                        v.lvalue_place.identifier.id,
+                        IdentifierKindTag::Context,
+                    )?;
                 }
                 InstructionValue::StoreContext(v) => {
-                    visit(&mut identifier_kinds, v.lvalue_place.identifier.id, IdentifierKindTag::Context)?;
+                    visit(
+                        &mut identifier_kinds,
+                        v.lvalue_place.identifier.id,
+                        IdentifierKindTag::Context,
+                    )?;
                 }
                 InstructionValue::LoadContext(v) => {
-                    visit(&mut identifier_kinds, v.place.identifier.id, IdentifierKindTag::Context)?;
+                    visit(
+                        &mut identifier_kinds,
+                        v.place.identifier.id,
+                        IdentifierKindTag::Context,
+                    )?;
                 }
                 InstructionValue::StoreLocal(v) => {
                     if v.lvalue.place.identifier.name.is_some() {
-                        visit(&mut identifier_kinds, v.lvalue.place.identifier.id, IdentifierKindTag::Local)?;
+                        visit(
+                            &mut identifier_kinds,
+                            v.lvalue.place.identifier.id,
+                            IdentifierKindTag::Local,
+                        )?;
                     }
                 }
                 InstructionValue::DeclareLocal(v) => {
                     if v.lvalue.place.identifier.name.is_some() {
-                        visit(&mut identifier_kinds, v.lvalue.place.identifier.id, IdentifierKindTag::Local)?;
+                        visit(
+                            &mut identifier_kinds,
+                            v.lvalue.place.identifier.id,
+                            IdentifierKindTag::Local,
+                        )?;
                     }
                 }
                 InstructionValue::LoadLocal(v) => {
                     if v.place.identifier.name.is_some() {
-                        visit(&mut identifier_kinds, v.place.identifier.id, IdentifierKindTag::Local)?;
+                        visit(
+                            &mut identifier_kinds,
+                            v.place.identifier.id,
+                            IdentifierKindTag::Local,
+                        )?;
                     }
                 }
                 _ => {}

@@ -26,10 +26,7 @@ pub fn each_instruction_value_operand(value: &InstructionValue) -> Vec<&Place> {
     operands
 }
 
-fn collect_instruction_value_operands<'a>(
-    value: &'a InstructionValue,
-    out: &mut Vec<&'a Place>,
-) {
+fn collect_instruction_value_operands<'a>(value: &'a InstructionValue, out: &mut Vec<&'a Place>) {
     match value {
         InstructionValue::CallExpression(v) => {
             out.push(&v.callee);
@@ -176,12 +173,12 @@ fn collect_instruction_value_operands<'a>(
         InstructionValue::PostfixUpdate(v) => {
             out.push(&v.value);
         }
-        InstructionValue::LoadGlobal(_) => {}
         InstructionValue::StartMemoize(v) => {
             if let Some(deps) = &v.deps {
                 for dep in deps {
-                    if let super::hir_types::ManualMemoDependencyRoot::NamedLocal { value, .. } =
-                        &dep.root
+                    if let super::hir_types::ManualMemoDependencyRoot::NamedLocal {
+                        value, ..
+                    } = &dep.root
                     {
                         out.push(value);
                     }
@@ -191,7 +188,8 @@ fn collect_instruction_value_operands<'a>(
         InstructionValue::FinishMemoize(v) => {
             out.push(&v.decl);
         }
-        InstructionValue::MetaProperty(_)
+        InstructionValue::LoadGlobal(_)
+        | InstructionValue::MetaProperty(_)
         | InstructionValue::RegExpLiteral(_)
         | InstructionValue::Primitive(_)
         | InstructionValue::JsxText(_)
@@ -223,10 +221,17 @@ pub fn each_instruction_lvalue(instr: &Instruction) -> Vec<&Place> {
     lvalues
 }
 
-fn collect_instruction_value_lvalues<'a>(
-    value: &'a InstructionValue,
-    out: &mut Vec<&'a Place>,
-) {
+/// Iterate over all lvalue Places from an InstructionValue (excluding the instruction's own lvalue).
+///
+/// This covers DeclareLocal, StoreLocal, DeclareContext, StoreContext,
+/// Destructure, PrefixUpdate, PostfixUpdate.
+pub fn each_instruction_value_lvalue(value: &InstructionValue) -> Vec<&Place> {
+    let mut lvalues = Vec::new();
+    collect_instruction_value_lvalues(value, &mut lvalues);
+    lvalues
+}
+
+fn collect_instruction_value_lvalues<'a>(value: &'a InstructionValue, out: &mut Vec<&'a Place>) {
     match value {
         InstructionValue::DeclareLocal(v) => {
             out.push(&v.lvalue.place);
@@ -617,7 +622,7 @@ pub fn map_terminal_operands(terminal: &mut Terminal, f: &mut impl FnMut(Place) 
     }
 }
 
-fn map_call_args(args: &mut Vec<CallArg>, f: &mut impl FnMut(Place) -> Place) {
+fn map_call_args(args: &mut [CallArg], f: &mut impl FnMut(Place) -> Place) {
     for arg in args.iter_mut() {
         match arg {
             CallArg::Place(p) => *p = f(p.clone()),

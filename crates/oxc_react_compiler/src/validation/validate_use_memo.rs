@@ -8,13 +8,8 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    compiler_error::{
-        CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
-    },
-    hir::{
-        HIRFunction, IdentifierId, InstructionValue,
-        visitors::each_instruction_value_operand,
-    },
+    compiler_error::{CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory},
+    hir::{HIRFunction, IdentifierId, InstructionValue, visitors::each_instruction_value_operand},
 };
 
 /// Validate useMemo and useCallback usage.

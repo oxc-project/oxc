@@ -36,8 +36,7 @@ pub enum CompilationMode {
 }
 
 /// The minimum major version of React the compiler targets.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum CompilerReactTarget {
     /// React 17
     React17,
@@ -49,7 +48,6 @@ pub enum CompilerReactTarget {
     /// Meta-internal target (re-exports useMemoCache from react directly).
     MetaInternal { runtime_module: String },
 }
-
 
 /// The parsed (validated) plugin options for the React Compiler.
 #[derive(Debug, Clone)]

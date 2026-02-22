@@ -51,9 +51,16 @@ pub enum ConcreteType {
     Boolean,
     Void,
     Nullable(Box<FloodType>),
-    Array { element: Box<FloodType> },
-    Set { element: Box<FloodType> },
-    Map { key: Box<FloodType>, value: Box<FloodType> },
+    Array {
+        element: Box<FloodType>,
+    },
+    Set {
+        element: Box<FloodType>,
+    },
+    Map {
+        key: Box<FloodType>,
+        value: Box<FloodType>,
+    },
     Function {
         type_parameters: Option<Vec<TypeParameter>>,
         params: Vec<FloodType>,
@@ -63,7 +70,10 @@ pub enum ConcreteType {
         props: FxHashMap<String, FloodType>,
         children: Option<Box<FloodType>>,
     },
-    Generic { id: TypeParameterId, bound: Box<FloodType> },
+    Generic {
+        id: TypeParameterId,
+        bound: Box<FloodType>,
+    },
     Object {
         id: NominalId,
         members: FxHashMap<String, FloodType>,
@@ -72,7 +82,9 @@ pub enum ConcreteType {
         id: NominalId,
         members: Vec<FloodType>,
     },
-    Structural { id: LinearId },
+    Structural {
+        id: LinearId,
+    },
     Union(Vec<FloodType>),
     Intersection(Vec<FloodType>),
 }
@@ -107,11 +119,7 @@ impl Default for FloodTypeEnv {
 impl FloodTypeEnv {
     /// Create a new empty type environment.
     pub fn new() -> Self {
-        Self {
-            bindings: FxHashMap::default(),
-            next_var_id: 0,
-            next_nominal_id: 0,
-        }
+        Self { bindings: FxHashMap::default(), next_var_id: 0, next_nominal_id: 0 }
     }
 
     /// Create a fresh type variable.
@@ -166,10 +174,9 @@ impl FloodTypeEnv {
                 self.bind(*id, a);
                 Ok(())
             }
-            (
-                FloodType::Concrete { ty: ty_a, .. },
-                FloodType::Concrete { ty: ty_b, .. },
-            ) => self.unify_concrete(ty_a, ty_b),
+            (FloodType::Concrete { ty: ty_a, .. }, FloodType::Concrete { ty: ty_b, .. }) => {
+                self.unify_concrete(ty_a, ty_b)
+            }
         }
     }
 

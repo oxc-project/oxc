@@ -39,14 +39,15 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
             let quasis = tpl
                 .quasis
                 .iter()
-                .map(|q| (q.value.raw.to_string(), q.value.cooked.as_ref().map(std::string::ToString::to_string)))
+                .map(|q| {
+                    (
+                        q.value.raw.to_string(),
+                        q.value.cooked.as_ref().map(std::string::ToString::to_string),
+                    )
+                })
                 .collect();
             let expressions = tpl.expressions.iter().map(convert_expression).collect();
-            LowerableExpression::TemplateLiteral {
-                quasis,
-                expressions,
-                span: tpl.span,
-            }
+            LowerableExpression::TemplateLiteral { quasis, expressions, span: tpl.span }
         }
         ast::Expression::ArrayExpression(arr) => {
             let elements = arr
@@ -68,9 +69,7 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
                 .collect();
             LowerableExpression::ArrayExpression(elements, arr.span)
         }
-        ast::Expression::ObjectExpression(obj) => {
-            LowerableExpression::ObjectExpression(obj.span)
-        }
+        ast::Expression::ObjectExpression(obj) => LowerableExpression::ObjectExpression(obj.span),
         ast::Expression::BinaryExpression(bin) => LowerableExpression::BinaryExpression {
             operator: bin.operator,
             left: Box::new(convert_expression(&bin.left)),
@@ -84,15 +83,17 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
         },
         ast::Expression::CallExpression(call) => {
             let callee = convert_expression(&call.callee);
-            let arguments = call.arguments.iter().map(|arg| {
-                match arg {
+            let arguments = call
+                .arguments
+                .iter()
+                .map(|arg| match arg {
                     ast::Argument::SpreadElement(spread) => LowerableExpression::SpreadElement {
                         argument: Box::new(convert_expression(&spread.argument)),
                         span: spread.span,
                     },
                     _ => convert_expression(arg.to_expression()),
-                }
-            }).collect();
+                })
+                .collect();
             LowerableExpression::CallExpression {
                 callee: Box::new(callee),
                 arguments,
@@ -101,28 +102,28 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
         }
         ast::Expression::NewExpression(new_expr) => {
             let callee = convert_expression(&new_expr.callee);
-            let arguments = new_expr.arguments.iter().map(|arg| {
-                match arg {
+            let arguments = new_expr
+                .arguments
+                .iter()
+                .map(|arg| match arg {
                     ast::Argument::SpreadElement(spread) => LowerableExpression::SpreadElement {
                         argument: Box::new(convert_expression(&spread.argument)),
                         span: spread.span,
                     },
                     _ => convert_expression(arg.to_expression()),
-                }
-            }).collect();
+                })
+                .collect();
             LowerableExpression::NewExpression {
                 callee: Box::new(callee),
                 arguments,
                 span: new_expr.span,
             }
         }
-        ast::Expression::StaticMemberExpression(member) => {
-            LowerableExpression::PropertyAccess {
-                object: Box::new(convert_expression(&member.object)),
-                property: member.property.name.to_string(),
-                span: member.span,
-            }
-        }
+        ast::Expression::StaticMemberExpression(member) => LowerableExpression::PropertyAccess {
+            object: Box::new(convert_expression(&member.object)),
+            property: member.property.name.to_string(),
+            span: member.span,
+        },
         ast::Expression::ComputedMemberExpression(member) => {
             LowerableExpression::ComputedPropertyAccess {
                 object: Box::new(convert_expression(&member.object)),
@@ -162,14 +163,12 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
                 span: arrow.span,
             }
         }
-        ast::Expression::FunctionExpression(func) => {
-            LowerableExpression::FunctionExpression {
-                name: func.id.as_ref().map(|id| id.name.to_string()),
-                is_async: func.r#async,
-                is_generator: func.generator,
-                span: func.span,
-            }
-        }
+        ast::Expression::FunctionExpression(func) => LowerableExpression::FunctionExpression {
+            name: func.id.as_ref().map(|id| id.name.to_string()),
+            is_async: func.r#async,
+            is_generator: func.generator,
+            span: func.span,
+        },
         ast::Expression::JSXElement(jsx) => {
             let tag_name = match &jsx.opening_element.name {
                 ast::JSXElementName::Identifier(ident) => ident.name.to_string(),
@@ -182,10 +181,7 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
                 }
                 ast::JSXElementName::ThisExpression(_) => "this".to_string(),
             };
-            LowerableExpression::JsxElement {
-                tag: tag_name,
-                span: jsx.span,
-            }
+            LowerableExpression::JsxElement { tag: tag_name, span: jsx.span }
         }
         ast::Expression::JSXFragment(frag) => LowerableExpression::ArrayExpression(
             Vec::new(), // Children would be processed here
@@ -221,21 +217,11 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
                 span: tagged.span,
             }
         }
-        ast::Expression::ParenthesizedExpression(paren) => {
-            convert_expression(&paren.expression)
-        }
-        ast::Expression::TSAsExpression(ts_as) => {
-            convert_expression(&ts_as.expression)
-        }
-        ast::Expression::TSSatisfiesExpression(ts_sat) => {
-            convert_expression(&ts_sat.expression)
-        }
-        ast::Expression::TSNonNullExpression(ts_nn) => {
-            convert_expression(&ts_nn.expression)
-        }
-        ast::Expression::TSTypeAssertion(ts_ta) => {
-            convert_expression(&ts_ta.expression)
-        }
+        ast::Expression::ParenthesizedExpression(paren) => convert_expression(&paren.expression),
+        ast::Expression::TSAsExpression(ts_as) => convert_expression(&ts_as.expression),
+        ast::Expression::TSSatisfiesExpression(ts_sat) => convert_expression(&ts_sat.expression),
+        ast::Expression::TSNonNullExpression(ts_nn) => convert_expression(&ts_nn.expression),
+        ast::Expression::TSTypeAssertion(ts_ta) => convert_expression(&ts_ta.expression),
         // Default: treat as undefined for unsupported expressions
         _ => LowerableExpression::Undefined(expr.span()),
     }
@@ -244,12 +230,8 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
 /// Convert an oxc_ast Statement to a LowerableStatement.
 pub fn convert_statement<'a>(stmt: &'a ast::Statement<'a>) -> LowerableStatement<'a> {
     match stmt {
-        ast::Statement::VariableDeclaration(decl) => {
-            LowerableStatement::VariableDeclaration(decl)
-        }
-        ast::Statement::ExpressionStatement(expr) => {
-            LowerableStatement::ExpressionStatement(expr)
-        }
+        ast::Statement::VariableDeclaration(decl) => LowerableStatement::VariableDeclaration(decl),
+        ast::Statement::ExpressionStatement(expr) => LowerableStatement::ExpressionStatement(expr),
         ast::Statement::ReturnStatement(ret) => LowerableStatement::ReturnStatement(ret),
         ast::Statement::IfStatement(if_stmt) => LowerableStatement::IfStatement(if_stmt),
         ast::Statement::WhileStatement(while_stmt) => {
@@ -259,9 +241,7 @@ pub fn convert_statement<'a>(stmt: &'a ast::Statement<'a>) -> LowerableStatement
         ast::Statement::BlockStatement(block) => LowerableStatement::BlockStatement(block),
         ast::Statement::ThrowStatement(throw) => LowerableStatement::ThrowStatement(throw),
         ast::Statement::TryStatement(try_stmt) => LowerableStatement::TryStatement(try_stmt),
-        ast::Statement::SwitchStatement(switch) => {
-            LowerableStatement::SwitchStatement(switch)
-        }
+        ast::Statement::SwitchStatement(switch) => LowerableStatement::SwitchStatement(switch),
         ast::Statement::BreakStatement(_) => LowerableStatement::BreakStatement,
         ast::Statement::ContinueStatement(_) => LowerableStatement::ContinueStatement,
         ast::Statement::DebuggerStatement(_) => LowerableStatement::DebuggerStatement,
@@ -313,11 +293,13 @@ mod tests {
         let body = &parser_result.program.body;
         assert!(!body.is_empty(), "Body should not be empty");
         // The string is inside a variable declaration initializer
-        if let ast::Statement::VariableDeclaration(decl) = &body[0] {
-            if let Some(init) = &decl.declarations[0].init {
-                let lowered = convert_expression(init);
-                assert!(matches!(lowered, LowerableExpression::StringLiteral(ref s, _) if s == "hello"));
-            }
+        if let ast::Statement::VariableDeclaration(decl) = &body[0]
+            && let Some(init) = &decl.declarations[0].init
+        {
+            let lowered = convert_expression(init);
+            assert!(
+                matches!(lowered, LowerableExpression::StringLiteral(ref s, _) if s == "hello")
+            );
         }
     }
 
@@ -331,7 +313,10 @@ mod tests {
         let body = &parser_result.program.body;
         if let ast::Statement::ExpressionStatement(expr_stmt) = &body[0] {
             let lowered = convert_expression(&expr_stmt.expression);
-            assert!(matches!(lowered, LowerableExpression::BinaryExpression { operator: BinaryOperator::Addition, .. }));
+            assert!(matches!(
+                lowered,
+                LowerableExpression::BinaryExpression { operator: BinaryOperator::Addition, .. }
+            ));
         }
     }
 
@@ -359,7 +344,9 @@ mod tests {
         let body = &parser_result.program.body;
         if let ast::Statement::ExpressionStatement(expr_stmt) = &body[0] {
             let lowered = convert_expression(&expr_stmt.expression);
-            assert!(matches!(lowered, LowerableExpression::PropertyAccess { ref property, .. } if property == "prop"));
+            assert!(
+                matches!(lowered, LowerableExpression::PropertyAccess { ref property, .. } if property == "prop")
+            );
         }
     }
 
@@ -373,7 +360,9 @@ mod tests {
         let body = &parser_result.program.body;
         if let ast::Statement::ExpressionStatement(expr_stmt) = &body[0] {
             let lowered = convert_expression(&expr_stmt.expression);
-            assert!(matches!(lowered, LowerableExpression::JsxElement { ref tag, .. } if tag == "div"));
+            assert!(
+                matches!(lowered, LowerableExpression::JsxElement { ref tag, .. } if tag == "div")
+            );
         }
     }
 
@@ -396,7 +385,7 @@ mod tests {
         let allocator = Allocator::default();
         let source = "return 42;";
         let source_type = SourceType::jsx().with_script(true);
-        let parser_result = Parser::new(&allocator, source, source_type).parse();
+        let _parser_result = Parser::new(&allocator, source, source_type).parse();
 
         // Return statements outside functions may error in some parsers
         // but our converter should handle all statement types gracefully
