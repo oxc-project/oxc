@@ -28,7 +28,7 @@ pub struct InferRangesOptions {
 pub fn infer_mutation_aliasing_ranges(
     func: &mut HIRFunction,
     _options: InferRangesOptions,
-) -> Vec<AliasingEffect> {
+) -> Result<Vec<AliasingEffect>, crate::compiler_error::CompilerError> {
     let external_effects: Vec<AliasingEffect> = Vec::new();
 
     // Phase 1: Collect all mutable ranges by analyzing instruction effects
@@ -107,7 +107,7 @@ pub fn infer_mutation_aliasing_ranges(
         }
     }
 
-    external_effects
+    Ok(external_effects)
 }
 
 /// Extend a mutable range for an identifier to include the given instruction.

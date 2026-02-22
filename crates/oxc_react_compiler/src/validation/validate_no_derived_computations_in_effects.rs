@@ -33,7 +33,9 @@ use crate::{
 ///   setFullName(firstName + ' ' + lastName);
 /// }, [firstName, lastName]);
 /// ```
-pub fn validate_no_derived_computations_in_effects(func: &HIRFunction) {
+pub fn validate_no_derived_computations_in_effects(
+    func: &HIRFunction,
+) -> Result<(), CompilerError> {
     let mut candidate_dependencies: FxHashMap<IdentifierId, Vec<IdentifierId>> =
         FxHashMap::default();
     let mut functions: FxHashMap<IdentifierId, &FunctionExpressionValue> = FxHashMap::default();
@@ -115,9 +117,9 @@ pub fn validate_no_derived_computations_in_effects(func: &HIRFunction) {
     }
 
     if errors.has_any_errors() {
-        // The TS version throws errors here; we just drop them since
-        // the pipeline doesn't check the return from this function
+        return Err(errors);
     }
+    Ok(())
 }
 
 fn validate_effect(

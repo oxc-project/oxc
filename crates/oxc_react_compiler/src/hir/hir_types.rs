@@ -1329,7 +1329,7 @@ pub struct ReactiveScope {
     pub range: MutableRange,
     pub dependencies: FxHashSet<ReactiveScopeDependency>,
     pub declarations: FxHashMap<IdentifierId, ReactiveScopeDeclaration>,
-    pub reassignments: FxHashSet<IdentifierId>,
+    pub reassignments: Vec<Identifier>,
     pub early_return_value: Option<Box<EarlyReturnValue>>,
     pub merged: FxHashSet<ScopeId>,
     pub loc: SourceLocation,
@@ -1360,12 +1360,34 @@ pub struct DependencyPathEntry {
 pub type DependencyPath = Vec<DependencyPathEntry>;
 
 /// A reactive scope dependency — an identifier with a property path.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+///
+/// In the TS reference, this stores a full `Identifier` object. We store the full
+/// `Identifier` to match, but implement Hash/Eq based on `identifier.id` and `path`
+/// for use in hash sets.
+#[derive(Debug, Clone)]
 pub struct ReactiveScopeDependency {
-    pub identifier_id: IdentifierId,
+    pub identifier: Identifier,
     pub reactive: bool,
     pub path: DependencyPath,
     pub loc: SourceLocation,
+}
+
+impl PartialEq for ReactiveScopeDependency {
+    fn eq(&self, other: &Self) -> bool {
+        self.identifier.id == other.identifier.id
+            && self.reactive == other.reactive
+            && self.path == other.path
+    }
+}
+
+impl Eq for ReactiveScopeDependency {}
+
+impl std::hash::Hash for ReactiveScopeDependency {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.identifier.id.hash(state);
+        self.reactive.hash(state);
+        self.path.hash(state);
+    }
 }
 
 // =====================================================================================

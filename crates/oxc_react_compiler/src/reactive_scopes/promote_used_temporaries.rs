@@ -290,10 +290,18 @@ fn promote_temporaries_statement(stmt: &mut ReactiveStatement, state: &mut State
 }
 
 fn promote_temporaries_scope(scope_block: &mut ReactiveScopeBlock, state: &mut State) {
-    // Promote unnamed dependencies.
-    // Note: Rust ReactiveScopeDependency only has identifier_id, not full Identifier.
-    // We cannot promote here since we don't have the Identifier to mutate.
-    // Dependencies will be handled by other means if needed.
+    // Promote unnamed dependencies (now possible since we store full Identifier).
+    let mut promoted_deps: Vec<crate::hir::ReactiveScopeDependency> = Vec::new();
+    for dep in scope_block.scope.dependencies.drain() {
+        let mut dep = dep;
+        if dep.identifier.name.is_none() {
+            promote_identifier(&mut dep.identifier, state);
+        }
+        promoted_deps.push(dep);
+    }
+    for dep in promoted_deps {
+        scope_block.scope.dependencies.insert(dep);
+    }
 
     // Promote unnamed declarations.
     for decl in scope_block.scope.declarations.values_mut() {
@@ -367,16 +375,9 @@ fn promote_temporaries_hir_function(func: &mut HIRFunction, state: &mut State) {
             promote_identifier(&mut place.identifier, state);
         }
     }
-    // Traverse blocks.
-    for block in func.body.blocks.values() {
-        for instr in &block.instructions {
-            if let InstructionValue::FunctionExpression(v) = &instr.value {
-                // We need mutable access, but this is within an immutable borrow.
-                // Instead, we'll handle this through the reactive function traversal.
-                let _ = v;
-            }
-        }
-    }
+    // Note: FunctionExpression/ObjectMethod traversal is handled at the
+    // ReactiveFunction level through promote_temporaries_value, which calls
+    // promote_temporaries_hir_function recursively.
 }
 
 fn promote_temporaries_terminal(terminal: &mut ReactiveTerminal, state: &mut State) {
@@ -1130,8 +1131,7 @@ fn promote_all_instances_statement(stmt: &mut ReactiveStatement, state: &mut Sta
     }
 }
 
-/// Promote identifiers in scope declarations (and reassignments/dependencies if they
-/// stored full Identifier objects — in this Rust port, only declarations do).
+/// Promote identifiers in scope declarations, dependencies, and reassignments.
 fn promote_all_instances_scope_identifiers(scope: &mut ReactiveScope, state: &mut State) {
     for decl in scope.declarations.values_mut() {
         if decl.identifier.name.is_none()
@@ -1140,9 +1140,27 @@ fn promote_all_instances_scope_identifiers(scope: &mut ReactiveScope, state: &mu
             promote_identifier(&mut decl.identifier, state);
         }
     }
-    // Note: In the TS version, scope.dependencies and scope.reassignments also store
-    // full Identifier objects that need promotion. In this Rust port, they only store
-    // IdentifierId values, so there are no Identifier instances to promote there.
+
+    // Promote dependencies (now stores full Identifier).
+    let mut promoted_deps: Vec<crate::hir::ReactiveScopeDependency> = Vec::new();
+    for dep in scope.dependencies.drain() {
+        let mut dep = dep;
+        if dep.identifier.name.is_none() && state.promoted.contains(&dep.identifier.declaration_id)
+        {
+            promote_identifier(&mut dep.identifier, state);
+        }
+        promoted_deps.push(dep);
+    }
+    for dep in promoted_deps {
+        scope.dependencies.insert(dep);
+    }
+
+    // Promote reassignments (now stores full Identifier).
+    for reassignment in &mut scope.reassignments {
+        if reassignment.name.is_none() && state.promoted.contains(&reassignment.declaration_id) {
+            promote_identifier(reassignment, state);
+        }
+    }
 }
 
 fn promote_all_instances_instruction(instruction: &mut ReactiveInstruction, state: &mut State) {

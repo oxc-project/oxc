@@ -8,7 +8,7 @@
 use rustc_hash::FxHashMap;
 
 use crate::{
-    compiler_error::SourceLocation,
+    compiler_error::{CompilerError, SourceLocation},
     hir::{
         BasicBlock, BlockId, GotoVariant, HIRFunction, Hir, Instruction, InstructionId,
         InstructionValue, Place, ReactiveBlock, ReactiveBreakTerminal, ReactiveContinueTerminal,
@@ -75,11 +75,11 @@ struct ValueBlockTerminalResult {
 // =====================================================================================
 
 /// Convert an HIR function to a ReactiveFunction.
-pub fn build_reactive_function(func: &HIRFunction) -> ReactiveFunction {
+pub fn build_reactive_function(func: &HIRFunction) -> Result<ReactiveFunction, CompilerError> {
     let cx = Context::new(&func.body);
-    let body = traverse_block(&cx, func.body.entry);
+    let body = traverse_block(&cx, func.body.entry)?;
 
-    ReactiveFunction {
+    Ok(ReactiveFunction {
         loc: func.loc,
         id: func.id.clone(),
         name_hint: func.name_hint.clone(),
@@ -88,7 +88,7 @@ pub fn build_reactive_function(func: &HIRFunction) -> ReactiveFunction {
         is_async: func.is_async,
         body,
         directives: func.directives.clone(),
-    }
+    })
 }
 
 // =====================================================================================
@@ -199,15 +199,15 @@ fn visit_value_block(
     block_id: BlockId,
     loc: SourceLocation,
     fallthrough: Option<BlockId>,
-) -> ValueBlockResult {
+) -> Result<ValueBlockResult, CompilerError> {
     let Some(block) = cx.block(block_id) else {
         // Fallback: return an undefined value if the block is missing
-        return ValueBlockResult {
+        return Ok(ValueBlockResult {
             block: block_id,
             place: make_undefined_place(loc),
             value: make_undefined_value(loc),
             id: InstructionId::ZERO,
-        };
+        });
     };
 
     // If we've reached the fallthrough block, this shouldn't happen
@@ -215,12 +215,12 @@ fn visit_value_block(
         && block_id == ft
     {
         // Invariant violation in TS; here we return undefined as fallback
-        return ValueBlockResult {
+        return Ok(ValueBlockResult {
             block: block_id,
             place: make_undefined_place(loc),
             value: make_undefined_value(loc),
             id: InstructionId::ZERO,
-        };
+        });
     }
 
     match &block.terminal {
@@ -230,28 +230,28 @@ fn visit_value_block(
             if block.instructions.is_empty() {
                 // The block has no instructions; the "value" is the test place itself.
                 let Terminal::Branch(branch) = &block.terminal else { unreachable!() };
-                return ValueBlockResult {
+                return Ok(ValueBlockResult {
                     block: block.id,
                     place: branch.test.clone(),
                     value: ReactiveValue::Instruction(Box::new(InstructionValue::LoadLocal(
                         crate::hir::LoadLocal { place: branch.test.clone(), loc: branch.test.loc },
                     ))),
                     id: branch.id,
-                };
+                });
             }
-            extract_value_block_result(&block.instructions, block.id, loc)
+            Ok(extract_value_block_result(&block.instructions, block.id, loc))
         }
         Terminal::Goto(_) => {
             // A goto terminal: extract the value from the instructions
             if block.instructions.is_empty() {
-                return ValueBlockResult {
+                return Ok(ValueBlockResult {
                     block: block.id,
                     place: make_undefined_place(loc),
                     value: make_undefined_value(loc),
                     id: block.terminal.id(),
-                };
+                });
             }
-            extract_value_block_result(&block.instructions, block.id, loc)
+            Ok(extract_value_block_result(&block.instructions, block.id, loc))
         }
         Terminal::MaybeThrow(mt) => {
             // ReactiveFunction does not explicitly model maybe-throw semantics,
@@ -264,13 +264,13 @@ fn visit_value_block(
                 && cont_block.instructions.is_empty()
                 && let Terminal::Goto(_) = &cont_block.terminal
             {
-                return extract_value_block_result(&block.instructions, cont_block.id, loc);
+                return Ok(extract_value_block_result(&block.instructions, cont_block.id, loc));
             }
 
-            let continuation = visit_value_block(cx, continuation_id, loc, fallthrough);
+            let continuation = visit_value_block(cx, continuation_id, loc, fallthrough)?;
             let instructions: Vec<ReactiveInstruction> =
                 block.instructions.iter().map(hir_instr_to_reactive).collect();
-            wrap_with_sequence(instructions, continuation, loc)
+            Ok(wrap_with_sequence(instructions, continuation, loc))
         }
         // The value block ended in a value terminal (logical, ternary, optional, sequence).
         // Recurse to get the value of that terminal and stitch them together in a sequence.
@@ -278,8 +278,8 @@ fn visit_value_block(
         | Terminal::Ternary(_)
         | Terminal::Optional(_)
         | Terminal::Sequence(_) => {
-            let init = visit_value_block_terminal(cx, &block.terminal);
-            let final_result = visit_value_block(cx, init.fallthrough, loc, fallthrough);
+            let init = visit_value_block_terminal(cx, &block.terminal)?;
+            let final_result = visit_value_block(cx, init.fallthrough, loc, fallthrough)?;
 
             let mut all_instructions: Vec<ReactiveInstruction> =
                 block.instructions.iter().map(hir_instr_to_reactive).collect();
@@ -290,209 +290,191 @@ fn visit_value_block(
                 value: init.value,
             });
 
-            wrap_with_sequence(all_instructions, final_result, loc)
+            Ok(wrap_with_sequence(all_instructions, final_result, loc))
         }
         _ => {
             // For other terminals (if, etc.), just extract from instructions
             if block.instructions.is_empty() {
-                return ValueBlockResult {
+                return Ok(ValueBlockResult {
                     block: block.id,
                     place: make_undefined_place(loc),
                     value: make_undefined_value(loc),
                     id: block.terminal.id(),
-                };
+                });
             }
-            extract_value_block_result(&block.instructions, block.id, loc)
+            Ok(extract_value_block_result(&block.instructions, block.id, loc))
         }
     }
 }
 
 /// Visits the test block of a value terminal (optional, logical, ternary) and
-/// returns the result along with the branch terminal. Returns None if the test
-/// block does not end in a branch terminal (unexpected).
+/// returns the result along with the branch terminal.
+///
+/// # Errors
+/// Returns a `CompilerError` if the test block does not end in a branch terminal.
 fn visit_test_block(
     cx: &Context,
     test_block_id: BlockId,
     loc: SourceLocation,
-) -> Option<TestBlockResult> {
-    let test = visit_value_block(cx, test_block_id, loc, None);
-    let test_block = cx.block(test.block)?;
+) -> Result<TestBlockResult, CompilerError> {
+    let test = visit_value_block(cx, test_block_id, loc, None)?;
+    let test_block = cx
+        .block(test.block)
+        .ok_or_else(|| CompilerError::invariant("Expected test block to exist", None, loc))?;
 
     if let Terminal::Branch(branch) = &test_block.terminal {
-        Some(TestBlockResult {
+        Ok(TestBlockResult {
             test,
             consequent: branch.consequent,
             alternate: branch.alternate,
             branch_loc: branch.loc,
         })
     } else {
-        // The TS code throws a Todo error here. We'll return None.
-        None
+        Err(CompilerError::todo(
+            "Unexpected terminal kind for test block",
+            None,
+            test_block.terminal.loc(),
+        ))
     }
 }
 
 /// Visits a value-block terminal (logical, ternary, optional, sequence) and returns
 /// the reactive value it produces.
-fn visit_value_block_terminal(cx: &Context, terminal: &Terminal) -> ValueBlockTerminalResult {
+fn visit_value_block_terminal(
+    cx: &Context,
+    terminal: &Terminal,
+) -> Result<ValueBlockTerminalResult, CompilerError> {
     match terminal {
         Terminal::Sequence(seq) => {
-            let block_result = visit_value_block(cx, seq.block, seq.loc, Some(seq.fallthrough));
-            ValueBlockTerminalResult {
+            let block_result = visit_value_block(cx, seq.block, seq.loc, Some(seq.fallthrough))?;
+            Ok(ValueBlockTerminalResult {
                 value: block_result.value,
                 place: block_result.place,
                 fallthrough: seq.fallthrough,
                 id: seq.id,
-            }
+            })
         }
         Terminal::Optional(optional) => {
-            // Visit the test block to get test value and branch info
-            if let Some(test_result) = visit_test_block(cx, optional.test, optional.loc) {
-                let consequent = visit_value_block(
-                    cx,
-                    test_result.consequent,
-                    optional.loc,
-                    Some(optional.fallthrough),
-                );
+            let test_result = visit_test_block(cx, optional.test, optional.loc)?;
+            let consequent = visit_value_block(
+                cx,
+                test_result.consequent,
+                optional.loc,
+                Some(optional.fallthrough),
+            )?;
 
-                // Build a SequenceExpression wrapping the test + consequent
-                let call = ReactiveSequenceValue {
-                    instructions: vec![ReactiveInstruction {
-                        id: test_result.test.id,
-                        loc: test_result.branch_loc,
-                        lvalue: Some(test_result.test.place),
-                        value: test_result.test.value,
-                    }],
-                    id: consequent.id,
-                    value: Box::new(consequent.value),
+            // Build a SequenceExpression wrapping the test + consequent
+            let call = ReactiveSequenceValue {
+                instructions: vec![ReactiveInstruction {
+                    id: test_result.test.id,
+                    loc: test_result.branch_loc,
+                    lvalue: Some(test_result.test.place),
+                    value: test_result.test.value,
+                }],
+                id: consequent.id,
+                value: Box::new(consequent.value),
+                loc: optional.loc,
+            };
+
+            let place = consequent.place;
+            Ok(ValueBlockTerminalResult {
+                place,
+                value: ReactiveValue::OptionalCall(ReactiveOptionalCallValue {
+                    id: optional.id,
+                    value: Box::new(ReactiveValue::Sequence(call)),
+                    optional: optional.optional,
                     loc: optional.loc,
-                };
-
-                let place = consequent.place;
-                ValueBlockTerminalResult {
-                    place,
-                    value: ReactiveValue::OptionalCall(ReactiveOptionalCallValue {
-                        id: optional.id,
-                        value: Box::new(ReactiveValue::Sequence(call)),
-                        optional: optional.optional,
-                        loc: optional.loc,
-                    }),
-                    fallthrough: optional.fallthrough,
-                    id: optional.id,
-                }
-            } else {
-                // Fallback if test block doesn't end in branch
-                ValueBlockTerminalResult {
-                    value: make_undefined_value(optional.loc),
-                    place: make_undefined_place(optional.loc),
-                    fallthrough: optional.fallthrough,
-                    id: optional.id,
-                }
-            }
+                }),
+                fallthrough: optional.fallthrough,
+                id: optional.id,
+            })
         }
         Terminal::Logical(logical) => {
-            if let Some(test_result) = visit_test_block(cx, logical.test, logical.loc) {
-                // The left (consequent) branch is the "short-circuit" path
-                let left_final = visit_value_block(
-                    cx,
-                    test_result.consequent,
-                    logical.loc,
-                    Some(logical.fallthrough),
-                );
+            let test_result = visit_test_block(cx, logical.test, logical.loc)?;
+            // The left (consequent) branch is the "short-circuit" path
+            let left_final = visit_value_block(
+                cx,
+                test_result.consequent,
+                logical.loc,
+                Some(logical.fallthrough),
+            )?;
 
-                // Build SequenceExpression for the left side (test + left continuation)
-                let left = ReactiveSequenceValue {
-                    instructions: vec![ReactiveInstruction {
-                        id: test_result.test.id,
-                        loc: logical.loc,
-                        lvalue: Some(test_result.test.place),
-                        value: test_result.test.value,
-                    }],
-                    id: left_final.id,
-                    value: Box::new(left_final.value),
+            // Build SequenceExpression for the left side (test + left continuation)
+            let left = ReactiveSequenceValue {
+                instructions: vec![ReactiveInstruction {
+                    id: test_result.test.id,
                     loc: logical.loc,
-                };
+                    lvalue: Some(test_result.test.place),
+                    value: test_result.test.value,
+                }],
+                id: left_final.id,
+                value: Box::new(left_final.value),
+                loc: logical.loc,
+            };
 
-                // The right (alternate) branch is the "non-short-circuit" path
-                let right = visit_value_block(
-                    cx,
-                    test_result.alternate,
-                    logical.loc,
-                    Some(logical.fallthrough),
-                );
+            // The right (alternate) branch is the "non-short-circuit" path
+            let right = visit_value_block(
+                cx,
+                test_result.alternate,
+                logical.loc,
+                Some(logical.fallthrough),
+            )?;
 
-                let place = left_final.place;
-                let value = ReactiveLogicalValue {
-                    operator: logical.operator,
-                    left: Box::new(ReactiveValue::Sequence(left)),
-                    right: Box::new(right.value),
-                    loc: logical.loc,
-                };
+            let place = left_final.place;
+            let value = ReactiveLogicalValue {
+                operator: logical.operator,
+                left: Box::new(ReactiveValue::Sequence(left)),
+                right: Box::new(right.value),
+                loc: logical.loc,
+            };
 
-                ValueBlockTerminalResult {
-                    place,
-                    value: ReactiveValue::Logical(value),
-                    fallthrough: logical.fallthrough,
-                    id: logical.id,
-                }
-            } else {
-                ValueBlockTerminalResult {
-                    value: make_undefined_value(logical.loc),
-                    place: make_undefined_place(logical.loc),
-                    fallthrough: logical.fallthrough,
-                    id: logical.id,
-                }
-            }
+            Ok(ValueBlockTerminalResult {
+                place,
+                value: ReactiveValue::Logical(value),
+                fallthrough: logical.fallthrough,
+                id: logical.id,
+            })
         }
         Terminal::Ternary(ternary) => {
-            if let Some(test_result) = visit_test_block(cx, ternary.test, ternary.loc) {
-                let consequent = visit_value_block(
-                    cx,
-                    test_result.consequent,
-                    ternary.loc,
-                    Some(ternary.fallthrough),
-                );
-                let alternate = visit_value_block(
-                    cx,
-                    test_result.alternate,
-                    ternary.loc,
-                    Some(ternary.fallthrough),
-                );
+            let test_result = visit_test_block(cx, ternary.test, ternary.loc)?;
+            let consequent = visit_value_block(
+                cx,
+                test_result.consequent,
+                ternary.loc,
+                Some(ternary.fallthrough),
+            )?;
+            let alternate = visit_value_block(
+                cx,
+                test_result.alternate,
+                ternary.loc,
+                Some(ternary.fallthrough),
+            )?;
 
-                let place = consequent.place;
-                let value = ReactiveTernaryValue {
-                    test: Box::new(test_result.test.value),
-                    consequent: Box::new(consequent.value),
-                    alternate: Box::new(alternate.value),
-                    loc: ternary.loc,
-                };
+            let place = consequent.place;
+            let value = ReactiveTernaryValue {
+                test: Box::new(test_result.test.value),
+                consequent: Box::new(consequent.value),
+                alternate: Box::new(alternate.value),
+                loc: ternary.loc,
+            };
 
-                ValueBlockTerminalResult {
-                    place,
-                    value: ReactiveValue::Ternary(value),
-                    fallthrough: ternary.fallthrough,
-                    id: ternary.id,
-                }
-            } else {
-                ValueBlockTerminalResult {
-                    value: make_undefined_value(ternary.loc),
-                    place: make_undefined_place(ternary.loc),
-                    fallthrough: ternary.fallthrough,
-                    id: ternary.id,
-                }
-            }
+            Ok(ValueBlockTerminalResult {
+                place,
+                value: ReactiveValue::Ternary(value),
+                fallthrough: ternary.fallthrough,
+                id: ternary.id,
+            })
         }
-        _ => {
-            // Unsupported terminal in value block context
-            let loc = terminal.loc();
-            let id = terminal.id();
-            let fallthrough = terminal.fallthrough().unwrap_or(BlockId(0));
-            ValueBlockTerminalResult {
-                value: make_undefined_value(loc),
-                place: make_undefined_place(loc),
-                fallthrough,
-                id,
-            }
-        }
+        Terminal::Label(_) => Err(CompilerError::todo(
+            "Support labeled statements combined with value blocks (conditional, logical, optional chaining, etc)",
+            None,
+            terminal.loc(),
+        )),
+        _ => Err(CompilerError::todo(
+            "Unsupported terminal as a value block terminal (conditional, logical, optional chaining, etc)",
+            None,
+            terminal.loc(),
+        )),
     }
 }
 
@@ -574,7 +556,7 @@ fn make_undefined_place(loc: SourceLocation) -> Place {
 // =====================================================================================
 
 /// Traverse a block and its successors, building a reactive block.
-fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
+fn traverse_block(cx: &Context, block_id: BlockId) -> Result<ReactiveBlock, CompilerError> {
     let mut statements: ReactiveBlock = Vec::new();
     let mut current_id = block_id;
 
@@ -651,8 +633,8 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 break;
             }
             Terminal::If(if_term) => {
-                let consequent = traverse_block(cx, if_term.consequent);
-                let alternate = traverse_block(cx, if_term.alternate);
+                let consequent = traverse_block(cx, if_term.consequent)?;
+                let alternate = traverse_block(cx, if_term.alternate)?;
                 let alternate_opt = if alternate.is_empty() { None } else { Some(alternate) };
 
                 statements.push(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
@@ -672,11 +654,13 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 let cases: Vec<ReactiveSwitchCase> = switch_term
                     .cases
                     .iter()
-                    .map(|case| ReactiveSwitchCase {
-                        test: case.test.clone(),
-                        block: Some(traverse_block(cx, case.block)),
+                    .map(|case| {
+                        Ok(ReactiveSwitchCase {
+                            test: case.test.clone(),
+                            block: Some(traverse_block(cx, case.block)?),
+                        })
                     })
-                    .collect();
+                    .collect::<Result<Vec<_>, CompilerError>>()?;
 
                 statements.push(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
                     terminal: ReactiveTerminal::Switch(Box::new(ReactiveSwitchTerminal {
@@ -691,8 +675,8 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = switch_term.fallthrough;
             }
             Terminal::While(while_term) => {
-                let test_result = visit_value_block(cx, while_term.test, while_term.loc, None);
-                let loop_body = traverse_block(cx, while_term.r#loop);
+                let test_result = visit_value_block(cx, while_term.test, while_term.loc, None)?;
+                let loop_body = traverse_block(cx, while_term.r#loop)?;
 
                 statements.push(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
                     terminal: ReactiveTerminal::While(Box::new(ReactiveWhileTerminal {
@@ -707,8 +691,8 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = while_term.fallthrough;
             }
             Terminal::DoWhile(do_while) => {
-                let loop_body = traverse_block(cx, do_while.r#loop);
-                let test_result = visit_value_block(cx, do_while.test, do_while.loc, None);
+                let loop_body = traverse_block(cx, do_while.r#loop)?;
+                let test_result = visit_value_block(cx, do_while.test, do_while.loc, None)?;
 
                 statements.push(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
                     terminal: ReactiveTerminal::DoWhile(Box::new(ReactiveDoWhileTerminal {
@@ -723,16 +707,18 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = do_while.fallthrough;
             }
             Terminal::For(for_term) => {
-                let init_result = visit_value_block(cx, for_term.init, for_term.loc, None);
+                let init_result = visit_value_block(cx, for_term.init, for_term.loc, None)?;
                 let init_value = ReactiveValue::Sequence(value_block_result_to_sequence(
                     init_result,
                     for_term.loc,
                 ));
-                let test_result = visit_value_block(cx, for_term.test, for_term.loc, None);
+                let test_result = visit_value_block(cx, for_term.test, for_term.loc, None)?;
                 let update = for_term
                     .update
-                    .map(|update_id| visit_value_block(cx, update_id, for_term.loc, None).value);
-                let loop_body = traverse_block(cx, for_term.r#loop);
+                    .map(|update_id| visit_value_block(cx, update_id, for_term.loc, None))
+                    .transpose()?
+                    .map(|r| r.value);
+                let loop_body = traverse_block(cx, for_term.r#loop)?;
 
                 statements.push(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
                     terminal: ReactiveTerminal::For(Box::new(ReactiveForTerminal {
@@ -749,17 +735,17 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = for_term.fallthrough;
             }
             Terminal::ForOf(for_of) => {
-                let init_result = visit_value_block(cx, for_of.init, for_of.loc, None);
+                let init_result = visit_value_block(cx, for_of.init, for_of.loc, None)?;
                 let init_value = ReactiveValue::Sequence(value_block_result_to_sequence(
                     init_result,
                     for_of.loc,
                 ));
-                let test_result = visit_value_block(cx, for_of.test, for_of.loc, None);
+                let test_result = visit_value_block(cx, for_of.test, for_of.loc, None)?;
                 let test_value = ReactiveValue::Sequence(value_block_result_to_sequence(
                     test_result,
                     for_of.loc,
                 ));
-                let loop_body = traverse_block(cx, for_of.r#loop);
+                let loop_body = traverse_block(cx, for_of.r#loop)?;
 
                 statements.push(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
                     terminal: ReactiveTerminal::ForOf(Box::new(ReactiveForOfTerminal {
@@ -775,12 +761,12 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = for_of.fallthrough;
             }
             Terminal::ForIn(for_in) => {
-                let init_result = visit_value_block(cx, for_in.init, for_in.loc, None);
+                let init_result = visit_value_block(cx, for_in.init, for_in.loc, None)?;
                 let init_value = ReactiveValue::Sequence(value_block_result_to_sequence(
                     init_result,
                     for_in.loc,
                 ));
-                let loop_body = traverse_block(cx, for_in.r#loop);
+                let loop_body = traverse_block(cx, for_in.r#loop)?;
 
                 statements.push(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
                     terminal: ReactiveTerminal::ForIn(Box::new(ReactiveForInTerminal {
@@ -795,7 +781,7 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = for_in.fallthrough;
             }
             Terminal::Label(label) => {
-                let block_body = traverse_block(cx, label.block);
+                let block_body = traverse_block(cx, label.block)?;
 
                 statements.push(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
                     terminal: ReactiveTerminal::Label(Box::new(ReactiveLabelTerminal {
@@ -809,8 +795,8 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = label.fallthrough;
             }
             Terminal::Try(try_term) => {
-                let block_body = traverse_block(cx, try_term.block);
-                let handler_body = traverse_block(cx, try_term.handler);
+                let block_body = traverse_block(cx, try_term.block)?;
+                let handler_body = traverse_block(cx, try_term.handler)?;
 
                 statements.push(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
                     terminal: ReactiveTerminal::Try(Box::new(ReactiveTryTerminal {
@@ -830,7 +816,7 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = mt.continuation;
             }
             Terminal::Scope(scope) => {
-                let block_body = traverse_block(cx, scope.block);
+                let block_body = traverse_block(cx, scope.block)?;
                 statements.push(ReactiveStatement::Scope(crate::hir::ReactiveScopeBlock {
                     scope: scope.scope.clone(),
                     instructions: block_body,
@@ -838,7 +824,7 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = scope.fallthrough;
             }
             Terminal::PrunedScope(scope) => {
-                let block_body = traverse_block(cx, scope.block);
+                let block_body = traverse_block(cx, scope.block)?;
                 statements.push(ReactiveStatement::PrunedScope(
                     crate::hir::PrunedReactiveScopeBlock {
                         scope: scope.scope.clone(),
@@ -855,7 +841,7 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
             // These produce expression-level values and are emitted as instructions,
             // matching the TS `visitValueBlockTerminal` behavior.
             Terminal::Sequence(seq) => {
-                let result = visit_value_block_terminal(cx, &block.terminal);
+                let result = visit_value_block_terminal(cx, &block.terminal)?;
 
                 statements.push(ReactiveStatement::Instruction(ReactiveInstructionStatement {
                     instruction: ReactiveInstruction {
@@ -869,7 +855,7 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = result.fallthrough;
             }
             Terminal::Logical(logical) => {
-                let result = visit_value_block_terminal(cx, &block.terminal);
+                let result = visit_value_block_terminal(cx, &block.terminal)?;
 
                 statements.push(ReactiveStatement::Instruction(ReactiveInstructionStatement {
                     instruction: ReactiveInstruction {
@@ -883,7 +869,7 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = result.fallthrough;
             }
             Terminal::Ternary(ternary) => {
-                let result = visit_value_block_terminal(cx, &block.terminal);
+                let result = visit_value_block_terminal(cx, &block.terminal)?;
 
                 statements.push(ReactiveStatement::Instruction(ReactiveInstructionStatement {
                     instruction: ReactiveInstruction {
@@ -897,7 +883,7 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = result.fallthrough;
             }
             Terminal::Optional(optional) => {
-                let result = visit_value_block_terminal(cx, &block.terminal);
+                let result = visit_value_block_terminal(cx, &block.terminal)?;
 
                 statements.push(ReactiveStatement::Instruction(ReactiveInstructionStatement {
                     instruction: ReactiveInstruction {
@@ -911,8 +897,8 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
                 current_id = result.fallthrough;
             }
             Terminal::Branch(branch) => {
-                let consequent = traverse_block(cx, branch.consequent);
-                let alternate = traverse_block(cx, branch.alternate);
+                let consequent = traverse_block(cx, branch.consequent)?;
+                let alternate = traverse_block(cx, branch.alternate)?;
                 let alternate_opt = if alternate.is_empty() { None } else { Some(alternate) };
 
                 statements.push(ReactiveStatement::Terminal(Box::new(ReactiveTerminalStatement {
@@ -931,5 +917,5 @@ fn traverse_block(cx: &Context, block_id: BlockId) -> ReactiveBlock {
         }
     }
 
-    statements
+    Ok(statements)
 }
