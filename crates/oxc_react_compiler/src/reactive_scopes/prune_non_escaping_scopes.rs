@@ -9,8 +9,8 @@
 use rustc_hash::FxHashSet;
 
 use crate::hir::{
-    IdentifierId, ReactiveBlock, ReactiveFunction, ReactiveStatement, ReactiveTerminal,
-    InstructionValue, ReactiveValue,
+    IdentifierId, InstructionValue, ReactiveBlock, ReactiveFunction, ReactiveStatement,
+    ReactiveTerminal, ReactiveValue,
 };
 
 /// Prune reactive scopes whose values don't escape the function.
@@ -37,26 +37,27 @@ fn find_escaping_in_block(block: &ReactiveBlock, escaping: &mut FxHashSet<Identi
             ReactiveStatement::Instruction(instr) => {
                 // JSX children and props escape
                 if let ReactiveValue::Instruction(value) = &instr.instruction.value
-                    && let InstructionValue::JsxExpression(jsx) = value.as_ref() {
-                        if let crate::hir::JsxTag::Place(p) = &jsx.tag {
-                            escaping.insert(p.identifier.id);
-                        }
-                        for attr in &jsx.props {
-                            match attr {
-                                crate::hir::JsxAttribute::Attribute { place, .. } => {
-                                    escaping.insert(place.identifier.id);
-                                }
-                                crate::hir::JsxAttribute::Spread { argument } => {
-                                    escaping.insert(argument.identifier.id);
-                                }
+                    && let InstructionValue::JsxExpression(jsx) = value.as_ref()
+                {
+                    if let crate::hir::JsxTag::Place(p) = &jsx.tag {
+                        escaping.insert(p.identifier.id);
+                    }
+                    for attr in &jsx.props {
+                        match attr {
+                            crate::hir::JsxAttribute::Attribute { place, .. } => {
+                                escaping.insert(place.identifier.id);
                             }
-                        }
-                        if let Some(children) = &jsx.children {
-                            for child in children {
-                                escaping.insert(child.identifier.id);
+                            crate::hir::JsxAttribute::Spread { argument } => {
+                                escaping.insert(argument.identifier.id);
                             }
                         }
                     }
+                    if let Some(children) = &jsx.children {
+                        for child in children {
+                            escaping.insert(child.identifier.id);
+                        }
+                    }
+                }
             }
             ReactiveStatement::Terminal(term) => {
                 // Return values escape
@@ -114,11 +115,7 @@ fn prune_in_block(block: &mut ReactiveBlock, escaping: &FxHashSet<IdentifierId>)
             ReactiveStatement::Scope(scope) => {
                 prune_in_block(&mut scope.instructions, escaping);
                 // Check if any declarations escape
-                let has_escaping = scope
-                    .scope
-                    .declarations
-                    .keys()
-                    .any(|id| escaping.contains(id));
+                let has_escaping = scope.scope.declarations.keys().any(|id| escaping.contains(id));
                 if !has_escaping && scope.scope.reassignments.is_empty() {
                     // Scope doesn't escape — flatten it
                     let instructions = std::mem::take(&mut scope.instructions);

@@ -12,38 +12,61 @@ use crate::hir::{
 };
 
 /// Name anonymous functions in the given HIR function.
-pub fn name_anonymous_functions(func: &HIRFunction) {
+pub fn name_anonymous_functions(func: &mut HIRFunction) {
     let parent_name = match &func.id {
         Some(name) => name.clone(),
         None => return,
     };
 
     let functions = collect_anonymous_functions(func);
+    let mut name_hints: Vec<(IdentifierId, String)> = Vec::new();
     for node in &functions {
-        visit_node(node, &format!("{parent_name}["));
+        visit_node(node, &format!("{parent_name}["), &mut name_hints);
+    }
+    if !name_hints.is_empty() {
+        apply_name_hints(func, &name_hints);
     }
 }
 
 struct FunctionNode {
+    /// The lvalue identifier ID of the instruction that produced this FunctionExpression.
+    lvalue_id: IdentifierId,
     generated_name: Option<String>,
     original_name: Option<String>,
     inner: Vec<FunctionNode>,
 }
 
-fn visit_node(node: &FunctionNode, prefix: &str) {
+fn visit_node(node: &FunctionNode, prefix: &str, name_hints: &mut Vec<(IdentifierId, String)>) {
     if let Some(ref gen_name) = node.generated_name {
-        let _name = format!("{prefix}{gen_name}]");
-        // In the full implementation, we'd set the nameHint on the function
+        let name = format!("{prefix}{gen_name}]");
+        name_hints.push((node.lvalue_id, name));
     }
     let next_prefix = format!(
         "{prefix}{} > ",
-        node.generated_name
-            .as_deref()
-            .or(node.original_name.as_deref())
-            .unwrap_or("<anonymous>")
+        node.generated_name.as_deref().or(node.original_name.as_deref()).unwrap_or("<anonymous>")
     );
     for inner in &node.inner {
-        visit_node(inner, &next_prefix);
+        visit_node(inner, &next_prefix, name_hints);
+    }
+}
+
+/// Apply collected name hints to FunctionExpression instructions in the HIR.
+fn apply_name_hints(func: &mut HIRFunction, name_hints: &[(IdentifierId, String)]) {
+    for block in func.body.blocks.values_mut() {
+        for instr in &mut block.instructions {
+            if let InstructionValue::FunctionExpression(func_expr) = &mut instr.value {
+                // Recurse into inner functions first
+                apply_name_hints(&mut func_expr.lowered_func.func, name_hints);
+                // Check if this instruction's lvalue matches any collected name hint
+                for (id, name) in name_hints {
+                    if instr.lvalue.identifier.id == *id && func_expr.name_hint.is_none() {
+                        func_expr.name_hint = Some(name.clone());
+                        func_expr.lowered_func.func.name_hint = Some(name.clone());
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -63,10 +86,16 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
                     if let Some(IdentifierName::Named(name)) = &v.place.identifier.name {
                         names.insert(instr.lvalue.identifier.id, name.clone());
                     }
+                    if let Some(&idx) = functions.get(&v.place.identifier.id) {
+                        functions.insert(instr.lvalue.identifier.id, idx);
+                    }
                 }
                 InstructionValue::LoadContext(v) => {
                     if let Some(IdentifierName::Named(name)) = &v.place.identifier.name {
                         names.insert(instr.lvalue.identifier.id, name.clone());
+                    }
+                    if let Some(&idx) = functions.get(&v.place.identifier.id) {
+                        functions.insert(instr.lvalue.identifier.id, idx);
                     }
                 }
                 InstructionValue::PropertyLoad(v) => {
@@ -78,6 +107,7 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
                 InstructionValue::FunctionExpression(v) => {
                     let inner = collect_anonymous_functions(&v.lowered_func.func);
                     let node = FunctionNode {
+                        lvalue_id: instr.lvalue.identifier.id,
                         generated_name: None,
                         original_name: v.name.clone(),
                         inner,
@@ -91,18 +121,20 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
                 InstructionValue::StoreLocal(v) => {
                     if let Some(&idx) = functions.get(&v.value.identifier.id)
                         && let Some(IdentifierName::Named(name)) = &v.lvalue.place.identifier.name
-                            && nodes[idx].generated_name.is_none() {
-                                nodes[idx].generated_name = Some(name.clone());
-                                functions.remove(&v.value.identifier.id);
-                            }
+                        && nodes[idx].generated_name.is_none()
+                    {
+                        nodes[idx].generated_name = Some(name.clone());
+                        functions.remove(&v.value.identifier.id);
+                    }
                 }
                 InstructionValue::StoreContext(v) => {
                     if let Some(&idx) = functions.get(&v.value.identifier.id)
                         && let Some(IdentifierName::Named(name)) = &v.lvalue_place.identifier.name
-                            && nodes[idx].generated_name.is_none() {
-                                nodes[idx].generated_name = Some(name.clone());
-                                functions.remove(&v.value.identifier.id);
-                            }
+                        && nodes[idx].generated_name.is_none()
+                    {
+                        nodes[idx].generated_name = Some(name.clone());
+                        functions.remove(&v.value.identifier.id);
+                    }
                 }
                 InstructionValue::CallExpression(v) => {
                     let callee_name = names.get(&v.callee.identifier.id).cloned();
@@ -110,11 +142,11 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
                         for arg in &v.args {
                             if let crate::hir::CallArg::Place(place) = arg
                                 && let Some(&idx) = functions.get(&place.identifier.id)
-                                    && nodes[idx].generated_name.is_none() {
-                                        nodes[idx].generated_name =
-                                            Some(format!("{callee_name}()"));
-                                        functions.remove(&place.identifier.id);
-                                    }
+                                && nodes[idx].generated_name.is_none()
+                            {
+                                nodes[idx].generated_name = Some(format!("{callee_name}()"));
+                                functions.remove(&place.identifier.id);
+                            }
                         }
                     }
                 }
@@ -126,14 +158,15 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
                     for attr in &v.props {
                         if let JsxAttribute::Attribute { name: attr_name, place } = attr
                             && let Some(&idx) = functions.get(&place.identifier.id)
-                                && nodes[idx].generated_name.is_none() {
-                                    let prop_name = match &element_name {
-                                        Some(el) => format!("<{el}>.{attr_name}"),
-                                        None => attr_name.clone(),
-                                    };
-                                    nodes[idx].generated_name = Some(prop_name);
-                                    functions.remove(&place.identifier.id);
-                                }
+                            && nodes[idx].generated_name.is_none()
+                        {
+                            let prop_name = match &element_name {
+                                Some(el) => format!("<{el}>.{attr_name}"),
+                                None => attr_name.clone(),
+                            };
+                            nodes[idx].generated_name = Some(prop_name);
+                            functions.remove(&place.identifier.id);
+                        }
                     }
                 }
                 _ => {}

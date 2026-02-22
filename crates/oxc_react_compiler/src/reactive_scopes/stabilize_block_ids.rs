@@ -4,9 +4,7 @@
 ///
 /// Renumbers block IDs in the reactive function to be sequential,
 /// which makes output more deterministic and easier to diff.
-use crate::hir::{
-    BlockId, ReactiveBlock, ReactiveFunction, ReactiveStatement, ReactiveTerminal,
-};
+use crate::hir::{BlockId, ReactiveBlock, ReactiveFunction, ReactiveStatement, ReactiveTerminal};
 
 /// Stabilize block IDs by renumbering them sequentially.
 pub fn stabilize_block_ids(func: &mut ReactiveFunction) {

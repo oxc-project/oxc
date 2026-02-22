@@ -1,4 +1,6 @@
 pub mod align_scopes;
+pub mod assert_scope_instructions_within_scopes;
+pub mod assert_well_formed_break_targets;
 pub mod build_reactive_function;
 pub mod codegen_reactive_function;
 pub mod extract_scope_declarations;
@@ -10,6 +12,8 @@ pub mod promote_used_temporaries;
 pub mod propagate_early_returns;
 pub mod prune;
 pub mod prune_non_escaping_scopes;
+pub mod prune_unused_labels;
+pub mod prune_unused_lvalues;
 pub mod rename_variables;
 pub mod stabilize_block_ids;
 pub mod visitors;

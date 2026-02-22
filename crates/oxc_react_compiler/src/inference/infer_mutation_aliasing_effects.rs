@@ -16,13 +16,10 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    compiler_error::CompilerError,
     hir::{
-        BlockId, HIRFunction, IdentifierId, Instruction,
-        InstructionValue, Place, ReactFunctionType, ReactiveParam, ValueKind,
-        ValueReason,
-        hir_builder::each_terminal_successor,
-        visitors::each_terminal_operand,
+        BlockId, HIRFunction, IdentifierId, Instruction, InstructionValue, Place,
+        ReactFunctionType, ReactiveParam, ValueKind, ValueReason,
+        hir_builder::each_terminal_successor, visitors::each_terminal_operand,
     },
     inference::aliasing_effects::AliasingEffect,
 };
@@ -96,10 +93,8 @@ impl InferenceState {
                 if merged_kind != existing.kind {
                     let mut merged_reasons = existing.reason.clone();
                     merged_reasons.extend(other_value.reason.iter().copied());
-                    self.values.insert(
-                        id,
-                        AbstractValue { kind: merged_kind, reason: merged_reasons },
-                    );
+                    self.values
+                        .insert(id, AbstractValue { kind: merged_kind, reason: merged_reasons });
                     changed = true;
                 }
             } else {
@@ -138,13 +133,7 @@ fn merge_value_kinds(a: ValueKind, b: ValueKind) -> ValueKind {
 }
 
 /// Infer mutation/aliasing effects for the given function.
-///
-/// # Errors
-/// Returns a `CompilerError` if invalid mutations are detected.
-pub fn infer_mutation_aliasing_effects(
-    func: &mut HIRFunction,
-    options: &InferOptions,
-) -> Result<(), CompilerError> {
+pub fn infer_mutation_aliasing_effects(func: &mut HIRFunction, options: &InferOptions) {
     let mut initial_state = InferenceState::empty();
 
     // Initialize context variables
@@ -198,15 +187,15 @@ pub fn infer_mutation_aliasing_effects(
         iteration_count += 1;
 
         // Process queued states
-        let blocks_to_process: Vec<(BlockId, InferenceState)> =
-            queued_states.drain().collect();
+        let blocks_to_process: Vec<(BlockId, InferenceState)> = queued_states.drain().collect();
 
         for (block_id, mut state) in blocks_to_process {
             // Check if state has changed since last visit
             if let Some(prev_state) = states_by_block.get(&block_id)
-                && !state.merge(prev_state) {
-                    continue; // No changes, skip
-                }
+                && !state.merge(prev_state)
+            {
+                continue; // No changes, skip
+            }
 
             let block = match func.body.blocks.get(&block_id) {
                 Some(b) => b.clone(),
@@ -245,25 +234,21 @@ pub fn infer_mutation_aliasing_effects(
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
         if let Some(state) = states_by_block.get(&block_id)
-            && let Some(block) = func.body.blocks.get_mut(&block_id) {
-                for instr in &mut block.instructions {
-                    let _effects = compute_instruction_effects(state, instr);
-                    // In the full implementation, we'd store these on instr.effects
-                    // Effect annotation handled in full implementation
-                }
+            && let Some(block) = func.body.blocks.get_mut(&block_id)
+        {
+            for instr in &mut block.instructions {
+                let effects = compute_instruction_effects(state, instr);
+                instr.effects = Some(effects);
             }
+        }
     }
-
-    Ok(())
 }
 
 /// Options for the inference pass.
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 pub struct InferOptions {
     pub is_function_expression: bool,
 }
-
 
 /// Infer effects of a single instruction on the abstract state.
 fn infer_instruction_effects(
@@ -274,13 +259,26 @@ fn infer_instruction_effects(
     let lvalue_id = instr.lvalue.identifier.id;
 
     match &instr.value {
-        // Primitives create a new primitive value
-        InstructionValue::Primitive(_) | InstructionValue::JsxText(_) => {
+        // Primitives, update expressions, binary/unary, and template literals produce primitives
+        InstructionValue::Primitive(_)
+        | InstructionValue::JsxText(_)
+        | InstructionValue::PrefixUpdate(_)
+        | InstructionValue::PostfixUpdate(_)
+        | InstructionValue::BinaryExpression(_)
+        | InstructionValue::UnaryExpression(_)
+        | InstructionValue::TemplateLiteral(_) => {
             state.define(&instr.lvalue, AbstractValue::primitive());
         }
 
-        // Object/array literals create new mutable values
-        InstructionValue::ObjectExpression(_) | InstructionValue::ArrayExpression(_) => {
+        // Object/array/function/regexp/iterator values create mutable values
+        InstructionValue::ObjectExpression(_)
+        | InstructionValue::ArrayExpression(_)
+        | InstructionValue::FunctionExpression(_)
+        | InstructionValue::ObjectMethod(_)
+        | InstructionValue::RegExpLiteral(_)
+        | InstructionValue::GetIterator(_)
+        | InstructionValue::IteratorNext(_)
+        | InstructionValue::NextPropertyOf(_) => {
             state.define(&instr.lvalue, AbstractValue::mutable());
         }
 
@@ -350,7 +348,6 @@ fn infer_instruction_effects(
             // Loading a property may return a mutable value from a mutable object
             if let Some(val) = state.get(&v.object) {
                 let result_kind = match val.kind {
-                    ValueKind::Mutable => ValueKind::Mutable,
                     ValueKind::Frozen | ValueKind::MaybeFrozen => ValueKind::MaybeFrozen,
                     _ => ValueKind::Mutable,
                 };
@@ -378,27 +375,14 @@ fn infer_instruction_effects(
             }
         }
 
-        // Function expressions create a mutable function value
-        InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_) => {
-            state.define(&instr.lvalue, AbstractValue::mutable());
-        }
-
         // Globals are frozen
         InstructionValue::LoadGlobal(_) => {
             let mut reasons = FxHashSet::default();
             reasons.insert(ValueReason::Global);
-            state.define(
-                &instr.lvalue,
-                AbstractValue { kind: ValueKind::Global, reason: reasons },
-            );
+            state.define(&instr.lvalue, AbstractValue { kind: ValueKind::Global, reason: reasons });
         }
 
         InstructionValue::StoreGlobal(_v) => {
-            state.define(&instr.lvalue, AbstractValue::primitive());
-        }
-
-        // Binary/unary expressions produce primitives
-        InstructionValue::BinaryExpression(_) | InstructionValue::UnaryExpression(_) => {
             state.define(&instr.lvalue, AbstractValue::primitive());
         }
 
@@ -409,15 +393,6 @@ fn infer_instruction_effects(
             }
         }
 
-        // Template literals produce primitives
-        InstructionValue::TemplateLiteral(_) => {
-            state.define(&instr.lvalue, AbstractValue::primitive());
-        }
-
-        InstructionValue::RegExpLiteral(_) => {
-            state.define(&instr.lvalue, AbstractValue::mutable());
-        }
-
         // Await produces the awaited value's type
         InstructionValue::Await(v) => {
             if let Some(val) = state.get(&v.value).cloned() {
@@ -425,18 +400,6 @@ fn infer_instruction_effects(
             } else {
                 state.define(&instr.lvalue, AbstractValue::mutable());
             }
-        }
-
-        // Iterators produce mutable values
-        InstructionValue::GetIterator(_)
-        | InstructionValue::IteratorNext(_)
-        | InstructionValue::NextPropertyOf(_) => {
-            state.define(&instr.lvalue, AbstractValue::mutable());
-        }
-
-        // Update expressions produce primitives (the numeric result)
-        InstructionValue::PrefixUpdate(_) | InstructionValue::PostfixUpdate(_) => {
-            state.define(&instr.lvalue, AbstractValue::primitive());
         }
 
         // Destructure: the destructured value may be mutable
@@ -489,16 +452,12 @@ fn compute_instruction_effects(
             });
         }
         InstructionValue::LoadLocal(v) => {
-            effects.push(AliasingEffect::Alias {
-                from: v.place.clone(),
-                into: instr.lvalue.clone(),
-            });
+            effects
+                .push(AliasingEffect::Alias { from: v.place.clone(), into: instr.lvalue.clone() });
         }
         InstructionValue::LoadContext(v) => {
-            effects.push(AliasingEffect::Alias {
-                from: v.place.clone(),
-                into: instr.lvalue.clone(),
-            });
+            effects
+                .push(AliasingEffect::Alias { from: v.place.clone(), into: instr.lvalue.clone() });
         }
         InstructionValue::StoreLocal(v) => {
             effects.push(AliasingEffect::Assign {

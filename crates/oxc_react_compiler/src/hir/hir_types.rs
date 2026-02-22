@@ -100,7 +100,7 @@ pub struct BasicBlock {
     pub instructions: Vec<Instruction>,
     pub terminal: Terminal,
     pub preds: FxHashSet<BlockId>,
-    pub phis: FxHashSet<PhiId>,
+    pub phis: Vec<Phi>,
 }
 
 /// The HIR control-flow graph: an entry block and a map of blocks.
@@ -117,13 +117,10 @@ pub struct Hir {
 // Phi nodes
 // =====================================================================================
 
-/// Unique ID for a phi node (used in FxHashSet storage).
-pub type PhiId = u32;
-
 /// A phi node, representing the merge of values from different control-flow paths.
 #[derive(Debug, Clone)]
 pub struct Phi {
-    pub id: PhiId,
+    pub id: u32,
     pub place: Place,
     pub operands: FxHashMap<BlockId, Place>,
 }
@@ -467,6 +464,7 @@ pub struct Instruction {
     pub id: InstructionId,
     pub lvalue: Place,
     pub value: InstructionValue,
+    pub effects: Option<Vec<crate::inference::aliasing_effects::AliasingEffect>>,
     pub loc: SourceLocation,
 }
 
@@ -1186,8 +1184,7 @@ impl IdentifierName {
     /// Get the string value of this identifier name.
     pub fn value(&self) -> &str {
         match self {
-            IdentifierName::Named(n) => n,
-            IdentifierName::Promoted(n) => n,
+            IdentifierName::Named(n) | IdentifierName::Promoted(n) => n,
         }
     }
 }
@@ -1643,6 +1640,7 @@ pub struct HIRFunction {
     pub id: Option<ValidIdentifierName>,
     pub name_hint: Option<String>,
     pub fn_type: ReactFunctionType,
+    pub env: super::environment::Environment,
     pub params: Vec<ReactiveParam>,
     pub returns: Place,
     pub context: Vec<Place>,
@@ -1650,6 +1648,7 @@ pub struct HIRFunction {
     pub generator: bool,
     pub is_async: bool,
     pub directives: Vec<String>,
+    pub aliasing_effects: Option<Vec<crate::inference::aliasing_effects::AliasingEffect>>,
 }
 
 // =====================================================================================

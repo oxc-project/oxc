@@ -9,12 +9,10 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use super::{
     hir_types::{Effect, ValueKind, ValueReason},
     object_shape::{
-        FunctionSignature, HookKind, ShapeRegistry,
-        BUILT_IN_ARRAY_ID, BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID,
-        BUILT_IN_OBJECT_ID, BUILT_IN_SET_ID, BUILT_IN_USE_CONTEXT_HOOK_ID,
-        BUILT_IN_USE_EFFECT_HOOK_ID, BUILT_IN_USE_REF_ID, BUILT_IN_USE_STATE_ID,
-        BUILT_IN_WEAK_MAP_ID, BUILT_IN_WEAK_SET_ID,
-        add_hook, add_object,
+        BUILT_IN_ARRAY_ID, BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID,
+        BUILT_IN_SET_ID, BUILT_IN_USE_CONTEXT_HOOK_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
+        BUILT_IN_USE_REF_ID, BUILT_IN_USE_STATE_ID, BUILT_IN_WEAK_MAP_ID, BUILT_IN_WEAK_SET_ID,
+        FunctionSignature, HookKind, ShapeRegistry, add_hook, add_object,
     },
     types::{ObjectType, Type},
 };
@@ -34,13 +32,45 @@ pub type GlobalRegistry = FxHashMap<String, Global>;
 /// Set of global names that are untyped (no shape information).
 fn untyped_globals() -> FxHashSet<String> {
     [
-        "Object", "Function", "RegExp", "Date", "Error", "TypeError",
-        "RangeError", "ReferenceError", "SyntaxError", "URIError", "EvalError",
-        "DataView", "Float32Array", "Float64Array", "Int8Array", "Int16Array",
-        "Int32Array", "WeakMap", "Uint8Array", "Uint8ClampedArray", "Uint16Array",
-        "Uint32Array", "ArrayBuffer", "JSON", "console", "performance", "window",
-        "document", "navigator", "Promise", "Symbol", "Proxy", "Reflect",
-        "Intl", "Number", "String", "Boolean", "Math", "globalThis",
+        "Object",
+        "Function",
+        "RegExp",
+        "Date",
+        "Error",
+        "TypeError",
+        "RangeError",
+        "ReferenceError",
+        "SyntaxError",
+        "URIError",
+        "EvalError",
+        "DataView",
+        "Float32Array",
+        "Float64Array",
+        "Int8Array",
+        "Int16Array",
+        "Int32Array",
+        "WeakMap",
+        "Uint8Array",
+        "Uint8ClampedArray",
+        "Uint16Array",
+        "Uint32Array",
+        "ArrayBuffer",
+        "JSON",
+        "console",
+        "performance",
+        "window",
+        "document",
+        "navigator",
+        "Promise",
+        "Symbol",
+        "Proxy",
+        "Reflect",
+        "Intl",
+        "Number",
+        "String",
+        "Boolean",
+        "Math",
+        "globalThis",
     ]
     .iter()
     .map(|s| (*s).to_string())
@@ -109,15 +139,16 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
             ..FunctionSignature::default()
         },
     );
-    globals.insert("useState".to_string(), Global::Typed(Type::Function(
-        crate::hir::types::FunctionType {
+    globals.insert(
+        "useState".to_string(),
+        Global::Typed(Type::Function(crate::hir::types::FunctionType {
             shape_id: Some(use_state_id),
             return_type: Box::new(Type::Object(ObjectType {
                 shape_id: Some(BUILT_IN_USE_STATE_ID.to_string()),
             })),
             is_constructor: false,
-        },
-    )));
+        })),
+    );
 
     // useRef
     let use_ref_id = add_hook(
@@ -136,15 +167,16 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
             ..FunctionSignature::default()
         },
     );
-    globals.insert("useRef".to_string(), Global::Typed(Type::Function(
-        crate::hir::types::FunctionType {
+    globals.insert(
+        "useRef".to_string(),
+        Global::Typed(Type::Function(crate::hir::types::FunctionType {
             shape_id: Some(use_ref_id),
             return_type: Box::new(Type::Object(ObjectType {
                 shape_id: Some(BUILT_IN_USE_REF_ID.to_string()),
             })),
             is_constructor: false,
-        },
-    )));
+        })),
+    );
 
     // useEffect
     let use_effect_id = add_hook(
@@ -160,13 +192,14 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
             ..FunctionSignature::default()
         },
     );
-    globals.insert("useEffect".to_string(), Global::Typed(Type::Function(
-        crate::hir::types::FunctionType {
+    globals.insert(
+        "useEffect".to_string(),
+        Global::Typed(Type::Function(crate::hir::types::FunctionType {
             shape_id: Some(use_effect_id),
             return_type: Box::new(Type::Primitive),
             is_constructor: false,
-        },
-    )));
+        })),
+    );
 
     // useContext
     let use_context_id = add_hook(
@@ -183,31 +216,34 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
             ..FunctionSignature::default()
         },
     );
-    globals.insert("useContext".to_string(), Global::Typed(Type::Function(
-        crate::hir::types::FunctionType {
+    globals.insert(
+        "useContext".to_string(),
+        Global::Typed(Type::Function(crate::hir::types::FunctionType {
             shape_id: Some(use_context_id),
             return_type: Box::new(Type::Poly),
             is_constructor: false,
-        },
-    )));
+        })),
+    );
 
     // useMemo
-    globals.insert("useMemo".to_string(), Global::Typed(Type::Function(
-        crate::hir::types::FunctionType {
+    globals.insert(
+        "useMemo".to_string(),
+        Global::Typed(Type::Function(crate::hir::types::FunctionType {
             shape_id: None,
             return_type: Box::new(Type::Poly),
             is_constructor: false,
-        },
-    )));
+        })),
+    );
 
     // useCallback
-    globals.insert("useCallback".to_string(), Global::Typed(Type::Function(
-        crate::hir::types::FunctionType {
+    globals.insert(
+        "useCallback".to_string(),
+        Global::Typed(Type::Function(crate::hir::types::FunctionType {
             shape_id: None,
             return_type: Box::new(Type::Poly),
             is_constructor: false,
-        },
-    )));
+        })),
+    );
 }
 
 fn add_global_function_globals(globals: &mut GlobalRegistry, _shapes: &mut ShapeRegistry) {
@@ -215,15 +251,26 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, _shapes: &mut Shape
     globals.insert("Array".to_string(), Global::Untyped);
 
     // Common pure functions
-    for name in &["parseInt", "parseFloat", "isNaN", "isFinite", "encodeURIComponent",
-                   "decodeURIComponent", "encodeURI", "decodeURI", "btoa", "atob"] {
-        globals.insert((*name).to_string(), Global::Typed(Type::Function(
-            crate::hir::types::FunctionType {
+    for name in &[
+        "parseInt",
+        "parseFloat",
+        "isNaN",
+        "isFinite",
+        "encodeURIComponent",
+        "decodeURIComponent",
+        "encodeURI",
+        "decodeURI",
+        "btoa",
+        "atob",
+    ] {
+        globals.insert(
+            (*name).to_string(),
+            Global::Typed(Type::Function(crate::hir::types::FunctionType {
                 shape_id: None,
                 return_type: Box::new(Type::Primitive),
                 is_constructor: false,
-            },
-        )));
+            })),
+        );
     }
 
     // undefined, NaN, Infinity

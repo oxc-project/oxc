@@ -6,9 +6,7 @@
 /// with any other variables in the same block scope.
 use rustc_hash::FxHashSet;
 
-use crate::hir::{
-    ReactiveBlock, ReactiveFunction, ReactiveStatement,
-};
+use crate::hir::{ReactiveBlock, ReactiveFunction, ReactiveStatement};
 
 /// Rename variables in the reactive function to ensure uniqueness.
 ///
@@ -24,10 +22,11 @@ fn collect_names_from_block(block: &ReactiveBlock, names: &mut FxHashSet<String>
         match stmt {
             ReactiveStatement::Instruction(instr) => {
                 if let Some(ref place) = instr.instruction.lvalue
-                    && let Some(name) = &place.identifier.name {
-                        let name_str = name.value().to_string();
-                        names.insert(name_str);
-                    }
+                    && let Some(name) = &place.identifier.name
+                {
+                    let name_str = name.value().to_string();
+                    names.insert(name_str);
+                }
             }
             ReactiveStatement::Terminal(term) => {
                 collect_names_from_terminal(&term.terminal, names);

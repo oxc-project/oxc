@@ -9,7 +9,6 @@
 use rustc_hash::FxHashMap;
 
 use crate::{
-    compiler_error::CompilerError,
     hir::{
         BlockId, Effect, HIRFunction, IdentifierId, InstructionId, MutableRange,
         visitors::{
@@ -26,13 +25,10 @@ pub struct InferRangesOptions {
 }
 
 /// Infer mutable ranges from aliasing effects.
-///
-/// # Errors
-/// Returns a `CompilerError` if invalid mutations are detected (e.g., mutating frozen values).
 pub fn infer_mutation_aliasing_ranges(
     func: &mut HIRFunction,
     _options: InferRangesOptions,
-) -> Result<Vec<AliasingEffect>, CompilerError> {
+) -> Vec<AliasingEffect> {
     let external_effects: Vec<AliasingEffect> = Vec::new();
 
     // Phase 1: Collect all mutable ranges by analyzing instruction effects
@@ -111,7 +107,7 @@ pub fn infer_mutation_aliasing_ranges(
         }
     }
 
-    Ok(external_effects)
+    external_effects
 }
 
 /// Extend a mutable range for an identifier to include the given instruction.
@@ -120,10 +116,9 @@ fn extend_range(
     id: IdentifierId,
     instr_id: InstructionId,
 ) {
-    let range = ranges.entry(id).or_insert(MutableRange {
-        start: instr_id,
-        end: InstructionId(instr_id.0 + 1),
-    });
+    let range = ranges
+        .entry(id)
+        .or_insert(MutableRange { start: instr_id, end: InstructionId(instr_id.0 + 1) });
 
     if instr_id < range.start {
         range.start = instr_id;
