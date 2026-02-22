@@ -13,6 +13,7 @@ use crate::{
     hir::{
         BlockId, BlockKind, HIRFunction, IdentifierId, InstructionId, InstructionValue,
         MutableRange, Place, ReactiveScope, ScopeId,
+        hir_builder::compute_rpo_order,
         visitors::{
             each_instruction_lvalue, each_instruction_value_operand, each_terminal_operand,
             each_terminal_successor, terminal_fallthrough,
@@ -360,9 +361,8 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HIRFunction) {
     // We track "place scopes" — mapping from place identity to scope ID
     // (not used for anything in the output but kept for TS fidelity)
 
-    // We need sorted block iteration (reverse postorder, approximated by sorted BlockIds)
-    let mut block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
-    block_ids.sort();
+    // Compute true reverse-postorder traversal from the entry block
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
 
     for block_id in &block_ids {
         let Some(block) = func.body.blocks.get(block_id) else {

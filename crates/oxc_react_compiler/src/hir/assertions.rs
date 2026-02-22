@@ -27,6 +27,14 @@ pub fn assert_consistent_identifiers(func: &HIRFunction) -> Result<(), CompilerE
     let mut assignments: FxHashSet<IdentifierId> = FxHashSet::default();
 
     for block in func.body.blocks.values() {
+        // Validate phi nodes
+        for phi in &block.phis {
+            validate_identifier(&mut identifiers, phi.place.identifier.id)?;
+            for operand in phi.operands.values() {
+                validate_identifier(&mut identifiers, operand.identifier.id)?;
+            }
+        }
+
         for instr in &block.instructions {
             // Check lvalue is a temporary (no name)
             if instr.lvalue.identifier.name.is_some() {
