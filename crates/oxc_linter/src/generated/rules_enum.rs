@@ -597,6 +597,7 @@ pub use crate::rules::unicorn::no_typeof_undefined::NoTypeofUndefined as Unicorn
 pub use crate::rules::unicorn::no_unnecessary_array_flat_depth::NoUnnecessaryArrayFlatDepth as UnicornNoUnnecessaryArrayFlatDepth;
 pub use crate::rules::unicorn::no_unnecessary_array_splice_count::NoUnnecessaryArraySpliceCount as UnicornNoUnnecessaryArraySpliceCount;
 pub use crate::rules::unicorn::no_unnecessary_await::NoUnnecessaryAwait as UnicornNoUnnecessaryAwait;
+pub use crate::rules::unicorn::no_unnecessary_polyfills::NoUnnecessaryPolyfills as UnicornNoUnnecessaryPolyfills;
 pub use crate::rules::unicorn::no_unnecessary_slice_end::NoUnnecessarySliceEnd as UnicornNoUnnecessarySliceEnd;
 pub use crate::rules::unicorn::no_unreadable_array_destructuring::NoUnreadableArrayDestructuring as UnicornNoUnreadableArrayDestructuring;
 pub use crate::rules::unicorn::no_unreadable_iife::NoUnreadableIife as UnicornNoUnreadableIife;
@@ -1188,6 +1189,7 @@ pub enum RuleEnum {
     UnicornNoUnnecessaryArrayFlatDepth(UnicornNoUnnecessaryArrayFlatDepth),
     UnicornNoUnnecessaryArraySpliceCount(UnicornNoUnnecessaryArraySpliceCount),
     UnicornNoUnnecessaryAwait(UnicornNoUnnecessaryAwait),
+    UnicornNoUnnecessaryPolyfills(UnicornNoUnnecessaryPolyfills),
     UnicornNoUnnecessarySliceEnd(UnicornNoUnnecessarySliceEnd),
     UnicornNoUnreadableArrayDestructuring(UnicornNoUnreadableArrayDestructuring),
     UnicornNoUnreadableIife(UnicornNoUnreadableIife),
@@ -1947,7 +1949,8 @@ const UNICORN_NO_UNNECESSARY_ARRAY_SPLICE_COUNT_ID: usize =
     UNICORN_NO_UNNECESSARY_ARRAY_FLAT_DEPTH_ID + 1usize;
 const UNICORN_NO_UNNECESSARY_AWAIT_ID: usize =
     UNICORN_NO_UNNECESSARY_ARRAY_SPLICE_COUNT_ID + 1usize;
-const UNICORN_NO_UNNECESSARY_SLICE_END_ID: usize = UNICORN_NO_UNNECESSARY_AWAIT_ID + 1usize;
+const UNICORN_NO_UNNECESSARY_POLYFILLS_ID: usize = UNICORN_NO_UNNECESSARY_AWAIT_ID + 1usize;
+const UNICORN_NO_UNNECESSARY_SLICE_END_ID: usize = UNICORN_NO_UNNECESSARY_POLYFILLS_ID + 1usize;
 const UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID: usize =
     UNICORN_NO_UNNECESSARY_SLICE_END_ID + 1usize;
 const UNICORN_NO_UNREADABLE_IIFE_ID: usize = UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID + 1usize;
@@ -2753,6 +2756,7 @@ impl RuleEnum {
                 UNICORN_NO_UNNECESSARY_ARRAY_SPLICE_COUNT_ID
             }
             Self::UnicornNoUnnecessaryAwait(_) => UNICORN_NO_UNNECESSARY_AWAIT_ID,
+            Self::UnicornNoUnnecessaryPolyfills(_) => UNICORN_NO_UNNECESSARY_POLYFILLS_ID,
             Self::UnicornNoUnnecessarySliceEnd(_) => UNICORN_NO_UNNECESSARY_SLICE_END_ID,
             Self::UnicornNoUnreadableArrayDestructuring(_) => {
                 UNICORN_NO_UNREADABLE_ARRAY_DESTRUCTURING_ID
@@ -3552,6 +3556,7 @@ impl RuleEnum {
                 UnicornNoUnnecessaryArraySpliceCount::NAME
             }
             Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::NAME,
+            Self::UnicornNoUnnecessaryPolyfills(_) => UnicornNoUnnecessaryPolyfills::NAME,
             Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::NAME,
             Self::UnicornNoUnreadableArrayDestructuring(_) => {
                 UnicornNoUnreadableArrayDestructuring::NAME
@@ -4379,6 +4384,7 @@ impl RuleEnum {
                 UnicornNoUnnecessaryArraySpliceCount::CATEGORY
             }
             Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::CATEGORY,
+            Self::UnicornNoUnnecessaryPolyfills(_) => UnicornNoUnnecessaryPolyfills::CATEGORY,
             Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::CATEGORY,
             Self::UnicornNoUnreadableArrayDestructuring(_) => {
                 UnicornNoUnreadableArrayDestructuring::CATEGORY
@@ -5189,6 +5195,7 @@ impl RuleEnum {
                 UnicornNoUnnecessaryArraySpliceCount::FIX
             }
             Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::FIX,
+            Self::UnicornNoUnnecessaryPolyfills(_) => UnicornNoUnnecessaryPolyfills::FIX,
             Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::FIX,
             Self::UnicornNoUnreadableArrayDestructuring(_) => {
                 UnicornNoUnreadableArrayDestructuring::FIX
@@ -6113,6 +6120,9 @@ impl RuleEnum {
                 UnicornNoUnnecessaryArraySpliceCount::documentation()
             }
             Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::documentation(),
+            Self::UnicornNoUnnecessaryPolyfills(_) => {
+                UnicornNoUnnecessaryPolyfills::documentation()
+            }
             Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::documentation(),
             Self::UnicornNoUnreadableArrayDestructuring(_) => {
                 UnicornNoUnreadableArrayDestructuring::documentation()
@@ -7768,6 +7778,10 @@ impl RuleEnum {
                 UnicornNoUnnecessaryAwait::config_schema(generator)
                     .or_else(|| UnicornNoUnnecessaryAwait::schema(generator))
             }
+            Self::UnicornNoUnnecessaryPolyfills(_) => {
+                UnicornNoUnnecessaryPolyfills::config_schema(generator)
+                    .or_else(|| UnicornNoUnnecessaryPolyfills::schema(generator))
+            }
             Self::UnicornNoUnnecessarySliceEnd(_) => {
                 UnicornNoUnnecessarySliceEnd::config_schema(generator)
                     .or_else(|| UnicornNoUnnecessarySliceEnd::schema(generator))
@@ -8889,6 +8903,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessaryArrayFlatDepth(_) => "unicorn",
             Self::UnicornNoUnnecessaryArraySpliceCount(_) => "unicorn",
             Self::UnicornNoUnnecessaryAwait(_) => "unicorn",
+            Self::UnicornNoUnnecessaryPolyfills(_) => "unicorn",
             Self::UnicornNoUnnecessarySliceEnd(_) => "unicorn",
             Self::UnicornNoUnreadableArrayDestructuring(_) => "unicorn",
             Self::UnicornNoUnreadableIife(_) => "unicorn",
@@ -10643,6 +10658,9 @@ impl RuleEnum {
             Self::UnicornNoUnnecessaryAwait(_) => Ok(Self::UnicornNoUnnecessaryAwait(
                 UnicornNoUnnecessaryAwait::from_configuration(value)?,
             )),
+            Self::UnicornNoUnnecessaryPolyfills(_) => Ok(Self::UnicornNoUnnecessaryPolyfills(
+                UnicornNoUnnecessaryPolyfills::from_configuration(value)?,
+            )),
             Self::UnicornNoUnnecessarySliceEnd(_) => Ok(Self::UnicornNoUnnecessarySliceEnd(
                 UnicornNoUnnecessarySliceEnd::from_configuration(value)?,
             )),
@@ -11832,6 +11850,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessaryArrayFlatDepth(rule) => rule.to_configuration(),
             Self::UnicornNoUnnecessaryArraySpliceCount(rule) => rule.to_configuration(),
             Self::UnicornNoUnnecessaryAwait(rule) => rule.to_configuration(),
+            Self::UnicornNoUnnecessaryPolyfills(rule) => rule.to_configuration(),
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.to_configuration(),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.to_configuration(),
             Self::UnicornNoUnreadableIife(rule) => rule.to_configuration(),
@@ -12535,6 +12554,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessaryArrayFlatDepth(rule) => rule.run(node, ctx),
             Self::UnicornNoUnnecessaryArraySpliceCount(rule) => rule.run(node, ctx),
             Self::UnicornNoUnnecessaryAwait(rule) => rule.run(node, ctx),
+            Self::UnicornNoUnnecessaryPolyfills(rule) => rule.run(node, ctx),
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.run(node, ctx),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.run(node, ctx),
             Self::UnicornNoUnreadableIife(rule) => rule.run(node, ctx),
@@ -13236,6 +13256,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessaryArrayFlatDepth(rule) => rule.run_once(ctx),
             Self::UnicornNoUnnecessaryArraySpliceCount(rule) => rule.run_once(ctx),
             Self::UnicornNoUnnecessaryAwait(rule) => rule.run_once(ctx),
+            Self::UnicornNoUnnecessaryPolyfills(rule) => rule.run_once(ctx),
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.run_once(ctx),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.run_once(ctx),
             Self::UnicornNoUnreadableIife(rule) => rule.run_once(ctx),
@@ -14015,6 +14036,7 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::UnicornNoUnnecessaryAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornNoUnnecessaryPolyfills(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -14736,6 +14758,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessaryArrayFlatDepth(rule) => rule.should_run(ctx),
             Self::UnicornNoUnnecessaryArraySpliceCount(rule) => rule.should_run(ctx),
             Self::UnicornNoUnnecessaryAwait(rule) => rule.should_run(ctx),
+            Self::UnicornNoUnnecessaryPolyfills(rule) => rule.should_run(ctx),
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.should_run(ctx),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.should_run(ctx),
             Self::UnicornNoUnreadableIife(rule) => rule.should_run(ctx),
@@ -15639,6 +15662,9 @@ impl RuleEnum {
                 UnicornNoUnnecessaryArraySpliceCount::IS_TSGOLINT_RULE
             }
             Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::IS_TSGOLINT_RULE,
+            Self::UnicornNoUnnecessaryPolyfills(_) => {
+                UnicornNoUnnecessaryPolyfills::IS_TSGOLINT_RULE
+            }
             Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::IS_TSGOLINT_RULE,
             Self::UnicornNoUnreadableArrayDestructuring(_) => {
                 UnicornNoUnreadableArrayDestructuring::IS_TSGOLINT_RULE
@@ -16559,6 +16585,7 @@ impl RuleEnum {
                 UnicornNoUnnecessaryArraySpliceCount::HAS_CONFIG
             }
             Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::HAS_CONFIG,
+            Self::UnicornNoUnnecessaryPolyfills(_) => UnicornNoUnnecessaryPolyfills::HAS_CONFIG,
             Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::HAS_CONFIG,
             Self::UnicornNoUnreadableArrayDestructuring(_) => {
                 UnicornNoUnreadableArrayDestructuring::HAS_CONFIG
@@ -17300,6 +17327,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessaryArrayFlatDepth(rule) => rule.types_info(),
             Self::UnicornNoUnnecessaryArraySpliceCount(rule) => rule.types_info(),
             Self::UnicornNoUnnecessaryAwait(rule) => rule.types_info(),
+            Self::UnicornNoUnnecessaryPolyfills(rule) => rule.types_info(),
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.types_info(),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.types_info(),
             Self::UnicornNoUnreadableIife(rule) => rule.types_info(),
@@ -18001,6 +18029,7 @@ impl RuleEnum {
             Self::UnicornNoUnnecessaryArrayFlatDepth(rule) => rule.run_info(),
             Self::UnicornNoUnnecessaryArraySpliceCount(rule) => rule.run_info(),
             Self::UnicornNoUnnecessaryAwait(rule) => rule.run_info(),
+            Self::UnicornNoUnnecessaryPolyfills(rule) => rule.run_info(),
             Self::UnicornNoUnnecessarySliceEnd(rule) => rule.run_info(),
             Self::UnicornNoUnreadableArrayDestructuring(rule) => rule.run_info(),
             Self::UnicornNoUnreadableIife(rule) => rule.run_info(),
@@ -18798,6 +18827,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
             UnicornNoUnnecessaryArraySpliceCount::default(),
         ),
         RuleEnum::UnicornNoUnnecessaryAwait(UnicornNoUnnecessaryAwait::default()),
+        RuleEnum::UnicornNoUnnecessaryPolyfills(UnicornNoUnnecessaryPolyfills::default()),
         RuleEnum::UnicornNoUnnecessarySliceEnd(UnicornNoUnnecessarySliceEnd::default()),
         RuleEnum::UnicornNoUnreadableArrayDestructuring(
             UnicornNoUnreadableArrayDestructuring::default(),

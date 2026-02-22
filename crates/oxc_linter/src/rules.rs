@@ -495,6 +495,7 @@ pub(crate) mod unicorn {
     pub mod no_unnecessary_array_flat_depth;
     pub mod no_unnecessary_array_splice_count;
     pub mod no_unnecessary_await;
+    pub mod no_unnecessary_polyfills;
     pub mod no_unnecessary_slice_end;
     pub mod no_unreadable_array_destructuring;
     pub mod no_unreadable_iife;

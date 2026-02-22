@@ -1996,6 +1996,7 @@ dependencies = [
  "oxc_ast_visit",
  "oxc_cfg",
  "oxc_codegen",
+ "oxc_compat",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_ecmascript",
