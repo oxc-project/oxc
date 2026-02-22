@@ -20,10 +20,7 @@ pub fn unsupported_language_feature(desc: &str, loc: SourceLocation) -> Compiler
 /// A unification error — two types that cannot be unified.
 #[derive(Debug, Clone)]
 pub enum UnificationError {
-    TypeUnification {
-        left: ConcreteType,
-        right: ConcreteType,
-    },
+    TypeUnification { left: ConcreteType, right: ConcreteType },
 }
 
 /// Report unification errors.
@@ -36,11 +33,9 @@ pub fn raise_unification_errors(
 ) -> Result<(), CompilerError> {
     match errors {
         None => Ok(()),
-        Some([]) => Err(CompilerError::invariant(
-            "Should not have array of zero errors",
-            None,
-            loc,
-        )),
+        Some([]) => {
+            Err(CompilerError::invariant("Should not have array of zero errors", None, loc))
+        }
         Some(errs) if errs.len() == 1 => Err(CompilerError::invalid_js(
             &format!("Unable to unify types: {:?}", errs[0]),
             None,

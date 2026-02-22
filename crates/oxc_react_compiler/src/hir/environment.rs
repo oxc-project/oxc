@@ -117,6 +117,12 @@ pub struct EnvironmentConfig {
 
     /// Enable reset cache on source file changes (HMR support).
     pub enable_reset_cache_on_source_file_changes: Option<bool>,
+
+    /// Enable custom type definitions for react-native-reanimated.
+    ///
+    /// When true, the compiler treats reanimated shared values as having
+    /// specific type signatures to allow correct memoization behavior.
+    pub enable_custom_type_definition_for_reanimated: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -148,6 +154,7 @@ impl Default for EnvironmentConfig {
             enable_emit_hook_guards: None,
             throw_unknown_exception_testonly: false,
             enable_reset_cache_on_source_file_changes: None,
+            enable_custom_type_definition_for_reanimated: false,
         }
     }
 }
@@ -222,10 +229,8 @@ impl Environment {
         output_mode: CompilerOutputMode,
         config: EnvironmentConfig,
     ) -> Self {
-        let enable_memoization = !matches!(
-            output_mode,
-            CompilerOutputMode::Lint | CompilerOutputMode::ClientNoMemo
-        );
+        let enable_memoization =
+            !matches!(output_mode, CompilerOutputMode::Lint | CompilerOutputMode::ClientNoMemo);
         let enable_validations = true;
         let enable_drop_manual_memoization = enable_memoization;
 

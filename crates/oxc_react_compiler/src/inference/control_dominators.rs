@@ -43,9 +43,10 @@ pub fn create_control_dominators<'a>(
                     }
                     for case in &t.cases {
                         if let Some(test) = &case.test
-                            && is_control_variable(test) {
-                                return true;
-                            }
+                            && is_control_variable(test)
+                        {
+                            return true;
+                        }
                     }
                 }
                 _ => {}
@@ -68,11 +69,8 @@ fn post_dominator_frontier(
     let mut visited = FxHashSet::default();
     let mut frontier = FxHashSet::default();
 
-    let all_blocks: Vec<BlockId> = target_post_dominators
-        .iter()
-        .copied()
-        .chain(std::iter::once(target_id))
-        .collect();
+    let all_blocks: Vec<BlockId> =
+        target_post_dominators.iter().copied().chain(std::iter::once(target_id)).collect();
 
     for block_id in all_blocks {
         if !visited.insert(block_id) {

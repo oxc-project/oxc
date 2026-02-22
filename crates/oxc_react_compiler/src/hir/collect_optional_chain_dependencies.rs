@@ -9,8 +9,8 @@
 use rustc_hash::FxHashMap;
 
 use super::hir_types::{
-    HIRFunction, IdentifierId, InstructionValue, Terminal,
-    DependencyPathEntry, ReactiveScopeDependency,
+    DependencyPathEntry, HIRFunction, IdentifierId, InstructionValue, ReactiveScopeDependency,
+    Terminal,
 };
 
 /// Result of optional chain dependency collection.

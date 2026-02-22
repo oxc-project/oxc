@@ -7,10 +7,8 @@
 use rustc_hash::FxHashMap;
 
 use crate::hir::{
-    HIRFunction, Instruction, InstructionValue, InstructionKind,
-    object_shape::{
-        BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID,
-    },
+    HIRFunction, Instruction, InstructionKind, InstructionValue,
+    object_shape::{BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID},
     types::{FunctionType, ObjectType, Type, TypeId, make_type, type_equals},
 };
 use oxc_syntax::operator::BinaryOperator;
@@ -139,7 +137,10 @@ fn generate_instruction_equations(instr: &Instruction, equations: &mut Vec<TypeE
     let lvalue_type = instr.lvalue.identifier.type_.clone();
 
     match &instr.value {
-        InstructionValue::Primitive(_) | InstructionValue::JsxText(_) => {
+        InstructionValue::Primitive(_)
+        | InstructionValue::JsxText(_)
+        | InstructionValue::UnaryExpression(_)
+        | InstructionValue::TemplateLiteral(_) => {
             equations.push(TypeEquation { left: lvalue_type, right: Type::Primitive });
         }
         InstructionValue::BinaryExpression(v) => {
@@ -147,20 +148,13 @@ fn generate_instruction_equations(instr: &Instruction, equations: &mut Vec<TypeE
                 equations.push(TypeEquation { left: lvalue_type, right: Type::Primitive });
             }
         }
-        InstructionValue::UnaryExpression(_) => {
-            equations.push(TypeEquation { left: lvalue_type, right: Type::Primitive });
-        }
         InstructionValue::LoadLocal(v) => {
-            equations.push(TypeEquation {
-                left: lvalue_type,
-                right: v.place.identifier.type_.clone(),
-            });
+            equations
+                .push(TypeEquation { left: lvalue_type, right: v.place.identifier.type_.clone() });
         }
         InstructionValue::LoadContext(v) => {
-            equations.push(TypeEquation {
-                left: lvalue_type,
-                right: v.place.identifier.type_.clone(),
-            });
+            equations
+                .push(TypeEquation { left: lvalue_type, right: v.place.identifier.type_.clone() });
         }
         InstructionValue::StoreLocal(v) => {
             equations.push(TypeEquation {
@@ -177,25 +171,19 @@ fn generate_instruction_equations(instr: &Instruction, equations: &mut Vec<TypeE
         InstructionValue::ObjectExpression(_) => {
             equations.push(TypeEquation {
                 left: lvalue_type,
-                right: Type::Object(ObjectType {
-                    shape_id: Some(BUILT_IN_OBJECT_ID.to_string()),
-                }),
+                right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_OBJECT_ID.to_string()) }),
             });
         }
         InstructionValue::ArrayExpression(_) => {
             equations.push(TypeEquation {
                 left: lvalue_type,
-                right: Type::Object(ObjectType {
-                    shape_id: Some(BUILT_IN_ARRAY_ID.to_string()),
-                }),
+                right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) }),
             });
         }
         InstructionValue::JsxExpression(_) | InstructionValue::JsxFragment(_) => {
             equations.push(TypeEquation {
                 left: lvalue_type,
-                right: Type::Object(ObjectType {
-                    shape_id: Some(BUILT_IN_JSX_ID.to_string()),
-                }),
+                right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_JSX_ID.to_string()) }),
             });
         }
         InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_) => {
@@ -214,14 +202,8 @@ fn generate_instruction_equations(instr: &Instruction, equations: &mut Vec<TypeE
                 right: Type::Object(ObjectType { shape_id: None }),
             });
         }
-        InstructionValue::TemplateLiteral(_) => {
-            equations.push(TypeEquation { left: lvalue_type, right: Type::Primitive });
-        }
         InstructionValue::TypeCastExpression(v) => {
-            equations.push(TypeEquation {
-                left: lvalue_type,
-                right: v.type_.clone(),
-            });
+            equations.push(TypeEquation { left: lvalue_type, right: v.type_.clone() });
         }
         _ => {
             // Many instruction values don't produce enough info for type equations

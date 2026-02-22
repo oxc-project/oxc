@@ -16,9 +16,7 @@
 /// ```
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use super::hir_types::{
-    BlockId, HIRFunction, IdentifierId, InstructionValue,
-};
+use super::hir_types::{BlockId, HIRFunction, IdentifierId, InstructionValue};
 
 /// Result of hoistable property load analysis.
 pub struct HoistablePropertyLoads {
@@ -76,10 +74,7 @@ pub fn collect_hoistable_property_loads(func: &HIRFunction) -> HoistableProperty
                 if let Some(pred_non_null) = non_null_by_block.get(&pred_id) {
                     intersection = Some(match intersection {
                         None => pred_non_null.clone(),
-                        Some(existing) => existing
-                            .intersection(pred_non_null)
-                            .copied()
-                            .collect(),
+                        Some(existing) => existing.intersection(pred_non_null).copied().collect(),
                     });
                 }
             }

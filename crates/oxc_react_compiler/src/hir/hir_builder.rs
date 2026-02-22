@@ -7,7 +7,7 @@
 /// (loops, switches, labels), and exception handling.
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::compiler_error::{CompilerError, SourceLocation, GENERATED_SOURCE};
+use crate::compiler_error::{CompilerError, GENERATED_SOURCE, SourceLocation};
 
 use super::{
     environment::Environment,
@@ -180,7 +180,7 @@ impl HirBuilder {
                 instructions,
                 terminal,
                 preds: FxHashSet::default(),
-                phis: FxHashSet::default(),
+                phis: Vec::new(),
             },
         );
 
@@ -194,7 +194,8 @@ impl HirBuilder {
     /// Terminate the current block with the given terminal, and set a previously
     /// reserved block as the new current block.
     pub fn terminate_with_continuation(&mut self, terminal: Terminal, continuation: WipBlock) {
-        let WipBlock { id, kind, instructions } = std::mem::replace(&mut self.current, continuation);
+        let WipBlock { id, kind, instructions } =
+            std::mem::replace(&mut self.current, continuation);
         self.completed.insert(
             id,
             BasicBlock {
@@ -203,7 +204,7 @@ impl HirBuilder {
                 instructions,
                 terminal,
                 preds: FxHashSet::default(),
-                phis: FxHashSet::default(),
+                phis: Vec::new(),
             },
         );
     }
@@ -224,7 +225,7 @@ impl HirBuilder {
                 instructions,
                 terminal,
                 preds: FxHashSet::default(),
-                phis: FxHashSet::default(),
+                phis: Vec::new(),
             },
         );
     }
@@ -243,7 +244,7 @@ impl HirBuilder {
                 instructions,
                 terminal,
                 preds: FxHashSet::default(),
-                phis: FxHashSet::default(),
+                phis: Vec::new(),
             },
         );
     }
@@ -338,9 +339,10 @@ impl HirBuilder {
     pub fn lookup_continue(&self, label: Option<&str>) -> Result<BlockId, CompilerError> {
         for scope in self.scopes.iter().rev() {
             if let Scope::Loop(s) = scope
-                && (label.is_none() || label == s.label.as_deref()) {
-                    return Ok(s.continue_block);
-                }
+                && (label.is_none() || label == s.label.as_deref())
+            {
+                return Ok(s.continue_block);
+            }
         }
         Err(CompilerError::invariant(
             "Expected a loop to be in scope for continue",
@@ -436,16 +438,17 @@ pub fn remove_unnecessary_try_catch(func: &mut Hir) {
         if should_convert {
             let block = func.blocks.get_mut(&block_id);
             if let Some(block) = block
-                && let Terminal::Try(ref t) = block.terminal {
-                    let target = t.block;
-                    let loc = t.loc;
-                    block.terminal = Terminal::Goto(super::hir_types::GotoTerminal {
-                        id: InstructionId(0),
-                        block: target,
-                        variant: GotoVariant::Break,
-                        loc,
-                    });
-                }
+                && let Terminal::Try(ref t) = block.terminal
+            {
+                let target = t.block;
+                let loc = t.loc;
+                block.terminal = Terminal::Goto(super::hir_types::GotoTerminal {
+                    id: InstructionId(0),
+                    block: target,
+                    variant: GotoVariant::Break,
+                    loc,
+                });
+            }
         }
     }
 }

@@ -142,24 +142,16 @@ pub enum CompilerSuggestion {
         text: String,
     },
     /// Remove operation (no replacement text needed).
-    Remove {
-        range: (u32, u32),
-        description: String,
-    },
+    Remove { range: (u32, u32), description: String },
 }
 
 /// Detail of a compiler diagnostic — either an error source or a hint.
 #[derive(Debug, Clone)]
 pub enum CompilerDiagnosticDetail {
     /// A/the source of the error
-    Error {
-        loc: Option<SourceLocation>,
-        message: Option<String>,
-    },
+    Error { loc: Option<SourceLocation>, message: Option<String> },
     /// A hint to help fix the error
-    Hint {
-        message: String,
-    },
+    Hint { message: String },
 }
 
 /// Options for creating a `CompilerDiagnostic`.
@@ -233,13 +225,10 @@ impl CompilerDiagnostic {
 
     /// Returns the primary source location from the first error detail.
     pub fn primary_location(&self) -> Option<SourceLocation> {
-        self.options
-            .details
-            .iter()
-            .find_map(|d| match d {
-                CompilerDiagnosticDetail::Error { loc, .. } => loc.as_ref().copied(),
-                CompilerDiagnosticDetail::Hint { .. } => None,
-            })
+        self.options.details.iter().find_map(|d| match d {
+            CompilerDiagnosticDetail::Error { loc, .. } => loc.as_ref().copied(),
+            CompilerDiagnosticDetail::Hint { .. } => None,
+        })
     }
 }
 
@@ -440,7 +429,11 @@ impl CompilerError {
     }
 
     /// Create a CompilerError for an invariant violation.
-    pub fn invariant(reason: &str, description: Option<&str>, loc: SourceLocation) -> CompilerError {
+    pub fn invariant(
+        reason: &str,
+        description: Option<&str>,
+        loc: SourceLocation,
+    ) -> CompilerError {
         let mut errors = CompilerError::new();
         errors.push_diagnostic(
             CompilerDiagnostic::create(
@@ -574,8 +567,7 @@ pub fn get_rule_for_category(category: ErrorCategory) -> LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "capitalized-calls",
-            description:
-                "Validates against calling capitalized functions/methods instead of using JSX",
+            description: "Validates against calling capitalized functions/methods instead of using JSX",
             preset: LintRulePreset::Off,
         },
         ErrorCategory::Config => LintRule {
@@ -596,8 +588,7 @@ pub fn get_rule_for_category(category: ErrorCategory) -> LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "exhaustive-effect-dependencies",
-            description:
-                "Validates that effect dependencies are exhaustive and without extraneous values",
+            description: "Validates that effect dependencies are exhaustive and without extraneous values",
             preset: LintRulePreset::Off,
         },
         ErrorCategory::EffectDerivationsOfState => LintRule {
@@ -618,8 +609,7 @@ pub fn get_rule_for_category(category: ErrorCategory) -> LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "error-boundaries",
-            description:
-                "Validates usage of error boundaries instead of try/catch for errors in child components",
+            description: "Validates usage of error boundaries instead of try/catch for errors in child components",
             preset: LintRulePreset::Recommended,
         },
         ErrorCategory::Fbt => LintRule {
@@ -640,8 +630,7 @@ pub fn get_rule_for_category(category: ErrorCategory) -> LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "globals",
-            description:
-                "Validates against assignment/mutation of globals during render",
+            description: "Validates against assignment/mutation of globals during render",
             preset: LintRulePreset::Recommended,
         },
         ErrorCategory::Hooks => LintRule {
@@ -655,8 +644,7 @@ pub fn get_rule_for_category(category: ErrorCategory) -> LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "immutability",
-            description:
-                "Validates against mutating props, state, and other values that are immutable",
+            description: "Validates against mutating props, state, and other values that are immutable",
             preset: LintRulePreset::Recommended,
         },
         ErrorCategory::Invariant => LintRule {
@@ -670,40 +658,35 @@ pub fn get_rule_for_category(category: ErrorCategory) -> LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "preserve-manual-memoization",
-            description:
-                "Validates that existing manual memoization is preserved by the compiler",
+            description: "Validates that existing manual memoization is preserved by the compiler",
             preset: LintRulePreset::Recommended,
         },
         ErrorCategory::Purity => LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "purity",
-            description:
-                "Validates that components/hooks are pure by checking that they do not call known-impure functions",
+            description: "Validates that components/hooks are pure by checking that they do not call known-impure functions",
             preset: LintRulePreset::Recommended,
         },
         ErrorCategory::Refs => LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "refs",
-            description:
-                "Validates correct usage of refs, not reading/writing during render",
+            description: "Validates correct usage of refs, not reading/writing during render",
             preset: LintRulePreset::Recommended,
         },
         ErrorCategory::RenderSetState => LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "set-state-in-render",
-            description:
-                "Validates against setting state during render",
+            description: "Validates against setting state during render",
             preset: LintRulePreset::Recommended,
         },
         ErrorCategory::StaticComponents => LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "static-components",
-            description:
-                "Validates that components are static, not recreated every render",
+            description: "Validates that components are static, not recreated every render",
             preset: LintRulePreset::Recommended,
         },
         ErrorCategory::Suppression => LintRule {
@@ -731,40 +714,35 @@ pub fn get_rule_for_category(category: ErrorCategory) -> LintRule {
             category,
             severity: ErrorSeverity::Warning,
             name: "unsupported-syntax",
-            description:
-                "Validates against syntax that we do not plan to support in React Compiler",
+            description: "Validates against syntax that we do not plan to support in React Compiler",
             preset: LintRulePreset::Recommended,
         },
         ErrorCategory::UseMemo => LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "use-memo",
-            description:
-                "Validates usage of the useMemo() hook against common mistakes",
+            description: "Validates usage of the useMemo() hook against common mistakes",
             preset: LintRulePreset::Recommended,
         },
         ErrorCategory::VoidUseMemo => LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "void-use-memo",
-            description:
-                "Validates that useMemos always return a value and that the result is used",
+            description: "Validates that useMemos always return a value and that the result is used",
             preset: LintRulePreset::RecommendedLatest,
         },
         ErrorCategory::MemoDependencies => LintRule {
             category,
             severity: ErrorSeverity::Error,
             name: "memo-dependencies",
-            description:
-                "Validates that useMemo() and useCallback() specify comprehensive dependencies",
+            description: "Validates that useMemo() and useCallback() specify comprehensive dependencies",
             preset: LintRulePreset::Off,
         },
         ErrorCategory::IncompatibleLibrary => LintRule {
             category,
             severity: ErrorSeverity::Warning,
             name: "incompatible-library",
-            description:
-                "Validates against usage of libraries which are incompatible with memoization",
+            description: "Validates against usage of libraries which are incompatible with memoization",
             preset: LintRulePreset::Recommended,
         },
     }

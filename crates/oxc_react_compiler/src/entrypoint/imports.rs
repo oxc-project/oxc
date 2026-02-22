@@ -43,7 +43,8 @@ impl ProgramContext {
 
         let specifiers = self.imports.entry(source).or_default();
         if !specifiers.iter().any(|s| s.imported == specifier) {
-            specifiers.push(ImportSpecifier { local: format!("_{specifier}"), imported: specifier });
+            specifiers
+                .push(ImportSpecifier { local: format!("_{specifier}"), imported: specifier });
         }
     }
 

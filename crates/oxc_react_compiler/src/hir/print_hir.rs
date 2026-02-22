@@ -1,11 +1,9 @@
-
 use crate::compiler_error::SourceLocation;
 
 use super::hir_types::{
-    ArrayExpressionElement, CallArg, GotoVariant, Hir, HIRFunction, Identifier,
-    IdentifierName, Instruction, InstructionValue, JsxAttribute, JsxTag,
-    ObjectPatternProperty, ObjectPropertyKey, Pattern, Place,
-    PrimitiveValueKind, ReactiveParam, Terminal,
+    ArrayExpressionElement, CallArg, GotoVariant, HIRFunction, Hir, Identifier, IdentifierName,
+    Instruction, InstructionValue, JsxAttribute, JsxTag, ObjectPatternProperty, ObjectPropertyKey,
+    Pattern, Place, PrimitiveValueKind, ReactiveParam, Terminal,
 };
 use super::types::Type;
 
@@ -355,7 +353,8 @@ pub fn print_instruction_value(value: &InstructionValue) -> String {
                     }
                 })
                 .collect();
-            let props_str = if props.is_empty() { String::new() } else { format!(" {}", props.join(" ")) };
+            let props_str =
+                if props.is_empty() { String::new() } else { format!(" {}", props.join(" ")) };
             if let Some(children) = &v.children {
                 let children_str: Vec<String> =
                     children.iter().map(|c| format!("{{{}}}", print_place(c))).collect();
@@ -424,15 +423,12 @@ pub fn print_place(place: &Place) -> String {
 
 /// Print an Identifier.
 pub fn print_identifier(id: &Identifier) -> String {
-    let name = print_name(&id.name);
-    let scope_str = id
-        .scope
-        .as_ref()
-        .map_or(String::new(), |s| format!("_@{}", s.id.0));
+    let name = print_name(id.name.as_ref());
+    let scope_str = id.scope.as_ref().map_or(String::new(), |s| format!("_@{}", s.id.0));
     format!("{name}${}{scope_str}", id.id.0)
 }
 
-fn print_name(name: &Option<IdentifierName>) -> String {
+fn print_name(name: Option<&IdentifierName>) -> String {
     match name {
         None => String::new(),
         Some(n) => n.value().to_string(),
@@ -459,7 +455,8 @@ pub fn print_type(ty: &Type) -> String {
         }
         Type::Function(func) if func.shape_id.is_some() => {
             let return_type = print_type(&func.return_type);
-            let ret = if return_type.is_empty() { String::new() } else { format!(":  {return_type}") };
+            let ret =
+                if return_type.is_empty() { String::new() } else { format!(":  {return_type}") };
             format!(":TFunction<{}>()){ret}", func.shape_id.as_ref().expect("checked"))
         }
         _ => format!(":T{}", ty.kind()),

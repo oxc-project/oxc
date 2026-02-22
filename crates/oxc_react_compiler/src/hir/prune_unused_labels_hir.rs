@@ -24,11 +24,13 @@ pub fn prune_unused_labels_hir(func: &mut HIRFunction) {
             if let (Some(next), Some(fallthrough)) = (next, fallthrough) {
                 // Check if the next block is a simple goto to the fallthrough
                 if let Terminal::Goto(goto) = &next.terminal
-                    && goto.variant == GotoVariant::Break && goto.block == fallthrough_id
-                        && next.kind == BlockKind::Block && fallthrough.kind == BlockKind::Block
-                    {
-                        merged.push((block_id, next_id, fallthrough_id));
-                    }
+                    && goto.variant == GotoVariant::Break
+                    && goto.block == fallthrough_id
+                    && next.kind == BlockKind::Block
+                    && fallthrough.kind == BlockKind::Block
+                {
+                    merged.push((block_id, next_id, fallthrough_id));
+                }
             }
         }
     }
@@ -39,15 +41,13 @@ pub fn prune_unused_labels_hir(func: &mut HIRFunction) {
         let label_id = rewrites.get(original_label_id).copied().unwrap_or(*original_label_id);
 
         // Get the instructions and terminal from next and fallthrough blocks
-        let next_instrs = func
+        let next_instrs =
+            func.body.blocks.get(next_id).map(|b| b.instructions.clone()).unwrap_or_default();
+        let fallthrough_data = func
             .body
             .blocks
-            .get(next_id)
-            .map(|b| b.instructions.clone())
-            .unwrap_or_default();
-        let fallthrough_data = func.body.blocks.get(fallthrough_id).map(|b| {
-            (b.instructions.clone(), b.terminal.clone())
-        });
+            .get(fallthrough_id)
+            .map(|b| (b.instructions.clone(), b.terminal.clone()));
 
         if let Some((ft_instrs, ft_terminal)) = fallthrough_data {
             if let Some(label) = func.body.blocks.get_mut(&label_id) {

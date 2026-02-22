@@ -5,9 +5,7 @@
 /// Provides substitution, mapping, and structural operations on Flood types.
 use rustc_hash::FxHashMap;
 
-use super::flood_types::{
-    ConcreteType, FloodType, Platform, TypeParameter, TypeParameterId,
-};
+use super::flood_types::{ConcreteType, FloodType, Platform, TypeParameter, TypeParameterId};
 
 /// Substitute type parameters with concrete type arguments.
 pub fn substitute(
@@ -20,22 +18,23 @@ pub fn substitute(
         subst_map.insert(param.id, arg.clone());
     }
 
-    let substituted = map_type(&|t: &FloodType| -> FloodType {
-        if let FloodType::Concrete { ty: ConcreteType::Generic { id, .. }, .. } = t
-            && let Some(substituted) = subst_map.get(id) {
+    let substituted = map_type(
+        &|t: &FloodType| -> FloodType {
+            if let FloodType::Concrete { ty: ConcreteType::Generic { id, .. }, .. } = t
+                && let Some(substituted) = subst_map.get(id)
+            {
                 return substituted.clone();
             }
-        t.clone()
-    }, ty);
+            t.clone()
+        },
+        ty,
+    );
 
     FloodType::Concrete { ty: substituted, platform: Platform::Universal }
 }
 
 /// Map a function over all sub-types of a concrete type.
-pub fn map_type(
-    f: &dyn Fn(&FloodType) -> FloodType,
-    ty: &ConcreteType,
-) -> ConcreteType {
+pub fn map_type(f: &dyn Fn(&FloodType) -> FloodType, ty: &ConcreteType) -> ConcreteType {
     match ty {
         ConcreteType::Number
         | ConcreteType::String
@@ -44,15 +43,9 @@ pub fn map_type(
         | ConcreteType::Mixed
         | ConcreteType::Enum => ty.clone(),
 
-        ConcreteType::Nullable(inner) => {
-            ConcreteType::Nullable(Box::new(f(inner)))
-        }
-        ConcreteType::Array { element } => {
-            ConcreteType::Array { element: Box::new(f(element)) }
-        }
-        ConcreteType::Set { element } => {
-            ConcreteType::Set { element: Box::new(f(element)) }
-        }
+        ConcreteType::Nullable(inner) => ConcreteType::Nullable(Box::new(f(inner))),
+        ConcreteType::Array { element } => ConcreteType::Array { element: Box::new(f(element)) },
+        ConcreteType::Set { element } => ConcreteType::Set { element: Box::new(f(element)) },
         ConcreteType::Map { key, value } => {
             ConcreteType::Map { key: Box::new(f(key)), value: Box::new(f(value)) }
         }
@@ -82,9 +75,7 @@ pub fn map_type(
             ConcreteType::Tuple { id: *id, members: new_members }
         }
         ConcreteType::Structural { id } => ConcreteType::Structural { id: *id },
-        ConcreteType::Union(types) => {
-            ConcreteType::Union(types.iter().map(f).collect())
-        }
+        ConcreteType::Union(types) => ConcreteType::Union(types.iter().map(f).collect()),
         ConcreteType::Intersection(types) => {
             ConcreteType::Intersection(types.iter().map(f).collect())
         }

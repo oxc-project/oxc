@@ -188,14 +188,16 @@ mod tests {
         reset_ids();
         let mut identifiers = DisjointSet::new();
         let ids = make_identifiers(&["x", "y", "z"]);
-        let (x, y, z) = (ids[0].clone(), ids[1].clone(), ids[2].clone());
+        let id_x = ids[0].clone();
+        let id_y = ids[1].clone();
+        let id_z = ids[2].clone();
 
-        identifiers.union(&[x.clone()]);
-        identifiers.union(&[y.clone(), x.clone()]);
+        identifiers.union(std::slice::from_ref(&id_x));
+        identifiers.union(&[id_y.clone(), id_x.clone()]);
 
-        assert_eq!(identifiers.find(&x), Some(y.clone()));
-        assert_eq!(identifiers.find(&y), Some(y.clone()));
-        assert_eq!(identifiers.find(&z), None);
+        assert_eq!(identifiers.find(&id_x), Some(id_y.clone()));
+        assert_eq!(identifiers.find(&id_y), Some(id_y.clone()));
+        assert_eq!(identifiers.find(&id_z), None);
     }
 
     #[test]
@@ -209,10 +211,11 @@ mod tests {
         reset_ids();
         let mut identifiers = DisjointSet::new();
         let ids = make_identifiers(&["x", "y", "z"]);
-        let (x, y) = (ids[0].clone(), ids[1].clone());
+        let id_x = ids[0].clone();
+        let id_y = ids[1].clone();
 
-        identifiers.union(&[x.clone()]);
-        identifiers.union(&[y.clone(), x.clone()]);
+        identifiers.union(std::slice::from_ref(&id_x));
+        identifiers.union(&[id_y, id_x]);
 
         assert_eq!(identifiers.size(), 2);
     }
@@ -222,35 +225,31 @@ mod tests {
         reset_ids();
         let mut identifiers = DisjointSet::new();
         let ids = make_identifiers(&["a", "b", "c", "x", "y", "z"]);
-        let (a, b, c, x, y, z) = (
-            ids[0].clone(),
-            ids[1].clone(),
-            ids[2].clone(),
-            ids[3].clone(),
-            ids[4].clone(),
-            ids[5].clone(),
-        );
+        let id_a = ids[0].clone();
+        let id_b = ids[1].clone();
+        let id_c = ids[2].clone();
+        let id_x = ids[3].clone();
+        let id_y = ids[4].clone();
+        let id_z = ids[5].clone();
 
-        identifiers.union(&[a.clone()]);
-        identifiers.union(&[b.clone(), a.clone()]);
-        identifiers.union(&[c.clone(), b.clone()]);
+        identifiers.union(std::slice::from_ref(&id_a));
+        identifiers.union(&[id_b.clone(), id_a.clone()]);
+        identifiers.union(&[id_c.clone(), id_b.clone()]);
 
-        identifiers.union(&[x.clone()]);
-        identifiers.union(&[y.clone(), x.clone()]);
-        identifiers.union(&[z.clone(), y.clone()]);
-        identifiers.union(&[x.clone(), z.clone()]);
+        identifiers.union(std::slice::from_ref(&id_x));
+        identifiers.union(&[id_y.clone(), id_x.clone()]);
+        identifiers.union(&[id_z.clone(), id_y.clone()]);
+        identifiers.union(&[id_x.clone(), id_z.clone()]);
 
         let sets = identifiers.build_sets();
         assert_eq!(sets.len(), 2);
 
         // Verify one set contains {a, b, c} and the other {x, y, z}
-        let set_abc: FxHashSet<TestIdentifier> =
-            [a.clone(), b.clone(), c.clone()].into_iter().collect();
-        let set_xyz: FxHashSet<TestIdentifier> =
-            [x.clone(), y.clone(), z.clone()].into_iter().collect();
+        let set_abc: FxHashSet<TestIdentifier> = [id_a, id_b, id_c].into_iter().collect();
+        let set_xyz: FxHashSet<TestIdentifier> = [id_x, id_y, id_z].into_iter().collect();
 
-        let found_abc = sets.iter().any(|s| *s == set_abc);
-        let found_xyz = sets.iter().any(|s| *s == set_xyz);
+        let found_abc = sets.contains(&set_abc);
+        let found_xyz = sets.contains(&set_xyz);
         assert!(found_abc, "Expected to find set {{a, b, c}}");
         assert!(found_xyz, "Expected to find set {{x, y, z}}");
     }
@@ -261,15 +260,17 @@ mod tests {
         reset_ids();
         let mut identifiers = DisjointSet::new();
         let ids = make_identifiers(&["x", "y", "z"]);
-        let (x, y, z) = (ids[0].clone(), ids[1].clone(), ids[2].clone());
+        let id_x = ids[0].clone();
+        let id_y = ids[1].clone();
+        let id_z = ids[2].clone();
 
-        identifiers.union(&[x.clone()]);
-        identifiers.union(&[y.clone(), x.clone()]);
-        identifiers.union(&[z.clone(), y.clone()]);
-        identifiers.union(&[x.clone(), z.clone()]);
+        identifiers.union(std::slice::from_ref(&id_x));
+        identifiers.union(&[id_y.clone(), id_x.clone()]);
+        identifiers.union(&[id_z.clone(), id_y]);
+        identifiers.union(&[id_x, id_z.clone()]);
 
         identifiers.for_each(|_, group| {
-            assert_eq!(group, &z);
+            assert_eq!(group, &id_z);
         });
     }
 }

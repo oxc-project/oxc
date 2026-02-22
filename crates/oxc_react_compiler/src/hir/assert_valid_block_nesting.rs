@@ -4,17 +4,11 @@
 ///
 /// Validates that scope and pruned-scope terminals are properly nested —
 /// no scope should overlap with another scope without one containing the other.
-use crate::{
-    compiler_error::CompilerError,
-    hir::{BlockId, HIRFunction, Terminal},
-};
+use crate::hir::{BlockId, HIRFunction, Terminal};
 use rustc_hash::FxHashSet;
 
 /// Validate that block nesting is well-formed.
-///
-/// # Errors
-/// Returns a `CompilerError` if block nesting is invalid.
-pub fn assert_valid_block_nesting(func: &HIRFunction) -> Result<(), CompilerError> {
+pub fn assert_valid_block_nesting(func: &HIRFunction) {
     let mut scope_stack: Vec<BlockId> = Vec::new();
     let mut visited: FxHashSet<BlockId> = FxHashSet::default();
 
@@ -38,6 +32,4 @@ pub fn assert_valid_block_nesting(func: &HIRFunction) -> Result<(), CompilerErro
         // Check if this block is a scope fallthrough — pop the scope
         scope_stack.retain(|&fallthrough| fallthrough != block_id);
     }
-
-    Ok(())
 }

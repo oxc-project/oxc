@@ -13,19 +13,19 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
-    BlockId, HIRFunction, Identifier, IdentifierId, InstructionValue, Place,
-    visitors::{
-        each_instruction_lvalue, each_instruction_value_operand, each_terminal_operand,
-    },
+    BlockId, HIRFunction, Identifier, IdentifierId, InstructionValue,
+    visitors::{map_instruction_lvalues, map_instruction_operands, map_terminal_operands},
 };
 
 /// Eliminate redundant phi nodes from the function's HIR.
-pub fn eliminate_redundant_phi(
+pub(crate) fn eliminate_redundant_phi(
     func: &mut HIRFunction,
     shared_rewrites: Option<&mut FxHashMap<IdentifierId, Identifier>>,
 ) {
     let mut owned_rewrites;
-    let rewrites: &mut FxHashMap<IdentifierId, Identifier> = if let Some(r) = shared_rewrites { r } else {
+    let rewrites: &mut FxHashMap<IdentifierId, Identifier> = if let Some(r) = shared_rewrites {
+        r
+    } else {
         owned_rewrites = FxHashMap::default();
         &mut owned_rewrites
     };
@@ -40,7 +40,7 @@ pub fn eliminate_redundant_phi(
     loop {
         let block_ids: Vec<BlockId> = ir.blocks.keys().copied().collect();
         for block_id in &block_ids {
-            let Some(block) = ir.blocks.get(block_id) else { continue };
+            let Some(block) = ir.blocks.get_mut(block_id) else { continue };
 
             // On the first iteration, check for back-edges
             if !has_back_edge {
@@ -52,14 +52,48 @@ pub fn eliminate_redundant_phi(
             }
             visited.insert(*block_id);
 
-            // Find redundant phis
-            // We need to collect phi IDs to process since we can't mutably borrow block while iterating
-            let _phi_ids: Vec<u32> = block.phis.iter().copied().collect();
-            // Note: In the TS version, phis are full Phi objects stored in a Set.
-            // In our Rust port, phis is a FxHashSet<PhiId> where PhiId = u32.
-            // The actual Phi data would need to be stored separately.
-            // For now, this is a structural placeholder.
-            // Phi processing handled in full implementation
+            // Find redundant phis: drain all phis, process them, put back non-redundant ones
+            let phis = std::mem::take(&mut block.phis);
+            let mut kept_phis = Vec::with_capacity(phis.len());
+            'phis: for mut phi in phis {
+                // Rewrite phi operands using current rewrites
+                for operand in phi.operands.values_mut() {
+                    rewrite_place_id(operand, rewrites);
+                }
+
+                // Find if the phi can be eliminated: look for a single unique
+                // non-self-referential operand
+                let phi_output_id = phi.place.identifier.id;
+                let mut same: Option<&Identifier> = None;
+                for operand in phi.operands.values() {
+                    let op_id = operand.identifier.id;
+                    if op_id == phi_output_id {
+                        // Operand is the phi itself, skip
+                        continue;
+                    }
+                    if let Some(s) = same {
+                        if op_id == s.id {
+                            // Same as the previous non-phi operand, skip
+                            continue;
+                        }
+                        // Multiple distinct non-self operands: phi is NOT redundant
+                        kept_phis.push(phi);
+                        continue 'phis;
+                    }
+                    same = Some(&operand.identifier);
+                }
+
+                // If `same` is Some, the phi is redundant
+                if let Some(same_ident) = same {
+                    let same_cloned = same_ident.clone();
+                    rewrites.insert(phi_output_id, same_cloned);
+                    // Do NOT push phi back: it's been eliminated
+                } else {
+                    // All operands were self-referential or phi was empty; keep it
+                    kept_phis.push(phi);
+                }
+            }
+            block.phis = kept_phis;
         }
 
         // Rewrite instruction lvalues and operands
@@ -68,24 +102,26 @@ pub fn eliminate_redundant_phi(
 
             for instr in &mut block.instructions {
                 // Rewrite lvalues
-                for place in each_instruction_lvalue(instr) {
-                    rewrite_place_id(place, rewrites);
-                }
+                map_instruction_lvalues(instr, &mut |mut place| {
+                    rewrite_place_id(&mut place, rewrites);
+                    place
+                });
                 // Rewrite operands
-                for place in each_instruction_value_operand(&instr.value) {
-                    rewrite_place_id(place, rewrites);
-                }
+                map_instruction_operands(instr, &mut |mut place| {
+                    rewrite_place_id(&mut place, rewrites);
+                    place
+                });
 
                 // Recursively handle nested functions
                 match &mut instr.value {
                     InstructionValue::FunctionExpression(v) => {
-                        for ctx_place in &v.lowered_func.func.context {
+                        for ctx_place in &mut v.lowered_func.func.context {
                             rewrite_place_id(ctx_place, rewrites);
                         }
                         eliminate_redundant_phi(&mut v.lowered_func.func, Some(rewrites));
                     }
                     InstructionValue::ObjectMethod(v) => {
-                        for ctx_place in &v.lowered_func.func.context {
+                        for ctx_place in &mut v.lowered_func.func.context {
                             rewrite_place_id(ctx_place, rewrites);
                         }
                         eliminate_redundant_phi(&mut v.lowered_func.func, Some(rewrites));
@@ -95,9 +131,10 @@ pub fn eliminate_redundant_phi(
             }
 
             // Rewrite terminal operands
-            for place in each_terminal_operand(&block.terminal) {
-                rewrite_place_id(place, rewrites);
-            }
+            map_terminal_operands(&mut block.terminal, &mut |mut place| {
+                rewrite_place_id(&mut place, rewrites);
+                place
+            });
         }
 
         // Only loop if there were new rewrites and the CFG has loops
@@ -109,12 +146,8 @@ pub fn eliminate_redundant_phi(
 }
 
 /// Rewrite a place's identifier if it has a mapping in the rewrites table.
-fn rewrite_place_id(place: &Place, rewrites: &FxHashMap<IdentifierId, Identifier>) {
-    if let Some(_rewrite) = rewrites.get(&place.identifier.id) {
-        // In the TS version, this mutates place.identifier directly.
-        // In Rust, we need interior mutability or to restructure.
-        // For now, this is a read-only check; the actual rewriting
-        // is done through the mutable mapping functions in the main loop.
-        // Place rewriting handled through mutable mapping in main loop
+fn rewrite_place_id(place: &mut crate::hir::Place, rewrites: &FxHashMap<IdentifierId, Identifier>) {
+    if let Some(rewrite) = rewrites.get(&place.identifier.id) {
+        place.identifier = rewrite.clone();
     }
 }

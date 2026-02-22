@@ -19,14 +19,17 @@ pub fn optimize_props_method_calls(func: &mut HIRFunction) {
         let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
         for instr in &mut block.instructions {
             if let InstructionValue::MethodCall(method) = &instr.value
-                && is_props_type(&method.receiver.identifier.type_) {
-                    let callee = method.property.clone();
-                    let args = method.args.clone();
-                    let loc = method.loc;
-                    instr.value = InstructionValue::CallExpression(
-                        crate::hir::CallExpression { callee, args, loc },
-                    );
-                }
+                && is_props_type(&method.receiver.identifier.type_)
+            {
+                let callee = method.property.clone();
+                let args = method.args.clone();
+                let loc = method.loc;
+                instr.value = InstructionValue::CallExpression(crate::hir::CallExpression {
+                    callee,
+                    args,
+                    loc,
+                });
+            }
         }
     }
 }

@@ -1,28 +1,22 @@
 /// Unit tests ported from the original React Compiler test suite.
 ///
 /// Ports of:
-/// - `__tests__/Result-test.ts` — tests for Result type (Rust native)
-/// - `__tests__/envConfig-test.ts` — tests for environment config validation
-/// - `__tests__/Logger-test.ts` — tests for compilation logging
-
-// =====================================================================================
-// Result-test.ts port
-// =====================================================================================
-// The TS version tests a custom Result class. In Rust, we use the native Result type.
-// We test that our CompilerError integrates correctly with Result.
-
+/// - `__tests__/Result-test.ts` -- tests for Result type (Rust native)
+/// - `__tests__/envConfig-test.ts` -- tests for environment config validation
+/// - `__tests__/Logger-test.ts` -- tests for compilation logging
 mod result_tests {
-    use oxc_react_compiler::compiler_error::{
-        CompilerError, CompilerDiagnostic, ErrorCategory, ErrorSeverity,
-    };
+    // Result-test.ts port
+    // The TS version tests a custom Result class. In Rust, we use the native Result type.
+    // We test that our CompilerError integrates correctly with Result.
+    use oxc_react_compiler::compiler_error::{CompilerDiagnostic, CompilerError, ErrorCategory};
 
     fn add_max_10(a: i32, b: i32) -> Result<i32, String> {
         let n = a + b;
         if n > 10 { Err(format!("{n} is too high")) } else { Ok(n) }
     }
 
-    fn only_foo(foo: &str) -> Result<String, String> {
-        if foo == "foo" { Ok(foo.to_string()) } else { Err(foo.to_string()) }
+    fn only_target(input: &str) -> Result<String, String> {
+        if input == "foo" { Ok(input.to_string()) } else { Err(input.to_string()) }
     }
 
     #[test]
@@ -33,10 +27,7 @@ mod result_tests {
 
     #[test]
     fn result_map_err() {
-        assert_eq!(
-            add_max_10(1, 1).map_err(|e| format!("not a number: {e}")),
-            Ok(2)
-        );
+        assert_eq!(add_max_10(1, 1).map_err(|e| format!("not a number: {e}")), Ok(2));
         assert_eq!(
             add_max_10(10, 10).map_err(|e| format!("couldn't add: {e}")),
             Err("couldn't add: 20 is too high".to_string())
@@ -45,20 +36,20 @@ mod result_tests {
 
     #[test]
     fn result_map_or() {
-        assert_eq!(only_foo("foo").map_or(42, |v| v.len()), 3);
-        assert_eq!(only_foo("bar").map_or(42, |v| v.len()), 42);
+        assert_eq!(only_target("foo").map_or(42, |v| v.len()), 3);
+        assert_eq!(only_target("bar").map_or(42, |v| v.len()), 42);
     }
 
     #[test]
     fn result_map_or_else() {
-        assert_eq!(only_foo("foo").map_or_else(|_| 42, |v| v.len()), 3);
-        assert_eq!(only_foo("bar").map_or_else(|_| 42, |v| v.len()), 42);
+        assert_eq!(only_target("foo").map_or_else(|_| 42, |v| v.len()), 3);
+        assert_eq!(only_target("bar").map_or_else(|_| 42, |v| v.len()), 42);
     }
 
     #[test]
     fn result_and_then() {
-        assert_eq!(add_max_10(1, 1).and_then(|n| Ok(n * 2)), Ok(4));
-        assert!(add_max_10(10, 10).and_then(|n| Ok(n * 2)).is_err());
+        assert_eq!(add_max_10(1, 1).map(|n| n * 2), Ok(4));
+        assert!(add_max_10(10, 10).map(|n| n * 2).is_err());
     }
 
     #[test]
@@ -84,12 +75,12 @@ mod result_tests {
 
     #[test]
     fn result_or_else() {
+        fn manual_uppercase(s: &str) -> String {
+            s.chars().map(|c| c.to_ascii_uppercase()).collect()
+        }
+        assert_eq!(add_max_10(1, 1).map_err(|s| manual_uppercase(&s)), Ok(2));
         assert_eq!(
-            add_max_10(1, 1).or_else(|s| Err::<i32, _>(s.to_uppercase())),
-            Ok(2)
-        );
-        assert_eq!(
-            add_max_10(10, 10).or_else(|s| Err::<i32, _>(s.to_uppercase())),
+            add_max_10(10, 10).map_err(|s| manual_uppercase(&s)),
             Err("20 IS TOO HIGH".to_string())
         );
     }
@@ -97,8 +88,8 @@ mod result_tests {
     #[test]
     fn result_is_ok_is_err() {
         assert!(add_max_10(1, 1).is_ok());
-        assert!(!add_max_10(10, 10).is_ok());
-        assert!(!add_max_10(1, 1).is_err());
+        assert!(add_max_10(10, 10).is_err());
+        assert!(add_max_10(1, 1).is_ok());
         assert!(add_max_10(10, 10).is_err());
     }
 
@@ -110,8 +101,8 @@ mod result_tests {
 
     #[test]
     fn result_unwrap_or_else() {
-        assert_eq!(add_max_10(1, 1).unwrap_or_else(|_| 4), 2);
-        assert_eq!(add_max_10(10, 10).unwrap_or_else(|s| s.len() as i32), 14);
+        assert_eq!(add_max_10(1, 1).unwrap_or(4), 2);
+        assert_eq!(add_max_10(10, 10).unwrap_or_else(|s| i32::try_from(s.len()).unwrap()), 14);
     }
 
     // Test CompilerError's Result integration
@@ -176,8 +167,8 @@ mod result_tests {
 
 mod env_config_tests {
     use oxc_react_compiler::hir::environment::{
-        validate_environment_config, EnvironmentConfig, HookConfig, InstrumentationConfig,
-        ExternalFunction,
+        EnvironmentConfig, ExternalFunction, HookConfig, InstrumentationConfig,
+        validate_environment_config,
     };
     use oxc_react_compiler::hir::{Effect, ValueKind};
 
@@ -271,31 +262,19 @@ mod logger_tests {
 
     #[test]
     fn should_compile_component() {
-        let result = should_compile_function(
-            Some("Component"),
-            &[],
-            CompilationMode::Infer,
-        );
+        let result = should_compile_function(Some("Component"), &[], CompilationMode::Infer);
         assert_eq!(result, Some(ReactFunctionType::Component));
     }
 
     #[test]
     fn should_compile_hook() {
-        let result = should_compile_function(
-            Some("useMyHook"),
-            &[],
-            CompilationMode::Infer,
-        );
+        let result = should_compile_function(Some("useMyHook"), &[], CompilationMode::Infer);
         assert_eq!(result, Some(ReactFunctionType::Hook));
     }
 
     #[test]
     fn should_not_compile_regular_function() {
-        let result = should_compile_function(
-            Some("helper"),
-            &[],
-            CompilationMode::Infer,
-        );
+        let result = should_compile_function(Some("helper"), &[], CompilationMode::Infer);
         assert_eq!(result, None);
     }
 
@@ -321,11 +300,7 @@ mod logger_tests {
 
     #[test]
     fn annotation_mode_requires_directive() {
-        let result = should_compile_function(
-            Some("Component"),
-            &[],
-            CompilationMode::Annotation,
-        );
+        let result = should_compile_function(Some("Component"), &[], CompilationMode::Annotation);
         assert_eq!(result, None);
 
         let result = should_compile_function(
@@ -338,11 +313,7 @@ mod logger_tests {
 
     #[test]
     fn all_mode_compiles_everything() {
-        let result = should_compile_function(
-            Some("helper"),
-            &[],
-            CompilationMode::All,
-        );
+        let result = should_compile_function(Some("helper"), &[], CompilationMode::All);
         assert!(result.is_some());
     }
 
@@ -354,11 +325,7 @@ mod logger_tests {
 
         // Check that all rule names follow the pattern [a-z]+(-[a-z]+)*
         for rule in &rules {
-            assert!(
-                !rule.name.is_empty(),
-                "Empty rule name for category {:?}",
-                rule.category
-            );
+            assert!(!rule.name.is_empty(), "Empty rule name for category {:?}", rule.category);
             assert!(
                 rule.name.chars().all(|c| c.is_ascii_lowercase() || c == '-'),
                 "Invalid rule name: '{}' for category {:?}",

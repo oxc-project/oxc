@@ -6,9 +6,7 @@
 use rustc_hash::FxHashMap;
 
 use crate::{
-    compiler_error::{
-        CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
-    },
+    compiler_error::{CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory},
     hir::{HIRFunction, IdentifierId, InstructionValue},
 };
 
@@ -21,7 +19,8 @@ pub fn validate_no_capitalized_calls(func: &HIRFunction) -> Result<(), CompilerE
     let mut capital_load_globals: FxHashMap<IdentifierId, String> = FxHashMap::default();
     let mut capitalized_properties: FxHashMap<IdentifierId, String> = FxHashMap::default();
 
-    let reason = "Capitalized functions are reserved for components, which must be invoked with JSX";
+    let reason =
+        "Capitalized functions are reserved for components, which must be invoked with JSX";
 
     for block in func.body.blocks.values() {
         for instr in &block.instructions {
@@ -36,9 +35,7 @@ pub fn validate_no_capitalized_calls(func: &HIRFunction) -> Result<(), CompilerE
                     }
                 }
                 InstructionValue::CallExpression(v) => {
-                    if let Some(callee_name) =
-                        capital_load_globals.get(&v.callee.identifier.id)
-                    {
+                    if let Some(callee_name) = capital_load_globals.get(&v.callee.identifier.id) {
                         errors.push_diagnostic(
                             CompilerDiagnostic::create(
                                 ErrorCategory::CapitalizedCalls,
@@ -46,24 +43,23 @@ pub fn validate_no_capitalized_calls(func: &HIRFunction) -> Result<(), CompilerE
                                 Some(format!("{callee_name} may be a component")),
                                 None,
                             )
-                            .with_detail(CompilerDiagnosticDetail::Error {
-                                loc: Some(v.loc),
-                                message: Some(format!("{callee_name} called as function")),
-                            }),
+                            .with_detail(
+                                CompilerDiagnosticDetail::Error {
+                                    loc: Some(v.loc),
+                                    message: Some(format!("{callee_name} called as function")),
+                                },
+                            ),
                         );
                     }
                 }
                 InstructionValue::PropertyLoad(v) => {
                     let prop_str = v.property.to_string();
                     if prop_str.starts_with(|c: char| c.is_ascii_uppercase()) {
-                        capitalized_properties
-                            .insert(instr.lvalue.identifier.id, prop_str);
+                        capitalized_properties.insert(instr.lvalue.identifier.id, prop_str);
                     }
                 }
                 InstructionValue::MethodCall(v) => {
-                    if let Some(prop_name) =
-                        capitalized_properties.get(&v.property.identifier.id)
-                    {
+                    if let Some(prop_name) = capitalized_properties.get(&v.property.identifier.id) {
                         errors.push_diagnostic(
                             CompilerDiagnostic::create(
                                 ErrorCategory::CapitalizedCalls,
@@ -71,10 +67,12 @@ pub fn validate_no_capitalized_calls(func: &HIRFunction) -> Result<(), CompilerE
                                 Some(format!("{prop_name} may be a component")),
                                 None,
                             )
-                            .with_detail(CompilerDiagnosticDetail::Error {
-                                loc: Some(v.loc),
-                                message: Some(format!("{prop_name} called as method")),
-                            }),
+                            .with_detail(
+                                CompilerDiagnosticDetail::Error {
+                                    loc: Some(v.loc),
+                                    message: Some(format!("{prop_name} called as method")),
+                                },
+                            ),
                         );
                     }
                 }

@@ -7,7 +7,6 @@
 /// from within the inner function.
 use rustc_hash::FxHashSet;
 
-
 /// A set of identifiers that are captured by inner functions.
 pub type ContextIdentifiers = FxHashSet<String>;
 

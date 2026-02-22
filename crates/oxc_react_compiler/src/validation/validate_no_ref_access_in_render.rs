@@ -8,13 +8,11 @@
 use rustc_hash::FxHashSet;
 
 use crate::{
-    compiler_error::{
-        CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory,
-    },
+    compiler_error::{CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory},
     hir::{
         HIRFunction, IdentifierId, InstructionValue,
-        types::{ObjectType, Type},
         object_shape::BUILT_IN_USE_REF_ID,
+        types::{ObjectType, Type},
     },
 };
 
@@ -36,30 +34,35 @@ pub fn validate_no_ref_access_in_render(func: &HIRFunction) -> Result<(), Compil
 
             // Track .current access on refs
             if let InstructionValue::PropertyLoad(v) = &instr.value
-                && ref_ids.contains(&v.object.identifier.id) {
-                    let prop = v.property.to_string();
-                    if prop == "current" {
-                        ref_value_ids.insert(instr.lvalue.identifier.id);
-                    }
+                && ref_ids.contains(&v.object.identifier.id)
+            {
+                let prop = v.property.to_string();
+                if prop == "current" {
+                    ref_value_ids.insert(instr.lvalue.identifier.id);
                 }
+            }
 
             // Check for reads of ref.current values during render
             if let InstructionValue::LoadLocal(v) = &instr.value
-                && ref_value_ids.contains(&v.place.identifier.id) {
-                    errors.push_diagnostic(
-                        CompilerDiagnostic::create(
-                            ErrorCategory::Refs,
-                            "Ref values (the `current` property) may not be accessed during render"
+                && ref_value_ids.contains(&v.place.identifier.id)
+            {
+                errors.push_diagnostic(
+                    CompilerDiagnostic::create(
+                        ErrorCategory::Refs,
+                        "Ref values (the `current` property) may not be accessed during render"
+                            .to_string(),
+                        Some(
+                            "Reading a ref during render breaks React's rendering model"
                                 .to_string(),
-                            Some("Reading a ref during render breaks React's rendering model".to_string()),
-                            None,
-                        )
-                        .with_detail(CompilerDiagnosticDetail::Error {
-                            loc: Some(v.loc),
-                            message: Some("ref.current accessed during render".to_string()),
-                        }),
-                    );
-                }
+                        ),
+                        None,
+                    )
+                    .with_detail(CompilerDiagnosticDetail::Error {
+                        loc: Some(v.loc),
+                        message: Some("ref.current accessed during render".to_string()),
+                    }),
+                );
+            }
         }
     }
 

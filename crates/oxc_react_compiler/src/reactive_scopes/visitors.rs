@@ -4,8 +4,8 @@
 ///
 /// Provides traversal and transformation patterns for the reactive function tree.
 use crate::hir::{
-    ReactiveBlock, ReactiveFunction, ReactiveInstruction, ReactiveStatement,
-    ReactiveTerminal, ReactiveTerminalStatement,
+    ReactiveBlock, ReactiveFunction, ReactiveInstruction, ReactiveStatement, ReactiveTerminal,
+    ReactiveTerminalStatement,
 };
 
 /// Visit all statements in a reactive block.
@@ -95,10 +95,7 @@ pub fn visit_reactive_function(func: &ReactiveFunction, visitor: &mut impl React
 }
 
 /// Mutable transform of a reactive block — allows replacing statements.
-pub fn transform_reactive_block(
-    block: &mut ReactiveBlock,
-    transform: &mut impl ReactiveTransform,
-) {
+pub fn transform_reactive_block(block: &mut ReactiveBlock, transform: &mut impl ReactiveTransform) {
     let mut i = 0;
     while i < block.len() {
         let result = transform.transform_statement(&block[i]);

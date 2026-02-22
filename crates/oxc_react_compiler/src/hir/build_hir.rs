@@ -1,11 +1,11 @@
-
 use oxc_ast::ast;
 use oxc_span::Span;
 
 use crate::{
-    compiler_error::{CompilerError, SourceLocation, GENERATED_SOURCE},
+    compiler_error::{CompilerError, GENERATED_SOURCE, SourceLocation},
     hir::{
-        GotoVariant, HIRFunction, Instruction, InstructionId, InstructionValue, PrimitiveValue, PrimitiveValueKind, ReactFunctionType, Terminal,
+        GotoVariant, HIRFunction, Instruction, InstructionId, InstructionValue, PrimitiveValue,
+        PrimitiveValueKind, ReactFunctionType, Terminal,
         environment::Environment,
         hir_builder::{HirBuilder, create_temporary_place},
     },
@@ -15,10 +15,7 @@ use crate::{
 ///
 /// # Errors
 /// Returns a `CompilerError` if lowering fails due to unsupported syntax.
-pub fn lower(
-    env: &Environment,
-    fn_type: ReactFunctionType,
-) -> Result<HIRFunction, CompilerError> {
+pub fn lower(env: &Environment, fn_type: ReactFunctionType) -> Result<HIRFunction, CompilerError> {
     let mut builder = HirBuilder::new(env.clone(), None);
 
     // Build a minimal HIR function
@@ -45,6 +42,7 @@ pub fn lower(
         id: None,
         name_hint: None,
         fn_type,
+        env: env.clone(),
         params: Vec::new(),
         returns: return_place,
         context: Vec::new(),
@@ -52,6 +50,7 @@ pub fn lower(
         generator: false,
         is_async: false,
         directives: Vec::new(),
+        aliasing_effects: None,
     })
 }
 
@@ -156,6 +155,7 @@ pub fn lower_statement(
                 value: InstructionValue::Debugger(crate::hir::DebuggerValue {
                     loc: GENERATED_SOURCE,
                 }),
+                effects: None,
                 loc: GENERATED_SOURCE,
             });
         }
@@ -191,6 +191,7 @@ pub fn lower_expression(
                 id: InstructionId(0),
                 lvalue: lvalue.clone(),
                 value: lower_number(*value, loc),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -202,6 +203,7 @@ pub fn lower_expression(
                 id: InstructionId(0),
                 lvalue: lvalue.clone(),
                 value: lower_string(value.clone(), loc),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -213,6 +215,7 @@ pub fn lower_expression(
                 id: InstructionId(0),
                 lvalue: lvalue.clone(),
                 value: lower_boolean(*value, loc),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -224,6 +227,7 @@ pub fn lower_expression(
                 id: InstructionId(0),
                 lvalue: lvalue.clone(),
                 value: lower_null(loc),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -235,6 +239,7 @@ pub fn lower_expression(
                 id: InstructionId(0),
                 lvalue: lvalue.clone(),
                 value: lower_undefined(loc),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -249,6 +254,7 @@ pub fn lower_expression(
                     elements: Vec::new(), // Elements would be lowered recursively
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -263,6 +269,7 @@ pub fn lower_expression(
                     properties: Vec::new(), // Properties would be lowered recursively
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -281,6 +288,7 @@ pub fn lower_expression(
                     right: right_result.place,
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -297,6 +305,7 @@ pub fn lower_expression(
                     value: arg_result.place,
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -318,6 +327,7 @@ pub fn lower_expression(
                     args,
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -339,6 +349,7 @@ pub fn lower_expression(
                     args,
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -355,6 +366,7 @@ pub fn lower_expression(
                     property: crate::hir::types::PropertyLiteral::String(property.clone()),
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -372,6 +384,7 @@ pub fn lower_expression(
                     property: prop_result.place,
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -387,6 +400,7 @@ pub fn lower_expression(
                     value: arg_result.place,
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -402,6 +416,7 @@ pub fn lower_expression(
                     flags: flags.clone(),
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -429,6 +444,7 @@ pub fn lower_expression(
                     quasis: quasi_values,
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -443,6 +459,7 @@ pub fn lower_expression(
                     binding: crate::hir::NonLocalBinding::Global { name: name.clone() },
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -459,6 +476,7 @@ pub fn lower_expression(
                     binding: crate::hir::NonLocalBinding::Global { name: name.clone() },
                     loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -500,6 +518,7 @@ pub fn lower_expression(
                     opening_loc: loc,
                     closing_loc: loc,
                 }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -514,6 +533,7 @@ pub fn lower_expression(
                 id: InstructionId(0),
                 lvalue: lvalue.clone(),
                 value: InstructionValue::UnsupportedNode(crate::hir::UnsupportedNode { loc }),
+                effects: None,
                 loc,
             });
             Ok(ExpressionResult { place: lvalue })
@@ -530,8 +550,16 @@ pub enum LowerableExpression {
     BooleanLiteral(bool, Span),
     NullLiteral(Span),
     Undefined(Span),
-    RegExpLiteral { pattern: String, flags: String, span: Span },
-    TemplateLiteral { quasis: Vec<(String, Option<String>)>, expressions: Vec<LowerableExpression>, span: Span },
+    RegExpLiteral {
+        pattern: String,
+        flags: String,
+        span: Span,
+    },
+    TemplateLiteral {
+        quasis: Vec<(String, Option<String>)>,
+        expressions: Vec<LowerableExpression>,
+        span: Span,
+    },
 
     // Compound expressions
     ArrayExpression(Vec<LowerableExpression>, Span),

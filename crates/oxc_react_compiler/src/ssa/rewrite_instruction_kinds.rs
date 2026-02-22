@@ -14,8 +14,7 @@ use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE},
     hir::{
         BlockKind, DeclarationId, HIRFunction, InstructionKind, InstructionValue, Place,
-        ReactiveParam,
-        visitors::each_pattern_operand,
+        ReactiveParam, visitors::each_pattern_operand,
     },
 };
 
