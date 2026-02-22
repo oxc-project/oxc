@@ -5,10 +5,10 @@
 /// The `Environment` holds all compilation context and configuration,
 /// including shape registries, global definitions, and feature flags.
 /// `EnvironmentConfig` defines all the knobs for controlling compiler behavior.
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::{
-    hir_types::{Effect, ReactFunctionType, ValueKind},
+    hir_types::{Effect, HIRFunction, IdentifierName, ReactFunctionType, ValueKind},
     object_shape::ShapeRegistry,
 };
 
@@ -216,10 +216,34 @@ pub struct Environment {
     /// Whether manual memoization dropping is enabled.
     pub enable_drop_manual_memoization: bool,
 
+    /// Collected diagnostics from lint-mode validation passes.
+    diagnostics: Vec<crate::compiler_error::CompilerError>,
+
+    /// Outlined functions extracted from this function.
+    ///
+    /// Each entry is a tuple of the outlined HIR function and an optional
+    /// `ReactFunctionType` string (e.g., `Some("Component")` or `None`).
+    outlined_functions: Vec<OutlinedFunctionEntry>,
+
+    /// Known referenced names — used for generating globally unique identifiers.
+    ///
+    /// Corresponds to `ProgramContext.knownReferencedNames` in the TS version.
+    known_referenced_names: FxHashSet<String>,
+
+    /// Counter for generating globally unique identifier names.
+    next_uid: u32,
+
     // ID counters
     next_block_id: u32,
     next_scope_id: u32,
     next_identifier_id: u32,
+}
+
+/// An entry in the outlined functions list.
+#[derive(Debug, Clone)]
+pub struct OutlinedFunctionEntry {
+    pub func: HIRFunction,
+    pub fn_type: Option<ReactFunctionType>,
 }
 
 impl Environment {
@@ -242,6 +266,10 @@ impl Environment {
             enable_validations,
             enable_memoization,
             enable_drop_manual_memoization,
+            diagnostics: Vec::new(),
+            outlined_functions: Vec::new(),
+            known_referenced_names: FxHashSet::default(),
+            next_uid: 0,
             next_block_id: 0,
             next_scope_id: 0,
             next_identifier_id: 0,
@@ -272,5 +300,67 @@ impl Environment {
         let id = self.next_identifier_id;
         self.next_identifier_id += 1;
         super::hir_types::IdentifierId(id)
+    }
+
+    /// Log errors from a validation pass result. If the result is Err, the errors
+    /// are collected into the environment's diagnostics list rather than propagated.
+    ///
+    /// This matches the TS `env.logErrors(result)` pattern used for lint-mode
+    /// validation passes.
+    pub fn log_errors(&mut self, result: Result<(), crate::compiler_error::CompilerError>) {
+        if let Err(error) = result {
+            self.diagnostics.push(error);
+        }
+    }
+
+    /// Retrieve and clear all collected diagnostics.
+    pub fn take_diagnostics(&mut self) -> Vec<crate::compiler_error::CompilerError> {
+        std::mem::take(&mut self.diagnostics)
+    }
+
+    /// Register a function to be outlined (extracted) from this function.
+    ///
+    /// Corresponds to `Environment.outlineFunction()` in the TS version.
+    pub fn outline_function(&mut self, func: HIRFunction, fn_type: Option<ReactFunctionType>) {
+        self.outlined_functions.push(OutlinedFunctionEntry { func, fn_type });
+    }
+
+    /// Get the list of outlined functions.
+    ///
+    /// Corresponds to `Environment.getOutlinedFunctions()` in the TS version.
+    pub fn get_outlined_functions(&self) -> &[OutlinedFunctionEntry] {
+        &self.outlined_functions
+    }
+
+    /// Generate a globally unique identifier name.
+    ///
+    /// Corresponds to `Environment.generateGloballyUniqueIdentifierName()` in
+    /// the TS version. In the TS version this delegates to Babel's
+    /// `scope.generateUidIdentifier()` which produces names like `_name`,
+    /// `_name2`, etc.
+    pub fn generate_globally_unique_identifier_name(
+        &mut self,
+        hint: Option<&str>,
+    ) -> IdentifierName {
+        let base = hint.unwrap_or("temp");
+        let prefix = format!("_{base}");
+        let mut candidate = prefix.clone();
+        loop {
+            if !self.known_referenced_names.contains(&candidate) {
+                break;
+            }
+            self.next_uid += 1;
+            candidate = format!("{prefix}{}", self.next_uid);
+        }
+        self.known_referenced_names.insert(candidate.clone());
+        IdentifierName::Named(candidate)
+    }
+
+    /// Register a name as known/referenced, preventing it from being
+    /// used by `generate_globally_unique_identifier_name`.
+    ///
+    /// Corresponds to `ProgramContext.addNewReference()` in the TS version.
+    pub fn add_new_reference(&mut self, name: &str) {
+        self.known_referenced_names.insert(name.to_string());
     }
 }

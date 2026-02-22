@@ -494,15 +494,17 @@ fn codegen_reactive_scope(
         cx.declare(decl.identifier.declaration_id);
     }
 
-    // Process reassignments
-    for reassignment_id in &scope.reassignments {
+    // Process reassignments — now stores full Identifier objects
+    for reassignment_ident in &scope.reassignments {
         let index = cx.alloc_cache_index();
         if first_output_index.is_none() {
             first_output_index = Some(index);
         }
-        // reassignment_id is an IdentifierId — we need to find the name
-        // For reassignments, we just use the id as a fallback name
-        let name = format!("t{}", reassignment_id.0);
+        let name = match &reassignment_ident.name {
+            Some(crate::hir::IdentifierName::Named(n)) => n.to_string(),
+            Some(crate::hir::IdentifierName::Promoted(n)) => n.clone(),
+            None => format!("t{}", reassignment_ident.id.0),
+        };
         cache_loads.push(CacheLoad { name, index });
     }
 
@@ -1360,7 +1362,7 @@ fn collect_pattern_operands<'a>(pattern: &'a Pattern, places: &mut Vec<&'a Place
 
 /// Generate a dependency expression string.
 fn codegen_dependency(dep: &ReactiveScopeDependency) -> String {
-    let mut object = format!("t${}", dep.identifier_id.0);
+    let mut object = format!("t${}", dep.identifier.id.0);
     for entry in &dep.path {
         match &entry.property {
             crate::hir::types::PropertyLiteral::String(name) => {
@@ -1500,8 +1502,8 @@ fn compare_scope_dependency(
     a: &ReactiveScopeDependency,
     b: &ReactiveScopeDependency,
 ) -> std::cmp::Ordering {
-    let a_name = format!("t${}", a.identifier_id.0);
-    let b_name = format!("t${}", b.identifier_id.0);
+    let a_name = format!("t${}", a.identifier.id.0);
+    let b_name = format!("t${}", b.identifier.id.0);
     a_name.cmp(&b_name)
 }
 

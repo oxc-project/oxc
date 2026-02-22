@@ -20,7 +20,7 @@ pub fn print_reactive_function(func: &ReactiveFunction) -> String {
 /// Print a summary of a reactive scope (used in terminal printing).
 pub fn print_reactive_scope_summary(scope: &ReactiveScope) -> String {
     let deps: Vec<String> =
-        scope.dependencies.iter().map(|dep| format!("#{}", dep.identifier_id.0)).collect();
+        scope.dependencies.iter().map(|dep| format!("#{}", dep.identifier.id.0)).collect();
     let decls: Vec<String> = scope.declarations.keys().map(|id| format!("#{}", id.0)).collect();
     format!(
         "scope({}) deps=[{}] decls=[{}] range=[{}:{}]",

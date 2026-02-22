@@ -292,7 +292,7 @@ fn prune_always_invalidating_block(
                     .scope
                     .dependencies
                     .iter()
-                    .any(|dep| unmemoized.contains(&dep.identifier_id));
+                    .any(|dep| unmemoized.contains(&dep.identifier.id));
 
                 if should_prune {
                     // Propagate unmemoized for declarations that are always-invalidating
@@ -301,9 +301,9 @@ fn prune_always_invalidating_block(
                             unmemoized.insert(decl.identifier.id);
                         }
                     }
-                    for &reassignment_id in &scope.scope.reassignments {
-                        if always_invalidating.contains(&reassignment_id) {
-                            unmemoized.insert(reassignment_id);
+                    for reassignment in &scope.scope.reassignments {
+                        if always_invalidating.contains(&reassignment.id) {
+                            unmemoized.insert(reassignment.id);
                         }
                     }
                     prune_indices.push(i);
@@ -332,7 +332,7 @@ fn prune_always_invalidating_block(
                     range: crate::hir::MutableRange::default(),
                     dependencies: FxHashSet::default(),
                     declarations: FxHashMap::default(),
-                    reassignments: FxHashSet::default(),
+                    reassignments: Vec::new(),
                     early_return_value: None,
                     merged: FxHashSet::default(),
                     loc: crate::compiler_error::SourceLocation::default(),

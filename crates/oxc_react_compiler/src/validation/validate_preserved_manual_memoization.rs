@@ -45,7 +45,8 @@ pub fn validate_preserved_manual_memoization(func: &ReactiveFunction) -> Result<
 
 struct ManualMemoBlockState {
     /// Tracks reassigned temporaries for inlined useMemo.
-    reassignments: FxHashMap<DeclarationId, FxHashSet<IdentifierId>>,
+    /// Maps DeclarationId to a set of full Identifiers (matching TS: `Map<DeclarationId, Set<Identifier>>`).
+    reassignments: FxHashMap<DeclarationId, Vec<crate::hir::Identifier>>,
     /// The source location of the original memoization.
     loc: SourceLocation,
     /// Values produced within manual memoization blocks.
@@ -163,7 +164,7 @@ fn validate_inferred_dep(
     memo_location: SourceLocation,
 ) {
     let normalized_dep: ManualMemoDependency;
-    if let Some(maybe_normalized_root) = temporaries.get(&dep.identifier_id) {
+    if let Some(maybe_normalized_root) = temporaries.get(&dep.identifier.id) {
         let mut path = maybe_normalized_root.path.clone();
         path.extend(dep.path.iter().cloned());
         normalized_dep = ManualMemoDependency {
@@ -172,11 +173,18 @@ fn validate_inferred_dep(
             loc: maybe_normalized_root.loc,
         };
     } else {
-        // Build a NamedLocal dependency from the scope dependency
-        // We need to fabricate a Place here since we only have identifier_id
+        // Build a NamedLocal dependency from the scope dependency.
+        // Now that we have the full Identifier, we can create a proper NamedLocal root
+        // matching the TS behavior.
         normalized_dep = ManualMemoDependency {
-            root: ManualMemoDependencyRoot::Global {
-                identifier_name: format!("$id{}", dep.identifier_id.0),
+            root: ManualMemoDependencyRoot::NamedLocal {
+                value: crate::hir::Place {
+                    identifier: dep.identifier.clone(),
+                    effect: crate::hir::Effect::Read,
+                    reactive: false,
+                    loc: GENERATED_SOURCE,
+                },
+                constant: false,
             },
             path: dep.path.clone(),
             loc: GENERATED_SOURCE,
@@ -414,50 +422,54 @@ fn visit_instruction(instruction: &ReactiveInstruction, state: &mut VisitorState
                 if let Some(memo_state) = state.manual_memo_state.take() {
                     // Verify matching StartMemoize/FinishMemoize
                     debug_assert_eq!(memo_state.manual_memo_id, v.manual_memo_id);
+                    let reassignments = memo_state.reassignments;
                     if !v.pruned {
                         for operand in each_instruction_value_operand(instr_value) {
-                            let decls: Vec<IdentifierId> = if operand.identifier.scope.is_none() {
-                                // If the manual memo was inlined, check reassignments
-                                memo_state
-                                    .reassignments
-                                    .get(&operand.identifier.declaration_id)
-                                    .map_or_else(
-                                        || vec![operand.identifier.id],
-                                        |ids| ids.iter().copied().collect(),
-                                    )
-                            } else {
-                                vec![operand.identifier.id]
-                            };
+                            // Build the list of Identifiers to check, matching the TS:
+                            // If scope is null (inlined useMemo), look up reassignments;
+                            // otherwise use the operand's own identifier.
+                            let decls: Vec<crate::hir::Identifier> =
+                                if operand.identifier.scope.is_none() {
+                                    reassignments
+                                        .get(&operand.identifier.declaration_id)
+                                        .map_or_else(
+                                            || vec![operand.identifier.clone()],
+                                            |ids| ids.clone(),
+                                        )
+                                } else {
+                                    vec![operand.identifier.clone()]
+                                };
 
-                            if !decls.is_empty() {
-                                // In the TS version, each decl would look up its own
-                                // scope. We approximate by checking the operand's scope.
-                                if let Some(ref scope) = operand.identifier.scope
+                            // Per-declaration scope lookup matching TS `isUnmemoized`
+                            for decl_ident in &decls {
+                                if let Some(ref scope) = decl_ident.scope
                                     && !state.scopes.contains(&scope.id)
                                 {
                                     state.errors.push_diagnostic(
-                                            CompilerDiagnostic::create(
-                                                ErrorCategory::PreserveManualMemo,
-                                                "Existing memoization could not be preserved"
+                                        CompilerDiagnostic::create(
+                                            ErrorCategory::PreserveManualMemo,
+                                            "Existing memoization could not be preserved"
+                                                .to_string(),
+                                            Some(
+                                                "React Compiler has skipped optimizing this \
+                                                 component because the existing manual \
+                                                 memoization could not be preserved. This value \
+                                                 was memoized in source but not in compilation \
+                                                 output"
                                                     .to_string(),
-                                                Some(
-                                                    "React Compiler has skipped optimizing this \
-                                                     component because the existing manual \
-                                                     memoization could not be preserved. This value \
-                                                     was memoized in source but not in compilation \
-                                                     output"
-                                                        .to_string(),
-                                                ),
-                                                None,
-                                            )
-                                            .with_detail(CompilerDiagnosticDetail::Error {
+                                            ),
+                                            None,
+                                        )
+                                        .with_detail(
+                                            CompilerDiagnosticDetail::Error {
                                                 loc: Some(operand.loc),
                                                 message: Some(
                                                     "Could not preserve existing memoization"
                                                         .to_string(),
                                                 ),
-                                            }),
-                                        );
+                                            },
+                                        ),
+                                    );
                                 }
                             }
                         }
@@ -468,11 +480,13 @@ fn visit_instruction(instruction: &ReactiveInstruction, state: &mut VisitorState
                 if v.lvalue.kind == crate::hir::InstructionKind::Reassign
                     && let Some(ref mut memo_state) = state.manual_memo_state
                 {
-                    memo_state
+                    let ids = memo_state
                         .reassignments
                         .entry(v.lvalue.place.identifier.declaration_id)
-                        .or_default()
-                        .insert(v.value.identifier.id);
+                        .or_default();
+                    if !ids.iter().any(|i| i.id == v.value.identifier.id) {
+                        ids.push(v.value.identifier.clone());
+                    }
                 }
             }
             InstructionValue::LoadLocal(v) => {
@@ -481,11 +495,11 @@ fn visit_instruction(instruction: &ReactiveInstruction, state: &mut VisitorState
                     && lval.identifier.scope.is_none()
                     && let Some(ref mut memo_state) = state.manual_memo_state
                 {
-                    memo_state
-                        .reassignments
-                        .entry(lval.identifier.declaration_id)
-                        .or_default()
-                        .insert(v.place.identifier.id);
+                    let ids =
+                        memo_state.reassignments.entry(lval.identifier.declaration_id).or_default();
+                    if !ids.iter().any(|i| i.id == v.place.identifier.id) {
+                        ids.push(v.place.identifier.clone());
+                    }
                 }
             }
             _ => {}

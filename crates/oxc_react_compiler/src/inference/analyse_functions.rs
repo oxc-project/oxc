@@ -64,10 +64,10 @@ pub fn analyse_functions(func: &mut HIRFunction) -> Result<(), CompilerError> {
 fn lower_with_mutation_aliasing(func: &mut HIRFunction) -> Result<(), CompilerError> {
     // Phase 1: similar to lower(), but using the new mutation/aliasing inference
     analyse_functions(func)?;
-    infer_mutation_aliasing_effects(func, &InferOptions { is_function_expression: true });
+    infer_mutation_aliasing_effects(func, &InferOptions { is_function_expression: true })?;
     dead_code_elimination(func);
     let function_effects =
-        infer_mutation_aliasing_ranges(func, InferRangesOptions { is_function_expression: true });
+        infer_mutation_aliasing_ranges(func, InferRangesOptions { is_function_expression: true })?;
     rewrite_instruction_kinds_based_on_reassignment(func)?;
     infer_reactive_scope_variables(func);
     func.aliasing_effects = Some(function_effects.clone());

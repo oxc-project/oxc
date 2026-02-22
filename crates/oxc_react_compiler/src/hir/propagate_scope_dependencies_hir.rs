@@ -237,6 +237,8 @@ struct DependencyNode {
 struct ReactiveScopeDependencyTree {
     hoistable_objects: FxHashMap<IdentifierId, (HoistableNode, bool)>,
     deps: FxHashMap<IdentifierId, (DependencyNode, bool)>,
+    /// Maps root IdentifierId to its full Identifier for reconstructing dependencies.
+    root_identifiers: FxHashMap<IdentifierId, Identifier>,
 }
 
 impl ReactiveScopeDependencyTree {
@@ -251,7 +253,7 @@ impl ReactiveScopeDependencyTree {
                 HoistableAccessType::NonNull
             };
 
-            let (root_node, _) = hoistable_map.entry(dep.identifier_id).or_insert_with(|| {
+            let (root_node, _) = hoistable_map.entry(dep.identifier.id).or_insert_with(|| {
                 (
                     HoistableNode { properties: FxHashMap::default(), access_type: root_access },
                     dep.reactive,
@@ -275,13 +277,18 @@ impl ReactiveScopeDependencyTree {
             }
         }
 
-        Self { hoistable_objects: hoistable_map, deps: FxHashMap::default() }
+        Self {
+            hoistable_objects: hoistable_map,
+            deps: FxHashMap::default(),
+            root_identifiers: FxHashMap::default(),
+        }
     }
 
     fn add_dependency(&mut self, dep: &ReactiveScopeDependency) {
-        let identifier_id = dep.identifier_id;
+        let identifier_id = dep.identifier.id;
         let reactive = dep.reactive;
         let loc = dep.loc;
+        self.root_identifiers.entry(identifier_id).or_insert_with(|| dep.identifier.clone());
 
         let (dep_root, _) = self.deps.entry(identifier_id).or_insert_with(|| {
             (
@@ -367,13 +374,15 @@ impl ReactiveScopeDependencyTree {
     fn derive_minimal_dependencies(&self) -> Vec<ReactiveScopeDependency> {
         let mut results = Vec::new();
         for (&root_id, (root_node, reactive)) in &self.deps {
-            collect_minimal_dependencies_in_subtree(
-                root_node,
-                *reactive,
-                root_id,
-                &[],
-                &mut results,
-            );
+            if let Some(root_ident) = self.root_identifiers.get(&root_id) {
+                collect_minimal_dependencies_in_subtree(
+                    root_node,
+                    *reactive,
+                    root_ident,
+                    &[],
+                    &mut results,
+                );
+            }
         }
         results
     }
@@ -382,13 +391,13 @@ impl ReactiveScopeDependencyTree {
 fn collect_minimal_dependencies_in_subtree(
     node: &DependencyNode,
     reactive: bool,
-    root_id: IdentifierId,
+    root_identifier: &Identifier,
     path: &[DependencyPathEntry],
     results: &mut Vec<ReactiveScopeDependency>,
 ) {
     if node.access_type.is_dependency() {
         results.push(ReactiveScopeDependency {
-            identifier_id: root_id,
+            identifier: root_identifier.clone(),
             reactive,
             path: path.to_vec(),
             loc: node.loc,
@@ -402,7 +411,11 @@ fn collect_minimal_dependencies_in_subtree(
                 loc: child_node.loc,
             });
             collect_minimal_dependencies_in_subtree(
-                child_node, reactive, root_id, &new_path, results,
+                child_node,
+                reactive,
+                root_identifier,
+                &new_path,
+                results,
             );
         }
     }
@@ -478,10 +491,10 @@ struct TempReactiveScopeDependency {
 }
 
 impl TempReactiveScopeDependency {
-    /// Convert to the public ReactiveScopeDependency (losing the full Identifier).
+    /// Convert to the public ReactiveScopeDependency.
     fn to_scope_dependency(&self) -> ReactiveScopeDependency {
         ReactiveScopeDependency {
-            identifier_id: self.identifier.id,
+            identifier: self.identifier.clone(),
             reactive: self.reactive,
             path: self.path.clone(),
             loc: self.loc,
@@ -720,6 +733,14 @@ struct DependencyCollectionContext<'a> {
 
     /// Tracks whether we are inside an inner function.
     inner_fn_context: Option<InstructionId>,
+
+    /// Collected scope declaration mutations to apply after the main traversal.
+    /// Each entry is (scope_id, identifier_id, identifier, declaring_scope).
+    scope_declaration_mutations: Vec<(ScopeId, IdentifierId, Identifier, ReactiveScope)>,
+
+    /// Collected scope reassignment mutations to apply after the main traversal.
+    /// Each entry is (scope_id, identifier).
+    scope_reassignment_mutations: Vec<(ScopeId, Identifier)>,
 }
 
 impl<'a> DependencyCollectionContext<'a> {
@@ -736,6 +757,8 @@ impl<'a> DependencyCollectionContext<'a> {
             temporaries,
             processed_instrs_in_optional,
             inner_fn_context: None,
+            scope_declaration_mutations: Vec::new(),
+            scope_reassignment_mutations: Vec::new(),
         }
     }
 
@@ -835,11 +858,13 @@ impl<'a> DependencyCollectionContext<'a> {
     }
 
     fn visit_dependency(&mut self, maybe_dep: TempReactiveScopeDependency) {
-        // Record declarations for scopes that the original declaration was in
+        // Record declarations for scopes that the original declaration was in.
+        // In the TS version, this mutates scope.declarations directly. In Rust,
+        // we collect mutations in a side-table and apply them in a second pass.
         let original_declaration =
             self.declarations.get(&maybe_dep.identifier.declaration_id).cloned();
         if let Some(ref original_decl) = original_declaration
-            && original_decl.scope.value().is_some()
+            && let Some(declaring_scope) = original_decl.scope.value()
         {
             let scopes_to_update: Vec<ReactiveScope> = {
                 let mut result = Vec::new();
@@ -855,11 +880,13 @@ impl<'a> DependencyCollectionContext<'a> {
                         decl.identifier.declaration_id == maybe_dep.identifier.declaration_id
                     })
                 {
-                    // Note: In the TS version, this mutates the scope directly.
-                    // In Rust, we'd need mutable access to the scope stored in the terminal.
-                    // Since our scopes in terminals are by value and we process them later
-                    // when writing back, we skip this scope.declarations mutation for now.
-                    // The main dependency collection still works correctly.
+                    // Collect the mutation for later application
+                    self.scope_declaration_mutations.push((
+                        scope.id,
+                        maybe_dep.identifier.id,
+                        maybe_dep.identifier.clone(),
+                        declaring_scope.clone(),
+                    ));
                 }
             }
         }
@@ -887,10 +914,13 @@ impl<'a> DependencyCollectionContext<'a> {
         }
     }
 
-    fn visit_reassignment(&self, place: &Place) {
+    fn visit_reassignment(&mut self, place: &Place) {
         let current_scope = self.scopes.value().cloned();
-        if let Some(scope) = current_scope
-            && !scope.reassignments.contains(&place.identifier.id)
+        if let Some(ref scope) = current_scope
+            && !scope
+                .reassignments
+                .iter()
+                .any(|r| r.declaration_id == place.identifier.declaration_id)
         {
             let is_valid = self.check_valid_dependency(&TempReactiveScopeDependency {
                 identifier: place.identifier.clone(),
@@ -899,8 +929,8 @@ impl<'a> DependencyCollectionContext<'a> {
                 loc: place.loc,
             });
             if is_valid {
-                // Note: Similar to declarations, we can't directly mutate the scope here.
-                // This will be handled at the end when writing results back to the function.
+                // Collect scope reassignment mutation for later application
+                self.scope_reassignment_mutations.push((scope.id, place.identifier.clone()));
             }
         }
     }
@@ -1006,11 +1036,20 @@ fn handle_instruction(instr: &Instruction, context: &mut DependencyCollectionCon
 // collectDependencies — main CFG traversal
 // =====================================================================================
 
+/// Result of dependency collection including collected scope mutations.
+struct CollectDependenciesResult {
+    deps: Vec<(ReactiveScope, Vec<TempReactiveScopeDependency>)>,
+    /// Scope declaration mutations: (scope_id, identifier_id, identifier, declaring_scope).
+    scope_declaration_mutations: Vec<(ScopeId, IdentifierId, Identifier, ReactiveScope)>,
+    /// Scope reassignment mutations: (scope_id, identifier).
+    scope_reassignment_mutations: Vec<(ScopeId, Identifier)>,
+}
+
 fn collect_dependencies(
     func: &HIRFunction,
     temporaries: &FxHashMap<IdentifierId, TempReactiveScopeDependency>,
     processed_instrs_in_optional: &FxHashSet<InstructionId>,
-) -> Vec<(ReactiveScope, Vec<TempReactiveScopeDependency>)> {
+) -> CollectDependenciesResult {
     fn handle_function(
         func: &HIRFunction,
         context: &mut DependencyCollectionContext,
@@ -1099,7 +1138,11 @@ fn collect_dependencies(
 
     let mut scope_traversal = ScopeBlockTraversal::new();
     handle_function(func, &mut context, &mut scope_traversal, temporaries);
-    context.deps
+    CollectDependenciesResult {
+        deps: context.deps,
+        scope_declaration_mutations: context.scope_declaration_mutations,
+        scope_reassignment_mutations: context.scope_reassignment_mutations,
+    }
 }
 
 // =====================================================================================
@@ -1143,15 +1186,7 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
     let mut merged_temporaries = temporaries;
     for (id, dep) in &opt_chain.dependencies {
         merged_temporaries.entry(*id).or_insert_with(|| TempReactiveScopeDependency {
-            identifier: Identifier {
-                id: dep.identifier_id,
-                declaration_id: DeclarationId(dep.identifier_id.0),
-                name: None,
-                mutable_range: MutableRange::default(),
-                scope: None,
-                type_: Type::Primitive,
-                loc: dep.loc,
-            },
+            identifier: dep.identifier.clone(),
             reactive: dep.reactive,
             path: dep.path.clone(),
             loc: dep.loc,
@@ -1168,20 +1203,21 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
     let processed_instrs: FxHashSet<InstructionId> = FxHashSet::default();
 
     // Collect dependencies
-    let scope_deps = collect_dependencies(func, &merged_temporaries, &processed_instrs);
+    let collect_result = collect_dependencies(func, &merged_temporaries, &processed_instrs);
 
     // Phase 3: Derive minimal dependency set for each scope
     // We need to write dependencies back to the scopes in the terminals.
     let mut scope_deps_map: FxHashMap<ScopeId, Vec<TempReactiveScopeDependency>> =
         FxHashMap::default();
-    for (scope, deps) in scope_deps {
+    for (scope, deps) in collect_result.deps {
         if deps.is_empty() {
             continue;
         }
         scope_deps_map.insert(scope.id, deps);
     }
 
-    // Build minimal dependencies and write back to scope terminals
+    // Build minimal dependencies and write back to scope terminals.
+    // Also apply collected scope declaration and reassignment mutations.
     for block in func.body.blocks.values_mut() {
         let scope_mut = match &mut block.terminal {
             Terminal::Scope(t) => Some(&mut t.scope),
@@ -1189,39 +1225,78 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
             _ => None,
         };
 
-        if let Some(scope) = scope_mut
-            && let Some(deps) = scope_deps_map.get(&scope.id)
-        {
-            // Get hoistable objects for this scope (used for dependency tree)
-            let hoistable_ids = hoistable_by_scope.get(&scope.id).cloned().unwrap_or_default();
-
-            // Build hoistable paths from the non-null identifier set
-            // In the full TS implementation, hoistable objects are full property paths.
-            // In our simplified version, we use the non-null identifiers to create
-            // root-level hoistable entries.
-            let hoistable_paths: Vec<ReactiveScopeDependency> = hoistable_ids
-                .iter()
-                .map(|&id| ReactiveScopeDependency {
-                    identifier_id: id,
-                    reactive: false,
-                    path: vec![],
-                    loc: SourceLocation::Generated,
-                })
-                .collect();
-
-            let mut tree = ReactiveScopeDependencyTree::new(hoistable_paths);
-            for dep in deps {
-                tree.add_dependency(&dep.to_scope_dependency());
+        if let Some(scope) = scope_mut {
+            // Apply collected scope declaration mutations (Task 5A fix)
+            for (target_scope_id, ident_id, ident, declaring_scope) in
+                &collect_result.scope_declaration_mutations
+            {
+                if scope.id == *target_scope_id && !scope.declarations.contains_key(ident_id) {
+                    scope.declarations.insert(
+                        *ident_id,
+                        super::hir_types::ReactiveScopeDeclaration {
+                            identifier: ident.clone(),
+                            scope: declaring_scope.clone(),
+                        },
+                    );
+                }
             }
 
-            let candidates = tree.derive_minimal_dependencies();
-            for candidate_dep in candidates {
-                let already_exists = scope.dependencies.iter().any(|existing| {
-                    existing.identifier_id == candidate_dep.identifier_id
-                        && super::hir_types::are_equal_paths(&existing.path, &candidate_dep.path)
-                });
-                if !already_exists {
-                    scope.dependencies.insert(candidate_dep);
+            // Apply collected scope reassignment mutations (Task 5A fix)
+            for (target_scope_id, ident) in &collect_result.scope_reassignment_mutations {
+                if scope.id == *target_scope_id
+                    && !scope.reassignments.iter().any(|r| r.declaration_id == ident.declaration_id)
+                {
+                    scope.reassignments.push(ident.clone());
+                }
+            }
+
+            // Apply dependencies
+            if let Some(deps) = scope_deps_map.get(&scope.id) {
+                let hoistable_ids = hoistable_by_scope.get(&scope.id).cloned().unwrap_or_default();
+
+                let hoistable_paths: Vec<ReactiveScopeDependency> = hoistable_ids
+                    .iter()
+                    .map(|&id| {
+                        let ident = if let Some(temp) = merged_temporaries.get(&id) {
+                            temp.identifier.clone()
+                        } else {
+                            Identifier {
+                                id,
+                                declaration_id: DeclarationId(id.0),
+                                name: None,
+                                mutable_range: MutableRange::default(),
+                                scope: None,
+                                type_: Type::Primitive,
+                                loc: SourceLocation::Generated,
+                            }
+                        };
+                        ReactiveScopeDependency {
+                            identifier: ident,
+                            reactive: false,
+                            path: vec![],
+                            loc: SourceLocation::Generated,
+                        }
+                    })
+                    .collect();
+
+                let mut tree = ReactiveScopeDependencyTree::new(hoistable_paths);
+                for dep in deps {
+                    tree.add_dependency(&dep.to_scope_dependency());
+                }
+
+                let candidates = tree.derive_minimal_dependencies();
+                for candidate_dep in candidates {
+                    let already_exists = scope.dependencies.iter().any(|existing| {
+                        existing.identifier.declaration_id
+                            == candidate_dep.identifier.declaration_id
+                            && super::hir_types::are_equal_paths(
+                                &existing.path,
+                                &candidate_dep.path,
+                            )
+                    });
+                    if !already_exists {
+                        scope.dependencies.insert(candidate_dep);
+                    }
                 }
             }
         }

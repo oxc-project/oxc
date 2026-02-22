@@ -97,6 +97,8 @@ struct HoistableNode {
 pub struct DependencyTree {
     hoistable_objects: FxHashMap<IdentifierId, (HoistableNode, bool)>,
     deps: FxHashMap<IdentifierId, (DependencyNode, bool)>,
+    /// Maps root IdentifierId to its full Identifier for reconstructing dependencies.
+    root_identifiers: FxHashMap<IdentifierId, super::hir_types::Identifier>,
 }
 
 impl DependencyTree {
@@ -106,7 +108,7 @@ impl DependencyTree {
             FxHashMap::default();
 
         for dep in hoistable_objects {
-            let root = hoistable_map.entry(dep.identifier_id).or_insert_with(|| {
+            let root = hoistable_map.entry(dep.identifier.id).or_insert_with(|| {
                 let access_type = if dep.path.first().is_some_and(|e| e.optional) {
                     HoistableAccessType::Optional
                 } else {
@@ -128,13 +130,20 @@ impl DependencyTree {
             }
         }
 
-        Self { hoistable_objects: hoistable_map, deps: FxHashMap::default() }
+        Self {
+            hoistable_objects: hoistable_map,
+            deps: FxHashMap::default(),
+            root_identifiers: FxHashMap::default(),
+        }
     }
 
     /// Add a dependency, joining it with hoistable objects to determine
     /// the maximal safe-to-evaluate subpath.
     pub fn add_dependency(&mut self, dep: &ReactiveScopeDependency) {
-        let root = self.deps.entry(dep.identifier_id).or_insert_with(|| {
+        let id = dep.identifier.id;
+        self.root_identifiers.entry(id).or_insert_with(|| dep.identifier.clone());
+
+        let root = self.deps.entry(id).or_insert_with(|| {
             (
                 DependencyNode {
                     properties: FxHashMap::default(),
@@ -146,7 +155,7 @@ impl DependencyTree {
         });
 
         let mut dep_cursor = &raw mut root.0;
-        let hoistable_root = self.hoistable_objects.get(&dep.identifier_id);
+        let hoistable_root = self.hoistable_objects.get(&id);
         let mut hoistable_cursor: Option<&HoistableNode> = hoistable_root.map(|(n, _)| n);
 
         for entry in &dep.path {
@@ -195,7 +204,9 @@ impl DependencyTree {
     pub fn derive_minimal_dependencies(&self) -> Vec<ReactiveScopeDependency> {
         let mut results = Vec::new();
         for (&root_id, (root_node, reactive)) in &self.deps {
-            collect_minimal_deps(root_node, *reactive, root_id, &[], &mut results);
+            if let Some(root_ident) = self.root_identifiers.get(&root_id) {
+                collect_minimal_deps(root_node, *reactive, root_ident, &[], &mut results);
+            }
         }
         results
     }
@@ -205,13 +216,13 @@ impl DependencyTree {
 fn collect_minimal_deps(
     node: &DependencyNode,
     reactive: bool,
-    root_id: IdentifierId,
+    root_identifier: &super::hir_types::Identifier,
     path: &[DependencyPathEntry],
     results: &mut Vec<ReactiveScopeDependency>,
 ) {
     if node.access_type.is_dependency() {
         results.push(ReactiveScopeDependency {
-            identifier_id: root_id,
+            identifier: root_identifier.clone(),
             reactive,
             path: path.to_vec(),
             loc: node.loc,
@@ -224,7 +235,7 @@ fn collect_minimal_deps(
                 optional: child_node.access_type.is_optional(),
                 loc: child_node.loc,
             });
-            collect_minimal_deps(child_node, reactive, root_id, &new_path, results);
+            collect_minimal_deps(child_node, reactive, root_identifier, &new_path, results);
         }
     }
 }
@@ -247,7 +258,7 @@ pub fn derive_minimal_dependencies(
     for dep in &deps {
         let is_redundant = deps.iter().any(|other| {
             // Check if `dep` is a longer path of `other` (other is a prefix of dep)
-            dep.identifier_id == other.identifier_id
+            dep.identifier.id == other.identifier.id
                 && other.path.len() < dep.path.len()
                 && is_sub_path(&other.path, &dep.path)
         });

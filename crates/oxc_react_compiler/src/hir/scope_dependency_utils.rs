@@ -22,7 +22,7 @@ pub fn merge_dependencies(deps: &[ReactiveScopeDependency]) -> FxHashSet<Reactiv
                 continue;
             }
             // If this dep's identifier is the same and its path is a super-path of other's
-            if dep.identifier_id == other.identifier_id
+            if dep.identifier.id == other.identifier.id
                 && is_sub_path(&other.path, &dep.path)
                 && !are_equal_paths(&other.path, &dep.path)
             {

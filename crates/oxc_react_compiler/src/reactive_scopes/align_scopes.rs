@@ -153,7 +153,7 @@ pub fn align_method_call_scopes(func: &mut HIRFunction) {
                                     range,
                                     dependencies: FxHashSet::default(),
                                     declarations: FxHashMap::default(),
-                                    reassignments: FxHashSet::default(),
+                                    reassignments: Vec::new(),
                                     early_return_value: None,
                                     merged: FxHashSet::default(),
                                     loc: instr.lvalue.identifier.loc,
