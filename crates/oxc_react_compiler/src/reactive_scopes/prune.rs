@@ -82,23 +82,349 @@ fn prune_terminal_children(terminal: &mut crate::hir::ReactiveTerminal) {
 
 /// Prune non-reactive dependencies — removes dependencies from reactive scopes
 /// that are not actually reactive (e.g., module-level constants).
+///
+/// Port of `ReactiveScopes/PruneNonReactiveDependencies.ts`.
+///
+/// Phase 1: Collect all reactive identifier IDs by walking all places in the
+/// reactive function tree.
+/// Phase 2: Walk the reactive tree again, propagating reactivity through
+/// instructions (LoadLocal, StoreLocal, Destructure, PropertyLoad, ComputedLoad),
+/// pruning non-reactive deps from scopes, and marking scope outputs as reactive
+/// when the scope has reactive inputs.
 pub fn prune_non_reactive_dependencies(func: &mut ReactiveFunction) {
-    prune_non_reactive_deps_block(&mut func.body);
+    // Phase 1: Collect reactive identifiers
+    let mut reactive = collect_reactive_ids(&func.body);
+
+    // Phase 2: Prune + propagate
+    prune_non_reactive_deps_block(&mut func.body, &mut reactive);
 }
 
-fn prune_non_reactive_deps_block(block: &mut ReactiveBlock) {
+/// Collect all identifier IDs whose place has `.reactive == true`.
+fn collect_reactive_ids(block: &ReactiveBlock) -> FxHashSet<IdentifierId> {
+    let mut reactive = FxHashSet::default();
+    collect_reactive_ids_block(block, &mut reactive);
+    reactive
+}
+
+fn collect_reactive_ids_block(block: &ReactiveBlock, reactive: &mut FxHashSet<IdentifierId>) {
+    for stmt in block {
+        match stmt {
+            ReactiveStatement::Instruction(s) => {
+                collect_reactive_ids_from_value(&s.instruction.value, reactive);
+                if let Some(lvalue) = &s.instruction.lvalue {
+                    if lvalue.reactive {
+                        reactive.insert(lvalue.identifier.id);
+                    }
+                }
+            }
+            ReactiveStatement::Terminal(s) => {
+                collect_reactive_ids_terminal(&s.terminal, reactive);
+            }
+            ReactiveStatement::Scope(s) => {
+                collect_reactive_ids_block(&s.instructions, reactive);
+            }
+            ReactiveStatement::PrunedScope(s) => {
+                collect_reactive_ids_block(&s.instructions, reactive);
+            }
+        }
+    }
+}
+
+fn collect_reactive_ids_from_value(
+    value: &ReactiveValue,
+    reactive: &mut FxHashSet<IdentifierId>,
+) {
+    match value {
+        ReactiveValue::Instruction(inner) => {
+            use crate::hir::visitors::each_instruction_value_operand;
+            for place in each_instruction_value_operand(inner) {
+                if place.reactive {
+                    reactive.insert(place.identifier.id);
+                }
+            }
+        }
+        ReactiveValue::Logical(v) => {
+            collect_reactive_ids_from_value(&v.left, reactive);
+            collect_reactive_ids_from_value(&v.right, reactive);
+        }
+        ReactiveValue::Ternary(v) => {
+            collect_reactive_ids_from_value(&v.test, reactive);
+            collect_reactive_ids_from_value(&v.consequent, reactive);
+            collect_reactive_ids_from_value(&v.alternate, reactive);
+        }
+        ReactiveValue::Sequence(v) => {
+            for instr in &v.instructions {
+                collect_reactive_ids_from_value(&instr.value, reactive);
+                if let Some(lvalue) = &instr.lvalue {
+                    if lvalue.reactive {
+                        reactive.insert(lvalue.identifier.id);
+                    }
+                }
+            }
+            collect_reactive_ids_from_value(&v.value, reactive);
+        }
+        ReactiveValue::OptionalCall(v) => {
+            collect_reactive_ids_from_value(&v.value, reactive);
+        }
+    }
+}
+
+fn collect_reactive_ids_terminal(
+    terminal: &crate::hir::ReactiveTerminal,
+    reactive: &mut FxHashSet<IdentifierId>,
+) {
+    use crate::hir::ReactiveTerminal;
+    match terminal {
+        ReactiveTerminal::If(t) => {
+            collect_reactive_ids_block(&t.consequent, reactive);
+            if let Some(alt) = &t.alternate {
+                collect_reactive_ids_block(alt, reactive);
+            }
+        }
+        ReactiveTerminal::Switch(t) => {
+            for case in &t.cases {
+                if let Some(block) = &case.block {
+                    collect_reactive_ids_block(block, reactive);
+                }
+            }
+        }
+        ReactiveTerminal::While(t) => {
+            collect_reactive_ids_from_value(&t.test, reactive);
+            collect_reactive_ids_block(&t.r#loop, reactive);
+        }
+        ReactiveTerminal::DoWhile(t) => {
+            collect_reactive_ids_block(&t.r#loop, reactive);
+            collect_reactive_ids_from_value(&t.test, reactive);
+        }
+        ReactiveTerminal::For(t) => {
+            collect_reactive_ids_from_value(&t.init, reactive);
+            collect_reactive_ids_from_value(&t.test, reactive);
+            if let Some(update) = &t.update {
+                collect_reactive_ids_from_value(update, reactive);
+            }
+            collect_reactive_ids_block(&t.r#loop, reactive);
+        }
+        ReactiveTerminal::ForOf(t) => {
+            collect_reactive_ids_from_value(&t.init, reactive);
+            collect_reactive_ids_from_value(&t.test, reactive);
+            collect_reactive_ids_block(&t.r#loop, reactive);
+        }
+        ReactiveTerminal::ForIn(t) => {
+            collect_reactive_ids_from_value(&t.init, reactive);
+            collect_reactive_ids_block(&t.r#loop, reactive);
+        }
+        ReactiveTerminal::Label(t) => collect_reactive_ids_block(&t.block, reactive),
+        ReactiveTerminal::Try(t) => {
+            collect_reactive_ids_block(&t.block, reactive);
+            collect_reactive_ids_block(&t.handler, reactive);
+        }
+        ReactiveTerminal::Break(_)
+        | ReactiveTerminal::Continue(_)
+        | ReactiveTerminal::Return(_)
+        | ReactiveTerminal::Throw(_) => {}
+    }
+}
+
+/// Phase 2: Walk the reactive tree, propagate reactivity through instructions,
+/// prune non-reactive deps from scopes, and mark scope outputs as reactive.
+fn prune_non_reactive_deps_block(
+    block: &mut ReactiveBlock,
+    reactive: &mut FxHashSet<IdentifierId>,
+) {
     for stmt in block.iter_mut() {
         match stmt {
+            ReactiveStatement::Instruction(s) => {
+                propagate_instruction_reactivity(&s.instruction, reactive);
+            }
             ReactiveStatement::Scope(scope) => {
-                // Remove non-reactive dependencies
-                scope.scope.dependencies.retain(|dep| dep.reactive);
-                prune_non_reactive_deps_block(&mut scope.instructions);
+                // First: recurse into scope contents to propagate reactivity
+                prune_non_reactive_deps_block(&mut scope.instructions, reactive);
+
+                // Second: prune non-reactive deps using the now-updated reactive set
+                scope.scope.dependencies.retain(|dep| reactive.contains(&dep.identifier.id));
+
+                // Third: if any deps remain, propagate reactivity to all scope outputs
+                if !scope.scope.dependencies.is_empty() {
+                    for decl in scope.scope.declarations.values() {
+                        reactive.insert(decl.identifier.id);
+                    }
+                    for reassignment in &scope.scope.reassignments {
+                        reactive.insert(reassignment.id);
+                    }
+                }
             }
             ReactiveStatement::PrunedScope(scope) => {
-                prune_non_reactive_deps_block(&mut scope.instructions);
+                prune_non_reactive_deps_block(&mut scope.instructions, reactive);
+            }
+            ReactiveStatement::Terminal(term) => {
+                prune_non_reactive_deps_terminal(&mut term.terminal, reactive);
+            }
+        }
+    }
+}
+
+/// Propagate reactivity through specific instruction kinds.
+fn propagate_instruction_reactivity(
+    instruction: &ReactiveInstruction,
+    reactive: &mut FxHashSet<IdentifierId>,
+) {
+    propagate_reactivity_from_value(&instruction.value, &instruction.lvalue, reactive);
+}
+
+fn propagate_reactivity_from_value(
+    value: &ReactiveValue,
+    lvalue: &Option<crate::hir::Place>,
+    reactive: &mut FxHashSet<IdentifierId>,
+) {
+    match value {
+        ReactiveValue::Instruction(inner) => match inner.as_ref() {
+            InstructionValue::LoadLocal(v) => {
+                if reactive.contains(&v.place.identifier.id) {
+                    if let Some(lv) = lvalue {
+                        reactive.insert(lv.identifier.id);
+                    }
+                }
+            }
+            InstructionValue::StoreLocal(v) => {
+                if reactive.contains(&v.value.identifier.id) {
+                    reactive.insert(v.lvalue.place.identifier.id);
+                    if let Some(lv) = lvalue {
+                        reactive.insert(lv.identifier.id);
+                    }
+                }
+            }
+            InstructionValue::Destructure(v) => {
+                if reactive.contains(&v.value.identifier.id) {
+                    // Mark all pattern output places as reactive (unless stable type)
+                    each_pattern_operand(&v.lvalue.pattern, &mut |place| {
+                        if !is_stable_type(&place.identifier) {
+                            reactive.insert(place.identifier.id);
+                        }
+                    });
+                    if let Some(lv) = lvalue {
+                        reactive.insert(lv.identifier.id);
+                    }
+                }
+            }
+            InstructionValue::PropertyLoad(v) => {
+                if let Some(lv) = lvalue {
+                    if reactive.contains(&v.object.identifier.id)
+                        && !is_stable_type(&lv.identifier)
+                    {
+                        reactive.insert(lv.identifier.id);
+                    }
+                }
+            }
+            InstructionValue::ComputedLoad(v) => {
+                if let Some(lv) = lvalue {
+                    if reactive.contains(&v.object.identifier.id)
+                        || reactive.contains(&v.property.identifier.id)
+                    {
+                        reactive.insert(lv.identifier.id);
+                    }
+                }
             }
             _ => {}
+        },
+        ReactiveValue::Sequence(v) => {
+            for instr in &v.instructions {
+                propagate_reactivity_from_value(&instr.value, &instr.lvalue, reactive);
+            }
+            propagate_reactivity_from_value(&v.value, lvalue, reactive);
         }
+        ReactiveValue::Logical(v) => {
+            propagate_reactivity_from_value(&v.left, lvalue, reactive);
+            propagate_reactivity_from_value(&v.right, lvalue, reactive);
+        }
+        ReactiveValue::Ternary(v) => {
+            propagate_reactivity_from_value(&v.test, lvalue, reactive);
+            propagate_reactivity_from_value(&v.consequent, lvalue, reactive);
+            propagate_reactivity_from_value(&v.alternate, lvalue, reactive);
+        }
+        ReactiveValue::OptionalCall(v) => {
+            propagate_reactivity_from_value(&v.value, lvalue, reactive);
+        }
+    }
+}
+
+/// Iterate over all output places in a destructuring pattern.
+fn each_pattern_operand(pattern: &crate::hir::Pattern, callback: &mut impl FnMut(&crate::hir::Place)) {
+    use crate::hir::{ArrayPatternElement, ObjectPatternProperty, Pattern};
+    match pattern {
+        Pattern::Array(arr) => {
+            for elem in &arr.items {
+                match elem {
+                    ArrayPatternElement::Place(p) => callback(p),
+                    ArrayPatternElement::Spread(s) => callback(&s.place),
+                    ArrayPatternElement::Hole => {}
+                }
+            }
+        }
+        Pattern::Object(obj) => {
+            for prop in &obj.properties {
+                match prop {
+                    ObjectPatternProperty::Property(p) => callback(&p.place),
+                    ObjectPatternProperty::Spread(s) => callback(&s.place),
+                }
+            }
+        }
+    }
+}
+
+/// Check if an identifier has a stable type (setState, useRef, etc.)
+fn is_stable_type(id: &crate::hir::Identifier) -> bool {
+    use crate::hir::types::Type;
+    match &id.type_ {
+        Type::Function(f) => matches!(
+            f.shape_id.as_deref(),
+            Some(
+                "BuiltInSetState"
+                    | "BuiltInSetActionState"
+                    | "BuiltInDispatch"
+                    | "BuiltInStartTransition"
+                    | "BuiltInSetOptimistic"
+            )
+        ),
+        Type::Object(o) => {
+            matches!(o.shape_id.as_deref(), Some("BuiltInUseRefId"))
+        }
+        _ => false,
+    }
+}
+
+fn prune_non_reactive_deps_terminal(
+    terminal: &mut crate::hir::ReactiveTerminal,
+    reactive: &mut FxHashSet<IdentifierId>,
+) {
+    use crate::hir::ReactiveTerminal;
+    match terminal {
+        ReactiveTerminal::If(t) => {
+            prune_non_reactive_deps_block(&mut t.consequent, reactive);
+            if let Some(alt) = &mut t.alternate {
+                prune_non_reactive_deps_block(alt, reactive);
+            }
+        }
+        ReactiveTerminal::Switch(t) => {
+            for case in &mut t.cases {
+                if let Some(block) = &mut case.block {
+                    prune_non_reactive_deps_block(block, reactive);
+                }
+            }
+        }
+        ReactiveTerminal::While(t) => prune_non_reactive_deps_block(&mut t.r#loop, reactive),
+        ReactiveTerminal::DoWhile(t) => prune_non_reactive_deps_block(&mut t.r#loop, reactive),
+        ReactiveTerminal::For(t) => prune_non_reactive_deps_block(&mut t.r#loop, reactive),
+        ReactiveTerminal::ForOf(t) => prune_non_reactive_deps_block(&mut t.r#loop, reactive),
+        ReactiveTerminal::ForIn(t) => prune_non_reactive_deps_block(&mut t.r#loop, reactive),
+        ReactiveTerminal::Label(t) => prune_non_reactive_deps_block(&mut t.block, reactive),
+        ReactiveTerminal::Try(t) => {
+            prune_non_reactive_deps_block(&mut t.block, reactive);
+            prune_non_reactive_deps_block(&mut t.handler, reactive);
+        }
+        ReactiveTerminal::Break(_)
+        | ReactiveTerminal::Continue(_)
+        | ReactiveTerminal::Return(_)
+        | ReactiveTerminal::Throw(_) => {}
     }
 }
 
