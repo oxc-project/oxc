@@ -14,7 +14,7 @@ use super::build_hir::{
 };
 
 /// Convert an oxc_ast Expression to a LowerableExpression.
-pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
+pub fn convert_expression<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpression<'a> {
     match expr {
         ast::Expression::NumericLiteral(lit) => {
             LowerableExpression::NumericLiteral(lit.value, lit.span)
@@ -209,17 +209,11 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
             span: await_expr.span,
         },
         ast::Expression::ArrowFunctionExpression(arrow) => {
-            LowerableExpression::ArrowFunctionExpression {
-                is_async: arrow.r#async,
-                span: arrow.span,
-            }
+            LowerableExpression::ArrowFunctionExpression { func: arrow, span: arrow.span }
         }
-        ast::Expression::FunctionExpression(func) => LowerableExpression::FunctionExpression {
-            name: func.id.as_ref().map(|id| id.name.to_string()),
-            is_async: func.r#async,
-            is_generator: func.generator,
-            span: func.span,
-        },
+        ast::Expression::FunctionExpression(func) => {
+            LowerableExpression::FunctionExpression { func, span: func.span }
+        }
 
         // =====================================================================
         // JSXElement — full tag, props, and children
@@ -327,7 +321,7 @@ pub fn convert_expression(expr: &ast::Expression<'_>) -> LowerableExpression {
 }
 
 /// Convert a property key from an object expression.
-fn convert_property_key(key: &ast::PropertyKey<'_>) -> LowerableObjectPropertyKey {
+fn convert_property_key<'a>(key: &'a ast::PropertyKey<'a>) -> LowerableObjectPropertyKey<'a> {
     match key {
         ast::PropertyKey::StaticIdentifier(ident) => {
             LowerableObjectPropertyKey::Identifier(ident.name.to_string())
@@ -347,7 +341,7 @@ fn convert_property_key(key: &ast::PropertyKey<'_>) -> LowerableObjectPropertyKe
 }
 
 /// Convert arguments from a call or new expression.
-fn convert_arguments(arguments: &[ast::Argument<'_>]) -> Vec<LowerableExpression> {
+fn convert_arguments<'a>(arguments: &'a [ast::Argument<'a>]) -> Vec<LowerableExpression<'a>> {
     arguments
         .iter()
         .map(|arg| match arg {
@@ -361,10 +355,10 @@ fn convert_arguments(arguments: &[ast::Argument<'_>]) -> Vec<LowerableExpression
 }
 
 /// Convert an assignment target to a LowerableExpression for the LHS.
-fn convert_assignment_target(
-    target: &ast::AssignmentTarget<'_>,
+fn convert_assignment_target<'a>(
+    target: &'a ast::AssignmentTarget<'a>,
     fallback_span: oxc_span::Span,
-) -> LowerableExpression {
+) -> LowerableExpression<'a> {
     match target {
         ast::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
             LowerableExpression::Identifier(ident.name.to_string(), ident.span)
@@ -383,13 +377,20 @@ fn convert_assignment_target(
                 span: member.span,
             }
         }
-        // TODO: Handle ObjectPattern, ArrayPattern destructuring assignment
+        ast::AssignmentTarget::ObjectAssignmentTarget(obj) => {
+            LowerableExpression::ObjectAssignmentTarget { target: obj, span: obj.span }
+        }
+        ast::AssignmentTarget::ArrayAssignmentTarget(arr) => {
+            LowerableExpression::ArrayAssignmentTarget { target: arr, span: arr.span }
+        }
         _ => LowerableExpression::Undefined(fallback_span),
     }
 }
 
 /// Convert an update expression argument (can be identifier or member expression).
-fn convert_update_argument(argument: &ast::SimpleAssignmentTarget<'_>) -> LowerableExpression {
+fn convert_update_argument<'a>(
+    argument: &'a ast::SimpleAssignmentTarget<'a>,
+) -> LowerableExpression<'a> {
     match argument {
         ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
             LowerableExpression::Identifier(ident.name.to_string(), ident.span)
@@ -419,7 +420,7 @@ fn convert_update_argument(argument: &ast::SimpleAssignmentTarget<'_>) -> Lowera
 /// Non-optional elements within the chain are converted to their regular variants
 /// only if they are at the innermost level (no optional flag); otherwise, they
 /// are wrapped in the optional variant to preserve the chain structure.
-fn convert_chain_element(element: &ast::ChainElement<'_>) -> LowerableExpression {
+fn convert_chain_element<'a>(element: &'a ast::ChainElement<'a>) -> LowerableExpression<'a> {
     match element {
         // CallExpression inside a chain: if optional, convert to OptionalCallExpression.
         // If not optional but nested inside a chain, we still need to keep the chain context
@@ -466,7 +467,7 @@ fn convert_chain_element(element: &ast::ChainElement<'_>) -> LowerableExpression
 ///
 /// If the callee is a member expression or call expression with an `optional` flag,
 /// it should be treated as part of the chain. Otherwise, convert it normally.
-fn convert_chain_callee(expr: &ast::Expression<'_>) -> LowerableExpression {
+fn convert_chain_callee<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpression<'a> {
     match expr {
         // If the callee is a StaticMemberExpression with optional=true,
         // it's part of the optional chain
@@ -505,7 +506,7 @@ fn convert_chain_callee(expr: &ast::Expression<'_>) -> LowerableExpression {
 }
 
 /// Convert a JSX element name to a `LowerableJsxTag`.
-fn convert_jsx_tag_name(name: &ast::JSXElementName<'_>) -> LowerableJsxTag {
+fn convert_jsx_tag_name<'a>(name: &'a ast::JSXElementName<'a>) -> LowerableJsxTag<'a> {
     match name {
         ast::JSXElementName::Identifier(ident) => {
             let tag_name = ident.name.to_string();
@@ -541,7 +542,9 @@ fn convert_jsx_tag_name(name: &ast::JSXElementName<'_>) -> LowerableJsxTag {
 }
 
 /// Convert JSX member expression to a chain of PropertyAccess expressions.
-fn convert_jsx_member_to_expression(member: &ast::JSXMemberExpression<'_>) -> LowerableExpression {
+fn convert_jsx_member_to_expression<'a>(
+    member: &'a ast::JSXMemberExpression<'a>,
+) -> LowerableExpression<'a> {
     let object = match &member.object {
         ast::JSXMemberExpressionObject::IdentifierReference(ident) => {
             LowerableExpression::Identifier(ident.name.to_string(), ident.span)
@@ -561,7 +564,9 @@ fn convert_jsx_member_to_expression(member: &ast::JSXMemberExpression<'_>) -> Lo
 }
 
 /// Convert JSX attributes to `LowerableJsxAttribute` values.
-fn convert_jsx_attributes(attributes: &[ast::JSXAttributeItem<'_>]) -> Vec<LowerableJsxAttribute> {
+fn convert_jsx_attributes<'a>(
+    attributes: &'a [ast::JSXAttributeItem<'a>],
+) -> Vec<LowerableJsxAttribute<'a>> {
     attributes
         .iter()
         .map(|attr| match attr {
@@ -586,7 +591,9 @@ fn convert_jsx_attributes(attributes: &[ast::JSXAttributeItem<'_>]) -> Vec<Lower
 }
 
 /// Convert a JSX attribute value to a `LowerableExpression`.
-fn convert_jsx_attribute_value(value: &ast::JSXAttributeValue<'_>) -> LowerableExpression {
+fn convert_jsx_attribute_value<'a>(
+    value: &'a ast::JSXAttributeValue<'a>,
+) -> LowerableExpression<'a> {
     match value {
         ast::JSXAttributeValue::StringLiteral(lit) => {
             LowerableExpression::StringLiteral(lit.value.to_string(), lit.span)
@@ -603,7 +610,7 @@ fn convert_jsx_attribute_value(value: &ast::JSXAttributeValue<'_>) -> LowerableE
 }
 
 /// Convert a JSX child to a `LowerableJsxChild`.
-fn convert_jsx_child(child: &ast::JSXChild<'_>) -> Option<LowerableJsxChild> {
+fn convert_jsx_child<'a>(child: &'a ast::JSXChild<'a>) -> Option<LowerableJsxChild<'a>> {
     match child {
         ast::JSXChild::Text(text) => {
             Some(LowerableJsxChild::Text(text.value.to_string(), text.span))
@@ -631,7 +638,9 @@ fn convert_jsx_child(child: &ast::JSXChild<'_>) -> Option<LowerableJsxChild> {
 }
 
 /// Convert a JSXElement reference to a LowerableExpression directly (avoids cloning oxc_allocator::Box).
-fn convert_jsx_element_to_expression(element: &ast::JSXElement<'_>) -> LowerableExpression {
+fn convert_jsx_element_to_expression<'a>(
+    element: &'a ast::JSXElement<'a>,
+) -> LowerableExpression<'a> {
     let tag = convert_jsx_tag_name(&element.opening_element.name);
     let props = convert_jsx_attributes(&element.opening_element.attributes);
     let children = element.children.iter().filter_map(convert_jsx_child).collect();
@@ -647,7 +656,9 @@ fn convert_jsx_element_to_expression(element: &ast::JSXElement<'_>) -> Lowerable
 }
 
 /// Convert a JSXFragment reference to a LowerableExpression directly (avoids cloning oxc_allocator::Box).
-fn convert_jsx_fragment_to_expression(fragment: &ast::JSXFragment<'_>) -> LowerableExpression {
+fn convert_jsx_fragment_to_expression<'a>(
+    fragment: &'a ast::JSXFragment<'a>,
+) -> LowerableExpression<'a> {
     let children = fragment.children.iter().filter_map(convert_jsx_child).collect();
     LowerableExpression::JsxFragment { children, span: fragment.span }
 }
