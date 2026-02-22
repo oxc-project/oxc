@@ -101,7 +101,7 @@ pub fn run_pipeline(
     crate::inference::infer_mutation_aliasing_effects::infer_mutation_aliasing_effects(
         func,
         &infer_opts,
-    );
+    )?;
 
     // 18. OptimizeForSSR (optional)
     if env.output_mode == CompilerOutputMode::Ssr {
@@ -118,11 +118,11 @@ pub fn run_pipeline(
     let range_opts = InferRangesOptions { is_function_expression: false };
     crate::inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges(
         func, range_opts,
-    );
+    )?;
 
     // 22. ValidateLocalsNotReassignedAfterRender
     if env.enable_validations {
-        crate::validation::validate_locals_not_reassigned_after_render::validate_locals_not_reassigned_after_render(func);
+        crate::validation::validate_locals_not_reassigned_after_render::validate_locals_not_reassigned_after_render(func)?;
     }
 
     // 23. Validations (conditional on config)
@@ -145,24 +145,21 @@ pub fn run_pipeline(
         if env.config.validate_no_derived_computations_in_effects_exp
             && env.output_mode == CompilerOutputMode::Lint
         {
-            let _errors = crate::validation::validate_no_derived_computations_in_effects_exp::validate_no_derived_computations_in_effects_exp(func);
-            // In lint mode, errors are logged rather than thrown
+            func.env.log_errors(crate::validation::validate_no_derived_computations_in_effects_exp::validate_no_derived_computations_in_effects_exp(func).into_result());
         } else if env.config.validate_no_derived_computations_in_effects {
-            crate::validation::validate_no_derived_computations_in_effects::validate_no_derived_computations_in_effects(func);
+            crate::validation::validate_no_derived_computations_in_effects::validate_no_derived_computations_in_effects(func)?;
         }
 
         if env.config.validate_no_set_state_in_effects
             && env.output_mode == CompilerOutputMode::Lint
         {
-            let _errors = crate::validation::validate_no_set_state_in_effects::validate_no_set_state_in_effects(func);
-            // In lint mode, errors are logged rather than thrown
+            func.env.log_errors(crate::validation::validate_no_set_state_in_effects::validate_no_set_state_in_effects(func).into_result());
         }
 
         if env.config.validate_no_jsx_in_try_statements
             && env.output_mode == CompilerOutputMode::Lint
         {
-            let _errors = crate::validation::validate_no_jsx_in_try_statement::validate_no_jsx_in_try_statement(func);
-            // In lint mode, errors are logged rather than thrown
+            func.env.log_errors(crate::validation::validate_no_jsx_in_try_statement::validate_no_jsx_in_try_statement(func).into_result());
         }
 
         if env.config.validate_no_impure_functions_in_render {
@@ -193,9 +190,10 @@ pub fn run_pipeline(
         && env.config.validate_static_components
         && env.output_mode == CompilerOutputMode::Lint
     {
-        let _errors =
-            crate::validation::validate_static_components::validate_static_components(func);
-        // In lint mode, errors are logged rather than thrown
+        func.env.log_errors(
+            crate::validation::validate_static_components::validate_static_components(func)
+                .into_result(),
+        );
     }
 
     // =========================================================================
@@ -271,7 +269,7 @@ pub fn run_pipeline(
 
     // 37. BuildReactiveFunction
     let mut reactive_function =
-        crate::reactive_scopes::build_reactive_function::build_reactive_function(func);
+        crate::reactive_scopes::build_reactive_function::build_reactive_function(func)?;
 
     // AssertWellFormedBreakTargets
     crate::reactive_scopes::assert_well_formed_break_targets::assert_well_formed_break_targets(

@@ -22,7 +22,9 @@ use crate::{
 /// # Panics
 /// Throws a `CompilerError` (via panic) if a context variable is reassigned
 /// after render, or if an async function reassigns a context variable.
-pub fn validate_locals_not_reassigned_after_render(func: &HIRFunction) {
+pub fn validate_locals_not_reassigned_after_render(
+    func: &HIRFunction,
+) -> Result<(), CompilerError> {
     let mut context_variables: FxHashSet<IdentifierId> = FxHashSet::default();
     let reassignment = get_context_reassignment(func, &mut context_variables, false, false);
     if let Some(reassignment) = reassignment {
@@ -43,9 +45,9 @@ pub fn validate_locals_not_reassigned_after_render(func: &HIRFunction) {
                 message: Some(format!("Cannot reassign {variable} after render completes")),
             }),
         );
-        // The TS version throws here; we just return since this is called as a void fn
-        // and the pipeline doesn't check the return value
+        return Err(errors);
     }
+    Ok(())
 }
 
 fn get_variable_name(place: &Place) -> String {

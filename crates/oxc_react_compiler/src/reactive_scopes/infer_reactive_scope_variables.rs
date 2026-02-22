@@ -115,7 +115,7 @@ pub fn infer_reactive_scope_variables(func: &mut HIRFunction) {
                     range: mutable_range,
                     dependencies: FxHashSet::default(),
                     declarations: FxHashMap::default(),
-                    reassignments: FxHashSet::default(),
+                    reassignments: Vec::new(),
                     early_return_value: None,
                     merged: FxHashSet::default(),
                     loc,

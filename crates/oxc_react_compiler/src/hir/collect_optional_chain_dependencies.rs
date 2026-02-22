@@ -36,7 +36,7 @@ pub fn collect_optional_chain_dependencies(func: &HIRFunction) -> OptionalChainD
                     if let InstructionValue::PropertyLoad(v) = &instr.value {
                         // This is part of the optional chain path
                         let dep = ReactiveScopeDependency {
-                            identifier_id: v.object.identifier.id,
+                            identifier: v.object.identifier.clone(),
                             reactive: false,
                             path: vec![DependencyPathEntry {
                                 property: v.property.clone(),

@@ -133,7 +133,10 @@ fn merge_value_kinds(a: ValueKind, b: ValueKind) -> ValueKind {
 }
 
 /// Infer mutation/aliasing effects for the given function.
-pub fn infer_mutation_aliasing_effects(func: &mut HIRFunction, options: &InferOptions) {
+pub fn infer_mutation_aliasing_effects(
+    func: &mut HIRFunction,
+    options: &InferOptions,
+) -> Result<(), crate::compiler_error::CompilerError> {
     let mut initial_state = InferenceState::empty();
 
     // Initialize context variables
@@ -242,6 +245,8 @@ pub fn infer_mutation_aliasing_effects(func: &mut HIRFunction, options: &InferOp
             }
         }
     }
+
+    Ok(())
 }
 
 /// Options for the inference pass.
