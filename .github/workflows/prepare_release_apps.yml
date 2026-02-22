@@ -97,7 +97,7 @@ jobs:
             Triggering Oxfmt Ecosystem CI
             https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml
 
-      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/oxc-ecosystem-ci
           workflow: oxlint-ci.yml
@@ -105,7 +105,7 @@ jobs:
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment-oxlint.outputs.comment-id }}" }'
 
-      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/oxc-ecosystem-ci
           workflow: oxfmt-ci.yml
@@ -121,7 +121,7 @@ jobs:
       actions: write
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
-      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+      - uses: benc-uk/workflow-dispatch@7a027648b88c2413826b6ddd6c76114894dc5ec4 # v1.3.1
         with:
           repo: oxc-project/website
           workflow: release.yml
