@@ -20,17 +20,16 @@ pub fn assert_valid_mutable_ranges(func: &HIRFunction) -> Result<(), CompilerErr
         for instr in &block.instructions {
             let range = &instr.lvalue.identifier.mutable_range;
             // Start should be <= End (or both 0 for uninitialized)
-            if (range.start.0 != 0 || range.end.0 != 0)
-                && range.start > range.end {
-                    return Err(CompilerError::invariant(
-                        "Invalid mutable range: start > end",
-                        Some(&format!(
-                            "Identifier #{}: range [{}, {})",
-                            instr.lvalue.identifier.id.0, range.start.0, range.end.0
-                        )),
-                        GENERATED_SOURCE,
-                    ));
-                }
+            if (range.start.0 != 0 || range.end.0 != 0) && range.start > range.end {
+                return Err(CompilerError::invariant(
+                    "Invalid mutable range: start > end",
+                    Some(&format!(
+                        "Identifier #{}: range [{}, {})",
+                        instr.lvalue.identifier.id.0, range.start.0, range.end.0
+                    )),
+                    GENERATED_SOURCE,
+                ));
+            }
         }
     }
     Ok(())

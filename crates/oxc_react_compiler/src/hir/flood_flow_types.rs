@@ -170,18 +170,31 @@ pub enum ReactType {
 #[derive(Debug, Clone)]
 pub enum Destructor {
     NonMaybeType,
-    PropertyType { name: String },
-    ElementType { index: u32 },
+    PropertyType {
+        name: String,
+    },
+    ElementType {
+        index: u32,
+    },
     ReadOnly,
     Partial,
     Required,
     SpreadType,
     RestType,
     ValuesType,
-    CallType { args: Vec<FlowType> },
-    ConditionalType { check: Box<FlowType>, extends: Box<FlowType>, true_type: Box<FlowType>, false_type: Box<FlowType> },
+    CallType {
+        args: Vec<FlowType>,
+    },
+    ConditionalType {
+        check: Box<FlowType>,
+        extends: Box<FlowType>,
+        true_type: Box<FlowType>,
+        false_type: Box<FlowType>,
+    },
     MappedType,
-    TypeMap { ty: Box<FlowType> },
+    TypeMap {
+        ty: Box<FlowType>,
+    },
     ReactCheckComponentConfig,
     ReactCheckComponentRef,
 }

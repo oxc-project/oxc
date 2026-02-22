@@ -1,4 +1,4 @@
-use super::{StyledComponentsOptions, ReactCompilerOptions};
+use super::{ReactCompilerOptions, StyledComponentsOptions};
 
 #[derive(Default, Debug, Clone)]
 /// Plugin-specific transform options.

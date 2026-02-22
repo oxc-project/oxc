@@ -134,7 +134,8 @@ pub fn add_function(
     properties: Vec<(String, Type)>,
     signature: FunctionSignature,
 ) -> String {
-    let shape_id = id.map_or_else(|| format!("<generated_{}>", registry.len()), ToString::to_string);
+    let shape_id =
+        id.map_or_else(|| format!("<generated_{}>", registry.len()), ToString::to_string);
     let shape = ObjectShape {
         properties: properties.into_iter().collect(),
         function_type: Some(signature),
@@ -162,10 +163,7 @@ pub fn add_object(
     id: &str,
     properties: Vec<(String, Type)>,
 ) -> String {
-    let shape = ObjectShape {
-        properties: properties.into_iter().collect(),
-        function_type: None,
-    };
+    let shape = ObjectShape { properties: properties.into_iter().collect(), function_type: None };
     registry.insert(id.to_string(), shape);
     id.to_string()
 }

@@ -11,10 +11,7 @@
 /// 3. Marks reactive places on each identifier
 use rustc_hash::FxHashSet;
 
-use crate::hir::{
-    HIRFunction, IdentifierId,
-    visitors::each_instruction_operand,
-};
+use crate::hir::{HIRFunction, IdentifierId, visitors::each_instruction_operand};
 
 /// Infer which places in the function are reactive.
 pub fn infer_reactive_places(func: &mut HIRFunction) {

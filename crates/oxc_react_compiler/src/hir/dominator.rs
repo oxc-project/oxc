@@ -128,10 +128,7 @@ fn compute_immediate_dominators(graph: &Graph) -> FxHashMap<BlockId, BlockId> {
                     break;
                 }
             }
-            let mut new_idom = match new_idom {
-                Some(idom) => idom,
-                None => continue, // skip if no predecessor visited yet
-            };
+            let Some(mut new_idom) = new_idom else { continue }; // skip if no predecessor visited yet
 
             // For all other predecessors
             for &pred in &node.preds {
@@ -207,15 +204,12 @@ fn build_graph(func: &HIRFunction) -> Graph {
 }
 
 fn build_reverse_graph(func: &HIRFunction, include_throws_as_exit: bool) -> Graph {
-    let exit_id = BlockId(u32::try_from(func.body.blocks.len()).unwrap_or(u32::MAX).saturating_add(1000)); // synthetic exit block
+    let exit_id =
+        BlockId(u32::try_from(func.body.blocks.len()).unwrap_or(u32::MAX).saturating_add(1000)); // synthetic exit block
 
     let mut nodes: FxHashMap<BlockId, Node> = FxHashMap::default();
-    let mut exit_node = Node {
-        id: exit_id,
-        index: 0,
-        preds: FxHashSet::default(),
-        succs: FxHashSet::default(),
-    };
+    let mut exit_node =
+        Node { id: exit_id, index: 0, preds: FxHashSet::default(), succs: FxHashSet::default() };
 
     for (&id, block) in &func.body.blocks {
         let mut node = Node {

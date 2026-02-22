@@ -4,19 +4,14 @@
 ///
 /// Utilities for working with reactive scope dependencies, including
 /// merging, comparing, and minimizing dependency sets.
-use crate::hir::{
-    ReactiveScopeDependency,
-    are_equal_paths, is_sub_path,
-};
+use crate::hir::{ReactiveScopeDependency, are_equal_paths, is_sub_path};
 use rustc_hash::FxHashSet;
 
 /// Merge two dependency sets, keeping only the minimal set of dependencies.
 ///
 /// If dependency A is a sub-path of dependency B, only A is kept (since
 /// A changing implies B's sub-path has also changed).
-pub fn merge_dependencies(
-    deps: &FxHashSet<ReactiveScopeDependency>,
-) -> FxHashSet<ReactiveScopeDependency> {
+pub fn merge_dependencies(deps: &[ReactiveScopeDependency]) -> FxHashSet<ReactiveScopeDependency> {
     let deps_vec: Vec<&ReactiveScopeDependency> = deps.iter().collect();
     let mut result = FxHashSet::default();
 

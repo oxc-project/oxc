@@ -1,10 +1,6 @@
-
 use crate::{
     compiler_error::{CompilerError, ErrorSeverity},
-    entrypoint::options::{
-        CompilationMode, PanicThreshold,
-        OPT_IN_DIRECTIVES, OPT_OUT_DIRECTIVES,
-    },
+    entrypoint::options::{CompilationMode, OPT_IN_DIRECTIVES, OPT_OUT_DIRECTIVES, PanicThreshold},
     hir::ReactFunctionType,
     utils::{component_declaration::is_component_name, hook_declaration::is_hook_name},
 };
@@ -34,9 +30,7 @@ pub fn should_compile_function(
     }
 
     // Check for opt-in directives
-    let has_opt_in = directives
-        .iter()
-        .any(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()));
+    let has_opt_in = directives.iter().any(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()));
 
     match mode {
         CompilationMode::Annotation => {
@@ -80,13 +74,8 @@ fn infer_function_type(name: Option<&str>) -> ReactFunctionType {
 }
 
 /// Check if a function has a directive that enables memoization.
-pub fn find_directive_enabling_memoization(
-    directives: &[String],
-) -> Option<String> {
-    directives
-        .iter()
-        .find(|d| OPT_IN_DIRECTIVES.contains(&d.as_str()))
-        .cloned()
+pub fn find_directive_enabling_memoization(directives: &[String]) -> Option<String> {
+    directives.iter().find(|d| OPT_IN_DIRECTIVES.contains(&d.as_str())).cloned()
 }
 
 /// Check if a function has a directive that disables memoization.
@@ -96,21 +85,16 @@ pub fn find_directive_disabling_memoization(
 ) -> Option<String> {
     // Check custom opt-out directives first
     if let Some(custom) = custom_opt_out
-        && let Some(found) = directives.iter().find(|d| custom.contains(d)) {
-            return Some(found.clone());
-        }
+        && let Some(found) = directives.iter().find(|d| custom.contains(d))
+    {
+        return Some(found.clone());
+    }
     // Then check standard opt-out
-    directives
-        .iter()
-        .find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str()))
-        .cloned()
+    directives.iter().find(|d| OPT_OUT_DIRECTIVES.contains(&d.as_str())).cloned()
 }
 
 /// Determine how to handle a compilation error based on the panic threshold.
-pub fn handle_compilation_error(
-    error: &CompilerError,
-    threshold: PanicThreshold,
-) -> ErrorAction {
+pub fn handle_compilation_error(error: &CompilerError, threshold: PanicThreshold) -> ErrorAction {
     match threshold {
         PanicThreshold::AllErrors => ErrorAction::Panic,
         PanicThreshold::CriticalErrors => {
@@ -120,11 +104,7 @@ pub fn handle_compilation_error(
                     let severity = detail.severity();
                     severity == ErrorSeverity::Error
                 });
-                if has_critical {
-                    ErrorAction::Panic
-                } else {
-                    ErrorAction::Skip
-                }
+                if has_critical { ErrorAction::Panic } else { ErrorAction::Skip }
             } else {
                 ErrorAction::Skip
             }

@@ -111,6 +111,5 @@ fn test() {
         // - Conditional hooks: "function Component(props) { if (props.cond) { useState(0); } }"
     ];
 
-    Tester::new(ReactCompilerRule::NAME, ReactCompilerRule::PLUGIN, pass, fail)
-        .test_and_snapshot();
+    Tester::new(ReactCompilerRule::NAME, ReactCompilerRule::PLUGIN, pass, fail).test_and_snapshot();
 }
