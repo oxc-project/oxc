@@ -1213,9 +1213,26 @@ fn test_namespaces() {
         export { Foo }
         ",
         "declare module 'tsdown' { function bar(): void; }",
+        "
+        declare module 'vitest' {
+            interface Matchers<T> {
+                toBeFoo(value: unknown): unknown;
+            }
+        }
+        ",
     ];
 
-    let fail = vec!["namespace N {}", "export namespace N { function foo() }"];
+    let fail = vec![
+        "namespace N {}",
+        "export namespace N { function foo() }",
+        "
+        export namespace NonAmbientModuleDeclaration {
+            export interface Matchers<T> extends MatcherOverride {
+                toBeFoo(value: unknown): unknown;
+            }
+        }
+        ",
+    ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
