@@ -5,16 +5,23 @@ use oxc_syntax::operator::AssignmentOperator;
 use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE, SourceLocation},
     hir::{
-        ArrayExpressionElement, BlockKind, BranchTerminal, Case, DeclareLocal, DoWhileTerminal,
-        ForInTerminal, ForOfTerminal, ForTerminal, GetIterator, GotoTerminal, GotoVariant,
+        ArrayExpressionElement, BlockKind, BranchTerminal, Case, DeclareContext, DeclareLocal,
+        Destructure, DoWhileTerminal, ForInTerminal, ForOfTerminal, ForTerminal,
+        FunctionExpressionType, FunctionExpressionValue, GetIterator, GotoTerminal, GotoVariant,
         HIRFunction, IfTerminal, Instruction, InstructionId, InstructionKind, InstructionValue,
-        IteratorNext, LValue, LabelTerminal, LoadLocal, LogicalTerminal, NextPropertyOf,
-        ObjectPatternProperty, ObjectProperty, ObjectPropertyKey, ObjectPropertyType,
-        OptionalTerminal, PrimitiveValue, PrimitiveValueKind, ReactFunctionType, ReturnVariant,
-        SequenceTerminal, SpreadPattern, StoreLocal, SwitchTerminal, TemplateLiteralQuasi,
-        Terminal, TernaryTerminal, TryTerminal, WhileTerminal,
+        IteratorNext, LValue, LValuePattern, LabelTerminal, LoadContext, LoadLocal,
+        LogicalTerminal, LoweredFunction, NextPropertyOf, NonLocalBinding, ObjectPatternProperty,
+        ObjectProperty, ObjectPropertyKey, ObjectPropertyType, OptionalTerminal, PrimitiveValue,
+        PrimitiveValueKind, ReactFunctionType, ReturnVariant, SequenceTerminal, SpreadPattern,
+        StoreContext, StoreGlobal, StoreLocal, SwitchTerminal, TemplateLiteralQuasi, Terminal,
+        TernaryTerminal, TryTerminal, WhileTerminal,
         environment::Environment,
-        hir_builder::{HirBuilder, create_temporary_place},
+        find_context_identifiers::{find_context_identifiers, find_context_identifiers_arrow},
+        hir_builder::{BindingKind, HirBuilder, VariableBinding, create_temporary_place},
+        hir_types::{
+            ArrayPattern as HirArrayPattern, ArrayPatternElement, IdentifierName,
+            ObjectPattern as HirObjectPattern, Pattern,
+        },
     },
 };
 
@@ -27,6 +34,9 @@ pub enum LowerableFunction<'a> {
 }
 
 /// Lower the parameters of a function to HIR reactive params.
+///
+/// This registers each parameter name in the builder's bindings map so that
+/// later identifier references can resolve to the correct local binding.
 fn lower_params(
     builder: &mut HirBuilder,
     func: &LowerableFunction<'_>,
@@ -39,15 +49,1144 @@ fn lower_params(
     let mut result = Vec::new();
     for param in &params.items {
         let loc = span_to_loc(param.span);
-        let place = create_temporary_place(builder.environment_mut(), loc);
+        let place = declare_binding_pattern(builder, &param.pattern, BindingKind::Param, loc);
         result.push(crate::hir::ReactiveParam::Place(place));
     }
     if let Some(rest) = &params.rest {
         let loc = span_to_loc(rest.span);
-        let place = create_temporary_place(builder.environment_mut(), loc);
+        let place = declare_binding_pattern(builder, &rest.rest.argument, BindingKind::Param, loc);
         result.push(crate::hir::ReactiveParam::Spread(SpreadPattern { place }));
     }
     result
+}
+
+/// Declare a binding from a `BindingPattern`, registering it in the builder's bindings map.
+///
+/// For simple identifiers, this directly calls `builder.declare_binding()`.
+/// For destructuring patterns, it creates a temporary place (the full destructuring
+/// lowering is handled elsewhere; this just needs a place for the parameter).
+fn declare_binding_pattern(
+    builder: &mut HirBuilder,
+    pattern: &ast::BindingPattern<'_>,
+    kind: BindingKind,
+    loc: SourceLocation,
+) -> crate::hir::Place {
+    match pattern {
+        ast::BindingPattern::BindingIdentifier(ident) => {
+            builder.declare_binding(&ident.name, kind, loc)
+        }
+        // For destructuring patterns, create a temporary place.
+        // The destructuring itself is lowered separately.
+        _ => create_temporary_place(builder.environment_mut(), loc),
+    }
+}
+
+/// Declare all leaf bindings in a pattern, emitting DeclareLocal/DeclareContext
+/// for each leaf identifier. Used for variable declarations without initializers.
+fn declare_all_bindings_in_pattern(
+    builder: &mut HirBuilder,
+    pattern: &ast::BindingPattern<'_>,
+    binding_kind: BindingKind,
+    instruction_kind: InstructionKind,
+    decl_loc: SourceLocation,
+    loc: SourceLocation,
+) {
+    match pattern {
+        ast::BindingPattern::BindingIdentifier(ident) => {
+            let decl_place = builder.declare_binding(&ident.name, binding_kind, decl_loc);
+            if builder.is_context_identifier(&ident.name) {
+                let lvalue = create_temporary_place(builder.environment_mut(), loc);
+                builder.push(Instruction {
+                    id: InstructionId(0),
+                    lvalue,
+                    value: InstructionValue::DeclareContext(DeclareContext {
+                        lvalue_kind: InstructionKind::Let,
+                        lvalue_place: decl_place,
+                        loc,
+                    }),
+                    effects: None,
+                    loc,
+                });
+            } else {
+                let lvalue = create_temporary_place(builder.environment_mut(), loc);
+                builder.push(Instruction {
+                    id: InstructionId(0),
+                    lvalue,
+                    value: InstructionValue::DeclareLocal(DeclareLocal {
+                        lvalue: LValue { place: decl_place, kind: instruction_kind },
+                        loc,
+                    }),
+                    effects: None,
+                    loc,
+                });
+            }
+        }
+        ast::BindingPattern::ObjectPattern(obj) => {
+            for prop in &obj.properties {
+                declare_all_bindings_in_pattern(
+                    builder,
+                    &prop.value,
+                    binding_kind,
+                    instruction_kind,
+                    decl_loc,
+                    loc,
+                );
+            }
+            if let Some(rest) = &obj.rest {
+                declare_all_bindings_in_pattern(
+                    builder,
+                    &rest.argument,
+                    binding_kind,
+                    instruction_kind,
+                    decl_loc,
+                    loc,
+                );
+            }
+        }
+        ast::BindingPattern::ArrayPattern(arr) => {
+            for elem in arr.elements.iter().flatten() {
+                declare_all_bindings_in_pattern(
+                    builder,
+                    elem,
+                    binding_kind,
+                    instruction_kind,
+                    decl_loc,
+                    loc,
+                );
+            }
+            if let Some(rest) = &arr.rest {
+                declare_all_bindings_in_pattern(
+                    builder,
+                    &rest.argument,
+                    binding_kind,
+                    instruction_kind,
+                    decl_loc,
+                    loc,
+                );
+            }
+        }
+        ast::BindingPattern::AssignmentPattern(assign) => {
+            declare_all_bindings_in_pattern(
+                builder,
+                &assign.left,
+                binding_kind,
+                instruction_kind,
+                decl_loc,
+                loc,
+            );
+        }
+    }
+}
+
+/// Create a promoted temporary place. Promoted temporaries have a name like `#t0`
+/// so they appear as named variables in the HIR, which is needed for destructuring
+/// pattern elements that are nested patterns (not simple identifiers).
+fn create_promoted_temporary(
+    builder: &mut HirBuilder,
+    loc: SourceLocation,
+) -> crate::hir::Place {
+    let id = builder.environment_mut().next_identifier_id();
+    let identifier = crate::hir::Identifier {
+        id,
+        declaration_id: crate::hir::DeclarationId(id.0),
+        name: Some(IdentifierName::Promoted(format!("#t{}", id.0))),
+        mutable_range: crate::hir::MutableRange::default(),
+        scope: None,
+        type_: crate::hir::types::make_type(),
+        loc,
+    };
+    crate::hir::Place {
+        identifier,
+        effect: crate::hir::Effect::Unknown,
+        reactive: false,
+        loc,
+    }
+}
+
+/// Lower a destructuring declaration (ObjectPattern or ArrayPattern) to HIR.
+///
+/// This is the core of destructuring support. For each pattern, it:
+/// 1. Walks the pattern to build an HIR Pattern (ObjectPattern or ArrayPattern)
+/// 2. For leaf identifiers, declares them in the builder's bindings map
+/// 3. For nested patterns or patterns with defaults, creates promoted temporaries
+/// 4. Emits a Destructure instruction
+/// 5. Recursively processes followups (nested patterns assigned to temporaries)
+///
+/// Port of the `ArrayPattern` and `ObjectPattern` cases in `lowerAssignment()` from
+/// `HIR/BuildHIR.ts`.
+fn lower_destructuring_declaration(
+    builder: &mut HirBuilder,
+    pattern: &ast::BindingPattern<'_>,
+    value: crate::hir::Place,
+    kind: InstructionKind,
+    binding_kind: BindingKind,
+    loc: SourceLocation,
+) -> Result<(), CompilerError> {
+    match pattern {
+        ast::BindingPattern::ObjectPattern(obj_pat) => {
+            lower_object_destructuring(builder, obj_pat, value, kind, binding_kind, loc)
+        }
+        ast::BindingPattern::ArrayPattern(arr_pat) => {
+            lower_array_destructuring(builder, arr_pat, value, kind, binding_kind, loc)
+        }
+        ast::BindingPattern::AssignmentPattern(assign_pat) => {
+            // AssignmentPattern: `const { a = defaultVal } = obj`
+            // Lower the default value conditionally, then recursively lower the left side
+            lower_assignment_pattern_declaration(
+                builder,
+                assign_pat,
+                value,
+                kind,
+                binding_kind,
+                loc,
+            )
+        }
+        ast::BindingPattern::BindingIdentifier(ident) => {
+            // Base case: simple identifier — declare and emit store
+            let ident_loc = span_to_loc(ident.span);
+            let decl_place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
+
+            if builder.is_context_identifier(&ident.name) {
+                let lvalue = create_temporary_place(builder.environment_mut(), loc);
+                builder.push(Instruction {
+                    id: InstructionId(0),
+                    lvalue,
+                    value: InstructionValue::StoreContext(StoreContext {
+                        lvalue_kind: kind,
+                        lvalue_place: decl_place,
+                        value,
+                        loc,
+                    }),
+                    effects: None,
+                    loc,
+                });
+            } else {
+                let lvalue = create_temporary_place(builder.environment_mut(), loc);
+                builder.push(Instruction {
+                    id: InstructionId(0),
+                    lvalue,
+                    value: InstructionValue::StoreLocal(StoreLocal {
+                        lvalue: LValue { place: decl_place, kind },
+                        value,
+                        loc,
+                    }),
+                    effects: None,
+                    loc,
+                });
+            }
+            Ok(())
+        }
+    }
+}
+
+/// Lower an ObjectPattern destructuring declaration.
+///
+/// Port of the `ObjectPattern` case in `lowerAssignment()` from BuildHIR.ts.
+fn lower_object_destructuring(
+    builder: &mut HirBuilder,
+    obj_pat: &ast::ObjectPattern<'_>,
+    value: crate::hir::Place,
+    kind: InstructionKind,
+    binding_kind: BindingKind,
+    loc: SourceLocation,
+) -> Result<(), CompilerError> {
+    let pat_loc = span_to_loc(obj_pat.span);
+    let mut properties = Vec::new();
+    let mut followups: Vec<(crate::hir::Place, FollowupPattern)> = Vec::new();
+
+    for prop in &obj_pat.properties {
+        let prop_loc = span_to_loc(prop.span);
+        let key = lower_binding_property_key(&prop.key)?;
+
+        // Get the value pattern
+        match &prop.value {
+            ast::BindingPattern::BindingIdentifier(ident) => {
+                // Simple identifier: declare it directly and use its place in the pattern
+                let ident_loc = span_to_loc(ident.span);
+                let place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                    key,
+                    property_type: ObjectPropertyType::Property,
+                    place,
+                }));
+            }
+            ast::BindingPattern::AssignmentPattern(assign) => {
+                // Property with default: `{ a = defaultVal }` or `{ key: val = defaultVal }`
+                // Create a promoted temporary and handle the default in followups
+                let temp = create_promoted_temporary(builder, prop_loc);
+                properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                    key,
+                    property_type: ObjectPropertyType::Property,
+                    place: temp.clone(),
+                }));
+                followups.push((
+                    temp,
+                    FollowupPattern::AssignmentPattern(assign),
+                ));
+            }
+            // Nested pattern (object or array): create a temporary and recurse
+            nested @ (ast::BindingPattern::ObjectPattern(_)
+            | ast::BindingPattern::ArrayPattern(_)) => {
+                let temp = create_promoted_temporary(builder, prop_loc);
+                properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                    key,
+                    property_type: ObjectPropertyType::Property,
+                    place: temp.clone(),
+                }));
+                followups.push((temp, FollowupPattern::Binding(nested)));
+            }
+        }
+    }
+
+    // Handle rest element: `const { a, ...rest } = obj`
+    if let Some(rest) = &obj_pat.rest {
+        let rest_loc = span_to_loc(rest.span);
+        match &rest.argument {
+            ast::BindingPattern::BindingIdentifier(ident) => {
+                let ident_loc = span_to_loc(ident.span);
+                let place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                properties.push(ObjectPatternProperty::Spread(SpreadPattern { place }));
+            }
+            nested => {
+                let temp = create_promoted_temporary(builder, rest_loc);
+                properties.push(ObjectPatternProperty::Spread(SpreadPattern {
+                    place: temp.clone(),
+                }));
+                followups.push((temp, FollowupPattern::Binding(nested)));
+            }
+        }
+    }
+
+    // Emit the Destructure instruction
+    lower_value_to_temporary(
+        builder,
+        InstructionValue::Destructure(Destructure {
+            lvalue: LValuePattern {
+                kind,
+                pattern: Pattern::Object(HirObjectPattern {
+                    properties,
+                    loc: pat_loc,
+                }),
+            },
+            value,
+            loc,
+        }),
+        loc,
+    )?;
+
+    // Process followups: recursively lower nested patterns
+    for (temp_place, followup) in followups {
+        match followup {
+            FollowupPattern::Binding(nested_pat) => {
+                lower_destructuring_declaration(
+                    builder,
+                    nested_pat,
+                    temp_place,
+                    kind,
+                    binding_kind,
+                    loc,
+                )?;
+            }
+            FollowupPattern::AssignmentPattern(assign_pat) => {
+                lower_assignment_pattern_declaration(
+                    builder,
+                    assign_pat,
+                    temp_place,
+                    kind,
+                    binding_kind,
+                    loc,
+                )?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Lower an ArrayPattern destructuring declaration.
+///
+/// Port of the `ArrayPattern` case in `lowerAssignment()` from BuildHIR.ts.
+fn lower_array_destructuring(
+    builder: &mut HirBuilder,
+    arr_pat: &ast::ArrayPattern<'_>,
+    value: crate::hir::Place,
+    kind: InstructionKind,
+    binding_kind: BindingKind,
+    loc: SourceLocation,
+) -> Result<(), CompilerError> {
+    let pat_loc = span_to_loc(arr_pat.span);
+    let mut items = Vec::new();
+    let mut followups: Vec<(crate::hir::Place, FollowupPattern)> = Vec::new();
+
+    for element in &arr_pat.elements {
+        match element {
+            None => {
+                // Hole: `const [, x] = arr`
+                items.push(ArrayPatternElement::Hole);
+            }
+            Some(binding) => {
+                let elem_loc = span_to_loc(binding.span());
+                match binding {
+                    ast::BindingPattern::BindingIdentifier(ident) => {
+                        // Simple identifier element
+                        let ident_loc = span_to_loc(ident.span);
+                        let place =
+                            builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                        items.push(ArrayPatternElement::Place(place));
+                    }
+                    ast::BindingPattern::AssignmentPattern(assign) => {
+                        // Element with default: `const [a = 1] = arr`
+                        let temp = create_promoted_temporary(builder, elem_loc);
+                        items.push(ArrayPatternElement::Place(temp.clone()));
+                        followups.push((
+                            temp,
+                            FollowupPattern::AssignmentPattern(assign),
+                        ));
+                    }
+                    // Nested pattern
+                    nested @ (ast::BindingPattern::ObjectPattern(_)
+                    | ast::BindingPattern::ArrayPattern(_)) => {
+                        let temp = create_promoted_temporary(builder, elem_loc);
+                        items.push(ArrayPatternElement::Place(temp.clone()));
+                        followups.push((temp, FollowupPattern::Binding(nested)));
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle rest element: `const [first, ...rest] = arr`
+    if let Some(rest) = &arr_pat.rest {
+        let rest_loc = span_to_loc(rest.span);
+        match &rest.argument {
+            ast::BindingPattern::BindingIdentifier(ident) => {
+                let ident_loc = span_to_loc(ident.span);
+                let place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                items.push(ArrayPatternElement::Spread(SpreadPattern { place }));
+            }
+            nested => {
+                let temp = create_promoted_temporary(builder, rest_loc);
+                items.push(ArrayPatternElement::Spread(SpreadPattern {
+                    place: temp.clone(),
+                }));
+                followups.push((temp, FollowupPattern::Binding(nested)));
+            }
+        }
+    }
+
+    // Emit the Destructure instruction
+    lower_value_to_temporary(
+        builder,
+        InstructionValue::Destructure(Destructure {
+            lvalue: LValuePattern {
+                kind,
+                pattern: Pattern::Array(HirArrayPattern {
+                    items,
+                    loc: pat_loc,
+                }),
+            },
+            value,
+            loc,
+        }),
+        loc,
+    )?;
+
+    // Process followups: recursively lower nested patterns
+    for (temp_place, followup) in followups {
+        match followup {
+            FollowupPattern::Binding(nested_pat) => {
+                lower_destructuring_declaration(
+                    builder,
+                    nested_pat,
+                    temp_place,
+                    kind,
+                    binding_kind,
+                    loc,
+                )?;
+            }
+            FollowupPattern::AssignmentPattern(assign_pat) => {
+                lower_assignment_pattern_declaration(
+                    builder,
+                    assign_pat,
+                    temp_place,
+                    kind,
+                    binding_kind,
+                    loc,
+                )?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// A followup pattern to process after the initial Destructure instruction.
+/// This handles nested destructuring and default values.
+enum FollowupPattern<'a> {
+    /// A nested binding pattern to destructure further.
+    Binding(&'a ast::BindingPattern<'a>),
+    /// An assignment pattern (default value) to handle conditionally.
+    AssignmentPattern(&'a ast::AssignmentPattern<'a>),
+}
+
+/// Lower an AssignmentPattern (default value in destructuring).
+///
+/// Port of the `AssignmentPattern` case in `lowerAssignment()` from BuildHIR.ts.
+///
+/// `const { a = defaultVal } = obj` or `const [x = defaultVal] = arr`
+///
+/// Creates a conditional: `value === undefined ? defaultVal : value`,
+/// then recursively lowers the left side of the pattern.
+fn lower_assignment_pattern_declaration(
+    builder: &mut HirBuilder,
+    assign_pat: &ast::AssignmentPattern<'_>,
+    value: crate::hir::Place,
+    kind: InstructionKind,
+    binding_kind: BindingKind,
+    loc: SourceLocation,
+) -> Result<(), CompilerError> {
+    let pat_loc = span_to_loc(assign_pat.span);
+
+    // Create a temporary to hold the resolved value (either the provided value or the default)
+    let temp = create_promoted_temporary(builder, pat_loc);
+
+    let test_block = builder.reserve(BlockKind::Value);
+    let continuation_block = builder.reserve(builder.current_block_kind());
+
+    let continuation_id = continuation_block.id;
+
+    // Consequent: use the default value (when value === undefined)
+    let default_expr = convert_expression(&assign_pat.right);
+    let consequent_block = builder.enter(BlockKind::Value, |builder, _block_id| {
+        if let Ok(result) = lower_expression(builder, &default_expr) {
+            let lvalue = create_temporary_place(builder.environment_mut(), pat_loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue,
+                value: InstructionValue::StoreLocal(StoreLocal {
+                    lvalue: LValue {
+                        place: temp.clone(),
+                        kind: InstructionKind::Const,
+                    },
+                    value: result.place,
+                    loc: pat_loc,
+                }),
+                effects: None,
+                loc: pat_loc,
+            });
+        } else {
+            // If default lowering fails, store undefined
+            let undef_place = create_temporary_place(builder.environment_mut(), pat_loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: undef_place.clone(),
+                value: lower_undefined(pat_loc),
+                effects: None,
+                loc: pat_loc,
+            });
+            let lvalue = create_temporary_place(builder.environment_mut(), pat_loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue,
+                value: InstructionValue::StoreLocal(StoreLocal {
+                    lvalue: LValue {
+                        place: temp.clone(),
+                        kind: InstructionKind::Const,
+                    },
+                    value: undef_place,
+                    loc: pat_loc,
+                }),
+                effects: None,
+                loc: pat_loc,
+            });
+        }
+        Terminal::Goto(GotoTerminal {
+            id: InstructionId(0),
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            loc: pat_loc,
+        })
+    });
+
+    // Alternate: use the provided value (when value !== undefined)
+    let alternate_block = builder.enter(BlockKind::Value, |builder, _block_id| {
+        let lvalue = create_temporary_place(builder.environment_mut(), pat_loc);
+        builder.push(Instruction {
+            id: InstructionId(0),
+            lvalue,
+            value: InstructionValue::StoreLocal(StoreLocal {
+                lvalue: LValue {
+                    place: temp.clone(),
+                    kind: InstructionKind::Const,
+                },
+                value: value.clone(),
+                loc: pat_loc,
+            }),
+            effects: None,
+            loc: pat_loc,
+        });
+        Terminal::Goto(GotoTerminal {
+            id: InstructionId(0),
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            loc: pat_loc,
+        })
+    });
+
+    // Emit the ternary terminal
+    builder.terminate_with_continuation(
+        Terminal::Ternary(TernaryTerminal {
+            id: InstructionId(0),
+            test: test_block.id,
+            fallthrough: continuation_id,
+            loc: pat_loc,
+        }),
+        test_block,
+    );
+
+    // In the test block: compare value === undefined
+    let undef = lower_value_to_temporary(builder, lower_undefined(pat_loc), pat_loc)?;
+    let test_result = lower_value_to_temporary(
+        builder,
+        InstructionValue::BinaryExpression(crate::hir::BinaryExpressionValue {
+            operator: oxc_syntax::operator::BinaryOperator::StrictEquality,
+            left: value,
+            right: undef.place,
+            loc: pat_loc,
+        }),
+        pat_loc,
+    )?;
+
+    builder.terminate_with_continuation(
+        Terminal::Branch(BranchTerminal {
+            id: InstructionId(0),
+            test: test_result.place,
+            consequent: consequent_block,
+            alternate: alternate_block,
+            fallthrough: continuation_id,
+            loc: pat_loc,
+        }),
+        continuation_block,
+    );
+
+    // Now recursively lower the left side of the assignment pattern with the resolved temp value
+    lower_destructuring_declaration(builder, &assign_pat.left, temp, kind, binding_kind, loc)
+}
+
+/// Lower a property key from a binding property (used in object destructuring).
+fn lower_binding_property_key(
+    key: &ast::PropertyKey<'_>,
+) -> Result<ObjectPropertyKey, CompilerError> {
+    match key {
+        ast::PropertyKey::StaticIdentifier(ident) => {
+            Ok(ObjectPropertyKey::Identifier(ident.name.to_string()))
+        }
+        ast::PropertyKey::StringLiteral(lit) => {
+            Ok(ObjectPropertyKey::String(lit.value.to_string()))
+        }
+        ast::PropertyKey::NumericLiteral(lit) => Ok(ObjectPropertyKey::Number(lit.value)),
+        _ => {
+            // Computed properties in destructuring patterns are not yet fully supported.
+            // The TS reference also has a TODO for this case.
+            Err(CompilerError::todo(
+                "Handle computed properties in destructuring patterns",
+                None,
+                GENERATED_SOURCE,
+            ))
+        }
+    }
+}
+
+/// Lower an object destructuring assignment target: `({ a, b } = expr)`.
+///
+/// This emits a Destructure instruction with `InstructionKind::Reassign`.
+fn lower_object_assignment_target(
+    builder: &mut HirBuilder,
+    target: &ast::ObjectAssignmentTarget<'_>,
+    value: crate::hir::Place,
+    target_loc: SourceLocation,
+    loc: SourceLocation,
+) -> Result<ExpressionResult, CompilerError> {
+    let mut properties = Vec::new();
+    let mut followups: Vec<(crate::hir::Place, AssignmentFollowup)> = Vec::new();
+
+    for prop in &target.properties {
+        match prop {
+            ast::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident_prop) => {
+                // Shorthand: `{ a }` or `{ a = defaultVal }`
+                let name = &ident_prop.binding.name;
+                let ident_loc = span_to_loc(ident_prop.binding.span);
+                let key = ObjectPropertyKey::Identifier(name.to_string());
+
+                if ident_prop.init.is_some() {
+                    // Has default value: create a promoted temporary and defer
+                    let temp = create_promoted_temporary(builder, ident_loc);
+                    properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                        key,
+                        property_type: ObjectPropertyType::Property,
+                        place: temp.clone(),
+                    }));
+                    followups.push((temp, AssignmentFollowup::IdentifierWithDefault {
+                        name: name.to_string(),
+                        default_expr: ident_prop.init.as_ref(),
+                        loc: ident_loc,
+                    }));
+                } else {
+                    // No default: resolve identifier directly
+                    let place = resolve_identifier_for_reassignment(builder, name, ident_loc);
+                    properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                        key,
+                        property_type: ObjectPropertyType::Property,
+                        place,
+                    }));
+                }
+            }
+            ast::AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop_prop) => {
+                let key = lower_binding_property_key(&prop_prop.name)?;
+                let prop_loc = span_to_loc(prop_prop.span);
+
+                match &prop_prop.binding {
+                    ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) => {
+                        let place = resolve_identifier_for_reassignment(
+                            builder,
+                            &ident.name,
+                            span_to_loc(ident.span),
+                        );
+                        properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                            key,
+                            property_type: ObjectPropertyType::Property,
+                            place,
+                        }));
+                    }
+                    ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
+                        let temp = create_promoted_temporary(builder, prop_loc);
+                        properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                            key,
+                            property_type: ObjectPropertyType::Property,
+                            place: temp.clone(),
+                        }));
+                        followups.push((temp, AssignmentFollowup::TargetWithDefault {
+                            target: &with_default.binding,
+                            default_expr: Some(&with_default.init),
+                            loc: prop_loc,
+                        }));
+                    }
+                    // Nested destructuring targets
+                    ast::AssignmentTargetMaybeDefault::ObjectAssignmentTarget(nested_obj) => {
+                        let temp = create_promoted_temporary(builder, prop_loc);
+                        properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                            key,
+                            property_type: ObjectPropertyType::Property,
+                            place: temp.clone(),
+                        }));
+                        followups.push((temp, AssignmentFollowup::NestedObject(nested_obj)));
+                    }
+                    ast::AssignmentTargetMaybeDefault::ArrayAssignmentTarget(nested_arr) => {
+                        let temp = create_promoted_temporary(builder, prop_loc);
+                        properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                            key,
+                            property_type: ObjectPropertyType::Property,
+                            place: temp.clone(),
+                        }));
+                        followups.push((temp, AssignmentFollowup::NestedArray(nested_arr)));
+                    }
+                    // Simple member expressions or other targets
+                    _ => {
+                        let temp = create_promoted_temporary(builder, prop_loc);
+                        properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                            key,
+                            property_type: ObjectPropertyType::Property,
+                            place: temp.clone(),
+                        }));
+                        followups.push((temp, AssignmentFollowup::SimpleTarget(&prop_prop.binding)));
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle rest element
+    if let Some(rest) = &target.rest {
+        let rest_loc = span_to_loc(rest.span);
+        if let ast::AssignmentTarget::AssignmentTargetIdentifier(ident) = &rest.target {
+            let place =
+                resolve_identifier_for_reassignment(builder, &ident.name, span_to_loc(ident.span));
+            properties.push(ObjectPatternProperty::Spread(SpreadPattern { place }));
+        } else {
+            let temp = create_promoted_temporary(builder, rest_loc);
+            properties.push(ObjectPatternProperty::Spread(SpreadPattern {
+                place: temp.clone(),
+            }));
+            followups.push((temp, AssignmentFollowup::AssignmentTarget(&rest.target)));
+        }
+    }
+
+    // Emit the Destructure instruction
+    let result = lower_value_to_temporary(
+        builder,
+        InstructionValue::Destructure(Destructure {
+            lvalue: LValuePattern {
+                kind: InstructionKind::Reassign,
+                pattern: Pattern::Object(HirObjectPattern {
+                    properties,
+                    loc: target_loc,
+                }),
+            },
+            value,
+            loc,
+        }),
+        loc,
+    )?;
+
+    // Process followups
+    process_assignment_followups(builder, followups, loc)?;
+
+    Ok(result)
+}
+
+/// Lower an array destructuring assignment target: `([a, b] = expr)`.
+///
+/// This emits a Destructure instruction with `InstructionKind::Reassign`.
+fn lower_array_assignment_target(
+    builder: &mut HirBuilder,
+    target: &ast::ArrayAssignmentTarget<'_>,
+    value: crate::hir::Place,
+    target_loc: SourceLocation,
+    loc: SourceLocation,
+) -> Result<ExpressionResult, CompilerError> {
+    let mut items = Vec::new();
+    let mut followups: Vec<(crate::hir::Place, AssignmentFollowup)> = Vec::new();
+
+    for element in &target.elements {
+        match element {
+            None => {
+                items.push(ArrayPatternElement::Hole);
+            }
+            Some(target_maybe_default) => {
+                let elem_loc = span_to_loc(target_maybe_default.span());
+                match target_maybe_default {
+                    ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) => {
+                        let place = resolve_identifier_for_reassignment(
+                            builder,
+                            &ident.name,
+                            span_to_loc(ident.span),
+                        );
+                        items.push(ArrayPatternElement::Place(place));
+                    }
+                    ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
+                        let temp = create_promoted_temporary(builder, elem_loc);
+                        items.push(ArrayPatternElement::Place(temp.clone()));
+                        followups.push((temp, AssignmentFollowup::TargetWithDefault {
+                            target: &with_default.binding,
+                            default_expr: Some(&with_default.init),
+                            loc: elem_loc,
+                        }));
+                    }
+                    ast::AssignmentTargetMaybeDefault::ObjectAssignmentTarget(nested_obj) => {
+                        let temp = create_promoted_temporary(builder, elem_loc);
+                        items.push(ArrayPatternElement::Place(temp.clone()));
+                        followups.push((temp, AssignmentFollowup::NestedObject(nested_obj)));
+                    }
+                    ast::AssignmentTargetMaybeDefault::ArrayAssignmentTarget(nested_arr) => {
+                        let temp = create_promoted_temporary(builder, elem_loc);
+                        items.push(ArrayPatternElement::Place(temp.clone()));
+                        followups.push((temp, AssignmentFollowup::NestedArray(nested_arr)));
+                    }
+                    _ => {
+                        let temp = create_promoted_temporary(builder, elem_loc);
+                        items.push(ArrayPatternElement::Place(temp.clone()));
+                        followups.push((temp, AssignmentFollowup::SimpleTarget(target_maybe_default)));
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle rest element
+    if let Some(rest) = &target.rest {
+        let rest_loc = span_to_loc(rest.span);
+        if let ast::AssignmentTarget::AssignmentTargetIdentifier(ident) = &rest.target {
+            let place =
+                resolve_identifier_for_reassignment(builder, &ident.name, span_to_loc(ident.span));
+            items.push(ArrayPatternElement::Spread(SpreadPattern { place }));
+        } else {
+            let temp = create_promoted_temporary(builder, rest_loc);
+            items.push(ArrayPatternElement::Spread(SpreadPattern {
+                place: temp.clone(),
+            }));
+            followups.push((temp, AssignmentFollowup::AssignmentTarget(&rest.target)));
+        }
+    }
+
+    // Emit the Destructure instruction
+    let result = lower_value_to_temporary(
+        builder,
+        InstructionValue::Destructure(Destructure {
+            lvalue: LValuePattern {
+                kind: InstructionKind::Reassign,
+                pattern: Pattern::Array(HirArrayPattern {
+                    items,
+                    loc: target_loc,
+                }),
+            },
+            value,
+            loc,
+        }),
+        loc,
+    )?;
+
+    // Process followups
+    process_assignment_followups(builder, followups, loc)?;
+
+    Ok(result)
+}
+
+/// An assignment followup to process after the initial Destructure instruction.
+enum AssignmentFollowup<'a> {
+    /// An identifier with a default value (e.g., `{ a = 1 }` in `{ a = 1 } = obj`).
+    IdentifierWithDefault {
+        name: String,
+        default_expr: Option<&'a ast::Expression<'a>>,
+        loc: SourceLocation,
+    },
+    /// An assignment target with an optional default value.
+    TargetWithDefault {
+        target: &'a ast::AssignmentTarget<'a>,
+        default_expr: Option<&'a ast::Expression<'a>>,
+        loc: SourceLocation,
+    },
+    /// A nested object destructuring target.
+    NestedObject(&'a ast::ObjectAssignmentTarget<'a>),
+    /// A nested array destructuring target.
+    NestedArray(&'a ast::ArrayAssignmentTarget<'a>),
+    /// A simple assignment target (member expression etc.).
+    SimpleTarget(&'a ast::AssignmentTargetMaybeDefault<'a>),
+    /// A nested assignment target (for rest elements etc.).
+    AssignmentTarget(&'a ast::AssignmentTarget<'a>),
+}
+
+/// Process a list of assignment followups after a Destructure instruction.
+fn process_assignment_followups(
+    builder: &mut HirBuilder,
+    followups: Vec<(crate::hir::Place, AssignmentFollowup<'_>)>,
+    loc: SourceLocation,
+) -> Result<(), CompilerError> {
+    for (temp_place, followup) in followups {
+        match followup {
+            AssignmentFollowup::IdentifierWithDefault { name, default_expr, loc: ident_loc } => {
+                // Resolve the value through a conditional default
+                let resolved = if let Some(default) = default_expr {
+                    lower_conditional_default_assignment(builder, temp_place, default, ident_loc)?
+                } else {
+                    temp_place
+                };
+                // Assign to the identifier
+                let lowerable = LowerableExpression::Identifier(name, Span::default());
+                lower_assignment(builder, &lowerable, resolved, loc)?;
+            }
+            AssignmentFollowup::TargetWithDefault { target, default_expr, loc: target_loc } => {
+                let resolved = if let Some(default) = default_expr {
+                    lower_conditional_default_assignment(builder, temp_place, default, target_loc)?
+                } else {
+                    temp_place
+                };
+                let lowerable = convert_assignment_target_to_lowerable(target);
+                lower_assignment(builder, &lowerable, resolved, loc)?;
+            }
+            AssignmentFollowup::NestedObject(nested) => {
+                let nested_loc = span_to_loc(nested.span);
+                lower_object_assignment_target(builder, nested, temp_place, nested_loc, loc)?;
+            }
+            AssignmentFollowup::NestedArray(nested) => {
+                let nested_loc = span_to_loc(nested.span);
+                lower_array_assignment_target(builder, nested, temp_place, nested_loc, loc)?;
+            }
+            AssignmentFollowup::SimpleTarget(target_maybe_default) => {
+                if let ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) =
+                    target_maybe_default
+                {
+                    let lowerable = LowerableExpression::Identifier(
+                        ident.name.to_string(),
+                        ident.span,
+                    );
+                    lower_assignment(builder, &lowerable, temp_place, loc)?;
+                } else {
+                    // For other simple targets (member expressions), convert and assign
+                    let lowerable = LowerableExpression::Undefined(Span::default());
+                    lower_assignment(builder, &lowerable, temp_place, loc)?;
+                }
+            }
+            AssignmentFollowup::AssignmentTarget(target) => {
+                let lowerable = convert_assignment_target_to_lowerable(target);
+                lower_assignment(builder, &lowerable, temp_place, loc)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Lower a conditional default value for assignment destructuring.
+///
+/// `value === undefined ? defaultVal : value`
+fn lower_conditional_default_assignment(
+    builder: &mut HirBuilder,
+    value: crate::hir::Place,
+    default_expr: &ast::Expression<'_>,
+    loc: SourceLocation,
+) -> Result<crate::hir::Place, CompilerError> {
+    let temp = create_promoted_temporary(builder, loc);
+
+    let test_block = builder.reserve(BlockKind::Value);
+    let continuation_block = builder.reserve(builder.current_block_kind());
+    let continuation_id = continuation_block.id;
+
+    let default_lowerable = convert_expression(default_expr);
+
+    // Consequent: use the default value
+    let consequent_block = builder.enter(BlockKind::Value, |builder, _block_id| {
+        if let Ok(result) = lower_expression(builder, &default_lowerable) {
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue,
+                value: InstructionValue::StoreLocal(StoreLocal {
+                    lvalue: LValue {
+                        place: temp.clone(),
+                        kind: InstructionKind::Const,
+                    },
+                    value: result.place,
+                    loc,
+                }),
+                effects: None,
+                loc,
+            });
+        }
+        Terminal::Goto(GotoTerminal {
+            id: InstructionId(0),
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            loc,
+        })
+    });
+
+    // Alternate: use the provided value
+    let alternate_block = builder.enter(BlockKind::Value, |builder, _block_id| {
+        let lvalue = create_temporary_place(builder.environment_mut(), loc);
+        builder.push(Instruction {
+            id: InstructionId(0),
+            lvalue,
+            value: InstructionValue::StoreLocal(StoreLocal {
+                lvalue: LValue {
+                    place: temp.clone(),
+                    kind: InstructionKind::Const,
+                },
+                value: value.clone(),
+                loc,
+            }),
+            effects: None,
+            loc,
+        });
+        Terminal::Goto(GotoTerminal {
+            id: InstructionId(0),
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            loc,
+        })
+    });
+
+    // Emit the ternary terminal
+    builder.terminate_with_continuation(
+        Terminal::Ternary(TernaryTerminal {
+            id: InstructionId(0),
+            test: test_block.id,
+            fallthrough: continuation_id,
+            loc,
+        }),
+        test_block,
+    );
+
+    // In the test block: compare value === undefined
+    let undef = lower_value_to_temporary(builder, lower_undefined(loc), loc)?;
+    let test_result = lower_value_to_temporary(
+        builder,
+        InstructionValue::BinaryExpression(crate::hir::BinaryExpressionValue {
+            operator: oxc_syntax::operator::BinaryOperator::StrictEquality,
+            left: value,
+            right: undef.place,
+            loc,
+        }),
+        loc,
+    )?;
+
+    builder.terminate_with_continuation(
+        Terminal::Branch(BranchTerminal {
+            id: InstructionId(0),
+            test: test_result.place,
+            consequent: consequent_block,
+            alternate: alternate_block,
+            fallthrough: continuation_id,
+            loc,
+        }),
+        continuation_block,
+    );
+
+    Ok(temp)
+}
+
+/// Convert an `AssignmentTarget` to a `LowerableExpression` for use in `lower_assignment`.
+fn convert_assignment_target_to_lowerable<'a>(
+    target: &'a ast::AssignmentTarget<'a>,
+) -> LowerableExpression<'a> {
+    use super::lower_ast::convert_expression;
+
+    match target {
+        ast::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+            LowerableExpression::Identifier(ident.name.to_string(), ident.span)
+        }
+        ast::AssignmentTarget::StaticMemberExpression(member) => {
+            LowerableExpression::PropertyAccess {
+                object: Box::new(convert_expression(&member.object)),
+                property: member.property.name.to_string(),
+                span: member.span,
+            }
+        }
+        ast::AssignmentTarget::ComputedMemberExpression(member) => {
+            LowerableExpression::ComputedPropertyAccess {
+                object: Box::new(convert_expression(&member.object)),
+                property: Box::new(convert_expression(&member.expression)),
+                span: member.span,
+            }
+        }
+        ast::AssignmentTarget::ObjectAssignmentTarget(obj) => {
+            LowerableExpression::ObjectAssignmentTarget { target: obj, span: obj.span }
+        }
+        ast::AssignmentTarget::ArrayAssignmentTarget(arr) => {
+            LowerableExpression::ArrayAssignmentTarget { target: arr, span: arr.span }
+        }
+        _ => LowerableExpression::Undefined(target.span()),
+    }
+}
+
+/// Resolve an identifier for reassignment in a destructuring assignment.
+/// Returns a Place for the identifier, declaring it if needed.
+fn resolve_identifier_for_reassignment(
+    builder: &mut HirBuilder,
+    name: &str,
+    loc: SourceLocation,
+) -> crate::hir::Place {
+    match builder.resolve_identifier(name) {
+        VariableBinding::Identifier { identifier, .. } => crate::hir::Place {
+            identifier,
+            effect: crate::hir::Effect::Unknown,
+            reactive: false,
+            loc,
+        },
+        VariableBinding::NonLocal(_) => {
+            // Global: create a temporary (the actual StoreGlobal will be
+            // handled in the followup via lower_assignment)
+            create_temporary_place(builder.environment_mut(), loc)
+        }
+    }
 }
 
 /// Lower the body of a function to HIR, returning extracted directives.
@@ -134,7 +1273,13 @@ pub fn lower(
     fn_type: ReactFunctionType,
     func: &LowerableFunction<'_>,
 ) -> Result<HIRFunction, CompilerError> {
-    let mut builder = HirBuilder::new(env.clone(), None);
+    // Find context identifiers (variables captured by inner closures)
+    let context_identifiers = match func {
+        LowerableFunction::Function(f) => find_context_identifiers(f),
+        LowerableFunction::ArrowFunction(a) => find_context_identifiers_arrow(a),
+    };
+
+    let mut builder = HirBuilder::new(env.clone(), None, context_identifiers);
 
     // Extract function metadata
     let (id, generator, is_async) = extract_function_metadata(func);
@@ -186,6 +1331,623 @@ pub fn lower(
 }
 
 // =====================================================================================
+// Function expression lowering (recursive lowering for inner functions)
+// =====================================================================================
+
+/// Gather the captured context of an inner function.
+///
+/// This corresponds to `gatherCapturedContext()` in the TS reference.
+/// For each identifier referenced by the inner function, check if it exists
+/// as a binding in the outer builder. If so, it is a captured context variable.
+///
+/// Returns a map from variable name to source location for each captured variable.
+fn gather_captured_context(
+    func: &LowerableFunction<'_>,
+    outer_builder: &HirBuilder,
+) -> rustc_hash::FxHashMap<String, SourceLocation> {
+    // Collect all identifiers referenced by the inner function
+    // We use a simple approach: walk the inner function body collecting all
+    // Identifier references, then intersect with outer builder's bindings.
+    let mut captured = rustc_hash::FxHashMap::default();
+
+    // Get all binding names from the outer builder
+    // Walk the inner function body to find free variable references
+    let inner_refs = collect_inner_function_references(func);
+
+    for (name, loc) in inner_refs {
+        // Check if the name is bound in the outer function's scope
+        if let VariableBinding::Identifier { .. } = outer_builder.resolve_identifier(&name) {
+            captured.insert(name, loc);
+        }
+    }
+
+    captured
+}
+
+/// Collect all identifier references from an inner function that could be
+/// captured from an outer scope.
+///
+/// This does a simple walk of the function body, returning all identifiers
+/// that are not declared within the function itself.
+fn collect_inner_function_references(
+    func: &LowerableFunction<'_>,
+) -> Vec<(String, SourceLocation)> {
+    use rustc_hash::FxHashSet;
+
+    let mut refs = Vec::new();
+    let mut declared = FxHashSet::default();
+
+    // Declare the function's own parameters
+    let params = match func {
+        LowerableFunction::Function(f) => &f.params,
+        LowerableFunction::ArrowFunction(a) => &a.params,
+    };
+    for param in &params.items {
+        collect_binding_pattern_names(&param.pattern, &mut declared);
+    }
+    if let Some(rest) = &params.rest {
+        collect_binding_pattern_names(&rest.rest.argument, &mut declared);
+    }
+
+    // For function expressions, the function's own name is also declared
+    if let LowerableFunction::Function(f) = func
+        && let Some(id) = &f.id
+    {
+        declared.insert(id.name.to_string());
+    }
+
+    // Walk the body collecting references
+    match func {
+        LowerableFunction::Function(f) => {
+            if let Some(body) = &f.body {
+                for stmt in &body.statements {
+                    collect_statement_refs(stmt, &mut refs, &mut declared);
+                }
+            }
+        }
+        LowerableFunction::ArrowFunction(a) => {
+            for stmt in &a.body.statements {
+                collect_statement_refs(stmt, &mut refs, &mut declared);
+            }
+        }
+    }
+
+    // Filter out names that were declared within the inner function
+    refs.into_iter().filter(|(name, _)| !declared.contains(name)).collect()
+}
+
+/// Collect binding names from a binding pattern.
+fn collect_binding_pattern_names(
+    pattern: &ast::BindingPattern<'_>,
+    names: &mut rustc_hash::FxHashSet<String>,
+) {
+    match pattern {
+        ast::BindingPattern::BindingIdentifier(ident) => {
+            names.insert(ident.name.to_string());
+        }
+        ast::BindingPattern::ObjectPattern(obj) => {
+            for prop in &obj.properties {
+                collect_binding_pattern_names(&prop.value, names);
+            }
+            if let Some(rest) = &obj.rest {
+                collect_binding_pattern_names(&rest.argument, names);
+            }
+        }
+        ast::BindingPattern::ArrayPattern(arr) => {
+            for elem in arr.elements.iter().flatten() {
+                collect_binding_pattern_names(elem, names);
+            }
+            if let Some(rest) = &arr.rest {
+                collect_binding_pattern_names(&rest.argument, names);
+            }
+        }
+        ast::BindingPattern::AssignmentPattern(assign) => {
+            collect_binding_pattern_names(&assign.left, names);
+        }
+    }
+}
+
+/// Collect identifier references from a statement, also tracking local declarations.
+fn collect_statement_refs(
+    stmt: &ast::Statement<'_>,
+    refs: &mut Vec<(String, SourceLocation)>,
+    declared: &mut rustc_hash::FxHashSet<String>,
+) {
+    match stmt {
+        ast::Statement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                if let Some(init) = &declarator.init {
+                    collect_expression_refs(init, refs);
+                }
+                collect_binding_pattern_names(&declarator.id, declared);
+            }
+        }
+        ast::Statement::ExpressionStatement(expr) => {
+            collect_expression_refs(&expr.expression, refs);
+        }
+        ast::Statement::ReturnStatement(ret) => {
+            if let Some(arg) = &ret.argument {
+                collect_expression_refs(arg, refs);
+            }
+        }
+        ast::Statement::IfStatement(if_stmt) => {
+            collect_expression_refs(&if_stmt.test, refs);
+            collect_statement_refs(&if_stmt.consequent, refs, declared);
+            if let Some(alt) = &if_stmt.alternate {
+                collect_statement_refs(alt, refs, declared);
+            }
+        }
+        ast::Statement::WhileStatement(while_stmt) => {
+            collect_expression_refs(&while_stmt.test, refs);
+            collect_statement_refs(&while_stmt.body, refs, declared);
+        }
+        ast::Statement::DoWhileStatement(do_while) => {
+            collect_statement_refs(&do_while.body, refs, declared);
+            collect_expression_refs(&do_while.test, refs);
+        }
+        ast::Statement::ForStatement(for_stmt) => {
+            if let Some(init) = &for_stmt.init {
+                match init {
+                    ast::ForStatementInit::VariableDeclaration(decl) => {
+                        for declarator in &decl.declarations {
+                            if let Some(init_expr) = &declarator.init {
+                                collect_expression_refs(init_expr, refs);
+                            }
+                            collect_binding_pattern_names(&declarator.id, declared);
+                        }
+                    }
+                    _ => collect_expression_refs(init.to_expression(), refs),
+                }
+            }
+            if let Some(test) = &for_stmt.test {
+                collect_expression_refs(test, refs);
+            }
+            if let Some(update) = &for_stmt.update {
+                collect_expression_refs(update, refs);
+            }
+            collect_statement_refs(&for_stmt.body, refs, declared);
+        }
+        ast::Statement::ForOfStatement(for_of) => {
+            if let ast::ForStatementLeft::VariableDeclaration(decl) = &for_of.left {
+                for declarator in &decl.declarations {
+                    collect_binding_pattern_names(&declarator.id, declared);
+                }
+            }
+            collect_expression_refs(&for_of.right, refs);
+            collect_statement_refs(&for_of.body, refs, declared);
+        }
+        ast::Statement::ForInStatement(for_in) => {
+            if let ast::ForStatementLeft::VariableDeclaration(decl) = &for_in.left {
+                for declarator in &decl.declarations {
+                    collect_binding_pattern_names(&declarator.id, declared);
+                }
+            }
+            collect_expression_refs(&for_in.right, refs);
+            collect_statement_refs(&for_in.body, refs, declared);
+        }
+        ast::Statement::BlockStatement(block) => {
+            for s in &block.body {
+                collect_statement_refs(s, refs, declared);
+            }
+        }
+        ast::Statement::ThrowStatement(throw) => {
+            collect_expression_refs(&throw.argument, refs);
+        }
+        ast::Statement::TryStatement(try_stmt) => {
+            for s in &try_stmt.block.body {
+                collect_statement_refs(s, refs, declared);
+            }
+            if let Some(handler) = &try_stmt.handler {
+                if let Some(param) = &handler.param {
+                    collect_binding_pattern_names(&param.pattern, declared);
+                }
+                for s in &handler.body.body {
+                    collect_statement_refs(s, refs, declared);
+                }
+            }
+            if let Some(finalizer) = &try_stmt.finalizer {
+                for s in &finalizer.body {
+                    collect_statement_refs(s, refs, declared);
+                }
+            }
+        }
+        ast::Statement::SwitchStatement(switch) => {
+            collect_expression_refs(&switch.discriminant, refs);
+            for case in &switch.cases {
+                if let Some(test) = &case.test {
+                    collect_expression_refs(test, refs);
+                }
+                for s in &case.consequent {
+                    collect_statement_refs(s, refs, declared);
+                }
+            }
+        }
+        ast::Statement::LabeledStatement(labeled) => {
+            collect_statement_refs(&labeled.body, refs, declared);
+        }
+        ast::Statement::FunctionDeclaration(func) => {
+            if let Some(id) = &func.id {
+                declared.insert(id.name.to_string());
+            }
+            // Do not recurse into inner function bodies for captured context
+            // (their own references are their own captures)
+        }
+        _ => {}
+    }
+}
+
+/// Collect identifier references from an expression.
+fn collect_expression_refs(expr: &ast::Expression<'_>, refs: &mut Vec<(String, SourceLocation)>) {
+    match expr {
+        ast::Expression::Identifier(ident) => {
+            if ident.name != "undefined" {
+                refs.push((ident.name.to_string(), span_to_loc(ident.span)));
+            }
+        }
+        ast::Expression::BinaryExpression(bin) => {
+            collect_expression_refs(&bin.left, refs);
+            collect_expression_refs(&bin.right, refs);
+        }
+        ast::Expression::LogicalExpression(logical) => {
+            collect_expression_refs(&logical.left, refs);
+            collect_expression_refs(&logical.right, refs);
+        }
+        ast::Expression::UnaryExpression(unary) => {
+            collect_expression_refs(&unary.argument, refs);
+        }
+        ast::Expression::ConditionalExpression(cond) => {
+            collect_expression_refs(&cond.test, refs);
+            collect_expression_refs(&cond.consequent, refs);
+            collect_expression_refs(&cond.alternate, refs);
+        }
+        ast::Expression::CallExpression(call) => {
+            collect_expression_refs(&call.callee, refs);
+            for arg in &call.arguments {
+                match arg {
+                    ast::Argument::SpreadElement(spread) => {
+                        collect_expression_refs(&spread.argument, refs);
+                    }
+                    _ => collect_expression_refs(arg.to_expression(), refs),
+                }
+            }
+        }
+        ast::Expression::NewExpression(new_expr) => {
+            collect_expression_refs(&new_expr.callee, refs);
+            for arg in &new_expr.arguments {
+                match arg {
+                    ast::Argument::SpreadElement(spread) => {
+                        collect_expression_refs(&spread.argument, refs);
+                    }
+                    _ => collect_expression_refs(arg.to_expression(), refs),
+                }
+            }
+        }
+        ast::Expression::StaticMemberExpression(member) => {
+            collect_expression_refs(&member.object, refs);
+        }
+        ast::Expression::ComputedMemberExpression(member) => {
+            collect_expression_refs(&member.object, refs);
+            collect_expression_refs(&member.expression, refs);
+        }
+        ast::Expression::AssignmentExpression(assign) => {
+            collect_expression_refs(&assign.right, refs);
+            collect_assignment_target_refs(&assign.left, refs);
+        }
+        ast::Expression::UpdateExpression(update) => {
+            if let ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = &update.argument
+            {
+                refs.push((ident.name.to_string(), span_to_loc(ident.span)));
+            }
+        }
+        ast::Expression::ArrayExpression(arr) => {
+            for elem in &arr.elements {
+                match elem {
+                    ast::ArrayExpressionElement::SpreadElement(spread) => {
+                        collect_expression_refs(&spread.argument, refs);
+                    }
+                    ast::ArrayExpressionElement::Elision(_) => {}
+                    _ => collect_expression_refs(elem.to_expression(), refs),
+                }
+            }
+        }
+        ast::Expression::ObjectExpression(obj) => {
+            for prop in &obj.properties {
+                match prop {
+                    ast::ObjectPropertyKind::SpreadProperty(spread) => {
+                        collect_expression_refs(&spread.argument, refs);
+                    }
+                    ast::ObjectPropertyKind::ObjectProperty(prop) => {
+                        if prop.computed {
+                            collect_expression_refs(prop.key.to_expression(), refs);
+                        }
+                        collect_expression_refs(&prop.value, refs);
+                    }
+                }
+            }
+        }
+        ast::Expression::TemplateLiteral(tpl) => {
+            for sub_expr in &tpl.expressions {
+                collect_expression_refs(sub_expr, refs);
+            }
+        }
+        ast::Expression::TaggedTemplateExpression(tagged) => {
+            collect_expression_refs(&tagged.tag, refs);
+            for sub_expr in &tagged.quasi.expressions {
+                collect_expression_refs(sub_expr, refs);
+            }
+        }
+        ast::Expression::SequenceExpression(seq) => {
+            for sub_expr in &seq.expressions {
+                collect_expression_refs(sub_expr, refs);
+            }
+        }
+        ast::Expression::AwaitExpression(await_expr) => {
+            collect_expression_refs(&await_expr.argument, refs);
+        }
+        ast::Expression::YieldExpression(yield_expr) => {
+            if let Some(arg) = &yield_expr.argument {
+                collect_expression_refs(arg, refs);
+            }
+        }
+        ast::Expression::ChainExpression(chain) => {
+            collect_chain_element_refs(&chain.expression, refs);
+        }
+        ast::Expression::ParenthesizedExpression(paren) => {
+            collect_expression_refs(&paren.expression, refs);
+        }
+        ast::Expression::TSAsExpression(ts_as) => {
+            collect_expression_refs(&ts_as.expression, refs);
+        }
+        ast::Expression::TSSatisfiesExpression(ts_sat) => {
+            collect_expression_refs(&ts_sat.expression, refs);
+        }
+        ast::Expression::TSNonNullExpression(ts_nn) => {
+            collect_expression_refs(&ts_nn.expression, refs);
+        }
+        ast::Expression::TSTypeAssertion(ts_ta) => {
+            collect_expression_refs(&ts_ta.expression, refs);
+        }
+        ast::Expression::JSXElement(jsx) => {
+            collect_jsx_element_refs(jsx, refs);
+        }
+        ast::Expression::JSXFragment(frag) => {
+            for child in &frag.children {
+                collect_jsx_child_refs(child, refs);
+            }
+        }
+        // Literals, function expressions, and other expression types
+        // that don't reference identifiers (or have their own scope)
+        _ => {}
+    }
+}
+
+/// Collect identifier references from an assignment target.
+fn collect_assignment_target_refs(
+    target: &ast::AssignmentTarget<'_>,
+    refs: &mut Vec<(String, SourceLocation)>,
+) {
+    match target {
+        ast::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+            refs.push((ident.name.to_string(), span_to_loc(ident.span)));
+        }
+        ast::AssignmentTarget::StaticMemberExpression(member) => {
+            collect_expression_refs(&member.object, refs);
+        }
+        ast::AssignmentTarget::ComputedMemberExpression(member) => {
+            collect_expression_refs(&member.object, refs);
+            collect_expression_refs(&member.expression, refs);
+        }
+        _ => {}
+    }
+}
+
+/// Collect identifier references from a chain element.
+fn collect_chain_element_refs(
+    element: &ast::ChainElement<'_>,
+    refs: &mut Vec<(String, SourceLocation)>,
+) {
+    match element {
+        ast::ChainElement::CallExpression(call) => {
+            collect_expression_refs(&call.callee, refs);
+            for arg in &call.arguments {
+                match arg {
+                    ast::Argument::SpreadElement(spread) => {
+                        collect_expression_refs(&spread.argument, refs);
+                    }
+                    _ => collect_expression_refs(arg.to_expression(), refs),
+                }
+            }
+        }
+        ast::ChainElement::StaticMemberExpression(member) => {
+            collect_expression_refs(&member.object, refs);
+        }
+        ast::ChainElement::ComputedMemberExpression(member) => {
+            collect_expression_refs(&member.object, refs);
+            collect_expression_refs(&member.expression, refs);
+        }
+        ast::ChainElement::TSNonNullExpression(ts_nn) => {
+            collect_expression_refs(&ts_nn.expression, refs);
+        }
+        ast::ChainElement::PrivateFieldExpression(pf) => {
+            collect_expression_refs(&pf.object, refs);
+        }
+    }
+}
+
+/// Collect identifier references from a JSX element.
+fn collect_jsx_element_refs(
+    element: &ast::JSXElement<'_>,
+    refs: &mut Vec<(String, SourceLocation)>,
+) {
+    // Tag name
+    if let ast::JSXElementName::IdentifierReference(ident) = &element.opening_element.name
+        && ident.name.starts_with(|c: char| c.is_ascii_uppercase())
+    {
+        refs.push((ident.name.to_string(), span_to_loc(ident.span)));
+    }
+    // Attributes
+    for attr in &element.opening_element.attributes {
+        match attr {
+            ast::JSXAttributeItem::SpreadAttribute(spread) => {
+                collect_expression_refs(&spread.argument, refs);
+            }
+            ast::JSXAttributeItem::Attribute(attr) => {
+                if let Some(value) = &attr.value {
+                    match value {
+                        ast::JSXAttributeValue::ExpressionContainer(container) => {
+                            if !matches!(
+                                &container.expression,
+                                ast::JSXExpression::EmptyExpression(_)
+                            ) {
+                                collect_expression_refs(container.expression.to_expression(), refs);
+                            }
+                        }
+                        ast::JSXAttributeValue::Element(elem) => {
+                            collect_jsx_element_refs(elem, refs);
+                        }
+                        ast::JSXAttributeValue::Fragment(frag) => {
+                            for child in &frag.children {
+                                collect_jsx_child_refs(child, refs);
+                            }
+                        }
+                        ast::JSXAttributeValue::StringLiteral(_) => {}
+                    }
+                }
+            }
+        }
+    }
+    // Children
+    for child in &element.children {
+        collect_jsx_child_refs(child, refs);
+    }
+}
+
+/// Collect identifier references from a JSX child.
+fn collect_jsx_child_refs(child: &ast::JSXChild<'_>, refs: &mut Vec<(String, SourceLocation)>) {
+    match child {
+        ast::JSXChild::ExpressionContainer(container) => {
+            if !matches!(&container.expression, ast::JSXExpression::EmptyExpression(_)) {
+                collect_expression_refs(container.expression.to_expression(), refs);
+            }
+        }
+        ast::JSXChild::Element(element) => {
+            collect_jsx_element_refs(element, refs);
+        }
+        ast::JSXChild::Fragment(frag) => {
+            for c in &frag.children {
+                collect_jsx_child_refs(c, refs);
+            }
+        }
+        ast::JSXChild::Spread(spread) => {
+            collect_expression_refs(&spread.expression, refs);
+        }
+        ast::JSXChild::Text(_) => {}
+    }
+}
+
+/// Lower an inner function to a `FunctionExpressionValue`.
+///
+/// Port of `lowerFunctionToValue()` from `HIR/BuildHIR.ts` (lines 3462-3520).
+///
+/// This function:
+/// 1. Gathers the captured context (free variables of the inner function)
+/// 2. Creates a new HIR builder for the inner function
+/// 3. Recursively lowers the inner function body
+/// 4. Returns the `FunctionExpressionValue`
+///
+/// # Errors
+/// Returns a `CompilerError` if recursive lowering fails.
+fn lower_function_to_value(
+    outer_builder: &HirBuilder,
+    func: &LowerableFunction<'_>,
+    expression_type: FunctionExpressionType,
+    loc: SourceLocation,
+) -> Result<InstructionValue, CompilerError> {
+    // 1. Gather captured context from the inner function
+    let captured_context = gather_captured_context(func, outer_builder);
+
+    // 2. Recursively lower the inner function with ReactFunctionType::Other
+    let env = outer_builder.environment();
+
+    // Find context identifiers for the inner function
+    let context_identifiers = match func {
+        LowerableFunction::Function(f) => find_context_identifiers(f),
+        LowerableFunction::ArrowFunction(a) => find_context_identifiers_arrow(a),
+    };
+
+    // Create a new builder with the captured context merged into context_identifiers
+    let mut merged_context = context_identifiers;
+    for name in captured_context.keys() {
+        merged_context.insert(name.clone());
+    }
+
+    let mut inner_builder = HirBuilder::new(env.clone(), None, merged_context);
+
+    // Resolve captured context variables in the inner builder to build the context Vec<Place>
+    let mut context_places = Vec::new();
+    for (name, ctx_loc) in &captured_context {
+        let place = inner_builder.declare_binding(name, BindingKind::Let, *ctx_loc);
+        context_places.push(place);
+    }
+
+    // Extract function metadata
+    let (id, generator, is_async) = extract_function_metadata(func);
+    let func_loc = extract_function_loc(func);
+
+    // Walk parameters
+    let params = lower_params(&mut inner_builder, func);
+
+    // Walk body statements and extract directives
+    let directives = lower_body(&mut inner_builder, func)?;
+
+    // Emit final void return
+    let void_value = create_temporary_place(inner_builder.environment_mut(), GENERATED_SOURCE);
+    inner_builder.push(Instruction {
+        id: InstructionId(0),
+        lvalue: void_value.clone(),
+        value: lower_undefined(GENERATED_SOURCE),
+        effects: None,
+        loc: GENERATED_SOURCE,
+    });
+    inner_builder.terminate(
+        Terminal::Return(crate::hir::ReturnTerminal {
+            id: InstructionId(0),
+            value: void_value,
+            return_variant: ReturnVariant::Void,
+            loc: GENERATED_SOURCE,
+        }),
+        None,
+    );
+
+    let body = inner_builder.build()?;
+    let returns = create_temporary_place(&mut env.clone(), func_loc);
+
+    let hir_function = HIRFunction {
+        loc: func_loc,
+        id: id.clone(),
+        name_hint: None,
+        fn_type: ReactFunctionType::Other,
+        env: env.clone(),
+        params,
+        returns,
+        context: context_places,
+        body,
+        generator,
+        is_async,
+        directives,
+        aliasing_effects: None,
+    };
+
+    Ok(InstructionValue::FunctionExpression(FunctionExpressionValue {
+        name: id,
+        name_hint: None,
+        lowered_func: LoweredFunction { func: Box::new(hir_function) },
+        expression_type,
+        loc,
+    }))
+}
+
+// =====================================================================================
 // Statement lowering helpers
 // =====================================================================================
 
@@ -195,7 +1957,7 @@ pub fn lower(
 /// Returns a `CompilerError` if any statement in the block cannot be lowered.
 pub fn lower_block_statement(
     builder: &mut HirBuilder,
-    stmts: &[LowerableStatement],
+    stmts: &[LowerableStatement<'_>],
 ) -> Result<(), CompilerError> {
     for stmt in stmts {
         lower_statement(builder, stmt)?;
@@ -234,7 +1996,7 @@ pub enum LowerableStatement<'a> {
 /// Returns a `CompilerError` if the statement cannot be lowered.
 fn lower_statement_with_label(
     builder: &mut HirBuilder,
-    stmt: &LowerableStatement,
+    stmt: &LowerableStatement<'_>,
     label: Option<&str>,
 ) -> Result<(), CompilerError> {
     match stmt {
@@ -984,6 +2746,13 @@ fn lower_statement_with_label(
                     InstructionKind::Const
                 }
             };
+            let binding_kind = match var_decl.kind {
+                ast::VariableDeclarationKind::Const
+                | ast::VariableDeclarationKind::Using
+                | ast::VariableDeclarationKind::AwaitUsing => BindingKind::Const,
+                ast::VariableDeclarationKind::Let => BindingKind::Let,
+                ast::VariableDeclarationKind::Var => BindingKind::Var,
+            };
 
             for declaration in &var_decl.declarations {
                 if let Some(init) = &declaration.init {
@@ -991,36 +2760,74 @@ fn lower_statement_with_label(
                     let init_expr = convert_expression(init);
                     let value = lower_expression(builder, &init_expr)?.place;
 
-                    // Create a place for the declared variable
-                    let decl_place = create_temporary_place(builder.environment_mut(), loc);
+                    match &declaration.id {
+                        // Destructuring pattern: emit Destructure instruction
+                        ast::BindingPattern::ObjectPattern(_)
+                        | ast::BindingPattern::ArrayPattern(_) => {
+                            lower_destructuring_declaration(
+                                builder,
+                                &declaration.id,
+                                value,
+                                kind,
+                                binding_kind,
+                                loc,
+                            )?;
+                        }
+                        // Simple identifier binding
+                        ast::BindingPattern::BindingIdentifier(ident) => {
+                            let decl_loc = span_to_loc(declaration.span);
+                            let decl_place =
+                                builder.declare_binding(&ident.name, binding_kind, decl_loc);
 
-                    // Emit StoreLocal
-                    let lvalue = create_temporary_place(builder.environment_mut(), loc);
-                    builder.push(Instruction {
-                        id: InstructionId(0),
-                        lvalue,
-                        value: InstructionValue::StoreLocal(StoreLocal {
-                            lvalue: LValue { place: decl_place, kind },
-                            value,
-                            loc,
-                        }),
-                        effects: None,
-                        loc,
-                    });
+                            if builder.is_context_identifier(&ident.name) {
+                                let lvalue =
+                                    create_temporary_place(builder.environment_mut(), loc);
+                                builder.push(Instruction {
+                                    id: InstructionId(0),
+                                    lvalue,
+                                    value: InstructionValue::StoreContext(StoreContext {
+                                        lvalue_kind: InstructionKind::Let,
+                                        lvalue_place: decl_place,
+                                        value,
+                                        loc,
+                                    }),
+                                    effects: None,
+                                    loc,
+                                });
+                            } else {
+                                let lvalue =
+                                    create_temporary_place(builder.environment_mut(), loc);
+                                builder.push(Instruction {
+                                    id: InstructionId(0),
+                                    lvalue,
+                                    value: InstructionValue::StoreLocal(StoreLocal {
+                                        lvalue: LValue { place: decl_place, kind },
+                                        value,
+                                        loc,
+                                    }),
+                                    effects: None,
+                                    loc,
+                                });
+                            }
+                        }
+                        // AssignmentPattern at top level (e.g., `let x = 1 = ...` is invalid,
+                        // but handle gracefully)
+                        ast::BindingPattern::AssignmentPattern(assign) => {
+                            lower_destructuring_declaration(
+                                builder,
+                                &assign.left,
+                                value,
+                                kind,
+                                binding_kind,
+                                loc,
+                            )?;
+                        }
+                    }
                 } else {
-                    // No initializer: emit DeclareLocal
-                    let decl_place = create_temporary_place(builder.environment_mut(), loc);
-                    let lvalue = create_temporary_place(builder.environment_mut(), loc);
-                    builder.push(Instruction {
-                        id: InstructionId(0),
-                        lvalue,
-                        value: InstructionValue::DeclareLocal(DeclareLocal {
-                            lvalue: LValue { place: decl_place, kind },
-                            loc,
-                        }),
-                        effects: None,
-                        loc,
-                    });
+                    // No initializer: emit DeclareLocal or DeclareContext
+                    // For destructuring without init, declare all leaf bindings
+                    let decl_loc = span_to_loc(declaration.span);
+                    declare_all_bindings_in_pattern(builder, &declaration.id, binding_kind, kind, decl_loc, loc);
                 }
             }
         }
@@ -1035,22 +2842,36 @@ fn lower_statement_with_label(
 
         // =====================================================================
         // FunctionDeclaration
+        // Port of BuildHIR.ts — calls lowerFunctionToValue then StoreLocal
         // =====================================================================
         LowerableStatement::FunctionDeclaration(func) => {
             let loc = span_to_loc(func.span);
 
-            // Function declarations produce a FunctionExpression instruction + StoreLocal
+            // Lower the function body recursively
+            let lowerable_func = LowerableFunction::Function(func);
+            let fn_value = lower_function_to_value(
+                builder,
+                &lowerable_func,
+                FunctionExpressionType::FunctionDeclaration,
+                loc,
+            )?;
+
+            // Emit the FunctionExpression instruction
             let fn_place = create_temporary_place(builder.environment_mut(), loc);
             builder.push(Instruction {
                 id: InstructionId(0),
                 lvalue: fn_place.clone(),
-                value: InstructionValue::UnsupportedNode(crate::hir::UnsupportedNode { loc }),
+                value: fn_value,
                 effects: None,
                 loc,
             });
 
-            // Store the function into the declared binding
-            let decl_place = create_temporary_place(builder.environment_mut(), loc);
+            // Register the function name as a binding
+            let decl_place = if let Some(id) = &func.id {
+                builder.declare_binding(&id.name, BindingKind::Function, loc)
+            } else {
+                create_temporary_place(builder.environment_mut(), loc)
+            };
             let lvalue = create_temporary_place(builder.environment_mut(), loc);
             builder.push(Instruction {
                 id: InstructionId(0),
@@ -1180,7 +3001,7 @@ fn lower_statement_with_label(
 /// Returns a `CompilerError` if the statement cannot be lowered.
 pub fn lower_statement(
     builder: &mut HirBuilder,
-    stmt: &LowerableStatement,
+    stmt: &LowerableStatement<'_>,
 ) -> Result<(), CompilerError> {
     lower_statement_with_label(builder, stmt, None)
 }
@@ -1237,7 +3058,7 @@ pub struct ExpressionResult {
 /// Returns a `CompilerError` if the expression cannot be lowered.
 pub fn lower_expression(
     builder: &mut HirBuilder,
-    expr: &LowerableExpression,
+    expr: &LowerableExpression<'_>,
 ) -> Result<ExpressionResult, CompilerError> {
     match expr {
         LowerableExpression::NumericLiteral(value, span) => {
@@ -1936,21 +3757,58 @@ pub fn lower_expression(
         }
 
         // =====================================================================
-        // Identifier — for now treat as global load
+        // LoadGlobal — explicitly global identifiers
         // =====================================================================
-        LowerableExpression::LoadGlobal(name, span)
-        | LowerableExpression::Identifier(name, span) => {
+        LowerableExpression::LoadGlobal(name, span) => {
             let loc = span_to_loc(*span);
-            // TODO: Full implementation would resolve through scope chain.
-            // For now, all identifiers are treated as global loads.
             lower_value_to_temporary(
                 builder,
                 InstructionValue::LoadGlobal(crate::hir::LoadGlobal {
-                    binding: crate::hir::NonLocalBinding::Global { name: name.clone() },
+                    binding: NonLocalBinding::Global { name: name.clone() },
                     loc,
                 }),
                 loc,
             )
+        }
+
+        // =====================================================================
+        // Identifier — resolve through scope chain
+        // Port of BuildHIR.ts lines 1552-1560 (lowerIdentifier + getLoadKind)
+        // =====================================================================
+        LowerableExpression::Identifier(name, span) => {
+            let loc = span_to_loc(*span);
+            match builder.resolve_identifier(name) {
+                VariableBinding::Identifier { identifier, .. } => {
+                    // Local variable: emit LoadLocal or LoadContext
+                    let place = crate::hir::Place {
+                        identifier,
+                        effect: crate::hir::Effect::Unknown,
+                        reactive: false,
+                        loc,
+                    };
+                    if builder.is_context_identifier(name) {
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::LoadContext(LoadContext { place, loc }),
+                            loc,
+                        )
+                    } else {
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::LoadLocal(LoadLocal { place, loc }),
+                            loc,
+                        )
+                    }
+                }
+                VariableBinding::NonLocal(binding) => {
+                    // Global: emit LoadGlobal
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::LoadGlobal(crate::hir::LoadGlobal { binding, loc }),
+                        loc,
+                    )
+                }
+            }
         }
 
         // =====================================================================
@@ -2064,20 +3922,44 @@ pub fn lower_expression(
         }
 
         // =====================================================================
-        // FunctionExpression / ArrowFunctionExpression
-        // Port of BuildHIR.ts lines 2328-2333
-        // These require recursive lower() call for the function body.
-        // For now, emit UnsupportedNode — full recursive lowering is
-        // Phase 2 (FunctionExpression recursive lowering).
+        // FunctionExpression
+        // Port of BuildHIR.ts lines 2328-2333 (lowerFunctionToValue)
         // =====================================================================
-        LowerableExpression::FunctionExpression { span, .. }
-        | LowerableExpression::ArrowFunctionExpression { span, .. } => {
+        LowerableExpression::FunctionExpression { func, span } => {
             let loc = span_to_loc(*span);
-            lower_value_to_temporary(
+            let lowerable_func = LowerableFunction::Function(func);
+            let value = lower_function_to_value(
                 builder,
-                InstructionValue::UnsupportedNode(crate::hir::UnsupportedNode { loc }),
+                &lowerable_func,
+                FunctionExpressionType::FunctionExpression,
                 loc,
-            )
+            )?;
+            lower_value_to_temporary(builder, value, loc)
+        }
+
+        // =====================================================================
+        // ArrowFunctionExpression
+        // Port of BuildHIR.ts lines 2328-2333 (lowerFunctionToValue)
+        // =====================================================================
+        LowerableExpression::ArrowFunctionExpression { func, span } => {
+            let loc = span_to_loc(*span);
+            let lowerable_func = LowerableFunction::ArrowFunction(func);
+            let value = lower_function_to_value(
+                builder,
+                &lowerable_func,
+                FunctionExpressionType::ArrowFunctionExpression,
+                loc,
+            )?;
+            lower_value_to_temporary(builder, value, loc)
+        }
+
+        // Destructuring assignment targets should not appear directly in expression
+        // lowering — they are handled by `lower_assignment`. If we reach here,
+        // lower them as undefined (the assignment itself is handled elsewhere).
+        LowerableExpression::ObjectAssignmentTarget { span, .. }
+        | LowerableExpression::ArrayAssignmentTarget { span, .. } => {
+            let loc = span_to_loc(*span);
+            lower_value_to_temporary(builder, lower_undefined(loc), loc)
         }
     }
 }
@@ -2108,7 +3990,7 @@ fn lower_value_to_temporary(
 /// Lower a list of argument expressions into `CallArg` values.
 fn lower_arguments(
     builder: &mut HirBuilder,
-    arguments: &[LowerableExpression],
+    arguments: &[LowerableExpression<'_>],
 ) -> Result<Vec<crate::hir::CallArg>, CompilerError> {
     let mut args = Vec::new();
     for arg in arguments {
@@ -2128,27 +4010,80 @@ fn lower_arguments(
 
 /// Lower an assignment expression (simple `=` operator).
 ///
-/// For identifiers, this emits a StoreLocal. For member expressions, it emits
-/// PropertyStore or ComputedStore.
+/// For identifiers, this emits StoreLocal/StoreContext/StoreGlobal.
+/// For member expressions, it emits PropertyStore or ComputedStore.
+///
+/// Port of `lowerAssignment()` from BuildHIR.ts (Identifier case) and
+/// `lowerIdentifierForAssignment()`.
 fn lower_assignment(
     builder: &mut HirBuilder,
-    left: &LowerableExpression,
+    left: &LowerableExpression<'_>,
     value: crate::hir::Place,
     loc: SourceLocation,
 ) -> Result<ExpressionResult, CompilerError> {
     match left {
-        LowerableExpression::Identifier(_name, span) => {
+        LowerableExpression::Identifier(name, span) => {
             let ident_loc = span_to_loc(*span);
-            let decl_place = create_temporary_place(builder.environment_mut(), ident_loc);
-            lower_value_to_temporary(
-                builder,
-                InstructionValue::StoreLocal(StoreLocal {
-                    lvalue: LValue { place: decl_place, kind: InstructionKind::Reassign },
-                    value,
-                    loc,
-                }),
-                loc,
-            )
+            match builder.resolve_identifier(name) {
+                VariableBinding::Identifier { identifier, .. } => {
+                    let place = crate::hir::Place {
+                        identifier,
+                        effect: crate::hir::Effect::Unknown,
+                        reactive: false,
+                        loc: ident_loc,
+                    };
+
+                    if builder.is_context_identifier(name) {
+                        // Context variable: emit StoreContext
+                        let temporary = lower_value_to_temporary(
+                            builder,
+                            InstructionValue::StoreContext(StoreContext {
+                                lvalue_kind: InstructionKind::Reassign,
+                                lvalue_place: place.clone(),
+                                value,
+                                loc,
+                            }),
+                            loc,
+                        )?;
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::LoadContext(LoadContext {
+                                place: temporary.place,
+                                loc,
+                            }),
+                            loc,
+                        )
+                    } else {
+                        // Local variable: emit StoreLocal
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::StoreLocal(StoreLocal {
+                                lvalue: LValue { place, kind: InstructionKind::Reassign },
+                                value,
+                                loc,
+                            }),
+                            loc,
+                        )
+                    }
+                }
+                VariableBinding::NonLocal(_) => {
+                    // Global assignment: emit StoreGlobal
+                    let temporary = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::StoreGlobal(StoreGlobal {
+                            name: name.clone(),
+                            value,
+                            loc,
+                        }),
+                        loc,
+                    )?;
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::LoadLocal(LoadLocal { place: temporary.place, loc }),
+                        loc,
+                    )
+                }
+            }
         }
         LowerableExpression::PropertyAccess { object, property, span: member_span } => {
             let member_loc = span_to_loc(*member_span);
@@ -2179,10 +4114,18 @@ fn lower_assignment(
                 loc,
             )
         }
+        // Object destructuring assignment: `({ a, b } = expr)`
+        LowerableExpression::ObjectAssignmentTarget { target, span } => {
+            let target_loc = span_to_loc(*span);
+            lower_object_assignment_target(builder, target, value, target_loc, loc)
+        }
+        // Array destructuring assignment: `([a, b] = expr)`
+        LowerableExpression::ArrayAssignmentTarget { target, span } => {
+            let target_loc = span_to_loc(*span);
+            lower_array_assignment_target(builder, target, value, target_loc, loc)
+        }
         _ => {
-            // For unsupported assignment targets (destructuring patterns, etc.),
-            // return the value directly for now.
-            // TODO: Handle ObjectPattern/ArrayPattern destructuring assignment
+            // For truly unsupported assignment targets, return the value directly.
             Ok(ExpressionResult { place: value })
         }
     }
@@ -2191,7 +4134,7 @@ fn lower_assignment(
 /// Lower an object property key.
 fn lower_object_property_key(
     builder: &mut HirBuilder,
-    key: &LowerableObjectPropertyKey,
+    key: &LowerableObjectPropertyKey<'_>,
 ) -> Result<ObjectPropertyKey, CompilerError> {
     match key {
         LowerableObjectPropertyKey::Identifier(name) => {
@@ -2211,7 +4154,7 @@ fn lower_object_property_key(
 /// Lower a JSX tag to a `JsxTag`.
 fn lower_jsx_tag(
     builder: &mut HirBuilder,
-    tag: &LowerableJsxTag,
+    tag: &LowerableJsxTag<'_>,
 ) -> Result<crate::hir::JsxTag, CompilerError> {
     match tag {
         LowerableJsxTag::BuiltIn(name) => Ok(crate::hir::JsxTag::BuiltIn(crate::hir::BuiltinTag {
@@ -2228,7 +4171,7 @@ fn lower_jsx_tag(
 /// Lower a list of JSX children to HIR places.
 fn lower_jsx_children(
     builder: &mut HirBuilder,
-    children: &[LowerableJsxChild],
+    children: &[LowerableJsxChild<'_>],
 ) -> Result<Vec<crate::hir::Place>, CompilerError> {
     let mut result = Vec::new();
     for child in children {
@@ -2244,7 +4187,7 @@ fn lower_jsx_children(
 /// Port of `lowerJsxElement()` from BuildHIR.ts.
 fn lower_jsx_child(
     builder: &mut HirBuilder,
-    child: &LowerableJsxChild,
+    child: &LowerableJsxChild<'_>,
 ) -> Result<Option<crate::hir::Place>, CompilerError> {
     match child {
         LowerableJsxChild::Text(text, span) => {
@@ -2337,7 +4280,7 @@ struct OptionalMemberResult {
 /// alternate block; otherwise we reuse the parent's.
 fn lower_optional_member_expression(
     builder: &mut HirBuilder,
-    expr: &LowerableExpression,
+    expr: &LowerableExpression<'_>,
     parent_alternate: Option<crate::hir::BlockId>,
 ) -> Result<OptionalMemberResult, CompilerError> {
     let (object_expr, property, optional, span) = match expr {
@@ -2504,7 +4447,7 @@ fn lower_optional_member_expression(
 /// matching the TS pattern `return {kind: 'LoadLocal', place, loc: place.loc}`.
 fn lower_optional_call_expression(
     builder: &mut HirBuilder,
-    expr: &LowerableExpression,
+    expr: &LowerableExpression<'_>,
     parent_alternate: Option<crate::hir::BlockId>,
 ) -> Result<InstructionValue, CompilerError> {
     let (callee_expr, arguments, optional, span) = match expr {
@@ -2754,72 +4697,72 @@ fn compound_assignment_to_binary(
 
 /// An element in an array expression that can be lowered.
 #[derive(Debug)]
-pub enum LowerableArrayElement {
-    Expression(LowerableExpression),
-    Spread(LowerableExpression, Span),
+pub enum LowerableArrayElement<'a> {
+    Expression(LowerableExpression<'a>),
+    Spread(LowerableExpression<'a>, Span),
     Hole,
 }
 
 /// A property in an object expression that can be lowered.
 #[derive(Debug)]
-pub enum LowerableObjectProperty {
+pub enum LowerableObjectProperty<'a> {
     Property {
-        key: LowerableObjectPropertyKey,
-        value: LowerableExpression,
+        key: LowerableObjectPropertyKey<'a>,
+        value: LowerableExpression<'a>,
         computed: bool,
         shorthand: bool,
         method: bool,
         span: Span,
     },
-    Spread(LowerableExpression, Span),
+    Spread(LowerableExpression<'a>, Span),
 }
 
 /// A key of an object property.
 #[derive(Debug)]
-pub enum LowerableObjectPropertyKey {
+pub enum LowerableObjectPropertyKey<'a> {
     Identifier(String),
     StringLiteral(String),
     NumericLiteral(f64),
-    Computed(LowerableExpression),
+    Computed(LowerableExpression<'a>),
 }
 
 /// A JSX tag type for lowering.
 #[derive(Debug)]
-pub enum LowerableJsxTag {
+pub enum LowerableJsxTag<'a> {
     /// A built-in tag like "div", "span"
     BuiltIn(String),
     /// A component or member expression tag
-    Expression(Box<LowerableExpression>),
+    Expression(Box<LowerableExpression<'a>>),
 }
 
 /// A JSX attribute for lowering.
 #[derive(Debug)]
-pub enum LowerableJsxAttribute {
-    Attribute { name: String, value: Option<LowerableExpression>, span: Span },
-    SpreadAttribute { argument: LowerableExpression, span: Span },
+pub enum LowerableJsxAttribute<'a> {
+    Attribute { name: String, value: Option<LowerableExpression<'a>>, span: Span },
+    SpreadAttribute { argument: LowerableExpression<'a>, span: Span },
 }
 
 /// A JSX child for lowering.
 #[derive(Debug)]
-pub enum LowerableJsxChild {
+pub enum LowerableJsxChild<'a> {
     Text(String, Span),
-    Element(LowerableExpression),
-    ExpressionContainer(LowerableExpression, Span),
-    Fragment { children: Vec<LowerableJsxChild>, span: Span },
+    Element(LowerableExpression<'a>),
+    ExpressionContainer(LowerableExpression<'a>, Span),
+    Fragment { children: Vec<LowerableJsxChild<'a>>, span: Span },
 }
 
 /// The property of an optional member expression (static or computed).
 #[derive(Debug)]
-pub enum OptionalMemberProperty {
+pub enum OptionalMemberProperty<'a> {
     /// Static property access (e.g., `a?.b`)
     Static(String),
     /// Computed property access (e.g., `a?.[expr]`)
-    Computed(Box<LowerableExpression>),
+    Computed(Box<LowerableExpression<'a>>),
 }
 
 /// An expression that can be lowered to HIR.
 #[derive(Debug)]
-pub enum LowerableExpression {
+pub enum LowerableExpression<'a> {
     // Literals
     NumericLiteral(f64, Span),
     StringLiteral(String, Span),
@@ -2833,104 +4776,104 @@ pub enum LowerableExpression {
     },
     TemplateLiteral {
         quasis: Vec<(String, Option<String>)>,
-        expressions: Vec<LowerableExpression>,
+        expressions: Vec<LowerableExpression<'a>>,
         span: Span,
     },
 
     // Compound expressions
     ArrayExpression {
-        elements: Vec<LowerableArrayElement>,
+        elements: Vec<LowerableArrayElement<'a>>,
         span: Span,
     },
     ObjectExpression {
-        properties: Vec<LowerableObjectProperty>,
+        properties: Vec<LowerableObjectProperty<'a>>,
         span: Span,
     },
 
     // Operators
     BinaryExpression {
         operator: oxc_syntax::operator::BinaryOperator,
-        left: Box<LowerableExpression>,
-        right: Box<LowerableExpression>,
+        left: Box<LowerableExpression<'a>>,
+        right: Box<LowerableExpression<'a>>,
         span: Span,
     },
     UnaryExpression {
         operator: oxc_syntax::operator::UnaryOperator,
-        argument: Box<LowerableExpression>,
+        argument: Box<LowerableExpression<'a>>,
         span: Span,
     },
     LogicalExpression {
         operator: oxc_syntax::operator::LogicalOperator,
-        left: Box<LowerableExpression>,
-        right: Box<LowerableExpression>,
+        left: Box<LowerableExpression<'a>>,
+        right: Box<LowerableExpression<'a>>,
         span: Span,
     },
     UpdateExpression {
         operator: oxc_syntax::operator::UpdateOperator,
-        argument: Box<LowerableExpression>,
+        argument: Box<LowerableExpression<'a>>,
         prefix: bool,
         span: Span,
     },
 
     // Calls
     CallExpression {
-        callee: Box<LowerableExpression>,
-        arguments: Vec<LowerableExpression>,
+        callee: Box<LowerableExpression<'a>>,
+        arguments: Vec<LowerableExpression<'a>>,
         span: Span,
     },
     NewExpression {
-        callee: Box<LowerableExpression>,
-        arguments: Vec<LowerableExpression>,
+        callee: Box<LowerableExpression<'a>>,
+        arguments: Vec<LowerableExpression<'a>>,
         span: Span,
     },
 
     // Property access
     PropertyAccess {
-        object: Box<LowerableExpression>,
+        object: Box<LowerableExpression<'a>>,
         property: String,
         span: Span,
     },
     ComputedPropertyAccess {
-        object: Box<LowerableExpression>,
-        property: Box<LowerableExpression>,
+        object: Box<LowerableExpression<'a>>,
+        property: Box<LowerableExpression<'a>>,
         span: Span,
     },
 
     // Assignment
     AssignmentExpression {
         operator: oxc_syntax::operator::AssignmentOperator,
-        left: Box<LowerableExpression>,
-        right: Box<LowerableExpression>,
+        left: Box<LowerableExpression<'a>>,
+        right: Box<LowerableExpression<'a>>,
         span: Span,
     },
 
     // Other
     AwaitExpression {
-        argument: Box<LowerableExpression>,
+        argument: Box<LowerableExpression<'a>>,
         span: Span,
     },
     ConditionalExpression {
-        test: Box<LowerableExpression>,
-        consequent: Box<LowerableExpression>,
-        alternate: Box<LowerableExpression>,
+        test: Box<LowerableExpression<'a>>,
+        consequent: Box<LowerableExpression<'a>>,
+        alternate: Box<LowerableExpression<'a>>,
         span: Span,
     },
     SequenceExpression {
-        expressions: Vec<LowerableExpression>,
+        expressions: Vec<LowerableExpression<'a>>,
         span: Span,
     },
     SpreadElement {
-        argument: Box<LowerableExpression>,
+        argument: Box<LowerableExpression<'a>>,
         span: Span,
     },
     TaggedTemplateExpression {
-        tag: Box<LowerableExpression>,
+        tag: Box<LowerableExpression<'a>>,
         quasi_raw: String,
         quasi_cooked: Option<String>,
         span: Span,
     },
     TypeCastExpression {
-        expression: Box<LowerableExpression>,
+        expression: Box<LowerableExpression<'a>>,
         annotation_kind: crate::hir::TypeAnnotationKind,
         span: Span,
     },
@@ -2946,15 +4889,15 @@ pub enum LowerableExpression {
 
     // JSX
     JsxElement {
-        tag: LowerableJsxTag,
-        props: Vec<LowerableJsxAttribute>,
-        children: Vec<LowerableJsxChild>,
+        tag: LowerableJsxTag<'a>,
+        props: Vec<LowerableJsxAttribute<'a>>,
+        children: Vec<LowerableJsxChild<'a>>,
         span: Span,
         opening_span: Span,
         closing_span: Option<Span>,
     },
     JsxFragment {
-        children: Vec<LowerableJsxChild>,
+        children: Vec<LowerableJsxChild<'a>>,
         span: Span,
     },
 
@@ -2964,8 +4907,8 @@ pub enum LowerableExpression {
     /// In the Babel AST, this is `OptionalMemberExpression`.
     /// In oxc_ast, this comes from `ChainExpression` wrapping a `MemberExpression` with `optional: true`.
     OptionalMemberExpression {
-        object: Box<LowerableExpression>,
-        property: OptionalMemberProperty,
+        object: Box<LowerableExpression<'a>>,
+        property: OptionalMemberProperty<'a>,
         optional: bool,
         span: Span,
     },
@@ -2974,21 +4917,31 @@ pub enum LowerableExpression {
     /// In the Babel AST, this is `OptionalCallExpression`.
     /// In oxc_ast, this comes from `ChainExpression` wrapping a `CallExpression` with `optional: true`.
     OptionalCallExpression {
-        callee: Box<LowerableExpression>,
-        arguments: Vec<LowerableExpression>,
+        callee: Box<LowerableExpression<'a>>,
+        arguments: Vec<LowerableExpression<'a>>,
         optional: bool,
         span: Span,
     },
 
-    // Function expressions
+    // Function expressions — store references to the AST nodes for recursive lowering
     FunctionExpression {
-        name: Option<String>,
-        is_async: bool,
-        is_generator: bool,
+        func: &'a ast::Function<'a>,
         span: Span,
     },
     ArrowFunctionExpression {
-        is_async: bool,
+        func: &'a ast::ArrowFunctionExpression<'a>,
+        span: Span,
+    },
+
+    // Destructuring assignment targets (for `[a, b] = expr` and `{a, b} = expr`)
+    /// An object destructuring assignment target.
+    ObjectAssignmentTarget {
+        target: &'a ast::ObjectAssignmentTarget<'a>,
+        span: Span,
+    },
+    /// An array destructuring assignment target.
+    ArrayAssignmentTarget {
+        target: &'a ast::ArrayAssignmentTarget<'a>,
         span: Span,
     },
 }
