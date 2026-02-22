@@ -656,6 +656,51 @@ fn set_terminal_id(terminal: &mut Terminal, id: InstructionId) {
     }
 }
 
+/// Compute the reverse-postorder (RPO) traversal of blocks in the HIR CFG.
+///
+/// This is the canonical block ordering for forward data-flow analyses.
+/// Predecessors appear before successors (barring back edges from loops).
+pub fn compute_rpo_order(
+    entry: BlockId,
+    blocks: &rustc_hash::FxHashMap<BlockId, super::hir_types::BasicBlock>,
+) -> Vec<BlockId> {
+    enum Phase {
+        PreVisit,
+        PostVisit,
+    }
+
+    let mut visited: rustc_hash::FxHashSet<BlockId> = rustc_hash::FxHashSet::default();
+    let mut postorder: Vec<BlockId> = Vec::new();
+    let mut stack: Vec<(BlockId, Phase)> = vec![(entry, Phase::PreVisit)];
+
+    while let Some((block_id, phase)) = stack.pop() {
+        match phase {
+            Phase::PreVisit => {
+                if !visited.insert(block_id) {
+                    continue;
+                }
+                stack.push((block_id, Phase::PostVisit));
+
+                let Some(block) = blocks.get(&block_id) else {
+                    continue;
+                };
+
+                // Push successors in reverse so they come out in forward order after RPO reversal
+                let successors = each_terminal_successor(&block.terminal);
+                for successor in successors.into_iter().rev() {
+                    stack.push((successor, Phase::PreVisit));
+                }
+            }
+            Phase::PostVisit => {
+                postorder.push(block_id);
+            }
+        }
+    }
+
+    postorder.reverse();
+    postorder
+}
+
 /// Iterate over all successor block IDs of a terminal.
 pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
     let mut successors = Vec::new();

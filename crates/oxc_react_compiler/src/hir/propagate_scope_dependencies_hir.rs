@@ -1199,8 +1199,7 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
     // Key hoistable by scope ID
     let hoistable_by_scope = key_by_scope_id(func, &hoistable.non_null_by_block);
 
-    // Use empty set for processed instructions in optional (simplified)
-    let processed_instrs: FxHashSet<InstructionId> = FxHashSet::default();
+    let processed_instrs = opt_chain.processed_instrs_in_optional;
 
     // Collect dependencies
     let collect_result = collect_dependencies(func, &merged_temporaries, &processed_instrs);

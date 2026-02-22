@@ -11,7 +11,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
     DeclarationId, ReactiveBlock, ReactiveFunction, ReactiveInstruction, ReactiveStatement,
-    ReactiveTerminal,
+    ReactiveTerminal, ReactiveValue,
+    visitors::each_instruction_value_operand,
 };
 
 /// Prune unused lvalues from the reactive function.
@@ -86,13 +87,34 @@ fn collect_from_instruction(
 }
 
 fn collect_used_declarations_from_value(
-    _value: &crate::hir::ReactiveValue,
-    _used: &mut FxHashSet<DeclarationId>,
+    value: &ReactiveValue,
+    used: &mut FxHashSet<DeclarationId>,
 ) {
-    // In the full implementation, this would traverse the ReactiveValue tree
-    // and mark all referenced DeclarationIds as used. For now, this is a
-    // structural stub — the full implementation needs the place visitor
-    // infrastructure which traverses all Place references within a value.
+    match value {
+        ReactiveValue::Instruction(inner) => {
+            for place in each_instruction_value_operand(inner) {
+                used.insert(place.identifier.declaration_id);
+            }
+        }
+        ReactiveValue::Logical(v) => {
+            collect_used_declarations_from_value(&v.left, used);
+            collect_used_declarations_from_value(&v.right, used);
+        }
+        ReactiveValue::Ternary(v) => {
+            collect_used_declarations_from_value(&v.test, used);
+            collect_used_declarations_from_value(&v.consequent, used);
+            collect_used_declarations_from_value(&v.alternate, used);
+        }
+        ReactiveValue::OptionalCall(v) => {
+            collect_used_declarations_from_value(&v.value, used);
+        }
+        ReactiveValue::Sequence(v) => {
+            for instr in &v.instructions {
+                collect_used_declarations_from_value(&instr.value, used);
+            }
+            collect_used_declarations_from_value(&v.value, used);
+        }
+    }
 }
 
 fn collect_from_terminal(
@@ -115,18 +137,28 @@ fn collect_from_terminal(
             }
         }
         ReactiveTerminal::While(t) => {
+            collect_used_declarations_from_value(&t.test, used_declarations);
             collect_lvalue_info(&t.r#loop, lvalue_locations, used_declarations);
         }
         ReactiveTerminal::DoWhile(t) => {
             collect_lvalue_info(&t.r#loop, lvalue_locations, used_declarations);
+            collect_used_declarations_from_value(&t.test, used_declarations);
         }
         ReactiveTerminal::For(t) => {
+            collect_used_declarations_from_value(&t.init, used_declarations);
+            collect_used_declarations_from_value(&t.test, used_declarations);
+            if let Some(update) = &t.update {
+                collect_used_declarations_from_value(update, used_declarations);
+            }
             collect_lvalue_info(&t.r#loop, lvalue_locations, used_declarations);
         }
         ReactiveTerminal::ForOf(t) => {
+            collect_used_declarations_from_value(&t.init, used_declarations);
+            collect_used_declarations_from_value(&t.test, used_declarations);
             collect_lvalue_info(&t.r#loop, lvalue_locations, used_declarations);
         }
         ReactiveTerminal::ForIn(t) => {
+            collect_used_declarations_from_value(&t.init, used_declarations);
             collect_lvalue_info(&t.r#loop, lvalue_locations, used_declarations);
         }
         ReactiveTerminal::Label(t) => {

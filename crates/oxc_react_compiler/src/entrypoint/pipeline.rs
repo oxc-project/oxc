@@ -117,7 +117,7 @@ pub fn run_pipeline(
     // 21. InferMutationAliasingRanges
     let range_opts = InferRangesOptions { is_function_expression: false };
     crate::inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges(
-        func, range_opts,
+        func, &range_opts,
     )?;
 
     // 22. ValidateLocalsNotReassignedAfterRender
