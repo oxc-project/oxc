@@ -11,12 +11,45 @@ use crate::compiler_error::{CompilerError, GENERATED_SOURCE, SourceLocation};
 
 use super::{
     environment::Environment,
+    find_context_identifiers::ContextIdentifiers,
     hir_types::{
-        BasicBlock, BlockId, BlockKind, Effect, GotoVariant, Hir, Identifier, IdentifierId,
-        Instruction, InstructionId, MutableRange, Place, Terminal,
+        BasicBlock, BlockId, BlockKind, DeclarationId, Effect, GotoVariant, Hir, Identifier,
+        IdentifierId, IdentifierName, Instruction, InstructionId, MutableRange, NonLocalBinding,
+        Place, Terminal,
     },
     types::make_type,
 };
+
+/// The result of resolving an identifier reference.
+///
+/// Corresponds to the `VariableBinding` type in the TS `HIRBuilder.ts`.
+pub enum VariableBinding {
+    /// A local variable binding (declared in this function scope).
+    Identifier { identifier: Identifier, binding_kind: BindingKind },
+    /// A global or module-scope variable.
+    NonLocal(NonLocalBinding),
+}
+
+/// The kind of a local binding (corresponds to Babel's `Binding.kind`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BindingKind {
+    Const,
+    Let,
+    Var,
+    Param,
+    Function,
+}
+
+/// Entry in the bindings map.
+struct BindingEntry {
+    /// A unique key to distinguish same-named variables in different scopes.
+    /// We use a monotonically increasing counter for this.
+    declaration_key: u32,
+    /// The HIR Identifier for this binding.
+    identifier: Identifier,
+    /// The binding kind.
+    kind: BindingKind,
+}
 
 /// A work-in-progress block that does not yet have a terminal.
 #[derive(Debug)]
@@ -79,11 +112,28 @@ pub struct HirBuilder {
     pub errors: CompilerError,
     /// Counts the number of `fbt` tag parents of the current node.
     pub fbt_depth: u32,
+
+    /// Maps binding names to their HIR identifiers and metadata.
+    ///
+    /// This corresponds to `#bindings` in the TS `HIRBuilder`. When the same name
+    /// is used in different scopes (shadowing), each gets a unique entry with a
+    /// suffixed name (e.g., `x`, `x_0`, `x_1`).
+    bindings: FxHashMap<String, BindingEntry>,
+
+    /// Monotonically increasing counter for unique binding keys.
+    next_binding_key: u32,
+
+    /// The set of context identifiers (variables captured by inner closures).
+    context_identifiers: ContextIdentifiers,
 }
 
 impl HirBuilder {
-    /// Create a new `HirBuilder` with the given environment.
-    pub fn new(env: Environment, entry_block_kind: Option<BlockKind>) -> Self {
+    /// Create a new `HirBuilder` with the given environment and context identifiers.
+    pub fn new(
+        env: Environment,
+        entry_block_kind: Option<BlockKind>,
+        context_identifiers: ContextIdentifiers,
+    ) -> Self {
         let entry = env.next_block_id_value();
         let current = new_block(BlockId(entry), entry_block_kind.unwrap_or(BlockKind::Block));
         Self {
@@ -95,6 +145,9 @@ impl HirBuilder {
             exception_handler_stack: Vec::new(),
             errors: CompilerError::new(),
             fbt_depth: 0,
+            bindings: FxHashMap::default(),
+            next_binding_key: 0,
+            context_identifiers,
         }
     }
 
@@ -117,6 +170,124 @@ impl HirBuilder {
     pub fn make_temporary(&mut self, loc: SourceLocation) -> Identifier {
         let id = self.env.next_identifier_id();
         make_temporary_identifier(id, loc)
+    }
+
+    // =====================================================================================
+    // Binding resolution (port of HIRBuilder.ts resolveBinding / resolveIdentifier)
+    // =====================================================================================
+
+    /// Resolve a binding for a declared variable name, creating or returning an
+    /// existing HIR `Identifier`.
+    ///
+    /// This corresponds to `resolveBinding()` in the TS `HIRBuilder.ts`.
+    /// It ensures that each unique declaration gets a unique HIR Identifier,
+    /// even when the same name is used in different scopes (shadowing is handled
+    /// by appending `_0`, `_1`, etc.).
+    ///
+    /// `declaration_key` is a unique key identifying this specific declaration
+    /// (distinct from other declarations with the same name).
+    pub fn resolve_binding(
+        &mut self,
+        name: &str,
+        declaration_key: u32,
+        loc: SourceLocation,
+    ) -> Identifier {
+        // Check if we already have a binding for this name
+        if let Some(entry) = self.bindings.get(name) {
+            if entry.declaration_key == declaration_key {
+                return entry.identifier.clone();
+            }
+        }
+
+        // Try to find a unique name (handle shadowing)
+        let original_name = name.to_string();
+        let mut candidate = original_name.clone();
+        let mut index = 0u32;
+        loop {
+            if let Some(existing) = self.bindings.get(&candidate) {
+                if existing.declaration_key == declaration_key {
+                    return existing.identifier.clone();
+                }
+                // Name collision with a different declaration - try next suffix
+                candidate = format!("{original_name}_{index}");
+                index += 1;
+            } else {
+                // Found a free name
+                break;
+            }
+        }
+
+        let id = self.env.next_identifier_id();
+        let identifier = Identifier {
+            id,
+            declaration_id: DeclarationId(id.0),
+            name: Some(IdentifierName::Named(candidate.clone())),
+            mutable_range: MutableRange::default(),
+            scope: None,
+            type_: make_type(),
+            loc,
+        };
+        self.env.add_new_reference(&candidate);
+        self.bindings.insert(
+            candidate,
+            BindingEntry {
+                declaration_key,
+                identifier: identifier.clone(),
+                kind: BindingKind::Let,
+            },
+        );
+        identifier
+    }
+
+    /// Declare a local binding (parameter or variable) with the given name and kind.
+    ///
+    /// Returns the HIR `Identifier` for this binding and a `Place` referencing it.
+    pub fn declare_binding(&mut self, name: &str, kind: BindingKind, loc: SourceLocation) -> Place {
+        let key = self.next_binding_key;
+        self.next_binding_key += 1;
+
+        let identifier = self.resolve_binding(name, key, loc);
+
+        // Update the binding kind
+        let candidate =
+            identifier.name.as_ref().map_or_else(|| name.to_string(), |n| n.value().to_string());
+        if let Some(entry) = self.bindings.get_mut(&candidate) {
+            entry.kind = kind;
+        }
+
+        Place { identifier, effect: Effect::Unknown, reactive: false, loc }
+    }
+
+    /// Resolve an identifier reference to determine if it's a local binding or
+    /// a global/module-level reference.
+    ///
+    /// This corresponds to `resolveIdentifier()` in the TS `HIRBuilder.ts`.
+    ///
+    /// Returns `Some(VariableBinding)` if the identifier could be resolved.
+    /// For local bindings, returns `VariableBinding::Identifier`.
+    /// For globals, returns `VariableBinding::NonLocal(Global { name })`.
+    pub fn resolve_identifier(&self, name: &str) -> VariableBinding {
+        // Check our bindings map. Try the name directly first, then suffixed versions.
+        if let Some(entry) = self.bindings.get(name) {
+            return VariableBinding::Identifier {
+                identifier: entry.identifier.clone(),
+                binding_kind: entry.kind,
+            };
+        }
+
+        // Not found in local bindings -> it's a global
+        VariableBinding::NonLocal(NonLocalBinding::Global { name: name.to_string() })
+    }
+
+    /// Check if a named identifier is a context identifier (captured by inner closures).
+    ///
+    /// This corresponds to `isContextIdentifier()` in the TS `HIRBuilder.ts`.
+    pub fn is_context_identifier(&self, name: &str) -> bool {
+        // Must be a local binding AND in the context identifiers set
+        if self.bindings.contains_key(name) {
+            return self.context_identifiers.contains(name);
+        }
+        false
     }
 
     /// Push an instruction onto the current block.
