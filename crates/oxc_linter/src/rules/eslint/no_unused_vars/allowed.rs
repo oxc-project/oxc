@@ -152,7 +152,29 @@ impl NoUnusedVars {
         symbol: &Symbol<'_, '_>,
         declaration_id: NodeId,
     ) -> bool {
-        matches!(symbol.nodes().parent_kind(declaration_id), AstKind::TSMappedType(_))
+        let nodes = symbol.nodes();
+        let scoping = symbol.scoping();
+
+        if matches!(nodes.parent_kind(declaration_id), AstKind::TSMappedType(_)) {
+            return true;
+        }
+
+        // type parameters used within type declarations in ambient ts module
+        // blocks are required for declaration merging to work, since signatures
+        // must match.
+        let Some(parent_scope_id) = scoping.scope_parent_id(symbol.scope_id()) else {
+            return false;
+        };
+        let scope_flags = scoping.scope_flags(parent_scope_id);
+        if scope_flags.is_ts_module_block() {
+            // get declaration node for the parent scope
+            let parent_node_id = scoping.get_node_id(parent_scope_id);
+            if let AstKind::TSModuleDeclaration(namespace) = nodes.get_node(parent_node_id).kind() {
+                return namespace.declare;
+            }
+        }
+
+        false
     }
 
     /// Returns `true` if this unused parameter should be allowed (i.e. not
