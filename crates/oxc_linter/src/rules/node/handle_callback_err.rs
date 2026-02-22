@@ -79,7 +79,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Examples of **correct** code for this rule with the default `"err"`` parameter name:
+    /// Examples of **correct** code for this rule with the default `"err"` parameter name:
     /// ```js
     /// function loadData (err, data) {
     ///     if (err) {
