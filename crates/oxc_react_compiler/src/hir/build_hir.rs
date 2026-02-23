@@ -3,7 +3,10 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
-    compiler_error::{CompilerError, GENERATED_SOURCE, SourceLocation},
+    compiler_error::{
+        CompilerError, CompilerErrorDetail, CompilerErrorDetailOptions, ErrorCategory,
+        GENERATED_SOURCE, SourceLocation,
+    },
     hir::{
         ArrayExpressionElement, BlockKind, BranchTerminal, Case, DeclareContext, DeclareLocal,
         Destructure, DoWhileTerminal, ForInTerminal, ForOfTerminal, ForTerminal,
@@ -296,7 +299,7 @@ fn lower_object_destructuring(
 
     for prop in &obj_pat.properties {
         let prop_loc = span_to_loc(prop.span);
-        let key = lower_binding_property_key(&prop.key)?;
+        let key = lower_binding_property_key(builder, &prop.key)?;
 
         // Get the value pattern
         match &prop.value {
@@ -674,7 +677,11 @@ fn lower_assignment_pattern_declaration(
 }
 
 /// Lower a property key from a binding property (used in object destructuring).
+///
+/// Port of `lowerObjectPropertyKey()` from `HIR/BuildHIR.ts` (lines 1508-1543).
+/// Handles static identifiers, string literals, numeric literals, and computed keys.
 fn lower_binding_property_key(
+    builder: &mut HirBuilder,
     key: &ast::PropertyKey<'_>,
 ) -> Result<ObjectPropertyKey, CompilerError> {
     match key {
@@ -686,13 +693,11 @@ fn lower_binding_property_key(
         }
         ast::PropertyKey::NumericLiteral(lit) => Ok(ObjectPropertyKey::Number(lit.value)),
         _ => {
-            // Computed properties in destructuring patterns are not yet fully supported.
-            // The TS reference also has a TODO for this case.
-            Err(CompilerError::todo(
-                "Handle computed properties in destructuring patterns",
-                None,
-                GENERATED_SOURCE,
-            ))
+            // Computed key: lower the expression to get a Place
+            let expr = key.to_expression();
+            let lowerable = convert_expression(expr);
+            let result = lower_expression(builder, &lowerable)?;
+            Ok(ObjectPropertyKey::Computed(result.place))
         }
     }
 }
@@ -742,7 +747,7 @@ fn lower_object_assignment_target(
                 }
             }
             ast::AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop_prop) => {
-                let key = lower_binding_property_key(&prop_prop.name)?;
+                let key = lower_binding_property_key(builder, &prop_prop.name)?;
                 let prop_loc = span_to_loc(prop_prop.span);
 
                 match &prop_prop.binding {
@@ -2895,11 +2900,18 @@ fn lower_statement_with_label(
             let continuation_id = continuation_block.id;
 
             if try_stmt.handler.is_none() {
-                return Err(CompilerError::todo(
-                    "Handle TryStatement without a catch clause",
-                    None,
-                    loc,
+                builder.errors.push_error_detail(CompilerErrorDetail::new(
+                    CompilerErrorDetailOptions {
+                        category: ErrorCategory::Todo,
+                        reason:
+                            "(BuildHIR::lowerStatement) Handle TryStatement without a catch clause"
+                                .to_string(),
+                        description: None,
+                        loc: Some(loc),
+                        suggestions: None,
+                    },
                 ));
+                return Ok(());
             }
 
             // Declare handler binding if present
@@ -3683,11 +3695,28 @@ pub fn lower_expression(
                         // Assign the result back to the left
                         lower_assignment(builder, left, binary_result.place, loc)
                     }
-                    None => Err(CompilerError::todo(
-                        "Handle unsupported compound assignment operator",
-                        None,
-                        loc,
-                    )),
+                    None => {
+                        // Logical assignments (&&=, ||=, ??=) need special CFG handling
+                        // and are not yet supported. Push a Todo error and return UnsupportedNode,
+                        // matching the TS behavior at BuildHIR.ts lines 2033-2041.
+                        builder.errors.push_error_detail(CompilerErrorDetail::new(
+                            CompilerErrorDetailOptions {
+                                category: ErrorCategory::Todo,
+                                reason: format!(
+                                    "(BuildHIR::lowerExpression) Handle {} operators in AssignmentExpression",
+                                    operator.as_str()
+                                ),
+                                description: None,
+                                loc: Some(loc),
+                                suggestions: None,
+                            },
+                        ));
+                        lower_value_to_temporary(
+                            builder,
+                            InstructionValue::UnsupportedNode(crate::hir::UnsupportedNode { loc }),
+                            loc,
+                        )
+                    }
                 }
             }
         }

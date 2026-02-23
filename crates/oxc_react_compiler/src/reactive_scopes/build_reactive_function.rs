@@ -465,6 +465,11 @@ fn visit_value_block_terminal(
                 id: ternary.id,
             })
         }
+        Terminal::MaybeThrow(_) => Err(CompilerError::invariant(
+            "Unexpected maybe-throw in visit_value_block_terminal - should be handled in visit_value_block",
+            None,
+            terminal.loc(),
+        )),
         Terminal::Label(_) => Err(CompilerError::todo(
             "Support labeled statements combined with value blocks (conditional, logical, optional chaining, etc)",
             None,

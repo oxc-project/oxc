@@ -207,6 +207,14 @@ pub struct Environment {
     pub config: EnvironmentConfig,
     pub shapes: ShapeRegistry,
 
+    /// The source code of the file being compiled.
+    /// Used for HMR/Fast Refresh cache invalidation.
+    pub code: Option<String>,
+
+    /// The filename of the file being compiled.
+    /// Used for instrumentation (instrument forget) emission.
+    pub filename: Option<String>,
+
     /// Whether validations should be enabled.
     pub enable_validations: bool,
 
@@ -263,6 +271,8 @@ impl Environment {
             output_mode,
             config,
             shapes: FxHashMap::default(),
+            code: None,
+            filename: None,
             enable_validations,
             enable_memoization,
             enable_drop_manual_memoization,
