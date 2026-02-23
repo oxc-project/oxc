@@ -159,7 +159,7 @@ pub fn is_in_vue_setup(ctx: &LintContext<'_>, scope_id: ScopeId) -> bool {
     false
 }
 
-/// The last statement of <script setup> block must be JSXFragment, which includes Vue SFC struct
+/// The last statement of `<script setup>` block must be JSXFragment, which includes Vue SFC struct
 pub fn get_vue_sfc_struct<'a>(ctx: &LintContext<'a>) -> &'a Vec<'a, JSXChild<'a>> {
     let last_statement = get_vue_setup_statements(ctx).last().unwrap();
     let Statement::ExpressionStatement(expression_statement) = last_statement else {
