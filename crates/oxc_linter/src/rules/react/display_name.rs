@@ -175,16 +175,56 @@ impl Rule for DisplayName {
                 if !has_display_name_via_semantic(symbol_id, component_info.name.as_ref(), ctx) {
                     components_to_report.push((component_info.span, component_info.is_context));
                 }
-            } else if check_context_objects {
-                // If the declaration isn't a component, check if any write references assign createContext()
-                // This handles: var Hello; Hello = createContext();
-                if let Some(component_info) =
-                    check_context_assignment_references(symbol_id, decl_node, ctx)
-                {
-                    // Check if this symbol has a displayName assignment
-                    if !has_display_name_via_semantic(symbol_id, component_info.name.as_ref(), ctx)
+            } else {
+                // The primary declaration isn't a component. Check redeclarations too.
+                // This handles cases where a TypeScript interface/type shares the same name
+                // as a variable (e.g., `interface Foo {}; const Foo = createContext()`).
+                // The interface gets the primary declaration, but the variable is a redeclaration.
+                let mut found_in_redecl = false;
+                for redecl in ctx.scoping().symbol_redeclarations(symbol_id) {
+                    let redecl_node = ctx.nodes().get_node(redecl.declaration);
+                    if let Some(component_info) = is_react_component_node(
+                        redecl_node,
+                        ctx,
+                        &mut version_cache,
+                        ignore_transpiler_name,
+                        check_context_objects,
+                    ) {
+                        if component_info.name.is_some()
+                            && !ignore_transpiler_name
+                            && !component_info.is_context
+                        {
+                            found_in_redecl = true;
+                            break;
+                        }
+                        if !has_display_name_via_semantic(
+                            symbol_id,
+                            component_info.name.as_ref(),
+                            ctx,
+                        ) {
+                            components_to_report
+                                .push((component_info.span, component_info.is_context));
+                        }
+                        found_in_redecl = true;
+                        break;
+                    }
+                }
+
+                if !found_in_redecl && check_context_objects {
+                    // If the declaration isn't a component, check if any write references assign createContext()
+                    // This handles: var Hello; Hello = createContext();
+                    if let Some(component_info) =
+                        check_context_assignment_references(symbol_id, decl_node, ctx)
                     {
-                        components_to_report.push((component_info.span, component_info.is_context));
+                        // Check if this symbol has a displayName assignment
+                        if !has_display_name_via_semantic(
+                            symbol_id,
+                            component_info.name.as_ref(),
+                            ctx,
+                        ) {
+                            components_to_report
+                                .push((component_info.span, component_info.is_context));
+                        }
                     }
                 }
             }
@@ -1738,6 +1778,21 @@ fn test() {
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,
         ),
+        // Regression test for #19607: TS interface + createContext with displayName set (should pass)
+        (
+            r#"
+                    import { createContext } from 'react';
+
+                    interface PostHogGroupContext {
+                      value: string;
+                    }
+
+                    const PostHogGroupContext = createContext<PostHogGroupContext | null>(null);
+                    PostHogGroupContext.displayName = "PostHogGroupContext";
+                  "#,
+            Some(serde_json::json!([{ "checkContextObjects": true }])),
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -2163,6 +2218,32 @@ fn test() {
 
                     var Hello;
                     Hello = React.createContext();
+                  ",
+            Some(serde_json::json!([{ "checkContextObjects": true }])),
+            None,
+        ),
+        // Regression test for #19607: TS interface with same name as createContext variable
+        (
+            "
+                    import { createContext } from 'react';
+
+                    interface PostHogGroupContext {
+                      value: string;
+                    }
+
+                    const PostHogGroupContext = createContext<PostHogGroupContext | null>(null);
+                  ",
+            Some(serde_json::json!([{ "checkContextObjects": true }])),
+            None,
+        ),
+        // Same issue with type alias instead of interface
+        (
+            "
+                    import { createContext } from 'react';
+
+                    type MyContext = { value: string };
+
+                    const MyContext = createContext<MyContext | null>(null);
                   ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
             None,

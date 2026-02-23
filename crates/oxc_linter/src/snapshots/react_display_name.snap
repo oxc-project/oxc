@@ -360,3 +360,21 @@ source: crates/oxc_linter/src/tester.rs
  6 │                   
    ╰────
   help: Add a `displayName` property to the context.
+
+  ⚠ eslint-plugin-react(display-name): Context definition is missing display name.
+   ╭─[display_name.tsx:8:27]
+ 7 │ 
+ 8 │                     const PostHogGroupContext = createContext<PostHogGroupContext | null>(null);
+   ·                           ───────────────────
+ 9 │                   
+   ╰────
+  help: Add a `displayName` property to the context.
+
+  ⚠ eslint-plugin-react(display-name): Context definition is missing display name.
+   ╭─[display_name.tsx:6:27]
+ 5 │ 
+ 6 │                     const MyContext = createContext<MyContext | null>(null);
+   ·                           ─────────
+ 7 │                   
+   ╰────
+  help: Add a `displayName` property to the context.
