@@ -27,3 +27,4 @@ sha2 = { workspace = true }
 hmac = { workspace = true }
 
 [dev-dependencies]
+insta = { workspace = true }

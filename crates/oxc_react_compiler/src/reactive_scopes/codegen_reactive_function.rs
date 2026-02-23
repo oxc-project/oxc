@@ -18,13 +18,13 @@ use sha2::Sha256;
 use crate::{
     compiler_error::{CompilerError, SourceLocation},
     hir::{
-        ArrayExpressionElement, ArrayPatternElement, CallArg, DeclarationId, IdentifierId,
-        IdentifierName, InstructionKind, InstructionValue, JsxAttribute, JsxTag,
-        ObjectPatternProperty, ObjectPropertyKey, ObjectPropertyType, Pattern, Place,
-        PrimitiveValueKind, ReactiveBlock, ReactiveBreakTerminal, ReactiveContinueTerminal,
-        ReactiveFunction, ReactiveInstruction, ReactiveScope, ReactiveScopeDeclaration,
-        ReactiveScopeDependency, ReactiveStatement, ReactiveTerminal, ReactiveTerminalTargetKind,
-        ReactiveValue,
+        ArrayExpressionElement, ArrayPatternElement, CallArg, DeclarationId, FunctionExpressionType,
+        HIRFunction, IdentifierId, IdentifierName, InstructionKind, InstructionValue, JsxAttribute,
+        JsxTag, ObjectExpression, ObjectMethodValue, ObjectPatternProperty, ObjectPropertyKey,
+        ObjectPropertyType, Pattern, Place, PrimitiveValueKind, ReactiveBlock,
+        ReactiveBreakTerminal, ReactiveContinueTerminal, ReactiveFunction, ReactiveInstruction,
+        ReactiveParam, ReactiveScope, ReactiveScopeDeclaration, ReactiveScopeDependency,
+        ReactiveStatement, ReactiveTerminal, ReactiveTerminalTargetKind, ReactiveValue,
         environment::{CompilerOutputMode, ExternalFunction, InstrumentationConfig},
         object_shape::ShapeRegistry,
         types::Type,
@@ -49,6 +49,8 @@ pub struct CodegenFunction {
     pub id: Option<String>,
     /// Name hint for anonymous functions.
     pub name_hint: Option<String>,
+    /// Function parameters as formatted strings.
+    pub params: Vec<String>,
     /// Whether the function is a generator.
     pub generator: bool,
     /// Whether the function is async.
@@ -197,6 +199,8 @@ pub struct CodegenOptions {
     pub output_mode: CompilerOutputMode,
     /// The shape registry for looking up function signatures (needed for hook detection).
     pub shapes: ShapeRegistry,
+    /// Whether to wrap anonymous functions in a naming expression.
+    pub enable_name_anonymous_functions: bool,
 }
 
 /// Codegen context — tracks state during code generation.
@@ -219,6 +223,11 @@ pub struct CodegenContext {
     output_mode: CompilerOutputMode,
     /// The shape registry for looking up function signatures (needed for hook detection).
     shapes: ShapeRegistry,
+    /// Stored ObjectMethod values keyed by their lvalue's IdentifierId.
+    /// These are stored during instruction codegen and consumed in ObjectExpression codegen.
+    object_methods: FxHashMap<IdentifierId, ObjectMethodValue>,
+    /// Whether to wrap anonymous functions in a naming expression.
+    enable_name_anonymous_functions: bool,
 }
 
 impl CodegenContext {
@@ -228,6 +237,7 @@ impl CodegenContext {
         enable_emit_hook_guards: Option<ExternalFunction>,
         output_mode: CompilerOutputMode,
         shapes: ShapeRegistry,
+        enable_name_anonymous_functions: bool,
     ) -> Self {
         Self {
             next_cache_index: 0,
@@ -239,6 +249,8 @@ impl CodegenContext {
             enable_emit_hook_guards,
             output_mode,
             shapes,
+            object_methods: FxHashMap::default(),
+            enable_name_anonymous_functions,
         }
     }
 
@@ -301,6 +313,7 @@ pub fn codegen_function(
         options.enable_emit_hook_guards,
         options.output_mode,
         options.shapes,
+        options.enable_name_anonymous_functions,
     );
 
     // Fast Refresh reuses component instances at runtime even as the source of the
@@ -452,9 +465,12 @@ pub fn codegen_function(
         }
     }
 
+    let params = convert_params(&reactive_fn.params);
+
     Ok(CodegenFunction {
         id: reactive_fn.id.clone(),
         name_hint: reactive_fn.name_hint.clone(),
+        params,
         generator: reactive_fn.generator,
         is_async: reactive_fn.is_async,
         loc: reactive_fn.loc,
@@ -467,6 +483,72 @@ pub fn codegen_function(
         directives: reactive_fn.directives.clone(),
         outlined: Vec::new(),
     })
+}
+
+/// Convert reactive function parameters to formatted string representations.
+///
+/// Port of `convertParameter()` from `CodegenReactiveFunction.ts` lines 410-418.
+fn convert_params(params: &[ReactiveParam]) -> Vec<String> {
+    params
+        .iter()
+        .map(|param| match param {
+            ReactiveParam::Place(place) => identifier_name(&place.identifier),
+            ReactiveParam::Spread(spread) => {
+                format!("...{}", identifier_name(&spread.place.identifier))
+            }
+        })
+        .collect()
+}
+
+/// Run the sub-pipeline on an inner HIR function (e.g., FunctionExpression or ObjectMethod)
+/// and produce a `CodegenFunction`.
+///
+/// This mirrors the pattern in the TypeScript where `buildReactiveFunction` is called,
+/// followed by pruning passes, `renameVariables`, and then `codegenReactiveFunction`.
+///
+/// `include_prune_hoisted` controls whether `pruneHoistedContexts` is called.
+/// FunctionExpression passes `true`, ObjectMethod passes `false`.
+fn codegen_inner_function(
+    func: &HIRFunction,
+    cx: &CodegenContext,
+    include_prune_hoisted: bool,
+) -> Result<CodegenFunction, CompilerError> {
+    let mut reactive_fn = crate::reactive_scopes::build_reactive_function::build_reactive_function(func)?;
+    crate::reactive_scopes::prune_unused_labels::prune_unused_labels(&mut reactive_fn);
+    crate::reactive_scopes::prune_unused_lvalues::prune_unused_lvalues(&mut reactive_fn);
+    if include_prune_hoisted {
+        crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_fn);
+    }
+    let unique_identifiers = crate::reactive_scopes::rename_variables::rename_variables(&mut reactive_fn);
+    let options = CodegenOptions {
+        unique_identifiers,
+        fbt_operands: cx.fbt_operands.clone(),
+        enable_reset_cache_on_source_file_changes: false,
+        code: None,
+        enable_emit_hook_guards: cx.enable_emit_hook_guards.clone(),
+        enable_emit_instrument_forget: None,
+        fn_id: None,
+        filename: None,
+        output_mode: cx.output_mode,
+        shapes: cx.shapes.clone(),
+        enable_name_anonymous_functions: cx.enable_name_anonymous_functions,
+    };
+    codegen_function(&reactive_fn, options)
+}
+
+/// Format `CodegenFunction` body statements as a string for embedding in a function expression.
+///
+/// This produces the contents between `{` and `}` for function bodies, including directives.
+fn format_codegen_body(func: &CodegenFunction) -> String {
+    use std::fmt::Write;
+    let mut body = String::new();
+    for directive in &func.directives {
+        let _ = write!(body, "\"{directive}\"; ");
+    }
+    for stmt in &func.body {
+        let _ = write!(body, "{stmt}");
+    }
+    body
 }
 
 /// State for HMR/Fast Refresh cache reset.
@@ -1042,9 +1124,12 @@ fn codegen_instruction_nullable(
             }
             InstructionValue::StartMemoize(_) | InstructionValue::FinishMemoize(_) => None,
             InstructionValue::Debugger(_) => Some(CodegenStatement::Debugger),
-            InstructionValue::ObjectMethod(_) => {
-                // Object methods are stored for later use by ObjectExpression codegen
-                // No statement emitted here
+            InstructionValue::ObjectMethod(method) => {
+                // Store object method for later use by ObjectExpression codegen.
+                // Port of CodegenReactiveFunction.ts lines 1168-1174.
+                if let Some(lval) = &instr.lvalue {
+                    cx.object_methods.insert(lval.identifier.id, method.clone());
+                }
                 None
             }
             other => {
@@ -1247,34 +1332,7 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
             format!("new {callee}({args})")
         }
         InstructionValue::ObjectExpression(obj) => {
-            let props: Vec<String> = obj
-                .properties
-                .iter()
-                .map(|prop| match prop {
-                    ObjectPatternProperty::Property(p) => {
-                        let key = codegen_object_property_key(&p.key);
-                        let value = codegen_place_to_expression(cx, &p.place);
-                        let is_computed = matches!(p.key, ObjectPropertyKey::Computed(_));
-                        // Check for shorthand: key matches value
-                        let is_shorthand =
-                            matches!(&p.key, ObjectPropertyKey::Identifier(k) if *k == value);
-                        if p.property_type == ObjectPropertyType::Method {
-                            // Method shorthand
-                            format!("{key}(...)")
-                        } else if is_shorthand && !is_computed {
-                            key
-                        } else if is_computed {
-                            format!("[{key}]: {value}")
-                        } else {
-                            format!("{key}: {value}")
-                        }
-                    }
-                    ObjectPatternProperty::Spread(s) => {
-                        format!("...{}", codegen_place_to_expression(cx, &s.place))
-                    }
-                })
-                .collect();
-            format!("{{{}}}", props.join(", "))
+            codegen_object_expression(cx, obj)
         }
         InstructionValue::PropertyLoad(load) => {
             let object = codegen_place_to_expression(cx, &load.object);
@@ -1315,19 +1373,7 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
             format!("{} = {value}", store.name)
         }
         InstructionValue::FunctionExpression(func_expr) => {
-            // Simplified: emit as a function expression string
-            let name = func_expr.name.as_deref().unwrap_or("");
-            let is_async = if func_expr.lowered_func.func.is_async { "async " } else { "" };
-            let star = if func_expr.lowered_func.func.generator { "*" } else { "" };
-            match func_expr.expression_type {
-                crate::hir::FunctionExpressionType::ArrowFunctionExpression => {
-                    format!("{is_async}(...) => {{}}")
-                }
-                crate::hir::FunctionExpressionType::FunctionExpression
-                | crate::hir::FunctionExpressionType::FunctionDeclaration => {
-                    format!("{is_async}function{star} {name}(...) {{}}")
-                }
-            }
+            codegen_function_expression(cx, func_expr)
         }
         InstructionValue::RegExpLiteral(re) => {
             format!("/{}/{}", re.pattern, re.flags)
@@ -1432,6 +1478,158 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
             String::new()
         }
         InstructionValue::UnsupportedNode(_) => "/* unsupported */".to_string(),
+    }
+}
+
+// =====================================================================================
+// codegen_function_expression — recursive codegen for FunctionExpression
+// =====================================================================================
+
+/// Generate a function expression string by recursively compiling the inner function.
+///
+/// Port of `CodegenReactiveFunction.ts` lines 1852-1901 (case 'FunctionExpression').
+///
+/// This runs the sub-pipeline (build reactive function, prune, rename) on the lowered
+/// function, then formats the result based on the expression type (arrow, function expr,
+/// function declaration).
+fn codegen_function_expression(
+    cx: &CodegenContext,
+    func_expr: &crate::hir::FunctionExpressionValue,
+) -> String {
+    match codegen_inner_function(&func_expr.lowered_func.func, cx, true) {
+        Ok(inner_fn) => {
+            let params_str = inner_fn.params.join(", ");
+
+            let mut value = match func_expr.expression_type {
+                FunctionExpressionType::ArrowFunctionExpression => {
+                    let async_prefix = if inner_fn.is_async { "async " } else { "" };
+                    // Check for concise arrow body: single return statement with argument,
+                    // and no directives on the lowered function
+                    if inner_fn.body.len() == 1
+                        && func_expr.lowered_func.func.directives.is_empty()
+                    {
+                        if let CodegenStatement::Return(Some(expr)) = &inner_fn.body[0] {
+                            format!("{async_prefix}({params_str}) => {expr}")
+                        } else {
+                            let body_str = format_codegen_body(&inner_fn);
+                            format!("{async_prefix}({params_str}) => {{{body_str}}}")
+                        }
+                    } else {
+                        let body_str = format_codegen_body(&inner_fn);
+                        format!("{async_prefix}({params_str}) => {{{body_str}}}")
+                    }
+                }
+                FunctionExpressionType::FunctionExpression
+                | FunctionExpressionType::FunctionDeclaration => {
+                    let async_prefix = if inner_fn.is_async { "async " } else { "" };
+                    let star = if inner_fn.generator { "*" } else { "" };
+                    let name = func_expr
+                        .name
+                        .as_ref()
+                        .map_or(String::new(), |n| format!(" {n}"));
+                    let body_str = format_codegen_body(&inner_fn);
+                    format!("{async_prefix}function{star}{name}({params_str}) {{{body_str}}}")
+                }
+            };
+
+            // enableNameAnonymousFunctions: wrap anonymous functions in a naming expression
+            // Produces: ({"nameHint": <funcExpr>})["nameHint"]
+            if cx.enable_name_anonymous_functions
+                && func_expr.name.is_none()
+                && func_expr.name_hint.is_some()
+            {
+                let hint = func_expr.name_hint.as_ref().map_or("", String::as_str);
+                value = format!(
+                    "({{\"{hint}\": {value}}})[\"{hint}\"]"
+                );
+            }
+
+            value
+        }
+        Err(_) => {
+            // Fallback for inner function compilation errors
+            "/* error compiling inner function */".to_string()
+        }
+    }
+}
+
+/// Generate an object expression string, handling properties, shorthand, computed keys,
+/// method properties, and spread elements.
+///
+/// Port of `CodegenReactiveFunction.ts` ObjectExpression case (lines ~1580-1698).
+///
+/// Method properties are compiled recursively via `codegen_object_method_expression`.
+fn codegen_object_expression(
+    cx: &CodegenContext,
+    obj: &ObjectExpression,
+) -> String {
+    let mut props: Vec<String> = Vec::with_capacity(obj.properties.len());
+
+    for prop in &obj.properties {
+        match prop {
+            ObjectPatternProperty::Property(p) => {
+                let key = codegen_object_property_key(cx, &p.key);
+                let is_computed = matches!(p.key, ObjectPropertyKey::Computed(_));
+
+                if p.property_type == ObjectPropertyType::Method {
+                    // Look up the ObjectMethod from the context, clone to avoid borrow conflict
+                    let method = cx.object_methods.get(&p.place.identifier.id).cloned();
+                    if let Some(method) = method {
+                        props.push(codegen_object_method_expression(
+                            cx,
+                            &method,
+                            &key,
+                            is_computed,
+                        ));
+                    } else {
+                        // Fallback if method not found (should not happen)
+                        props.push(format!("{key}()"));
+                    }
+                } else {
+                    let value = codegen_place_to_expression(cx, &p.place);
+                    let is_shorthand =
+                        matches!(&p.key, ObjectPropertyKey::Identifier(k) if *k == value);
+                    if is_shorthand && !is_computed {
+                        props.push(key);
+                    } else if is_computed {
+                        props.push(format!("[{key}]: {value}"));
+                    } else {
+                        props.push(format!("{key}: {value}"));
+                    }
+                }
+            }
+            ObjectPatternProperty::Spread(s) => {
+                props.push(format!("...{}", codegen_place_to_expression(cx, &s.place)));
+            }
+        }
+    }
+
+    format!("{{{}}}", props.join(", "))
+}
+
+/// Generate an object method expression string by recursively compiling the inner function.
+///
+/// Port of `CodegenReactiveFunction.ts` lines 1649-1684 (case 'method' in ObjectExpression).
+///
+/// Object methods do NOT call `pruneHoistedContexts`.
+fn codegen_object_method_expression(
+    cx: &CodegenContext,
+    method: &ObjectMethodValue,
+    key: &str,
+    is_computed: bool,
+) -> String {
+    match codegen_inner_function(&method.lowered_func.func, cx, false) {
+        Ok(inner_fn) => {
+            let params_str = inner_fn.params.join(", ");
+            let body_str = format_codegen_body(&inner_fn);
+            let async_prefix = if inner_fn.is_async { "async " } else { "" };
+            let star = if inner_fn.generator { "*" } else { "" };
+            let key_str = if is_computed { format!("[{key}]") } else { key.to_string() };
+            format!("{async_prefix}{star}{key_str}({params_str}) {{{body_str}}}")
+        }
+        Err(_) => {
+            format!("{key}() {{ /* error compiling method */ }}")
+        }
     }
 }
 
@@ -1560,15 +1758,11 @@ fn codegen_member_access(object: &str, property: &crate::hir::types::PropertyLit
 }
 
 /// Generate an object property key string.
-fn codegen_object_property_key(key: &ObjectPropertyKey) -> String {
+fn codegen_object_property_key(cx: &CodegenContext, key: &ObjectPropertyKey) -> String {
     match key {
         ObjectPropertyKey::String(s) => format!("\"{}\"", escape_string(s)),
         ObjectPropertyKey::Identifier(name) => name.clone(),
-        ObjectPropertyKey::Computed(place) => {
-            // Computed keys: we'd need a context here, but for codegen IR
-            // we represent it as the place name
-            format!("t${}", place.identifier.id.0)
-        }
+        ObjectPropertyKey::Computed(place) => codegen_place_to_expression(cx, place),
         ObjectPropertyKey::Number(n) => format!("{n}"),
     }
 }
@@ -1609,7 +1803,7 @@ fn codegen_pattern(cx: &CodegenContext, pattern: &Pattern) -> String {
                 .iter()
                 .map(|prop| match prop {
                     ObjectPatternProperty::Property(p) => {
-                        let key = codegen_object_property_key(&p.key);
+                        let key = codegen_object_property_key(cx, &p.key);
                         let value = codegen_place_to_expression(cx, &p.place);
                         let is_computed = matches!(p.key, ObjectPropertyKey::Computed(_));
                         let is_shorthand =
@@ -1663,7 +1857,7 @@ fn collect_pattern_operands<'a>(pattern: &'a Pattern, places: &mut Vec<&'a Place
 
 /// Generate a dependency expression string.
 fn codegen_dependency(dep: &ReactiveScopeDependency) -> String {
-    let mut object = format!("t${}", dep.identifier.id.0);
+    let mut object = identifier_name(&dep.identifier);
     for entry in &dep.path {
         match &entry.property {
             crate::hir::types::PropertyLiteral::String(name) => {
@@ -1799,13 +1993,37 @@ fn codegen_for_in_collection(cx: &mut CodegenContext, init: &ReactiveValue) -> S
 }
 
 /// Compare two scope dependencies for deterministic ordering.
+///
+/// Port of `compareScopeDependency()` from `CodegenReactiveFunction.ts` lines 2426-2448.
+/// Builds a sort key from the identifier name joined with path entries (with optional markers).
 fn compare_scope_dependency(
     a: &ReactiveScopeDependency,
     b: &ReactiveScopeDependency,
 ) -> std::cmp::Ordering {
-    let a_name = format!("t${}", a.identifier.id.0);
-    let b_name = format!("t${}", b.identifier.id.0);
-    a_name.cmp(&b_name)
+    let a_key = build_dependency_sort_key(a);
+    let b_key = build_dependency_sort_key(b);
+    a_key.cmp(&b_key)
+}
+
+/// Build a sort key for a dependency, matching the TypeScript:
+/// ```js
+/// [identifier.name.value, ...path.map(entry => `${entry.optional ? '?' : ''}${entry.property}`)].join('.')
+/// ```
+fn build_dependency_sort_key(dep: &ReactiveScopeDependency) -> String {
+    let mut parts: Vec<String> = Vec::with_capacity(1 + dep.path.len());
+    parts.push(identifier_name(&dep.identifier));
+    for entry in &dep.path {
+        let optional_prefix = if entry.optional { "?" } else { "" };
+        match &entry.property {
+            crate::hir::types::PropertyLiteral::String(name) => {
+                parts.push(format!("{optional_prefix}{name}"));
+            }
+            crate::hir::types::PropertyLiteral::Number(n) => {
+                parts.push(format!("{optional_prefix}{n}"));
+            }
+        }
+    }
+    parts.join(".")
 }
 
 /// Compare two scope declarations for deterministic ordering.

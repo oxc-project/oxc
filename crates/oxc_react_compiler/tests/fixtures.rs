@@ -1,14 +1,15 @@
 /// Test fixture runner for the React Compiler.
 ///
 /// Reads test fixtures from the React git submodule, parses them with oxc_parser,
-/// and will eventually run the full compilation pipeline, comparing output against
+/// and runs the full compilation pipeline, comparing output against
 /// the `.expect.md` files.
-///
-/// For now, this validates that:
-/// 1. All fixture files can be found and read
-/// 2. All fixture files can be parsed by oxc_parser
-/// 3. The test pragma parser correctly handles fixture pragmas
 use std::path::Path;
+
+use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+use oxc_react_compiler::hir::ReactFunctionType;
+use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
+use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
+use oxc_react_compiler::reactive_scopes::codegen_reactive_function::CodegenFunction;
 
 fn is_js_ts_tsx(path: &Path) -> bool {
     path.extension().and_then(|e| e.to_str()).is_some_and(|ext| matches!(ext, "js" | "ts" | "tsx"))
@@ -155,13 +156,6 @@ fn test_parse_fixture_pragmas() {
 /// matching the expected output.
 #[test]
 fn test_pipeline_runs_without_panic() {
-    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
-    use oxc_react_compiler::hir::ReactFunctionType;
-    use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
-    use oxc_react_compiler::hir::environment::{
-        CompilerOutputMode, Environment, EnvironmentConfig,
-    };
-
     let source = r"
         function Component(props) {
             return props.value;
@@ -268,13 +262,6 @@ fn test_read_expect_files() {
 // Returns Ok(()) on success, Err(String) with a description on failure.
 // ===========================================================================
 fn run_pipeline_on_source(source: &str) -> Result<(), String> {
-    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
-    use oxc_react_compiler::hir::ReactFunctionType;
-    use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
-    use oxc_react_compiler::hir::environment::{
-        CompilerOutputMode, Environment, EnvironmentConfig,
-    };
-
     let allocator = oxc_allocator::Allocator::default();
     let source_type = oxc_span::SourceType::jsx();
     let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
@@ -320,12 +307,6 @@ fn run_pipeline_on_source(source: &str) -> Result<(), String> {
 /// individual named tests below.
 #[test]
 fn test_lower_fixture_pass_rate() {
-    use oxc_react_compiler::hir::ReactFunctionType;
-    use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
-    use oxc_react_compiler::hir::environment::{
-        CompilerOutputMode, Environment, EnvironmentConfig,
-    };
-
     let fixtures_dir = Path::new(FIXTURES_PATH);
     if !fixtures_dir.exists() {
         return;
@@ -738,4 +719,382 @@ fn test_extracted_code_section_looks_like_js() {
     println!("  Parseable code sections: {checked}");
 
     assert!(checked > 30, "Expected at least 30 parseable ## Code sections, got {checked}");
+}
+
+// ===========================================================================
+// Task 4: Codegen conformance test — compare pipeline output to expected
+// ===========================================================================
+
+/// Run the full pipeline (parse -> lower -> pipeline -> codegen) on a source
+/// string and return the `CodegenFunction` on success.
+fn run_pipeline_for_codegen(
+    source: &str,
+    source_type: oxc_span::SourceType,
+) -> Result<CodegenFunction, String> {
+    let allocator = oxc_allocator::Allocator::default();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    if !parser_result.errors.is_empty() {
+        return Err(format!("Parse errors: {:?}", parser_result.errors));
+    }
+
+    // Find the first function declaration or export default function in the program.
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| {
+            use oxc_ast::ast::Statement;
+            match stmt {
+                Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+                Statement::ExportDefaultDeclaration(export) => {
+                    use oxc_ast::ast::ExportDefaultDeclarationKind;
+                    match &export.declaration {
+                        ExportDefaultDeclarationKind::FunctionDeclaration(f) => {
+                            Some(LowerableFunction::Function(f))
+                        }
+                        _ => None,
+                    }
+                }
+                _ => None,
+            }
+        })
+        .ok_or_else(|| "No function declaration found in source".to_string())?;
+
+    let env = Environment::new(
+        ReactFunctionType::Component,
+        CompilerOutputMode::Client,
+        EnvironmentConfig::default(),
+    );
+
+    let mut hir_func =
+        lower(&env, ReactFunctionType::Component, &func).map_err(|e| format!("Lower: {e:?}"))?;
+
+    run_pipeline(&mut hir_func, &env).map_err(|e| format!("Pipeline: {e:?}"))
+}
+
+/// Reconstruct the full function source from a `CodegenFunction`, including
+/// the function declaration wrapper (but not imports).
+fn format_full_function(func: &CodegenFunction) -> String {
+    let async_prefix = if func.is_async { "async " } else { "" };
+    let star = if func.generator { "*" } else { "" };
+    let name = func.id.as_deref().unwrap_or("anonymous");
+    let params = func.params.join(", ");
+    let body = format!("{func}"); // uses Display impl for the body
+    format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}")
+}
+
+/// Normalize a code string for comparison: trim each line, remove blank lines,
+/// and join with newlines. This makes comparison resilient to minor whitespace
+/// differences without losing structural information.
+fn normalize_code(s: &str) -> String {
+    s.lines()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Extract the function body (without the wrapper and imports) from an expected
+/// code section. This strips:
+/// - `import { c as _c } from "react/compiler-runtime";` lines
+/// - The function declaration line (e.g. `function Component(props) {`)
+/// - The closing brace `}`
+/// - Any code before the first function declaration
+/// - Any code after the function's closing brace
+///
+/// Returns the full expected code with imports stripped but function wrapper
+/// intact, so we can compare against `format_full_function` output.
+fn extract_function_from_expected(code: &str) -> Option<String> {
+    let lines: Vec<&str> = code.lines().collect();
+
+    // Find the first line that looks like a function declaration.
+    let func_start = lines.iter().position(|line| {
+        let trimmed = line.trim();
+        trimmed.starts_with("function ")
+            || trimmed.starts_with("async function ")
+            || trimmed.starts_with("export default function ")
+    })?;
+
+    // Collect from the function declaration to the end, then strip
+    // "export default function" -> "function" for normalization.
+    let func_lines: Vec<&str> = lines[func_start..].to_vec();
+    let joined = func_lines.join("\n");
+
+    // Strip "export default " prefix if present.
+    let cleaned = if joined.starts_with("export default ") {
+        joined.replacen("export default ", "", 1)
+    } else {
+        joined
+    };
+
+    Some(cleaned)
+}
+
+/// Category of failure for a fixture.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum FailureCategory {
+    ParseError,
+    NoFunction,
+    LowerError,
+    PipelineError,
+    Panic,
+    OutputMismatch,
+    NoExpectedCode,
+}
+
+impl std::fmt::Display for FailureCategory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ParseError => write!(f, "parse_error"),
+            Self::NoFunction => write!(f, "no_function"),
+            Self::LowerError => write!(f, "lower_error"),
+            Self::PipelineError => write!(f, "pipeline_error"),
+            Self::Panic => write!(f, "panic"),
+            Self::OutputMismatch => write!(f, "output_mismatch"),
+            Self::NoExpectedCode => write!(f, "no_expected_code"),
+        }
+    }
+}
+
+/// Codegen conformance test: run the full compilation pipeline on each fixture
+/// that has a matching `.expect.md` with a `## Code` section, compare the
+/// generated output, and track the pass rate using an insta snapshot.
+///
+/// This is a progress-tracking test, not a pass/fail gate. The snapshot records
+/// the current state so improvements (or regressions) are visible in diffs.
+///
+/// This test is ignored by default because some fixtures trigger stack overflows
+/// in the compilation pipeline (pre-existing infinite recursion bugs in certain
+/// passes). Stack overflows abort the process and cannot be caught.
+///
+/// Run with: `cargo test -p oxc_react_compiler -- --ignored test_codegen_conformance`
+/// or in release mode: `cargo test -p oxc_react_compiler --release -- --ignored test_codegen_conformance`
+#[test]
+#[ignore]
+fn test_codegen_conformance_pass_rate() {
+    codegen_conformance_inner();
+}
+
+fn codegen_conformance_inner() {
+    let fixtures_dir = Path::new(FIXTURES_PATH);
+    if !fixtures_dir.exists() {
+        return;
+    }
+
+    // Collect all eligible fixture paths (non-error, with matching .expect.md).
+    let mut fixture_pairs: Vec<(std::path::PathBuf, std::path::PathBuf)> = Vec::new();
+    for entry in std::fs::read_dir(fixtures_dir).expect("Failed to read fixtures dir") {
+        let entry = entry.expect("Failed to read dir entry");
+        let path = entry.path();
+
+        if !is_js_ts_tsx(&path) {
+            continue;
+        }
+
+        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        // Skip error-prefixed fixtures — they are expected to fail compilation.
+        if file_name.starts_with("error.") {
+            continue;
+        }
+
+        // Find the matching .expect.md file.
+        let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+        let expect_path = fixtures_dir.join(format!("{stem}.expect.md"));
+        if expect_path.exists() {
+            fixture_pairs.push((path, expect_path));
+        }
+    }
+    fixture_pairs.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let mut passed = 0u32;
+    let mut failed: Vec<(String, FailureCategory)> = Vec::new();
+
+    for (input_path, expect_path) in &fixture_pairs {
+        let file_name = input_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("<unknown>")
+            .to_string();
+
+        let Ok(source) = std::fs::read_to_string(input_path) else {
+            failed.push((file_name, FailureCategory::ParseError));
+            continue;
+        };
+
+        let Ok(expect_content) = std::fs::read_to_string(expect_path) else {
+            failed.push((file_name, FailureCategory::NoExpectedCode));
+            continue;
+        };
+
+        // Extract the ## Code section from the expected output.
+        let Some(expected_code) = extract_expect_md_section(&expect_content, "Code") else {
+            failed.push((file_name, FailureCategory::NoExpectedCode));
+            continue;
+        };
+
+        // Determine source type from extension.
+        let ext = input_path.extension().and_then(|e| e.to_str()).unwrap_or("js");
+        let source_type = match ext {
+            "tsx" => oxc_span::SourceType::tsx(),
+            "ts" => oxc_span::SourceType::ts(),
+            _ => oxc_span::SourceType::jsx(),
+        };
+
+        // Run the pipeline inside catch_unwind to prevent panics from aborting
+        // the entire test. Note: stack overflows cannot be caught — those will
+        // abort the process (this test is #[ignore]d for that reason).
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            run_pipeline_for_codegen(&source, source_type)
+        }));
+
+        let codegen_func = match result {
+            Ok(Ok(func)) => func,
+            Ok(Err(e)) => {
+                let category = if e.starts_with("Parse") {
+                    FailureCategory::ParseError
+                } else if e.contains("No function") {
+                    FailureCategory::NoFunction
+                } else if e.starts_with("Lower") {
+                    FailureCategory::LowerError
+                } else {
+                    FailureCategory::PipelineError
+                };
+                failed.push((file_name, category));
+                continue;
+            }
+            Err(_) => {
+                failed.push((file_name, FailureCategory::Panic));
+                continue;
+            }
+        };
+
+        // Format our output and compare against expected.
+        let actual_full = format_full_function(&codegen_func);
+        let expected_func = match extract_function_from_expected(expected_code) {
+            Some(f) => f,
+            None => {
+                // If we cannot extract the function from expected, compare raw.
+                let actual_norm = normalize_code(&actual_full);
+                let expected_norm = normalize_code(expected_code);
+                if actual_norm == expected_norm {
+                    passed += 1;
+                } else {
+                    failed.push((file_name, FailureCategory::OutputMismatch));
+                }
+                continue;
+            }
+        };
+
+        let actual_norm = normalize_code(&actual_full);
+        let expected_norm = normalize_code(&expected_func);
+
+        if actual_norm == expected_norm {
+            passed += 1;
+        } else {
+            failed.push((file_name, FailureCategory::OutputMismatch));
+        }
+    }
+
+    let total = fixture_pairs.len() as u32;
+    let pct = if total > 0 { (passed as f64 / total as f64) * 100.0 } else { 0.0 };
+
+    // Build category breakdown.
+    let mut parse_errors = 0u32;
+    let mut no_function = 0u32;
+    let mut lower_errors = 0u32;
+    let mut pipeline_errors = 0u32;
+    let mut panics = 0u32;
+    let mut mismatches = 0u32;
+    let mut no_expected = 0u32;
+
+    for (_, cat) in &failed {
+        match cat {
+            FailureCategory::ParseError => parse_errors += 1,
+            FailureCategory::NoFunction => no_function += 1,
+            FailureCategory::LowerError => lower_errors += 1,
+            FailureCategory::PipelineError => pipeline_errors += 1,
+            FailureCategory::Panic => panics += 1,
+            FailureCategory::OutputMismatch => mismatches += 1,
+            FailureCategory::NoExpectedCode => no_expected += 1,
+        }
+    }
+
+    // Build the snapshot content.
+    let mut snapshot = String::new();
+    snapshot.push_str(&format!("Codegen conformance: {passed}/{total} passed ({pct:.1}%)\n"));
+    snapshot.push('\n');
+    snapshot.push_str("Failure breakdown:\n");
+    snapshot.push_str(&format!("  parse_error:    {parse_errors}\n"));
+    snapshot.push_str(&format!("  no_function:    {no_function}\n"));
+    snapshot.push_str(&format!("  lower_error:    {lower_errors}\n"));
+    snapshot.push_str(&format!("  pipeline_error: {pipeline_errors}\n"));
+    snapshot.push_str(&format!("  panic:          {panics}\n"));
+    snapshot.push_str(&format!("  output_mismatch:{mismatches}\n"));
+    snapshot.push_str(&format!("  no_expected:    {no_expected}\n"));
+    snapshot.push('\n');
+
+    // List failed fixtures by category.
+    snapshot.push_str("Failed fixtures:\n");
+    for (name, cat) in &failed {
+        snapshot.push_str(&format!("  [{cat}] {name}\n"));
+    }
+
+    insta::assert_snapshot!("codegen_conformance", snapshot);
+}
+
+/// Debug test for alias-while infinite recursion
+#[test]
+fn test_debug_alias_while() {
+    let source = r"
+function foo(cond) {
+  let a = {};
+  let b = {};
+  let c = {};
+  while (cond) {
+    let z = a;
+    a = b;
+    b = c;
+    c = z;
+    mutate(a, b);
+  }
+  a;
+  b;
+  c;
+  return a;
+}
+    ";
+    use oxc_react_compiler::hir::ReactFunctionType;
+    use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
+    use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
+
+    let allocator = oxc_allocator::Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    assert!(parser_result.errors.is_empty());
+
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| match stmt {
+            oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+            _ => None,
+        })
+        .expect("No function found");
+
+    let env = Environment::new(
+        ReactFunctionType::Component,
+        CompilerOutputMode::Client,
+        EnvironmentConfig::default(),
+    );
+
+    let hir_func = lower(&env, ReactFunctionType::Component, &func).expect("lower failed");
+    eprintln!("Lower succeeded. Block count: {}", hir_func.body.blocks.len());
+
+    // Try calling build_reactive_function directly (without pipeline passes)
+    let result = oxc_react_compiler::reactive_scopes::build_reactive_function::build_reactive_function(&hir_func);
+    match &result {
+        Ok(_) => eprintln!("build_reactive_function SUCCEEDED (direct, no pipeline)"),
+        Err(e) => eprintln!("build_reactive_function FAILED (direct): {e:?}"),
+    }
 }
