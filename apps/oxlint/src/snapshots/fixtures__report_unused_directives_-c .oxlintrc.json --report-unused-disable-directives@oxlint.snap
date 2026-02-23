@@ -6,64 +6,21 @@ arguments: -c .oxlintrc.json --report-unused-disable-directives
 working directory: fixtures/report_unused_directives
 ----------
 
-  ! Unused eslint-disable directive (no problems were reported).
-   ,-[test-multiple-scripts.vue:6:3]
- 5 | <script>
- 6 | // eslint-disable-next-line no-debugger
-   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 7 | console.log('regular script');
-   `----
-
-  ! eslint(no-console): Unexpected console statement.
-   ,-[test-multiple-scripts.vue:7:1]
- 6 | // eslint-disable-next-line no-debugger
- 7 | console.log('regular script');
-   : ^^^^^^^^^^^
- 8 | 
-   `----
-  help: Delete this console statement.
-
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test-multiple-scripts.vue:9:3]
-  8 | 
-  9 | // eslint-disable-next-line no-console
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 10 | debugger;
+  x Single file component can contain only one <script setup> element.
+    ,-[test-multiple-scripts.vue:36:1]
+ 35 |     
+ 36 | ,-> <script setup lang="ts" generic="T extends Record<string, string>">
+ 37 | |   let foo: T;
+ 38 | |   
+ 39 | |   // eslint-disable-next-line no-debugger
+ 40 | |   console.log('setup with generics');
+ 41 | |   
+ 42 | |   // eslint-disable-next-line no-console
+ 43 | |   debugger;
+ 44 | |   
+ 45 | |   // eslint-enable
+ 46 | `-> </script>
     `----
-
-  ! eslint(no-debugger): `debugger` statement is not allowed
-    ,-[test-multiple-scripts.vue:10:1]
-  9 | // eslint-disable-next-line no-console
- 10 | debugger;
-    : ^^^^^^^^^
- 11 | </script>
-    `----
-  help: Remove the debugger statement
-
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test-multiple-scripts.vue:17:3]
- 16 | 
- 17 | // eslint-disable-next-line no-unused-vars
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 18 | const unusedVariable2 = 100;
-    `----
-
-  ! Unused eslint-disable directive (no problems were reported).
-    ,-[test-multiple-scripts.vue:30:3]
- 29 | 
- 30 | // oxlint-disable-next-line no-debugger, no-for-loop
-    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 31 | console.log("complete line");
-    `----
-
-  ! eslint(no-console): Unexpected console statement.
-    ,-[test-multiple-scripts.vue:31:1]
- 30 | // oxlint-disable-next-line no-debugger, no-for-loop
- 31 | console.log("complete line");
-    : ^^^^^^^^^^^
- 32 | 
-    `----
-  help: Delete this console statement.
 
   ! Unused eslint-disable directive (no problems were reported).
    ,-[test.astro:5:3]
@@ -320,8 +277,8 @@ working directory: fixtures/report_unused_directives
  37 | </script>
     `----
 
-Found 38 warnings and 0 errors.
+Found 31 warnings and 1 error.
 Finished in <variable>ms on 5 files with 94 rules using 1 threads.
 ----------
-CLI result: LintSucceeded
+CLI result: LintFoundErrors
 ----------

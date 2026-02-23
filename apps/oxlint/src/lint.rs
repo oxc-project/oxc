@@ -814,7 +814,7 @@ mod test {
 
     #[test]
     fn lint_vue_file() {
-        let args = &["fixtures/vue/debugger.vue"];
+        let args = &["fixtures/vue/debugger.vue", "fixtures/vue/debugger-ts.vue"];
         Tester::new().test_and_snapshot(args);
     }
 
