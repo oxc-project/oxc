@@ -6,7 +6,7 @@ use tracing::{debug, error, warn};
 
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{
-    Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges, ToolStartInput,
+    Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges, ToolStartInput, WorkspaceType,
 };
 
 use crate::core::{
@@ -97,7 +97,10 @@ impl ToolBuilder for ServerFormatterBuilder {
     }
 
     fn build_boxed(&self, tool_start_input: ToolStartInput) -> Box<dyn Tool> {
-        Box::new(self.build(tool_start_input.root_uri, tool_start_input.options))
+        let WorkspaceType::Folder(root_uri) = tool_start_input.r#type else {
+            panic!("Global Workspace type is not implemented on the lsp backend yet.");
+        };
+        Box::new(self.build(root_uri, tool_start_input.options))
     }
 }
 
@@ -206,7 +209,7 @@ impl Tool for ServerFormatter {
             return ToolRestartChanges { tool: None, watch_patterns: None };
         }
 
-        builder.shutdown(tool_start_input.root_uri);
+        builder.shutdown(tool_start_input.r#type);
         let new_options = tool_start_input.options.clone();
         let new_formatter = builder.build_boxed(tool_start_input);
         let watch_patterns = new_formatter.get_watcher_patterns(new_options);
@@ -242,7 +245,7 @@ impl Tool for ServerFormatter {
         tool_start_input: ToolStartInput,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file
-        builder.shutdown(tool_start_input.root_uri);
+        builder.shutdown(tool_start_input.r#type);
         let new_formatter = builder.build_boxed(tool_start_input);
 
         ToolRestartChanges {
