@@ -8,15 +8,33 @@
 ///
 /// NOTE: a `let` which was reassigned in the source may be converted to a `const` if the
 /// reassignment is not used and was removed by dead code elimination.
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE},
     hir::{
-        BlockKind, DeclarationId, HIRFunction, InstructionKind, InstructionValue, Place,
+        BlockId, BlockKind, DeclarationId, HIRFunction, InstructionKind, InstructionValue, Place,
         ReactiveParam, visitors::each_pattern_operand,
     },
 };
+
+/// Location of the original declaration in the block/instruction list,
+/// used for back-propagating `InstructionKind::Let` when a reassignment is found.
+/// In the TS version, this back-propagation happens implicitly via JS reference
+/// semantics (the `declarations` Map stores references to the actual LValue objects).
+/// In Rust, we need to explicitly track locations and do a second pass.
+struct DeclLocation {
+    block_id: BlockId,
+    instr_index: usize,
+    /// Which variant the original declaration was
+    decl_type: DeclType,
+}
+
+enum DeclType {
+    DeclareLocal,
+    StoreLocal,
+    Destructure,
+}
 
 /// Rewrite instruction kinds based on whether variables are reassigned.
 ///
@@ -25,35 +43,52 @@ use crate::{
 pub fn rewrite_instruction_kinds_based_on_reassignment(
     func: &mut HIRFunction,
 ) -> Result<(), CompilerError> {
-    // Track first declaration of each variable by DeclarationId
-    let mut declarations: FxHashMap<DeclarationId, InstructionKind> = FxHashMap::default();
+    // Track first declaration of each variable by DeclarationId.
+    // We store the location so we can back-propagate Let to the original declaration.
+    let mut declarations: FxHashMap<DeclarationId, DeclLocation> = FxHashMap::default();
+    // Track which declarations need back-propagation to Let
+    let mut needs_let: FxHashSet<DeclarationId> = FxHashSet::default();
 
-    // Register params
+    // Register params — these are always Let (they can be reassigned)
     for param in &func.params {
         let place: &Place = match param {
             ReactiveParam::Place(p) => p,
             ReactiveParam::Spread(s) => &s.place,
         };
         if place.identifier.name.is_some() {
-            declarations.insert(place.identifier.declaration_id, InstructionKind::Let);
+            declarations.insert(
+                place.identifier.declaration_id,
+                DeclLocation {
+                    block_id: BlockId(u32::MAX), // sentinel — params aren't in blocks
+                    instr_index: 0,
+                    decl_type: DeclType::StoreLocal,
+                },
+            );
         }
     }
 
     // Register context variables
     for place in &func.context {
         if place.identifier.name.is_some() {
-            declarations.insert(place.identifier.declaration_id, InstructionKind::Let);
+            declarations.insert(
+                place.identifier.declaration_id,
+                DeclLocation {
+                    block_id: BlockId(u32::MAX),
+                    instr_index: 0,
+                    decl_type: DeclType::StoreLocal,
+                },
+            );
         }
     }
 
-    // Process all blocks
+    // Pass 1: Determine kinds and mark reassignments
     let mut block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     block_ids.sort_by_key(|id| id.0);
-    for block_id in block_ids {
-        let block_kind = func.body.blocks.get(&block_id).map(|b| b.kind);
-        let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
+    for block_id in &block_ids {
+        let block_kind = func.body.blocks.get(block_id).map(|b| b.kind);
+        let Some(block) = func.body.blocks.get_mut(block_id) else { continue };
 
-        for instr in &mut block.instructions {
+        for (instr_index, instr) in block.instructions.iter_mut().enumerate() {
             match &mut instr.value {
                 InstructionValue::DeclareLocal(v) => {
                     let decl_id = v.lvalue.place.identifier.declaration_id;
@@ -64,18 +99,32 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                             v.lvalue.place.loc,
                         ));
                     }
-                    declarations.insert(decl_id, v.lvalue.kind);
+                    declarations.insert(
+                        decl_id,
+                        DeclLocation {
+                            block_id: *block_id,
+                            instr_index,
+                            decl_type: DeclType::DeclareLocal,
+                        },
+                    );
                 }
                 InstructionValue::StoreLocal(v) => {
                     if v.lvalue.place.identifier.name.is_some() {
                         let decl_id = v.lvalue.place.identifier.declaration_id;
-                        if let Some(existing_kind) = declarations.get_mut(&decl_id) {
-                            // This is a reassignment
-                            *existing_kind = InstructionKind::Let;
+                        if declarations.contains_key(&decl_id) {
+                            // This is a reassignment — mark original as needing Let
+                            needs_let.insert(decl_id);
                             v.lvalue.kind = InstructionKind::Reassign;
                         } else {
                             // First definition
-                            declarations.insert(decl_id, InstructionKind::Const);
+                            declarations.insert(
+                                decl_id,
+                                DeclLocation {
+                                    block_id: *block_id,
+                                    instr_index,
+                                    decl_type: DeclType::StoreLocal,
+                                },
+                            );
                             v.lvalue.kind = InstructionKind::Const;
                         }
                     }
@@ -93,9 +142,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                             kind = Some(InstructionKind::Const);
                         } else if declarations.contains_key(decl_id) {
                             // Reassignment of existing declaration
-                            if let Some(existing_kind) = declarations.get_mut(decl_id) {
-                                *existing_kind = InstructionKind::Let;
-                            }
+                            needs_let.insert(*decl_id);
                             kind = Some(InstructionKind::Reassign);
                         } else {
                             // First definition
@@ -106,7 +153,14 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                                     GENERATED_SOURCE,
                                 ));
                             }
-                            declarations.insert(*decl_id, InstructionKind::Const);
+                            declarations.insert(
+                                *decl_id,
+                                DeclLocation {
+                                    block_id: *block_id,
+                                    instr_index,
+                                    decl_type: DeclType::Destructure,
+                                },
+                            );
                             kind = Some(InstructionKind::Const);
                         }
                     }
@@ -123,8 +177,8 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                 }
                 InstructionValue::PrefixUpdate(v) => {
                     let decl_id = v.lvalue.identifier.declaration_id;
-                    if let Some(existing_kind) = declarations.get_mut(&decl_id) {
-                        *existing_kind = InstructionKind::Let;
+                    if declarations.contains_key(&decl_id) {
+                        needs_let.insert(decl_id);
                     } else {
                         return Err(CompilerError::invariant(
                             "Expected variable to have been defined before update",
@@ -135,8 +189,8 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                 }
                 InstructionValue::PostfixUpdate(v) => {
                     let decl_id = v.lvalue.identifier.declaration_id;
-                    if let Some(existing_kind) = declarations.get_mut(&decl_id) {
-                        *existing_kind = InstructionKind::Let;
+                    if declarations.contains_key(&decl_id) {
+                        needs_let.insert(decl_id);
                     } else {
                         return Err(CompilerError::invariant(
                             "Expected variable to have been defined before update",
@@ -146,6 +200,34 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                     }
                 }
                 _ => {}
+            }
+        }
+    }
+
+    // Pass 2: Back-propagate Let to original declarations.
+    // In TS, `declaration.kind = InstructionKind.Let` mutates the original LValue
+    // via reference. In Rust, we stored the location and now update it explicitly.
+    for decl_id in &needs_let {
+        if let Some(loc) = declarations.get(decl_id) {
+            // Skip params/context (sentinel block_id) — they're already Let
+            if loc.block_id == BlockId(u32::MAX) {
+                continue;
+            }
+            if let Some(block) = func.body.blocks.get_mut(&loc.block_id) {
+                if let Some(instr) = block.instructions.get_mut(loc.instr_index) {
+                    match (&mut instr.value, &loc.decl_type) {
+                        (InstructionValue::DeclareLocal(v), DeclType::DeclareLocal) => {
+                            v.lvalue.kind = InstructionKind::Let;
+                        }
+                        (InstructionValue::StoreLocal(v), DeclType::StoreLocal) => {
+                            v.lvalue.kind = InstructionKind::Let;
+                        }
+                        (InstructionValue::Destructure(v), DeclType::Destructure) => {
+                            v.lvalue.kind = InstructionKind::Let;
+                        }
+                        _ => {}
+                    }
+                }
             }
         }
     }

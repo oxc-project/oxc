@@ -8,8 +8,12 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::{
-    hir_types::{Effect, HIRFunction, IdentifierName, ReactFunctionType, ValueKind},
-    object_shape::ShapeRegistry,
+    globals::{Global, GlobalRegistry},
+    hir_types::{
+        Effect, HIRFunction, IdentifierName, NonLocalBinding, ReactFunctionType, ValueKind,
+    },
+    object_shape::{FunctionSignature, HookKind, ShapeRegistry},
+    types::{FunctionType, ObjectType, Type},
 };
 
 /// Configuration for an external function reference (source module + import specifier).
@@ -206,6 +210,7 @@ pub struct Environment {
     pub output_mode: CompilerOutputMode,
     pub config: EnvironmentConfig,
     pub shapes: ShapeRegistry,
+    pub globals: GlobalRegistry,
 
     /// The source code of the file being compiled.
     /// Used for HMR/Fast Refresh cache invalidation.
@@ -266,11 +271,16 @@ impl Environment {
         let enable_validations = true;
         let enable_drop_manual_memoization = enable_memoization;
 
+        // Initialize shapes and globals from the built-in definitions
+        let mut shapes = super::globals::default_shapes();
+        let globals = super::globals::default_globals(&mut shapes);
+
         Self {
             fn_type,
             output_mode,
             config,
-            shapes: FxHashMap::default(),
+            shapes,
+            globals,
             code: None,
             filename: None,
             enable_validations,
@@ -310,6 +320,22 @@ impl Environment {
         let id = self.next_identifier_id;
         self.next_identifier_id += 1;
         super::hir_types::IdentifierId(id)
+    }
+
+    /// Advance all ID counters to be at least as high as the given environment's
+    /// counters. This simulates the TS behavior where nested function lowering
+    /// shares the same Environment object (by reference), so the outer function's
+    /// counters automatically advance past all inner function's allocations.
+    pub fn advance_counters_past(&mut self, other: &Environment) {
+        if other.next_block_id > self.next_block_id {
+            self.next_block_id = other.next_block_id;
+        }
+        if other.next_scope_id > self.next_scope_id {
+            self.next_scope_id = other.next_scope_id;
+        }
+        if other.next_identifier_id > self.next_identifier_id {
+            self.next_identifier_id = other.next_identifier_id;
+        }
     }
 
     /// Log errors from a validation pass result. If the result is Err, the errors
@@ -373,4 +399,161 @@ impl Environment {
     pub fn add_new_reference(&mut self, name: &str) {
         self.known_referenced_names.insert(name.to_string());
     }
+
+    // =========================================================================
+    // Global and type lookup methods
+    // =========================================================================
+
+    /// Resolve a non-local binding to its global type.
+    ///
+    /// Port of `Environment.getGlobalDeclaration()` from `HIR/Environment.ts`.
+    pub fn get_global_declaration(&self, binding: &NonLocalBinding) -> Option<Global> {
+        match binding {
+            NonLocalBinding::ModuleLocal { name } => {
+                if is_hook_name(name) {
+                    Some(self.get_custom_hook_type())
+                } else {
+                    None
+                }
+            }
+            NonLocalBinding::Global { name } => {
+                if let Some(g) = self.globals.get(name) {
+                    Some(g.clone())
+                } else if is_hook_name(name) {
+                    Some(self.get_custom_hook_type())
+                } else {
+                    None
+                }
+            }
+            NonLocalBinding::ImportSpecifier { name, module, imported } => {
+                if is_known_react_module(module) {
+                    // For React modules, look up by imported name
+                    if let Some(g) = self.globals.get(imported) {
+                        Some(g.clone())
+                    } else if is_hook_name(imported) || is_hook_name(name) {
+                        Some(self.get_custom_hook_type())
+                    } else {
+                        None
+                    }
+                } else {
+                    // Non-react modules: fall back to hook name pattern
+                    if is_hook_name(imported) || is_hook_name(name) {
+                        Some(self.get_custom_hook_type())
+                    } else {
+                        None
+                    }
+                }
+            }
+            NonLocalBinding::ImportDefault { name, module }
+            | NonLocalBinding::ImportNamespace { name, module } => {
+                if is_known_react_module(module) {
+                    if let Some(g) = self.globals.get(name) {
+                        Some(g.clone())
+                    } else if is_hook_name(name) {
+                        Some(self.get_custom_hook_type())
+                    } else {
+                        None
+                    }
+                } else if is_hook_name(name) {
+                    Some(self.get_custom_hook_type())
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
+    /// Look up a property type from the shape registry.
+    ///
+    /// Port of `Environment.getPropertyType()` from `HIR/Environment.ts`.
+    ///
+    /// Lookup order for string properties: exact name → wildcard ('*') → hook pattern.
+    pub fn get_property_type(&self, receiver: &Type, property: &str) -> Option<Type> {
+        let shape_id = match receiver {
+            Type::Object(ObjectType { shape_id: Some(id) }) => Some(id.as_str()),
+            Type::Function(FunctionType { shape_id: Some(id), .. }) => Some(id.as_str()),
+            _ => None,
+        };
+
+        if let Some(shape_id) = shape_id {
+            if let Some(shape) = self.shapes.get(shape_id) {
+                // Try exact property name, then wildcard, then hook pattern
+                if let Some(t) = shape.properties.get(property) {
+                    return Some(t.clone());
+                }
+                if let Some(t) = shape.properties.get("*") {
+                    return Some(t.clone());
+                }
+                if is_hook_name(property) {
+                    return Some(Global::to_type(&self.get_custom_hook_type()));
+                }
+                return None;
+            }
+        }
+
+        // No shape: only check hook pattern for string properties
+        if is_hook_name(property) {
+            return Some(Global::to_type(&self.get_custom_hook_type()));
+        }
+        None
+    }
+
+    /// Get the function signature from a function type's shape.
+    ///
+    /// Port of `Environment.getFunctionSignature()` from `HIR/Environment.ts`.
+    pub fn get_function_signature(&self, type_: &Type) -> Option<&FunctionSignature> {
+        let shape_id = match type_ {
+            Type::Function(FunctionType { shape_id: Some(id), .. }) => Some(id.as_str()),
+            _ => None,
+        };
+
+        if let Some(shape_id) = shape_id {
+            if let Some(shape) = self.shapes.get(shape_id) {
+                return shape.function_type.as_ref();
+            }
+        }
+        None
+    }
+
+    /// Get the default hook type for unrecognized hooks.
+    ///
+    /// Corresponds to `#getCustomHookType()` in the TS version.
+    fn get_custom_hook_type(&self) -> Global {
+        // Default non-mutating hook: restParam=Freeze, returnValueKind=Frozen
+        Global::Typed(Type::Function(FunctionType {
+            shape_id: None,
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }))
+    }
+}
+
+/// Check if a name matches the React hook naming convention: `use[A-Z0-9]`.
+pub fn is_hook_name(name: &str) -> bool {
+    if let Some(rest) = name.strip_prefix("use") {
+        rest.starts_with(|c: char| c.is_ascii_uppercase() || c.is_ascii_digit())
+    } else {
+        false
+    }
+}
+
+/// Check if a module name is a known React module.
+fn is_known_react_module(module: &str) -> bool {
+    let lower = module.to_lowercase();
+    lower == "react" || lower == "react-dom"
+}
+
+impl Global {
+    /// Convert a Global to a Type (extracting the inner type if Typed).
+    pub fn to_type(global: &Global) -> Type {
+        match global {
+            Global::Typed(t) => t.clone(),
+            Global::Untyped => Type::Poly,
+        }
+    }
+}
+
+/// Get the hook kind for a given type, if it is a hook.
+pub fn get_hook_kind_for_type(env: &Environment, type_: &Type) -> Option<HookKind> {
+    env.get_function_signature(type_).and_then(|sig| sig.hook_kind)
 }

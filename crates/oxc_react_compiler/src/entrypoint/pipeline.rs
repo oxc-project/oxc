@@ -43,8 +43,8 @@ pub fn run_pipeline(
     // 3. ValidateContextVariableLValues
     crate::validation::validate_context_variable_lvalues::validate_context_variable_lvalues(func)?;
 
-    // 4. ValidateUseMemo
-    crate::validation::validate_use_memo::validate_use_memo(func)?;
+    // 4. ValidateUseMemo — logged as non-fatal warnings (matching TS env.logErrors)
+    func.env.log_errors(crate::validation::validate_use_memo::validate_use_memo(func));
 
     // 5. DropManualMemoization (when memoization is enabled)
     if env.enable_drop_manual_memoization {
@@ -117,7 +117,8 @@ pub fn run_pipeline(
     // 21. InferMutationAliasingRanges
     let range_opts = InferRangesOptions { is_function_expression: false };
     crate::inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges(
-        func, &range_opts,
+        func,
+        &range_opts,
     )?;
 
     // 22. ValidateLocalsNotReassignedAfterRender
@@ -393,12 +394,10 @@ pub fn run_pipeline(
             &outlined_reactive,
             outlined_codegen_options,
         )?;
-        outlined.push(
-            crate::reactive_scopes::codegen_reactive_function::OutlinedFunction {
-                fn_: outlined_ast,
-                fn_type: entry.fn_type,
-            },
-        );
+        outlined.push(crate::reactive_scopes::codegen_reactive_function::OutlinedFunction {
+            fn_: outlined_ast,
+            fn_type: entry.fn_type,
+        });
     }
     ast.outlined = outlined;
 
