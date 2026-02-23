@@ -83,12 +83,6 @@ impl SsaBuilder {
         self.states.get_mut(&block_id).expect("state must exist for current block")
     }
 
-    fn define_context(&mut self, old_place: Place) -> Place {
-        let old_id = old_place.identifier.id;
-        let new_place = self.define_place(old_place);
-        self.context.insert(old_id);
-        new_place
-    }
 
     fn define_place(&mut self, old_place: Place) -> Place {
         let old_id = old_place.identifier.id;
@@ -99,7 +93,11 @@ impl SsaBuilder {
             return old_place;
         }
 
-        // Do not redefine context references
+        // Note: TS has a `defineContext` method but never calls it, because
+        // TS uses shared Environment (no ID collisions). In Rust, nested
+        // functions have cloned Environments with overlapping IDs, so we
+        // must mark context variables to avoid re-defining them as new SSA
+        // versions (which would create duplicate assignments).
         if self.context.contains(&old_id) {
             return self.get_place(&old_place);
         }
@@ -221,9 +219,11 @@ impl SsaBuilder {
 ///
 /// # Errors
 /// Returns a `CompilerError` if the function has invalid structure.
-pub fn enter_ssa(func: &mut HIRFunction, env: &Environment) -> Result<(), CompilerError> {
+pub fn enter_ssa(func: &mut HIRFunction, _env: &Environment) -> Result<(), CompilerError> {
     let entry = func.body.entry;
-    let mut builder = SsaBuilder::new(env.clone(), &func.body.blocks);
+    // Use func.env (which has up-to-date ID counters from lowering) rather than
+    // the external env parameter. This matches the TS: `new SSABuilder(func.env, ...)`
+    let mut builder = SsaBuilder::new(func.env.clone(), &func.body.blocks);
     enter_ssa_impl(func, &mut builder, entry)?;
 
     // Write back the blocks from the builder
@@ -287,31 +287,65 @@ fn enter_ssa_impl(
                 // Handle nested function expressions: take the lowered function
                 // out of the instruction, perform recursive SSA conversion, then
                 // put it back. This mirrors the TS EnterSSA lines 283-310.
+                //
+                // Note: nested function block IDs may collide with outer function
+                // block IDs because each function gets a cloned Environment with
+                // potentially overlapping ID counters. We save/restore any
+                // colliding outer blocks to prevent data loss.
                 let nested_func = take_lowered_function(&mut instr.value);
                 if let Some(mut lowered_func) = nested_func {
                     let entry_id = lowered_func.func.body.entry;
 
-                    // The entry block should have zero predecessors; temporarily
-                    // add the current block_id so SSA lookups can traverse into
-                    // the outer scope.
+                    // Temporarily add the current block_id as predecessor
                     if let Some(entry_block) = lowered_func.func.body.blocks.get_mut(&entry_id) {
                         entry_block.preds.insert(block_id);
                     }
 
+                    // Save any outer builder state that would be overwritten by
+                    // nested function processing due to block ID collisions.
+                    // This includes blocks, SSA states, and unsealed_preds.
+                    let nested_block_ids: Vec<BlockId> =
+                        lowered_func.func.body.blocks.keys().copied().collect();
+                    let mut saved_outer_blocks: Vec<(BlockId, BasicBlock)> = Vec::new();
+                    let mut saved_outer_states: Vec<(BlockId, State)> = Vec::new();
+                    let mut saved_outer_unsealed: Vec<(BlockId, usize)> = Vec::new();
+                    for &bid in &nested_block_ids {
+                        if let Some(outer_block) = builder.blocks.get(&bid) {
+                            saved_outer_blocks.push((bid, outer_block.clone()));
+                        }
+                        if let Some(outer_state) = builder.states.remove(&bid) {
+                            saved_outer_states.push((bid, outer_state));
+                        }
+                        if let Some(outer_unsealed) = builder.unsealed_preds.remove(&bid) {
+                            saved_outer_unsealed.push((bid, outer_unsealed));
+                        }
+                    }
+
                     // Register nested function's blocks in the builder
-                    // (TS: builder.defineFunction)
                     builder.register_blocks_from(&lowered_func.func);
 
-                    // Enter a new scope: define context, params, and recurse
-                    builder.enter(|builder| {
-                        // Define context variables (captured from outer scope)
-                        lowered_func.func.context = lowered_func
-                            .func
-                            .context
-                            .iter()
-                            .map(|place| builder.define_context(place.clone()))
-                            .collect();
+                    // Save the unknown set — nested function processing may add
+                    // entries with colliding numeric IDs that would contaminate
+                    // the outer function's SSA renaming.
+                    let saved_unknown = builder.unknown.clone();
 
+                    // Enter a new scope: define params and recurse.
+                    // In TS, definePlace for params uses the CURRENT (outer) block's
+                    // state. The nested entry block discovers these defs via
+                    // predecessor traversal (we added block_id as a predecessor).
+                    // We use a sentinel root_entry so the recursive call never
+                    // enters the root-entry param-definition branch.
+                    builder.enter(|builder| {
+                        // Mark context variables so define_place won't re-assign them.
+                        // Note: TS has defineContext but never calls it because TS uses
+                        // shared Environment (no ID collisions). In Rust, we need this
+                        // to prevent colliding IDs from creating duplicate assignments.
+                        for ctx_place in &lowered_func.func.context {
+                            builder.context.insert(ctx_place.identifier.id);
+                        }
+
+                        // Define params in the CURRENT (outer) block's state.
+                        // The nested entry block will find them via predecessor lookup.
                         lowered_func.func.params = lowered_func
                             .func
                             .params
@@ -326,18 +360,42 @@ fn enter_ssa_impl(
                             })
                             .collect();
 
-                        // Recursively apply SSA to the nested function.
-                        let _ = enter_ssa_impl(&mut lowered_func.func, builder, root_entry);
+                        // Use a sentinel that won't match any real block ID
+                        let sentinel = BlockId(u32::MAX);
+                        let _ = enter_ssa_impl(&mut lowered_func.func, builder, sentinel);
+
+                        // Clean up context markers
+                        for ctx_place in &lowered_func.func.context {
+                            builder.context.remove(&ctx_place.identifier.id);
+                        }
                     });
+
+                    // Restore the unknown set to prevent contamination
+                    builder.unknown = saved_unknown;
+
+                    // Write back modified blocks to the nested function and
+                    // remove them from builder. Then restore any saved outer state.
+                    for &bid in &nested_block_ids {
+                        if let Some(modified_block) = builder.blocks.remove(&bid) {
+                            lowered_func.func.body.blocks.insert(bid, modified_block);
+                        }
+                        // Remove nested function's states and unsealed_preds
+                        builder.states.remove(&bid);
+                        builder.unsealed_preds.remove(&bid);
+                    }
+                    for (bid, saved_block) in saved_outer_blocks {
+                        builder.blocks.insert(bid, saved_block);
+                    }
+                    for (bid, saved_state) in saved_outer_states {
+                        builder.states.insert(bid, saved_state);
+                    }
+                    for (bid, saved_unsealed) in saved_outer_unsealed {
+                        builder.unsealed_preds.insert(bid, saved_unsealed);
+                    }
 
                     // Remove the artificial predecessor
                     if let Some(entry_block) = lowered_func.func.body.blocks.get_mut(&entry_id) {
                         entry_block.preds.remove(&block_id);
-                    }
-
-                    // Also update the builder's copy of the entry block
-                    if let Some(builder_entry) = builder.blocks.get_mut(&entry_id) {
-                        builder_entry.preds.remove(&block_id);
                     }
 
                     // Put the lowered function back into the instruction
