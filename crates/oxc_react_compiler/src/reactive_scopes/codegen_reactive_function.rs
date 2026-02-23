@@ -11,7 +11,9 @@
 /// - `$[idx] !== dep` checks for dependency changes
 /// - `$[idx] = value` assignments to cache new values
 /// - `$[idx]` reads for cached values
+use hmac::{Hmac, Mac};
 use rustc_hash::{FxHashMap, FxHashSet};
+use sha2::Sha256;
 
 use crate::{
     compiler_error::{CompilerError, SourceLocation},
@@ -23,7 +25,11 @@ use crate::{
         ReactiveFunction, ReactiveInstruction, ReactiveScope, ReactiveScopeDeclaration,
         ReactiveScopeDependency, ReactiveStatement, ReactiveTerminal, ReactiveTerminalTargetKind,
         ReactiveValue,
+        environment::{CompilerOutputMode, ExternalFunction, InstrumentationConfig},
+        object_shape::ShapeRegistry,
+        types::Type,
     },
+    utils::runtime_diagnostic_constants::GuardKind,
 };
 
 use super::visitors::{ReactiveVisitor, visit_reactive_block};
@@ -71,7 +77,7 @@ pub struct CodegenFunction {
 #[derive(Debug)]
 pub struct OutlinedFunction {
     pub fn_: CodegenFunction,
-    pub fn_type: crate::hir::ReactFunctionType,
+    pub fn_type: Option<crate::hir::ReactFunctionType>,
 }
 
 // =====================================================================================
@@ -112,11 +118,12 @@ pub enum CodegenStatement {
     Break(Option<String>),
     /// A continue statement: `continue;` or `continue label;`
     Continue(Option<String>),
-    /// A try statement: `try { block } catch (param) { handler }`
+    /// A try statement: `try { block } catch (param) { handler } finally { finalizer }`
     Try {
         block: Vec<CodegenStatement>,
         handler_param: Option<String>,
-        handler: Vec<CodegenStatement>,
+        handler: Option<Vec<CodegenStatement>>,
+        finalizer: Option<Vec<CodegenStatement>>,
     },
     /// A throw statement: `throw expr;`
     Throw(String),
@@ -171,6 +178,25 @@ pub struct CodegenOptions {
     pub unique_identifiers: FxHashSet<String>,
     /// Identifiers that are fbt operands (from MemoizeFbt).
     pub fbt_operands: FxHashSet<IdentifierId>,
+    /// Whether to enable HMR/Fast Refresh cache reset on source file changes.
+    pub enable_reset_cache_on_source_file_changes: bool,
+    /// The source code of the component, used for computing the hash for HMR cache reset.
+    pub code: Option<String>,
+    /// Hook guard configuration. When set, wraps function body and hook calls
+    /// with runtime hook guard diagnostics.
+    pub enable_emit_hook_guards: Option<ExternalFunction>,
+    /// Instrumentation configuration for instrument forget emission.
+    /// When set (and output mode is Client and function has a name),
+    /// emits an instrumentation call at the start of compiled components.
+    pub enable_emit_instrument_forget: Option<InstrumentationConfig>,
+    /// The function name, needed for the instrument forget call argument.
+    pub fn_id: Option<String>,
+    /// The source filename, needed for the instrument forget call argument.
+    pub filename: Option<String>,
+    /// The compiler output mode.
+    pub output_mode: CompilerOutputMode,
+    /// The shape registry for looking up function signatures (needed for hook detection).
+    pub shapes: ShapeRegistry,
 }
 
 /// Codegen context — tracks state during code generation.
@@ -187,10 +213,22 @@ pub struct CodegenContext {
     synthesized_names: FxHashMap<String, String>,
     /// Identifiers that are fbt operands (used for JSX attribute codegen).
     fbt_operands: FxHashSet<IdentifierId>,
+    /// Hook guard configuration for emitting runtime hook diagnostics.
+    enable_emit_hook_guards: Option<ExternalFunction>,
+    /// The compiler output mode (needed for hook guard checks).
+    output_mode: CompilerOutputMode,
+    /// The shape registry for looking up function signatures (needed for hook detection).
+    shapes: ShapeRegistry,
 }
 
 impl CodegenContext {
-    fn new(unique_identifiers: FxHashSet<String>, fbt_operands: FxHashSet<IdentifierId>) -> Self {
+    fn new(
+        unique_identifiers: FxHashSet<String>,
+        fbt_operands: FxHashSet<IdentifierId>,
+        enable_emit_hook_guards: Option<ExternalFunction>,
+        output_mode: CompilerOutputMode,
+        shapes: ShapeRegistry,
+    ) -> Self {
         Self {
             next_cache_index: 0,
             declarations: FxHashSet::default(),
@@ -198,6 +236,9 @@ impl CodegenContext {
             unique_identifiers,
             synthesized_names: FxHashMap::default(),
             fbt_operands,
+            enable_emit_hook_guards,
+            output_mode,
+            shapes,
         }
     }
 
@@ -254,7 +295,29 @@ pub fn codegen_function(
     reactive_fn: &ReactiveFunction,
     options: CodegenOptions,
 ) -> Result<CodegenFunction, CompilerError> {
-    let mut cx = CodegenContext::new(options.unique_identifiers, options.fbt_operands);
+    let mut cx = CodegenContext::new(
+        options.unique_identifiers,
+        options.fbt_operands,
+        options.enable_emit_hook_guards,
+        options.output_mode,
+        options.shapes,
+    );
+
+    // Fast Refresh reuses component instances at runtime even as the source of the
+    // component changes. The generated code needs to prevent values from one version of
+    // the code being reused after a code change.
+    // If HMR detection is enabled and we know the source code of the component, assign a
+    // cache slot to track the source hash, and later, emit code to check for source
+    // changes and reset the cache on source changes.
+    let fast_refresh_state = if options.enable_reset_cache_on_source_file_changes {
+        options.code.map(|code| {
+            let hash = compute_source_hash(&code);
+            let cache_index = cx.alloc_cache_index();
+            FastRefreshState { cache_index, hash }
+        })
+    } else {
+        None
+    };
 
     // Register function params as declared and as temporaries
     for param in &reactive_fn.params {
@@ -274,6 +337,22 @@ pub fn codegen_function(
         body.pop();
     }
 
+    // Function-level hook guard: wrap the entire body in a try-finally with
+    // PushHookGuard/PopHookGuard if enableEmitHookGuards is set and output mode is client.
+    if cx.output_mode == CompilerOutputMode::Client {
+        if let Some(specifier_name) = cx.enable_emit_hook_guards.as_ref()
+            .map(|g| g.import_specifier_name.clone())
+        {
+            let guard_fn_name = cx.synthesize_name(&specifier_name);
+            body = vec![create_hook_guard(
+                &guard_fn_name,
+                body,
+                GuardKind::PushHookGuard,
+                GuardKind::PopHookGuard,
+            )];
+        }
+    }
+
     // Count memo blocks/values
     let mut counter = MemoCounter::default();
     visit_reactive_block(&reactive_fn.body, &mut counter);
@@ -282,12 +361,95 @@ pub fn codegen_function(
     let cache_count = cx.next_cache_index;
     if cache_count > 0 {
         let cache_name = cx.synthesize_name("$");
-        let init_stmt = CodegenStatement::VariableDeclaration {
+        let mut preface: Vec<CodegenStatement> = Vec::new();
+
+        preface.push(CodegenStatement::VariableDeclaration {
             kind: VarKind::Const,
-            name: cache_name,
+            name: cache_name.clone(),
             init: Some(format!("_c({cache_count})")),
+        });
+
+        // Emit HMR/Fast Refresh hash check and cache reset
+        if let Some(ref state) = fast_refresh_state {
+            let index_name = cx.synthesize_name("$i");
+            preface.push(CodegenStatement::If {
+                test: format!(
+                    "{cache_name}[{}] !== \"{}\"",
+                    state.cache_index, state.hash
+                ),
+                consequent: vec![
+                    CodegenStatement::For {
+                        init: Some(format!("let {index_name} = 0")),
+                        test: Some(format!("{index_name} < {cache_count}")),
+                        update: Some(format!("{index_name} += 1")),
+                        body: vec![CodegenStatement::ExpressionStatement(format!(
+                            "{cache_name}[{index_name}] = Symbol.for(\"{MEMO_CACHE_SENTINEL}\")"
+                        ))],
+                    },
+                    CodegenStatement::ExpressionStatement(format!(
+                        "{cache_name}[{}] = \"{}\"",
+                        state.cache_index, state.hash
+                    )),
+                ],
+                alternate: None,
+            });
+        }
+
+        // Prepend all preface statements to the body
+        for (i, stmt) in preface.into_iter().enumerate() {
+            body.insert(i, stmt);
+        }
+    }
+
+    // Emit instrument forget: if the config is set, the function has a name,
+    // and the output mode is Client, prepend an instrumentation call at the
+    // start of the function body.
+    //
+    // Port of CodegenReactiveFunction.ts lines 247-307.
+    //
+    // Generated pattern:
+    //   if (globalGating && gatingFn) { instrumentFn("fnName", "filename"); }
+    //
+    // This uses `.unshift()` in the TS version — i.e., inserted at position 0.
+    if let Some(ref instrument_config) = options.enable_emit_instrument_forget
+        && options.fn_id.is_some()
+        && options.output_mode == CompilerOutputMode::Client
+    {
+        let fn_name = options.fn_id.as_deref().unwrap_or("");
+        let filename = options.filename.as_deref().unwrap_or("");
+
+        // Build the gating condition
+        let gating_expr = instrument_config
+            .gating
+            .as_ref()
+            .map(|g| g.import_specifier_name.clone());
+        let global_gating_expr = instrument_config.global_gating.clone();
+
+        let if_test = match (&gating_expr, &global_gating_expr) {
+            (Some(gating), Some(global)) => format!("{global} && {gating}"),
+            (Some(gating), None) => gating.clone(),
+            (None, Some(global)) => global.clone(),
+            (None, None) => {
+                // This should not happen — validated in validate_environment_config.
+                // But if it does, skip instrumentation rather than panic.
+                String::new()
+            }
         };
-        body.insert(0, init_stmt);
+
+        if !if_test.is_empty() {
+            let instrument_fn_name = &instrument_config.func.import_specifier_name;
+            let instrument_call = format!(
+                "{instrument_fn_name}(\"{}\", \"{}\")",
+                escape_string(fn_name),
+                escape_string(filename),
+            );
+            let instrument_if = CodegenStatement::If {
+                test: if_test,
+                consequent: vec![CodegenStatement::ExpressionStatement(instrument_call)],
+                alternate: None,
+            };
+            body.insert(0, instrument_if);
+        }
     }
 
     Ok(CodegenFunction {
@@ -305,6 +467,41 @@ pub fn codegen_function(
         directives: reactive_fn.directives.clone(),
         outlined: Vec::new(),
     })
+}
+
+/// State for HMR/Fast Refresh cache reset.
+struct FastRefreshState {
+    /// The cache index allocated for tracking the source hash.
+    cache_index: u32,
+    /// The hex-encoded HMAC-SHA256 hash of the source code.
+    hash: String,
+}
+
+/// Compute an HMAC-SHA256 hash of the source code, matching the TypeScript implementation:
+/// `createHmac('sha256', code).digest('hex')`
+///
+/// In Node.js, `createHmac(algo, key)` uses the source code as the HMAC key
+/// and digests an empty message.
+fn compute_source_hash(code: &str) -> String {
+    type HmacSha256 = Hmac<Sha256>;
+    // HMAC accepts keys of any length, so `new_from_slice` is infallible in practice.
+    let Ok(mut mac) = HmacSha256::new_from_slice(code.as_bytes()) else {
+        return String::new();
+    };
+    mac.update(b"");
+    let result = mac.finalize();
+    let bytes = result.into_bytes();
+    hex_encode(&bytes[..])
+}
+
+/// Encode bytes as a lowercase hexadecimal string.
+fn hex_encode(bytes: &[u8]) -> String {
+    let mut hex = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        use std::fmt::Write;
+        let _ = write!(hex, "{byte:02x}");
+    }
+    hex
 }
 
 // =====================================================================================
@@ -329,6 +526,108 @@ impl ReactiveVisitor for MemoCounter {
         self.pruned_memo_blocks += 1;
         self.pruned_memo_values += u32::try_from(scope.declarations.len()).unwrap_or(u32::MAX);
     }
+}
+
+// =====================================================================================
+// Hook guard helpers
+// =====================================================================================
+
+/// Create a try-finally statement that wraps `stmts` with hook guard calls.
+///
+/// Produces:
+/// ```js
+/// try {
+///   guardFn(before);
+///   ...stmts
+/// } finally {
+///   guardFn(after);
+/// }
+/// ```
+///
+/// Port of `createHookGuard()` from `CodegenReactiveFunction.ts` lines 1343-1362.
+fn create_hook_guard(
+    guard_fn_name: &str,
+    stmts: Vec<CodegenStatement>,
+    before: GuardKind,
+    after: GuardKind,
+) -> CodegenStatement {
+    let before_call = CodegenStatement::ExpressionStatement(format!(
+        "{guard_fn_name}({})",
+        before as u8,
+    ));
+    let after_call = CodegenStatement::ExpressionStatement(format!(
+        "{guard_fn_name}({})",
+        after as u8,
+    ));
+
+    let mut try_block = Vec::with_capacity(stmts.len() + 1);
+    try_block.push(before_call);
+    try_block.extend(stmts);
+
+    CodegenStatement::Try {
+        block: try_block,
+        handler_param: None,
+        handler: None,
+        finalizer: Some(vec![after_call]),
+    }
+}
+
+/// Check if an identifier represents a hook by looking up its type in the shape registry.
+///
+/// Port of `getHookKind()` from `HIR/HIR.ts` lines 1974-1976.
+fn get_hook_kind(shapes: &ShapeRegistry, identifier: &crate::hir::Identifier) -> bool {
+    let Type::Function(ref ft) = identifier.type_ else {
+        return false;
+    };
+    let Some(ref shape_id) = ft.shape_id else {
+        return false;
+    };
+    let Some(shape) = shapes.get(shape_id) else {
+        return false;
+    };
+    shape.function_type.as_ref().is_some_and(|sig| sig.hook_kind.is_some())
+}
+
+/// Create a call expression string, optionally wrapping hook calls in an IIFE with
+/// try-finally hook guards.
+///
+/// When hook guards are enabled, hook calls are wrapped like:
+/// ```js
+/// (() => {
+///   try {
+///     guardFn(2); // AllowHook
+///     return hookCall(args);
+///   } finally {
+///     guardFn(3); // DisallowHook
+///   }
+/// })()
+/// ```
+///
+/// Port of `createCallExpression()` from `CodegenReactiveFunction.ts` lines 1383-1414.
+fn create_call_expression_string(
+    cx: &mut CodegenContext,
+    callee_str: &str,
+    args_str: &str,
+    is_hook: bool,
+) -> String {
+    let call_expr = format!("{callee_str}({args_str})");
+
+    if is_hook && cx.output_mode == CompilerOutputMode::Client {
+        if let Some(specifier_name) = cx.enable_emit_hook_guards.as_ref()
+            .map(|g| g.import_specifier_name.clone())
+        {
+            let guard_fn_name = cx.synthesize_name(&specifier_name);
+            // Generate an IIFE with try-finally:
+            // (() => { try { guardFn(2); return callExpr; } finally { guardFn(3); } })()
+            return format!(
+                "(() => {{ try {{ {guard_fn_name}({}); return {call_expr}; }} finally {{ {guard_fn_name}({}); }} }})()",
+                GuardKind::AllowHook as u8,
+                GuardKind::DisallowHook as u8,
+            );
+        }
+    }
+
+    call_expr
 }
 
 // =====================================================================================
@@ -661,8 +960,8 @@ fn codegen_terminal(
                 cx.temp.insert(binding.identifier.declaration_id, None);
                 name
             });
-            let handler = codegen_block(cx, &t.handler);
-            Some(CodegenStatement::Try { block, handler_param, handler })
+            let handler = Some(codegen_block(cx, &t.handler));
+            Some(CodegenStatement::Try { block, handler_param, handler, finalizer: None })
         }
     }
 }
@@ -894,7 +1193,7 @@ fn codegen_instruction_to_statement(
 // =====================================================================================
 
 /// Generate an expression string from an InstructionValue.
-fn codegen_instruction_value(cx: &CodegenContext, value: &InstructionValue) -> String {
+fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) -> String {
     match value {
         InstructionValue::ArrayExpression(arr) => {
             let elements: Vec<String> = arr
@@ -931,14 +1230,16 @@ fn codegen_instruction_value(cx: &CodegenContext, value: &InstructionValue) -> S
             format!("\"{}\"", escape_string(&text.value))
         }
         InstructionValue::CallExpression(call) => {
+            let is_hook = get_hook_kind(&cx.shapes, &call.callee.identifier);
             let callee = codegen_place_to_expression(cx, &call.callee);
             let args = codegen_args(cx, &call.args);
-            format!("{callee}({args})")
+            create_call_expression_string(cx, &callee, &args, is_hook)
         }
         InstructionValue::MethodCall(method) => {
+            let is_hook = get_hook_kind(&cx.shapes, &method.property.identifier);
             let property_expr = codegen_place_to_expression(cx, &method.property);
             let args = codegen_args(cx, &method.args);
-            format!("{property_expr}({args})")
+            create_call_expression_string(cx, &property_expr, &args, is_hook)
         }
         InstructionValue::NewExpression(new) => {
             let callee = codegen_place_to_expression(cx, &new.callee);
@@ -1624,17 +1925,25 @@ fn write_statement(
             Some(l) => writeln!(f, "{pad}continue {l};"),
             None => writeln!(f, "{pad}continue;"),
         },
-        CodegenStatement::Try { block, handler_param, handler } => {
+        CodegenStatement::Try { block, handler_param, handler, finalizer } => {
             writeln!(f, "{pad}try {{")?;
             for s in block {
                 write_statement(f, s, indent + 1)?;
             }
-            match handler_param {
-                Some(param) => writeln!(f, "{pad}}} catch ({param}) {{")?,
-                None => writeln!(f, "{pad}}} catch {{")?,
+            if let Some(handler_stmts) = handler {
+                match handler_param {
+                    Some(param) => writeln!(f, "{pad}}} catch ({param}) {{")?,
+                    None => writeln!(f, "{pad}}} catch {{")?,
+                }
+                for s in handler_stmts {
+                    write_statement(f, s, indent + 1)?;
+                }
             }
-            for s in handler {
-                write_statement(f, s, indent + 1)?;
+            if let Some(finalizer_stmts) = finalizer {
+                writeln!(f, "{pad}}} finally {{")?;
+                for s in finalizer_stmts {
+                    write_statement(f, s, indent + 1)?;
+                }
             }
             writeln!(f, "{pad}}}")
         }

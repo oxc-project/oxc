@@ -342,11 +342,63 @@ pub fn run_pipeline(
     // =========================================================================
 
     // 50. CodegenFunction
-    let codegen_options = CodegenOptions { unique_identifiers, fbt_operands };
-    let ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
+    let fbt_operands_for_outlined = fbt_operands.clone();
+    let enable_reset_cache =
+        func.env.config.enable_reset_cache_on_source_file_changes == Some(true);
+    let source_code = func.env.code.clone();
+    let codegen_options = CodegenOptions {
+        unique_identifiers,
+        fbt_operands,
+        enable_reset_cache_on_source_file_changes: enable_reset_cache,
+        code: source_code,
+        enable_emit_hook_guards: func.env.config.enable_emit_hook_guards.clone(),
+        enable_emit_instrument_forget: func.env.config.enable_emit_instrument_forget.clone(),
+        fn_id: reactive_function.id.clone(),
+        filename: func.env.filename.clone(),
+        output_mode: func.env.output_mode,
+        shapes: func.env.shapes.clone(),
+    };
+    let mut ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
         &reactive_function,
         codegen_options,
     )?;
+
+    // 51. Process outlined functions
+    // Each outlined function goes through a sub-pipeline: build reactive function,
+    // prune unused labels/lvalues, prune hoisted contexts, rename variables, and codegen.
+    let mut outlined = Vec::new();
+    for entry in func.env.get_outlined_functions() {
+        let mut outlined_reactive =
+            crate::reactive_scopes::build_reactive_function::build_reactive_function(&entry.func)?;
+        crate::reactive_scopes::prune_unused_labels::prune_unused_labels(&mut outlined_reactive);
+        crate::reactive_scopes::prune_unused_lvalues::prune_unused_lvalues(&mut outlined_reactive);
+        crate::reactive_scopes::prune::prune_hoisted_contexts(&mut outlined_reactive);
+        let outlined_identifiers =
+            crate::reactive_scopes::rename_variables::rename_variables(&outlined_reactive);
+        let outlined_codegen_options = CodegenOptions {
+            unique_identifiers: outlined_identifiers,
+            fbt_operands: fbt_operands_for_outlined.clone(),
+            enable_reset_cache_on_source_file_changes: false,
+            code: None,
+            enable_emit_hook_guards: func.env.config.enable_emit_hook_guards.clone(),
+            enable_emit_instrument_forget: None,
+            fn_id: None,
+            filename: None,
+            output_mode: func.env.output_mode,
+            shapes: func.env.shapes.clone(),
+        };
+        let outlined_ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
+            &outlined_reactive,
+            outlined_codegen_options,
+        )?;
+        outlined.push(
+            crate::reactive_scopes::codegen_reactive_function::OutlinedFunction {
+                fn_: outlined_ast,
+                fn_type: entry.fn_type,
+            },
+        );
+    }
+    ast.outlined = outlined;
 
     // ValidateSourceLocations (optional)
     if env.config.validate_source_locations {
