@@ -15,7 +15,7 @@ use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-    compiler_error::SourceLocation,
+    compiler_error::{CompilerError, GENERATED_SOURCE, SourceLocation},
     hir::{
         HIRFunction, Identifier, IdentifierId, InstructionId, MutableRange, ReactiveScope,
         visitors::each_instruction_operand,
@@ -48,9 +48,9 @@ fn merge_location(l: SourceLocation, r: SourceLocation) -> SourceLocation {
 /// Phase 1: Groups co-mutating identifiers using disjoint sets.
 /// Phase 2: Creates ReactiveScope objects and assigns them to identifiers.
 ///
-/// # Panics
-/// Panics if a scope has an invalid mutable range.
-pub fn infer_reactive_scope_variables(func: &mut HIRFunction) {
+/// # Errors
+/// Returns a `CompilerError` if a scope has an invalid mutable range.
+pub fn infer_reactive_scope_variables(func: &mut HIRFunction) -> Result<(), CompilerError> {
     // Phase 1: Find groups of co-mutating identifiers using disjoint sets
     let mut scope_identifiers = find_disjoint_mutable_values(func);
 
@@ -160,21 +160,23 @@ pub fn infer_reactive_scope_variables(func: &mut HIRFunction) {
             || max_instruction == InstructionId(0)
             || scope.range.end.0 > max_instruction.0 + 1
         {
-            // In the TS version this is a CompilerError.invariant, but since this
-            // function doesn't return Result, we panic to match the TS behavior
-            // of throwing an invariant error.
-            panic!(
-                "Invalid mutable range for scope: Scope @{} has range [{}:{}] but the valid range is [1:{}]",
-                scope.id.0,
-                scope.range.start.0,
-                scope.range.end.0,
-                max_instruction.0 + 1,
-            );
+            return Err(CompilerError::invariant(
+                &format!(
+                    "Invalid mutable range for scope: Scope @{} has range [{}:{}] but the valid range is [1:{}]",
+                    scope.id.0,
+                    scope.range.start.0,
+                    scope.range.end.0,
+                    max_instruction.0 + 1,
+                ),
+                None,
+                GENERATED_SOURCE,
+            ));
         }
     }
 
     // Phase 2b: Walk the HIR and assign scopes to identifiers
     assign_scopes_to_identifiers(func, &id_to_scope);
+    Ok(())
 }
 
 /// Walk the entire HIR function and assign scope + mutable_range to every

@@ -30,7 +30,7 @@ enum ControlFlowTarget {
     If { block: BlockId, id: u32 },
     Switch { block: BlockId, id: u32 },
     Case { block: BlockId, id: u32 },
-    Loop { block: BlockId, owns_block: bool, continue_block: BlockId, loop_block: Option<BlockId>, owns_loop: bool, id: u32 },
+    Loop { block: BlockId, continue_block: BlockId, loop_block: Option<BlockId>, owns_loop: bool, id: u32 },
 }
 
 impl ControlFlowTarget {
@@ -138,7 +138,6 @@ impl Context {
     ) -> u32 {
         let id = self.next_schedule_id;
         self.next_schedule_id += 1;
-        let owns_block = !self.scheduled.contains(&fallthrough_block);
         self.scheduled.insert(fallthrough_block);
         debug_assert!(
             !self.scheduled.contains(&continue_block),
@@ -152,7 +151,6 @@ impl Context {
         }
         self.control_flow_stack.push(ControlFlowTarget::Loop {
             block: fallthrough_block,
-            owns_block,
             continue_block,
             loop_block,
             owns_loop,
@@ -170,10 +168,12 @@ impl Context {
         );
         if let Some(target) = last {
             match &target {
-                ControlFlowTarget::Loop { block, owns_block, continue_block, loop_block, owns_loop, .. } => {
-                    if *owns_block {
-                        self.scheduled.remove(block);
-                    }
+                ControlFlowTarget::Loop { block, continue_block, loop_block, owns_loop, .. } => {
+                    // Always remove the fallthrough block from scheduled.
+                    // In the TS reference, the condition is `last.ownsBlock !== null`
+                    // which is always true since ownsBlock is a boolean (never null),
+                    // so the block is always removed from scheduled regardless of ownsBlock.
+                    self.scheduled.remove(block);
                     self.scheduled.remove(continue_block);
                     if *owns_loop
                         && let Some(lb) = loop_block
