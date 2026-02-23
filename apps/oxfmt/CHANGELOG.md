@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.35.0] - 2026-02-23
+
+### 🚀 Features
+
+- 984dc07 oxfmt: Strip `"experimental"SortXxx` prefix (#19567) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d7b63a4 oxfmt: Update API types for `sortPackageJsonOptions` (#19569) (leaysgur)
+
 ## [0.34.0] - 2026-02-19
 
 ### 🚀 Features

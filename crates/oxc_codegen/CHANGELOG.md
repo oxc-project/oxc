@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.115.0] - 2026-02-23
+
+### 🐛 Bug Fixes
+
+- e316694 codegen: Avoid sourcemap panic on `U+2028`/`U+2029` (#19548) (camc314)
+
+### ⚡ Performance
+
+- b5fa195 codegen: Remove bounds check from `SourcemapBuilder` (#19578) (overlookmotel)
+
 ## [0.114.0] - 2026-02-16
 
 ### 📚 Documentation

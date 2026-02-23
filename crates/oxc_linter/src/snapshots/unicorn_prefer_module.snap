@@ -1,0 +1,758 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "use strict" directive.
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ 'use strict';
+   · ─────────────
+ 2 │             console.log(1);
+   ╰────
+  help: ES modules are always strict mode, so this directive is redundant.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "use strict" directive.
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ "use strict";
+   · ─────────────
+ 2 │             console.log(1);
+   ╰────
+  help: ES modules are always strict mode, so this directive is redundant.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "use strict" directive.
+   ╭─[prefer_module.tsx:2:17]
+ 1 │ function foo () {
+ 2 │                 "use strict";
+   ·                 ─────────────
+ 3 │                 console.log(1);
+   ╰────
+  help: ES modules are always strict mode, so this directive is redundant.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "use strict" directive.
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ 'use strict';
+   · ─────────────
+ 2 │             console.log(1);
+   ╰────
+  help: ES modules are always strict mode, so this directive is redundant.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): "return" should be used inside a function.
+   ╭─[prefer_module.tsx:2:17]
+ 1 │ if (foo) {
+ 2 │                 return;
+   ·                 ───────
+ 3 │             }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "__dirname".
+   ╭─[prefer_module.tsx:1:17]
+ 1 │ const dirname = __dirname;
+   ·                 ─────────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "__filename".
+   ╭─[prefer_module.tsx:1:17]
+ 1 │ const dirname = __filename;
+   ·                 ──────────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "__dirname".
+   ╭─[prefer_module.tsx:1:15]
+ 1 │ const foo = { __dirname};
+   ·               ─────────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "__filename".
+   ╭─[prefer_module.tsx:1:14]
+ 1 │ const foo = {__filename, };
+   ·              ──────────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "__dirname".
+   ╭─[prefer_module.tsx:1:5]
+ 1 │ if (__dirname.startsWith("/project/src/")) {}
+   ·     ─────────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "__filename".
+   ╭─[prefer_module.tsx:1:5]
+ 1 │ if (__filename.endsWith(".js")) {}
+   ·     ──────────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ require("foo");
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ require('foo');
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ require( (("foo")) );
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:3]
+ 1 │ ((require))("foo");
+   ·   ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:4]
+ 1 │ (( require("foo") ));
+   ·    ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:11]
+ 1 │ const foo=require("foo");
+   ·           ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = require.resolve("foo");
+   ·             ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:3:17]
+ 2 │                 =
+ 3 │                 require("foo");
+   ·                 ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = require("foo");
+   ·             ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = require( (("foo")) );
+   ·             ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:15]
+ 1 │ const foo = ((require))("foo");
+   ·               ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:16]
+ 1 │ const foo = (( require("foo") ));
+   ·                ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const {foo}=require("foo");
+   ·             ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:3:17]
+ 2 │                 =
+ 3 │                 require("foo");
+   ·                 ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:15]
+ 1 │ const {foo} = require("foo");
+   ·               ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:15]
+ 1 │ const {foo} = require( (("foo")) );
+   ·               ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:17]
+ 1 │ const {foo} = ((require))("foo");
+   ·                 ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:18]
+ 1 │ const {foo} = (( require("foo") ));
+   ·                  ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:18]
+ 1 │ const {foo} = (( require("foo") ));
+   ·                  ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:18]
+ 1 │ const {foo: foo}=require("foo");
+   ·                  ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:3:17]
+ 2 │                 =
+ 3 │                 require("foo");
+   ·                 ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:20]
+ 1 │ const {foo: foo} = require("foo");
+   ·                    ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:20]
+ 1 │ const {foo: foo} = require( (("foo")) );
+   ·                    ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:22]
+ 1 │ const {foo: foo} = ((require))("foo");
+   ·                      ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:23]
+ 1 │ const {foo: foo} = (( require("foo") ));
+   ·                       ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:23]
+ 1 │ const {foo: foo} = (( require("foo") ));
+   ·                       ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:17]
+ 1 │ const {foo:bar}=require("foo");
+   ·                 ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:3:17]
+ 2 │                 =
+ 3 │                 require("foo");
+   ·                 ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:19]
+ 1 │ const {foo:bar} = require("foo");
+   ·                   ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:19]
+ 1 │ const {foo:bar} = require( (("foo")) );
+   ·                   ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:21]
+ 1 │ const {foo:bar} = ((require))("foo");
+   ·                     ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:22]
+ 1 │ const {foo:bar} = (( require("foo") ));
+   ·                      ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:22]
+ 1 │ const {foo:bar} = (( require("foo") ));
+   ·                      ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:47]
+ 1 │ const {a   :foo, b:   bar, default   :   baz}=require("foo");
+   ·                                               ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:7:17]
+ 6 │                 =
+ 7 │                 require("foo");
+   ·                 ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:49]
+ 1 │ const {a   :foo, b:   bar, default   :   baz} = require("foo");
+   ·                                                 ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:49]
+ 1 │ const {a   :foo, b:   bar, default   :   baz} = require( (("foo")) );
+   ·                                                 ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:51]
+ 1 │ const {a   :foo, b:   bar, default   :   baz} = ((require))("foo");
+   ·                                                   ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:52]
+ 1 │ const {a   :foo, b:   bar, default   :   baz} = (( require("foo") ));
+   ·                                                    ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:52]
+ 1 │ const {a   :foo, b:   bar, default   :   baz} = (( require("foo") ));
+   ·                                                    ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:12]
+ 1 │ const {} = require("foo");
+   ·            ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:12]
+ 1 │ const{   }=require("foo");
+   ·            ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:11]
+ 1 │ const r = require;
+   ·           ───────
+ 2 │             const foo = r("foo");
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:5]
+ 1 │ new require("foo")
+   ·     ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ require("foo", extraArgument)
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:11]
+ 1 │ const a = require()
+   ·           ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ require(..."foo")
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ require("../" + "file.js")
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ require(file)
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:5]
+ 1 │ a = require("foo")
+   ·     ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:16]
+ 1 │ function a(a = require("foo")) {}
+   ·                ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:11]
+ 1 │ let foo = require("foo");
+   ·           ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = require("foo"), bar = require("bar");
+   ·             ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:35]
+ 1 │ const foo = require("foo"), bar = require("bar");
+   ·                                   ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:22]
+ 1 │ const {[foo]: foo} = require("foo");
+   ·                      ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:24]
+ 1 │ const {["foo"]: foo} = require("foo");
+   ·                        ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:10]
+ 1 │ if (foo) require("foo");
+   ·          ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = require`foo`;
+   ·             ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:2:24]
+ 1 │ function loadModule() {
+ 2 │                 return require("foo");
+   ·                        ───────
+ 3 │             }
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:2:29]
+ 1 │ function loadModule() {
+ 2 │                 const foo = require("foo");
+   ·                             ───────
+ 3 │                 return foo;
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = require("foo"), bar = 1;
+   ·             ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = require("foo"), bar = require("bar");
+   ·             ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:35]
+ 1 │ const foo = require("foo"), bar = require("bar");
+   ·                                   ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ exports = foo;
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ module.exports = foo;
+   · ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:6]
+ 1 │ (( ((exports)) = ((foo)) ));
+   ·      ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:6]
+ 1 │ (( ((module.exports)) = ((foo)) ));
+   ·      ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:15]
+ 1 │ const foo = 1;exports.foo = foo;
+   ·               ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:15]
+ 1 │ const foo = 1;module.exports.foo = foo;
+   ·               ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ exports["foo"] = foo;
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ module.exports["foo"] = foo;
+   · ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = exports;
+   ·             ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = exports.foo;
+   ·             ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = module.exports;
+   ·             ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = module.exports.foo;
+   ·             ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ module["exports"] = foo;
+   · ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ module[exports] = foo;
+   · ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:8]
+ 1 │ module[exports] = foo;
+   ·        ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ module.exports.foo.bar = foo;
+   · ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:15]
+ 1 │ const foo = 1;exports.default = foo;
+   ·               ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:15]
+ 1 │ const foo = 1;module.exports.default = foo;
+   ·               ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ exports.foo.bar = foo;
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ exports = 1;
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ exports.foo = [];
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ module.exports = function() {};
+   · ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ module.exports.foo = foo || bar;
+   · ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ exports += foo;
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:13]
+ 1 │ const foo = module.children
+   ·             ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:1:22]
+ 1 │ const parentModule = module.parent
+   ·                      ──────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "exports".
+   ╭─[prefer_module.tsx:2:17]
+ 1 │ function foo() {
+ 2 │                 exports.foo = foo;
+   ·                 ───────
+ 3 │                 module.exports.foo = foo;
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "module".
+   ╭─[prefer_module.tsx:3:17]
+ 2 │                 exports.foo = foo;
+ 3 │                 module.exports.foo = foo;
+   ·                 ──────
+ 4 │             }
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "__filename".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ __filename
+   · ──────────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ require("lodash")
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.
+
+  ⚠ eslint-plugin-unicorn(prefer-module): Do not use "require".
+   ╭─[prefer_module.tsx:1:1]
+ 1 │ require("lodash")
+   · ───────
+   ╰────
+  help: Prefer ES modules over CommonJS globals.

@@ -38,6 +38,7 @@
     "import/no-deprecated": "No need to implement, already implemented by `typescript/no-deprecated` via tsgolint.",
     "n/no-restricted-import": "No need to implement, already implemented by `no-restricted-imports` rule.",
     "n/no-restricted-require": "No need to implement, already implemented by `no-restricted-imports` rule.",
+    "import/order": "Not implementing this in Oxlint as its behavior is covered very well by [Oxfmt's import sorting](https://oxc.rs/docs/guide/usage/formatter/sorting.html).",
 
     "jsdoc/type-formatting": "Experimental rule in the original plugin, may reconsider once stable.",
     "jsdoc/convert-to-jsdoc-comments": "Experimental rule in the original plugin, may reconsider once stable.",
