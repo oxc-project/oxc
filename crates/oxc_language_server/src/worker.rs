@@ -19,13 +19,22 @@ use crate::{
     tool::{DiagnosticResult, Tool, ToolBuilder, ToolStartInput},
 };
 
+pub enum WorkspaceType {
+    // A single folder workspace with the given root URI
+    // Each workspace can be used for a multi-root setup, but the tools will be configured with the root URI of the workspace.
+    Folder(Uri),
+    // Global instance for files which can not be associated with a specific workspace,
+    // e.g. the user did not open a folder.
+    Global,
+}
+
 /// A worker that manages the individual tools for a specific workspace
 /// and reports back the results to the [`Backend`](crate::backend::Backend).
 ///
 /// Each worker is responsible for a specific root URI and configures the tools `cwd` to that root URI.
 /// The [`Backend`](crate::backend::Backend) is responsible to target the correct worker for a given file URI.
 pub struct WorkspaceWorker {
-    root_uri: Uri,
+    r#type: WorkspaceType,
     tools: RwLock<Vec<Box<dyn Tool>>>,
     builders: Arc<[Box<dyn ToolBuilder>]>,
     // Initialized options from the client
@@ -48,7 +57,7 @@ impl WorkspaceWorker {
         diagnostic_mode: DiagnosticMode,
     ) -> Self {
         Self {
-            root_uri,
+            r#type: WorkspaceType::Folder(root_uri),
             tools: RwLock::new(vec![]),
             builders,
             options: Mutex::new(None),
@@ -58,8 +67,11 @@ impl WorkspaceWorker {
     }
 
     /// Get the root URI of the worker
-    pub fn get_root_uri(&self) -> &Uri {
-        &self.root_uri
+    pub fn get_root_uri(&self) -> Option<&Uri> {
+        match &self.r#type {
+            WorkspaceType::Folder(uri) => Some(uri),
+            WorkspaceType::Global => None,
+        }
     }
 
     /// Start all programs (linter, formatter) for the worker.
@@ -70,7 +82,7 @@ impl WorkspaceWorker {
             .iter()
             .map(|builder| {
                 builder.build_boxed(ToolStartInput {
-                    root_uri: &self.root_uri,
+                    root_uri: &self.r#type,
                     options: options.clone(),
                 })
             })
@@ -95,7 +107,7 @@ impl WorkspaceWorker {
                 if patterns.is_empty() {
                     None
                 } else {
-                    Some(registration_tool_watcher_id(tool.name(), &self.root_uri, patterns))
+                    Some(registration_tool_watcher_id(tool.name(), &self.r#type, patterns))
                 }
             })
             .collect()
@@ -224,10 +236,9 @@ impl WorkspaceWorker {
             self.published_diagnostics.lock().await.drain().collect::<Vec<Uri>>();
         let mut watchers_to_unregister = Vec::new();
         for (tool, builder) in self.tools.read().await.iter().zip(self.builders.iter()) {
-            builder.shutdown(&self.root_uri);
+            builder.shutdown(&self.r#type);
 
-            watchers_to_unregister
-                .push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
+            watchers_to_unregister.push(unregistration_tool_watcher_id(tool.name(), &self.r#type));
         }
 
         (uris_to_clear_diagnostics, watchers_to_unregister)
@@ -279,7 +290,7 @@ impl WorkspaceWorker {
             tool.handle_watched_file_change(
                 builder,
                 &file_event.uri,
-                ToolStartInput { root_uri: &self.root_uri, options: options.clone() },
+                ToolStartInput { root_uri: &self.r#type, options: options.clone() },
             )
         })
         .await
@@ -321,7 +332,7 @@ impl WorkspaceWorker {
                     builder,
                     &old_options,
                     ToolStartInput {
-                        root_uri: &self.root_uri,
+                        root_uri: &self.r#type,
                         options: changed_options_json.clone(),
                     },
                 )
@@ -362,11 +373,11 @@ impl WorkspaceWorker {
             let change = change_handler(tool, builder);
 
             if let Some(patterns) = change.watch_patterns {
-                unregistrations.push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
+                unregistrations.push(unregistration_tool_watcher_id(tool.name(), &self.r#type));
                 if !patterns.is_empty() {
                     registrations.push(registration_tool_watcher_id(
                         tool.name(),
-                        &self.root_uri,
+                        &self.r#type,
                         patterns,
                     ));
                 }
@@ -420,26 +431,45 @@ impl WorkspaceWorker {
 }
 
 /// Create an unregistration for a file system watcher for the given tool
-fn unregistration_tool_watcher_id(tool: &str, root_uri: &Uri) -> Unregistration {
+fn unregistration_tool_watcher_id(tool: &str, workspace_type: &WorkspaceType) -> Unregistration {
     Unregistration {
-        id: format!("watcher-{tool}-{}", root_uri.as_str()),
+        id: format!(
+            "watcher-{tool}-{}",
+            match workspace_type {
+                WorkspaceType::Folder(uri) => uri.as_str(),
+                WorkspaceType::Global => "global",
+            }
+        ),
         method: "workspace/didChangeWatchedFiles".to_string(),
     }
 }
 
 /// Create a registration for a file system watcher for the given tool and patterns
-fn registration_tool_watcher_id(tool: &str, root_uri: &Uri, patterns: Vec<String>) -> Registration {
+fn registration_tool_watcher_id(
+    tool: &str,
+    workspace_type: &WorkspaceType,
+    patterns: Vec<String>,
+) -> Registration {
     Registration {
-        id: format!("watcher-{tool}-{}", root_uri.as_str()),
+        id: format!(
+            "watcher-{tool}-{}",
+            match workspace_type {
+                WorkspaceType::Folder(uri) => uri.as_str(),
+                WorkspaceType::Global => "global",
+            }
+        ),
         method: "workspace/didChangeWatchedFiles".to_string(),
         register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
             watchers: patterns
                 .into_iter()
                 .map(|pattern| FileSystemWatcher {
-                    glob_pattern: GlobPattern::Relative(RelativePattern {
-                        base_uri: OneOf::Right(root_uri.clone()),
-                        pattern,
-                    }),
+                    glob_pattern: match workspace_type {
+                        WorkspaceType::Folder(root_uri) => GlobPattern::Relative(RelativePattern {
+                            base_uri: OneOf::Right(root_uri.clone()),
+                            pattern,
+                        }),
+                        WorkspaceType::Global => GlobPattern::String(pattern),
+                    },
                     kind: Some(WatchKind::all()), // created, deleted, changed
                 })
                 .collect::<Vec<_>>(),
@@ -468,13 +498,10 @@ mod tests {
 
     #[test]
     fn test_get_root_uri() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///root/").unwrap(),
-            Arc::new([]),
-            DiagnosticMode::None,
-        );
+        let uri = Uri::from_str("file:///root/").unwrap();
+        let worker = WorkspaceWorker::new(uri.clone(), Arc::new([]), DiagnosticMode::None);
 
-        assert_eq!(worker.get_root_uri(), &Uri::from_str("file:///root/").unwrap());
+        assert_eq!(worker.get_root_uri(), Some(&uri));
     }
 
     #[tokio::test]

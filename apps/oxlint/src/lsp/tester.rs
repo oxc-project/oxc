@@ -1,6 +1,8 @@
 use std::{fmt::Write, path::PathBuf};
 
-use oxc_language_server::{DiagnosticResult, Tool, ToolRestartChanges, ToolStartInput};
+use oxc_language_server::{
+    DiagnosticResult, Tool, ToolRestartChanges, ToolStartInput, WorkspaceType,
+};
 use tower_lsp_server::ls_types::{
     CodeAction, CodeActionKind, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString,
     Position, Range, Uri,
@@ -264,7 +266,7 @@ impl Tester<'_> {
             &builder,
             &self.options,
             ToolStartInput {
-                root_uri: &Self::get_root_uri(self.relative_root_dir),
+                root_uri: &WorkspaceType::Folder(Self::get_root_uri(self.relative_root_dir)),
                 options: new_options,
             },
         )

@@ -159,7 +159,7 @@ impl LanguageServer for Backend {
                 let option = options
                     .iter()
                     .find(|workspace_option| {
-                        worker.get_root_uri() == &workspace_option.workspace_uri
+                        worker.get_root_uri() == Some(&workspace_option.workspace_uri)
                     })
                     .map(|workspace_options| workspace_options.options.clone())
                     .unwrap_or_default();
@@ -207,7 +207,15 @@ impl LanguageServer for Backend {
         let needed_configurations = needed_configurations.pin_owned();
         for worker in workers {
             if worker.needs_init_options().await {
-                needed_configurations.insert(worker.get_root_uri().clone(), worker);
+                needed_configurations.insert(
+                    worker
+                        .get_root_uri()
+                        .expect(
+                            "Global workers should already be initialized in `initialize` request",
+                        )
+                        .clone(),
+                    worker,
+                );
             }
         }
 
@@ -339,7 +347,7 @@ impl LanguageServer for Backend {
                     let options = workers
                         .iter()
                         .map(|worker| WorkspaceOption {
-                            workspace_uri: worker.get_root_uri().clone(),
+                            workspace_uri: worker.get_root_uri().expect("Global workers are not implemented yet. Find a good fallback or handle global workers").clone(),
                             options: params.settings.clone(),
                         })
                         .collect();
@@ -360,7 +368,8 @@ impl LanguageServer for Backend {
         {
             let configs = self
                 .request_workspace_configuration(
-                    workers.iter().map(WorkspaceWorker::get_root_uri).collect(),
+                    // Global workers are not implemented yet. Find a good fallback or handle global workers
+                    workers.iter().filter_map(WorkspaceWorker::get_root_uri).collect(),
                 )
                 .await;
 
@@ -369,7 +378,7 @@ impl LanguageServer for Backend {
                 .into_iter()
                 .enumerate()
                 .map(|(index, options)| WorkspaceOption {
-                    workspace_uri: workers[index].get_root_uri().clone(),
+                    workspace_uri: workers[index].get_root_uri().expect("Global workers are not implemented yet. Find a good fallback or handle global workers").clone(),
                     options,
                 })
                 .collect::<Vec<_>>()
@@ -392,7 +401,7 @@ impl LanguageServer for Backend {
 
         for option in resolved_options {
             let Some(worker) =
-                workers.iter().find(|worker| worker.get_root_uri() == &option.workspace_uri)
+                workers.iter().find(|worker| worker.get_root_uri() == Some(&option.workspace_uri))
             else {
                 continue;
             };
@@ -512,8 +521,10 @@ impl LanguageServer for Backend {
         let mut removed_registrations = vec![];
 
         for folder in params.event.removed {
-            let Some((index, worker)) =
-                workers.iter().enumerate().find(|(_, worker)| worker.get_root_uri() == &folder.uri)
+            let Some((index, worker)) = workers
+                .iter()
+                .enumerate()
+                .find(|(_, worker)| worker.get_root_uri() == Some(&folder.uri))
             else {
                 continue;
             };
@@ -951,7 +962,7 @@ impl Backend {
         workers
             .iter()
             .filter_map(|worker| {
-                let root_path = worker.get_root_uri().to_file_path()?;
+                let root_path = worker.get_root_uri()?.to_file_path()?;
                 if file_path.starts_with(&root_path) {
                     Some((worker, root_path.as_os_str().len()))
                 } else {
@@ -990,13 +1001,19 @@ mod tests {
         let file_in_deeper: Uri = "file:///path/to/workspace/deeper/file.js".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &file_in_deeper);
         assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace/deeper");
+        assert_eq!(
+            worker.unwrap().get_root_uri().as_ref().unwrap().as_str(),
+            "file:///path/to/workspace/deeper"
+        );
 
         // File in parent workspace should match the parent worker
         let file_in_parent: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &file_in_parent);
         assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
+        assert_eq!(
+            worker.unwrap().get_root_uri().as_ref().unwrap().as_str(),
+            "file:///path/to/workspace"
+        );
 
         // File outside both workspaces should not match any worker
         let file_outside: Uri = "file:///path/to/other/file.js".parse().unwrap();
@@ -1022,13 +1039,19 @@ mod tests {
         let file_in_workspace2: Uri = "file:///path/to/workspace-2/file.js".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &file_in_workspace2);
         assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace-2");
+        assert_eq!(
+            worker.unwrap().get_root_uri().as_ref().unwrap().as_str(),
+            "file:///path/to/workspace-2"
+        );
 
         // File in workspace should match workspace only
         let file_in_workspace: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &file_in_workspace);
         assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
+        assert_eq!(
+            worker.unwrap().get_root_uri().as_ref().unwrap().as_str(),
+            "file:///path/to/workspace"
+        );
     }
 
     #[test]
@@ -1044,7 +1067,10 @@ mod tests {
         let file_in_workspace: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &file_in_workspace);
         assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
+        assert_eq!(
+            worker.unwrap().get_root_uri().as_ref().unwrap().as_str(),
+            "file:///path/to/workspace"
+        );
 
         // File outside workspace should not match
         let file_outside: Uri = "file:///path/to/other/file.js".parse().unwrap();
@@ -1089,7 +1115,10 @@ mod tests {
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
         assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
+        assert_eq!(
+            worker.unwrap().get_root_uri().as_ref().unwrap().as_str(),
+            "file:///path/to/workspace"
+        );
     }
 
     #[test]
@@ -1110,7 +1139,10 @@ mod tests {
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
         assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace1");
+        assert_eq!(
+            worker.unwrap().get_root_uri().as_ref().unwrap().as_str(),
+            "file:///path/to/workspace1"
+        );
     }
 
     #[test]
@@ -1141,12 +1173,18 @@ mod tests {
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
         assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
+        assert_eq!(
+            worker.unwrap().get_root_uri().as_ref().unwrap().as_str(),
+            "file:///path/to/workspace"
+        );
 
         // File URIs should still use path-based matching
         let file_in_deeper: Uri = "file:///path/to/workspace/deeper/file.js".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &file_in_deeper);
         assert!(worker.is_some());
-        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace/deeper");
+        assert_eq!(
+            worker.unwrap().get_root_uri().as_ref().unwrap().as_str(),
+            "file:///path/to/workspace/deeper"
+        );
     }
 }

@@ -23,7 +23,7 @@ use oxc_linter::{
 
 use oxc_language_server::{
     Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, Tool, ToolBuilder,
-    ToolRestartChanges, ToolStartInput,
+    ToolRestartChanges, ToolStartInput, WorkspaceType,
 };
 
 use crate::{
@@ -308,17 +308,24 @@ impl ToolBuilder for ServerLinterBuilder {
     }
 
     fn build_boxed(&self, tool_start_input: ToolStartInput) -> Box<dyn Tool> {
-        Box::new(self.build(tool_start_input.root_uri, tool_start_input.options))
+        let WorkspaceType::Folder(root_uri) = tool_start_input.root_uri else {
+            panic!("Global Workspace type is not implemented on the lsp backend yet.");
+        };
+        Box::new(self.build(root_uri, tool_start_input.options))
     }
 
     #[expect(unused)]
-    fn shutdown(&self, root_uri: &Uri) {
+    fn shutdown(&self, root_uri: &WorkspaceType) {
         // We don't currently destroy workspaces.
         // See comment in `destroyWorkspace` in `src-js/workspace/index.ts` for explanation.
         return;
 
         // Destroy JS workspace
         if let Some(external_linter) = &self.external_linter {
+            let WorkspaceType::Folder(root_uri) = root_uri else {
+                // this is skipped at the top of the function, just make the compiler about this match arm.
+                panic!("Global Workspace type is not implemented on the lsp backend yet.");
+            };
             let res = (external_linter.destroy_workspace)(root_uri.as_str().to_string());
 
             if let Err(err) = res {

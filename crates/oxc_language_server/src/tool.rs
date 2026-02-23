@@ -6,7 +6,7 @@ use tower_lsp_server::{
     },
 };
 
-use crate::{LanguageId, capabilities::Capabilities};
+use crate::{LanguageId, capabilities::Capabilities, worker::WorkspaceType};
 
 pub trait ToolBuilder: Send + Sync {
     /// Modify the server capabilities to include capabilities provided by this tool.
@@ -21,7 +21,7 @@ pub trait ToolBuilder: Send + Sync {
     fn build_boxed(&self, tool_start_input: ToolStartInput) -> Box<dyn Tool>;
 
     /// Shutdown hook for the tool. Implementors may perform any necessary cleanup here.
-    fn shutdown(&self, _root_uri: &Uri) {
+    fn shutdown(&self, _root_uri: &WorkspaceType) {
         // Default implementation does nothing.
     }
 }
@@ -147,7 +147,7 @@ pub trait Tool: Send + Sync {
 /// containing necessary information for initialization.
 pub struct ToolStartInput<'a> {
     /// The root URI of the workspace when the tool is started or restarted.
-    pub root_uri: &'a Uri,
+    pub root_uri: &'a WorkspaceType,
     /// The options for the tool, provided as a JSON value.
     /// The tool can deserialize this into its specific configuration struct.
     pub options: serde_json::Value,
