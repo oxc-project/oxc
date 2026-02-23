@@ -69,7 +69,7 @@ fn lower_with_mutation_aliasing(func: &mut HIRFunction) -> Result<(), CompilerEr
     let function_effects =
         infer_mutation_aliasing_ranges(func, &InferRangesOptions { is_function_expression: true })?;
     rewrite_instruction_kinds_based_on_reassignment(func)?;
-    infer_reactive_scope_variables(func);
+    infer_reactive_scope_variables(func)?;
     func.aliasing_effects = Some(function_effects.clone());
 
     // Phase 2: populate the Effect of each context variable to use in inferring

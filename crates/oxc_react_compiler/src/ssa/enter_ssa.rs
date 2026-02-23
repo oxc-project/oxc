@@ -150,7 +150,10 @@ impl SsaBuilder {
             // Haven't visited all predecessors; place an incomplete phi
             let new_id = self.make_id(&old_place.identifier);
             let new_place = Place { identifier: new_id.clone(), ..old_place.clone() };
-            let state = self.states.get_mut(&block_id).expect("state must exist");
+            let state = self.states.entry(block_id).or_insert_with(|| State {
+                defs: FxHashMap::default(),
+                incomplete_phis: Vec::new(),
+            });
             state.incomplete_phis.push(IncompletePhi { old_place: old_place.clone(), new_place });
             state.defs.insert(old_id, new_id.clone());
             return new_id;

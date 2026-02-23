@@ -204,7 +204,7 @@ pub fn run_pipeline(
     if env.enable_memoization {
         crate::reactive_scopes::infer_reactive_scope_variables::infer_reactive_scope_variables(
             func,
-        );
+        )?;
     }
 
     // 27. MemoizeFbtAndMacroOperandsInSameScope
