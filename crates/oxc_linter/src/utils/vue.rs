@@ -93,7 +93,7 @@ pub fn check_define_macro_call_expression(
     match expression {
         Expression::ArrayExpression(_) | Expression::ObjectExpression(_) => None,
         Expression::Identifier(identifier) => {
-            // Check if the identifier is defined in the <script setup> block
+            // Check if the identifier is defined in the `<script setup>` block
             if ctx.scoping().get_binding(get_vue_setup_scope_id(ctx), identifier.name).is_some() {
                 Some(DefineMacroProblem::ReferencingLocally)
             } else {

@@ -1069,8 +1069,7 @@ impl RuleRunner for crate::rules::eslint::no_unsafe_optional_chaining::NoUnsafeO
 }
 
 impl RuleRunner for crate::rules::eslint::no_unused_expressions::NoUnusedExpressions {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ExpressionStatement]));
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
