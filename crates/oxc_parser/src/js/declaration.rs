@@ -135,6 +135,12 @@ impl<'a> ParserImpl<'a> {
             init,
             definite.is_some(),
         );
+        if self.ctx.has_ambient()
+            && let Some(init) = &decl.init
+            && !(decl.kind.is_const() && decl.type_annotation.is_none())
+        {
+            self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(init.span()));
+        }
         if decl_parent == VariableDeclarationParent::Statement {
             self.check_missing_initializer(&decl);
         }

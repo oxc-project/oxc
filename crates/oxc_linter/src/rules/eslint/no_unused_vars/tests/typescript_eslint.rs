@@ -1127,7 +1127,7 @@ fn test() {
             "
         declare module 'foo' {
           type Test = 1;
-          const x: Test = 1;
+          const x: Test;
           export = x;
         }
             ",
@@ -2018,9 +2018,9 @@ fn test_d_ts() {
         declare function func();
         declare enum Enum {}
         declare namespace Name {}
-        declare const v1 = 1;
-        declare var v2 = 1;
-        declare let v3 = 1;
+        declare const v1: 1;
+        declare var v2: 1;
+        declare let v3: 1;
         declare const { v4 };
         declare const { v4: v5 };
         declare const [v6];
