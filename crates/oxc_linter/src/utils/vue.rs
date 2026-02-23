@@ -105,29 +105,37 @@ pub fn check_define_macro_call_expression(
 }
 
 /// According to <https://github.com/liangmiQwQ/vue-oxc-toolkit/blob/main/MAPPING.md>,
-/// In vue-oxc-toolkit compiled AST, the last top-level BlockStatement contains
+/// In vue-oxc-toolkit compiled AST, the last top-level statement contains
 /// the `<script setup>` code.
 pub fn get_vue_setup_statements<'a>(ctx: &LintContext<'a>) -> &'a [Statement<'a>] {
     let program = ctx.nodes().program();
 
-    // Find the last top-level BlockStatement
-    let Statement::BlockStatement(block) = program.body.last().unwrap() else {
+    // Find the last top-level ArrowFunctionExpression
+    let Statement::ExpressionStatement(block) = program.body.last().unwrap() else {
         unreachable!();
     };
 
-    &block.body
+    let Expression::ArrowFunctionExpression(function) = &block.expression else {
+        unreachable!();
+    };
+
+    &function.body.statements
 }
 
-/// Get the scope ID of the Vue setup block (last top-level BlockStatement).
+/// Get the scope ID of the Vue setup block (last top-level ArrowFunctionExpression).
 pub fn get_vue_setup_scope_id(ctx: &LintContext<'_>) -> ScopeId {
     let program = ctx.nodes().program();
 
-    // Find the last top-level BlockStatement
-    let Statement::BlockStatement(block) = program.body.last().unwrap() else {
+    // Find the last top-level ArrowFunctionExpression
+    let Statement::ExpressionStatement(block) = program.body.last().unwrap() else {
         unreachable!();
     };
 
-    block.scope_id.get().unwrap()
+    let Expression::ArrowFunctionExpression(function) = &block.expression else {
+        unreachable!();
+    };
+
+    function.scope_id.get().unwrap()
 }
 
 /// Check if a scope is within the Vue `<script setup>` block.

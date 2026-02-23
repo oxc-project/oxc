@@ -4004,9 +4004,9 @@ dependencies = [
 
 [[package]]
 name = "vue_oxc_toolkit"
-version = "0.7.2"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8a236356e385a9747331a5d1b49f04439c9f79794c5f7de3b2b846eef8c49fd"
+checksum = "ed1cb8e0200af5d281b0577674283dd1467bbad3771bda7cd992c222fa706e54"
 dependencies = [
  "memchr",
  "oxc_allocator",
