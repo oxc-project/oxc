@@ -11,8 +11,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
     DeclarationId, ReactiveBlock, ReactiveFunction, ReactiveInstruction, ReactiveStatement,
-    ReactiveTerminal, ReactiveValue,
-    visitors::each_instruction_value_operand,
+    ReactiveTerminal, ReactiveValue, visitors::each_instruction_value_operand,
 };
 
 /// Prune unused lvalues from the reactive function.
@@ -124,12 +123,16 @@ fn collect_from_terminal(
 ) {
     match terminal {
         ReactiveTerminal::If(t) => {
+            // The test place is used by this terminal
+            used_declarations.insert(t.test.identifier.declaration_id);
             collect_lvalue_info(&t.consequent, lvalue_locations, used_declarations);
             if let Some(alt) = &t.alternate {
                 collect_lvalue_info(alt, lvalue_locations, used_declarations);
             }
         }
         ReactiveTerminal::Switch(t) => {
+            // The test place is used by this terminal
+            used_declarations.insert(t.test.identifier.declaration_id);
             for case in &t.cases {
                 if let Some(block) = &case.block {
                     collect_lvalue_info(block, lvalue_locations, used_declarations);
@@ -168,10 +171,15 @@ fn collect_from_terminal(
             collect_lvalue_info(&t.block, lvalue_locations, used_declarations);
             collect_lvalue_info(&t.handler, lvalue_locations, used_declarations);
         }
-        ReactiveTerminal::Break(_)
-        | ReactiveTerminal::Continue(_)
-        | ReactiveTerminal::Return(_)
-        | ReactiveTerminal::Throw(_) => {}
+        ReactiveTerminal::Return(t) => {
+            // The return value place is used by this terminal
+            used_declarations.insert(t.value.identifier.declaration_id);
+        }
+        ReactiveTerminal::Throw(t) => {
+            // The throw value place is used by this terminal
+            used_declarations.insert(t.value.identifier.declaration_id);
+        }
+        ReactiveTerminal::Break(_) | ReactiveTerminal::Continue(_) => {}
     }
 }
 

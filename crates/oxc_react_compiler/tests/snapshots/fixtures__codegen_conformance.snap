@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 0/1040 passed (0.0%)
+Codegen conformance: 10/1040 passed (1.0%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 39
   panic:          0
-  output_mismatch:958
+  output_mismatch:948
   no_expected:    1
 
 Failed fixtures:
@@ -407,7 +407,6 @@ Failed fixtures:
   [output_mismatch] independent.js
   [output_mismatch] independently-memoize-object-property.js
   [output_mismatch] infer-compile-hooks-with-multiple-params.js
-  [output_mismatch] infer-computed-delete.js
   [output_mismatch] infer-dont-compile-components-with-multiple-params.js
   [no_function] infer-function-React-memo.js
   [no_function] infer-function-assignment.js
@@ -423,16 +422,12 @@ Failed fixtures:
   [output_mismatch] infer-no-component-nested-jsx.js
   [output_mismatch] infer-no-component-obj-return.js
   [output_mismatch] infer-phi-primitive.js
-  [output_mismatch] infer-property-delete.js
   [output_mismatch] infer-sequential-optional-chain-nonnull.ts
-  [output_mismatch] infer-skip-components-without-hooks-or-jsx.js
   [parse_error] infer-types-through-type-cast.flow.js
   [output_mismatch] inner-memo-value-not-promoted-to-outer-scope-dynamic.js
   [output_mismatch] inner-memo-value-not-promoted-to-outer-scope-static.js
   [output_mismatch] interdependent-across-if.js
   [output_mismatch] interdependent.js
-  [output_mismatch] invalid-jsx-in-catch-in-outer-try-with-catch.js
-  [output_mismatch] invalid-jsx-in-try-with-catch.js
   [output_mismatch] invalid-set-state-in-effect-verbose-derived-event.js
   [output_mismatch] invalid-set-state-in-effect-verbose-force-update.js
   [output_mismatch] invalid-set-state-in-effect-verbose-non-local-derived.js
@@ -896,7 +891,6 @@ Failed fixtures:
   [no_expected_code] todo.error.object-pattern-computed-key.js
   [pipeline_error] todo.memoize-loops-that-produce-memoizeable-values.js
   [output_mismatch] todo.unnecessary-lambda-memoization.js
-  [output_mismatch] transitive-alias-fields.js
   [output_mismatch] transitive-freeze-array.js
   [output_mismatch] transitive-freeze-function-expressions.js
   [output_mismatch] trivial.js
@@ -955,7 +949,6 @@ Failed fixtures:
   [output_mismatch] unclosed-eslint-suppression-skips-all-components.js
   [output_mismatch] unconditional-break-label.js
   [output_mismatch] uninitialized-declaration-in-reactive-scope.js
-  [output_mismatch] unknown-hooks-do-not-assert.js
   [output_mismatch] unlabeled-break-within-label-loop.ts
   [output_mismatch] unlabeled-break-within-label-switch.ts
   [output_mismatch] unmemoized-nonreactive-dependency-is-pruned-as-dependency.js
@@ -967,7 +960,6 @@ Failed fixtures:
   [output_mismatch] unused-object-element-with-rest.js
   [output_mismatch] unused-object-element.js
   [output_mismatch] unused-optional-method-assigned-to-variable.js
-  [output_mismatch] unused-ternary-assigned-to-variable.js
   [output_mismatch] update-expression-constant-propagation.js
   [output_mismatch] update-expression-in-sequence.js
   [pipeline_error] update-expression-on-function-parameter-1.js
@@ -980,11 +972,9 @@ Failed fixtures:
   [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] use-memo-noemit.js
   [output_mismatch] use-memo-simple.js
-  [output_mismatch] use-no-forget-module-level.js
   [output_mismatch] use-no-forget-multiple-with-eslint-suppression.js
   [output_mismatch] use-no-forget-with-eslint-suppression.js
   [output_mismatch] use-no-forget-with-no-errors.js
-  [output_mismatch] use-no-memo-module-level.js
   [output_mismatch] use-no-memo-module-scope-usememo-function-scope.js
   [output_mismatch] use-no-memo-simple.js
   [output_mismatch] use-operator-call-expression.js
