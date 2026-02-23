@@ -29,8 +29,12 @@ pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
     let mut merged = MergedBlocks::new();
     let mut fallthrough_blocks = FxHashSet::default();
 
-    // Collect fallthrough block IDs and recursively merge nested functions
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    // Collect fallthrough block IDs and recursively merge nested functions.
+    // Sort block IDs to match TypeScript Map insertion-order iteration.
+    // FxHashMap iterates in arbitrary order; sorting by BlockId ensures
+    // deterministic, program-order processing.
+    let mut block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    block_ids.sort();
     for &block_id in &block_ids {
         let Some(block) = func.body.blocks.get(&block_id) else { continue };
         if let Some(ft) = terminal_fallthrough(&block.terminal) {
@@ -72,8 +76,10 @@ pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
         }
     }
 
-    // Process blocks for merging
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    // Process blocks for merging.
+    // Sort to match TypeScript Map insertion-order iteration (see above).
+    let mut block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    block_ids.sort();
     for &block_id in &block_ids {
         let (should_merge, predecessor_id) = {
             let Some(block) = func.body.blocks.get(&block_id) else { continue };
