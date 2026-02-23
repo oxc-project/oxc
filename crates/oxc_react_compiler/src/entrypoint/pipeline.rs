@@ -325,7 +325,7 @@ pub fn run_pipeline(
 
     // 47. RenameVariables
     let unique_identifiers =
-        crate::reactive_scopes::rename_variables::rename_variables(&reactive_function);
+        crate::reactive_scopes::rename_variables::rename_variables(&mut reactive_function);
 
     // 48. PruneHoistedContexts
     crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_function);
@@ -357,6 +357,7 @@ pub fn run_pipeline(
         filename: func.env.filename.clone(),
         output_mode: func.env.output_mode,
         shapes: func.env.shapes.clone(),
+        enable_name_anonymous_functions: func.env.config.enable_name_anonymous_functions,
     };
     let mut ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
         &reactive_function,
@@ -374,7 +375,7 @@ pub fn run_pipeline(
         crate::reactive_scopes::prune_unused_lvalues::prune_unused_lvalues(&mut outlined_reactive);
         crate::reactive_scopes::prune::prune_hoisted_contexts(&mut outlined_reactive);
         let outlined_identifiers =
-            crate::reactive_scopes::rename_variables::rename_variables(&outlined_reactive);
+            crate::reactive_scopes::rename_variables::rename_variables(&mut outlined_reactive);
         let outlined_codegen_options = CodegenOptions {
             unique_identifiers: outlined_identifiers,
             fbt_operands: fbt_operands_for_outlined.clone(),
@@ -386,6 +387,7 @@ pub fn run_pipeline(
             filename: None,
             output_mode: func.env.output_mode,
             shapes: func.env.shapes.clone(),
+            enable_name_anonymous_functions: func.env.config.enable_name_anonymous_functions,
         };
         let outlined_ast = crate::reactive_scopes::codegen_reactive_function::codegen_function(
             &outlined_reactive,
