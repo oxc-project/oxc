@@ -315,12 +315,18 @@ impl Linter {
                             if with_runtime_optimization && let Some(ast_types) = rule.types_info()
                             {
                                 for node in semantic.nodes() {
+                                    if node.span() == SPAN {
+                                        continue;
+                                    }
                                     if ast_types.has(node.kind().ty()) {
                                         rule.run(node, ctx);
                                     }
                                 }
                             } else {
                                 for node in semantic.nodes() {
+                                    if node.span() == SPAN {
+                                        continue;
+                                    }
                                     rule.run(node, ctx);
                                 }
                             }
