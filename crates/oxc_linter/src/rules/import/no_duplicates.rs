@@ -143,8 +143,9 @@ impl Rule for NoDuplicates {
                 .into_iter()
                 .flat_map(|(_path, requested_modules)| requested_modules)
                 .filter(|requested_module| requested_module.is_import);
-            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
-            // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
+            // When prefer_inline is false: 0 = value, 1 = type named, 2 = type namespace, 3 = type default
+            // When prefer_inline is true: 0 = value + type named, 2 = type namespace, 3 = type default,
+            //   4 = side-effect (so they don't collide with type-only imports in bucket 0)
             let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
                 FxHashMap::default();
             for requested_module in requested_modules {
@@ -154,10 +155,11 @@ impl Rule for NoDuplicates {
                     .filter(|entry| entry.module_request.span == requested_module.span)
                     .collect::<Vec<_>>();
                 if imports.is_empty() {
-                    import_entries_maps.entry(0).or_default().push(requested_module);
+                    let key = if self.prefer_inline { 4 } else { 0 };
+                    import_entries_maps.entry(key).or_default().push(requested_module);
                     continue;
                 }
-                let mut flags = [true; 4];
+                let mut flags = [true; 5];
                 for imports in imports {
                     let key = if imports.is_type {
                         match imports.import_name {
@@ -176,10 +178,16 @@ impl Rule for NoDuplicates {
                         flags[key as usize] = false;
                         import_entries_maps.entry(key).or_default().push(requested_module);
                     }
+                    // When prefer_inline is true, non-type value imports should also
+                    // appear in bucket 4 so they still conflict with side-effect imports
+                    if self.prefer_inline && !imports.is_type && key == 0 && flags[4] {
+                        flags[4] = false;
+                        import_entries_maps.entry(4).or_default().push(requested_module);
+                    }
                 }
             }
 
-            for i in 0..4 {
+            for i in 0..5 {
                 check_duplicates(ctx, import_entries_maps.get(&i));
             }
         }
@@ -258,6 +266,15 @@ fn test() {
         (r"import y from './foo'; import type * as something from './foo';", None),
         (r"import { y } from './foo'; import type * as something from './foo';", None),
         (r"import { RouterModule, Routes } from '@angular/router';", None),
+        // #19632: type-only import + side-effect import with prefer-inline should not conflict
+        (
+            r"import type { Foo } from './foo'; import './foo'",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
+        (
+            r"import './foo'; import type { Foo } from './foo'",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -476,6 +493,11 @@ fn test() {
         // Test prefer-inline with kebab-case (primary, matches ESLint)
         (
             r"import {AValue} from './foo'; import type {AType} from './foo'",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
+        // #19632: side-effect + value import should still be flagged with prefer-inline
+        (
+            r"import './foo'; import { x } from './foo'",
             Some(json!([{ "prefer-inline": true }])),
         ),
     ];
