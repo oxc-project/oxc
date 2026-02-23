@@ -1,0 +1,83 @@
+commit: a53e1b22
+
+estree_acorn_jsx_tokens Summary:
+AST Parsed     : 39/39 (100.00%)
+Positive Passed: 0/39 (0.00%)
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/003.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/004.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/005.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/007.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/008.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/009.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/010.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/011.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/012.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/013.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/014.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/015.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/016.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/017.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/018.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/019.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/020.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/021.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/022.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/023.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/024.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/025.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/026.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/027.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/028.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/029.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/030.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/031.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/032.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/033.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/034.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/035.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/041.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/042.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/043.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/044.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/045.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/046.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/047.jsx
+
