@@ -21,7 +21,7 @@ use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::AstNode;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::Span;
 
 mod ast_util;
 mod config;
@@ -278,11 +278,6 @@ impl Linter {
 
                     // Run rules on nodes
                     for node in semantic.nodes() {
-                        // For manually created nodes (have a lot in .vue files), skip them
-                        if node.span() == SPAN {
-                            continue;
-                        }
-
                         for (rule, ctx) in &rules_by_ast_type[node.kind().ty() as usize] {
                             rule.run(node, ctx);
                         }
@@ -315,18 +310,12 @@ impl Linter {
                             if with_runtime_optimization && let Some(ast_types) = rule.types_info()
                             {
                                 for node in semantic.nodes() {
-                                    if node.span() == SPAN {
-                                        continue;
-                                    }
                                     if ast_types.has(node.kind().ty()) {
                                         rule.run(node, ctx);
                                     }
                                 }
                             } else {
                                 for node in semantic.nodes() {
-                                    if node.span() == SPAN {
-                                        continue;
-                                    }
                                     rule.run(node, ctx);
                                 }
                             }
