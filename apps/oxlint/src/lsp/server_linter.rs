@@ -23,7 +23,7 @@ use oxc_linter::{
 
 use oxc_language_server::{
     Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, Tool, ToolBuilder,
-    ToolRestartChanges,
+    ToolRestartChanges, ToolStartInput,
 };
 
 use crate::{
@@ -307,8 +307,8 @@ impl ToolBuilder for ServerLinterBuilder {
             };
     }
 
-    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(self.build(root_uri, options))
+    fn build_boxed(&self, tool_start_input: ToolStartInput) -> Box<dyn Tool> {
+        Box::new(self.build(tool_start_input.root_uri, tool_start_input.options))
     }
 
     #[expect(unused)]
@@ -423,9 +423,8 @@ impl Tool for ServerLinter {
     fn handle_configuration_change(
         &self,
         builder: &dyn ToolBuilder,
-        root_uri: &Uri,
         old_options_json: &serde_json::Value,
-        new_options_json: serde_json::Value,
+        tool_start_input: ToolStartInput,
     ) -> ToolRestartChanges {
         let old_option = match serde_json::from_value::<LSPLintOptions>(old_options_json.clone()) {
             Ok(opts) => opts,
@@ -437,7 +436,9 @@ impl Tool for ServerLinter {
             }
         };
 
-        let new_options = match serde_json::from_value::<LSPLintOptions>(new_options_json.clone()) {
+        let new_options = match serde_json::from_value::<LSPLintOptions>(
+            tool_start_input.options.clone(),
+        ) {
             Ok(opts) => opts,
             Err(e) => {
                 warn!(
@@ -452,8 +453,9 @@ impl Tool for ServerLinter {
         }
 
         // get the cached files before refreshing the linter, and revalidate them after
-        builder.shutdown(root_uri);
-        let new_linter = builder.build_boxed(root_uri, new_options_json.clone());
+        builder.shutdown(tool_start_input.root_uri);
+        let new_json_options = tool_start_input.options.clone();
+        let new_linter = builder.build_boxed(tool_start_input);
 
         let patterns = {
             if old_option.config_path == new_options.config_path
@@ -462,7 +464,7 @@ impl Tool for ServerLinter {
             {
                 None
             } else {
-                Some(new_linter.get_watcher_patterns(new_options_json))
+                Some(new_linter.get_watcher_patterns(new_json_options))
             }
         };
 
@@ -511,12 +513,11 @@ impl Tool for ServerLinter {
         &self,
         builder: &dyn ToolBuilder,
         _changed_uri: &Uri,
-        root_uri: &Uri,
-        options: serde_json::Value,
+        tool_start_input: ToolStartInput,
     ) -> ToolRestartChanges {
         // TODO: Check if the changed file is actually a config file (including extended paths)
-        builder.shutdown(root_uri);
-        let new_linter = builder.build_boxed(root_uri, options);
+        builder.shutdown(tool_start_input.root_uri);
+        let new_linter = builder.build_boxed(tool_start_input);
 
         ToolRestartChanges {
             tool: Some(new_linter),

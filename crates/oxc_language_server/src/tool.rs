@@ -18,7 +18,7 @@ pub trait ToolBuilder: Send + Sync {
     }
 
     /// Build a boxed instance of the tool for the given root URI and options.
-    fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;
+    fn build_boxed(&self, tool_start_input: ToolStartInput) -> Box<dyn Tool>;
 
     /// Shutdown hook for the tool. Implementors may perform any necessary cleanup here.
     fn shutdown(&self, _root_uri: &Uri) {
@@ -33,13 +33,13 @@ pub trait Tool: Send + Sync {
     fn name(&self) -> &'static str;
 
     /// The Server has new configuration changes.
-    /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
+    /// A WorkspaceWorker provides the new configuration inside [`ToolStartInput`] for the tool to decide if it needs to restart or take any action.
+    /// Returns a [`ToolRestartChanges`] indicating what changes were made for the Tool.
     fn handle_configuration_change(
         &self,
         builder: &dyn ToolBuilder,
-        root_uri: &Uri,
         old_options_json: &serde_json::Value,
-        new_options_json: serde_json::Value,
+        tool_start_input: ToolStartInput,
     ) -> ToolRestartChanges;
 
     /// Get the file watcher patterns for this tool based on the provided options.
@@ -47,14 +47,13 @@ pub trait Tool: Send + Sync {
     fn get_watcher_patterns(&self, options: serde_json::Value) -> Vec<Pattern>;
 
     /// Handle a watched file change event for the given URI.
-    /// Returns a [ToolRestartChanges] indicating what changes were made for the Tool.
+    /// Returns a [`ToolRestartChanges`] indicating what changes were made for the Tool.
     /// The Tool should decide whether it needs to restart or take any action based on the URI.
     fn handle_watched_file_change(
         &self,
         builder: &dyn ToolBuilder,
         changed_uri: &Uri,
-        root_uri: &Uri,
-        options: serde_json::Value,
+        tool_start_input: ToolStartInput,
     ) -> ToolRestartChanges;
 
     /// Check if this tool is responsible for handling the given command.
@@ -142,6 +141,16 @@ pub trait Tool: Send + Sync {
     fn remove_uri_cache(&self, _uri: &Uri) {
         // Default implementation does nothing.
     }
+}
+
+/// Input provided to the Tool when it is started or restarted,
+/// containing necessary information for initialization.
+pub struct ToolStartInput<'a> {
+    /// The root URI of the workspace when the tool is started or restarted.
+    pub root_uri: &'a Uri,
+    /// The options for the tool, provided as a JSON value.
+    /// The tool can deserialize this into its specific configuration struct.
+    pub options: serde_json::Value,
 }
 
 pub struct ToolRestartChanges {
