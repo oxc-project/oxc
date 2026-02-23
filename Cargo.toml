@@ -223,6 +223,8 @@ schemars = { package = "oxc-schemars", version = "0.8.27" } # JSON schema genera
 self_cell = "1.2.2" # Self-referential structs
 seq-macro = "0.3.6" # Sequence macros
 sha1 = "0.10.6" # SHA-1 hashing
+sha2 = "0.10.9" # SHA-2 hashing
+hmac = "0.12.1" # HMAC authentication
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] } # SIMD UTF-8 validation
 similar = "2.7.0" # Text diffing
 similar-asserts = "1.7.0" # Test diff assertions

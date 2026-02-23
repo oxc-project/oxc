@@ -23,5 +23,7 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 rustc-hash = { workspace = true }
+sha2 = { workspace = true }
+hmac = { workspace = true }
 
 [dev-dependencies]
