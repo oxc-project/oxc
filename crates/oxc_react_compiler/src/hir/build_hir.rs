@@ -184,10 +184,7 @@ fn declare_all_bindings_in_pattern(
 /// Create a promoted temporary place. Promoted temporaries have a name like `#t0`
 /// so they appear as named variables in the HIR, which is needed for destructuring
 /// pattern elements that are nested patterns (not simple identifiers).
-fn create_promoted_temporary(
-    builder: &mut HirBuilder,
-    loc: SourceLocation,
-) -> crate::hir::Place {
+fn create_promoted_temporary(builder: &mut HirBuilder, loc: SourceLocation) -> crate::hir::Place {
     let id = builder.environment_mut().next_identifier_id();
     let identifier = crate::hir::Identifier {
         id,
@@ -198,12 +195,7 @@ fn create_promoted_temporary(
         type_: crate::hir::types::make_type(),
         loc,
     };
-    crate::hir::Place {
-        identifier,
-        effect: crate::hir::Effect::Unknown,
-        reactive: false,
-        loc,
-    }
+    crate::hir::Place { identifier, effect: crate::hir::Effect::Unknown, reactive: false, loc }
 }
 
 /// Lower a destructuring declaration (ObjectPattern or ArrayPattern) to HIR.
@@ -322,10 +314,7 @@ fn lower_object_destructuring(
                     property_type: ObjectPropertyType::Property,
                     place: temp.clone(),
                 }));
-                followups.push((
-                    temp,
-                    FollowupPattern::AssignmentPattern(assign),
-                ));
+                followups.push((temp, FollowupPattern::AssignmentPattern(assign)));
             }
             // Nested pattern (object or array): create a temporary and recurse
             nested @ (ast::BindingPattern::ObjectPattern(_)
@@ -352,9 +341,8 @@ fn lower_object_destructuring(
             }
             nested => {
                 let temp = create_promoted_temporary(builder, rest_loc);
-                properties.push(ObjectPatternProperty::Spread(SpreadPattern {
-                    place: temp.clone(),
-                }));
+                properties
+                    .push(ObjectPatternProperty::Spread(SpreadPattern { place: temp.clone() }));
                 followups.push((temp, FollowupPattern::Binding(nested)));
             }
         }
@@ -366,10 +354,7 @@ fn lower_object_destructuring(
         InstructionValue::Destructure(Destructure {
             lvalue: LValuePattern {
                 kind,
-                pattern: Pattern::Object(HirObjectPattern {
-                    properties,
-                    loc: pat_loc,
-                }),
+                pattern: Pattern::Object(HirObjectPattern { properties, loc: pat_loc }),
             },
             value,
             loc,
@@ -433,18 +418,14 @@ fn lower_array_destructuring(
                     ast::BindingPattern::BindingIdentifier(ident) => {
                         // Simple identifier element
                         let ident_loc = span_to_loc(ident.span);
-                        let place =
-                            builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                        let place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
                         items.push(ArrayPatternElement::Place(place));
                     }
                     ast::BindingPattern::AssignmentPattern(assign) => {
                         // Element with default: `const [a = 1] = arr`
                         let temp = create_promoted_temporary(builder, elem_loc);
                         items.push(ArrayPatternElement::Place(temp.clone()));
-                        followups.push((
-                            temp,
-                            FollowupPattern::AssignmentPattern(assign),
-                        ));
+                        followups.push((temp, FollowupPattern::AssignmentPattern(assign)));
                     }
                     // Nested pattern
                     nested @ (ast::BindingPattern::ObjectPattern(_)
@@ -469,9 +450,7 @@ fn lower_array_destructuring(
             }
             nested => {
                 let temp = create_promoted_temporary(builder, rest_loc);
-                items.push(ArrayPatternElement::Spread(SpreadPattern {
-                    place: temp.clone(),
-                }));
+                items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp.clone() }));
                 followups.push((temp, FollowupPattern::Binding(nested)));
             }
         }
@@ -483,10 +462,7 @@ fn lower_array_destructuring(
         InstructionValue::Destructure(Destructure {
             lvalue: LValuePattern {
                 kind,
-                pattern: Pattern::Array(HirArrayPattern {
-                    items,
-                    loc: pat_loc,
-                }),
+                pattern: Pattern::Array(HirArrayPattern { items, loc: pat_loc }),
             },
             value,
             loc,
@@ -567,10 +543,7 @@ fn lower_assignment_pattern_declaration(
                 id: InstructionId(0),
                 lvalue,
                 value: InstructionValue::StoreLocal(StoreLocal {
-                    lvalue: LValue {
-                        place: temp.clone(),
-                        kind: InstructionKind::Const,
-                    },
+                    lvalue: LValue { place: temp.clone(), kind: InstructionKind::Const },
                     value: result.place,
                     loc: pat_loc,
                 }),
@@ -592,10 +565,7 @@ fn lower_assignment_pattern_declaration(
                 id: InstructionId(0),
                 lvalue,
                 value: InstructionValue::StoreLocal(StoreLocal {
-                    lvalue: LValue {
-                        place: temp.clone(),
-                        kind: InstructionKind::Const,
-                    },
+                    lvalue: LValue { place: temp.clone(), kind: InstructionKind::Const },
                     value: undef_place,
                     loc: pat_loc,
                 }),
@@ -618,10 +588,7 @@ fn lower_assignment_pattern_declaration(
             id: InstructionId(0),
             lvalue,
             value: InstructionValue::StoreLocal(StoreLocal {
-                lvalue: LValue {
-                    place: temp.clone(),
-                    kind: InstructionKind::Const,
-                },
+                lvalue: LValue { place: temp.clone(), kind: InstructionKind::Const },
                 value: value.clone(),
                 loc: pat_loc,
             }),
@@ -731,11 +698,14 @@ fn lower_object_assignment_target(
                         property_type: ObjectPropertyType::Property,
                         place: temp.clone(),
                     }));
-                    followups.push((temp, AssignmentFollowup::IdentifierWithDefault {
-                        name: name.to_string(),
-                        default_expr: ident_prop.init.as_ref(),
-                        loc: ident_loc,
-                    }));
+                    followups.push((
+                        temp,
+                        AssignmentFollowup::IdentifierWithDefault {
+                            name: name.to_string(),
+                            default_expr: ident_prop.init.as_ref(),
+                            loc: ident_loc,
+                        },
+                    ));
                 } else {
                     // No default: resolve identifier directly
                     let place = resolve_identifier_for_reassignment(builder, name, ident_loc);
@@ -763,18 +733,23 @@ fn lower_object_assignment_target(
                             place,
                         }));
                     }
-                    ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
+                    ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(
+                        with_default,
+                    ) => {
                         let temp = create_promoted_temporary(builder, prop_loc);
                         properties.push(ObjectPatternProperty::Property(ObjectProperty {
                             key,
                             property_type: ObjectPropertyType::Property,
                             place: temp.clone(),
                         }));
-                        followups.push((temp, AssignmentFollowup::TargetWithDefault {
-                            target: &with_default.binding,
-                            default_expr: Some(&with_default.init),
-                            loc: prop_loc,
-                        }));
+                        followups.push((
+                            temp,
+                            AssignmentFollowup::TargetWithDefault {
+                                target: &with_default.binding,
+                                default_expr: Some(&with_default.init),
+                                loc: prop_loc,
+                            },
+                        ));
                     }
                     // Nested destructuring targets
                     ast::AssignmentTargetMaybeDefault::ObjectAssignmentTarget(nested_obj) => {
@@ -803,7 +778,8 @@ fn lower_object_assignment_target(
                             property_type: ObjectPropertyType::Property,
                             place: temp.clone(),
                         }));
-                        followups.push((temp, AssignmentFollowup::SimpleTarget(&prop_prop.binding)));
+                        followups
+                            .push((temp, AssignmentFollowup::SimpleTarget(&prop_prop.binding)));
                     }
                 }
             }
@@ -819,9 +795,7 @@ fn lower_object_assignment_target(
             properties.push(ObjectPatternProperty::Spread(SpreadPattern { place }));
         } else {
             let temp = create_promoted_temporary(builder, rest_loc);
-            properties.push(ObjectPatternProperty::Spread(SpreadPattern {
-                place: temp.clone(),
-            }));
+            properties.push(ObjectPatternProperty::Spread(SpreadPattern { place: temp.clone() }));
             followups.push((temp, AssignmentFollowup::AssignmentTarget(&rest.target)));
         }
     }
@@ -832,10 +806,7 @@ fn lower_object_assignment_target(
         InstructionValue::Destructure(Destructure {
             lvalue: LValuePattern {
                 kind: InstructionKind::Reassign,
-                pattern: Pattern::Object(HirObjectPattern {
-                    properties,
-                    loc: target_loc,
-                }),
+                pattern: Pattern::Object(HirObjectPattern { properties, loc: target_loc }),
             },
             value,
             loc,
@@ -878,14 +849,19 @@ fn lower_array_assignment_target(
                         );
                         items.push(ArrayPatternElement::Place(place));
                     }
-                    ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
+                    ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(
+                        with_default,
+                    ) => {
                         let temp = create_promoted_temporary(builder, elem_loc);
                         items.push(ArrayPatternElement::Place(temp.clone()));
-                        followups.push((temp, AssignmentFollowup::TargetWithDefault {
-                            target: &with_default.binding,
-                            default_expr: Some(&with_default.init),
-                            loc: elem_loc,
-                        }));
+                        followups.push((
+                            temp,
+                            AssignmentFollowup::TargetWithDefault {
+                                target: &with_default.binding,
+                                default_expr: Some(&with_default.init),
+                                loc: elem_loc,
+                            },
+                        ));
                     }
                     ast::AssignmentTargetMaybeDefault::ObjectAssignmentTarget(nested_obj) => {
                         let temp = create_promoted_temporary(builder, elem_loc);
@@ -900,7 +876,8 @@ fn lower_array_assignment_target(
                     _ => {
                         let temp = create_promoted_temporary(builder, elem_loc);
                         items.push(ArrayPatternElement::Place(temp.clone()));
-                        followups.push((temp, AssignmentFollowup::SimpleTarget(target_maybe_default)));
+                        followups
+                            .push((temp, AssignmentFollowup::SimpleTarget(target_maybe_default)));
                     }
                 }
             }
@@ -916,9 +893,7 @@ fn lower_array_assignment_target(
             items.push(ArrayPatternElement::Spread(SpreadPattern { place }));
         } else {
             let temp = create_promoted_temporary(builder, rest_loc);
-            items.push(ArrayPatternElement::Spread(SpreadPattern {
-                place: temp.clone(),
-            }));
+            items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp.clone() }));
             followups.push((temp, AssignmentFollowup::AssignmentTarget(&rest.target)));
         }
     }
@@ -929,10 +904,7 @@ fn lower_array_assignment_target(
         InstructionValue::Destructure(Destructure {
             lvalue: LValuePattern {
                 kind: InstructionKind::Reassign,
-                pattern: Pattern::Array(HirArrayPattern {
-                    items,
-                    loc: target_loc,
-                }),
+                pattern: Pattern::Array(HirArrayPattern { items, loc: target_loc }),
             },
             value,
             loc,
@@ -1010,10 +982,8 @@ fn process_assignment_followups(
                 if let ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) =
                     target_maybe_default
                 {
-                    let lowerable = LowerableExpression::Identifier(
-                        ident.name.to_string(),
-                        ident.span,
-                    );
+                    let lowerable =
+                        LowerableExpression::Identifier(ident.name.to_string(), ident.span);
                     lower_assignment(builder, &lowerable, temp_place, loc)?;
                 } else {
                     // For other simple targets (member expressions), convert and assign
@@ -1055,10 +1025,7 @@ fn lower_conditional_default_assignment(
                 id: InstructionId(0),
                 lvalue,
                 value: InstructionValue::StoreLocal(StoreLocal {
-                    lvalue: LValue {
-                        place: temp.clone(),
-                        kind: InstructionKind::Const,
-                    },
+                    lvalue: LValue { place: temp.clone(), kind: InstructionKind::Const },
                     value: result.place,
                     loc,
                 }),
@@ -1081,10 +1048,7 @@ fn lower_conditional_default_assignment(
             id: InstructionId(0),
             lvalue,
             value: InstructionValue::StoreLocal(StoreLocal {
-                lvalue: LValue {
-                    place: temp.clone(),
-                    kind: InstructionKind::Const,
-                },
+                lvalue: LValue { place: temp.clone(), kind: InstructionKind::Const },
                 value: value.clone(),
                 loc,
             }),
@@ -1315,15 +1279,15 @@ pub fn lower(
         None,
     );
 
-    let body = builder.build()?;
-    let returns = create_temporary_place(&mut env.clone(), func_loc);
+    let (body, mut built_env) = builder.build_with_env()?;
+    let returns = create_temporary_place(&mut built_env, func_loc);
 
     Ok(HIRFunction {
         loc: func_loc,
         id,
         name_hint: None,
         fn_type,
-        env: env.clone(),
+        env: built_env,
         params,
         returns,
         context: Vec::new(),
@@ -1863,7 +1827,7 @@ fn collect_jsx_child_refs(child: &ast::JSXChild<'_>, refs: &mut Vec<(String, Sou
 /// # Errors
 /// Returns a `CompilerError` if recursive lowering fails.
 fn lower_function_to_value(
-    outer_builder: &HirBuilder,
+    outer_builder: &mut HirBuilder,
     func: &LowerableFunction<'_>,
     expression_type: FunctionExpressionType,
     loc: SourceLocation,
@@ -1924,15 +1888,21 @@ fn lower_function_to_value(
         None,
     );
 
-    let body = inner_builder.build()?;
-    let returns = create_temporary_place(&mut env.clone(), func_loc);
+    let (body, mut built_env) = inner_builder.build_with_env()?;
+    let returns = create_temporary_place(&mut built_env, func_loc);
+
+    // Advance the outer builder's environment counters past the inner function's
+    // allocations. This simulates the TS behavior where the inner function shares
+    // the same Environment object by reference, so the outer function's counters
+    // automatically stay ahead of all inner function IDs.
+    outer_builder.environment_mut().advance_counters_past(&built_env);
 
     let hir_function = HIRFunction {
         loc: func_loc,
         id: id.clone(),
         name_hint: None,
         fn_type: ReactFunctionType::Other,
-        env: env.clone(),
+        env: built_env,
         params,
         returns,
         context: context_places,
@@ -2785,8 +2755,7 @@ fn lower_statement_with_label(
                                 builder.declare_binding(&ident.name, binding_kind, decl_loc);
 
                             if builder.is_context_identifier(&ident.name) {
-                                let lvalue =
-                                    create_temporary_place(builder.environment_mut(), loc);
+                                let lvalue = create_temporary_place(builder.environment_mut(), loc);
                                 builder.push(Instruction {
                                     id: InstructionId(0),
                                     lvalue,
@@ -2800,8 +2769,7 @@ fn lower_statement_with_label(
                                     loc,
                                 });
                             } else {
-                                let lvalue =
-                                    create_temporary_place(builder.environment_mut(), loc);
+                                let lvalue = create_temporary_place(builder.environment_mut(), loc);
                                 builder.push(Instruction {
                                     id: InstructionId(0),
                                     lvalue,
@@ -2832,7 +2800,14 @@ fn lower_statement_with_label(
                     // No initializer: emit DeclareLocal or DeclareContext
                     // For destructuring without init, declare all leaf bindings
                     let decl_loc = span_to_loc(declaration.span);
-                    declare_all_bindings_in_pattern(builder, &declaration.id, binding_kind, kind, decl_loc, loc);
+                    declare_all_bindings_in_pattern(
+                        builder,
+                        &declaration.id,
+                        binding_kind,
+                        kind,
+                        decl_loc,
+                        loc,
+                    );
                 }
             }
         }
@@ -3346,15 +3321,41 @@ pub fn lower_expression(
         // =====================================================================
         // UpdateExpression — PrefixUpdate or PostfixUpdate
         // Port of BuildHIR.ts lines 2510-2627
+        //
+        // The lvalue must be the actual variable's Place (with real declarationId),
+        // not a temporary. This matches the TS `lowerIdentifierForAssignment()` which
+        // resolves the identifier binding to get binding.identifier.
         // =====================================================================
         LowerableExpression::UpdateExpression { operator, argument, prefix, span } => {
             let loc = span_to_loc(*span);
 
+            // Resolve the lvalue — the variable being updated
+            let lvalue_place = match argument.as_ref() {
+                LowerableExpression::Identifier(name, ident_span) => {
+                    let ident_loc = span_to_loc(*ident_span);
+                    match builder.resolve_identifier(name) {
+                        VariableBinding::Identifier { identifier, .. } => {
+                            crate::hir::Place {
+                                identifier,
+                                effect: crate::hir::Effect::Unknown,
+                                reactive: false,
+                                loc: ident_loc,
+                            }
+                        }
+                        VariableBinding::NonLocal(_) => {
+                            // Global variable update — use a temporary
+                            create_temporary_place(builder.environment_mut(), loc)
+                        }
+                    }
+                }
+                _ => {
+                    // Member expression or other complex target — use a temporary
+                    create_temporary_place(builder.environment_mut(), loc)
+                }
+            };
+
             // Lower the argument to get the current value
             let arg_result = lower_expression(builder, argument)?;
-
-            // Create an lvalue place for the assignment
-            let lvalue_place = create_temporary_place(builder.environment_mut(), loc);
 
             if *prefix {
                 lower_value_to_temporary(

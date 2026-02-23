@@ -334,6 +334,20 @@ impl HirBuilder {
         Ok(Hir { entry: self.entry, blocks: self.completed })
     }
 
+    /// Finish building the HIR and return both the CFG and the updated environment.
+    ///
+    /// Use this instead of `build()` when you need the environment with its
+    /// advanced ID counters (e.g., to store in the resulting `HIRFunction`).
+    ///
+    /// # Errors
+    /// Returns an error if the builder encountered errors during construction.
+    pub fn build_with_env(self) -> Result<(Hir, Environment), CompilerError> {
+        if self.errors.has_any_errors() {
+            return Err(self.errors);
+        }
+        Ok((Hir { entry: self.entry, blocks: self.completed }, self.env))
+    }
+
     /// Terminate the current block with the given terminal, and start a new block.
     ///
     /// Returns the ID of the terminated block.
