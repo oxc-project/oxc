@@ -140,7 +140,12 @@ impl SsaBuilder {
             return old_place.identifier.clone();
         }
 
-        let unsealed = self.unsealed_preds.get(&block_id).copied().unwrap_or(0);
+        // Default to block.preds.len() for blocks not yet registered in unsealed_preds,
+        // meaning all predecessors are still unsealed. This prevents infinite recursion
+        // when get_id_at traverses into unvisited blocks that are part of a cycle (e.g.
+        // while loop back-edges). The TypeScript version avoids this because Map iteration
+        // order guarantees blocks are visited in creation order; FxHashMap does not.
+        let unsealed = self.unsealed_preds.get(&block_id).copied().unwrap_or(block.preds.len());
         if unsealed > 0 {
             // Haven't visited all predecessors; place an incomplete phi
             let new_id = self.make_id(&old_place.identifier);
@@ -229,7 +234,10 @@ fn enter_ssa_impl(
     root_entry: BlockId,
 ) -> Result<(), CompilerError> {
     let mut visited_blocks: FxHashSet<BlockId> = FxHashSet::default();
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    let mut block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    // Sort blocks by BlockId to ensure deterministic ordering matching insertion order
+    // (TypeScript Map preserves insertion order; FxHashMap does not)
+    block_ids.sort_by_key(|id| id.0);
 
     for block_id in block_ids {
         if !visited_blocks.insert(block_id) {
