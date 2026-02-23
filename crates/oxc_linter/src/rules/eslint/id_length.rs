@@ -65,6 +65,9 @@ pub struct IdLengthConfig {
     max: u64,
     /// The minimum number of graphemes required in an identifier.
     min: u64,
+    /// Whether to check TypeScript generic type parameter names.
+    /// Defaults to `true`.
+    check_generic: bool,
     /// When set to `"never"`, property names are not checked for length.
     /// When set to `"always"` (default), property names are checked just like other identifiers.
     properties: PropertyKind,
@@ -77,6 +80,7 @@ impl Default for IdLengthConfig {
             exceptions: vec![],
             max: DEFAULT_MAX_LENGTH,
             min: DEFAULT_MIN_LENGTH,
+            check_generic: true,
             properties: PropertyKind::default(),
         }
     }
@@ -193,6 +197,10 @@ impl Rule for IdLength {
                 .and_then(|map| map.get("min"))
                 .and_then(Value::as_u64)
                 .unwrap_or(DEFAULT_MIN_LENGTH),
+            check_generic: object
+                .and_then(|map| map.get("checkGeneric"))
+                .and_then(Value::as_bool)
+                .unwrap_or(true),
             properties: object
                 .and_then(|map| map.get("properties"))
                 .and_then(Value::as_str)
@@ -245,6 +253,9 @@ impl IdLength {
         }
 
         let parent_node = ctx.nodes().parent_node(node.id());
+        if !self.check_generic && matches!(parent_node.kind(), AstKind::TSTypeParameter(_)) {
+            return;
+        }
 
         match parent_node.kind() {
             AstKind::ImportSpecifier(import_specifier) => {
@@ -595,6 +606,10 @@ fn test() {
         ("class Foo { #abc() {} }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         ("class Foo { abc = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         ("class Foo { #abc = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
+        (
+            "export type Example<T> = T extends Array<infer U> ? U : never;",
+            Some(serde_json::json!([{ "min": 2, "checkGeneric": false }])),
+        ),
         ("var 𠮟 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var 葛󠄀 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var a = { 𐌘: 1 };", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
@@ -713,6 +728,10 @@ fn test() {
         ("class Foo { #abcdefg() {} }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         ("class Foo { abcdefg = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         ("class Foo { #abcdefg = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
+        (
+            "export type Example<T> = T extends Array<infer U> ? U : never;",
+            Some(serde_json::json!([{ "min": 2, "checkGeneric": true }])),
+        ),
         ("var 𠮟 = 2", None),              // { "ecmaVersion": 6 },
         ("var 葛󠄀 = 2", None),              // { "ecmaVersion": 6 },
         ("var myObj = { 𐌘: 1 };", None),   // { "ecmaVersion": 6, },
