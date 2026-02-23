@@ -130,16 +130,16 @@ pub struct HirBuilder {
 impl HirBuilder {
     /// Create a new `HirBuilder` with the given environment and context identifiers.
     pub fn new(
-        env: Environment,
+        mut env: Environment,
         entry_block_kind: Option<BlockKind>,
         context_identifiers: ContextIdentifiers,
     ) -> Self {
-        let entry = env.next_block_id_value();
-        let current = new_block(BlockId(entry), entry_block_kind.unwrap_or(BlockKind::Block));
+        let entry = env.next_block_id();
+        let current = new_block(entry, entry_block_kind.unwrap_or(BlockKind::Block));
         Self {
             completed: FxHashMap::default(),
             current,
-            entry: BlockId(entry),
+            entry,
             scopes: Vec::new(),
             env,
             exception_handler_stack: Vec::new(),
