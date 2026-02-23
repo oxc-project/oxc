@@ -54,9 +54,10 @@ declare_oxc_lint!(
     ///
     /// ::: warning
     /// Caveat: This lint rule will report on constructors whose sole purpose
-    /// is to change visibility of a parent constructor. This is because the rule
-    /// does not have type information to determine if the parent constructor is
-    /// `public`, `protected`, or `private`.
+    /// is to change the visibility of a parent constructor, or to expose parameter
+    /// properties with modifiers. This is because the rule does not have type
+    /// information to determine if the parent constructor is `public`, `protected`,
+    /// or `private`.
     /// :::
     ///
     /// ### Examples
