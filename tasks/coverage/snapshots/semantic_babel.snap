@@ -2,7 +2,7 @@ commit: ad32683b
 
 semantic_babel Summary:
 AST Parsed     : 2224/2224 (100.00%)
-Positive Passed: 2025/2224 (91.05%)
+Positive Passed: 2024/2224 (91.01%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -1080,6 +1080,9 @@ rebuilt        : ScopeId(0): ["foo", "fooBar"]
 Symbol reference IDs mismatch for "fooBar":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts
+Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-class/input.ts
 Bindings mismatch:

@@ -101,6 +101,7 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
 
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     check_ambient_module_export_modifier(decl, ctx);
+    check_nested_ambient_module_declaration(decl, ctx);
     check_ts_module_or_global_declaration(decl.span, ctx);
     check_ts_export_assignment_in_module_decl(decl, ctx);
 }
@@ -149,6 +150,84 @@ fn check_ambient_module_export_modifier<'a>(
             6,
         )));
     }
+}
+
+fn check_nested_ambient_module_declaration<'a>(
+    decl: &TSModuleDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    let TSModuleDeclarationName::StringLiteral(name) = &decl.id else {
+        return;
+    };
+
+    let Some(parent_id) = first_non_export_parent_id(ctx) else {
+        return;
+    };
+
+    if is_external_module_augmentation(parent_id, ctx) {
+        return;
+    }
+
+    if matches!(ctx.nodes.kind(parent_id), AstKind::Program(_)) && is_global_source_file(ctx) {
+        return;
+    }
+
+    ctx.error(diagnostics::ambient_modules_cannot_be_nested(name.span));
+}
+
+fn first_non_export_parent_id(ctx: &SemanticBuilder<'_>) -> Option<oxc_syntax::node::NodeId> {
+    ctx.nodes
+        .ancestor_ids(ctx.current_node_id)
+        .find(|&id| !matches!(ctx.nodes.kind(id), AstKind::ExportNamedDeclaration(_)))
+}
+
+fn is_external_module_augmentation(
+    parent_id: oxc_syntax::node::NodeId,
+    ctx: &SemanticBuilder<'_>,
+) -> bool {
+    match ctx.nodes.kind(parent_id) {
+        AstKind::Program(_) => is_external_module_file(ctx),
+        AstKind::TSModuleBlock(_) => {
+            let parent_module = ctx.nodes.parent_id(parent_id);
+            let is_parent_ambient_module = matches!(
+                ctx.nodes.kind(parent_module),
+                AstKind::TSModuleDeclaration(TSModuleDeclaration {
+                    id: TSModuleDeclarationName::StringLiteral(_),
+                    ..
+                }) | AstKind::TSGlobalDeclaration(_)
+            );
+            if !is_parent_ambient_module {
+                return false;
+            }
+
+            let ancestor = ctx.nodes.parent_id(parent_module);
+            matches!(ctx.nodes.kind(ancestor), AstKind::Program(_)) && is_global_source_file(ctx)
+        }
+        _ => false,
+    }
+}
+
+fn is_global_source_file(ctx: &SemanticBuilder<'_>) -> bool {
+    !is_external_module_file(ctx)
+}
+
+fn is_external_module_file(ctx: &SemanticBuilder<'_>) -> bool {
+    if ctx.source_type.is_module() || ctx.source_type.is_commonjs() {
+        return true;
+    }
+
+    let program = ctx.nodes.program();
+    program.body.iter().any(|stmt| {
+        matches!(
+            stmt,
+            Statement::ImportDeclaration(_)
+                | Statement::ExportAllDeclaration(_)
+                | Statement::ExportDefaultDeclaration(_)
+                | Statement::ExportNamedDeclaration(_)
+                | Statement::TSExportAssignment(_)
+                | Statement::TSNamespaceExportDeclaration(_)
+        )
+    })
 }
 
 pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {

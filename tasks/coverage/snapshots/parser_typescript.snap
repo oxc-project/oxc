@@ -8352,6 +8352,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ 
    ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:9:20]
+  8 │ 
+  9 │     declare module "ambient" {
+    ·                    ─────────
+ 10 │ 
+    ╰────
+
   × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext.ts:9:5]
   8 │     
@@ -8411,6 +8419,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  8 │ 
    ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:9:20]
+  8 │ 
+  9 │     declare module "ambient" {
+    ·                    ─────────
+ 10 │ 
+    ╰────
+
   × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext2.ts:9:5]
   8 │     
@@ -8453,6 +8469,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ─────────────────
  9 │ 
    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:10:24]
+  9 │ 
+ 10 │         declare module "ambient" {
+    ·                        ─────────
+ 11 │ 
+    ╰────
 
   × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
     ╭─[typescript/tests/cases/compiler/moduleElementsInWrongContext3.ts:10:9]
@@ -9943,6 +9967,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  23 │         export function f1();
     ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:22:27]
+ 21 │ 
+ 22 │     export declare module "m1_M3_public" {
+    ·                           ──────────────
+ 23 │         export function f1();
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:30:20]
+ 29 │ 
+ 30 │     declare module "m1_M4_private" {
+    ·                    ───────────────
+ 31 │         export function f1();
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:133:24]
+ 132 │     namespace m2 {
+ 133 │         declare module "abc" {
+     ·                        ─────
+ 134 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:138:16]
+ 137 │     namespace m2 {
+ 138 │         module "abc2" {
+     ·                ──────
+ 139 │         }
+     ╰────
+
   × TS(1029): 'export' modifier must precede 'declare' modifier.
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
@@ -9968,12 +10024,44 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  23 │         export function f1();
     ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:22:27]
+ 21 │ 
+ 22 │     export declare module "m1_M3_public" {
+    ·                           ──────────────
+ 23 │         export function f1();
+    ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:30:20]
+ 29 │ 
+ 30 │     declare module "m1_M4_private" {
+    ·                    ───────────────
+ 31 │         export function f1();
+    ╰────
+
   × TS(2668): 'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:106:5]
  105 │ 
  106 │     export declare module "m2_M3_public" {
      ·     ──────
  107 │         export function f1();
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:106:27]
+ 105 │ 
+ 106 │     export declare module "m2_M3_public" {
+     ·                           ──────────────
+ 107 │         export function f1();
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:114:20]
+ 113 │ 
+ 114 │     declare module "m2_M4_private" {
+     ·                    ───────────────
+ 115 │         export function f1();
      ╰────
 
   × TS(2668): 'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.
@@ -9998,6 +10086,54 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  255 │ export declare module "use_glo_M1_public" {
      · ──────
  256 │     import use_glo_M1_public = glo_M1_public;
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:314:24]
+ 313 │     namespace m2 {
+ 314 │         declare module "abc" {
+     ·                        ─────
+ 315 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:319:16]
+ 318 │     namespace m2 {
+ 319 │         module "abc2" {
+     ·                ──────
+ 320 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:322:12]
+ 321 │     }
+ 322 │     module "abc3" {
+     ·            ──────
+ 323 │     }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:328:24]
+ 327 │     namespace m2 {
+ 328 │         declare module "abc" {
+     ·                        ─────
+ 329 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:333:16]
+ 332 │     namespace m2 {
+ 333 │         module "abc2" {
+     ·                ──────
+ 334 │         }
+     ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:336:12]
+ 335 │     }
+ 336 │     module "abc3" {
+     ·            ──────
+ 337 │     }
      ╰────
 
   × Unexpected token
@@ -12858,6 +12994,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  42 │     }
     ╰────
 
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:47:20]
+ 46 │ namespace M2 {
+ 47 │     declare module 'nope' { }
+    ·                    ──────
+ 48 │ }
+    ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
     ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:57:5]
  56 │     export var q;
@@ -12872,6 +13016,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ namespace M {
  2 │     export declare module "M" { }
    ·     ──────
+ 3 │ }
+   ╰────
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+   ╭─[typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbient.ts:2:27]
+ 1 │ namespace M {
+ 2 │     export declare module "M" { }
+   ·                           ───
  3 │ }
    ╰────
 

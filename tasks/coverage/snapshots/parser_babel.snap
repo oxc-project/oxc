@@ -2,7 +2,7 @@ commit: ad32683b
 
 parser_babel Summary:
 AST Parsed     : 2224/2224 (100.00%)
-Positive Passed: 2211/2224 (99.42%)
+Positive Passed: 2210/2224 (99.37%)
 Negative Passed: 1675/1689 (99.17%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
@@ -264,6 +264,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts:1:25]
  1 │ declare function f([]?, {})
    ·                         ──
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts
+
+  × TS(2435): Ambient modules cannot be nested in other modules or namespaces.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts:3:10]
+ 2 │   import type { JSONSchema7 } from 'json-schema';
+ 3 │   module 'test/sub2' {
+   ·          ───────────
+ 4 │     export { JSONSchema7 }
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
