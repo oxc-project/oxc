@@ -329,6 +329,15 @@ pub fn global_scope_augmentation_should_have_declare_modifier(span: Span) -> Oxc
 }
 
 #[cold]
+pub fn export_modifier_cannot_be_applied_to_ambient_modules(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "2668",
+        "'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.",
+    )
+    .with_label(span)
+}
+
+#[cold]
 pub fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Enum member must have initializer.").with_label(span)
 }

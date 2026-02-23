@@ -3,7 +3,7 @@ commit: ad04bf74
 parser_typescript Summary:
 AST Parsed     : 9831/9834 (99.97%)
 Positive Passed: 9820/9834 (99.86%)
-Negative Passed: 1527/2578 (59.23%)
+Negative Passed: 1530/2578 (59.35%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -756,8 +756,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidat
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/primitiveMembers.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privacyGloImportParseErrors.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privacyTopLevelAmbientExternalModuleImportWithExport.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privacyTopLevelAmbientExternalModuleImportWithoutExport.ts
@@ -969,10 +967,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/voidAsNonAmb
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/widenedTypes.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns_merging3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbient.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbientExternalModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction3_es2017.ts
 
@@ -9941,6 +9935,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·           ──────
    ╰────
 
+  × TS(2668): 'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.
+    ╭─[typescript/tests/cases/compiler/privacyGloImportParseErrors.ts:22:5]
+ 21 │ 
+ 22 │     export declare module "m1_M3_public" {
+    ·     ──────
+ 23 │         export function f1();
+    ╰────
+
   × TS(1029): 'export' modifier must precede 'declare' modifier.
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
@@ -9957,6 +9959,46 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  327 │     namespace m2 {
      ╰────
   help: Only 'declare' modifier is allowed here.
+
+  × TS(2668): 'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.
+    ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:22:5]
+ 21 │ 
+ 22 │     export declare module "m1_M3_public" {
+    ·     ──────
+ 23 │         export function f1();
+    ╰────
+
+  × TS(2668): 'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:106:5]
+ 105 │ 
+ 106 │     export declare module "m2_M3_public" {
+     ·     ──────
+ 107 │         export function f1();
+     ╰────
+
+  × TS(2668): 'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:180:1]
+ 179 │ 
+ 180 │ export declare module "glo_M2_public" {
+     · ──────
+ 181 │     export function f1();
+     ╰────
+
+  × TS(2668): 'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:198:1]
+ 197 │ 
+ 198 │ export declare module "glo_M4_private" {
+     · ──────
+ 199 │     export function f1();
+     ╰────
+
+  × TS(2668): 'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.
+     ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:255:1]
+ 254 │ 
+ 255 │ export declare module "use_glo_M1_public" {
+     · ──────
+ 256 │     import use_glo_M1_public = glo_M1_public;
+     ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/privateNameJsx.tsx:4:22]
@@ -12824,6 +12866,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  58 │ }
     ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × TS(2668): 'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.
+   ╭─[typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbient.ts:2:5]
+ 1 │ namespace M {
+ 2 │     export declare module "M" { }
+   ·     ──────
+ 3 │ }
+   ╰────
+
+  × TS(2668): 'export' modifier cannot be applied to ambient modules and module augmentations since they are always visible.
+   ╭─[typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbientExternalModule.ts:1:1]
+ 1 │ export declare module "M" { }
+   · ──────
+   ╰────
 
   × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:26]
