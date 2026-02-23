@@ -12,7 +12,11 @@ pub fn run_rules(
 ) -> CliRunResult {
     // Build the set of enabled builtin rule names from the resolved config.
     let enabled: FxHashSet<&str> =
-        lint_config.rules().iter().map(|(rule, _)| rule.name()).collect();
+        lint_config.rules()
+        .iter()
+        .filter(|rule, _)| self.options.type_aware || !rule.is_tsgolint_rule())
+        .map(|(rule, _)| rule.name())
+        .collect();
 
     if let Some(output) = output_formatter.all_rules(enabled) {
         print_and_flush_stdout(stdout, &output);

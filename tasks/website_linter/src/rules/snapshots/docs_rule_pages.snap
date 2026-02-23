@@ -988,7 +988,7 @@ oxlint --deny promise/no-callback-in-promise --promise-plugin
 ---
 title: "typescript/no-floating-promises"
 category: "Correctness"
-default: true
+default: false
 type_aware: true
 fix: "fixable_suggestion"
 ---
