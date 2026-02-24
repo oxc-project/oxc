@@ -675,7 +675,7 @@ function mergeCfgVisitFns(visitProps: VisitProp[]): CfgVisitFn {
       debugAssertIsNonNull(visitProps[i].fn);
       visitFns.push(visitProps[i].fn!);
     }
-    mergedFn = merger(...visitFns as CfgVisitFn[]);
+    mergedFn = merger(...(visitFns as CfgVisitFn[]));
 
     visitFns.length = 0;
   }
