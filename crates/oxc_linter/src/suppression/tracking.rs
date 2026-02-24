@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use crate::read_to_string;
+use crate::{Message, read_to_string};
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 #[serde(default)]
@@ -32,12 +32,20 @@ impl std::fmt::Display for Filename {
 #[serde(default)]
 pub struct RuleName(String);
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize, Hash, Eq, PartialEq)]
-pub struct SuppressionId(pub Filename, pub RuleName);
+// TODO: Try instead of From
+impl From<&Message> for RuleName {
+    fn from(val: &Message) -> Self {
+        let a = val.error.as_ref();
 
-impl SuppressionId {
-    pub fn new(path: &Path, plugin_name: &str, rule_name: &str) -> Self {
-        Self(Filename::new(path), RuleName::new(plugin_name, rule_name))
+        let Some(ref scope) = a.code.scope else {
+            return Self::new("plugin_name", "rule_name");
+        };
+
+        let Some(ref number) = a.code.number else {
+            return Self::new("plugin_name", "rule_name");
+        };
+
+        RuleName::new(scope, number)
     }
 }
 

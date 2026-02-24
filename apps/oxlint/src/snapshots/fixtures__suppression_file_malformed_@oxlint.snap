@@ -3,14 +3,14 @@ source: apps/oxlint/src/tester.rs
 ---
 ########## 
 arguments: 
-working directory: fixtures/suppression_report_only_from_one_file
+working directory: fixtures/suppression_file_malformed
 ----------
 
-  x The number of 'eslint/no-console' errors in folder_a/test.js increased from 1 to 3.
+  x 3 new 'eslint/no-console' errors appeared in test.js.
   help: Update `oxlint-suppressions.json` file running `oxlint --suppress--all`
 
   x eslint(no-console): Unexpected console statement.
-   ,-[folder_a/test.js:1:1]
+   ,-[test.js:1:1]
  1 | console.log();
    : ^^^^^^^^^^^
  2 | console.log();
@@ -18,7 +18,7 @@ working directory: fixtures/suppression_report_only_from_one_file
   help: Delete this console statement.
 
   x eslint(no-console): Unexpected console statement.
-   ,-[folder_a/test.js:2:1]
+   ,-[test.js:2:1]
  1 | console.log();
  2 | console.log();
    : ^^^^^^^^^^^
@@ -27,7 +27,7 @@ working directory: fixtures/suppression_report_only_from_one_file
   help: Delete this console statement.
 
   x eslint(no-console): Unexpected console statement.
-   ,-[folder_a/test.js:3:1]
+   ,-[test.js:3:1]
  2 | console.log();
  3 | console.log();
    : ^^^^^^^^^^^
@@ -35,8 +35,9 @@ working directory: fixtures/suppression_report_only_from_one_file
   help: Delete this console statement.
 
 Found 0 warnings and 4 errors.
-'oxlint-suppressions.json' has been updated.
-Finished in <variable>ms on 2 files with 56 rules using 1 threads.
+Failed to parse oxlint config <cwd>/fixtures/suppression_file_malformed/oxlint-suppressions.json.
+trailing comma at line 7 column 7
+Finished in <variable>ms on 1 file with 56 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

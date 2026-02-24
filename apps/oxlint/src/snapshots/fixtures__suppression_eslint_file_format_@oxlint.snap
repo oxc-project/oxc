@@ -35,6 +35,7 @@ working directory: fixtures/suppression_eslint_file_format
   help: Delete this console statement.
 
 Found 0 warnings and 4 errors.
+'oxlint-suppressions.json' has been updated.
 Finished in <variable>ms on 1 file with 56 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
