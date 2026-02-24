@@ -1701,6 +1701,9 @@ fn collect_expression_refs(expr: &ast::Expression<'_>, refs: &mut Vec<(String, S
         ast::Expression::TSNonNullExpression(ts_nn) => {
             collect_expression_refs(&ts_nn.expression, refs);
         }
+        ast::Expression::TSInstantiationExpression(ts_inst) => {
+            collect_expression_refs(&ts_inst.expression, refs);
+        }
         ast::Expression::TSTypeAssertion(ts_ta) => {
             collect_expression_refs(&ts_ta.expression, refs);
         }
@@ -4511,10 +4514,11 @@ fn lower_jsx_child(
             if trimmed.is_empty() {
                 return Ok(None);
             }
+            let decoded = decode_jsx_entities(&trimmed);
             let loc = span_to_loc(*span);
             let result = lower_value_to_temporary(
                 builder,
-                InstructionValue::JsxText(crate::hir::JsxTextValue { value: trimmed, loc }),
+                InstructionValue::JsxText(crate::hir::JsxTextValue { value: decoded, loc }),
                 loc,
             )?;
             Ok(Some(result.place))
@@ -4571,7 +4575,9 @@ fn trim_jsx_text(text: &str) -> String {
         // (e.g., " {expr}" has a leading space JSX text node).
         let line = lines[0];
         if line.chars().all(|c| c.is_whitespace()) {
-            return String::new();
+            // Single-line all-whitespace text is significant (e.g., space between elements).
+            // Preserve as a single space, matching React/Babel behavior.
+            return " ".to_string();
         }
         let mut result = String::new();
         let mut last_was_whitespace = false;
@@ -4626,6 +4632,74 @@ fn trim_jsx_text(text: &str) -> String {
     }
 
     trimmed_lines.join(" ")
+}
+
+/// Decode HTML/XML entities in JSX text (e.g. `&amp;` → `&`, `&#65;` → `A`, `&#x41;` → `A`).
+fn decode_jsx_entities(text: &str) -> String {
+    if !text.contains('&') {
+        return text.to_string();
+    }
+    let mut result = String::with_capacity(text.len());
+    let mut chars = text.chars().peekable();
+    while let Some(ch) = chars.next() {
+        if ch != '&' {
+            result.push(ch);
+            continue;
+        }
+        // Collect entity name up to `;` (max 10 chars to avoid runaway)
+        let mut entity = String::new();
+        let mut found_semi = false;
+        let mut consumed = Vec::new();
+        for _ in 0..10 {
+            match chars.peek() {
+                Some(&';') => {
+                    chars.next();
+                    found_semi = true;
+                    break;
+                }
+                Some(&c) if c.is_ascii_alphanumeric() || c == '#' => {
+                    consumed.push(c);
+                    entity.push(c);
+                    chars.next();
+                }
+                _ => break,
+            }
+        }
+        if !found_semi || entity.is_empty() {
+            // Not a valid entity, emit literally
+            result.push('&');
+            for c in consumed {
+                result.push(c);
+            }
+            continue;
+        }
+        // Try to decode the entity
+        if let Some(decoded) = decode_entity(&entity) {
+            result.push(decoded);
+        } else {
+            // Unknown entity, emit literally
+            result.push('&');
+            result.push_str(&entity);
+            result.push(';');
+        }
+    }
+    result
+}
+
+fn decode_entity(entity: &str) -> Option<char> {
+    if entity.starts_with('#') {
+        // Numeric entity
+        let num_str = &entity[1..];
+        let code = if num_str.starts_with('x') || num_str.starts_with('X') {
+            u32::from_str_radix(&num_str[1..], 16).ok()?
+        } else {
+            num_str.parse::<u32>().ok()?
+        };
+        char::from_u32(code)
+    } else {
+        // Named entity — use the XML_ENTITIES map from oxc_syntax
+        oxc_syntax::xml_entities::XML_ENTITIES.get(entity).copied()
+    }
 }
 
 // =====================================================================================

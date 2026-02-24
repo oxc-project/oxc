@@ -1532,10 +1532,12 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
                 Some(children) => {
                     let children_str: Vec<String> =
                         children.iter().map(|c| codegen_jsx_child(cx, c)).collect();
-                    if children_str.len() > 1 {
-                        // Multi-child: emit with newlines matching reference compiler.
-                        // Expression containers ({expr}) get their own lines, but JSX text
-                        // nodes stay adjacent to their neighbors (no extra whitespace).
+                    // Check if any child is a JSX text node (not wrapped in { })
+                    let has_text_child = children_str.iter().any(|c| {
+                        !c.starts_with('{') && !c.starts_with('<')
+                    });
+                    if children_str.len() > 1 && !has_text_child {
+                        // Multi-child, all expression containers/elements: emit with newlines
                         let joined = join_jsx_children_multiline(&children_str);
                         format!("<{tag_str}{attrs_str}>\n{joined}\n</{tag_str}>")
                     } else {

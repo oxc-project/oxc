@@ -119,6 +119,15 @@ pub fn run_pipeline(
     // 20. PruneMaybeThrows (second pass)
     crate::optimization::prune_maybe_throws::prune_maybe_throws(func);
 
+    // 20b. Ensure blocks are in RPO order for InferMutationAliasingRanges.
+    // The TS reference maintains RPO order by calling reversePostorderBlocks in
+    // pruneMaybeThrows and constantPropagation. Without RPO order, the alias graph
+    // index values computed in Phase 1 of InferMutationAliasingRanges are incorrect,
+    // leading to inverted mutable ranges (start > end) for blocks processed out of order.
+    crate::hir::hir_builder::reverse_postorder_blocks(&mut func.body);
+    crate::hir::hir_builder::mark_instruction_ids(&mut func.body);
+    crate::hir::hir_builder::mark_predecessors(&mut func.body);
+
     // 21. InferMutationAliasingRanges
     let range_opts = InferRangesOptions { is_function_expression: false };
     crate::inference::infer_mutation_aliasing_ranges::infer_mutation_aliasing_ranges(

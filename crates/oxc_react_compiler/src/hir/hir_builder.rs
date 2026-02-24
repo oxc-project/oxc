@@ -15,7 +15,7 @@ use super::{
     hir_types::{
         BasicBlock, BlockId, BlockKind, BlockMap, DeclarationId, Effect, GotoVariant, Hir,
         Identifier, IdentifierId, IdentifierName, Instruction, InstructionId, MutableRange,
-        NonLocalBinding, Place, Terminal,
+        NonLocalBinding, Place, Terminal, UnreachableTerminal,
     },
     types::make_type,
 };
@@ -652,6 +652,98 @@ pub fn mark_predecessors(func: &mut Hir) {
             block.preds.insert(pred_id);
         }
     }
+}
+
+/// Reorder blocks in reverse postorder, removing unreachable blocks.
+/// Port of `reversePostorderBlocks` from HIRBuilder.ts.
+///
+/// The TS reference calls this in various passes (pruneMaybeThrows, constantPropagation)
+/// to keep blocks in RPO order. Passes like `infer_mutation_aliasing_ranges` depend on
+/// RPO iteration order for correct mutable range computation.
+pub fn reverse_postorder_blocks(body: &mut Hir) {
+    enum Phase {
+        PreVisit,
+        PostVisit,
+    }
+
+    let mut visited: FxHashSet<BlockId> = FxHashSet::default();
+    let mut used: FxHashSet<BlockId> = FxHashSet::default();
+    let mut used_fallthroughs: FxHashSet<BlockId> = FxHashSet::default();
+    let mut postorder: Vec<BlockId> = Vec::new();
+    let mut stack: Vec<(BlockId, bool, Phase)> = Vec::new();
+    stack.push((body.entry, true, Phase::PreVisit));
+
+    while let Some((block_id, is_used, phase)) = stack.pop() {
+        match phase {
+            Phase::PreVisit => {
+                let was_used = used.contains(&block_id);
+                let was_visited = visited.contains(&block_id);
+                visited.insert(block_id);
+                if is_used {
+                    used.insert(block_id);
+                }
+                if was_visited && (was_used || !is_used) {
+                    continue;
+                }
+
+                let Some(block) = body.blocks.get(&block_id) else {
+                    continue;
+                };
+
+                let successors: Vec<BlockId> =
+                    each_terminal_successor(&block.terminal).into_iter().rev().collect();
+                let fallthrough = block.terminal.fallthrough();
+
+                if !was_visited {
+                    stack.push((block_id, is_used, Phase::PostVisit));
+                }
+
+                for &successor in &successors {
+                    stack.push((successor, is_used, Phase::PreVisit));
+                }
+
+                if let Some(ft) = fallthrough {
+                    if is_used {
+                        used_fallthroughs.insert(ft);
+                    }
+                    stack.push((ft, false, Phase::PreVisit));
+                }
+            }
+            Phase::PostVisit => {
+                postorder.push(block_id);
+            }
+        }
+    }
+
+    postorder.reverse();
+
+    let mut new_blocks: BlockMap = BlockMap::default();
+    for block_id in &postorder {
+        if used.contains(block_id) {
+            if let Some(block) = body.blocks.shift_remove(block_id) {
+                new_blocks.insert(*block_id, block);
+            }
+        } else if used_fallthroughs.contains(block_id)
+            && let Some(block) = body.blocks.shift_remove(block_id)
+        {
+            new_blocks.insert(
+                *block_id,
+                BasicBlock {
+                    id: block.id,
+                    kind: block.kind,
+                    instructions: Vec::new(),
+                    phis: block.phis,
+                    preds: block.preds,
+                    terminal: Terminal::Unreachable(UnreachableTerminal {
+                        id: block.terminal.id(),
+                        loc: block.terminal.loc(),
+                    }),
+                },
+            );
+        }
+    }
+
+    body.blocks = new_blocks;
 }
 
 /// Remove unnecessary try/catch terminals where the handler is unreachable.

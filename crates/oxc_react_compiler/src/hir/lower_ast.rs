@@ -269,24 +269,6 @@ pub fn convert_expression<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpress
         }
 
         // =====================================================================
-        // TSAsExpression — TypeCastExpression with 'as' kind
-        // =====================================================================
-        ast::Expression::TSAsExpression(ts_as) => LowerableExpression::TypeCastExpression {
-            expression: Box::new(convert_expression(&ts_as.expression)),
-            annotation_kind: crate::hir::TypeAnnotationKind::As,
-            span: ts_as.span,
-        },
-
-        // =====================================================================
-        // TSSatisfiesExpression — TypeCastExpression with 'satisfies' kind
-        // =====================================================================
-        ast::Expression::TSSatisfiesExpression(ts_sat) => LowerableExpression::TypeCastExpression {
-            expression: Box::new(convert_expression(&ts_sat.expression)),
-            annotation_kind: crate::hir::TypeAnnotationKind::Satisfies,
-            span: ts_sat.span,
-        },
-
-        // =====================================================================
         // MetaProperty (e.g., import.meta, new.target)
         // =====================================================================
         ast::Expression::MetaProperty(meta) => LowerableExpression::MetaProperty {
@@ -309,6 +291,19 @@ pub fn convert_expression<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpress
         // Pass-through for parenthesized and TS assertion expressions
         ast::Expression::ParenthesizedExpression(paren) => convert_expression(&paren.expression),
         ast::Expression::TSNonNullExpression(ts_nn) => convert_expression(&ts_nn.expression),
+        ast::Expression::TSInstantiationExpression(ts_inst) => {
+            convert_expression(&ts_inst.expression)
+        }
+        ast::Expression::TSAsExpression(ts_as) => LowerableExpression::TypeCastExpression {
+            expression: Box::new(convert_expression(&ts_as.expression)),
+            annotation_kind: crate::hir::TypeAnnotationKind::As,
+            span: ts_as.span,
+        },
+        ast::Expression::TSSatisfiesExpression(ts_sat) => LowerableExpression::TypeCastExpression {
+            expression: Box::new(convert_expression(&ts_sat.expression)),
+            annotation_kind: crate::hir::TypeAnnotationKind::Satisfies,
+            span: ts_sat.span,
+        },
         ast::Expression::TSTypeAssertion(ts_ta) => LowerableExpression::TypeCastExpression {
             expression: Box::new(convert_expression(&ts_ta.expression)),
             annotation_kind: crate::hir::TypeAnnotationKind::Cast,

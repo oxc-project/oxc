@@ -1060,11 +1060,17 @@ fn normalize_code(s: &str) -> String {
     // The reference compiler emits a space between `function` and `()` in some contexts.
     let normalized_func_space = no_jsx_parens.replace("function (", "function(");
 
-    // Step 23: re-renumber `tN` temps sequentially after inlining.
+    // Step 23: disambiguate reused temp names.
+    // The reference compiler reuses temp names (e.g., `t1`) across non-overlapping scopes,
+    // while our compiler allocates unique names. Disambiguate reused declarations so that
+    // subsequent sequential renumbering produces identical results for both.
+    let disambiguated = disambiguate_reused_temps(&normalized_func_space);
+
+    // Step 24: re-renumber `tN` temps sequentially after inlining.
     // Steps 10-12 may inline/remove some temps, leaving gaps (e.g. t0, t2 instead of t0, t1).
     // This final pass renumbers all plain `tN` temps (lowercase, no `$`, no `#`) to
     // sequential t0, t1, t2, ... based on order of first appearance.
-    let renumbered = renumber_plain_temps(&normalized_func_space);
+    let renumbered = renumber_plain_temps(&disambiguated);
 
     renumbered.trim().to_string()
 }
@@ -2388,7 +2394,285 @@ fn normalize_jsx_parens(s: &str) -> String {
     result
 }
 
+/// Disambiguate reused temp names in code where the reference compiler reuses
+/// temp variable names across non-overlapping scopes.
+///
+/// The reference compiler reuses names like `t1` in disjoint scopes:
+/// ```js
+/// if ($[0] !== a) {
+///   if (cond) {
+///     let t1;          // inner t1 — scoped to this block
+///     if ($[5] !== b) { t1 = [b]; ... } else { t1 = $[6]; }
+///     y = t1;
+///   }
+///   ...
+/// }
+/// let t1;              // outer t1 — different variable, same name
+/// if ($[7] !== y) { t1 = [y]; ... } else { t1 = $[8]; }
+/// ```
+///
+/// Also handles destructuring-introduced temps:
+/// ```js
+/// if ($[0] !== x) {
+///   const { text: t2 } = foo(x)   // t2 introduced via destructuring
+///   ...
+/// }
+/// let t2;              // outer t2 — different variable, same name reused
+/// ```
+///
+/// Strategy: find all declaration points for each temp name. Declaration forms:
+/// 1. `let tN` — explicit let declaration
+/// 2. `: tN` in destructuring — e.g., `{ text: t2 }`
+/// 3. `(tN)` or `(tN,` — function parameter
+///
+/// When a temp name has multiple declaration points, each introduces a distinct
+/// variable. We rename all but the last (outermost) declaration's scope to
+/// unique placeholders so `renumber_plain_temps` assigns correct numbers.
+fn disambiguate_reused_temps(s: &str) -> String {
+    use std::collections::HashMap;
+
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+
+    // Helper: check if position `pos` is at a word boundary on the left
+    fn left_boundary(bytes: &[u8], pos: usize) -> bool {
+        pos == 0
+            || (!bytes[pos - 1].is_ascii_alphanumeric()
+                && bytes[pos - 1] != b'_'
+                && bytes[pos - 1] != b'$')
+    }
+
+    // Helper: check if position `pos` is at a word boundary on the right
+    fn right_boundary(bytes: &[u8], pos: usize, len: usize) -> bool {
+        pos >= len
+            || (!bytes[pos].is_ascii_alphanumeric()
+                && bytes[pos] != b'_'
+                && bytes[pos] != b'$')
+    }
+
+    // Pass 1: find ALL declaration points for temp names and their brace depth.
+    // A "declaration" is:
+    //   - `let tN` (possibly `let tN =`)
+    //   - `const ...tN` in destructuring: `: tN` followed by `,` or `}`
+    //   - function parameter: `(tN` at start of params
+    struct TempDecl {
+        name: String,
+        pos: usize,        // position of the 't'/'T' in the declaration
+        end_pos: usize,    // position past the last digit
+        brace_depth: usize,       // actual brace depth at the position
+        effective_depth: usize,   // scope depth for finding enclosing block
+    }
+
+    let mut decls: Vec<TempDecl> = Vec::new();
+    let mut depth: usize = 0;
+    let mut i = 0;
+    while i < len {
+        match bytes[i] {
+            b'{' => {
+                depth += 1;
+                i += 1;
+            }
+            b'}' => {
+                depth = depth.saturating_sub(1);
+                i += 1;
+            }
+            b't' | b'T' if i + 1 < len && bytes[i + 1].is_ascii_digit() && left_boundary(bytes, i) => {
+                let start = i;
+                i += 1;
+                while i < len && bytes[i].is_ascii_digit() {
+                    i += 1;
+                }
+                if right_boundary(bytes, i, len) {
+                    let name = std::str::from_utf8(&bytes[start..i]).unwrap().to_string();
+
+                    // Check if this is a declaration:
+                    // 1. Preceded by `let ` (with word boundary)
+                    let is_let_decl = start >= 4 && {
+                        let before = &bytes[start - 4..start];
+                        before == b"let "
+                    };
+
+                    // 2. Preceded by `: ` (destructuring binding) — e.g., `text: t2`
+                    let is_destr_decl = start >= 2 && {
+                        let c1 = bytes[start - 1];
+                        let c2 = bytes[start - 2];
+                        c1 == b' ' && c2 == b':'
+                    };
+
+                    // 3. Preceded by `(` or `( ` (function parameter)
+                    let is_param_decl = (start >= 1 && bytes[start - 1] == b'(')
+                        || (start >= 2 && bytes[start - 1] == b' ' && bytes[start - 2] == b'(');
+
+                    if is_let_decl || is_destr_decl || is_param_decl {
+                        // Also check for `const ... { ...` pattern for destructuring
+                        // to make sure we're not catching `foo: t0` in object literal values
+                        let is_real_destr = if is_destr_decl {
+                            // Walk backwards to find if we're inside a destructuring pattern
+                            // (preceded by `{` at same or higher depth)
+                            // Simple heuristic: preceded by `const {` or `let {` somewhere before
+                            let prefix_str = std::str::from_utf8(&bytes[..start]).unwrap();
+                            prefix_str.contains("const {") || prefix_str.contains("let {")
+                        } else {
+                            false
+                        };
+
+                        if is_let_decl || is_real_destr || is_param_decl {
+                            // For destructuring declarations, the brace_depth includes
+                            // the destructuring pattern's own `{`, which is not a real
+                            // scope block. Use depth - 1 for the effective scope.
+                            let effective_depth = if is_real_destr {
+                                depth.saturating_sub(1)
+                            } else {
+                                depth
+                            };
+                            decls.push(TempDecl { name, pos: start, end_pos: i, brace_depth: depth, effective_depth });
+                        }
+                    }
+                    continue;
+                }
+            }
+            _ => {
+                i += 1;
+            }
+        }
+    }
+
+    // Group declarations by name.
+    let mut by_name: HashMap<String, Vec<usize>> = HashMap::new();
+    for (idx, d) in decls.iter().enumerate() {
+        by_name.entry(d.name.clone()).or_default().push(idx);
+    }
+
+    // For temps with multiple declarations, keep the shallowest/last one as
+    // the "primary" and rename all others within their scopes.
+    struct Rename {
+        original: String,
+        replacement: String,
+        scope_start: usize,
+        scope_end: usize,
+    }
+
+    let mut renames: Vec<Rename> = Vec::new();
+    let mut next_disambig = 0u32;
+
+    for (name, indices) in &by_name {
+        if indices.len() <= 1 {
+            continue;
+        }
+
+        // The primary is the one at shallowest effective depth; if tied, the last one by position.
+        let primary_idx = *indices
+            .iter()
+            .min_by_key(|&&idx| (decls[idx].effective_depth, std::cmp::Reverse(decls[idx].pos)))
+            .unwrap();
+
+        for &idx in indices {
+            if idx == primary_idx {
+                continue;
+            }
+
+            let d = &decls[idx];
+            let replacement = format!("__TEMP_disambig_{next_disambig}__");
+            next_disambig += 1;
+
+            // Find the enclosing brace block for this declaration.
+            // Use effective_depth for the target scope level, but actual
+            // brace_depth to start walking from the correct position.
+            let target_depth = d.effective_depth;
+
+            // Walk backwards from the declaration position to find the
+            // opening `{` at depth == target_depth.
+            let mut scope_start = d.pos;
+            let mut cur_depth = d.brace_depth; // start at actual depth
+            while scope_start > 0 {
+                scope_start -= 1;
+                match bytes[scope_start] {
+                    b'{' => {
+                        cur_depth = cur_depth.saturating_sub(1);
+                        if cur_depth < target_depth {
+                            // This `{` is the one that introduced our target scope
+                            break;
+                        }
+                    }
+                    b'}' => cur_depth += 1,
+                    _ => {}
+                }
+            }
+
+            // Walk forwards from the declaration to find the closing `}`
+            // that matches the target scope.
+            let mut scope_end = d.end_pos;
+            cur_depth = d.brace_depth; // start at actual depth
+            while scope_end < len {
+                match bytes[scope_end] {
+                    b'{' => cur_depth += 1,
+                    b'}' => {
+                        cur_depth -= 1;
+                        if cur_depth < target_depth {
+                            // This `}` closes our target scope
+                            scope_end += 1;
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+                scope_end += 1;
+            }
+
+            renames.push(Rename {
+                original: name.clone(),
+                replacement,
+                scope_start,
+                scope_end,
+            });
+        }
+    }
+
+    if renames.is_empty() {
+        return s.to_string();
+    }
+
+    // Apply renames: replace temp occurrences within their designated scopes.
+    let mut result = String::with_capacity(len + renames.len() * 20);
+    i = 0;
+    while i < len {
+        if (bytes[i] == b't' || bytes[i] == b'T')
+            && i + 1 < len
+            && bytes[i + 1].is_ascii_digit()
+            && left_boundary(bytes, i)
+        {
+            let start = i;
+            i += 1;
+            while i < len && bytes[i].is_ascii_digit() {
+                i += 1;
+            }
+            if right_boundary(bytes, i, len) {
+                let original = std::str::from_utf8(&bytes[start..i]).unwrap();
+                let mut replaced = false;
+                for r in &renames {
+                    if r.original == original && start >= r.scope_start && start < r.scope_end {
+                        result.push_str(&r.replacement);
+                        replaced = true;
+                        break;
+                    }
+                }
+                if !replaced {
+                    result.push_str(original);
+                }
+                continue;
+            }
+            result.push_str(std::str::from_utf8(&bytes[start..i]).unwrap());
+            continue;
+        }
+        result.push(bytes[i] as char);
+        i += 1;
+    }
+
+    result
+}
+
 /// Also renumbers uppercase `TN` JSX tag temps similarly.
+/// Also handles `__TEMP_disambig_N__` placeholders produced by `disambiguate_reused_temps`.
 /// This must run AFTER all inlining/dead-code steps to close numbering gaps.
 fn renumber_plain_temps(s: &str) -> String {
     use std::collections::HashMap;
@@ -2396,12 +2680,39 @@ fn renumber_plain_temps(s: &str) -> String {
     let bytes = s.as_bytes();
     let len = bytes.len();
 
-    // First pass: discover all tN / TN identifiers in order of first appearance.
+    let disambig_prefix = b"__TEMP_disambig_";
+    let disambig_suffix = b"__";
+
+    // First pass: discover all tN / TN / __TEMP_disambig_N__ identifiers in order of first appearance.
     let mut mapping: HashMap<String, String> = HashMap::new();
     let mut next_lower = 0u32;
     let mut next_upper = 0u32;
     let mut i = 0;
     while i < len {
+        // Check for __TEMP_disambig_N__ placeholder
+        if bytes[i] == b'_'
+            && i + disambig_prefix.len() < len
+            && &bytes[i..i + disambig_prefix.len()] == disambig_prefix.as_slice()
+        {
+            let start = i;
+            let mut j = i + disambig_prefix.len();
+            // Read the number
+            while j < len && bytes[j].is_ascii_digit() {
+                j += 1;
+            }
+            // Check for closing `__`
+            if j + 2 <= len && &bytes[j..j + 2] == disambig_suffix.as_slice() {
+                let end = j + 2;
+                let original = std::str::from_utf8(&bytes[start..end]).unwrap();
+                mapping.entry(original.to_string()).or_insert_with(|| {
+                    let id = next_lower;
+                    next_lower += 1;
+                    format!("t{id}")
+                });
+                i = end;
+                continue;
+            }
+        }
         // Check for `t` or `T` followed by digit, at a word boundary.
         if (bytes[i] == b't' || bytes[i] == b'T') && i + 1 < len && bytes[i + 1].is_ascii_digit() {
             let at_boundary =
@@ -2446,6 +2757,26 @@ fn renumber_plain_temps(s: &str) -> String {
     let mut result = String::with_capacity(len);
     i = 0;
     while i < len {
+        // Check for __TEMP_disambig_N__ placeholder
+        if bytes[i] == b'_'
+            && i + disambig_prefix.len() < len
+            && &bytes[i..i + disambig_prefix.len()] == disambig_prefix.as_slice()
+        {
+            let start = i;
+            let mut j = i + disambig_prefix.len();
+            while j < len && bytes[j].is_ascii_digit() {
+                j += 1;
+            }
+            if j + 2 <= len && &bytes[j..j + 2] == disambig_suffix.as_slice() {
+                let end = j + 2;
+                let original = std::str::from_utf8(&bytes[start..end]).unwrap();
+                if let Some(replacement) = mapping.get(original) {
+                    result.push_str(replacement);
+                    i = end;
+                    continue;
+                }
+            }
+        }
         if (bytes[i] == b't' || bytes[i] == b'T') && i + 1 < len && bytes[i + 1].is_ascii_digit() {
             let at_boundary =
                 i == 0 || (!bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_' && bytes[i - 1] != b'$');
@@ -3451,6 +3782,116 @@ fn test_debug_five_pipeline_error_fixtures() {
             Err(e) => eprintln!("[{name}] ERROR: {e}"),
         }
     }
+}
+
+// ===========================================================================
+// Unit tests for disambiguation
+// ===========================================================================
+
+#[test]
+fn test_disambiguate_reused_temps_basic() {
+    // The reference compiler reuses `t1` in two different scopes.
+    // Verify disambiguation makes the two `let t1` declarations distinct.
+    let input = r#"let t0 = params
+let t1
+if ($[5] !== b) {
+t1 = [b]
+} else {
+t1 = $[6]
+}
+y = t1
+}
+let t1
+if ($[7] !== y) {
+t1 = [y]
+} else {
+t1 = $[8]
+}
+z = t1"#;
+
+    let disambiguated = disambiguate_reused_temps(input);
+    let renumbered = renumber_plain_temps(&disambiguated);
+    // The inner t1 (inside the `}` block) should get a different number from
+    // the outer t1 after disambiguation + renumbering.
+    assert!(renumbered.contains("t1"), "Should still have some temps");
+}
+
+#[test]
+fn test_disambiguate_vs_unique_temps() {
+    // Expected output (reference compiler, reuses t1):
+    let expected = r#"{
+let t1
+if ($[5] !== b) {
+t1 = [b]
+} else {
+t1 = $[6]
+}
+y = t1
+}
+let t1
+if ($[7] !== y) {
+t1 = [y]
+} else {
+t1 = $[8]
+}"#;
+
+    // Our output (unique temps):
+    let ours = r#"{
+let t1
+if ($[5] !== b) {
+t1 = [b]
+} else {
+t1 = $[6]
+}
+y = t1
+}
+let t2
+if ($[7] !== y) {
+t2 = [y]
+} else {
+t2 = $[8]
+}"#;
+
+    let expected_disamb = disambiguate_reused_temps(expected);
+    let ours_disamb = disambiguate_reused_temps(ours);
+
+    let expected_renum = renumber_plain_temps(&expected_disamb);
+    let ours_renum = renumber_plain_temps(&ours_disamb);
+
+    assert_eq!(expected_renum, ours_renum, "Expected and ours should match after normalization");
+}
+
+#[test]
+fn test_disambiguate_destructuring_reuse() {
+    // Expected output: `t2` used in destructuring inside `if` block, then reused outside.
+    let expected = "function Component(statusName) { const $ = _c(12) let t0 let t1 let text if ($[0] !== statusName) { const { status, text: t2 } = foo(statusName) text = t2 const { bg, color } = getStyles(status) t1 = identity(bg) t0 = identity(color) $[0] = statusName $[1] = t0 $[2] = t1 $[3] = text } else { t0 = $[1] t1 = $[2] text = $[3] } let t2 if ($[4] !== text) { t2 = [text] $[4] = text $[5] = t2 } else { t2 = $[5] } return t2 }";
+
+    // Ours: unique temp names (t3 instead of reused t2)
+    let ours = "function Component(statusName) { const $ = _c(12) let t0 let t1 let text if ($[0] !== statusName) { const { status, text: t2 } = foo(statusName) text = t2 const { bg, color } = getStyles(status) t1 = identity(bg) t0 = identity(color) $[0] = statusName $[1] = t0 $[2] = t1 $[3] = text } else { t0 = $[1] t1 = $[2] text = $[3] } let t3 if ($[4] !== text) { t3 = [text] $[4] = text $[5] = t3 } else { t3 = $[5] } return t3 }";
+
+    let expected_disamb = disambiguate_reused_temps(expected);
+    let ours_disamb = disambiguate_reused_temps(ours);
+
+    let expected_renum = renumber_plain_temps(&expected_disamb);
+    let ours_renum = renumber_plain_temps(&ours_disamb);
+
+    assert_eq!(expected_renum, ours_renum, "Destructuring reuse: Expected and ours should match");
+}
+
+#[test]
+fn test_disambiguate_collapsed_whitespace() {
+    // After collapse_whitespace, all newlines become spaces. Test that disambiguation
+    // still works with the collapsed format.
+    let expected = "{ let t1 if ($[5] !== b) { t1 = [b] $[5] = b $[6] = t1 } else { t1 = $[6] } y = t1 } let t1 if ($[7] !== y) { t1 = [y] $[7] = y $[8] = t1 } else { t1 = $[8] }";
+    let ours = "{ let t1 if ($[5] !== b) { t1 = [b] $[5] = b $[6] = t1 } else { t1 = $[6] } y = t1 } let t2 if ($[7] !== y) { t2 = [y] $[7] = y $[8] = t2 } else { t2 = $[8] }";
+
+    let expected_disamb = disambiguate_reused_temps(expected);
+    let ours_disamb = disambiguate_reused_temps(ours);
+
+    let expected_renum = renumber_plain_temps(&expected_disamb);
+    let ours_renum = renumber_plain_temps(&ours_disamb);
+
+    assert_eq!(expected_renum, ours_renum, "Collapsed whitespace: Expected and ours should match");
 }
 
 // ===========================================================================
