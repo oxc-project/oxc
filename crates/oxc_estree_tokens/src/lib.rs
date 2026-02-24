@@ -2,14 +2,7 @@ use rustc_hash::FxHashSet;
 use serde::Serialize;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
-use oxc_ast::ast::{
-    BindingIdentifier, IdentifierName, IdentifierReference, JSXAttribute, JSXAttributeValue,
-    JSXElementName, JSXExpressionContainer, JSXIdentifier, JSXMemberExpressionObject,
-    JSXNamespacedName, JSXSpreadAttribute, JSXSpreadChild, LabelIdentifier, MemberExpression,
-    MetaProperty, ObjectPropertyKind, Program, PropertyKey, TSImportType, TSThisParameter,
-    TSTypeName, TSTypeParameterDeclaration, TSTypeQuery, TSTypeQueryExprName, WithClause,
-    WithClauseKeyword,
-};
+use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16, walk};
 use oxc_parser::{Kind, Token};
 use oxc_span::Span;
