@@ -1,17 +1,17 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 2838
+assertion_line: 3169
 expression: snapshot
 ---
-Codegen conformance: 338/1040 passed (32.5%)
+Codegen conformance: 354/1040 passed (34.0%)
 
 Failure breakdown:
   parse_error:    27
   no_function:    2
   lower_error:    0
-  pipeline_error: 15
+  pipeline_error: 16
   panic:          0
-  output_mismatch:657
+  output_mismatch:640
   no_expected:    1
 
 Failed fixtures:
@@ -28,7 +28,7 @@ Failed fixtures:
   [output_mismatch] align-scopes-reactive-scope-overlaps-label.ts
   [output_mismatch] align-scopes-reactive-scope-overlaps-try.ts
   [output_mismatch] align-scopes-trycatch-nested-overlapping-range.ts
-  [output_mismatch] align-scopes-within-nested-valueblock-in-array.tsx
+  [output_mismatch] allocating-logical-expression-instruction-scope.ts
   [output_mismatch] allocating-primitive-as-dep-nested-scope.js
   [output_mismatch] allocating-primitive-as-dep.js
   [output_mismatch] allow-assigning-ref-accessing-function-to-object-property-if-not-mutated.js
@@ -175,7 +175,6 @@ Failed fixtures:
   [output_mismatch] default-param-with-empty-callback.js
   [output_mismatch] default-param-with-reorderable-callback.js
   [output_mismatch] dependencies-outputs.js
-  [output_mismatch] dependencies.js
   [output_mismatch] destructure-array-assignment-to-context-var.js
   [output_mismatch] destructure-array-declaration-to-context-var.js
   [output_mismatch] destructure-default-array-with-unary.js
@@ -201,7 +200,6 @@ Failed fixtures:
   [parse_error] destructuring-with-typecast-as-default-value.flow.js
   [output_mismatch] destructuring.js
   [output_mismatch] do-while-break.js
-  [output_mismatch] do-while-compound-test.js
   [output_mismatch] do-while-conditional-break.js
   [output_mismatch] do-while-continue.js
   [output_mismatch] do-while-early-unconditional-break.js
@@ -221,7 +219,6 @@ Failed fixtures:
   [output_mismatch] evaluation-order-mutate-call-after-dependency-load.ts
   [output_mismatch] evaluation-order-mutate-store-after-dependency-load.ts
   [output_mismatch] existing-variables-with-c-name.js
-  [output_mismatch] extend-scopes-if.js
   [output_mismatch] fast-refresh-reloading.js
   [output_mismatch] flag-enable-emit-hook-guards.ts
   [parse_error] flow-enum-inline.js
@@ -232,7 +229,6 @@ Failed fixtures:
   [output_mismatch] for-multiple-variable-declarations-in-initializer.js
   [output_mismatch] for-of-capture-item-of-local-collection-mutate-later-value-initially-null.js
   [output_mismatch] for-of-capture-item-of-local-collection-mutate-later.js
-  [output_mismatch] for-of-conditional-break.js
   [output_mismatch] for-of-continue.js
   [output_mismatch] for-of-destructure.js
   [output_mismatch] for-of-immutable-collection.js
@@ -289,6 +285,7 @@ Failed fixtures:
   [output_mismatch] hook-noAlias.js
   [output_mismatch] hook-ref-callback.js
   [output_mismatch] hooks-freeze-arguments.js
+  [output_mismatch] hooks-freeze-possibly-mutable-arguments.js
   [output_mismatch] hooks-with-React-namespace.js
   [output_mismatch] idx-method-no-outlining-wildcard.js
   [output_mismatch] idx-method-no-outlining.js
@@ -321,7 +318,6 @@ Failed fixtures:
   [output_mismatch] jsx-attribute-with-jsx-element-value.js
   [output_mismatch] jsx-attribute-with-jsx-fragment-value.flow.js
   [output_mismatch] jsx-fragment.js
-  [output_mismatch] jsx-html-entity.js
   [output_mismatch] jsx-local-memberexpr-tag-conditional.js
   [output_mismatch] jsx-local-tag-in-lambda.js
   [output_mismatch] jsx-member-expression-tag-grouping.js
@@ -427,10 +423,9 @@ Failed fixtures:
   [output_mismatch] optional-call-simple.js
   [output_mismatch] optional-call-with-independently-memoizable-arg.js
   [output_mismatch] optional-call-with-optional-property-load.js
-  [output_mismatch] optional-call.js
   [output_mismatch] optional-computed-load-static.js
   [output_mismatch] optional-computed-member-expression.js
-  [output_mismatch] optional-member-expression-as-memo-dep.js
+  [pipeline_error] optional-member-expression-as-memo-dep.js
   [output_mismatch] optional-member-expression-call-as-property.js
   [output_mismatch] optional-member-expression-chain.js
   [output_mismatch] optional-member-expression-inverted-optionals-parallel-paths.js
@@ -438,9 +433,6 @@ Failed fixtures:
   [pipeline_error] optional-member-expression-single.js
   [output_mismatch] optional-member-expression-with-optional-member-expr-as-property.js
   [output_mismatch] optional-member-expression.js
-  [output_mismatch] optional-method-call.js
-  [output_mismatch] optional-receiver-method-call.js
-  [output_mismatch] optional-receiver-optional-method.js
   [output_mismatch] overlapping-scopes-shadowing-within-block.js
   [output_mismatch] overlapping-scopes-within-block.js
   [output_mismatch] partial-early-return-within-reactive-scope.js
@@ -448,7 +440,6 @@ Failed fixtures:
   [output_mismatch] phi-type-inference-array-push-consecutive-phis.js
   [output_mismatch] phi-type-inference-array-push.js
   [output_mismatch] phi-type-inference-property-store.js
-  [output_mismatch] preserve-jsxtext-stringliteral-distinction.js
   [pipeline_error] preserve-memo-deps-conditional-property-chain-less-precise-deps.js
   [pipeline_error] preserve-memo-deps-conditional-property-chain.js
   [output_mismatch] preserve-memo-deps-optional-property-chain.js
@@ -549,8 +540,9 @@ Failed fixtures:
   [output_mismatch] repro-memoize-array-with-immutable-map-after-hook.js
   [output_mismatch] repro-memoize-for-of-collection-when-loop-body-returns.js
   [output_mismatch] repro-missing-dependency-if-within-while.js
-  [output_mismatch] repro-missing-memoization-lack-of-phi-types.js
+  [pipeline_error] repro-missing-memoization-lack-of-phi-types.js
   [output_mismatch] repro-missing-phi-after-dce-merge-scopes.js
+  [output_mismatch] repro-mutable-range-extending-into-ternary.js
   [parse_error] repro-mutate-ref-in-function-passed-to-hook.js
   [output_mismatch] repro-mutate-result-of-function-call-with-frozen-argument-in-function-expression.js
   [output_mismatch] repro-mutate-result-of-method-call-on-frozen-value-in-function-expression.js
@@ -566,7 +558,6 @@ Failed fixtures:
   [parse_error] repro-propagate-type-of-ternary-jsx.js
   [parse_error] repro-propagate-type-of-ternary-nested.js
   [output_mismatch] repro-reassign-props.js
-  [output_mismatch] repro-reassign-to-variable-without-mutable-range.js
   [output_mismatch] repro-ref-mutable-range.tsx
   [output_mismatch] repro-renaming-conflicting-decls.js
   [output_mismatch] repro-returned-inner-fn-mutates-context.js
@@ -589,18 +580,12 @@ Failed fixtures:
   [output_mismatch] same-variable-as-dep-and-redeclare-maybe-frozen.js
   [output_mismatch] same-variable-as-dep-and-redeclare.js
   [output_mismatch] sequence-expression.js
-  [output_mismatch] sequential-destructuring-assignment-to-scope-declarations.js
-  [output_mismatch] sequential-destructuring-both-mixed-local-and-scope-declaration.js
-  [output_mismatch] sequentially-constant-progagatable-if-test-conditions.js
   [output_mismatch] shapes-object-key.ts
   [output_mismatch] ssa-cascading-eliminated-phis.js
-  [output_mismatch] ssa-complex-multiple-if.js
   [output_mismatch] ssa-for-trivial-update.js
   [output_mismatch] ssa-leave-case.js
   [output_mismatch] ssa-nested-loops-no-reassign.js
-  [output_mismatch] ssa-property-alias-alias-mutate-if.js
   [output_mismatch] ssa-property-alias-if.js
-  [output_mismatch] ssa-property-alias-mutate-if.js
   [output_mismatch] ssa-property-alias-mutate-inside-if.js
   [output_mismatch] ssa-property.js
   [output_mismatch] ssa-reassign-in-rval.js
@@ -616,11 +601,9 @@ Failed fixtures:
   [output_mismatch] ssa-renaming-via-destructuring.js
   [output_mismatch] ssa-renaming-with-mutation.js
   [output_mismatch] ssa-renaming.js
-  [output_mismatch] ssa-sibling-phis.js
-  [output_mismatch] ssa-simple-phi.js
   [output_mismatch] ssa-switch.js
   [output_mismatch] ssa-while-no-reassign.js
-  [pipeline_error] switch-non-final-default.js
+  [output_mismatch] switch-non-final-default.js
   [output_mismatch] switch-with-fallthrough.js
   [output_mismatch] switch-with-only-default.js
   [output_mismatch] switch.js
@@ -638,7 +621,9 @@ Failed fixtures:
   [output_mismatch] try-catch-alias-try-values.js
   [output_mismatch] try-catch-empty-try.js
   [output_mismatch] try-catch-in-nested-scope.ts
+  [output_mismatch] try-catch-logical-and-optional.js
   [output_mismatch] try-catch-maybe-null-dependency.ts
+  [output_mismatch] try-catch-multiple-value-blocks.js
   [output_mismatch] try-catch-mutate-outer-value.js
   [output_mismatch] try-catch-optional-call.js
   [output_mismatch] try-catch-optional-chaining.js
@@ -653,9 +638,7 @@ Failed fixtures:
   [output_mismatch] try-catch-within-mutable-range.js
   [output_mismatch] try-catch-within-object-method-returns-caught-value.js
   [output_mismatch] try-catch-within-object-method.js
-  [output_mismatch] ts-as-expression-default-value.tsx
   [output_mismatch] ts-enum-inline.tsx
-  [output_mismatch] ts-instantiation-expression.tsx
   [output_mismatch] ts-non-null-expression-default-value.tsx
   [parse_error] type-alias-used-as-annotation_.flow.js
   [parse_error] type-alias-used-as-variable-annotation_.flow.js
@@ -717,3 +700,4 @@ Failed fixtures:
   [output_mismatch] value-block-mutates-outer-value.ts
   [output_mismatch] weakmap-constructor.js
   [output_mismatch] weakset-constructor.js
+  [output_mismatch] while-conditional-continue.js
