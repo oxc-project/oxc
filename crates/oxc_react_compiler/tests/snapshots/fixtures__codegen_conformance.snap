@@ -1,9 +1,8 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 1560
 expression: snapshot
 ---
-Codegen conformance: 156/1040 passed (15.0%)
+Codegen conformance: 168/1040 passed (16.2%)
 
 Failure breakdown:
   parse_error:    27
@@ -11,7 +10,7 @@ Failure breakdown:
   lower_error:    1
   pipeline_error: 37
   panic:          0
-  output_mismatch:815
+  output_mismatch:803
   no_expected:    1
 
 Failed fixtures:
@@ -94,8 +93,6 @@ Failed fixtures:
   [output_mismatch] bug-separate-memoization-due-to-callback-capturing.js
   [output_mismatch] bug-type-inference-control-flow.ts
   [output_mismatch] builtin-jsx-tag-lowered-between-mutations.js
-  [output_mismatch] call-args-assignment.js
-  [output_mismatch] call-args-destructuring-assignment.js
   [output_mismatch] call-spread-argument-mutable-iterator.js
   [output_mismatch] call-with-independently-memoizable-arg.js
   [output_mismatch] capture-indirect-mutate-alias-iife.js
@@ -266,7 +263,6 @@ Failed fixtures:
   [output_mismatch] evaluation-order-mutate-call-after-dependency-load.ts
   [output_mismatch] evaluation-order-mutate-store-after-dependency-load.ts
   [output_mismatch] existing-variables-with-c-name.js
-  [output_mismatch] expression-with-assignment-dynamic.js
   [output_mismatch] expression-with-assignment.js
   [output_mismatch] extend-scopes-if.js
   [output_mismatch] fast-refresh-reloading.js
@@ -462,7 +458,6 @@ Failed fixtures:
   [output_mismatch] nested-optional-chains.ts
   [output_mismatch] nested-optional-member-expr.js
   [output_mismatch] nested-scopes-begin-same-instr-valueblock.ts
-  [output_mismatch] new-does-not-mutate-class.ts
   [output_mismatch] noAlias-filter-on-array-prop.js
   [output_mismatch] nonmutated-spread-hook-return.js
   [output_mismatch] nonmutated-spread-props-jsx.js
@@ -499,7 +494,6 @@ Failed fixtures:
   [output_mismatch] object-method-shorthand-mutated-after.js
   [output_mismatch] object-method-shorthand.js
   [output_mismatch] object-mutated-in-consequent-alternate-both-return.js
-  [output_mismatch] object-pattern-params.js
   [output_mismatch] object-properties.js
   [output_mismatch] object-shorthand-method-1.js
   [output_mismatch] object-shorthand-method-2.js
@@ -624,7 +618,6 @@ Failed fixtures:
   [output_mismatch] ref-like-name-in-useCallback.js
   [output_mismatch] ref-parameter-mutate-in-effect.js
   [pipeline_error] regexp-literal.js
-  [output_mismatch] relay-transitive-mixeddata.js
   [output_mismatch] renaming-jsx-tag-lowercase.tsx
   [output_mismatch] reordering-across-blocks.js
   [parse_error] repeated-dependencies-more-precise.js
@@ -673,7 +666,6 @@ Failed fixtures:
   [output_mismatch] repro-non-identifier-object-keys.ts
   [output_mismatch] repro-object-expression-computed-key-modified-during-after-construction-hoisted-sequence-expr.js
   [output_mismatch] repro-object-fromEntries-entries.js
-  [output_mismatch] repro-object-pattern.js
   [output_mismatch] repro-preds-undefined-try-catch-return-primitive.js
   [output_mismatch] repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency.js
   [parse_error] repro-propagate-type-of-ternary-jsx.js
@@ -697,7 +689,6 @@ Failed fixtures:
   [output_mismatch] repro.js
   [output_mismatch] resolve-react-hooks-based-on-import-name.js
   [output_mismatch] rest-param-with-identifier.js
-  [output_mismatch] rest-param-with-object-spread-pattern.js
   [parse_error] return-ref-callback-structure.js
   [parse_error] return-ref-callback.js
   [output_mismatch] reverse-postorder.js
@@ -824,12 +815,10 @@ Failed fixtures:
   [output_mismatch] unused-logical-assigned-to-variable.js
   [output_mismatch] unused-logical.js
   [output_mismatch] unused-object-element-with-rest.js
-  [output_mismatch] unused-object-element.js
   [output_mismatch] unused-optional-method-assigned-to-variable.js
   [output_mismatch] update-expression-constant-propagation.js
   [output_mismatch] update-expression-in-sequence.js
   [output_mismatch] update-expression-on-function-parameter-1.js
-  [output_mismatch] update-expression-on-function-parameter-3.js
   [output_mismatch] update-global-in-callback.tsx
   [output_mismatch] use-callback-simple.js
   [output_mismatch] use-effect-cleanup-reassigns.js
@@ -884,14 +873,12 @@ Failed fixtures:
   [output_mismatch] useMemo-switch-return.js
   [output_mismatch] useMemo-with-optional.js
   [output_mismatch] useReducer-returned-dispatcher-is-non-reactive.js
-  [output_mismatch] valid-set-state-in-useEffect-from-ref.js
   [output_mismatch] valid-setState-in-effect-from-ref-array-index.js
   [output_mismatch] valid-setState-in-effect-from-ref-function-call.js
   [output_mismatch] valid-setState-in-useEffect-controlled-by-ref-value.js
   [output_mismatch] valid-setState-in-useEffect-listener-transitive.js
   [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-listener.js
   [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-with-ref.js
-  [output_mismatch] valid-setState-in-useLayoutEffect-from-ref.js
   [output_mismatch] validate-no-set-state-in-render-uncalled-function-with-mutable-range-is-valid.js
   [output_mismatch] value-block-mutates-outer-value.ts
   [output_mismatch] weakmap-constructor.js

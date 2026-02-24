@@ -234,6 +234,9 @@ pub struct CodegenContext {
     jsx_text_temps: FxHashSet<DeclarationId>,
     /// Temporaries that hold JSX element/fragment values (render without {…} wrapper).
     jsx_element_temps: FxHashSet<DeclarationId>,
+    /// Temporaries that hold assignment expressions (need parens when used in expression context).
+    /// e.g., `x = value` needs wrapping as `(x = value)` when used as call args or initializers.
+    assignment_temps: FxHashSet<DeclarationId>,
 }
 
 impl CodegenContext {
@@ -259,6 +262,7 @@ impl CodegenContext {
             enable_name_anonymous_functions,
             jsx_text_temps: FxHashSet::default(),
             jsx_element_temps: FxHashSet::default(),
+            assignment_temps: FxHashSet::default(),
         }
     }
 
@@ -1108,12 +1112,24 @@ fn codegen_instruction_nullable(
                 } else {
                     store.lvalue.kind
                 };
-                let value_expr = codegen_place_to_expression(cx, &store.value);
+                // Use raw (non-paren-wrapping) expression for the value in Reassign
+                // context, since chained assignments `x = y = z = 1` should not have
+                // intermediate parens. The parens are added at the point of consumption
+                // in expression contexts (call args, initializers, etc.).
+                let value_expr = if kind == InstructionKind::Reassign {
+                    codegen_place_to_expression_raw(cx, &store.value)
+                } else {
+                    codegen_place_to_expression(cx, &store.value)
+                };
                 codegen_store_or_declare(cx, instr, kind, &store.lvalue.place, Some(&value_expr))
             }
             InstructionValue::StoreContext(store) => {
                 let kind = store.lvalue_kind;
-                let value_expr = codegen_place_to_expression(cx, &store.value);
+                let value_expr = if kind == InstructionKind::Reassign {
+                    codegen_place_to_expression_raw(cx, &store.value)
+                } else {
+                    codegen_place_to_expression(cx, &store.value)
+                };
                 codegen_store_or_declare(cx, instr, kind, &store.lvalue_place, Some(&value_expr))
             }
             InstructionValue::DeclareLocal(decl) => {
@@ -1179,6 +1195,31 @@ fn codegen_instruction_nullable(
                     }
                 }
                 let value_str = codegen_instruction_value(cx, other);
+                // Track assignment expressions (PropertyStore, ComputedStore, StoreGlobal)
+                // as assignment temps when they are stored as unnamed temporaries.
+                // The parens will be added by codegen_place_to_expression when the temp
+                // is consumed in expression context (call args, initializers, etc.).
+                // For named lvalues, wrap in parens immediately since they'll appear
+                // as `let name = (lhs = rhs)` in the output.
+                let is_store_instr = matches!(
+                    other,
+                    InstructionValue::PropertyStore(_)
+                        | InstructionValue::ComputedStore(_)
+                        | InstructionValue::StoreGlobal(_)
+                );
+                if is_store_instr {
+                    if let Some(lval) = instr.lvalue.as_ref() {
+                        if lval.identifier.name.is_none() {
+                            // Unnamed temp: store as assignment temp for deferred wrapping
+                            cx.temp.insert(lval.identifier.declaration_id, Some(value_str));
+                            cx.assignment_temps.insert(lval.identifier.declaration_id);
+                            return None;
+                        }
+                        // Named lval: wrap in parens immediately
+                        let wrapped = format!("({value_str})");
+                        return codegen_instruction_to_statement(cx, instr, &wrapped);
+                    }
+                }
                 codegen_instruction_to_statement(cx, instr, &value_str)
             }
         },
@@ -1232,8 +1273,16 @@ fn codegen_store_or_declare(
             if let Some(val) = value {
                 let assign_expr = format!("{name} = {val}");
                 // If there's an lvalue on the instruction (i.e., it's used as an expression),
-                // store as temporary
-                return try_store_as_temporary(cx, instr.lvalue.as_ref(), assign_expr);
+                // store as temporary and mark it as an assignment expression so it can
+                // be wrapped in parens when consumed in expression contexts.
+                if let Some(lval) = instr.lvalue.as_ref()
+                    && lval.identifier.name.is_none()
+                {
+                    cx.temp.insert(lval.identifier.declaration_id, Some(assign_expr));
+                    cx.assignment_temps.insert(lval.identifier.declaration_id);
+                    return None;
+                }
+                return try_store_as_temporary(cx, None, assign_expr);
             }
             None
         }
@@ -1267,7 +1316,16 @@ fn codegen_destructure_statement(
         }
         InstructionKind::Reassign => {
             let assign_expr = format!("{lval} = {value}");
-            try_store_as_temporary(cx, instr.lvalue.as_ref(), assign_expr)
+            // Mark as assignment temp when stored as temp, so consumers can
+            // add parens when needed (e.g., `foo(([x] = obj))`).
+            if let Some(lval_place) = instr.lvalue.as_ref()
+                && lval_place.identifier.name.is_none()
+            {
+                cx.temp.insert(lval_place.identifier.declaration_id, Some(assign_expr));
+                cx.assignment_temps.insert(lval_place.identifier.declaration_id);
+                return None;
+            }
+            try_store_as_temporary(cx, None, assign_expr)
         }
         InstructionKind::Catch => Some(CodegenStatement::Empty),
     }
@@ -1663,17 +1721,31 @@ fn codegen_object_method_expression(
 /// parentheses. This matches Babel's code generator: a `LogicalExpression`
 /// whose operator differs from the parent logical operator gets wrapped,
 /// as does a ternary expression (lower precedence than any logical operator).
+///
+/// For `Sequence` values, we look at the inner final `value` since sequences
+/// are reduced to their final value expression during codegen.
 fn wrap_logical_operand_if_needed(
     expr: &str,
     child_value: &ReactiveValue,
     parent_op: LogicalOperator,
 ) -> String {
-    let needs_parens = match child_value {
+    let effective = effective_value(child_value);
+    let needs_parens = match effective {
         ReactiveValue::Logical(child_logical) => child_logical.operator != parent_op,
         ReactiveValue::Ternary(_) => true,
         _ => false,
     };
     if needs_parens { format!("({expr})") } else { expr.to_string() }
+}
+
+/// Unwrap `Sequence` wrappers to find the effective value for precedence checks.
+/// Sequences wrap a final value with preceding instructions; the emitted expression
+/// string corresponds to that final value.
+fn effective_value(value: &ReactiveValue) -> &ReactiveValue {
+    match value {
+        ReactiveValue::Sequence(seq) => effective_value(&seq.value),
+        other => other,
+    }
 }
 
 /// Convert a `ReactiveValue` to an expression string.
@@ -1828,13 +1900,34 @@ fn codegen_jsx_child(cx: &CodegenContext, place: &Place) -> String {
 }
 
 /// Convert a Place to an expression string.
+///
+/// When the place references a temporary that holds an assignment expression
+/// (e.g., `x = value`), the result is automatically wrapped in parentheses
+/// because assignment expressions have very low precedence and need parens
+/// when used as sub-expressions (call args, initializers, etc.).
 fn codegen_place_to_expression(cx: &CodegenContext, place: &Place) -> String {
+    let decl_id = place.identifier.declaration_id;
     // Check if this place is a temporary with a stored expression
-    if let Some(Some(expr)) = cx.temp.get(&place.identifier.declaration_id) {
+    if let Some(Some(expr)) = cx.temp.get(&decl_id) {
+        // Wrap assignment-expression temps in parentheses for correct precedence.
+        if cx.assignment_temps.contains(&decl_id) {
+            return format!("({expr})");
+        }
         return expr.clone();
     }
 
     // Must be a named identifier
+    identifier_name(&place.identifier)
+}
+
+/// Convert a Place to an expression string WITHOUT wrapping assignment expressions.
+/// Used in contexts where assignment expressions are being chained (e.g., `x = y = z = 1`)
+/// and parens would be superfluous since `=` is right-associative.
+fn codegen_place_to_expression_raw(cx: &CodegenContext, place: &Place) -> String {
+    let decl_id = place.identifier.declaration_id;
+    if let Some(Some(expr)) = cx.temp.get(&decl_id) {
+        return expr.clone();
+    }
     identifier_name(&place.identifier)
 }
 
@@ -2053,7 +2146,11 @@ fn codegen_pattern(cx: &CodegenContext, pattern: &Pattern) -> String {
                     }
                 })
                 .collect();
-            format!("{{{}}}", props.join(", "))
+            if props.is_empty() {
+                "{}".to_string()
+            } else {
+                format!("{{ {} }}", props.join(", "))
+            }
         }
     }
 }
