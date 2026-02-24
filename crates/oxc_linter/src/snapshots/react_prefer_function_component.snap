@@ -1,0 +1,529 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:20]
+ 2 │ 
+ 3 │              class Foo extends Component {
+   ·                    ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.PureComponent {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:13]
+ 1 │ ╭─▶ const Foo = class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return <div>{this.props.foo}</div>;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:16]
+ 1 │ ╭─▶ export default class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return <div>{this.props.foo}</div>;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:20]
+ 2 │ 
+ 3 │              class Foo extends Component {
+   ·                    ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:13]
+ 1 │ ╭─▶ const Foo = class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return null;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:26]
+ 2 │     
+ 3 │ ╭─▶              const Foo = class extends Component {
+ 4 │ │                  render() {
+ 5 │ │                    return null;
+ 6 │ │                  }
+ 7 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:32]
+ 2 │ 
+ 3 │              const Foo = class Bar extends Component {
+   ·                                ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:29]
+ 2 │     
+ 3 │ ╭─▶              export default class extends Component {
+ 4 │ │                  render() {
+ 5 │ │                    return null;
+ 6 │ │                  }
+ 7 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:35]
+ 2 │ 
+ 3 │              export default class Foo extends Component {
+   ·                                   ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                componentDidCatch(error, errorInfo) {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.PureComponent {
+   ·       ───
+ 2 │                componentDidCatch(error, errorInfo) {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:13]
+ 1 │ ╭─▶ const Foo = class extends React.Component {
+ 2 │ │                  componentDidCatch(error, errorInfo) {
+ 3 │ │                    logErrorToMyService(error, errorInfo);
+ 4 │ │                  }
+ 5 │ │                  render() {
+ 6 │ │                    return <div>{this.props.foo}</div>;
+ 7 │ │                  }
+ 8 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                constructor(props) {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.PureComponent {
+   ·       ───
+ 2 │                constructor(props) {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+    ╭─[prefer_function_component.tsx:1:13]
+  1 │ ╭─▶ const Foo = class extends React.Component {
+  2 │ │                  constructor(props) {
+  3 │ │                    super(props);
+  4 │ │                    this.state = { hasError: false };
+  5 │ │                  }
+  6 │ │                  static getDerivedStateFromError(error) {
+  7 │ │                    return { hasError: true };
+  8 │ │                  }
+  9 │ │                  render() {
+ 10 │ │                    return <div>{this.state.hasError ? 'Error' : this.props.foo}</div>;
+ 11 │ │                  }
+ 12 │ ╰─▶              };
+    ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo {
+   ·       ───
+ 2 │                getBar() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo {
+   ·       ───
+ 2 │                getBar() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:20]
+ 2 │ 
+ 3 │              class Foo extends Component {
+   ·                    ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.PureComponent {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:13]
+ 1 │ ╭─▶ const Foo = class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return <div>{this.props.foo}</div>;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:16]
+ 1 │ ╭─▶ export default class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return <div>{this.props.foo}</div>;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:20]
+ 2 │ 
+ 3 │              class Foo extends Component {
+   ·                    ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:13]
+ 1 │ ╭─▶ const Foo = class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return null;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:26]
+ 2 │     
+ 3 │ ╭─▶              const Foo = class extends Component {
+ 4 │ │                  render() {
+ 5 │ │                    return null;
+ 6 │ │                  }
+ 7 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:32]
+ 2 │ 
+ 3 │              const Foo = class Bar extends Component {
+   ·                                ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:29]
+ 2 │     
+ 3 │ ╭─▶              export default class extends Component {
+ 4 │ │                  render() {
+ 5 │ │                    return null;
+ 6 │ │                  }
+ 7 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:35]
+ 2 │ 
+ 3 │              export default class Foo extends Component {
+   ·                                   ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:20]
+ 2 │ 
+ 3 │              class Foo extends Component {
+   ·                    ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.PureComponent {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:13]
+ 1 │ ╭─▶ const Foo = class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return <div>{this.props.foo}</div>;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:16]
+ 1 │ ╭─▶ export default class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return <div>{this.props.foo}</div>;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:20]
+ 2 │ 
+ 3 │              class Foo extends Component {
+   ·                    ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:13]
+ 1 │ ╭─▶ const Foo = class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return null;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:26]
+ 2 │     
+ 3 │ ╭─▶              const Foo = class extends Component {
+ 4 │ │                  render() {
+ 5 │ │                    return null;
+ 6 │ │                  }
+ 7 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:32]
+ 2 │ 
+ 3 │              const Foo = class Bar extends Component {
+   ·                                ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:29]
+ 2 │     
+ 3 │ ╭─▶              export default class extends Component {
+ 4 │ │                  render() {
+ 5 │ │                    return null;
+ 6 │ │                  }
+ 7 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:35]
+ 2 │ 
+ 3 │              export default class Foo extends Component {
+   ·                                   ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:20]
+ 2 │ 
+ 3 │              class Foo extends Component {
+   ·                    ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.PureComponent {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:13]
+ 1 │ ╭─▶ const Foo = class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return <div>{this.props.foo}</div>;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:16]
+ 1 │ ╭─▶ export default class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return <div>{this.props.foo}</div>;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:20]
+ 2 │ 
+ 3 │              class Foo extends Component {
+   ·                    ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:13]
+ 1 │ ╭─▶ const Foo = class extends React.Component {
+ 2 │ │                  render() {
+ 3 │ │                    return null;
+ 4 │ │                  }
+ 5 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:26]
+ 2 │     
+ 3 │ ╭─▶              const Foo = class extends Component {
+ 4 │ │                  render() {
+ 5 │ │                    return null;
+ 6 │ │                  }
+ 7 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:32]
+ 2 │ 
+ 3 │              const Foo = class Bar extends Component {
+   ·                                ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:29]
+ 2 │     
+ 3 │ ╭─▶              export default class extends Component {
+ 4 │ │                  render() {
+ 5 │ │                    return null;
+ 6 │ │                  }
+ 7 │ ╰─▶              };
+   ╰────
+  help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:3:35]
+ 2 │ 
+ 3 │              export default class Foo extends Component {
+   ·                                   ───
+ 4 │                render() {
+   ╰────
+  help: Convert the class component to a function component.
