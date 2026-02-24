@@ -3,29 +3,30 @@
   "checkpoint_id": "2ea3fd9fd668",
   "session_id": "0cddc6a6-d800-433d-b83a-a83fb06ad8c4",
   "strategy": "manual-commit",
-  "created_at": "2026-02-24T06:41:06.758668Z",
+  "created_at": "2026-02-24T06:54:11.95385Z",
   "branch": "fix/jsdoc-double-backticks",
   "checkpoints_count": 1,
   "files_touched": [
-    "crates/oxc_semantic/src/jsdoc/parser/jsdoc.rs",
-    "crates/oxc_semantic/src/jsdoc/parser/parse.rs"
+    "crates/oxc_semantic/src/jsdoc/parser/jsdoc.rs"
   ],
   "agent": "Claude Code",
-  "transcript_identifier_at_start": "c178d732-91bf-436e-8066-27bc374c3c8a",
+  "transcript_identifier_at_start": "f81c7676-fa73-4d1d-8dce-5364f485efcb",
+  "checkpoint_transcript_start": 226,
+  "transcript_lines_at_start": 226,
   "token_usage": {
-    "input_tokens": 50,
-    "cache_creation_tokens": 62169,
-    "cache_read_tokens": 1542586,
-    "output_tokens": 3027,
-    "api_call_count": 48
+    "input_tokens": 7,
+    "cache_creation_tokens": 1909,
+    "cache_read_tokens": 222562,
+    "output_tokens": 73,
+    "api_call_count": 5
   },
   "initial_attribution": {
-    "calculated_at": "2026-02-24T06:41:06.738576Z",
-    "agent_lines": 48,
+    "calculated_at": "2026-02-24T06:54:11.927965Z",
+    "agent_lines": 0,
     "human_added": 2435,
-    "human_modified": 0,
+    "human_modified": 12,
     "human_removed": 0,
-    "total_committed": 2483,
-    "agent_percentage": 1.9331453886427707
+    "total_committed": 2436,
+    "agent_percentage": 0
   }
 }

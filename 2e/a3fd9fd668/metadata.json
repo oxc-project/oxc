@@ -5,8 +5,7 @@
   "branch": "fix/jsdoc-double-backticks",
   "checkpoints_count": 1,
   "files_touched": [
-    "crates/oxc_semantic/src/jsdoc/parser/jsdoc.rs",
-    "crates/oxc_semantic/src/jsdoc/parser/parse.rs"
+    "crates/oxc_semantic/src/jsdoc/parser/jsdoc.rs"
   ],
   "sessions": [
     {
@@ -18,10 +17,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 50,
-    "cache_creation_tokens": 62169,
-    "cache_read_tokens": 1542586,
-    "output_tokens": 3027,
-    "api_call_count": 48
+    "input_tokens": 7,
+    "cache_creation_tokens": 1909,
+    "cache_read_tokens": 222562,
+    "output_tokens": 73,
+    "api_call_count": 5
   }
 }
