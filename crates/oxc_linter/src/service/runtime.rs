@@ -586,16 +586,10 @@ impl Runtime {
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
         tx_error: &DiagnosticSender,
+        suppression_manager: &mut SuppressionManager,
     ) {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
-
-        let mut suppression_manager = SuppressionManager::load(
-            self.cwd.join("oxlint-suppressions.json").as_path(),
-            self.linter.options.suppress_all,
-            self.linter.options.prune_suppressions,
-        )
-        .unwrap();
 
         let is_updating_suppression_file = suppression_manager.is_updating_file();
         let file_exists = suppression_manager.exists_suppression_file();

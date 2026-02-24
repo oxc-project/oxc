@@ -18,6 +18,7 @@ working directory: fixtures/suppression_report_one_new_error_but_filter_the_rest
   help: Remove the debugger statement
 
 Found 0 warnings and 2 errors.
+'oxlint-suppressions.json' has been updated.
 Finished in <variable>ms on 2 files with 56 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

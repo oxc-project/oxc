@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "suppressions": {
+    "test.js": {
+      "eslint/no-console": {
+        "count": 1,
+      }
+    }
+  }
+}

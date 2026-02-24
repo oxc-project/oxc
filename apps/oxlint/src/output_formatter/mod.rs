@@ -15,6 +15,7 @@ use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
+use oxc_linter::OxlintSuppressionFileAction;
 use rustc_hash::FxHashSet;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
@@ -53,12 +54,6 @@ impl FromStr for OutputFormat {
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
-}
-
-pub enum OxlintSuppressionFileAction {
-    None,
-    Updated,
-    Created,
 }
 
 /// Some extra lint information, which can be outputted

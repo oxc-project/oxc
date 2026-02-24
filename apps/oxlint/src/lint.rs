@@ -15,6 +15,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    OxlintSuppressionFileAction, SuppressionManager,
 };
 
 #[cfg(feature = "napi")]
@@ -22,7 +23,7 @@ use crate::js_config::JsConfigLoaderCb;
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     config_loader::{CliConfigLoadError, ConfigLoadError, ConfigLoader},
-    output_formatter::{LintCommandInfo, OutputFormatter, OxlintSuppressionFileAction},
+    output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
 use oxc_linter::LintIgnoreMatcher;
@@ -371,6 +372,12 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
+        let mut suppression_manager = SuppressionManager::load(
+            options.cwd().join("oxlint-suppressions.json").as_path(),
+            suppression_options.suppress_all,
+            suppression_options.prune_suppressions,
+        );
+
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives)
@@ -415,24 +422,7 @@ impl CliRunner {
             }
         };
 
-        // Ideally this information should come from the manager, but the first PR for suppressions is big enough.
-        // Looks this could be tackle at same time the suppression manager should be working with TS lint, it
-        // will require some architecture changes.
-        let oxlint_suppression_file_action = {
-            let suppression_file_path = self.cwd.join("oxlint-suppressions.json");
-
-            if suppression_file_path.exists()
-                && (suppression_options.suppress_all || suppression_options.prune_suppressions)
-            {
-                OxlintSuppressionFileAction::Updated
-            } else if !suppression_file_path.exists() && suppression_options.suppress_all {
-                OxlintSuppressionFileAction::Created
-            } else {
-                OxlintSuppressionFileAction::None
-            }
-        };
-
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone()) {
+        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), &mut suppression_manager) {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }
@@ -451,7 +441,7 @@ impl CliRunner {
             number_of_rules,
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
-            oxlint_suppression_file_action,
+            oxlint_suppression_file_action: suppression_manager.manager_status,
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -1455,6 +1445,7 @@ mod suppression {
             .with_cwd("fixtures/suppression_not_file_reporting_errors".into())
             .test_and_snapshot(args);
     }
+
     #[test]
     fn test_suppression_not_reporting_new_errors() {
         let args = &[];
@@ -1514,6 +1505,14 @@ mod suppression {
         let args = &[];
         Tester::new()
             .with_cwd("fixtures/suppression_report_one_new_error_but_filter_the_rest".into())
+            .test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_suppression_file_malformed() {
+        let args = &[];
+        Tester::new()
+            .with_cwd("fixtures/suppression_file_malformed".into())
             .test_and_snapshot(args);
     }
 
