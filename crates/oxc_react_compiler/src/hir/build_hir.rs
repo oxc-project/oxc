@@ -3255,6 +3255,44 @@ pub fn lower_expression(
         // =====================================================================
         LowerableExpression::UnaryExpression { operator, argument, span } => {
             let loc = span_to_loc(*span);
+            // `delete` requires special handling: decompose the member expression
+            // argument into object + property and emit PropertyDelete/ComputedDelete,
+            // matching the TS reference (BuildHIR.ts lines 2407-2464).
+            if *operator == oxc_syntax::operator::UnaryOperator::Delete {
+                match argument.as_ref() {
+                    LowerableExpression::PropertyAccess { object, property, .. } => {
+                        let obj_result = lower_expression(builder, object)?;
+                        return lower_value_to_temporary(
+                            builder,
+                            InstructionValue::PropertyDelete(crate::hir::PropertyDelete {
+                                object: obj_result.place,
+                                property: crate::hir::types::PropertyLiteral::String(
+                                    property.clone(),
+                                ),
+                                loc,
+                            }),
+                            loc,
+                        );
+                    }
+                    LowerableExpression::ComputedPropertyAccess { object, property, .. } => {
+                        let obj_result = lower_expression(builder, object)?;
+                        let prop_result = lower_expression(builder, property)?;
+                        return lower_value_to_temporary(
+                            builder,
+                            InstructionValue::ComputedDelete(crate::hir::ComputedDelete {
+                                object: obj_result.place,
+                                property: prop_result.place,
+                                loc,
+                            }),
+                            loc,
+                        );
+                    }
+                    _ => {
+                        // Non-member delete (e.g. `delete x`) — treat as unsupported
+                        // like the TS reference does.
+                    }
+                }
+            }
             let arg_result = lower_expression(builder, argument)?;
             lower_value_to_temporary(
                 builder,

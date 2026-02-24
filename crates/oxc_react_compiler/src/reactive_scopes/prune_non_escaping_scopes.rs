@@ -114,12 +114,20 @@ impl State {
 // Phase 1: Collect — build the dependency graph
 // =====================================================================================
 
+/// Options controlling memoization behavior during pruning.
+pub struct PruneOptions {
+    /// When true, JSX elements are treated as `Memoized` (always memoized when
+    /// reachable from escaping values). When false, they are `Unmemoized` (only
+    /// memoized if explicitly forced). Corresponds to `!enableForest` in the TS.
+    pub memoize_jsx_elements: bool,
+}
+
 /// Prune reactive scopes whose values don't escape the function.
-pub fn prune_non_escaping_scopes(func: &mut ReactiveFunction) {
+pub fn prune_non_escaping_scopes(func: &mut ReactiveFunction, opts: &PruneOptions) {
     let mut state = State::new();
 
     // Phase 1: Walk all instructions/terminals to build the dependency graph
-    collect_in_block(&func.body, &mut state, &[]);
+    collect_in_block(&func.body, &mut state, &[], opts);
 
     // Phase 2: Compute memoized set via DFS from escaping values
     let memoized = compute_memoized_identifiers(&mut state);
@@ -129,7 +137,7 @@ pub fn prune_non_escaping_scopes(func: &mut ReactiveFunction) {
 }
 
 /// Determine the MemoizationLevel for an instruction value.
-fn classify_value(value: &InstructionValue) -> MemoizationLevel {
+fn classify_value(value: &InstructionValue, opts: &PruneOptions) -> MemoizationLevel {
     match value {
         // Allocating values that should always be memoized
         InstructionValue::CallExpression(_)
@@ -161,9 +169,13 @@ fn classify_value(value: &InstructionValue) -> MemoizationLevel {
         | InstructionValue::IteratorNext(_)
         | InstructionValue::NextPropertyOf(_) => MemoizationLevel::Conditional,
 
-        // JSX — treat as Unmemoized by default (would be Memoized with memoizeJsxElements)
+        // JSX — memoize when `memoizeJsxElements` is true (the default when `enableForest` is false)
         InstructionValue::JsxExpression(_) | InstructionValue::JsxFragment(_) => {
-            MemoizationLevel::Unmemoized
+            if opts.memoize_jsx_elements {
+                MemoizationLevel::Memoized
+            } else {
+                MemoizationLevel::Unmemoized
+            }
         }
 
         // Primitives and other cheap-to-compare values — never memoize
@@ -224,9 +236,9 @@ fn collect_instruction_operands(value: &InstructionValue, operands: &mut Vec<Dec
 }
 
 /// Get the MemoizationLevel for a ReactiveValue (handles compound values).
-fn classify_reactive_value(value: &ReactiveValue) -> MemoizationLevel {
+fn classify_reactive_value(value: &ReactiveValue, opts: &PruneOptions) -> MemoizationLevel {
     match value {
-        ReactiveValue::Instruction(iv) => classify_value(iv),
+        ReactiveValue::Instruction(iv) => classify_value(iv, opts),
         ReactiveValue::Logical(_)
         | ReactiveValue::Ternary(_)
         | ReactiveValue::Sequence(_)
@@ -234,12 +246,17 @@ fn classify_reactive_value(value: &ReactiveValue) -> MemoizationLevel {
     }
 }
 
-fn collect_in_block(block: &ReactiveBlock, state: &mut State, active_scopes: &[ScopeId]) {
+fn collect_in_block(
+    block: &ReactiveBlock,
+    state: &mut State,
+    active_scopes: &[ScopeId],
+    opts: &PruneOptions,
+) {
     for stmt in block {
         match stmt {
             ReactiveStatement::Instruction(instr_stmt) => {
                 let instr = &instr_stmt.instruction;
-                let level = classify_reactive_value(&instr.value);
+                let level = classify_reactive_value(&instr.value, opts);
 
                 // Collect operands (rvalues)
                 let mut operand_ids = Vec::new();
@@ -360,7 +377,7 @@ fn collect_in_block(block: &ReactiveBlock, state: &mut State, active_scopes: &[S
                         node.scopes.insert(scope_id);
                     }
                 }
-                collect_in_terminal(&term.terminal, state, active_scopes);
+                collect_in_terminal(&term.terminal, state, active_scopes, opts);
             }
             ReactiveStatement::Scope(scope) => {
                 // Register scope node with its dependencies
@@ -389,39 +406,44 @@ fn collect_in_block(block: &ReactiveBlock, state: &mut State, active_scopes: &[S
                 // Recurse into scope body with this scope added to active scopes
                 let mut inner_scopes = active_scopes.to_vec();
                 inner_scopes.push(scope.scope.id);
-                collect_in_block(&scope.instructions, state, &inner_scopes);
+                collect_in_block(&scope.instructions, state, &inner_scopes, opts);
             }
             ReactiveStatement::PrunedScope(scope) => {
-                collect_in_block(&scope.instructions, state, active_scopes);
+                collect_in_block(&scope.instructions, state, active_scopes, opts);
             }
         }
     }
 }
 
-fn collect_in_terminal(terminal: &ReactiveTerminal, state: &mut State, active_scopes: &[ScopeId]) {
+fn collect_in_terminal(
+    terminal: &ReactiveTerminal,
+    state: &mut State,
+    active_scopes: &[ScopeId],
+    opts: &PruneOptions,
+) {
     match terminal {
         ReactiveTerminal::If(t) => {
-            collect_in_block(&t.consequent, state, active_scopes);
+            collect_in_block(&t.consequent, state, active_scopes, opts);
             if let Some(alt) = &t.alternate {
-                collect_in_block(alt, state, active_scopes);
+                collect_in_block(alt, state, active_scopes, opts);
             }
         }
         ReactiveTerminal::Switch(t) => {
             for case in &t.cases {
                 if let Some(block) = &case.block {
-                    collect_in_block(block, state, active_scopes);
+                    collect_in_block(block, state, active_scopes, opts);
                 }
             }
         }
-        ReactiveTerminal::While(t) => collect_in_block(&t.r#loop, state, active_scopes),
-        ReactiveTerminal::DoWhile(t) => collect_in_block(&t.r#loop, state, active_scopes),
-        ReactiveTerminal::For(t) => collect_in_block(&t.r#loop, state, active_scopes),
-        ReactiveTerminal::ForOf(t) => collect_in_block(&t.r#loop, state, active_scopes),
-        ReactiveTerminal::ForIn(t) => collect_in_block(&t.r#loop, state, active_scopes),
-        ReactiveTerminal::Label(t) => collect_in_block(&t.block, state, active_scopes),
+        ReactiveTerminal::While(t) => collect_in_block(&t.r#loop, state, active_scopes, opts),
+        ReactiveTerminal::DoWhile(t) => collect_in_block(&t.r#loop, state, active_scopes, opts),
+        ReactiveTerminal::For(t) => collect_in_block(&t.r#loop, state, active_scopes, opts),
+        ReactiveTerminal::ForOf(t) => collect_in_block(&t.r#loop, state, active_scopes, opts),
+        ReactiveTerminal::ForIn(t) => collect_in_block(&t.r#loop, state, active_scopes, opts),
+        ReactiveTerminal::Label(t) => collect_in_block(&t.block, state, active_scopes, opts),
         ReactiveTerminal::Try(t) => {
-            collect_in_block(&t.block, state, active_scopes);
-            collect_in_block(&t.handler, state, active_scopes);
+            collect_in_block(&t.block, state, active_scopes, opts);
+            collect_in_block(&t.handler, state, active_scopes, opts);
         }
         ReactiveTerminal::Break(_)
         | ReactiveTerminal::Continue(_)

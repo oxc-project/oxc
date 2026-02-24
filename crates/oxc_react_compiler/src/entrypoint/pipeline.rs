@@ -293,8 +293,12 @@ pub fn run_pipeline(
     // =========================================================================
 
     // 38. PruneNonEscapingScopes
+    let prune_opts = crate::reactive_scopes::prune_non_escaping_scopes::PruneOptions {
+        memoize_jsx_elements: !env.config.enable_forest,
+    };
     crate::reactive_scopes::prune_non_escaping_scopes::prune_non_escaping_scopes(
         &mut reactive_function,
+        &prune_opts,
     );
 
     // 39. PruneNonReactiveDependencies
