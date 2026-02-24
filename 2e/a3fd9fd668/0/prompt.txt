@@ -3,3 +3,7 @@ https://github.com/oxc-project/oxc/issues/19137
 ---
 
 fix lint
+
+---
+
+dont try from, allow / expect this clippy rule
