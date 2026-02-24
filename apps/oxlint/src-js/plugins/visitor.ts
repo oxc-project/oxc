@@ -98,7 +98,7 @@ import type { Node, Visitor } from "./types.ts";
 export type VisitFn = (node: Node) => void;
 
 // Visit function for a specific CFG event.
-type CfgVisitFn = (...args: unknown[]) => void;
+export type CfgVisitFn = (...args: unknown[]) => void;
 
 // Enter+exit pair, for non-leaf nodes in compiled visitor.
 export interface EnterExit {
@@ -268,7 +268,7 @@ export function addVisitorToCompiled(visitor: Visitor): void {
   for (let i = 0; i < keysLen; i++) {
     let name = keys[i];
 
-    const visitFn = visitor[name];
+    const visitFn = visitor[name] as VisitFn;
     if (typeof visitFn !== "function") {
       throw new TypeError(`'${name}' property of visitor object is not a function`);
     }
@@ -649,7 +649,7 @@ function mergeCfgVisitFns(visitProps: VisitProp[]): CfgVisitFn {
   if (numVisitFns === 1) {
     // Only 1 visit function, so no need to merge
     debugAssertIsNonNull(visitProps[0].fn);
-    mergedFn = visitProps[0].fn;
+    mergedFn = visitProps[0].fn as CfgVisitFn;
   } else {
     // No need to sort in order of specificity, because each rule can only have 1 handler for each CFG event
 
@@ -675,7 +675,7 @@ function mergeCfgVisitFns(visitProps: VisitProp[]): CfgVisitFn {
       debugAssertIsNonNull(visitProps[i].fn);
       visitFns.push(visitProps[i].fn!);
     }
-    mergedFn = merger(...visitFns);
+    mergedFn = merger(...visitFns as CfgVisitFn[]);
 
     visitFns.length = 0;
   }

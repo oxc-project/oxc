@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-import type { Program } from "./types.d.ts";
+import type { Program, NodeOrToken } from "./types.d.ts";
 import type { Location as SourceLocation } from "../plugins/location.ts";
 
 type BufferWithArrays = Uint8Array & { uint32: Uint32Array; float64: Float64Array };
@@ -12,7 +12,7 @@ export declare function deserializeProgramOnly(
   sourceText: string,
   sourceStartPosInput: number,
   sourceByteLen: number,
-  getLoc: GetLoc,
+  getLoc: NodeOrToken,
 ): Program;
 
 export declare function resetBuffer(): void;
