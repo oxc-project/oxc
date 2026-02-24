@@ -10,6 +10,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -18,6 +19,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -26,6 +28,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:13]
@@ -36,6 +39,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:16]
@@ -46,6 +50,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -54,6 +59,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:20]
@@ -63,6 +69,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:13]
@@ -73,6 +80,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:26]
@@ -84,6 +92,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:32]
@@ -93,6 +102,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:29]
@@ -104,6 +114,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:35]
@@ -113,6 +124,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -121,6 +133,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                componentDidCatch(error, errorInfo) {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -129,6 +142,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                componentDidCatch(error, errorInfo) {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:13]
@@ -142,6 +156,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -150,6 +165,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                constructor(props) {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -158,6 +174,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                constructor(props) {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
     ╭─[prefer_function_component.tsx:1:13]
@@ -175,6 +192,7 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶              };
     ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -183,6 +201,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                getBar() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -191,6 +210,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                getBar() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:20]
@@ -200,6 +220,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -208,6 +229,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -216,6 +238,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:13]
@@ -226,6 +249,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:16]
@@ -236,6 +260,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -244,6 +269,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:20]
@@ -253,6 +279,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:13]
@@ -263,6 +290,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:26]
@@ -274,6 +302,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:32]
@@ -283,6 +312,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:29]
@@ -294,6 +324,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:35]
@@ -303,6 +334,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:20]
@@ -312,6 +344,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -320,6 +353,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -328,6 +362,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:13]
@@ -338,6 +373,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:16]
@@ -348,6 +384,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -356,6 +393,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:20]
@@ -365,6 +403,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:13]
@@ -375,6 +414,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:26]
@@ -386,6 +426,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:32]
@@ -395,6 +436,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:29]
@@ -406,6 +448,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:35]
@@ -415,6 +458,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:20]
@@ -424,6 +468,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -432,6 +477,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -440,6 +486,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:13]
@@ -450,6 +497,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:16]
@@ -460,6 +508,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -468,6 +517,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:20]
@@ -477,6 +527,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:13]
@@ -487,6 +538,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:26]
@@ -498,6 +550,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:32]
@@ -507,6 +560,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:29]
@@ -518,6 +572,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶              };
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:3:35]
@@ -527,6 +582,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
 
   ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
    ╭─[prefer_function_component.tsx:1:7]
@@ -535,3 +591,4 @@ source: crates/oxc_linter/src/tester.rs
  2 │                getDerivedStateFromError(error) {
    ╰────
   help: Convert the class component to a function component.
+  note: See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function
