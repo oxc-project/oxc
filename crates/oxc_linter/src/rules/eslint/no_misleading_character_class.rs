@@ -24,7 +24,7 @@ fn surrogate_pair_diagnostic(span: Span) -> OxcDiagnostic {
 
 fn combining_class_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected combining class in character class.")
-        .with_help("Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \\u{1F1E6}\\u{0301} for 'Á') instead of combining sequences.")
+        .with_help("Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.")
         .with_label(span)
 }
 
