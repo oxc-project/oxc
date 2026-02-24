@@ -258,6 +258,29 @@ impl HirBuilder {
         Place { identifier, effect: Effect::Unknown, reactive: false, loc }
     }
 
+    /// Register an existing identifier from an outer scope as a local binding.
+    ///
+    /// This is used for FunctionExpression context variables: the inner function
+    /// shares the same IdentifierId as the outer scope, so reactivity can propagate.
+    pub fn register_outer_binding(
+        &mut self,
+        name: &str,
+        identifier: Identifier,
+        kind: BindingKind,
+    ) {
+        let candidate =
+            identifier.name.as_ref().map_or_else(|| name.to_string(), |n| n.value().to_string());
+        self.bindings.insert(
+            candidate,
+            BindingEntry {
+                declaration_key: self.next_binding_key,
+                identifier,
+                kind,
+            },
+        );
+        self.next_binding_key += 1;
+    }
+
     /// Resolve an identifier reference to determine if it's a local binding or
     /// a global/module-level reference.
     ///

@@ -344,6 +344,7 @@ pub fn run_pipeline(
     if env.config.enable_preserve_existing_memoization_guarantees
         || env.config.validate_preserve_existing_memoization_guarantees
     {
+        eprintln!("[DEBUG PIPELINE] Reactive function before validation:\n{}", crate::reactive_scopes::print_reactive_function::print_reactive_function(&reactive_function));
         crate::validation::validate_preserved_manual_memoization::validate_preserved_manual_memoization(&reactive_function)?;
     }
 

@@ -1394,6 +1394,17 @@ fn visit_block(
                         }
                     }
                     GotoVariant::Continue => {
+                        // If the target is not scheduled and hasn't been emitted,
+                        // treat it as an inline continuation. This happens when
+                        // build_reactive_scope_terminals_hir splits a Goto(Continue)
+                        // across a scope boundary, creating an intermediate block.
+                        if !cx.is_scheduled(goto.block)
+                            && !cx.emitted.contains(&goto.block)
+                            && let Some(next_block) = cx.block(goto.block).cloned()
+                        {
+                            block = next_block;
+                            continue;
+                        }
                         let continue_stmt = visit_continue(cx, goto.block, goto.id, goto.loc)?;
                         statements.push(continue_stmt);
                     }

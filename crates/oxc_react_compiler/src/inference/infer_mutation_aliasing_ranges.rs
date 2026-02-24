@@ -829,10 +829,8 @@ pub fn infer_mutation_aliasing_ranges(
     //
     // This sync ensures that when later passes (e.g., InferReactiveScopeVariables)
     // check operand mutable ranges, they see the same range as the lvalue definition.
-    // TODO: sync_mutable_ranges still causes net regression (310→308), disabled pending investigation.
-    // The core issue is that Rust's value-type semantics for Identifier means mutations to
-    // mutableRange on one Place copy don't propagate to other copies. This sync function
-    // attempts to fix that but has subtle bugs that need investigation.
+    // TODO: sync_mutable_ranges causes net regression (310→308) due to over-extending
+    // ranges for phi operands from different branches. Needs phi-aware exclusion logic.
     // sync_mutable_ranges(func);
 
     // ===== Phase 3: Compute external effects for params/context/returns =====
@@ -2160,9 +2158,7 @@ fn sync_mutable_ranges(func: &mut HIRFunction) {
         }
     }
 
-    // Step 2: Apply canonical ranges to ALL Places using the existing
-    // apply_range_updates infrastructure, but with full range (start+end),
-    // not just end updates.
+    // Step 2: Apply canonical ranges to ALL Places.
     for param in &mut func.params {
         let place = match param {
             ReactiveParam::Place(p) => p,

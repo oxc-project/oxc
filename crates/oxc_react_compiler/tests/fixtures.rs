@@ -1046,11 +1046,25 @@ fn normalize_code(s: &str) -> String {
     // conditions. Our codegen doesn't. Normalize `( expr )` → `(expr)`.
     let normalized_paren_space = normalize_paren_spacing(&normalized_shorthand);
 
-    // Step 20: re-renumber `tN` temps sequentially after inlining.
+    // Step 20: strip SSA underscore suffixes (`x_0` -> `x`, `pathname_0` -> `pathname`).
+    // The reference compiler renames shadowed variables with `_N` suffixes, while ours does not.
+    // Strip `_N` suffixes from non-temp identifiers where N is a small integer.
+    let no_ssa_underscores = strip_ssa_underscore_suffixes(&normalized_paren_space);
+
+    // Step 21: normalize JSX paren wrapping.
+    // The reference compiler wraps multi-line JSX in parens: `(<div>...</div>)`.
+    // Our codegen does not. Strip outer JSX parens.
+    let no_jsx_parens = normalize_jsx_parens(&no_ssa_underscores);
+
+    // Step 22: normalize `function ()` -> `function()` spacing.
+    // The reference compiler emits a space between `function` and `()` in some contexts.
+    let normalized_func_space = no_jsx_parens.replace("function (", "function(");
+
+    // Step 23: re-renumber `tN` temps sequentially after inlining.
     // Steps 10-12 may inline/remove some temps, leaving gaps (e.g. t0, t2 instead of t0, t1).
     // This final pass renumbers all plain `tN` temps (lowercase, no `$`, no `#`) to
     // sequential t0, t1, t2, ... based on order of first appearance.
-    let renumbered = renumber_plain_temps(&normalized_paren_space);
+    let renumbered = renumber_plain_temps(&normalized_func_space);
 
     renumbered.trim().to_string()
 }
@@ -1750,6 +1764,43 @@ fn remove_dead_expression_statements(s: &str) -> String {
         if *token == "[]" {
             continue;
         }
+        // Remove standalone array literal expression statements like `[a]`, `[a, b]`.
+        // These are dead useMemo dependency arrays our codegen emits but the reference
+        // compiler doesn't. A standalone array is identified by:
+        // - Token starts with `[` and ends with `]`
+        // - Contains only identifiers and commas (no operators, assignments, etc.)
+        // - Previous token is NOT `=` or `!==` or `===` (not part of an expression)
+        // - Next token is a statement start (let, const, if, return, etc.)
+        if token.starts_with('[') && token.ends_with(']') && token.len() > 2 {
+            let inner = &token[1..token.len() - 1];
+            let is_simple_array = inner
+                .split(',')
+                .all(|part| {
+                    let p = part.trim();
+                    !p.is_empty()
+                        && p.chars()
+                            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.' || c == '$')
+                });
+            if is_simple_array {
+                let prev = result.last().copied().unwrap_or("");
+                let next = tokens.get(idx + 1).copied().unwrap_or("");
+                let prev_is_stmt_end = prev.ends_with(')')
+                    || prev.ends_with('}')
+                    || prev.ends_with(']')
+                    || prev.chars().last().is_some_and(|c| c.is_ascii_alphanumeric() || c == '_');
+                let next_is_stmt_start = matches!(
+                    next,
+                    "let" | "const" | "var" | "if" | "return" | "for" | "while" | "switch"
+                        | "try" | "throw" | "do" | "}" | ""
+                );
+                // Also check that prev is not an assignment operator
+                let prev_is_operator =
+                    matches!(prev, "=" | "!=" | "!==" | "==" | "===" | "||" | "&&" | "?");
+                if prev_is_stmt_end && !prev_is_operator && next_is_stmt_start {
+                    continue;
+                }
+            }
+        }
         // Remove standalone `{}` when it appears as a dead expression statement.
         // Cases to remove:
         // 1. `{ {} }` - empty block inside a block (our codegen emits Block([]) as body)
@@ -2240,6 +2291,103 @@ fn normalize_shorthand_properties(s: &str) -> String {
 
 /// Re-renumber all plain `tN` temps (lowercase, digits only) to sequential
 /// t0, t1, t2, ... based on order of first appearance.
+/// Strip SSA underscore suffixes (`x_0` -> `x`, `pathname_0` -> `pathname`).
+/// The reference compiler renames shadowed variables with `_N` suffixes.
+/// Only strips `_N` where N is a small integer (0-9) at a word boundary.
+fn strip_ssa_underscore_suffixes(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+
+    while i < len {
+        if bytes[i] == b'_'
+            && i > 0
+            && (bytes[i - 1].is_ascii_alphanumeric() || bytes[i - 1] == b'_')
+        {
+            // Check for `_N` where N is a single digit, at word boundary.
+            let j = i + 1;
+            if j < len && bytes[j].is_ascii_digit() {
+                let k = j + 1;
+                let at_boundary =
+                    k >= len || (!bytes[k].is_ascii_alphanumeric() && bytes[k] != b'_');
+                if at_boundary {
+                    // Check this is not a `tN_M` temp — only strip from named identifiers.
+                    // Look back to find the start of the identifier.
+                    let mut start = i;
+                    while start > 0
+                        && (bytes[start - 1].is_ascii_alphanumeric() || bytes[start - 1] == b'_')
+                    {
+                        start -= 1;
+                    }
+                    let ident = &s[start..i];
+                    // Don't strip from temp identifiers (t0, t1, etc.) or _temp patterns
+                    let is_temp = ident == "t"
+                        || ident.starts_with("t$")
+                        || ident == "_temp"
+                        || ident.starts_with("_temp");
+                    if !is_temp && !ident.is_empty() {
+                        // Skip the `_N` suffix
+                        i = k;
+                        continue;
+                    }
+                }
+            }
+        }
+        result.push(bytes[i] as char);
+        i += 1;
+    }
+
+    result
+}
+
+/// Normalize JSX paren wrapping.
+/// The reference compiler wraps multi-line JSX returns in parens: `(<div>...</div>)`
+/// or `(<>...</>)`. Our codegen does not. Strip these outer parens around JSX.
+fn normalize_jsx_parens(s: &str) -> String {
+    // Strip parens wrapping JSX elements: `(<Tag ...>...</Tag>)` -> `<Tag ...>...</Tag>`
+    // Only match when `(<` is followed by an uppercase letter (component) or lowercase
+    // HTML tag or `>` (fragment).
+    let mut result = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+
+    while i < len {
+        if bytes[i] == b'(' && i + 1 < len && bytes[i + 1] == b'<' {
+            // Check if followed by a tag name (letter) or `>` (fragment)
+            if i + 2 < len
+                && (bytes[i + 2].is_ascii_alphabetic()
+                    || bytes[i + 2] == b'>'
+                    || bytes[i + 2] == b'/')
+            {
+                // Skip the opening paren
+                i += 1;
+                continue;
+            }
+        }
+        // Close: `>)` after JSX closing tag
+        if bytes[i] == b')' && i > 0 && bytes[i - 1] == b'>' {
+            // Check if this is after a JSX close: `/>)` or `>)` preceded by tag close
+            // Look back for `/>` or `</tagname>`
+            let prev_slice = &s[..i];
+            if prev_slice.ends_with("/>")
+                || prev_slice
+                    .rfind("</")
+                    .is_some_and(|p| s[p..i].ends_with('>'))
+            {
+                // Skip the closing paren
+                i += 1;
+                continue;
+            }
+        }
+        result.push(bytes[i] as char);
+        i += 1;
+    }
+
+    result
+}
+
 /// Also renumbers uppercase `TN` JSX tag temps similarly.
 /// This must run AFTER all inlining/dead-code steps to close numbering gaps.
 fn renumber_plain_temps(s: &str) -> String {

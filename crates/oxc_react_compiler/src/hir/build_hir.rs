@@ -1881,10 +1881,25 @@ fn lower_function_to_value(
     let mut inner_builder = HirBuilder::new(env.clone(), None, merged_context);
 
     // Resolve captured context variables in the inner builder to build the context Vec<Place>
+    // Use the OUTER builder's identifier so that context places share the same IdentifierId
+    // as the outer scope's variables. This enables reactivity propagation through closures.
     let mut context_places = Vec::new();
     for (name, ctx_loc) in &captured_context {
-        let place = inner_builder.declare_binding(name, BindingKind::Let, *ctx_loc);
-        context_places.push(place);
+        if let VariableBinding::Identifier { identifier, binding_kind } =
+            outer_builder.resolve_identifier(name)
+        {
+            inner_builder.register_outer_binding(name, identifier.clone(), binding_kind);
+            context_places.push(crate::hir::Place {
+                identifier,
+                effect: crate::hir::Effect::Unknown,
+                reactive: false,
+                loc: *ctx_loc,
+            });
+        } else {
+            // Fallback: if not found in outer builder (shouldn't happen), create new
+            let place = inner_builder.declare_binding(name, BindingKind::Let, *ctx_loc);
+            context_places.push(place);
+        }
     }
 
     // Extract function metadata
@@ -4533,29 +4548,84 @@ fn lower_jsx_child(
 /// JSX text with only whitespace (including newlines) is removed.
 /// Leading/trailing whitespace on each line is collapsed.
 fn trim_jsx_text(text: &str) -> String {
-    // React's JSX text trimming rules:
-    // 1. Empty text or whitespace-only text is removed
-    // 2. Newlines at start/end are removed
-    // 3. Adjacent whitespace is collapsed to a single space
-    let trimmed = text.trim();
-    if trimmed.is_empty() {
-        return String::new();
+    // React/Babel JSX text trimming algorithm (cleanJSXElementLiteralChild):
+    //
+    // 1. Split by newlines
+    // 2. For each line:
+    //    - If it's the first line, only trim trailing whitespace
+    //    - If it's the last line, only trim leading whitespace
+    //    - If it's a middle line, trim both sides
+    //    - If a line becomes empty after trimming, it's removed
+    // 3. Collapse adjacent whitespace within each surviving line to a single space
+    // 4. Join the surviving lines with a single space
+    //
+    // This preserves significant whitespace like "Status: " (trailing space before
+    // an expression container on the same line).
+
+    let lines: Vec<&str> = text.split('\n').collect();
+    let num_lines = lines.len();
+
+    if num_lines == 1 {
+        // Single line: no newline trimming, just collapse internal whitespace.
+        // Preserve leading/trailing spaces since they may be significant
+        // (e.g., " {expr}" has a leading space JSX text node).
+        let line = lines[0];
+        if line.chars().all(|c| c.is_whitespace()) {
+            return String::new();
+        }
+        let mut result = String::new();
+        let mut last_was_whitespace = false;
+        for ch in line.chars() {
+            if ch.is_whitespace() {
+                if !last_was_whitespace {
+                    result.push(' ');
+                }
+                last_was_whitespace = true;
+            } else {
+                result.push(ch);
+                last_was_whitespace = false;
+            }
+        }
+        return result;
     }
 
-    let mut result = String::new();
-    let mut last_was_whitespace = false;
-    for ch in trimmed.chars() {
-        if ch.is_whitespace() {
-            if !last_was_whitespace {
-                result.push(' ');
-            }
-            last_was_whitespace = true;
+    // Multi-line: apply the standard Babel/React trimming
+    let mut trimmed_lines: Vec<String> = Vec::new();
+
+    for (i, line) in lines.iter().enumerate() {
+        let processed = if i == 0 {
+            // First line: trim trailing whitespace only
+            line.trim_end()
+        } else if i == num_lines - 1 {
+            // Last line: trim leading whitespace only
+            line.trim_start()
         } else {
-            result.push(ch);
-            last_was_whitespace = false;
+            // Middle lines: trim both sides
+            line.trim()
+        };
+
+        if processed.is_empty() {
+            continue;
         }
+
+        // Collapse internal whitespace to single spaces
+        let mut collapsed = String::new();
+        let mut last_was_whitespace = false;
+        for ch in processed.chars() {
+            if ch.is_whitespace() {
+                if !last_was_whitespace {
+                    collapsed.push(' ');
+                }
+                last_was_whitespace = true;
+            } else {
+                collapsed.push(ch);
+                last_was_whitespace = false;
+            }
+        }
+        trimmed_lines.push(collapsed);
     }
-    result
+
+    trimmed_lines.join(" ")
 }
 
 // =====================================================================================
