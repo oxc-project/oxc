@@ -124,22 +124,20 @@ impl Rule for PreferFunctionComponent {
     }
 }
 
-/// Returns `true` if the class has `componentDidCatch` method or
-/// `static getDerivedStateFromError` method.
+/// Returns `true` if the class has a `componentDidCatch` method or a
+/// `static getDerivedStateFromError` method/property.
 fn is_error_boundary(class: &Class) -> bool {
     class.body.body.iter().any(|element| {
-        let key_name = match element {
-            ClassElement::MethodDefinition(method) => {
-                method.key.static_name().map(|n| (n, method.r#static))
-            }
-            ClassElement::PropertyDefinition(prop) => {
-                prop.key.static_name().map(|n| (n, prop.r#static))
-            }
-            _ => None,
+        let (is_static, key) = match element {
+            ClassElement::MethodDefinition(m) => (m.r#static, &m.key),
+            ClassElement::PropertyDefinition(p) => (p.r#static, &p.key),
+            _ => return false,
         };
-
-        matches!(key_name, Some((ref name, false)) if name == "componentDidCatch")
-            || matches!(key_name, Some((ref name, true)) if name == "getDerivedStateFromError")
+        match key.static_name().as_deref() {
+            Some("componentDidCatch") => !is_static,
+            Some("getDerivedStateFromError") => is_static,
+            _ => false,
+        }
     })
 }
 
@@ -158,6 +156,15 @@ impl ClassJsxFinder {
 }
 
 impl<'a> Visit<'a> for ClassJsxFinder {
+    fn visit_class_body(&mut self, body: &ClassBody<'a>) {
+        for element in &body.body {
+            if self.found {
+                return;
+            }
+            self.visit_class_element(element);
+        }
+    }
+
     fn visit_jsx_element(&mut self, _elem: &JSXElement<'a>) {
         self.found = true;
     }
@@ -176,9 +183,10 @@ impl<'a> Visit<'a> for ClassJsxFinder {
     }
 
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
-        // depth 0 = class method body, walk into it
-        // depth > 0 = nested function inside a method, skip
-        if self.depth == 0 {
+        // depth 0 = entering a class method body, walk into it.
+        // depth > 0 = nested function inside a method, skip — it's a
+        //             separate component / callback.
+        if !self.found && self.depth == 0 {
             self.depth += 1;
             walk::walk_function(self, func, flags);
             self.depth -= 1;
@@ -186,7 +194,7 @@ impl<'a> Visit<'a> for ClassJsxFinder {
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
-        if self.depth == 0 {
+        if !self.found && self.depth == 0 {
             self.depth += 1;
             walk::walk_arrow_function_expression(self, arrow);
             self.depth -= 1;
