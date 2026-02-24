@@ -1082,6 +1082,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·          ───────
  2 │ function decrypt() {}
    ╰────
+  help: Did you mean 'decrypt'?
 
   × Export 'encrypt' is not defined
    ╭─[babel/packages/babel-parser/test/fixtures/core/scope/undecl-export-as-default/input.js:1:10]

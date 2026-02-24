@@ -13683,6 +13683,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                            ──
  12 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × Private field '#x' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock16.ts:21:28]
@@ -13691,6 +13692,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                            ──
  22 │     getY = (obj: D) => obj.#y;
     ╰────
+  help: Did you mean '#y'?
 
   × Decorators are not valid here.
    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock19.ts:2:5]
@@ -14165,6 +14167,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·               ────
  10 │         thing.#foo();
     ╰────
+  help: Did you mean '#baz'?
 
   × Private field '#bar' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndAny.ts:16:15]
@@ -14173,6 +14176,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·               ────
  17 │         thing.#foo();
     ╰────
+  help: Did you mean '#baz'?
 
   × Private field '#bar' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndAny.ts:23:15]
@@ -14181,6 +14185,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·               ────
  24 │         thing.#foo();
     ╰────
+  help: Did you mean '#baz'?
 
   × Private field '#f' must be declared in an enclosing class
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts:6:14]
@@ -14189,6 +14194,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──
  7 │         this["#foo"] = 3;     // Okay (type has index signature and "#foo" does not collide with private identifier #foo)
    ╰────
+  help: Did you mean '#foo'?
 
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:2:5]
@@ -25281,6 +25287,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·              ──
  6 │     }
    ╰────
+  help: Did you mean '#a'?
 
   × Identifier `orbitol` has already been declared
    ╭─[typescript/tests/cases/conformance/salsa/plainJSRedeclare.ts:1:7]
