@@ -546,6 +546,7 @@ mod test {
     use std::fs;
 
     use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use cow_utils::CowUtils;
     use oxc_linter::LintPlugins;
     use oxc_linter::rules::RULES;
 
@@ -1427,10 +1428,10 @@ export { redundant };
 
     #[test]
     fn test_list_rules_headers() {
+        const EXPECTED_HEADERS: &str = "|Rulename|Source|Default|Enabled?|Fixable?|";
         let args: &[&str] = &["--rules"];
         let output: String = Tester::new().test_output(args);
         let sanitized_output: String = output.chars().filter(|c| !c.is_whitespace()).collect();
-        const EXPECTED_HEADERS: &str = "|Rulename|Source|Default|Enabled?|Fixable?|";
 
         let header_count: usize = sanitized_output.matches(EXPECTED_HEADERS).count();
         let expected_count: usize = oxc_linter::table::RuleTable::default().sections.len();
@@ -1442,8 +1443,7 @@ export { redundant };
 
         assert_eq!(
             header_count, expected_count,
-            "Output should contain the table headers for each section. Expected {}, found {}",
-            expected_count, header_count
+            "Output should contain the table headers for each section. Expected {expected_count}, found {header_count}",
         );
     }
 
@@ -1453,11 +1453,10 @@ export { redundant };
         let output: String = Tester::new().test_output(args);
 
         for flag in LintPlugins::all().iter_names() {
-            let source_name = flag.0.to_lowercase();
+            let source_name = flag.0.cow_to_lowercase();
             assert!(
-                output.contains(&source_name),
-                "Output should contain the source: {}",
-                source_name
+                output.contains(source_name.as_ref()),
+                "Output should contain the source: {source_name}",
             );
         }
     }
