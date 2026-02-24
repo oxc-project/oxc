@@ -85,9 +85,9 @@ impl Lexer<'_> {
     }
 
     pub(crate) fn re_lex_right_angle(&mut self) -> Token {
-        self.token.set_start(self.offset());
+        self.token.set_start(self.offset() - 1);
         let kind = self.read_right_angle();
-        self.finish_next(kind)
+        self.finish_next_retokenized(kind)
     }
 
     fn read_right_angle(&mut self) -> Kind {

@@ -243,7 +243,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`
     pub(crate) fn continue_lex_jsx_identifier(&mut self) {
-        if let Some(token) = self.lexer.continue_lex_jsx_identifier() {
+        if let Some(token) = self.lexer.continue_lex_jsx_identifier(self.token.start()) {
             self.token = token;
         }
     }
