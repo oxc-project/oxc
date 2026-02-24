@@ -9,7 +9,7 @@ mod tracking;
 
 pub use tracking::{
     DiagnosticCounts, Filename, RuleName, SuppressionDiff, SuppressionFile, SuppressionFileState,
-    SuppressionId, SuppressionTracking,
+    SuppressionTracking,
 };
 
 type StaticSuppressionMap = papaya::HashMap<
@@ -18,9 +18,25 @@ type StaticSuppressionMap = papaya::HashMap<
     BuildHasherDefault<FxHasher>,
 >;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum OxlintSuppressionFileAction {
+    None,
+    Updated,
+    Created,
+    Malformed(OxcDiagnostic),
+}
+
+impl OxlintSuppressionFileAction {
+    fn ignore(&self) -> bool {
+        *self != OxlintSuppressionFileAction::Created
+            && *self != OxlintSuppressionFileAction::Updated
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct SuppressionManager {
-    pub suppressions_by_file: SuppressionTracking,
+    pub suppressions_by_file: Option<SuppressionTracking>,
+    pub manager_status: OxlintSuppressionFileAction,
     suppress_all: bool,
     prune_suppression: bool,
     //If the source of truth exists
@@ -28,28 +44,50 @@ pub struct SuppressionManager {
 }
 
 impl SuppressionManager {
-    pub fn load(
-        path: &Path,
-        suppress_all: bool,
-        prune_suppression: bool,
-    ) -> Result<Self, OxcDiagnostic> {
+    pub fn load(path: &Path, suppress_all: bool, prune_suppression: bool) -> Self {
         if !path.exists() {
-            return Ok(Self {
-                suppressions_by_file: SuppressionTracking::default(),
+            let manager_status = if suppress_all {
+                OxlintSuppressionFileAction::Created
+            } else {
+                OxlintSuppressionFileAction::None
+            };
+
+            let suppressions_by_file =
+                if suppress_all { Some(SuppressionTracking::default()) } else { None };
+
+            return Self {
+                suppressions_by_file,
+                manager_status,
                 file_exists: false,
                 prune_suppression,
                 suppress_all,
-            });
+            };
         }
 
-        let suppression_file = SuppressionTracking::from_file(path)?;
+        match SuppressionTracking::from_file(path) {
+            Ok(suppression_file) => Self {
+                suppressions_by_file: Some(suppression_file),
+                manager_status: OxlintSuppressionFileAction::Updated,
+                file_exists: true,
+                prune_suppression,
+                suppress_all,
+            },
+            Err(err) => Self {
+                suppressions_by_file: None,
+                manager_status: OxlintSuppressionFileAction::Malformed(err),
+                file_exists: true,
+                prune_suppression,
+                suppress_all,
+            },
+        }
+    }
 
-        Ok(Self {
-            suppressions_by_file: suppression_file,
-            file_exists: true,
-            prune_suppression,
-            suppress_all,
-        })
+    pub fn get_to_be_defined(self: Self) -> Option<Self> {
+        if self.manager_status.ignore() {
+            return None;
+        }
+
+        Some(self)
     }
 
     pub fn concurrent_map(&self) -> StaticSuppressionMap {
@@ -62,11 +100,14 @@ impl SuppressionManager {
             return concurrent_papaya;
         }
 
-        for file_key in self.suppressions_by_file.suppressions().keys() {
-            concurrent_papaya.pin().insert(
-                Arc::new(file_key.clone()),
-                self.suppressions_by_file.suppressions()[file_key].clone(),
-            );
+        let Some(ref file) = self.suppressions_by_file else {
+            return concurrent_papaya;
+        };
+
+        for file_key in file.suppressions().keys() {
+            concurrent_papaya
+                .pin()
+                .insert(Arc::new(file_key.clone()), file.suppressions()[file_key].clone());
         }
 
         concurrent_papaya
@@ -81,7 +122,11 @@ impl SuppressionManager {
     }
 
     pub fn update(&mut self, diff: SuppressionDiff) {
-        self.suppressions_by_file.update(diff);
+        let Some(file) = self.suppressions_by_file.as_mut() else {
+            return;
+        };
+
+        file.update(diff)
     }
 
     pub fn write(&self, path: &Path) -> Result<(), OxcDiagnostic> {
@@ -91,7 +136,13 @@ impl SuppressionManager {
             ));
         }
 
-        self.suppressions_by_file.save(path)
+        let Some(file) = self.suppressions_by_file.as_ref() else {
+            return Err(OxcDiagnostic::error(
+                "You can't prune error messages if a bulk suppression file is malformed.",
+            ));
+        };
+
+        file.save(path)
     }
 
     pub fn diff_filename(
@@ -173,14 +224,10 @@ impl SuppressionManager {
             let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
                 FxHashMap::default();
             for message in diagnostics {
-                let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
-                    continue;
-                };
-
-                if let Some(violation_count) = suppression_tracking.get_mut(rule_name) {
+                if let Some(violation_count) = suppression_tracking.get_mut(&message.into()) {
                     violation_count.count += 1;
                 } else {
-                    suppression_tracking.insert(rule_name.clone(), DiagnosticCounts { count: 1 });
+                    suppression_tracking.insert(message.into(), DiagnosticCounts { count: 1 });
                 }
             }
 
@@ -204,15 +251,11 @@ impl SuppressionManager {
                 let diagnostics_filtered = lint_diagnostics
                     .into_iter()
                     .filter(|message| {
-                        let Some(SuppressionId(_, rule_name)) = &message.suppression_id else {
-                            return false;
-                        };
-
-                        let Some(count_file) = recorded_violations.get(rule_name) else {
+                        let Some(count_file) = recorded_violations.get(&message.into()) else {
                             return true;
                         };
 
-                        let Some(count_runtime) = runtime_suppression_tracking.get(rule_name)
+                        let Some(count_runtime) = runtime_suppression_tracking.get(&message.into())
                         else {
                             return false;
                         };
