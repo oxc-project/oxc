@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
-use oxc_estree_tokens::{EstreeTokenOptions, collect_token_context, to_estree_tokens_json};
+use oxc_estree_tokens::{EstreeTokenOptions, to_estree_tokens_json};
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
 use oxc_tasks_common::TestFiles;
 
@@ -140,14 +140,11 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
                 span_converter.convert_program(&mut program);
 
                 runner.run(|| {
-                    let token_options = EstreeTokenOptions::test262();
-                    let token_context = collect_token_context(&program, token_options);
                     let tokens_json = to_estree_tokens_json(
-                        &allocator,
-                        source_text,
                         &tokens,
-                        &token_context,
-                        token_options,
+                        &program,
+                        EstreeTokenOptions::test262(),
+                        &allocator,
                     );
                     let tokens_json = black_box(tokens_json);
                     // Allocate into tokens JSON into arena, same as linter and NAPI parser package do

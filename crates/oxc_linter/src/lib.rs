@@ -20,7 +20,7 @@ use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_estree_tokens::{EstreeTokenOptions, collect_token_context, to_estree_tokens_json};
+use oxc_estree_tokens::{EstreeTokenOptions, to_estree_tokens_json};
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
@@ -576,14 +576,11 @@ impl Linter {
             // Keep JS fallback path for BOM sources.
             (0, 0)
         } else if let Some(parser_tokens) = ctx_host.current_sub_host().parser_tokens() {
-            let token_options = EstreeTokenOptions::linter();
-            let token_context = collect_token_context(program, token_options);
             let tokens_json = to_estree_tokens_json(
-                allocator,
-                source_text,
                 parser_tokens,
-                &token_context,
-                token_options,
+                program,
+                EstreeTokenOptions::linter(),
+                allocator,
             );
             if tokens_json.is_empty() {
                 (0, 0)

@@ -8,7 +8,7 @@ use napi_derive::napi;
 
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
-use oxc_estree_tokens::{EstreeTokenOptions, collect_token_context, to_estree_tokens_json};
+use oxc_estree_tokens::{EstreeTokenOptions, to_estree_tokens_json};
 use oxc_linter::RawTransferMetadata2 as RawTransferMetadata;
 use oxc_napi::get_source_type;
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
@@ -220,14 +220,11 @@ unsafe fn parse_raw_impl(
                 // Fallback to TypeScript token parsing in JS for BOM files.
                 (0, 0)
             } else {
-                let token_options = EstreeTokenOptions::linter();
-                let token_context = collect_token_context(program, token_options);
                 let tokens_json = to_estree_tokens_json(
-                    &allocator,
-                    source_text,
                     &tokens,
-                    &token_context,
-                    token_options,
+                    program,
+                    EstreeTokenOptions::linter(),
+                    &allocator,
                 );
                 let tokens_json = allocator.alloc_str(&tokens_json);
                 let tokens_offset = tokens_json.as_ptr() as u32;
