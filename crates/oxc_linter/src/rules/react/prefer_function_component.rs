@@ -64,6 +64,12 @@ declare_oxc_lint!(
     ///     return <div>{this.props.foo}</div>;
     ///   }
     /// }
+    ///
+    /// class Bar extends React.PureComponent {
+    ///   render() {
+    ///     return <div>{this.props.bar}</div>;
+    ///   }
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -71,10 +77,12 @@ declare_oxc_lint!(
     /// const Foo = function(props) {
     ///   return <div>{props.foo}</div>;
     /// };
+    ///
+    /// const Bar = ({ bar }) => <div>{bar}</div>;
     /// ```
     PreferFunctionComponent,
     react,
-    restriction,
+    restriction, // TODO: Or style?
     config = PreferFunctionComponent,
 );
 
