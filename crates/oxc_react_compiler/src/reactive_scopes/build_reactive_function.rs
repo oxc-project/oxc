@@ -797,37 +797,6 @@ fn value_block_result_to_sequence(
 // Helper: make undefined value / place
 // =====================================================================================
 
-fn terminal_name(t: &Terminal) -> &'static str {
-    match t {
-        Terminal::Return(_) => "Return",
-        Terminal::Throw(_) => "Throw",
-        Terminal::If(_) => "If",
-        Terminal::Switch(_) => "Switch",
-        Terminal::DoWhile(_) => "DoWhile",
-        Terminal::While(_) => "While",
-        Terminal::For(_) => "For",
-        Terminal::ForOf(_) => "ForOf",
-        Terminal::ForIn(_) => "ForIn",
-        Terminal::Branch(_) => "Branch",
-        Terminal::Label(_) => "Label",
-        Terminal::Goto(g) => match g.variant {
-            GotoVariant::Break => "Goto(Break)",
-            GotoVariant::Continue => "Goto(Continue)",
-            GotoVariant::Try => "Goto(Try)",
-        },
-        Terminal::MaybeThrow(_) => "MaybeThrow",
-        Terminal::Try(_) => "Try",
-        Terminal::Scope(_) => "Scope",
-        Terminal::PrunedScope(_) => "PrunedScope",
-        Terminal::Sequence(_) => "Sequence",
-        Terminal::Logical(_) => "Logical",
-        Terminal::Ternary(_) => "Ternary",
-        Terminal::Optional(_) => "Optional",
-        Terminal::Unreachable(_) => "Unreachable",
-        Terminal::Unsupported(_) => "Unsupported",
-    }
-}
-
 fn make_undefined_value(loc: SourceLocation) -> ReactiveValue {
     ReactiveValue::Instruction(Box::new(InstructionValue::Primitive(crate::hir::PrimitiveValue {
         value: crate::hir::PrimitiveValueKind::Undefined,
@@ -941,15 +910,9 @@ fn visit_block(
 ) -> Result<(), CompilerError> {
     loop {
         if cx.emitted.contains(&block.id) {
-            return Err(CompilerError::invariant(
-                &format!(
-                    "Block bb{:?} ({}) was already emitted",
-                    block.id,
-                    terminal_name(&block.terminal)
-                ),
-                None,
-                block.terminal.loc(),
-            ));
+            // The block was already emitted via an inline-continuation path
+            // (e.g., Goto(Break) fallback). Skip to avoid duplicating output.
+            break;
         }
         cx.emitted.insert(block.id);
 

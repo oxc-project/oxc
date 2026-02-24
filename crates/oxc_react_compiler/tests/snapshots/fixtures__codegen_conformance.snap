@@ -2,15 +2,15 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 151/1040 passed (14.5%)
+Codegen conformance: 152/1040 passed (14.6%)
 
 Failure breakdown:
   parse_error:    27
   no_function:    3
   lower_error:    1
-  pipeline_error: 43
+  pipeline_error: 37
   panic:          0
-  output_mismatch:814
+  output_mismatch:819
   no_expected:    1
 
 Failed fixtures:
@@ -22,11 +22,11 @@ Failed fixtures:
   [output_mismatch] aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] align-scope-starts-within-cond.ts
   [output_mismatch] align-scopes-iife-return-modified-later-logical.ts
-  [pipeline_error] align-scopes-nested-block-structure.ts
+  [output_mismatch] align-scopes-nested-block-structure.ts
   [output_mismatch] align-scopes-reactive-scope-overlaps-if.ts
   [output_mismatch] align-scopes-reactive-scope-overlaps-label.ts
   [output_mismatch] align-scopes-reactive-scope-overlaps-try.ts
-  [pipeline_error] align-scopes-trycatch-nested-overlapping-range.ts
+  [output_mismatch] align-scopes-trycatch-nested-overlapping-range.ts
   [output_mismatch] align-scopes-within-nested-valueblock-in-array.tsx
   [output_mismatch] allocating-logical-expression-instruction-scope.ts
   [output_mismatch] allocating-primitive-as-dep-nested-scope.js
@@ -54,7 +54,7 @@ Failed fixtures:
   [output_mismatch] allow-ref-access-in-unused-callback-nested.js
   [parse_error] allow-ref-initialization-undefined.js
   [parse_error] allow-ref-initialization.js
-  [pipeline_error] allow-ref-lazy-initialization-with-logical.js
+  [output_mismatch] allow-ref-lazy-initialization-with-logical.js
   [parse_error] allow-ref-type-cast-in-render.js
   [output_mismatch] array-access-assignment.js
   [output_mismatch] array-at-closure.js
@@ -237,7 +237,7 @@ Failed fixtures:
   [output_mismatch] destructuring.js
   [output_mismatch] do-while-break.js
   [output_mismatch] do-while-compound-test.js
-  [pipeline_error] do-while-conditional-break.js
+  [output_mismatch] do-while-conditional-break.js
   [output_mismatch] do-while-continue.js
   [output_mismatch] do-while-early-unconditional-break.js
   [output_mismatch] do-while-simple.js
@@ -477,7 +477,7 @@ Failed fixtures:
   [output_mismatch] obj-literal-mutated-after-if-else.js
   [output_mismatch] obj-mutated-after-if-else-with-alias.js
   [output_mismatch] obj-mutated-after-if-else.js
-  [pipeline_error] obj-mutated-after-nested-if-else-with-alias.js
+  [output_mismatch] obj-mutated-after-nested-if-else-with-alias.js
   [output_mismatch] object-access-assignment.js
   [output_mismatch] object-entries-mutation.js
   [output_mismatch] object-expression-captures-function-with-global-mutation.js
@@ -487,7 +487,6 @@ Failed fixtures:
   [output_mismatch] object-expression-computed-key.js
   [output_mismatch] object-expression-computed-member.js
   [output_mismatch] object-expression-member-expr-call.js
-  [output_mismatch] object-expression-string-literal-key.js
   [output_mismatch] object-keys.js
   [output_mismatch] object-literal-method-call-in-ternary-test.js
   [output_mismatch] object-literal-method-derived-in-ternary-consequent.js
@@ -610,7 +609,7 @@ Failed fixtures:
   [output_mismatch] recursive-function-expression.js
   [output_mismatch] recursive-function.js
   [pipeline_error] reduce-reactive-cond-deps-break-in-scope.ts
-  [pipeline_error] reduce-reactive-cond-deps-cfg-nested-testifelse.ts
+  [output_mismatch] reduce-reactive-cond-deps-cfg-nested-testifelse.ts
   [pipeline_error] reduce-reactive-cond-deps-return-in-scope.ts
   [output_mismatch] ref-current-aliased-no-added-to-dep.js
   [output_mismatch] ref-current-aliased-not-added-to-dep-2.js
