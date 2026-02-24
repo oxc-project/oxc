@@ -409,7 +409,7 @@ fn test_esm_minification_edge_cases() {
     );
 
     // Import.meta (should be preserved mostly)
-    test("import.meta.url", "");
+    test_same("import.meta.url");
     test_same("import.meta.resolve('./module.js')");
     test_same("import.meta.hot");
     test_same("import.meta.env");
@@ -590,6 +590,17 @@ fn test_esm_module_patterns() {
     // Import with computed expressions
     test("import('module-' + (version || 'latest'))", "import('module-' + (version || 'latest'))");
     test("import('module-' + (2 + 3))", "import('module-5')");
+}
+
+#[test]
+fn test_meta_property_url_getter_side_effects() {
+    test(
+        "Object.defineProperty(import.meta, 'url', { get() { console.log('import.meta.url'); return 'virtual:' } }); import.meta.url;",
+        "Object.defineProperty(import.meta, 'url', { get() { return console.log('import.meta.url'), 'virtual:'; } }), import.meta.url;",
+    );
+    test_same(
+        "class A { constructor() { new.target.url; } } class B extends A { static get url() { console.log('url!'); } constructor() { super(); } } new B();",
+    );
 }
 
 #[test]
