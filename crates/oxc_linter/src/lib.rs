@@ -89,6 +89,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
+    suppression::{OxlintSuppressionFileAction, SuppressionManager},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
 };
@@ -99,7 +100,7 @@ use crate::{
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
-    suppression::{DiagnosticCounts, RuleName, SuppressionFile, SuppressionManager},
+    suppression::{DiagnosticCounts, RuleName, SuppressionFile},
     utils::iter_possible_jest_call_node,
 };
 
@@ -188,7 +189,6 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message> {
-        //TODO Inside LintRunner::run, we should check self.options.suppression_options, to handle each setting correctly
         self.run_with_disable_directives(
             path,
             context_sub_hosts,
@@ -785,16 +785,13 @@ impl Linter {
                         PossibleFixes::from(fix)
                     };
 
-                    ctx_host.push_diagnostic(
-                        Message::new(
-                            OxcDiagnostic::error(diagnostic.message)
-                                .with_label(span)
-                                .with_error_code(plugin_name.to_string(), rule_name.to_string())
-                                .with_severity(severity.into()),
-                            possible_fixes,
-                        )
-                        .add_suppression_id(path, plugin_name, rule_name),
-                    );
+                    ctx_host.push_diagnostic(Message::new(
+                        OxcDiagnostic::error(diagnostic.message)
+                            .with_label(span)
+                            .with_error_code(plugin_name.to_string(), rule_name.to_string())
+                            .with_severity(severity.into()),
+                        possible_fixes,
+                    ));
                 }
             }
             Err(err) => {
