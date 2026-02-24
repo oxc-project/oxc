@@ -1207,10 +1207,12 @@ fn normalize_destructuring_spacing(s: &str) -> String {
             && chars[i - 1] != '\n'
         {
             // Check if this is likely the end of a destructuring pattern by looking back.
-            // Simple heuristic: if we see a `:` or `...` inside the braces, it's destructuring.
+            // Heuristic: if we see a `:`, `...`, or `,` inside the braces (indicating a
+            // destructuring pattern with either named properties or shorthand props), add space.
             let mut j = i.saturating_sub(1);
             let mut found_colon = false;
             let mut found_spread = false;
+            let mut found_comma = false;
             while j > 0 {
                 if chars[j] == '{' {
                     break;
@@ -1219,13 +1221,17 @@ fn normalize_destructuring_spacing(s: &str) -> String {
                     found_colon = true;
                     break;
                 }
+                if chars[j] == ',' {
+                    found_comma = true;
+                    break;
+                }
                 if j >= 2 && chars[j - 2] == '.' && chars[j - 1] == '.' && chars[j] == '.' {
                     found_spread = true;
                     break;
                 }
                 j -= 1;
             }
-            if found_colon || found_spread {
+            if found_colon || found_spread || found_comma {
                 result.push(' ');
             }
         }
