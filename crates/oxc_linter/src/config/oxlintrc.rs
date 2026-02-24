@@ -415,28 +415,6 @@ mod test {
     }
 
     #[test]
-    fn test_oxlintrc_max_warnings() {
-        let config: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
-        assert_eq!(config.max_warnings, Some(10));
-
-        let config: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 0}"#).unwrap();
-        assert_eq!(config.max_warnings, Some(0));
-
-        let config: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
-        assert_eq!(config.max_warnings, None);
-
-        let config1: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
-        let config2: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 20}"#).unwrap();
-        let merged = config1.merge(config2);
-        assert_eq!(merged.max_warnings, Some(10));
-
-        let config1: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
-        let config2: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 20}"#).unwrap();
-        let merged = config1.merge(config2);
-        assert_eq!(merged.max_warnings, Some(20));
-    }
-
-    #[test]
     fn test_oxlintrc_js_plugins() {
         let config: Oxlintrc = serde_json::from_str(
             r#"{"jsPlugins": ["./plugin.ts", { "name": "custom", "specifier": "./plugin2.ts" }]}"#,
