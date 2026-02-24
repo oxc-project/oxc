@@ -11,7 +11,7 @@ use oxc_span::Span;
 
 use crate::{
     AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter, Message,
-    OsFileSystem, TsGoLintState,
+    OsFileSystem, TimingStore, TsGoLintState,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
@@ -142,6 +142,7 @@ pub struct LintRunnerBuilder {
     lint_service_options: LintServiceOptions,
     silent: bool,
     fix_kind: FixKind,
+    timing_store: Option<Arc<TimingStore>>,
 }
 
 impl LintRunnerBuilder {
@@ -153,6 +154,7 @@ impl LintRunnerBuilder {
             lint_service_options,
             silent: false,
             fix_kind: FixKind::None,
+            timing_store: None,
         }
     }
 
@@ -180,6 +182,12 @@ impl LintRunnerBuilder {
         self
     }
 
+    #[must_use]
+    pub fn with_timing(mut self, store: Arc<TimingStore>) -> Self {
+        self.timing_store = Some(store);
+        self
+    }
+
     /// # Errors
     /// Returns an error if the type-aware linter fails to initialize.
     pub fn build(self) -> Result<LintRunner, String> {
@@ -191,7 +199,14 @@ impl LintRunnerBuilder {
                 self.regular_linter.config.clone(),
                 self.fix_kind,
             ) {
-                Ok(state) => Some(state.with_silent(self.silent).with_type_check(self.type_check)),
+                Ok(state) => {
+                    let mut state =
+                        state.with_silent(self.silent).with_type_check(self.type_check);
+                    if let Some(store) = &self.timing_store {
+                        state = state.with_timing(Arc::clone(store));
+                    }
+                    Some(state)
+                }
                 Err(e) => return Err(e),
             }
         } else {

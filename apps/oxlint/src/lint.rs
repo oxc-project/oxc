@@ -15,6 +15,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandle
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    TimingStore,
 };
 
 #[cfg(feature = "napi")]
@@ -79,6 +80,7 @@ impl CliRunner {
             fix_options,
             enable_plugins,
             misc_options,
+            output_options,
             disable_nested_config,
             inline_config_options,
             ..
@@ -161,6 +163,8 @@ impl CliRunner {
                     number_of_rules: None,
                     threads_count: rayon::current_num_threads(),
                     start_time: now.elapsed(),
+                    rule_timings: None,
+                    overhead_timings: None,
                 }) {
                     print_and_flush_stdout(stdout, &end);
                 }
@@ -369,9 +373,15 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        let linter = Linter::new(LintOptions::default(), config_store, external_linter)
+        let timing_enabled = output_options.timing || std::env::var("TIMING").is_ok();
+        let timing_store = if timing_enabled { Some(TimingStore::new()) } else { None };
+
+        let mut linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
+        if let Some(ref store) = timing_store {
+            linter = linter.with_timing(Arc::clone(store));
+        }
 
         let number_of_files = files_to_lint.len();
         let tsconfig = basic_options.tsconfig;
@@ -397,12 +407,15 @@ impl CliRunner {
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
-        let lint_runner = match LintRunner::builder(options, linter)
+        let mut lint_runner_builder = LintRunner::builder(options, linter)
             .with_type_aware(self.options.type_aware)
             .with_type_check(self.options.type_check)
             .with_silent(misc_options.silent)
-            .with_fix_kind(fix_options.fix_kind())
-            .build()
+            .with_fix_kind(fix_options.fix_kind());
+        if let Some(ref store) = timing_store {
+            lint_runner_builder = lint_runner_builder.with_timing(Arc::clone(store));
+        }
+        let lint_runner = match lint_runner_builder.build()
         {
             Ok(runner) => runner,
             Err(err) => {
@@ -425,11 +438,16 @@ impl CliRunner {
 
         let diagnostic_result = diagnostic_service.run(stdout);
 
+        let rule_timings = timing_store.as_ref().map(|s| s.collect());
+        let overhead_timings = timing_store.as_ref().map(|s| s.collect_overhead());
+
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
             number_of_files,
             number_of_rules,
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
+            rule_timings,
+            overhead_timings,
         }) {
             print_and_flush_stdout(stdout, &end);
         }
