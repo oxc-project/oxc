@@ -3,7 +3,7 @@ source: crates/oxc_react_compiler/tests/fixtures.rs
 assertion_line: 3169
 expression: snapshot
 ---
-Codegen conformance: 354/1040 passed (34.0%)
+Codegen conformance: 357/1040 passed (34.3%)
 
 Failure breakdown:
   parse_error:    27
@@ -11,7 +11,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 16
   panic:          0
-  output_mismatch:640
+  output_mismatch:637
   no_expected:    1
 
 Failed fixtures:
@@ -424,14 +424,11 @@ Failed fixtures:
   [output_mismatch] optional-call-with-independently-memoizable-arg.js
   [output_mismatch] optional-call-with-optional-property-load.js
   [output_mismatch] optional-computed-load-static.js
-  [output_mismatch] optional-computed-member-expression.js
   [pipeline_error] optional-member-expression-as-memo-dep.js
-  [output_mismatch] optional-member-expression-call-as-property.js
   [output_mismatch] optional-member-expression-chain.js
   [output_mismatch] optional-member-expression-inverted-optionals-parallel-paths.js
   [pipeline_error] optional-member-expression-single-with-unconditional.js
   [pipeline_error] optional-member-expression-single.js
-  [output_mismatch] optional-member-expression-with-optional-member-expr-as-property.js
   [output_mismatch] optional-member-expression.js
   [output_mismatch] overlapping-scopes-shadowing-within-block.js
   [output_mismatch] overlapping-scopes-within-block.js
