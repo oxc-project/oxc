@@ -1,0 +1,1 @@
+https://github.com/oxc-project/oxc/issues/19137

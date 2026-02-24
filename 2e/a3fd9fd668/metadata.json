@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "2ea3fd9fd668",
+  "strategy": "manual-commit",
+  "branch": "fix/jsdoc-double-backticks",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "crates/oxc_semantic/src/jsdoc/parser/jsdoc.rs",
+    "crates/oxc_semantic/src/jsdoc/parser/parse.rs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/2e/a3fd9fd668/0/metadata.json",
+      "transcript": "/2e/a3fd9fd668/0/full.jsonl",
+      "context": "/2e/a3fd9fd668/0/context.md",
+      "content_hash": "/2e/a3fd9fd668/0/content_hash.txt",
+      "prompt": "/2e/a3fd9fd668/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 50,
+    "cache_creation_tokens": 62169,
+    "cache_read_tokens": 1542586,
+    "output_tokens": 3027,
+    "api_call_count": 48
+  }
+}
