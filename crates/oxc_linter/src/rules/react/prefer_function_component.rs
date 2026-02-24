@@ -32,6 +32,9 @@ fn prefer_function_component_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct PreferFunctionComponent {
     /// If `true`, error boundary classes (those implementing `componentDidCatch`
     /// or `static getDerivedStateFromError`) are allowed as class components.
+    ///
+    /// This is because these classes are not easily converted to function components,
+    /// and so they are exempted from this rule by default.
     allow_error_boundary: bool,
     /// If `true`, classes that contain JSX but do not extend `Component` or
     /// `PureComponent` are allowed.
