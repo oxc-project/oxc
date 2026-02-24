@@ -855,20 +855,17 @@ pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
             let ParserReturn { mut program, tokens, .. } = ret;
             let utf8_to_utf16 = Utf8ToUtf16::new(&f.code);
             utf8_to_utf16.convert_program_with_ascending_order_checks(&mut program);
-            let token_context = collect_token_context(&program);
+
+            let token_options = EstreeTokenOptions::test262();
+            let token_context = collect_token_context(&program, token_options);
 
             let token_path = workspace_root()
                 .join("estree-conformance/tests/test262-tokens")
                 .join(f.path.strip_prefix("test262/").unwrap_or(&f.path))
                 .with_extension("json");
             let expected_tokens_json = fs::read_to_string(&token_path).unwrap_or_default();
-            let oxc_tokens_json = to_estree_tokens_json(
-                &allocator,
-                &f.code,
-                &tokens,
-                &token_context,
-                EstreeTokenOptions::test262(),
-            );
+            let oxc_tokens_json =
+                to_estree_tokens_json(&allocator, &f.code, &tokens, &token_context, token_options);
 
             let result = if oxc_tokens_json == expected_tokens_json {
                 TestResult::Passed
@@ -906,14 +903,16 @@ pub fn run_estree_acorn_jsx_tokens(files: &[AcornJsxFile]) -> Vec<CoverageResult
             let mut program = ret.program;
             let utf8_to_utf16 = Utf8ToUtf16::new(&f.code);
             utf8_to_utf16.convert_program_with_ascending_order_checks(&mut program);
-            let token_context = collect_token_context(&program);
+
+            let token_options = EstreeTokenOptions::test262();
+            let token_context = collect_token_context(&program, token_options);
 
             let oxc_tokens_json = to_estree_tokens_json(
                 &allocator,
                 &f.code,
                 &ret.tokens,
                 &token_context,
-                EstreeTokenOptions::typescript(),
+                token_options,
             );
 
             let result = if oxc_tokens_json == expected_tokens_json {
@@ -1085,14 +1084,16 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
                 let mut program = ret.program;
                 let utf8_to_utf16 = Utf8ToUtf16::new(&unit.content);
                 utf8_to_utf16.convert_program_with_ascending_order_checks(&mut program);
-                let token_context = collect_token_context(&program);
+
+                let token_options = EstreeTokenOptions::typescript();
+                let token_context = collect_token_context(&program, token_options);
 
                 let oxc_tokens_json = to_estree_tokens_json(
                     &allocator,
                     &unit.content,
                     &ret.tokens,
                     &token_context,
-                    EstreeTokenOptions::typescript(),
+                    token_options,
                 );
                 if oxc_tokens_json != *expected_tokens {
                     return CoverageResult {
