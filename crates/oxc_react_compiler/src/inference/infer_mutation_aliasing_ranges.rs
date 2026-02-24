@@ -479,9 +479,10 @@ pub fn infer_mutation_aliasing_ranges(
     }
     state.create(&func.returns, NodeValue::Object);
 
-    // Process blocks in sorted order for determinism
-    let mut block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
-    block_ids.sort();
+    // Process blocks in insertion order (RPO), matching the TS reference which
+    // iterates `fn.body.blocks.values()` (Map preserves insertion order).
+    // The pipeline ensures RPO ordering via reverse_postorder_blocks before this pass.
+    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
     let mut seen_blocks: FxHashSet<BlockId> = FxHashSet::default();
 
@@ -752,11 +753,8 @@ pub fn infer_mutation_aliasing_ranges(
     }
 
     // ===== Phase 2: Set legacy Effect on each Place =====
-    let block_ids_sorted: Vec<BlockId> = {
-        let mut ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
-        ids.sort();
-        ids
-    };
+    // Use insertion order (RPO) to match the TS reference.
+    let block_ids_sorted: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
     for &block_id in &block_ids_sorted {
         let block = func.body.blocks.get_mut(&block_id).map(|b| {
