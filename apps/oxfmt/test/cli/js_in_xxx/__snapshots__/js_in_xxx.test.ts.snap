@@ -214,9 +214,9 @@ const count = ref(0);
 
 --- AFTER ----------
 <script setup lang="ts">
-  import z from "z";
   import a from "a";
   import m from "m";
+  import z from "z";
 
   const count = ref(0);
 </script>
@@ -255,14 +255,14 @@ const count = ref(0);
 
 --- AFTER ----------
 <script lang="ts">
-  import z from "z";
   import a from "a";
+  import z from "z";
 
   export default { name: "App" };
 </script>
 <script setup lang="ts">
-  import m from "m";
   import b from "b";
+  import m from "m";
 
   const count = ref(0);
 </script>

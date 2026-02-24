@@ -2527,6 +2527,7 @@ dependencies = [
  "oxc-schemars",
  "oxc-toml",
  "oxc_allocator",
+ "oxc_ast",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_formatter",

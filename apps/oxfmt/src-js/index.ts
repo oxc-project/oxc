@@ -27,13 +27,13 @@ export async function format(fileName: string, sourceText: string, options?: For
  * Format a JS/TS snippet for Prettier `textToDoc()` plugin flow.
  */
 export async function jsTextToDoc(
-  fileName: string,
+  sourceExt: string,
   sourceText: string,
   oxfmtPluginOptionsJson: string,
   parentContext: string,
 ) {
   return napiJsTextToDoc(
-    fileName,
+    sourceExt,
     sourceText,
     oxfmtPluginOptionsJson,
     parentContext,

@@ -12,10 +12,10 @@ pub enum Tag {
     StartIndent,
     EndIndent,
 
-    /// Variant of [TagKind::Indent] that indents content by a number of spaces. For example, `Align(2)`
+    /// Variant of `Indent` that indents content by a number of spaces. For example, `Align(2)`
     /// indents any content following a line break by an additional two spaces.
     ///
-    /// Nesting (Aligns)[TagKind::Align] has the effect that all except the most inner align are handled as (Indent)[TagKind::Indent].
+    /// Nesting Aligns has the effect that all except the most inner align are handled as `Indent`.
     StartAlign(Align),
     EndAlign,
 
@@ -215,6 +215,10 @@ impl Condition {
 
     pub fn mode(&self) -> PrintMode {
         self.mode
+    }
+
+    pub fn group_id(&self) -> Option<GroupId> {
+        self.group_id
     }
 }
 
