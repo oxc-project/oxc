@@ -507,13 +507,22 @@ fn generate(codegen: &Codegen) -> Codes {
         }}
     ");
 
+    // See https://github.com/DefinitelyTyped/DefinitelyTyped/pull/20219 for why we need "Bivariance hack"
     #[rustfmt::skip]
     let visitor_type_oxlint = format!("
         import type * as ESTree from './types.d.ts';
 
-        export interface VisitorObject {{
-            {visitor_type} [key: string]: (node: ESTree.Node) => void;
+        type BivarianceHackHandler<Handler extends (...args: any) => any> = {{
+            bivarianceHack(...args: Parameters<Handler>): ReturnType<Handler>;
+        }}[\"bivarianceHack\"];
+
+        interface StrictVisitorObject {{
+            {visitor_type}
         }}
+
+        export type VisitorObject = {{
+            [K in keyof StrictVisitorObject]: BivarianceHackHandler<Exclude<StrictVisitorObject[K], undefined>> | undefined;
+        }} & Record<string, BivarianceHackHandler<(node: ESTree.Node) => void> | undefined>;
     ");
 
     // Type definitions for walk.js.
