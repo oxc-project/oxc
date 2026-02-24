@@ -6,7 +6,7 @@ use tracing::{debug, error, warn};
 
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{
-    Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges, ToolStartInput,
+    Capabilities, LanguageId, Tool, ToolBuilder, ToolRestartChanges, ToolStartInput, WorkspaceType,
 };
 
 use crate::core::{
@@ -97,7 +97,10 @@ impl ToolBuilder for ServerFormatterBuilder {
     }
 
     fn build_boxed(&self, tool_start_input: ToolStartInput) -> Box<dyn Tool> {
-        Box::new(self.build(tool_start_input.root_uri, tool_start_input.options))
+        let WorkspaceType::Folder(root_uri) = tool_start_input.root_uri else {
+            panic!("Global Workspace type is not implemented on the lsp backend yet.");
+        };
+        Box::new(self.build(root_uri, tool_start_input.options))
     }
 }
 
