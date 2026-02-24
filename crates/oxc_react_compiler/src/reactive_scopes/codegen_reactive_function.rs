@@ -1867,7 +1867,7 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
                     // syntax instead of `?(` which is invalid.
                     // `?.` is used for optional member access (`foo?.bar`)
                     // `?.(` is used for optional calls (`foo?.()`)
-                    if after.starts_with('(') {
+                    if after.starts_with('(') || after.starts_with('[') {
                         format!("{before}?.{after}")
                     } else {
                         format!("{before}?{after}")
