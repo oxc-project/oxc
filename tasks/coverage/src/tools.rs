@@ -11,7 +11,7 @@ use oxc::{
     span::{ModuleKind, SourceType, Span},
     transformer::{JsxOptions, JsxRuntime, TransformOptions},
 };
-use oxc_estree_tokens::{EstreeTokenOptions, to_estree_tokens_json};
+use oxc_estree_tokens::{EstreeTokenOptions, to_estree_tokens_pretty_json};
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, FormatOptions,
     Formatter, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
@@ -854,7 +854,7 @@ pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
             let span_converter = Utf8ToUtf16::new(source_text);
             span_converter.convert_program_with_ascending_order_checks(&mut program);
 
-            let oxc_tokens_json = to_estree_tokens_json(
+            let oxc_tokens_json = to_estree_tokens_pretty_json(
                 &tokens,
                 &program,
                 source_text,
@@ -904,7 +904,7 @@ pub fn run_estree_acorn_jsx_tokens(files: &[AcornJsxFile]) -> Vec<CoverageResult
             let span_converter = Utf8ToUtf16::new(source_text);
             span_converter.convert_program_with_ascending_order_checks(&mut program);
 
-            let oxc_tokens_json = to_estree_tokens_json(
+            let oxc_tokens_json = to_estree_tokens_pretty_json(
                 &tokens,
                 &program,
                 source_text,
@@ -1087,7 +1087,7 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
                 let span_converter = Utf8ToUtf16::new(source_text);
                 span_converter.convert_program_with_ascending_order_checks(&mut program);
 
-                let oxc_tokens_json = to_estree_tokens_json(
+                let oxc_tokens_json = to_estree_tokens_pretty_json(
                     &tokens,
                     &program,
                     source_text,

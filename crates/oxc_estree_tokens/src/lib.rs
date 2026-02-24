@@ -82,6 +82,23 @@ pub fn to_estree_tokens_json(
 ) -> String {
     let estree_tokens =
         to_estree_tokens(tokens, program, source_text, span_converter, options, allocator);
+    serde_json::to_string(&estree_tokens).unwrap_or_default()
+}
+
+/// Serialize tokens to pretty-printed JSON.
+///
+/// `source_text` must be the original source text, prior to BOM removal.
+/// i.e. BOM must be present on start of `source_text`, if the file has a BOM.
+pub fn to_estree_tokens_pretty_json(
+    tokens: &[Token],
+    program: &Program<'_>,
+    source_text: &str,
+    span_converter: &Utf8ToUtf16,
+    options: EstreeTokenOptions,
+    allocator: &Allocator,
+) -> String {
+    let estree_tokens =
+        to_estree_tokens(tokens, program, source_text, span_converter, options, allocator);
     serde_json::to_string_pretty(&estree_tokens).unwrap_or_default()
 }
 
