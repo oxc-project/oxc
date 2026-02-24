@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 306/1040 passed (29.4%)
+Codegen conformance: 310/1040 passed (29.8%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 11
   panic:          0
-  output_mismatch:693
+  output_mismatch:689
   no_expected:    1
 
 Failed fixtures:
@@ -700,14 +700,10 @@ Failed fixtures:
   [output_mismatch] unused-object-element-with-rest.js
   [output_mismatch] update-expression-constant-propagation.js
   [output_mismatch] update-expression-in-sequence.js
-  [output_mismatch] update-expression-on-function-parameter-1.js
   [output_mismatch] use-callback-simple.js
   [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] use-memo-simple.js
   [output_mismatch] use-no-forget-multiple-with-eslint-suppression.js
-  [output_mismatch] use-operator-call-expression.js
-  [output_mismatch] use-operator-conditional.js
-  [output_mismatch] use-operator-method-call.js
   [output_mismatch] useActionState-dispatch-considered-as-non-reactive.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-dont-preserve-memoization.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js

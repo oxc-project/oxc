@@ -1933,8 +1933,16 @@ fn codegen_jsx_child(cx: &CodegenContext, place: &Place) -> String {
             text
         }
     } else if cx.jsx_element_temps.contains(&decl_id) {
-        // JSX elements render directly without wrapper
-        codegen_place_to_expression(cx, place)
+        // JSX elements render directly without wrapper, BUT only if the place
+        // resolves to an inline expression (not a promoted variable name).
+        // When a temp is promoted/named (e.g. after scope caching), it's just
+        // a variable reference like `t0` and needs `{ t0 }` wrapping.
+        let expr = codegen_place_to_expression(cx, place);
+        if expr.starts_with('<') {
+            expr
+        } else {
+            format!("{{{expr}}}")
+        }
     } else {
         // All other expressions get wrapped in expression containers
         format!("{{{}}}", codegen_place_to_expression(cx, place))

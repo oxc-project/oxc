@@ -16,10 +16,80 @@ use crate::hir::{
     ReactiveFunction, ReactiveInstruction, ReactiveStatement, ReactiveValue,
 };
 
-/// Prune unused reactive scopes — removes scopes that have no declarations
-/// or whose declarations are all unused.
+/// Prune unused reactive scopes — removes scopes that have no declarations,
+/// no reassignments, and no return statements.
+///
+/// Matches TS `PruneUnusedScopes.ts`:
+/// - Scopes with return statements are NEVER pruned.
+/// - Scopes where all declarations are from inner scopes (not "owned") are pruned.
+/// - Pruned scopes become `PrunedReactiveScopeBlock` (preserving metadata).
 pub fn prune_unused_scopes(func: &mut ReactiveFunction) {
     prune_unused_scopes_block(&mut func.body);
+}
+
+/// Check if any declaration in the scope is actually "owned" by this scope
+/// (i.e. was originally declared in this scope, not propagated from an inner scope).
+fn has_own_declaration(scope: &crate::hir::ReactiveScopeBlock) -> bool {
+    for decl in scope.scope.declarations.values() {
+        if decl.scope.id == scope.scope.id {
+            return true;
+        }
+    }
+    false
+}
+
+/// Check if a reactive block contains a return statement (non-recursively through scopes).
+fn block_has_return(block: &ReactiveBlock) -> bool {
+    for stmt in block {
+        match stmt {
+            ReactiveStatement::Terminal(term) => {
+                if matches!(term.terminal, crate::hir::ReactiveTerminal::Return(_)) {
+                    return true;
+                }
+                if terminal_has_return(&term.terminal) {
+                    return true;
+                }
+            }
+            ReactiveStatement::Scope(scope) => {
+                if block_has_return(&scope.instructions) {
+                    return true;
+                }
+            }
+            ReactiveStatement::PrunedScope(scope) => {
+                if block_has_return(&scope.instructions) {
+                    return true;
+                }
+            }
+            ReactiveStatement::Instruction(_) => {}
+        }
+    }
+    false
+}
+
+/// Check if a terminal or its children contain a return statement.
+fn terminal_has_return(terminal: &crate::hir::ReactiveTerminal) -> bool {
+    use crate::hir::ReactiveTerminal;
+    match terminal {
+        ReactiveTerminal::Return(_) => true,
+        ReactiveTerminal::If(t) => {
+            block_has_return(&t.consequent)
+                || t.alternate.as_ref().is_some_and(|alt| block_has_return(alt))
+        }
+        ReactiveTerminal::Switch(t) => t
+            .cases
+            .iter()
+            .any(|case| case.block.as_ref().is_some_and(|b| block_has_return(b))),
+        ReactiveTerminal::While(t) => block_has_return(&t.r#loop),
+        ReactiveTerminal::DoWhile(t) => block_has_return(&t.r#loop),
+        ReactiveTerminal::For(t) => block_has_return(&t.r#loop),
+        ReactiveTerminal::ForOf(t) => block_has_return(&t.r#loop),
+        ReactiveTerminal::ForIn(t) => block_has_return(&t.r#loop),
+        ReactiveTerminal::Label(t) => block_has_return(&t.block),
+        ReactiveTerminal::Try(t) => block_has_return(&t.block) || block_has_return(&t.handler),
+        ReactiveTerminal::Break(_)
+        | ReactiveTerminal::Continue(_)
+        | ReactiveTerminal::Throw(_) => false,
+    }
 }
 
 fn prune_unused_scopes_block(block: &mut ReactiveBlock) {
@@ -28,11 +98,29 @@ fn prune_unused_scopes_block(block: &mut ReactiveBlock) {
         match &mut block[i] {
             ReactiveStatement::Scope(scope) => {
                 prune_unused_scopes_block(&mut scope.instructions);
-                if scope.scope.declarations.is_empty() && scope.scope.reassignments.is_empty() {
-                    // Flatten the scope — replace with its instructions
-                    let instructions = std::mem::take(&mut scope.instructions);
-                    block.splice(i..=i, instructions);
-                    continue; // Don't increment i, process the newly inserted items
+
+                // Check if scope should be pruned (matching TS PruneUnusedScopes):
+                // 1. Scope must NOT contain a return statement
+                // 2. Scope must have no reassignments
+                // 3. Scope must have no declarations, OR no "own" declarations
+                let has_return = block_has_return(&scope.instructions);
+                let should_prune = !has_return
+                    && scope.scope.reassignments.is_empty()
+                    && (scope.scope.declarations.is_empty() || !has_own_declaration(scope));
+
+                if should_prune {
+                    // Convert to PrunedScope (preserving scope metadata) instead
+                    // of flattening. Downstream passes need the scope metadata.
+                    let removed = block.remove(i);
+                    if let ReactiveStatement::Scope(scope_block) = removed {
+                        block.insert(
+                            i,
+                            ReactiveStatement::PrunedScope(crate::hir::PrunedReactiveScopeBlock {
+                                scope: scope_block.scope,
+                                instructions: scope_block.instructions,
+                            }),
+                        );
+                    }
                 }
             }
             ReactiveStatement::PrunedScope(scope) => {

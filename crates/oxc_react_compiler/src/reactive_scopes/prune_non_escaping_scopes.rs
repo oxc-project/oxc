@@ -126,6 +126,16 @@ pub struct PruneOptions {
 pub fn prune_non_escaping_scopes(func: &mut ReactiveFunction, opts: &PruneOptions) {
     let mut state = State::new();
 
+    // Pre-declare parameters so they exist in the dependency graph.
+    // Matches TS: `for (const param of fn.params) { state.declare(param...) }`
+    for param in &func.params {
+        let decl_id = match param {
+            crate::hir::ReactiveParam::Place(p) => p.identifier.declaration_id,
+            crate::hir::ReactiveParam::Spread(s) => s.place.identifier.declaration_id,
+        };
+        state.ensure_identifier(decl_id);
+    }
+
     // Phase 1: Walk all instructions/terminals to build the dependency graph
     collect_in_block(&func.body, &mut state, &[], opts);
 

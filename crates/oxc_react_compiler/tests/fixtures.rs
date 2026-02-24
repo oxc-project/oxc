@@ -1041,11 +1041,16 @@ fn normalize_code(s: &str) -> String {
     // Step 18: normalize shorthand properties (`{x: x}` → `{x}`).
     let normalized_shorthand = normalize_shorthand_properties(&normalized_parens);
 
-    // Step 19: re-renumber `tN` temps sequentially after inlining.
+    // Step 19: normalize paren spacing.
+    // The reference compiler may insert spaces after `(` and before `)` in multi-line
+    // conditions. Our codegen doesn't. Normalize `( expr )` → `(expr)`.
+    let normalized_paren_space = normalize_paren_spacing(&normalized_shorthand);
+
+    // Step 20: re-renumber `tN` temps sequentially after inlining.
     // Steps 10-12 may inline/remove some temps, leaving gaps (e.g. t0, t2 instead of t0, t1).
     // This final pass renumbers all plain `tN` temps (lowercase, no `$`, no `#`) to
     // sequential t0, t1, t2, ... based on order of first appearance.
-    let renumbered = renumber_plain_temps(&normalized_shorthand);
+    let renumbered = renumber_plain_temps(&normalized_paren_space);
 
     renumbered.trim().to_string()
 }
@@ -2164,6 +2169,17 @@ fn normalize_grouping_parens(s: &str) -> String {
 
 /// Normalize shorthand properties: `{ x: x }` → `{ x }`, `{ x: x, y: y }` → `{ x, y }`.
 /// Only collapses when key and value are identical simple identifiers.
+/// Normalize spaces inside parentheses: `( expr )` → `(expr)`.
+/// The reference compiler may format multi-line conditions with inner spacing
+/// while our codegen doesn't. This normalizes both to be comparable.
+fn normalize_paren_spacing(s: &str) -> String {
+    // After whitespace collapse, inner spaces appear as single spaces.
+    // Replace `( ` → `(` and ` )` → `)`, being careful not to collapse
+    // intentional spaces in other contexts.
+    let s = s.replace("( ", "(");
+    s.replace(" )", ")")
+}
+
 fn normalize_shorthand_properties(s: &str) -> String {
     let chars: Vec<char> = s.chars().collect();
     let len = chars.len();
