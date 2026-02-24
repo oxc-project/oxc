@@ -1262,12 +1262,19 @@ fn codegen_store_or_declare(
         }
         InstructionKind::Function | InstructionKind::HoistedFunction => {
             cx.declare(lvalue_place.identifier.declaration_id);
-            // Emit as const for function declarations in codegen IR
-            Some(CodegenStatement::VariableDeclaration {
-                kind: VarKind::Const,
-                name,
-                init: value.map(String::from),
-            })
+            // Emit as a proper function declaration statement, matching the TS
+            // reference which calls `createFunctionDeclaration` for this kind.
+            // The value string is already `function name(...) { ... }` from
+            // codegen_function_expression, so emit it as a raw expression statement.
+            if let Some(val) = value {
+                Some(CodegenStatement::ExpressionStatement(val.to_string()))
+            } else {
+                Some(CodegenStatement::VariableDeclaration {
+                    kind: VarKind::Const,
+                    name,
+                    init: None,
+                })
+            }
         }
         InstructionKind::Reassign => {
             if let Some(val) = value {
@@ -1496,7 +1503,7 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
         }
         InstructionValue::TaggedTemplateExpression(tagged) => {
             let tag = codegen_place_to_expression(cx, &tagged.tag);
-            format!("`{tag}`{}", tagged.value.raw)
+            format!("{tag}`{}`", tagged.value.raw)
         }
         InstructionValue::TypeCastExpression(cast) => {
             // Simplified: just emit the value (type annotations are stripped)
@@ -1741,9 +1748,30 @@ fn wrap_logical_operand_if_needed(
 /// Unwrap `Sequence` wrappers to find the effective value for precedence checks.
 /// Sequences wrap a final value with preceding instructions; the emitted expression
 /// string corresponds to that final value.
+///
+/// When a sequence contains instructions that produce a `Logical` expression and
+/// the final value is just a `LoadLocal` of that result temp, we treat the
+/// `Logical` as the effective value. This is needed because Babel's AST-based
+/// codegen inserts parens automatically for nested logical expressions, while our
+/// string-based codegen needs to detect the precedence relationship explicitly.
 fn effective_value(value: &ReactiveValue) -> &ReactiveValue {
     match value {
-        ReactiveValue::Sequence(seq) => effective_value(&seq.value),
+        ReactiveValue::Sequence(seq) => {
+            // If the sequence's final value is a plain instruction (LoadLocal) and
+            // the last instruction in the sequence produced a Logical/Ternary value,
+            // use that instruction's value for precedence instead of the LoadLocal.
+            if let ReactiveValue::Instruction(_) = &*seq.value {
+                if let Some(last_instr) = seq.instructions.last() {
+                    match &last_instr.value {
+                        ReactiveValue::Logical(_) | ReactiveValue::Ternary(_) => {
+                            return &last_instr.value;
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            effective_value(&seq.value)
+        }
         other => other,
     }
 }
