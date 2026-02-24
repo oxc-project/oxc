@@ -2154,11 +2154,7 @@ fn codegen_pattern(cx: &CodegenContext, pattern: &Pattern) -> String {
                     }
                 })
                 .collect();
-            if props.is_empty() {
-                "{}".to_string()
-            } else {
-                format!("{{ {} }}", props.join(", "))
-            }
+            if props.is_empty() { "{}".to_string() } else { format!("{{ {} }}", props.join(", ")) }
         }
     }
 }
