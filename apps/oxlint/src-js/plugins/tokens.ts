@@ -146,8 +146,6 @@ export let tokensAndComments: TokenOrComment[] | null = null;
 
 /**
  * Initialize TS-ESLint tokens for current file.
- *
- * Caller must ensure `filePath` and `sourceText` are initialized before calling this function.
  */
 export function initTokens() {
   debugAssert(tokens === null, "Tokens already initialized");
