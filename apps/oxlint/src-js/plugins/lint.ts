@@ -40,8 +40,7 @@ export const buffers: (BufferWithArrays | null)[] = [];
 const afterHooks: AfterHook[] = [];
 
 // Whether per-rule timing is enabled (set via `TIMING` environment variable).
-const TIMING_ENABLED =
-  typeof process !== "undefined" && process.env["TIMING"] !== undefined;
+const TIMING_ENABLED = typeof process !== "undefined" && process.env["TIMING"] !== undefined;
 
 // Per-rule timing accumulator for the current file (ms). Indexed parallel to `ruleIds`.
 // `null` when timing is disabled.

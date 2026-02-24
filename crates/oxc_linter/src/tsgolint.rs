@@ -236,13 +236,11 @@ impl TsGoLintState {
             let stdout_result = stdout_handler.join();
 
             if !exit_status.success() {
-                return Err(
-                    if let Some(err) = &stdout_result.ok().and_then(|r| r.err()) {
-                        format!("exit status: {exit_status}, error: {err}")
-                    } else {
-                        format!("exit status: {exit_status}")
-                    },
-                );
+                return Err(if let Some(err) = &stdout_result.ok().and_then(|r| r.err()) {
+                    format!("exit status: {exit_status}, error: {err}")
+                } else {
+                    format!("exit status: {exit_status}")
+                });
             }
 
             match stdout_result {

@@ -693,8 +693,8 @@ impl Linter {
                 if let Some(store) = &self.timing_store {
                     let js_rules_ms: f64 =
                         js_timings.as_ref().map(|t| t.iter().sum()).unwrap_or(0.0);
-                    let bridge_dur = js_call_dur
-                        .saturating_sub(Duration::from_secs_f64(js_rules_ms / 1000.0));
+                    let bridge_dur =
+                        js_call_dur.saturating_sub(Duration::from_secs_f64(js_rules_ms / 1000.0));
                     store.record_overhead("JS plugin bridge", bridge_dur);
                 }
 

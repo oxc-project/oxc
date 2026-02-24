@@ -415,8 +415,7 @@ impl CliRunner {
         if let Some(ref store) = timing_store {
             lint_runner_builder = lint_runner_builder.with_timing(Arc::clone(store));
         }
-        let lint_runner = match lint_runner_builder.build()
-        {
+        let lint_runner = match lint_runner_builder.build() {
             Ok(runner) => runner,
             Err(err) => {
                 print_and_flush_stdout(stdout, &err);

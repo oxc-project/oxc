@@ -200,8 +200,7 @@ impl LintRunnerBuilder {
                 self.fix_kind,
             ) {
                 Ok(state) => {
-                    let mut state =
-                        state.with_silent(self.silent).with_type_check(self.type_check);
+                    let mut state = state.with_silent(self.silent).with_type_check(self.type_check);
                     if let Some(store) = &self.timing_store {
                         state = state.with_timing(Arc::clone(store));
                     }
