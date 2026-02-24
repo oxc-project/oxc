@@ -56,8 +56,8 @@ pub fn prune_unused_labels_hir(func: &mut HIRFunction) {
                 label.terminal = ft_terminal;
             }
 
-            func.body.blocks.remove(next_id);
-            func.body.blocks.remove(fallthrough_id);
+            func.body.blocks.shift_remove(next_id);
+            func.body.blocks.shift_remove(fallthrough_id);
             rewrites.insert(*fallthrough_id, label_id);
         }
     }

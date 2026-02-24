@@ -37,6 +37,11 @@ pub fn run_pipeline(
     // Phase 1: HIR-level passes
     // =========================================================================
 
+    // 1. MarkInstructionIds — assign unique IDs to all instructions and terminals.
+    // The TS compiler calls markInstructionIds at the end of HIR building (HIRBuilder.ts:397).
+    // This is critical: without unique IDs, mutable range tracking is broken.
+    crate::hir::hir_builder::mark_instruction_ids(&mut func.body);
+
     // 2. PruneMaybeThrows
     crate::optimization::prune_maybe_throws::prune_maybe_throws(func);
 

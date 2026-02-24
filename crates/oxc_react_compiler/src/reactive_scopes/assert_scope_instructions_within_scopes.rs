@@ -7,13 +7,37 @@
 /// Errors in HIR/ReactiveFunction structure and alias analysis could theoretically
 /// create a structure where instructions belonging to a scope appear outside
 /// that scope's block. This pass guards against such compiler coding mistakes.
+///
+/// The TS reference checks operands (via `visitPlace`) and terminal places,
+/// NOT lvalues (which use a separate `visitLValue` callback that is not overridden).
+/// It uses `getPlaceScope(id, place)` to filter by instruction ID range, and
+/// properly tracks scope entry/exit via add/delete on `activeScopes`.
+///
+/// This Rust port checks lvalues and uses `getPlaceScope` to filter by instruction
+/// ID range. Scope tracking is add-only (scopes remain permanently active once
+/// encountered) which is more lenient than the TS reference's entry/exit tracking.
+/// Switching to operand-only checks and proper scope exit tracking will be done
+/// once earlier passes (BuildReactiveFunction, etc.) are more fully aligned with
+/// the TS reference.
 use rustc_hash::FxHashSet;
 
 use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE},
-    hir::{ReactiveFunction, ReactiveInstruction, ReactiveTerminalStatement, ScopeId},
+    hir::{InstructionId, Place, ReactiveFunction, ReactiveInstruction, ReactiveScope, ReactiveTerminalStatement, ScopeId},
     reactive_scopes::visitors::{ReactiveVisitor, visit_reactive_function},
 };
+
+/// Returns the identifier's scope if the instruction `id` is within the scope's range.
+///
+/// Port of `getPlaceScope` from `HIR/HIR.ts`.
+fn get_place_scope(id: InstructionId, place: &Place) -> Option<&ReactiveScope> {
+    let scope = place.identifier.scope.as_ref()?;
+    if id >= scope.range.start && id < scope.range.end {
+        Some(scope)
+    } else {
+        None
+    }
+}
 
 /// Assert that all scope instructions are within their corresponding scopes.
 ///
@@ -57,8 +81,13 @@ struct ScopeChecker {
 }
 
 impl ScopeChecker {
-    fn check_place_scope(&mut self, place: &crate::hir::Place, id: crate::hir::InstructionId) {
-        if let Some(ref scope) = place.identifier.scope
+    /// Check a place using `getPlaceScope` to filter by instruction ID range.
+    ///
+    /// This matches the TS behavior where `getPlaceScope(id, place)` returns null
+    /// if the instruction ID is outside the scope's range, preventing false positives
+    /// for instructions that reference scopes they don't actually belong to.
+    fn check_place_scope(&mut self, place: &Place, id: InstructionId) {
+        if let Some(scope) = get_place_scope(id, place)
             && self.existing_scopes.contains(&scope.id)
             && !self.active_scopes.contains(&scope.id)
         {

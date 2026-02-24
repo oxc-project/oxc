@@ -14,7 +14,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
     BlockId, HIRFunction, Identifier, IdentifierId, InstructionValue,
-    visitors::{map_instruction_lvalues, map_instruction_operands, map_terminal_operands},
+    visitors::{map_instruction_operands, map_terminal_operands},
 };
 
 /// Eliminate redundant phi nodes from the function's HIR.
@@ -96,23 +96,37 @@ pub(crate) fn eliminate_redundant_phi(
             block.phis = kept_phis;
         }
 
-        // Rewrite instruction lvalues and operands
+        // Rewrite instruction lvalues and operands.
+        // Matches the TS: eachInstructionLValue(instr) → rewritePlace,
+        // then eachInstructionOperand(instr) → rewritePlace
         for block_id in &block_ids {
             let Some(block) = ir.blocks.get_mut(block_id) else { continue };
 
             for instr in &mut block.instructions {
-                // Rewrite lvalues
-                map_instruction_lvalues(instr, &mut |mut place| {
-                    rewrite_place_id(&mut place, rewrites);
-                    place
-                });
+                // Rewrite inner value lvalues (StoreLocal.lvalue.place, etc.)
+                // but NOT the outer instr.lvalue.
+                //
+                // In the TS version, eachInstructionLValue(instr) yields instr.lvalue
+                // and calls rewritePlace on it. However, the TS rewrite map uses
+                // Map<Identifier, Identifier> with Identifier OBJECT keys (JS reference
+                // equality). Since instr.lvalue.identifier is always a fresh object from
+                // definePlace/makeId, it never matches a phi output identifier in the
+                // rewrite table. So the TS rewrite of instr.lvalue is effectively a no-op.
+                //
+                // In Rust, our rewrite map uses IdentifierId (numeric) keys, so a lookup
+                // WOULD match. Rewriting instr.lvalue causes two instructions whose
+                // lvalues were outputs of different phis (both mapping to the same source)
+                // to end up with the same lvalue ID — violating the "assigned exactly once"
+                // invariant. So we intentionally skip rewriting instr.lvalue.
+                rewrite_value_lvalues(&mut instr.value, rewrites);
+
                 // Rewrite operands
                 map_instruction_operands(instr, &mut |mut place| {
                     rewrite_place_id(&mut place, rewrites);
                     place
                 });
 
-                // Recursively handle nested functions
+                // Recursively handle nested functions (matches TS lines 120-135)
                 match &mut instr.value {
                     InstructionValue::FunctionExpression(v) => {
                         for ctx_place in &mut v.lowered_func.func.context {
@@ -149,5 +163,73 @@ pub(crate) fn eliminate_redundant_phi(
 fn rewrite_place_id(place: &mut crate::hir::Place, rewrites: &FxHashMap<IdentifierId, Identifier>) {
     if let Some(rewrite) = rewrites.get(&place.identifier.id) {
         place.identifier = rewrite.clone();
+    }
+}
+
+/// Rewrite lvalues within an instruction value (DeclareLocal.lvalue.place,
+/// StoreLocal.lvalue.place, StoreContext.lvalue_place, Destructure patterns,
+/// PrefixUpdate.lvalue, PostfixUpdate.lvalue).
+///
+/// Matches TS `eachInstructionValueLValue` from visitors.ts.
+fn rewrite_value_lvalues(
+    value: &mut crate::hir::InstructionValue,
+    rewrites: &FxHashMap<IdentifierId, Identifier>,
+) {
+    use crate::hir::InstructionValue;
+    match value {
+        InstructionValue::DeclareLocal(v) => {
+            rewrite_place_id(&mut v.lvalue.place, rewrites);
+        }
+        InstructionValue::StoreLocal(v) => {
+            rewrite_place_id(&mut v.lvalue.place, rewrites);
+        }
+        InstructionValue::StoreContext(v) => {
+            rewrite_place_id(&mut v.lvalue_place, rewrites);
+        }
+        InstructionValue::DeclareContext(v) => {
+            rewrite_place_id(&mut v.lvalue_place, rewrites);
+        }
+        InstructionValue::Destructure(v) => {
+            rewrite_pattern(rewrites, &mut v.lvalue.pattern);
+        }
+        InstructionValue::PrefixUpdate(v) => {
+            rewrite_place_id(&mut v.lvalue, rewrites);
+        }
+        InstructionValue::PostfixUpdate(v) => {
+            rewrite_place_id(&mut v.lvalue, rewrites);
+        }
+        _ => {}
+    }
+}
+
+/// Rewrite all places in a pattern.
+fn rewrite_pattern(
+    rewrites: &FxHashMap<IdentifierId, Identifier>,
+    pattern: &mut crate::hir::Pattern,
+) {
+    match pattern {
+        crate::hir::Pattern::Array(arr) => {
+            for item in &mut arr.items {
+                match item {
+                    crate::hir::ArrayPatternElement::Place(p) => rewrite_place_id(p, rewrites),
+                    crate::hir::ArrayPatternElement::Spread(s) => {
+                        rewrite_place_id(&mut s.place, rewrites);
+                    }
+                    crate::hir::ArrayPatternElement::Hole => {}
+                }
+            }
+        }
+        crate::hir::Pattern::Object(obj) => {
+            for prop in &mut obj.properties {
+                match prop {
+                    crate::hir::ObjectPatternProperty::Property(p) => {
+                        rewrite_place_id(&mut p.place, rewrites);
+                    }
+                    crate::hir::ObjectPatternProperty::Spread(s) => {
+                        rewrite_place_id(&mut s.place, rewrites);
+                    }
+                }
+            }
+        }
     }
 }

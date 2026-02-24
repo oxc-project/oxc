@@ -12,19 +12,21 @@
 /// - `$[idx] = value` assignments to cache new values
 /// - `$[idx]` reads for cached values
 use hmac::{Hmac, Mac};
+use oxc_syntax::operator::LogicalOperator;
 use rustc_hash::{FxHashMap, FxHashSet};
 use sha2::Sha256;
 
 use crate::{
     compiler_error::{CompilerError, SourceLocation},
     hir::{
-        ArrayExpressionElement, ArrayPatternElement, CallArg, DeclarationId, FunctionExpressionType,
-        HIRFunction, IdentifierId, IdentifierName, InstructionKind, InstructionValue, JsxAttribute,
-        JsxTag, ObjectExpression, ObjectMethodValue, ObjectPatternProperty, ObjectPropertyKey,
-        ObjectPropertyType, Pattern, Place, PrimitiveValueKind, ReactiveBlock,
-        ReactiveBreakTerminal, ReactiveContinueTerminal, ReactiveFunction, ReactiveInstruction,
-        ReactiveParam, ReactiveScope, ReactiveScopeDeclaration, ReactiveScopeDependency,
-        ReactiveStatement, ReactiveTerminal, ReactiveTerminalTargetKind, ReactiveValue,
+        ArrayExpressionElement, ArrayPatternElement, CallArg, DeclarationId,
+        FunctionExpressionType, HIRFunction, IdentifierId, IdentifierName, InstructionKind,
+        InstructionValue, JsxAttribute, JsxTag, ObjectExpression, ObjectMethodValue,
+        ObjectPatternProperty, ObjectPropertyKey, ObjectPropertyType, Pattern, Place,
+        PrimitiveValueKind, ReactiveBlock, ReactiveBreakTerminal, ReactiveContinueTerminal,
+        ReactiveFunction, ReactiveInstruction, ReactiveParam, ReactiveScope,
+        ReactiveScopeDeclaration, ReactiveScopeDependency, ReactiveStatement, ReactiveTerminal,
+        ReactiveTerminalTargetKind, ReactiveValue,
         environment::{CompilerOutputMode, ExternalFunction, InstrumentationConfig},
         object_shape::ShapeRegistry,
         types::Type,
@@ -228,6 +230,10 @@ pub struct CodegenContext {
     object_methods: FxHashMap<IdentifierId, ObjectMethodValue>,
     /// Whether to wrap anonymous functions in a naming expression.
     enable_name_anonymous_functions: bool,
+    /// Temporaries that hold JSX text values (render as raw text in JSX children).
+    jsx_text_temps: FxHashSet<DeclarationId>,
+    /// Temporaries that hold JSX element/fragment values (render without {…} wrapper).
+    jsx_element_temps: FxHashSet<DeclarationId>,
 }
 
 impl CodegenContext {
@@ -251,6 +257,8 @@ impl CodegenContext {
             shapes,
             object_methods: FxHashMap::default(),
             enable_name_anonymous_functions,
+            jsx_text_temps: FxHashSet::default(),
+            jsx_element_temps: FxHashSet::default(),
         }
     }
 
@@ -353,8 +361,8 @@ pub fn codegen_function(
     // Function-level hook guard: wrap the entire body in a try-finally with
     // PushHookGuard/PopHookGuard if enableEmitHookGuards is set and output mode is client.
     if cx.output_mode == CompilerOutputMode::Client {
-        if let Some(specifier_name) = cx.enable_emit_hook_guards.as_ref()
-            .map(|g| g.import_specifier_name.clone())
+        if let Some(specifier_name) =
+            cx.enable_emit_hook_guards.as_ref().map(|g| g.import_specifier_name.clone())
         {
             let guard_fn_name = cx.synthesize_name(&specifier_name);
             body = vec![create_hook_guard(
@@ -386,10 +394,7 @@ pub fn codegen_function(
         if let Some(ref state) = fast_refresh_state {
             let index_name = cx.synthesize_name("$i");
             preface.push(CodegenStatement::If {
-                test: format!(
-                    "{cache_name}[{}] !== \"{}\"",
-                    state.cache_index, state.hash
-                ),
+                test: format!("{cache_name}[{}] !== \"{}\"", state.cache_index, state.hash),
                 consequent: vec![
                     CodegenStatement::For {
                         init: Some(format!("let {index_name} = 0")),
@@ -432,10 +437,8 @@ pub fn codegen_function(
         let filename = options.filename.as_deref().unwrap_or("");
 
         // Build the gating condition
-        let gating_expr = instrument_config
-            .gating
-            .as_ref()
-            .map(|g| g.import_specifier_name.clone());
+        let gating_expr =
+            instrument_config.gating.as_ref().map(|g| g.import_specifier_name.clone());
         let global_gating_expr = instrument_config.global_gating.clone();
 
         let if_test = match (&gating_expr, &global_gating_expr) {
@@ -513,13 +516,15 @@ fn codegen_inner_function(
     cx: &CodegenContext,
     include_prune_hoisted: bool,
 ) -> Result<CodegenFunction, CompilerError> {
-    let mut reactive_fn = crate::reactive_scopes::build_reactive_function::build_reactive_function(func)?;
+    let mut reactive_fn =
+        crate::reactive_scopes::build_reactive_function::build_reactive_function(func)?;
     crate::reactive_scopes::prune_unused_labels::prune_unused_labels(&mut reactive_fn);
     crate::reactive_scopes::prune_unused_lvalues::prune_unused_lvalues(&mut reactive_fn);
     if include_prune_hoisted {
         crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_fn);
     }
-    let unique_identifiers = crate::reactive_scopes::rename_variables::rename_variables(&mut reactive_fn);
+    let unique_identifiers =
+        crate::reactive_scopes::rename_variables::rename_variables(&mut reactive_fn);
     let options = CodegenOptions {
         unique_identifiers,
         fbt_operands: cx.fbt_operands.clone(),
@@ -541,14 +546,31 @@ fn codegen_inner_function(
 /// This produces the contents between `{` and `}` for function bodies, including directives.
 fn format_codegen_body(func: &CodegenFunction) -> String {
     use std::fmt::Write;
+
+    let has_content = !func.directives.is_empty() || !func.body.is_empty();
+    if !has_content {
+        return String::new();
+    }
+
     let mut body = String::new();
+    body.push('\n');
     for directive in &func.directives {
-        let _ = write!(body, "\"{directive}\"; ");
+        let _ = writeln!(body, "  \"{directive}\";");
     }
     for stmt in &func.body {
-        let _ = write!(body, "{stmt}");
+        // Use the StmtAtIndent wrapper to write statements at indent level 1
+        let _ = write!(body, "{}", StmtAtIndent(stmt, 1));
     }
     body
+}
+
+/// Helper struct to format a `CodegenStatement` at a specific indentation level.
+struct StmtAtIndent<'a>(&'a CodegenStatement, usize);
+
+impl std::fmt::Display for StmtAtIndent<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write_statement(f, self.0, self.1)
+    }
 }
 
 /// State for HMR/Fast Refresh cache reset.
@@ -633,14 +655,10 @@ fn create_hook_guard(
     before: GuardKind,
     after: GuardKind,
 ) -> CodegenStatement {
-    let before_call = CodegenStatement::ExpressionStatement(format!(
-        "{guard_fn_name}({})",
-        before as u8,
-    ));
-    let after_call = CodegenStatement::ExpressionStatement(format!(
-        "{guard_fn_name}({})",
-        after as u8,
-    ));
+    let before_call =
+        CodegenStatement::ExpressionStatement(format!("{guard_fn_name}({})", before as u8,));
+    let after_call =
+        CodegenStatement::ExpressionStatement(format!("{guard_fn_name}({})", after as u8,));
 
     let mut try_block = Vec::with_capacity(stmts.len() + 1);
     try_block.push(before_call);
@@ -695,8 +713,8 @@ fn create_call_expression_string(
     let call_expr = format!("{callee_str}({args_str})");
 
     if is_hook && cx.output_mode == CompilerOutputMode::Client {
-        if let Some(specifier_name) = cx.enable_emit_hook_guards.as_ref()
-            .map(|g| g.import_specifier_name.clone())
+        if let Some(specifier_name) =
+            cx.enable_emit_hook_guards.as_ref().map(|g| g.import_specifier_name.clone())
         {
             let guard_fn_name = cx.synthesize_name(&specifier_name);
             // Generate an IIFE with try-finally:
@@ -1124,6 +1142,20 @@ fn codegen_instruction_nullable(
             }
             InstructionValue::StartMemoize(_) | InstructionValue::FinishMemoize(_) => None,
             InstructionValue::Debugger(_) => Some(CodegenStatement::Debugger),
+            // Delete expressions are side effects that must always be emitted as
+            // expression statements. If we let them fall through to the default
+            // `codegen_instruction_to_statement` path, they would be stored as
+            // temporaries (when the lvalue is unnamed) and silently dropped.
+            InstructionValue::PropertyDelete(del) => {
+                let object = codegen_place_to_expression(cx, &del.object);
+                let member = codegen_member_access(&object, &del.property);
+                Some(CodegenStatement::ExpressionStatement(format!("delete {member}")))
+            }
+            InstructionValue::ComputedDelete(del) => {
+                let object = codegen_place_to_expression(cx, &del.object);
+                let property = codegen_place_to_expression(cx, &del.property);
+                Some(CodegenStatement::ExpressionStatement(format!("delete {object}[{property}]")))
+            }
             InstructionValue::ObjectMethod(method) => {
                 // Store object method for later use by ObjectExpression codegen.
                 // Port of CodegenReactiveFunction.ts lines 1168-1174.
@@ -1133,6 +1165,19 @@ fn codegen_instruction_nullable(
                 None
             }
             other => {
+                // Track JSX text/element temporaries for proper JSX child rendering
+                if let Some(lval) = &instr.lvalue {
+                    let decl_id = lval.identifier.declaration_id;
+                    match other {
+                        InstructionValue::JsxText(_) => {
+                            cx.jsx_text_temps.insert(decl_id);
+                        }
+                        InstructionValue::JsxExpression(_) | InstructionValue::JsxFragment(_) => {
+                            cx.jsx_element_temps.insert(decl_id);
+                        }
+                        _ => {}
+                    }
+                }
                 let value_str = codegen_instruction_value(cx, other);
                 codegen_instruction_to_statement(cx, instr, &value_str)
             }
@@ -1311,8 +1356,8 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
         }
         InstructionValue::Primitive(prim) => codegen_primitive(&prim.value),
         InstructionValue::JsxText(text) => {
-            // JSX text: emit as string literal
-            format!("\"{}\"", escape_string(&text.value))
+            // JSX text: emit as raw text (will be rendered directly in JSX children)
+            text.value.clone()
         }
         InstructionValue::CallExpression(call) => {
             let is_hook = get_hook_kind(&cx.shapes, &call.callee.identifier);
@@ -1322,18 +1367,18 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
         }
         InstructionValue::MethodCall(method) => {
             let is_hook = get_hook_kind(&cx.shapes, &method.property.identifier);
-            let property_expr = codegen_place_to_expression(cx, &method.property);
+            // TS: the property Place is a PropertyLoad result (e.g. "console.log"),
+            // already a member expression string. Use it directly as the callee.
+            let callee = codegen_place_to_expression(cx, &method.property);
             let args = codegen_args(cx, &method.args);
-            create_call_expression_string(cx, &property_expr, &args, is_hook)
+            create_call_expression_string(cx, &callee, &args, is_hook)
         }
         InstructionValue::NewExpression(new) => {
             let callee = codegen_place_to_expression(cx, &new.callee);
             let args = codegen_args(cx, &new.args);
             format!("new {callee}({args})")
         }
-        InstructionValue::ObjectExpression(obj) => {
-            codegen_object_expression(cx, obj)
-        }
+        InstructionValue::ObjectExpression(obj) => codegen_object_expression(cx, obj),
         InstructionValue::PropertyLoad(load) => {
             let object = codegen_place_to_expression(cx, &load.object);
             codegen_member_access(&object, &load.property)
@@ -1404,19 +1449,8 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
                 JsxTag::Place(p) => codegen_place_to_expression(cx, p),
                 JsxTag::BuiltIn(b) => b.name.clone(),
             };
-            let attrs: Vec<String> = jsx
-                .props
-                .iter()
-                .map(|attr| match attr {
-                    JsxAttribute::Attribute { name, place } => {
-                        let value = codegen_place_to_expression(cx, place);
-                        format!("{name}={{{value}}}")
-                    }
-                    JsxAttribute::Spread { argument } => {
-                        format!("{{...{}}}", codegen_place_to_expression(cx, argument))
-                    }
-                })
-                .collect();
+            let attrs: Vec<String> =
+                jsx.props.iter().map(|attr| codegen_jsx_attribute(cx, attr)).collect();
             let attrs_str =
                 if attrs.is_empty() { String::new() } else { format!(" {}", attrs.join(" ")) };
             match &jsx.children {
@@ -1425,20 +1459,15 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
                     format!("<{tag_str}{attrs_str}></{tag_str}>")
                 }
                 Some(children) => {
-                    let children_str: Vec<String> = children
-                        .iter()
-                        .map(|c| format!("{{{}}}", codegen_place_to_expression(cx, c)))
-                        .collect();
+                    let children_str: Vec<String> =
+                        children.iter().map(|c| codegen_jsx_child(cx, c)).collect();
                     format!("<{tag_str}{attrs_str}>{}</{tag_str}>", children_str.join(""))
                 }
             }
         }
         InstructionValue::JsxFragment(frag) => {
-            let children_str: Vec<String> = frag
-                .children
-                .iter()
-                .map(|c| format!("{{{}}}", codegen_place_to_expression(cx, c)))
-                .collect();
+            let children_str: Vec<String> =
+                frag.children.iter().map(|c| codegen_jsx_child(cx, c)).collect();
             format!("<>{}</>", children_str.join(""))
         }
         InstructionValue::GetIterator(iter) => codegen_place_to_expression(cx, &iter.collection),
@@ -1505,8 +1534,7 @@ fn codegen_function_expression(
                     let async_prefix = if inner_fn.is_async { "async " } else { "" };
                     // Check for concise arrow body: single return statement with argument,
                     // and no directives on the lowered function
-                    if inner_fn.body.len() == 1
-                        && func_expr.lowered_func.func.directives.is_empty()
+                    if inner_fn.body.len() == 1 && func_expr.lowered_func.func.directives.is_empty()
                     {
                         if let CodegenStatement::Return(Some(expr)) = &inner_fn.body[0] {
                             format!("{async_prefix}({params_str}) => {expr}")
@@ -1523,10 +1551,7 @@ fn codegen_function_expression(
                 | FunctionExpressionType::FunctionDeclaration => {
                     let async_prefix = if inner_fn.is_async { "async " } else { "" };
                     let star = if inner_fn.generator { "*" } else { "" };
-                    let name = func_expr
-                        .name
-                        .as_ref()
-                        .map_or(String::new(), |n| format!(" {n}"));
+                    let name = func_expr.name.as_ref().map_or(String::new(), |n| format!(" {n}"));
                     let body_str = format_codegen_body(&inner_fn);
                     format!("{async_prefix}function{star}{name}({params_str}) {{{body_str}}}")
                 }
@@ -1539,9 +1564,7 @@ fn codegen_function_expression(
                 && func_expr.name_hint.is_some()
             {
                 let hint = func_expr.name_hint.as_ref().map_or("", String::as_str);
-                value = format!(
-                    "({{\"{hint}\": {value}}})[\"{hint}\"]"
-                );
+                value = format!("({{\"{hint}\": {value}}})[\"{hint}\"]");
             }
 
             value
@@ -1559,10 +1582,7 @@ fn codegen_function_expression(
 /// Port of `CodegenReactiveFunction.ts` ObjectExpression case (lines ~1580-1698).
 ///
 /// Method properties are compiled recursively via `codegen_object_method_expression`.
-fn codegen_object_expression(
-    cx: &CodegenContext,
-    obj: &ObjectExpression,
-) -> String {
+fn codegen_object_expression(cx: &CodegenContext, obj: &ObjectExpression) -> String {
     let mut props: Vec<String> = Vec::with_capacity(obj.properties.len());
 
     for prop in &obj.properties {
@@ -1604,7 +1624,7 @@ fn codegen_object_expression(
         }
     }
 
-    format!("{{{}}}", props.join(", "))
+    if props.is_empty() { "{}".to_string() } else { format!("{{ {} }}", props.join(", ")) }
 }
 
 /// Generate an object method expression string by recursively compiling the inner function.
@@ -1637,6 +1657,23 @@ fn codegen_object_method_expression(
 // codegen_reactive_value_to_expression — ReactiveValue → expression string
 // =====================================================================================
 
+/// Determine whether a logical operand expression needs to be wrapped in
+/// parentheses. This matches Babel's code generator: a `LogicalExpression`
+/// whose operator differs from the parent logical operator gets wrapped,
+/// as does a ternary expression (lower precedence than any logical operator).
+fn wrap_logical_operand_if_needed(
+    expr: &str,
+    child_value: &ReactiveValue,
+    parent_op: LogicalOperator,
+) -> String {
+    let needs_parens = match child_value {
+        ReactiveValue::Logical(child_logical) => child_logical.operator != parent_op,
+        ReactiveValue::Ternary(_) => true,
+        _ => false,
+    };
+    if needs_parens { format!("({expr})") } else { expr.to_string() }
+}
+
 /// Convert a `ReactiveValue` to an expression string.
 fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &ReactiveValue) -> String {
     match value {
@@ -1644,12 +1681,26 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
         ReactiveValue::Logical(logical) => {
             let left = codegen_reactive_value_to_expression(cx, &logical.left);
             let right = codegen_reactive_value_to_expression(cx, &logical.right);
+            // Wrap operands in parens when they are logical expressions with a
+            // different operator or ternary expressions. This matches Babel's
+            // code generator behaviour and is required for correctness when
+            // lower-precedence operators are nested inside higher-precedence
+            // ones (e.g. `||` inside `&&`).
+            let left = wrap_logical_operand_if_needed(&left, &logical.left, logical.operator);
+            let right = wrap_logical_operand_if_needed(&right, &logical.right, logical.operator);
             format!("{left} {} {right}", logical.operator.as_str())
         }
         ReactiveValue::Ternary(ternary) => {
             let test = codegen_reactive_value_to_expression(cx, &ternary.test);
             let consequent = codegen_reactive_value_to_expression(cx, &ternary.consequent);
             let alternate = codegen_reactive_value_to_expression(cx, &ternary.alternate);
+            // Wrap the test expression in parens if it's a logical/ternary
+            // expression, matching Babel's code generator behaviour.
+            let test = if matches!(&*ternary.test, ReactiveValue::Ternary(_)) {
+                format!("({test})")
+            } else {
+                test
+            };
             format!("{test} ? {consequent} : {alternate}")
         }
         ReactiveValue::Sequence(seq) => {
@@ -1679,7 +1730,23 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
         }
         ReactiveValue::OptionalCall(optional) => {
             let value = codegen_reactive_value_to_expression(cx, &optional.value);
-            if optional.optional { format!("{value}?.") } else { value }
+            if optional.optional {
+                // The inner value is a complete call expression like `foo.bar(args)` or
+                // member expression like `foo.bar`. We need to insert `?` before the last
+                // `.` or `(` to produce `foo?.bar(args)` or `foo?.bar`.
+                //
+                // Strategy: find the boundary between the receiver and the access/call,
+                // then insert `?` there.
+                if let Some(paren_idx) = find_optional_insertion_point(&value) {
+                    let (before, after) = value.split_at(paren_idx);
+                    format!("{before}?{after}")
+                } else {
+                    // Fallback: just append ?.
+                    format!("{value}?.()")
+                }
+            } else {
+                value
+            }
         }
     }
 }
@@ -1687,6 +1754,76 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
 // =====================================================================================
 // Helper functions
 // =====================================================================================
+
+/// Generate a JSX attribute string.
+///
+/// Handles namespaced attributes (e.g., `xmlns:xlink`) and string value escaping.
+fn codegen_jsx_attribute(cx: &CodegenContext, attr: &JsxAttribute) -> String {
+    match attr {
+        JsxAttribute::Attribute { name, place } => {
+            let value = codegen_place_to_expression(cx, place);
+            // Check if value is a simple string literal that can be used directly
+            let is_double_quoted = value.starts_with('"') && value.ends_with('"');
+            let is_single_quoted = value.starts_with('\'') && value.ends_with('\'');
+            if is_double_quoted || is_single_quoted {
+                let inner = &value[1..value.len() - 1];
+                // If the string contains special chars, wrap in expression container
+                if string_requires_expr_container(inner) {
+                    format!("{name}={{{value}}}")
+                } else {
+                    format!("{name}={value}")
+                }
+            } else {
+                format!("{name}={{{value}}}")
+            }
+        }
+        JsxAttribute::Spread { argument } => {
+            format!("{{...{}}}", codegen_place_to_expression(cx, argument))
+        }
+    }
+}
+
+/// Check if a string literal value requires wrapping in a JSX expression container.
+///
+/// Matches the TS `STRING_REQUIRES_EXPR_CONTAINER_PATTERN` regex:
+/// `/[\u{0000}-\u{001F}\u{007F}\u{0080}-\u{FFFF}\u{010000}-\u{10FFFF}]|"|\\/u`
+fn string_requires_expr_container(s: &str) -> bool {
+    for c in s.chars() {
+        let code = c as u32;
+        // Control characters, DEL, or non-ASCII
+        if code <= 0x1F || code == 0x7F || code >= 0x80 {
+            return true;
+        }
+        // Double quote or backslash
+        if c == '"' || c == '\\' {
+            return true;
+        }
+    }
+    false
+}
+
+/// Render a JSX child element. Matches TS `codegenJsxElement` which:
+/// - JSX text → raw text (or expression container if contains `<>&{}`)
+/// - JSX element/fragment → pass through as-is
+/// - Other expressions → wrap in `{...}` expression container
+fn codegen_jsx_child(cx: &CodegenContext, place: &Place) -> String {
+    let decl_id = place.identifier.declaration_id;
+    if cx.jsx_text_temps.contains(&decl_id) {
+        let text = codegen_place_to_expression(cx, place);
+        // If text contains JSX-special chars, wrap in expression container with string literal
+        if text.contains(['<', '>', '&', '{', '}']) {
+            format!("{{\"{}\"}}", escape_string(&text))
+        } else {
+            text
+        }
+    } else if cx.jsx_element_temps.contains(&decl_id) {
+        // JSX elements render directly without wrapper
+        codegen_place_to_expression(cx, place)
+    } else {
+        // All other expressions get wrapped in expression containers
+        format!("{{{}}}", codegen_place_to_expression(cx, place))
+    }
+}
 
 /// Convert a Place to an expression string.
 fn codegen_place_to_expression(cx: &CodegenContext, place: &Place) -> String {
@@ -1707,6 +1844,51 @@ fn identifier_name(identifier: &crate::hir::Identifier) -> String {
     }
 }
 
+/// Find the point in a codegen'd expression string where `?` should be inserted
+/// to convert a call/member expression to an optional chain.
+///
+/// For `foo.bar(args)` returns the index of `.` → produces `foo?.bar(args)`
+/// For `foo.bar` returns the index of `.bar` → produces `foo?.bar`
+/// For `foo(args)` returns the index of `(` → produces `foo?.(args)`
+fn find_optional_insertion_point(expr: &str) -> Option<usize> {
+    let bytes = expr.as_bytes();
+    let mut depth_paren: i32 = 0;
+    let mut depth_bracket: i32 = 0;
+    let mut last_access_point = None;
+
+    // Scan from the end to find the outermost access/call point
+    for i in (0..bytes.len()).rev() {
+        match bytes[i] {
+            b')' => depth_paren += 1,
+            b'(' => {
+                depth_paren -= 1;
+                if depth_paren == 0 && depth_bracket == 0 {
+                    last_access_point = Some(i);
+                    // Keep scanning to find if there's a `.` before this
+                    continue;
+                }
+            }
+            b']' => depth_bracket += 1,
+            b'[' => {
+                depth_bracket -= 1;
+                if depth_paren == 0 && depth_bracket == 0 {
+                    last_access_point = Some(i);
+                    continue;
+                }
+            }
+            b'.' if depth_paren == 0 && depth_bracket == 0 => {
+                return Some(i);
+            }
+            _ => {
+                if depth_paren == 0 && depth_bracket == 0 && last_access_point.is_some() {
+                    return last_access_point;
+                }
+            }
+        }
+    }
+    last_access_point
+}
+
 /// Generate a label string from a BlockId.
 fn codegen_label(id: crate::hir::BlockId) -> String {
     format!("bb{}", id.0)
@@ -1723,18 +1905,42 @@ fn codegen_primitive(value: &PrimitiveValueKind) -> String {
             }
         }
         PrimitiveValueKind::Boolean(b) => format!("{b}"),
-        PrimitiveValueKind::String(s) => format!("\"{}\"", escape_string(s)),
+        PrimitiveValueKind::String(s) => {
+            if s.contains('"') {
+                // Use single quotes when the string contains double quotes
+                format!("'{}'", escape_string_single_quote(s))
+            } else {
+                format!("\"{}\"", escape_string(s))
+            }
+        }
         PrimitiveValueKind::Null => "null".to_string(),
         PrimitiveValueKind::Undefined => "undefined".to_string(),
     }
 }
 
-/// Escape special characters in a string literal.
+/// Escape special characters in a double-quoted string literal.
 fn escape_string(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
     for c in s.chars() {
         match c {
             '"' => result.push_str("\\\""),
+            '\\' => result.push_str("\\\\"),
+            '\n' => result.push_str("\\n"),
+            '\r' => result.push_str("\\r"),
+            '\t' => result.push_str("\\t"),
+            _ => result.push(c),
+        }
+    }
+    result
+}
+
+/// Escape special characters in a single-quoted string literal.
+/// Does not escape double quotes but escapes single quotes.
+fn escape_string_single_quote(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '\'' => result.push_str("\\'"),
             '\\' => result.push_str("\\\\"),
             '\n' => result.push_str("\\n"),
             '\r' => result.push_str("\\r"),
@@ -2088,32 +2294,48 @@ fn write_statement(
             let init_str = init.as_deref().unwrap_or("");
             let test_str = test.as_deref().unwrap_or("");
             let update_str = update.as_deref().unwrap_or("");
-            writeln!(f, "{pad}for ({init_str}; {test_str}; {update_str}) {{")?;
-            for s in body {
-                write_statement(f, s, indent + 1)?;
+            if body.is_empty() {
+                writeln!(f, "{pad}for ({init_str}; {test_str}; {update_str}) {{}}")
+            } else {
+                writeln!(f, "{pad}for ({init_str}; {test_str}; {update_str}) {{")?;
+                for s in body {
+                    write_statement(f, s, indent + 1)?;
+                }
+                writeln!(f, "{pad}}}")
             }
-            writeln!(f, "{pad}}}")
         }
         CodegenStatement::ForOf { kind, left, right, body } => {
-            writeln!(f, "{pad}for ({} {left} of {right}) {{", kind.as_str())?;
-            for s in body {
-                write_statement(f, s, indent + 1)?;
+            if body.is_empty() {
+                writeln!(f, "{pad}for ({} {left} of {right}) {{}}", kind.as_str())
+            } else {
+                writeln!(f, "{pad}for ({} {left} of {right}) {{", kind.as_str())?;
+                for s in body {
+                    write_statement(f, s, indent + 1)?;
+                }
+                writeln!(f, "{pad}}}")
             }
-            writeln!(f, "{pad}}}")
         }
         CodegenStatement::ForIn { kind, left, right, body } => {
-            writeln!(f, "{pad}for ({} {left} in {right}) {{", kind.as_str())?;
-            for s in body {
-                write_statement(f, s, indent + 1)?;
+            if body.is_empty() {
+                writeln!(f, "{pad}for ({} {left} in {right}) {{}}", kind.as_str())
+            } else {
+                writeln!(f, "{pad}for ({} {left} in {right}) {{", kind.as_str())?;
+                for s in body {
+                    write_statement(f, s, indent + 1)?;
+                }
+                writeln!(f, "{pad}}}")
             }
-            writeln!(f, "{pad}}}")
         }
         CodegenStatement::While { test, body } => {
-            writeln!(f, "{pad}while ({test}) {{")?;
-            for s in body {
-                write_statement(f, s, indent + 1)?;
+            if body.is_empty() {
+                writeln!(f, "{pad}while ({test}) {{}}")
+            } else {
+                writeln!(f, "{pad}while ({test}) {{")?;
+                for s in body {
+                    write_statement(f, s, indent + 1)?;
+                }
+                writeln!(f, "{pad}}}")
             }
-            writeln!(f, "{pad}}}")
         }
         CodegenStatement::DoWhile { body, test } => {
             writeln!(f, "{pad}do {{")?;
@@ -2144,26 +2366,46 @@ fn write_statement(
             None => writeln!(f, "{pad}continue;"),
         },
         CodegenStatement::Try { block, handler_param, handler, finalizer } => {
-            writeln!(f, "{pad}try {{")?;
-            for s in block {
-                write_statement(f, s, indent + 1)?;
+            // Collapse empty try block onto one line
+            if block.is_empty() {
+                write!(f, "{pad}try {{}}")?;
+            } else {
+                writeln!(f, "{pad}try {{")?;
+                for s in block {
+                    write_statement(f, s, indent + 1)?;
+                }
+                write!(f, "{pad}}}")?;
             }
             if let Some(handler_stmts) = handler {
-                match handler_param {
-                    Some(param) => writeln!(f, "{pad}}} catch ({param}) {{")?,
-                    None => writeln!(f, "{pad}}} catch {{")?,
-                }
-                for s in handler_stmts {
-                    write_statement(f, s, indent + 1)?;
+                // Collapse empty catch block onto same line
+                if handler_stmts.is_empty() {
+                    match handler_param {
+                        Some(param) => write!(f, " catch ({param}) {{}}")?,
+                        None => write!(f, " catch {{}}")?,
+                    }
+                } else {
+                    match handler_param {
+                        Some(param) => writeln!(f, " catch ({param}) {{")?,
+                        None => writeln!(f, " catch {{")?,
+                    }
+                    for s in handler_stmts {
+                        write_statement(f, s, indent + 1)?;
+                    }
+                    write!(f, "{pad}}}")?;
                 }
             }
             if let Some(finalizer_stmts) = finalizer {
-                writeln!(f, "{pad}}} finally {{")?;
-                for s in finalizer_stmts {
-                    write_statement(f, s, indent + 1)?;
+                if finalizer_stmts.is_empty() {
+                    write!(f, " finally {{}}")?;
+                } else {
+                    writeln!(f, " finally {{")?;
+                    for s in finalizer_stmts {
+                        write_statement(f, s, indent + 1)?;
+                    }
+                    write!(f, "{pad}}}")?;
                 }
             }
-            writeln!(f, "{pad}}}")
+            writeln!(f)
         }
         CodegenStatement::Throw(expr) => {
             writeln!(f, "{pad}throw {expr};")

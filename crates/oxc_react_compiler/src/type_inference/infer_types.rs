@@ -8,6 +8,8 @@ use rustc_hash::FxHashMap;
 
 use crate::hir::{
     HIRFunction, Instruction, InstructionKind, InstructionValue,
+    environment::Environment,
+    globals::Global,
     object_shape::{BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID},
     types::{FunctionType, ObjectType, Type, TypeId, make_type, type_equals},
 };
@@ -126,14 +128,18 @@ fn generate(func: &HIRFunction) -> Vec<TypeEquation> {
 
     for block in func.body.blocks.values() {
         for instr in &block.instructions {
-            generate_instruction_equations(instr, &mut equations);
+            generate_instruction_equations(instr, &func.env, &mut equations);
         }
     }
 
     equations
 }
 
-fn generate_instruction_equations(instr: &Instruction, equations: &mut Vec<TypeEquation>) {
+fn generate_instruction_equations(
+    instr: &Instruction,
+    env: &Environment,
+    equations: &mut Vec<TypeEquation>,
+) {
     let lvalue_type = instr.lvalue.identifier.type_.clone();
 
     match &instr.value {
@@ -204,6 +210,25 @@ fn generate_instruction_equations(instr: &Instruction, equations: &mut Vec<TypeE
         }
         InstructionValue::TypeCastExpression(v) => {
             equations.push(TypeEquation { left: lvalue_type, right: v.type_.clone() });
+        }
+        InstructionValue::LoadGlobal(load) => {
+            // Use the environment to resolve the type of this global
+            if let Some(global) = env.get_global_declaration(&load.binding) {
+                let global_type = Global::to_type(&global);
+                equations.push(TypeEquation { left: lvalue_type, right: global_type });
+            }
+        }
+        InstructionValue::PropertyLoad(load) => {
+            // Use the environment to resolve the property type from the object's shape
+            let object_type = &load.object.identifier.type_;
+            let property_name = load.property.to_string();
+            if let Some(prop_type) = env.get_property_type(object_type, &property_name) {
+                equations.push(TypeEquation { left: lvalue_type, right: prop_type });
+            }
+        }
+        InstructionValue::CallExpression(_) => {
+            // If the callee has a function type with known return, use it
+            // (This will be picked up via the function's return type shape)
         }
         _ => {
             // Many instruction values don't produce enough info for type equations

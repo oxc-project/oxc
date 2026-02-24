@@ -85,15 +85,20 @@ impl Scopes {
     }
 
     fn visit(&mut self, identifier: &mut Identifier) {
-        let original_name = match &identifier.name {
-            Some(name) => name.clone(),
-            None => return,
-        };
-
+        // In TypeScript, identifiers are reference types — renaming one reference
+        // renames all others with the same declaration_id automatically. In Rust,
+        // identifiers are cloned values, so we must propagate renames explicitly.
+        // Always check `seen` first: if another copy of this identifier (same
+        // declaration_id) was already renamed, apply that name to this copy too.
         if let Some(mapped_name) = self.seen.get(&identifier.declaration_id) {
             identifier.name = Some(mapped_name.clone());
             return;
         }
+
+        let original_name = match &identifier.name {
+            Some(name) => name.clone(),
+            None => return,
+        };
 
         let original_value = original_name.value().to_string();
         let is_promoted_temp = is_promoted_temporary(&original_value);
@@ -187,14 +192,25 @@ fn traverse_block(block: &mut ReactiveBlock, scopes: &mut Scopes) {
     }
 }
 
-fn visit_scope(
-    scope_block: &mut crate::hir::ReactiveScopeBlock,
-    scopes: &mut Scopes,
-) {
+fn visit_scope(scope_block: &mut crate::hir::ReactiveScopeBlock, scopes: &mut Scopes) {
     // Visit scope declarations first (matches TS visitScope)
     for declaration in scope_block.scope.declarations.values_mut() {
         scopes.visit(&mut declaration.identifier);
     }
+
+    // In TS, identifiers are reference types, so renaming a declaration's identifier
+    // automatically updates all other references to the same identifier (including in
+    // scope.dependencies and scope.reassignments). In Rust, identifiers are cloned
+    // values, so we must explicitly visit dependencies and reassignments too.
+    let old_deps: Vec<_> = scope_block.scope.dependencies.drain().collect();
+    for mut dep in old_deps {
+        scopes.visit(&mut dep.identifier);
+        scope_block.scope.dependencies.insert(dep);
+    }
+    for reassignment in &mut scope_block.scope.reassignments {
+        scopes.visit(reassignment);
+    }
+
     // Then traverse scope instructions (no extra enter — traverseScope just visits the block)
     traverse_block(&mut scope_block.instructions, scopes);
 }

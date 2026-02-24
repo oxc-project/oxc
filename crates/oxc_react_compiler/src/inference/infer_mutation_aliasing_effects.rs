@@ -233,15 +233,26 @@ pub fn infer_mutation_aliasing_effects(
         }
     }
 
-    // Annotate effects on instructions
+    // Annotate effects on instructions.
+    // For blocks reached during fixpoint iteration, compute effects from abstract state.
+    // For unreachable blocks, set empty effects (not None) so downstream passes
+    // (infer_mutation_aliasing_ranges) still process them correctly.
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
-        if let Some(state) = states_by_block.get(&block_id)
-            && let Some(block) = func.body.blocks.get_mut(&block_id)
-        {
+        let Some(block) = func.body.blocks.get_mut(&block_id) else {
+            continue;
+        };
+        if let Some(state) = states_by_block.get(&block_id) {
             for instr in &mut block.instructions {
                 let effects = compute_instruction_effects(state, instr);
                 instr.effects = Some(effects);
+            }
+        } else {
+            // Unreachable block: set empty effects so downstream passes don't skip
+            for instr in &mut block.instructions {
+                if instr.effects.is_none() {
+                    instr.effects = Some(Vec::new());
+                }
             }
         }
     }
@@ -435,94 +446,444 @@ fn infer_instruction_effects(
 }
 
 /// Compute the aliasing effects for an instruction.
+///
+/// Port of `computeSignatureForInstruction` from `InferMutationAliasingEffects.ts`.
 fn compute_instruction_effects(
     _state: &InferenceState,
     instr: &Instruction,
 ) -> Vec<AliasingEffect> {
+    use crate::hir::{CallArg, Effect, InstructionKind, visitors::each_instruction_value_operand};
+    use crate::inference::aliasing_effects::CreateFunctionKind;
+
+    let lvalue = &instr.lvalue;
     let mut effects = Vec::new();
 
     match &instr.value {
-        InstructionValue::ObjectExpression(_) | InstructionValue::ArrayExpression(_) => {
+        // ArrayExpression: Create(Mutable) + Capture each element into the array
+        InstructionValue::ArrayExpression(arr) => {
             effects.push(AliasingEffect::Create {
-                into: instr.lvalue.clone(),
+                into: lvalue.clone(),
+                value: ValueKind::Mutable,
+                reason: ValueReason::Other,
+            });
+            for element in &arr.elements {
+                match element {
+                    crate::hir::ArrayExpressionElement::Place(p) => {
+                        effects.push(AliasingEffect::Capture {
+                            from: p.clone(),
+                            into: lvalue.clone(),
+                        });
+                    }
+                    crate::hir::ArrayExpressionElement::Spread(s) => {
+                        effects.push(AliasingEffect::Capture {
+                            from: s.place.clone(),
+                            into: lvalue.clone(),
+                        });
+                    }
+                    crate::hir::ArrayExpressionElement::Hole => {}
+                }
+            }
+        }
+
+        // ObjectExpression: Create(Mutable) + Capture each property value into the object
+        InstructionValue::ObjectExpression(obj) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Mutable,
+                reason: ValueReason::Other,
+            });
+            for prop in &obj.properties {
+                match prop {
+                    crate::hir::ObjectPatternProperty::Property(p) => {
+                        effects.push(AliasingEffect::Capture {
+                            from: p.place.clone(),
+                            into: lvalue.clone(),
+                        });
+                    }
+                    crate::hir::ObjectPatternProperty::Spread(s) => {
+                        effects.push(AliasingEffect::Capture {
+                            from: s.place.clone(),
+                            into: lvalue.clone(),
+                        });
+                    }
+                }
+            }
+        }
+
+        // CallExpression / MethodCall / NewExpression
+        //
+        // The TS compiler generates an `Apply` effect that gets resolved during
+        // abstract interpretation using function signatures. Since we don't yet
+        // have function signature resolution, we use the conservative fallback:
+        // - MutateTransitiveConditionally each argument
+        // - Capture each argument into the return value
+        // - Create(Mutable) for the return value
+        // - For CallExpression: MutateTransitiveConditionally the callee too
+        InstructionValue::CallExpression(v) => {
+            // CallExpression: callee may also be mutated (mutatesFunction=true)
+            effects.push(AliasingEffect::MutateTransitiveConditionally { value: v.callee.clone() });
+            for arg in &v.args {
+                let place = match arg {
+                    CallArg::Place(p) => p,
+                    CallArg::Spread(s) => &s.place,
+                };
+                effects
+                    .push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
+                effects.push(AliasingEffect::Capture { from: place.clone(), into: lvalue.clone() });
+            }
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
                 value: ValueKind::Mutable,
                 reason: ValueReason::Other,
             });
         }
-        InstructionValue::Primitive(_) | InstructionValue::JsxText(_) => {
+        InstructionValue::MethodCall(v) => {
+            // MethodCall: receiver is conditionally mutated, callee (property) is not
+            effects
+                .push(AliasingEffect::MutateTransitiveConditionally { value: v.receiver.clone() });
+            for arg in &v.args {
+                let place = match arg {
+                    CallArg::Place(p) => p,
+                    CallArg::Spread(s) => &s.place,
+                };
+                effects
+                    .push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
+                effects.push(AliasingEffect::Capture { from: place.clone(), into: lvalue.clone() });
+            }
             effects.push(AliasingEffect::Create {
-                into: instr.lvalue.clone(),
+                into: lvalue.clone(),
+                value: ValueKind::Mutable,
+                reason: ValueReason::Other,
+            });
+        }
+        InstructionValue::NewExpression(v) => {
+            // NewExpression: callee is NOT mutated (mutatesFunction=false)
+            for arg in &v.args {
+                let place = match arg {
+                    CallArg::Place(p) => p,
+                    CallArg::Spread(s) => &s.place,
+                };
+                effects
+                    .push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
+                effects.push(AliasingEffect::Capture { from: place.clone(), into: lvalue.clone() });
+            }
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Mutable,
+                reason: ValueReason::Other,
+            });
+        }
+
+        // PropertyLoad / ComputedLoad: CreateFrom (result inherits kind from object)
+        InstructionValue::PropertyLoad(v) => {
+            effects
+                .push(AliasingEffect::CreateFrom { from: v.object.clone(), into: lvalue.clone() });
+        }
+        InstructionValue::ComputedLoad(v) => {
+            effects
+                .push(AliasingEffect::CreateFrom { from: v.object.clone(), into: lvalue.clone() });
+        }
+
+        // PropertyStore / ComputedStore: Mutate(object) + Capture(value->object) + Create(Primitive, lvalue)
+        InstructionValue::PropertyStore(v) => {
+            let mutation_reason = if matches!(v.property, crate::hir::types::PropertyLiteral::String(ref s) if s == "current")
+            {
+                Some(crate::inference::aliasing_effects::MutationReason::AssignCurrentProperty)
+            } else {
+                None
+            };
+            effects
+                .push(AliasingEffect::Mutate { value: v.object.clone(), reason: mutation_reason });
+            effects.push(AliasingEffect::Capture { from: v.value.clone(), into: v.object.clone() });
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
         }
-        InstructionValue::LoadLocal(v) => {
-            effects
-                .push(AliasingEffect::Alias { from: v.place.clone(), into: instr.lvalue.clone() });
+        InstructionValue::ComputedStore(v) => {
+            effects.push(AliasingEffect::Mutate { value: v.object.clone(), reason: None });
+            effects.push(AliasingEffect::Capture { from: v.value.clone(), into: v.object.clone() });
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
         }
+
+        // PropertyDelete / ComputedDelete: Create(Primitive) + Mutate(object)
+        InstructionValue::PropertyDelete(v) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+            effects.push(AliasingEffect::Mutate { value: v.object.clone(), reason: None });
+        }
+        InstructionValue::ComputedDelete(v) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+            effects.push(AliasingEffect::Mutate { value: v.object.clone(), reason: None });
+        }
+
+        // FunctionExpression: CreateFunction with captured context variables
+        InstructionValue::FunctionExpression(v) => {
+            let captures: Vec<Place> = v
+                .lowered_func
+                .func
+                .context
+                .iter()
+                .filter(|operand| operand.effect == Effect::Capture)
+                .cloned()
+                .collect();
+            effects.push(AliasingEffect::CreateFunction {
+                captures,
+                function: CreateFunctionKind::FunctionExpression(v.clone()),
+                into: lvalue.clone(),
+            });
+        }
+        InstructionValue::ObjectMethod(v) => {
+            let captures: Vec<Place> = v
+                .lowered_func
+                .func
+                .context
+                .iter()
+                .filter(|operand| operand.effect == Effect::Capture)
+                .cloned()
+                .collect();
+            effects.push(AliasingEffect::CreateFunction {
+                captures,
+                function: CreateFunctionKind::ObjectMethod(v.clone()),
+                into: lvalue.clone(),
+            });
+        }
+
+        // LoadLocal: Assign (direct value flow)
+        InstructionValue::LoadLocal(v) => {
+            effects.push(AliasingEffect::Assign { from: v.place.clone(), into: lvalue.clone() });
+        }
+
+        // LoadContext: CreateFrom (loading from mutable box)
         InstructionValue::LoadContext(v) => {
             effects
-                .push(AliasingEffect::Alias { from: v.place.clone(), into: instr.lvalue.clone() });
+                .push(AliasingEffect::CreateFrom { from: v.place.clone(), into: lvalue.clone() });
         }
+
+        // StoreLocal: Assign to lvalue target + Assign to instruction lvalue
         InstructionValue::StoreLocal(v) => {
             effects.push(AliasingEffect::Assign {
                 from: v.value.clone(),
                 into: v.lvalue.place.clone(),
             });
+            effects.push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
         }
-        InstructionValue::CallExpression(v) => {
-            // Function calls: capture args, create return value
-            for arg in &v.args {
-                if let crate::hir::CallArg::Place(p) = arg {
-                    effects.push(AliasingEffect::Capture {
-                        from: p.clone(),
-                        into: instr.lvalue.clone(),
-                    });
-                }
+
+        // StoreContext: Mutate/Create for context box + Capture + Assign
+        InstructionValue::StoreContext(v) => {
+            if v.lvalue_kind == InstructionKind::Reassign {
+                effects
+                    .push(AliasingEffect::Mutate { value: v.lvalue_place.clone(), reason: None });
+            } else {
+                effects.push(AliasingEffect::Create {
+                    into: v.lvalue_place.clone(),
+                    value: ValueKind::Mutable,
+                    reason: ValueReason::Other,
+                });
             }
+            effects.push(AliasingEffect::Capture {
+                from: v.value.clone(),
+                into: v.lvalue_place.clone(),
+            });
+            effects.push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
+        }
+
+        // DeclareLocal: Create(Primitive) for both lvalue place and instruction lvalue
+        InstructionValue::DeclareLocal(v) => {
             effects.push(AliasingEffect::Create {
-                into: instr.lvalue.clone(),
-                value: ValueKind::Mutable,
+                into: v.lvalue.place.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
         }
-        InstructionValue::JsxExpression(jsx) => {
-            // JSX freezes its props and children
-            for attr in &jsx.props {
-                match attr {
-                    crate::hir::JsxAttribute::Attribute { place, .. } => {
-                        effects.push(AliasingEffect::Freeze {
-                            value: place.clone(),
-                            reason: ValueReason::JsxCaptured,
-                        });
-                    }
-                    crate::hir::JsxAttribute::Spread { argument } => {
-                        effects.push(AliasingEffect::Freeze {
-                            value: argument.clone(),
-                            reason: ValueReason::JsxCaptured,
-                        });
-                    }
-                }
-            }
-            if let Some(children) = &jsx.children {
-                for child in children {
-                    effects.push(AliasingEffect::Freeze {
-                        value: child.clone(),
-                        reason: ValueReason::JsxCaptured,
-                    });
-                }
-            }
+
+        // DeclareContext: Create(Mutable) or Mutate + Create(Primitive) for lvalue
+        InstructionValue::DeclareContext(v) => {
             effects.push(AliasingEffect::Create {
-                into: instr.lvalue.clone(),
+                into: v.lvalue_place.clone(),
+                value: ValueKind::Mutable,
+                reason: ValueReason::Other,
+            });
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+        }
+
+        // Destructure: CreateFrom per pattern item + Assign to lvalue
+        InstructionValue::Destructure(v) => {
+            for place in crate::hir::visitors::each_pattern_operand(&v.lvalue.pattern) {
+                effects.push(AliasingEffect::CreateFrom {
+                    from: v.value.clone(),
+                    into: place.clone(),
+                });
+            }
+            effects.push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
+        }
+
+        // PostfixUpdate / PrefixUpdate: Create(Primitive) for both lvalue and updated place
+        InstructionValue::PostfixUpdate(v) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+            effects.push(AliasingEffect::Create {
+                into: v.lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+        }
+        InstructionValue::PrefixUpdate(v) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+            effects.push(AliasingEffect::Create {
+                into: v.lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+        }
+
+        // TypeCastExpression: Assign (transparent)
+        InstructionValue::TypeCastExpression(v) => {
+            effects.push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
+        }
+
+        // LoadGlobal: Create(Global)
+        InstructionValue::LoadGlobal(_) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Global,
+                reason: ValueReason::Global,
+            });
+        }
+
+        // StoreGlobal: Assign to lvalue (mutation is an error, but still track flow)
+        InstructionValue::StoreGlobal(v) => {
+            effects.push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
+        }
+
+        // GetIterator: Create(Mutable) + Capture(collection -> iterator)
+        InstructionValue::GetIterator(v) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Mutable,
+                reason: ValueReason::Other,
+            });
+            effects
+                .push(AliasingEffect::Capture { from: v.collection.clone(), into: lvalue.clone() });
+        }
+
+        // IteratorNext: MutateConditionally(iterator) + CreateFrom(collection -> lvalue)
+        InstructionValue::IteratorNext(v) => {
+            effects.push(AliasingEffect::MutateConditionally { value: v.iterator.clone() });
+            effects.push(AliasingEffect::CreateFrom {
+                from: v.collection.clone(),
+                into: lvalue.clone(),
+            });
+        }
+
+        // NextPropertyOf: Create(Primitive) -- property name string
+        InstructionValue::NextPropertyOf(_) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+        }
+
+        // AwaitExpression: Create(Mutable) + MutateTransitiveConditionally + Capture
+        InstructionValue::Await(v) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Mutable,
+                reason: ValueReason::Other,
+            });
+            effects.push(AliasingEffect::MutateTransitiveConditionally { value: v.value.clone() });
+            effects.push(AliasingEffect::Capture { from: v.value.clone(), into: lvalue.clone() });
+        }
+
+        // JsxExpression: Create(Frozen) + Freeze + Capture per operand
+        InstructionValue::JsxExpression(jsx) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
                 value: ValueKind::Frozen,
                 reason: ValueReason::JsxCaptured,
             });
+            for operand in each_instruction_value_operand(&instr.value) {
+                effects.push(AliasingEffect::Freeze {
+                    value: operand.clone(),
+                    reason: ValueReason::JsxCaptured,
+                });
+                effects
+                    .push(AliasingEffect::Capture { from: operand.clone(), into: lvalue.clone() });
+            }
+            // Render effects for tag (component references)
+            if let crate::hir::JsxTag::Place(tag_place) = &jsx.tag {
+                effects.push(AliasingEffect::Render { place: tag_place.clone() });
+            }
         }
-        _ => {
-            // Default: create a mutable value
+
+        // JsxFragment: Create(Frozen) + Freeze + Capture per child
+        InstructionValue::JsxFragment(frag) => {
             effects.push(AliasingEffect::Create {
-                into: instr.lvalue.clone(),
-                value: ValueKind::Mutable,
+                into: lvalue.clone(),
+                value: ValueKind::Frozen,
+                reason: ValueReason::JsxCaptured,
+            });
+            for child in &frag.children {
+                effects.push(AliasingEffect::Freeze {
+                    value: child.clone(),
+                    reason: ValueReason::JsxCaptured,
+                });
+                effects.push(AliasingEffect::Capture { from: child.clone(), into: lvalue.clone() });
+            }
+        }
+
+        // StartMemoize / FinishMemoize: Create(Primitive)
+        InstructionValue::StartMemoize(_) | InstructionValue::FinishMemoize(_) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+        }
+
+        // All primitives: Create(Primitive)
+        InstructionValue::Primitive(_)
+        | InstructionValue::JsxText(_)
+        | InstructionValue::BinaryExpression(_)
+        | InstructionValue::UnaryExpression(_)
+        | InstructionValue::TaggedTemplateExpression(_)
+        | InstructionValue::TemplateLiteral(_)
+        | InstructionValue::RegExpLiteral(_)
+        | InstructionValue::Debugger(_)
+        | InstructionValue::MetaProperty(_)
+        | InstructionValue::UnsupportedNode(_) => {
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
         }

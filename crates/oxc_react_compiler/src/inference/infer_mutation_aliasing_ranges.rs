@@ -533,9 +533,7 @@ pub fn infer_mutation_aliasing_ranges(
                             CreateFunctionKind::FunctionExpression(fe) => {
                                 fe.lowered_func.func.clone()
                             }
-                            CreateFunctionKind::ObjectMethod(om) => {
-                                om.lowered_func.func.clone()
-                            }
+                            CreateFunctionKind::ObjectMethod(om) => om.lowered_func.func.clone(),
                         };
                         state.create(into, NodeValue::Function { func: inner_func });
                     }
@@ -822,6 +820,18 @@ pub fn infer_mutation_aliasing_ranges(
         }
     }
 
+    // ===== Sync mutableRange across all Places =====
+    // In TypeScript, Identifier is a reference type — updating mutableRange on one
+    // Place automatically affects all Places sharing the same Identifier object.
+    // In Rust, each Place has its own Identifier copy. After Phase 2 sets ranges
+    // on lvalues, we need to propagate those ranges to all other Places with the
+    // same IdentifierId (operands, effects, terminal operands, etc.).
+    //
+    // This sync ensures that when later passes (e.g., InferReactiveScopeVariables)
+    // check operand mutable ranges, they see the same range as the lvalue definition.
+    // TODO: sync_mutable_ranges causes net regression (96→94), disabled pending investigation
+    // sync_mutable_ranges(func);
+
     // ===== Phase 3: Compute external effects for params/context/returns =====
     let returns_id = func.returns.identifier.id;
     let return_value_kind = if func.returns.identifier.is_primitive_type() {
@@ -905,10 +915,7 @@ fn set_lvalue_effects(instr: &mut crate::hir::Instruction) {
         instr.lvalue.identifier.mutable_range.start = instr_id;
     }
     if instr.lvalue.identifier.mutable_range.end == InstructionId(0) {
-        let new_end = std::cmp::max(
-            instr_id.0 + 1,
-            instr.lvalue.identifier.mutable_range.end.0,
-        );
+        let new_end = std::cmp::max(instr_id.0 + 1, instr.lvalue.identifier.mutable_range.end.0);
         instr.lvalue.identifier.mutable_range.end = InstructionId(new_end);
     }
 
@@ -920,10 +927,8 @@ fn set_lvalue_effects(instr: &mut crate::hir::Instruction) {
                 v.lvalue.place.identifier.mutable_range.start = instr_id;
             }
             if v.lvalue.place.identifier.mutable_range.end == InstructionId(0) {
-                let new_end = std::cmp::max(
-                    instr_id.0 + 1,
-                    v.lvalue.place.identifier.mutable_range.end.0,
-                );
+                let new_end =
+                    std::cmp::max(instr_id.0 + 1, v.lvalue.place.identifier.mutable_range.end.0);
                 v.lvalue.place.identifier.mutable_range.end = InstructionId(new_end);
             }
         }
@@ -933,10 +938,8 @@ fn set_lvalue_effects(instr: &mut crate::hir::Instruction) {
                 v.lvalue_place.identifier.mutable_range.start = instr_id;
             }
             if v.lvalue_place.identifier.mutable_range.end == InstructionId(0) {
-                let new_end = std::cmp::max(
-                    instr_id.0 + 1,
-                    v.lvalue_place.identifier.mutable_range.end.0,
-                );
+                let new_end =
+                    std::cmp::max(instr_id.0 + 1, v.lvalue_place.identifier.mutable_range.end.0);
                 v.lvalue_place.identifier.mutable_range.end = InstructionId(new_end);
             }
         }
@@ -946,10 +949,8 @@ fn set_lvalue_effects(instr: &mut crate::hir::Instruction) {
                 v.lvalue.place.identifier.mutable_range.start = instr_id;
             }
             if v.lvalue.place.identifier.mutable_range.end == InstructionId(0) {
-                let new_end = std::cmp::max(
-                    instr_id.0 + 1,
-                    v.lvalue.place.identifier.mutable_range.end.0,
-                );
+                let new_end =
+                    std::cmp::max(instr_id.0 + 1, v.lvalue.place.identifier.mutable_range.end.0);
                 v.lvalue.place.identifier.mutable_range.end = InstructionId(new_end);
             }
         }
@@ -959,10 +960,8 @@ fn set_lvalue_effects(instr: &mut crate::hir::Instruction) {
                 v.lvalue_place.identifier.mutable_range.start = instr_id;
             }
             if v.lvalue_place.identifier.mutable_range.end == InstructionId(0) {
-                let new_end = std::cmp::max(
-                    instr_id.0 + 1,
-                    v.lvalue_place.identifier.mutable_range.end.0,
-                );
+                let new_end =
+                    std::cmp::max(instr_id.0 + 1, v.lvalue_place.identifier.mutable_range.end.0);
                 v.lvalue_place.identifier.mutable_range.end = InstructionId(new_end);
             }
         }
@@ -975,10 +974,8 @@ fn set_lvalue_effects(instr: &mut crate::hir::Instruction) {
                 v.lvalue.identifier.mutable_range.start = instr_id;
             }
             if v.lvalue.identifier.mutable_range.end == InstructionId(0) {
-                let new_end = std::cmp::max(
-                    instr_id.0 + 1,
-                    v.lvalue.identifier.mutable_range.end.0,
-                );
+                let new_end =
+                    std::cmp::max(instr_id.0 + 1, v.lvalue.identifier.mutable_range.end.0);
                 v.lvalue.identifier.mutable_range.end = InstructionId(new_end);
             }
         }
@@ -988,10 +985,8 @@ fn set_lvalue_effects(instr: &mut crate::hir::Instruction) {
                 v.lvalue.identifier.mutable_range.start = instr_id;
             }
             if v.lvalue.identifier.mutable_range.end == InstructionId(0) {
-                let new_end = std::cmp::max(
-                    instr_id.0 + 1,
-                    v.lvalue.identifier.mutable_range.end.0,
-                );
+                let new_end =
+                    std::cmp::max(instr_id.0 + 1, v.lvalue.identifier.mutable_range.end.0);
                 v.lvalue.identifier.mutable_range.end = InstructionId(new_end);
             }
         }
@@ -1011,10 +1006,8 @@ fn set_pattern_lvalue_effects(pattern: &mut crate::hir::Pattern, instr_id: Instr
                             p.identifier.mutable_range.start = instr_id;
                         }
                         if p.identifier.mutable_range.end == InstructionId(0) {
-                            let new_end = std::cmp::max(
-                                instr_id.0 + 1,
-                                p.identifier.mutable_range.end.0,
-                            );
+                            let new_end =
+                                std::cmp::max(instr_id.0 + 1, p.identifier.mutable_range.end.0);
                             p.identifier.mutable_range.end = InstructionId(new_end);
                         }
                     }
@@ -1266,9 +1259,7 @@ fn set_operand_effects_on_value(value: &mut InstructionValue, effect: Effect) {
 }
 
 /// Compute the operand effect overrides from instruction effects.
-fn compute_operand_effects(
-    instr: &crate::hir::Instruction,
-) -> FxHashMap<IdentifierId, Effect> {
+fn compute_operand_effects(instr: &crate::hir::Instruction) -> FxHashMap<IdentifierId, Effect> {
     let mut operand_effects: FxHashMap<IdentifierId, Effect> = FxHashMap::default();
     let instr_id = instr.id;
 
@@ -1325,8 +1316,10 @@ fn apply_lvalue_operand_effects(
     operand_effects: &FxHashMap<IdentifierId, Effect>,
 ) {
     // Apply to instruction's own lvalue
-    let effect =
-        operand_effects.get(&instr.lvalue.identifier.id).copied().unwrap_or(Effect::ConditionallyMutate);
+    let effect = operand_effects
+        .get(&instr.lvalue.identifier.id)
+        .copied()
+        .unwrap_or(Effect::ConditionallyMutate);
     instr.lvalue.effect = effect;
 
     // Apply to value lvalues
@@ -1456,10 +1449,7 @@ fn apply_operand_effects_to_value(
         {
             place.identifier.mutable_range.start = instr_id;
         }
-        let effect = operand_effects
-            .get(&place.identifier.id)
-            .copied()
-            .unwrap_or(Effect::Read);
+        let effect = operand_effects.get(&place.identifier.id).copied().unwrap_or(Effect::Read);
         place.effect = effect;
     }
 
@@ -1760,8 +1750,7 @@ fn apply_range_updates(func: &mut HIRFunction, updates: &FxHashMap<IdentifierId,
 /// Update the mutableRange.end of a place if there's an update for its identifier.
 fn update_place_range(place: &mut Place, updates: &FxHashMap<IdentifierId, InstructionId>) {
     if let Some(&end) = updates.get(&place.identifier.id) {
-        place.identifier.mutable_range.end =
-            std::cmp::max(place.identifier.mutable_range.end, end);
+        place.identifier.mutable_range.end = std::cmp::max(place.identifier.mutable_range.end, end);
     }
 }
 
@@ -2085,6 +2074,398 @@ fn update_terminal_ranges(
         Terminal::Try(t) => {
             if let Some(ref mut binding) = t.handler_binding {
                 update_place_range(binding, updates);
+            }
+        }
+        _ => {}
+    }
+}
+
+// =============================================================================
+// Mutable range synchronization
+// =============================================================================
+
+use crate::hir::MutableRange;
+
+/// Synchronize mutableRange across all Places sharing the same IdentifierId.
+///
+/// In the TypeScript compiler, Identifier is a reference type — mutating mutableRange
+/// on any Place automatically affects all other Places that share the same Identifier.
+/// In Rust, each Place owns its own Identifier copy. After Phase 2 updates ranges on
+/// lvalues, operands still have stale [0..0) ranges. This function collects the
+/// canonical range for each IdentifierId and propagates it to all Places.
+fn sync_mutable_ranges(func: &mut HIRFunction) {
+    use crate::hir::visitors::{
+        each_instruction_lvalue, each_instruction_value_operand, each_terminal_operand,
+    };
+
+    // Step 1: Collect canonical ranges (max end, min non-zero start) per IdentifierId
+    let mut canonical: FxHashMap<IdentifierId, MutableRange> = FxHashMap::default();
+
+    fn merge_range(canonical: &mut FxHashMap<IdentifierId, MutableRange>, place: &Place) {
+        let id = place.identifier.id;
+        let range = &place.identifier.mutable_range;
+        canonical
+            .entry(id)
+            .and_modify(|existing| {
+                if range.start.0 > 0 {
+                    if existing.start.0 == 0 || range.start.0 < existing.start.0 {
+                        existing.start = range.start;
+                    }
+                }
+                if range.end.0 > existing.end.0 {
+                    existing.end = range.end;
+                }
+            })
+            .or_insert(*range);
+    }
+
+    // Collect from params
+    for param in &func.params {
+        let place = match param {
+            ReactiveParam::Place(p) => p,
+            ReactiveParam::Spread(s) => &s.place,
+        };
+        merge_range(&mut canonical, place);
+    }
+    for ctx in &func.context {
+        merge_range(&mut canonical, ctx);
+    }
+    merge_range(&mut canonical, &func.returns);
+
+    // Collect from all blocks — use visitors to cover all places
+    for block in func.body.blocks.values() {
+        for phi in &block.phis {
+            merge_range(&mut canonical, &phi.place);
+            for operand in phi.operands.values() {
+                merge_range(&mut canonical, operand);
+            }
+        }
+        for instr in &block.instructions {
+            // Top-level lvalue
+            merge_range(&mut canonical, &instr.lvalue);
+            // Inner lvalues (StoreLocal target, DeclareLocal target, etc.)
+            for lvalue in each_instruction_lvalue(instr) {
+                merge_range(&mut canonical, lvalue);
+            }
+            // All operands
+            for operand in each_instruction_value_operand(&instr.value) {
+                merge_range(&mut canonical, operand);
+            }
+        }
+        for operand in each_terminal_operand(&block.terminal) {
+            merge_range(&mut canonical, operand);
+        }
+    }
+
+    // Step 2: Apply canonical ranges to ALL Places using the existing
+    // apply_range_updates infrastructure, but with full range (start+end),
+    // not just end updates.
+    for param in &mut func.params {
+        let place = match param {
+            ReactiveParam::Place(p) => p,
+            ReactiveParam::Spread(s) => &mut s.place,
+        };
+        sync_place(&canonical, place);
+    }
+    for ctx in &mut func.context {
+        sync_place(&canonical, ctx);
+    }
+    sync_place(&canonical, &mut func.returns);
+
+    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    for block_id in block_ids {
+        let Some(block) = func.body.blocks.get_mut(&block_id) else {
+            continue;
+        };
+        for phi in &mut block.phis {
+            sync_place(&canonical, &mut phi.place);
+            for operand in phi.operands.values_mut() {
+                sync_place(&canonical, operand);
+            }
+        }
+        for instr in &mut block.instructions {
+            sync_place(&canonical, &mut instr.lvalue);
+            sync_instruction_value_ranges(&canonical, &mut instr.value);
+            if let Some(effects) = &mut instr.effects {
+                for effect in effects {
+                    sync_effect_ranges(&canonical, effect);
+                }
+            }
+        }
+        sync_terminal_ranges(&canonical, &mut block.terminal);
+    }
+}
+
+fn sync_place(canonical: &FxHashMap<IdentifierId, MutableRange>, place: &mut Place) {
+    if let Some(range) = canonical.get(&place.identifier.id) {
+        place.identifier.mutable_range = *range;
+    }
+}
+
+/// Sync mutable range for instruction value places.
+/// Reuses the same pattern as `update_instruction_value_ranges` but applies full range.
+fn sync_instruction_value_ranges(
+    canonical: &FxHashMap<IdentifierId, MutableRange>,
+    value: &mut InstructionValue,
+) {
+    // Use the existing update_instruction_value_ranges infrastructure
+    // but convert canonical to an InstructionId-only map for end updates,
+    // then separately handle start updates.
+    // Actually, simpler: just walk all mutable places and sync each one.
+    match value {
+        InstructionValue::CallExpression(v) => {
+            sync_place(canonical, &mut v.callee);
+            for arg in &mut v.args {
+                match arg {
+                    crate::hir::CallArg::Place(p) => sync_place(canonical, p),
+                    crate::hir::CallArg::Spread(s) => sync_place(canonical, &mut s.place),
+                }
+            }
+        }
+        InstructionValue::NewExpression(v) => {
+            sync_place(canonical, &mut v.callee);
+            for arg in &mut v.args {
+                match arg {
+                    crate::hir::CallArg::Place(p) => sync_place(canonical, p),
+                    crate::hir::CallArg::Spread(s) => sync_place(canonical, &mut s.place),
+                }
+            }
+        }
+        InstructionValue::MethodCall(v) => {
+            sync_place(canonical, &mut v.receiver);
+            sync_place(canonical, &mut v.property);
+            for arg in &mut v.args {
+                match arg {
+                    crate::hir::CallArg::Place(p) => sync_place(canonical, p),
+                    crate::hir::CallArg::Spread(s) => sync_place(canonical, &mut s.place),
+                }
+            }
+        }
+        InstructionValue::LoadLocal(v) => sync_place(canonical, &mut v.place),
+        InstructionValue::LoadContext(v) => sync_place(canonical, &mut v.place),
+        InstructionValue::StoreLocal(v) => {
+            sync_place(canonical, &mut v.lvalue.place);
+            sync_place(canonical, &mut v.value);
+        }
+        InstructionValue::StoreContext(v) => {
+            sync_place(canonical, &mut v.lvalue_place);
+            sync_place(canonical, &mut v.value);
+        }
+        InstructionValue::DeclareLocal(v) => {
+            sync_place(canonical, &mut v.lvalue.place);
+        }
+        InstructionValue::DeclareContext(v) => {
+            sync_place(canonical, &mut v.lvalue_place);
+        }
+        InstructionValue::Destructure(v) => {
+            sync_pattern_ranges(canonical, &mut v.lvalue.pattern);
+            sync_place(canonical, &mut v.value);
+        }
+        InstructionValue::PropertyLoad(v) => sync_place(canonical, &mut v.object),
+        InstructionValue::PropertyStore(v) => {
+            sync_place(canonical, &mut v.object);
+            sync_place(canonical, &mut v.value);
+        }
+        InstructionValue::PropertyDelete(v) => sync_place(canonical, &mut v.object),
+        InstructionValue::ComputedLoad(v) => {
+            sync_place(canonical, &mut v.object);
+            sync_place(canonical, &mut v.property);
+        }
+        InstructionValue::ComputedStore(v) => {
+            sync_place(canonical, &mut v.object);
+            sync_place(canonical, &mut v.property);
+            sync_place(canonical, &mut v.value);
+        }
+        InstructionValue::ComputedDelete(v) => {
+            sync_place(canonical, &mut v.object);
+            sync_place(canonical, &mut v.property);
+        }
+        InstructionValue::ArrayExpression(v) => {
+            for elem in &mut v.elements {
+                match elem {
+                    crate::hir::ArrayExpressionElement::Place(p) => sync_place(canonical, p),
+                    crate::hir::ArrayExpressionElement::Spread(s) => {
+                        sync_place(canonical, &mut s.place);
+                    }
+                    crate::hir::ArrayExpressionElement::Hole => {}
+                }
+            }
+        }
+        InstructionValue::ObjectExpression(v) => {
+            for prop in &mut v.properties {
+                match prop {
+                    crate::hir::ObjectPatternProperty::Property(p) => {
+                        if let crate::hir::ObjectPropertyKey::Computed(c) = &mut p.key {
+                            sync_place(canonical, c);
+                        }
+                        sync_place(canonical, &mut p.place);
+                    }
+                    crate::hir::ObjectPatternProperty::Spread(s) => {
+                        sync_place(canonical, &mut s.place);
+                    }
+                }
+            }
+        }
+        InstructionValue::JsxExpression(v) => {
+            if let crate::hir::JsxTag::Place(p) = &mut v.tag {
+                sync_place(canonical, p);
+            }
+            for prop in &mut v.props {
+                match prop {
+                    crate::hir::JsxAttribute::Spread { argument } => {
+                        sync_place(canonical, argument);
+                    }
+                    crate::hir::JsxAttribute::Attribute { place, .. } => {
+                        sync_place(canonical, place);
+                    }
+                }
+            }
+            if let Some(children) = &mut v.children {
+                for child in children {
+                    sync_place(canonical, child);
+                }
+            }
+        }
+        InstructionValue::JsxFragment(v) => {
+            for child in &mut v.children {
+                sync_place(canonical, child);
+            }
+        }
+        InstructionValue::UnaryExpression(v) => sync_place(canonical, &mut v.value),
+        InstructionValue::BinaryExpression(v) => {
+            sync_place(canonical, &mut v.left);
+            sync_place(canonical, &mut v.right);
+        }
+        InstructionValue::TypeCastExpression(v) => sync_place(canonical, &mut v.value),
+        InstructionValue::TemplateLiteral(v) => {
+            for sub in &mut v.subexprs {
+                sync_place(canonical, sub);
+            }
+        }
+        InstructionValue::TaggedTemplateExpression(v) => {
+            sync_place(canonical, &mut v.tag);
+            // TaggedTemplateExpression's value is TemplateLiteralQuasi (raw/cooked), no places
+        }
+        InstructionValue::PrefixUpdate(v) => {
+            sync_place(canonical, &mut v.lvalue);
+            sync_place(canonical, &mut v.value);
+        }
+        InstructionValue::PostfixUpdate(v) => {
+            sync_place(canonical, &mut v.lvalue);
+            sync_place(canonical, &mut v.value);
+        }
+        InstructionValue::FunctionExpression(v) => {
+            for dep in &mut v.lowered_func.func.context {
+                sync_place(canonical, dep);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn sync_pattern_ranges(
+    canonical: &FxHashMap<IdentifierId, MutableRange>,
+    pattern: &mut crate::hir::Pattern,
+) {
+    match pattern {
+        crate::hir::Pattern::Array(arr) => {
+            for item in &mut arr.items {
+                match item {
+                    crate::hir::ArrayPatternElement::Place(p) => sync_place(canonical, p),
+                    crate::hir::ArrayPatternElement::Spread(s) => {
+                        sync_place(canonical, &mut s.place);
+                    }
+                    crate::hir::ArrayPatternElement::Hole => {}
+                }
+            }
+        }
+        crate::hir::Pattern::Object(obj) => {
+            for prop in &mut obj.properties {
+                match prop {
+                    crate::hir::ObjectPatternProperty::Property(p) => {
+                        sync_place(canonical, &mut p.place);
+                    }
+                    crate::hir::ObjectPatternProperty::Spread(s) => {
+                        sync_place(canonical, &mut s.place);
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn sync_effect_ranges(
+    canonical: &FxHashMap<IdentifierId, MutableRange>,
+    effect: &mut AliasingEffect,
+) {
+    match effect {
+        AliasingEffect::Create { into, .. } => sync_place(canonical, into),
+        AliasingEffect::Capture { from, into }
+        | AliasingEffect::ImmutableCapture { from, into }
+        | AliasingEffect::Alias { from, into }
+        | AliasingEffect::Assign { from, into }
+        | AliasingEffect::MaybeAlias { from, into }
+        | AliasingEffect::CreateFrom { from, into } => {
+            sync_place(canonical, from);
+            sync_place(canonical, into);
+        }
+        AliasingEffect::Mutate { value, .. }
+        | AliasingEffect::MutateConditionally { value }
+        | AliasingEffect::MutateTransitive { value, .. }
+        | AliasingEffect::MutateTransitiveConditionally { value }
+        | AliasingEffect::Freeze { value, .. } => {
+            sync_place(canonical, value);
+        }
+        AliasingEffect::Render { place }
+        | AliasingEffect::Impure { place, .. }
+        | AliasingEffect::MutateFrozen { place, .. }
+        | AliasingEffect::MutateGlobal { place, .. } => {
+            sync_place(canonical, place);
+        }
+        AliasingEffect::CreateFunction { captures, .. } => {
+            for cap in captures {
+                sync_place(canonical, cap);
+            }
+        }
+        AliasingEffect::Apply { receiver, function, args, into, .. } => {
+            sync_place(canonical, receiver);
+            sync_place(canonical, function);
+            for arg in args {
+                match arg {
+                    crate::inference::aliasing_effects::ApplyArg::Place(p) => {
+                        sync_place(canonical, p);
+                    }
+                    crate::inference::aliasing_effects::ApplyArg::Spread(s) => {
+                        sync_place(canonical, &mut s.place);
+                    }
+                    crate::inference::aliasing_effects::ApplyArg::Hole => {}
+                }
+            }
+            sync_place(canonical, into);
+        }
+    }
+}
+
+fn sync_terminal_ranges(
+    canonical: &FxHashMap<IdentifierId, MutableRange>,
+    terminal: &mut Terminal,
+) {
+    match terminal {
+        Terminal::Throw(t) => sync_place(canonical, &mut t.value),
+        Terminal::Return(t) => sync_place(canonical, &mut t.value),
+        Terminal::If(t) => sync_place(canonical, &mut t.test),
+        Terminal::Branch(t) => sync_place(canonical, &mut t.test),
+        Terminal::Switch(t) => {
+            sync_place(canonical, &mut t.test);
+            for case in &mut t.cases {
+                if let Some(ref mut test) = case.test {
+                    sync_place(canonical, test);
+                }
+            }
+        }
+        Terminal::Try(t) => {
+            if let Some(ref mut binding) = t.handler_binding {
+                sync_place(canonical, binding);
             }
         }
         _ => {}

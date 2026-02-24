@@ -8,8 +8,9 @@
 use rustc_hash::FxHashSet;
 
 use crate::hir::{
-    BlockKind, HIRFunction, Identifier, IdentifierId, InstructionKind, InstructionValue,
-    visitors::{each_instruction_value_operand, each_terminal_operand},
+    ArrayPatternElement, BlockKind, HIRFunction, Identifier, IdentifierId, InstructionKind,
+    InstructionValue, ObjectPatternProperty, Pattern,
+    visitors::{each_instruction_value_operand, each_pattern_operand, each_terminal_operand},
 };
 
 /// State for tracking referenced identifiers during DCE.
@@ -59,10 +60,15 @@ pub fn dead_code_elimination(func: &mut HIRFunction) {
     // Phase 1: Find all referenced identifiers
     let state = find_referenced_identifiers(func);
 
-    // Phase 2: Prune unreferenced instructions
+    // Phase 2: Rewrite destructure patterns to remove unused lvalues, then prune instructions
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
+
+        // Rewrite destructure patterns to remove unused properties/items
+        for instr in &mut block.instructions {
+            rewrite_instruction(instr, &state);
+        }
 
         // Retain only instructions whose lvalue is referenced
         block.instructions.retain(|instr| state.is_id_or_name_used(&instr.lvalue.identifier));
@@ -134,6 +140,72 @@ fn find_referenced_identifiers(func: &HIRFunction) -> DceState {
     state
 }
 
+/// Rewrite destructure patterns to remove unused lvalues.
+///
+/// Port of `rewriteInstruction` from `DeadCodeElimination.ts` (lines 187-252).
+///
+/// For array patterns, unused items before the end are replaced with holes;
+/// trailing unused items are dropped entirely.
+///
+/// For object patterns, unused properties can be pruned as long as there is no
+/// used rest/spread element. If a rest element exists and is used, nothing can
+/// be pruned because removing properties would change the set of properties
+/// copied into the rest value.
+fn rewrite_instruction(instr: &mut crate::hir::Instruction, state: &DceState) {
+    if let InstructionValue::Destructure(v) = &mut instr.value {
+        match &mut v.lvalue.pattern {
+            Pattern::Array(arr) => {
+                // For arrays, we can prune items prior to the end by replacing
+                // them with a hole. Items at the end can simply be dropped.
+                let mut last_entry_index: usize = 0;
+                for i in 0..arr.items.len() {
+                    let should_remove = match &arr.items[i] {
+                        ArrayPatternElement::Place(p) => !state.is_id_or_name_used(&p.identifier),
+                        ArrayPatternElement::Spread(s) => {
+                            !state.is_id_or_name_used(&s.place.identifier)
+                        }
+                        ArrayPatternElement::Hole => true,
+                    };
+                    if should_remove {
+                        arr.items[i] = ArrayPatternElement::Hole;
+                    } else {
+                        last_entry_index = i;
+                    }
+                }
+                if !arr.items.is_empty() {
+                    arr.items.truncate(last_entry_index + 1);
+                }
+            }
+            Pattern::Object(obj) => {
+                // For objects we can prune any unused properties so long as there
+                // is no used rest element. If a rest element exists and is used,
+                // then nothing can be pruned because it would change the set of
+                // properties which are copied into the rest value.
+                let mut next_properties: Option<Vec<ObjectPatternProperty>> = None;
+                for prop in &obj.properties {
+                    match prop {
+                        ObjectPatternProperty::Property(p) => {
+                            if state.is_id_or_name_used(&p.place.identifier) {
+                                next_properties.get_or_insert_with(Vec::new).push(prop.clone());
+                            }
+                        }
+                        ObjectPatternProperty::Spread(s) => {
+                            if state.is_id_or_name_used(&s.place.identifier) {
+                                // Used rest element — don't prune anything
+                                next_properties = None;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if let Some(new_props) = next_properties {
+                    obj.properties = new_props;
+                }
+            }
+        }
+    }
+}
+
 /// Check if a value is pruneable (can be safely eliminated if unused).
 fn pruneable_value(value: &InstructionValue, state: &DceState) -> bool {
     match value {
@@ -159,6 +231,27 @@ fn pruneable_value(value: &InstructionValue, state: &DceState) -> bool {
         InstructionValue::StoreLocal(v) => {
             v.lvalue.kind != InstructionKind::Reassign
                 && !state.is_id_or_name_used(&v.lvalue.place.identifier)
+        }
+
+        // Destructure: pruneable if all pattern operands are unused
+        InstructionValue::Destructure(v) => {
+            let mut is_id_or_name_used = false;
+            let mut is_id_used = false;
+            for place in each_pattern_operand(&v.lvalue.pattern) {
+                if state.is_id_used(&place.identifier) {
+                    is_id_or_name_used = true;
+                    is_id_used = true;
+                } else if state.is_id_or_name_used(&place.identifier) {
+                    is_id_or_name_used = true;
+                }
+            }
+            if v.lvalue.kind == InstructionKind::Reassign {
+                // Reassignments can be pruned if the specific instance being assigned is never read
+                !is_id_used
+            } else {
+                // Otherwise pruneable only if none of the identifiers are read from later
+                !is_id_or_name_used
+            }
         }
 
         // Most other values have side effects and cannot be pruned
