@@ -1,0 +1,19 @@
+commit: eeda64c2
+
+estree_acorn_jsx_tokens Summary:
+AST Parsed     : 39/39 (100.00%)
+Positive Passed: 32/39 (82.05%)
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/003.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/004.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/008.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/009.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/020.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/027.jsx
+
+Token mismatch: tasks/coverage/estree-conformance/tests/acorn-jsx/pass/046.jsx
+

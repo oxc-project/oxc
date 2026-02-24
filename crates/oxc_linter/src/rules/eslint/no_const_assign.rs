@@ -8,6 +8,7 @@ use crate::{context::LintContext, rule::Rule};
 
 fn no_const_assign_diagnostic(name: &str, decl_span: Span, assign_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected re-assignment of `const` variable {name}."))
+        .with_help("Use `let` instead of `const` if you need to reassign this variable.")
         .with_labels([
             decl_span.label(format!("{name} is declared here as `const`.")),
             assign_span.label(format!("{name} is re-assigned here.")),

@@ -104,8 +104,16 @@ working directory: fixtures/tsgolint_rule_options
  127 | }
      `----
 
-Found 0 warnings and 12 errors.
-Finished in <variable>ms on 1 file with 14 rules using 1 threads.
+  x typescript-eslint(dot-notation): ["name"] is better written in dot notation.
+     ,-[test.ts:145:19]
+ 144 | // This SHOULD error because static property access should use dot notation
+ 145 | dotNotationSimple['name'];
+     :                   ^^^^^^
+ 146 | 
+     `----
+
+Found 0 warnings and 13 errors.
+Finished in <variable>ms on 1 file with 15 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

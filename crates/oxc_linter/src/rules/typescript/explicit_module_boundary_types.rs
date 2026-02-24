@@ -232,7 +232,10 @@ impl ExplicitModuleBoundaryTypes {
                 Self::run_on_identifier_reference(ctx, id, &mut checker);
             }
             Expression::ArrowFunctionExpression(arrow) => {
-                walk::walk_arrow_function_expression(&mut checker, arrow);
+                checker.visit_arrow_function_expression(arrow);
+            }
+            Expression::FunctionExpression(func) => {
+                checker.visit_function(func, ScopeFlags::Function);
             }
             // const foo = arg => arg;
             // export default [foo];
@@ -576,8 +579,8 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
     }
 
     fn visit_class_element(&mut self, el: &ClassElement<'a>) {
-        // dont check non-public members
-        if el.accessibility().is_some_and(|a| a != TSAccessibility::Public)
+        // only skip private members
+        if el.accessibility().is_some_and(|a| a == TSAccessibility::Private)
             || el.property_key().is_some_and(|key| matches!(key, PropertyKey::PrivateIdentifier(_)))
         {
             return;
@@ -801,6 +804,17 @@ mod test {
               }
               private arrow = one => 'arrow';
               private abstract abs(one);
+            }
+            ",
+                None,
+            ),
+            (
+                "
+            export class Test {
+              protected method(one: string): string {
+                return one;
+              }
+              protected arrow = (one: string): string => one;
             }
             ",
                 None,
@@ -1556,6 +1570,17 @@ mod test {
             ",
                 None,
             ),
+            (
+                "
+            export class Test {
+              protected method(one: string) {
+                return one;
+              }
+              protected arrow = (one: string) => one;
+            }
+            ",
+                None,
+            ),
             ("export default () => (true ? () => {} : (): void => {});", None),
             (
                 "export var arrowFn = () => 'test';",
@@ -2000,6 +2025,23 @@ mod test {
                 None,
             ),
             ("function App() { return 42; } export default App", None),
+            (
+                "
+            export default ({
+                a,
+                b,
+                c,
+            }: {
+                a: string;
+                b: string;
+                c: string;
+            }) => {
+                return `${a} ${b} ${c}`;
+            };
+            ",
+                None,
+            ),
+            ("export default (function() { return 'test'; });", None),
         ];
 
         Tester::new(

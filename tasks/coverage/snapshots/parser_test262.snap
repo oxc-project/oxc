@@ -1,8 +1,8 @@
-commit: 3180f5a9
+commit: 3aa9cb2c
 
 parser_test262 Summary:
-AST Parsed     : 46777/46777 (100.00%)
-Positive Passed: 46777/46777 (100.00%)
+AST Parsed     : 46802/46802 (100.00%)
+Positive Passed: 46802/46802 (100.00%)
 Negative Passed: 4588/4588 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -11475,6 +11475,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:15]
@@ -11491,6 +11492,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:15]
@@ -11507,6 +11509,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:41:15]
@@ -11523,6 +11526,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:41:15]
@@ -11539,6 +11543,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:41:15]
@@ -11555,6 +11560,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:41:15]
@@ -11571,6 +11577,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js:41:15]
@@ -11595,6 +11602,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:15]
@@ -11611,6 +11619,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js:41:15]
@@ -11651,6 +11660,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:41:15]
@@ -11667,6 +11677,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js:41:15]
@@ -11691,6 +11702,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:35:14]
@@ -11707,6 +11719,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:35:14]
@@ -11723,6 +11736,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:35:14]
@@ -11739,6 +11753,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:35:14]
@@ -11755,6 +11770,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:35:14]
@@ -11771,6 +11787,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:35:14]
@@ -11787,6 +11804,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js:35:14]
@@ -11811,6 +11829,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:35:14]
@@ -11827,6 +11846,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js:35:14]
@@ -11867,6 +11887,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:35:14]
@@ -11883,6 +11904,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  36 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js:35:14]
@@ -11907,6 +11929,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:16]
@@ -11923,6 +11946,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:16]
@@ -11939,6 +11963,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:16]
@@ -11955,6 +11980,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:16]
@@ -11971,6 +11997,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:41:16]
@@ -11987,6 +12014,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:16]
@@ -12003,6 +12031,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js:41:16]
@@ -12027,6 +12056,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                     ──
  42 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:16]
@@ -12043,6 +12073,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                     ──
  42 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:41:16]
@@ -12083,6 +12114,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                     ──
  42 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:16]
@@ -12099,6 +12131,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                     ──
  42 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js:41:16]
@@ -12123,6 +12156,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:43:13]
@@ -12139,6 +12173,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:43:13]
@@ -12155,6 +12190,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:43:13]
@@ -12171,6 +12207,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:43:13]
@@ -12187,6 +12224,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:43:13]
@@ -12203,6 +12241,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:43:13]
@@ -12219,6 +12258,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js:43:13]
@@ -12243,6 +12283,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:43:13]
@@ -12259,6 +12300,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js:43:13]
@@ -12299,6 +12341,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:43:13]
@@ -12315,6 +12358,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js:43:13]
@@ -12339,6 +12383,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:37:12]
@@ -12355,6 +12400,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:37:12]
@@ -12371,6 +12417,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:37:12]
@@ -12387,6 +12434,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:37:12]
@@ -12403,6 +12451,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:37:12]
@@ -12419,6 +12468,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:37:12]
@@ -12435,6 +12485,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js:37:12]
@@ -12459,6 +12510,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:37:12]
@@ -12475,6 +12527,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js:37:12]
@@ -12515,6 +12568,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:37:12]
@@ -12531,6 +12585,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js:37:12]
@@ -12555,6 +12610,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:43:14]
@@ -12571,6 +12627,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:43:14]
@@ -12587,6 +12644,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:43:14]
@@ -12603,6 +12661,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:43:14]
@@ -12619,6 +12678,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:43:14]
@@ -12635,6 +12695,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:43:14]
@@ -12651,6 +12712,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js:43:14]
@@ -12675,6 +12737,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:43:14]
@@ -12691,6 +12754,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:43:14]
@@ -12731,6 +12795,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:43:14]
@@ -12747,6 +12812,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js:43:14]
@@ -18162,6 +18228,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·     ──
  31 │   }
     ╰────
+  help: Did you mean '#a'?
 
   × Private identifier '#name' is not allowed outside class bodies
     ╭─[test262/test/language/expressions/in/private-field-invalid-identifier-simple.js:26:1]
@@ -30613,6 +30680,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:38:15]
@@ -30629,6 +30697,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:38:15]
@@ -30645,6 +30714,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:38:15]
@@ -30661,6 +30731,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:38:15]
@@ -30677,6 +30748,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:38:15]
@@ -30693,6 +30765,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:38:15]
@@ -30709,6 +30782,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  39 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js:38:15]
@@ -30733,6 +30807,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:38:15]
@@ -30749,6 +30824,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js:38:15]
@@ -30789,6 +30865,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:38:15]
@@ -30805,6 +30882,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │   
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js:38:15]
@@ -30829,6 +30907,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:35:14]
@@ -30845,6 +30924,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:35:14]
@@ -30861,6 +30941,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:35:14]
@@ -30877,6 +30958,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:35:14]
@@ -30893,6 +30975,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:35:14]
@@ -30909,6 +30992,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:35:14]
@@ -30925,6 +31009,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  36 │   f() {
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js:35:14]
@@ -30949,6 +31034,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:35:14]
@@ -30965,6 +31051,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js:35:14]
@@ -31005,6 +31092,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  36 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:35:14]
@@ -31021,6 +31109,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  36 │   
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js:35:14]
@@ -31045,6 +31134,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:38:16]
@@ -31061,6 +31151,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:38:16]
@@ -31077,6 +31168,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:38:16]
@@ -31093,6 +31185,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:38:16]
@@ -31109,6 +31202,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:38:16]
@@ -31125,6 +31219,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:38:16]
@@ -31141,6 +31236,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                    ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js:38:16]
@@ -31165,6 +31261,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                     ──
  39 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:38:16]
@@ -31181,6 +31278,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                     ──
  39 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:38:16]
@@ -31221,6 +31319,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                     ──
  39 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:38:16]
@@ -31237,6 +31336,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                     ──
  39 │ 
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js:38:16]
@@ -31261,6 +31361,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:43:13]
@@ -31277,6 +31378,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:43:13]
@@ -31293,6 +31395,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:43:13]
@@ -31309,6 +31412,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:43:13]
@@ -31325,6 +31429,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:43:13]
@@ -31341,6 +31446,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:43:13]
@@ -31357,6 +31463,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js:43:13]
@@ -31381,6 +31488,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:43:13]
@@ -31397,6 +31505,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js:43:13]
@@ -31437,6 +31546,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │ );
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:43:13]
@@ -31453,6 +31563,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js:43:13]
@@ -31477,6 +31588,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:37:12]
@@ -31493,6 +31605,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:37:12]
@@ -31509,6 +31622,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:37:12]
@@ -31525,6 +31639,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:37:12]
@@ -31541,6 +31656,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:37:12]
@@ -31557,6 +31673,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:37:12]
@@ -31573,6 +31690,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js:37:12]
@@ -31597,6 +31715,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:37:12]
@@ -31613,6 +31732,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js:37:12]
@@ -31653,6 +31773,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  38 │ ;
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:37:12]
@@ -31669,6 +31790,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                 ──
  38 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js:37:12]
@@ -31693,6 +31815,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:43:14]
@@ -31709,6 +31832,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:43:14]
@@ -31725,6 +31849,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:43:14]
@@ -31741,6 +31866,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:43:14]
@@ -31757,6 +31883,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:43:14]
@@ -31773,6 +31900,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:43:14]
@@ -31789,6 +31917,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                  ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js:43:14]
@@ -31813,6 +31942,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:43:14]
@@ -31829,6 +31959,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:43:14]
@@ -31869,6 +32000,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  44 │ ));
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:43:14]
@@ -31885,6 +32017,7 @@ Negative Passed: 4588/4588 (100.00%)
     ·                   ──
  44 │   }
     ╰────
+  help: Did you mean '#x'?
 
   × The operand of a 'delete' operator cannot be a private identifier.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js:43:14]

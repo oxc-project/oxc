@@ -9,7 +9,9 @@ fn no_throw_literal_diagnostic(span: Span, is_undef: bool) -> OxcDiagnostic {
     let message =
         if is_undef { "Do not throw undefined" } else { "Expected an error object to be thrown" };
 
-    OxcDiagnostic::warn(message).with_label(span)
+    OxcDiagnostic::warn(message)
+        .with_help("Throwing literals or non-Error objects is not recommended. Use an Error object instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -19,6 +21,11 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Disallows throwing literals or non-Error objects as exceptions.
+    ///
+    /// ::: warning
+    /// This rule has been deprecated, please instead use [typescript/only-throw-error](https://oxc.rs/docs/guide/usage/linter/rules/typescript/only-throw-error.html).
+    /// The typescript rule is more reliable than the Javascript version, as it has less false positive, and can catch more cases.
+    /// :::
     ///
     /// ### Why is this bad?
     ///

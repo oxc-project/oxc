@@ -13,7 +13,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
 
-use self::return_checker::{StatementReturnStatus, check_function_body};
+use self::return_checker::{StatementReturnStatus, check_function_body, is_void_arrow_return};
 use crate::{
     AstNode,
     ast_util::{get_enclosing_function, outermost_paren},
@@ -106,6 +106,15 @@ fn expect_no_return(method_name: &str, call_span: Span, return_span: Span) -> Ox
         ])
 }
 
+fn expect_void_return(method_name: &str, call_span: Span, return_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected return value in callback for {method_name:?}"))
+        .with_help("Expected the return expression to be started with `void`")
+        .with_labels([
+            call_span.label(format!("{method_name:?} is called here.")),
+            return_span.label("Prepend `void` to the expression."),
+        ])
+}
+
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ArrayCallbackReturn {
@@ -114,6 +123,9 @@ pub struct ArrayCallbackReturn {
     /// When set to true, allows callbacks of methods that require a return value to
     /// implicitly return undefined with a return statement containing no expression.
     allow_implicit: bool,
+    /// When set to true, rule will not report the return value with a void operator.
+    /// Works only if `checkForEach` option is set to true.
+    allow_void: bool,
 }
 
 declare_oxc_lint!(
@@ -189,22 +201,47 @@ impl Rule for ArrayCallbackReturn {
                 check_function_body(function_body)
             };
 
-            match (array_method, self.check_for_each, self.allow_implicit) {
-                ("forEach", false, _) => (),
-                ("forEach", true, _) => {
+            match (array_method, self.check_for_each, self.allow_void, self.allow_implicit) {
+                ("forEach", false, _, _) => (),
+                ("forEach", true, false, _) => {
                     if return_status.may_return_explicit() {
-                        let return_span = return_checker::get_explicit_return_spans(function_body)
+                        let return_spans = return_checker::get_explicit_return_spans(function_body)
                             .into_iter()
                             .next()
                             .unwrap_or_else(|| function_body.span());
+
                         ctx.diagnostic(expect_no_return(
                             &full_array_method_name(array_method),
                             array_method_span,
-                            return_span,
+                            return_spans,
                         ));
                     }
                 }
-                ("fromAsync", _, false) => {
+                ("forEach", true, true, _) => {
+                    if !return_status.may_return_explicit() {
+                        return;
+                    }
+
+                    if is_void_arrow_return(&function_body.statements) {
+                        return;
+                    }
+
+                    let (return_spans, has_void) =
+                        return_checker::get_no_voided_return_spans(function_body, self.allow_void);
+
+                    if has_void && return_spans.is_empty() {
+                        return;
+                    }
+
+                    let diagnostic_span =
+                        return_spans.into_iter().next().unwrap_or_else(|| function_body.span());
+                    ctx.diagnostic(expect_void_return(
+                        &full_array_method_name(array_method),
+                        array_method_span,
+                        diagnostic_span,
+                    ));
+                }
+                ("fromAsync", _, _, false) => {
                     if !return_status.must_return()
                         || return_status.may_return_implicit()
                         || is_async_empty
@@ -217,7 +254,7 @@ impl Rule for ArrayCallbackReturn {
                         ));
                     }
                 }
-                (_, _, true) => {
+                (_, _, _, true) => {
                     if !return_status.must_return() {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
@@ -227,7 +264,7 @@ impl Rule for ArrayCallbackReturn {
                         ));
                     }
                 }
-                (_, _, false) => {
+                (_, _, _, false) => {
                     if !return_status.must_return() || return_status.may_return_implicit() {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
@@ -528,7 +565,7 @@ fn test() {
             "foo.every(function() { return; })",
             Some(serde_json::json!([{"allowImplicit": true, "checkForEach": true}])),
         ),
-        /*(
+        (
             "foo.forEach((x) => void x)",
             Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
         ),
@@ -547,7 +584,7 @@ fn test() {
         (
             "foo.forEach((x) => { if (a === b) { return void a; } bar(x) })",
             Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
-        ),*/
+        ),
         ("Arrow.from(x, function() {})", None),
         ("foo.abc(function() {})", None),
         ("every(function() {})", None),
@@ -810,6 +847,46 @@ const _test = fruits.map((fruit) => {
         ("Array.fromAsync(x, function foo() {})", None),
         ("Array.fromAsync(x, async function() {})", None),
         ("Array.fromAsync(x, async () => {})", None),
+        (
+            "foo.forEach(x => x);",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => !x);",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => (x));",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { return x; });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { return !x; });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { return (x); });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { return x + 1; });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { if (a === b) { return x; } });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { if (a === b) { return !x; } });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
+        (
+            "foo.forEach(x => { if (a === b) { return (x + a); } });",
+            Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
+        ),
     ];
 
     Tester::new(ArrayCallbackReturn::NAME, ArrayCallbackReturn::PLUGIN, pass, fail)

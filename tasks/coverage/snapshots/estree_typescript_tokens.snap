@@ -1,0 +1,15 @@
+commit: 34725489
+
+estree_typescript_tokens Summary:
+AST Parsed     : 9761/9761 (100.00%)
+Positive Passed: 9756/9761 (99.95%)
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/ambientWithStatements.ts
+A 'return' statement can only be used within a function body.
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-invalidContexts.ts
+Lexical declaration cannot appear in a single-statement context
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-scopes.ts
+Lexical declaration cannot appear in a single-statement context
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-validContexts.ts
+Lexical declaration cannot appear in a single-statement context
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts
+A 'return' statement can only be used within a function body.

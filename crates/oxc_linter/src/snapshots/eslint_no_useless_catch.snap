@@ -13,6 +13,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── and re-thrown here
  6 │         }
    ╰────
+  help: Remove the try/catch wrapper, since it does not provide any additional error handling or functionality.
 
   ⚠ eslint(no-useless-catch): Unnecessary catch clause
    ╭─[no_useless_catch.tsx:4:18]
@@ -25,6 +26,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── and re-thrown here
  6 │         } finally {
    ╰────
+  help: Remove the catch clause, since it does not provide any additional error handling or functionality beyond what the finalizer already provides.
 
   ⚠ eslint(no-useless-catch): Unnecessary try/catch wrapper
    ╭─[no_useless_catch.tsx:4:18]
@@ -38,6 +40,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── and re-thrown here
  7 │         }
    ╰────
+  help: Remove the try/catch wrapper, since it does not provide any additional error handling or functionality.
 
   ⚠ eslint(no-useless-catch): Unnecessary catch clause
    ╭─[no_useless_catch.tsx:4:18]
@@ -51,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── and re-thrown here
  7 │         } finally {
    ╰────
+  help: Remove the catch clause, since it does not provide any additional error handling or functionality beyond what the finalizer already provides.
 
   ⚠ eslint(no-useless-catch): Unnecessary try/catch wrapper
    ╭─[no_useless_catch.tsx:5:20]
@@ -63,3 +67,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── and re-thrown here
  7 │           }
    ╰────
+  help: Remove the try/catch wrapper, since it does not provide any additional error handling or functionality.
