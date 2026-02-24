@@ -319,7 +319,12 @@ impl CliRunner {
         };
 
         if self.options.list_rules {
-            return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
+            return crate::mode::run_rules(
+                &lint_config,
+                &output_formatter,
+                stdout,
+                self.options.type_aware,
+            );
         }
 
         let ignore_matcher =

@@ -9,12 +9,13 @@ pub fn run_rules(
     lint_config: &Config,
     output_formatter: &OutputFormatter,
     stdout: &mut dyn std::io::Write,
+    type_aware: bool,
 ) -> CliRunResult {
     // Build the set of enabled builtin rule names from the resolved config.
-    let enabled: FxHashSet<&str> =
-        lint_config.rules()
+    let enabled: FxHashSet<&str> = lint_config
+        .rules()
         .iter()
-        .filter(|rule, _)| self.options.type_aware || !rule.is_tsgolint_rule())
+        .filter(|(rule, _)| type_aware || !rule.is_tsgolint_rule())
         .map(|(rule, _)| rule.name())
         .collect();
 
