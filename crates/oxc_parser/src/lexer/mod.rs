@@ -119,6 +119,20 @@ impl<'a, C: Config> Lexer<'a, C> {
     ) -> Self {
         let source = Source::new(source_text, unique);
 
+        // If collecting tokens, allocate enough space so that the `Vec<Token>` will not have to grow during parsing.
+        // `source_text.len()` is almost always a large overestimate of number of tokens, but it's impossible to have
+        // more than N tokens in a file which is N bytes long, so it'll never be an underestimate.
+        //
+        // Our largest benchmark file `binder.ts` is 190 KB, and `Token` is 16 bytes, so the `Vec<Token>`
+        // would be ~3 MB even in the case of this unusually large file. That's not a huge amount of memory.
+        //
+        // However, we should choose a better heuristic based on real-world observation, and bring this usage down.
+        let tokens = if config.tokens() {
+            ArenaVec::with_capacity_in(source_text.len(), allocator)
+        } else {
+            ArenaVec::new_in(allocator)
+        };
+
         // The first token is at the start of file, so is allows on a new line
         let token = Token::new_on_new_line();
         Self {
@@ -133,7 +147,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
-            tokens: ArenaVec::new_in(allocator),
+            tokens,
             config,
         }
     }
