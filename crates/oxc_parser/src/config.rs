@@ -114,6 +114,16 @@ pub trait LexerConfig: Default {
     /// Byte handlers table type.
     type ByteHandlers: Index<usize, Output = ByteHandler<Self>>;
 
+    /// `true` if [`tokens`] method returns a static value.
+    ///
+    /// This const is useful in situations where code can be more efficient
+    /// when the return value of [`tokens`] method is known at compile time.
+    ///
+    /// Implementors of this trait MUST only set this const to `true` if [`tokens`] method returns a static value.
+    ///
+    /// [`tokens`]: LexerConfig::tokens
+    const TOKENS_METHOD_IS_STATIC: bool;
+
     /// Returns `true` if tokens are enabled.
     fn tokens(&self) -> bool;
 
@@ -127,6 +137,8 @@ pub struct NoTokensLexerConfig;
 
 impl LexerConfig for NoTokensLexerConfig {
     type ByteHandlers = ByteHandlers<Self>;
+
+    const TOKENS_METHOD_IS_STATIC: bool = true;
 
     #[inline(always)]
     fn tokens(&self) -> bool {
@@ -145,6 +157,8 @@ pub struct TokensLexerConfig;
 
 impl LexerConfig for TokensLexerConfig {
     type ByteHandlers = ByteHandlers<Self>;
+
+    const TOKENS_METHOD_IS_STATIC: bool = true;
 
     #[inline(always)]
     fn tokens(&self) -> bool {
@@ -173,6 +187,8 @@ impl RuntimeLexerConfig {
 
 impl LexerConfig for RuntimeLexerConfig {
     type ByteHandlers = ByteHandlers<Self>;
+
+    const TOKENS_METHOD_IS_STATIC: bool = false;
 
     #[inline(always)]
     fn tokens(&self) -> bool {
