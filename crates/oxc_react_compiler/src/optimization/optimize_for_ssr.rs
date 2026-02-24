@@ -22,7 +22,6 @@ use crate::hir::{
     object_shape::{
         BUILT_IN_SET_STATE_ID, BUILT_IN_START_TRANSITION_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
         BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID, BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID,
-        BUILT_IN_USE_STATE_ID,
     },
     types::{FunctionType, Type},
     visitors::{each_instruction_value_operand, each_terminal_operand},
@@ -48,8 +47,8 @@ enum HookKind {
 fn get_hook_kind_from_type(ty: &Type) -> Option<HookKind> {
     match ty {
         Type::Function(FunctionType { shape_id: Some(id), .. }) => match id.as_str() {
-            BUILT_IN_USE_STATE_ID => Some(HookKind::State),
-            "BuiltInUseReducer" => Some(HookKind::Reducer),
+            "BuiltInUseStateHook" => Some(HookKind::State),
+            "BuiltInUseReducerHook" => Some(HookKind::Reducer),
             BUILT_IN_USE_EFFECT_HOOK_ID => Some(HookKind::Effect),
             BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID => Some(HookKind::LayoutEffect),
             BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID => Some(HookKind::InsertionEffect),

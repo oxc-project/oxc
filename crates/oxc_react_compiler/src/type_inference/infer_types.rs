@@ -11,7 +11,10 @@ use crate::hir::{
     environment::Environment,
     globals::Global,
     object_shape::{BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID},
-    types::{FunctionType, ObjectType, Type, TypeId, make_type, type_equals},
+    types::{
+        FunctionType, ObjectType, PropType, PropertyLiteral, PropertyName, Type, TypeId, make_type,
+        type_equals,
+    },
 };
 use oxc_syntax::operator::BinaryOperator;
 
@@ -22,13 +25,14 @@ struct TypeEquation {
 }
 
 /// Union-find based type unifier.
-struct Unifier {
+struct Unifier<'a> {
     substitutions: FxHashMap<TypeId, Type>,
+    env: &'a Environment,
 }
 
-impl Unifier {
-    fn new() -> Self {
-        Self { substitutions: FxHashMap::default() }
+impl<'a> Unifier<'a> {
+    fn new(env: &'a Environment) -> Self {
+        Self { substitutions: FxHashMap::default(), env }
     }
 
     /// Unify two types, recording any substitutions needed.
@@ -37,6 +41,31 @@ impl Unifier {
         let right = self.resolve(right);
 
         if type_equals(&left, &right) {
+            return;
+        }
+
+        // Handle Property types: resolve the object type and look up the property
+        if let Type::Property(prop) = &right {
+            let object_type = self.get(prop.object_type.clone());
+            if let PropertyName::Literal { value } = &prop.property_name {
+                let property_str = value.to_string();
+                if let Some(prop_type) = self.env.get_property_type(&object_type, &property_str) {
+                    self.unify(left, prop_type);
+                    return;
+                }
+            }
+            // If we can't resolve the property, unify left with a fresh type var
+            return;
+        }
+        if let Type::Property(prop) = &left {
+            let object_type = self.get(prop.object_type.clone());
+            if let PropertyName::Literal { value } = &prop.property_name {
+                let property_str = value.to_string();
+                if let Some(prop_type) = self.env.get_property_type(&object_type, &property_str) {
+                    self.unify(prop_type, right);
+                    return;
+                }
+            }
             return;
         }
 
@@ -83,9 +112,30 @@ impl Unifier {
     }
 }
 
+/// A resolved set of type substitutions (no env reference needed).
+struct ResolvedTypes {
+    substitutions: FxHashMap<TypeId, Type>,
+}
+
+impl ResolvedTypes {
+    fn resolve(&self, ty: Type) -> Type {
+        match &ty {
+            Type::Var(id) => match self.substitutions.get(id) {
+                Some(resolved) => self.resolve(resolved.clone()),
+                None => ty,
+            },
+            _ => ty,
+        }
+    }
+
+    fn get(&self, ty: Type) -> Type {
+        self.resolve(ty)
+    }
+}
+
 /// Run type inference on the given function.
 pub fn infer_types(func: &mut HIRFunction) {
-    let mut unifier = Unifier::new();
+    let mut unifier = Unifier::new(&func.env);
 
     // Generate type equations
     let equations = generate(func);
@@ -93,34 +143,137 @@ pub fn infer_types(func: &mut HIRFunction) {
         unifier.unify(eq.left, eq.right);
     }
 
+    // Extract substitutions so we can release the env borrow
+    let resolved = ResolvedTypes { substitutions: unifier.substitutions };
+
     // Apply resolved types back to the function
-    apply(func, &unifier);
+    apply(func, &resolved);
 }
 
-fn apply(func: &mut HIRFunction, unifier: &Unifier) {
+fn apply(func: &mut HIRFunction, unifier: &ResolvedTypes) {
+    use crate::hir::Place;
+
+    // Helper to resolve a place's type
+    fn resolve_place(place: &mut Place, unifier: &ResolvedTypes) {
+        place.identifier.type_ = unifier.get(place.identifier.type_.clone());
+    }
+
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
         if let Some(block) = func.body.blocks.get_mut(&block_id) {
             for instr in &mut block.instructions {
                 // Apply to lvalue
-                instr.lvalue.identifier.type_ = unifier.get(instr.lvalue.identifier.type_.clone());
+                resolve_place(&mut instr.lvalue, unifier);
 
-                // Apply to nested functions
-                match &mut instr.value {
-                    InstructionValue::FunctionExpression(v) => {
-                        apply(&mut v.lowered_func.func, unifier);
-                    }
-                    InstructionValue::ObjectMethod(v) => {
-                        apply(&mut v.lowered_func.func, unifier);
-                    }
-                    _ => {}
-                }
+                // Apply to all operand places within the instruction value
+                apply_to_instruction_value(&mut instr.value, unifier);
             }
         }
     }
 
     // Apply to returns
-    func.returns.identifier.type_ = unifier.get(func.returns.identifier.type_.clone());
+    resolve_place(&mut func.returns, unifier);
+}
+
+/// Apply resolved types to all places within an instruction value.
+fn apply_to_instruction_value(value: &mut InstructionValue, unifier: &ResolvedTypes) {
+    use crate::hir::{CallArg, Place};
+
+    fn resolve_place(place: &mut Place, unifier: &ResolvedTypes) {
+        place.identifier.type_ = unifier.get(place.identifier.type_.clone());
+    }
+
+    fn resolve_args(args: &mut [CallArg], unifier: &ResolvedTypes) {
+        for arg in args.iter_mut() {
+            match arg {
+                CallArg::Place(p) => resolve_place(p, unifier),
+                CallArg::Spread(s) => resolve_place(&mut s.place, unifier),
+            }
+        }
+    }
+
+    match value {
+        InstructionValue::CallExpression(v) => {
+            resolve_place(&mut v.callee, unifier);
+            resolve_args(&mut v.args, unifier);
+        }
+        InstructionValue::MethodCall(v) => {
+            resolve_place(&mut v.receiver, unifier);
+            resolve_place(&mut v.property, unifier);
+            resolve_args(&mut v.args, unifier);
+        }
+        InstructionValue::NewExpression(v) => {
+            resolve_place(&mut v.callee, unifier);
+            resolve_args(&mut v.args, unifier);
+        }
+        InstructionValue::PropertyLoad(v) => {
+            resolve_place(&mut v.object, unifier);
+        }
+        InstructionValue::PropertyStore(v) => {
+            resolve_place(&mut v.object, unifier);
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::ComputedLoad(v) => {
+            resolve_place(&mut v.object, unifier);
+        }
+        InstructionValue::ComputedStore(v) => {
+            resolve_place(&mut v.object, unifier);
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::LoadLocal(v) => {
+            resolve_place(&mut v.place, unifier);
+        }
+        InstructionValue::LoadContext(v) => {
+            resolve_place(&mut v.place, unifier);
+        }
+        InstructionValue::StoreLocal(v) => {
+            resolve_place(&mut v.lvalue.place, unifier);
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::StoreContext(v) => {
+            resolve_place(&mut v.lvalue_place, unifier);
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::FunctionExpression(v) => {
+            apply(&mut v.lowered_func.func, unifier);
+        }
+        InstructionValue::ObjectMethod(v) => {
+            apply(&mut v.lowered_func.func, unifier);
+        }
+        InstructionValue::Destructure(v) => {
+            resolve_place(&mut v.value, unifier);
+            match &mut v.lvalue.pattern {
+                crate::hir::Pattern::Array(arr) => {
+                    for item in &mut arr.items {
+                        match item {
+                            crate::hir::ArrayPatternElement::Place(p) => {
+                                resolve_place(p, unifier);
+                            }
+                            crate::hir::ArrayPatternElement::Spread(s) => {
+                                resolve_place(&mut s.place, unifier);
+                            }
+                            crate::hir::ArrayPatternElement::Hole => {}
+                        }
+                    }
+                }
+                crate::hir::Pattern::Object(obj) => {
+                    for prop in &mut obj.properties {
+                        match prop {
+                            crate::hir::ObjectPatternProperty::Property(p) => {
+                                resolve_place(&mut p.place, unifier);
+                            }
+                            crate::hir::ObjectPatternProperty::Spread(s) => {
+                                resolve_place(&mut s.place, unifier);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Other instruction values don't have nested places that need resolution,
+        // or their places don't participate in function signature resolution.
+        _ => {}
+    }
 }
 
 fn generate(func: &HIRFunction) -> Vec<TypeEquation> {
@@ -219,16 +372,114 @@ fn generate_instruction_equations(
             }
         }
         InstructionValue::PropertyLoad(load) => {
-            // Use the environment to resolve the property type from the object's shape
-            let object_type = &load.object.identifier.type_;
-            let property_name = load.property.to_string();
-            if let Some(prop_type) = env.get_property_type(object_type, &property_name) {
-                equations.push(TypeEquation { left: lvalue_type, right: prop_type });
+            // Create a lazy Property type that will be resolved during unification,
+            // allowing type propagation through property accesses like React.useState.
+            equations.push(TypeEquation {
+                left: lvalue_type,
+                right: Type::Property(Box::new(PropType {
+                    object_type: load.object.identifier.type_.clone(),
+                    object_name: String::new(),
+                    property_name: PropertyName::Literal {
+                        value: PropertyLiteral::String(load.property.to_string()),
+                    },
+                })),
+            });
+        }
+        InstructionValue::CallExpression(v) => {
+            // The callee must be a function; its return type equals the lvalue type.
+            let return_type = make_type();
+            equations.push(TypeEquation {
+                left: v.callee.identifier.type_.clone(),
+                right: Type::Function(FunctionType {
+                    shape_id: None,
+                    return_type: Box::new(return_type.clone()),
+                    is_constructor: false,
+                }),
+            });
+            equations.push(TypeEquation { left: lvalue_type, right: return_type });
+        }
+        InstructionValue::MethodCall(v) => {
+            // The method (property) must be a function; its return type equals the lvalue type.
+            let return_type = make_type();
+            equations.push(TypeEquation {
+                left: v.property.identifier.type_.clone(),
+                right: Type::Function(FunctionType {
+                    shape_id: None,
+                    return_type: Box::new(return_type.clone()),
+                    is_constructor: false,
+                }),
+            });
+            equations.push(TypeEquation { left: lvalue_type, right: return_type });
+        }
+        InstructionValue::Destructure(v) => {
+            let source_type = v.value.identifier.type_.clone();
+            match &v.lvalue.pattern {
+                crate::hir::Pattern::Array(arr) => {
+                    for (i, item) in arr.items.iter().enumerate() {
+                        match item {
+                            crate::hir::ArrayPatternElement::Place(place) => {
+                                // Array element type = Property(source, "i")
+                                equations.push(TypeEquation {
+                                    left: place.identifier.type_.clone(),
+                                    right: Type::Property(Box::new(PropType {
+                                        object_type: source_type.clone(),
+                                        object_name: String::new(),
+                                        property_name: PropertyName::Literal {
+                                            value: PropertyLiteral::String(i.to_string()),
+                                        },
+                                    })),
+                                });
+                            }
+                            crate::hir::ArrayPatternElement::Spread(spread) => {
+                                // Spread element always produces an array
+                                equations.push(TypeEquation {
+                                    left: spread.place.identifier.type_.clone(),
+                                    right: Type::Object(ObjectType {
+                                        shape_id: Some(BUILT_IN_ARRAY_ID.to_string()),
+                                    }),
+                                });
+                            }
+                            crate::hir::ArrayPatternElement::Hole => {}
+                        }
+                    }
+                }
+                crate::hir::Pattern::Object(obj) => {
+                    for prop in &obj.properties {
+                        match prop {
+                            crate::hir::ObjectPatternProperty::Property(p) => {
+                                let key_name = match &p.key {
+                                    crate::hir::ObjectPropertyKey::Identifier(name)
+                                    | crate::hir::ObjectPropertyKey::String(name) => {
+                                        Some(name.clone())
+                                    }
+                                    _ => None,
+                                };
+                                if let Some(name) = key_name {
+                                    equations.push(TypeEquation {
+                                        left: p.place.identifier.type_.clone(),
+                                        right: Type::Property(Box::new(PropType {
+                                            object_type: source_type.clone(),
+                                            object_name: String::new(),
+                                            property_name: PropertyName::Literal {
+                                                value: PropertyLiteral::String(name),
+                                            },
+                                        })),
+                                    });
+                                }
+                            }
+                            crate::hir::ObjectPatternProperty::Spread(_) => {
+                                // Rest element in object pattern - type is unconstrained
+                            }
+                        }
+                    }
+                }
             }
         }
-        InstructionValue::CallExpression(_) => {
-            // If the callee has a function type with known return, use it
-            // (This will be picked up via the function's return type shape)
+        InstructionValue::StoreContext(v) => {
+            equations.push(TypeEquation {
+                left: v.lvalue_place.identifier.type_.clone(),
+                right: v.value.identifier.type_.clone(),
+            });
         }
         _ => {
             // Many instruction values don't produce enough info for type equations

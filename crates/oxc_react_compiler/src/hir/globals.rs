@@ -11,10 +11,13 @@ use super::{
     object_shape::{
         BUILT_IN_ARRAY_ID, BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID,
         BUILT_IN_OBJECT_ID, BUILT_IN_SET_ID, BUILT_IN_USE_ACTION_STATE_ID,
-        BUILT_IN_USE_CONTEXT_HOOK_ID, BUILT_IN_USE_EFFECT_EVENT_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
+        BUILT_IN_USE_ACTION_STATE_HOOK_ID, BUILT_IN_USE_CONTEXT_HOOK_ID,
+        BUILT_IN_USE_EFFECT_EVENT_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
         BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID, BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID,
-        BUILT_IN_USE_OPERATOR_ID, BUILT_IN_USE_OPTIMISTIC_ID, BUILT_IN_USE_REDUCER_ID,
-        BUILT_IN_USE_REF_ID, BUILT_IN_USE_STATE_ID, BUILT_IN_USE_TRANSITION_ID,
+        BUILT_IN_USE_OPERATOR_ID, BUILT_IN_USE_OPTIMISTIC_HOOK_ID, BUILT_IN_USE_OPTIMISTIC_ID,
+        BUILT_IN_USE_REDUCER_HOOK_ID, BUILT_IN_USE_REDUCER_ID, BUILT_IN_USE_REF_HOOK_ID,
+        BUILT_IN_USE_REF_ID, BUILT_IN_USE_STATE_HOOK_ID, BUILT_IN_USE_STATE_ID,
+        BUILT_IN_USE_TRANSITION_HOOK_ID, BUILT_IN_USE_TRANSITION_ID,
         BUILT_IN_WEAK_MAP_ID, BUILT_IN_WEAK_SET_ID, FunctionSignature, HookKind, ShapeRegistry,
         add_function, add_hook, add_object,
     },
@@ -762,20 +765,18 @@ pub fn default_shapes() -> ShapeRegistry {
             callee_effect: Effect::Read,
             ..FunctionSignature::default()
         };
-        let set_state_fn = method_prop(&mut registry, set_state_sig, Type::Primitive);
-        // Also register the SetState shape so it can be looked up
+        // Register the SetState shape with the well-known id so is_set_state_type() matches
         add_function(
             &mut registry,
             Some(BUILT_IN_SET_STATE_ID),
             Vec::new(),
-            FunctionSignature {
-                rest_param: Some(Effect::Freeze),
-                return_type: Type::Primitive,
-                return_value_kind: ValueKind::Primitive,
-                callee_effect: Effect::Read,
-                ..FunctionSignature::default()
-            },
+            set_state_sig,
         );
+        let set_state_fn = Type::Function(FunctionType {
+            shape_id: Some(BUILT_IN_SET_STATE_ID.to_string()),
+            return_type: Box::new(Type::Primitive),
+            is_constructor: false,
+        });
 
         add_object(
             &mut registry,
@@ -986,7 +987,7 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
         Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_STATE_ID.to_string()) });
     let id = add_hook(
         shapes,
-        Some(BUILT_IN_USE_STATE_ID),
+        Some(BUILT_IN_USE_STATE_HOOK_ID),
         FunctionSignature {
             rest_param: Some(Effect::Freeze),
             return_type: use_state_ret.clone(),
@@ -1004,7 +1005,7 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
         Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_ACTION_STATE_ID.to_string()) });
     let id = add_hook(
         shapes,
-        Some(BUILT_IN_USE_ACTION_STATE_ID),
+        Some(BUILT_IN_USE_ACTION_STATE_HOOK_ID),
         FunctionSignature {
             rest_param: Some(Effect::Freeze),
             return_type: use_action_state_ret.clone(),
@@ -1022,7 +1023,7 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
         Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_REDUCER_ID.to_string()) });
     let id = add_hook(
         shapes,
-        Some(BUILT_IN_USE_REDUCER_ID),
+        Some(BUILT_IN_USE_REDUCER_HOOK_ID),
         FunctionSignature {
             rest_param: Some(Effect::Freeze),
             return_type: use_reducer_ret.clone(),
@@ -1039,7 +1040,7 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
     let use_ref_ret = Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) });
     let id = add_hook(
         shapes,
-        Some(BUILT_IN_USE_REF_ID),
+        Some(BUILT_IN_USE_REF_HOOK_ID),
         FunctionSignature {
             rest_param: Some(Effect::Capture),
             return_type: use_ref_ret.clone(),
@@ -1146,7 +1147,7 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
         Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_TRANSITION_ID.to_string()) });
     let id = add_hook(
         shapes,
-        Some(BUILT_IN_USE_TRANSITION_ID),
+        Some(BUILT_IN_USE_TRANSITION_HOOK_ID),
         FunctionSignature {
             return_type: use_transition_ret.clone(),
             return_value_kind: ValueKind::Frozen,
@@ -1162,7 +1163,7 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
         Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_OPTIMISTIC_ID.to_string()) });
     let id = add_hook(
         shapes,
-        Some(BUILT_IN_USE_OPTIMISTIC_ID),
+        Some(BUILT_IN_USE_OPTIMISTIC_HOOK_ID),
         FunctionSignature {
             rest_param: Some(Effect::Freeze),
             return_type: use_optimistic_ret.clone(),

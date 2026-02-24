@@ -264,16 +264,16 @@ fn get_hook_kind_for_identifier(id: &Identifier) -> Option<HookKind> {
     };
     // Map well-known shape IDs to hook kinds
     match shape_id {
-        "BuiltInUseState" => Some(HookKind::UseState),
-        "BuiltInUseReducer" => Some(HookKind::UseReducer),
-        "BuiltInUseActionState" => Some(HookKind::UseActionState),
-        "BuiltInUseRefId" => Some(HookKind::UseRef),
+        "BuiltInUseStateHook" => Some(HookKind::UseState),
+        "BuiltInUseReducerHook" => Some(HookKind::UseReducer),
+        "BuiltInUseActionStateHook" => Some(HookKind::UseActionState),
+        "BuiltInUseRefHook" => Some(HookKind::UseRef),
         "BuiltInUseEffectHook" => Some(HookKind::UseEffect),
         "BuiltInUseLayoutEffectHook" => Some(HookKind::UseLayoutEffect),
         "BuiltInUseInsertionEffectHook" => Some(HookKind::UseInsertionEffect),
         "BuiltInUseContextHook" => Some(HookKind::UseContext),
-        "BuiltInUseTransition" => Some(HookKind::UseTransition),
-        "BuiltInUseOptimistic" => Some(HookKind::UseOptimistic),
+        "BuiltInUseTransitionHook" => Some(HookKind::UseTransition),
+        "BuiltInUseOptimisticHook" => Some(HookKind::UseOptimistic),
         "BuiltInUseEffectEvent" => Some(HookKind::UseEffectEvent),
         _ => None,
     }
