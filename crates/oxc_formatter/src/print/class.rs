@@ -467,7 +467,7 @@ impl<'a> Format<'a> for FormatClass<'a, '_> {
 /// 2. Superclass is a member expression and has no type arguments
 ///   - ClassExpression: its parent is not an AssignmentExpression
 ///   - ClassDeclaration: always
-/// 3. Implements is a qualified name and has no type arguments
+/// 3. Implements is an identifier or qualified name and has no type arguments
 /// 4. There are comments in the heritage clause area
 /// 5. There are trailing line comments after type parameters
 fn should_group<'a>(class: &AstNode<Class<'a>>, f: &Formatter<'_, 'a>) -> bool {
@@ -484,7 +484,9 @@ fn should_group<'a>(class: &AstNode<Class<'a>>, f: &Formatter<'_, 'a>) -> bool {
                 matches!(&super_class, Expression::ChainExpression(chain) if chain.expression.is_member_expression())
             ) && class.super_type_arguments.is_none()
         || class.implements.first().is_some_and(|implements| {
-            implements.type_arguments.is_none() && implements.expression.is_qualified_name()
+            implements.type_arguments.is_none()
+                && (implements.expression.is_identifier()
+                    || implements.expression.is_qualified_name())
         })
     {
         return true;

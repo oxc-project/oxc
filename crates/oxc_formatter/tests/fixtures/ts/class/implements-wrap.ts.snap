@@ -1,0 +1,28 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+export class longlonglonglonglonglonglonglonglonglonglongclassname implements xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx {
+  method() {}
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+export class longlonglonglonglonglonglonglonglonglonglongclassname
+  implements xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+{
+  method() {}
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+export class longlonglonglonglonglonglonglonglonglonglongclassname
+  implements xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+{
+  method() {}
+}
+
+===================== End =====================
