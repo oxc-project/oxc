@@ -61,7 +61,7 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// In Node.js, a common pattern for dealing with asynchronous behavior is called the callback pattern.
-    /// This pattern expects an Error object or null as the first argument of the callback.
+    /// This pattern expects an `Error` object or `null` as the first argument of the callback.
     /// Forgetting to handle these errors can lead to some really strange behavior in your application.
     ///
     /// ```js
