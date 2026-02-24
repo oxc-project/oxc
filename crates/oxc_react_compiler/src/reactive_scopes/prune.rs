@@ -95,6 +95,25 @@ pub fn prune_non_reactive_dependencies(func: &mut ReactiveFunction) {
     // Phase 1: Collect reactive identifiers
     let mut reactive = collect_reactive_ids(&func.body);
 
+    // Also collect reactive identifiers from function parameters.
+    // The TS version's `collectReactiveIdentifiers` uses a visitor that visits
+    // all places including params. Our `collect_reactive_ids` only walks the body,
+    // so we must explicitly include params here.
+    for param in &func.params {
+        match param {
+            crate::hir::ReactiveParam::Place(p) => {
+                if p.reactive {
+                    reactive.insert(p.identifier.id);
+                }
+            }
+            crate::hir::ReactiveParam::Spread(s) => {
+                if s.place.reactive {
+                    reactive.insert(s.place.identifier.id);
+                }
+            }
+        }
+    }
+
     // Phase 2: Prune + propagate
     prune_non_reactive_deps_block(&mut func.body, &mut reactive);
 }
@@ -125,6 +144,15 @@ fn collect_reactive_ids_block(block: &ReactiveBlock, reactive: &mut FxHashSet<Id
             }
             ReactiveStatement::PrunedScope(s) => {
                 collect_reactive_ids_block(&s.instructions, reactive);
+                // Match TS `visitPrunedScope`: add non-primitive declarations
+                // from pruned scopes to the reactive set. This ensures that
+                // values from pruned scopes are recognized as potentially reactive
+                // when used as dependencies of other scopes.
+                for decl in s.scope.declarations.values() {
+                    if !is_primitive_type(&decl.identifier) {
+                        reactive.insert(decl.identifier.id);
+                    }
+                }
             }
         }
     }
@@ -171,15 +199,21 @@ fn collect_reactive_ids_terminal(
     reactive: &mut FxHashSet<IdentifierId>,
 ) {
     use crate::hir::ReactiveTerminal;
+
     match terminal {
         ReactiveTerminal::If(t) => {
+            check_place_reactive(&t.test, reactive);
             collect_reactive_ids_block(&t.consequent, reactive);
             if let Some(alt) = &t.alternate {
                 collect_reactive_ids_block(alt, reactive);
             }
         }
         ReactiveTerminal::Switch(t) => {
+            check_place_reactive(&t.test, reactive);
             for case in &t.cases {
+                if let Some(test) = &case.test {
+                    check_place_reactive(test, reactive);
+                }
                 if let Some(block) = &case.block {
                     collect_reactive_ids_block(block, reactive);
                 }
@@ -215,10 +249,20 @@ fn collect_reactive_ids_terminal(
             collect_reactive_ids_block(&t.block, reactive);
             collect_reactive_ids_block(&t.handler, reactive);
         }
-        ReactiveTerminal::Break(_)
-        | ReactiveTerminal::Continue(_)
-        | ReactiveTerminal::Return(_)
-        | ReactiveTerminal::Throw(_) => {}
+        ReactiveTerminal::Return(t) => {
+            check_place_reactive(&t.value, reactive);
+        }
+        ReactiveTerminal::Throw(t) => {
+            check_place_reactive(&t.value, reactive);
+        }
+        ReactiveTerminal::Break(_) | ReactiveTerminal::Continue(_) => {}
+    }
+}
+
+/// Check if a place is reactive and add its identifier to the reactive set.
+fn check_place_reactive(place: &crate::hir::Place, reactive: &mut FxHashSet<IdentifierId>) {
+    if place.reactive {
+        reactive.insert(place.identifier.id);
     }
 }
 
@@ -389,6 +433,11 @@ fn is_stable_type(id: &crate::hir::Identifier) -> bool {
         }
         _ => false,
     }
+}
+
+/// Check if an identifier has a primitive type.
+fn is_primitive_type(id: &crate::hir::Identifier) -> bool {
+    id.type_ == crate::hir::types::Type::Primitive
 }
 
 fn prune_non_reactive_deps_terminal(
