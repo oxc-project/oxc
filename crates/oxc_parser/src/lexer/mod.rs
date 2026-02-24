@@ -279,7 +279,9 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.finish_next_inner::<true>(kind)
     }
 
-    #[inline]
+    // `#[inline(always)]` to ensure this function is inlined into `finish_next` and `finish_next_retokenized`
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn finish_next_inner<const REPLACE_SAME_START: bool>(&mut self, kind: Kind) -> Token {
         self.token.set_kind(kind);
         self.token.set_end(self.offset());
