@@ -78,6 +78,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.1.0
+      degit:
+        specifier: ^2.8.4
+        version: 2.8.4
       execa:
         specifier: ^9.6.0
         version: 9.6.1
