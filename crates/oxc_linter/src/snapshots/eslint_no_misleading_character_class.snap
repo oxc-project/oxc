@@ -91,70 +91,70 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = /[Á]/
    ·           ─
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[Á]/u
    ·           ─
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u0041\u0301]/
    ·           ────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u0041\u0301]/u
    ·           ────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u{41}\u{301}]/u
    ·           ─────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[❇️]/
    ·           ──
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[❇️]/u
    ·           ──
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u2747\uFE0F]/
    ·           ────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u2747\uFE0F]/u
    ·           ────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
  1 │ var r = /[\u{2747}\u{FE0F}]/u
    ·           ────────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:11]
@@ -471,7 +471,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                             [❇️]`)
    ·                              ─
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:2:5]
@@ -479,7 +479,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             [❇️]`)
    ·              ─
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:40]
@@ -577,98 +577,98 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = new RegExp("[Á]", "")
    ·                      ─
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[Á]", "u")
    ·                      ─
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[\\u0041\\u0301]", "")
    ·                      ──────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[\\u0041\\u0301]", "u")
    ·                      ──────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[\\u{41}\\u{301}]", "u")
    ·                      ───────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[❇️]", "")
    ·                      ──
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[❇️]", "u")
    ·                      ──
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp("[ \\ufe0f]", "")
    ·              ────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp("[ \\ufe0f]", "u")
    ·              ────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp("[ \\ufe0f][ \\ufe0f]")
    ·              ────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:24]
  1 │ new RegExp("[ \\ufe0f][ \\ufe0f]")
    ·                        ────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[\\u2747\\uFE0F]", "")
    ·                      ──────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[\\u2747\\uFE0F]", "u")
    ·                      ──────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
  1 │ var r = new RegExp("[\\u{2747}\\u{FE0F}]", "u")
    ·                      ──────────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:22]
@@ -1004,7 +1004,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var r = new globalThis.RegExp("[❇️]", "")
    ·                                 ──
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected emoji modifier in character class.
    ╭─[no_misleading_character_class.tsx:1:33]
@@ -1095,28 +1095,28 @@ source: crates/oxc_linter/src/tester.rs
  1 │ new RegExp("\x5B \\ufe0f\u005D")
    ·                 ────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp("[ \u{5c}ufe0f]")
    ·              ────────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp("[ \\ufe\60f]")
    ·              ──────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:14]
  1 │ new RegExp("[ \\uf\e0f]")
    ·              ─────────
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected joined character sequence in character class.
    ╭─[no_misleading_character_class.tsx:1:14]
@@ -1144,21 +1144,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ /[Á]/
    ·   ─
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\\̶]/
    ·   ──
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected combining class in character class.
    ╭─[no_misleading_character_class.tsx:1:3]
  1 │ /[\n̅]/
    ·   ──
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:3]
@@ -1172,7 +1172,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ RegExp('[\è]')
    ·          ──
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:10]
@@ -1193,7 +1193,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ RegExp('[\❇️]')
    ·          ───
    ╰────
-  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \u{1F1E6}\u{0301} for 'Á') instead of combining sequences.
+  help: Replace the character with its normalized form (NFC) or use Unicode code point escapes instead of combining sequences.
 
   ⚠ eslint(no-misleading-character-class): Unexpected surrogate pair in character class.
    ╭─[no_misleading_character_class.tsx:1:10]
