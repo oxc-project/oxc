@@ -3,8 +3,9 @@
  */
 
 import { ast, initAst } from "./source_code.ts";
-import { getSerializedTokensJSON } from "./source_code.ts";
+import { buffer, textDecoder } from "./source_code.ts";
 import { getNodeLoc } from "./location.ts";
+import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
@@ -149,35 +150,39 @@ export let tokensAndComments: TokenOrComment[] | null = null;
  * Caller must ensure `filePath` and `sourceText` are initialized before calling this function.
  */
 export function initTokens() {
-  const serializedTokens = getSerializedTokensJSON();
-  debugAssertIsNonNull(
-    serializedTokens,
-    "Serialized tokens should be provided by Rust parser transfer",
+  debugAssert(tokens === null, "Tokens already initialized");
+
+  // Get tokens JSON from buffer, and deserialize it
+  debugAssertIsNonNull(buffer);
+
+  const { uint32 } = buffer;
+  const tokensJsonLen = uint32[TOKENS_LEN_POS_32];
+  if (tokensJsonLen === 0) {
+    tokens = [];
+    return;
+  }
+
+  const tokensJsonOffset = uint32[TOKENS_OFFSET_POS_32];
+  const tokensJson = textDecoder.decode(
+    buffer.subarray(tokensJsonOffset, tokensJsonOffset + tokensJsonLen),
   );
-  tokens = parseSerializedTokens(serializedTokens);
+  tokens = JSON.parse(tokensJson) as Token[];
 
-  // Check `tokens` have valid ranges and are in ascending order
-  debugCheckValidRanges(tokens, "token");
-}
-
-/**
- * Deserialize serialized ESTree tokens from Rust and hydrate ESLint-compatible token fields.
- */
-function parseSerializedTokens(serializedTokens: string): Token[] {
-  const parsed = JSON.parse(serializedTokens) as Token[];
-  for (const token of parsed) {
+  // Add `range` property to each token, and set prototype of each to `TokenProto` which provides getter for `loc`
+  for (const token of tokens) {
     const { start, end } = token;
     debugAssert(
       typeof start === "number" && typeof end === "number",
       "Precomputed tokens should include `start` and `end`",
     );
 
-    // `TokenProto` provides getter for `loc`
-    // @ts-expect-error - TS doesn't understand `__proto__`
-    token.__proto__ = TokenProto;
     token.range = [start, end];
+    // `TokenProto` provides getter for `loc`
+    Object.setPrototypeOf(token, TokenProto);
   }
-  return parsed;
+
+  // Check `tokens` have valid ranges and are in ascending order
+  debugCheckValidRanges(tokens, "token");
 }
 
 /**
