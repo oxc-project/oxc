@@ -64,6 +64,7 @@
 //!
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
+pub mod config;
 mod context;
 mod cursor;
 mod error_handler;
@@ -93,10 +94,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
+pub use crate::lexer::{Kind, Token};
 use crate::{
+    config::{LexerConfig, NoTokensParserConfig, ParserConfig},
     context::{Context, StatementContext},
     error_handler::FatalError,
-    lexer::{Lexer, Token},
+    lexer::Lexer,
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
@@ -165,6 +168,11 @@ pub struct ParserReturn<'a> {
 
     /// Irregular whitespaces for `Oxlint`
     pub irregular_whitespaces: Box<[Span]>,
+
+    /// Lexed tokens in source order.
+    ///
+    /// Tokens are only collected when tokens are enabled in [`ParserConfig`].
+    pub tokens: oxc_allocator::Vec<'a, Token>,
 
     /// Whether the parser panicked and terminated early.
     ///
@@ -236,11 +244,12 @@ impl Default for ParseOptions {
 /// Recursive Descent Parser for ECMAScript and TypeScript
 ///
 /// See [`Parser::parse`] for entry function.
-pub struct Parser<'a> {
+pub struct Parser<'a, C: ParserConfig = NoTokensParserConfig> {
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
     options: ParseOptions,
+    config: C,
 }
 
 impl<'a> Parser<'a> {
@@ -252,14 +261,30 @@ impl<'a> Parser<'a> {
     /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
         let options = ParseOptions::default();
-        Self { allocator, source_text, source_type, options }
+        Self { allocator, source_text, source_type, options, config: NoTokensParserConfig }
     }
+}
 
+impl<'a, C: ParserConfig> Parser<'a, C> {
     /// Set parse options
     #[must_use]
     pub fn with_options(mut self, options: ParseOptions) -> Self {
         self.options = options;
         self
+    }
+
+    /// Set parser config.
+    ///
+    /// See [`ParserConfig`] for more details.
+    #[must_use]
+    pub fn with_config<Config: ParserConfig>(self, config: Config) -> Parser<'a, Config> {
+        Parser {
+            allocator: self.allocator,
+            source_text: self.source_text,
+            source_type: self.source_type,
+            options: self.options,
+            config,
+        }
     }
 }
 
@@ -297,7 +322,7 @@ mod parser_parse {
         }
     }
 
-    impl<'a> Parser<'a> {
+    impl<'a, C: ParserConfig> Parser<'a, C> {
         /// Main entry point
         ///
         /// Returns an empty `Program` on unrecoverable error,
@@ -311,6 +336,7 @@ mod parser_parse {
                 self.source_text,
                 self.source_type,
                 self.options,
+                self.config,
                 unique,
             );
             parser.parse()
@@ -342,6 +368,7 @@ mod parser_parse {
                 self.source_text,
                 self.source_type,
                 self.options,
+                self.config,
                 unique,
             );
             parser.parse_expression()
@@ -352,10 +379,11 @@ use parser_parse::UniquePromise;
 
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
-struct ParserImpl<'a> {
+struct ParserImpl<'a, C: ParserConfig> {
+    /// Options
     options: ParseOptions,
 
-    pub(crate) lexer: Lexer<'a>,
+    pub(crate) lexer: Lexer<'a, C::LexerConfig>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
     source_type: SourceType,
@@ -398,22 +426,24 @@ struct ParserImpl<'a> {
     is_ts: bool,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// Create a new `ParserImpl`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
     /// on a single thread at one time.
     #[inline]
+    #[expect(clippy::needless_pass_by_value)]
     pub fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
         options: ParseOptions,
+        config: C,
         unique: UniquePromise,
     ) -> Self {
         Self {
             options,
-            lexer: Lexer::new(allocator, source_text, source_type, unique),
+            lexer: Lexer::new(allocator, source_text, source_type, config.lexer_config(), unique),
             source_type,
             source_text,
             errors: vec![],
@@ -470,16 +500,16 @@ impl<'a> ParserImpl<'a> {
             is_flow_language = true;
             errors.push(error);
         }
-        let (module_record, module_record_errors) = self.module_record_builder.build();
+        let (module_record, mut module_record_errors) = self.module_record_builder.build();
         if errors.len() != 1 {
             errors
                 .reserve(self.lexer.errors.len() + self.errors.len() + module_record_errors.len());
-            errors.extend(self.lexer.errors);
-            errors.extend(self.errors);
-            errors.extend(module_record_errors);
+            errors.append(&mut self.lexer.errors);
+            errors.append(&mut self.errors);
+            errors.append(&mut module_record_errors);
         }
         let irregular_whitespaces =
-            self.lexer.trivia_builder.irregular_whitespaces.into_boxed_slice();
+            std::mem::take(&mut self.lexer.trivia_builder.irregular_whitespaces).into_boxed_slice();
 
         let source_type = program.source_type;
         if source_type.is_unambiguous() {
@@ -501,6 +531,7 @@ impl<'a> ParserImpl<'a> {
             module_record,
             errors,
             irregular_whitespaces,
+            tokens: self.lexer.take_tokens(),
             panicked,
             is_flow_language,
         }
@@ -564,6 +595,11 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         statements: &mut oxc_allocator::Vec<'a, oxc_ast::ast::Statement<'a>>,
     ) {
+        // Token stream is already complete from the first parse.
+        // Reparsing here is only to patch AST nodes, so keep the original token stream.
+        let original_tokens =
+            if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
+
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
         for (stmt_index, checkpoint) in checkpoints {
             // Rewind to the checkpoint
@@ -578,6 +614,11 @@ impl<'a> ParserImpl<'a> {
             if stmt_index < statements.len() {
                 statements[stmt_index] = stmt;
             }
+        }
+
+        if let Some(tokens) = original_tokens {
+            self.lexer.take_tokens();
+            self.lexer.set_tokens(tokens);
         }
     }
 

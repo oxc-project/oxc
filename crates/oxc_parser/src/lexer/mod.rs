@@ -7,12 +7,12 @@
 
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
 
-use crate::{UniquePromise, diagnostics};
+use crate::{UniquePromise, config::LexerConfig as Config, diagnostics};
 
 mod byte_handlers;
 mod comment;
@@ -33,6 +33,7 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
+pub(crate) use byte_handlers::{ByteHandler, ByteHandlers, byte_handler_tables};
 pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
@@ -45,6 +46,7 @@ pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     token: Token,
     errors_snapshot: ErrorSnapshot,
+    tokens_len: usize,
     has_pure_comment: bool,
     has_no_side_effects_comment: bool,
 }
@@ -63,7 +65,7 @@ pub enum LexerContext {
     JsxAttributeValue,
 }
 
-pub struct Lexer<'a> {
+pub struct Lexer<'a, C: Config> {
     allocator: &'a Allocator,
 
     // Wrapper around source text. Must not be changed after initialization.
@@ -95,9 +97,15 @@ pub struct Lexer<'a> {
 
     /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
+
+    /// Collected tokens in source order.
+    tokens: ArenaVec<'a, Token>,
+
+    /// Config
+    pub(crate) config: C,
 }
 
-impl<'a> Lexer<'a> {
+impl<'a, C: Config> Lexer<'a, C> {
     /// Create new `Lexer`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
@@ -106,6 +114,7 @@ impl<'a> Lexer<'a> {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        config: C,
         unique: UniquePromise,
     ) -> Self {
         let source = Source::new(source_text, unique);
@@ -124,6 +133,8 @@ impl<'a> Lexer<'a> {
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
+            tokens: ArenaVec::new_in(allocator),
+            config,
         }
     }
 
@@ -134,9 +145,10 @@ impl<'a> Lexer<'a> {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        config: C,
     ) -> Self {
         let unique = UniquePromise::new_for_tests_and_benchmarks();
-        Self::new(allocator, source_text, source_type, unique)
+        Self::new(allocator, source_text, source_type, config, unique)
     }
 
     /// Get errors.
@@ -163,6 +175,7 @@ impl<'a> Lexer<'a> {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
+            tokens_len: self.tokens.len(),
             has_pure_comment: self.trivia_builder.has_pure_comment,
             has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
         }
@@ -180,6 +193,7 @@ impl<'a> Lexer<'a> {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
+            tokens_len: self.tokens.len(),
             has_pure_comment: self.trivia_builder.has_pure_comment,
             has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
         }
@@ -192,6 +206,7 @@ impl<'a> Lexer<'a> {
             ErrorSnapshot::Count(len) => self.errors.truncate(len),
             ErrorSnapshot::Full(errors) => self.errors = errors,
         }
+        self.tokens.truncate(checkpoint.tokens_len);
         self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
         self.trivia_builder.has_pure_comment = checkpoint.has_pure_comment;
@@ -240,13 +255,51 @@ impl<'a> Lexer<'a> {
         self.finish_next(kind)
     }
 
+    #[inline]
     fn finish_next(&mut self, kind: Kind) -> Token {
+        self.finish_next_inner::<false>(kind)
+    }
+
+    #[inline]
+    fn finish_next_retokenized(&mut self, kind: Kind) -> Token {
+        self.finish_next_inner::<true>(kind)
+    }
+
+    #[inline]
+    fn finish_next_inner<const REPLACE_SAME_START: bool>(&mut self, kind: Kind) -> Token {
         self.token.set_kind(kind);
         self.token.set_end(self.offset());
         let token = self.token;
+        if self.config.tokens() && !matches!(token.kind(), Kind::Eof | Kind::HashbangComment) {
+            if REPLACE_SAME_START {
+                debug_assert!(self.tokens.last().is_some_and(|last| last.start() == token.start()));
+                let last = self.tokens.last_mut().unwrap();
+                *last = token;
+            } else {
+                self.tokens.push(token);
+            }
+        }
         self.trivia_builder.handle_token(token);
         self.token = Token::default();
         token
+    }
+
+    /// Finish a re-lexed token used only for parser disambiguation.
+    /// This must not mutate the externally collected token stream.
+    fn finish_re_lex(&mut self, kind: Kind) -> Token {
+        self.token.set_kind(kind);
+        self.token.set_end(self.offset());
+        let token = self.token;
+        self.token = Token::default();
+        token
+    }
+
+    pub(crate) fn take_tokens(&mut self) -> ArenaVec<'a, Token> {
+        std::mem::replace(&mut self.tokens, ArenaVec::new_in(self.allocator))
+    }
+
+    pub(crate) fn set_tokens(&mut self, tokens: ArenaVec<'a, Token>) {
+        self.tokens = tokens;
     }
 
     /// Advance source cursor to end of file.
