@@ -710,10 +710,6 @@ pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
             if should_fail {
                 return false;
             }
-            // Skip hashbang tests
-            if f.path.starts_with("test262/test/language/comments/hashbang/") {
-                return false;
-            }
             // Skip tests where no Acorn JSON file
             let acorn_path = workspace_root()
                 .join("estree-conformance/tests")
@@ -937,13 +933,6 @@ static TS_SKIP_PATHS: &[&str] = &[
     "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
     // Skip tests where TS-ESLint is incorrect
     "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
-    // Skip tests with hashbangs (we have different handling)
-    "typescript/tests/cases/compiler/emitBundleWithShebang1.ts",
-    "typescript/tests/cases/compiler/emitBundleWithShebang2.ts",
-    "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives1.ts",
-    "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives2.ts",
-    "typescript/tests/cases/compiler/shebang.ts",
-    "typescript/tests/cases/compiler/shebangBeforeReferences.ts",
 ];
 
 pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
