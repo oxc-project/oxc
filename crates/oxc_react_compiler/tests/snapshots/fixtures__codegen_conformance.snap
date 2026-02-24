@@ -1,9 +1,8 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 1320
 expression: snapshot
 ---
-Codegen conformance: 136/1040 passed (13.1%)
+Codegen conformance: 151/1040 passed (14.5%)
 
 Failure breakdown:
   parse_error:    27
@@ -11,7 +10,7 @@ Failure breakdown:
   lower_error:    1
   pipeline_error: 43
   panic:          0
-  output_mismatch:829
+  output_mismatch:814
   no_expected:    1
 
 Failed fixtures:
@@ -171,7 +170,6 @@ Failed fixtures:
   [pipeline_error] conditional-break-labeled.js
   [output_mismatch] conditional-early-return.js
   [pipeline_error] conditional-on-mutable.js
-  [output_mismatch] conditional-set-state-in-render.js
   [output_mismatch] conflict-codegen-instrument-forget.js
   [output_mismatch] consecutive-use-memo.ts
   [output_mismatch] console-readonly.js
@@ -217,13 +215,8 @@ Failed fixtures:
   [output_mismatch] destructure-default-array-with-unary.js
   [output_mismatch] destructure-direct-reassignment.js
   [output_mismatch] destructure-in-branch-ssa.ts
-  [output_mismatch] destructure-mixed-property-key-types.js
   [output_mismatch] destructure-object-assignment-to-context-var.js
   [output_mismatch] destructure-object-declaration-to-context-var.js
-  [output_mismatch] destructure-param-string-literal-key-invalid-identifier.js
-  [output_mismatch] destructure-param-string-literal-key.js
-  [output_mismatch] destructure-string-literal-invalid-identifier-property-key.js
-  [output_mismatch] destructure-string-literal-property-key.js
   [output_mismatch] destructuring-array-default.js
   [output_mismatch] destructuring-array-param-default.js
   [output_mismatch] destructuring-assignment-array-default.js
@@ -375,7 +368,6 @@ Failed fixtures:
   [output_mismatch] infer-functions-hook-with-hook-call.js
   [output_mismatch] infer-functions-hook-with-jsx.js
   [output_mismatch] infer-global-object.js
-  [output_mismatch] infer-no-component-obj-return.js
   [output_mismatch] infer-property-delete.js
   [output_mismatch] infer-sequential-optional-chain-nonnull.ts
   [parse_error] infer-types-through-type-cast.flow.js
@@ -387,9 +379,6 @@ Failed fixtures:
   [output_mismatch] invalid-set-state-in-effect-verbose-force-update.js
   [output_mismatch] invalid-set-state-in-effect-verbose-non-local-derived.js
   [output_mismatch] invalid-setState-in-useEffect-namespace.js
-  [output_mismatch] invalid-setState-in-useEffect-transitive.js
-  [output_mismatch] invalid-setState-in-useEffect-via-useEffectEvent.js
-  [output_mismatch] invalid-setState-in-useEffect.js
   [output_mismatch] invalid-unused-usememo.js
   [output_mismatch] invalid-useMemo-no-return-value.js
   [output_mismatch] invalid-useMemo-return-empty.js
@@ -436,7 +425,6 @@ Failed fixtures:
   [output_mismatch] lambda-mutated-ref-non-reactive.js
   [output_mismatch] lambda-reassign-primitive.js
   [output_mismatch] lambda-reassign-shadowed-primitive.js
-  [output_mismatch] lambda-return-expression.ts
   [output_mismatch] log-pruned-memoization.js
   [output_mismatch] logical-expression-object.js
   [output_mismatch] logical-expression.js
@@ -790,7 +778,6 @@ Failed fixtures:
   [output_mismatch] try-catch-empty-try.js
   [pipeline_error] try-catch-in-nested-scope.ts
   [output_mismatch] try-catch-logical-and-optional.js
-  [output_mismatch] try-catch-logical-expression.js
   [pipeline_error] try-catch-maybe-null-dependency.ts
   [output_mismatch] try-catch-multiple-value-blocks.js
   [pipeline_error] try-catch-mutate-outer-value.js
@@ -798,7 +785,6 @@ Failed fixtures:
   [output_mismatch] try-catch-nullish-coalescing.js
   [output_mismatch] try-catch-optional-call.js
   [output_mismatch] try-catch-optional-chaining.js
-  [output_mismatch] try-catch-ternary-expression.js
   [output_mismatch] try-catch-try-immediately-returns.js
   [output_mismatch] try-catch-try-immediately-throws-after-constant-propagation.js
   [pipeline_error] try-catch-try-value-modified-in-catch-escaping.js
@@ -902,12 +888,10 @@ Failed fixtures:
   [output_mismatch] useMemo-with-optional.js
   [output_mismatch] useReducer-returned-dispatcher-is-non-reactive.js
   [output_mismatch] valid-set-state-in-useEffect-from-ref.js
-  [output_mismatch] valid-setState-in-effect-from-ref-arithmetic.js
   [output_mismatch] valid-setState-in-effect-from-ref-array-index.js
   [output_mismatch] valid-setState-in-effect-from-ref-function-call.js
   [output_mismatch] valid-setState-in-useEffect-controlled-by-ref-value.js
   [output_mismatch] valid-setState-in-useEffect-listener-transitive.js
-  [output_mismatch] valid-setState-in-useEffect-listener.js
   [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-listener.js
   [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-with-ref.js
   [output_mismatch] valid-setState-in-useLayoutEffect-from-ref.js
