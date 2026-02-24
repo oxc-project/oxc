@@ -426,6 +426,7 @@ pub(crate) mod react {
     pub mod no_will_update_set_state;
     pub mod only_export_components;
     pub mod prefer_es6_class;
+    pub mod prefer_function_component;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
