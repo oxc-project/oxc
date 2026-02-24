@@ -50,8 +50,8 @@ Read more about our [architecture](https://oxc.rs/docs/learn/architecture/parser
 
 ## 📦 Tools & Packages
 
-| Tool        | npm                                                          | crates.io                                                   |
-| ----------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
+| Tool        | npm                                                     | crates.io                                                   |
+| ----------- | ------------------------------------------------------- | ----------------------------------------------------------- |
 | Linter      | [oxlint](https://npmx.dev/package/oxlint)               | -                                                           |
 | Formatter   | [oxfmt](https://npmx.dev/package/oxfmt)                 | -                                                           |
 | Parser      | [oxc-parser](https://npmx.dev/package/oxc-parser)       | [oxc_parser](https://crates.io/crates/oxc_parser)           |
