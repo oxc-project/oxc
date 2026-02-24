@@ -527,3 +527,11 @@ source: crates/oxc_linter/src/tester.rs
  4 │                render() {
    ╰────
   help: Convert the class component to a function component.
+
+  ⚠ eslint-plugin-react(prefer-function-component): Class component should be written as a function component.
+   ╭─[prefer_function_component.tsx:1:7]
+ 1 │ class Foo extends React.Component {
+   ·       ───
+ 2 │                getDerivedStateFromError(error) {
+   ╰────
+  help: Convert the class component to a function component.

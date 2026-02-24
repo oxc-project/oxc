@@ -1021,6 +1021,19 @@ fn test() {
                 serde_json::json!([{ "allowJsxUtilityClass": true, "allowErrorBoundary": false }]),
             ),
         ),
+        // Non-static getDerivedStateFromError is NOT a valid error boundary,
+        // so allowErrorBoundary should not exempt it.
+        (
+            "class Foo extends React.Component {
+               getDerivedStateFromError(error) {
+                 return { hasError: true };
+               }
+               render() {
+                 return <div>{this.props.foo}</div>;
+               }
+             }",
+            None,
+        ),
     ];
 
     Tester::new(PreferFunctionComponent::NAME, PreferFunctionComponent::PLUGIN, pass, fail)
