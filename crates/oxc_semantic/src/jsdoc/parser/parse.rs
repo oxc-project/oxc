@@ -36,7 +36,9 @@ pub fn parse_jsdoc(
 
     // Tracks whether we're currently inside backticks `...`
     // This includes inline code blocks or markdown-style code inside comments.
-    let mut in_backticks = false;
+    // When 0, we're outside backticks. When > 0, stores the count of opening backticks,
+    // so we can match the closing sequence (per CommonMark, backtick strings must match).
+    let mut backtick_count: u32 = 0;
 
     // Track whether we're currently inside quotes '...' or "..."
     // This includes package names when doing a @import
@@ -67,21 +69,32 @@ pub fn parse_jsdoc(
         let can_parse = curly_brace_depth == 0
             && square_brace_depth == 0
             && brace_depth == 0
-            && !in_backticks
+            && backtick_count == 0
             && !in_double_quotes
             && !in_single_quotes;
 
         match ch {
-            // NOTE: For now, only odd backtick(s) are handled.
+            // Handle backtick sequences of any length (per CommonMark):
             // - 1 backtick: inline code
-            // - 3, 5, ... backticks: code fence
-            // Not so common but technically, major markdown parser can handle 3 or more backticks as code fence.
-            // (for nested code blocks)
-            // But for now, 4, 6, ... backticks are not handled here to keep things simple...
+            // - 2 backticks: inline code (used to escape backticks inside)
+            // - 3+ backticks: code fence (for nested code blocks)
+            // Opening and closing sequences must have the same number of backticks.
             '`' => {
-                if chars.peek().is_some_and(|&c| c != '`') {
-                    in_backticks = !in_backticks;
+                // Count consecutive backticks
+                let mut count: u32 = 1;
+                while chars.peek() == Some(&'`') {
+                    chars.next();
+                    end += 1;
+                    count += 1;
                 }
+                if backtick_count == 0 {
+                    // Opening a new backtick section
+                    backtick_count = count;
+                } else if backtick_count == count {
+                    // Closing backtick section with matching count
+                    backtick_count = 0;
+                }
+                // Mismatched count inside a backtick section: ignore
             }
             '"' => in_double_quotes = !in_double_quotes,
             '\'' => in_single_quotes = !in_single_quotes,

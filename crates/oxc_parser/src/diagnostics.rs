@@ -1121,6 +1121,11 @@ pub fn implementation_in_ambient(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn initializers_not_allowed_in_ambient_contexts(span: Span) -> OxcDiagnostic {
+    ts_error("1039", "Initializers are not allowed in ambient contexts.").with_label(span)
+}
+
+#[cold]
 pub fn interface_implements(span: Span) -> OxcDiagnostic {
     ts_error("1176", "Interface declaration cannot have 'implements' clause.").with_label(span)
 }

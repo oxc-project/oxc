@@ -7,57 +7,67 @@ source: crates/oxc_linter/src/tester.rs
  1 │ foo ? bar : baz === qux ? quxx : foobar;
    · ───────────────────────────────────────
    ╰────
+  help: Refactor nested ternary expressions into if-else statements for better readability.
 
   ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
    ╭─[no_nested_ternary.tsx:1:1]
  1 │ foo ? baz === qux ? quxx : foobar : bar;
    · ───────────────────────────────────────
    ╰────
+  help: Refactor nested ternary expressions into if-else statements for better readability.
 
   ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
    ╭─[no_nested_ternary.tsx:1:14]
  1 │ var result = foo ? (bar ? baz : qux) : quux;
    ·              ──────────────────────────────
    ╰────
+  help: Refactor nested ternary expressions into if-else statements for better readability.
 
   ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
    ╭─[no_nested_ternary.tsx:1:14]
  1 │ var result = foo ? (bar === baz ? qux : quux) : foobar;
    ·              ─────────────────────────────────────────
    ╰────
+  help: Refactor nested ternary expressions into if-else statements for better readability.
 
   ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
    ╭─[no_nested_ternary.tsx:1:13]
  1 │ doSomething(foo ? bar : baz ? qux : quux);
    ·             ────────────────────────────
    ╰────
+  help: Refactor nested ternary expressions into if-else statements for better readability.
 
   ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
    ╭─[no_nested_ternary.tsx:1:14]
  1 │ var result = foo /* comment */ ? bar : baz ? qux : quux;
    ·              ──────────────────────────────────────────
    ╰────
+  help: Refactor nested ternary expressions into if-else statements for better readability.
 
   ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
    ╭─[no_nested_ternary.tsx:1:14]
  1 │ var result = foo! ? bar : baz! ? qux : quux;
    ·              ──────────────────────────────
    ╰────
+  help: Refactor nested ternary expressions into if-else statements for better readability.
 
   ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
    ╭─[no_nested_ternary.tsx:1:14]
  1 │ var result = foo ? bar! : (baz! ? qux : quux);
    ·              ────────────────────────────────
    ╰────
+  help: Refactor nested ternary expressions into if-else statements for better readability.
 
   ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
    ╭─[no_nested_ternary.tsx:1:14]
  1 │ var result = (foo as boolean) ? bar : (baz as string) ? qux : quux;
    ·              ─────────────────────────────────────────────────────
    ╰────
+  help: Refactor nested ternary expressions into if-else statements for better readability.
 
   ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
    ╭─[no_nested_ternary.tsx:1:14]
  1 │ var result = foo ? (bar as string) : (baz as number ? qux : quux);
    ·              ────────────────────────────────────────────────────
    ╰────
+  help: Refactor nested ternary expressions into if-else statements for better readability.

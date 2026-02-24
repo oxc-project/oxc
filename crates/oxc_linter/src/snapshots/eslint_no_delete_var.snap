@@ -7,3 +7,4 @@ source: crates/oxc_linter/src/tester.rs
  1 │ delete x
    · ────────
    ╰────
+  help: Assign `undefined` to the variable instead of using `delete`. The `delete` operator is intended for removing properties from objects, not for variables.

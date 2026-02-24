@@ -13,19 +13,25 @@ mod service;
 mod utils;
 
 use oxc_allocator::Allocator;
+use oxc_ast::Comment;
 use oxc_ast::ast::*;
+use oxc_span::SourceType;
 
+pub use crate::ast_nodes::{AstNode, AstNodes};
 pub use crate::external_formatter::{
     EmbeddedFormatterCallback, ExternalCallbacks, TailwindCallback,
 };
+pub use crate::formatter::GroupId;
+pub use crate::formatter::format_element::tag::{DedentMode, Tag};
+pub use crate::formatter::format_element::{
+    BestFittingElement, FormatElement, LineMode, PrintMode,
+};
+pub use crate::formatter::{Format, Formatted};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
+pub use crate::print::{FormatVueBindingParams, FormatVueScriptGeneric};
 pub use crate::service::*;
-use crate::{
-    ast_nodes::{AstNode, AstNodes},
-    formatter::{FormatContext, Formatted},
-    ir_transform::SortImportsTransform,
-};
+use crate::{formatter::FormatContext, ir_transform::SortImportsTransform};
 #[cfg(feature = "detect_code_removal")]
 pub use detect_code_removal::detect_code_removal;
 
@@ -87,6 +93,34 @@ impl<'a> Formatter<'a> {
         }
 
         formatted
+    }
+
+    /// Formats an arbitrary value that implements `Format` and returns the `Formatted` IR.
+    ///
+    /// Unlike `format()` which requires a full `Program`,
+    /// this method accepts any value that implements `Format`.
+    /// This enables fragment formatting for embedded contexts like:
+    /// - Vue: `v-for`, `v-slot`, and `<script generic="...">`
+    /// - etc...
+    ///
+    /// `SortImportsTransform` is skipped since it only applies to whole `Program` formatting.
+    pub fn format_node<F: formatter::Format<'a>>(
+        self,
+        node: &F,
+        source_text: &'a str,
+        source_type: SourceType,
+        comments: &'a [Comment],
+        external_callbacks: Option<ExternalCallbacks>,
+    ) -> Formatted<'a> {
+        let context = FormatContext::new(
+            source_text,
+            source_type,
+            comments,
+            self.allocator,
+            self.options,
+            external_callbacks,
+        );
+        formatter::format(context, formatter::Arguments::new(&[formatter::Argument::new(node)]))
     }
 }
 

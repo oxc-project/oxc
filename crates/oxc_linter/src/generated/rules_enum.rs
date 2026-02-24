@@ -140,6 +140,7 @@ pub use crate::rules::eslint::no_unused_expressions::NoUnusedExpressions as Esli
 pub use crate::rules::eslint::no_unused_labels::NoUnusedLabels as EslintNoUnusedLabels;
 pub use crate::rules::eslint::no_unused_private_class_members::NoUnusedPrivateClassMembers as EslintNoUnusedPrivateClassMembers;
 pub use crate::rules::eslint::no_unused_vars::NoUnusedVars as EslintNoUnusedVars;
+pub use crate::rules::eslint::no_use_before_define::NoUseBeforeDefine as EslintNoUseBeforeDefine;
 pub use crate::rules::eslint::no_useless_backreference::NoUselessBackreference as EslintNoUselessBackreference;
 pub use crate::rules::eslint::no_useless_call::NoUselessCall as EslintNoUselessCall;
 pub use crate::rules::eslint::no_useless_catch::NoUselessCatch as EslintNoUselessCatch;
@@ -248,6 +249,7 @@ pub use crate::rules::jest::prefer_hooks_on_top::PreferHooksOnTop as JestPreferH
 pub use crate::rules::jest::prefer_jest_mocked::PreferJestMocked as JestPreferJestMocked;
 pub use crate::rules::jest::prefer_lowercase_title::PreferLowercaseTitle as JestPreferLowercaseTitle;
 pub use crate::rules::jest::prefer_mock_promise_shorthand::PreferMockPromiseShorthand as JestPreferMockPromiseShorthand;
+pub use crate::rules::jest::prefer_mock_return_shorthand::PreferMockReturnShorthand as JestPreferMockReturnShorthand;
 pub use crate::rules::jest::prefer_spy_on::PreferSpyOn as JestPreferSpyOn;
 pub use crate::rules::jest::prefer_strict_equal::PreferStrictEqual as JestPreferStrictEqual;
 pub use crate::rules::jest::prefer_to_be::PreferToBe as JestPreferToBe;
@@ -335,6 +337,7 @@ pub use crate::rules::nextjs::no_unwanted_polyfillio::NoUnwantedPolyfillio as Ne
 pub use crate::rules::node::global_require::GlobalRequire as NodeGlobalRequire;
 pub use crate::rules::node::no_exports_assign::NoExportsAssign as NodeNoExportsAssign;
 pub use crate::rules::node::no_new_require::NoNewRequire as NodeNoNewRequire;
+pub use crate::rules::node::no_path_concat::NoPathConcat as NodeNoPathConcat;
 pub use crate::rules::node::no_process_env::NoProcessEnv as NodeNoProcessEnv;
 pub use crate::rules::oxc::approx_constant::ApproxConstant as OxcApproxConstant;
 pub use crate::rules::oxc::bad_array_method_on_arguments::BadArrayMethodOnArguments as OxcBadArrayMethodOnArguments;
@@ -449,6 +452,7 @@ pub use crate::rules::typescript::consistent_type_assertions::ConsistentTypeAsse
 pub use crate::rules::typescript::consistent_type_definitions::ConsistentTypeDefinitions as TypescriptConsistentTypeDefinitions;
 pub use crate::rules::typescript::consistent_type_exports::ConsistentTypeExports as TypescriptConsistentTypeExports;
 pub use crate::rules::typescript::consistent_type_imports::ConsistentTypeImports as TypescriptConsistentTypeImports;
+pub use crate::rules::typescript::dot_notation::DotNotation as TypescriptDotNotation;
 pub use crate::rules::typescript::explicit_function_return_type::ExplicitFunctionReturnType as TypescriptExplicitFunctionReturnType;
 pub use crate::rules::typescript::explicit_module_boundary_types::ExplicitModuleBoundaryTypes as TypescriptExplicitModuleBoundaryTypes;
 pub use crate::rules::typescript::no_array_delete::NoArrayDelete as TypescriptNoArrayDelete;
@@ -502,7 +506,6 @@ pub use crate::rules::typescript::no_unsafe_member_access::NoUnsafeMemberAccess 
 pub use crate::rules::typescript::no_unsafe_return::NoUnsafeReturn as TypescriptNoUnsafeReturn;
 pub use crate::rules::typescript::no_unsafe_type_assertion::NoUnsafeTypeAssertion as TypescriptNoUnsafeTypeAssertion;
 pub use crate::rules::typescript::no_unsafe_unary_minus::NoUnsafeUnaryMinus as TypescriptNoUnsafeUnaryMinus;
-pub use crate::rules::typescript::no_use_before_define::NoUseBeforeDefine as TypescriptNoUseBeforeDefine;
 pub use crate::rules::typescript::no_useless_default_assignment::NoUselessDefaultAssignment as TypescriptNoUselessDefaultAssignment;
 pub use crate::rules::typescript::no_useless_empty_export::NoUselessEmptyExport as TypescriptNoUselessEmptyExport;
 pub use crate::rules::typescript::no_var_requires::NoVarRequires as TypescriptNoVarRequires;
@@ -633,6 +636,7 @@ pub use crate::rules::unicorn::prefer_math_min_max::PreferMathMinMax as UnicornP
 pub use crate::rules::unicorn::prefer_math_trunc::PreferMathTrunc as UnicornPreferMathTrunc;
 pub use crate::rules::unicorn::prefer_modern_dom_apis::PreferModernDomApis as UnicornPreferModernDomApis;
 pub use crate::rules::unicorn::prefer_modern_math_apis::PreferModernMathApis as UnicornPreferModernMathApis;
+pub use crate::rules::unicorn::prefer_module::PreferModule as UnicornPreferModule;
 pub use crate::rules::unicorn::prefer_native_coercion_functions::PreferNativeCoercionFunctions as UnicornPreferNativeCoercionFunctions;
 pub use crate::rules::unicorn::prefer_negative_index::PreferNegativeIndex as UnicornPreferNegativeIndex;
 pub use crate::rules::unicorn::prefer_node_protocol::PreferNodeProtocol as UnicornPreferNodeProtocol;
@@ -653,6 +657,7 @@ pub use crate::rules::unicorn::prefer_string_slice::PreferStringSlice as Unicorn
 pub use crate::rules::unicorn::prefer_string_starts_ends_with::PreferStringStartsEndsWith as UnicornPreferStringStartsEndsWith;
 pub use crate::rules::unicorn::prefer_string_trim_start_end::PreferStringTrimStartEnd as UnicornPreferStringTrimStartEnd;
 pub use crate::rules::unicorn::prefer_structured_clone::PreferStructuredClone as UnicornPreferStructuredClone;
+pub use crate::rules::unicorn::prefer_ternary::PreferTernary as UnicornPreferTernary;
 pub use crate::rules::unicorn::prefer_top_level_await::PreferTopLevelAwait as UnicornPreferTopLevelAwait;
 pub use crate::rules::unicorn::prefer_type_error::PreferTypeError as UnicornPreferTypeError;
 pub use crate::rules::unicorn::relative_url_style::RelativeUrlStyle as UnicornRelativeUrlStyle;
@@ -670,10 +675,12 @@ pub use crate::rules::vitest::consistent_vitest_vi::ConsistentVitestVi as Vitest
 pub use crate::rules::vitest::hoisted_apis_on_top::HoistedApisOnTop as VitestHoistedApisOnTop;
 pub use crate::rules::vitest::no_conditional_tests::NoConditionalTests as VitestNoConditionalTests;
 pub use crate::rules::vitest::no_import_node_test::NoImportNodeTest as VitestNoImportNodeTest;
+pub use crate::rules::vitest::no_importing_vitest_globals::NoImportingVitestGlobals as VitestNoImportingVitestGlobals;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
 pub use crate::rules::vitest::prefer_expect_type_of::PreferExpectTypeOf as VitestPreferExpectTypeOf;
+pub use crate::rules::vitest::prefer_import_in_mock::PreferImportInMock as VitestPreferImportInMock;
 pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPreferToBeFalsy;
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
@@ -869,6 +876,7 @@ pub enum RuleEnum {
     EslintNoUnusedLabels(EslintNoUnusedLabels),
     EslintNoUnusedPrivateClassMembers(EslintNoUnusedPrivateClassMembers),
     EslintNoUnusedVars(EslintNoUnusedVars),
+    EslintNoUseBeforeDefine(EslintNoUseBeforeDefine),
     EslintNoUselessBackreference(EslintNoUselessBackreference),
     EslintNoUselessCall(EslintNoUselessCall),
     EslintNoUselessCatch(EslintNoUselessCatch),
@@ -920,6 +928,7 @@ pub enum RuleEnum {
     TypescriptConsistentTypeDefinitions(TypescriptConsistentTypeDefinitions),
     TypescriptConsistentTypeExports(TypescriptConsistentTypeExports),
     TypescriptConsistentTypeImports(TypescriptConsistentTypeImports),
+    TypescriptDotNotation(TypescriptDotNotation),
     TypescriptExplicitFunctionReturnType(TypescriptExplicitFunctionReturnType),
     TypescriptExplicitModuleBoundaryTypes(TypescriptExplicitModuleBoundaryTypes),
     TypescriptNoArrayDelete(TypescriptNoArrayDelete),
@@ -975,7 +984,6 @@ pub enum RuleEnum {
     TypescriptNoUnsafeReturn(TypescriptNoUnsafeReturn),
     TypescriptNoUnsafeTypeAssertion(TypescriptNoUnsafeTypeAssertion),
     TypescriptNoUnsafeUnaryMinus(TypescriptNoUnsafeUnaryMinus),
-    TypescriptNoUseBeforeDefine(TypescriptNoUseBeforeDefine),
     TypescriptNoUselessDefaultAssignment(TypescriptNoUselessDefaultAssignment),
     TypescriptNoUselessEmptyExport(TypescriptNoUselessEmptyExport),
     TypescriptNoVarRequires(TypescriptNoVarRequires),
@@ -1054,6 +1062,7 @@ pub enum RuleEnum {
     JestPreferJestMocked(JestPreferJestMocked),
     JestPreferLowercaseTitle(JestPreferLowercaseTitle),
     JestPreferMockPromiseShorthand(JestPreferMockPromiseShorthand),
+    JestPreferMockReturnShorthand(JestPreferMockReturnShorthand),
     JestPreferSpyOn(JestPreferSpyOn),
     JestPreferStrictEqual(JestPreferStrictEqual),
     JestPreferToBe(JestPreferToBe),
@@ -1216,6 +1225,7 @@ pub enum RuleEnum {
     UnicornPreferMathTrunc(UnicornPreferMathTrunc),
     UnicornPreferModernDomApis(UnicornPreferModernDomApis),
     UnicornPreferModernMathApis(UnicornPreferModernMathApis),
+    UnicornPreferModule(UnicornPreferModule),
     UnicornPreferNativeCoercionFunctions(UnicornPreferNativeCoercionFunctions),
     UnicornPreferNegativeIndex(UnicornPreferNegativeIndex),
     UnicornPreferNodeProtocol(UnicornPreferNodeProtocol),
@@ -1236,6 +1246,7 @@ pub enum RuleEnum {
     UnicornPreferStringStartsEndsWith(UnicornPreferStringStartsEndsWith),
     UnicornPreferStringTrimStartEnd(UnicornPreferStringTrimStartEnd),
     UnicornPreferStructuredClone(UnicornPreferStructuredClone),
+    UnicornPreferTernary(UnicornPreferTernary),
     UnicornPreferTopLevelAwait(UnicornPreferTopLevelAwait),
     UnicornPreferTypeError(UnicornPreferTypeError),
     UnicornRelativeUrlStyle(UnicornRelativeUrlStyle),
@@ -1365,10 +1376,12 @@ pub enum RuleEnum {
     VitestHoistedApisOnTop(VitestHoistedApisOnTop),
     VitestNoConditionalTests(VitestNoConditionalTests),
     VitestNoImportNodeTest(VitestNoImportNodeTest),
+    VitestNoImportingVitestGlobals(VitestNoImportingVitestGlobals),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
     VitestPreferExpectTypeOf(VitestPreferExpectTypeOf),
+    VitestPreferImportInMock(VitestPreferImportInMock),
     VitestPreferToBeFalsy(VitestPreferToBeFalsy),
     VitestPreferToBeObject(VitestPreferToBeObject),
     VitestPreferToBeTruthy(VitestPreferToBeTruthy),
@@ -1379,6 +1392,7 @@ pub enum RuleEnum {
     NodeGlobalRequire(NodeGlobalRequire),
     NodeNoExportsAssign(NodeNoExportsAssign),
     NodeNoNewRequire(NodeNoNewRequire),
+    NodeNoPathConcat(NodeNoPathConcat),
     NodeNoProcessEnv(NodeNoProcessEnv),
     VueDefineEmitsDeclaration(VueDefineEmitsDeclaration),
     VueDefinePropsDeclaration(VueDefinePropsDeclaration),
@@ -1562,7 +1576,8 @@ const ESLINT_NO_UNUSED_EXPRESSIONS_ID: usize = ESLINT_NO_UNSAFE_OPTIONAL_CHAININ
 const ESLINT_NO_UNUSED_LABELS_ID: usize = ESLINT_NO_UNUSED_EXPRESSIONS_ID + 1usize;
 const ESLINT_NO_UNUSED_PRIVATE_CLASS_MEMBERS_ID: usize = ESLINT_NO_UNUSED_LABELS_ID + 1usize;
 const ESLINT_NO_UNUSED_VARS_ID: usize = ESLINT_NO_UNUSED_PRIVATE_CLASS_MEMBERS_ID + 1usize;
-const ESLINT_NO_USELESS_BACKREFERENCE_ID: usize = ESLINT_NO_UNUSED_VARS_ID + 1usize;
+const ESLINT_NO_USE_BEFORE_DEFINE_ID: usize = ESLINT_NO_UNUSED_VARS_ID + 1usize;
+const ESLINT_NO_USELESS_BACKREFERENCE_ID: usize = ESLINT_NO_USE_BEFORE_DEFINE_ID + 1usize;
 const ESLINT_NO_USELESS_CALL_ID: usize = ESLINT_NO_USELESS_BACKREFERENCE_ID + 1usize;
 const ESLINT_NO_USELESS_CATCH_ID: usize = ESLINT_NO_USELESS_CALL_ID + 1usize;
 const ESLINT_NO_USELESS_COMPUTED_KEY_ID: usize = ESLINT_NO_USELESS_CATCH_ID + 1usize;
@@ -1618,8 +1633,8 @@ const TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID: usize =
 const TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID: usize =
     TYPESCRIPT_CONSISTENT_TYPE_DEFINITIONS_ID + 1usize;
 const TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID + 1usize;
-const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize =
-    TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID + 1usize;
+const TYPESCRIPT_DOT_NOTATION_ID: usize = TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID + 1usize;
+const TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID: usize = TYPESCRIPT_DOT_NOTATION_ID + 1usize;
 const TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID: usize =
     TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID + 1usize;
 const TYPESCRIPT_NO_ARRAY_DELETE_ID: usize = TYPESCRIPT_EXPLICIT_MODULE_BOUNDARY_TYPES_ID + 1usize;
@@ -1695,9 +1710,8 @@ const TYPESCRIPT_NO_UNSAFE_MEMBER_ACCESS_ID: usize = TYPESCRIPT_NO_UNSAFE_FUNCTI
 const TYPESCRIPT_NO_UNSAFE_RETURN_ID: usize = TYPESCRIPT_NO_UNSAFE_MEMBER_ACCESS_ID + 1usize;
 const TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID: usize = TYPESCRIPT_NO_UNSAFE_RETURN_ID + 1usize;
 const TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID: usize = TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID + 1usize;
-const TYPESCRIPT_NO_USE_BEFORE_DEFINE_ID: usize = TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID + 1usize;
 const TYPESCRIPT_NO_USELESS_DEFAULT_ASSIGNMENT_ID: usize =
-    TYPESCRIPT_NO_USE_BEFORE_DEFINE_ID + 1usize;
+    TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID + 1usize;
 const TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID: usize =
     TYPESCRIPT_NO_USELESS_DEFAULT_ASSIGNMENT_ID + 1usize;
 const TYPESCRIPT_NO_VAR_REQUIRES_ID: usize = TYPESCRIPT_NO_USELESS_EMPTY_EXPORT_ID + 1usize;
@@ -1790,7 +1804,8 @@ const JEST_PREFER_HOOKS_ON_TOP_ID: usize = JEST_PREFER_HOOKS_IN_ORDER_ID + 1usiz
 const JEST_PREFER_JEST_MOCKED_ID: usize = JEST_PREFER_HOOKS_ON_TOP_ID + 1usize;
 const JEST_PREFER_LOWERCASE_TITLE_ID: usize = JEST_PREFER_JEST_MOCKED_ID + 1usize;
 const JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = JEST_PREFER_LOWERCASE_TITLE_ID + 1usize;
-const JEST_PREFER_SPY_ON_ID: usize = JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID + 1usize;
+const JEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID + 1usize;
+const JEST_PREFER_SPY_ON_ID: usize = JEST_PREFER_MOCK_RETURN_SHORTHAND_ID + 1usize;
 const JEST_PREFER_STRICT_EQUAL_ID: usize = JEST_PREFER_SPY_ON_ID + 1usize;
 const JEST_PREFER_TO_BE_ID: usize = JEST_PREFER_STRICT_EQUAL_ID + 1usize;
 const JEST_PREFER_TO_CONTAIN_ID: usize = JEST_PREFER_TO_BE_ID + 1usize;
@@ -1972,8 +1987,8 @@ const UNICORN_PREFER_MATH_MIN_MAX_ID: usize =
 const UNICORN_PREFER_MATH_TRUNC_ID: usize = UNICORN_PREFER_MATH_MIN_MAX_ID + 1usize;
 const UNICORN_PREFER_MODERN_DOM_APIS_ID: usize = UNICORN_PREFER_MATH_TRUNC_ID + 1usize;
 const UNICORN_PREFER_MODERN_MATH_APIS_ID: usize = UNICORN_PREFER_MODERN_DOM_APIS_ID + 1usize;
-const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize =
-    UNICORN_PREFER_MODERN_MATH_APIS_ID + 1usize;
+const UNICORN_PREFER_MODULE_ID: usize = UNICORN_PREFER_MODERN_MATH_APIS_ID + 1usize;
+const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = UNICORN_PREFER_MODULE_ID + 1usize;
 const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize =
     UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID + 1usize;
 const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = UNICORN_PREFER_NEGATIVE_INDEX_ID + 1usize;
@@ -1997,7 +2012,8 @@ const UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = UNICORN_PREFER_STRING_S
 const UNICORN_PREFER_STRING_TRIM_START_END_ID: usize =
     UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID + 1usize;
 const UNICORN_PREFER_STRUCTURED_CLONE_ID: usize = UNICORN_PREFER_STRING_TRIM_START_END_ID + 1usize;
-const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = UNICORN_PREFER_STRUCTURED_CLONE_ID + 1usize;
+const UNICORN_PREFER_TERNARY_ID: usize = UNICORN_PREFER_STRUCTURED_CLONE_ID + 1usize;
+const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = UNICORN_PREFER_TERNARY_ID + 1usize;
 const UNICORN_PREFER_TYPE_ERROR_ID: usize = UNICORN_PREFER_TOP_LEVEL_AWAIT_ID + 1usize;
 const UNICORN_RELATIVE_URL_STYLE_ID: usize = UNICORN_PREFER_TYPE_ERROR_ID + 1usize;
 const UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID: usize = UNICORN_RELATIVE_URL_STYLE_ID + 1usize;
@@ -2138,11 +2154,13 @@ const VITEST_CONSISTENT_VITEST_VI_ID: usize = VITEST_CONSISTENT_TEST_FILENAME_ID
 const VITEST_HOISTED_APIS_ON_TOP_ID: usize = VITEST_CONSISTENT_VITEST_VI_ID + 1usize;
 const VITEST_NO_CONDITIONAL_TESTS_ID: usize = VITEST_HOISTED_APIS_ON_TOP_ID + 1usize;
 const VITEST_NO_IMPORT_NODE_TEST_ID: usize = VITEST_NO_CONDITIONAL_TESTS_ID + 1usize;
-const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_NO_IMPORT_NODE_TEST_ID + 1usize;
+const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = VITEST_NO_IMPORT_NODE_TEST_ID + 1usize;
+const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_NO_IMPORTING_VITEST_GLOBALS_ID + 1usize;
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
 const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
 const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
+const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_IMPORT_IN_MOCK_ID + 1usize;
 const VITEST_PREFER_TO_BE_OBJECT_ID: usize = VITEST_PREFER_TO_BE_FALSY_ID + 1usize;
 const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = VITEST_PREFER_TO_BE_OBJECT_ID + 1usize;
 const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize =
@@ -2152,7 +2170,8 @@ const VITEST_WARN_TODO_ID: usize =
 const NODE_GLOBAL_REQUIRE_ID: usize = VITEST_WARN_TODO_ID + 1usize;
 const NODE_NO_EXPORTS_ASSIGN_ID: usize = NODE_GLOBAL_REQUIRE_ID + 1usize;
 const NODE_NO_NEW_REQUIRE_ID: usize = NODE_NO_EXPORTS_ASSIGN_ID + 1usize;
-const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
+const NODE_NO_PATH_CONCAT_ID: usize = NODE_NO_NEW_REQUIRE_ID + 1usize;
+const NODE_NO_PROCESS_ENV_ID: usize = NODE_NO_PATH_CONCAT_ID + 1usize;
 const VUE_DEFINE_EMITS_DECLARATION_ID: usize = NODE_NO_PROCESS_ENV_ID + 1usize;
 const VUE_DEFINE_PROPS_DECLARATION_ID: usize = VUE_DEFINE_EMITS_DECLARATION_ID + 1usize;
 const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = VUE_DEFINE_PROPS_DECLARATION_ID + 1usize;
@@ -2339,6 +2358,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(_) => ESLINT_NO_UNUSED_LABELS_ID,
             Self::EslintNoUnusedPrivateClassMembers(_) => ESLINT_NO_UNUSED_PRIVATE_CLASS_MEMBERS_ID,
             Self::EslintNoUnusedVars(_) => ESLINT_NO_UNUSED_VARS_ID,
+            Self::EslintNoUseBeforeDefine(_) => ESLINT_NO_USE_BEFORE_DEFINE_ID,
             Self::EslintNoUselessBackreference(_) => ESLINT_NO_USELESS_BACKREFERENCE_ID,
             Self::EslintNoUselessCall(_) => ESLINT_NO_USELESS_CALL_ID,
             Self::EslintNoUselessCatch(_) => ESLINT_NO_USELESS_CATCH_ID,
@@ -2400,6 +2420,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(_) => TYPESCRIPT_CONSISTENT_TYPE_EXPORTS_ID,
             Self::TypescriptConsistentTypeImports(_) => TYPESCRIPT_CONSISTENT_TYPE_IMPORTS_ID,
+            Self::TypescriptDotNotation(_) => TYPESCRIPT_DOT_NOTATION_ID,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TYPESCRIPT_EXPLICIT_FUNCTION_RETURN_TYPE_ID
             }
@@ -2487,7 +2508,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => TYPESCRIPT_NO_UNSAFE_RETURN_ID,
             Self::TypescriptNoUnsafeTypeAssertion(_) => TYPESCRIPT_NO_UNSAFE_TYPE_ASSERTION_ID,
             Self::TypescriptNoUnsafeUnaryMinus(_) => TYPESCRIPT_NO_UNSAFE_UNARY_MINUS_ID,
-            Self::TypescriptNoUseBeforeDefine(_) => TYPESCRIPT_NO_USE_BEFORE_DEFINE_ID,
             Self::TypescriptNoUselessDefaultAssignment(_) => {
                 TYPESCRIPT_NO_USELESS_DEFAULT_ASSIGNMENT_ID
             }
@@ -2586,6 +2606,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => JEST_PREFER_JEST_MOCKED_ID,
             Self::JestPreferLowercaseTitle(_) => JEST_PREFER_LOWERCASE_TITLE_ID,
             Self::JestPreferMockPromiseShorthand(_) => JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID,
+            Self::JestPreferMockReturnShorthand(_) => JEST_PREFER_MOCK_RETURN_SHORTHAND_ID,
             Self::JestPreferSpyOn(_) => JEST_PREFER_SPY_ON_ID,
             Self::JestPreferStrictEqual(_) => JEST_PREFER_STRICT_EQUAL_ID,
             Self::JestPreferToBe(_) => JEST_PREFER_TO_BE_ID,
@@ -2774,6 +2795,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UNICORN_PREFER_MATH_TRUNC_ID,
             Self::UnicornPreferModernDomApis(_) => UNICORN_PREFER_MODERN_DOM_APIS_ID,
             Self::UnicornPreferModernMathApis(_) => UNICORN_PREFER_MODERN_MATH_APIS_ID,
+            Self::UnicornPreferModule(_) => UNICORN_PREFER_MODULE_ID,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID
             }
@@ -2796,6 +2818,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID,
             Self::UnicornPreferStringTrimStartEnd(_) => UNICORN_PREFER_STRING_TRIM_START_END_ID,
             Self::UnicornPreferStructuredClone(_) => UNICORN_PREFER_STRUCTURED_CLONE_ID,
+            Self::UnicornPreferTernary(_) => UNICORN_PREFER_TERNARY_ID,
             Self::UnicornPreferTopLevelAwait(_) => UNICORN_PREFER_TOP_LEVEL_AWAIT_ID,
             Self::UnicornPreferTypeError(_) => UNICORN_PREFER_TYPE_ERROR_ID,
             Self::UnicornRelativeUrlStyle(_) => UNICORN_RELATIVE_URL_STYLE_ID,
@@ -2935,10 +2958,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VITEST_HOISTED_APIS_ON_TOP_ID,
             Self::VitestNoConditionalTests(_) => VITEST_NO_CONDITIONAL_TESTS_ID,
             Self::VitestNoImportNodeTest(_) => VITEST_NO_IMPORT_NODE_TEST_ID,
+            Self::VitestNoImportingVitestGlobals(_) => VITEST_NO_IMPORTING_VITEST_GLOBALS_ID,
             Self::VitestPreferCalledOnce(_) => VITEST_PREFER_CALLED_ONCE_ID,
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
             Self::VitestPreferDescribeFunctionTitle(_) => VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID,
             Self::VitestPreferExpectTypeOf(_) => VITEST_PREFER_EXPECT_TYPE_OF_ID,
+            Self::VitestPreferImportInMock(_) => VITEST_PREFER_IMPORT_IN_MOCK_ID,
             Self::VitestPreferToBeFalsy(_) => VITEST_PREFER_TO_BE_FALSY_ID,
             Self::VitestPreferToBeObject(_) => VITEST_PREFER_TO_BE_OBJECT_ID,
             Self::VitestPreferToBeTruthy(_) => VITEST_PREFER_TO_BE_TRUTHY_ID,
@@ -2949,6 +2974,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NODE_GLOBAL_REQUIRE_ID,
             Self::NodeNoExportsAssign(_) => NODE_NO_EXPORTS_ASSIGN_ID,
             Self::NodeNoNewRequire(_) => NODE_NO_NEW_REQUIRE_ID,
+            Self::NodeNoPathConcat(_) => NODE_NO_PATH_CONCAT_ID,
             Self::NodeNoProcessEnv(_) => NODE_NO_PROCESS_ENV_ID,
             Self::VueDefineEmitsDeclaration(_) => VUE_DEFINE_EMITS_DECLARATION_ID,
             Self::VueDefinePropsDeclaration(_) => VUE_DEFINE_PROPS_DECLARATION_ID,
@@ -3135,6 +3161,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(_) => EslintNoUnusedLabels::NAME,
             Self::EslintNoUnusedPrivateClassMembers(_) => EslintNoUnusedPrivateClassMembers::NAME,
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::NAME,
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::NAME,
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::NAME,
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::NAME,
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::NAME,
@@ -3196,6 +3223,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::NAME,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::NAME,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::NAME,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::NAME
             }
@@ -3283,7 +3311,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::NAME,
             Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::NAME,
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::NAME,
-            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::NAME,
             Self::TypescriptNoUselessDefaultAssignment(_) => {
                 TypescriptNoUselessDefaultAssignment::NAME
             }
@@ -3380,6 +3407,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::NAME,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::NAME,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::NAME,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::NAME,
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::NAME,
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::NAME,
             Self::JestPreferToBe(_) => JestPreferToBe::NAME,
@@ -3562,6 +3590,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::NAME,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::NAME,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::NAME,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::NAME,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::NAME
             }
@@ -3584,6 +3613,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => UnicornPreferStringStartsEndsWith::NAME,
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::NAME,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::NAME,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::NAME,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::NAME,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::NAME,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::NAME,
@@ -3721,10 +3751,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::NAME,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::NAME,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::NAME,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::NAME,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::NAME,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::NAME,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::NAME,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::NAME,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::NAME,
@@ -3735,6 +3767,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::NAME,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::NAME,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::NAME,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::NAME,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::NAME,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::NAME,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::NAME,
@@ -3925,6 +3958,7 @@ impl RuleEnum {
                 EslintNoUnusedPrivateClassMembers::CATEGORY
             }
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::CATEGORY,
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::CATEGORY,
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::CATEGORY,
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::CATEGORY,
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::CATEGORY,
@@ -3990,6 +4024,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::CATEGORY,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::CATEGORY,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::CATEGORY,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::CATEGORY
             }
@@ -4081,7 +4116,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::CATEGORY,
             Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::CATEGORY,
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::CATEGORY,
-            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::CATEGORY,
             Self::TypescriptNoUselessDefaultAssignment(_) => {
                 TypescriptNoUselessDefaultAssignment::CATEGORY
             }
@@ -4190,6 +4224,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::CATEGORY,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::CATEGORY,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::CATEGORY,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::CATEGORY,
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::CATEGORY,
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::CATEGORY,
             Self::JestPreferToBe(_) => JestPreferToBe::CATEGORY,
@@ -4382,6 +4417,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::CATEGORY,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::CATEGORY,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::CATEGORY,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::CATEGORY,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::CATEGORY
             }
@@ -4408,6 +4444,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::CATEGORY,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::CATEGORY,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::CATEGORY,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::CATEGORY,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::CATEGORY,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::CATEGORY,
@@ -4549,12 +4586,14 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::CATEGORY,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::CATEGORY,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::CATEGORY,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::CATEGORY,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::CATEGORY,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::CATEGORY,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::CATEGORY
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::CATEGORY,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::CATEGORY,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::CATEGORY,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::CATEGORY,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::CATEGORY,
@@ -4565,6 +4604,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::CATEGORY,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::CATEGORY,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::CATEGORY,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::CATEGORY,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::CATEGORY,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::CATEGORY,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::CATEGORY,
@@ -4754,6 +4794,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(_) => EslintNoUnusedLabels::FIX,
             Self::EslintNoUnusedPrivateClassMembers(_) => EslintNoUnusedPrivateClassMembers::FIX,
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::FIX,
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::FIX,
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::FIX,
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::FIX,
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::FIX,
@@ -4815,6 +4856,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::FIX,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::FIX,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::FIX,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::FIX
             }
@@ -4902,7 +4944,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::FIX,
             Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::FIX,
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::FIX,
-            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::FIX,
             Self::TypescriptNoUselessDefaultAssignment(_) => {
                 TypescriptNoUselessDefaultAssignment::FIX
             }
@@ -4999,6 +5040,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::FIX,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::FIX,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::FIX,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::FIX,
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::FIX,
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::FIX,
             Self::JestPreferToBe(_) => JestPreferToBe::FIX,
@@ -5181,6 +5223,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::FIX,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::FIX,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::FIX,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::FIX,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::FIX
             }
@@ -5203,6 +5246,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => UnicornPreferStringStartsEndsWith::FIX,
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::FIX,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::FIX,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::FIX,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::FIX,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::FIX,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::FIX,
@@ -5340,10 +5384,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::FIX,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::FIX,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::FIX,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::FIX,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::FIX,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::FIX,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FIX,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FIX,
@@ -5354,6 +5400,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::FIX,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::FIX,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::FIX,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::FIX,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FIX,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FIX,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FIX,
@@ -5567,6 +5614,7 @@ impl RuleEnum {
                 EslintNoUnusedPrivateClassMembers::documentation()
             }
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::documentation(),
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::documentation(),
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::documentation(),
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::documentation(),
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::documentation(),
@@ -5638,6 +5686,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(_) => {
                 TypescriptConsistentTypeImports::documentation()
             }
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::documentation(),
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::documentation()
             }
@@ -5743,7 +5792,6 @@ impl RuleEnum {
                 TypescriptNoUnsafeTypeAssertion::documentation()
             }
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::documentation(),
-            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::documentation(),
             Self::TypescriptNoUselessDefaultAssignment(_) => {
                 TypescriptNoUselessDefaultAssignment::documentation()
             }
@@ -5877,6 +5925,9 @@ impl RuleEnum {
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::documentation(),
             Self::JestPreferMockPromiseShorthand(_) => {
                 JestPreferMockPromiseShorthand::documentation()
+            }
+            Self::JestPreferMockReturnShorthand(_) => {
+                JestPreferMockReturnShorthand::documentation()
             }
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::documentation(),
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::documentation(),
@@ -6108,6 +6159,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::documentation(),
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::documentation(),
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::documentation(),
+            Self::UnicornPreferModule(_) => UnicornPreferModule::documentation(),
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::documentation()
             }
@@ -6146,6 +6198,7 @@ impl RuleEnum {
                 UnicornPreferStringTrimStartEnd::documentation()
             }
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::documentation(),
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::documentation(),
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::documentation(),
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::documentation(),
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::documentation(),
@@ -6317,12 +6370,16 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::documentation(),
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::documentation(),
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::documentation(),
+            Self::VitestNoImportingVitestGlobals(_) => {
+                VitestNoImportingVitestGlobals::documentation()
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::documentation(),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::documentation(),
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::documentation()
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::documentation(),
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::documentation(),
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::documentation(),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::documentation(),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::documentation(),
@@ -6333,6 +6390,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::documentation(),
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::documentation(),
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::documentation(),
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::documentation(),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::documentation(),
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::documentation(),
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::documentation(),
@@ -6770,6 +6828,8 @@ impl RuleEnum {
             }
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::config_schema(generator)
                 .or_else(|| EslintNoUnusedVars::schema(generator)),
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::config_schema(generator)
+                .or_else(|| EslintNoUseBeforeDefine::schema(generator)),
             Self::EslintNoUselessBackreference(_) => {
                 EslintNoUselessBackreference::config_schema(generator)
                     .or_else(|| EslintNoUselessBackreference::schema(generator))
@@ -6913,6 +6973,8 @@ impl RuleEnum {
                 TypescriptConsistentTypeImports::config_schema(generator)
                     .or_else(|| TypescriptConsistentTypeImports::schema(generator))
             }
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::config_schema(generator)
+                .or_else(|| TypescriptDotNotation::schema(generator)),
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::config_schema(generator)
                     .or_else(|| TypescriptExplicitFunctionReturnType::schema(generator))
@@ -7102,10 +7164,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeUnaryMinus(_) => {
                 TypescriptNoUnsafeUnaryMinus::config_schema(generator)
                     .or_else(|| TypescriptNoUnsafeUnaryMinus::schema(generator))
-            }
-            Self::TypescriptNoUseBeforeDefine(_) => {
-                TypescriptNoUseBeforeDefine::config_schema(generator)
-                    .or_else(|| TypescriptNoUseBeforeDefine::schema(generator))
             }
             Self::TypescriptNoUselessDefaultAssignment(_) => {
                 TypescriptNoUselessDefaultAssignment::config_schema(generator)
@@ -7342,6 +7400,10 @@ impl RuleEnum {
             Self::JestPreferMockPromiseShorthand(_) => {
                 JestPreferMockPromiseShorthand::config_schema(generator)
                     .or_else(|| JestPreferMockPromiseShorthand::schema(generator))
+            }
+            Self::JestPreferMockReturnShorthand(_) => {
+                JestPreferMockReturnShorthand::config_schema(generator)
+                    .or_else(|| JestPreferMockReturnShorthand::schema(generator))
             }
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::config_schema(generator)
                 .or_else(|| JestPreferSpyOn::schema(generator)),
@@ -7813,6 +7875,8 @@ impl RuleEnum {
                 UnicornPreferModernMathApis::config_schema(generator)
                     .or_else(|| UnicornPreferModernMathApis::schema(generator))
             }
+            Self::UnicornPreferModule(_) => UnicornPreferModule::config_schema(generator)
+                .or_else(|| UnicornPreferModule::schema(generator)),
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::config_schema(generator)
                     .or_else(|| UnicornPreferNativeCoercionFunctions::schema(generator))
@@ -7881,6 +7945,8 @@ impl RuleEnum {
                 UnicornPreferStructuredClone::config_schema(generator)
                     .or_else(|| UnicornPreferStructuredClone::schema(generator))
             }
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::config_schema(generator)
+                .or_else(|| UnicornPreferTernary::schema(generator)),
             Self::UnicornPreferTopLevelAwait(_) => {
                 UnicornPreferTopLevelAwait::config_schema(generator)
                     .or_else(|| UnicornPreferTopLevelAwait::schema(generator))
@@ -8231,6 +8297,10 @@ impl RuleEnum {
                 .or_else(|| VitestNoConditionalTests::schema(generator)),
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::config_schema(generator)
                 .or_else(|| VitestNoImportNodeTest::schema(generator)),
+            Self::VitestNoImportingVitestGlobals(_) => {
+                VitestNoImportingVitestGlobals::config_schema(generator)
+                    .or_else(|| VitestNoImportingVitestGlobals::schema(generator))
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::config_schema(generator)
                 .or_else(|| VitestPreferCalledOnce::schema(generator)),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::config_schema(generator)
@@ -8241,6 +8311,8 @@ impl RuleEnum {
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::config_schema(generator)
                 .or_else(|| VitestPreferExpectTypeOf::schema(generator)),
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::config_schema(generator)
+                .or_else(|| VitestPreferImportInMock::schema(generator)),
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::config_schema(generator)
                 .or_else(|| VitestPreferToBeFalsy::schema(generator)),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::config_schema(generator)
@@ -8261,6 +8333,8 @@ impl RuleEnum {
                 .or_else(|| NodeNoExportsAssign::schema(generator)),
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::config_schema(generator)
                 .or_else(|| NodeNoNewRequire::schema(generator)),
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::config_schema(generator)
+                .or_else(|| NodeNoPathConcat::schema(generator)),
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::config_schema(generator)
                 .or_else(|| NodeNoProcessEnv::schema(generator)),
             Self::VueDefineEmitsDeclaration(_) => {
@@ -8482,6 +8556,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(_) => "eslint",
             Self::EslintNoUnusedPrivateClassMembers(_) => "eslint",
             Self::EslintNoUnusedVars(_) => "eslint",
+            Self::EslintNoUseBeforeDefine(_) => "eslint",
             Self::EslintNoUselessBackreference(_) => "eslint",
             Self::EslintNoUselessCall(_) => "eslint",
             Self::EslintNoUselessCatch(_) => "eslint",
@@ -8533,6 +8608,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(_) => "typescript",
             Self::TypescriptConsistentTypeExports(_) => "typescript",
             Self::TypescriptConsistentTypeImports(_) => "typescript",
+            Self::TypescriptDotNotation(_) => "typescript",
             Self::TypescriptExplicitFunctionReturnType(_) => "typescript",
             Self::TypescriptExplicitModuleBoundaryTypes(_) => "typescript",
             Self::TypescriptNoArrayDelete(_) => "typescript",
@@ -8586,7 +8662,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => "typescript",
             Self::TypescriptNoUnsafeTypeAssertion(_) => "typescript",
             Self::TypescriptNoUnsafeUnaryMinus(_) => "typescript",
-            Self::TypescriptNoUseBeforeDefine(_) => "typescript",
             Self::TypescriptNoUselessDefaultAssignment(_) => "typescript",
             Self::TypescriptNoUselessEmptyExport(_) => "typescript",
             Self::TypescriptNoVarRequires(_) => "typescript",
@@ -8665,6 +8740,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => "jest",
             Self::JestPreferLowercaseTitle(_) => "jest",
             Self::JestPreferMockPromiseShorthand(_) => "jest",
+            Self::JestPreferMockReturnShorthand(_) => "jest",
             Self::JestPreferSpyOn(_) => "jest",
             Self::JestPreferStrictEqual(_) => "jest",
             Self::JestPreferToBe(_) => "jest",
@@ -8827,6 +8903,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => "unicorn",
             Self::UnicornPreferModernDomApis(_) => "unicorn",
             Self::UnicornPreferModernMathApis(_) => "unicorn",
+            Self::UnicornPreferModule(_) => "unicorn",
             Self::UnicornPreferNativeCoercionFunctions(_) => "unicorn",
             Self::UnicornPreferNegativeIndex(_) => "unicorn",
             Self::UnicornPreferNodeProtocol(_) => "unicorn",
@@ -8847,6 +8924,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => "unicorn",
             Self::UnicornPreferStringTrimStartEnd(_) => "unicorn",
             Self::UnicornPreferStructuredClone(_) => "unicorn",
+            Self::UnicornPreferTernary(_) => "unicorn",
             Self::UnicornPreferTopLevelAwait(_) => "unicorn",
             Self::UnicornPreferTypeError(_) => "unicorn",
             Self::UnicornRelativeUrlStyle(_) => "unicorn",
@@ -8976,10 +9054,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => "vitest",
             Self::VitestNoConditionalTests(_) => "vitest",
             Self::VitestNoImportNodeTest(_) => "vitest",
+            Self::VitestNoImportingVitestGlobals(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
             Self::VitestPreferExpectTypeOf(_) => "vitest",
+            Self::VitestPreferImportInMock(_) => "vitest",
             Self::VitestPreferToBeFalsy(_) => "vitest",
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
@@ -8988,6 +9068,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => "node",
             Self::NodeNoExportsAssign(_) => "node",
             Self::NodeNoNewRequire(_) => "node",
+            Self::NodeNoPathConcat(_) => "node",
             Self::NodeNoProcessEnv(_) => "node",
             Self::VueDefineEmitsDeclaration(_) => "vue",
             Self::VueDefinePropsDeclaration(_) => "vue",
@@ -9503,6 +9584,9 @@ impl RuleEnum {
             Self::EslintNoUnusedVars(_) => {
                 Ok(Self::EslintNoUnusedVars(EslintNoUnusedVars::from_configuration(value)?))
             }
+            Self::EslintNoUseBeforeDefine(_) => Ok(Self::EslintNoUseBeforeDefine(
+                EslintNoUseBeforeDefine::from_configuration(value)?,
+            )),
             Self::EslintNoUselessBackreference(_) => Ok(Self::EslintNoUselessBackreference(
                 EslintNoUselessBackreference::from_configuration(value)?,
             )),
@@ -9664,6 +9748,9 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(_) => Ok(Self::TypescriptConsistentTypeImports(
                 TypescriptConsistentTypeImports::from_configuration(value)?,
             )),
+            Self::TypescriptDotNotation(_) => {
+                Ok(Self::TypescriptDotNotation(TypescriptDotNotation::from_configuration(value)?))
+            }
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 Ok(Self::TypescriptExplicitFunctionReturnType(
                     TypescriptExplicitFunctionReturnType::from_configuration(value)?,
@@ -9866,9 +9953,6 @@ impl RuleEnum {
             )),
             Self::TypescriptNoUnsafeUnaryMinus(_) => Ok(Self::TypescriptNoUnsafeUnaryMinus(
                 TypescriptNoUnsafeUnaryMinus::from_configuration(value)?,
-            )),
-            Self::TypescriptNoUseBeforeDefine(_) => Ok(Self::TypescriptNoUseBeforeDefine(
-                TypescriptNoUseBeforeDefine::from_configuration(value)?,
             )),
             Self::TypescriptNoUselessDefaultAssignment(_) => {
                 Ok(Self::TypescriptNoUselessDefaultAssignment(
@@ -10135,6 +10219,9 @@ impl RuleEnum {
             )),
             Self::JestPreferMockPromiseShorthand(_) => Ok(Self::JestPreferMockPromiseShorthand(
                 JestPreferMockPromiseShorthand::from_configuration(value)?,
+            )),
+            Self::JestPreferMockReturnShorthand(_) => Ok(Self::JestPreferMockReturnShorthand(
+                JestPreferMockReturnShorthand::from_configuration(value)?,
             )),
             Self::JestPreferSpyOn(_) => {
                 Ok(Self::JestPreferSpyOn(JestPreferSpyOn::from_configuration(value)?))
@@ -10658,6 +10745,9 @@ impl RuleEnum {
             Self::UnicornPreferModernMathApis(_) => Ok(Self::UnicornPreferModernMathApis(
                 UnicornPreferModernMathApis::from_configuration(value)?,
             )),
+            Self::UnicornPreferModule(_) => {
+                Ok(Self::UnicornPreferModule(UnicornPreferModule::from_configuration(value)?))
+            }
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 Ok(Self::UnicornPreferNativeCoercionFunctions(
                     UnicornPreferNativeCoercionFunctions::from_configuration(value)?,
@@ -10724,6 +10814,9 @@ impl RuleEnum {
             Self::UnicornPreferStructuredClone(_) => Ok(Self::UnicornPreferStructuredClone(
                 UnicornPreferStructuredClone::from_configuration(value)?,
             )),
+            Self::UnicornPreferTernary(_) => {
+                Ok(Self::UnicornPreferTernary(UnicornPreferTernary::from_configuration(value)?))
+            }
             Self::UnicornPreferTopLevelAwait(_) => Ok(Self::UnicornPreferTopLevelAwait(
                 UnicornPreferTopLevelAwait::from_configuration(value)?,
             )),
@@ -11125,6 +11218,9 @@ impl RuleEnum {
             Self::VitestNoImportNodeTest(_) => {
                 Ok(Self::VitestNoImportNodeTest(VitestNoImportNodeTest::from_configuration(value)?))
             }
+            Self::VitestNoImportingVitestGlobals(_) => Ok(Self::VitestNoImportingVitestGlobals(
+                VitestNoImportingVitestGlobals::from_configuration(value)?,
+            )),
             Self::VitestPreferCalledOnce(_) => {
                 Ok(Self::VitestPreferCalledOnce(VitestPreferCalledOnce::from_configuration(value)?))
             }
@@ -11138,6 +11234,9 @@ impl RuleEnum {
             }
             Self::VitestPreferExpectTypeOf(_) => Ok(Self::VitestPreferExpectTypeOf(
                 VitestPreferExpectTypeOf::from_configuration(value)?,
+            )),
+            Self::VitestPreferImportInMock(_) => Ok(Self::VitestPreferImportInMock(
+                VitestPreferImportInMock::from_configuration(value)?,
             )),
             Self::VitestPreferToBeFalsy(_) => {
                 Ok(Self::VitestPreferToBeFalsy(VitestPreferToBeFalsy::from_configuration(value)?))
@@ -11164,6 +11263,9 @@ impl RuleEnum {
             }
             Self::NodeNoNewRequire(_) => {
                 Ok(Self::NodeNoNewRequire(NodeNoNewRequire::from_configuration(value)?))
+            }
+            Self::NodeNoPathConcat(_) => {
+                Ok(Self::NodeNoPathConcat(NodeNoPathConcat::from_configuration(value)?))
             }
             Self::NodeNoProcessEnv(_) => {
                 Ok(Self::NodeNoProcessEnv(NodeNoProcessEnv::from_configuration(value)?))
@@ -11387,6 +11489,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(rule) => rule.to_configuration(),
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.to_configuration(),
             Self::EslintNoUnusedVars(rule) => rule.to_configuration(),
+            Self::EslintNoUseBeforeDefine(rule) => rule.to_configuration(),
             Self::EslintNoUselessBackreference(rule) => rule.to_configuration(),
             Self::EslintNoUselessCall(rule) => rule.to_configuration(),
             Self::EslintNoUselessCatch(rule) => rule.to_configuration(),
@@ -11438,6 +11541,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeExports(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeImports(rule) => rule.to_configuration(),
+            Self::TypescriptDotNotation(rule) => rule.to_configuration(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.to_configuration(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.to_configuration(),
             Self::TypescriptNoArrayDelete(rule) => rule.to_configuration(),
@@ -11493,7 +11597,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.to_configuration(),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.to_configuration(),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.to_configuration(),
-            Self::TypescriptNoUseBeforeDefine(rule) => rule.to_configuration(),
             Self::TypescriptNoUselessDefaultAssignment(rule) => rule.to_configuration(),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.to_configuration(),
             Self::TypescriptNoVarRequires(rule) => rule.to_configuration(),
@@ -11572,6 +11675,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.to_configuration(),
             Self::JestPreferLowercaseTitle(rule) => rule.to_configuration(),
             Self::JestPreferMockPromiseShorthand(rule) => rule.to_configuration(),
+            Self::JestPreferMockReturnShorthand(rule) => rule.to_configuration(),
             Self::JestPreferSpyOn(rule) => rule.to_configuration(),
             Self::JestPreferStrictEqual(rule) => rule.to_configuration(),
             Self::JestPreferToBe(rule) => rule.to_configuration(),
@@ -11734,6 +11838,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.to_configuration(),
             Self::UnicornPreferModernDomApis(rule) => rule.to_configuration(),
             Self::UnicornPreferModernMathApis(rule) => rule.to_configuration(),
+            Self::UnicornPreferModule(rule) => rule.to_configuration(),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.to_configuration(),
             Self::UnicornPreferNegativeIndex(rule) => rule.to_configuration(),
             Self::UnicornPreferNodeProtocol(rule) => rule.to_configuration(),
@@ -11754,6 +11859,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.to_configuration(),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.to_configuration(),
             Self::UnicornPreferStructuredClone(rule) => rule.to_configuration(),
+            Self::UnicornPreferTernary(rule) => rule.to_configuration(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.to_configuration(),
             Self::UnicornPreferTypeError(rule) => rule.to_configuration(),
             Self::UnicornRelativeUrlStyle(rule) => rule.to_configuration(),
@@ -11883,10 +11989,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.to_configuration(),
             Self::VitestNoConditionalTests(rule) => rule.to_configuration(),
             Self::VitestNoImportNodeTest(rule) => rule.to_configuration(),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
             Self::VitestPreferExpectTypeOf(rule) => rule.to_configuration(),
+            Self::VitestPreferImportInMock(rule) => rule.to_configuration(),
             Self::VitestPreferToBeFalsy(rule) => rule.to_configuration(),
             Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
             Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
@@ -11897,6 +12005,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.to_configuration(),
             Self::NodeNoExportsAssign(rule) => rule.to_configuration(),
             Self::NodeNoNewRequire(rule) => rule.to_configuration(),
+            Self::NodeNoPathConcat(rule) => rule.to_configuration(),
             Self::NodeNoProcessEnv(rule) => rule.to_configuration(),
             Self::VueDefineEmitsDeclaration(rule) => rule.to_configuration(),
             Self::VueDefinePropsDeclaration(rule) => rule.to_configuration(),
@@ -12083,6 +12192,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(rule) => rule.run(node, ctx),
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.run(node, ctx),
             Self::EslintNoUnusedVars(rule) => rule.run(node, ctx),
+            Self::EslintNoUseBeforeDefine(rule) => rule.run(node, ctx),
             Self::EslintNoUselessBackreference(rule) => rule.run(node, ctx),
             Self::EslintNoUselessCall(rule) => rule.run(node, ctx),
             Self::EslintNoUselessCatch(rule) => rule.run(node, ctx),
@@ -12134,6 +12244,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeExports(rule) => rule.run(node, ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.run(node, ctx),
+            Self::TypescriptDotNotation(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run(node, ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run(node, ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run(node, ctx),
@@ -12187,7 +12298,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.run(node, ctx),
-            Self::TypescriptNoUseBeforeDefine(rule) => rule.run(node, ctx),
             Self::TypescriptNoUselessDefaultAssignment(rule) => rule.run(node, ctx),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.run(node, ctx),
             Self::TypescriptNoVarRequires(rule) => rule.run(node, ctx),
@@ -12266,6 +12376,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.run(node, ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.run(node, ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run(node, ctx),
+            Self::JestPreferMockReturnShorthand(rule) => rule.run(node, ctx),
             Self::JestPreferSpyOn(rule) => rule.run(node, ctx),
             Self::JestPreferStrictEqual(rule) => rule.run(node, ctx),
             Self::JestPreferToBe(rule) => rule.run(node, ctx),
@@ -12428,6 +12539,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run(node, ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.run(node, ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.run(node, ctx),
+            Self::UnicornPreferModule(rule) => rule.run(node, ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run(node, ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.run(node, ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.run(node, ctx),
@@ -12448,6 +12560,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run(node, ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run(node, ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.run(node, ctx),
+            Self::UnicornPreferTernary(rule) => rule.run(node, ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run(node, ctx),
             Self::UnicornPreferTypeError(rule) => rule.run(node, ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run(node, ctx),
@@ -12577,10 +12690,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.run(node, ctx),
             Self::VitestNoConditionalTests(rule) => rule.run(node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run(node, ctx),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run(node, ctx),
+            Self::VitestPreferImportInMock(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
@@ -12589,6 +12704,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run(node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run(node, ctx),
             Self::NodeNoNewRequire(rule) => rule.run(node, ctx),
+            Self::NodeNoPathConcat(rule) => rule.run(node, ctx),
             Self::NodeNoProcessEnv(rule) => rule.run(node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run(node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run(node, ctx),
@@ -12775,6 +12891,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(rule) => rule.run_once(ctx),
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.run_once(ctx),
             Self::EslintNoUnusedVars(rule) => rule.run_once(ctx),
+            Self::EslintNoUseBeforeDefine(rule) => rule.run_once(ctx),
             Self::EslintNoUselessBackreference(rule) => rule.run_once(ctx),
             Self::EslintNoUselessCall(rule) => rule.run_once(ctx),
             Self::EslintNoUselessCatch(rule) => rule.run_once(ctx),
@@ -12826,6 +12943,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeExports(rule) => rule.run_once(ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.run_once(ctx),
+            Self::TypescriptDotNotation(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_once(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_once(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.run_once(ctx),
@@ -12879,7 +12997,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.run_once(ctx),
-            Self::TypescriptNoUseBeforeDefine(rule) => rule.run_once(ctx),
             Self::TypescriptNoUselessDefaultAssignment(rule) => rule.run_once(ctx),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.run_once(ctx),
             Self::TypescriptNoVarRequires(rule) => rule.run_once(ctx),
@@ -12958,6 +13075,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.run_once(ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.run_once(ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run_once(ctx),
+            Self::JestPreferMockReturnShorthand(rule) => rule.run_once(ctx),
             Self::JestPreferSpyOn(rule) => rule.run_once(ctx),
             Self::JestPreferStrictEqual(rule) => rule.run_once(ctx),
             Self::JestPreferToBe(rule) => rule.run_once(ctx),
@@ -13120,6 +13238,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run_once(ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.run_once(ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.run_once(ctx),
+            Self::UnicornPreferModule(rule) => rule.run_once(ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_once(ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.run_once(ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_once(ctx),
@@ -13140,6 +13259,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_once(ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run_once(ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.run_once(ctx),
+            Self::UnicornPreferTernary(rule) => rule.run_once(ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_once(ctx),
             Self::UnicornPreferTypeError(rule) => rule.run_once(ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_once(ctx),
@@ -13269,10 +13389,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.run_once(ctx),
             Self::VitestNoConditionalTests(rule) => rule.run_once(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_once(ctx),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_once(ctx),
+            Self::VitestPreferImportInMock(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
@@ -13281,6 +13403,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_once(ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_once(ctx),
             Self::NodeNoNewRequire(rule) => rule.run_once(ctx),
+            Self::NodeNoPathConcat(rule) => rule.run_once(ctx),
             Self::NodeNoProcessEnv(rule) => rule.run_once(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_once(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_once(ctx),
@@ -13471,6 +13594,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUnusedVars(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::EslintNoUseBeforeDefine(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessBackreference(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessCall(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::EslintNoUselessCatch(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13532,6 +13656,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::TypescriptDotNotation(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -13619,7 +13744,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoUseBeforeDefine(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoUselessDefaultAssignment(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -13716,6 +13840,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JestPreferMockReturnShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferSpyOn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferStrictEqual(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferToBe(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13898,6 +14023,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferModule(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -13920,6 +14046,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferTypeError(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14057,10 +14184,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoConditionalTests(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferImportInMock(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14071,6 +14200,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoExportsAssign(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoNewRequire(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NodeNoPathConcat(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NodeNoProcessEnv(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14257,6 +14387,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(rule) => rule.should_run(ctx),
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.should_run(ctx),
             Self::EslintNoUnusedVars(rule) => rule.should_run(ctx),
+            Self::EslintNoUseBeforeDefine(rule) => rule.should_run(ctx),
             Self::EslintNoUselessBackreference(rule) => rule.should_run(ctx),
             Self::EslintNoUselessCall(rule) => rule.should_run(ctx),
             Self::EslintNoUselessCatch(rule) => rule.should_run(ctx),
@@ -14308,6 +14439,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeExports(rule) => rule.should_run(ctx),
             Self::TypescriptConsistentTypeImports(rule) => rule.should_run(ctx),
+            Self::TypescriptDotNotation(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.should_run(ctx),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.should_run(ctx),
             Self::TypescriptNoArrayDelete(rule) => rule.should_run(ctx),
@@ -14361,7 +14493,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.should_run(ctx),
-            Self::TypescriptNoUseBeforeDefine(rule) => rule.should_run(ctx),
             Self::TypescriptNoUselessDefaultAssignment(rule) => rule.should_run(ctx),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.should_run(ctx),
             Self::TypescriptNoVarRequires(rule) => rule.should_run(ctx),
@@ -14440,6 +14571,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.should_run(ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.should_run(ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.should_run(ctx),
+            Self::JestPreferMockReturnShorthand(rule) => rule.should_run(ctx),
             Self::JestPreferSpyOn(rule) => rule.should_run(ctx),
             Self::JestPreferStrictEqual(rule) => rule.should_run(ctx),
             Self::JestPreferToBe(rule) => rule.should_run(ctx),
@@ -14602,6 +14734,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.should_run(ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.should_run(ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.should_run(ctx),
+            Self::UnicornPreferModule(rule) => rule.should_run(ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.should_run(ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.should_run(ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.should_run(ctx),
@@ -14622,6 +14755,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.should_run(ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.should_run(ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.should_run(ctx),
+            Self::UnicornPreferTernary(rule) => rule.should_run(ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.should_run(ctx),
             Self::UnicornPreferTypeError(rule) => rule.should_run(ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.should_run(ctx),
@@ -14751,10 +14885,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.should_run(ctx),
             Self::VitestNoConditionalTests(rule) => rule.should_run(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.should_run(ctx),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.should_run(ctx),
+            Self::VitestPreferImportInMock(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
@@ -14763,6 +14899,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.should_run(ctx),
             Self::NodeNoExportsAssign(rule) => rule.should_run(ctx),
             Self::NodeNoNewRequire(rule) => rule.should_run(ctx),
+            Self::NodeNoPathConcat(rule) => rule.should_run(ctx),
             Self::NodeNoProcessEnv(rule) => rule.should_run(ctx),
             Self::VueDefineEmitsDeclaration(rule) => rule.should_run(ctx),
             Self::VueDefinePropsDeclaration(rule) => rule.should_run(ctx),
@@ -14975,6 +15112,7 @@ impl RuleEnum {
                 EslintNoUnusedPrivateClassMembers::IS_TSGOLINT_RULE
             }
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::IS_TSGOLINT_RULE,
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::IS_TSGOLINT_RULE,
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::IS_TSGOLINT_RULE,
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::IS_TSGOLINT_RULE,
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::IS_TSGOLINT_RULE,
@@ -15046,6 +15184,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeImports(_) => {
                 TypescriptConsistentTypeImports::IS_TSGOLINT_RULE
             }
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::IS_TSGOLINT_RULE,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::IS_TSGOLINT_RULE
             }
@@ -15151,7 +15290,6 @@ impl RuleEnum {
                 TypescriptNoUnsafeTypeAssertion::IS_TSGOLINT_RULE
             }
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::IS_TSGOLINT_RULE,
-            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::IS_TSGOLINT_RULE,
             Self::TypescriptNoUselessDefaultAssignment(_) => {
                 TypescriptNoUselessDefaultAssignment::IS_TSGOLINT_RULE
             }
@@ -15285,6 +15423,9 @@ impl RuleEnum {
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::IS_TSGOLINT_RULE,
             Self::JestPreferMockPromiseShorthand(_) => {
                 JestPreferMockPromiseShorthand::IS_TSGOLINT_RULE
+            }
+            Self::JestPreferMockReturnShorthand(_) => {
+                JestPreferMockReturnShorthand::IS_TSGOLINT_RULE
             }
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::IS_TSGOLINT_RULE,
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::IS_TSGOLINT_RULE,
@@ -15516,6 +15657,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::IS_TSGOLINT_RULE,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::IS_TSGOLINT_RULE,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::IS_TSGOLINT_RULE,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::IS_TSGOLINT_RULE,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::IS_TSGOLINT_RULE
             }
@@ -15554,6 +15696,7 @@ impl RuleEnum {
                 UnicornPreferStringTrimStartEnd::IS_TSGOLINT_RULE
             }
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::IS_TSGOLINT_RULE,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::IS_TSGOLINT_RULE,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::IS_TSGOLINT_RULE,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::IS_TSGOLINT_RULE,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::IS_TSGOLINT_RULE,
@@ -15725,12 +15868,16 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::IS_TSGOLINT_RULE,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::IS_TSGOLINT_RULE,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::IS_TSGOLINT_RULE,
+            Self::VitestNoImportingVitestGlobals(_) => {
+                VitestNoImportingVitestGlobals::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::IS_TSGOLINT_RULE,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::IS_TSGOLINT_RULE,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::IS_TSGOLINT_RULE
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::IS_TSGOLINT_RULE,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
@@ -15741,6 +15888,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::IS_TSGOLINT_RULE,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::IS_TSGOLINT_RULE,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::IS_TSGOLINT_RULE,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::IS_TSGOLINT_RULE,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::IS_TSGOLINT_RULE,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::IS_TSGOLINT_RULE,
@@ -15938,6 +16086,7 @@ impl RuleEnum {
                 EslintNoUnusedPrivateClassMembers::HAS_CONFIG
             }
             Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::HAS_CONFIG,
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::HAS_CONFIG,
             Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::HAS_CONFIG,
             Self::EslintNoUselessCall(_) => EslintNoUselessCall::HAS_CONFIG,
             Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::HAS_CONFIG,
@@ -16003,6 +16152,7 @@ impl RuleEnum {
             }
             Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::HAS_CONFIG,
             Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::HAS_CONFIG,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::HAS_CONFIG,
             Self::TypescriptExplicitFunctionReturnType(_) => {
                 TypescriptExplicitFunctionReturnType::HAS_CONFIG
             }
@@ -16100,7 +16250,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::HAS_CONFIG,
             Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::HAS_CONFIG,
             Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::HAS_CONFIG,
-            Self::TypescriptNoUseBeforeDefine(_) => TypescriptNoUseBeforeDefine::HAS_CONFIG,
             Self::TypescriptNoUselessDefaultAssignment(_) => {
                 TypescriptNoUselessDefaultAssignment::HAS_CONFIG
             }
@@ -16213,6 +16362,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::HAS_CONFIG,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::HAS_CONFIG,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::HAS_CONFIG,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::HAS_CONFIG,
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::HAS_CONFIG,
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::HAS_CONFIG,
             Self::JestPreferToBe(_) => JestPreferToBe::HAS_CONFIG,
@@ -16413,6 +16563,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::HAS_CONFIG,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::HAS_CONFIG,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::HAS_CONFIG,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::HAS_CONFIG,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::HAS_CONFIG
             }
@@ -16439,6 +16590,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::HAS_CONFIG,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::HAS_CONFIG,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::HAS_CONFIG,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::HAS_CONFIG,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::HAS_CONFIG,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::HAS_CONFIG,
@@ -16584,12 +16736,14 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::HAS_CONFIG,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::HAS_CONFIG,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::HAS_CONFIG,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::HAS_CONFIG,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::HAS_CONFIG,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::HAS_CONFIG,
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::HAS_CONFIG
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::HAS_CONFIG,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::HAS_CONFIG,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::HAS_CONFIG,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::HAS_CONFIG,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::HAS_CONFIG,
@@ -16600,6 +16754,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
             Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::HAS_CONFIG,
             Self::NodeNoNewRequire(_) => NodeNoNewRequire::HAS_CONFIG,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::HAS_CONFIG,
             Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::HAS_CONFIG,
             Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::HAS_CONFIG,
             Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::HAS_CONFIG,
@@ -16788,6 +16943,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(rule) => rule.types_info(),
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.types_info(),
             Self::EslintNoUnusedVars(rule) => rule.types_info(),
+            Self::EslintNoUseBeforeDefine(rule) => rule.types_info(),
             Self::EslintNoUselessBackreference(rule) => rule.types_info(),
             Self::EslintNoUselessCall(rule) => rule.types_info(),
             Self::EslintNoUselessCatch(rule) => rule.types_info(),
@@ -16839,6 +16995,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeExports(rule) => rule.types_info(),
             Self::TypescriptConsistentTypeImports(rule) => rule.types_info(),
+            Self::TypescriptDotNotation(rule) => rule.types_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.types_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.types_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.types_info(),
@@ -16892,7 +17049,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.types_info(),
-            Self::TypescriptNoUseBeforeDefine(rule) => rule.types_info(),
             Self::TypescriptNoUselessDefaultAssignment(rule) => rule.types_info(),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.types_info(),
             Self::TypescriptNoVarRequires(rule) => rule.types_info(),
@@ -16971,6 +17127,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.types_info(),
             Self::JestPreferLowercaseTitle(rule) => rule.types_info(),
             Self::JestPreferMockPromiseShorthand(rule) => rule.types_info(),
+            Self::JestPreferMockReturnShorthand(rule) => rule.types_info(),
             Self::JestPreferSpyOn(rule) => rule.types_info(),
             Self::JestPreferStrictEqual(rule) => rule.types_info(),
             Self::JestPreferToBe(rule) => rule.types_info(),
@@ -17133,6 +17290,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.types_info(),
             Self::UnicornPreferModernDomApis(rule) => rule.types_info(),
             Self::UnicornPreferModernMathApis(rule) => rule.types_info(),
+            Self::UnicornPreferModule(rule) => rule.types_info(),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.types_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.types_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.types_info(),
@@ -17153,6 +17311,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.types_info(),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.types_info(),
             Self::UnicornPreferStructuredClone(rule) => rule.types_info(),
+            Self::UnicornPreferTernary(rule) => rule.types_info(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.types_info(),
             Self::UnicornPreferTypeError(rule) => rule.types_info(),
             Self::UnicornRelativeUrlStyle(rule) => rule.types_info(),
@@ -17282,10 +17441,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.types_info(),
             Self::VitestNoConditionalTests(rule) => rule.types_info(),
             Self::VitestNoImportNodeTest(rule) => rule.types_info(),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.types_info(),
+            Self::VitestPreferImportInMock(rule) => rule.types_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.types_info(),
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
@@ -17294,6 +17455,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.types_info(),
             Self::NodeNoExportsAssign(rule) => rule.types_info(),
             Self::NodeNoNewRequire(rule) => rule.types_info(),
+            Self::NodeNoPathConcat(rule) => rule.types_info(),
             Self::NodeNoProcessEnv(rule) => rule.types_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.types_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.types_info(),
@@ -17480,6 +17642,7 @@ impl RuleEnum {
             Self::EslintNoUnusedLabels(rule) => rule.run_info(),
             Self::EslintNoUnusedPrivateClassMembers(rule) => rule.run_info(),
             Self::EslintNoUnusedVars(rule) => rule.run_info(),
+            Self::EslintNoUseBeforeDefine(rule) => rule.run_info(),
             Self::EslintNoUselessBackreference(rule) => rule.run_info(),
             Self::EslintNoUselessCall(rule) => rule.run_info(),
             Self::EslintNoUselessCatch(rule) => rule.run_info(),
@@ -17531,6 +17694,7 @@ impl RuleEnum {
             Self::TypescriptConsistentTypeDefinitions(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeExports(rule) => rule.run_info(),
             Self::TypescriptConsistentTypeImports(rule) => rule.run_info(),
+            Self::TypescriptDotNotation(rule) => rule.run_info(),
             Self::TypescriptExplicitFunctionReturnType(rule) => rule.run_info(),
             Self::TypescriptExplicitModuleBoundaryTypes(rule) => rule.run_info(),
             Self::TypescriptNoArrayDelete(rule) => rule.run_info(),
@@ -17584,7 +17748,6 @@ impl RuleEnum {
             Self::TypescriptNoUnsafeReturn(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeTypeAssertion(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeUnaryMinus(rule) => rule.run_info(),
-            Self::TypescriptNoUseBeforeDefine(rule) => rule.run_info(),
             Self::TypescriptNoUselessDefaultAssignment(rule) => rule.run_info(),
             Self::TypescriptNoUselessEmptyExport(rule) => rule.run_info(),
             Self::TypescriptNoVarRequires(rule) => rule.run_info(),
@@ -17663,6 +17826,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.run_info(),
             Self::JestPreferLowercaseTitle(rule) => rule.run_info(),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run_info(),
+            Self::JestPreferMockReturnShorthand(rule) => rule.run_info(),
             Self::JestPreferSpyOn(rule) => rule.run_info(),
             Self::JestPreferStrictEqual(rule) => rule.run_info(),
             Self::JestPreferToBe(rule) => rule.run_info(),
@@ -17825,6 +17989,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run_info(),
             Self::UnicornPreferModernDomApis(rule) => rule.run_info(),
             Self::UnicornPreferModernMathApis(rule) => rule.run_info(),
+            Self::UnicornPreferModule(rule) => rule.run_info(),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.run_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_info(),
@@ -17845,6 +18010,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_info(),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run_info(),
             Self::UnicornPreferStructuredClone(rule) => rule.run_info(),
+            Self::UnicornPreferTernary(rule) => rule.run_info(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_info(),
             Self::UnicornPreferTypeError(rule) => rule.run_info(),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_info(),
@@ -17974,10 +18140,12 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.run_info(),
             Self::VitestNoConditionalTests(rule) => rule.run_info(),
             Self::VitestNoImportNodeTest(rule) => rule.run_info(),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_info(),
+            Self::VitestPreferImportInMock(rule) => rule.run_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.run_info(),
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
@@ -17986,6 +18154,7 @@ impl RuleEnum {
             Self::NodeGlobalRequire(rule) => rule.run_info(),
             Self::NodeNoExportsAssign(rule) => rule.run_info(),
             Self::NodeNoNewRequire(rule) => rule.run_info(),
+            Self::NodeNoPathConcat(rule) => rule.run_info(),
             Self::NodeNoProcessEnv(rule) => rule.run_info(),
             Self::VueDefineEmitsDeclaration(rule) => rule.run_info(),
             Self::VueDefinePropsDeclaration(rule) => rule.run_info(),
@@ -18194,6 +18363,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::EslintNoUnusedLabels(EslintNoUnusedLabels::default()),
         RuleEnum::EslintNoUnusedPrivateClassMembers(EslintNoUnusedPrivateClassMembers::default()),
         RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
+        RuleEnum::EslintNoUseBeforeDefine(EslintNoUseBeforeDefine::default()),
         RuleEnum::EslintNoUselessBackreference(EslintNoUselessBackreference::default()),
         RuleEnum::EslintNoUselessCall(EslintNoUselessCall::default()),
         RuleEnum::EslintNoUselessCatch(EslintNoUselessCatch::default()),
@@ -18255,6 +18425,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::TypescriptConsistentTypeExports(TypescriptConsistentTypeExports::default()),
         RuleEnum::TypescriptConsistentTypeImports(TypescriptConsistentTypeImports::default()),
+        RuleEnum::TypescriptDotNotation(TypescriptDotNotation::default()),
         RuleEnum::TypescriptExplicitFunctionReturnType(
             TypescriptExplicitFunctionReturnType::default(),
         ),
@@ -18342,7 +18513,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::TypescriptNoUnsafeReturn(TypescriptNoUnsafeReturn::default()),
         RuleEnum::TypescriptNoUnsafeTypeAssertion(TypescriptNoUnsafeTypeAssertion::default()),
         RuleEnum::TypescriptNoUnsafeUnaryMinus(TypescriptNoUnsafeUnaryMinus::default()),
-        RuleEnum::TypescriptNoUseBeforeDefine(TypescriptNoUseBeforeDefine::default()),
         RuleEnum::TypescriptNoUselessDefaultAssignment(
             TypescriptNoUselessDefaultAssignment::default(),
         ),
@@ -18439,6 +18609,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestPreferJestMocked(JestPreferJestMocked::default()),
         RuleEnum::JestPreferLowercaseTitle(JestPreferLowercaseTitle::default()),
         RuleEnum::JestPreferMockPromiseShorthand(JestPreferMockPromiseShorthand::default()),
+        RuleEnum::JestPreferMockReturnShorthand(JestPreferMockReturnShorthand::default()),
         RuleEnum::JestPreferSpyOn(JestPreferSpyOn::default()),
         RuleEnum::JestPreferStrictEqual(JestPreferStrictEqual::default()),
         RuleEnum::JestPreferToBe(JestPreferToBe::default()),
@@ -18621,6 +18792,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferMathTrunc(UnicornPreferMathTrunc::default()),
         RuleEnum::UnicornPreferModernDomApis(UnicornPreferModernDomApis::default()),
         RuleEnum::UnicornPreferModernMathApis(UnicornPreferModernMathApis::default()),
+        RuleEnum::UnicornPreferModule(UnicornPreferModule::default()),
         RuleEnum::UnicornPreferNativeCoercionFunctions(
             UnicornPreferNativeCoercionFunctions::default(),
         ),
@@ -18643,6 +18815,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferStringStartsEndsWith(UnicornPreferStringStartsEndsWith::default()),
         RuleEnum::UnicornPreferStringTrimStartEnd(UnicornPreferStringTrimStartEnd::default()),
         RuleEnum::UnicornPreferStructuredClone(UnicornPreferStructuredClone::default()),
+        RuleEnum::UnicornPreferTernary(UnicornPreferTernary::default()),
         RuleEnum::UnicornPreferTopLevelAwait(UnicornPreferTopLevelAwait::default()),
         RuleEnum::UnicornPreferTypeError(UnicornPreferTypeError::default()),
         RuleEnum::UnicornRelativeUrlStyle(UnicornRelativeUrlStyle::default()),
@@ -18780,10 +18953,12 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestHoistedApisOnTop(VitestHoistedApisOnTop::default()),
         RuleEnum::VitestNoConditionalTests(VitestNoConditionalTests::default()),
         RuleEnum::VitestNoImportNodeTest(VitestNoImportNodeTest::default()),
+        RuleEnum::VitestNoImportingVitestGlobals(VitestNoImportingVitestGlobals::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
         RuleEnum::VitestPreferExpectTypeOf(VitestPreferExpectTypeOf::default()),
+        RuleEnum::VitestPreferImportInMock(VitestPreferImportInMock::default()),
         RuleEnum::VitestPreferToBeFalsy(VitestPreferToBeFalsy::default()),
         RuleEnum::VitestPreferToBeObject(VitestPreferToBeObject::default()),
         RuleEnum::VitestPreferToBeTruthy(VitestPreferToBeTruthy::default()),
@@ -18794,6 +18969,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NodeGlobalRequire(NodeGlobalRequire::default()),
         RuleEnum::NodeNoExportsAssign(NodeNoExportsAssign::default()),
         RuleEnum::NodeNoNewRequire(NodeNoNewRequire::default()),
+        RuleEnum::NodeNoPathConcat(NodeNoPathConcat::default()),
         RuleEnum::NodeNoProcessEnv(NodeNoProcessEnv::default()),
         RuleEnum::VueDefineEmitsDeclaration(VueDefineEmitsDeclaration::default()),
         RuleEnum::VueDefinePropsDeclaration(VueDefinePropsDeclaration::default()),

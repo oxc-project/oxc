@@ -106,18 +106,12 @@ export async function formatFixture(
   fixturesDir: string,
   fixturePath: string,
   languageId: string,
-  initializationOptions?: OxfmtLSPConfig,
+  clientOrConfig?: OxfmtLSPConfig | ReturnType<typeof createLspConnection>,
 ): Promise<string> {
   const filePath = join(fixturesDir, fixturePath);
   const fileUri = pathToFileURL(filePath).href;
 
-  return await formatFixtureContent(
-    fixturesDir,
-    fixturePath,
-    fileUri,
-    languageId,
-    initializationOptions,
-  );
+  return await formatFixtureContent(fixturesDir, fixturePath, fileUri, languageId, clientOrConfig);
 }
 
 export async function formatFixtureContent(
@@ -125,23 +119,33 @@ export async function formatFixtureContent(
   fixturePath: string,
   fileUri: string,
   languageId: string,
-  initializationOptions?: OxfmtLSPConfig,
+  clientOrConfig?: OxfmtLSPConfig | ReturnType<typeof createLspConnection>,
 ): Promise<string> {
   const filePath = join(fixturesDir, fixturePath);
   const dirPath = dirname(filePath);
   const content = await fs.readFile(filePath, "utf-8");
 
-  await using client = createLspConnection();
+  let innerClient: ReturnType<typeof createLspConnection> | undefined;
 
-  await client.initialize([{ uri: pathToFileURL(dirPath).href, name: "test" }], {}, [
-    {
-      workspaceUri: pathToFileURL(dirPath).href,
-      options: initializationOptions,
-    },
-  ]);
-  await client.didOpen(fileUri, languageId, content);
+  if (clientOrConfig === undefined || !("initialize" in clientOrConfig)) {
+    innerClient = createLspConnection();
 
-  const edits = await client.format(fileUri);
+    await innerClient.initialize([{ uri: pathToFileURL(dirPath).href, name: "test" }], {}, [
+      {
+        workspaceUri: pathToFileURL(dirPath).href,
+        options: clientOrConfig,
+      },
+    ]);
+
+    clientOrConfig = innerClient;
+  }
+  await clientOrConfig.didOpen(fileUri, languageId, content);
+
+  const edits = await clientOrConfig.format(fileUri);
+
+  if (innerClient) {
+    await innerClient[Symbol.asyncDispose]();
+  }
 
   return `
 --- FILE -----------

@@ -67,7 +67,7 @@ pub fn run(
 
     // Resolve format options directly from the provided options
     let resolved_options =
-        match resolve_options_from_value(&cwd, options.unwrap_or_default(), &strategy) {
+        match resolve_options_from_value(options.unwrap_or_default(), &strategy, Some(&cwd)) {
             Ok(options) => options,
             Err(err) => {
                 external_formatter.cleanup();

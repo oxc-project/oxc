@@ -92,6 +92,16 @@
         "allowSingleElementEquality": "always"
       }
     ],
+    "typescript/dot-notation": [
+      "error",
+      {
+        "allowIndexSignaturePropertyAccess": true,
+        "allowKeywords": false,
+        "allowPattern": "^snake_case$",
+        "allowPrivateClassPropertyAccess": true,
+        "allowProtectedClassPropertyAccess": true
+      }
+    ],
     "typescript/only-throw-error": [
       "error",
       {

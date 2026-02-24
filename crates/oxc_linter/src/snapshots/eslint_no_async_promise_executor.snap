@@ -7,15 +7,18 @@ source: crates/oxc_linter/src/tester.rs
  1 │ new Promise(async function foo(resolve, reject) {})
    ·             ─────
    ╰────
+  help: Remove the `async` keyword from the Promise executor function.
 
   ⚠ eslint(no-async-promise-executor): Promise executor functions should not be `async`.
    ╭─[no_async_promise_executor.tsx:1:13]
  1 │ new Promise(async (resolve, reject) => {})
    ·             ─────
    ╰────
+  help: Remove the `async` keyword from the Promise executor function.
 
   ⚠ eslint(no-async-promise-executor): Promise executor functions should not be `async`.
    ╭─[no_async_promise_executor.tsx:1:17]
  1 │ new Promise(((((async () => {})))))
    ·                 ─────
    ╰────
+  help: Remove the `async` keyword from the Promise executor function.

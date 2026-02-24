@@ -242,7 +242,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:9]
- 1 │ declare var foo = 2;
+ 1 │ declare var foo: 2;
    ·         ───
    ╰────
   help: Replace var with let or const

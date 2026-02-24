@@ -27,8 +27,13 @@ pub fn static_and_instance_private_identifier(x0: &str, span1: Span, span2: Span
 }
 
 #[cold]
-pub fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Export '{x0}' is not defined")).with_label(span1)
+pub fn undefined_export(x0: &str, suggestion: Option<&str>, span1: Span) -> OxcDiagnostic {
+    let mut diagnostic =
+        OxcDiagnostic::error(format!("Export '{x0}' is not defined")).with_label(span1);
+    if let Some(suggestion) = suggestion {
+        diagnostic = diagnostic.with_help(format!("Did you mean '{suggestion}'?"));
+    }
+    diagnostic
 }
 
 #[cold]
@@ -68,9 +73,15 @@ pub fn private_not_in_class(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn private_field_undeclared(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Private field '#{x0}' must be declared in an enclosing class"))
-        .with_label(span1)
+pub fn private_field_undeclared(x0: &str, suggestion: Option<&str>, span1: Span) -> OxcDiagnostic {
+    let mut diagnostic = OxcDiagnostic::error(format!(
+        "Private field '#{x0}' must be declared in an enclosing class"
+    ))
+    .with_label(span1);
+    if let Some(suggestion) = suggestion {
+        diagnostic = diagnostic.with_help(format!("Did you mean '#{suggestion}'?"));
+    }
+    diagnostic
 }
 
 #[cold]
@@ -168,8 +179,12 @@ pub fn invalid_label_jump_target(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn invalid_label_target(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Use of undefined label").with_label(span)
+pub fn invalid_label_target(suggestion: Option<&str>, span: Span) -> OxcDiagnostic {
+    let mut diagnostic = OxcDiagnostic::error("Use of undefined label").with_label(span);
+    if let Some(suggestion) = suggestion {
+        diagnostic = diagnostic.with_help(format!("Did you mean '{suggestion}'?"));
+    }
+    diagnostic
 }
 
 #[cold]
@@ -364,7 +379,18 @@ pub fn function_implementation_missing(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
-    ts_error("2414", format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
+    let code = match syntax_name {
+        "Type parameter" => "2368",
+        "Class" => "2414",
+        "Interface" => "2427",
+        "Enum" => "2431",
+        "Type alias" => "2457",
+        _ => {
+            debug_assert!(false, "all syntax_name should have a corresponding match arm");
+            "2414"
+        }
+    };
+    ts_error(code, format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
 }
 
 /// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)

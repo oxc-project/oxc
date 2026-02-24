@@ -3104,6 +3104,26 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'myRef'. Mutable values like 'myRef.current' aren't valid dependencies because mutating them doesn't re-render the component.
+   ╭─[exhaustive_deps.tsx:2:56]
+ 1 │ function MyComponent({ myRef }) {
+ 2 │     useCallback(() => { console.log(myRef.current); }, [myRef.current]);
+   ·                                     ──┬──              ───────────────
+   ·                                       ╰── useCallback uses `myRef` here
+ 3 │     // React Hook useCallback has a missing dependency: 'myRef'. Either include it or remove the dependency array. Mutable values like 'myRef.current' aren't valid dependencies because mutating them doesn't re-render the component.
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'myRef'
+   ╭─[exhaustive_deps.tsx:2:56]
+ 1 │ function MyComponent2({ myRef }) {
+ 2 │     useCallback(() => { console.log(myRef.current); }, []);
+   ·                                     ──┬──              ──
+   ·                                       ╰── useCallback uses `myRef` here
+ 3 │     // React Hook useCallback has a missing dependency: 'myRef'. Either include it or remove the dependency array.
+   ╰────
+  help: Either include it or remove the dependency array.
+
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useSpecialEffect has a missing dependency: 'state'
    ╭─[exhaustive_deps.tsx:7:14]
  5 │             const someNumber: typeof state = 2;
