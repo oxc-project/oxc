@@ -1532,14 +1532,28 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
                 Some(children) => {
                     let children_str: Vec<String> =
                         children.iter().map(|c| codegen_jsx_child(cx, c)).collect();
-                    format!("<{tag_str}{attrs_str}>{}</{tag_str}>", children_str.join(""))
+                    if children_str.len() > 1 {
+                        // Multi-child: emit with newlines matching reference compiler.
+                        // Expression containers ({expr}) get their own lines, but JSX text
+                        // nodes stay adjacent to their neighbors (no extra whitespace).
+                        let joined = join_jsx_children_multiline(&children_str);
+                        format!("<{tag_str}{attrs_str}>\n{joined}\n</{tag_str}>")
+                    } else {
+                        format!("<{tag_str}{attrs_str}>{}</{tag_str}>", children_str.join(""))
+                    }
                 }
             }
         }
         InstructionValue::JsxFragment(frag) => {
             let children_str: Vec<String> =
                 frag.children.iter().map(|c| codegen_jsx_child(cx, c)).collect();
-            format!("<>{}</>", children_str.join(""))
+            if children_str.len() > 1 {
+                // Multi-child: emit with newlines matching reference compiler
+                let joined = join_jsx_children_multiline(&children_str);
+                format!("<>\n{joined}\n</>")
+            } else {
+                format!("<>{}</>", children_str.join(""))
+            }
         }
         InstructionValue::GetIterator(iter) => codegen_place_to_expression(cx, &iter.collection),
         InstructionValue::IteratorNext(iter) => codegen_place_to_expression(cx, &iter.iterator),
@@ -1870,6 +1884,44 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
 // =====================================================================================
 // Helper functions
 // =====================================================================================
+
+/// Join multi-child JSX children with appropriate newline separators.
+///
+/// The reference compiler emits expression-container children (`{expr}`) on separate
+/// lines, but JSX text nodes remain adjacent to neighboring children. For example:
+///
+/// ```jsx
+/// <>
+///   {t3}
+///   {t5}
+/// </>
+/// ```
+///
+/// But text nodes stay inline:
+/// ```jsx
+/// <div>
+///   {t1}-{t2}-{t3}
+/// </div>
+/// ```
+fn join_jsx_children_multiline(children: &[String]) -> String {
+    let mut result = String::new();
+    for (i, child) in children.iter().enumerate() {
+        if i > 0 {
+            let prev = &children[i - 1];
+            // Add newline between children when BOTH are expression containers,
+            // or when transitioning between a text node and an expression container
+            // that is not glued to it. Text nodes (not wrapped in {}) stay adjacent.
+            let prev_is_expr = prev.starts_with('{') || prev.starts_with('<');
+            let curr_is_expr = child.starts_with('{') || child.starts_with('<');
+            if prev_is_expr && curr_is_expr {
+                result.push('\n');
+            }
+            // Text nodes are adjacent — no separator
+        }
+        result.push_str(child);
+    }
+    result
+}
 
 /// Generate a JSX attribute string.
 ///

@@ -15,7 +15,7 @@ use crate::{
         ReactFunctionType,
         object_shape::{
             BUILT_IN_SET_STATE_ID, BUILT_IN_USE_EFFECT_HOOK_ID, BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID,
-            BUILT_IN_USE_STATE_ID,
+            BUILT_IN_USE_STATE_HOOK_ID,
         },
         types::{FunctionType, Type},
         visitors::each_instruction_operand,
@@ -331,7 +331,7 @@ fn is_use_state_type(ty: &Type) -> bool {
     matches!(
         ty,
         Type::Function(FunctionType { shape_id: Some(id), .. })
-        if id == BUILT_IN_USE_STATE_ID
+        if id == BUILT_IN_USE_STATE_HOOK_ID
     )
 }
 

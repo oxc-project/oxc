@@ -11,6 +11,7 @@ use rustc_hash::FxHashSet;
 use crate::hir::{
     BlockId, HIRFunction, IdentifierId, InstructionValue, LabelTerminal, PrunedScopeTerminal,
     Terminal,
+    environment::get_hook_kind_for_type,
 };
 use crate::utils::hook_declaration::is_hook_name;
 
@@ -123,10 +124,19 @@ pub fn flatten_scopes_with_hooks_or_use_hir(func: &mut HIRFunction) {
                 InstructionValue::CallExpression(v) => {
                     hook_identifiers.contains(&v.callee.identifier.id)
                         || is_use_operator_by_name(v.callee.identifier.name.as_ref())
+                        || get_hook_kind_for_type(&func.env, &v.callee.identifier.type_)
+                            .is_some()
                 }
                 InstructionValue::MethodCall(v) => {
                     hook_identifiers.contains(&v.property.identifier.id)
                         || is_use_operator_by_name(v.property.identifier.name.as_ref())
+                        || v.property
+                            .identifier
+                            .name
+                            .as_ref()
+                            .is_some_and(|n| is_hook_name(n.value()))
+                        || get_hook_kind_for_type(&func.env, &v.property.identifier.type_)
+                            .is_some()
                 }
                 _ => false,
             };

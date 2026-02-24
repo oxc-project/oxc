@@ -244,7 +244,7 @@ pub fn infer_mutation_aliasing_effects(
         };
         if let Some(state) = states_by_block.get(&block_id) {
             for instr in &mut block.instructions {
-                let effects = compute_instruction_effects(state, instr);
+                let effects = compute_instruction_effects(state, instr, &func.env);
                 instr.effects = Some(effects);
             }
         } else {
@@ -445,12 +445,132 @@ fn infer_instruction_effects(
     }
 }
 
+/// Generate aliasing effects for a function call based on a known `FunctionSignature`.
+///
+/// Port of `computeEffectsForLegacySignature` from `InferMutationAliasingEffects.ts` (lines 2316-2497).
+///
+/// For each parameter, the declared effect determines what aliasing effect is generated:
+/// - Read → ImmutableCapture (no mutation)
+/// - Capture → deferred, then aliased to return or captured into store targets
+/// - Freeze → Freeze the argument
+/// - ConditionallyMutate → MutateTransitiveConditionally
+/// - Mutate → MutateTransitive
+/// - Store → Mutate + track as store target for capture resolution
+fn effects_from_signature(
+    sig: &crate::hir::object_shape::FunctionSignature,
+    callee_or_receiver: &Place,
+    args: &[crate::hir::CallArg],
+    lvalue: &Place,
+) -> Vec<AliasingEffect> {
+    use crate::hir::{CallArg, Effect};
+
+    let mut effects = Vec::new();
+    let mut captures: Vec<Place> = Vec::new();
+    let mut stores: Vec<Place> = Vec::new();
+
+    let return_value_reason = sig.return_value_reason.unwrap_or(ValueReason::Other);
+
+    // Helper closure to process a single place with a declared effect
+    let mut visit = |place: &Place, effect: Effect| {
+        match effect {
+            Effect::Store => {
+                effects.push(AliasingEffect::Mutate { value: place.clone(), reason: None });
+                stores.push(place.clone());
+            }
+            Effect::Capture => {
+                captures.push(place.clone());
+            }
+            Effect::ConditionallyMutate => {
+                effects.push(AliasingEffect::MutateTransitiveConditionally {
+                    value: place.clone(),
+                });
+            }
+            Effect::ConditionallyMutateIterator => {
+                // For iterables: capture into return value
+                effects.push(AliasingEffect::Capture {
+                    from: place.clone(),
+                    into: lvalue.clone(),
+                });
+            }
+            Effect::Freeze => {
+                effects.push(AliasingEffect::Freeze {
+                    value: place.clone(),
+                    reason: return_value_reason,
+                });
+            }
+            Effect::Mutate => {
+                effects.push(AliasingEffect::MutateTransitive { value: place.clone() });
+            }
+            Effect::Read => {
+                effects.push(AliasingEffect::ImmutableCapture {
+                    from: place.clone(),
+                    into: lvalue.clone(),
+                });
+            }
+            _ => {
+                // Unknown or other: conservative
+                effects.push(AliasingEffect::MutateTransitiveConditionally {
+                    value: place.clone(),
+                });
+            }
+        }
+    };
+
+    // Apply callee effect to the receiver/callee
+    visit(callee_or_receiver, sig.callee_effect);
+
+    // Process each argument with its declared effect
+    for (i, arg) in args.iter().enumerate() {
+        let place = match arg {
+            CallArg::Place(p) => p,
+            CallArg::Spread(s) => &s.place,
+        };
+        let effect = if i < sig.positional_params.len() {
+            sig.positional_params[i]
+        } else if let Some(rest) = sig.rest_param {
+            rest
+        } else {
+            // No more declared params — conservative
+            Effect::ConditionallyMutate
+        };
+        visit(place, effect);
+    }
+
+    // Process captures: if stores exist, capture into stores; otherwise alias to return
+    if !captures.is_empty() {
+        if stores.is_empty() {
+            for cap in &captures {
+                effects.push(AliasingEffect::Alias { from: cap.clone(), into: lvalue.clone() });
+            }
+        } else {
+            for cap in &captures {
+                for store in &stores {
+                    effects.push(AliasingEffect::Capture {
+                        from: cap.clone(),
+                        into: store.clone(),
+                    });
+                }
+            }
+        }
+    }
+
+    // Create the return value
+    effects.push(AliasingEffect::Create {
+        into: lvalue.clone(),
+        value: sig.return_value_kind,
+        reason: return_value_reason,
+    });
+
+    effects
+}
+
 /// Compute the aliasing effects for an instruction.
 ///
 /// Port of `computeSignatureForInstruction` from `InferMutationAliasingEffects.ts`.
 fn compute_instruction_effects(
     _state: &InferenceState,
     instr: &Instruction,
+    env: &crate::hir::environment::Environment,
 ) -> Vec<AliasingEffect> {
     use crate::hir::{CallArg, Effect, InstructionKind, visitors::each_instruction_value_operand};
     use crate::inference::aliasing_effects::CreateFunctionKind;
@@ -512,15 +632,17 @@ fn compute_instruction_effects(
 
         // CallExpression / MethodCall / NewExpression
         //
-        // The TS compiler generates an `Apply` effect that gets resolved during
-        // abstract interpretation using function signatures. Since we don't yet
-        // have function signature resolution, we use the conservative fallback:
-        // - MutateTransitiveConditionally each argument
-        // - Capture each argument into the return value
-        // - Create(Mutable) for the return value
-        // - For CallExpression: MutateTransitiveConditionally the callee too
+        // Try to resolve a function signature for the callee. If found, generate
+        // precise effects based on the declared parameter effects. Otherwise, fall
+        // back to the conservative behavior.
         InstructionValue::CallExpression(v) => {
-            // CallExpression: callee may also be mutated (mutatesFunction=true)
+            // Try to get function signature from callee's type
+            let sig = env.get_function_signature(&v.callee.identifier.type_);
+            if let Some(sig) = sig {
+                let sig = sig.clone();
+                return effects_from_signature(&sig, &v.callee, &v.args, lvalue);
+            }
+            // Conservative fallback: callee may also be mutated (mutatesFunction=true)
             effects.push(AliasingEffect::MutateTransitiveConditionally { value: v.callee.clone() });
             for arg in &v.args {
                 let place = match arg {
@@ -538,7 +660,14 @@ fn compute_instruction_effects(
             });
         }
         InstructionValue::MethodCall(v) => {
-            // MethodCall: receiver is conditionally mutated, callee (property) is not
+            // Try to get function signature from the property's type (the method)
+            let sig = env.get_function_signature(&v.property.identifier.type_);
+            if let Some(sig) = sig {
+                let sig = sig.clone();
+                // For method calls, the receiver is the callee_or_receiver
+                return effects_from_signature(&sig, &v.receiver, &v.args, lvalue);
+            }
+            // Conservative fallback: receiver is conditionally mutated
             effects
                 .push(AliasingEffect::MutateTransitiveConditionally { value: v.receiver.clone() });
             for arg in &v.args {
