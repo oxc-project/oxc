@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt::Write};
 
 use cow_utils::CowUtils;
 
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 use oxc_allocator::StringBuilder;
 use oxc_syntax::{
     identifier::{
@@ -29,7 +29,7 @@ enum UnicodeEscape {
     LoneSurrogate(u32),
 }
 
-impl<'a> Lexer<'a> {
+impl<'a, C: Config> Lexer<'a, C> {
     pub(super) fn unicode_char_handler(&mut self) -> Kind {
         let c = self.peek_char().unwrap();
         match c {

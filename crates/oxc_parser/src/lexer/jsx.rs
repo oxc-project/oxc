@@ -3,7 +3,7 @@ use memchr::memchr;
 use oxc_span::Span;
 use oxc_syntax::identifier::is_identifier_part;
 
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
     Kind, Lexer, Token, cold_branch,
@@ -26,7 +26,7 @@ static JSX_CHILD_END_TABLE: SafeByteMatchTable =
 ///   `JSXStringCharacter` but not '
 /// `JSXStringCharacter` ::
 ///   `SourceCharacter` but not one of `HTMLCharacterReference`
-impl Lexer<'_> {
+impl<C: Config> Lexer<'_, C> {
     /// Read JSX string literal.
     /// # SAFETY
     /// * `delimiter` must be an ASCII character.

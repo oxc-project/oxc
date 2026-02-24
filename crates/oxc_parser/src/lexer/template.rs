@@ -2,7 +2,7 @@ use std::{cmp::max, str};
 
 use oxc_allocator::StringBuilder;
 
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
     Kind, Lexer, SourcePosition, Token, cold_branch,
@@ -33,7 +33,7 @@ static TEMPLATE_LITERAL_ESCAPED_MATCH_TABLE: SafeByteMatchTable = safe_byte_matc
 );
 
 /// 12.8.6 Template Literal Lexical Components
-impl<'a> Lexer<'a> {
+impl<'a, C: Config> Lexer<'a, C> {
     /// Read template literal component.
     ///
     /// This function handles the common case where template contains no escapes or `\r` characters
@@ -409,6 +409,8 @@ mod test {
     use oxc_allocator::Allocator;
     use oxc_span::SourceType;
 
+    use crate::config::NoTokensLexerConfig;
+
     use super::super::{Kind, Lexer, UniquePromise};
 
     #[test]
@@ -442,8 +444,13 @@ mod test {
         fn run_test(source_text: String, expected_escaped: String, is_only_part: bool) {
             let allocator = Allocator::default();
             let unique = UniquePromise::new_for_tests_and_benchmarks();
-            let mut lexer =
-                Lexer::new(&allocator, &source_text, SourceType::default(), false, unique);
+            let mut lexer = Lexer::new(
+                &allocator,
+                &source_text,
+                SourceType::default(),
+                NoTokensLexerConfig,
+                unique,
+            );
             let token = lexer.next_token();
             assert_eq!(
                 token.kind(),

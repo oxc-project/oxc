@@ -1,9 +1,10 @@
 use oxc_span::Span;
 
-use super::{Kind, Lexer, Token};
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
-impl Lexer<'_> {
+use super::{Kind, Lexer, Token};
+
+impl<C: Config> Lexer<'_, C> {
     /// Section 12.8 Punctuators
     pub(super) fn read_dot(&mut self) -> Kind {
         if self.peek_2_bytes() == Some([b'.', b'.']) {

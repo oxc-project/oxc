@@ -4,7 +4,7 @@ use oxc_ecmascript::PropName;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Context, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
 };
@@ -14,7 +14,7 @@ use super::FunctionKind;
 type ImplementsWithKeywordSpan<'a> = (Span, Vec<'a, TSClassImplements<'a>>);
 
 /// Section 15.7 Class Definitions
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     // `start_span` points at the start of all decoractors and `class` keyword.
     pub(crate) fn parse_class_statement(
         &mut self,

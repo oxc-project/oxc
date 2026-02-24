@@ -12,7 +12,7 @@ use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
 
-use crate::{UniquePromise, diagnostics};
+use crate::{UniquePromise, config::LexerConfig as Config, diagnostics};
 
 mod byte_handlers;
 mod comment;
@@ -33,6 +33,7 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
+pub(crate) use byte_handlers::{ByteHandler, ByteHandlers, byte_handler_tables};
 pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
@@ -64,7 +65,7 @@ pub enum LexerContext {
     JsxAttributeValue,
 }
 
-pub struct Lexer<'a> {
+pub struct Lexer<'a, C: Config> {
     allocator: &'a Allocator,
 
     // Wrapper around source text. Must not be changed after initialization.
@@ -100,11 +101,11 @@ pub struct Lexer<'a> {
     /// Collected tokens in source order.
     tokens: ArenaVec<'a, Token>,
 
-    /// Whether to collect tokens.
-    collect_tokens: bool,
+    /// Config
+    pub(crate) config: C,
 }
 
-impl<'a> Lexer<'a> {
+impl<'a, C: Config> Lexer<'a, C> {
     /// Create new `Lexer`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `Lexer` can exist
@@ -113,7 +114,7 @@ impl<'a> Lexer<'a> {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
-        collect_tokens: bool,
+        config: C,
         unique: UniquePromise,
     ) -> Self {
         let source = Source::new(source_text, unique);
@@ -133,7 +134,7 @@ impl<'a> Lexer<'a> {
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
             tokens: ArenaVec::new_in(allocator),
-            collect_tokens,
+            config,
         }
     }
 
@@ -144,9 +145,10 @@ impl<'a> Lexer<'a> {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
+        config: C,
     ) -> Self {
         let unique = UniquePromise::new_for_tests_and_benchmarks();
-        Self::new(allocator, source_text, source_type, false, unique)
+        Self::new(allocator, source_text, source_type, config, unique)
     }
 
     /// Get errors.
@@ -268,7 +270,7 @@ impl<'a> Lexer<'a> {
         self.token.set_kind(kind);
         self.token.set_end(self.offset());
         let token = self.token;
-        if self.collect_tokens && !matches!(token.kind(), Kind::Eof | Kind::HashbangComment) {
+        if self.config.tokens() && !matches!(token.kind(), Kind::Eof | Kind::HashbangComment) {
             if REPLACE_SAME_START {
                 debug_assert!(self.tokens.last().is_some_and(|last| last.start() == token.start()));
                 let last = self.tokens.last_mut().unwrap();

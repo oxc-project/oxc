@@ -17,12 +17,12 @@ use super::{
     },
 };
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::{Kind, parse_big_int, parse_float, parse_int},
     modifiers::Modifiers,
 };
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_paren_expression(&mut self) -> Expression<'a> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);

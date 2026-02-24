@@ -3,14 +3,14 @@ use oxc_ast::ast::*;
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{ModifierFlags, Modifiers},
 };
 
 use super::FunctionKind;
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
     /// `ObjectLiteral`[Yield, Await] :
     ///     { }

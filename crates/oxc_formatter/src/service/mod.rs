@@ -11,7 +11,6 @@ pub fn get_parse_options() -> ParseOptions {
         allow_v8_intrinsics: true,
         // `oxc_formatter` expects this to be `false`, otherwise panics
         preserve_parens: false,
-        collect_tokens: false,
     }
 }
 

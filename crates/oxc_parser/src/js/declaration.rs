@@ -3,9 +3,9 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use super::VariableDeclarationParent;
-use crate::{ParserImpl, StatementContext, diagnostics, lexer::Kind};
+use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, lexer::Kind};
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
 

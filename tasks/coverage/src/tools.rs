@@ -7,7 +7,7 @@ use oxc::{
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic},
     minifier::CompressOptions,
-    parser::{ParseOptions, Parser, ParserReturn},
+    parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig},
     span::{ModuleKind, SourceType, Span},
     transformer::{JsxOptions, JsxRuntime, TransformOptions},
 };
@@ -838,8 +838,9 @@ pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
             let source_type = SourceType::script().with_module(is_module);
             let allocator = Allocator::new();
-            let options = ParseOptions { collect_tokens: true, ..ParseOptions::default() };
-            let ret = Parser::new(&allocator, &f.code, source_type).with_options(options).parse();
+            let ret = Parser::new(&allocator, &f.code, source_type)
+                .with_config(RuntimeParserConfig::new(true))
+                .parse();
 
             if ret.panicked || !ret.errors.is_empty() {
                 let error =
@@ -887,7 +888,7 @@ pub fn run_estree_acorn_jsx_tokens(files: &[AcornJsxFile]) -> Vec<CoverageResult
             let source_type = SourceType::script().with_module(true).with_jsx(true);
             let allocator = Allocator::new();
             let ret = Parser::new(&allocator, &f.code, source_type)
-                .with_options(ParseOptions { collect_tokens: true, ..Default::default() })
+                .with_config(RuntimeParserConfig::new(true))
                 .parse();
             if ret.panicked || !ret.errors.is_empty() {
                 let error =
@@ -1063,13 +1064,10 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
 
             for (unit, expected_tokens) in f.units.iter().zip(estree_token_units.iter()) {
                 let allocator = Allocator::new();
-                let options = ParseOptions {
-                    preserve_parens: false,
-                    collect_tokens: true,
-                    ..Default::default()
-                };
+                let options = ParseOptions { preserve_parens: false, ..Default::default() };
                 let ret = Parser::new(&allocator, &unit.content, unit.source_type)
                     .with_options(options)
+                    .with_config(RuntimeParserConfig::new(true))
                     .parse();
 
                 if ret.panicked || !ret.errors.is_empty() {
