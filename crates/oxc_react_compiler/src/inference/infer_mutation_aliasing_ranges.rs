@@ -829,7 +829,10 @@ pub fn infer_mutation_aliasing_ranges(
     //
     // This sync ensures that when later passes (e.g., InferReactiveScopeVariables)
     // check operand mutable ranges, they see the same range as the lvalue definition.
-    // TODO: sync_mutable_ranges causes net regression (96→94), disabled pending investigation
+    // TODO: sync_mutable_ranges still causes net regression (310→308), disabled pending investigation.
+    // The core issue is that Rust's value-type semantics for Identifier means mutations to
+    // mutableRange on one Place copy don't propagate to other copies. This sync function
+    // attempts to fix that but has subtle bugs that need investigation.
     // sync_mutable_ranges(func);
 
     // ===== Phase 3: Compute external effects for params/context/returns =====
