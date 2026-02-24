@@ -1603,7 +1603,7 @@ fn codegen_object_expression(cx: &CodegenContext, obj: &ObjectExpression) -> Str
                         ));
                     } else {
                         // Fallback if method not found (should not happen)
-                        props.push(format!("{key}()"));
+                        props.push(format!("{key}() {{}}"));
                     }
                 } else {
                     let value = codegen_place_to_expression(cx, &p.place);
