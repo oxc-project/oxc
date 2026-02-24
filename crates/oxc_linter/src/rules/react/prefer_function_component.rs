@@ -85,7 +85,7 @@ declare_oxc_lint!(
     /// ```
     PreferFunctionComponent,
     react,
-    restriction, // TODO: Or style?
+    restriction,
     config = PreferFunctionComponent,
 );
 
