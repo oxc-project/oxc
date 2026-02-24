@@ -55,6 +55,9 @@ declare_oxc_lint!(
     /// hooks. Class components are a legacy pattern that is discouraged in
     /// modern React.
     ///
+    /// This rule is based on the rule from
+    /// [eslint-plugin-react-prefer-function-component](https://www.npmjs.com/package/eslint-plugin-react-prefer-function-component).
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
