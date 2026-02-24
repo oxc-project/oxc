@@ -23,6 +23,7 @@ use crate::{
 fn prefer_function_component_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Class component should be written as a function component.")
         .with_help("Convert the class component to a function component.")
+        .with_note("See https://react.dev/reference/react/Component#migrating-a-simple-component-from-a-class-to-a-function")
         .with_label(span)
 }
 
