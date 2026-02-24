@@ -9,7 +9,10 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE},
-    hir::{BlockId, ReactiveFunction, ReactiveTerminal, ReactiveTerminalStatement},
+    hir::{
+        BlockId, ReactiveFunction, ReactiveTerminal, ReactiveTerminalStatement,
+        ReactiveTerminalTargetKind,
+    },
     reactive_scopes::visitors::{ReactiveVisitor, visit_reactive_function},
 };
 
@@ -38,7 +41,13 @@ impl ReactiveVisitor for Visitor {
         }
         match &stmt.terminal {
             ReactiveTerminal::Break(t) => {
-                if !self.seen_labels.contains(&t.target) {
+                // Implicit breaks don't need labels — they represent control flow
+                // that falls through naturally and produce no output in codegen.
+                // The TS reference doesn't recurse into terminal children, so it
+                // never validates these implicit breaks either.
+                if t.target_kind != ReactiveTerminalTargetKind::Implicit
+                    && !self.seen_labels.contains(&t.target)
+                {
                     self.error = Some(CompilerError::invariant(
                         "Unexpected break to invalid label",
                         None,
@@ -47,7 +56,10 @@ impl ReactiveVisitor for Visitor {
                 }
             }
             ReactiveTerminal::Continue(t) => {
-                if !self.seen_labels.contains(&t.target) {
+                // Same reasoning as break: implicit continues don't need labels.
+                if t.target_kind != ReactiveTerminalTargetKind::Implicit
+                    && !self.seen_labels.contains(&t.target)
+                {
                     self.error = Some(CompilerError::invariant(
                         "Unexpected continue to invalid label",
                         None,

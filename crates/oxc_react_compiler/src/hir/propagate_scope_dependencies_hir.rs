@@ -825,7 +825,8 @@ impl<'a> DependencyCollectionContext<'a> {
         let current_scope = self.scopes.value();
         match (current_scope, current_declaration) {
             (Some(scope), Some(decl)) => decl.id < scope.range.start,
-            _ => false,
+            (None, _) => false,
+            (_, None) => false,
         }
     }
 
@@ -875,11 +876,11 @@ impl<'a> DependencyCollectionContext<'a> {
             };
 
             for scope in &scopes_to_update {
-                if !self.is_scope_active_in_stack(scope)
-                    && !scope.declarations.values().any(|decl| {
-                        decl.identifier.declaration_id == maybe_dep.identifier.declaration_id
-                    })
-                {
+                let is_active = self.is_scope_active_in_stack(scope);
+                let has_decl = scope.declarations.values().any(|decl| {
+                    decl.identifier.declaration_id == maybe_dep.identifier.declaration_id
+                });
+                if !is_active && !has_decl {
                     // Collect the mutation for later application
                     self.scope_declaration_mutations.push((
                         scope.id,

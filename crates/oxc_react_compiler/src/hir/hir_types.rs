@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 /// Core HIR (High-level Intermediate Representation) types.
 ///
 /// Port of `HIR/HIR.ts` from the React Compiler.
@@ -8,7 +9,7 @@
 ///
 /// Pipeline: AST → (lowering) → HIR → (analysis) → Reactive Scopes → (codegen) → AST
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::compiler_error::SourceLocation;
 
@@ -103,14 +104,22 @@ pub struct BasicBlock {
     pub phis: Vec<Phi>,
 }
 
+/// Insertion-order-preserving map from `BlockId` → `BasicBlock`, using Fx hashing.
+///
+/// JavaScript `Map` preserves insertion order; `FxHashMap` does not.
+/// Many compiler passes rely on iterating blocks in reverse-postorder
+/// (the order in which they were inserted during HIR building).
+pub type BlockMap = IndexMap<BlockId, BasicBlock, FxBuildHasher>;
+
 /// The HIR control-flow graph: an entry block and a map of blocks.
 ///
 /// Blocks are stored in reverse postorder: barring cycles, predecessors
-/// appear before successors.
+/// appear before successors. The `BlockMap` type (`IndexMap`) preserves
+/// this insertion order.
 #[derive(Debug, Clone)]
 pub struct Hir {
     pub entry: BlockId,
-    pub blocks: FxHashMap<BlockId, BasicBlock>,
+    pub blocks: BlockMap,
 }
 
 // =====================================================================================

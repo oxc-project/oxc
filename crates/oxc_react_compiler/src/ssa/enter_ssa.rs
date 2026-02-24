@@ -10,7 +10,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE},
     hir::{
-        BasicBlock, BlockId, HIRFunction, Identifier, IdentifierId, InstructionId,
+        BasicBlock, BlockId, BlockMap, HIRFunction, Identifier, IdentifierId, InstructionId,
         InstructionValue, LoweredFunction, MutableRange, Phi, Place, ReactiveParam, SpreadPattern,
         environment::Environment,
         hir_builder::each_terminal_successor,
@@ -33,14 +33,14 @@ struct SsaBuilder {
     states: FxHashMap<BlockId, State>,
     current_block_id: Option<BlockId>,
     unsealed_preds: FxHashMap<BlockId, usize>,
-    blocks: FxHashMap<BlockId, BasicBlock>,
+    blocks: BlockMap,
     env: Environment,
     unknown: FxHashSet<IdentifierId>,
     context: FxHashSet<IdentifierId>,
 }
 
 impl SsaBuilder {
-    fn new(env: Environment, blocks: &FxHashMap<BlockId, BasicBlock>) -> Self {
+    fn new(env: Environment, blocks: &BlockMap) -> Self {
         Self {
             states: FxHashMap::default(),
             current_block_id: None,
@@ -82,7 +82,6 @@ impl SsaBuilder {
         let block_id = self.current_block_id.expect("must be in a block to access state");
         self.states.get_mut(&block_id).expect("state must exist for current block")
     }
-
 
     fn define_place(&mut self, old_place: Place) -> Place {
         let old_id = old_place.identifier.id;
@@ -376,7 +375,7 @@ fn enter_ssa_impl(
                     // Write back modified blocks to the nested function and
                     // remove them from builder. Then restore any saved outer state.
                     for &bid in &nested_block_ids {
-                        if let Some(modified_block) = builder.blocks.remove(&bid) {
+                        if let Some(modified_block) = builder.blocks.shift_remove(&bid) {
                             lowered_func.func.body.blocks.insert(bid, modified_block);
                         }
                         // Remove nested function's states and unsealed_preds
@@ -460,7 +459,7 @@ fn placeholder_lowered_function() -> LoweredFunction {
                 loc: GENERATED_SOURCE,
             },
             context: Vec::new(),
-            body: crate::hir::Hir { entry: BlockId(0), blocks: FxHashMap::default() },
+            body: crate::hir::Hir { entry: BlockId(0), blocks: BlockMap::default() },
             generator: false,
             is_async: false,
             directives: Vec::new(),

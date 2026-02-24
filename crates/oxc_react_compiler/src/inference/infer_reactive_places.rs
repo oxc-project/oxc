@@ -21,13 +21,10 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     hir::{
-        BlockId, Effect, HIRFunction, Identifier, IdentifierId, InstructionValue,
-        Place, ReactiveParam,
-        object_shape::{HookKind, BUILT_IN_USE_OPERATOR_ID},
-        visitors::{
-            each_instruction_lvalue,
-            each_instruction_value_operand,
-        },
+        BlockId, Effect, HIRFunction, Identifier, IdentifierId, InstructionValue, Place,
+        ReactiveParam,
+        object_shape::{BUILT_IN_USE_OPERATOR_ID, HookKind},
+        visitors::{each_instruction_lvalue, each_instruction_value_operand},
     },
     reactive_scopes::infer_reactive_scope_variables::{find_disjoint_mutable_values, is_mutable},
     utils::disjoint_set::DisjointSet,
@@ -130,11 +127,7 @@ struct ReactivityMap {
 
 impl ReactivityMap {
     fn new(aliased_identifiers: DisjointSet<IdentifierId>) -> Self {
-        Self {
-            has_changes: false,
-            reactive: FxHashSet::default(),
-            aliased_identifiers,
-        }
+        Self { has_changes: false, reactive: FxHashSet::default(), aliased_identifiers }
     }
 
     /// Check reactivity of an identifier id.
@@ -235,8 +228,7 @@ fn evaluates_to_stable_type_or_container(instr: &crate::hir::Instruction) -> boo
             get_hook_kind_for_identifier(&call.callee.identifier).is_some_and(is_stable_hook_kind)
         }
         InstructionValue::MethodCall(call) => {
-            get_hook_kind_for_identifier(&call.property.identifier)
-                .is_some_and(is_stable_hook_kind)
+            get_hook_kind_for_identifier(&call.property.identifier).is_some_and(is_stable_hook_kind)
         }
         _ => false,
     }
@@ -336,18 +328,15 @@ pub fn infer_reactive_places(func: &mut HIRFunction) {
         // We need to do this before mutating blocks because create_control_dominators
         // borrows func immutably.
         let reactive_control_map: FxHashMap<BlockId, bool> = {
-            let reactive_snapshot: FxHashSet<IdentifierId> =
-                reactive_identifiers.reactive.clone();
+            let reactive_snapshot: FxHashSet<IdentifierId> = reactive_identifiers.reactive.clone();
             let canonical_map = {
                 let mut aliased_for_control = find_disjoint_mutable_values(func);
                 aliased_for_control.canonicalize()
             };
 
             let is_reactive_for_control = |place: &Place| -> bool {
-                let canonical = canonical_map
-                    .get(&place.identifier.id)
-                    .copied()
-                    .unwrap_or(place.identifier.id);
+                let canonical =
+                    canonical_map.get(&place.identifier.id).copied().unwrap_or(place.identifier.id);
                 reactive_snapshot.contains(&canonical)
             };
 
@@ -365,8 +354,7 @@ pub fn infer_reactive_places(func: &mut HIRFunction) {
                 if let Some(block) = func.body.blocks.get(&block_id) {
                     for phi in &block.phis {
                         for &pred in phi.operands.keys() {
-                            map.entry(pred)
-                                .or_insert_with(|| is_reactive_controlled_block(pred));
+                            map.entry(pred).or_insert_with(|| is_reactive_controlled_block(pred));
                         }
                     }
                 }
@@ -404,11 +392,7 @@ pub fn infer_reactive_places(func: &mut HIRFunction) {
                         if !is_phi_reactive {
                             // Check if any predecessor is reactively controlled
                             for &pred in phi.operands.keys() {
-                                if reactive_control_map
-                                    .get(&pred)
-                                    .copied()
-                                    .unwrap_or(false)
-                                {
+                                if reactive_control_map.get(&pred).copied().unwrap_or(false) {
                                     is_phi_reactive = true;
                                     break;
                                 }
@@ -619,8 +603,7 @@ fn propagate_reactivity_to_inner_functions(
                 .filter_map(|(i, instr)| {
                     matches!(
                         instr.value,
-                        InstructionValue::FunctionExpression(_)
-                            | InstructionValue::ObjectMethod(_)
+                        InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_)
                     )
                     .then_some(i)
                 })

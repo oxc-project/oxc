@@ -96,6 +96,12 @@ pub fn infer_reactive_scope_variables(func: &mut HIRFunction) -> Result<(), Comp
             return;
         };
 
+        // Skip identifiers with uninitialized mutable ranges (start == 0).
+        // These represent globals or values that were never assigned a proper range.
+        if mutable_range.start == InstructionId(0) && mutable_range.end == InstructionId(0) {
+            return;
+        }
+
         if let Some(scope) = scopes.get_mut(group_identifier_id) {
             // Extend the existing scope's range
             if scope.range.start == InstructionId(0) {
@@ -123,6 +129,10 @@ pub fn infer_reactive_scope_variables(func: &mut HIRFunction) -> Result<(), Comp
             );
         }
     });
+
+    // Remove scopes that still have an invalid range (start == 0)
+    // This can happen when all identifiers in a group had uninitialized starts
+    scopes.retain(|_, scope| scope.range.start != InstructionId(0));
 
     // Build a map from each IdentifierId to its group's scope (and the scope's range).
     // We need to call for_each again to build the full mapping because for_each

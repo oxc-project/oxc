@@ -13,9 +13,9 @@ use super::{
     environment::Environment,
     find_context_identifiers::ContextIdentifiers,
     hir_types::{
-        BasicBlock, BlockId, BlockKind, DeclarationId, Effect, GotoVariant, Hir, Identifier,
-        IdentifierId, IdentifierName, Instruction, InstructionId, MutableRange, NonLocalBinding,
-        Place, Terminal,
+        BasicBlock, BlockId, BlockKind, BlockMap, DeclarationId, Effect, GotoVariant, Hir,
+        Identifier, IdentifierId, IdentifierName, Instruction, InstructionId, MutableRange,
+        NonLocalBinding, Place, Terminal,
     },
     types::make_type,
 };
@@ -102,7 +102,7 @@ pub enum ExceptionsMode {
 
 /// Helper class for constructing a HIR control-flow graph.
 pub struct HirBuilder {
-    completed: FxHashMap<BlockId, BasicBlock>,
+    completed: BlockMap,
     current: WipBlock,
     entry: BlockId,
     scopes: Vec<Scope>,
@@ -137,7 +137,7 @@ impl HirBuilder {
         let entry = env.next_block_id();
         let current = new_block(entry, entry_block_kind.unwrap_or(BlockKind::Block));
         Self {
-            completed: FxHashMap::default(),
+            completed: BlockMap::default(),
             current,
             entry,
             scopes: Vec::new(),
@@ -418,9 +418,32 @@ impl HirBuilder {
     /// Sets the given WIP block as the current block, executes the callback to populate it,
     /// and then resets to the previous block.
     pub fn enter_reserved(&mut self, wip: WipBlock, f: impl FnOnce(&mut Self) -> Terminal) {
+        let wip_id = wip.id;
         let prev = std::mem::replace(&mut self.current, wip);
         let terminal = f(self);
         let WipBlock { id, kind, instructions } = std::mem::replace(&mut self.current, prev);
+
+        // After the closure executes, self.current may have changed from the
+        // original wip block if `terminate(_, None)` was called as the last
+        // action inside the closure. In that case, `terminate` leaves a
+        // placeholder with `BlockId(0)` as current, while the actual block
+        // was already completed by `terminate`. We must NOT overwrite an
+        // already-completed block that has a different ID from our wip block
+        // (this would clobber unrelated blocks, such as the entry block at
+        // BlockId(0)).
+        //
+        // The check: if the current block's ID changed from the wip block's
+        // original ID, it means `terminate` or `terminate_with_continuation`
+        // already completed the wip block. The current block is a stale
+        // placeholder or a continuation. If its ID is already in
+        // `completed` (and it's not the wip block), skip the insert.
+        if id != wip_id && self.completed.contains_key(&id) {
+            // The wip block was already completed by terminate() inside the
+            // closure. The current placeholder has a different ID (e.g.
+            // BlockId(0)) that already exists in completed. Don't overwrite.
+            return;
+        }
+
         self.completed.insert(
             id,
             BasicBlock {
@@ -674,10 +697,7 @@ fn set_terminal_id(terminal: &mut Terminal, id: InstructionId) {
 ///
 /// This is the canonical block ordering for forward data-flow analyses.
 /// Predecessors appear before successors (barring back edges from loops).
-pub fn compute_rpo_order(
-    entry: BlockId,
-    blocks: &rustc_hash::FxHashMap<BlockId, super::hir_types::BasicBlock>,
-) -> Vec<BlockId> {
+pub fn compute_rpo_order(entry: BlockId, blocks: &super::hir_types::BlockMap) -> Vec<BlockId> {
     enum Phase {
         PreVisit,
         PostVisit,

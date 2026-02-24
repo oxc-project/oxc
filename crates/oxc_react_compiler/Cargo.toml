@@ -23,6 +23,7 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 rustc-hash = { workspace = true }
+indexmap = { workspace = true }
 sha2 = { workspace = true }
 hmac = { workspace = true }
 

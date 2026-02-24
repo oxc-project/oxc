@@ -2229,6 +2229,7 @@ name = "oxc_react_compiler"
 version = "0.0.0"
 dependencies = [
  "hmac",
+ "indexmap",
  "insta",
  "oxc_allocator",
  "oxc_ast",
