@@ -197,7 +197,8 @@ unsafe fn parse_raw_impl(
             const BOM: &str = "\u{feff}";
             const BOM_LEN: usize = BOM.len();
 
-            let mut source_text = program.source_text;
+            let original_source_text = program.source_text;
+            let mut source_text = original_source_text;
             let has_bom = source_text.starts_with(BOM);
             if has_bom {
                 source_text = &source_text[BOM_LEN..];
@@ -216,22 +217,18 @@ unsafe fn parse_raw_impl(
             span_converter.convert_program(program);
             span_converter.convert_comments(&mut program.comments);
 
-            let (tokens_offset, tokens_len) = if has_bom {
-                // Fallback to TypeScript token parsing in JS for BOM files.
-                (0, 0)
-            } else {
-                let tokens_json = to_estree_tokens_json(
-                    &tokens,
-                    program,
-                    EstreeTokenOptions::linter(),
-                    &allocator,
-                );
-                let tokens_json = allocator.alloc_str(&tokens_json);
-                let tokens_offset = tokens_json.as_ptr() as u32;
-                #[expect(clippy::cast_possible_truncation)]
-                let tokens_len = tokens_json.len() as u32;
-                (tokens_offset, tokens_len)
-            };
+            let tokens_json = to_estree_tokens_json(
+                &tokens,
+                program,
+                original_source_text,
+                &span_converter,
+                EstreeTokenOptions::linter(),
+                &allocator,
+            );
+            let tokens_json = allocator.alloc_str(&tokens_json);
+            let tokens_offset = tokens_json.as_ptr() as u32;
+            #[expect(clippy::cast_possible_truncation)]
+            let tokens_len = tokens_json.len() as u32;
 
             // Return offset of `Program` within buffer (bottom 32 bits of pointer)
             let program_offset = ptr::from_ref(program) as u32;

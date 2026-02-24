@@ -143,6 +143,8 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
                     let tokens_json = to_estree_tokens_json(
                         &tokens,
                         &program,
+                        program.source_text,
+                        &span_converter,
                         EstreeTokenOptions::test262(),
                         &allocator,
                     );

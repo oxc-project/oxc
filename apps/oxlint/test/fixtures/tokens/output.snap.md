@@ -3,6 +3,50 @@
 
 # stdout
 ```
+  x tokens-plugin(tokens): Identifier ("a")
+   ,-[files/bom.js:1:4]
+ 1 | ﻿a = b;
+   : ^
+   `----
+
+  x tokens-plugin(tokens): Tokens and comments:
+  | Identifier        loc= 1:0 - 1:1    range= 0-1     "a"
+  | Punctuator        loc= 1:2 - 1:3    range= 2-3     "="
+  | Identifier        loc= 1:4 - 1:5    range= 4-5     "b"
+  | Punctuator        loc= 1:5 - 1:6    range= 5-6     ";"
+   ,-[files/bom.js:1:4]
+ 1 | ﻿a = b;
+   : ^^^^^^^
+   `----
+
+  x tokens-plugin(tokens): Tokens:
+  | Identifier        loc= 1:0 - 1:1    range= 0-1     "a"
+  | Punctuator        loc= 1:2 - 1:3    range= 2-3     "="
+  | Identifier        loc= 1:4 - 1:5    range= 4-5     "b"
+  | Punctuator        loc= 1:5 - 1:6    range= 5-6     ";"
+   ,-[files/bom.js:1:4]
+ 1 | ﻿a = b;
+   : ^^^^^^^
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=")
+   ,-[files/bom.js:1:6]
+ 1 | ﻿a = b;
+   :   ^
+   `----
+
+  x tokens-plugin(tokens): Identifier ("b")
+   ,-[files/bom.js:1:8]
+ 1 | ﻿a = b;
+   :     ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/bom.js:1:9]
+ 1 | ﻿a = b;
+   :      ^
+   `----
+
   x tokens-plugin(tokens): Keyword ("const")
    ,-[files/generic_arrow.ts:1:1]
  1 | const obj = {
@@ -1071,8 +1115,67 @@
    :  ^
    `----
 
-Found 0 warnings and 109 errors.
-Finished in Xms on 4 files with 1 rules using X threads.
+  x tokens-plugin(tokens): Identifier ("a")
+   ,-[files/unicode.js:1:1]
+ 1 | a;
+   : ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
+  x tokens-plugin(tokens): Tokens and comments:
+  | Identifier        loc= 1:0 - 1:1    range= 0-1     "a"
+  | Punctuator        loc= 1:1 - 1:2    range= 1-2     ";"
+  | Line              loc= 2:0 - 2:13   range= 3-16    " 😀🤪😆😎🤮"
+  | Identifier        loc= 3:0 - 3:1    range= 17-18   "b"
+  | Punctuator        loc= 3:1 - 3:2    range= 18-19   ";"
+   ,-[files/unicode.js:1:1]
+ 1 | ,-> a;
+ 2 | |   // 😀🤪😆😎🤮
+ 3 | `-> b;
+   `----
+
+  x tokens-plugin(tokens): Tokens:
+  | Identifier        loc= 1:0 - 1:1    range= 0-1     "a"
+  | Punctuator        loc= 1:1 - 1:2    range= 1-2     ";"
+  | Identifier        loc= 3:0 - 3:1    range= 17-18   "b"
+  | Punctuator        loc= 3:1 - 3:2    range= 18-19   ";"
+   ,-[files/unicode.js:1:1]
+ 1 | ,-> a;
+ 2 | |   // 😀🤪😆😎🤮
+ 3 | `-> b;
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/unicode.js:1:2]
+ 1 | a;
+   :  ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
+  x tokens-plugin(tokens): Line (" 😀🤪😆😎🤮")
+   ,-[files/unicode.js:2:1]
+ 1 | a;
+ 2 | // 😀🤪😆😎🤮
+   : ^^^^^^^^^^^^^
+ 3 | b;
+   `----
+
+  x tokens-plugin(tokens): Identifier ("b")
+   ,-[files/unicode.js:3:1]
+ 2 | // 😀🤪😆😎🤮
+ 3 | b;
+   : ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/unicode.js:3:2]
+ 2 | // 😀🤪😆😎🤮
+ 3 | b;
+   :  ^
+   `----
+
+Found 0 warnings and 122 errors.
+Finished in Xms on 6 files with 1 rules using X threads.
 ```
 
 # stderr

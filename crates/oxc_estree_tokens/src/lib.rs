@@ -69,13 +69,19 @@ impl EstreeTokenOptions {
 }
 
 /// Serialize tokens to JSON.
+///
+/// `source_text` must be the original source text, prior to BOM removal.
+/// i.e. BOM must be present on start of `source_text`, if the file has a BOM.
 pub fn to_estree_tokens_json(
     tokens: &[Token],
     program: &Program<'_>,
+    source_text: &str,
+    span_converter: &Utf8ToUtf16,
     options: EstreeTokenOptions,
     allocator: &Allocator,
 ) -> String {
-    let estree_tokens = to_estree_tokens(tokens, program, options, allocator);
+    let estree_tokens =
+        to_estree_tokens(tokens, program, source_text, span_converter, options, allocator);
     serde_json::to_string_pretty(&estree_tokens).unwrap_or_default()
 }
 
@@ -83,6 +89,8 @@ pub fn to_estree_tokens_json(
 fn to_estree_tokens<'a>(
     tokens: &[Token],
     program: &Program<'a>,
+    source_text: &'a str,
+    span_converter: &Utf8ToUtf16,
     options: EstreeTokenOptions,
     allocator: &'a Allocator,
 ) -> ArenaVec<'a, EstreeToken<'a>> {
@@ -95,12 +103,9 @@ fn to_estree_tokens<'a>(
     };
     context.visit_program(program);
 
-    // Create UTF-8 to UTF-16 conversion table
-    let source_text = program.source_text;
-    let utf8_to_utf16 = Utf8ToUtf16::new(source_text);
-    let mut converter = utf8_to_utf16.converter();
-
     // Convert tokens to `EstreeToken`s
+    let mut span_converter = span_converter.converter();
+
     let mut estree_tokens = ArenaVec::with_capacity_in(tokens.len(), allocator);
     for token in tokens {
         let kind = token.kind();
@@ -108,9 +113,9 @@ fn to_estree_tokens<'a>(
 
         let mut start = token.start();
         let mut end = token.end();
-        if let Some(converter) = converter.as_mut() {
-            converter.convert_offset(&mut start);
-            converter.convert_offset(&mut end);
+        if let Some(span_converter) = span_converter.as_mut() {
+            span_converter.convert_offset(&mut start);
+            span_converter.convert_offset(&mut end);
         }
         let span_utf16 = Span::new(start, end);
 
