@@ -7,6 +7,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ parseInt();
    · ──────────
    ╰────
+  help: Add parameters for parsing numbers, e.g., `parseInt('10', 10)`.
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -41,54 +42,63 @@ source: crates/oxc_linter/src/tester.rs
  1 │ parseInt("10", null);
    ·                ────
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", undefined);
    ·                ─────────
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", true);
    ·                ────
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", "foo");
    ·                ─────
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", "123");
    ·                ─────
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", 1);
    ·                ─
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", 37);
    ·                ──
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", 10.5);
    ·                ────
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:1]
  1 │ Number.parseInt();
    · ─────────────────
    ╰────
+  help: Add parameters for parsing numbers, e.g., `parseInt('10', 10)`.
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -102,18 +112,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ Number.parseInt("10", 1);
    ·                       ─
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:23]
  1 │ Number.parseInt("10", 37);
    ·                       ──
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:23]
  1 │ Number.parseInt("10", 10.5);
    ·                       ────
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -148,12 +161,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ parseInt();
    · ──────────
    ╰────
+  help: Add parameters for parsing numbers, e.g., `parseInt('10', 10)`.
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:1]
  1 │ parseInt();
    · ──────────
    ╰────
+  help: Add parameters for parsing numbers, e.g., `parseInt('10', 10)`.
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -174,21 +189,25 @@ source: crates/oxc_linter/src/tester.rs
  1 │ parseInt("10", 1);
    ·                ─
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
  1 │ parseInt("10", 1);
    ·                ─
    ╰────
+  help: The radix parameter should be an integer between 2 and 36, or a variable that is not `undefined`.
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:1]
  1 │ Number.parseInt();
    · ─────────────────
    ╰────
+  help: Add parameters for parsing numbers, e.g., `parseInt('10', 10)`.
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:1]
  1 │ Number.parseInt();
    · ─────────────────
    ╰────
+  help: Add parameters for parsing numbers, e.g., `parseInt('10', 10)`.
