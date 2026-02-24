@@ -16,7 +16,7 @@ use crate::compiler_error::GENERATED_SOURCE;
 use crate::hir::hir_builder::{each_terminal_successor, mark_instruction_ids, mark_predecessors};
 use crate::hir::hir_types::{
     BasicBlock, BlockId, BlockKind, BlockMap, GotoTerminal, GotoVariant, HIRFunction, Hir,
-    Instruction, InstructionId, MutableRange, ReactiveScope, ReactiveScopeTerminal, ScopeId,
+    Instruction, InstructionId, InstructionValue, MutableRange, ReactiveScope, ReactiveScopeTerminal, ScopeId,
     Terminal, UnreachableTerminal,
 };
 use crate::hir::visitors::{
@@ -366,21 +366,91 @@ fn fix_scope_and_identifier_ranges(func: &mut Hir) {
         })
         .collect();
 
+    // Build a map from ScopeId -> new MutableRange.
+    //
+    // In the TS reference, scopes are shared by reference: all identifiers in the
+    // same scope point to the same `ReactiveScope` object. Updating the terminal's
+    // scope range thus implicitly updates every identifier's scope range too.
+    //
+    // In Rust, scopes are `Box<ReactiveScope>` clones, so terminal and identifier
+    // scope ranges diverge after renumbering. We must explicitly propagate the
+    // updated ranges to all identifiers in the HIR.
+    let mut scope_range_map: FxHashMap<ScopeId, MutableRange> = FxHashMap::default();
+
     for (block_id, terminal_id, end_id) in fixups {
         if let Some(block) = func.blocks.get_mut(&block_id) {
             match &mut block.terminal {
                 Terminal::Scope(t) => {
-                    t.scope.range.start = terminal_id;
-                    t.scope.range.end = end_id;
+                    let new_range = MutableRange { start: terminal_id, end: end_id };
+                    t.scope.range = new_range;
+                    scope_range_map.insert(t.scope.id, new_range);
                 }
                 Terminal::PrunedScope(t) => {
-                    t.scope.range.start = terminal_id;
-                    t.scope.range.end = end_id;
+                    let new_range = MutableRange { start: terminal_id, end: end_id };
+                    t.scope.range = new_range;
+                    scope_range_map.insert(t.scope.id, new_range);
                 }
                 _ => {}
             }
         }
     }
+
+    // Propagate updated scope ranges to all identifiers in the HIR.
+    if !scope_range_map.is_empty() {
+        for block in func.blocks.values_mut() {
+            // Sync phi nodes
+            for phi in &mut block.phis {
+                sync_identifier_scope(&mut phi.place.identifier, &scope_range_map);
+                for operand in phi.operands.values_mut() {
+                    sync_identifier_scope(&mut operand.identifier, &scope_range_map);
+                }
+            }
+            // Sync instruction lvalues and operands
+            for instr in &mut block.instructions {
+                sync_identifier_scope(&mut instr.lvalue.identifier, &scope_range_map);
+                sync_instruction_value_identifiers(&mut instr.value, &scope_range_map);
+            }
+            // Sync terminal operands
+            sync_terminal_identifiers(&mut block.terminal, &scope_range_map);
+        }
+    }
+}
+
+/// Update an identifier's scope range if it belongs to a scope that was remapped.
+fn sync_identifier_scope(
+    identifier: &mut crate::hir::hir_types::Identifier,
+    scope_range_map: &FxHashMap<ScopeId, MutableRange>,
+) {
+    if let Some(scope) = &mut identifier.scope {
+        if let Some(&new_range) = scope_range_map.get(&scope.id) {
+            scope.range = new_range;
+            identifier.mutable_range = new_range;
+        }
+    }
+}
+
+/// Update identifiers in an instruction value using the existing map functions.
+fn sync_instruction_value_identifiers(
+    value: &mut InstructionValue,
+    map: &FxHashMap<ScopeId, MutableRange>,
+) {
+    use crate::hir::visitors::map_instruction_value_operands;
+    map_instruction_value_operands(value, &mut |mut place| {
+        sync_identifier_scope(&mut place.identifier, map);
+        place
+    });
+}
+
+/// Update identifiers in terminal operands.
+fn sync_terminal_identifiers(
+    terminal: &mut Terminal,
+    map: &FxHashMap<ScopeId, MutableRange>,
+) {
+    use crate::hir::visitors::map_terminal_operands;
+    map_terminal_operands(terminal, &mut |mut place| {
+        sync_identifier_scope(&mut place.identifier, map);
+        place
+    });
 }
 
 // =====================================================================================
