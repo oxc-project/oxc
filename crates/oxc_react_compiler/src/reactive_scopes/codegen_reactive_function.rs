@@ -1322,7 +1322,13 @@ fn codegen_destructure_statement(
             })
         }
         InstructionKind::Reassign => {
-            let assign_expr = format!("{lval} = {value}");
+            // Object destructuring assignments need parens to avoid being
+            // parsed as block statements: `({ f: g } = t3)` not `{ f: g } = t3`
+            let assign_expr = if lval.starts_with('{') {
+                format!("({lval} = {value})")
+            } else {
+                format!("{lval} = {value}")
+            };
             // Mark as assignment temp when stored as temp, so consumers can
             // add parens when needed (e.g., `foo(([x] = obj))`).
             if let Some(lval_place) = instr.lvalue.as_ref()

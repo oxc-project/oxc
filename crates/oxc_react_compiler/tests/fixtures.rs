@@ -995,11 +995,16 @@ fn normalize_code(s: &str) -> String {
     // the value, then removes the now-redundant declaration.
     let inlined = inline_simple_temp_assignments(&normalized_destr);
 
-    // Step 10b: replace temp references with named aliases.
+    // Step 10b: inline temp-to-temp aliases.
+    // When our codegen produces `const t1 = t0` or `let t1 = t0` (temp alias),
+    // replace all uses of `t1` with `t0` and remove the alias declaration.
+    let inlined_temp_aliases = inline_temp_to_temp_aliases(&inlined);
+
+    // Step 10c: replace temp references with named aliases.
     // When we see `const/let NAME = tN` (named var assigned from temp), replace
     // subsequent occurrences of `tN` with `NAME` in specific safe contexts.
     // Does NOT remove the alias declaration (that's for dead-code removal later).
-    let propagated = propagate_temp_aliases_conservative(&inlined);
+    let propagated = propagate_temp_aliases_conservative(&inlined_temp_aliases);
 
     // Step 11: remove dead expression statements.
     // Our codegen may emit side-effect-free expression statements like `[]` or
@@ -1036,7 +1041,13 @@ fn normalize_code(s: &str) -> String {
     // Step 18: normalize shorthand properties (`{x: x}` → `{x}`).
     let normalized_shorthand = normalize_shorthand_properties(&normalized_parens);
 
-    normalized_shorthand.trim().to_string()
+    // Step 19: re-renumber `tN` temps sequentially after inlining.
+    // Steps 10-12 may inline/remove some temps, leaving gaps (e.g. t0, t2 instead of t0, t1).
+    // This final pass renumbers all plain `tN` temps (lowercase, no `$`, no `#`) to
+    // sequential t0, t1, t2, ... based on order of first appearance.
+    let renumbered = renumber_plain_temps(&normalized_shorthand);
+
+    renumbered.trim().to_string()
 }
 
 /// Remove trailing commas before closing brackets: `,]`, `,)`, `,}`,
@@ -1467,6 +1478,92 @@ fn inline_simple_temp_assignments(s: &str) -> String {
 
 /// Conservative version of temp alias propagation.
 /// When we see `const/let NAME = tN`, replace subsequent uses of `tN` with `NAME`
+/// Inline temp-to-temp aliases: `const t1 = t0` or `let t1 = t0` → replace all
+/// uses of `t1` with `t0` and remove the alias declaration.
+fn inline_temp_to_temp_aliases(s: &str) -> String {
+    use std::collections::HashMap;
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    if tokens.len() < 4 {
+        return s.to_string();
+    }
+
+    // Find `let/const tA = tB` patterns where both are temp identifiers
+    let mut aliases: HashMap<String, String> = HashMap::new();
+    let mut i = 0;
+    while i + 3 < tokens.len() {
+        if matches!(tokens[i], "let" | "const")
+            && is_temp_identifier(tokens[i + 1])
+            && tokens[i + 2] == "="
+            && is_temp_identifier(tokens[i + 3])
+        {
+            aliases.insert(tokens[i + 1].to_string(), tokens[i + 3].to_string());
+        }
+        i += 1;
+    }
+
+    if aliases.is_empty() {
+        return s.to_string();
+    }
+
+    // Resolve transitive aliases: t2 → t1 → t0 becomes t2 → t0
+    let mut resolved: HashMap<String, String> = HashMap::new();
+    for (from, to) in &aliases {
+        let mut target = to.clone();
+        let mut seen = std::collections::HashSet::new();
+        seen.insert(from.clone());
+        while let Some(next) = aliases.get(&target) {
+            if seen.contains(next) {
+                break;
+            }
+            seen.insert(target.clone());
+            target = next.clone();
+        }
+        resolved.insert(from.clone(), target);
+    }
+
+    // Remove alias declarations and replace references
+    let mut result = s.to_string();
+    for (from, to) in &resolved {
+        // Remove the declaration `let FROM = TO ` or `const FROM = TO `
+        for keyword in &["let", "const"] {
+            let decl = format!("{keyword} {from} = {to}");
+            result = result.replace(&decl, "");
+        }
+    }
+
+    // Replace all occurrences of alias temps with their targets (word-boundary aware)
+    for (from, to) in &resolved {
+        let bytes = from.as_bytes();
+        let mut new_result = String::with_capacity(result.len());
+        let result_bytes = result.as_bytes();
+        let name_len = bytes.len();
+        let mut pos = 0;
+
+        while pos < result_bytes.len() {
+            if pos + name_len <= result_bytes.len()
+                && &result_bytes[pos..pos + name_len] == bytes
+            {
+                let at_start = pos == 0
+                    || (!result_bytes[pos - 1].is_ascii_alphanumeric()
+                        && result_bytes[pos - 1] != b'_');
+                let at_end = pos + name_len >= result_bytes.len()
+                    || (!result_bytes[pos + name_len].is_ascii_alphanumeric()
+                        && result_bytes[pos + name_len] != b'_');
+                if at_start && at_end {
+                    new_result.push_str(to);
+                    pos += name_len;
+                    continue;
+                }
+            }
+            new_result.push(result_bytes[pos] as char);
+            pos += 1;
+        }
+        result = new_result;
+    }
+
+    collapse_whitespace(&result)
+}
+
 /// but do NOT remove the alias declaration. The dead-code pass will clean it up
 /// if `NAME` is unused.
 fn propagate_temp_aliases_conservative(s: &str) -> String {
@@ -2033,12 +2130,12 @@ fn normalize_grouping_parens(s: &str) -> String {
                 j += 1;
             }
             if !has_nested && j < len && chars[j] == ')' {
-                let inner = &s[i + 1..j];
+                let inner: String = chars[i + 1..j].iter().collect();
                 let inner_trimmed = inner.trim();
-                let before = if i >= 3 { &s[i.saturating_sub(4)..i] } else { "" };
+                let before: String = if i >= 4 { chars[i - 4..i].iter().collect() } else { chars[..i].iter().collect() };
                 let after_start = (j + 1).min(len);
                 let after_end = (j + 5).min(len);
-                let after = &s[after_start..after_end];
+                let after: String = chars[after_start..after_end].iter().collect();
                 let adjacent_to_logical = before.contains("??")
                     || before.contains("||")
                     || before.contains("&&")
@@ -2122,6 +2219,96 @@ fn normalize_shorthand_properties(s: &str) -> String {
         result.push(chars[i]);
         i += 1;
     }
+    result
+}
+
+/// Re-renumber all plain `tN` temps (lowercase, digits only) to sequential
+/// t0, t1, t2, ... based on order of first appearance.
+/// Also renumbers uppercase `TN` JSX tag temps similarly.
+/// This must run AFTER all inlining/dead-code steps to close numbering gaps.
+fn renumber_plain_temps(s: &str) -> String {
+    use std::collections::HashMap;
+
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+
+    // First pass: discover all tN / TN identifiers in order of first appearance.
+    let mut mapping: HashMap<String, String> = HashMap::new();
+    let mut next_lower = 0u32;
+    let mut next_upper = 0u32;
+    let mut i = 0;
+    while i < len {
+        // Check for `t` or `T` followed by digit, at a word boundary.
+        if (bytes[i] == b't' || bytes[i] == b'T') && i + 1 < len && bytes[i + 1].is_ascii_digit() {
+            let at_boundary =
+                i == 0 || (!bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_' && bytes[i - 1] != b'$');
+            if at_boundary {
+                let start = i;
+                let is_upper = bytes[i] == b'T';
+                i += 1; // skip t/T
+                while i < len && bytes[i].is_ascii_digit() {
+                    i += 1;
+                }
+                // Make sure the next char is NOT alphanumeric or _ (word boundary)
+                let end_boundary =
+                    i >= len || (!bytes[i].is_ascii_alphanumeric() && bytes[i] != b'_' && bytes[i] != b'$');
+                if end_boundary {
+                    let original = std::str::from_utf8(&bytes[start..i]).unwrap();
+                    mapping.entry(original.to_string()).or_insert_with(|| {
+                        if is_upper {
+                            let id = next_upper;
+                            next_upper += 1;
+                            format!("T{id}")
+                        } else {
+                            let id = next_lower;
+                            next_lower += 1;
+                            format!("t{id}")
+                        }
+                    });
+                    continue;
+                }
+            }
+        }
+        i += 1;
+    }
+
+    // If all temps are already sequential (no renaming needed), return as-is.
+    let needs_rename = mapping.iter().any(|(k, v)| k != v);
+    if !needs_rename {
+        return s.to_string();
+    }
+
+    // Second pass: replace.
+    let mut result = String::with_capacity(len);
+    i = 0;
+    while i < len {
+        if (bytes[i] == b't' || bytes[i] == b'T') && i + 1 < len && bytes[i + 1].is_ascii_digit() {
+            let at_boundary =
+                i == 0 || (!bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_' && bytes[i - 1] != b'$');
+            if at_boundary {
+                let start = i;
+                i += 1;
+                while i < len && bytes[i].is_ascii_digit() {
+                    i += 1;
+                }
+                let end_boundary =
+                    i >= len || (!bytes[i].is_ascii_alphanumeric() && bytes[i] != b'_' && bytes[i] != b'$');
+                if end_boundary {
+                    let original = std::str::from_utf8(&bytes[start..i]).unwrap();
+                    if let Some(replacement) = mapping.get(original) {
+                        result.push_str(replacement);
+                        continue;
+                    }
+                }
+                // Not in mapping, push original
+                result.push_str(std::str::from_utf8(&bytes[start..i]).unwrap());
+                continue;
+            }
+        }
+        result.push(bytes[i] as char);
+        i += 1;
+    }
+
     result
 }
 
@@ -2485,6 +2672,184 @@ fn codegen_conformance_inner() {
     }
 
     insta::assert_snapshot!("codegen_conformance", snapshot);
+}
+
+/// Diagnostic test: print near-miss fixtures with diffs to find low-hanging fixes.
+/// Run with: cargo test -p oxc_react_compiler --release -- --ignored --nocapture test_near_miss_diagnostic
+#[allow(dead_code)]
+#[test]
+#[ignore]
+fn test_near_miss_diagnostic() {
+    let fixtures_dir = Path::new(FIXTURES_PATH);
+    if !fixtures_dir.exists() {
+        return;
+    }
+
+    let mut fixture_pairs: Vec<(std::path::PathBuf, std::path::PathBuf)> = Vec::new();
+    for entry in std::fs::read_dir(fixtures_dir).expect("Failed to read fixtures dir") {
+        let entry = entry.expect("Failed to read dir entry");
+        let path = entry.path();
+        if !is_js_ts_tsx(&path) {
+            continue;
+        }
+        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if file_name.starts_with("error.") {
+            continue;
+        }
+        let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+        let expect_path = fixtures_dir.join(format!("{stem}.expect.md"));
+        if expect_path.exists() {
+            fixture_pairs.push((path, expect_path));
+        }
+    }
+    fixture_pairs.sort_by(|a, b| a.0.cmp(&b.0));
+
+    struct NearMiss {
+        name: String,
+        diff_lines: usize,
+        actual_lines: usize,
+        expected_lines: usize,
+        diff_summary: String,
+    }
+    let mut near_misses: Vec<NearMiss> = Vec::new();
+
+    for (input_path, expect_path) in &fixture_pairs {
+        let file_name =
+            input_path.file_name().and_then(|n| n.to_str()).unwrap_or("<unknown>").to_string();
+        let Ok(source) = std::fs::read_to_string(input_path) else { continue };
+        let Ok(expect_content) = std::fs::read_to_string(expect_path) else { continue };
+        let Some(expected_code) = extract_expect_md_section(&expect_content, "Code") else {
+            continue;
+        };
+        if source.contains("@expectNothingCompiled")
+            || source.contains("'use no forget'")
+            || source.contains("\"use no forget\"")
+            || source.contains("'use no memo'")
+            || source.contains("\"use no memo\"")
+        {
+            continue;
+        }
+
+        let ext = input_path.extension().and_then(|e| e.to_str()).unwrap_or("js");
+        let source_type = match ext {
+            "tsx" => oxc_span::SourceType::tsx(),
+            "ts" => oxc_span::SourceType::ts(),
+            _ => oxc_span::SourceType::jsx(),
+        };
+
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            run_pipeline_for_codegen(&source, source_type)
+        }));
+        let codegen_func = match result {
+            Ok(Ok(func)) => func,
+            _ => continue,
+        };
+
+        let actual_full = format_full_function(&codegen_func);
+        let expected_func = match extract_function_from_expected(expected_code) {
+            Some(f) => f,
+            None => expected_code.to_string(),
+        };
+
+        let actual_norm = normalize_code(&actual_full);
+        let expected_norm = normalize_code(&expected_func);
+        if actual_norm == expected_norm {
+            continue; // already passing
+        }
+
+        // Count differing lines
+        let actual_lines: Vec<&str> = actual_norm.lines().collect();
+        let expected_lines: Vec<&str> = expected_norm.lines().collect();
+        let max_len = actual_lines.len().max(expected_lines.len());
+        let mut diff_count = 0;
+        let mut diff_details = Vec::new();
+        for i in 0..max_len {
+            let a = actual_lines.get(i).unwrap_or(&"");
+            let e = expected_lines.get(i).unwrap_or(&"");
+            if a != e {
+                diff_count += 1;
+                if diff_details.len() < 5 {
+                    diff_details.push(format!("  L{}: A=`{}` E=`{}`", i + 1, a, e));
+                }
+            }
+        }
+
+        if diff_count <= 5 && max_len > 0 {
+            near_misses.push(NearMiss {
+                name: file_name,
+                diff_lines: diff_count,
+                actual_lines: actual_lines.len(),
+                expected_lines: expected_lines.len(),
+                diff_summary: diff_details.join("\n"),
+            });
+        }
+    }
+
+    near_misses.sort_by_key(|n| n.diff_lines);
+
+    // Categorize the near misses
+    let mut temp_renumber_issues = Vec::new();
+    let mut no_memo_issues = Vec::new();
+    let mut function_outline_issues = Vec::new();
+    let mut scope_structure_issues = Vec::new();
+    let mut other_issues = Vec::new();
+
+    for nm in &near_misses {
+        // Check if the diff is ONLY temp renumbering (tN vs tM)
+        let a_line = nm.diff_summary.lines().next().unwrap_or("");
+        let a_part = a_line.split("A=`").nth(1).unwrap_or("");
+        let e_part = a_line.split("E=`").nth(1).unwrap_or("");
+
+        if !a_part.contains("_c(") && e_part.contains("_c(") {
+            no_memo_issues.push(&nm.name);
+        } else if e_part.contains("_temp") && !a_part.contains("_temp") {
+            function_outline_issues.push(&nm.name);
+        } else if a_part.contains("_c(") && e_part.contains("_c(") {
+            // Both have memoization — check if scope counts differ
+            let a_c = a_part.split("_c(").nth(1).and_then(|s| s.split(')').next());
+            let e_c = e_part.split("_c(").nth(1).and_then(|s| s.split(')').next());
+            if a_c != e_c {
+                scope_structure_issues.push((&nm.name, a_c.unwrap_or("?").to_string(), e_c.unwrap_or("?").to_string()));
+            } else {
+                // Same _c() count — likely temp renumbering or small codegen diff
+                temp_renumber_issues.push(&nm.name);
+            }
+        } else {
+            other_issues.push(&nm.name);
+        }
+    }
+
+    println!("\n=== NEAR-MISS ANALYSIS ===");
+    println!("Total near-miss fixtures: {}", near_misses.len());
+    println!("\n--- NO MEMOIZATION (our output lacks _c()): {} fixtures ---", no_memo_issues.len());
+    for name in &no_memo_issues[..no_memo_issues.len().min(20)] {
+        println!("  {}", name);
+    }
+    println!("\n--- FUNCTION OUTLINING (_temp missing): {} fixtures ---", function_outline_issues.len());
+    for name in &function_outline_issues[..function_outline_issues.len().min(20)] {
+        println!("  {}", name);
+    }
+    println!("\n--- SAME _c() COUNT (close match): {} fixtures ---", temp_renumber_issues.len());
+    for name in &temp_renumber_issues {
+        println!("  {}", name);
+    }
+    println!("\n--- DIFFERENT _c() COUNT: {} fixtures ---", scope_structure_issues.len());
+    for (name, a, e) in &scope_structure_issues[..scope_structure_issues.len().min(20)] {
+        println!("  {} (ours={}, expected={})", name, a, e);
+    }
+    println!("\n--- OTHER: {} fixtures ---", other_issues.len());
+    for name in &other_issues[..other_issues.len().min(20)] {
+        println!("  {}", name);
+    }
+
+    // Print the same _c() count ones with full diffs — these are closest to passing
+    println!("\n=== FULL DIFFS FOR SAME _c() FIXTURES ===");
+    for nm in &near_misses {
+        if temp_renumber_issues.contains(&&nm.name) {
+            println!("\n--- {} ---", nm.name);
+            println!("{}", nm.diff_summary);
+        }
+    }
 }
 
 /// Test optional chaining - simple case

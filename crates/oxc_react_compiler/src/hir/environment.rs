@@ -135,7 +135,7 @@ impl Default for EnvironmentConfig {
             custom_hooks: FxHashMap::default(),
             custom_macros: None,
             enable_forest: false,
-            enable_function_outlining: false,
+            enable_function_outlining: true,
             enable_jsx_outlining: false,
             enable_name_anonymous_functions: false,
             validate_hooks_usage: true,

@@ -186,7 +186,7 @@ mod env_config_tests {
         assert!(config.validate_no_set_state_in_render);
         assert!(config.validate_ref_access_during_render);
         assert!(!config.enable_forest);
-        assert!(!config.enable_function_outlining);
+        assert!(config.enable_function_outlining);
         assert!(!config.validate_no_set_state_in_effects);
     }
 
