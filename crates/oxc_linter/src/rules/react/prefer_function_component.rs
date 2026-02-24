@@ -1,15 +1,10 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        ArrowFunctionExpression, CallExpression, Class, ClassBody, ClassElement, Function,
-        JSXElement, JSXFragment,
-    },
+    ast::{Class, ClassElement},
 };
-use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_syntax::scope::ScopeFlags;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -17,7 +12,7 @@ use crate::{
     AstNode,
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
-    utils::is_es6_component,
+    utils::{expression_contains_jsx, function_contains_jsx, is_es6_component},
 };
 
 fn prefer_function_component_diagnostic(span: Span) -> OxcDiagnostic {
@@ -109,7 +104,7 @@ impl Rule for PreferFunctionComponent {
             if self.allow_jsx_utility_class {
                 return;
             }
-            if !class_body_contains_jsx(&class.body) {
+            if !class_body_contains_jsx(class) {
                 return;
             }
         }
@@ -145,72 +140,18 @@ fn is_error_boundary(class: &Class) -> bool {
     })
 }
 
-/// Visitor that searches for JSX elements within a class body.
-/// Walks into direct class method bodies but stops at nested
-/// functions/arrows within those methods.
-struct ClassJsxFinder {
-    found: bool,
-    depth: u32,
-}
-
-impl ClassJsxFinder {
-    fn new() -> Self {
-        Self { found: false, depth: 0 }
-    }
-}
-
-impl<'a> Visit<'a> for ClassJsxFinder {
-    fn visit_class_body(&mut self, body: &ClassBody<'a>) {
-        for element in &body.body {
-            if self.found {
-                return;
-            }
-            self.visit_class_element(element);
+/// Returns `true` if any class method or property initializer contains JSX.
+/// Reuses the existing `function_contains_jsx` and `expression_contains_jsx`
+/// utilities from `crate::utils`, which already handle nested function
+/// boundaries correctly.
+fn class_body_contains_jsx(class: &Class) -> bool {
+    class.body.body.iter().any(|element| match element {
+        ClassElement::MethodDefinition(method) => function_contains_jsx(&method.value),
+        ClassElement::PropertyDefinition(prop) => {
+            prop.value.as_ref().is_some_and(|v| expression_contains_jsx(v))
         }
-    }
-
-    fn visit_jsx_element(&mut self, _elem: &JSXElement<'a>) {
-        self.found = true;
-    }
-
-    fn visit_jsx_fragment(&mut self, _frag: &JSXFragment<'a>) {
-        self.found = true;
-    }
-
-    fn visit_call_expression(&mut self, call: &CallExpression<'a>) {
-        if crate::utils::is_create_element_call(call) {
-            self.found = true;
-        }
-        if !self.found {
-            walk::walk_call_expression(self, call);
-        }
-    }
-
-    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
-        // depth 0 = entering a class method body, walk into it.
-        // depth > 0 = nested function inside a method, skip — it's a
-        //             separate component / callback.
-        if !self.found && self.depth == 0 {
-            self.depth += 1;
-            walk::walk_function(self, func, flags);
-            self.depth -= 1;
-        }
-    }
-
-    fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {
-        if !self.found && self.depth == 0 {
-            self.depth += 1;
-            walk::walk_arrow_function_expression(self, arrow);
-            self.depth -= 1;
-        }
-    }
-}
-
-/// Returns `true` if the class body contains JSX in any of its methods.
-fn class_body_contains_jsx(body: &ClassBody) -> bool {
-    let mut finder = ClassJsxFinder::new();
-    finder.visit_class_body(body);
-    finder.found
+        _ => false,
+    })
 }
 
 #[test]
