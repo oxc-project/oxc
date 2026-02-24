@@ -12,9 +12,6 @@ catalogs:
     '@napi-rs/cli':
       specifier: 3.5.1
       version: 3.5.1
-    '@napi-rs/wasm-runtime':
-      specifier: 1.1.1
-      version: 1.1.1
     '@types/node':
       specifier: 24.1.0
       version: 24.1.0
@@ -24,18 +21,12 @@ catalogs:
     eslint:
       specifier: 9.39.2
       version: 9.39.2
-    publint:
-      specifier: 0.3.17
-      version: 0.3.17
     rolldown:
       specifier: 1.0.0-rc.5
       version: 1.0.0-rc.5
     tsdown:
       specifier: 0.20.3
       version: 0.20.3
-    typescript:
-      specifier: 5.9.3
-      version: 5.9.3
     vitest:
       specifier: 4.0.18
       version: 4.0.18
@@ -171,9 +162,6 @@ importers:
       type-fest:
         specifier: ^5.2.0
         version: 5.4.4
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
       vitest:
         specifier: 'catalog:'
         version: 4.0.18(@types/node@24.1.0)(@vitest/browser-playwright@4.0.18)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)
