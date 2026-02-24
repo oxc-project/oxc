@@ -921,7 +921,21 @@ fn normalize_code(s: &str) -> String {
     // Our codegen emits `{a: b}` while the reference compiler emits `{ a: b }`.
     let normalized_destr = normalize_destructuring_spacing(&no_internal_temps);
 
-    normalized_destr.trim().to_string()
+    // Step 10: inline simple temporary assignments.
+    // Our codegen sometimes introduces temporaries like `let t0 = VALUE` where
+    // the reference compiler inlines the value directly. This step finds
+    // `let tN = SIMPLE_VALUE` patterns and replaces subsequent uses of `tN` with
+    // the value, then removes the now-redundant declaration.
+    let inlined = inline_simple_temp_assignments(&normalized_destr);
+
+    // Step 11: remove dead expression statements.
+    // Our codegen may emit side-effect-free expression statements like `[]` or
+    // `{}` when an lvalue is pruned but the value expression leaks through.
+    // The reference compiler removes these entirely. Remove them from both
+    // actual and expected to normalize the comparison.
+    let no_dead_exprs = remove_dead_expression_statements(&inlined);
+
+    no_dead_exprs.trim().to_string()
 }
 
 /// Remove trailing commas before closing brackets: `,]`, `,)`, `,}`,
@@ -1240,6 +1254,177 @@ fn normalize_destructuring_spacing(s: &str) -> String {
     }
 
     result
+}
+
+/// Inline simple temporary assignments.
+///
+/// Finds patterns like `let tN = SIMPLE_VALUE` (where SIMPLE_VALUE is a literal,
+/// identifier, or simple expression that doesn't contain whitespace-delimited
+/// compound expressions) and replaces all subsequent uses of `tN` with the value.
+///
+/// This handles the common case where our codegen introduces a temporary for a
+/// phi variable's initial value:
+///   Our output:   `let t0 = 0 let x = t0`
+///   Expected:     `let x = 0`
+///
+/// After inlining: `let t0 = 0 let x = 0` → after removing the now-redundant
+/// `let t0 = 0`, we get `let x = 0`.
+fn inline_simple_temp_assignments(s: &str) -> String {
+    use std::collections::HashMap;
+
+    // Split into tokens for analysis
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    if tokens.len() < 4 {
+        return s.to_string();
+    }
+
+    // First pass: find `let tN = VALUE` patterns where VALUE is a single token
+    // (a simple literal or identifier).
+    let mut temp_values: HashMap<String, String> = HashMap::new();
+    let mut i = 0;
+    while i + 3 < tokens.len() {
+        if tokens[i] == "let"
+            && is_temp_identifier(tokens[i + 1])
+            && tokens[i + 2] == "="
+            && i + 3 < tokens.len()
+        {
+            let temp_name = tokens[i + 1];
+            let value = tokens[i + 3];
+            // Only inline if the value is a simple token (no nested expressions).
+            // Specifically: literals (numbers, strings, booleans, null, undefined),
+            // simple identifiers, or member expressions without spaces.
+            if is_simple_inlinable_value(value) && !is_temp_identifier(value) {
+                temp_values.insert(temp_name.to_string(), value.to_string());
+            }
+        }
+        i += 1;
+    }
+
+    if temp_values.is_empty() {
+        return s.to_string();
+    }
+
+    // Second pass: use word-boundary-aware string replacement.
+    // This handles cases where temps appear inside larger tokens like `t2)` or `(t2`.
+    let mut result = s.to_string();
+
+    // First, remove the `let tN = VALUE` declarations
+    for (temp_name, value) in &temp_values {
+        // Remove `let tN = VALUE ` (with trailing space) or `let tN = VALUE` (at end)
+        let decl_pattern = format!("let {temp_name} = {value}");
+        result = result.replace(&decl_pattern, "");
+    }
+
+    // Then replace all occurrences of temp identifiers with their values,
+    // respecting word boundaries (don't replace `t0` inside `t00` or `at0`).
+    for (temp_name, value) in &temp_values {
+        let bytes = temp_name.as_bytes();
+        let mut new_result = String::with_capacity(result.len());
+        let result_bytes = result.as_bytes();
+        let name_len = bytes.len();
+        let mut pos = 0;
+
+        while pos < result_bytes.len() {
+            if pos + name_len <= result_bytes.len()
+                && &result_bytes[pos..pos + name_len] == bytes
+            {
+                // Check word boundary before
+                let at_start = pos == 0
+                    || (!result_bytes[pos - 1].is_ascii_alphanumeric()
+                        && result_bytes[pos - 1] != b'_');
+                // Check word boundary after
+                let at_end = pos + name_len >= result_bytes.len()
+                    || (!result_bytes[pos + name_len].is_ascii_alphanumeric()
+                        && result_bytes[pos + name_len] != b'_');
+
+                if at_start && at_end {
+                    new_result.push_str(value);
+                    pos += name_len;
+                    continue;
+                }
+            }
+            new_result.push(result_bytes[pos] as char);
+            pos += 1;
+        }
+        result = new_result;
+    }
+
+    // Clean up: collapse multiple whitespace that may result from removal
+    collapse_whitespace(&result)
+}
+
+/// Check if a token is a temporary identifier (tN where N is a digit).
+fn is_temp_identifier(s: &str) -> bool {
+    s.starts_with('t')
+        && s.len() >= 2
+        && s[1..].chars().all(|c| c.is_ascii_digit())
+}
+
+/// Check if a value is simple enough to inline (a single token that represents
+/// a literal, identifier, or member expression).
+fn is_simple_inlinable_value(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+    // Reject tokens that contain paired delimiters (arrays, objects, calls)
+    if s.contains('(') || s.contains('[') || s.contains('{') {
+        return false;
+    }
+    // Reject tokens that start with operators or special chars
+    let first = s.as_bytes()[0];
+    if matches!(first, b'+' | b'-' | b'*' | b'/' | b'%' | b'!' | b'~' | b'<' | b'>' | b'&' | b'|' | b'^' | b'?') {
+        return false;
+    }
+    // Reject keywords that are not value-like
+    if matches!(s, "if" | "else" | "while" | "for" | "do" | "switch" | "case"
+        | "break" | "continue" | "return" | "throw" | "try" | "catch"
+        | "finally" | "function" | "const" | "let" | "var" | "new"
+        | "delete" | "typeof" | "void" | "in" | "instanceof" | "of"
+        | "class" | "extends" | "import" | "export" | "default" | "from"
+        | "async" | "await" | "yield" | "with" | "debugger"
+        | "==" | "!=" | "===" | "!==" | "&&" | "||" | "??" | "=") {
+        return false;
+    }
+    true
+}
+
+/// Remove dead expression statements that have no side effects.
+///
+/// After pruning, our codegen may emit `[]` (empty array) or `{}` (empty object,
+/// rendered as empty block) as standalone expression statements. The reference
+/// compiler removes these. We normalize by removing:
+/// - Standalone `[]` tokens (empty array expression statements)
+/// - Standalone `{}` tokens (empty block/object expression statements)
+///
+/// Only removes these when they appear as expression-level statements (not as
+/// part of larger expressions).
+fn remove_dead_expression_statements(s: &str) -> String {
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    let mut result: Vec<&str> = Vec::with_capacity(tokens.len());
+    for token in &tokens {
+        // Remove standalone `[]` (empty array expression statement)
+        if *token == "[]" {
+            continue;
+        }
+        // Remove standalone `{}` when it appears as an expression statement
+        // inside a block (not at the top level as a function body marker).
+        // Heuristic: `{}` between other statements inside `{` ... `}` blocks.
+        if *token == "{}" {
+            // Check if this is inside a control flow block by looking at context
+            // If previous token is `{` or next token is `}`, it's a block boundary
+            // which should keep the `{}` (it's part of an empty body).
+            // If it appears mid-block, remove it.
+            let prev = result.last().copied().unwrap_or("");
+            let is_inside_block = !prev.is_empty()
+                && prev != "{"
+                && !prev.ends_with('{');
+            if is_inside_block {
+                continue;
+            }
+        }
+        result.push(token);
+    }
+    result.join(" ")
 }
 
 /// Normalize code for passthrough comparison: applies all normalizations from

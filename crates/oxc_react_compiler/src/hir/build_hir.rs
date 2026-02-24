@@ -3039,7 +3039,32 @@ fn lower_for_loop_left_assignment(
         // Assignment target (e.g. `for (x of ...)`) uses Reassign
         _ => InstructionKind::Reassign,
     };
-    let decl_place = create_temporary_place(builder.environment_mut(), loc);
+
+    // Extract the variable name from the left-hand side and create a named place
+    // instead of an unnamed temporary. This preserves the original variable name
+    // (e.g., `x` in `for (const x in obj)`) in the codegen output.
+    let decl_place = match left {
+        ast::ForStatementLeft::VariableDeclaration(decl) => {
+            if let Some(declarator) = decl.declarations.first() {
+                if let ast::BindingPattern::BindingIdentifier(ident) = &declarator.id {
+                    let binding_kind = match decl.kind {
+                        ast::VariableDeclarationKind::Const
+                        | ast::VariableDeclarationKind::Using
+                        | ast::VariableDeclarationKind::AwaitUsing => BindingKind::Const,
+                        ast::VariableDeclarationKind::Let => BindingKind::Let,
+                        ast::VariableDeclarationKind::Var => BindingKind::Let,
+                    };
+                    builder.declare_binding(&ident.name, binding_kind, loc)
+                } else {
+                    create_temporary_place(builder.environment_mut(), loc)
+                }
+            } else {
+                create_temporary_place(builder.environment_mut(), loc)
+            }
+        }
+        _ => create_temporary_place(builder.environment_mut(), loc),
+    };
+
     let lvalue = create_temporary_place(builder.environment_mut(), loc);
     builder.push(Instruction {
         id: InstructionId(0),
