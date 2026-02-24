@@ -5,12 +5,12 @@
 /// Converts from HIR (lower-level CFG) to ReactiveFunction, a tree representation
 /// that is closer to an AST. This pass restores the original control flow constructs,
 /// including break/continue to labeled statements.
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use crate::{
     compiler_error::{CompilerError, SourceLocation},
     hir::{
-        BasicBlock, BlockId, GotoVariant, HIRFunction, Hir, Instruction, InstructionId,
+        BasicBlock, BlockId, BlockMap, GotoVariant, HIRFunction, Hir, Instruction, InstructionId,
         InstructionValue, Place, ReactiveBlock, ReactiveBreakTerminal, ReactiveContinueTerminal,
         ReactiveDoWhileTerminal, ReactiveForInTerminal, ReactiveForOfTerminal, ReactiveForTerminal,
         ReactiveFunction, ReactiveIfTerminal, ReactiveInstruction, ReactiveInstructionStatement,
@@ -26,11 +26,27 @@ use crate::{
 // Control flow target (matches TS ControlFlowTarget)
 // =====================================================================================
 
+#[derive(Debug)]
 enum ControlFlowTarget {
-    If { block: BlockId, id: u32 },
-    Switch { block: BlockId, id: u32 },
-    Case { block: BlockId, id: u32 },
-    Loop { block: BlockId, continue_block: BlockId, loop_block: Option<BlockId>, owns_loop: bool, id: u32 },
+    If {
+        block: BlockId,
+        id: u32,
+    },
+    Switch {
+        block: BlockId,
+        id: u32,
+    },
+    Case {
+        block: BlockId,
+        id: u32,
+    },
+    Loop {
+        block: BlockId,
+        continue_block: BlockId,
+        loop_block: Option<BlockId>,
+        owns_loop: bool,
+        id: u32,
+    },
 }
 
 impl ControlFlowTarget {
@@ -63,7 +79,7 @@ impl ControlFlowTarget {
 
 /// Context for the HIR -> Reactive conversion.
 struct Context {
-    blocks: FxHashMap<BlockId, BasicBlock>,
+    blocks: BlockMap,
     next_schedule_id: u32,
     /// Used to track which blocks *have been* generated already in order to
     /// abort if a block is generated a second time. This is an error catching
@@ -168,16 +184,16 @@ impl Context {
         );
         if let Some(target) = last {
             match &target {
-                ControlFlowTarget::Loop { block, continue_block, loop_block, owns_loop, .. } => {
+                ControlFlowTarget::Loop {
+                    block, continue_block, loop_block, owns_loop, ..
+                } => {
                     // Always remove the fallthrough block from scheduled.
                     // In the TS reference, the condition is `last.ownsBlock !== null`
                     // which is always true since ownsBlock is a boolean (never null),
                     // so the block is always removed from scheduled regardless of ownsBlock.
                     self.scheduled.remove(block);
                     self.scheduled.remove(continue_block);
-                    if *owns_loop
-                        && let Some(lb) = loop_block
-                    {
+                    if *owns_loop && let Some(lb) = loop_block {
                         self.scheduled.remove(lb);
                     }
                 }
@@ -306,11 +322,8 @@ struct ValueBlockTerminalResult {
 pub fn build_reactive_function(func: &HIRFunction) -> Result<ReactiveFunction, CompilerError> {
     let mut cx = Context::new(&func.body);
     let entry_block = cx.block(func.body.entry).cloned();
-    let body = if let Some(block) = entry_block {
-        traverse_block(&mut cx, block)?
-    } else {
-        Vec::new()
-    };
+    let body =
+        if let Some(block) = entry_block { traverse_block(&mut cx, block)? } else { Vec::new() };
 
     Ok(ReactiveFunction {
         loc: func.loc,
@@ -524,6 +537,25 @@ fn visit_value_block(
             });
 
             Ok(wrap_with_sequence(all_instructions, final_result, loc))
+        }
+        // Scope and PrunedScope terminals can appear inside value blocks when the
+        // reactive scope inference inserts scope boundaries into the middle of a
+        // value block chain (e.g., inside the test block of an optional chain).
+        // We "see through" the scope by recursing into the scope's inner block,
+        // then wrapping any preceding instructions from the current block.
+        Terminal::Scope(scope) => {
+            let inner_block_id = scope.block;
+            let continuation = visit_value_block(cx, inner_block_id, loc, fallthrough)?;
+            let instructions: Vec<ReactiveInstruction> =
+                block.instructions.iter().map(hir_instr_to_reactive).collect();
+            Ok(wrap_with_sequence(instructions, continuation, loc))
+        }
+        Terminal::PrunedScope(scope) => {
+            let inner_block_id = scope.block;
+            let continuation = visit_value_block(cx, inner_block_id, loc, fallthrough)?;
+            let instructions: Vec<ReactiveInstruction> =
+                block.instructions.iter().map(hir_instr_to_reactive).collect();
+            Ok(wrap_with_sequence(instructions, continuation, loc))
         }
         _ => {
             // For other terminals (if, etc.), just extract from instructions
@@ -833,9 +865,14 @@ fn visit_break(
     id: InstructionId,
     loc: SourceLocation,
 ) -> Result<Option<ReactiveStatement>, CompilerError> {
-    let (target_block, target_kind) = cx.get_break_target(block).ok_or_else(|| {
-        CompilerError::invariant("Expected a break target", None, loc)
-    })?;
+    // If the target is a scope fallthrough, the break is implicit —
+    // control will naturally fall through to the next block. Suppress it.
+    if cx.scope_fallthroughs.contains(&block) {
+        return Ok(None);
+    }
+    let (target_block, target_kind) = cx
+        .get_break_target(block)
+        .ok_or_else(|| CompilerError::invariant("Expected a break target", None, loc))?;
     if cx.scope_fallthroughs.contains(&target_block) {
         debug_assert!(
             target_kind == ReactiveTerminalTargetKind::Implicit,
@@ -956,8 +993,8 @@ fn visit_block(
                     } else {
                         None
                     };
-                let alternate_id = (if_term.alternate != if_term.fallthrough)
-                    .then_some(if_term.alternate);
+                let alternate_id =
+                    (if_term.alternate != if_term.fallthrough).then_some(if_term.alternate);
 
                 if let Some(ft) = fallthrough_id {
                     let sid = cx.schedule(ft, "if");
@@ -966,20 +1003,12 @@ fn visit_block(
 
                 let consequent = {
                     let consequent_block = cx.block(if_term.consequent).cloned();
-                    if let Some(b) = consequent_block {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = consequent_block { traverse_block(cx, b)? } else { Vec::new() }
                 };
 
                 let alternate = if let Some(alt_id) = alternate_id {
                     let alt_block = cx.block(alt_id).cloned();
-                    if let Some(b) = alt_block {
-                        Some(traverse_block(cx, b)?)
-                    } else {
-                        None
-                    }
+                    if let Some(b) = alt_block { Some(traverse_block(cx, b)?) } else { None }
                 } else {
                     None
                 };
@@ -1066,22 +1095,20 @@ fn visit_block(
             Terminal::DoWhile(do_while) => {
                 let fallthrough_id =
                     (!cx.is_scheduled(do_while.fallthrough)).then_some(do_while.fallthrough);
-                let loop_id =
-                    if !cx.is_scheduled(do_while.r#loop) && do_while.r#loop != do_while.fallthrough {
-                        Some(do_while.r#loop)
-                    } else {
-                        None
-                    };
-                let sid = cx.schedule_loop(do_while.fallthrough, do_while.test, Some(do_while.r#loop));
+                let loop_id = if !cx.is_scheduled(do_while.r#loop)
+                    && do_while.r#loop != do_while.fallthrough
+                {
+                    Some(do_while.r#loop)
+                } else {
+                    None
+                };
+                let sid =
+                    cx.schedule_loop(do_while.fallthrough, do_while.test, Some(do_while.r#loop));
                 schedule_ids.push(sid);
 
                 let loop_body = if let Some(lid) = loop_id {
                     let lb = cx.block(lid).cloned();
-                    if let Some(b) = lb {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = lb { traverse_block(cx, b)? } else { Vec::new() }
                 } else {
                     Vec::new()
                 };
@@ -1123,19 +1150,18 @@ fn visit_block(
                 } else {
                     None
                 };
-                let sid =
-                    cx.schedule_loop(while_term.fallthrough, while_term.test, Some(while_term.r#loop));
+                let sid = cx.schedule_loop(
+                    while_term.fallthrough,
+                    while_term.test,
+                    Some(while_term.r#loop),
+                );
                 schedule_ids.push(sid);
 
                 let test_result = visit_value_block(cx, while_term.test, while_term.loc, None)?;
 
                 let loop_body = if let Some(lid) = loop_id {
                     let lb = cx.block(lid).cloned();
-                    if let Some(b) = lb {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = lb { traverse_block(cx, b)? } else { Vec::new() }
                 } else {
                     Vec::new()
                 };
@@ -1191,11 +1217,7 @@ fn visit_block(
 
                 let loop_body = if let Some(lid) = loop_id {
                     let lb = cx.block(lid).cloned();
-                    if let Some(b) = lb {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = lb { traverse_block(cx, b)? } else { Vec::new() }
                 } else {
                     Vec::new()
                 };
@@ -1231,8 +1253,7 @@ fn visit_block(
                     };
                 let fallthrough_id =
                     (!cx.is_scheduled(for_of.fallthrough)).then_some(for_of.fallthrough);
-                let sid =
-                    cx.schedule_loop(for_of.fallthrough, for_of.init, Some(for_of.r#loop));
+                let sid = cx.schedule_loop(for_of.fallthrough, for_of.init, Some(for_of.r#loop));
                 schedule_ids.push(sid);
 
                 let init_result = visit_value_block(cx, for_of.init, for_of.loc, None)?;
@@ -1248,11 +1269,7 @@ fn visit_block(
 
                 let loop_body = if let Some(lid) = loop_id {
                     let lb = cx.block(lid).cloned();
-                    if let Some(b) = lb {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = lb { traverse_block(cx, b)? } else { Vec::new() }
                 } else {
                     Vec::new()
                 };
@@ -1287,8 +1304,7 @@ fn visit_block(
                     };
                 let fallthrough_id =
                     (!cx.is_scheduled(for_in.fallthrough)).then_some(for_in.fallthrough);
-                let sid =
-                    cx.schedule_loop(for_in.fallthrough, for_in.init, Some(for_in.r#loop));
+                let sid = cx.schedule_loop(for_in.fallthrough, for_in.init, Some(for_in.r#loop));
                 schedule_ids.push(sid);
 
                 let init_result = visit_value_block(cx, for_in.init, for_in.loc, None)?;
@@ -1299,11 +1315,7 @@ fn visit_block(
 
                 let loop_body = if let Some(lid) = loop_id {
                     let lb = cx.block(lid).cloned();
-                    if let Some(b) = lb {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = lb { traverse_block(cx, b)? } else { Vec::new() }
                 } else {
                     Vec::new()
                 };
@@ -1331,18 +1343,10 @@ fn visit_block(
             Terminal::Branch(branch) => {
                 let consequent = if cx.is_scheduled(branch.consequent) {
                     let break_stmt = visit_break(cx, branch.consequent, branch.id, branch.loc)?;
-                    if let Some(s) = break_stmt {
-                        vec![s]
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(s) = break_stmt { vec![s] } else { Vec::new() }
                 } else {
                     let consequent_block = cx.block(branch.consequent).cloned();
-                    if let Some(b) = consequent_block {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = consequent_block { traverse_block(cx, b)? } else { Vec::new() }
                 };
 
                 let alternate = if cx.is_scheduled(branch.alternate) {
@@ -1350,11 +1354,7 @@ fn visit_block(
                     Vec::new()
                 } else {
                     let alternate_block = cx.block(branch.alternate).cloned();
-                    if let Some(b) = alternate_block {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = alternate_block { traverse_block(cx, b)? } else { Vec::new() }
                 };
                 let alternate_opt = if alternate.is_empty() { None } else { Some(alternate) };
 
@@ -1371,13 +1371,12 @@ fn visit_block(
                 break;
             }
             Terminal::Label(label) => {
-                let fallthrough_id = if cx.reachable(label.fallthrough)
-                    && !cx.is_scheduled(label.fallthrough)
-                {
-                    Some(label.fallthrough)
-                } else {
-                    None
-                };
+                let fallthrough_id =
+                    if cx.reachable(label.fallthrough) && !cx.is_scheduled(label.fallthrough) {
+                        Some(label.fallthrough)
+                    } else {
+                        None
+                    };
                 if let Some(ft) = fallthrough_id {
                     let sid = cx.schedule(ft, "if");
                     schedule_ids.push(sid);
@@ -1385,11 +1384,7 @@ fn visit_block(
 
                 let block_body = {
                     let label_block = cx.block(label.block).cloned();
-                    if let Some(b) = label_block {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = label_block { traverse_block(cx, b)? } else { Vec::new() }
                 };
 
                 cx.unschedule_all(&schedule_ids);
@@ -1414,6 +1409,22 @@ fn visit_block(
             Terminal::Goto(goto) => {
                 match goto.variant {
                     GotoVariant::Break => {
+                        // If the target is a scope fallthrough, suppress the break.
+                        if cx.scope_fallthroughs.contains(&goto.block) {
+                            break;
+                        }
+                        // If the target is not scheduled and hasn't been emitted,
+                        // treat it as an inline continuation rather than a break.
+                        // This happens when build_reactive_scope_terminals_hir
+                        // splits a Goto(Continue) across a scope boundary,
+                        // creating an intermediate block.
+                        if !cx.is_scheduled(goto.block)
+                            && !cx.emitted.contains(&goto.block)
+                            && let Some(next_block) = cx.block(goto.block).cloned()
+                        {
+                            block = next_block;
+                            continue;
+                        }
                         let break_stmt = visit_break(cx, goto.block, goto.id, goto.loc)?;
                         if let Some(s) = break_stmt {
                             statements.push(s);
@@ -1456,19 +1467,11 @@ fn visit_block(
 
                 let block_body = {
                     let try_block = cx.block(try_term.block).cloned();
-                    if let Some(b) = try_block {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = try_block { traverse_block(cx, b)? } else { Vec::new() }
                 };
                 let handler_body = {
                     let handler_block = cx.block(try_term.handler).cloned();
-                    if let Some(b) = handler_block {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = handler_block { traverse_block(cx, b)? } else { Vec::new() }
                 };
 
                 cx.unschedule_all(&schedule_ids);
@@ -1503,11 +1506,7 @@ fn visit_block(
 
                 let block_body = {
                     let scope_block = cx.block(scope.block).cloned();
-                    if let Some(b) = scope_block {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = scope_block { traverse_block(cx, b)? } else { Vec::new() }
                 };
 
                 cx.unschedule_all(&schedule_ids);
@@ -1536,11 +1535,7 @@ fn visit_block(
 
                 let block_body = {
                     let scope_block = cx.block(scope.block).cloned();
-                    if let Some(b) = scope_block {
-                        traverse_block(cx, b)?
-                    } else {
-                        Vec::new()
-                    }
+                    if let Some(b) = scope_block { traverse_block(cx, b)? } else { Vec::new() }
                 };
 
                 cx.unschedule_all(&schedule_ids);
@@ -1563,8 +1558,7 @@ fn visit_block(
             // Value-block terminals: Logical, Ternary, Optional, Sequence
             // These produce expression-level values and are emitted as instructions.
             Terminal::Sequence(seq) => {
-                let fallthrough_id =
-                    (!cx.is_scheduled(seq.fallthrough)).then_some(seq.fallthrough);
+                let fallthrough_id = (!cx.is_scheduled(seq.fallthrough)).then_some(seq.fallthrough);
                 if let Some(ft) = fallthrough_id {
                     let sid = cx.schedule(ft, "if");
                     schedule_ids.push(sid);

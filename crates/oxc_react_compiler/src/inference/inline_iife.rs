@@ -16,10 +16,10 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     compiler_error::{GENERATED_SOURCE, SourceLocation},
     hir::{
-        BasicBlock, BlockId, BlockKind, DeclareLocal, FunctionExpressionValue, GotoTerminal,
-        GotoVariant, HIRFunction, Hir, IdentifierId, IdentifierName, Instruction, InstructionId,
-        InstructionKind, InstructionValue, LValue, LabelTerminal, LoadLocal, Place, StoreLocal,
-        Terminal, UnreachableTerminal,
+        BasicBlock, BlockId, BlockKind, BlockMap, DeclareLocal, FunctionExpressionValue,
+        GotoTerminal, GotoVariant, HIRFunction, Hir, IdentifierId, IdentifierName, Instruction,
+        InstructionId, InstructionKind, InstructionValue, LValue, LabelTerminal, LoadLocal, Place,
+        StoreLocal, Terminal, UnreachableTerminal,
         environment::Environment,
         hir_builder::{
             create_temporary_place, each_terminal_successor, mark_instruction_ids,
@@ -454,14 +454,14 @@ fn reverse_postorder_blocks(body: &mut Hir) {
 
     postorder.reverse();
 
-    let mut new_blocks: FxHashMap<BlockId, BasicBlock> = FxHashMap::default();
+    let mut new_blocks: BlockMap = BlockMap::default();
     for block_id in &postorder {
         if used.contains(block_id) {
-            if let Some(block) = body.blocks.remove(block_id) {
+            if let Some(block) = body.blocks.shift_remove(block_id) {
                 new_blocks.insert(*block_id, block);
             }
         } else if used_fallthroughs.contains(block_id)
-            && let Some(block) = body.blocks.remove(block_id)
+            && let Some(block) = body.blocks.shift_remove(block_id)
         {
             new_blocks.insert(
                 *block_id,

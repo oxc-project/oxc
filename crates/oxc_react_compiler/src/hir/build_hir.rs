@@ -40,10 +40,19 @@ pub enum LowerableFunction<'a> {
 ///
 /// This registers each parameter name in the builder's bindings map so that
 /// later identifier references can resolve to the correct local binding.
+///
+/// For destructured parameters (ObjectPattern, ArrayPattern, AssignmentPattern),
+/// this also emits Destructure/StoreLocal instructions into the function body
+/// to extract the individual bindings from the parameter place. This matches
+/// the TS reference which calls `lowerAssignment()` for destructured params
+/// (BuildHIR.ts lines 130-151).
+///
+/// # Errors
+/// Returns a `CompilerError` if destructuring lowering fails.
 fn lower_params(
     builder: &mut HirBuilder,
     func: &LowerableFunction<'_>,
-) -> Vec<crate::hir::ReactiveParam> {
+) -> Result<Vec<crate::hir::ReactiveParam>, CompilerError> {
     let params = match func {
         LowerableFunction::Function(f) => &f.params,
         LowerableFunction::ArrowFunction(a) => &a.params,
@@ -52,36 +61,55 @@ fn lower_params(
     let mut result = Vec::new();
     for param in &params.items {
         let loc = span_to_loc(param.span);
-        let place = declare_binding_pattern(builder, &param.pattern, BindingKind::Param, loc);
-        result.push(crate::hir::ReactiveParam::Place(place));
+        match &param.pattern {
+            ast::BindingPattern::BindingIdentifier(ident) => {
+                let place = builder.declare_binding(&ident.name, BindingKind::Param, loc);
+                result.push(crate::hir::ReactiveParam::Place(place));
+            }
+            // Destructured parameters: create a promoted temporary for the overall param,
+            // then emit Destructure instructions to extract individual bindings.
+            // This matches the TS reference (BuildHIR.ts lines 130-151).
+            ast::BindingPattern::ObjectPattern(_)
+            | ast::BindingPattern::ArrayPattern(_)
+            | ast::BindingPattern::AssignmentPattern(_) => {
+                let place = create_promoted_temporary(builder, loc);
+                result.push(crate::hir::ReactiveParam::Place(place.clone()));
+                lower_destructuring_declaration(
+                    builder,
+                    &param.pattern,
+                    place,
+                    InstructionKind::Let,
+                    BindingKind::Let,
+                    loc,
+                )?;
+            }
+        }
     }
     if let Some(rest) = &params.rest {
         let loc = span_to_loc(rest.span);
-        let place = declare_binding_pattern(builder, &rest.rest.argument, BindingKind::Param, loc);
-        result.push(crate::hir::ReactiveParam::Spread(SpreadPattern { place }));
-    }
-    result
-}
-
-/// Declare a binding from a `BindingPattern`, registering it in the builder's bindings map.
-///
-/// For simple identifiers, this directly calls `builder.declare_binding()`.
-/// For destructuring patterns, it creates a temporary place (the full destructuring
-/// lowering is handled elsewhere; this just needs a place for the parameter).
-fn declare_binding_pattern(
-    builder: &mut HirBuilder,
-    pattern: &ast::BindingPattern<'_>,
-    kind: BindingKind,
-    loc: SourceLocation,
-) -> crate::hir::Place {
-    match pattern {
-        ast::BindingPattern::BindingIdentifier(ident) => {
-            builder.declare_binding(&ident.name, kind, loc)
+        match &rest.rest.argument {
+            ast::BindingPattern::BindingIdentifier(ident) => {
+                let place = builder.declare_binding(&ident.name, BindingKind::Param, loc);
+                result.push(crate::hir::ReactiveParam::Spread(SpreadPattern { place }));
+            }
+            // Destructured rest parameter
+            _ => {
+                let place = create_promoted_temporary(builder, loc);
+                result.push(crate::hir::ReactiveParam::Spread(SpreadPattern {
+                    place: place.clone(),
+                }));
+                lower_destructuring_declaration(
+                    builder,
+                    &rest.rest.argument,
+                    place,
+                    InstructionKind::Let,
+                    BindingKind::Let,
+                    loc,
+                )?;
+            }
         }
-        // For destructuring patterns, create a temporary place.
-        // The destructuring itself is lowered separately.
-        _ => create_temporary_place(builder.environment_mut(), loc),
     }
+    Ok(result)
 }
 
 /// Declare all leaf bindings in a pattern, emitting DeclareLocal/DeclareContext
@@ -1255,7 +1283,7 @@ pub fn lower(
     let func_loc = extract_function_loc(func);
 
     // Walk parameters
-    let params = lower_params(&mut builder, func);
+    let params = lower_params(&mut builder, func)?;
 
     // Walk body statements and extract directives
     let directives = lower_body(&mut builder, func)?;
@@ -1864,7 +1892,7 @@ fn lower_function_to_value(
     let func_loc = extract_function_loc(func);
 
     // Walk parameters
-    let params = lower_params(&mut inner_builder, func);
+    let params = lower_params(&mut inner_builder, func)?;
 
     // Walk body statements and extract directives
     let directives = lower_body(&mut inner_builder, func)?;
@@ -3322,63 +3350,219 @@ pub fn lower_expression(
         // UpdateExpression — PrefixUpdate or PostfixUpdate
         // Port of BuildHIR.ts lines 2510-2627
         //
-        // The lvalue must be the actual variable's Place (with real declarationId),
-        // not a temporary. This matches the TS `lowerIdentifierForAssignment()` which
-        // resolves the identifier binding to get binding.identifier.
+        // For member expression arguments (e.g. `obj.prop++`), we lower as:
+        //   PropertyLoad + BinaryExpression + PropertyStore (TS lines 2513-2562)
+        // For context identifiers and globals, we return a Todo error (TS lines 2572-2608)
+        // For local identifiers, we emit PrefixUpdate/PostfixUpdate.
         // =====================================================================
         LowerableExpression::UpdateExpression { operator, argument, prefix, span } => {
             let loc = span_to_loc(*span);
+            use oxc_syntax::operator::{BinaryOperator, UpdateOperator};
 
-            // Resolve the lvalue — the variable being updated
-            let lvalue_place = match argument.as_ref() {
+            // Determine the binary operator for the update
+            let binary_op = match operator {
+                UpdateOperator::Increment => BinaryOperator::Addition,
+                UpdateOperator::Decrement => BinaryOperator::Subtraction,
+            };
+
+            match argument.as_ref() {
+                // Member expression update: obj.prop++ or obj[expr]++
+                // Port of BuildHIR.ts lines 2513-2562
+                LowerableExpression::PropertyAccess { object, property, span: member_span } => {
+                    let member_loc = span_to_loc(*member_span);
+
+                    // Lower the object
+                    let obj_result = lower_expression(builder, object)?;
+
+                    // PropertyLoad to get the current value
+                    let current_value = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::PropertyLoad(crate::hir::PropertyLoad {
+                            object: obj_result.place.clone(),
+                            property: crate::hir::types::PropertyLiteral::String(property.clone()),
+                            loc: member_loc,
+                        }),
+                        member_loc,
+                    )?;
+
+                    // Save the previous value place for postfix return
+                    let previous_value_place = current_value.place.clone();
+
+                    // Primitive(1) for the increment/decrement
+                    let one_place = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::Primitive(PrimitiveValue {
+                            value: PrimitiveValueKind::Number(1.0),
+                            loc: GENERATED_SOURCE,
+                        }),
+                        GENERATED_SOURCE,
+                    )?;
+
+                    // BinaryExpression: previousValue +/- 1
+                    let updated_value = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::BinaryExpression(crate::hir::BinaryExpressionValue {
+                            operator: binary_op,
+                            left: current_value.place,
+                            right: one_place.place,
+                            loc: member_loc,
+                        }),
+                        member_loc,
+                    )?;
+
+                    // PropertyStore to save the updated value back
+                    let new_value = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::PropertyStore(crate::hir::PropertyStore {
+                            object: obj_result.place,
+                            property: crate::hir::types::PropertyLiteral::String(property.clone()),
+                            value: updated_value.place.clone(),
+                            loc: member_loc,
+                        }),
+                        member_loc,
+                    )?;
+
+                    // Return previous value for postfix, new value for prefix
+                    let result_place = if *prefix { new_value.place } else { previous_value_place };
+
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::LoadLocal(LoadLocal { place: result_place, loc }),
+                        loc,
+                    )
+                }
+                LowerableExpression::ComputedPropertyAccess {
+                    object,
+                    property,
+                    span: member_span,
+                } => {
+                    let member_loc = span_to_loc(*member_span);
+
+                    // Lower the object and computed property
+                    let obj_result = lower_expression(builder, object)?;
+                    let prop_result = lower_expression(builder, property)?;
+
+                    // ComputedLoad to get the current value
+                    let current_value = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::ComputedLoad(crate::hir::ComputedLoad {
+                            object: obj_result.place.clone(),
+                            property: prop_result.place.clone(),
+                            loc: member_loc,
+                        }),
+                        member_loc,
+                    )?;
+
+                    let previous_value_place = current_value.place.clone();
+
+                    // Primitive(1)
+                    let one_place = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::Primitive(PrimitiveValue {
+                            value: PrimitiveValueKind::Number(1.0),
+                            loc: GENERATED_SOURCE,
+                        }),
+                        GENERATED_SOURCE,
+                    )?;
+
+                    // BinaryExpression: previousValue +/- 1
+                    let updated_value = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::BinaryExpression(crate::hir::BinaryExpressionValue {
+                            operator: binary_op,
+                            left: current_value.place,
+                            right: one_place.place,
+                            loc: member_loc,
+                        }),
+                        member_loc,
+                    )?;
+
+                    // ComputedStore to save the updated value back
+                    let new_value = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::ComputedStore(crate::hir::ComputedStore {
+                            object: obj_result.place,
+                            property: prop_result.place,
+                            value: updated_value.place.clone(),
+                            loc: member_loc,
+                        }),
+                        member_loc,
+                    )?;
+
+                    let result_place = if *prefix { new_value.place } else { previous_value_place };
+
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::LoadLocal(LoadLocal { place: result_place, loc }),
+                        loc,
+                    )
+                }
+                // Identifier update: x++ or ++x
                 LowerableExpression::Identifier(name, ident_span) => {
                     let ident_loc = span_to_loc(*ident_span);
+
+                    // Check for context identifiers (captured in closures)
+                    // TS reference throws Todo for these (BuildHIR.ts lines 2572-2579)
+                    if builder.is_context_identifier(name) {
+                        return Err(CompilerError::todo(
+                            "Handle UpdateExpression to variables captured within lambdas",
+                            None,
+                            loc,
+                        ));
+                    }
+
                     match builder.resolve_identifier(name) {
                         VariableBinding::Identifier { identifier, .. } => {
-                            crate::hir::Place {
+                            let lvalue_place = crate::hir::Place {
                                 identifier,
                                 effect: crate::hir::Effect::Unknown,
                                 reactive: false,
                                 loc: ident_loc,
+                            };
+
+                            // Lower the argument to get the current value
+                            let arg_result = lower_expression(builder, argument)?;
+
+                            if *prefix {
+                                lower_value_to_temporary(
+                                    builder,
+                                    InstructionValue::PrefixUpdate(crate::hir::PrefixUpdate {
+                                        lvalue: lvalue_place,
+                                        operation: *operator,
+                                        value: arg_result.place,
+                                        loc,
+                                    }),
+                                    loc,
+                                )
+                            } else {
+                                lower_value_to_temporary(
+                                    builder,
+                                    InstructionValue::PostfixUpdate(crate::hir::PostfixUpdate {
+                                        lvalue: lvalue_place,
+                                        operation: *operator,
+                                        value: arg_result.place,
+                                        loc,
+                                    }),
+                                    loc,
+                                )
                             }
                         }
                         VariableBinding::NonLocal(_) => {
-                            // Global variable update — use a temporary
-                            create_temporary_place(builder.environment_mut(), loc)
+                            // Global variable update — TS throws Todo (BuildHIR.ts lines 2601-2608)
+                            Err(CompilerError::todo(
+                                "Support UpdateExpression where argument is a global",
+                                None,
+                                loc,
+                            ))
                         }
                     }
                 }
-                _ => {
-                    // Member expression or other complex target — use a temporary
-                    create_temporary_place(builder.environment_mut(), loc)
-                }
-            };
-
-            // Lower the argument to get the current value
-            let arg_result = lower_expression(builder, argument)?;
-
-            if *prefix {
-                lower_value_to_temporary(
-                    builder,
-                    InstructionValue::PrefixUpdate(crate::hir::PrefixUpdate {
-                        lvalue: lvalue_place,
-                        operation: *operator,
-                        value: arg_result.place,
-                        loc,
-                    }),
+                // Other argument types (shouldn't normally happen)
+                _ => Err(CompilerError::todo(
+                    &format!("Handle UpdateExpression with complex argument"),
+                    None,
                     loc,
-                )
-            } else {
-                lower_value_to_temporary(
-                    builder,
-                    InstructionValue::PostfixUpdate(crate::hir::PostfixUpdate {
-                        lvalue: lvalue_place,
-                        operation: *operator,
-                        value: arg_result.place,
-                        loc,
-                    }),
-                    loc,
-                )
+                )),
             }
         }
 
@@ -3393,9 +3577,17 @@ pub fn lower_expression(
                 LowerableExpression::PropertyAccess { object, property, span: member_span } => {
                     let member_loc = span_to_loc(*member_span);
                     let receiver = lower_expression(builder, object)?;
+                    // TS: lowerMemberExpression creates a PropertyLoad, then
+                    // lowerValueToTemporary stores it. The property Place for a
+                    // MethodCall is the result of evaluating the member expression
+                    // (PropertyLoad), not a string literal.
                     let property_place = lower_value_to_temporary(
                         builder,
-                        lower_string(property.clone(), member_loc),
+                        InstructionValue::PropertyLoad(crate::hir::PropertyLoad {
+                            object: receiver.place.clone(),
+                            property: crate::hir::types::PropertyLiteral::String(property.clone()),
+                            loc: member_loc,
+                        }),
                         member_loc,
                     )?;
                     let args = lower_arguments(builder, arguments)?;
@@ -3410,9 +3602,25 @@ pub fn lower_expression(
                         loc,
                     )
                 }
-                LowerableExpression::ComputedPropertyAccess { object, property, .. } => {
+                LowerableExpression::ComputedPropertyAccess {
+                    object,
+                    property,
+                    span: computed_span,
+                } => {
+                    let computed_loc = span_to_loc(*computed_span);
                     let receiver = lower_expression(builder, object)?;
-                    let property_place = lower_expression(builder, property)?;
+                    let key_place = lower_expression(builder, property)?;
+                    // TS: lowerMemberExpression creates a ComputedLoad, then
+                    // lowerValueToTemporary stores it.
+                    let property_place = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::ComputedLoad(crate::hir::ComputedLoad {
+                            object: receiver.place.clone(),
+                            property: key_place.place,
+                            loc: computed_loc,
+                        }),
+                        computed_loc,
+                    )?;
                     let args = lower_arguments(builder, arguments)?;
                     lower_value_to_temporary(
                         builder,

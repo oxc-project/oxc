@@ -115,7 +115,7 @@ pub fn merge_consecutive_blocks(func: &mut HIRFunction) {
         }
 
         // Remove the block and merge its instructions into the predecessor
-        let block = func.body.blocks.remove(&block_id);
+        let block = func.body.blocks.shift_remove(&block_id);
         if let Some(block) = block {
             if let Some(predecessor) = func.body.blocks.get_mut(&predecessor_id) {
                 // Replace phis in the merged block with canonical assignments to the

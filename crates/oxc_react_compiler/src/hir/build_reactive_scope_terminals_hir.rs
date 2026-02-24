@@ -15,9 +15,9 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::compiler_error::GENERATED_SOURCE;
 use crate::hir::hir_builder::{each_terminal_successor, mark_instruction_ids, mark_predecessors};
 use crate::hir::hir_types::{
-    BasicBlock, BlockId, BlockKind, GotoTerminal, GotoVariant, HIRFunction, Hir, Instruction,
-    InstructionId, MutableRange, ReactiveScope, ReactiveScopeTerminal, ScopeId, Terminal,
-    UnreachableTerminal,
+    BasicBlock, BlockId, BlockKind, BlockMap, GotoTerminal, GotoVariant, HIRFunction, Hir,
+    Instruction, InstructionId, MutableRange, ReactiveScope, ReactiveScopeTerminal, ScopeId,
+    Terminal, UnreachableTerminal,
 };
 use crate::hir::visitors::{
     each_instruction_lvalue, each_instruction_operand, each_terminal_operand,
@@ -302,14 +302,14 @@ fn reverse_postorder_blocks(body: &mut Hir) {
 
     postorder.reverse();
 
-    let mut new_blocks: FxHashMap<BlockId, BasicBlock> = FxHashMap::default();
+    let mut new_blocks: BlockMap = BlockMap::default();
     for block_id in &postorder {
         if used.contains(block_id) {
-            if let Some(block) = body.blocks.remove(block_id) {
+            if let Some(block) = body.blocks.shift_remove(block_id) {
                 new_blocks.insert(*block_id, block);
             }
         } else if used_fallthroughs.contains(block_id)
-            && let Some(block) = body.blocks.remove(block_id)
+            && let Some(block) = body.blocks.shift_remove(block_id)
         {
             new_blocks.insert(
                 *block_id,
@@ -421,7 +421,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HIRFunction) {
     // to add scope terminals and fallthroughs.
     // ---------------------------------------------------------------------------------
     let mut rewritten_final_blocks: FxHashMap<BlockId, BlockId> = FxHashMap::default();
-    let mut next_blocks: FxHashMap<BlockId, BasicBlock> = FxHashMap::default();
+    let mut next_blocks: BlockMap = BlockMap::default();
 
     // Reverse queued_rewrites to pop off the end as we traverse instructions in
     // ascending order.
@@ -429,7 +429,7 @@ pub fn build_reactive_scope_terminals_hir(func: &mut HIRFunction) {
 
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
-        let Some(block) = func.body.blocks.remove(&block_id) else { continue };
+        let Some(block) = func.body.blocks.shift_remove(&block_id) else { continue };
 
         let mut context = RewriteContext {
             source_kind: block.kind,

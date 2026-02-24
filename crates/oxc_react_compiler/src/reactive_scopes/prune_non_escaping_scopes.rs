@@ -6,100 +6,422 @@
 /// A value escapes if it's returned, passed to a hook, used in JSX, etc.
 /// If a scope only produces local values that don't escape, memoizing them
 /// provides no benefit because React can't observe the difference.
-use rustc_hash::FxHashSet;
+///
+/// Algorithm (3 phases, matching TS):
+///   Phase 1: Walk the reactive function tree to build a dependency graph.
+///            - Track `definitions` (LoadLocal indirections: lvalue → source)
+///            - Classify each value's `MemoizationLevel` (Memoized/Conditional/Never)
+///            - Build dependency edges between DeclarationIds
+///            - Collect `escapingValues` (return values, hook args)
+///   Phase 2: DFS from escaping values through the dependency graph.
+///            - `Memoized` values are always marked if reachable
+///            - `Conditional` values are marked only if a dependency is memoized
+///            - When a value is memoized, force-memoize its scope's dependencies
+///   Phase 3: Prune scopes whose declarations aren't in the memoized set.
+///
+/// NOTE: Uses DeclarationId throughout, as noted in TS: "this pass uses DeclarationId
+/// rather than IdentifierId because the pass is not aware of control-flow, only data
+/// flow via mutation."
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
-    IdentifierId, InstructionValue, ReactiveBlock, ReactiveFunction, ReactiveStatement,
-    ReactiveTerminal, ReactiveValue,
+    DeclarationId, InstructionValue, Place, ReactiveBlock, ReactiveFunction, ReactiveStatement,
+    ReactiveTerminal, ReactiveValue, ScopeId,
 };
+
+// =====================================================================================
+// MemoizationLevel
+// =====================================================================================
+
+/// Classification of a value's memoization needs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum MemoizationLevel {
+    /// The value will never be memoized (primitives, cheaply comparable values).
+    Never = 0,
+    /// Only memoize if forced (JSX without memoizeJsxElements).
+    Unmemoized = 1,
+    /// Memoize only if dependencies are memoized (LoadLocal, StoreLocal, conditionals).
+    Conditional = 2,
+    /// Always memoize if reachable from escaping values (CallExpression, ArrayExpression, etc.).
+    Memoized = 3,
+}
+
+fn join_levels(a: MemoizationLevel, b: MemoizationLevel) -> MemoizationLevel {
+    // Take the higher level
+    if a >= b { a } else { b }
+}
+
+// =====================================================================================
+// Graph nodes
+// =====================================================================================
+
+#[derive(Debug)]
+struct IdentifierNode {
+    level: MemoizationLevel,
+    memoized: bool,
+    dependencies: FxHashSet<DeclarationId>,
+    scopes: FxHashSet<ScopeId>,
+    seen: bool,
+}
+
+#[derive(Debug)]
+struct ScopeNode {
+    dependencies: Vec<DeclarationId>,
+    seen: bool,
+}
+
+// =====================================================================================
+// State — built during Phase 1
+// =====================================================================================
+
+struct State {
+    /// Maps lvalue DeclarationId → source DeclarationId for LoadLocal indirections.
+    definitions: FxHashMap<DeclarationId, DeclarationId>,
+    /// Per-identifier graph nodes.
+    identifiers: FxHashMap<DeclarationId, IdentifierNode>,
+    /// Per-scope graph nodes.
+    scopes: FxHashMap<ScopeId, ScopeNode>,
+    /// DeclarationIds that escape (returned, passed to hooks).
+    escaping_values: FxHashSet<DeclarationId>,
+}
+
+impl State {
+    fn new() -> Self {
+        Self {
+            definitions: FxHashMap::default(),
+            identifiers: FxHashMap::default(),
+            scopes: FxHashMap::default(),
+            escaping_values: FxHashSet::default(),
+        }
+    }
+
+    fn resolve(&self, id: DeclarationId) -> DeclarationId {
+        self.definitions.get(&id).copied().unwrap_or(id)
+    }
+
+    fn ensure_identifier(&mut self, id: DeclarationId) -> &mut IdentifierNode {
+        self.identifiers.entry(id).or_insert_with(|| IdentifierNode {
+            level: MemoizationLevel::Never,
+            memoized: false,
+            dependencies: FxHashSet::default(),
+            scopes: FxHashSet::default(),
+            seen: false,
+        })
+    }
+}
+
+// =====================================================================================
+// Phase 1: Collect — build the dependency graph
+// =====================================================================================
 
 /// Prune reactive scopes whose values don't escape the function.
 pub fn prune_non_escaping_scopes(func: &mut ReactiveFunction) {
-    // Phase 1: Find all identifiers that escape the function
-    let escaping_ids = find_escaping_identifiers(func);
+    let mut state = State::new();
 
-    // Phase 2: Prune scopes that only produce non-escaping values
-    prune_in_block(&mut func.body, &escaping_ids);
+    // Phase 1: Walk all instructions/terminals to build the dependency graph
+    collect_in_block(&func.body, &mut state, &[]);
+
+    // Phase 2: Compute memoized set via DFS from escaping values
+    let memoized = compute_memoized_identifiers(&mut state);
+
+    // Phase 3: Prune scopes whose declarations aren't in the memoized set
+    prune_in_block(&mut func.body, &memoized);
 }
 
-fn find_escaping_identifiers(func: &ReactiveFunction) -> FxHashSet<IdentifierId> {
-    let mut escaping = FxHashSet::default();
+/// Determine the MemoizationLevel for an instruction value.
+fn classify_value(value: &InstructionValue) -> MemoizationLevel {
+    match value {
+        // Allocating values that should always be memoized
+        InstructionValue::CallExpression(_)
+        | InstructionValue::MethodCall(_)
+        | InstructionValue::ArrayExpression(_)
+        | InstructionValue::ObjectExpression(_)
+        | InstructionValue::NewExpression(_)
+        | InstructionValue::FunctionExpression(_)
+        | InstructionValue::ObjectMethod(_)
+        | InstructionValue::RegExpLiteral(_)
+        | InstructionValue::TaggedTemplateExpression(_)
+        | InstructionValue::PropertyStore(_)
+        | InstructionValue::ComputedStore(_)
+        | InstructionValue::StoreContext(_)
+        | InstructionValue::DeclareContext(_) => MemoizationLevel::Memoized,
 
-    // Return values always escape
-    find_escaping_in_block(&func.body, &mut escaping);
+        // Values that propagate memoization from their dependencies
+        InstructionValue::LoadLocal(_)
+        | InstructionValue::LoadContext(_)
+        | InstructionValue::StoreLocal(_)
+        | InstructionValue::PropertyLoad(_)
+        | InstructionValue::ComputedLoad(_)
+        | InstructionValue::Destructure(_)
+        | InstructionValue::Await(_)
+        | InstructionValue::TypeCastExpression(_)
+        | InstructionValue::PrefixUpdate(_)
+        | InstructionValue::PostfixUpdate(_)
+        | InstructionValue::GetIterator(_)
+        | InstructionValue::IteratorNext(_)
+        | InstructionValue::NextPropertyOf(_) => MemoizationLevel::Conditional,
 
-    escaping
+        // JSX — treat as Unmemoized by default (would be Memoized with memoizeJsxElements)
+        InstructionValue::JsxExpression(_) | InstructionValue::JsxFragment(_) => {
+            MemoizationLevel::Unmemoized
+        }
+
+        // Primitives and other cheap-to-compare values — never memoize
+        InstructionValue::Primitive(_)
+        | InstructionValue::JsxText(_)
+        | InstructionValue::BinaryExpression(_)
+        | InstructionValue::UnaryExpression(_)
+        | InstructionValue::TemplateLiteral(_)
+        | InstructionValue::LoadGlobal(_)
+        | InstructionValue::StoreGlobal(_)
+        | InstructionValue::MetaProperty(_)
+        | InstructionValue::Debugger(_)
+        | InstructionValue::ComputedDelete(_)
+        | InstructionValue::PropertyDelete(_)
+        | InstructionValue::StartMemoize(_)
+        | InstructionValue::FinishMemoize(_)
+        | InstructionValue::UnsupportedNode(_)
+        | InstructionValue::DeclareLocal(_) => MemoizationLevel::Never,
+    }
 }
 
-fn find_escaping_in_block(block: &ReactiveBlock, escaping: &mut FxHashSet<IdentifierId>) {
+/// Collect operands (rvalues) from a ReactiveValue.
+fn collect_operands(value: &ReactiveValue, operands: &mut Vec<DeclarationId>) {
+    match value {
+        ReactiveValue::Instruction(iv) => {
+            collect_instruction_operands(iv, operands);
+        }
+        ReactiveValue::Logical(v) => {
+            collect_operands(&v.left, operands);
+            collect_operands(&v.right, operands);
+        }
+        ReactiveValue::Ternary(v) => {
+            collect_operands(&v.test, operands);
+            collect_operands(&v.consequent, operands);
+            collect_operands(&v.alternate, operands);
+        }
+        ReactiveValue::Sequence(v) => {
+            for instr in &v.instructions {
+                if let Some(lvalue) = &instr.lvalue {
+                    operands.push(lvalue.identifier.declaration_id);
+                }
+                collect_operands(&instr.value, operands);
+            }
+            collect_operands(&v.value, operands);
+        }
+        ReactiveValue::OptionalCall(v) => {
+            collect_operands(&v.value, operands);
+        }
+    }
+}
+
+/// Collect operands from a single InstructionValue.
+fn collect_instruction_operands(value: &InstructionValue, operands: &mut Vec<DeclarationId>) {
+    // Use the visitors to get all operands
+    for place in crate::hir::visitors::each_instruction_value_operand(value) {
+        operands.push(place.identifier.declaration_id);
+    }
+}
+
+/// Get the MemoizationLevel for a ReactiveValue (handles compound values).
+fn classify_reactive_value(value: &ReactiveValue) -> MemoizationLevel {
+    match value {
+        ReactiveValue::Instruction(iv) => classify_value(iv),
+        ReactiveValue::Logical(_)
+        | ReactiveValue::Ternary(_)
+        | ReactiveValue::Sequence(_)
+        | ReactiveValue::OptionalCall(_) => MemoizationLevel::Conditional,
+    }
+}
+
+fn collect_in_block(block: &ReactiveBlock, state: &mut State, active_scopes: &[ScopeId]) {
     for stmt in block {
         match stmt {
-            ReactiveStatement::Instruction(instr) => {
-                // JSX children and props escape
-                if let ReactiveValue::Instruction(value) = &instr.instruction.value
-                    && let InstructionValue::JsxExpression(jsx) = value.as_ref()
-                {
-                    if let crate::hir::JsxTag::Place(p) = &jsx.tag {
-                        escaping.insert(p.identifier.id);
-                    }
-                    for attr in &jsx.props {
-                        match attr {
-                            crate::hir::JsxAttribute::Attribute { place, .. } => {
-                                escaping.insert(place.identifier.id);
-                            }
-                            crate::hir::JsxAttribute::Spread { argument } => {
-                                escaping.insert(argument.identifier.id);
+            ReactiveStatement::Instruction(instr_stmt) => {
+                let instr = &instr_stmt.instruction;
+                let level = classify_reactive_value(&instr.value);
+
+                // Collect operands (rvalues)
+                let mut operand_ids = Vec::new();
+                collect_operands(&instr.value, &mut operand_ids);
+
+                // Resolve all operand IDs upfront
+                let resolved_operands: Vec<DeclarationId> =
+                    operand_ids.iter().map(|&id| state.resolve(id)).collect();
+
+                // Ensure all operand nodes exist
+                for &resolved in &resolved_operands {
+                    state.ensure_identifier(resolved);
+                }
+
+                // Collect all lvalues (instruction lvalue + any inner lvalues from StoreLocal etc.)
+                let mut lvalue_entries: Vec<(DeclarationId, MemoizationLevel)> = Vec::new();
+
+                if let Some(lvalue) = &instr.lvalue {
+                    let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
+                    lvalue_entries.push((lvalue_id, level));
+                }
+
+                // For StoreLocal/DeclareLocal, also process the inner target
+                if let ReactiveValue::Instruction(iv) = &instr.value {
+                    match iv.as_ref() {
+                        InstructionValue::StoreLocal(v) => {
+                            let target_id = state.resolve(v.lvalue.place.identifier.declaration_id);
+                            lvalue_entries.push((target_id, level));
+                        }
+                        InstructionValue::DeclareLocal(v) => {
+                            let target_id = state.resolve(v.lvalue.place.identifier.declaration_id);
+                            lvalue_entries.push((target_id, MemoizationLevel::Never));
+                        }
+                        InstructionValue::Destructure(v) => {
+                            for place in
+                                crate::hir::visitors::each_pattern_operand(&v.lvalue.pattern)
+                            {
+                                let target_id = state.resolve(place.identifier.declaration_id);
+                                lvalue_entries.push((target_id, level));
                             }
                         }
+                        _ => {}
                     }
-                    if let Some(children) = &jsx.children {
-                        for child in children {
-                            escaping.insert(child.identifier.id);
+                }
+
+                // Process each lvalue
+                for &(lvalue_id, lv_level) in &lvalue_entries {
+                    let node = state.ensure_identifier(lvalue_id);
+                    node.level = join_levels(node.level, lv_level);
+                    for &resolved in &resolved_operands {
+                        if resolved != lvalue_id {
+                            node.dependencies.insert(resolved);
                         }
+                    }
+                    for &scope_id in active_scopes {
+                        node.scopes.insert(scope_id);
+                    }
+                }
+
+                // Visit operands for scope association
+                for &resolved in &resolved_operands {
+                    let op_node = state.ensure_identifier(resolved);
+                    for &scope_id in active_scopes {
+                        op_node.scopes.insert(scope_id);
+                    }
+                }
+
+                // Handle LoadLocal definitions
+                if let ReactiveValue::Instruction(iv) = &instr.value {
+                    if let InstructionValue::LoadLocal(v) = iv.as_ref() {
+                        if let Some(lvalue) = &instr.lvalue {
+                            state.definitions.insert(
+                                lvalue.identifier.declaration_id,
+                                v.place.identifier.declaration_id,
+                            );
+                        }
+                    }
+
+                    // Handle hook arguments escaping
+                    match iv.as_ref() {
+                        InstructionValue::CallExpression(call) => {
+                            if is_hook_name_identifier(&call.callee) {
+                                for arg in &call.args {
+                                    let place = match arg {
+                                        crate::hir::CallArg::Spread(s) => &s.place,
+                                        crate::hir::CallArg::Place(p) => p,
+                                    };
+                                    let resolved = state.resolve(place.identifier.declaration_id);
+                                    state.escaping_values.insert(resolved);
+                                }
+                            }
+                        }
+                        InstructionValue::MethodCall(call) => {
+                            if is_hook_name_identifier(&call.property) {
+                                for arg in &call.args {
+                                    let place = match arg {
+                                        crate::hir::CallArg::Spread(s) => &s.place,
+                                        crate::hir::CallArg::Place(p) => p,
+                                    };
+                                    let resolved = state.resolve(place.identifier.declaration_id);
+                                    state.escaping_values.insert(resolved);
+                                }
+                            }
+                        }
+                        _ => {}
                     }
                 }
             }
             ReactiveStatement::Terminal(term) => {
                 // Return values escape
                 if let ReactiveTerminal::Return(ret) = &term.terminal {
-                    escaping.insert(ret.value.identifier.id);
+                    let resolved = state.resolve(ret.value.identifier.declaration_id);
+                    state.escaping_values.insert(resolved);
+
+                    // Associate return value with active scopes
+                    let node = state.ensure_identifier(resolved);
+                    for &scope_id in active_scopes {
+                        node.scopes.insert(scope_id);
+                    }
                 }
-                find_escaping_in_terminal(&term.terminal, escaping);
+                collect_in_terminal(&term.terminal, state, active_scopes);
             }
             ReactiveStatement::Scope(scope) => {
-                find_escaping_in_block(&scope.instructions, escaping);
+                // Register scope node with its dependencies
+                if !state.scopes.contains_key(&scope.scope.id) {
+                    let dep_ids: Vec<DeclarationId> = scope
+                        .scope
+                        .dependencies
+                        .iter()
+                        .map(|d| state.resolve(d.identifier.declaration_id))
+                        .collect();
+                    state
+                        .scopes
+                        .insert(scope.scope.id, ScopeNode { dependencies: dep_ids, seen: false });
+                }
+
+                // Process scope's reassignments
+                for reassignment in &scope.scope.reassignments {
+                    let resolved = state.resolve(reassignment.declaration_id);
+                    let node = state.ensure_identifier(resolved);
+                    for &scope_id in active_scopes {
+                        node.scopes.insert(scope_id);
+                    }
+                    node.scopes.insert(scope.scope.id);
+                }
+
+                // Recurse into scope body with this scope added to active scopes
+                let mut inner_scopes = active_scopes.to_vec();
+                inner_scopes.push(scope.scope.id);
+                collect_in_block(&scope.instructions, state, &inner_scopes);
             }
             ReactiveStatement::PrunedScope(scope) => {
-                find_escaping_in_block(&scope.instructions, escaping);
+                collect_in_block(&scope.instructions, state, active_scopes);
             }
         }
     }
 }
 
-fn find_escaping_in_terminal(terminal: &ReactiveTerminal, escaping: &mut FxHashSet<IdentifierId>) {
+fn collect_in_terminal(terminal: &ReactiveTerminal, state: &mut State, active_scopes: &[ScopeId]) {
     match terminal {
         ReactiveTerminal::If(t) => {
-            find_escaping_in_block(&t.consequent, escaping);
+            collect_in_block(&t.consequent, state, active_scopes);
             if let Some(alt) = &t.alternate {
-                find_escaping_in_block(alt, escaping);
+                collect_in_block(alt, state, active_scopes);
             }
         }
         ReactiveTerminal::Switch(t) => {
             for case in &t.cases {
                 if let Some(block) = &case.block {
-                    find_escaping_in_block(block, escaping);
+                    collect_in_block(block, state, active_scopes);
                 }
             }
         }
-        ReactiveTerminal::While(t) => find_escaping_in_block(&t.r#loop, escaping),
-        ReactiveTerminal::DoWhile(t) => find_escaping_in_block(&t.r#loop, escaping),
-        ReactiveTerminal::For(t) => find_escaping_in_block(&t.r#loop, escaping),
-        ReactiveTerminal::ForOf(t) => find_escaping_in_block(&t.r#loop, escaping),
-        ReactiveTerminal::ForIn(t) => find_escaping_in_block(&t.r#loop, escaping),
-        ReactiveTerminal::Label(t) => find_escaping_in_block(&t.block, escaping),
+        ReactiveTerminal::While(t) => collect_in_block(&t.r#loop, state, active_scopes),
+        ReactiveTerminal::DoWhile(t) => collect_in_block(&t.r#loop, state, active_scopes),
+        ReactiveTerminal::For(t) => collect_in_block(&t.r#loop, state, active_scopes),
+        ReactiveTerminal::ForOf(t) => collect_in_block(&t.r#loop, state, active_scopes),
+        ReactiveTerminal::ForIn(t) => collect_in_block(&t.r#loop, state, active_scopes),
+        ReactiveTerminal::Label(t) => collect_in_block(&t.block, state, active_scopes),
         ReactiveTerminal::Try(t) => {
-            find_escaping_in_block(&t.block, escaping);
-            find_escaping_in_block(&t.handler, escaping);
+            collect_in_block(&t.block, state, active_scopes);
+            collect_in_block(&t.handler, state, active_scopes);
         }
         ReactiveTerminal::Break(_)
         | ReactiveTerminal::Continue(_)
@@ -108,26 +430,146 @@ fn find_escaping_in_terminal(terminal: &ReactiveTerminal, escaping: &mut FxHashS
     }
 }
 
-fn prune_in_block(block: &mut ReactiveBlock, escaping: &FxHashSet<IdentifierId>) {
+/// Check if a place looks like a hook name (starts with "use" + uppercase letter).
+fn is_hook_name_identifier(place: &Place) -> bool {
+    match &place.identifier.name {
+        Some(crate::hir::IdentifierName::Named(name)) => {
+            name.starts_with("use") && name.len() > 3 && name.as_bytes()[3].is_ascii_uppercase()
+        }
+        _ => false,
+    }
+}
+
+// =====================================================================================
+// Phase 2: Compute memoized identifiers via DFS
+// =====================================================================================
+
+fn compute_memoized_identifiers(state: &mut State) -> FxHashSet<DeclarationId> {
+    let mut memoized = FxHashSet::default();
+    let escaping: Vec<DeclarationId> = state.escaping_values.iter().copied().collect();
+
+    for value in escaping {
+        visit_identifier(value, false, state, &mut memoized);
+    }
+
+    memoized
+}
+
+fn visit_identifier(
+    id: DeclarationId,
+    force_memoize: bool,
+    state: &mut State,
+    memoized: &mut FxHashSet<DeclarationId>,
+) -> bool {
+    let Some(node) = state.identifiers.get_mut(&id) else {
+        return false;
+    };
+    if node.seen {
+        return node.memoized;
+    }
+    node.seen = true;
+    node.memoized = false;
+
+    // Collect dependencies and scopes before recursive calls
+    let deps: Vec<DeclarationId> = node.dependencies.iter().copied().collect();
+    let level = node.level;
+    let scope_ids: Vec<ScopeId> = node.scopes.iter().copied().collect();
+
+    // Visit dependencies
+    let mut has_memoized_dependency = false;
+    for dep in deps {
+        let is_dep_memoized = visit_identifier(dep, false, state, memoized);
+        has_memoized_dependency |= is_dep_memoized;
+    }
+
+    // Determine if this identifier should be memoized
+    let should_memoize = match level {
+        MemoizationLevel::Memoized => true,
+        MemoizationLevel::Conditional => has_memoized_dependency || force_memoize,
+        MemoizationLevel::Unmemoized => force_memoize,
+        MemoizationLevel::Never => false,
+    };
+
+    if should_memoize {
+        let node = state.identifiers.get_mut(&id).unwrap();
+        node.memoized = true;
+        memoized.insert(id);
+
+        // Force memoize scope dependencies
+        for scope_id in scope_ids {
+            force_memoize_scope_dependencies(scope_id, state, memoized);
+        }
+    }
+
+    should_memoize
+}
+
+fn force_memoize_scope_dependencies(
+    scope_id: ScopeId,
+    state: &mut State,
+    memoized: &mut FxHashSet<DeclarationId>,
+) {
+    let Some(node) = state.scopes.get_mut(&scope_id) else {
+        return;
+    };
+    if node.seen {
+        return;
+    }
+    node.seen = true;
+
+    let deps: Vec<DeclarationId> = node.dependencies.clone();
+    for dep in deps {
+        visit_identifier(dep, true, state, memoized);
+    }
+}
+
+// =====================================================================================
+// Phase 3: Prune scopes
+// =====================================================================================
+
+fn prune_in_block(block: &mut ReactiveBlock, memoized: &FxHashSet<DeclarationId>) {
     let mut i = 0;
     while i < block.len() {
         match &mut block[i] {
             ReactiveStatement::Scope(scope) => {
-                prune_in_block(&mut scope.instructions, escaping);
-                // Check if any declarations escape
-                let has_escaping = scope.scope.declarations.keys().any(|id| escaping.contains(id));
-                if !has_escaping && scope.scope.reassignments.is_empty() {
-                    // Scope doesn't escape — flatten it
+                prune_in_block(&mut scope.instructions, memoized);
+
+                // Keep scopes with early returns (matches TS behavior)
+                if scope.scope.early_return_value.is_some() {
+                    i += 1;
+                    continue;
+                }
+
+                // Keep scopes with no outputs (they may be needed for early returns later)
+                if scope.scope.declarations.is_empty() && scope.scope.reassignments.is_empty() {
+                    i += 1;
+                    continue;
+                }
+
+                // Check if any declarations or reassignments are in the memoized set
+                let has_memoized_output = scope
+                    .scope
+                    .declarations
+                    .values()
+                    .any(|decl| memoized.contains(&decl.identifier.declaration_id))
+                    || scope
+                        .scope
+                        .reassignments
+                        .iter()
+                        .any(|ident| memoized.contains(&ident.declaration_id));
+
+                if !has_memoized_output {
+                    // Scope doesn't need memoization — flatten it
                     let instructions = std::mem::take(&mut scope.instructions);
                     block.splice(i..=i, instructions);
                     continue;
                 }
             }
             ReactiveStatement::PrunedScope(scope) => {
-                prune_in_block(&mut scope.instructions, escaping);
+                prune_in_block(&mut scope.instructions, memoized);
             }
             ReactiveStatement::Terminal(term) => {
-                prune_in_terminal(&mut term.terminal, escaping);
+                prune_in_terminal(&mut term.terminal, memoized);
             }
             ReactiveStatement::Instruction(_) => {}
         }
@@ -135,30 +577,30 @@ fn prune_in_block(block: &mut ReactiveBlock, escaping: &FxHashSet<IdentifierId>)
     }
 }
 
-fn prune_in_terminal(terminal: &mut ReactiveTerminal, escaping: &FxHashSet<IdentifierId>) {
+fn prune_in_terminal(terminal: &mut ReactiveTerminal, memoized: &FxHashSet<DeclarationId>) {
     match terminal {
         ReactiveTerminal::If(t) => {
-            prune_in_block(&mut t.consequent, escaping);
+            prune_in_block(&mut t.consequent, memoized);
             if let Some(alt) = &mut t.alternate {
-                prune_in_block(alt, escaping);
+                prune_in_block(alt, memoized);
             }
         }
         ReactiveTerminal::Switch(t) => {
             for case in &mut t.cases {
                 if let Some(block) = &mut case.block {
-                    prune_in_block(block, escaping);
+                    prune_in_block(block, memoized);
                 }
             }
         }
-        ReactiveTerminal::While(t) => prune_in_block(&mut t.r#loop, escaping),
-        ReactiveTerminal::DoWhile(t) => prune_in_block(&mut t.r#loop, escaping),
-        ReactiveTerminal::For(t) => prune_in_block(&mut t.r#loop, escaping),
-        ReactiveTerminal::ForOf(t) => prune_in_block(&mut t.r#loop, escaping),
-        ReactiveTerminal::ForIn(t) => prune_in_block(&mut t.r#loop, escaping),
-        ReactiveTerminal::Label(t) => prune_in_block(&mut t.block, escaping),
+        ReactiveTerminal::While(t) => prune_in_block(&mut t.r#loop, memoized),
+        ReactiveTerminal::DoWhile(t) => prune_in_block(&mut t.r#loop, memoized),
+        ReactiveTerminal::For(t) => prune_in_block(&mut t.r#loop, memoized),
+        ReactiveTerminal::ForOf(t) => prune_in_block(&mut t.r#loop, memoized),
+        ReactiveTerminal::ForIn(t) => prune_in_block(&mut t.r#loop, memoized),
+        ReactiveTerminal::Label(t) => prune_in_block(&mut t.block, memoized),
         ReactiveTerminal::Try(t) => {
-            prune_in_block(&mut t.block, escaping);
-            prune_in_block(&mut t.handler, escaping);
+            prune_in_block(&mut t.block, memoized);
+            prune_in_block(&mut t.handler, memoized);
         }
         ReactiveTerminal::Break(_)
         | ReactiveTerminal::Continue(_)

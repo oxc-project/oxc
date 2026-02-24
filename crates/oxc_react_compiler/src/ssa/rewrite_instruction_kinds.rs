@@ -168,11 +168,10 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                     if let Some(k) = kind {
                         v.lvalue.kind = k;
                     } else {
-                        return Err(CompilerError::invariant(
-                            "Expected at least one operand in destructure",
-                            None,
-                            GENERATED_SOURCE,
-                        ));
+                        // Zero operands: this can happen with empty destructuring patterns
+                        // like `function Component({})`. DCE should have pruned these, but
+                        // as a safety net, default to Const.
+                        v.lvalue.kind = InstructionKind::Const;
                     }
                 }
                 InstructionValue::PrefixUpdate(v) => {

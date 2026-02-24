@@ -17,7 +17,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     compiler_error::GENERATED_SOURCE,
     hir::{
-        BasicBlock, BlockId, BlockKind, Destructure, HIRFunction, Hir, IdentifierId,
+        BasicBlock, BlockId, BlockKind, BlockMap, Destructure, HIRFunction, Hir, IdentifierId,
         IdentifierName, Instruction, InstructionId, InstructionKind, InstructionValue,
         JsxAttribute, JsxExpression, JsxTag, LValuePattern, LoadGlobal, NonLocalBinding,
         ObjectPattern, ObjectPatternProperty, ObjectProperty, ObjectPropertyKey,
@@ -427,7 +427,7 @@ fn emit_outlined_fn(
         phis: Vec::new(),
     };
 
-    let mut blocks = FxHashMap::default();
+    let mut blocks = BlockMap::default();
     blocks.insert(block.id, block);
 
     Some(HIRFunction {

@@ -130,10 +130,7 @@ fn collect_reactive_ids_block(block: &ReactiveBlock, reactive: &mut FxHashSet<Id
     }
 }
 
-fn collect_reactive_ids_from_value(
-    value: &ReactiveValue,
-    reactive: &mut FxHashSet<IdentifierId>,
-) {
+fn collect_reactive_ids_from_value(value: &ReactiveValue, reactive: &mut FxHashSet<IdentifierId>) {
     match value {
         ReactiveValue::Instruction(inner) => {
             use crate::hir::visitors::each_instruction_value_operand;
@@ -308,8 +305,7 @@ fn propagate_reactivity_from_value(
             }
             InstructionValue::PropertyLoad(v) => {
                 if let Some(lv) = lvalue {
-                    if reactive.contains(&v.object.identifier.id)
-                        && !is_stable_type(&lv.identifier)
+                    if reactive.contains(&v.object.identifier.id) && !is_stable_type(&lv.identifier)
                     {
                         reactive.insert(lv.identifier.id);
                     }
@@ -348,7 +344,10 @@ fn propagate_reactivity_from_value(
 }
 
 /// Iterate over all output places in a destructuring pattern.
-fn each_pattern_operand(pattern: &crate::hir::Pattern, callback: &mut impl FnMut(&crate::hir::Place)) {
+fn each_pattern_operand(
+    pattern: &crate::hir::Pattern,
+    callback: &mut impl FnMut(&crate::hir::Place),
+) {
     use crate::hir::{ArrayPatternElement, ObjectPatternProperty, Pattern};
     match pattern {
         Pattern::Array(arr) => {
