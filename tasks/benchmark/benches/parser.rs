@@ -149,7 +149,7 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
                         &allocator,
                     );
                     let tokens_json = black_box(tokens_json);
-                    // Allocate into tokens JSON into arena, same as linter and NAPI parser package do
+                    // Allocate tokens JSON into arena, same as linter and NAPI parser package do
                     let _tokens_json = allocator.alloc_str(&tokens_json);
 
                     program
