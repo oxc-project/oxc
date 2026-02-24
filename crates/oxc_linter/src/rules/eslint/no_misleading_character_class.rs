@@ -17,23 +17,33 @@ use crate::{
 };
 
 fn surrogate_pair_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected surrogate pair in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected surrogate pair in character class.")
+        .with_help("Add the Unicode flag 'u' to the regular expression or use Unicode code point escapes (e.g., \\u{1F44D}) instead of surrogate pairs.")
+        .with_label(span)
 }
 
 fn combining_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected combining class in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected combining class in character class.")
+        .with_help("Replace the character with its normalized form (NFC) or use Unicode code point escapes (e.g., \\u{1F1E6}\\u{0301} for 'Á') instead of combining sequences.")
+        .with_label(span)
 }
 
 fn emoji_modifiers_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected emoji modifier in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected emoji modifier in character class.")
+        .with_help("Use Unicode code point escapes (e.g., \\u{1F3FB} for the light skin tone modifier) instead of emoji modifier sequences in character classes.")
+        .with_label(span)
 }
 
 fn regional_indicator_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected regional indicator in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected regional indicator in character class.")
+        .with_help("Use Unicode code point escapes (e.g., \\u{1F1EF} for the regional indicator symbol for 'J') instead of regional indicator symbol pairs in character classes.")
+        .with_label(span)
 }
 
 fn zwj_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected joined character sequence in character class.").with_label(span)
+    OxcDiagnostic::warn("Unexpected joined character sequence in character class.")
+        .with_help("Use Unicode code point escapes (e.g., \\u{1F468}\\u200D\\u{1F469} for '👨‍👩') instead of zero-width joiner sequences in character classes.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
