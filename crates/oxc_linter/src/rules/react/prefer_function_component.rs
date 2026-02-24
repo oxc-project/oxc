@@ -88,9 +88,7 @@ impl Rule for PreferFunctionComponent {
             return;
         };
 
-        let is_component = is_es6_component(node);
-
-        if !is_component {
+        if !is_es6_component(node) {
             // Not extending Component/PureComponent. Only flag if it contains
             // JSX and allowJsxUtilityClass is false.
             if self.allow_jsx_utility_class {
