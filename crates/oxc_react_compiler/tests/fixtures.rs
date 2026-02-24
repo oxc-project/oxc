@@ -1178,7 +1178,10 @@ fn normalize_destructuring_spacing(s: &str) -> String {
     let mut i = 0;
 
     while i < len {
-        if chars[i] == '{' && i + 1 < len && chars[i + 1] != ' ' && chars[i + 1] != '}'
+        if chars[i] == '{'
+            && i + 1 < len
+            && chars[i + 1] != ' '
+            && chars[i + 1] != '}'
             && chars[i + 1] != '\n'
         {
             // Look ahead to see if this looks like a destructuring pattern.
@@ -1197,7 +1200,10 @@ fn normalize_destructuring_spacing(s: &str) -> String {
             }
         }
         // Add space before `}` if preceded by a non-space char in destructuring.
-        if chars[i] == '}' && i > 0 && chars[i - 1] != ' ' && chars[i - 1] != '{'
+        if chars[i] == '}'
+            && i > 0
+            && chars[i - 1] != ' '
+            && chars[i - 1] != '{'
             && chars[i - 1] != '\n'
         {
             // Check if this is likely the end of a destructuring pattern by looking back.

@@ -23,7 +23,10 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE},
-    hir::{InstructionId, Place, ReactiveFunction, ReactiveInstruction, ReactiveScope, ReactiveTerminalStatement, ScopeId},
+    hir::{
+        InstructionId, Place, ReactiveFunction, ReactiveInstruction, ReactiveScope,
+        ReactiveTerminalStatement, ScopeId,
+    },
     reactive_scopes::visitors::{ReactiveVisitor, visit_reactive_function},
 };
 
@@ -32,11 +35,7 @@ use crate::{
 /// Port of `getPlaceScope` from `HIR/HIR.ts`.
 fn get_place_scope(id: InstructionId, place: &Place) -> Option<&ReactiveScope> {
     let scope = place.identifier.scope.as_ref()?;
-    if id >= scope.range.start && id < scope.range.end {
-        Some(scope)
-    } else {
-        None
-    }
+    if id >= scope.range.start && id < scope.range.end { Some(scope) } else { None }
 }
 
 /// Assert that all scope instructions are within their corresponding scopes.

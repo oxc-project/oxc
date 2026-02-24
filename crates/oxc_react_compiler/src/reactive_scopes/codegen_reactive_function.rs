@@ -1051,7 +1051,7 @@ fn codegen_terminal(
         }
         ReactiveTerminal::Label(t) => {
             let block = codegen_block(cx, &t.block);
-            Some(CodegenStatement::Block(block))
+            if block.is_empty() { None } else { Some(CodegenStatement::Block(block)) }
         }
         ReactiveTerminal::Try(t) => {
             let block = codegen_block(cx, &t.block);
@@ -1488,12 +1488,14 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
         InstructionValue::MetaProperty(meta) => {
             format!("{}.{}", meta.meta, meta.property)
         }
-        // These should not appear in codegen_instruction_value
+        // StoreLocal in expression context means it's a reassignment used as a value.
+        // Wrap in parentheses because assignment expressions have very low precedence
+        // and are typically used inside call arguments, conditions, etc.
+        // e.g., `foo((x = 1))` not `foo(x = 1)`.
         InstructionValue::StoreLocal(store) => {
-            // StoreLocal in expression context means it's a reassignment
             let lval = codegen_place_to_expression(cx, &store.lvalue.place);
             let value = codegen_place_to_expression(cx, &store.value);
-            format!("{lval} = {value}")
+            format!("({lval} = {value})")
         }
         InstructionValue::StoreContext(_)
         | InstructionValue::DeclareLocal(_)
@@ -1963,10 +1965,34 @@ fn codegen_member_access(object: &str, property: &crate::hir::types::PropertyLit
     }
 }
 
+/// Check if a string is a valid JavaScript identifier name that can be used
+/// unquoted as an object property key. This includes keywords since they are
+/// valid as property keys in ES5+.
+fn is_valid_identifier_name(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+    let mut chars = s.chars();
+    let first = chars.next().unwrap();
+    if !first.is_ascii_alphabetic() && first != '_' && first != '$' {
+        return false;
+    }
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$')
+}
+
 /// Generate an object property key string.
 fn codegen_object_property_key(cx: &CodegenContext, key: &ObjectPropertyKey) -> String {
     match key {
-        ObjectPropertyKey::String(s) => format!("\"{}\"", escape_string(s)),
+        ObjectPropertyKey::String(s) => {
+            // If the string is a valid identifier name, emit it unquoted.
+            // This matches the reference compiler behavior where `{['foo']: v}`
+            // is lowered to `{foo: v}` rather than `{"foo": v}`.
+            if is_valid_identifier_name(s) {
+                s.clone()
+            } else {
+                format!("\"{}\"", escape_string(s))
+            }
+        }
         ObjectPropertyKey::Identifier(name) => name.clone(),
         ObjectPropertyKey::Computed(place) => codegen_place_to_expression(cx, place),
         ObjectPropertyKey::Number(n) => format!("{n}"),
