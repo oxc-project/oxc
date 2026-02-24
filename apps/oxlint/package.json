@@ -39,6 +39,7 @@
     "@arethetypeswrong/core": "catalog:",
     "@babel/code-frame": "^7.28.6",
     "@napi-rs/cli": "catalog:",
+    "@type-challenges/utils": "^0.1.1",
     "@types/babel__code-frame": "^7.27.0",
     "@types/esquery": "^1.5.4",
     "@types/estree": "^1.0.8",
