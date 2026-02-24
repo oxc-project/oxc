@@ -160,5 +160,65 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(parser, bench_parser, bench_parser_tokens, bench_estree, bench_estree_tokens);
+fn bench_estree_tokens_raw(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("estree_tokens_raw");
+
+    for file in TestFiles::complicated().files().iter().take(1) {
+        let id = BenchmarkId::from_parameter(&file.file_name);
+        let source_text = &file.source_text;
+        let source_type = file.source_type;
+        let mut allocator = Allocator::default();
+
+        group.bench_function(id, |b| {
+            b.iter_with_setup_wrapper(|runner| {
+                allocator.reset();
+
+                // Use `RuntimeParserConfig` (runtime config), same as NAPI parser package will.
+                // `bench_estree` uses `NoTokensParserConfig` (implicitly as default).
+                // Usually it's inadvisable to use 2 different configs in the same application,
+                // but this is just a benchmark, and it's better if we don't entwine this benchmark with `bench_estree`.
+                let config = RuntimeParserConfig::new(true);
+
+                let ret = Parser::new(&allocator, source_text, source_type)
+                    .with_options(ParseOptions {
+                        parse_regular_expression: true,
+                        ..ParseOptions::default()
+                    })
+                    .with_config(config)
+                    .parse();
+                let ParserReturn { program, tokens, .. } = ret;
+
+                // Creating span converter is not performed in measured section, as we only want to measure tokens.
+                // Span converter needs to be created anyway for converting spans in AST.
+                let span_converter = Utf8ToUtf16::new(program.source_text);
+
+                runner.run(|| {
+                    let tokens_json = to_estree_tokens_json(
+                        &tokens,
+                        &program,
+                        program.source_text,
+                        &span_converter,
+                        ESTreeTokenOptionsJS,
+                    );
+                    let tokens_json = black_box(tokens_json);
+                    // Allocate tokens JSON into arena, same as linter and NAPI parser package do
+                    let _tokens_json = allocator.alloc_str(&tokens_json);
+
+                    program
+                });
+            });
+        });
+    }
+
+    group.finish();
+}
+
+criterion_group!(
+    parser,
+    bench_parser,
+    bench_parser_tokens,
+    bench_estree,
+    bench_estree_tokens,
+    bench_estree_tokens_raw
+);
 criterion_main!(parser);
