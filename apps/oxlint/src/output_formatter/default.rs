@@ -40,18 +40,21 @@ impl InternalFormatter for DefaultOutputFormatter {
             )
         };
 
-        let oxlint_suppression_action_text = match lint_command_info.oxlint_suppression_file_action
+        let oxlint_suppression_action_text = match &lint_command_info.oxlint_suppression_file_action
         {
-            OxlintSuppressionFileAction::None => "",
+            OxlintSuppressionFileAction::None => "".to_string(),
             OxlintSuppressionFileAction::Created => {
-                "'oxlint-suppressions.json' has been created in the root folder.\n"
+                "'oxlint-suppressions.json' has been created in the root folder.\n".to_string()
             }
             OxlintSuppressionFileAction::Updated => {
-                "'oxlint-suppressions.json' has been updated.\n"
+                "'oxlint-suppressions.json' has been updated.\n".to_string()
+            }
+            OxlintSuppressionFileAction::Malformed(error) => {
+                format!("{}\n", &error.message.to_string())
             }
         };
 
-        finished_text.insert_str(0, oxlint_suppression_action_text);
+        finished_text.insert_str(0, oxlint_suppression_action_text.as_ref());
 
         Some(finished_text)
     }

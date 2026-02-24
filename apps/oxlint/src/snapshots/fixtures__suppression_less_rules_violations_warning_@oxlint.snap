@@ -10,6 +10,7 @@ working directory: fixtures/suppression_less_rules_violations_warning
   help: Update `oxlint-suppressions.json` file running `oxlint --prune-suppressions`
 
 Found 0 warnings and 1 error.
+'oxlint-suppressions.json' has been updated.
 Finished in <variable>ms on 1 file with 56 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
