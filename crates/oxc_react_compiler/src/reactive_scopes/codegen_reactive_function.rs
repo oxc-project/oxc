@@ -1813,7 +1813,15 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
                 // then insert `?` there.
                 if let Some(paren_idx) = find_optional_insertion_point(&value) {
                     let (before, after) = value.split_at(paren_idx);
-                    format!("{before}?{after}")
+                    // When the insertion point is a `(` (call), use `?.(`
+                    // syntax instead of `?(` which is invalid.
+                    // `?.` is used for optional member access (`foo?.bar`)
+                    // `?.(` is used for optional calls (`foo?.()`)
+                    if after.starts_with('(') {
+                        format!("{before}?.{after}")
+                    } else {
+                        format!("{before}?{after}")
+                    }
                 } else {
                     // Fallback: just append ?.
                     format!("{value}?.()")
@@ -2283,29 +2291,37 @@ fn codegen_for_of_collection(cx: &mut CodegenContext, init: &ReactiveValue) -> S
 
 /// Extract left and collection for for-in from the init value.
 fn codegen_for_in_init(cx: &mut CodegenContext, init: &ReactiveValue) -> (VarKind, String) {
-    if let ReactiveValue::Sequence(seq) = init
-        && let Some(item_instr) = seq.instructions.get(1)
-        && let ReactiveValue::Instruction(boxed) = &item_instr.value
-    {
-        match boxed.as_ref() {
-            InstructionValue::StoreLocal(store) => {
-                let kind = match store.lvalue.kind {
-                    InstructionKind::Const | InstructionKind::HoistedConst => VarKind::Const,
-                    _ => VarKind::Let,
-                };
-                let name = identifier_name(&store.lvalue.place.identifier);
-                cx.declare(store.lvalue.place.identifier.declaration_id);
-                return (kind, name);
+    if let ReactiveValue::Sequence(seq) = init {
+        // Search all instructions (not just index 1) for the StoreLocal/Destructure
+        // that defines the loop variable. The position varies depending on how many
+        // instructions are in the init block (e.g., phi nodes may be present).
+        for item_instr in seq.instructions.iter().rev() {
+            if let ReactiveValue::Instruction(boxed) = &item_instr.value {
+                match boxed.as_ref() {
+                    InstructionValue::StoreLocal(store) => {
+                        let kind = match store.lvalue.kind {
+                            InstructionKind::Const | InstructionKind::HoistedConst => {
+                                VarKind::Const
+                            }
+                            _ => VarKind::Let,
+                        };
+                        let name = identifier_name(&store.lvalue.place.identifier);
+                        cx.declare(store.lvalue.place.identifier.declaration_id);
+                        return (kind, name);
+                    }
+                    InstructionValue::Destructure(destr) => {
+                        let kind = match destr.lvalue.kind {
+                            InstructionKind::Const | InstructionKind::HoistedConst => {
+                                VarKind::Const
+                            }
+                            _ => VarKind::Let,
+                        };
+                        let pattern = codegen_pattern(cx, &destr.lvalue.pattern);
+                        return (kind, pattern);
+                    }
+                    _ => {}
+                }
             }
-            InstructionValue::Destructure(destr) => {
-                let kind = match destr.lvalue.kind {
-                    InstructionKind::Const | InstructionKind::HoistedConst => VarKind::Const,
-                    _ => VarKind::Let,
-                };
-                let pattern = codegen_pattern(cx, &destr.lvalue.pattern);
-                return (kind, pattern);
-            }
-            _ => {}
         }
     }
     (VarKind::Const, "key".to_string())
