@@ -825,9 +825,6 @@ pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
             if should_fail {
                 return false;
             }
-            if f.path.starts_with("test262/test/language/comments/hashbang/") {
-                return false;
-            }
             workspace_root()
                 .join("estree-conformance/tests/test262-tokens")
                 .join(f.path.strip_prefix("test262/").unwrap_or(&f.path))
