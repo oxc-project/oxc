@@ -507,7 +507,7 @@
    `----
 
   x tokens-plugin(tokens): RegularExpression ("/abc/gu")
-  |   regex: {"flags":"gu","pattern":"abc"}
+  |   regex: {"pattern":"abc","flags":"gu"}
    ,-[files/index.js:6:9]
  5 | // Another comment
  6 | let y = /abc/gu;

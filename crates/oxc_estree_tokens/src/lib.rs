@@ -27,8 +27,8 @@ pub struct EstreeToken<'a> {
 
 #[derive(Serialize)]
 pub struct EstreeRegExpToken<'a> {
-    pub flags: &'a str,
     pub pattern: &'a str,
+    pub flags: &'a str,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -170,7 +170,7 @@ fn to_estree_tokens<'a>(
             source_value
         };
         let regex = if kind == Kind::RegExp {
-            regex_parts(source_value).map(|(pattern, flags)| EstreeRegExpToken { flags, pattern })
+            regex_parts(source_value).map(|(pattern, flags)| EstreeRegExpToken { pattern, flags })
         } else {
             None
         };
