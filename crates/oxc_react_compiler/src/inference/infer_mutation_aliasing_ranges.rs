@@ -594,9 +594,26 @@ pub fn infer_mutation_aliasing_ranges(
                     AliasingEffect::Assign { from, into } => {
                         let from_remapped = remap(from);
                         let into_remapped = remap(into);
-                        // If the node doesn't exist yet, create it
+                        // If the into node doesn't exist yet, create it.
+                        // Matches TS InferMutationAliasingRanges.ts lines 158-160.
                         if !state.nodes.contains_key(&into_remapped.identifier.id) {
                             state.create(&into_remapped, NodeValue::Object);
+                        }
+                        // If the from node doesn't exist yet, create it.
+                        // In the TS compiler, Identifier is a reference type: when SSA
+                        // creates a phi and later eliminates it, all references to the phi
+                        // output are replaced in-place. In Rust, SSA creates unique
+                        // IdentifierIds for phi outputs that may survive phi elimination
+                        // as operands in instructions (e.g., LoadLocal operands in loop
+                        // bodies). When eliminate_redundant_phi removes a phi at a loop
+                        // header, the rewrite may not propagate to all places (because
+                        // the phi at an intermediate block was not trivial). This leaves
+                        // orphan IdentifierIds with no node in the alias graph.
+                        // Auto-creating them ensures the Assign establishes alias edges,
+                        // allowing mutation propagation through the graph (e.g., x.push()
+                        // inside a for-of loop extending the mutable range of x's array).
+                        if !state.nodes.contains_key(&from_remapped.identifier.id) {
+                            state.create(&from_remapped, NodeValue::Object);
                         }
                         let i = index;
                         index += 1;

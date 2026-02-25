@@ -3,7 +3,7 @@ source: crates/oxc_react_compiler/tests/fixtures.rs
 assertion_line: 5214
 expression: snapshot
 ---
-Codegen conformance: 513/1040 passed (49.3%)
+Codegen conformance: 524/1040 passed (50.4%)
 
 Failure breakdown:
   parse_error:    27
@@ -11,7 +11,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:496
+  output_mismatch:485
   no_expected:    1
 
 Failed fixtures:
@@ -109,7 +109,6 @@ Failed fixtures:
   [output_mismatch] const-propagation-into-function-expression-primitive.js
   [output_mismatch] constant-prop-to-object-method.js
   [output_mismatch] constant-propagation-bit-ops.js
-  [output_mismatch] constant-propagation-for.js
   [output_mismatch] constant-propagation-into-function-expressions.js
   [output_mismatch] constant-propagation-phi.js
   [output_mismatch] constant-propagation-template-literal.js
@@ -167,21 +166,16 @@ Failed fixtures:
   [output_mismatch] fast-refresh-reloading.js
   [output_mismatch] flag-enable-emit-hook-guards.ts
   [parse_error] flow-enum-inline.js
-  [output_mismatch] for-empty-update.js
   [output_mismatch] for-in-statement.js
   [output_mismatch] for-logical.js
   [output_mismatch] for-loop-with-value-block-initializer.js
   [output_mismatch] for-multiple-variable-declarations-in-initializer.js
-  [output_mismatch] for-of-capture-item-of-local-collection-mutate-later-value-initially-null.js
-  [output_mismatch] for-of-capture-item-of-local-collection-mutate-later.js
   [output_mismatch] for-of-continue.js
   [output_mismatch] for-of-destructure.js
   [output_mismatch] for-of-immutable-collection.js
-  [output_mismatch] for-of-iterator-of-immutable-collection.js
   [output_mismatch] for-of-mutate-item-of-local-collection.js
   [output_mismatch] for-of-mutate.tsx
   [output_mismatch] for-of-nonmutating-loop-local-collection.js
-  [output_mismatch] for-of-simple.js
   [output_mismatch] for-return.js
   [output_mismatch] frozen-after-alias.js
   [output_mismatch] function-declaration-redeclare.js
@@ -263,7 +257,6 @@ Failed fixtures:
   [output_mismatch] jsx-string-attribute-expression-container.js
   [output_mismatch] jsx-string-attribute-non-ascii.js
   [output_mismatch] jsx-ternary-local-variable.tsx
-  [output_mismatch] labeled-break-within-label-loop.ts
   [output_mismatch] lambda-array-access-member-expr-captured.ts
   [output_mismatch] lambda-capture-returned-alias.js
   [output_mismatch] lambda-mutate-shadowed-object.js
@@ -355,7 +348,6 @@ Failed fixtures:
   [output_mismatch] reactive-control-dependency-forof-collection.js
   [output_mismatch] reactive-control-dependency-from-interleaved-reactivity-for-update.js
   [output_mismatch] reactive-control-dependency-on-context-variable.js
-  [output_mismatch] reactive-control-dependency-reactive-after-fixpoint.js
   [output_mismatch] reactive-control-dependency-while-test.js
   [output_mismatch] reactive-dependencies-non-optional-properties-inside-optional-chain.js
   [output_mismatch] reactive-dependency-fixpoint.js
@@ -392,7 +384,6 @@ Failed fixtures:
   [output_mismatch] repro-backedge-reference-effect.js
   [output_mismatch] repro-capturing-func-maybealias-captured-mutate.ts
   [output_mismatch] repro-context-var-reassign-no-scope.js
-  [output_mismatch] repro-dce-circular-reference.js
   [output_mismatch] repro-dispatch-spread-event-marks-event-frozen.js
   [output_mismatch] repro-dont-memoize-array-with-capturing-map-after-hook.js
   [output_mismatch] repro-dont-memoize-array-with-mutable-map-after-hook.js
@@ -446,7 +437,6 @@ Failed fixtures:
   [output_mismatch] same-variable-as-dep-and-redeclare-maybe-frozen.js
   [output_mismatch] same-variable-as-dep-and-redeclare.js
   [output_mismatch] sequence-expression.js
-  [output_mismatch] ssa-for-trivial-update.js
   [output_mismatch] ssa-leave-case.js
   [output_mismatch] ssa-nested-loops-no-reassign.js
   [output_mismatch] ssa-property-alias-mutate-inside-if.js
@@ -509,7 +499,6 @@ Failed fixtures:
   [output_mismatch] type-test-return-type-inference.js
   [output_mismatch] unary-expr.js
   [output_mismatch] uninitialized-declaration-in-reactive-scope.js
-  [output_mismatch] unlabeled-break-within-label-loop.ts
   [output_mismatch] unused-object-element-with-rest.js
   [output_mismatch] use-callback-simple.js
   [output_mismatch] use-effect-cleanup-reassigns.js
