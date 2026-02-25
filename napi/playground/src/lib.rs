@@ -368,13 +368,14 @@ impl Oxc {
                         value: hashbang.value.to_string(),
                         start: hashbang.span.start,
                         end: hashbang.span.end,
+                        loc: None,
                     },
                 );
             }
 
-            program.to_pretty_estree_js_json_with_fixes(false)
+            program.to_pretty_estree_js_json_with_fixes(false, true)
         } else {
-            program.to_pretty_estree_ts_json_with_fixes(false)
+            program.to_pretty_estree_ts_json_with_fixes(false, true)
         };
         self.comments = comments;
     }

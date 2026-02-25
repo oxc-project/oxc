@@ -19,6 +19,7 @@ export interface Comment {
   value: string
   start: number
   end: number
+  loc?: SourceLocation
 }
 
 export interface ErrorLabel {
@@ -39,6 +40,16 @@ export declare const enum Severity {
   Error = 'Error',
   Warning = 'Warning',
   Advice = 'Advice'
+}
+
+export interface SourceLocation {
+  start: SourcePosition
+  end: SourcePosition
+}
+
+export interface SourcePosition {
+  line: number
+  column: number
 }
 export declare class ParseResult {
   get program(): import("@oxc-project/types").Program
@@ -177,6 +188,14 @@ export interface ParserOptions {
    * @default false
    */
   range?: boolean
+  /**
+   * Controls whether the `loc` property is included on AST nodes.
+   * The `loc` property contains line and column information for the start and end
+   * of each node.
+   *
+   * @default false
+   */
+  loc?: boolean
   /**
    * Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
    *

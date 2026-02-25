@@ -1,7 +1,7 @@
 ---
 source: apps/oxlint/src/tester.rs
 ---
-########## 
+##########
 arguments: --type-aware test.svelte
 working directory: fixtures/tsgolint
 ----------
@@ -11,7 +11,7 @@ working directory: fixtures/tsgolint
  1 | <script>
  2 |     debugger;
    :     ^^^^^^^^^
- 3 | 
+ 3 |
    `----
   help: Remove the debugger statement
 
