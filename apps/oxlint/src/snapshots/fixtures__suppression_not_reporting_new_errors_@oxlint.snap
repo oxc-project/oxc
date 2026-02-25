@@ -6,7 +6,6 @@ arguments:
 working directory: fixtures/suppression_not_reporting_new_errors
 ----------
 Found 0 warnings and 0 errors.
-'oxlint-suppressions.json' has been updated.
 Finished in <variable>ms on 2 files with 56 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
