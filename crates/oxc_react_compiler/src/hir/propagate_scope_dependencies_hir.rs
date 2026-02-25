@@ -1165,6 +1165,19 @@ fn handle_instruction(instr: &Instruction, context: &mut DependencyCollectionCon
                     &v.lvalue_place.identifier,
                     Decl { id, scope: context.scopes.clone() },
                 );
+                // Same fix as DeclareContext: context variables stored before their
+                // reactive scope starts have an empty scope stack, so visitDependency
+                // won't add them as scope declarations. Proactively register them.
+                if context.scopes.value().is_none() {
+                    if let Some(ref var_scope) = v.lvalue_place.identifier.scope {
+                        context.scope_declaration_mutations.push((
+                            var_scope.id,
+                            v.lvalue_place.identifier.id,
+                            v.lvalue_place.identifier.clone(),
+                            var_scope.as_ref().clone(),
+                        ));
+                    }
+                }
             }
 
             for operand in each_instruction_value_operand(&instr.value) {
