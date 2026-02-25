@@ -348,3 +348,165 @@ mod logger_tests {
         assert_eq!(format!("{}", ErrorSeverity::Hint), "Hint");
     }
 }
+
+/// Test that console.log(x) doesn't extend x's mutable range.
+/// The expected output should have console.log(x) OUTSIDE the scope guard.
+#[test]
+fn test_console_readonly_output() {
+    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::hir::ReactFunctionType;
+    use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
+    use oxc_react_compiler::hir::environment::{
+        CompilerOutputMode, Environment, EnvironmentConfig,
+    };
+
+    // Full test: all console methods including global.console.log
+    let source = r#"function Component(props) {
+  const x = [props.a, props.b];
+  console.log(x);
+  console.info(x);
+  console.warn(x);
+  console.error(x);
+  console.trace(x);
+  console.table(x);
+  global.console.log(x);
+  return x;
+}"#;
+
+    let allocator = oxc_allocator::Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    assert!(parser_result.errors.is_empty(), "Parse errors: {:?}", parser_result.errors);
+
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| match stmt {
+            oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+            _ => None,
+        })
+        .expect("No function found");
+
+    let env = Environment::new(
+        ReactFunctionType::Component,
+        CompilerOutputMode::Client,
+        EnvironmentConfig::default(),
+    );
+
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func).expect("Lower failed");
+    let result = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
+    let output = format!("{result}");
+
+    // The console.log(x) call should be OUTSIDE the scope guard.
+    // Expected pattern: the scope guard assigns to $ cache, then console.log happens after.
+    // Bad pattern: console.log(t0) is INSIDE the if block (before $[N] = t0).
+    //
+    // Look for: console.log should appear AFTER the scope guard's else branch.
+    // If console.log is inside the if block, it means x's mutable range was extended.
+    // Check that console.log appears after the cache store, not before it
+    let lines: Vec<&str> = output.lines().collect();
+    let mut found_cache_store = false;
+    let mut console_after_cache = false;
+    let mut console_before_cache = false;
+    for line in &lines {
+        let trimmed = line.trim();
+        if trimmed.starts_with("$[") && trimmed.contains("=") && !trimmed.contains("!==") {
+            found_cache_store = true;
+        }
+        if trimmed.contains("console.log") {
+            if found_cache_store {
+                console_after_cache = true;
+            } else {
+                console_before_cache = true;
+            }
+        }
+    }
+
+    assert!(
+        console_after_cache && !console_before_cache,
+        "console.log should be OUTSIDE the scope guard (after cache stores), but it appears to be inside.\nOutput:\n{output}"
+    );
+}
+
+/// Verify console and global.console method types resolve correctly.
+#[test]
+fn test_console_method_type_resolution() {
+    use oxc_react_compiler::hir::ReactFunctionType;
+    use oxc_react_compiler::hir::environment::{
+        CompilerOutputMode, Environment, EnvironmentConfig,
+    };
+
+    let env = Environment::new(
+        ReactFunctionType::Component,
+        CompilerOutputMode::Client,
+        EnvironmentConfig::default(),
+    );
+
+    // Helper to verify a console-like object has a "log" method with Read effects.
+    let verify_console_log =
+        |console_type: &oxc_react_compiler::hir::types::Type, label: &str| match console_type {
+            oxc_react_compiler::hir::types::Type::Object(obj) => {
+                assert!(obj.shape_id.is_some(), "{label} should have a shape_id");
+
+                let log_type = env.get_property_type(console_type, "log");
+                assert!(log_type.is_some(), "{label}.log should have a property type");
+
+                let log_type = log_type.unwrap();
+                match &log_type {
+                    oxc_react_compiler::hir::types::Type::Function(func_type) => {
+                        assert!(
+                            func_type.shape_id.is_some(),
+                            "{label}.log should have a function shape_id"
+                        );
+                        let sig = env.get_function_signature(&log_type);
+                        assert!(sig.is_some(), "{label}.log should have a function signature");
+                        let sig = sig.unwrap();
+                        assert_eq!(
+                            sig.callee_effect,
+                            oxc_react_compiler::hir::Effect::Read,
+                            "{label}.log callee_effect should be Read"
+                        );
+                        assert_eq!(
+                            sig.rest_param,
+                            Some(oxc_react_compiler::hir::Effect::Read),
+                            "{label}.log rest_param should be Read"
+                        );
+                    }
+                    _ => panic!("{label}.log should be a Function type, got: {log_type:?}"),
+                }
+            }
+            _ => panic!("{label} should be an Object type, got: {console_type:?}"),
+        };
+
+    // 1. Verify direct `console` global
+    let console_global = env
+        .get_global_declaration(&oxc_react_compiler::hir::NonLocalBinding::Global {
+            name: "console".to_string(),
+        })
+        .expect("console should be a registered global");
+    let console_type = oxc_react_compiler::hir::globals::Global::to_type(&console_global);
+    verify_console_log(&console_type, "console");
+
+    // 2. Verify `global.console` resolves correctly
+    let global_global = env
+        .get_global_declaration(&oxc_react_compiler::hir::NonLocalBinding::Global {
+            name: "global".to_string(),
+        })
+        .expect("global should be a registered global");
+    let global_type = oxc_react_compiler::hir::globals::Global::to_type(&global_global);
+    let global_console_type = env.get_property_type(&global_type, "console");
+    assert!(global_console_type.is_some(), "global.console should resolve to a type");
+    verify_console_log(&global_console_type.unwrap(), "global.console");
+
+    // 3. Verify `globalThis.console` resolves correctly
+    let global_this = env
+        .get_global_declaration(&oxc_react_compiler::hir::NonLocalBinding::Global {
+            name: "globalThis".to_string(),
+        })
+        .expect("globalThis should be a registered global");
+    let global_this_type = oxc_react_compiler::hir::globals::Global::to_type(&global_this);
+    let global_this_console_type = env.get_property_type(&global_this_type, "console");
+    assert!(global_this_console_type.is_some(), "globalThis.console should resolve to a type");
+    verify_console_log(&global_this_console_type.unwrap(), "globalThis.console");
+}

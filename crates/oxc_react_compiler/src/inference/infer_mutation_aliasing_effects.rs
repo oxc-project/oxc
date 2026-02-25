@@ -791,8 +791,10 @@ fn compute_effects_for_signature(
             | AliasingEffect::Alias { from, into }
             | AliasingEffect::CreateFrom { from, into }
             | AliasingEffect::Capture { from, into } => {
-                let from_places = substitutions.get(&from.identifier.id).cloned().unwrap_or_default();
-                let into_places = substitutions.get(&into.identifier.id).cloned().unwrap_or_default();
+                let from_places =
+                    substitutions.get(&from.identifier.id).cloned().unwrap_or_default();
+                let into_places =
+                    substitutions.get(&into.identifier.id).cloned().unwrap_or_default();
                 for from_place in &from_places {
                     for into_place in &into_places {
                         // Reconstruct the same effect variant with substituted places
