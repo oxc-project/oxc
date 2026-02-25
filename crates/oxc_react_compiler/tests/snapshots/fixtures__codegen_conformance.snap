@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 403/1040 passed (38.8%)
+Codegen conformance: 411/1040 passed (39.5%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 13
   panic:          0
-  output_mismatch:594
+  output_mismatch:586
   no_expected:    1
 
 Failed fixtures:
@@ -129,7 +129,6 @@ Failed fixtures:
   [output_mismatch] capturing-variable-in-nested-function.js
   [output_mismatch] chained-assignment-context-variable.js
   [output_mismatch] chained-assignment-expressions.js
-  [output_mismatch] codegen-instrument-forget-test.js
   [parse_error] component-declaration-basic.flow.js
   [output_mismatch] component.js
   [output_mismatch] computed-call-evaluation-order.js
@@ -138,7 +137,6 @@ Failed fixtures:
   [output_mismatch] concise-arrow-expr.js
   [output_mismatch] conditional-early-return.js
   [output_mismatch] conditional-on-mutable.js
-  [output_mismatch] conflict-codegen-instrument-forget.js
   [pipeline_error] consecutive-use-memo.ts
   [output_mismatch] console-readonly.js
   [output_mismatch] const-propagation-into-function-expression-global.js
@@ -274,7 +272,6 @@ Failed fixtures:
   [output_mismatch] idx-method-no-outlining-wildcard.js
   [output_mismatch] idx-method-no-outlining.js
   [output_mismatch] idx-no-outlining.js
-  [output_mismatch] ignore-use-no-forget.js
   [output_mismatch] iife-return-modified-later-phi.js
   [output_mismatch] iife-return-modified-later.js
   [output_mismatch] immutable-hooks.js
@@ -282,7 +279,6 @@ Failed fixtures:
   [output_mismatch] incompatible-destructuring-kinds.js
   [output_mismatch] independently-memoize-object-property.js
   [no_function] infer-function-React-memo.js
-  [output_mismatch] infer-function-expression-component.js
   [no_function] infer-function-forwardRef.js
   [output_mismatch] infer-global-object.js
   [output_mismatch] infer-sequential-optional-chain-nonnull.ts
@@ -356,13 +352,11 @@ Failed fixtures:
   [output_mismatch] nested-optional-chains.ts
   [output_mismatch] nested-optional-member-expr.js
   [output_mismatch] nested-scopes-begin-same-instr-valueblock.ts
-  [output_mismatch] nested-scopes-hook-call.js
   [output_mismatch] nonmutated-spread-hook-return.js
   [output_mismatch] nonmutated-spread-props-jsx.js
   [output_mismatch] nonmutated-spread-props-local-indirection.js
   [output_mismatch] nonmutated-spread-props.js
   [output_mismatch] nonmutating-capture-in-unsplittable-memo-block.ts
-  [output_mismatch] nonoptional-load-from-optional-memberexpr.js
   [output_mismatch] nonreactive-noescaping-dependency-can-inline-into-consuming-scope.js
   [output_mismatch] obj-literal-cached-in-if-else.js
   [output_mismatch] obj-literal-mutated-after-if-else.js
@@ -398,7 +392,6 @@ Failed fixtures:
   [output_mismatch] optional-call-simple.js
   [output_mismatch] optional-call-with-independently-memoizable-arg.js
   [output_mismatch] optional-call-with-optional-property-load.js
-  [output_mismatch] optional-computed-load-static.js
   [pipeline_error] optional-member-expression-as-memo-dep.js
   [output_mismatch] optional-member-expression-chain.js
   [output_mismatch] optional-member-expression-inverted-optionals-parallel-paths.js
@@ -615,7 +608,6 @@ Failed fixtures:
   [output_mismatch] use-callback-simple.js
   [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] use-memo-simple.js
-  [output_mismatch] use-no-forget-multiple-with-eslint-suppression.js
   [output_mismatch] useActionState-dispatch-considered-as-non-reactive.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-dont-preserve-memoization.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js
