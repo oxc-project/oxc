@@ -105,6 +105,7 @@ fn to_estree_tokens<'a>(
 ) -> ArenaVec<'a, EstreeToken<'a>> {
     // Traverse AST to collect details of tokens requiring correction, depending on provided options
     let mut context = EstreeTokenContext {
+        exclude_legacy_keyword_identifiers: options.exclude_legacy_keyword_identifiers,
         jsx_namespace_jsx_identifiers: options.jsx_namespace_jsx_identifiers,
         member_expr_in_jsx_expression_jsx_identifiers: options
             .member_expr_in_jsx_expression_jsx_identifiers,
@@ -134,7 +135,7 @@ fn to_estree_tokens<'a>(
             span_converter.convert_offset(&mut end);
         }
 
-        let mut token_override = if next_override_start == start {
+        let token_override = if next_override_start == start {
             let override_kind = next_override_kind;
             (next_override_start, next_override_kind) =
                 overrides.next().unwrap_or((u32::MAX, TokenKindOverride::Identifier));
@@ -142,14 +143,6 @@ fn to_estree_tokens<'a>(
         } else {
             None
         };
-
-        // Exclude legacy keyword identifiers if option is set
-        if matches!(token_override, Some(TokenKindOverride::Identifier))
-            && options.exclude_legacy_keyword_identifiers
-            && matches!(kind, Kind::Yield | Kind::Let | Kind::Static)
-        {
-            token_override = None;
-        }
         let token_type = token_type(kind, token_override);
 
         let source_value =
@@ -189,6 +182,7 @@ enum TokenKindOverride {
 #[derive(Default)]
 pub struct EstreeTokenContext {
     // Options
+    exclude_legacy_keyword_identifiers: bool,
     jsx_namespace_jsx_identifiers: bool,
     member_expr_in_jsx_expression_jsx_identifiers: bool,
     /// Token kind overrides, stored in source order.
@@ -209,6 +203,12 @@ impl EstreeTokenContext {
         );
 
         self.overrides.push((span.start, token_override));
+    }
+
+    fn set_identifier_override_unless_excluded(&mut self, span: Span, name: &str) {
+        if !self.exclude_legacy_keyword_identifiers || !matches!(name, "yield" | "let" | "static") {
+            self.set_override(span, TokenKindOverride::Identifier);
+        }
     }
 }
 
@@ -282,7 +282,7 @@ impl<'a> Visit<'a> for EstreeTokenContext {
         {
             self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
         } else {
-            self.set_override(identifier.span, TokenKindOverride::Identifier);
+            self.set_identifier_override_unless_excluded(identifier.span, &identifier.name);
         }
     }
 
@@ -294,16 +294,16 @@ impl<'a> Visit<'a> for EstreeTokenContext {
         {
             self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
         } else {
-            self.set_override(identifier.span, TokenKindOverride::Identifier);
+            self.set_identifier_override_unless_excluded(identifier.span, &identifier.name);
         }
     }
 
     fn visit_binding_identifier(&mut self, identifier: &BindingIdentifier<'a>) {
-        self.set_override(identifier.span, TokenKindOverride::Identifier);
+        self.set_identifier_override_unless_excluded(identifier.span, &identifier.name);
     }
 
     fn visit_label_identifier(&mut self, identifier: &LabelIdentifier<'a>) {
-        self.set_override(identifier.span, TokenKindOverride::Identifier);
+        self.set_identifier_override_unless_excluded(identifier.span, &identifier.name);
     }
 
     fn visit_ts_this_parameter(&mut self, parameter: &TSThisParameter<'a>) {
