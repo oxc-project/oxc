@@ -27,7 +27,8 @@ use crate::hir::types::{ObjectType, PropertyLiteral, Type};
 use super::hir_types::{
     BasicBlock, BlockId, DeclarationId, DependencyPath, DependencyPathEntry, HIRFunction,
     Identifier, IdentifierId, Instruction, InstructionId, InstructionKind, InstructionValue,
-    MutableRange, Place, ReactiveScope, ReactiveScopeDependency, ScopeId, Terminal,
+    ManualMemoDependencyRoot, MutableRange, Place, ReactiveScope, ReactiveScopeDependency, ScopeId,
+    Terminal,
 };
 use super::visitors::{
     each_instruction_operand, each_instruction_value_operand, each_pattern_operand,
@@ -605,6 +606,63 @@ fn collect_temporaries_sidemap(
     used_outside_declaring_scope: &FxHashSet<DeclarationId>,
 ) -> FxHashMap<IdentifierId, TempReactiveScopeDependency> {
     let mut temporaries = FxHashMap::default();
+    if std::env::var("DEBUG_TEMPORARIES").is_ok() {
+        // Print outer function params
+        let params_info: Vec<_> = func
+            .params
+            .iter()
+            .map(|p| match p {
+                super::hir_types::ReactiveParam::Place(pp) => {
+                    (pp.identifier.id, pp.identifier.name.clone())
+                }
+                super::hir_types::ReactiveParam::Spread(s) => {
+                    (s.place.identifier.id, s.place.identifier.name.clone())
+                }
+            })
+            .collect();
+        eprintln!("[TEMP_OUTER] params: {:?}", params_info);
+        // Only print ALL instructions if this is the "props" function
+        let has_props = params_info.iter().any(|(_, name)| {
+            name.as_ref()
+                .map(|n| matches!(n, super::hir_types::IdentifierName::Named(s) if s == "props"))
+                .unwrap_or(false)
+        });
+        for block in func.body.blocks.values() {
+            for instr in &block.instructions {
+                let kind = match &instr.value {
+                    InstructionValue::FunctionExpression(v) => format!(
+                        "FunctionExpression(ctx={:?})",
+                        v.lowered_func
+                            .func
+                            .context
+                            .iter()
+                            .map(|p| (p.identifier.id, p.identifier.name.clone()))
+                            .collect::<Vec<_>>()
+                    ),
+                    InstructionValue::StartMemoize(v) => format!(
+                        "StartMemoize(deps={:?})",
+                        v.deps.as_ref().map(|d| d
+                            .iter()
+                            .map(|dep| match &dep.root {
+                                ManualMemoDependencyRoot::NamedLocal { value, .. } => (
+                                    value.identifier.id,
+                                    value.identifier.name.clone(),
+                                    dep.path.len()
+                                ),
+                                _ => (IdentifierId(0), None, 0),
+                            })
+                            .collect::<Vec<_>>())
+                    ),
+                    other if has_props => format!("{:?}", std::mem::discriminant(other)),
+                    _ => continue,
+                };
+                eprintln!(
+                    "[TEMP_OUTER] lvalue={:?}({:?}) {}",
+                    instr.lvalue.identifier.id, instr.lvalue.identifier.name, kind
+                );
+            }
+        }
+    }
     collect_temporaries_sidemap_impl(func, used_outside_declaring_scope, &mut temporaries, None);
     temporaries
 }
@@ -615,6 +673,37 @@ fn collect_temporaries_sidemap_impl(
     temporaries: &mut FxHashMap<IdentifierId, TempReactiveScopeDependency>,
     inner_fn_context: Option<InstructionId>,
 ) {
+    if std::env::var("DEBUG_TEMPORARIES").is_ok() && inner_fn_context.is_some() {
+        eprintln!(
+            "[TEMP_IMPL] inner_fn context: {:?}",
+            func.context
+                .iter()
+                .map(|p| (p.identifier.id, p.identifier.name.clone()))
+                .collect::<Vec<_>>()
+        );
+        for block in func.body.blocks.values() {
+            for instr in &block.instructions {
+                let kind = match &instr.value {
+                    InstructionValue::LoadLocal(v) => format!(
+                        "LoadLocal({:?}:{:?})",
+                        v.place.identifier.id, v.place.identifier.name
+                    ),
+                    InstructionValue::LoadContext(v) => format!(
+                        "LoadContext({:?}:{:?})",
+                        v.place.identifier.id, v.place.identifier.name
+                    ),
+                    InstructionValue::PropertyLoad(v) => {
+                        format!("PropertyLoad({:?}.{:?})", v.object.identifier.id, v.property)
+                    }
+                    _ => format!("{:?}", std::mem::discriminant(&instr.value)),
+                };
+                eprintln!(
+                    "[TEMP_IMPL] instr lvalue={:?}({:?}) kind={}",
+                    instr.lvalue.identifier.id, instr.lvalue.identifier.name, kind
+                );
+            }
+        }
+    }
     for block in func.body.blocks.values() {
         for instr in &block.instructions {
             let orig_instr_id = instr.id;
@@ -631,7 +720,24 @@ fn collect_temporaries_sidemap_impl(
                     {
                         let property =
                             get_property(&v.object, &v.property, false, v.loc, temporaries);
+                        if std::env::var("DEBUG_TEMPORARIES").is_ok() {
+                            eprintln!(
+                                "[TEMP_PROPLOAD_INSERT] lvalue={:?} → {:?}(id={:?}) path_len={}",
+                                instr.lvalue.identifier.id,
+                                property.identifier.name,
+                                property.identifier.id,
+                                property.path.len()
+                            );
+                        }
                         temporaries.insert(instr.lvalue.identifier.id, property);
+                    } else if std::env::var("DEBUG_TEMPORARIES").is_ok() {
+                        eprintln!(
+                            "[TEMP_PROPLOAD_SKIP_NO_OBJ] lvalue={:?} obj={:?}({:?}) prop={:?}",
+                            instr.lvalue.identifier.id,
+                            v.object.identifier.id,
+                            v.object.identifier.name,
+                            v.property
+                        );
                     }
                 }
                 InstructionValue::LoadLocal(v)
@@ -654,11 +760,20 @@ fn collect_temporaries_sidemap_impl(
                     }
                 }
                 InstructionValue::LoadContext(_)
-                    if is_load_context_mutable(&instr.value, instr_id)
-                        && instr.lvalue.identifier.name.is_none()
-                        && !used_outside =>
+                    if instr.lvalue.identifier.name.is_none() && !used_outside =>
                 {
                     let InstructionValue::LoadContext(v) = &instr.value else { continue };
+                    // Port of the TS condition: (LoadLocal || isLoadContextMutable) &&
+                    // lvalue.name == null && place.name != null && !usedOutside.
+                    //
+                    // In Rust, context identifiers (including params like `props` captured by
+                    // inner closures) are lowered as LoadContext. After IIFE inlining, these
+                    // LoadContext instructions remain in the outer function body — whereas in
+                    // TS they would have been LoadLocal. To match TS behavior, we add ALL
+                    // LoadContext instructions with a named source to the temporaries sidemap,
+                    // not just mutable ones. This allows PropertyLoad chains like
+                    // `LoadContext(props) → tmp43; PropertyLoad(tmp43, "value") → tmp44`
+                    // to resolve to `{props, path=[value]}` as a scope dependency.
                     if v.place.identifier.name.is_some()
                         && (inner_fn_context.is_none()
                             || func
@@ -666,6 +781,15 @@ fn collect_temporaries_sidemap_impl(
                                 .iter()
                                 .any(|ctx| ctx.identifier.id == v.place.identifier.id))
                     {
+                        if std::env::var("DEBUG_TEMPORARIES").is_ok() {
+                            eprintln!(
+                                "[TEMP_LOADCTX] lvalue={:?} → {:?}(id={:?}) inner_fn={:?}",
+                                instr.lvalue.identifier.id,
+                                v.place.identifier.name,
+                                v.place.identifier.id,
+                                inner_fn_context
+                            );
+                        }
                         temporaries.insert(
                             instr.lvalue.identifier.id,
                             TempReactiveScopeDependency {
@@ -823,11 +947,12 @@ impl<'a> DependencyCollectionContext<'a> {
             .or_else(|| self.declarations.get(&maybe_dep.identifier.declaration_id));
 
         let current_scope = self.scopes.value();
-        match (current_scope, current_declaration) {
+        let result = match (current_scope, current_declaration) {
             (Some(scope), Some(decl)) => decl.id < scope.range.start,
             (None, _) => false,
             (_, None) => false,
-        }
+        };
+        result
     }
 
     fn is_scope_active_in_stack(&self, scope: &ReactiveScope) -> bool {
@@ -906,9 +1031,8 @@ impl<'a> DependencyCollectionContext<'a> {
             };
         }
 
-        if self.check_valid_dependency(&dep)
-            && let Some(current_deps) = self.dependencies.value()
-        {
+        let is_valid = self.check_valid_dependency(&dep);
+        if is_valid && let Some(current_deps) = self.dependencies.value() {
             let mut new_deps = current_deps.clone();
             new_deps.push(dep);
             self.dependencies = self.dependencies.pop().push(new_deps);
@@ -1024,6 +1148,14 @@ fn handle_instruction(instr: &Instruction, context: &mut DependencyCollectionCon
             for operand in each_instruction_value_operand(&instr.value) {
                 context.visit_operand(operand);
             }
+        }
+        InstructionValue::StartMemoize(_) | InstructionValue::FinishMemoize(_) => {
+            // StartMemoize and FinishMemoize contain manually-specified dependency
+            // information from the user's useMemo/useCallback call. Their root Places
+            // should NOT be visited as inferred scope dependencies — doing so would
+            // add coarser-grained deps (e.g. `props`) instead of the user's intended
+            // finer-grained ones (e.g. `props.value`). Scope dependency inference
+            // works independently on the actual instructions inside the scope body.
         }
         _ => {
             for operand in each_instruction_value_operand(&instr.value) {
@@ -1278,6 +1410,22 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
                         }
                     })
                     .collect();
+
+                if std::env::var("DEBUG_HOISTABLE").is_ok() {
+                    let tree_hoistable: Vec<_> = hoistable_paths
+                        .iter()
+                        .map(|hp| (hp.identifier.id, hp.identifier.name.clone()))
+                        .collect();
+                    eprintln!(
+                        "[SCOPE_DEPS] scope={:?} hoistable_ids={:?} tree_hoistable_ids={:?}",
+                        scope.id, &hoistable_ids, tree_hoistable
+                    );
+                    let dep_info: Vec<_> = deps
+                        .iter()
+                        .map(|d| (d.identifier.id, d.identifier.name.clone(), d.path.len()))
+                        .collect();
+                    eprintln!("[SCOPE_DEPS] scope={:?} deps={:?}", scope.id, dep_info);
+                }
 
                 let mut tree = ReactiveScopeDependencyTree::new(hoistable_paths);
                 for dep in deps {

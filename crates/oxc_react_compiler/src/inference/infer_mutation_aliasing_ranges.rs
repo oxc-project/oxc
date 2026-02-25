@@ -558,7 +558,10 @@ pub fn infer_mutation_aliasing_ranges(
         let remap = |place: &Place| -> Place {
             if let Some(&original_id) = ctx_ssa_remap.get(&place.identifier.id) {
                 Place {
-                    identifier: crate::hir::Identifier { id: original_id, ..place.identifier.clone() },
+                    identifier: crate::hir::Identifier {
+                        id: original_id,
+                        ..place.identifier.clone()
+                    },
                     ..place.clone()
                 }
             } else {
@@ -984,14 +987,24 @@ fn set_lvalue_effects(instr: &mut crate::hir::Instruction) {
         }
         InstructionValue::DeclareContext(v) => {
             v.lvalue_place.effect = Effect::ConditionallyMutate;
-            if v.lvalue_place.identifier.mutable_range.start == InstructionId(0) {
-                v.lvalue_place.identifier.mutable_range.start = instr_id;
-            }
-            if v.lvalue_place.identifier.mutable_range.end == InstructionId(0) {
-                let new_end =
-                    std::cmp::max(instr_id.0 + 1, v.lvalue_place.identifier.mutable_range.end.0);
-                v.lvalue_place.identifier.mutable_range.end = InstructionId(new_end);
-            }
+            // Do NOT initialize mutable_range.start here.
+            //
+            // In TS HIR, context variables are handled via LoadLocal/StoreLocal, so
+            // there's no DeclareContext instruction. After IIFE inlining, the context
+            // variable's mutable range starts at its first StoreLocal/StoreContext.
+            //
+            // In Rust HIR, DeclareContext appears at the top of the function (before
+            // the actual computation) so that inner closures can reference the variable.
+            // If we initialize mutable_range.start here, it would be set to a very
+            // early instruction ID (e.g. 8), causing the reactive scope range to start
+            // early and encompass other useMemo scopes' declarations (e.g. item1/item2).
+            //
+            // The correct behavior: let StoreContext (the first actual assignment)
+            // initialize the mutable range. This matches the TS behavior where the
+            // variable's range starts at its first StoreLocal assignment.
+            //
+            // See: type-provider-store-capture.tsx — items scope range should start
+            // at the StoreContext for items, NOT at the DeclareContext.
         }
         InstructionValue::StoreLocal(v) => {
             v.lvalue.place.effect = Effect::ConditionallyMutate;

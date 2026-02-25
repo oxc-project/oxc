@@ -206,6 +206,32 @@ fn validate_inferred_dep(
     let mut error_diagnostic: Option<CompareDependencyResult> = None;
     for original_dep in valid_deps_in_memo_block {
         let compare_result = compare_deps(&normalized_dep, original_dep);
+        if std::env::var("DEBUG_VALIDATE_MEMO").is_ok() {
+            eprintln!(
+                "[VALIDATE_MEMO] inferred={:?} source={:?} result={:?}",
+                match &normalized_dep.root {
+                    ManualMemoDependencyRoot::NamedLocal { value, .. } => format!(
+                        "Named({:?}:{:?} path={:?})",
+                        value.identifier.id,
+                        value.identifier.name,
+                        normalized_dep.path.len()
+                    ),
+                    ManualMemoDependencyRoot::Global { identifier_name } =>
+                        format!("Global({:?})", identifier_name),
+                },
+                match &original_dep.root {
+                    ManualMemoDependencyRoot::NamedLocal { value, .. } => format!(
+                        "Named({:?}:{:?} path={:?})",
+                        value.identifier.id,
+                        value.identifier.name,
+                        original_dep.path.len()
+                    ),
+                    ManualMemoDependencyRoot::Global { identifier_name } =>
+                        format!("Global({:?})", identifier_name),
+                },
+                compare_result
+            );
+        }
         if compare_result == CompareDependencyResult::Ok {
             return;
         }

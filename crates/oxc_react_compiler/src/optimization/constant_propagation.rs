@@ -337,8 +337,10 @@ fn evaluate_instruction(constants: &mut Constants, instr: &mut Instruction) -> O
                     UpdateOperator::Decrement => n - 1.0,
                 };
                 // Store the updated value for the lvalue (the variable being updated)
-                constants
-                    .insert(v.lvalue.identifier.id, Constant::Primitive(PrimitiveValueKind::Number(next)));
+                constants.insert(
+                    v.lvalue.identifier.id,
+                    Constant::Primitive(PrimitiveValueKind::Number(next)),
+                );
                 // But return the value prior to the update (postfix semantics)
                 return Some(Constant::Primitive(PrimitiveValueKind::Number(n)));
             }

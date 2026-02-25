@@ -17,7 +17,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     hir::{
-        BlockId, HIRFunction, IdentifierId, Instruction, InstructionValue, Place,
+        BlockId, Effect, HIRFunction, IdentifierId, Instruction, InstructionValue, Place,
         ReactFunctionType, ReactiveParam, ValueKind, ValueReason,
         hir_builder::each_terminal_successor, visitors::each_terminal_operand,
     },
@@ -207,7 +207,7 @@ pub fn infer_mutation_aliasing_effects(
 
             // Process instructions
             for instr in &block.instructions {
-                infer_instruction_effects(&mut state, instr, options);
+                infer_instruction_effects(&mut state, instr, options, &func.env);
             }
 
             // Store the state for this block
@@ -238,8 +238,6 @@ pub fn infer_mutation_aliasing_effects(
     // For unreachable blocks, set empty effects (not None) so downstream passes
     // (infer_mutation_aliasing_ranges) still process them correctly.
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
-    let total_blocks = block_ids.len();
-    let reached_blocks = states_by_block.len();
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else {
             continue;
@@ -248,6 +246,48 @@ pub fn infer_mutation_aliasing_effects(
             for instr in &mut block.instructions {
                 let effects = compute_instruction_effects(state, instr, &func.env);
                 instr.effects = Some(effects);
+
+                // Match TS applyEffect for CreateFunction: demote context operands
+                // from Capture to Read when they have Global/Frozen/Primitive kind in
+                // the outer abstract state. This allows validate_no_freezing_known_mutable_functions
+                // to skip mutations of known-global context variables.
+                match &mut instr.value {
+                    InstructionValue::FunctionExpression(v) => {
+                        for ctx in &mut v.lowered_func.func.context {
+                            if ctx.effect == Effect::Capture {
+                                if let Some(av) = state.get(ctx) {
+                                    if matches!(
+                                        av.kind,
+                                        ValueKind::Primitive
+                                            | ValueKind::Frozen
+                                            | ValueKind::MaybeFrozen
+                                            | ValueKind::Global
+                                    ) {
+                                        ctx.effect = Effect::Read;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    InstructionValue::ObjectMethod(v) => {
+                        for ctx in &mut v.lowered_func.func.context {
+                            if ctx.effect == Effect::Capture {
+                                if let Some(av) = state.get(ctx) {
+                                    if matches!(
+                                        av.kind,
+                                        ValueKind::Primitive
+                                            | ValueKind::Frozen
+                                            | ValueKind::MaybeFrozen
+                                            | ValueKind::Global
+                                    ) {
+                                        ctx.effect = Effect::Read;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
             }
         } else {
             // Unreachable block: set empty effects so downstream passes don't skip
@@ -273,6 +313,7 @@ fn infer_instruction_effects(
     state: &mut InferenceState,
     instr: &Instruction,
     _options: &InferOptions,
+    env: &crate::hir::environment::Environment,
 ) {
     let lvalue_id = instr.lvalue.identifier.id;
 
@@ -421,19 +462,61 @@ fn infer_instruction_effects(
         }
 
         // Destructure: the destructured value may be mutable
+        // When the source is frozen, propagate frozen to the pattern lvalues.
         InstructionValue::Destructure(v) => {
             if let Some(val) = state.get(&v.value).cloned() {
-                state.define(&instr.lvalue, val);
+                state.define(&instr.lvalue, val.clone());
+                // Propagate source type to pattern lvalues
+                for place in crate::hir::visitors::each_pattern_operand(&v.lvalue.pattern) {
+                    state.define(place, val.clone());
+                }
             } else {
                 state.define(&instr.lvalue, AbstractValue::mutable());
             }
         }
 
+        // StartMemoize: freeze the deps (matching TS applyEffect for Freeze)
+        // In TS, StartMemoize with enablePreserveExistingMemoizationGuarantees
+        // iterates eachInstructionValueOperand (the named local deps) and emits
+        // Freeze effects. applyEffect then calls state.freeze(dep) which updates
+        // the abstract state. We replicate this here to ensure the abstract state
+        // is up-to-date for subsequent LoadContext/LoadLocal instructions.
+        InstructionValue::StartMemoize(v) => {
+            if env.config.enable_preserve_existing_memoization_guarantees {
+                if let Some(deps) = &v.deps {
+                    for dep in deps {
+                        if let crate::hir::ManualMemoDependencyRoot::NamedLocal { value, .. } =
+                            &dep.root
+                        {
+                            let mut reasons = FxHashSet::default();
+                            reasons.insert(ValueReason::HookCaptured);
+                            state.define(value, AbstractValue::frozen(reasons));
+                        }
+                    }
+                }
+            }
+            state.define(&instr.lvalue, AbstractValue::mutable());
+        }
+
+        // FinishMemoize: freeze the declared memoized value (matching TS applyEffect for Freeze)
+        // In TS, FinishMemoize with enablePreserveExistingMemoizationGuarantees
+        // emits Freeze(decl). applyEffect calls state.freeze(decl), updating the
+        // abstract state so subsequent LoadContext/LoadLocal of the same identifier
+        // see a Frozen abstract value and emit ImmutableCapture instead of CreateFrom.
+        // This prevents item1/item2 mutable ranges from being extended through the
+        // items useMemo scope (fixes type-provider-store-capture.tsx).
+        InstructionValue::FinishMemoize(v) => {
+            if env.config.enable_preserve_existing_memoization_guarantees {
+                let mut reasons = FxHashSet::default();
+                reasons.insert(ValueReason::HookCaptured);
+                state.define(&v.decl, AbstractValue::frozen(reasons));
+            }
+            state.define(&instr.lvalue, AbstractValue::mutable());
+        }
+
         // Other values
         InstructionValue::DeclareLocal(_)
         | InstructionValue::DeclareContext(_)
-        | InstructionValue::StartMemoize(_)
-        | InstructionValue::FinishMemoize(_)
         | InstructionValue::Debugger(_)
         | InstructionValue::MetaProperty(_)
         | InstructionValue::TaggedTemplateExpression(_)
@@ -559,6 +642,16 @@ fn effects_from_signature(
     effects
 }
 
+/// Check if a place's abstract value is Frozen or MaybeFrozen in the inference state.
+/// Used to decide whether to emit ImmutableCapture instead of Capture/Assign/CreateFrom
+/// (matching TS applyEffect behavior).
+fn is_frozen(state: &InferenceState, place: &crate::hir::Place) -> bool {
+    match state.get(place) {
+        Some(av) => matches!(av.kind, ValueKind::Frozen | ValueKind::MaybeFrozen),
+        None => false,
+    }
+}
+
 /// Compute the aliasing effects for an instruction.
 ///
 /// Port of `computeSignatureForInstruction` from `InferMutationAliasingEffects.ts`.
@@ -575,6 +668,7 @@ fn compute_instruction_effects(
 
     match &instr.value {
         // ArrayExpression: Create(Mutable) + Capture each element into the array
+        // If an element is frozen, use ImmutableCapture instead of Capture (matching TS applyEffect).
         InstructionValue::ArrayExpression(arr) => {
             effects.push(AliasingEffect::Create {
                 into: lvalue.clone(),
@@ -584,16 +678,30 @@ fn compute_instruction_effects(
             for element in &arr.elements {
                 match element {
                     crate::hir::ArrayExpressionElement::Place(p) => {
-                        effects.push(AliasingEffect::Capture {
-                            from: p.clone(),
-                            into: lvalue.clone(),
-                        });
+                        if is_frozen(state, p) {
+                            effects.push(AliasingEffect::ImmutableCapture {
+                                from: p.clone(),
+                                into: lvalue.clone(),
+                            });
+                        } else {
+                            effects.push(AliasingEffect::Capture {
+                                from: p.clone(),
+                                into: lvalue.clone(),
+                            });
+                        }
                     }
                     crate::hir::ArrayExpressionElement::Spread(s) => {
-                        effects.push(AliasingEffect::Capture {
-                            from: s.place.clone(),
-                            into: lvalue.clone(),
-                        });
+                        if is_frozen(state, &s.place) {
+                            effects.push(AliasingEffect::ImmutableCapture {
+                                from: s.place.clone(),
+                                into: lvalue.clone(),
+                            });
+                        } else {
+                            effects.push(AliasingEffect::Capture {
+                                from: s.place.clone(),
+                                into: lvalue.clone(),
+                            });
+                        }
                     }
                     crate::hir::ArrayExpressionElement::Hole => {}
                 }
@@ -601,6 +709,7 @@ fn compute_instruction_effects(
         }
 
         // ObjectExpression: Create(Mutable) + Capture each property value into the object
+        // If a property is frozen, use ImmutableCapture instead of Capture (matching TS applyEffect).
         InstructionValue::ObjectExpression(obj) => {
             effects.push(AliasingEffect::Create {
                 into: lvalue.clone(),
@@ -610,16 +719,30 @@ fn compute_instruction_effects(
             for prop in &obj.properties {
                 match prop {
                     crate::hir::ObjectPatternProperty::Property(p) => {
-                        effects.push(AliasingEffect::Capture {
-                            from: p.place.clone(),
-                            into: lvalue.clone(),
-                        });
+                        if is_frozen(state, &p.place) {
+                            effects.push(AliasingEffect::ImmutableCapture {
+                                from: p.place.clone(),
+                                into: lvalue.clone(),
+                            });
+                        } else {
+                            effects.push(AliasingEffect::Capture {
+                                from: p.place.clone(),
+                                into: lvalue.clone(),
+                            });
+                        }
                     }
                     crate::hir::ObjectPatternProperty::Spread(s) => {
-                        effects.push(AliasingEffect::Capture {
-                            from: s.place.clone(),
-                            into: lvalue.clone(),
-                        });
+                        if is_frozen(state, &s.place) {
+                            effects.push(AliasingEffect::ImmutableCapture {
+                                from: s.place.clone(),
+                                into: lvalue.clone(),
+                            });
+                        } else {
+                            effects.push(AliasingEffect::Capture {
+                                from: s.place.clone(),
+                                into: lvalue.clone(),
+                            });
+                        }
                     }
                 }
             }
@@ -760,12 +883,32 @@ fn compute_instruction_effects(
         // edges in the alias graph, enabling mutation propagation through
         // captured variables.
         InstructionValue::FunctionExpression(v) => {
+            // Match TS applyEffect for CreateFunction: if a context operand has kind
+            // Primitive, Frozen, or Global in the outer state, demote it from Capture to Read
+            // (it doesn't need to be mutable-captured). This prevents false-positive
+            // Immutability errors when a context variable is a known global/frozen value.
             let captures: Vec<Place> = v
                 .lowered_func
                 .func
                 .context
                 .iter()
-                .filter(|operand| operand.effect == Effect::Capture)
+                .filter(|operand| {
+                    if operand.effect != Effect::Capture {
+                        return false;
+                    }
+                    // Check outer-function abstract kind: if Global/Frozen/MaybeFrozen/Primitive,
+                    // treat as Read (not a mutable capture).
+                    match state.get(operand) {
+                        Some(av) => !matches!(
+                            av.kind,
+                            ValueKind::Primitive
+                                | ValueKind::Frozen
+                                | ValueKind::MaybeFrozen
+                                | ValueKind::Global
+                        ),
+                        None => true, // Unknown: assume mutable capture
+                    }
+                })
                 .cloned()
                 .collect();
             effects.push(AliasingEffect::CreateFunction {
@@ -774,10 +917,8 @@ fn compute_instruction_effects(
                 into: lvalue.clone(),
             });
             for capture in &captures {
-                effects.push(AliasingEffect::Capture {
-                    from: capture.clone(),
-                    into: lvalue.clone(),
-                });
+                effects
+                    .push(AliasingEffect::Capture { from: capture.clone(), into: lvalue.clone() });
             }
         }
         InstructionValue::ObjectMethod(v) => {
@@ -786,7 +927,21 @@ fn compute_instruction_effects(
                 .func
                 .context
                 .iter()
-                .filter(|operand| operand.effect == Effect::Capture)
+                .filter(|operand| {
+                    if operand.effect != Effect::Capture {
+                        return false;
+                    }
+                    match state.get(operand) {
+                        Some(av) => !matches!(
+                            av.kind,
+                            ValueKind::Primitive
+                                | ValueKind::Frozen
+                                | ValueKind::MaybeFrozen
+                                | ValueKind::Global
+                        ),
+                        None => true,
+                    }
+                })
                 .cloned()
                 .collect();
             effects.push(AliasingEffect::CreateFunction {
@@ -795,22 +950,41 @@ fn compute_instruction_effects(
                 into: lvalue.clone(),
             });
             for capture in &captures {
-                effects.push(AliasingEffect::Capture {
-                    from: capture.clone(),
-                    into: lvalue.clone(),
-                });
+                effects
+                    .push(AliasingEffect::Capture { from: capture.clone(), into: lvalue.clone() });
             }
         }
 
         // LoadLocal: Assign (direct value flow)
+        // If the source is frozen, use ImmutableCapture instead (matching TS applyEffect for Assign
+        // with frozen source: emits ImmutableCapture and marks into as Frozen).
         InstructionValue::LoadLocal(v) => {
-            effects.push(AliasingEffect::Assign { from: v.place.clone(), into: lvalue.clone() });
+            if is_frozen(state, &v.place) {
+                effects.push(AliasingEffect::ImmutableCapture {
+                    from: v.place.clone(),
+                    into: lvalue.clone(),
+                });
+            } else {
+                effects
+                    .push(AliasingEffect::Assign { from: v.place.clone(), into: lvalue.clone() });
+            }
         }
 
         // LoadContext: CreateFrom (loading from mutable box)
+        // If the source is frozen, use ImmutableCapture instead (matching TS applyEffect for
+        // CreateFrom with frozen source: emits Create(Frozen) + ImmutableCapture).
         InstructionValue::LoadContext(v) => {
-            effects
-                .push(AliasingEffect::CreateFrom { from: v.place.clone(), into: lvalue.clone() });
+            if is_frozen(state, &v.place) {
+                effects.push(AliasingEffect::ImmutableCapture {
+                    from: v.place.clone(),
+                    into: lvalue.clone(),
+                });
+            } else {
+                effects.push(AliasingEffect::CreateFrom {
+                    from: v.place.clone(),
+                    into: lvalue.clone(),
+                });
+            }
         }
 
         // StoreLocal: Assign to lvalue target + Assign to instruction lvalue
@@ -870,14 +1044,45 @@ fn compute_instruction_effects(
         }
 
         // Destructure: CreateFrom per pattern item + Assign to lvalue
+        // If the source is frozen (e.g., props param), use Create(Frozen) + ImmutableCapture
+        // instead of CreateFrom (matching TS applyEffect for CreateFrom with frozen source).
+        // This prevents the mutation BFS in InferMutationAliasingRanges from propagating
+        // mutations through props destructuring.
         InstructionValue::Destructure(v) => {
+            let source_frozen = is_frozen(state, &v.value);
+            let source_reason = state
+                .get(&v.value)
+                .and_then(|av| av.reason.iter().next().copied())
+                .unwrap_or(ValueReason::Other);
             for place in crate::hir::visitors::each_pattern_operand(&v.lvalue.pattern) {
-                effects.push(AliasingEffect::CreateFrom {
-                    from: v.value.clone(),
-                    into: place.clone(),
-                });
+                if source_frozen {
+                    // Matching TS: CreateFrom with frozen source → Create(Frozen) + ImmutableCapture
+                    effects.push(AliasingEffect::Create {
+                        into: place.clone(),
+                        value: ValueKind::Frozen,
+                        reason: source_reason,
+                    });
+                    effects.push(AliasingEffect::ImmutableCapture {
+                        from: v.value.clone(),
+                        into: place.clone(),
+                    });
+                } else {
+                    effects.push(AliasingEffect::CreateFrom {
+                        from: v.value.clone(),
+                        into: place.clone(),
+                    });
+                }
             }
-            effects.push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
+            if source_frozen {
+                // Matching TS: Assign with frozen source → ImmutableCapture
+                effects.push(AliasingEffect::ImmutableCapture {
+                    from: v.value.clone(),
+                    into: lvalue.clone(),
+                });
+            } else {
+                effects
+                    .push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
+            }
         }
 
         // PostfixUpdate / PrefixUpdate: Create(Primitive) for both lvalue and updated place
