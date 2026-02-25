@@ -591,16 +591,6 @@ fn find_temporaries_used_outside_declaring_scope(func: &HIRFunction) -> FxHashSe
 // Phase 1b: collectTemporariesSidemap
 // =====================================================================================
 
-/// Check if a LoadContext instruction is mutable at the given instruction ID.
-fn is_load_context_mutable(value: &InstructionValue, id: InstructionId) -> bool {
-    if let InstructionValue::LoadContext(load_ctx) = value
-        && let Some(scope) = &load_ctx.place.identifier.scope
-    {
-        return id >= scope.range.end;
-    }
-    false
-}
-
 fn collect_temporaries_sidemap(
     func: &HIRFunction,
     used_outside_declaring_scope: &FxHashSet<DeclarationId>,
@@ -989,6 +979,15 @@ impl<'a> DependencyCollectionContext<'a> {
         // we collect mutations in a side-table and apply them in a second pass.
         let original_declaration =
             self.declarations.get(&maybe_dep.identifier.declaration_id).cloned();
+        if std::env::var("DEBUG_VISIT_DEP").is_ok() {
+            eprintln!(
+                "[VISIT_DEP] maybe_dep id={:?} decl_id={:?} name={:?} original_decl={}",
+                maybe_dep.identifier.id,
+                maybe_dep.identifier.declaration_id,
+                maybe_dep.identifier.name,
+                original_declaration.is_some()
+            );
+        }
         if let Some(ref original_decl) = original_declaration
             && let Some(declaring_scope) = original_decl.scope.value()
         {
@@ -1005,6 +1004,13 @@ impl<'a> DependencyCollectionContext<'a> {
                 let has_decl = scope.declarations.values().any(|decl| {
                     decl.identifier.declaration_id == maybe_dep.identifier.declaration_id
                 });
+                if std::env::var("DEBUG_VISIT_DEP").is_ok() {
+                    eprintln!(
+                        "[VISIT_DEP]   scope @{}: active={} has_decl={} → {}",
+                        scope.id.0, is_active, has_decl,
+                        if !is_active && !has_decl { "ADD DECLARATION" } else { "skip" }
+                    );
+                }
                 if !is_active && !has_decl {
                     // Collect the mutation for later application
                     self.scope_declaration_mutations.push((
@@ -1124,6 +1130,22 @@ fn handle_instruction(instr: &Instruction, context: &mut DependencyCollectionCon
                     &v.lvalue_place.identifier,
                     Decl { id, scope: context.scopes.clone() },
                 );
+                // Context variables may be declared before their reactive scope starts
+                // (e.g. DeclareContext at instruction 1, scope starts at instruction 2).
+                // In that case, the Decl stored by declare() has an empty scope stack,
+                // and visitDependency won't add the variable as a scope declaration.
+                // If InferReactiveScopeVariables already assigned a scope to this
+                // identifier, proactively register it as a scope declaration.
+                if context.scopes.value().is_none() {
+                    if let Some(ref var_scope) = v.lvalue_place.identifier.scope {
+                        context.scope_declaration_mutations.push((
+                            var_scope.id,
+                            v.lvalue_place.identifier.id,
+                            v.lvalue_place.identifier.clone(),
+                            var_scope.as_ref().clone(),
+                        ));
+                    }
+                }
             }
         }
         InstructionValue::Destructure(v) => {
@@ -1156,6 +1178,9 @@ fn handle_instruction(instr: &Instruction, context: &mut DependencyCollectionCon
             // add coarser-grained deps (e.g. `props`) instead of the user's intended
             // finer-grained ones (e.g. `props.value`). Scope dependency inference
             // works independently on the actual instructions inside the scope body.
+        }
+        InstructionValue::LoadContext(v) => {
+            context.visit_operand(&v.place);
         }
         _ => {
             for operand in each_instruction_value_operand(&instr.value) {

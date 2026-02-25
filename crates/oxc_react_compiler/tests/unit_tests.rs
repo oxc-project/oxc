@@ -570,3 +570,123 @@ fn test_console_method_type_resolution() {
     assert!(global_this_console_type.is_some(), "globalThis.console should resolve to a type");
     verify_console_log(&global_this_console_type.unwrap(), "globalThis.console");
 }
+
+#[test]
+fn test_context_variable_debug() {
+    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::hir::{ReactFunctionType, InstructionValue};
+    use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
+    use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
+    use oxc_react_compiler::hir::print_hir::print_function;
+
+    let source = r#"function Component(p) {
+  let x;
+  const foo = () => {
+    x = {};
+  };
+  foo();
+  return x;
+}
+"#;
+    let allocator = oxc_allocator::Allocator::default();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, oxc_span::SourceType::jsx()).parse();
+    assert!(parser_result.errors.is_empty(), "Parse errors: {:?}", parser_result.errors);
+
+    let env_config = EnvironmentConfig::default();
+    let env = Environment::new(
+        ReactFunctionType::Component,
+        CompilerOutputMode::Client,
+        env_config,
+    );
+
+    let func_decl = parser_result.program.body.iter().find_map(|stmt| {
+        if let oxc_ast::ast::Statement::FunctionDeclaration(f) = stmt {
+            Some(f)
+        } else {
+            None
+        }
+    }).expect("Expected function declaration");
+
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &LowerableFunction::Function(func_decl)).expect("Lower failed");
+
+    // Print HIR before pipeline
+    println!("=== HIR after lowering (before pipeline) ===");
+    println!("{}", print_function(&hir_func));
+
+    // Run pipeline - we need to intercept at specific points
+    // First let's just run the full pipeline and check mutable ranges
+    let result = run_pipeline(&mut hir_func, &env);
+
+    // Print all instructions with mutable ranges and scopes
+    println!("=== After full pipeline ===");
+    for (&block_id, block) in &hir_func.body.blocks {
+        println!("Block {}:", block_id.0);
+        for instr in &block.instructions {
+            let lid = &instr.lvalue.identifier;
+            let scope_info = lid.scope.as_ref().map(|s| format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)).unwrap_or_default();
+            println!("  [{}] lvalue={:?}:{:?} mr=[{}-{}] reactive={} {}",
+                instr.id.0, lid.id, lid.name, lid.mutable_range.start.0, lid.mutable_range.end.0,
+                instr.lvalue.reactive, scope_info);
+
+            match &instr.value {
+                InstructionValue::DeclareContext(v) => {
+                    let id = &v.lvalue_place.identifier;
+                    let si = id.scope.as_ref().map(|s| format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)).unwrap_or_default();
+                    println!("    DeclareContext {:?}:{:?} mr=[{}-{}] reactive={} {}",
+                        id.id, id.name, id.mutable_range.start.0, id.mutable_range.end.0, v.lvalue_place.reactive, si);
+                }
+                InstructionValue::StoreContext(v) => {
+                    let id = &v.lvalue_place.identifier;
+                    let si = id.scope.as_ref().map(|s| format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)).unwrap_or_default();
+                    println!("    StoreContext {:?}:{:?} mr=[{}-{}] reactive={} {}",
+                        id.id, id.name, id.mutable_range.start.0, id.mutable_range.end.0, v.lvalue_place.reactive, si);
+                    let vid = &v.value.identifier;
+                    println!("    value: {:?}:{:?} mr=[{}-{}] reactive={}",
+                        vid.id, vid.name, vid.mutable_range.start.0, vid.mutable_range.end.0, v.value.reactive);
+                }
+                InstructionValue::LoadContext(v) => {
+                    let id = &v.place.identifier;
+                    let si = id.scope.as_ref().map(|s| format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)).unwrap_or_default();
+                    println!("    LoadContext {:?}:{:?} mr=[{}-{}] reactive={} {}",
+                        id.id, id.name, id.mutable_range.start.0, id.mutable_range.end.0, v.place.reactive, si);
+                }
+                InstructionValue::FunctionExpression(v) => {
+                    println!("    FunctionExpression context:");
+                    for c in &v.lowered_func.func.context {
+                        println!("      {:?}:{:?} mr=[{}-{}] effect={:?} reactive={}",
+                            c.identifier.id, c.identifier.name,
+                            c.identifier.mutable_range.start.0, c.identifier.mutable_range.end.0,
+                            c.effect, c.reactive);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // Check for Scope terminals
+    println!("=== Terminal types ===");
+    for (&block_id, block) in &hir_func.body.blocks {
+        let terminal_type = match &block.terminal {
+            oxc_react_compiler::hir::Terminal::Scope(s) => format!("Scope(body={}, fallthrough={}, scope_id={}, range=[{}-{}], deps={}, decls={})",
+                s.block.0, s.fallthrough.0, s.scope.id.0, s.scope.range.start.0, s.scope.range.end.0,
+                s.scope.dependencies.len(), s.scope.declarations.len()),
+            oxc_react_compiler::hir::Terminal::PrunedScope(s) => format!("PrunedScope(body={}, fallthrough={}, scope_id={})", s.block.0, s.fallthrough.0, s.scope.id.0),
+            oxc_react_compiler::hir::Terminal::Goto(g) => format!("Goto({})", g.block.0),
+            oxc_react_compiler::hir::Terminal::Return(_) => "Return".to_string(),
+            t => format!("{:?}", std::mem::discriminant(t)),
+        };
+        println!("  Block {} -> {}", block_id.0, terminal_type);
+    }
+
+    match result {
+        Ok(codegen_func) => {
+            let output = format!("{codegen_func}");
+            println!("=== Codegen output ===\n{output}");
+            assert!(output.contains("_c("), "Expected memoization (_c) in output but got:\n{output}");
+        }
+        Err(e) => {
+            panic!("Pipeline error: {e:?}");
+        }
+    }
+}
