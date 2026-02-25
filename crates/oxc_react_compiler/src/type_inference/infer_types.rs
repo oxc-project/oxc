@@ -7,10 +7,13 @@
 use rustc_hash::FxHashMap;
 
 use crate::hir::{
-    HIRFunction, Instruction, InstructionKind, InstructionValue,
+    HIRFunction, Instruction, InstructionKind, InstructionValue, ReactFunctionType, ReactiveParam,
     environment::Environment,
     globals::Global,
-    object_shape::{BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID},
+    object_shape::{
+        BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID,
+        BUILT_IN_PROPS_ID, BUILT_IN_USE_REF_ID,
+    },
     types::{
         FunctionType, ObjectType, PropType, PropertyLiteral, PropertyName, Type, TypeId, make_type,
         type_equals,
@@ -159,6 +162,14 @@ fn apply(func: &mut HIRFunction, unifier: &ResolvedTypes) {
         place.identifier.type_ = unifier.get(place.identifier.type_.clone());
     }
 
+    // Apply to params (these are not in block instructions, so we need
+    // to resolve them explicitly).
+    for param in &mut func.params {
+        if let ReactiveParam::Place(p) = param {
+            resolve_place(p, unifier);
+        }
+    }
+
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
         if let Some(block) = func.body.blocks.get_mut(&block_id) {
@@ -292,6 +303,36 @@ fn apply_to_instruction_value(value: &mut InstructionValue, unifier: &ResolvedTy
 
 fn generate(func: &HIRFunction) -> Vec<TypeEquation> {
     let mut equations = Vec::new();
+
+    // Match TS InferTypes.ts: for Component functions, type the first param as
+    // Props and the second param as BuiltInUseRefId (for forwardRef components).
+    // This ensures that `ref` parameters in components like `function Foo(props, ref) {}`
+    // are recognized as ref-like mutable types, allowing mutation in effects.
+    if func.fn_type == ReactFunctionType::Component {
+        let mut params_iter = func.params.iter();
+        // First param → BuiltInPropsId
+        if let Some(first_param) = params_iter.next() {
+            if let ReactiveParam::Place(p) = first_param {
+                equations.push(TypeEquation {
+                    left: p.identifier.type_.clone(),
+                    right: Type::Object(ObjectType {
+                        shape_id: Some(BUILT_IN_PROPS_ID.to_string()),
+                    }),
+                });
+            }
+        }
+        // Second param → BuiltInUseRefId (for forwardRef)
+        if let Some(second_param) = params_iter.next() {
+            if let ReactiveParam::Place(p) = second_param {
+                equations.push(TypeEquation {
+                    left: p.identifier.type_.clone(),
+                    right: Type::Object(ObjectType {
+                        shape_id: Some(BUILT_IN_USE_REF_ID.to_string()),
+                    }),
+                });
+            }
+        }
+    }
 
     for block in func.body.blocks.values() {
         for instr in &block.instructions {

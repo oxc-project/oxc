@@ -186,6 +186,7 @@ pub fn infer_reactive_scope_variables(func: &mut HIRFunction) -> Result<(), Comp
 
     // Phase 2b: Walk the HIR and assign scopes to identifiers
     assign_scopes_to_identifiers(func, &id_to_scope);
+
     Ok(())
 }
 

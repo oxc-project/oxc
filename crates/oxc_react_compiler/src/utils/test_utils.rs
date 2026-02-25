@@ -21,6 +21,16 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
 
     let mut env_config = EnvironmentConfig::default();
 
+    // Match the TS snap test harness behavior: default to NOT validating
+    // preserve-existing-memoization-guarantees. The snap tool in the TS
+    // codebase (packages/snap/src/compiler.ts) sets:
+    //   validatePreserveExistingMemoizationGuarantees = false
+    // by default and only enables it when the pragma explicitly contains
+    // `@validatePreserveExistingMemoizationGuarantees`. Most fixtures use
+    // useMemo for testing compilation output, not for testing that manual
+    // memoization is preserved.
+    env_config.validate_preserve_existing_memoization_guarantees = false;
+
     for entry in split_pragma(pragma) {
         match entry.key.as_str() {
             "enableForest" => {

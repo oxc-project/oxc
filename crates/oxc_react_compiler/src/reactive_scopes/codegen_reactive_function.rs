@@ -241,6 +241,15 @@ pub struct CodegenContext {
     /// the `LogicalOperator` of the expression. Used to add mandatory parentheses when
     /// `??` is mixed with `||`/`&&` (a JavaScript syntax error without parens).
     logical_temps: FxHashMap<DeclarationId, LogicalOperator>,
+    /// Whether we are currently generating code inside an optional-chain Sequence
+    /// (the `Sequence` node wrapped by an `OptionalCall`).
+    ///
+    /// When `true`, a `PropertyLoad` or `ComputedLoad` whose object is an
+    /// optional-chain expression should NOT be parenthesised, because the
+    /// `.prop` / `[prop]` access is a continuation of the chain (e.g. the `.c`
+    /// in `props?.b.c`) rather than a separate, unconditional access applied to
+    /// the chain's result (e.g. the `.b` in `(props?.a).b`).
+    inside_optional_chain: bool,
 }
 
 impl CodegenContext {
@@ -268,6 +277,7 @@ impl CodegenContext {
             jsx_element_temps: FxHashSet::default(),
             assignment_temps: FxHashSet::default(),
             logical_temps: FxHashMap::default(),
+            inside_optional_chain: false,
         }
     }
 
@@ -1179,7 +1189,7 @@ fn codegen_instruction_nullable(
             // temporaries (when the lvalue is unnamed) and silently dropped.
             InstructionValue::PropertyDelete(del) => {
                 let object = codegen_place_to_expression(cx, &del.object);
-                let member = codegen_member_access(&object, &del.property);
+                let member = codegen_member_access(cx, &object, &del.property);
                 Some(CodegenStatement::ExpressionStatement(format!("delete {member}")))
             }
             InstructionValue::ComputedDelete(del) => {
@@ -1249,9 +1259,7 @@ fn codegen_instruction_nullable(
             }
             codegen_instruction_to_statement(cx, instr, &value_str)
         }
-        ReactiveValue::Ternary(_)
-        | ReactiveValue::Sequence(_)
-        | ReactiveValue::OptionalCall(_) => {
+        ReactiveValue::Ternary(_) | ReactiveValue::Sequence(_) | ReactiveValue::OptionalCall(_) => {
             let value_str = codegen_reactive_value_to_expression(cx, &instr.value);
             // For Sequence values, the inner sequence may contain a Logical expression
             // that was stored as a temp. Propagate the logical operator tracking to
@@ -1260,8 +1268,7 @@ fn codegen_instruction_nullable(
                 if let Some(lval) = &instr.lvalue {
                     if lval.identifier.name.is_none() {
                         if let Some(op) = find_logical_operator_in_value(&instr.value) {
-                            cx.logical_temps
-                                .insert(lval.identifier.declaration_id, op);
+                            cx.logical_temps.insert(lval.identifier.declaration_id, op);
                         }
                     }
                 }
@@ -1475,8 +1482,7 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
             // When the callee is a FunctionExpression (IIFE pattern), wrap it in
             // parentheses so it parses as an expression, not a declaration.
             // In the TS reference this is handled automatically by Babel's AST printer.
-            let callee = if callee.starts_with("function") || callee.starts_with("async function")
-            {
+            let callee = if callee.starts_with("function") || callee.starts_with("async function") {
                 format!("({callee})")
             } else {
                 callee
@@ -1499,32 +1505,35 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
         InstructionValue::ObjectExpression(obj) => codegen_object_expression(cx, obj),
         InstructionValue::PropertyLoad(load) => {
             let object = codegen_place_to_expression(cx, &load.object);
-            codegen_member_access(&object, &load.property)
+            codegen_member_access(cx, &object, &load.property)
         }
         InstructionValue::PropertyStore(store) => {
             let object = codegen_place_to_expression(cx, &store.object);
-            let member = codegen_member_access(&object, &store.property);
+            let member = codegen_member_access(cx, &object, &store.property);
             let value = codegen_place_to_expression(cx, &store.value);
             format!("{member} = {value}")
         }
         InstructionValue::PropertyDelete(del) => {
             let object = codegen_place_to_expression(cx, &del.object);
-            let member = codegen_member_access(&object, &del.property);
+            let member = codegen_member_access(cx, &object, &del.property);
             format!("delete {member}")
         }
         InstructionValue::ComputedLoad(load) => {
             let object = codegen_place_to_expression(cx, &load.object);
+            let object = maybe_parenthesize_optional_chain(cx, &object);
             let property = codegen_place_to_expression(cx, &load.property);
             format!("{object}[{property}]")
         }
         InstructionValue::ComputedStore(store) => {
             let object = codegen_place_to_expression(cx, &store.object);
+            let object = maybe_parenthesize_optional_chain(cx, &object);
             let property = codegen_place_to_expression(cx, &store.property);
             let value = codegen_place_to_expression(cx, &store.value);
             format!("{object}[{property}] = {value}")
         }
         InstructionValue::ComputedDelete(del) => {
             let object = codegen_place_to_expression(cx, &del.object);
+            let object = maybe_parenthesize_optional_chain(cx, &object);
             let property = codegen_place_to_expression(cx, &del.property);
             format!("delete {object}[{property}]")
         }
@@ -1923,7 +1932,8 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
             // ones (e.g. `||` inside `&&`), and is mandatory when `??` is
             // mixed with `||`/`&&` (a JavaScript syntax error without parens).
             let left = wrap_logical_operand_if_needed(cx, &left, &logical.left, logical.operator);
-            let right = wrap_logical_operand_if_needed(cx, &right, &logical.right, logical.operator);
+            let right =
+                wrap_logical_operand_if_needed(cx, &right, &logical.right, logical.operator);
             format!("{left} {} {right}", logical.operator.as_str())
         }
         ReactiveValue::Ternary(ternary) => {
@@ -1965,7 +1975,14 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
             }
         }
         ReactiveValue::OptionalCall(optional) => {
+            // While generating the body of an optional-chain sequence, member and
+            // computed accesses on intermediate optional-chain temps are PART of the
+            // chain (e.g. the `.c` in `props?.b.c`), so they must NOT be wrapped in
+            // parentheses.  Set the flag before recursing and restore it afterwards.
+            let prev_inside_optional_chain = cx.inside_optional_chain;
+            cx.inside_optional_chain = true;
             let value = codegen_reactive_value_to_expression(cx, &optional.value);
+            cx.inside_optional_chain = prev_inside_optional_chain;
             if optional.optional {
                 // The inner value is a complete call expression like `foo.bar(args)` or
                 // member expression like `foo.bar`. We need to insert `?` before the last
@@ -2281,8 +2298,87 @@ fn escape_string_single_quote(s: &str) -> String {
     result
 }
 
+/// Returns `true` if `expr` is an optional-chain expression that would absorb
+/// a following `.prop` or `[prop]` access into the chain, changing semantics.
+///
+/// Specifically, this detects `?.` at nesting depth 0 (not inside `()`, `[]`,
+/// or template literal `${}`).  When such an expression is used as the object
+/// of a *non-optional* member access we must wrap it in parentheses, e.g.
+///
+///   `props?.a`    + `.b`  → `(props?.a).b`   (not `props?.a.b`)
+///   `a?.b?.c`     + `.d`  → `(a?.b?.c).d`
+///   `foo(x?.y)`   + `.z`  → `foo(x?.y).z`    (no wrap needed; `?.` is nested)
+fn is_optional_chain_at_top_level(expr: &str) -> bool {
+    let bytes = expr.as_bytes();
+    let mut depth_paren: i32 = 0;
+    let mut depth_bracket: i32 = 0;
+    // Simple template-literal depth (counts opening backtick vs closing)
+    let mut depth_template: i32 = 0;
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'(' => depth_paren += 1,
+            b')' => depth_paren -= 1,
+            b'[' => depth_bracket += 1,
+            b']' => depth_bracket -= 1,
+            b'`' => {
+                // Toggle template literal depth (simplified: no nested templates)
+                if depth_template > 0 {
+                    depth_template -= 1;
+                } else {
+                    depth_template += 1;
+                }
+            }
+            b'?' if depth_paren == 0 && depth_bracket == 0 && depth_template == 0 => {
+                // Check for `?.` (not `??`)
+                if i + 1 < bytes.len() && bytes[i + 1] == b'.' {
+                    return true;
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    false
+}
+
+/// Wrap `object` in parentheses if it is an optional-chain expression that
+/// would absorb a following `.prop` / `[prop]` into the chain, AND we are not
+/// currently inside an optional-chain Sequence (where the `.prop` access is
+/// intentionally part of the chain itself).
+///
+/// # When parens are needed
+/// `(props?.a).b` — the `.b` is an unconditional access on the result of the
+/// chain, not part of the chain itself.  Without parens the output would be
+/// `props?.a.b`, which short-circuits `.b` as well.
+///
+/// # When parens are NOT needed
+/// `props?.b.c` — the `.c` is *inside* the chain (optional=false in the
+/// OptionalMemberExpression).  Here the object temp holds `"props?.b"` during
+/// sequence processing, but the outer `OptionalCall` will later insert `?.`
+/// at the right position so the string must remain `props.b.c` (the `?.` will
+/// be injected to produce `props?.b.c`).
+fn maybe_parenthesize_optional_chain(cx: &CodegenContext, object: &str) -> String {
+    // Inside an optional-chain Sequence the access is part of the chain, so no
+    // wrapping is required (and would in fact be wrong).
+    if cx.inside_optional_chain {
+        return object.to_string();
+    }
+    if is_optional_chain_at_top_level(object) { format!("({object})") } else { object.to_string() }
+}
+
 /// Generate a member access expression.
-fn codegen_member_access(object: &str, property: &crate::hir::types::PropertyLiteral) -> String {
+fn codegen_member_access(
+    cx: &CodegenContext,
+    object: &str,
+    property: &crate::hir::types::PropertyLiteral,
+) -> String {
+    // If `object` is an optional-chain expression (e.g. `props?.a`), a following
+    // non-optional access like `.b` would be parsed as part of the chain, producing
+    // `props?.a.b` instead of `(props?.a).b`.  Wrap with parens to prevent this.
+    // The wrapping is skipped when we are inside an optional-chain Sequence because
+    // in that context the access IS part of the chain (e.g. the `.c` in `props?.b.c`).
+    let object = maybe_parenthesize_optional_chain(cx, object);
     match property {
         crate::hir::types::PropertyLiteral::String(name) => {
             format!("{object}.{name}")

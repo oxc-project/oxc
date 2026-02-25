@@ -592,12 +592,7 @@ fn prune_in_block(
     while i < block.len() {
         match &mut block[i] {
             ReactiveStatement::Scope(scope) => {
-                prune_in_block(
-                    &mut scope.instructions,
-                    memoized,
-                    pruned_scopes,
-                    reassignments,
-                );
+                prune_in_block(&mut scope.instructions, memoized, pruned_scopes, reassignments);
 
                 // Keep scopes with early returns (matches TS behavior)
                 if scope.scope.early_return_value.is_some() {
@@ -633,12 +628,7 @@ fn prune_in_block(
                 }
             }
             ReactiveStatement::PrunedScope(scope) => {
-                prune_in_block(
-                    &mut scope.instructions,
-                    memoized,
-                    pruned_scopes,
-                    reassignments,
-                );
+                prune_in_block(&mut scope.instructions, memoized, pruned_scopes, reassignments);
             }
             ReactiveStatement::Terminal(term) => {
                 prune_in_terminal(&mut term.terminal, memoized, pruned_scopes, reassignments);
@@ -677,12 +667,10 @@ fn prune_in_block(
                     if let InstructionValue::FinishMemoize(fm) = iv.as_ref() {
                         let decls: Vec<crate::hir::Identifier> =
                             if fm.decl.identifier.scope.is_none() {
-                                reassignments
-                                    .get(&fm.decl.identifier.declaration_id)
-                                    .map_or_else(
-                                        || vec![fm.decl.identifier.clone()],
-                                        |ids| ids.clone(),
-                                    )
+                                reassignments.get(&fm.decl.identifier.declaration_id).map_or_else(
+                                    || vec![fm.decl.identifier.clone()],
+                                    |ids| ids.clone(),
+                                )
                             } else {
                                 vec![fm.decl.identifier.clone()]
                             };
