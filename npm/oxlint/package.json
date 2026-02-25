@@ -43,6 +43,10 @@
       "types": "./dist/plugins-dev.d.ts",
       "default": "./dist/plugins-dev.js"
     },
+    "./built-in-rules": {
+      "types": "./dist/built-in-rules.d.ts",
+      "default": "./dist/built-in-rules.js"
+    },
     "./package.json": "./package.json"
   },
   "peerDependencies": {
