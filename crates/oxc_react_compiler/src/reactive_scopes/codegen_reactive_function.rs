@@ -241,6 +241,10 @@ pub struct CodegenContext {
     /// the `LogicalOperator` of the expression. Used to add mandatory parentheses when
     /// `??` is mixed with `||`/`&&` (a JavaScript syntax error without parens).
     logical_temps: FxHashMap<DeclarationId, LogicalOperator>,
+    /// Temporaries that hold function expressions (arrow or regular).
+    /// Used for IIFE parenthesization: when a function expression temp is used
+    /// as a callee, it needs wrapping as `(fn)()` to avoid parsing ambiguity.
+    fn_expr_temps: FxHashSet<DeclarationId>,
     /// Whether we are currently generating code inside an optional-chain Sequence
     /// (the `Sequence` node wrapped by an `OptionalCall`).
     ///
@@ -277,6 +281,7 @@ impl CodegenContext {
             jsx_element_temps: FxHashSet::default(),
             assignment_temps: FxHashSet::default(),
             logical_temps: FxHashMap::default(),
+            fn_expr_temps: FxHashSet::default(),
             inside_optional_chain: false,
         }
     }
@@ -1206,7 +1211,7 @@ fn codegen_instruction_nullable(
                 None
             }
             other => {
-                // Track JSX text/element temporaries for proper JSX child rendering
+                // Track JSX text/element/function temporaries for proper rendering
                 if let Some(lval) = &instr.lvalue {
                     let decl_id = lval.identifier.declaration_id;
                     match other {
@@ -1215,6 +1220,9 @@ fn codegen_instruction_nullable(
                         }
                         InstructionValue::JsxExpression(_) | InstructionValue::JsxFragment(_) => {
                             cx.jsx_element_temps.insert(decl_id);
+                        }
+                        InstructionValue::FunctionExpression(_) => {
+                            cx.fn_expr_temps.insert(decl_id);
                         }
                         _ => {}
                     }
@@ -1479,14 +1487,15 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
             let is_hook = get_hook_kind(&cx.shapes, &call.callee.identifier);
             let callee = codegen_place_to_expression(cx, &call.callee);
             let args = codegen_args(cx, &call.args);
-            // When the callee is a FunctionExpression (IIFE pattern), wrap it in
-            // parentheses so it parses as an expression, not a declaration.
+            // When the callee is a FunctionExpression or arrow function (IIFE pattern),
+            // wrap it in parentheses so it parses as an expression, not a declaration.
             // In the TS reference this is handled automatically by Babel's AST printer.
-            let callee = if callee.starts_with("function") || callee.starts_with("async function") {
-                format!("({callee})")
-            } else {
-                callee
-            };
+            // We also check `fn_expr_temps` for cases where the callee is a temp
+            // holding a function expression (e.g., arrow functions stored as temps).
+            let is_fn_expr = callee.starts_with("function")
+                || callee.starts_with("async function")
+                || cx.fn_expr_temps.contains(&call.callee.identifier.declaration_id);
+            let callee = if is_fn_expr { format!("({callee})") } else { callee };
             create_call_expression_string(cx, &callee, &args, is_hook)
         }
         InstructionValue::MethodCall(method) => {
@@ -1950,28 +1959,38 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
             format!("{test} ? {consequent} : {alternate}")
         }
         ReactiveValue::Sequence(seq) => {
-            // Process sequence instructions (they may create temporaries)
-            let stmts: Vec<CodegenStatement> = seq
-                .instructions
-                .iter()
-                .filter_map(|instr| codegen_instruction_nullable(cx, instr))
-                .collect();
+            // Process sequence instructions, matching the TS reference's
+            // `codegenBlockNoReset` + `SequenceExpression` handling.
+            //
+            // After `prune_unused_lvalues` runs, instructions whose unnamed
+            // temp results are never consumed have `lvalue: None`. When
+            // `codegen_instruction_nullable` processes these, it produces an
+            // `ExpressionStatement` (the side-effect expression). Instructions
+            // whose results ARE consumed retain `lvalue: Some(unnamed temp)`
+            // and are stored in `cx.temp` (returning None).
+            //
+            // We collect the ExpressionStatements into a sequence expression
+            // `(expr1, expr2, ..., finalValue)` to preserve evaluation order.
+            // If there are no expression statements (all instructions are
+            // consumed temps), we just emit the final value directly.
+            let mut expressions: Vec<String> = Vec::new();
 
-            let expressions: Vec<String> = stmts
-                .into_iter()
-                .filter_map(|stmt| match stmt {
-                    CodegenStatement::ExpressionStatement(expr) => Some(expr),
-                    _ => None,
-                })
-                .collect();
+            for instr in &seq.instructions {
+                let stmt = codegen_instruction_nullable(cx, instr);
+
+                if let Some(CodegenStatement::ExpressionStatement(expr)) = stmt {
+                    expressions.push(expr);
+                }
+                // VariableDeclarations in value blocks are an error in the TS
+                // reference but we silently skip them for now.
+            }
 
             let final_value = codegen_reactive_value_to_expression(cx, &seq.value);
             if expressions.is_empty() {
                 final_value
             } else {
-                let mut all = expressions;
-                all.push(final_value);
-                format!("({})", all.join(", "))
+                expressions.push(final_value);
+                format!("({})", expressions.join(", "))
             }
         }
         ReactiveValue::OptionalCall(optional) => {
