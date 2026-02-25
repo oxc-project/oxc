@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "ff8d770111c6",
+  "strategy": "manual-commit",
+  "branch": "fix/codegen-jsx-comments",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "crates/oxc_codegen/src/comment.rs",
+    "crates/oxc_codegen/src/gen.rs",
+    "crates/oxc_codegen/tests/integration/comments.rs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ff/8d770111c6/0/metadata.json",
+      "transcript": "/ff/8d770111c6/0/full.jsonl",
+      "context": "/ff/8d770111c6/0/context.md",
+      "content_hash": "/ff/8d770111c6/0/content_hash.txt",
+      "prompt": "/ff/8d770111c6/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 86420,
+    "cache_read_tokens": 3370613,
+    "output_tokens": 5307,
+    "api_call_count": 68
+  }
+}
