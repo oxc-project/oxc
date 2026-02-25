@@ -19,12 +19,13 @@ const _: () = {
 
     // Padding: 1 bytes
     assert!(size_of::<RawTransferMetadata>() == 16);
-    assert!(align_of::<RawTransferMetadata>() == 8);
-    assert!(offset_of!(RawTransferMetadata, data_offset) == 8);
+    assert!(align_of::<RawTransferMetadata>() == 4);
+    assert!(offset_of!(RawTransferMetadata, data_offset) == 0);
     assert!(offset_of!(RawTransferMetadata, is_ts) == 12);
     assert!(offset_of!(RawTransferMetadata, is_jsx) == 13);
     assert!(offset_of!(RawTransferMetadata, has_bom) == 14);
-    assert!(offset_of!(RawTransferMetadata, _padding) == 0);
+    assert!(offset_of!(RawTransferMetadata, tokens_offset) == 4);
+    assert!(offset_of!(RawTransferMetadata, tokens_len) == 8);
 
     // Padding: 7 bytes
     assert!(size_of::<Error>() == 80);
@@ -79,12 +80,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
 
     // Padding: 1 bytes
     assert!(size_of::<RawTransferMetadata>() == 16);
-    assert!(align_of::<RawTransferMetadata>() == 8);
-    assert!(offset_of!(RawTransferMetadata, data_offset) == 8);
+    assert!(align_of::<RawTransferMetadata>() == 4);
+    assert!(offset_of!(RawTransferMetadata, data_offset) == 0);
     assert!(offset_of!(RawTransferMetadata, is_ts) == 12);
     assert!(offset_of!(RawTransferMetadata, is_jsx) == 13);
     assert!(offset_of!(RawTransferMetadata, has_bom) == 14);
-    assert!(offset_of!(RawTransferMetadata, _padding) == 0);
+    assert!(offset_of!(RawTransferMetadata, tokens_offset) == 4);
+    assert!(offset_of!(RawTransferMetadata, tokens_len) == 8);
 
     // Padding: 3 bytes
     assert!(size_of::<Error>() == 44);

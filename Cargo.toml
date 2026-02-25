@@ -117,6 +117,7 @@ oxc_data_structures = { version = "0.115.0", path = "crates/oxc_data_structures"
 oxc_diagnostics = { version = "0.115.0", path = "crates/oxc_diagnostics" } # Error reporting
 oxc_ecmascript = { version = "0.115.0", path = "crates/oxc_ecmascript" } # ECMAScript operations
 oxc_estree = { version = "0.115.0", path = "crates/oxc_estree" } # ESTree format
+oxc_estree_tokens = { version = "0.115.0", path = "crates/oxc_estree_tokens" } # ESTree token conversion
 oxc_isolated_declarations = { version = "0.115.0", path = "crates/oxc_isolated_declarations" } # TS declaration generation
 oxc_mangler = { version = "0.115.0", path = "crates/oxc_mangler" } # Name mangling
 oxc_minifier = { version = "0.115.0", path = "crates/oxc_minifier" } # Code minification

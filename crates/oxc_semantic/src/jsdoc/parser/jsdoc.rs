@@ -329,6 +329,33 @@ line2
         assert_eq!(tag.kind.parsed(), "example");
     }
 
+    // https://github.com/oxc-project/oxc/issues/19137
+    #[test]
+    fn parses_with_double_backticks() {
+        let source = "\
+ * Handle whitespace rendering based on meta string
+ *
+ * `` ```js :whitespace[=all|boundary|trailing] ``
+ *
+ * @param parser - Code parser instance
+ * @param meta - Meta string
+ * @param globalOption - Global whitespace option
+ *
+ * @example
+ * ```ts
+ * metaWhitespace(parser, ':whitespace=all', true)
+ * ```
+ ";
+        #[expect(clippy::cast_possible_truncation)]
+        let jsdoc = super::JSDoc::new(source, Span::new(0, source.len() as u32));
+        let tags = jsdoc.tags();
+        assert_eq!(tags.len(), 4);
+        assert_eq!(tags[0].kind.parsed(), "param");
+        assert_eq!(tags[1].kind.parsed(), "param");
+        assert_eq!(tags[2].kind.parsed(), "param");
+        assert_eq!(tags[3].kind.parsed(), "example");
+    }
+
     #[test]
     fn parses_issue_11992() {
         let allocator = Allocator::default();

@@ -1,6 +1,7 @@
 use std::cell::{Cell, RefCell};
 use std::collections::VecDeque;
 
+use oxc_ast::ast::Expression;
 use oxc_span::GetSpan;
 
 use super::chain_member::ChainMember;
@@ -185,6 +186,16 @@ impl<'a, 'b> MemberChainGroup<'a, 'b> {
         let Some(ChainMember::StaticMember(expression)) = self.members.first() else {
             return false;
         };
+
+        // Prettier doesn't preserve blank lines after a terminal call like `fn()`
+        // whose callee is not part of the chain: `fn()\n\n.bar()` becomes `fn().bar()`.
+        // <https://github.com/prettier/prettier/blob/812a4d0071270f61a7aa549d625b618be7e09d71/src/language-js/print/member-chain.js#L101-L121>
+        if let Expression::CallExpression(call) = expression.object().as_ref()
+            && !call.callee.is_member_expression()
+            && !call.callee.is_call_expression()
+        {
+            return false;
+        }
 
         let source = f.source_text();
 

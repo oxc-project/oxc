@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   check:
+    if: github.repository == 'oxc-project/oxc'
     name: Check
     runs-on: ubuntu-latest
     steps:
@@ -26,6 +27,7 @@ jobs:
       - run: cargo release-oxc publish --release crates --dry-run # zizmor: ignore[use-trusted-publishing]
 
   prepare:
+    if: github.repository == 'oxc-project/oxc'
     name: Prepare Release
     runs-on: ubuntu-latest
     outputs:

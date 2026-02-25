@@ -2,7 +2,7 @@ use std::cmp::max;
 
 use oxc_allocator::StringBuilder;
 
-use crate::diagnostics;
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{
     Kind, Lexer, LexerContext, Span, Token, cold_branch,
@@ -202,7 +202,7 @@ macro_rules! handle_string_literal_escape {
 }
 
 /// 12.9.4 String Literals
-impl<'a> Lexer<'a> {
+impl<'a, C: Config> Lexer<'a, C> {
     /// Read string literal delimited with `"`.
     /// # SAFETY
     /// Next character must be `"`.

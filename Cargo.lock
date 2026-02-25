@@ -1612,9 +1612,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "2.3.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75b1853bc34cadaa90aa09f95713d8b77ec0c0d3e2d90ccf7a74216f40d20850"
+checksum = "abb7a1163a5501f935f8722d839b576491b749c695e7a066aa0b8df988b806df"
 dependencies = [
  "flate2",
  "postcard",
@@ -1764,6 +1764,7 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_codegen",
+ "oxc_estree_tokens",
  "oxc_formatter",
  "oxc_isolated_declarations",
  "oxc_linter",
@@ -1848,6 +1849,7 @@ dependencies = [
  "itertools",
  "lazy-regex",
  "oxc",
+ "oxc_estree_tokens",
  "oxc_formatter",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
@@ -1899,6 +1901,20 @@ dependencies = [
  "dragonbox_ecma",
  "itoa",
  "oxc_data_structures",
+]
+
+[[package]]
+name = "oxc_estree_tokens"
+version = "0.115.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_ast_visit",
+ "oxc_parser",
+ "oxc_span",
+ "rustc-hash",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1999,6 +2015,7 @@ dependencies = [
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_ecmascript",
+ "oxc_estree_tokens",
  "oxc_index",
  "oxc_macros",
  "oxc_parser",
@@ -2512,6 +2529,7 @@ dependencies = [
  "oxc-schemars",
  "oxc-toml",
  "oxc_allocator",
+ "oxc_ast",
  "oxc_data_structures",
  "oxc_diagnostics",
  "oxc_formatter",
@@ -2550,6 +2568,7 @@ dependencies = [
  "oxc_ast_visit",
  "oxc_data_structures",
  "oxc_diagnostics",
+ "oxc_estree_tokens",
  "oxc_language_server",
  "oxc_linter",
  "oxc_napi",
