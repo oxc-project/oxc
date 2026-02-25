@@ -5,32 +5,9 @@
   "branch": "refactor/extract-oxc-jsdoc",
   "checkpoints_count": 1,
   "files_touched": [
-    "Cargo.toml",
-    "crates/oxc_jsdoc/Cargo.toml",
-    "crates/oxc_jsdoc/README.md",
-    "crates/oxc_jsdoc/src/builder.rs",
-    "crates/oxc_jsdoc/src/finder.rs",
     "crates/oxc_jsdoc/src/lib.rs",
-    "crates/oxc_jsdoc/src/parser/jsdoc.rs",
-    "crates/oxc_jsdoc/src/parser/jsdoc_parts.rs",
-    "crates/oxc_jsdoc/src/parser/jsdoc_tag.rs",
     "crates/oxc_jsdoc/src/parser/mod.rs",
-    "crates/oxc_jsdoc/src/parser/parse.rs",
-    "crates/oxc_jsdoc/src/parser/utils.rs",
-    "crates/oxc_semantic/Cargo.toml",
-    "crates/oxc_semantic/src/builder.rs",
-    "crates/oxc_semantic/src/jsdoc.rs",
-    "crates/oxc_semantic/src/jsdoc/builder.rs",
-    "crates/oxc_semantic/src/jsdoc/finder.rs",
-    "crates/oxc_semantic/src/jsdoc/mod.rs",
-    "crates/oxc_semantic/src/jsdoc/parser/jsdoc.rs",
-    "crates/oxc_semantic/src/jsdoc/parser/jsdoc_parts.rs",
-    "crates/oxc_semantic/src/jsdoc/parser/jsdoc_tag.rs",
-    "crates/oxc_semantic/src/jsdoc/parser/mod.rs",
-    "crates/oxc_semantic/src/jsdoc/parser/parse.rs",
-    "crates/oxc_semantic/src/jsdoc/parser/utils.rs",
-    "crates/oxc_semantic/src/jsdoc_ext.rs",
-    "crates/oxc_semantic/src/lib.rs"
+    "crates/oxc_semantic/src/jsdoc.rs"
   ],
   "sessions": [
     {
@@ -42,10 +19,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 127,
-    "cache_creation_tokens": 113366,
-    "cache_read_tokens": 11293898,
-    "output_tokens": 8907,
-    "api_call_count": 123
+    "input_tokens": 19,
+    "cache_creation_tokens": 23281,
+    "cache_read_tokens": 2422435,
+    "output_tokens": 989,
+    "api_call_count": 17
   }
 }
