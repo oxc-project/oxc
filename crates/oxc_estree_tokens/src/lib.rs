@@ -126,7 +126,7 @@ fn to_estree_tokens<'a>(
 
     for token in tokens {
         let kind = token.kind();
-        let source_value = &source_text[token.start() as usize..token.end() as usize];
+        let mut value = &source_text[token.start() as usize..token.end() as usize];
 
         let mut start = token.start();
         let mut end = token.end();
@@ -151,18 +151,19 @@ fn to_estree_tokens<'a>(
             get_token_type(kind)
         };
 
-        let source_value =
-            if kind == Kind::PrivateIdentifier { &source_value[1..] } else { source_value };
-        let value = if options.decode_identifier_escapes
+        if kind == Kind::PrivateIdentifier {
+            value = &value[1..];
+        }
+
+        if options.decode_identifier_escapes
             && token.escaped()
             && (kind.is_identifier_name() || kind == Kind::PrivateIdentifier)
         {
-            decode_js_unicode_escapes(allocator, source_value)
-        } else {
-            source_value
-        };
+            value = decode_js_unicode_escapes(allocator, value);
+        }
+
         let regex = if kind == Kind::RegExp {
-            regex_parts(source_value).map(|(pattern, flags)| EstreeRegExpToken { pattern, flags })
+            regex_parts(value).map(|(pattern, flags)| EstreeRegExpToken { pattern, flags })
         } else {
             None
         };
