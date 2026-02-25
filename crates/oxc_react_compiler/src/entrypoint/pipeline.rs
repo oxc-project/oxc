@@ -306,6 +306,7 @@ pub fn run_pipeline(
         memoize_jsx_elements: !env.config.enable_forest,
         force_memoize_primitives: env.config.enable_forest
             || env.config.enable_preserve_existing_memoization_guarantees,
+        shapes: &env.shapes,
     };
     crate::reactive_scopes::prune_non_escaping_scopes::prune_non_escaping_scopes(
         &mut reactive_function,

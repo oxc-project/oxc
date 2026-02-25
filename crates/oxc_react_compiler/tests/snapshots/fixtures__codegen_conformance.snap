@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 474/1040 passed (45.6%)
+Codegen conformance: 484/1040 passed (46.5%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:535
+  output_mismatch:525
   no_expected:    1
 
 Failed fixtures:
@@ -62,7 +62,6 @@ Failed fixtures:
   [output_mismatch] array-map-mutable-array-non-mutating-lambda-mutated-result.js
   [output_mismatch] array-map-noAlias-escaping-function.js
   [output_mismatch] array-pattern-spread-creates-array.js
-  [output_mismatch] array-push-effect.js
   [output_mismatch] array-spread-later-mutated.js
   [output_mismatch] array-spread-mutable-iterator.js
   [output_mismatch] arrow-expr-directive.js
@@ -83,16 +82,11 @@ Failed fixtures:
   [output_mismatch] capturing-func-mutate.js
   [output_mismatch] capturing-func-no-mutate.js
   [output_mismatch] capturing-func-simple-alias-iife.js
-  [output_mismatch] capturing-func-simple-alias.js
   [output_mismatch] capturing-function-1.js
   [output_mismatch] capturing-function-alias-computed-load-2-iife.js
-  [output_mismatch] capturing-function-alias-computed-load-2.js
   [output_mismatch] capturing-function-alias-computed-load-3-iife.js
-  [output_mismatch] capturing-function-alias-computed-load-3.js
   [output_mismatch] capturing-function-alias-computed-load-4-iife.js
-  [output_mismatch] capturing-function-alias-computed-load-4.js
   [output_mismatch] capturing-function-alias-computed-load-iife.js
-  [output_mismatch] capturing-function-alias-computed-load.js
   [output_mismatch] capturing-function-capture-ref-before-rename.js
   [output_mismatch] capturing-function-conditional-capture-mutate.js
   [output_mismatch] capturing-function-member-expr-arguments.js
@@ -135,7 +129,6 @@ Failed fixtures:
   [output_mismatch] context-variable-reassigned-objectmethod.js
   [output_mismatch] context-variable-reassigned-outside-of-lambda.js
   [output_mismatch] context-variable-reassigned-reactive-capture.js
-  [output_mismatch] context-variable-reassigned-two-lambdas.js
   [output_mismatch] createElement-freeze.js
   [output_mismatch] declare-reassign-variable-in-closure.js
   [output_mismatch] deeply-nested-function-expressions-with-params.js
@@ -178,7 +171,6 @@ Failed fixtures:
   [output_mismatch] early-return-no-declarations-reassignments-dependencies.js
   [output_mismatch] early-return-within-reactive-scope.js
   [output_mismatch] escape-analysis-destructured-rest-element.js
-  [output_mismatch] escape-analysis-jsx-child.js
   [output_mismatch] escape-analysis-non-escaping-interleaved-allocating-nested-dependency.js
   [output_mismatch] evaluation-order-mutate-call-after-dependency-load.ts
   [output_mismatch] evaluation-order-mutate-store-after-dependency-load.ts
@@ -247,7 +239,6 @@ Failed fixtures:
   [output_mismatch] immutable-hooks.js
   [output_mismatch] inadvertent-mutability-readonly-lambda.js
   [output_mismatch] incompatible-destructuring-kinds.js
-  [output_mismatch] independently-memoize-object-property.js
   [no_function] infer-function-React-memo.js
   [no_function] infer-function-forwardRef.js
   [output_mismatch] infer-global-object.js
@@ -306,6 +297,7 @@ Failed fixtures:
   [output_mismatch] merge-consecutive-scopes-no-deps.js
   [output_mismatch] merge-consecutive-scopes-objects.js
   [output_mismatch] merge-consecutive-scopes.js
+  [output_mismatch] merge-nested-scopes-with-same-inputs.js
   [output_mismatch] method-call-computed.js
   [output_mismatch] method-call-fn-call.js
   [output_mismatch] method-call.js
@@ -359,7 +351,6 @@ Failed fixtures:
   [output_mismatch] optional-member-expression-call-as-property.js
   [output_mismatch] optional-member-expression-inverted-optionals-parallel-paths.js
   [output_mismatch] optional-member-expression-single.js
-  [output_mismatch] overlapping-scopes-shadowing-within-block.js
   [output_mismatch] overlapping-scopes-within-block.js
   [output_mismatch] partial-early-return-within-reactive-scope.js
   [output_mismatch] phi-type-inference-array-push-consecutive-phis.js
@@ -389,14 +380,13 @@ Failed fixtures:
   [output_mismatch] reactive-dependency-fixpoint.js
   [output_mismatch] reactive-dependency-object-captured-with-reactive-mutated.js
   [output_mismatch] reactive-ref.tsx
-  [output_mismatch] reactive-scopes-if.js
+  [output_mismatch] reactive-scope-grouping.js
   [output_mismatch] reactive-scopes.js
   [output_mismatch] reactivity-analysis-interleaved-reactivity.js
   [output_mismatch] readonly-object-method-calls-mutable-lambda.js
   [output_mismatch] readonly-object-method-calls.js
   [output_mismatch] reanimated-no-memo-arg.js
   [output_mismatch] reassign-in-while-loop-condition.js
-  [output_mismatch] reassign-object-in-context.js
   [output_mismatch] reassign-primitive-in-context.js
   [parse_error] reassign-variable-in-usememo.js
   [output_mismatch] reassigned-phi-in-returned-function-expression.js
@@ -480,7 +470,6 @@ Failed fixtures:
   [output_mismatch] ssa-for-trivial-update.js
   [output_mismatch] ssa-leave-case.js
   [output_mismatch] ssa-nested-loops-no-reassign.js
-  [output_mismatch] ssa-property-alias-if.js
   [output_mismatch] ssa-property-alias-mutate-inside-if.js
   [output_mismatch] ssa-property.js
   [output_mismatch] ssa-reassign-in-rval.js
@@ -540,6 +529,7 @@ Failed fixtures:
   [output_mismatch] type-provider-store-capture.tsx
   [output_mismatch] type-provider-tagged-template-expression.js
   [output_mismatch] type-test-field-load-binary-op.js
+  [output_mismatch] type-test-field-store.js
   [output_mismatch] type-test-polymorphic.js
   [output_mismatch] type-test-return-type-inference.js
   [output_mismatch] unary-expr.js
