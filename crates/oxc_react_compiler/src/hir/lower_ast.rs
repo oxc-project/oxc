@@ -34,7 +34,7 @@ pub fn convert_expression<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpress
             }
         }
         ast::Expression::RegExpLiteral(lit) => LowerableExpression::RegExpLiteral {
-            pattern: format!("{:?}", lit.regex.pattern),
+            pattern: lit.regex.pattern.text.to_string(),
             flags: lit.regex.flags.to_string(),
             span: lit.span,
         },
@@ -680,8 +680,12 @@ pub fn convert_statement<'a>(stmt: &'a ast::Statement<'a>) -> LowerableStatement
         ast::Statement::SwitchStatement(switch) => LowerableStatement::SwitchStatement(switch),
         ast::Statement::LabeledStatement(labeled) => LowerableStatement::LabeledStatement(labeled),
         ast::Statement::FunctionDeclaration(func) => LowerableStatement::FunctionDeclaration(func),
-        ast::Statement::BreakStatement(_) => LowerableStatement::BreakStatement,
-        ast::Statement::ContinueStatement(_) => LowerableStatement::ContinueStatement,
+        ast::Statement::BreakStatement(brk) => {
+            LowerableStatement::BreakStatement(brk.label.as_ref().map(|l| l.name.as_str()))
+        }
+        ast::Statement::ContinueStatement(cont) => {
+            LowerableStatement::ContinueStatement(cont.label.as_ref().map(|l| l.name.as_str()))
+        }
         ast::Statement::DebuggerStatement(_) => LowerableStatement::DebuggerStatement,
         // Empty statements and unsupported statement types
         _ => LowerableStatement::EmptyStatement,

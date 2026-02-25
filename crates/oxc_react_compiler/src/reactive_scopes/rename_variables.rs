@@ -200,8 +200,8 @@ fn visit_scope(scope_block: &mut crate::hir::ReactiveScopeBlock, scopes: &mut Sc
 
     // In TS, identifiers are reference types, so renaming a declaration's identifier
     // automatically updates all other references to the same identifier (including in
-    // scope.dependencies and scope.reassignments). In Rust, identifiers are cloned
-    // values, so we must explicitly visit dependencies and reassignments too.
+    // scope.dependencies, scope.reassignments, and scope.early_return_value). In Rust,
+    // identifiers are cloned values, so we must explicitly visit them all.
     let old_deps: Vec<_> = scope_block.scope.dependencies.drain().collect();
     for mut dep in old_deps {
         scopes.visit(&mut dep.identifier);
@@ -209,6 +209,11 @@ fn visit_scope(scope_block: &mut crate::hir::ReactiveScopeBlock, scopes: &mut Sc
     }
     for reassignment in &mut scope_block.scope.reassignments {
         scopes.visit(reassignment);
+    }
+    // The early_return_value identifier is a clone of the declaration identifier;
+    // update it so codegen emits the correct (renamed) variable name.
+    if let Some(ref mut early_return) = scope_block.scope.early_return_value {
+        scopes.visit(&mut early_return.value);
     }
 
     // Then traverse scope instructions (no extra enter — traverseScope just visits the block)

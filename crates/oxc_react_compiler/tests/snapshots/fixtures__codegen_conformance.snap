@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 363/1040 passed (34.9%)
+Codegen conformance: 386/1040 passed (37.1%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 16
   panic:          0
-  output_mismatch:631
+  output_mismatch:608
   no_expected:    1
 
 Failed fixtures:
@@ -22,11 +22,9 @@ Failed fixtures:
   [output_mismatch] aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] align-scope-starts-within-cond.ts
   [output_mismatch] align-scopes-iife-return-modified-later-logical.ts
-  [output_mismatch] align-scopes-nested-block-structure.ts
   [output_mismatch] align-scopes-reactive-scope-overlaps-if.ts
   [output_mismatch] align-scopes-reactive-scope-overlaps-label.ts
   [output_mismatch] align-scopes-reactive-scope-overlaps-try.ts
-  [output_mismatch] align-scopes-trycatch-nested-overlapping-range.ts
   [output_mismatch] allocating-logical-expression-instruction-scope.ts
   [output_mismatch] allocating-primitive-as-dep-nested-scope.js
   [output_mismatch] allocating-primitive-as-dep.js
@@ -76,7 +74,6 @@ Failed fixtures:
   [output_mismatch] babel-existing-react-kitchensink-import.js
   [output_mismatch] babel-existing-react-namespace-import.js
   [output_mismatch] babel-existing-react-runtime-import.js
-  [output_mismatch] block-scoping-switch-dead-code.js
   [output_mismatch] block-scoping-switch-variable-scoping.js
   [output_mismatch] bug-capturing-func-maybealias-captured-mutate.ts
   [output_mismatch] bug-ref-prefix-postfix-operator.js
@@ -134,14 +131,12 @@ Failed fixtures:
   [output_mismatch] chained-assignment-context-variable.js
   [output_mismatch] chained-assignment-expressions.js
   [output_mismatch] codegen-instrument-forget-test.js
-  [output_mismatch] complex-while.js
   [parse_error] component-declaration-basic.flow.js
   [output_mismatch] component.js
   [output_mismatch] computed-call-evaluation-order.js
   [output_mismatch] computed-load-primitive-as-dependency.js
   [output_mismatch] computed-store-alias.js
   [output_mismatch] concise-arrow-expr.js
-  [output_mismatch] conditional-break-labeled.js
   [output_mismatch] conditional-early-return.js
   [output_mismatch] conditional-on-mutable.js
   [output_mismatch] conflict-codegen-instrument-forget.js
@@ -236,7 +231,6 @@ Failed fixtures:
   [pipeline_error] for-of-nonmutating-loop-local-collection.js
   [output_mismatch] for-of-simple.js
   [output_mismatch] for-return.js
-  [output_mismatch] for-with-assignment-as-update.js
   [output_mismatch] frozen-after-alias.js
   [output_mismatch] function-declaration-reassign.js
   [output_mismatch] function-declaration-redeclare.js
@@ -311,8 +305,6 @@ Failed fixtures:
   [output_mismatch] invalid-setState-in-useEffect-transitive.js
   [output_mismatch] invalid-setState-in-useEffect.js
   [output_mismatch] invalid-unused-usememo.js
-  [output_mismatch] inverted-if-else.js
-  [output_mismatch] inverted-if.js
   [output_mismatch] jsx-attribute-with-jsx-element-value.js
   [output_mismatch] jsx-attribute-with-jsx-fragment-value.flow.js
   [output_mismatch] jsx-fragment.js
@@ -336,7 +328,6 @@ Failed fixtures:
   [output_mismatch] jsx-string-attribute-non-ascii.js
   [output_mismatch] jsx-ternary-local-variable.tsx
   [output_mismatch] labeled-break-within-label-loop.ts
-  [output_mismatch] labeled-break-within-label-switch.ts
   [output_mismatch] lambda-array-access-member-expr-captured.ts
   [output_mismatch] lambda-array-access-member-expr-param.ts
   [output_mismatch] lambda-capture-returned-alias.js
@@ -399,17 +390,14 @@ Failed fixtures:
   [output_mismatch] object-expression-computed-member.js
   [output_mismatch] object-expression-member-expr-call.js
   [pipeline_error] object-keys.js
-  [output_mismatch] object-literal-method-call-in-ternary-test.js
   [output_mismatch] object-literal-method-derived-in-ternary-consequent.js
   [output_mismatch] object-literal-method-in-ternary-consequent.js
-  [output_mismatch] object-literal-method-in-ternary-test.js
   [output_mismatch] object-method-maybe-alias.js
   [output_mismatch] object-method-shorthand-3.js
   [output_mismatch] object-method-shorthand-aliased-mutate-after.js
   [output_mismatch] object-method-shorthand-derived-value.js
   [output_mismatch] object-method-shorthand-hook-dep.js
   [output_mismatch] object-method-shorthand-mutated-after.js
-  [output_mismatch] object-method-shorthand.js
   [output_mismatch] object-mutated-in-consequent-alternate-both-return.js
   [output_mismatch] object-shorthand-method-1.js
   [output_mismatch] object-shorthand-method-2.js
@@ -431,7 +419,6 @@ Failed fixtures:
   [output_mismatch] overlapping-scopes-shadowing-within-block.js
   [output_mismatch] overlapping-scopes-within-block.js
   [output_mismatch] partial-early-return-within-reactive-scope.js
-  [output_mismatch] phi-reference-effects.ts
   [output_mismatch] phi-type-inference-array-push-consecutive-phis.js
   [output_mismatch] phi-type-inference-array-push.js
   [output_mismatch] phi-type-inference-property-store.js
@@ -448,22 +435,15 @@ Failed fixtures:
   [output_mismatch] prune-scopes-whose-deps-invalidate-jsx.js
   [output_mismatch] prune-scopes-whose-deps-may-invalidate-array.js
   [output_mismatch] react-namespace.js
-  [output_mismatch] reactive-control-dependency-do-while-test.js
   [output_mismatch] reactive-control-dependency-for-init.js
   [output_mismatch] reactive-control-dependency-for-test.js
   [output_mismatch] reactive-control-dependency-for-update.js
   [output_mismatch] reactive-control-dependency-forin-collection.js
   [output_mismatch] reactive-control-dependency-forof-collection.js
-  [output_mismatch] reactive-control-dependency-from-interleaved-reactivity-for-in.js
-  [output_mismatch] reactive-control-dependency-from-interleaved-reactivity-for-of.js
   [output_mismatch] reactive-control-dependency-from-interleaved-reactivity-for-update.js
-  [output_mismatch] reactive-control-dependency-from-interleaved-reactivity-switch.js
   [output_mismatch] reactive-control-dependency-on-context-variable.js
   [output_mismatch] reactive-control-dependency-phi-setState-type.js
   [output_mismatch] reactive-control-dependency-reactive-after-fixpoint.js
-  [output_mismatch] reactive-control-dependency-switch-case-test.js
-  [output_mismatch] reactive-control-dependency-switch-condition.js
-  [output_mismatch] reactive-control-dependency-via-mutation-switch.js
   [output_mismatch] reactive-control-dependency-while-test.js
   [output_mismatch] reactive-dependencies-non-optional-properties-inside-optional-chain.js
   [output_mismatch] reactive-dependency-fixpoint.js
@@ -502,7 +482,6 @@ Failed fixtures:
   [output_mismatch] ref-current-write-not-added-to-dep.js
   [output_mismatch] ref-in-effect.js
   [output_mismatch] ref-parameter-mutate-in-effect.js
-  [output_mismatch] regexp-literal.js
   [output_mismatch] renaming-jsx-tag-lowercase.tsx
   [output_mismatch] reordering-across-blocks.js
   [parse_error] repeated-dependencies-more-precise.js
@@ -627,7 +606,6 @@ Failed fixtures:
   [output_mismatch] try-catch-within-function-expression.js
   [output_mismatch] try-catch-within-mutable-range.js
   [output_mismatch] try-catch-within-object-method-returns-caught-value.js
-  [output_mismatch] try-catch-within-object-method.js
   [output_mismatch] ts-enum-inline.tsx
   [output_mismatch] ts-non-null-expression-default-value.tsx
   [parse_error] type-alias-used-as-annotation_.flow.js
@@ -645,7 +623,6 @@ Failed fixtures:
   [output_mismatch] unary-expr.js
   [output_mismatch] uninitialized-declaration-in-reactive-scope.js
   [output_mismatch] unlabeled-break-within-label-loop.ts
-  [output_mismatch] unlabeled-break-within-label-switch.ts
   [output_mismatch] unused-conditional.js
   [output_mismatch] unused-logical-assigned-to-variable.js
   [output_mismatch] unused-object-element-with-rest.js
