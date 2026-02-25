@@ -930,7 +930,11 @@ fn format_full_function(func: &CodegenFunction) -> String {
     let name = func.id.as_deref().unwrap_or("anonymous");
     let params = func.params.join(", ");
     let body = format!("{func}"); // uses Display impl for the body
-    let mut result = format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}");
+    let mut result = if body.trim().is_empty() {
+        format!("{async_prefix}function {star}{name}({params}) {{}}")
+    } else {
+        format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}")
+    };
 
     // Append outlined functions after the main function body.
     // The reference compiler emits these as top-level function declarations
@@ -944,8 +948,15 @@ fn format_full_function(func: &CodegenFunction) -> String {
         let o_name = outlined_fn.id.as_deref().unwrap_or("_temp");
         let o_params = outlined_fn.params.join(", ");
         let o_body = format!("{outlined_fn}");
-        result
-            .push_str(&format!("\n{o_async}function {o_star}{o_name}({o_params}) {{\n{o_body}}}"));
+        if o_body.trim().is_empty() {
+            result.push_str(
+                &format!("\n{o_async}function {o_star}{o_name}({o_params}) {{}}"),
+            );
+        } else {
+            result.push_str(
+                &format!("\n{o_async}function {o_star}{o_name}({o_params}) {{\n{o_body}}}"),
+            );
+        }
     }
 
     result
@@ -1190,7 +1201,15 @@ fn normalize_code(s: &str) -> String {
     // The reference compiler doesn't emit these. Remove them.
     let no_extra_outlined = remove_unreferenced_temp_functions(&no_dead_func_expr);
 
-    no_extra_outlined.trim().to_string()
+    // Step 38: normalize Prettier's extra parentheses around assignments in sequence expressions.
+    // The reference compiler's output goes through Prettier which wraps assignment expressions
+    // within sequence expressions in extra parentheses: `((x = y), z)` instead of `(x = y, z)`.
+    // Our Rust codegen doesn't use Prettier, so we don't add these cosmetic parentheses.
+    // Strip them for comparison.
+    let no_prettier_assign_parens =
+        normalize_sequence_assignment_parens(&no_extra_outlined);
+
+    no_prettier_assign_parens.trim().to_string()
 }
 
 /// Remove trailing commas before closing brackets: `,]`, `,)`, `,}`,
@@ -4629,6 +4648,123 @@ fn remove_unreferenced_temp_functions(s: &str) -> String {
         result.push(token);
     }
     result.join(" ")
+}
+
+/// Normalize Prettier's extra parentheses around assignment expressions within
+/// sequence expressions. Prettier wraps assignments in sequence expressions:
+/// `((x = y), z)` instead of `(x = y, z)`. Our Rust codegen does not use Prettier
+/// so we strip these cosmetic parentheses for comparison.
+///
+/// The pattern to strip: within a parenthesized sequence expression (outer parens with
+/// commas), remove the inner parens that wrap assignment expressions.
+///
+/// Examples:
+///   `((b = a), a++)` -> `(b = a, a++)`
+///   `(x.push(1), (y = 2), z)` -> `(x.push(1), y = 2, z)`
+///   `((x = []), x.push(y))` -> `(x = [], x.push(y))`
+///   `(([t0] = [[]]), t0.push(y))` -> `([t0] = [[]], t0.push(y))`
+fn normalize_sequence_assignment_parens(s: &str) -> String {
+    let chars: Vec<char> = s.chars().collect();
+    let len = chars.len();
+    let mut result = String::with_capacity(len);
+    let mut i = 0;
+
+    while i < len {
+        // Look for `(` that might be a sequence expression paren wrapping an assignment
+        // Pattern 1: `((` at sequence start — `((ASSIGN), ...`
+        // Pattern 2: `, (` in sequence middle — `..., (ASSIGN), ...`
+        // Pattern 3: `, (` at sequence end — `..., (ASSIGN))`
+        if chars[i] == '(' {
+            // Check if this paren wraps an assignment within a sequence expression.
+            // We need: the content inside this paren group to contain an `=` (assignment)
+            // that is not `==`, `===`, `!=`, `!==`, `<=`, `>=`, `=>`, and the next
+            // non-whitespace char after the closing `)` should be `,` or `)`.
+            // Also, the preceding context should indicate we're in a sequence: either
+            // preceded by `(` (start of sequence) or `, ` (middle of sequence).
+            let before_is_seq_context = if i == 0 {
+                false
+            } else {
+                let prev = chars[i - 1];
+                prev == '(' || prev == ' ' && i >= 2 && chars[i - 2] == ','
+            };
+
+            if before_is_seq_context {
+                // Find matching close paren
+                if let Some((close_idx, inner)) = find_balanced_paren(&chars, i) {
+                    // Check if the content after close paren is `,` or `)` (sequence context)
+                    let after_idx = close_idx + 1;
+                    let after_is_seq_context = after_idx < len
+                        && (chars[after_idx] == ',' || chars[after_idx] == ')');
+
+                    // Check if inner content contains a simple assignment operator
+                    let has_assignment = contains_assignment_operator(&inner);
+
+                    if after_is_seq_context && has_assignment {
+                        // Strip the wrapping parens: emit inner content directly
+                        result.push_str(&inner);
+                        i = close_idx + 1;
+                        continue;
+                    }
+                }
+            }
+        }
+
+        result.push(chars[i]);
+        i += 1;
+    }
+
+    result
+}
+
+/// Find a balanced parenthesis group starting at `start` (which must be `(`).
+/// Returns `(close_index, inner_content)` where inner_content is the string
+/// between (exclusive of) the open and close parens.
+fn find_balanced_paren(chars: &[char], start: usize) -> Option<(usize, String)> {
+    if start >= chars.len() || chars[start] != '(' {
+        return None;
+    }
+    let mut depth = 0;
+    let mut j = start;
+    while j < chars.len() {
+        match chars[j] {
+            '(' => depth += 1,
+            ')' => {
+                depth -= 1;
+                if depth == 0 {
+                    let inner: String = chars[start + 1..j].iter().collect();
+                    return Some((j, inner));
+                }
+            }
+            _ => {}
+        }
+        j += 1;
+    }
+    None
+}
+
+/// Check if a string contains an assignment operator (`=`) that is not part of
+/// `==`, `===`, `!=`, `!==`, `<=`, `>=`, or `=>`.
+fn contains_assignment_operator(s: &str) -> bool {
+    let chars: Vec<char> = s.chars().collect();
+    let len = chars.len();
+    for i in 0..len {
+        if chars[i] == '=' {
+            // Check it's not part of ==, ===
+            if i + 1 < len && chars[i + 1] == '=' {
+                continue;
+            }
+            // Check it's not preceded by !, <, >, = (which would make !=, <=, >=, ==)
+            if i > 0 && matches!(chars[i - 1], '!' | '<' | '>' | '=') {
+                continue;
+            }
+            // Check it's not => (arrow)
+            if i + 1 < len && chars[i + 1] == '>' {
+                continue;
+            }
+            return true;
+        }
+    }
+    false
 }
 
 /// Normalize code for passthrough comparison: applies all normalizations from

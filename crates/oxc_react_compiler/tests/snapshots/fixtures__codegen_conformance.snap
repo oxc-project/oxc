@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 5214
 expression: snapshot
 ---
-Codegen conformance: 494/1040 passed (47.5%)
+Codegen conformance: 501/1040 passed (48.2%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +11,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:515
+  output_mismatch:508
   no_expected:    1
 
 Failed fixtures:
@@ -104,7 +105,6 @@ Failed fixtures:
   [output_mismatch] computed-call-evaluation-order.js
   [output_mismatch] computed-load-primitive-as-dependency.js
   [output_mismatch] concise-arrow-expr.js
-  [output_mismatch] conditional-early-return.js
   [output_mismatch] conditional-on-mutable.js
   [output_mismatch] const-propagation-into-function-expression-global.js
   [output_mismatch] const-propagation-into-function-expression-primitive.js
@@ -161,8 +161,6 @@ Failed fixtures:
   [output_mismatch] dont-memoize-primitive-function-call-non-escaping-useMemo.js
   [output_mismatch] drop-methodcall-usecallback.js
   [output_mismatch] early-return-nested-early-return-within-reactive-scope.js
-  [output_mismatch] early-return-no-declarations-reassignments-dependencies.js
-  [output_mismatch] early-return-within-reactive-scope.js
   [output_mismatch] escape-analysis-destructured-rest-element.js
   [output_mismatch] escape-analysis-non-escaping-interleaved-allocating-nested-dependency.js
   [output_mismatch] evaluation-order-mutate-call-after-dependency-load.ts
@@ -328,7 +326,6 @@ Failed fixtures:
   [output_mismatch] object-method-shorthand-aliased-mutate-after.js
   [output_mismatch] object-method-shorthand-derived-value.js
   [output_mismatch] object-method-shorthand-hook-dep.js
-  [output_mismatch] object-mutated-in-consequent-alternate-both-return.js
   [output_mismatch] object-shorthand-method-1.js
   [output_mismatch] object-shorthand-method-2.js
   [output_mismatch] object-shorthand-method-nested.js
@@ -344,7 +341,6 @@ Failed fixtures:
   [output_mismatch] optional-member-expression-inverted-optionals-parallel-paths.js
   [output_mismatch] optional-member-expression-single.js
   [output_mismatch] overlapping-scopes-within-block.js
-  [output_mismatch] partial-early-return-within-reactive-scope.js
   [output_mismatch] phi-type-inference-array-push-consecutive-phis.js
   [output_mismatch] phi-type-inference-array-push.js
   [output_mismatch] phi-type-inference-property-store.js
@@ -525,9 +521,7 @@ Failed fixtures:
   [output_mismatch] unary-expr.js
   [output_mismatch] uninitialized-declaration-in-reactive-scope.js
   [output_mismatch] unlabeled-break-within-label-loop.ts
-  [output_mismatch] unused-conditional.js
   [output_mismatch] unused-object-element-with-rest.js
-  [output_mismatch] update-expression-in-sequence.js
   [output_mismatch] use-callback-simple.js
   [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] use-memo-simple.js
