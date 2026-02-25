@@ -237,6 +237,10 @@ pub struct CodegenContext {
     /// Temporaries that hold assignment expressions (need parens when used in expression context).
     /// e.g., `x = value` needs wrapping as `(x = value)` when used as call args or initializers.
     assignment_temps: FxHashSet<DeclarationId>,
+    /// Temporaries that hold logical expressions, keyed by `DeclarationId`, valued by
+    /// the `LogicalOperator` of the expression. Used to add mandatory parentheses when
+    /// `??` is mixed with `||`/`&&` (a JavaScript syntax error without parens).
+    logical_temps: FxHashMap<DeclarationId, LogicalOperator>,
 }
 
 impl CodegenContext {
@@ -263,6 +267,7 @@ impl CodegenContext {
             jsx_text_temps: FxHashSet::default(),
             jsx_element_temps: FxHashSet::default(),
             assignment_temps: FxHashSet::default(),
+            logical_temps: FxHashMap::default(),
         }
     }
 
@@ -386,12 +391,13 @@ pub fn codegen_function(
     let cache_count = cx.next_cache_index;
     if cache_count > 0 {
         let cache_name = cx.synthesize_name("$");
+        let memo_cache_fn = cx.synthesize_name("_c");
         let mut preface: Vec<CodegenStatement> = Vec::new();
 
         preface.push(CodegenStatement::VariableDeclaration {
             kind: VarKind::Const,
             name: cache_name.clone(),
-            init: Some(format!("_c({cache_count})")),
+            init: Some(format!("{memo_cache_fn}({cache_count})")),
         });
 
         // Emit HMR/Fast Refresh hash check and cache reset
@@ -1232,11 +1238,34 @@ fn codegen_instruction_nullable(
                 codegen_instruction_to_statement(cx, instr, &value_str)
             }
         },
-        ReactiveValue::Logical(_)
-        | ReactiveValue::Ternary(_)
+        ReactiveValue::Logical(logical) => {
+            let value_str = codegen_reactive_value_to_expression(cx, &instr.value);
+            // Track logical operator on temps so that parent logical expressions
+            // can detect when `??` is mixed with `||`/`&&` and add mandatory parens.
+            if let Some(lval) = &instr.lvalue {
+                if lval.identifier.name.is_none() {
+                    cx.logical_temps.insert(lval.identifier.declaration_id, logical.operator);
+                }
+            }
+            codegen_instruction_to_statement(cx, instr, &value_str)
+        }
+        ReactiveValue::Ternary(_)
         | ReactiveValue::Sequence(_)
         | ReactiveValue::OptionalCall(_) => {
             let value_str = codegen_reactive_value_to_expression(cx, &instr.value);
+            // For Sequence values, the inner sequence may contain a Logical expression
+            // that was stored as a temp. Propagate the logical operator tracking to
+            // this instruction's lvalue so parent logical expressions can detect mixing.
+            if matches!(&instr.value, ReactiveValue::Sequence(_)) {
+                if let Some(lval) = &instr.lvalue {
+                    if lval.identifier.name.is_none() {
+                        if let Some(op) = find_logical_operator_in_value(&instr.value) {
+                            cx.logical_temps
+                                .insert(lval.identifier.declaration_id, op);
+                        }
+                    }
+                }
+            }
             codegen_instruction_to_statement(cx, instr, &value_str)
         }
     }
@@ -1760,8 +1789,11 @@ fn codegen_object_method_expression(
 /// as does a ternary expression (lower precedence than any logical operator).
 ///
 /// For `Sequence` values, we look at the inner final `value` since sequences
-/// are reduced to their final value expression during codegen.
+/// are reduced to their final value expression during codegen. When the operand
+/// was stored in a temp (the common case for nested logical expressions), we
+/// also check the `logical_temps` map to recover the original logical operator.
 fn wrap_logical_operand_if_needed(
+    cx: &CodegenContext,
     expr: &str,
     child_value: &ReactiveValue,
     parent_op: LogicalOperator,
@@ -1770,9 +1802,58 @@ fn wrap_logical_operand_if_needed(
     let needs_parens = match effective {
         ReactiveValue::Logical(child_logical) => child_logical.operator != parent_op,
         ReactiveValue::Ternary(_) => true,
-        _ => false,
+        _ => {
+            // The operand may be an Instruction (LoadLocal) that reads from a temp
+            // which was originally a logical expression. Check the logical_temps map
+            // via the final place's declaration_id.
+            if let Some(child_op) = resolve_logical_operator_from_value(cx, child_value) {
+                child_op != parent_op
+            } else {
+                false
+            }
+        }
     };
     if needs_parens { format!("({expr})") } else { expr.to_string() }
+}
+
+/// Try to resolve the logical operator from a value chain that ultimately reads
+/// from a temp that was a logical expression. This traces through Sequences
+/// and LoadLocal instructions to find the final declaration_id and checks
+/// `cx.logical_temps`.
+fn resolve_logical_operator_from_value(
+    cx: &CodegenContext,
+    value: &ReactiveValue,
+) -> Option<LogicalOperator> {
+    match value {
+        ReactiveValue::Instruction(iv) => {
+            if let InstructionValue::LoadLocal(load) = iv.as_ref() {
+                cx.logical_temps.get(&load.place.identifier.declaration_id).copied()
+            } else {
+                None
+            }
+        }
+        ReactiveValue::Sequence(seq) => resolve_logical_operator_from_value(cx, &seq.value),
+        _ => None,
+    }
+}
+
+/// Search a `ReactiveValue` tree (without codegen context) for the top-level
+/// logical operator. This looks through Sequences and their instructions to
+/// find a `ReactiveValue::Logical` that represents the "effective" expression.
+fn find_logical_operator_in_value(value: &ReactiveValue) -> Option<LogicalOperator> {
+    match value {
+        ReactiveValue::Logical(logical) => Some(logical.operator),
+        ReactiveValue::Sequence(seq) => {
+            // Check if the last instruction in the sequence is/contains a Logical
+            if let Some(last_instr) = seq.instructions.last() {
+                if let Some(op) = find_logical_operator_in_value(&last_instr.value) {
+                    return Some(op);
+                }
+            }
+            find_logical_operator_in_value(&seq.value)
+        }
+        _ => None,
+    }
 }
 
 /// Unwrap `Sequence` wrappers to find the effective value for precedence checks.
@@ -1796,6 +1877,19 @@ fn effective_value(value: &ReactiveValue) -> &ReactiveValue {
                         ReactiveValue::Logical(_) | ReactiveValue::Ternary(_) => {
                             return &last_instr.value;
                         }
+                        // The last instruction's value may itself be a Sequence
+                        // (e.g., when `??` is nested inside `||`, the `??` result
+                        // appears as a Sequence-wrapped value in the `||`'s test
+                        // block). Recursively resolve it to find the effective value.
+                        ReactiveValue::Sequence(_) => {
+                            let inner = effective_value(&last_instr.value);
+                            if matches!(
+                                inner,
+                                ReactiveValue::Logical(_) | ReactiveValue::Ternary(_)
+                            ) {
+                                return inner;
+                            }
+                        }
                         _ => {}
                     }
                 }
@@ -1817,9 +1911,10 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
             // different operator or ternary expressions. This matches Babel's
             // code generator behaviour and is required for correctness when
             // lower-precedence operators are nested inside higher-precedence
-            // ones (e.g. `||` inside `&&`).
-            let left = wrap_logical_operand_if_needed(&left, &logical.left, logical.operator);
-            let right = wrap_logical_operand_if_needed(&right, &logical.right, logical.operator);
+            // ones (e.g. `||` inside `&&`), and is mandatory when `??` is
+            // mixed with `||`/`&&` (a JavaScript syntax error without parens).
+            let left = wrap_logical_operand_if_needed(cx, &left, &logical.left, logical.operator);
+            let right = wrap_logical_operand_if_needed(cx, &right, &logical.right, logical.operator);
             format!("{left} {} {right}", logical.operator.as_str())
         }
         ReactiveValue::Ternary(ternary) => {
