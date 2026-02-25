@@ -14196,13 +14196,147 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Did you mean '#foo'?
 
-  × Unexpected token
+  × Private identifier '#foo' is not allowed in property names
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:2:5]
  1 │ type A = {
  2 │     #foo: string;
    ·     ────
  3 │     #bar(): string;
    ╰────
+
+  × Private identifier '#bar' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:3:5]
+ 2 │     #foo: string;
+ 3 │     #bar(): string;
+   ·     ────
+ 4 │ }
+   ╰────
+
+  × Private identifier '#foo' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:7:5]
+ 6 │ interface B {
+ 7 │     #foo: string;
+   ·     ────
+ 8 │     #bar(): string;
+   ╰────
+
+  × Private identifier '#bar' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:8:5]
+ 7 │     #foo: string;
+ 8 │     #bar(): string;
+   ·     ────
+ 9 │ }
+   ╰────
+
+  × Private identifier '#foo' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:12:5]
+ 11 │ declare const x: {
+ 12 │     #foo: number;
+    ·     ────
+ 13 │     bar: {
+    ╰────
+
+  × Private identifier '#baz' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:14:9]
+ 13 │     bar: {
+ 14 │         #baz: string;
+    ·         ────
+ 15 │         #taz(): string;
+    ╰────
+
+  × Private identifier '#taz' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:15:9]
+ 14 │         #baz: string;
+ 15 │         #taz(): string;
+    ·         ────
+ 16 │     }
+    ╰────
+
+  × Private identifier '#baz' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:17:5]
+ 16 │     }
+ 17 │     #baz(): string;
+    ·     ────
+ 18 │ };
+    ╰────
+
+  × Private identifier '#quux' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:20:28]
+ 19 │ 
+ 20 │ declare const y: [{ qux: { #quux: 3 } }];
+    ·                            ─────
+    ╰────
+
+  × Private identifier '#foo' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:2:5]
+ 1 │ type A = {
+ 2 │     #foo: string;
+   ·     ────
+ 3 │     #bar(): string;
+   ╰────
+
+  × Private identifier '#bar' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:3:5]
+ 2 │     #foo: string;
+ 3 │     #bar(): string;
+   ·     ────
+ 4 │ }
+   ╰────
+
+  × Private identifier '#foo' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:7:5]
+ 6 │ interface B {
+ 7 │     #foo: string;
+   ·     ────
+ 8 │     #bar(): string;
+   ╰────
+
+  × Private identifier '#bar' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:8:5]
+ 7 │     #foo: string;
+ 8 │     #bar(): string;
+   ·     ────
+ 9 │ }
+   ╰────
+
+  × Private identifier '#foo' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:12:5]
+ 11 │ declare const x: {
+ 12 │     #foo: number;
+    ·     ────
+ 13 │     bar: {
+    ╰────
+
+  × Private identifier '#baz' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:14:9]
+ 13 │     bar: {
+ 14 │         #baz: string;
+    ·         ────
+ 15 │         #taz(): string;
+    ╰────
+
+  × Private identifier '#taz' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:15:9]
+ 14 │         #baz: string;
+ 15 │         #taz(): string;
+    ·         ────
+ 16 │     }
+    ╰────
+
+  × Private identifier '#baz' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:17:5]
+ 16 │     }
+ 17 │     #baz(): string;
+    ·     ────
+ 18 │ };
+    ╰────
+
+  × Private identifier '#quux' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndPropertySignature.ts:20:28]
+ 19 │ 
+ 20 │ declare const y: [{ qux: { #quux: 3 } }];
+    ·                            ─────
+    ╰────
 
   × Private identifier '#nope' is not allowed outside class bodies
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadAssignment.ts:1:9]
@@ -14235,13 +14369,109 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │     }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:3:3]
  2 │ A.prototype = {
  3 │   #x: 1,         // Error
    ·   ──
  4 │   #m() {},       // Error
    ╰────
+
+  × Private identifier '#m' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:4:3]
+ 3 │   #x: 1,         // Error
+ 4 │   #m() {},       // Error
+   ·   ──
+ 5 │   get #p() { return "" } // Error
+   ╰────
+
+  × Private identifier '#p' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:5:7]
+ 4 │   #m() {},       // Error
+ 5 │   get #p() { return "" } // Error
+   ·       ──
+ 6 │ }
+   ╰────
+
+  × Private identifier '#y' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:9:3]
+  8 │ B.prototype = {
+  9 │   #y: 2,         // Error
+    ·   ──
+ 10 │   #m() {},       // Error
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:10:3]
+  9 │   #y: 2,         // Error
+ 10 │   #m() {},       // Error
+    ·   ──
+ 11 │   get #p() { return "" } // Error
+    ╰────
+
+  × Private identifier '#p' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:11:7]
+ 10 │   #m() {},       // Error
+ 11 │   get #p() { return "" } // Error
+    ·       ──
+ 12 │ }
+    ╰────
+
+  × Private identifier '#x' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:3:3]
+ 2 │ A.prototype = {
+ 3 │   #x: 1,         // Error
+   ·   ──
+ 4 │   #m() {},       // Error
+   ╰────
+
+  × Private identifier '#m' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:4:3]
+ 3 │   #x: 1,         // Error
+ 4 │   #m() {},       // Error
+   ·   ──
+ 5 │   get #p() { return "" } // Error
+   ╰────
+
+  × Private identifier '#p' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:5:7]
+ 4 │   #m() {},       // Error
+ 5 │   get #p() { return "" } // Error
+   ·       ──
+ 6 │ }
+   ╰────
+
+  × Private identifier '#y' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:9:3]
+  8 │ B.prototype = {
+  9 │   #y: 2,         // Error
+    ·   ──
+ 10 │   #m() {},       // Error
+    ╰────
+
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:10:3]
+  9 │   #y: 2,         // Error
+ 10 │   #m() {},       // Error
+    ·   ──
+ 11 │   get #p() { return "" } // Error
+    ╰────
+
+  × Private identifier '#p' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:11:7]
+ 10 │   #m() {},       // Error
+ 11 │   get #p() { return "" } // Error
+    ·       ──
+ 12 │ }
+    ╰────
+
+  × Private field '#z' must be declared in an enclosing class
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadDeclaration.ts:15:10]
+ 14 │   constructor() {
+ 15 │     this.#z = 3;
+    ·          ──
+ 16 │   }
+    ╰────
 
   × Classes can't have an element named '#constructor'
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameConstructorReserved.ts:2:5]
@@ -15021,7 +15251,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  21 │ 
     ╰────
 
-  × Unexpected token
+  × Private identifier '#foo' is not allowed in property names
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-1.ts:2:5]
  1 │ const obj = {
  2 │     #foo: 1
@@ -15029,7 +15259,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ };
    ╰────
 
-  × Unexpected token
+  × Private identifier '#foo' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-1.ts:2:5]
+ 1 │ const obj = {
+ 2 │     #foo: 1
+   ·     ────
+ 3 │ };
+   ╰────
+
+  × Private identifier '#foo' is not allowed in property names
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-2.ts:2:5]
  1 │ const obj = {
  2 │     #foo() {
@@ -15037,7 +15275,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ 
    ╰────
 
-  × Unexpected token
+  × Private identifier '#foo' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-2.ts:2:5]
+ 1 │ const obj = {
+ 2 │     #foo() {
+   ·     ────
+ 3 │ 
+   ╰────
+
+  × Private identifier '#foo' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-3.ts:2:9]
+ 1 │ const obj = {
+ 2 │     get #foo() {
+   ·         ────
+ 3 │         return ""
+   ╰────
+
+  × Private identifier '#foo' is not allowed outside class bodies
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInObjectLiteral-3.ts:2:9]
  1 │ const obj = {
  2 │     get #foo() {
@@ -15076,13 +15330,109 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │     }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:3:3]
  2 │ A.prototype = {
  3 │   #x: 1,         // Error
    ·   ──
  4 │   #m() {},       // Error
    ╰────
+
+  × Private identifier '#m' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:4:3]
+ 3 │   #x: 1,         // Error
+ 4 │   #m() {},       // Error
+   ·   ──
+ 5 │   get #p() { return "" } // Error
+   ╰────
+
+  × Private identifier '#p' is not allowed in property names
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:5:7]
+ 4 │   #m() {},       // Error
+ 5 │   get #p() { return "" } // Error
+   ·       ──
+ 6 │ }
+   ╰────
+
+  × Private identifier '#y' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:9:3]
+  8 │ B.prototype = {
+  9 │   #y: 2,         // Error
+    ·   ──
+ 10 │   #m() {},       // Error
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:10:3]
+  9 │   #y: 2,         // Error
+ 10 │   #m() {},       // Error
+    ·   ──
+ 11 │   get #p() { return "" } // Error
+    ╰────
+
+  × Private identifier '#p' is not allowed in property names
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:11:7]
+ 10 │   #m() {},       // Error
+ 11 │   get #p() { return "" } // Error
+    ·       ──
+ 12 │ }
+    ╰────
+
+  × Private identifier '#x' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:3:3]
+ 2 │ A.prototype = {
+ 3 │   #x: 1,         // Error
+   ·   ──
+ 4 │   #m() {},       // Error
+   ╰────
+
+  × Private identifier '#m' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:4:3]
+ 3 │   #x: 1,         // Error
+ 4 │   #m() {},       // Error
+   ·   ──
+ 5 │   get #p() { return "" } // Error
+   ╰────
+
+  × Private identifier '#p' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:5:7]
+ 4 │   #m() {},       // Error
+ 5 │   get #p() { return "" } // Error
+   ·       ──
+ 6 │ }
+   ╰────
+
+  × Private identifier '#y' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:9:3]
+  8 │ B.prototype = {
+  9 │   #y: 2,         // Error
+    ·   ──
+ 10 │   #m() {},       // Error
+    ╰────
+
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:10:3]
+  9 │   #y: 2,         // Error
+ 10 │   #m() {},       // Error
+    ·   ──
+ 11 │   get #p() { return "" } // Error
+    ╰────
+
+  × Private identifier '#p' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:11:7]
+ 10 │   #m() {},       // Error
+ 11 │   get #p() { return "" } // Error
+    ·       ──
+ 12 │ }
+    ╰────
+
+  × Private field '#z' must be declared in an enclosing class
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadDeclaration.ts:15:10]
+ 14 │   constructor() {
+ 15 │     this.#z = 3;
+    ·          ──
+ 16 │   }
+    ╰────
 
   × Private identifier '#method' is not allowed outside class bodies
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameMethodAccess.ts:12:10]
@@ -19992,7 +20342,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Wrap either expression by parentheses
 
-  × Unexpected token
+  × Private identifier '#z' is not allowed in property names
     ╭─[typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts:50:5]
  49 │     y = 2,
  50 │     #z: 3
@@ -20017,6 +20367,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  49 │     y = 2,
     ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Private identifier '#z' is not allowed outside class bodies
+    ╭─[typescript/tests/cases/conformance/expressions/objectLiterals/objectLiteralErrors.ts:50:5]
+ 49 │     y = 2,
+ 50 │     #z: 3
+    ·     ──
+ 51 │ }
+    ╰────
 
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/expressions/operators/incrementAndDecrement.ts:8:1]

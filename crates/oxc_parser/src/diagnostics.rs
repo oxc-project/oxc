@@ -64,6 +64,12 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn private_identifier_in_property_name(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Private identifier '#{name}' is not allowed in property names"))
+        .with_label(span)
+}
+
+#[cold]
 pub fn html_comment_in_module(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("HTML comments are not allowed in modules").with_label(span)
 }

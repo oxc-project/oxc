@@ -7919,7 +7919,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/invalid-object-method/input.js:2:11]
  1 │ class C {
  2 │   #p = ({ #x() {} });
@@ -7927,7 +7927,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/invalid-object-property/input.js:2:11]
  1 │ class C {
  2 │   #p = ({ #x: 42 });
@@ -7935,7 +7935,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/invalid-object-property-with-assignment/input.js:4:5]
  3 │   m = {
  4 │     #x: x,
@@ -7943,7 +7943,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │     y: y = m
    ╰────
 
-  × Unexpected token
+  × Private identifier '#p' is not allowed in property names
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/invalid-ts-type-literal/input.js:2:3]
+ 1 │ interface I {
+ 2 │   #p: string
+   ·   ──
+ 3 │ }
+   ╰────
+
+  × Private identifier '#p' is not allowed outside class bodies
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/invalid-ts-type-literal/input.js:2:3]
  1 │ interface I {
  2 │   #p: string
