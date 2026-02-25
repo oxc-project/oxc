@@ -1,0 +1,6 @@
+{
+  "plugins": ["eslint"],
+  "rules": {
+    "prefer-const": "error"
+  }
+}

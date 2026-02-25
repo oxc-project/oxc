@@ -594,6 +594,7 @@ impl Runtime {
         let is_updating_suppression_file = suppression_manager.is_updating_file();
         let file_exists = suppression_manager.exists_suppression_file();
         let concurrent_tracking_map = suppression_manager.concurrent_map();
+        let ignore_suppression = suppression_manager.ignore();
 
         let (suppression_diff_channel, tx_suppression_diff_channel) =
             std::sync::mpsc::channel::<SuppressionDiff>();
@@ -654,20 +655,24 @@ impl Runtime {
 
                         let tmp_pin = concurrent_tracking_map.pin();
 
-                        let suppression_file = if let Ok(file_path) = path.strip_prefix(&self.cwd) {
-                            let filename = Filename::new(file_path);
+                        let suppression_file_check = {
+                            if ignore_suppression {
+                                None
+                            } else if let Ok(file_path) = path.strip_prefix(&self.cwd) {
+                                let filename = Filename::new(file_path);
 
-                            let key_arc = Arc::from(filename);
+                                let key_arc = Arc::from(filename);
 
-                            let suppression_data = tmp_pin.get(&key_arc);
+                                let suppression_data = tmp_pin.get(&key_arc);
 
-                            SuppressionFile::new(
-                                file_exists,
-                                self.linter.options.suppress_all,
-                                suppression_data,
-                            )
-                        } else {
-                            SuppressionFile::default()
+                                Some(&SuppressionFile::new(
+                                    file_exists,
+                                    self.linter.options.suppress_all,
+                                    suppression_data,
+                                ))
+                            } else {
+                                Some(&SuppressionFile::default())
+                            }
                         };
 
                         let (mut messages, disable_directives, suppression) =
@@ -676,7 +681,7 @@ impl Runtime {
                                 context_sub_hosts,
                                 allocator_guard,
                                 me.js_allocator_pool(),
-                                &suppression_file,
+                                suppression_file_check,
                             );
 
                         // Store the disable directives for this file
@@ -687,11 +692,19 @@ impl Runtime {
                                 .insert(path.to_path_buf(), disable_directives);
                         }
 
-                        if let Some(suppression_detected) = suppression {
+                        if let Some(suppression_detected) = suppression
+                            && !ignore_suppression
+                        {
                             let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
 
+                            let suppression_file = if let Some(file) = suppression_file_check {
+                                file
+                            } else {
+                                &SuppressionFile::default()
+                            };
+
                             let diffs = SuppressionManager::diff_filename(
-                                &suppression_file,
+                                suppression_file,
                                 &suppression_detected,
                                 &filename,
                             );
@@ -829,7 +842,7 @@ impl Runtime {
 
                         let (section_messages, disable_directives, _) = me
                             .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool(), &SuppressionFile::default());
+                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool(), None);
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map

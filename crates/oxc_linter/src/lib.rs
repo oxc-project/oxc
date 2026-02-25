@@ -185,14 +185,7 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message> {
-        self.run_with_disable_directives(
-            path,
-            context_sub_hosts,
-            allocator,
-            None,
-            &SuppressionFile::default(),
-        )
-        .0
+        self.run_with_disable_directives(path, context_sub_hosts, allocator, None, None).0
     }
 
     /// Same as `run` but also returns the disable directives for the file
@@ -210,7 +203,7 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
-        suppression_file_state: &SuppressionFile,
+        suppression_file_state: Option<&SuppressionFile>,
     ) -> (Vec<Message>, Option<DisableDirectives>, Option<FxHashMap<RuleName, DiagnosticCounts>>)
     {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
@@ -437,10 +430,14 @@ impl Linter {
             Rc::try_unwrap(ctx_host).unwrap().into_disable_directives()
         };
 
-        let (filtered_diagnostics, runtime_suppression_tracking) =
-            SuppressionManager::suppress_lint_diagnostics(suppression_file_state, diagnostics);
+        if let Some(state) = suppression_file_state {
+            let (filtered_diagnostics, runtime_suppression_tracking) =
+                SuppressionManager::suppress_lint_diagnostics(state, diagnostics);
 
-        (filtered_diagnostics, disable_directives, runtime_suppression_tracking)
+            (filtered_diagnostics, disable_directives, runtime_suppression_tracking)
+        } else {
+            (diagnostics, disable_directives, None)
+        }
     }
 
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
