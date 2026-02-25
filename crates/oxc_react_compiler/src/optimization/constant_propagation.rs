@@ -8,14 +8,17 @@
 /// - Prunes unreachable branches when conditions are known constants
 /// - Uses fixpoint iteration to propagate constants through the CFG
 use oxc_syntax::identifier::is_identifier_name;
-use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator, UpdateOperator};
 use rustc_hash::FxHashMap;
 
 use crate::hir::{
-    BlockKind, GotoTerminal, GotoVariant, HIRFunction, IdentifierId, Instruction, InstructionValue,
-    NonLocalBinding, Place, PrimitiveValue, PrimitiveValueKind, PropertyLoad, PropertyStore,
-    Terminal,
-    hir_builder::{mark_instruction_ids, mark_predecessors, remove_unnecessary_try_catch},
+    BlockKind, GotoTerminal, GotoVariant, HIRFunction, Hir, IdentifierId, Instruction,
+    InstructionValue, NonLocalBinding, Place, PrimitiveValue, PrimitiveValueKind, PropertyLoad,
+    PropertyStore, Terminal,
+    hir_builder::{
+        mark_instruction_ids, mark_predecessors, remove_unnecessary_try_catch,
+        reverse_postorder_blocks,
+    },
     merge_consecutive_blocks::merge_consecutive_blocks,
     types::PropertyLiteral,
 };
@@ -45,7 +48,10 @@ fn constant_propagation_impl(func: &mut HIRFunction, constants: &mut Constants) 
         }
 
         // If terminals have changed, blocks may have become unreachable.
-        // Re-run minification passes.
+        // Re-run minification passes (matching TS order).
+        reverse_postorder_blocks(&mut func.body);
+        remove_unreachable_for_updates(&mut func.body);
+        remove_dead_do_while_statements(&mut func.body);
         remove_unnecessary_try_catch(&mut func.body);
         mark_instruction_ids(&mut func.body);
         mark_predecessors(&mut func.body);
@@ -322,6 +328,52 @@ fn evaluate_instruction(constants: &mut Constants, instr: &mut Instruction) -> O
                 loc,
             });
             Some(result)
+        }
+        InstructionValue::PostfixUpdate(v) => {
+            let previous = read(constants, &v.value)?;
+            if let Constant::Primitive(PrimitiveValueKind::Number(n)) = previous {
+                let next = match v.operation {
+                    UpdateOperator::Increment => n + 1.0,
+                    UpdateOperator::Decrement => n - 1.0,
+                };
+                // Store the updated value for the lvalue (the variable being updated)
+                constants
+                    .insert(v.lvalue.identifier.id, Constant::Primitive(PrimitiveValueKind::Number(next)));
+                // But return the value prior to the update (postfix semantics)
+                return Some(Constant::Primitive(PrimitiveValueKind::Number(n)));
+            }
+            None
+        }
+        InstructionValue::PrefixUpdate(v) => {
+            let previous = read(constants, &v.value)?;
+            if let Constant::Primitive(PrimitiveValueKind::Number(n)) = previous {
+                let next = match v.operation {
+                    UpdateOperator::Increment => n + 1.0,
+                    UpdateOperator::Decrement => n - 1.0,
+                };
+                let result = Constant::Primitive(PrimitiveValueKind::Number(next));
+                // Store and return the updated value (prefix semantics)
+                constants.insert(v.lvalue.identifier.id, result.clone());
+                return Some(result);
+            }
+            None
+        }
+        InstructionValue::PropertyLoad(v) => {
+            let object_value = read(constants, &v.object);
+            if let Some(Constant::Primitive(PrimitiveValueKind::String(ref s))) = object_value
+                && matches!(&v.property, PropertyLiteral::String(prop) if prop == "length")
+            {
+                #[expect(clippy::cast_precision_loss)]
+                let len = s.len() as f64;
+                let result = Constant::Primitive(PrimitiveValueKind::Number(len));
+                let loc = v.loc;
+                instr.value = InstructionValue::Primitive(PrimitiveValue {
+                    value: PrimitiveValueKind::Number(len),
+                    loc,
+                });
+                return Some(result);
+            }
+            None
         }
         // FunctionExpression and ObjectMethod are handled at the top of this function
         _ => None,
@@ -607,5 +659,61 @@ fn primitive_to_string(prim: &PrimitiveValueKind) -> String {
         }
         PrimitiveValueKind::Null => "null".to_string(),
         PrimitiveValueKind::Undefined => "undefined".to_string(),
+    }
+}
+
+/// Port of `removeUnreachableForUpdates` from HIRBuilder.ts.
+///
+/// If a `for` terminal's update block has been removed (unreachable), set it to None.
+fn remove_unreachable_for_updates(body: &mut Hir) {
+    let block_ids: Vec<_> = body.blocks.keys().copied().collect();
+    for block_id in block_ids {
+        let should_clear = {
+            let Some(block) = body.blocks.get(&block_id) else { continue };
+            if let Terminal::For(t) = &block.terminal {
+                t.update.is_some_and(|update| !body.blocks.contains_key(&update))
+            } else {
+                false
+            }
+        };
+        if should_clear {
+            if let Some(block) = body.blocks.get_mut(&block_id)
+                && let Terminal::For(t) = &mut block.terminal
+            {
+                t.update = None;
+            }
+        }
+    }
+}
+
+/// Port of `removeDeadDoWhileStatements` from HIRBuilder.ts.
+///
+/// If the test condition of a DoWhile is unreachable, replace the terminal
+/// with a goto to the loop block.
+fn remove_dead_do_while_statements(body: &mut Hir) {
+    let block_ids: Vec<_> = body.blocks.keys().copied().collect();
+    for block_id in block_ids {
+        let replacement = {
+            let Some(block) = body.blocks.get(&block_id) else { continue };
+            if let Terminal::DoWhile(t) = &block.terminal {
+                if !body.blocks.contains_key(&t.test) {
+                    Some(Terminal::Goto(GotoTerminal {
+                        id: t.id,
+                        block: t.r#loop,
+                        variant: GotoVariant::Break,
+                        loc: t.loc,
+                    }))
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        };
+        if let Some(new_terminal) = replacement {
+            if let Some(block) = body.blocks.get_mut(&block_id) {
+                block.terminal = new_terminal;
+            }
+        }
     }
 }
