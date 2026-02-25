@@ -240,7 +240,7 @@ fn rewrite_instruction(instr: &mut crate::hir::Instruction, state: &DceState) {
 /// Check if a value is pruneable (can be safely eliminated if unused).
 fn pruneable_value(value: &InstructionValue, state: &DceState) -> bool {
     match value {
-        // Side-effect-free values can always be pruned
+        // Side-effect-free values can always be pruned (read-only)
         InstructionValue::Primitive(_)
         | InstructionValue::LoadLocal(_)
         | InstructionValue::LoadContext(_)
@@ -253,7 +253,13 @@ fn pruneable_value(value: &InstructionValue, state: &DceState) -> bool {
         | InstructionValue::JsxText(_)
         | InstructionValue::RegExpLiteral(_)
         | InstructionValue::MetaProperty(_)
-        | InstructionValue::TemplateLiteral(_) => true,
+        | InstructionValue::TemplateLiteral(_)
+        | InstructionValue::ArrayExpression(_)
+        | InstructionValue::ObjectExpression(_)
+        | InstructionValue::ObjectMethod(_)
+        | InstructionValue::FunctionExpression(_)
+        | InstructionValue::JsxExpression(_)
+        | InstructionValue::JsxFragment(_) => true,
 
         // DeclareLocal with unreferenced lvalue can be pruned
         InstructionValue::DeclareLocal(v) => !state.is_id_or_name_used(&v.lvalue.place.identifier),
