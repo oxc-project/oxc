@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 493/1040 passed (47.4%)
+Codegen conformance: 494/1040 passed (47.5%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:516
+  output_mismatch:515
   no_expected:    1
 
 Failed fixtures:
@@ -124,7 +124,6 @@ Failed fixtures:
   [output_mismatch] context-variable-reassigned-outside-of-lambda.js
   [output_mismatch] context-variable-reassigned-reactive-capture.js
   [output_mismatch] createElement-freeze.js
-  [output_mismatch] declare-reassign-variable-in-closure.js
   [output_mismatch] deeply-nested-function-expressions-with-params.js
   [output_mismatch] default-param-array-with-unary.js
   [output_mismatch] default-param-calls-global-function.js

@@ -100,7 +100,18 @@ impl StableSidemap {
                     self.map.insert(v.lvalue.place.identifier.id, entry);
                 }
             }
+            InstructionValue::StoreContext(v) => {
+                if let Some(&entry) = self.map.get(&v.value.identifier.id) {
+                    self.map.insert(lvalue.identifier.id, entry);
+                    self.map.insert(v.lvalue_place.identifier.id, entry);
+                }
+            }
             InstructionValue::LoadLocal(v) => {
+                if let Some(&entry) = self.map.get(&v.place.identifier.id) {
+                    self.map.insert(lvalue.identifier.id, entry);
+                }
+            }
+            InstructionValue::LoadContext(v) => {
                 if let Some(&entry) = self.map.get(&v.place.identifier.id) {
                     self.map.insert(lvalue.identifier.id, entry);
                 }
