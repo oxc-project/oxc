@@ -9,7 +9,8 @@
   "imports": {
     "#oxlint": "./dist/index.js",
     "#oxlint/plugins": "./dist-pkg-plugins/index.js",
-    "#oxlint/plugins-dev": "./dist/plugins-dev.js"
+    "#oxlint/plugins-dev": "./dist/plugins-dev.js",
+    "#oxlint/built-in-rules": "./dist/built-in-rules.js"
   },
   "exports": {
     ".": {
@@ -19,6 +20,10 @@
     "./plugins-dev": {
       "types": "./dist/plugins-dev.d.ts",
       "default": "./dist/plugins-dev.js"
+    },
+    "./built-in-rules": {
+      "types": "./dist/built-in-rules.d.ts",
+      "default": "./dist/built-in-rules.js"
     }
   },
   "scripts": {
