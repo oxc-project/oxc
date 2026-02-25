@@ -71,7 +71,7 @@ fn collect_from_instruction(
     used_declarations: &mut FxHashSet<DeclarationId>,
 ) {
     // Visit places used in the instruction value first (these are "reads")
-    collect_used_declarations_from_value(&instr.value, used_declarations);
+    collect_used_declarations_from_value(&instr.value, lvalue_locations, used_declarations);
 
     // Then check if this instruction has a temporary lvalue (unnamed)
     if let Some(ref lvalue) = instr.lvalue
@@ -87,6 +87,7 @@ fn collect_from_instruction(
 
 fn collect_used_declarations_from_value(
     value: &ReactiveValue,
+    lvalue_locations: &mut FxHashMap<DeclarationId, Vec<LValueLocation>>,
     used: &mut FxHashSet<DeclarationId>,
 ) {
     match value {
@@ -96,22 +97,24 @@ fn collect_used_declarations_from_value(
             }
         }
         ReactiveValue::Logical(v) => {
-            collect_used_declarations_from_value(&v.left, used);
-            collect_used_declarations_from_value(&v.right, used);
+            collect_used_declarations_from_value(&v.left, lvalue_locations, used);
+            collect_used_declarations_from_value(&v.right, lvalue_locations, used);
         }
         ReactiveValue::Ternary(v) => {
-            collect_used_declarations_from_value(&v.test, used);
-            collect_used_declarations_from_value(&v.consequent, used);
-            collect_used_declarations_from_value(&v.alternate, used);
+            collect_used_declarations_from_value(&v.test, lvalue_locations, used);
+            collect_used_declarations_from_value(&v.consequent, lvalue_locations, used);
+            collect_used_declarations_from_value(&v.alternate, lvalue_locations, used);
         }
         ReactiveValue::OptionalCall(v) => {
-            collect_used_declarations_from_value(&v.value, used);
+            collect_used_declarations_from_value(&v.value, lvalue_locations, used);
         }
         ReactiveValue::Sequence(v) => {
+            // Process sequence instructions like top-level instructions:
+            // collect reads from their values and track their unnamed temp lvalues.
             for instr in &v.instructions {
-                collect_used_declarations_from_value(&instr.value, used);
+                collect_from_instruction(instr, lvalue_locations, used);
             }
-            collect_used_declarations_from_value(&v.value, used);
+            collect_used_declarations_from_value(&v.value, lvalue_locations, used);
         }
     }
 }
@@ -145,28 +148,28 @@ fn collect_from_terminal(
             }
         }
         ReactiveTerminal::While(t) => {
-            collect_used_declarations_from_value(&t.test, used_declarations);
+            collect_used_declarations_from_value(&t.test, lvalue_locations, used_declarations);
             collect_lvalue_info(&t.r#loop, lvalue_locations, used_declarations);
         }
         ReactiveTerminal::DoWhile(t) => {
             collect_lvalue_info(&t.r#loop, lvalue_locations, used_declarations);
-            collect_used_declarations_from_value(&t.test, used_declarations);
+            collect_used_declarations_from_value(&t.test, lvalue_locations, used_declarations);
         }
         ReactiveTerminal::For(t) => {
-            collect_used_declarations_from_value(&t.init, used_declarations);
-            collect_used_declarations_from_value(&t.test, used_declarations);
+            collect_used_declarations_from_value(&t.init, lvalue_locations, used_declarations);
+            collect_used_declarations_from_value(&t.test, lvalue_locations, used_declarations);
             if let Some(update) = &t.update {
-                collect_used_declarations_from_value(update, used_declarations);
+                collect_used_declarations_from_value(update, lvalue_locations, used_declarations);
             }
             collect_lvalue_info(&t.r#loop, lvalue_locations, used_declarations);
         }
         ReactiveTerminal::ForOf(t) => {
-            collect_used_declarations_from_value(&t.init, used_declarations);
-            collect_used_declarations_from_value(&t.test, used_declarations);
+            collect_used_declarations_from_value(&t.init, lvalue_locations, used_declarations);
+            collect_used_declarations_from_value(&t.test, lvalue_locations, used_declarations);
             collect_lvalue_info(&t.r#loop, lvalue_locations, used_declarations);
         }
         ReactiveTerminal::ForIn(t) => {
-            collect_used_declarations_from_value(&t.init, used_declarations);
+            collect_used_declarations_from_value(&t.init, lvalue_locations, used_declarations);
             collect_lvalue_info(&t.r#loop, lvalue_locations, used_declarations);
         }
         ReactiveTerminal::Label(t) => {
@@ -197,6 +200,8 @@ fn prune_lvalues_in_block(block: &mut ReactiveBlock, to_prune: &FxHashSet<Declar
                 {
                     instr_stmt.instruction.lvalue = None;
                 }
+                // Also prune inside nested reactive values (e.g. Sequence instructions)
+                prune_lvalues_in_value(&mut instr_stmt.instruction.value, to_prune);
             }
             ReactiveStatement::Terminal(term_stmt) => {
                 prune_lvalues_in_terminal(&mut term_stmt.terminal, to_prune);
@@ -207,6 +212,37 @@ fn prune_lvalues_in_block(block: &mut ReactiveBlock, to_prune: &FxHashSet<Declar
             ReactiveStatement::PrunedScope(scope) => {
                 prune_lvalues_in_block(&mut scope.instructions, to_prune);
             }
+        }
+    }
+}
+
+/// Recursively prune lvalues inside reactive values (sequences contain their own instructions).
+fn prune_lvalues_in_value(value: &mut ReactiveValue, to_prune: &FxHashSet<DeclarationId>) {
+    match value {
+        ReactiveValue::Instruction(_) => {}
+        ReactiveValue::Logical(v) => {
+            prune_lvalues_in_value(&mut v.left, to_prune);
+            prune_lvalues_in_value(&mut v.right, to_prune);
+        }
+        ReactiveValue::Ternary(v) => {
+            prune_lvalues_in_value(&mut v.test, to_prune);
+            prune_lvalues_in_value(&mut v.consequent, to_prune);
+            prune_lvalues_in_value(&mut v.alternate, to_prune);
+        }
+        ReactiveValue::OptionalCall(v) => {
+            prune_lvalues_in_value(&mut v.value, to_prune);
+        }
+        ReactiveValue::Sequence(v) => {
+            for instr in &mut v.instructions {
+                if let Some(ref lvalue) = instr.lvalue
+                    && to_prune.contains(&lvalue.identifier.declaration_id)
+                {
+                    instr.lvalue = None;
+                }
+                // Recurse into nested values within the sequence instructions
+                prune_lvalues_in_value(&mut instr.value, to_prune);
+            }
+            prune_lvalues_in_value(&mut v.value, to_prune);
         }
     }
 }
@@ -226,11 +262,31 @@ fn prune_lvalues_in_terminal(terminal: &mut ReactiveTerminal, to_prune: &FxHashS
                 }
             }
         }
-        ReactiveTerminal::While(t) => prune_lvalues_in_block(&mut t.r#loop, to_prune),
-        ReactiveTerminal::DoWhile(t) => prune_lvalues_in_block(&mut t.r#loop, to_prune),
-        ReactiveTerminal::For(t) => prune_lvalues_in_block(&mut t.r#loop, to_prune),
-        ReactiveTerminal::ForOf(t) => prune_lvalues_in_block(&mut t.r#loop, to_prune),
-        ReactiveTerminal::ForIn(t) => prune_lvalues_in_block(&mut t.r#loop, to_prune),
+        ReactiveTerminal::While(t) => {
+            prune_lvalues_in_value(&mut t.test, to_prune);
+            prune_lvalues_in_block(&mut t.r#loop, to_prune);
+        }
+        ReactiveTerminal::DoWhile(t) => {
+            prune_lvalues_in_value(&mut t.test, to_prune);
+            prune_lvalues_in_block(&mut t.r#loop, to_prune);
+        }
+        ReactiveTerminal::For(t) => {
+            prune_lvalues_in_value(&mut t.init, to_prune);
+            prune_lvalues_in_value(&mut t.test, to_prune);
+            if let Some(update) = &mut t.update {
+                prune_lvalues_in_value(update, to_prune);
+            }
+            prune_lvalues_in_block(&mut t.r#loop, to_prune);
+        }
+        ReactiveTerminal::ForOf(t) => {
+            prune_lvalues_in_value(&mut t.init, to_prune);
+            prune_lvalues_in_value(&mut t.test, to_prune);
+            prune_lvalues_in_block(&mut t.r#loop, to_prune);
+        }
+        ReactiveTerminal::ForIn(t) => {
+            prune_lvalues_in_value(&mut t.init, to_prune);
+            prune_lvalues_in_block(&mut t.r#loop, to_prune);
+        }
         ReactiveTerminal::Label(t) => prune_lvalues_in_block(&mut t.block, to_prune),
         ReactiveTerminal::Try(t) => {
             prune_lvalues_in_block(&mut t.block, to_prune);
