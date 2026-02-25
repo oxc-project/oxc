@@ -1472,6 +1472,15 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
             let is_hook = get_hook_kind(&cx.shapes, &call.callee.identifier);
             let callee = codegen_place_to_expression(cx, &call.callee);
             let args = codegen_args(cx, &call.args);
+            // When the callee is a FunctionExpression (IIFE pattern), wrap it in
+            // parentheses so it parses as an expression, not a declaration.
+            // In the TS reference this is handled automatically by Babel's AST printer.
+            let callee = if callee.starts_with("function") || callee.starts_with("async function")
+            {
+                format!("({callee})")
+            } else {
+                callee
+            };
             create_call_expression_string(cx, &callee, &args, is_hook)
         }
         InstructionValue::MethodCall(method) => {
