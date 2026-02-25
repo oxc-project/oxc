@@ -227,6 +227,15 @@ pub fn enter_ssa(func: &mut HIRFunction, _env: &Environment) -> Result<(), Compi
 
     // Write back the blocks from the builder
     func.body.blocks = builder.blocks;
+
+    // Sync the environment's identifier counter back to func.env.
+    // The SSA builder clones func.env and allocates new IdentifierIds for SSA
+    // versions. Without syncing, later passes (e.g. PropagateEarlyReturns) that
+    // create new identifiers via func.env.next_identifier_id() would allocate
+    // ids that collide with SSA-created identifiers, causing incorrect temp
+    // promotion in PromoteUsedTemporaries.
+    func.env.advance_counters_past(&builder.env);
+
     Ok(())
 }
 

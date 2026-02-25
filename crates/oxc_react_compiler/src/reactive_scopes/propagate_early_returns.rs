@@ -139,7 +139,6 @@ fn visit_scope(
             let symbol_temp = create_temporary_place(env, loc);
             let for_temp = create_temporary_place(env, loc);
             let arg_temp = create_temporary_place(env, loc);
-
             // 1. LoadGlobal("Symbol") -> symbolTemp
             let load_global_instr = ReactiveStatement::Instruction(ReactiveInstructionStatement {
                 instruction: ReactiveInstruction {
