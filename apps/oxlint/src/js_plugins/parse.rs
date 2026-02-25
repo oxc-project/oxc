@@ -220,7 +220,6 @@ unsafe fn parse_raw_impl(
                 original_source_text,
                 &span_converter,
                 EstreeTokenOptions::linter(),
-                &allocator,
             );
 
             span_converter.convert_program(program);

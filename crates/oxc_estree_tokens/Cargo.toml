@@ -20,7 +20,6 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_estree = { workspace = true, features = ["serialize"] }

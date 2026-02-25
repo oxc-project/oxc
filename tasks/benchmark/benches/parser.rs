@@ -146,7 +146,6 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
                         program.source_text,
                         &span_converter,
                         EstreeTokenOptions::test262(),
-                        &allocator,
                     );
                     let tokens_json = black_box(tokens_json);
                     // Allocate tokens JSON into arena, same as linter and NAPI parser package do

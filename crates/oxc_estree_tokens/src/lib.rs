@@ -1,9 +1,14 @@
-use oxc_allocator::{Allocator, Vec as ArenaVec};
+use std::slice::Iter;
+
 use oxc_ast::ast::*;
-use oxc_ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16, walk};
+use oxc_ast_visit::{
+    Visit,
+    utf8_to_utf16::{Utf8ToUtf16, Utf8ToUtf16Converter},
+    walk,
+};
 use oxc_estree::{
     CompactFormatter, Config, ESTree, ESTreeSerializer, JsonSafeString, PrettyFormatter,
-    Serializer, StructSerializer,
+    SequenceSerializer, Serializer, StructSerializer,
 };
 use oxc_parser::{Kind, Token};
 use oxc_span::{GetSpan, Span};
@@ -119,17 +124,14 @@ pub fn to_estree_tokens_json(
     source_text: &str,
     span_converter: &Utf8ToUtf16,
     options: EstreeTokenOptions,
-    allocator: &Allocator,
 ) -> String {
     // Estimated size of a single token serialized to JSON, in bytes.
     // TODO: Estimate this better based on real-world usage.
     const BYTES_PER_TOKEN: usize = 64;
 
-    let estree_tokens =
-        to_estree_tokens(tokens, program, source_text, span_converter, options, allocator);
     let mut serializer =
-        CompactTokenSerializer::with_capacity(estree_tokens.len() * BYTES_PER_TOKEN, false);
-    estree_tokens.serialize(&mut serializer);
+        CompactTokenSerializer::with_capacity(tokens.len() * BYTES_PER_TOKEN, false);
+    serialize_tokens(&mut serializer, tokens, program, source_text, span_converter, options);
     serializer.into_string()
 }
 
@@ -146,84 +148,130 @@ pub fn to_estree_tokens_pretty_json(
     source_text: &str,
     span_converter: &Utf8ToUtf16,
     options: EstreeTokenOptions,
-    allocator: &Allocator,
 ) -> String {
     // Estimated size of a single token serialized to JSON, in bytes.
     // TODO: Estimate this better based on real-world usage.
     const BYTES_PER_TOKEN: usize = 64;
 
-    let estree_tokens =
-        to_estree_tokens(tokens, program, source_text, span_converter, options, allocator);
     let mut serializer =
-        PrettyTokenSerializer::with_capacity(estree_tokens.len() * BYTES_PER_TOKEN, false);
-    estree_tokens.serialize(&mut serializer);
+        PrettyTokenSerializer::with_capacity(tokens.len() * BYTES_PER_TOKEN, false);
+    serialize_tokens(&mut serializer, tokens, program, source_text, span_converter, options);
     serializer.into_string()
 }
 
-/// Convert `Token`s to `EstreeToken`s.
-fn to_estree_tokens<'a>(
+/// Walk AST and serialize each token to the serializer as it's encountered.
+///
+/// Tokens are consumed from the `tokens` slice in source order. When a visitor method
+/// encounters an AST node that requires a token type override (e.g. a keyword used as an
+/// identifier), it serializes all preceding tokens with their default types, then serializes
+/// the overridden token with its corrected type.
+fn serialize_tokens(
+    serializer: impl Serializer,
     tokens: &[Token],
-    program: &Program<'a>,
-    source_text: &'a str,
+    program: &Program<'_>,
+    source_text: &str,
     span_converter: &Utf8ToUtf16,
     options: EstreeTokenOptions,
-    allocator: &'a Allocator,
-) -> ArenaVec<'a, EstreeToken<'a>> {
-    // Traverse AST to collect details of tokens requiring correction, depending on provided options
+) {
     let mut context = EstreeTokenContext {
-        exclude_legacy_keyword_identifiers: options.exclude_legacy_keyword_identifiers,
-        jsx_namespace_jsx_identifiers: options.jsx_namespace_jsx_identifiers,
-        member_expr_in_jsx_expression_jsx_identifiers: options
-            .member_expr_in_jsx_expression_jsx_identifiers,
-        ..Default::default()
+        seq: serializer.serialize_sequence(),
+        tokens: tokens.iter(),
+        source_text,
+        span_converter: span_converter.converter(),
+        options,
+        jsx_expression_depth: 0,
+        jsx_member_expression_depth: 0,
+        jsx_computed_member_depth: 0,
     };
     context.visit_program(program);
+    context.finish();
+}
 
-    // Convert tokens to `EstreeToken`s
-    let mut span_converter = span_converter.converter();
+/// Visitor that walks the AST and serializes tokens as it encounters them.
+///
+/// Tokens are consumed from a slice in source order. When a visitor method encounters
+/// an AST node that requires a token type override, all preceding tokens are serialized
+/// with their default types, then the overridden token is serialized with its corrected type.
+/// After the AST walk, any remaining tokens are serialized with default types.
+struct EstreeTokenContext<'b, S: SequenceSerializer> {
+    /// JSON sequence serializer.
+    /// Tokens are serialized into this serializer.
+    seq: S,
+    /// Token iterator
+    tokens: Iter<'b, Token>,
+    /// Source text (for extracting token values)
+    source_text: &'b str,
+    /// Span converter for UTF-8 to UTF-16 conversion.
+    /// `None` if source is ASCII-only.
+    span_converter: Option<Utf8ToUtf16Converter<'b>>,
+    /// Options
+    options: EstreeTokenOptions,
+    // State
+    jsx_expression_depth: usize,
+    jsx_member_expression_depth: usize,
+    jsx_computed_member_depth: usize,
+}
 
-    let mut estree_tokens = ArenaVec::with_capacity_in(tokens.len(), allocator);
+impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
+    /// Serialize all tokens before `start` with default types,
+    /// then serialize the token at `start` with the given `token_type`.
+    fn emit_token_at(&mut self, start: u32, token_type: &'static str) {
+        let token = self.advance_to(start);
+        self.emit_token(token, token_type);
+    }
 
-    // If no overrides, use `u32::MAX` as span start.
-    // No token can start at `u32::MAX`, since source text is capped at `u32::MAX` bytes length.
-    let mut overrides = context.overrides.into_iter();
-    let (mut next_override_start, mut next_override_kind) =
-        overrides.next().unwrap_or((u32::MAX, TokenKindOverride::Identifier));
+    /// Emit the token at `start` as `"Identifier"`, unless it's a legacy keyword
+    /// and `exclude_legacy_keyword_identifiers` is set (in which case it gets its default type).
+    fn emit_identifier(&mut self, start: u32) {
+        let token = self.advance_to(start);
+        let token_type = if self.options.exclude_legacy_keyword_identifiers
+            && matches!(token.kind(), Kind::Yield | Kind::Let | Kind::Static)
+        {
+            "Keyword"
+        } else {
+            "Identifier"
+        };
+        self.emit_token(token, token_type);
+    }
 
-    for token in tokens {
+    /// Consume all tokens before `start` (emitting them with default types),
+    /// and return the token at `start`.
+    fn advance_to(&mut self, start: u32) -> &'b Token {
+        while let Some(token) = self.tokens.next() {
+            if token.start() < start {
+                self.emit_token(token, get_token_type(token.kind()));
+            } else {
+                debug_assert_eq!(
+                    token.start(),
+                    start,
+                    "Expected token at position {start}, found token at position {}",
+                    token.start(),
+                );
+                return token;
+            }
+        }
+        unreachable!("Expected token at position {start}");
+    }
+
+    /// Serialize a single token.
+    fn emit_token(&mut self, token: &Token, token_type: &'static str) {
         let kind = token.kind();
         let start = token.start();
         let end = token.end();
+        let value = &self.source_text[start as usize..end as usize];
+        let value = if kind == Kind::PrivateIdentifier { &value[1..] } else { value };
 
-        // Compare override start against original UTF-8 token start (before span conversion)
-        let token_type = if next_override_start == start {
-            let token_type = match next_override_kind {
-                TokenKindOverride::Identifier => "Identifier",
-                TokenKindOverride::JSXIdentifier => "JSXIdentifier",
-                TokenKindOverride::JSXText => "JSXText",
-            };
-
-            // Get next override
-            (next_override_start, next_override_kind) =
-                overrides.next().unwrap_or((u32::MAX, TokenKindOverride::Identifier));
-
-            token_type
-        } else {
-            get_token_type(kind)
-        };
-
-        let mut value = &source_text[start as usize..end as usize];
-
-        if kind == Kind::PrivateIdentifier {
-            value = &value[1..];
-        }
-
-        if options.decode_identifier_escapes
+        let decoded;
+        let value = if self.options.decode_identifier_escapes
             && token.escaped()
             && (kind.is_identifier_name() || kind == Kind::PrivateIdentifier)
+            && value.contains("\\u")
         {
-            value = decode_js_unicode_escapes(allocator, value);
-        }
+            decoded = decode_js_unicode_escapes(value);
+            decoded.as_str()
+        } else {
+            value
+        };
 
         let regex = if kind == Kind::RegExp {
             regex_parts(value).map(|(pattern, flags)| EstreeRegExpToken { pattern, flags })
@@ -233,67 +281,32 @@ fn to_estree_tokens<'a>(
 
         // Convert offsets to UTF-16
         let mut span = Span::new(start, end);
-        if let Some(span_converter) = span_converter.as_mut() {
-            span_converter.convert_span(&mut span);
+        if let Some(converter) = self.span_converter.as_mut() {
+            converter.convert_span(&mut span);
         }
 
-        estree_tokens.push(EstreeToken { token_type, value, regex, span });
+        let estree_token = EstreeToken { token_type, value, regex, span };
+        self.seq.serialize_element(&estree_token);
     }
 
-    estree_tokens
-}
-
-/// Override for a token's type, determined by AST context.
-/// Each span is assigned at most one override during the AST walk.
-#[derive(Debug, Clone, Copy)]
-enum TokenKindOverride {
-    /// Token is an identifier in the AST (overrides keyword `Kind`s like `yield`, `let`, etc).
-    Identifier,
-    /// Token is a JSX identifier.
-    JSXIdentifier,
-    /// Token is JSX text (a string literal in a JSX attribute).
-    JSXText,
-}
-
-#[derive(Default)]
-pub struct EstreeTokenContext {
-    // Options
-    exclude_legacy_keyword_identifiers: bool,
-    jsx_namespace_jsx_identifiers: bool,
-    member_expr_in_jsx_expression_jsx_identifiers: bool,
-    /// Token kind overrides, stored in source order.
-    /// Each entry is `(token_start_position, override)`.
-    overrides: Vec<(u32, TokenKindOverride)>,
-    // State
-    jsx_expression_depth: usize,
-    jsx_member_expression_depth: usize,
-    jsx_computed_member_depth: usize,
-}
-
-impl EstreeTokenContext {
-    fn set_override(&mut self, span: Span, token_override: TokenKindOverride) {
-        debug_assert!(
-            self.overrides.last().is_none_or(|&(prev_start, _)| span.start > prev_start),
-            "Out of order: {span:?} ({token_override:?}) not after previous start {}",
-            self.overrides.last().unwrap().0,
-        );
-
-        self.overrides.push((span.start, token_override));
-    }
-
-    fn set_identifier_override_unless_excluded(&mut self, span: Span, name: &str) {
-        if !self.exclude_legacy_keyword_identifiers || !matches!(name, "yield" | "let" | "static") {
-            self.set_override(span, TokenKindOverride::Identifier);
+    /// Serialize all remaining tokens and close the sequence.
+    fn finish(mut self) {
+        while let Some(token) = self.tokens.next() {
+            self.emit_token(token, get_token_type(token.kind()));
         }
+        self.seq.end();
     }
 }
 
-impl<'a> Visit<'a> for EstreeTokenContext {
+impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
     fn visit_ts_type_query(&mut self, type_query: &TSTypeQuery<'a>) {
-        fn collect_type_query_this(ctx: &mut EstreeTokenContext, type_name: &TSTypeName<'_>) {
+        fn collect_type_query_this<S: SequenceSerializer>(
+            ctx: &mut EstreeTokenContext<'_, S>,
+            type_name: &TSTypeName<'_>,
+        ) {
             match type_name {
                 TSTypeName::ThisExpression(this_expression) => {
-                    ctx.set_override(this_expression.span, TokenKindOverride::Identifier);
+                    ctx.emit_token_at(this_expression.span.start, "Identifier");
                 }
                 TSTypeName::QualifiedName(qualified_name) => {
                     collect_type_query_this(ctx, &qualified_name.left);
@@ -304,7 +317,7 @@ impl<'a> Visit<'a> for EstreeTokenContext {
 
         match &type_query.expr_name {
             TSTypeQueryExprName::ThisExpression(this_expression) => {
-                self.set_override(this_expression.span, TokenKindOverride::Identifier);
+                self.emit_token_at(this_expression.span.start, "Identifier");
             }
             TSTypeQueryExprName::QualifiedName(qualified_name) => {
                 collect_type_query_this(self, &qualified_name.left);
@@ -350,40 +363,40 @@ impl<'a> Visit<'a> for EstreeTokenContext {
 
     fn visit_identifier_name(&mut self, identifier: &IdentifierName<'a>) {
         // `JSXIdentifier` takes priority over `Identifier` in `token_type`,
-        // so `TokenKindOverride::Identifier` is redundant when `TokenKindOverride::JSXIdentifier` is set.
-        if self.member_expr_in_jsx_expression_jsx_identifiers
+        // so `"Identifier"` is redundant when `"JSXIdentifier"` is set.
+        if self.options.member_expr_in_jsx_expression_jsx_identifiers
             && self.jsx_expression_depth > 0
             && self.jsx_member_expression_depth > 0
             && self.jsx_computed_member_depth == 0
         {
-            self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
+            self.emit_token_at(identifier.span.start, "JSXIdentifier");
         } else {
-            self.set_identifier_override_unless_excluded(identifier.span, &identifier.name);
+            self.emit_identifier(identifier.span.start);
         }
     }
 
     fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
-        if self.member_expr_in_jsx_expression_jsx_identifiers
+        if self.options.member_expr_in_jsx_expression_jsx_identifiers
             && self.jsx_expression_depth > 0
             && self.jsx_member_expression_depth > 0
             && self.jsx_computed_member_depth == 0
         {
-            self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
+            self.emit_token_at(identifier.span.start, "JSXIdentifier");
         } else {
-            self.set_identifier_override_unless_excluded(identifier.span, &identifier.name);
+            self.emit_identifier(identifier.span.start);
         }
     }
 
     fn visit_binding_identifier(&mut self, identifier: &BindingIdentifier<'a>) {
-        self.set_identifier_override_unless_excluded(identifier.span, &identifier.name);
+        self.emit_identifier(identifier.span.start);
     }
 
     fn visit_label_identifier(&mut self, identifier: &LabelIdentifier<'a>) {
-        self.set_identifier_override_unless_excluded(identifier.span, &identifier.name);
+        self.emit_identifier(identifier.span.start);
     }
 
     fn visit_ts_this_parameter(&mut self, parameter: &TSThisParameter<'a>) {
-        self.set_override(parameter.this_span, TokenKindOverride::Identifier);
+        self.emit_token_at(parameter.this_span.start, "Identifier");
         walk::walk_ts_this_parameter(self, parameter);
     }
 
@@ -428,12 +441,12 @@ impl<'a> Visit<'a> for EstreeTokenContext {
     }
 
     fn visit_jsx_identifier(&mut self, identifier: &JSXIdentifier<'a>) {
-        self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
+        self.emit_token_at(identifier.span.start, "JSXIdentifier");
     }
 
     fn visit_jsx_element_name(&mut self, name: &JSXElementName<'a>) {
         if let JSXElementName::IdentifierReference(identifier) = name {
-            self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
+            self.emit_token_at(identifier.span.start, "JSXIdentifier");
         } else {
             walk::walk_jsx_element_name(self, name);
         }
@@ -441,19 +454,18 @@ impl<'a> Visit<'a> for EstreeTokenContext {
 
     fn visit_jsx_member_expression_object(&mut self, object: &JSXMemberExpressionObject<'a>) {
         if let JSXMemberExpressionObject::IdentifierReference(identifier) = object {
-            self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
+            self.emit_token_at(identifier.span.start, "JSXIdentifier");
         } else {
             walk::walk_jsx_member_expression_object(self, object);
         }
     }
 
     fn visit_jsx_namespaced_name(&mut self, name: &JSXNamespacedName<'a>) {
-        if self.jsx_namespace_jsx_identifiers {
-            self.set_override(name.namespace.span, TokenKindOverride::JSXIdentifier);
-            self.set_override(name.name.span, TokenKindOverride::JSXIdentifier);
+        if self.options.jsx_namespace_jsx_identifiers {
+            self.emit_token_at(name.namespace.span.start, "JSXIdentifier");
+            self.emit_token_at(name.name.span.start, "JSXIdentifier");
         }
-        // When `!jsx_namespace_jsx_identifiers`, these spans are not marked,
-        // so they retain their default token kind
+        // When `!jsx_namespace_jsx_identifiers`, these tokens retain their default type
     }
 
     fn visit_jsx_expression_container(&mut self, container: &JSXExpressionContainer<'a>) {
@@ -493,11 +505,11 @@ impl<'a> Visit<'a> for EstreeTokenContext {
     fn visit_jsx_attribute(&mut self, attribute: &JSXAttribute<'a>) {
         // Manual walk.
         // * `name`: Visit normally.
-        // * `value`: Set `JSXText` override if is a `StringLiteral`.
+        // * `value`: Set `JSXText` token type if is a `StringLiteral`.
         self.visit_jsx_attribute_name(&attribute.name);
         match &attribute.value {
             Some(JSXAttributeValue::StringLiteral(string_literal)) => {
-                self.set_override(string_literal.span, TokenKindOverride::JSXText);
+                self.emit_token_at(string_literal.span.start, "JSXText");
             }
             Some(value) => self.visit_jsx_attribute_value(value),
             None => {}
@@ -551,10 +563,8 @@ fn regex_parts(raw: &str) -> Option<(&str, &str)> {
     None
 }
 
-fn decode_js_unicode_escapes<'a>(allocator: &'a Allocator, raw: &'a str) -> &'a str {
-    if !raw.contains("\\u") {
-        return raw;
-    }
+fn decode_js_unicode_escapes(raw: &str) -> String {
+    debug_assert!(raw.contains("\\u"));
 
     let bytes = raw.as_bytes();
     let mut output = String::with_capacity(raw.len());
@@ -593,5 +603,5 @@ fn decode_js_unicode_escapes<'a>(allocator: &'a Allocator, raw: &'a str) -> &'a 
         i += ch.len_utf8();
     }
 
-    allocator.alloc_str(&output)
+    output
 }
