@@ -1,11 +1,11 @@
-use rustc_hash::FxHashSet;
+use rustc_hash::FxHashMap;
 use serde::Serialize;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16, walk};
 use oxc_parser::{Kind, Token};
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 #[derive(Serialize)]
 pub struct EstreeToken<'a> {
@@ -129,20 +129,15 @@ fn to_estree_tokens<'a>(
         }
         let span_utf16 = Span::new(start, end);
 
-        let is_ast_identifier = context.ast_identifier_spans.contains(&span_utf16);
-        let is_ast_identifier = if options.exclude_legacy_keyword_identifiers {
-            is_ast_identifier && !matches!(kind, Kind::Yield | Kind::Let | Kind::Static)
-        } else {
-            is_ast_identifier
-        };
-        let token_type = token_type(
-            kind,
-            is_ast_identifier,
-            context.force_keyword_spans.contains(&span_utf16),
-            context.jsx_identifier_spans.contains(&span_utf16)
-                && !context.non_jsx_identifier_spans.contains(&span_utf16),
-            context.jsx_text_spans.contains(&span_utf16),
-        );
+        let mut token_override = context.overrides.get(&span_utf16.start).copied();
+        // Exclude legacy keyword identifiers if option is set
+        if matches!(token_override, Some(TokenKindOverride::Identifier))
+            && options.exclude_legacy_keyword_identifiers
+            && matches!(kind, Kind::Yield | Kind::Let | Kind::Static)
+        {
+            token_override = None;
+        }
+        let token_type = token_type(kind, token_override);
 
         let source_value =
             if kind == Kind::PrivateIdentifier { &source_value[1..] } else { source_value };
@@ -166,29 +161,52 @@ fn to_estree_tokens<'a>(
     estree_tokens
 }
 
+/// Override for a token's type, determined by AST context.
+/// Each span is assigned at most one override during the AST walk.
+#[derive(Debug, Clone, Copy)]
+enum TokenKindOverride {
+    /// Token is an identifier in the AST (overrides keyword `Kind`s like `yield`, `let`, etc).
+    Identifier,
+    /// Token is a JSX identifier.
+    JSXIdentifier,
+    /// Token is JSX text (a string literal in a JSX attribute).
+    JSXText,
+}
+
 #[derive(Default)]
 pub struct EstreeTokenContext {
+    // Options
     jsx_namespace_jsx_identifiers: bool,
     member_expr_in_jsx_expression_jsx_identifiers: bool,
-    ast_identifier_spans: FxHashSet<Span>,
-    force_keyword_spans: FxHashSet<Span>,
-    jsx_identifier_spans: FxHashSet<Span>,
-    non_jsx_identifier_spans: FxHashSet<Span>,
-    jsx_text_spans: FxHashSet<Span>,
+    /// Token kind overrides keyed by span start position.
+    /// Each token maps to a single `TokenKindOverride` indicating how its token type
+    /// should differ from the default determined by `Kind`.
+    overrides: FxHashMap<u32, TokenKindOverride>,
+    // State
     jsx_expression_depth: usize,
     jsx_member_expression_depth: usize,
     jsx_computed_member_depth: usize,
 }
 
+impl EstreeTokenContext {
+    fn set_override(&mut self, span: Span, token_override: TokenKindOverride) {
+        let previous = self.overrides.insert(span.start, token_override);
+        debug_assert!(
+            previous.is_none(),
+            "Double override: span {span:?} already has {previous:?}, setting {token_override:?}"
+        );
+    }
+}
+
 impl<'a> Visit<'a> for EstreeTokenContext {
     fn visit_ts_type_query(&mut self, type_query: &TSTypeQuery<'a>) {
-        fn collect_type_query_this(spans: &mut FxHashSet<Span>, type_name: &TSTypeName<'_>) {
+        fn collect_type_query_this(ctx: &mut EstreeTokenContext, type_name: &TSTypeName<'_>) {
             match type_name {
                 TSTypeName::ThisExpression(this_expression) => {
-                    spans.insert(this_expression.span);
+                    ctx.set_override(this_expression.span, TokenKindOverride::Identifier);
                 }
                 TSTypeName::QualifiedName(qualified_name) => {
-                    collect_type_query_this(spans, &qualified_name.left);
+                    collect_type_query_this(ctx, &qualified_name.left);
                 }
                 TSTypeName::IdentifierReference(_) => {}
             }
@@ -196,10 +214,10 @@ impl<'a> Visit<'a> for EstreeTokenContext {
 
         match &type_query.expr_name {
             TSTypeQueryExprName::ThisExpression(this_expression) => {
-                self.ast_identifier_spans.insert(this_expression.span);
+                self.set_override(this_expression.span, TokenKindOverride::Identifier);
             }
             TSTypeQueryExprName::QualifiedName(qualified_name) => {
-                collect_type_query_this(&mut self.ast_identifier_spans, &qualified_name.left);
+                collect_type_query_this(self, &qualified_name.left);
             }
             TSTypeQueryExprName::IdentifierReference(_) | TSTypeQueryExprName::TSImportType(_) => {}
         }
@@ -208,93 +226,144 @@ impl<'a> Visit<'a> for EstreeTokenContext {
     }
 
     fn visit_ts_import_type(&mut self, import_type: &TSImportType<'a>) {
+        // Manual walk.
+        // * `source` is a `StringLiteral` — can't contain identifiers, so we skip visiting it.
+        // * `options` is an `ObjectExpression`. Manually walk each property, but don't visit the key if it's `with`,
+        //   as it needs to remain "Keyword" token, not get converted to "Identifier".
+        // * `qualifier` and `type_arguments` are visited as usual.
         if let Some(options) = &import_type.options {
             for property in &options.properties {
-                if let ObjectPropertyKind::ObjectProperty(property) = property
-                    && let PropertyKey::StaticIdentifier(identifier) = &property.key
-                    && identifier.name == "with"
-                {
-                    self.force_keyword_spans.insert(identifier.span);
+                match property {
+                    ObjectPropertyKind::ObjectProperty(property) => {
+                        let is_with_key = matches!(
+                            &property.key,
+                            PropertyKey::StaticIdentifier(id) if id.name == "with"
+                        );
+                        if !is_with_key {
+                            self.visit_property_key(&property.key);
+                        }
+                        self.visit_expression(&property.value);
+                    }
+                    ObjectPropertyKind::SpreadProperty(spread) => {
+                        self.visit_spread_element(spread);
+                    }
                 }
             }
         }
-        walk::walk_ts_import_type(self, import_type);
+        if let Some(qualifier) = &import_type.qualifier {
+            self.visit_ts_import_type_qualifier(qualifier);
+        }
+        if let Some(type_arguments) = &import_type.type_arguments {
+            self.visit_ts_type_parameter_instantiation(type_arguments);
+        }
     }
 
     fn visit_identifier_name(&mut self, identifier: &IdentifierName<'a>) {
-        self.ast_identifier_spans.insert(identifier.span);
+        // `JSXIdentifier` takes priority over `Identifier` in `token_type`,
+        // so `TokenKindOverride::Identifier` is redundant when `TokenKindOverride::JSXIdentifier` is set.
         if self.member_expr_in_jsx_expression_jsx_identifiers
             && self.jsx_expression_depth > 0
             && self.jsx_member_expression_depth > 0
             && self.jsx_computed_member_depth == 0
         {
-            self.jsx_identifier_spans.insert(identifier.span);
+            self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
+        } else {
+            self.set_override(identifier.span, TokenKindOverride::Identifier);
         }
     }
 
     fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
-        self.ast_identifier_spans.insert(identifier.span);
         if self.member_expr_in_jsx_expression_jsx_identifiers
             && self.jsx_expression_depth > 0
             && self.jsx_member_expression_depth > 0
             && self.jsx_computed_member_depth == 0
         {
-            self.jsx_identifier_spans.insert(identifier.span);
+            self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
+        } else {
+            self.set_override(identifier.span, TokenKindOverride::Identifier);
         }
     }
 
     fn visit_binding_identifier(&mut self, identifier: &BindingIdentifier<'a>) {
-        self.ast_identifier_spans.insert(identifier.span);
+        self.set_override(identifier.span, TokenKindOverride::Identifier);
     }
 
     fn visit_label_identifier(&mut self, identifier: &LabelIdentifier<'a>) {
-        self.ast_identifier_spans.insert(identifier.span);
+        self.set_override(identifier.span, TokenKindOverride::Identifier);
     }
 
     fn visit_ts_this_parameter(&mut self, parameter: &TSThisParameter<'a>) {
-        self.ast_identifier_spans.insert(parameter.this_span);
+        self.set_override(parameter.this_span, TokenKindOverride::Identifier);
         walk::walk_ts_this_parameter(self, parameter);
     }
 
-    fn visit_meta_property(&mut self, meta_property: &MetaProperty<'a>) {
-        self.force_keyword_spans.insert(meta_property.meta.span);
-        walk::walk_meta_property(self, meta_property);
+    fn visit_meta_property(&mut self, _meta_property: &MetaProperty<'a>) {
+        // Don't walk.
+        // * `meta` (either `import` or `new`) has a "Keyword" token already, which is correct.
+        // * `property` (either `meta` or `target`) has an "Identifier" token, which is correct.
     }
 
-    fn visit_with_clause(&mut self, with_clause: &WithClause<'a>) {
-        if matches!(with_clause.keyword, WithClauseKeyword::With) {
-            let span = Span::new(with_clause.span.start, with_clause.span.start + 4);
-            self.force_keyword_spans.insert(span);
+    fn visit_object_property(&mut self, property: &ObjectProperty<'a>) {
+        // For shorthand `{ x }`, key and value share the same span.
+        // Skip the key to avoid double-flagging.
+        if !property.shorthand {
+            self.visit_property_key(&property.key);
         }
-        walk::walk_with_clause(self, with_clause);
+        self.visit_expression(&property.value);
+    }
+
+    fn visit_binding_property(&mut self, property: &BindingProperty<'a>) {
+        if !property.shorthand {
+            self.visit_property_key(&property.key);
+        }
+        self.visit_binding_pattern(&property.value);
+    }
+
+    fn visit_import_specifier(&mut self, specifier: &ImportSpecifier<'a>) {
+        // For `import { x }`, `imported` and `local` share the same span.
+        // Only visit `imported` when it differs from `local`.
+        if specifier.imported.span() != specifier.local.span {
+            self.visit_module_export_name(&specifier.imported);
+        }
+        self.visit_binding_identifier(&specifier.local);
+    }
+
+    fn visit_export_specifier(&mut self, specifier: &ExportSpecifier<'a>) {
+        // For `export { x }`, `local` and `exported` share the same span.
+        // Only visit `exported` when it differs from `local`.
+        self.visit_module_export_name(&specifier.local);
+        if specifier.exported.span() != specifier.local.span() {
+            self.visit_module_export_name(&specifier.exported);
+        }
     }
 
     fn visit_jsx_identifier(&mut self, identifier: &JSXIdentifier<'a>) {
-        self.jsx_identifier_spans.insert(identifier.span);
+        self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
     }
 
     fn visit_jsx_element_name(&mut self, name: &JSXElementName<'a>) {
         if let JSXElementName::IdentifierReference(identifier) = name {
-            self.jsx_identifier_spans.insert(identifier.span);
+            self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
+        } else {
+            walk::walk_jsx_element_name(self, name);
         }
-        walk::walk_jsx_element_name(self, name);
     }
 
     fn visit_jsx_member_expression_object(&mut self, object: &JSXMemberExpressionObject<'a>) {
         if let JSXMemberExpressionObject::IdentifierReference(identifier) = object {
-            self.jsx_identifier_spans.insert(identifier.span);
+            self.set_override(identifier.span, TokenKindOverride::JSXIdentifier);
+        } else {
+            walk::walk_jsx_member_expression_object(self, object);
         }
-        walk::walk_jsx_member_expression_object(self, object);
     }
 
     fn visit_jsx_namespaced_name(&mut self, name: &JSXNamespacedName<'a>) {
         if self.jsx_namespace_jsx_identifiers {
-            self.jsx_identifier_spans.insert(name.namespace.span);
-            self.jsx_identifier_spans.insert(name.name.span);
-        } else {
-            self.non_jsx_identifier_spans.insert(name.namespace.span);
-            self.non_jsx_identifier_spans.insert(name.name.span);
+            self.set_override(name.namespace.span, TokenKindOverride::JSXIdentifier);
+            self.set_override(name.name.span, TokenKindOverride::JSXIdentifier);
         }
+        // When `!jsx_namespace_jsx_identifiers`, these spans are not marked,
+        // so they retain their default token kind
     }
 
     fn visit_jsx_expression_container(&mut self, container: &JSXExpressionContainer<'a>) {
@@ -332,31 +401,27 @@ impl<'a> Visit<'a> for EstreeTokenContext {
     }
 
     fn visit_jsx_attribute(&mut self, attribute: &JSXAttribute<'a>) {
-        if let Some(JSXAttributeValue::StringLiteral(string_literal)) = &attribute.value {
-            self.jsx_text_spans.insert(string_literal.span);
+        // Manual walk.
+        // * `name`: Visit normally.
+        // * `value`: Set `JSXText` override if is a `StringLiteral`.
+        self.visit_jsx_attribute_name(&attribute.name);
+        match &attribute.value {
+            Some(JSXAttributeValue::StringLiteral(string_literal)) => {
+                self.set_override(string_literal.span, TokenKindOverride::JSXText);
+            }
+            Some(value) => self.visit_jsx_attribute_value(value),
+            None => {}
         }
-        walk::walk_jsx_attribute(self, attribute);
     }
 }
 
-fn token_type(
-    kind: Kind,
-    is_ast_identifier: bool,
-    is_forced_keyword: bool,
-    is_jsx_identifier: bool,
-    is_jsx_text: bool,
-) -> &'static str {
-    if is_jsx_identifier {
-        return "JSXIdentifier";
-    }
-    if is_jsx_text {
-        return "JSXText";
-    }
-    if is_forced_keyword {
-        return "Keyword";
-    }
-    if is_ast_identifier {
-        return "Identifier";
+fn token_type(kind: Kind, token_override: Option<TokenKindOverride>) -> &'static str {
+    if let Some(token_override) = token_override {
+        return match token_override {
+            TokenKindOverride::Identifier => "Identifier",
+            TokenKindOverride::JSXIdentifier => "JSXIdentifier",
+            TokenKindOverride::JSXText => "JSXText",
+        };
     }
 
     match kind {
