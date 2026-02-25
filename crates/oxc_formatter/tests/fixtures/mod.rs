@@ -3,8 +3,8 @@ use std::{env::current_dir, fs, path::Path};
 use oxc_allocator::Allocator;
 use oxc_formatter::{
     ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, Formatter, IndentStyle,
-    IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
-    get_parse_options,
+    IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons,
+    TrailingCommas, get_parse_options,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -126,6 +126,15 @@ fn parse_format_options(json: &OptionSet) -> FormatOptions {
                         "preserve" => QuoteProperties::Preserve,
                         "consistent" => QuoteProperties::Consistent,
                         _ => QuoteProperties::default(),
+                    };
+                }
+            }
+            "experimentalOperatorPosition" => {
+                if let Some(s) = value.as_str() {
+                    options.experimental_operator_position = match s {
+                        "start" => OperatorPosition::Start,
+                        "end" => OperatorPosition::End,
+                        _ => options.experimental_operator_position,
                     };
                 }
             }
