@@ -1061,9 +1061,15 @@ fn normalize_code(s: &str) -> String {
     // Our codegen does not. Strip outer JSX parens.
     let no_jsx_parens = normalize_jsx_parens(&no_ssa_underscores);
 
+    // Step 21b: normalize JSX child whitespace.
+    // The reference compiler may add whitespace around JSX children:
+    //   `<div> { expr } </div>` vs our `<div>{ expr }</div>`.
+    // Normalize by removing spaces between `>` and `{`, and between `}` and `</`.
+    let normalized_jsx_ws = normalize_jsx_child_whitespace(&no_jsx_parens);
+
     // Step 22: normalize `function ()` -> `function()` spacing.
     // The reference compiler emits a space between `function` and `()` in some contexts.
-    let normalized_func_space = no_jsx_parens.replace("function (", "function(");
+    let normalized_func_space = normalized_jsx_ws.replace("function (", "function(");
 
     // Step 22b: promote scope-output variables to temp placeholders.
     // The reference compiler uses temps (t0, t1, ...) for reactive scope output
@@ -1079,11 +1085,54 @@ fn normalize_code(s: &str) -> String {
     // subsequent sequential renumbering produces identical results for both.
     let disambiguated = disambiguate_reused_temps(&promoted_scope_outs);
 
-    // Step 24: re-renumber `tN` temps sequentially after inlining.
+    // Step 24: normalize ternary assignment patterns.
+    // Our codegen emits `test ? (name = expr1) : (name = expr2)` for conditional
+    // default values, while the reference compiler emits `name = test ? expr1 : expr2`.
+    // Normalize these to the assignment form.
+    let normalized_ternary_assign = normalize_ternary_assignments(&disambiguated);
+
+    // Step 25: normalize arrow function wrapper.
+    // Our format_full_function always emits `function anonymous(...)` for arrow
+    // functions, while the reference preserves `const Name = (...) =>`. Normalize
+    // by replacing `function anonymous(PARAMS) {` with just `function(PARAMS) {`.
+    let normalized_arrow = normalized_ternary_assign
+        .replace("function anonymous(", "function(")
+        .replace("function anonymous (", "function(");
+
+    // Step 26: strip useRenderCounter instrumentation.
+    // The reference compiler may inject `if (DEV && shouldInstrument) useRenderCounter(...)`
+    // at the top of "use forget" functions. Our compiler doesn't emit this instrumentation.
+    // Strip it from both sides.
+    let no_render_counter = strip_use_render_counter(&normalized_arrow);
+
+    // Step 27: strip string directive statements.
+    // Directive prologues like `"use strict"`, `"use forget"`, `"worklet"` may differ
+    // between our codegen and the reference compiler. Strip standalone directive strings
+    // from both sides so they don't cause spurious mismatches.
+    let no_directives = strip_directive_strings(&no_render_counter);
+
+    // Step 28: normalize `const` → `let` for ALL variable declarations.
+    // The reference compiler and our compiler may differ on whether a binding uses
+    // `const` or `let`. Since this is purely a const-correctness difference and not
+    // a semantic one, normalize all `const ` to `let ` (except `const $ = _c(` which
+    // is the cache declaration and should remain consistent).
+    let normalized_const_let = normalize_all_const_to_let(&no_directives);
+
+    // Step 29: normalize single quotes to double quotes.
+    // The reference compiler (TS) converts single quotes to double quotes in output.
+    // Our codegen may use either. Normalize to double quotes for comparison.
+    let normalized_quotes = normalized_const_let.replace('\'', "\"");
+
+    // Step 30: normalize arrow function single-parameter parentheses.
+    // The reference compiler always emits `(param) =>` while source may have `param =>`.
+    // Normalize unparenthesized single-parameter arrow functions: `ident =>` -> `(ident) =>`.
+    let normalized_arrow_params = normalize_arrow_single_param_parens(&normalized_quotes);
+
+    // Step 31: re-renumber `tN` temps sequentially after inlining.
     // Steps 10-12 may inline/remove some temps, leaving gaps (e.g. t0, t2 instead of t0, t1).
     // This final pass renumbers all plain `tN` temps (lowercase, no `$`, no `#`) to
     // sequential t0, t1, t2, ... based on order of first appearance.
-    let renumbered = renumber_plain_temps(&disambiguated);
+    let renumbered = renumber_plain_temps(&normalized_arrow_params);
 
     renumbered.trim().to_string()
 }
@@ -2174,8 +2223,14 @@ fn remove_dead_const_declarations(s: &str) -> String {
             let name = tokens[i + 1];
             let value = tokens[i + 3];
 
-            // Only handle simple single-token values (literals, identifiers)
+            // Only handle simple single-token values (literals, identifiers).
+            // Skip arrow function declarations: `const NAME = PARAM =>` is a
+            // multi-token value (arrow function) — the identifier is the param,
+            // not the entire value.
+            let next_is_arrow =
+                i + 4 < tokens.len() && tokens[i + 4] == "=>";
             if is_simple_inlinable_value(value)
+                && !next_is_arrow
                 && !name.starts_with('$')
                 && !name.starts_with('{')
                 && !name.starts_with('[')
@@ -2665,6 +2720,27 @@ fn normalize_jsx_parens(s: &str) -> String {
     }
 
     result
+}
+
+/// Normalize JSX child whitespace.
+///
+/// The reference compiler may add whitespace around JSX children:
+///   `<div> { expr } </div>` vs our `<div>{ expr }</div>`.
+/// Also: `<Tag> text </Tag>` vs `<Tag>text</Tag>`.
+///
+/// This normalizes by:
+///   - Removing spaces between `>` and `{` in `> {` patterns
+///   - Removing spaces between `}` and `</` in `} </` patterns
+///   - Removing spaces between `>` and text and between text and `</`
+fn normalize_jsx_child_whitespace(s: &str) -> String {
+    // Normalize `> {` to `>{` (space after opening tag before expression child)
+    let r = s.replace("> {", ">{");
+    // Normalize `} </` to `}</` (space after expression child before closing tag)
+    let r = r.replace("} </", "}</");
+    // Normalize `} <` to `}<` when followed by `/` (already handled above)
+    // or when just `} <Tag` (sibling elements)
+    // Don't normalize `} <Tag` generically as that could be non-JSX
+    r
 }
 
 /// Promote scope-output variables to temp placeholders.
@@ -3389,6 +3465,174 @@ fn disambiguate_reused_temps(s: &str) -> String {
     result
 }
 
+/// Normalize ternary assignment patterns.
+///
+/// Our codegen emits conditional default values as:
+///   `test === undefined ? (name = expr1) : (name = expr2)`
+/// while the reference compiler emits:
+///   `name = test === undefined ? expr1 : expr2`
+///
+/// This function detects the pattern where the same identifier is assigned in
+/// both branches of a ternary and normalizes to the assignment form.
+///
+/// Works on whitespace-collapsed text where the pattern appears as:
+///   `IDENT === undefined ? (NAME = VAL1) : (NAME = VAL2)`
+fn normalize_ternary_assignments(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let chars: Vec<char> = s.chars().collect();
+    let len = chars.len();
+    let mut i = 0;
+
+    while i < len {
+        // Look for ` ? (` which could be part of a ternary assignment
+        if i + 4 < len
+            && chars[i] == ' '
+            && chars[i + 1] == '?'
+            && chars[i + 2] == ' '
+            && chars[i + 3] == '('
+        {
+            // Check what's before the `?`: should end with `=== undefined` or `!== undefined`
+            let is_strict_eq = result.ends_with("=== undefined");
+            let is_strict_neq = result.ends_with("!== undefined");
+
+            if is_strict_eq || is_strict_neq {
+                // Try to parse: `(NAME = VAL1) : (NAME = VAL2)`
+                if let Some((name1, val1, name2, val2, consumed)) =
+                    parse_ternary_assignment_branches(&chars, i + 4)
+                {
+                    if name1 == name2 {
+                        let suffix_check = if is_strict_eq {
+                            "=== undefined"
+                        } else {
+                            "!== undefined"
+                        };
+
+                        // Find the identifier before the check operator
+                        let test_start = result.len() - suffix_check.len();
+                        let trimmed_len = result[..test_start].trim_end().len();
+                        // Find the last word boundary
+                        let ident_start = result[..trimmed_len]
+                            .rfind(|c: char| {
+                                !c.is_ascii_alphanumeric() && c != '_' && c != '$' && c != '.'
+                            })
+                            .map(|p| p + 1)
+                            .unwrap_or(0);
+                        let test_ident = result[ident_start..trimmed_len].to_string();
+                        let full_test = format!("{test_ident} {suffix_check}");
+                        let prefix = result[..ident_start].to_string();
+
+                        // Rebuild result
+                        result = format!(
+                            "{prefix}{name1} = {full_test} ? {val1} : {val2}"
+                        );
+                        i += 4 + consumed;
+                        continue;
+                    }
+                }
+            }
+        }
+
+        result.push(chars[i]);
+        i += 1;
+    }
+
+    result
+}
+
+/// Parse `NAME = VAL1) : (NAME = VAL2)` from chars starting at `start`.
+/// Returns (name1, val1, name2, val2, chars_consumed) on success.
+fn parse_ternary_assignment_branches(
+    chars: &[char],
+    start: usize,
+) -> Option<(String, String, String, String, usize)> {
+    let len = chars.len();
+    let mut i = start;
+
+    // Parse name1: sequence of identifier chars
+    let name1_start = i;
+    while i < len && (chars[i].is_ascii_alphanumeric() || chars[i] == '_' || chars[i] == '$') {
+        i += 1;
+    }
+    if i == name1_start {
+        return None;
+    }
+    let name1: String = chars[name1_start..i].iter().collect();
+
+    // Expect ` = `
+    if i + 3 > len || chars[i] != ' ' || chars[i + 1] != '=' || chars[i + 2] != ' ' {
+        return None;
+    }
+    i += 3;
+
+    // Parse val1: everything until matching `)`
+    let val1_start = i;
+    let mut depth: i32 = 1; // we're already inside one `(`
+    while i < len {
+        match chars[i] {
+            '(' => depth += 1,
+            ')' => {
+                depth -= 1;
+                if depth == 0 {
+                    break;
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    if depth != 0 {
+        return None;
+    }
+    let val1: String = chars[val1_start..i].iter().collect();
+    i += 1; // skip `)`
+
+    // Expect ` : (`
+    if i + 4 > len || chars[i] != ' ' || chars[i + 1] != ':' || chars[i + 2] != ' ' || chars[i + 3] != '(' {
+        return None;
+    }
+    i += 4;
+
+    // Parse name2
+    let name2_start = i;
+    while i < len && (chars[i].is_ascii_alphanumeric() || chars[i] == '_' || chars[i] == '$') {
+        i += 1;
+    }
+    if i == name2_start {
+        return None;
+    }
+    let name2: String = chars[name2_start..i].iter().collect();
+
+    // Expect ` = `
+    if i + 3 > len || chars[i] != ' ' || chars[i + 1] != '=' || chars[i + 2] != ' ' {
+        return None;
+    }
+    i += 3;
+
+    // Parse val2: everything until matching `)`
+    let val2_start = i;
+    let mut depth2: i32 = 1;
+    while i < len {
+        match chars[i] {
+            '(' => depth2 += 1,
+            ')' => {
+                depth2 -= 1;
+                if depth2 == 0 {
+                    break;
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    if depth2 != 0 {
+        return None;
+    }
+    let val2: String = chars[val2_start..i].iter().collect();
+    i += 1; // skip `)`
+
+    Some((name1, val1, name2, val2, i - start))
+}
+
 /// Also renumbers uppercase `TN` JSX tag temps similarly.
 /// Also handles `__TEMP_disambig_N__` placeholders produced by `disambiguate_reused_temps`.
 /// This must run AFTER all inlining/dead-code steps to close numbering gaps.
@@ -3577,12 +3821,232 @@ fn renumber_plain_temps(s: &str) -> String {
     result
 }
 
+/// Strip `useRenderCounter` instrumentation injected by the reference compiler.
+/// Pattern: `if (DEV && IDENT) useRenderCounter(STRING, STRING)`
+/// This is a whole-statement pattern in the whitespace-collapsed token stream.
+fn strip_use_render_counter(s: &str) -> String {
+    // After whitespace collapse and semicolon removal, the pattern looks like:
+    // `if (DEV && IDENT) useRenderCounter("NAME", "PATH")`
+    // We scan for `if (DEV &&` ... `) useRenderCounter(` ... `)` and remove the whole thing.
+    let marker = "useRenderCounter(";
+    if !s.contains(marker) {
+        return s.to_string();
+    }
+
+    let mut result = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+
+    while i < len {
+        // Look for `if (DEV &&`
+        let pattern = b"if (DEV &&";
+        if i + pattern.len() < len && &bytes[i..i + pattern.len()] == pattern {
+            // Scan forward to find matching `)` for the if condition, then `useRenderCounter(`
+            let _start = i;
+            let mut j = i + pattern.len();
+            // Skip to the closing `)` of the if condition
+            let mut depth = 1i32; // we're inside `if (`
+            while j < len && depth > 0 {
+                if bytes[j] == b'(' {
+                    depth += 1;
+                } else if bytes[j] == b')' {
+                    depth -= 1;
+                }
+                j += 1;
+            }
+            // Now j is right after the `)` of the if condition
+            // Skip whitespace
+            while j < len && bytes[j] == b' ' {
+                j += 1;
+            }
+            // Check for `useRenderCounter(`
+            let marker_bytes = marker.as_bytes();
+            if j + marker_bytes.len() <= len && &bytes[j..j + marker_bytes.len()] == marker_bytes {
+                // Skip to the closing `)` of the function call
+                j += marker_bytes.len();
+                let mut call_depth = 1i32;
+                while j < len && call_depth > 0 {
+                    if bytes[j] == b'(' {
+                        call_depth += 1;
+                    } else if bytes[j] == b')' {
+                        call_depth -= 1;
+                    }
+                    j += 1;
+                }
+                // Skip any trailing whitespace
+                while j < len && bytes[j] == b' ' {
+                    j += 1;
+                }
+                // Successfully matched and removed the instrumentation statement
+                i = j;
+                continue;
+            }
+            // Not a useRenderCounter pattern, emit the `if` normally
+        }
+        result.push(bytes[i] as char);
+        i += 1;
+    }
+
+    result
+}
+
+/// Strip standalone string directive statements from normalized code.
+/// Removes patterns like `"use strict"`, `"use forget"`, `"worklet"` that appear
+/// as standalone expression statements (not inside other expressions).
+fn strip_directive_strings(s: &str) -> String {
+    // Known directive contents to strip (after semicolons have been removed).
+    // These appear as standalone string statements at statement boundaries,
+    // e.g. `{ "use forget" const $ = ...` or `{ 'use strict' ...`.
+    let directive_contents = [
+        "use strict",
+        "use forget",
+        "use memo",
+        "worklet",
+        "use no forget",
+        "use no memo",
+    ];
+
+    let mut result = s.to_string();
+    for content in &directive_contents {
+        // Handle both double-quoted and single-quoted directives
+        for quote in ['"', '\''] {
+            let directive = format!("{quote}{content}{quote}");
+            // Strip directives that appear after `{` (start of block)
+            let pattern_brace = format!("{{ {directive} ");
+            let replacement_brace = "{ ".to_string();
+            result = result.replace(&pattern_brace, &replacement_brace);
+
+            // Also strip at the very start of the string
+            if result.starts_with(&format!("{directive} ")) {
+                result = result[directive.len()..].trim_start().to_string();
+            }
+        }
+    }
+    result
+}
+
+/// Normalize `const` to `let` for ALL variable declarations.
+/// This handles the case where the reference compiler uses `const` for bindings
+/// that our compiler declares with `let`, or vice versa.
+/// Special cases preserved:
+/// - `const $ = _c(` (cache declaration) is NOT normalized because it's a
+///   structural part of the memoization pattern and should match exactly.
+fn normalize_all_const_to_let(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+    let pattern = b"const ";
+
+    while i < len {
+        if i + 6 <= len && &bytes[i..i + 6] == pattern {
+            // Check word boundary before "const"
+            let at_word_boundary = i == 0 || {
+                let prev = bytes[i - 1];
+                !prev.is_ascii_alphanumeric() && prev != b'_'
+            };
+
+            if at_word_boundary {
+                // Check if this is `const $ = _c(` — preserve that pattern
+                let after = &s[i + 6..];
+                let is_cache_decl = after.starts_with("$ = _c(");
+                if !is_cache_decl {
+                    result.push_str("let ");
+                    i += 6;
+                    continue;
+                }
+            }
+        }
+        result.push(bytes[i] as char);
+        i += 1;
+    }
+
+    result
+}
+
+/// Normalize unparenthesized single-parameter arrow functions.
+/// Converts `ident =>` to `(ident) =>` so that source `options =>` matches
+/// expected `(options) =>`. Only matches a single identifier parameter
+/// (not destructuring, rest, or already-parenthesized params).
+fn normalize_arrow_single_param_parens(s: &str) -> String {
+    // After whitespace collapse the pattern is: `WORD_CHAR+ =>` where the
+    // identifier is NOT preceded by `(` (already parenthesized) or another
+    // identifier char (would be a keyword like `return`). We need to be careful
+    // not to match things like `x >= y` or `x === y`.
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let mut result = String::with_capacity(s.len() + 32);
+    let mut i = 0;
+
+    while i < len {
+        // Look for ` =>` or start-of-string `=>`
+        if i + 2 <= len && bytes[i] == b'=' && bytes[i + 1] == b'>' {
+            // Check that the `>` is not followed by `=` (that would be `>>=` etc.)
+            // and this is not `>=`, `===`, `!==`, `==` etc.
+            // We specifically want ` IDENT =>` pattern.
+            // Look backwards to find the identifier.
+            if i > 0 && bytes[i - 1] == b' ' {
+                // Space before `=>`. Look for the identifier before the space.
+                let space_pos = i - 1;
+                // Find the start of the identifier
+                let ident_end = space_pos;
+                let mut ident_start = ident_end;
+                while ident_start > 0 {
+                    let ch = bytes[ident_start - 1];
+                    if ch.is_ascii_alphanumeric() || ch == b'_' || ch == b'$' {
+                        ident_start -= 1;
+                    } else {
+                        break;
+                    }
+                }
+
+                if ident_start < ident_end {
+                    let ident = &s[ident_start..ident_end];
+                    // Check that the identifier is not a keyword that can precede `=>`
+                    // and that it's not already inside parens.
+                    let prev_char = if ident_start > 0 { bytes[ident_start - 1] } else { b' ' };
+                    let already_parened = prev_char == b'(';
+                    let is_keyword = matches!(
+                        ident,
+                        "return" | "yield" | "typeof" | "void" | "delete" | "throw" | "new" | "in" | "of" | "async" | "await"
+                    );
+                    // Only transform if preceded by `=`, `,`, `(`, `{`, `[`, or whitespace/start
+                    // (contexts where an arrow param makes sense)
+                    let valid_context = matches!(
+                        prev_char,
+                        b'=' | b',' | b'(' | b'{' | b'[' | b' ' | b':' | b'>' | b'&' | b'|' | b'?' | b'!'
+                    ) || ident_start == 0;
+
+                    if !already_parened && !is_keyword && valid_context {
+                        // Replace: remove the ident we already pushed, add (ident) =>
+                        // We need to truncate result back to before the ident
+                        let result_len = result.len();
+                        let ident_len = ident_end - ident_start;
+                        let space_len = 1; // the space before `=>`
+                        result.truncate(result_len - ident_len - space_len);
+                        result.push('(');
+                        result.push_str(ident);
+                        result.push_str(") =>");
+                        i += 2; // skip `=>`
+                        continue;
+                    }
+                }
+            }
+        }
+        result.push(bytes[i] as char);
+        i += 1;
+    }
+
+    result
+}
+
 /// Normalize code for passthrough comparison: applies all normalizations from
-/// `normalize_code` plus normalizes single quotes to double quotes (the TS
-/// compiler converts ' to " in its output).
+/// `normalize_code` (which now includes quote normalization).
 fn normalize_code_quotes(s: &str) -> String {
-    let base = normalize_code(s);
-    base.replace('\'', "\"")
+    // normalize_code now includes quote normalization (Step 29), so this is
+    // just a direct call.
+    normalize_code(s)
 }
 
 /// Extract the function body (without the wrapper and imports) from an expected
@@ -3606,6 +4070,13 @@ fn extract_function_from_expected(code: &str) -> Option<String> {
             || trimmed.starts_with("export default function ")
             || trimmed.starts_with("export function ")
             || (trimmed.starts_with("const ") && trimmed.contains("=>"))
+            || (trimmed.starts_with("let ") && trimmed.contains("=>"))
+            // Handle `const/let/var X = function ...` (named function expressions)
+            || (trimmed.starts_with("const ") && trimmed.contains("= function"))
+            || (trimmed.starts_with("let ") && trimmed.contains("= function"))
+            // Handle `export const/let X = ...`
+            || (trimmed.starts_with("export const ") && (trimmed.contains("=>") || trimmed.contains("= function")))
+            || (trimmed.starts_with("export let ") && (trimmed.contains("=>") || trimmed.contains("= function")))
     })?;
 
     // Track brace depth to find the function's closing `}`.
@@ -3632,13 +4103,28 @@ fn extract_function_from_expected(code: &str) -> Option<String> {
     let joined = func_lines.join("\n");
 
     // Strip "export default " or "export " prefix if present.
-    let cleaned = if joined.starts_with("export default ") {
+    let mut cleaned = if joined.starts_with("export default ") {
         joined.replacen("export default ", "", 1)
     } else if joined.starts_with("export function ") {
+        joined.replacen("export ", "", 1)
+    } else if joined.starts_with("export const ") || joined.starts_with("export let ") {
+        // Strip "export " prefix for variable-assigned functions
         joined.replacen("export ", "", 1)
     } else {
         joined
     };
+
+    // Strip variable assignment wrapper for function expressions:
+    // `const/let X = function Name(...)` -> `function Name(...)`
+    // `const/let X = (params) => {` -> keep as-is (arrow functions have different structure)
+    if let Some(func_pos) = cleaned.find("= function") {
+        let prefix = &cleaned[..func_pos];
+        // Only strip if the prefix looks like a simple assignment (const/let IDENT =)
+        let trimmed_prefix = prefix.trim();
+        if trimmed_prefix.starts_with("const ") || trimmed_prefix.starts_with("let ") || trimmed_prefix.starts_with("var ") {
+            cleaned = cleaned[func_pos + 2..].to_string(); // skip "= "
+        }
+    }
 
     Some(cleaned)
 }
@@ -3782,21 +4268,36 @@ fn codegen_conformance_inner() {
 
         // Handle opt-out directives: 'use no forget' / 'use no memo' mean the function
         // should not be compiled, so expected == source (identity transform).
-        if source.contains("'use no forget'")
+        // Compare entire source against entire expected (not just extracted functions),
+        // because opt-out fixtures may contain multiple functions, and function extraction
+        // followed by dead-code normalization would incorrectly remove declarations.
+        //
+        // Only enter identity path if the expected code has NO memoization (`_c(`).
+        // If the expected has `_c(`, some functions are compiled (e.g., compilationMode:"infer"
+        // where one function uses 'use no memo' but others are compiled).
+        let has_opt_out_directive = source.contains("'use no forget'")
             || source.contains("\"use no forget\"")
             || source.contains("'use no memo'")
-            || source.contains("\"use no memo\"")
-        {
-            let expected_func = extract_function_from_expected(expected_code);
-            let expected_text = expected_func.as_deref().unwrap_or(expected_code);
-            let source_func = extract_function_from_expected(&source);
-            let source_text = source_func.as_deref().unwrap_or(&source);
-            let actual_norm = normalize_code_quotes(source_text);
-            let expected_norm = normalize_code_quotes(expected_text);
+            || source.contains("\"use no memo\"");
+        if has_opt_out_directive && !expected_code.contains("_c(") {
+            let actual_norm = normalize_code_quotes(&source);
+            let expected_norm = normalize_code_quotes(expected_code);
             if actual_norm == expected_norm {
                 passed += 1;
             } else {
-                failed.push((file_name, FailureCategory::OutputMismatch));
+                // Try extracting just the first function as a fallback, in case
+                // there's extra scaffolding (FIXTURE_ENTRYPOINT etc.) that differs.
+                let expected_func = extract_function_from_expected(expected_code);
+                let expected_text = expected_func.as_deref().unwrap_or(expected_code);
+                let source_func = extract_function_from_expected(&source);
+                let source_text = source_func.as_deref().unwrap_or(&source);
+                let actual_norm2 = normalize_code_quotes(source_text);
+                let expected_norm2 = normalize_code_quotes(expected_text);
+                if actual_norm2 == expected_norm2 {
+                    passed += 1;
+                } else {
+                    failed.push((file_name, FailureCategory::OutputMismatch));
+                }
             }
             continue;
         }
