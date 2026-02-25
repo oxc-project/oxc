@@ -1118,10 +1118,16 @@ fn normalize_code(s: &str) -> String {
     // is the cache declaration and should remain consistent).
     let normalized_const_let = normalize_all_const_to_let(&no_directives);
 
+    // Step 28b: normalize memo cache function name.
+    // The reference compiler (Babel) generates `_c2`, `_c3`, etc. for the memo cache
+    // import when `_c` conflicts with user variables. Our codegen generates `_c0`, `_c1`.
+    // Normalize all `_cN(` patterns to `_c(` so the exact suffix doesn't matter.
+    let normalized_cache_fn = normalize_memo_cache_fn_name(&normalized_const_let);
+
     // Step 29: normalize single quotes to double quotes.
     // The reference compiler (TS) converts single quotes to double quotes in output.
     // Our codegen may use either. Normalize to double quotes for comparison.
-    let normalized_quotes = normalized_const_let.replace('\'', "\"");
+    let normalized_quotes = normalized_cache_fn.replace('\'', "\"");
 
     // Step 30: normalize arrow function single-parameter parentheses.
     // The reference compiler always emits `(param) =>` while source may have `param =>`.
@@ -3961,7 +3967,24 @@ fn normalize_all_const_to_let(s: &str) -> String {
             if at_word_boundary {
                 // Check if this is `const $ = _c(` — preserve that pattern
                 let after = &s[i + 6..];
-                let is_cache_decl = after.starts_with("$ = _c(");
+                // Match `$ = _c(`, `$ = _c0(`, `$ = _c2(`, etc.
+                let is_cache_decl = after.starts_with("$ = _c(")
+                    || after
+                        .strip_prefix("$ = _c")
+                        .is_some_and(|rest| {
+                            rest.bytes()
+                                .take_while(|b| b.is_ascii_digit())
+                                .count()
+                                > 0
+                                && rest
+                                    .as_bytes()
+                                    .get(
+                                        rest.bytes()
+                                            .take_while(|b| b.is_ascii_digit())
+                                            .count(),
+                                    )
+                                    == Some(&b'(')
+                        });
                 if !is_cache_decl {
                     result.push_str("let ");
                     i += 6;
@@ -3973,6 +3996,42 @@ fn normalize_all_const_to_let(s: &str) -> String {
         i += 1;
     }
 
+    result
+}
+
+/// Normalize memo cache function names: `_c0(`, `_c2(`, etc. -> `_c(`.
+/// The reference compiler (Babel) and our codegen may use different suffixes when
+/// `_c` conflicts with user variables. Normalize all variants to `_c(`.
+fn normalize_memo_cache_fn_name(s: &str) -> String {
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let mut result = String::with_capacity(len);
+    let mut i = 0;
+    while i < len {
+        // Look for `_c` followed by digits then `(`
+        if i + 2 < len && bytes[i] == b'_' && bytes[i + 1] == b'c' {
+            // Check word boundary: preceding char must not be alphanumeric or `_`
+            let at_boundary = i == 0 || {
+                let prev = bytes[i - 1];
+                !prev.is_ascii_alphanumeric() && prev != b'_'
+            };
+            if at_boundary {
+                // Count digits after `_c`
+                let mut j = i + 2;
+                while j < len && bytes[j].is_ascii_digit() {
+                    j += 1;
+                }
+                // Must have at least one digit and be followed by `(`
+                if j > i + 2 && j < len && bytes[j] == b'(' {
+                    result.push_str("_c(");
+                    i = j + 1; // skip past the `(`
+                    continue;
+                }
+            }
+        }
+        result.push(bytes[i] as char);
+        i += 1;
+    }
     result
 }
 

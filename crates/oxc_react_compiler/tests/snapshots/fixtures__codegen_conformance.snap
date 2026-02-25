@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 413/1040 passed (39.7%)
+Codegen conformance: 417/1040 passed (40.1%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 13
   panic:          0
-  output_mismatch:584
+  output_mismatch:580
   no_expected:    1
 
 Failed fixtures:
@@ -203,11 +203,9 @@ Failed fixtures:
   [output_mismatch] early-return-within-reactive-scope.js
   [output_mismatch] escape-analysis-destructured-rest-element.js
   [output_mismatch] escape-analysis-jsx-child.js
-  [output_mismatch] escape-analysis-logical.js
   [output_mismatch] escape-analysis-non-escaping-interleaved-allocating-nested-dependency.js
   [output_mismatch] evaluation-order-mutate-call-after-dependency-load.ts
   [output_mismatch] evaluation-order-mutate-store-after-dependency-load.ts
-  [output_mismatch] existing-variables-with-c-name.js
   [output_mismatch] fast-refresh-reloading.js
   [output_mismatch] flag-enable-emit-hook-guards.ts
   [parse_error] flow-enum-inline.js
@@ -392,7 +390,6 @@ Failed fixtures:
   [output_mismatch] optional-call-with-independently-memoizable-arg.js
   [output_mismatch] optional-call-with-optional-property-load.js
   [pipeline_error] optional-member-expression-as-memo-dep.js
-  [output_mismatch] optional-member-expression-chain.js
   [output_mismatch] optional-member-expression-inverted-optionals-parallel-paths.js
   [pipeline_error] optional-member-expression-single-with-unconditional.js
   [pipeline_error] optional-member-expression-single.js
@@ -599,7 +596,6 @@ Failed fixtures:
   [output_mismatch] uninitialized-declaration-in-reactive-scope.js
   [output_mismatch] unlabeled-break-within-label-loop.ts
   [output_mismatch] unused-conditional.js
-  [output_mismatch] unused-logical-assigned-to-variable.js
   [output_mismatch] unused-object-element-with-rest.js
   [output_mismatch] update-expression-constant-propagation.js
   [output_mismatch] update-expression-in-sequence.js

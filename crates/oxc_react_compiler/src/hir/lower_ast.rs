@@ -460,42 +460,51 @@ fn convert_chain_element<'a>(element: &'a ast::ChainElement<'a>) -> LowerableExp
 
 /// Convert a callee expression that is inside a chain.
 ///
-/// If the callee is a member expression or call expression with an `optional` flag,
-/// it should be treated as part of the chain. Otherwise, convert it normally.
+/// ALL member/call/computed expressions within a `ChainExpression` must be converted
+/// as `OptionalMemberExpression`/`OptionalCallExpression` with the appropriate
+/// `optional` flag, regardless of whether the individual access uses `?.` or `.`.
+/// In Babel's AST, all nodes within an optional chain are `OptionalMemberExpression`
+/// or `OptionalCallExpression`, with `optional=false` for non-optional accesses.
+///
+/// Previously, non-optional member expressions inside a chain fell through to
+/// `convert_expression`, which lost the chain context and caused inner `?.` markers
+/// to be dropped during codegen (e.g., `props?.b.c.d?.e.f.g?.h` became
+/// `props.b.c.d.e.f.g?.h`).
 fn convert_chain_callee<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpression<'a> {
     match expr {
-        // If the callee is a StaticMemberExpression with optional=true,
-        // it's part of the optional chain
-        ast::Expression::StaticMemberExpression(member) if member.optional => {
+        // Static member expression — always treat as part of the chain
+        ast::Expression::StaticMemberExpression(member) => {
             let object = convert_chain_callee(&member.object);
             LowerableExpression::OptionalMemberExpression {
                 object: Box::new(object),
                 property: OptionalMemberProperty::Static(member.property.name.to_string()),
-                optional: true,
+                optional: member.optional,
                 span: member.span,
             }
         }
-        ast::Expression::ComputedMemberExpression(member) if member.optional => {
+        // Computed member expression — always treat as part of the chain
+        ast::Expression::ComputedMemberExpression(member) => {
             let object = convert_chain_callee(&member.object);
             let prop = convert_expression(&member.expression);
             LowerableExpression::OptionalMemberExpression {
                 object: Box::new(object),
                 property: OptionalMemberProperty::Computed(Box::new(prop)),
-                optional: true,
+                optional: member.optional,
                 span: member.span,
             }
         }
-        ast::Expression::CallExpression(call) if call.optional => {
+        // Call expression — always treat as part of the chain
+        ast::Expression::CallExpression(call) => {
             let callee = convert_chain_callee(&call.callee);
             let arguments = convert_arguments(&call.arguments);
             LowerableExpression::OptionalCallExpression {
                 callee: Box::new(callee),
                 arguments,
-                optional: true,
+                optional: call.optional,
                 span: call.span,
             }
         }
-        // Not an optional part of the chain - convert normally
+        // Not a member/call expression — base of the chain, convert normally
         _ => convert_expression(expr),
     }
 }
