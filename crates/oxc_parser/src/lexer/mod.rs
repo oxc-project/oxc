@@ -328,6 +328,34 @@ impl<'a, C: Config> Lexer<'a, C> {
         token
     }
 
+    /// Overwrite the last token in the collected token stream.
+    ///
+    /// Used to restore a token that was popped by `re_lex_as_typescript_l_angle`
+    /// when `try_parse` fails and rewinds.
+    #[inline]
+    pub(crate) fn rewrite_last_collected_token(&mut self, token: Token) {
+        // Make this function a no-op when tokens are statically disabled (`NoTokensLexerConfig`)
+        if C::TOKENS_METHOD_IS_STATIC && !self.config.tokens() {
+            return;
+        }
+
+        // Because of the static check above, there's no need to check `self.config.tokens()` here.
+        //
+        // * If tokens are statically disabled, we already exited.
+        // * If tokens are statically enabled, then `self.tokens` is always non-empty.
+        // * If tokens are runtime disabled, then `self.tokens` is always empty.
+        // * If tokens are runtime enabled, then `self.tokens` is always non-empty.
+        //
+        // So checking `self.config.tokens()` too here would be redundant,
+        // and would be an extra branch with runtime config (`RuntimeLexerConfig`).
+        if let Some(last) = self.tokens.last_mut() {
+            *last = token;
+        } else {
+            // When tokens are enabled, this should be unreachable
+            debug_assert!(!self.config.tokens());
+        }
+    }
+
     pub(crate) fn take_tokens(&mut self) -> ArenaVec<'a, Token> {
         mem::replace(&mut self.tokens, ArenaVec::new_in(self.allocator))
     }

@@ -129,14 +129,6 @@ fn to_estree_tokens<'a>(
         }
         let span_utf16 = Span::new(start, end);
 
-        // TS estree token streams may already contain the second `<` as a
-        // standalone token here; skip the overlapping `<<` token.
-        if kind == Kind::ShiftLeft
-            && context.ts_type_parameter_starts.contains(&(span_utf16.start + 1))
-        {
-            continue;
-        }
-
         let is_ast_identifier = context.ast_identifier_spans.contains(&span_utf16);
         let is_ast_identifier = if options.exclude_legacy_keyword_identifiers {
             is_ast_identifier && !matches!(kind, Kind::Yield | Kind::Let | Kind::Static)
@@ -183,7 +175,6 @@ pub struct EstreeTokenContext {
     jsx_identifier_spans: FxHashSet<Span>,
     non_jsx_identifier_spans: FxHashSet<Span>,
     jsx_text_spans: FxHashSet<Span>,
-    ts_type_parameter_starts: FxHashSet<u32>,
     jsx_expression_depth: usize,
     jsx_member_expression_depth: usize,
     jsx_computed_member_depth: usize,
@@ -228,14 +219,6 @@ impl<'a> Visit<'a> for EstreeTokenContext {
             }
         }
         walk::walk_ts_import_type(self, import_type);
-    }
-
-    fn visit_ts_type_parameter_declaration(
-        &mut self,
-        declaration: &TSTypeParameterDeclaration<'a>,
-    ) {
-        self.ts_type_parameter_starts.insert(declaration.span.start);
-        walk::walk_ts_type_parameter_declaration(self, declaration);
     }
 
     fn visit_identifier_name(&mut self, identifier: &IdentifierName<'a>) {
