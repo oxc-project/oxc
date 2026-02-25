@@ -82,12 +82,8 @@ impl SuppressionManager {
         }
     }
 
-    pub fn get_to_be_defined(self: Self) -> Option<Self> {
-        if self.manager_status.ignore() {
-            return None;
-        }
-
-        Some(self)
+    pub fn ignore(&self) -> bool {
+        self.manager_status.ignore()
     }
 
     pub fn concurrent_map(&self) -> StaticSuppressionMap {
