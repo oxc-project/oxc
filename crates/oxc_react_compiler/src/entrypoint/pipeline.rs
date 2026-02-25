@@ -45,7 +45,6 @@ pub fn run_pipeline(
     // 2. PruneMaybeThrows
     crate::optimization::prune_maybe_throws::prune_maybe_throws(func);
 
-
     // 3. ValidateContextVariableLValues
     crate::validation::validate_context_variable_lvalues::validate_context_variable_lvalues(func)?;
 
