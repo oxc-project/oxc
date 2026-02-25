@@ -429,6 +429,66 @@ fn test_console_readonly_output() {
     );
 }
 
+/// Test that context variables (StoreContext/DeclareContext) are properly tracked
+/// in PruneNonEscapingScopes so that reactive scopes containing them are not
+/// incorrectly pruned. This is a regression test for a bug where StoreContext
+/// and DeclareContext were not adding their inner target (the context variable)
+/// to the dependency graph in PruneNonEscapingScopes, causing scopes that
+/// produced context variables to be pruned even when those variables escaped.
+#[test]
+fn test_context_variable_reactive_scopes() {
+    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::hir::ReactFunctionType;
+    use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
+    use oxc_react_compiler::hir::environment::{
+        CompilerOutputMode, Environment, EnvironmentConfig,
+    };
+
+    // Based on the capturing-func-simple-alias-iife fixture.
+    // The IIFE inlining converts `y` to a context variable (StoreContext).
+    // The returned `y` must be memoized.
+    let source = r#"function component(a) {
+  let x = {a};
+  let y = {};
+  (function () {
+    y = x;
+  })();
+  mutate(y);
+  return y;
+}"#;
+
+    let allocator = oxc_allocator::Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    assert!(parser_result.errors.is_empty(), "Parse errors: {:?}", parser_result.errors);
+
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| match stmt {
+            oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+            _ => None,
+        })
+        .expect("No function found");
+
+    let env = Environment::new(
+        ReactFunctionType::Component,
+        CompilerOutputMode::Client,
+        EnvironmentConfig::default(),
+    );
+
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func).expect("Lower failed");
+    let result = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
+
+    // The expected output should have _c(2) and a reactive scope
+    assert_eq!(
+        result.memo_slots_used, 2,
+        "Expected 2 memo slots for context variable memoization, got {}",
+        result.memo_slots_used
+    );
+}
+
 /// Verify console and global.console method types resolve correctly.
 #[test]
 fn test_console_method_type_resolution() {

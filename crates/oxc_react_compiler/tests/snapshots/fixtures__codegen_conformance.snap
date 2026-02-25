@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 489/1040 passed (47.0%)
+Codegen conformance: 492/1040 passed (47.3%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:520
+  output_mismatch:517
   no_expected:    1
 
 Failed fixtures:
@@ -80,7 +80,6 @@ Failed fixtures:
   [output_mismatch] capturing-arrow-function-1.js
   [output_mismatch] capturing-func-mutate.js
   [output_mismatch] capturing-func-no-mutate.js
-  [output_mismatch] capturing-func-simple-alias-iife.js
   [output_mismatch] capturing-function-1.js
   [output_mismatch] capturing-function-alias-computed-load-2-iife.js
   [output_mismatch] capturing-function-alias-computed-load-3-iife.js
@@ -97,7 +96,6 @@ Failed fixtures:
   [output_mismatch] capturing-nested-member-call.js
   [output_mismatch] capturing-nested-member-expr-in-nested-func.js
   [output_mismatch] capturing-nested-member-expr.js
-  [output_mismatch] capturing-reference-changes-type.js
   [output_mismatch] capturing-variable-in-nested-block.js
   [output_mismatch] capturing-variable-in-nested-function.js
   [output_mismatch] chained-assignment-context-variable.js
@@ -208,6 +206,7 @@ Failed fixtures:
   [output_mismatch] globals-dont-resolve-local-useState.js
   [parse_error] hoist-destruct.js
   [output_mismatch] hoisted-context-variable-in-outlined-fn.js
+  [output_mismatch] hoisted-declaration-with-scope.tsx
   [output_mismatch] hoisted-function-declaration.js
   [output_mismatch] hoisting-computed-member-expression.js
   [output_mismatch] hoisting-functionexpr-conditional-dep.tsx
@@ -277,7 +276,6 @@ Failed fixtures:
   [output_mismatch] lambda-mutate-shadowed-object.js
   [output_mismatch] lambda-mutated-non-reactive-to-reactive.js
   [output_mismatch] lambda-mutated-ref-non-reactive.js
-  [output_mismatch] lambda-reassign-primitive.js
   [output_mismatch] lambda-reassign-shadowed-primitive.js
   [output_mismatch] log-pruned-memoization.js
   [parse_error] logical-reorder.flow.js
@@ -383,7 +381,6 @@ Failed fixtures:
   [output_mismatch] readonly-object-method-calls.js
   [output_mismatch] reanimated-no-memo-arg.js
   [output_mismatch] reassign-in-while-loop-condition.js
-  [output_mismatch] reassign-primitive-in-context.js
   [parse_error] reassign-variable-in-usememo.js
   [output_mismatch] reassigned-phi-in-returned-function-expression.js
   [output_mismatch] reassignment-conditional.js
