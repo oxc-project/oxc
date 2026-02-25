@@ -27,6 +27,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::hir::{
     DeclarationId, InstructionValue, Place, ReactiveBlock, ReactiveFunction, ReactiveStatement,
     ReactiveTerminal, ReactiveValue, ScopeId,
+    object_shape::ShapeRegistry,
 };
 
 // =====================================================================================
@@ -115,7 +116,7 @@ impl State {
 // =====================================================================================
 
 /// Options controlling memoization behavior during pruning.
-pub struct PruneOptions {
+pub struct PruneOptions<'a> {
     /// When true, JSX elements are treated as `Memoized` (always memoized when
     /// reachable from escaping values). When false, they are `Unmemoized` (only
     /// memoized if explicitly forced). Corresponds to `!enableForest` in the TS.
@@ -128,10 +129,14 @@ pub struct PruneOptions {
     /// enabled. Corresponds to `forceMemoizePrimitives` in the TS, which is set
     /// to `enableForest || enablePreserveExistingMemoizationGuarantees`.
     pub force_memoize_primitives: bool,
+
+    /// Reference to the shape registry for looking up function signatures
+    /// (e.g., to check `noAlias` on call expressions).
+    pub shapes: &'a ShapeRegistry,
 }
 
 /// Prune reactive scopes whose values don't escape the function.
-pub fn prune_non_escaping_scopes(func: &mut ReactiveFunction, opts: &PruneOptions) {
+pub fn prune_non_escaping_scopes(func: &mut ReactiveFunction, opts: &PruneOptions<'_>) {
     let mut state = State::new();
 
     // Pre-declare parameters so they exist in the dependency graph.
@@ -157,7 +162,7 @@ pub fn prune_non_escaping_scopes(func: &mut ReactiveFunction, opts: &PruneOption
 }
 
 /// Determine the MemoizationLevel for an instruction value.
-fn classify_value(value: &InstructionValue, opts: &PruneOptions) -> MemoizationLevel {
+fn classify_value(value: &InstructionValue, opts: &PruneOptions<'_>) -> MemoizationLevel {
     match value {
         // Allocating values that should always be memoized
         InstructionValue::CallExpression(_)
@@ -231,45 +236,158 @@ fn classify_value(value: &InstructionValue, opts: &PruneOptions) -> MemoizationL
 }
 
 /// Collect operands (rvalues) from a ReactiveValue.
-fn collect_operands(value: &ReactiveValue, operands: &mut Vec<DeclarationId>) {
+fn collect_operands(
+    value: &ReactiveValue,
+    operands: &mut Vec<DeclarationId>,
+    shapes: &ShapeRegistry,
+) {
     match value {
         ReactiveValue::Instruction(iv) => {
-            collect_instruction_operands(iv, operands);
+            collect_instruction_operands(iv, operands, shapes);
         }
         ReactiveValue::Logical(v) => {
-            collect_operands(&v.left, operands);
-            collect_operands(&v.right, operands);
+            collect_operands(&v.left, operands, shapes);
+            collect_operands(&v.right, operands, shapes);
         }
         ReactiveValue::Ternary(v) => {
-            collect_operands(&v.test, operands);
-            collect_operands(&v.consequent, operands);
-            collect_operands(&v.alternate, operands);
+            // Conditionals do not alias their test value (matching TS behavior).
+            // Only consequent and alternate are rvalues.
+            collect_operands(&v.consequent, operands, shapes);
+            collect_operands(&v.alternate, operands, shapes);
         }
         ReactiveValue::Sequence(v) => {
             for instr in &v.instructions {
                 if let Some(lvalue) = &instr.lvalue {
                     operands.push(lvalue.identifier.declaration_id);
                 }
-                collect_operands(&instr.value, operands);
+                collect_operands(&instr.value, operands, shapes);
             }
-            collect_operands(&v.value, operands);
+            collect_operands(&v.value, operands, shapes);
         }
         ReactiveValue::OptionalCall(v) => {
-            collect_operands(&v.value, operands);
+            collect_operands(&v.value, operands, shapes);
         }
     }
 }
 
-/// Collect operands from a single InstructionValue.
-fn collect_instruction_operands(value: &InstructionValue, operands: &mut Vec<DeclarationId>) {
+/// Collect operands (rvalues) from a single InstructionValue.
+///
+/// For `CallExpression`, `MethodCall`, and `TaggedTemplateExpression`,
+/// checks the `noAlias` flag on the callee's function signature: if true,
+/// the call cannot alias its arguments so we return no rvalues (matching TS).
+fn collect_instruction_operands(
+    value: &InstructionValue,
+    operands: &mut Vec<DeclarationId>,
+    shapes: &ShapeRegistry,
+) {
+    // Check noAlias for call-like instructions: if the callee's function
+    // signature has noAlias=true, the call cannot alias its arguments and
+    // we should return no rvalues.
+    match value {
+        InstructionValue::CallExpression(v) => {
+            if has_no_alias(shapes, &v.callee) {
+                return;
+            }
+        }
+        InstructionValue::MethodCall(v) => {
+            if has_no_alias(shapes, &v.property) {
+                return;
+            }
+        }
+        InstructionValue::TaggedTemplateExpression(v) => {
+            if has_no_alias(shapes, &v.tag) {
+                return;
+            }
+        }
+        _ => {}
+    }
+
     // Use the visitors to get all operands
     for place in crate::hir::visitors::each_instruction_value_operand(value) {
         operands.push(place.identifier.declaration_id);
     }
 }
 
+/// Check if a place's identifier type has a function signature with `noAlias=true`.
+fn has_no_alias(shapes: &ShapeRegistry, place: &Place) -> bool {
+    let Some(shape_id) = place.identifier.type_.shape_id() else {
+        return false;
+    };
+    let Some(shape) = shapes.get(shape_id) else {
+        return false;
+    };
+    let Some(sig) = &shape.function_type else {
+        return false;
+    };
+    sig.no_alias
+}
+
+/// Collect additional lvalue entries for mutable operands of allocating instructions.
+///
+/// In the TS, for `CallExpression`, `MethodCall`, `TaggedTemplateExpression`,
+/// `ArrayExpression`, `ObjectExpression`, `NewExpression`, `PropertyStore`,
+/// `FunctionExpression`, `ObjectMethod`, `RegExpLiteral`, `ComputedStore`:
+/// mutable operands are treated as additional lvalues (they alias the result).
+fn collect_mutable_operand_lvalues(
+    value: &InstructionValue,
+    shapes: &ShapeRegistry,
+) -> Vec<(DeclarationId, MemoizationLevel)> {
+    let mut lvalues = Vec::new();
+
+    match value {
+        // Call-like expressions: check noAlias first
+        InstructionValue::CallExpression(v) => {
+            if has_no_alias(shapes, &v.callee) {
+                return lvalues;
+            }
+            for place in crate::hir::visitors::each_instruction_value_operand(value) {
+                if place.effect.is_mutable() {
+                    lvalues.push((place.identifier.declaration_id, MemoizationLevel::Memoized));
+                }
+            }
+        }
+        InstructionValue::MethodCall(v) => {
+            if has_no_alias(shapes, &v.property) {
+                return lvalues;
+            }
+            for place in crate::hir::visitors::each_instruction_value_operand(value) {
+                if place.effect.is_mutable() {
+                    lvalues.push((place.identifier.declaration_id, MemoizationLevel::Memoized));
+                }
+            }
+        }
+        InstructionValue::TaggedTemplateExpression(v) => {
+            if has_no_alias(shapes, &v.tag) {
+                return lvalues;
+            }
+            for place in crate::hir::visitors::each_instruction_value_operand(value) {
+                if place.effect.is_mutable() {
+                    lvalues.push((place.identifier.declaration_id, MemoizationLevel::Memoized));
+                }
+            }
+        }
+        // Non-call allocating expressions: always check mutable operands
+        InstructionValue::ArrayExpression(_)
+        | InstructionValue::ObjectExpression(_)
+        | InstructionValue::NewExpression(_)
+        | InstructionValue::PropertyStore(_)
+        | InstructionValue::FunctionExpression(_)
+        | InstructionValue::ObjectMethod(_)
+        | InstructionValue::RegExpLiteral(_) => {
+            for place in crate::hir::visitors::each_instruction_value_operand(value) {
+                if place.effect.is_mutable() {
+                    lvalues.push((place.identifier.declaration_id, MemoizationLevel::Memoized));
+                }
+            }
+        }
+        _ => {}
+    }
+
+    lvalues
+}
+
 /// Get the MemoizationLevel for a ReactiveValue (handles compound values).
-fn classify_reactive_value(value: &ReactiveValue, opts: &PruneOptions) -> MemoizationLevel {
+fn classify_reactive_value(value: &ReactiveValue, opts: &PruneOptions<'_>) -> MemoizationLevel {
     match value {
         ReactiveValue::Instruction(iv) => classify_value(iv, opts),
         ReactiveValue::Logical(_)
@@ -283,7 +401,7 @@ fn collect_in_block(
     block: &ReactiveBlock,
     state: &mut State,
     active_scopes: &[ScopeId],
-    opts: &PruneOptions,
+    opts: &PruneOptions<'_>,
 ) {
     for stmt in block {
         match stmt {
@@ -293,7 +411,7 @@ fn collect_in_block(
 
                 // Collect operands (rvalues)
                 let mut operand_ids = Vec::new();
-                collect_operands(&instr.value, &mut operand_ids);
+                collect_operands(&instr.value, &mut operand_ids, opts.shapes);
 
                 // Resolve all operand IDs upfront
                 let resolved_operands: Vec<DeclarationId> =
@@ -333,6 +451,18 @@ fn collect_in_block(
                         }
                         _ => {}
                     }
+
+                    // Collect mutable operands as additional lvalues (Issue 3).
+                    // In the TS, for CallExpression, MethodCall, TaggedTemplateExpression,
+                    // ArrayExpression, ObjectExpression, NewExpression, PropertyStore,
+                    // FunctionExpression, ObjectMethod, RegExpLiteral: mutable operands
+                    // are treated as additional lvalues because they alias the result.
+                    for (mutable_id, mutable_level) in
+                        collect_mutable_operand_lvalues(iv, opts.shapes)
+                    {
+                        let resolved_id = state.resolve(mutable_id);
+                        lvalue_entries.push((resolved_id, mutable_level));
+                    }
                 }
 
                 // Process each lvalue
@@ -368,10 +498,14 @@ fn collect_in_block(
                         }
                     }
 
-                    // Handle hook arguments escaping
+                    // Handle hook arguments escaping.
+                    // In the TS, hook arguments are marked as escaping UNLESS the
+                    // hook's function signature has noAlias=true.
                     match iv.as_ref() {
                         InstructionValue::CallExpression(call) => {
-                            if is_hook_name_identifier(&call.callee) {
+                            if is_hook_name_identifier(&call.callee)
+                                && !has_no_alias(opts.shapes, &call.callee)
+                            {
                                 for arg in &call.args {
                                     let place = match arg {
                                         crate::hir::CallArg::Spread(s) => &s.place,
@@ -383,7 +517,9 @@ fn collect_in_block(
                             }
                         }
                         InstructionValue::MethodCall(call) => {
-                            if is_hook_name_identifier(&call.property) {
+                            if is_hook_name_identifier(&call.property)
+                                && !has_no_alias(opts.shapes, &call.property)
+                            {
                                 for arg in &call.args {
                                     let place = match arg {
                                         crate::hir::CallArg::Spread(s) => &s.place,
@@ -452,7 +588,7 @@ fn collect_in_terminal(
     terminal: &ReactiveTerminal,
     state: &mut State,
     active_scopes: &[ScopeId],
-    opts: &PruneOptions,
+    opts: &PruneOptions<'_>,
 ) {
     match terminal {
         ReactiveTerminal::If(t) => {
