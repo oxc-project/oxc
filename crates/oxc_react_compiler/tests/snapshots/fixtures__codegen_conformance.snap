@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 401/1040 passed (38.6%)
+Codegen conformance: 403/1040 passed (38.8%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 13
   panic:          0
-  output_mismatch:596
+  output_mismatch:594
   no_expected:    1
 
 Failed fixtures:
@@ -271,7 +271,6 @@ Failed fixtures:
   [output_mismatch] hook-ref-callback.js
   [output_mismatch] hooks-freeze-arguments.js
   [output_mismatch] hooks-freeze-possibly-mutable-arguments.js
-  [output_mismatch] hooks-with-React-namespace.js
   [output_mismatch] idx-method-no-outlining-wildcard.js
   [output_mismatch] idx-method-no-outlining.js
   [output_mismatch] idx-no-outlining.js
@@ -405,7 +404,6 @@ Failed fixtures:
   [output_mismatch] optional-member-expression-inverted-optionals-parallel-paths.js
   [pipeline_error] optional-member-expression-single-with-unconditional.js
   [pipeline_error] optional-member-expression-single.js
-  [output_mismatch] optional-member-expression.js
   [output_mismatch] overlapping-scopes-shadowing-within-block.js
   [output_mismatch] overlapping-scopes-within-block.js
   [output_mismatch] partial-early-return-within-reactive-scope.js
