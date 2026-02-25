@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "a3121e8c7091",
+  "strategy": "manual-commit",
+  "branch": "fix/parser-private-identifier-error-recovery",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "crates/oxc_codegen/src/comment.rs",
+    "crates/oxc_codegen/src/gen.rs",
+    "crates/oxc_codegen/src/lib.rs",
+    "crates/oxc_codegen/src/options.rs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a3/121e8c7091/0/metadata.json",
+      "transcript": "/a3/121e8c7091/0/full.jsonl",
+      "context": "/a3/121e8c7091/0/context.md",
+      "content_hash": "/a3/121e8c7091/0/content_hash.txt",
+      "prompt": "/a3/121e8c7091/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 21,
+    "cache_creation_tokens": 90599,
+    "cache_read_tokens": 1495455,
+    "output_tokens": 782,
+    "api_call_count": 19
+  }
+}
