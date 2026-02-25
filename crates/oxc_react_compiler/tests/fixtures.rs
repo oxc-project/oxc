@@ -1837,6 +1837,27 @@ fn remove_dead_expression_statements(s: &str) -> String {
                 continue;
             }
         }
+        // Remove standalone `_temp` or `_tempN` tokens: these are dead outlined
+        // function references that our codegen emits but the reference compiler doesn't.
+        if token.starts_with("_temp") && token[5..].chars().all(|c| c.is_ascii_digit()) {
+            let prev = result.last().copied().unwrap_or("");
+            let next = tokens.get(idx + 1).copied().unwrap_or("");
+            let prev_is_stmt_end = prev.ends_with(')')
+                || prev.ends_with('}')
+                || prev.ends_with(']')
+                || prev.chars().last().is_some_and(|c| c.is_ascii_alphanumeric() || c == '_');
+            let prev_is_operator =
+                matches!(prev, "=" | "!=" | "!==" | "==" | "===" | "||" | "&&" | "?" | "(" | ",");
+            let next_is_stmt_start = matches!(
+                next,
+                "let" | "const" | "var" | "if" | "return" | "for" | "while" | "switch"
+                    | "try" | "throw" | "do" | "}" | ""
+            ) || next.starts_with("t")
+                && next[1..].chars().all(|c| c.is_ascii_digit());
+            if prev_is_stmt_end && !prev_is_operator && next_is_stmt_start {
+                continue;
+            }
+        }
         result.push(token);
     }
     result.join(" ")
