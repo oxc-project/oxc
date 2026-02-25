@@ -65,6 +65,14 @@ pub enum LexerContext {
     JsxAttributeValue,
 }
 
+/// Action to take when finishing a token.
+/// Passed to [`Lexer::finish_next_inner`].
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum FinishTokenMode {
+    Push,
+    Replace,
+}
+
 pub struct Lexer<'a, C: Config> {
     allocator: &'a Allocator,
 
@@ -271,26 +279,32 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     #[inline]
     fn finish_next(&mut self, kind: Kind) -> Token {
-        self.finish_next_inner::<false>(kind)
+        self.finish_next_inner(kind, FinishTokenMode::Push)
     }
 
     #[inline]
     fn finish_next_retokenized(&mut self, kind: Kind) -> Token {
-        self.finish_next_inner::<true>(kind)
+        self.finish_next_inner(kind, FinishTokenMode::Replace)
     }
 
-    #[inline]
-    fn finish_next_inner<const REPLACE_SAME_START: bool>(&mut self, kind: Kind) -> Token {
+    // `#[inline(always)]` to ensure is inlined into `finish_next` and `finish_next_retokenized`,
+    // so that `mode` is statically known
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn finish_next_inner(&mut self, kind: Kind, mode: FinishTokenMode) -> Token {
         self.token.set_kind(kind);
         self.token.set_end(self.offset());
         let token = self.token;
         if self.config.tokens() && !matches!(token.kind(), Kind::Eof | Kind::HashbangComment) {
-            if REPLACE_SAME_START {
-                debug_assert!(self.tokens.last().is_some_and(|last| last.start() == token.start()));
-                let last = self.tokens.last_mut().unwrap();
-                *last = token;
-            } else {
-                self.tokens.push(token);
+            match mode {
+                FinishTokenMode::Push => self.tokens.push(token),
+                FinishTokenMode::Replace => {
+                    debug_assert!(
+                        self.tokens.last().is_some_and(|last| last.start() == token.start())
+                    );
+                    let last = self.tokens.last_mut().unwrap();
+                    *last = token;
+                }
             }
         }
         self.trivia_builder.handle_token(token);
