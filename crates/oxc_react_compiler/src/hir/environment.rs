@@ -374,12 +374,22 @@ impl Environment {
     /// the TS version. In the TS version this delegates to Babel's
     /// `scope.generateUidIdentifier()` which produces names like `_name`,
     /// `_name2`, etc.
+    ///
+    /// Babel's `generateUid` applies `toIdentifier()` to sanitize the hint
+    /// into a valid JS identifier (replacing brackets, dots, angle brackets,
+    /// spaces, etc. with camelCase), then strips leading underscores and
+    /// trailing digits before prefixing with `_`.
     pub fn generate_globally_unique_identifier_name(
         &mut self,
         hint: Option<&str>,
     ) -> IdentifierName {
         let base = hint.unwrap_or("temp");
-        let prefix = format!("_{base}");
+        // Mimic Babel's generateUid: toIdentifier(name).replace(/^_+/, "").replace(/\d+$/g, "")
+        let sanitized = to_identifier(base);
+        let stripped = sanitized.trim_start_matches('_');
+        let stripped = stripped.trim_end_matches(|c: char| c.is_ascii_digit());
+        let stripped = if stripped.is_empty() { "temp" } else { stripped };
+        let prefix = format!("_{stripped}");
         let mut candidate = prefix.clone();
         loop {
             if !self.known_referenced_names.contains(&candidate) {
@@ -535,6 +545,70 @@ pub fn is_hook_name(name: &str) -> bool {
     } else {
         false
     }
+}
+
+/// Convert a string to a valid JavaScript identifier.
+///
+/// Port of Babel's `toIdentifier()` from `@babel/types/src/converters/toIdentifier.ts`.
+///
+/// 1. Replaces all non-identifier characters with `-`
+/// 2. Removes leading dashes and digits
+/// 3. CamelCases dash-separated segments (and collapses whitespace/dashes)
+/// 4. Prefixes with `_` if result is not a valid identifier start
+fn to_identifier(input: &str) -> String {
+    // Step 1: Replace all non-identifier characters with `-`
+    let mut dashed = String::with_capacity(input.len());
+    for c in input.chars() {
+        if is_identifier_char(c) {
+            dashed.push(c);
+        } else {
+            dashed.push('-');
+        }
+    }
+
+    // Step 2: Remove leading dashes and digits
+    let trimmed = dashed.trim_start_matches(|c: char| c == '-' || c.is_ascii_digit());
+
+    // Step 3: CamelCase — replace /[-\s]+(.)?/g with uppercased capture
+    let mut result = String::with_capacity(trimmed.len());
+    let mut capitalize_next = false;
+    for c in trimmed.chars() {
+        if c == '-' || c.is_whitespace() {
+            capitalize_next = true;
+        } else if capitalize_next {
+            // Uppercase the first char after a dash/space sequence
+            for uc in c.to_uppercase() {
+                result.push(uc);
+            }
+            capitalize_next = false;
+        } else {
+            result.push(c);
+        }
+    }
+
+    // Step 4: If still not valid identifier start, prefix with _
+    if result.is_empty() {
+        return "_".to_string();
+    }
+    let first = result.chars().next().unwrap();
+    if !is_identifier_start(first) {
+        return format!("_{result}");
+    }
+
+    result
+}
+
+/// Check if a character is a valid JS identifier continuation character.
+///
+/// Matches Unicode ID_Continue plus `$` and `_` (like Babel's `isIdentifierChar`).
+fn is_identifier_char(c: char) -> bool {
+    // Simple check: ASCII alphanumeric, _, $, or Unicode letter/digit
+    c == '_' || c == '$' || c.is_alphanumeric()
+}
+
+/// Check if a character is a valid JS identifier start character.
+fn is_identifier_start(c: char) -> bool {
+    c == '_' || c == '$' || c.is_alphabetic()
 }
 
 /// Check if a module name is a known React module.

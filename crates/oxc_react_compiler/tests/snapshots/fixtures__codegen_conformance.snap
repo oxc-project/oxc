@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 3693
 expression: snapshot
 ---
-Codegen conformance: 388/1040 passed (37.3%)
+Codegen conformance: 395/1040 passed (38.0%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +11,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 15
   panic:          0
-  output_mismatch:607
+  output_mismatch:600
   no_expected:    1
 
 Failed fixtures:
@@ -249,7 +250,6 @@ Failed fixtures:
   [output_mismatch] globals-dont-resolve-local-useState.js
   [parse_error] hoist-destruct.js
   [output_mismatch] hoisted-context-variable-in-outlined-fn.js
-  [output_mismatch] hoisted-declaration-with-scope.tsx
   [output_mismatch] hoisted-function-declaration.js
   [output_mismatch] hoisting-computed-member-expression.js
   [output_mismatch] hoisting-functionexpr-conditional-dep.tsx
@@ -258,17 +258,13 @@ Failed fixtures:
   [output_mismatch] hoisting-member-expression.js
   [output_mismatch] hoisting-nested-block-statements.js
   [output_mismatch] hoisting-nested-const-declaration-2.js
-  [output_mismatch] hoisting-nested-const-declaration.js
   [output_mismatch] hoisting-nested-let-declaration-2.js
-  [output_mismatch] hoisting-nested-let-declaration.js
-  [output_mismatch] hoisting-object-method.js
   [output_mismatch] hoisting-reassigned-let-declaration.js
   [output_mismatch] hoisting-reassigned-twice-let-declaration.js
   [output_mismatch] hoisting-recursive-call-within-lambda.js
   [output_mismatch] hoisting-recursive-call.ts
   [output_mismatch] hoisting-setstate-captured-indirectly-jsx.js
   [output_mismatch] hoisting-simple-const-declaration.js
-  [output_mismatch] hoisting-simple-function-expression.js
   [output_mismatch] hoisting-simple-let-declaration.js
   [output_mismatch] hoisting-within-lambda.js
   [output_mismatch] hook-call-freezes-captured-memberexpr.tsx
@@ -355,11 +351,9 @@ Failed fixtures:
   [output_mismatch] method-call.js
   [output_mismatch] mixedreadonly-mutating-map.js
   [output_mismatch] multiple-calls-to-hoisted-callback-from-other-callback.js
-  [output_mismatch] mutate-captured-arg-separately.js
   [output_mismatch] mutation-within-capture-and-mutablerange.tsx
   [output_mismatch] mutation-within-jsx-and-break.tsx
   [output_mismatch] mutation-within-jsx.tsx
-  [output_mismatch] name-anonymous-functions-outline.js
   [output_mismatch] name-anonymous-functions.js
   [output_mismatch] nested-function-shadowed-identifiers.js
   [output_mismatch] nested-function-with-param-as-captured-dep.ts
