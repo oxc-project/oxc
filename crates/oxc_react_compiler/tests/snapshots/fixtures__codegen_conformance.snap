@@ -3,15 +3,15 @@ source: crates/oxc_react_compiler/tests/fixtures.rs
 assertion_line: 3693
 expression: snapshot
 ---
-Codegen conformance: 395/1040 passed (38.0%)
+Codegen conformance: 396/1040 passed (38.1%)
 
 Failure breakdown:
   parse_error:    27
   no_function:    2
   lower_error:    0
-  pipeline_error: 15
+  pipeline_error: 13
   panic:          0
-  output_mismatch:600
+  output_mismatch:601
   no_expected:    1
 
 Failed fixtures:
@@ -229,7 +229,7 @@ Failed fixtures:
   [output_mismatch] for-of-iterator-of-immutable-collection.js
   [output_mismatch] for-of-mutate-item-of-local-collection.js
   [output_mismatch] for-of-mutate.tsx
-  [pipeline_error] for-of-nonmutating-loop-local-collection.js
+  [output_mismatch] for-of-nonmutating-loop-local-collection.js
   [output_mismatch] for-of-simple.js
   [output_mismatch] for-return.js
   [output_mismatch] frozen-after-alias.js
@@ -647,7 +647,7 @@ Failed fixtures:
   [output_mismatch] useMemo-maybe-modified-later-dont-preserve-memoization-guarantees.js
   [pipeline_error] useMemo-maybe-modified-later-preserve-memoization-guarantees.js
   [output_mismatch] useMemo-multiple-if-else.js
-  [pipeline_error] useMemo-multiple-returns.js
+  [output_mismatch] useMemo-multiple-returns.js
   [output_mismatch] useMemo-nested-ifs.js
   [output_mismatch] useMemo-switch-no-fallthrough.js
   [output_mismatch] useMemo-switch-return.js
@@ -659,4 +659,3 @@ Failed fixtures:
   [output_mismatch] value-block-mutates-outer-value.ts
   [output_mismatch] weakmap-constructor.js
   [output_mismatch] weakset-constructor.js
-  [output_mismatch] while-conditional-continue.js
