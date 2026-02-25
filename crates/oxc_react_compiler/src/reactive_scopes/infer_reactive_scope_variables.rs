@@ -18,7 +18,7 @@ use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE, SourceLocation},
     hir::{
         HIRFunction, Identifier, IdentifierId, InstructionId, MutableRange, ReactiveScope,
-        visitors::each_instruction_operand,
+        hir_builder::compute_rpo_order, visitors::each_instruction_operand,
     },
     utils::disjoint_set::DisjointSet,
 };
@@ -59,7 +59,9 @@ pub fn infer_reactive_scope_variables(func: &mut HIRFunction) -> Result<(), Comp
     // creating scopes requires the mutable ranges and source locations.
     let mut identifier_info: FxHashMap<IdentifierId, (MutableRange, SourceLocation)> =
         FxHashMap::default();
-    for block in func.body.blocks.values() {
+    let rpo_block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
+    for block_id in &rpo_block_ids {
+        let Some(block) = func.body.blocks.get(block_id) else { continue };
         for phi in &block.phis {
             let id = phi.place.identifier.id;
             identifier_info
@@ -213,7 +215,7 @@ fn assign_scopes_to_identifiers(
         apply_scope(&mut place.identifier, id_to_scope);
     }
 
-    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else {
             continue;
@@ -470,7 +472,9 @@ pub fn find_disjoint_mutable_values(func: &HIRFunction) -> DisjointSet<Identifie
 
     let mut declarations: FxHashMap<crate::hir::DeclarationId, IdentifierId> = FxHashMap::default();
 
-    for block in func.body.blocks.values() {
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
+    for block_id in &block_ids {
+        let Some(block) = func.body.blocks.get(block_id) else { continue };
         // If a phi is mutated after creation, then we need to alias all of its
         // operands such that they are assigned to the same scope.
         for phi in &block.phis {

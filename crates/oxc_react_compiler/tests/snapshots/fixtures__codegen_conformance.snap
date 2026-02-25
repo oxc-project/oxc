@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 464/1040 passed (44.6%)
+Codegen conformance: 474/1040 passed (45.6%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:545
+  output_mismatch:535
   no_expected:    1
 
 Failed fixtures:
@@ -309,7 +309,6 @@ Failed fixtures:
   [output_mismatch] method-call-computed.js
   [output_mismatch] method-call-fn-call.js
   [output_mismatch] method-call.js
-  [output_mismatch] mixedreadonly-mutating-map.js
   [output_mismatch] multiple-calls-to-hoisted-callback-from-other-callback.js
   [output_mismatch] mutation-within-capture-and-mutablerange.tsx
   [output_mismatch] mutation-within-jsx-and-break.tsx
@@ -384,13 +383,11 @@ Failed fixtures:
   [output_mismatch] reactive-control-dependency-forof-collection.js
   [output_mismatch] reactive-control-dependency-from-interleaved-reactivity-for-update.js
   [output_mismatch] reactive-control-dependency-on-context-variable.js
-  [output_mismatch] reactive-control-dependency-phi-setState-type.js
   [output_mismatch] reactive-control-dependency-reactive-after-fixpoint.js
   [output_mismatch] reactive-control-dependency-while-test.js
   [output_mismatch] reactive-dependencies-non-optional-properties-inside-optional-chain.js
   [output_mismatch] reactive-dependency-fixpoint.js
   [output_mismatch] reactive-dependency-object-captured-with-reactive-mutated.js
-  [output_mismatch] reactive-ref-param.tsx
   [output_mismatch] reactive-ref.tsx
   [output_mismatch] reactive-scopes-if.js
   [output_mismatch] reactive-scopes.js
@@ -419,7 +416,6 @@ Failed fixtures:
   [output_mismatch] ref-current-write-not-added-to-dep.js
   [output_mismatch] ref-in-effect.js
   [output_mismatch] ref-parameter-mutate-in-effect.js
-  [output_mismatch] renaming-jsx-tag-lowercase.tsx
   [output_mismatch] reordering-across-blocks.js
   [parse_error] repeated-dependencies-more-precise.js
   [parse_error] repro-aliased-capture-aliased-mutate.js
@@ -441,13 +437,11 @@ Failed fixtures:
   [parse_error] repro-invalid-destructuring-reassignment-undefined-variable.js
   [output_mismatch] repro-invalid-pruned-scope-leaks-value-via-alias.ts
   [output_mismatch] repro-invalid-pruned-scope-leaks-value.ts
-  [output_mismatch] repro-invalid-reactivity-value-block.ts
   [output_mismatch] repro-local-mutation-of-new-object-from-destructured-prop.js
   [output_mismatch] repro-memoize-array-with-immutable-map-after-hook.js
   [output_mismatch] repro-memoize-for-of-collection-when-loop-body-returns.js
   [output_mismatch] repro-missing-dependency-if-within-while.js
   [output_mismatch] repro-missing-memoization-lack-of-phi-types.js
-  [output_mismatch] repro-mutable-range-extending-into-ternary.js
   [parse_error] repro-mutate-ref-in-function-passed-to-hook.js
   [output_mismatch] repro-mutate-result-of-function-call-with-frozen-argument-in-function-expression.js
   [output_mismatch] repro-mutate-result-of-method-call-on-frozen-value-in-function-expression.js
@@ -558,9 +552,7 @@ Failed fixtures:
   [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] use-memo-simple.js
   [output_mismatch] useActionState-dispatch-considered-as-non-reactive.js
-  [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-dont-preserve-memoization.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js
-  [output_mismatch] useCallback-maybe-modify-free-variable-dont-preserve-memoization-guarantee.js
   [output_mismatch] useCallback-maybe-modify-free-variable-preserve-memoization-guarantee.js
   [parse_error] useCallback-ref-in-render.js
   [output_mismatch] useContext-maybe-mutate-context-in-callback.js
@@ -574,7 +566,6 @@ Failed fixtures:
   [output_mismatch] useMemo-inlining-block-return.js
   [output_mismatch] useMemo-inverted-if.js
   [output_mismatch] useMemo-logical.js
-  [output_mismatch] useMemo-mabye-modified-free-variable-dont-preserve-memoization-guarantees.js
   [output_mismatch] useMemo-mabye-modified-free-variable-preserve-memoization-guarantees.js
   [output_mismatch] useMemo-maybe-modified-later-dont-preserve-memoization-guarantees.js
   [output_mismatch] useMemo-multiple-if-else.js
@@ -587,6 +578,5 @@ Failed fixtures:
   [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-listener.js
   [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-with-ref.js
   [output_mismatch] validate-no-set-state-in-render-uncalled-function-with-mutable-range-is-valid.js
-  [output_mismatch] value-block-mutates-outer-value.ts
   [output_mismatch] weakmap-constructor.js
   [output_mismatch] weakset-constructor.js

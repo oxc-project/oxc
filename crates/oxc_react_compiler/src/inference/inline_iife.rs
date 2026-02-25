@@ -22,8 +22,8 @@ use crate::{
         StoreLocal, Terminal, UnreachableTerminal,
         environment::Environment,
         hir_builder::{
-            create_temporary_place, each_terminal_successor, mark_instruction_ids,
-            mark_predecessors,
+            compute_rpo_order, create_temporary_place, each_terminal_successor,
+            mark_instruction_ids, mark_predecessors,
         },
         merge_consecutive_blocks::merge_consecutive_blocks,
         visitors::each_instruction_value_operand,
@@ -43,12 +43,11 @@ pub fn inline_immediately_invoked_function_expressions(func: &mut HIRFunction) {
     // of IIFEs) so we explicitly copy references to just the original
     // function's blocks first. As blocks are split to make room for IIFE calls,
     // the split portions of the blocks will be added to this queue.
-    // Sort block IDs to match TypeScript Map insertion-order iteration.
-    // FxHashMap iterates in arbitrary order; sorting by BlockId ensures
+    // Use RPO order to match TypeScript Map insertion-order iteration.
+    // FxHashMap iterates in arbitrary order; RPO ensures
     // FunctionExpression instructions are seen before their CallExpression
     // uses, which is required for IIFE detection.
-    let mut queue: Vec<BlockId> = func.body.blocks.keys().copied().collect();
-    queue.sort();
+    let mut queue: Vec<BlockId> = compute_rpo_order(func.body.entry, &func.body.blocks);
 
     let mut queue_idx = 0;
     'queue: while queue_idx < queue.len() {
