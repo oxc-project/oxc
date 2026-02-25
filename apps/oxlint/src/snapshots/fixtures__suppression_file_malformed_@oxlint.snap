@@ -6,9 +6,6 @@ arguments:
 working directory: fixtures/suppression_file_malformed
 ----------
 
-  x 3 new 'eslint/no-console' errors appeared in test.js.
-  help: Update `oxlint-suppressions.json` file running `oxlint --suppress--all`
-
   x eslint(no-console): Unexpected console statement.
    ,-[test.js:1:1]
  1 | console.log();
@@ -34,7 +31,7 @@ working directory: fixtures/suppression_file_malformed
    `----
   help: Delete this console statement.
 
-Found 0 warnings and 4 errors.
+Found 0 warnings and 3 errors.
 Failed to parse oxlint config <cwd>/fixtures/suppression_file_malformed/oxlint-suppressions.json.
 trailing comma at line 7 column 7
 Finished in <variable>ms on 1 file with 56 rules using 1 threads.
