@@ -6,11 +6,9 @@
 ///
 /// These passes flatten (remove) reactive scopes that cannot be correctly
 /// memoized due to being inside loops or containing hook calls.
-
 use crate::hir::{
     BlockId, HIRFunction, Identifier, InstructionValue, LabelTerminal, PrunedScopeTerminal,
-    Terminal, environment::get_hook_kind_for_type,
-    object_shape::BUILT_IN_USE_OPERATOR_ID,
+    Terminal, environment::get_hook_kind_for_type, object_shape::BUILT_IN_USE_OPERATOR_ID,
 };
 
 /// Flatten reactive loops -- removes reactive scopes inside loops.
@@ -195,10 +193,7 @@ pub fn flatten_scopes_with_hooks_or_use_hir(func: &mut HIRFunction) {
 /// This checks the identifier's type: if it has a `Function` type with a shape
 /// that has `hookKind` set, it's a hook. If its shape_id is `BuiltInUseOperator`,
 /// it's a `use()` call.
-fn is_hook_or_use(
-    env: &crate::hir::environment::Environment,
-    identifier: &Identifier,
-) -> bool {
+fn is_hook_or_use(env: &crate::hir::environment::Environment, identifier: &Identifier) -> bool {
     // Check getHookKind: type-based hook detection
     if get_hook_kind_for_type(env, &identifier.type_).is_some() {
         return true;

@@ -944,7 +944,8 @@ fn format_full_function(func: &CodegenFunction) -> String {
         let o_name = outlined_fn.id.as_deref().unwrap_or("_temp");
         let o_params = outlined_fn.params.join(", ");
         let o_body = format!("{outlined_fn}");
-        result.push_str(&format!("\n{o_async}function {o_star}{o_name}({o_params}) {{\n{o_body}}}"));
+        result
+            .push_str(&format!("\n{o_async}function {o_star}{o_name}({o_params}) {{\n{o_body}}}"));
     }
 
     result
@@ -2253,7 +2254,10 @@ fn remove_dead_const_declarations(s: &str) -> String {
     let mut dead_ranges: Vec<(usize, usize)> = Vec::new(); // (start_idx, end_idx exclusive)
     let mut i = 0;
     while i + 3 < tokens.len() {
-        if (tokens[i] == "const" || tokens[i] == "let") && tokens[i + 2] == "=" && i + 3 < tokens.len() {
+        if (tokens[i] == "const" || tokens[i] == "let")
+            && tokens[i + 2] == "="
+            && i + 3 < tokens.len()
+        {
             let name = tokens[i + 1];
             let value = tokens[i + 3];
 
@@ -2261,8 +2265,7 @@ fn remove_dead_const_declarations(s: &str) -> String {
             // Skip arrow function declarations: `const NAME = PARAM =>` is a
             // multi-token value (arrow function) — the identifier is the param,
             // not the entire value.
-            let next_is_arrow =
-                i + 4 < tokens.len() && tokens[i + 4] == "=>";
+            let next_is_arrow = i + 4 < tokens.len() && tokens[i + 4] == "=>";
             if is_simple_inlinable_value(value)
                 && !next_is_arrow
                 && !name.starts_with('$')
@@ -3535,11 +3538,8 @@ fn normalize_ternary_assignments(s: &str) -> String {
                     parse_ternary_assignment_branches(&chars, i + 4)
                 {
                     if name1 == name2 {
-                        let suffix_check = if is_strict_eq {
-                            "=== undefined"
-                        } else {
-                            "!== undefined"
-                        };
+                        let suffix_check =
+                            if is_strict_eq { "=== undefined" } else { "!== undefined" };
 
                         // Find the identifier before the check operator
                         let test_start = result.len() - suffix_check.len();
@@ -3556,9 +3556,7 @@ fn normalize_ternary_assignments(s: &str) -> String {
                         let prefix = result[..ident_start].to_string();
 
                         // Rebuild result
-                        result = format!(
-                            "{prefix}{name1} = {full_test} ? {val1} : {val2}"
-                        );
+                        result = format!("{prefix}{name1} = {full_test} ? {val1} : {val2}");
                         i += 4 + consumed;
                         continue;
                     }
@@ -3621,7 +3619,12 @@ fn parse_ternary_assignment_branches(
     i += 1; // skip `)`
 
     // Expect ` : (`
-    if i + 4 > len || chars[i] != ' ' || chars[i + 1] != ':' || chars[i + 2] != ' ' || chars[i + 3] != '(' {
+    if i + 4 > len
+        || chars[i] != ' '
+        || chars[i + 1] != ':'
+        || chars[i + 2] != ' '
+        || chars[i + 3] != '('
+    {
         return None;
     }
     i += 4;
@@ -3932,14 +3935,8 @@ fn strip_directive_strings(s: &str) -> String {
     // Known directive contents to strip (after semicolons have been removed).
     // These appear as standalone string statements at statement boundaries,
     // e.g. `{ "use forget" const $ = ...` or `{ 'use strict' ...`.
-    let directive_contents = [
-        "use strict",
-        "use forget",
-        "use memo",
-        "worklet",
-        "use no forget",
-        "use no memo",
-    ];
+    let directive_contents =
+        ["use strict", "use forget", "use memo", "worklet", "use no forget", "use no memo"];
 
     let mut result = s.to_string();
     for content in &directive_contents {
@@ -3986,22 +3983,13 @@ fn normalize_all_const_to_let(s: &str) -> String {
                 let after = &s[i + 6..];
                 // Match `$ = _c(`, `$ = _c0(`, `$ = _c2(`, etc.
                 let is_cache_decl = after.starts_with("$ = _c(")
-                    || after
-                        .strip_prefix("$ = _c")
-                        .is_some_and(|rest| {
-                            rest.bytes()
-                                .take_while(|b| b.is_ascii_digit())
-                                .count()
-                                > 0
-                                && rest
-                                    .as_bytes()
-                                    .get(
-                                        rest.bytes()
-                                            .take_while(|b| b.is_ascii_digit())
-                                            .count(),
-                                    )
-                                    == Some(&b'(')
-                        });
+                    || after.strip_prefix("$ = _c").is_some_and(|rest| {
+                        rest.bytes().take_while(|b| b.is_ascii_digit()).count() > 0
+                            && rest
+                                .as_bytes()
+                                .get(rest.bytes().take_while(|b| b.is_ascii_digit()).count())
+                                == Some(&b'(')
+                    });
                 if !is_cache_decl {
                     result.push_str("let ");
                     i += 6;
@@ -4096,13 +4084,33 @@ fn normalize_arrow_single_param_parens(s: &str) -> String {
                     let already_parened = prev_char == b'(';
                     let is_keyword = matches!(
                         ident,
-                        "return" | "yield" | "typeof" | "void" | "delete" | "throw" | "new" | "in" | "of" | "async" | "await"
+                        "return"
+                            | "yield"
+                            | "typeof"
+                            | "void"
+                            | "delete"
+                            | "throw"
+                            | "new"
+                            | "in"
+                            | "of"
+                            | "async"
+                            | "await"
                     );
                     // Only transform if preceded by `=`, `,`, `(`, `{`, `[`, or whitespace/start
                     // (contexts where an arrow param makes sense)
                     let valid_context = matches!(
                         prev_char,
-                        b'=' | b',' | b'(' | b'{' | b'[' | b' ' | b':' | b'>' | b'&' | b'|' | b'?' | b'!'
+                        b'=' | b','
+                            | b'('
+                            | b'{'
+                            | b'['
+                            | b' '
+                            | b':'
+                            | b'>'
+                            | b'&'
+                            | b'|'
+                            | b'?'
+                            | b'!'
                     ) || ident_start == 0;
 
                     if !already_parened && !is_keyword && valid_context {
@@ -4325,7 +4333,10 @@ fn extract_function_from_expected(code: &str) -> Option<String> {
         let prefix = &cleaned[..func_pos];
         // Only strip if the prefix looks like a simple assignment (const/let IDENT =)
         let trimmed_prefix = prefix.trim();
-        if trimmed_prefix.starts_with("const ") || trimmed_prefix.starts_with("let ") || trimmed_prefix.starts_with("var ") {
+        if trimmed_prefix.starts_with("const ")
+            || trimmed_prefix.starts_with("let ")
+            || trimmed_prefix.starts_with("var ")
+        {
             cleaned = cleaned[func_pos + 2..].to_string(); // skip "= "
         }
     }
@@ -4923,7 +4934,11 @@ fn test_token_near_miss() {
         let total_diff = positional_diff + len_diff;
 
         if total_diff <= 5 {
-            eprintln!("[NEAR-MISS-{total_diff}] {file_name}: actual_tokens={} expected_tokens={} positional_diff={positional_diff} len_diff={len_diff}", a_tokens.len(), e_tokens.len());
+            eprintln!(
+                "[NEAR-MISS-{total_diff}] {file_name}: actual_tokens={} expected_tokens={} positional_diff={positional_diff} len_diff={len_diff}",
+                a_tokens.len(),
+                e_tokens.len()
+            );
             // Print the first few differing tokens with context
             for (i, (a, e)) in a_tokens.iter().zip(e_tokens.iter()).enumerate() {
                 if a != e {
@@ -4941,8 +4956,16 @@ fn test_token_near_miss() {
                 let min_len = a_tokens.len().min(e_tokens.len());
                 let max_len = a_tokens.len().max(e_tokens.len());
                 let which = if a_tokens.len() > e_tokens.len() { "actual" } else { "expected" };
-                let extra = if a_tokens.len() > e_tokens.len() { &a_tokens[min_len..] } else { &e_tokens[min_len..] };
-                eprintln!("  Extra {which} tail ({} tokens): {}", max_len - min_len, extra.join(" "));
+                let extra = if a_tokens.len() > e_tokens.len() {
+                    &a_tokens[min_len..]
+                } else {
+                    &e_tokens[min_len..]
+                };
+                eprintln!(
+                    "  Extra {which} tail ({} tokens): {}",
+                    max_len - min_len,
+                    extra.join(" ")
+                );
             }
         }
     }
@@ -5364,11 +5387,16 @@ function Component(props) {
 #[test]
 fn test_debug_five_pipeline_error_fixtures() {
     let fixtures = [
-        ("for-of-nonmutating-loop-local-collection.js", oxc_span::SourceType::jsx()),
-        ("multiple-components-first-is-invalid.js", oxc_span::SourceType::jsx()),
-        ("switch-non-final-default.js", oxc_span::SourceType::jsx()),
-        ("useMemo-multiple-returns.js", oxc_span::SourceType::jsx()),
-        ("useMemo-named-function.ts", oxc_span::SourceType::ts()),
+        ("consecutive-use-memo.ts", oxc_span::SourceType::ts()),
+        ("drop-methodcall-usememo.js", oxc_span::SourceType::jsx()),
+        ("object-values.js", oxc_span::SourceType::jsx()),
+        ("optional-member-expression-as-memo-dep.js", oxc_span::SourceType::jsx()),
+        ("optional-member-expression-single.js", oxc_span::SourceType::jsx()),
+        ("preserve-memo-deps-conditional-property-chain.js", oxc_span::SourceType::jsx()),
+        ("repro-object-fromEntries-entries.js", oxc_span::SourceType::jsx()),
+        ("type-provider-store-capture.tsx", oxc_span::SourceType::tsx()),
+        ("allow-mutate-global-in-effect-fixpoint.js", oxc_span::SourceType::jsx()),
+        ("ref-parameter-mutate-in-effect.js", oxc_span::SourceType::jsx()),
     ];
     let fixtures_dir = Path::new(FIXTURES_PATH);
     for (name, source_type) in &fixtures {
@@ -5584,6 +5612,43 @@ fn test_recursive_arrow_not_outlined() {
         }
         Err(e) => {
             panic!("Pipeline should succeed for recursive arrow function: {e}");
+        }
+    }
+}
+
+/// Debug test for type-provider-store-capture.tsx
+#[test]
+fn test_type_provider_store_capture() {
+    let source = r#"import {useMemo} from 'react';
+import {typedArrayPush, ValidateMemoization} from 'shared-runtime';
+
+export function Component({a, b}) {
+  const item1 = useMemo(() => ({a}), [a]);
+  const item2 = useMemo(() => ({b}), [b]);
+  const items = useMemo(() => {
+    const items = [];
+    typedArrayPush(items, item1);
+    typedArrayPush(items, item2);
+    return items;
+  }, [item1, item2]);
+
+  return (
+    <>
+      <ValidateMemoization inputs={[a]} output={items[0]} />
+      <ValidateMemoization inputs={[b]} output={items[1]} />
+      <ValidateMemoization inputs={[a, b]} output={items} />
+    </>
+  );
+}"#;
+
+    let result = run_pipeline_for_codegen(source, oxc_span::SourceType::tsx());
+    match result {
+        Ok(func) => {
+            let output = format_full_function(&func);
+            eprintln!("SUCCESS:\n{output}");
+        }
+        Err(e) => {
+            panic!("Pipeline failed: {e}");
         }
     }
 }

@@ -83,8 +83,18 @@ pub fn validate_no_freezing_known_mutable_functions(
                 }
                 InstructionValue::FunctionExpression(v) => {
                     if let Some(ref aliasing_effects) = v.lowered_func.func.aliasing_effects {
-                        let context: rustc_hash::FxHashSet<IdentifierId> =
-                            v.lowered_func.func.context.iter().map(|p| p.identifier.id).collect();
+                        // Only include context variables that are actively captured (Effect::Capture).
+                        // Variables demoted to Effect::Read by inferMutationAliasingEffects
+                        // (because they are global/frozen in the outer scope) should not
+                        // be considered mutable context captures.
+                        let context: rustc_hash::FxHashSet<IdentifierId> = v
+                            .lowered_func
+                            .func
+                            .context
+                            .iter()
+                            .filter(|p| p.effect == Effect::Capture)
+                            .map(|p| p.identifier.id)
+                            .collect();
 
                         for effect in aliasing_effects {
                             match effect {
