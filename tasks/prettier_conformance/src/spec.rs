@@ -86,6 +86,8 @@ impl VisitMut<'_> for SpecParser {
         let mut options = FormatOptions {
             // Use Prettier's default printWidth(80) instead of our default(100)
             line_width: LineWidth::try_from(80).unwrap(),
+            // Keep Prettier's default operator position for conformance snapshots.
+            experimental_operator_position: OperatorPosition::End,
             ..Default::default()
         };
 
@@ -214,9 +216,10 @@ impl VisitMut<'_> for SpecParser {
                                     .unwrap_or_default();
                                 }
                                 "experimentalOperatorPosition" => {
-                                    // TODO: change `unwrap_or_default` to `unwrap`
+                                    // Keep Prettier's default (`end`) for conformance if parsing fails.
                                     options.experimental_operator_position =
-                                        OperatorPosition::from_str(s).unwrap_or_default();
+                                        OperatorPosition::from_str(s)
+                                            .unwrap_or(OperatorPosition::End);
                                 }
                                 _ => {}
                             }

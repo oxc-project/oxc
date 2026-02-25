@@ -213,8 +213,7 @@ impl TestRunner {
             .filter(|call| {
                 let options = &call.0;
                 // Skip all options that are not supported yet
-                !options.experimental_operator_position.is_start()
-                    && !options.experimental_ternaries
+                !options.experimental_ternaries
             })
             .collect::<Vec<_>>();
 

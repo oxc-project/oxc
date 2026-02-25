@@ -55,7 +55,7 @@ pub struct FormatOptions {
     /// Whether to expand object and array literals to multiple lines. Defaults to "auto".
     pub expand: Expand,
 
-    /// Controls the position of operators in binary expressions. [**NOT SUPPORTED YET**]
+    /// Controls the position of operators in binary expressions.
     ///
     /// Accepted values are:
     /// - `"start"`: Places the operator at the beginning of the next line.
@@ -954,9 +954,9 @@ impl fmt::Display for Expand {
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum OperatorPosition {
     /// When binary expressions wrap lines, print operators at the start of new lines.
+    #[default]
     Start,
     // Default behavior; when binary expressions wrap lines, print operators at the end of previous lines.
-    #[default]
     End,
 }
 
