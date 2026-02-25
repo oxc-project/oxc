@@ -561,7 +561,7 @@ fn effects_from_signature(
 ///
 /// Port of `computeSignatureForInstruction` from `InferMutationAliasingEffects.ts`.
 fn compute_instruction_effects(
-    _state: &InferenceState,
+    state: &InferenceState,
     instr: &Instruction,
     env: &crate::hir::environment::Environment,
 ) -> Vec<AliasingEffect> {
@@ -983,8 +983,35 @@ fn compute_instruction_effects(
             }
         }
 
-        // StartMemoize / FinishMemoize: Create(Primitive)
-        InstructionValue::StartMemoize(_) | InstructionValue::FinishMemoize(_) => {
+        // StartMemoize / FinishMemoize: Create(Primitive), with optional Freeze
+        InstructionValue::StartMemoize(memo) => {
+            if env.config.enable_preserve_existing_memoization_guarantees {
+                if let Some(deps) = &memo.deps {
+                    for dep in deps {
+                        if let crate::hir::ManualMemoDependencyRoot::NamedLocal { value, .. } =
+                            &dep.root
+                        {
+                            effects.push(AliasingEffect::Freeze {
+                                value: value.clone(),
+                                reason: ValueReason::HookCaptured,
+                            });
+                        }
+                    }
+                }
+            }
+            effects.push(AliasingEffect::Create {
+                into: lvalue.clone(),
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+        }
+        InstructionValue::FinishMemoize(memo) => {
+            if env.config.enable_preserve_existing_memoization_guarantees {
+                effects.push(AliasingEffect::Freeze {
+                    value: memo.decl.clone(),
+                    reason: ValueReason::HookCaptured,
+                });
+            }
             effects.push(AliasingEffect::Create {
                 into: lvalue.clone(),
                 value: ValueKind::Primitive,
@@ -1010,6 +1037,28 @@ fn compute_instruction_effects(
             });
         }
     }
+
+    // Post-process: drop conditional mutations on frozen values.
+    //
+    // Port of the `applyEffect` behavior from `InferMutationAliasingEffects.ts`:
+    // When a `MutateTransitiveConditionally` or `MutateConditionally` effect targets
+    // a value that is frozen (or any non-mutable kind), the mutation is silently
+    // dropped because conditional mutations only apply to mutable values.
+    effects.retain(|effect| {
+        match effect {
+            AliasingEffect::MutateTransitiveConditionally { value }
+            | AliasingEffect::MutateConditionally { value } => {
+                if let Some(abstract_val) = state.get(value) {
+                    // Only keep the mutation if the value is Mutable or Context
+                    matches!(abstract_val.kind, ValueKind::Mutable | ValueKind::Context)
+                } else {
+                    // Unknown state — keep the effect conservatively
+                    true
+                }
+            }
+            _ => true,
+        }
+    });
 
     effects
 }

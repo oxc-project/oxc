@@ -49,7 +49,8 @@ impl<'a> Unifier<'a> {
             let object_type = self.get(prop.object_type.clone());
             if let PropertyName::Literal { value } = &prop.property_name {
                 let property_str = value.to_string();
-                if let Some(prop_type) = self.env.get_property_type(&object_type, &property_str) {
+                let prop_type = self.env.get_property_type(&object_type, &property_str);
+                if let Some(prop_type) = prop_type {
                     self.unify(left, prop_type);
                     return;
                 }
