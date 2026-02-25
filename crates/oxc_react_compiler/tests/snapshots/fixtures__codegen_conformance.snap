@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 492/1040 passed (47.3%)
+Codegen conformance: 493/1040 passed (47.4%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:517
+  output_mismatch:516
   no_expected:    1
 
 Failed fixtures:
@@ -99,7 +99,6 @@ Failed fixtures:
   [output_mismatch] capturing-variable-in-nested-block.js
   [output_mismatch] capturing-variable-in-nested-function.js
   [output_mismatch] chained-assignment-context-variable.js
-  [output_mismatch] chained-assignment-expressions.js
   [parse_error] component-declaration-basic.flow.js
   [output_mismatch] component.js
   [output_mismatch] computed-call-evaluation-order.js
@@ -295,8 +294,8 @@ Failed fixtures:
   [output_mismatch] method-call-computed.js
   [output_mismatch] method-call-fn-call.js
   [output_mismatch] method-call.js
+  [output_mismatch] mixedreadonly-mutating-map.js
   [output_mismatch] multiple-calls-to-hoisted-callback-from-other-callback.js
-  [output_mismatch] mutation-within-capture-and-mutablerange.tsx
   [output_mismatch] mutation-within-jsx-and-break.tsx
   [output_mismatch] mutation-within-jsx.tsx
   [output_mismatch] name-anonymous-functions.js

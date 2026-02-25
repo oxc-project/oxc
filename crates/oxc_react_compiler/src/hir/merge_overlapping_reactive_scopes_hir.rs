@@ -19,7 +19,6 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     hir::{
         HIRFunction, InstructionId, InstructionValue, MutableRange, Place, ReactiveScope, ScopeId,
-        hir_builder::compute_rpo_order,
         visitors::{each_instruction_lvalue, each_instruction_operand, each_terminal_operand},
     },
     reactive_scopes::infer_reactive_scope_variables::is_mutable,
@@ -112,7 +111,9 @@ fn collect_scope_info(func: &HIRFunction) -> ScopeInfo {
     let mut scope_ranges: FxHashMap<ScopeId, MutableRange> = FxHashMap::default();
     let mut place_scopes: Vec<PlaceScopeEntry> = Vec::new();
 
-    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
+    // Use IndexMap insertion order to match the TS reference's Map iteration order
+    // (block-ID ascending), rather than compute_rpo_order which may differ.
+    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
 
     for (block_idx, block_id) in block_ids.iter().enumerate() {
         let block = &func.body.blocks[block_id];
@@ -266,75 +267,69 @@ struct TraversalState {
 }
 
 fn visit_instruction_id(id: InstructionId, scope_info: &mut ScopeInfo, state: &mut TraversalState) {
-    // Handle all scopes that end at this instruction.
-    let should_process_ends = scope_info.scope_ends.last().is_some_and(|top| top.id <= id);
+    // Handle all scopes that end at or before this instruction.
+    // Use a while loop to drain ALL pending entries, not just one.
+    while scope_info.scope_ends.last().is_some_and(|top| top.id <= id) {
+        let scope_end_top = scope_info.scope_ends.pop().unwrap();
+        // Sort scopes that end here by start descending, because the
+        // active_scopes stack is ordered with later-starting scopes at the end.
+        let mut scopes_sorted_start_descending: Vec<ScopeId> =
+            scope_end_top.scopes.into_iter().collect();
+        scopes_sorted_start_descending.sort_by(|a, b| {
+            let range_a = scope_info.scope_ranges.get(a).map_or(InstructionId(0), |r| r.start);
+            let range_b = scope_info.scope_ranges.get(b).map_or(InstructionId(0), |r| r.start);
+            range_b.cmp(&range_a)
+        });
 
-    if should_process_ends {
-        let scope_end_top = scope_info.scope_ends.pop();
-        if let Some(scope_end_top) = scope_end_top {
-            // Sort scopes that end here by start descending, because the
-            // active_scopes stack is ordered with later-starting scopes at the end.
-            let mut scopes_sorted_start_descending: Vec<ScopeId> =
-                scope_end_top.scopes.into_iter().collect();
-            scopes_sorted_start_descending.sort_by(|a, b| {
-                let range_a = scope_info.scope_ranges.get(a).map_or(InstructionId(0), |r| r.start);
-                let range_b = scope_info.scope_ranges.get(b).map_or(InstructionId(0), |r| r.start);
-                range_b.cmp(&range_a)
-            });
-
-            for scope_id in &scopes_sorted_start_descending {
-                let idx = state.active_scopes.iter().position(|(sid, _)| sid == scope_id);
-                if let Some(idx) = idx {
-                    // Detect and merge all overlapping scopes. active_scopes is ordered
-                    // by scope start, so every active scope between a completed scope s
-                    // and the top of the stack (1) started later than s and (2) completes
-                    // after s.
-                    if idx != state.active_scopes.len() - 1 {
-                        let mut to_union: Vec<ScopeId> = vec![*scope_id];
-                        for (sid, _) in &state.active_scopes[idx + 1..] {
-                            to_union.push(*sid);
-                        }
-                        state.joined.union(&to_union);
+        for scope_id in &scopes_sorted_start_descending {
+            let idx = state.active_scopes.iter().position(|(sid, _)| sid == scope_id);
+            if let Some(idx) = idx {
+                // Detect and merge all overlapping scopes. active_scopes is ordered
+                // by scope start, so every active scope between a completed scope s
+                // and the top of the stack (1) started later than s and (2) completes
+                // after s.
+                if idx != state.active_scopes.len() - 1 {
+                    let mut to_union: Vec<ScopeId> = vec![*scope_id];
+                    for (sid, _) in &state.active_scopes[idx + 1..] {
+                        to_union.push(*sid);
                     }
-                    state.active_scopes.remove(idx);
+                    state.joined.union(&to_union);
                 }
+                state.active_scopes.remove(idx);
             }
         }
     }
 
-    // Handle all scopes that begin at this instruction by adding them
-    // to the scopes stack.
-    let should_process_starts = scope_info.scope_starts.last().is_some_and(|top| top.id <= id);
+    // Handle all scopes that begin at or before this instruction by adding
+    // them to the scopes stack.
+    // Use a while loop to drain ALL pending entries, not just one.
+    while scope_info.scope_starts.last().is_some_and(|top| top.id <= id) {
+        let scope_start_top = scope_info.scope_starts.pop().unwrap();
+        // Sort scopes that start here by end descending.
+        let mut scopes_sorted_end_descending: Vec<ScopeId> =
+            scope_start_top.scopes.into_iter().collect();
+        scopes_sorted_end_descending.sort_by(|a, b| {
+            let range_a = scope_info.scope_ranges.get(a).map_or(InstructionId(0), |r| r.end);
+            let range_b = scope_info.scope_ranges.get(b).map_or(InstructionId(0), |r| r.end);
+            range_b.cmp(&range_a)
+        });
 
-    if should_process_starts {
-        let scope_start_top = scope_info.scope_starts.pop();
-        if let Some(scope_start_top) = scope_start_top {
-            // Sort scopes that start here by end descending.
-            let mut scopes_sorted_end_descending: Vec<ScopeId> =
-                scope_start_top.scopes.into_iter().collect();
-            scopes_sorted_end_descending.sort_by(|a, b| {
-                let range_a = scope_info.scope_ranges.get(a).map_or(InstructionId(0), |r| r.end);
-                let range_b = scope_info.scope_ranges.get(b).map_or(InstructionId(0), |r| r.end);
-                range_b.cmp(&range_a)
-            });
+        for scope_id in &scopes_sorted_end_descending {
+            let range = scope_info.scope_ranges.get(scope_id).copied().unwrap_or_default();
+            state.active_scopes.push((*scope_id, range));
+        }
 
-            for scope_id in &scopes_sorted_end_descending {
-                let range = scope_info.scope_ranges.get(scope_id).copied().unwrap_or_default();
-                state.active_scopes.push((*scope_id, range));
-            }
-
-            // Merge all identical scopes (ones with the same start and end),
-            // as they end up with the same reactive block.
-            for i in 1..scopes_sorted_end_descending.len() {
-                let prev = scopes_sorted_end_descending[i - 1];
-                let curr = scopes_sorted_end_descending[i];
-                let prev_range = scope_info.scope_ranges.get(&prev);
-                let curr_range = scope_info.scope_ranges.get(&curr);
-                if let (Some(pr), Some(cr)) = (prev_range, curr_range)
-                    && pr.end == cr.end
-                {
-                    state.joined.union(&[prev, curr]);
-                }
+        // Merge all identical scopes (ones with the same start and end),
+        // as they end up with the same reactive block.
+        for i in 1..scopes_sorted_end_descending.len() {
+            let prev = scopes_sorted_end_descending[i - 1];
+            let curr = scopes_sorted_end_descending[i];
+            let prev_range = scope_info.scope_ranges.get(&prev);
+            let curr_range = scope_info.scope_ranges.get(&curr);
+            if let (Some(pr), Some(cr)) = (prev_range, curr_range)
+                && pr.end == cr.end
+            {
+                state.joined.union(&[prev, curr]);
             }
         }
     }
@@ -368,7 +363,8 @@ fn get_overlapping_reactive_scopes(
 ) -> DisjointSet<ScopeId> {
     let mut state = TraversalState { joined: DisjointSet::new(), active_scopes: Vec::new() };
 
-    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
+    // Use IndexMap insertion order to match the TS reference's Map iteration order.
+    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
 
     for block_id in &block_ids {
         let block = &func.body.blocks[block_id];
@@ -413,16 +409,21 @@ fn rewrite_scopes(
     scope_mapping: &FxHashMap<ScopeId, ScopeId>,
     merged_ranges: &FxHashMap<ScopeId, MutableRange>,
 ) {
-    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
+    // Use IndexMap insertion order to match the TS reference's Map iteration order.
+    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
 
     for place_entry in &scopes_info.place_scopes {
         let original_scope_id = place_entry.original_scope_id;
-        let root_scope_id = match scope_mapping.get(&original_scope_id) {
-            Some(root) if *root != original_scope_id => *root,
-            _ => continue,
-        };
+        // Look up the root scope id for this place's scope. If the scope was
+        // merged, its root may differ; if it IS the root of a merged group,
+        // we still need to update its range.
+        let root_scope_id = scope_mapping
+            .get(&original_scope_id)
+            .copied()
+            .unwrap_or(original_scope_id);
 
-        // Get the merged range for the root scope.
+        // Get the merged range for the root scope. If this scope was not part
+        // of any merge group, there is no merged_range entry and we skip it.
         let merged_range = match merged_ranges.get(&root_scope_id) {
             Some(range) => *range,
             None => continue,
