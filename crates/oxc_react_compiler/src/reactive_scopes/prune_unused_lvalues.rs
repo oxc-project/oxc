@@ -134,6 +134,11 @@ fn collect_from_terminal(
             // The test place is used by this terminal
             used_declarations.insert(t.test.identifier.declaration_id);
             for case in &t.cases {
+                // Mark case test places as used so their defining instructions
+                // (e.g. Primitive(true)) retain their lvalues for codegen.
+                if let Some(test) = &case.test {
+                    used_declarations.insert(test.identifier.declaration_id);
+                }
                 if let Some(block) = &case.block {
                     collect_lvalue_info(block, lvalue_locations, used_declarations);
                 }
