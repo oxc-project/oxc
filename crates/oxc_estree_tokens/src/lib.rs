@@ -135,15 +135,21 @@ fn to_estree_tokens<'a>(
             span_converter.convert_offset(&mut end);
         }
 
-        let token_override = if next_override_start == start {
-            let override_kind = next_override_kind;
+        let token_type = if next_override_start == start {
+            let token_type = match next_override_kind {
+                TokenKindOverride::Identifier => "Identifier",
+                TokenKindOverride::JSXIdentifier => "JSXIdentifier",
+                TokenKindOverride::JSXText => "JSXText",
+            };
+
+            // Get next override
             (next_override_start, next_override_kind) =
                 overrides.next().unwrap_or((u32::MAX, TokenKindOverride::Identifier));
-            Some(override_kind)
+
+            token_type
         } else {
-            None
+            get_token_type(kind)
         };
-        let token_type = token_type(kind, token_override);
 
         let source_value =
             if kind == Kind::PrivateIdentifier { &source_value[1..] } else { source_value };
@@ -429,15 +435,7 @@ impl<'a> Visit<'a> for EstreeTokenContext {
     }
 }
 
-fn token_type(kind: Kind, token_override: Option<TokenKindOverride>) -> &'static str {
-    if let Some(token_override) = token_override {
-        return match token_override {
-            TokenKindOverride::Identifier => "Identifier",
-            TokenKindOverride::JSXIdentifier => "JSXIdentifier",
-            TokenKindOverride::JSXText => "JSXText",
-        };
-    }
-
+fn get_token_type(kind: Kind) -> &'static str {
     match kind {
         Kind::Ident | Kind::Await => "Identifier",
         Kind::PrivateIdentifier => "PrivateIdentifier",
