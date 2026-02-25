@@ -1394,19 +1394,20 @@ fn visit_block(
                         }
                     }
                     GotoVariant::Continue => {
-                        // If the target is not scheduled and hasn't been emitted,
-                        // treat it as an inline continuation. This happens when
-                        // build_reactive_scope_terminals_hir splits a Goto(Continue)
-                        // across a scope boundary, creating an intermediate block.
-                        if !cx.is_scheduled(goto.block)
-                            && !cx.emitted.contains(&goto.block)
-                            && let Some(next_block) = cx.block(goto.block).cloned()
-                        {
-                            block = next_block;
-                            continue;
+                        // First, try to resolve the continue target on the control flow stack.
+                        // This is the normal case when we're inside a loop.
+                        if cx.get_continue_target(goto.block).is_some() {
+                            let continue_stmt =
+                                visit_continue(cx, goto.block, goto.id, goto.loc)?;
+                            statements.push(continue_stmt);
+                        } else {
+                            // If the continue target is not on the control flow stack, this
+                            // Goto(Continue) was split across a scope boundary by
+                            // build_reactive_scope_terminals_hir. The actual continue was
+                            // already emitted inside the loop body (within the scope).
+                            // This block is now the scope fallthrough and is dead code
+                            // from the reactive tree perspective. Just stop processing.
                         }
-                        let continue_stmt = visit_continue(cx, goto.block, goto.id, goto.loc)?;
-                        statements.push(continue_stmt);
                     }
                     GotoVariant::Try => {
                         // noop - try gotos flatten away

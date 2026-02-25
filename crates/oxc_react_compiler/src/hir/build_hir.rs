@@ -3458,24 +3458,13 @@ fn lower_statement_with_label(
                     |builder| {
                         let body = convert_statement(&for_stmt.body);
                         lower_statement_with_label(builder, &body, None).ok();
-                        builder.terminate(
-                            Terminal::Goto(GotoTerminal {
-                                id: InstructionId(0),
-                                block: continue_target,
-                                variant: GotoVariant::Continue,
-                                loc: span_to_loc(for_stmt.body.span()),
-                            }),
-                            None,
-                        );
                     },
                 );
-                // The loop body terminate already handled, emit a dummy terminal
-                // that won't be reached
                 Terminal::Goto(GotoTerminal {
                     id: InstructionId(0),
                     block: continue_target,
                     variant: GotoVariant::Continue,
-                    loc,
+                    loc: span_to_loc(for_stmt.body.span()),
                 })
             });
 
@@ -3543,22 +3532,13 @@ fn lower_statement_with_label(
                     |builder| {
                         let body = convert_statement(&while_stmt.body);
                         lower_statement_with_label(builder, &body, None).ok();
-                        builder.terminate(
-                            Terminal::Goto(GotoTerminal {
-                                id: InstructionId(0),
-                                block: conditional_id,
-                                variant: GotoVariant::Continue,
-                                loc: span_to_loc(while_stmt.body.span()),
-                            }),
-                            None,
-                        );
                     },
                 );
                 Terminal::Goto(GotoTerminal {
                     id: InstructionId(0),
                     block: conditional_id,
                     variant: GotoVariant::Continue,
-                    loc,
+                    loc: span_to_loc(while_stmt.body.span()),
                 })
             });
 
@@ -3612,22 +3592,13 @@ fn lower_statement_with_label(
                     |builder| {
                         let body = convert_statement(&do_while.body);
                         lower_statement_with_label(builder, &body, None).ok();
-                        builder.terminate(
-                            Terminal::Goto(GotoTerminal {
-                                id: InstructionId(0),
-                                block: conditional_id,
-                                variant: GotoVariant::Continue,
-                                loc: span_to_loc(do_while.body.span()),
-                            }),
-                            None,
-                        );
                     },
                 );
                 Terminal::Goto(GotoTerminal {
                     id: InstructionId(0),
                     block: conditional_id,
                     variant: GotoVariant::Continue,
-                    loc,
+                    loc: span_to_loc(do_while.body.span()),
                 })
             });
 
@@ -3680,22 +3651,13 @@ fn lower_statement_with_label(
                     |builder| {
                         let body = convert_statement(&for_of.body);
                         lower_statement_with_label(builder, &body, None).ok();
-                        builder.terminate(
-                            Terminal::Goto(GotoTerminal {
-                                id: InstructionId(0),
-                                block: init_block_id,
-                                variant: GotoVariant::Continue,
-                                loc: span_to_loc(for_of.body.span()),
-                            }),
-                            None,
-                        );
                     },
                 );
                 Terminal::Goto(GotoTerminal {
                     id: InstructionId(0),
                     block: init_block_id,
                     variant: GotoVariant::Continue,
-                    loc,
+                    loc: span_to_loc(for_of.body.span()),
                 })
             });
 
@@ -3788,22 +3750,13 @@ fn lower_statement_with_label(
                     |builder| {
                         let body = convert_statement(&for_in.body);
                         lower_statement_with_label(builder, &body, None).ok();
-                        builder.terminate(
-                            Terminal::Goto(GotoTerminal {
-                                id: InstructionId(0),
-                                block: init_block_id,
-                                variant: GotoVariant::Continue,
-                                loc: span_to_loc(for_in.body.span()),
-                            }),
-                            None,
-                        );
                     },
                 );
                 Terminal::Goto(GotoTerminal {
                     id: InstructionId(0),
                     block: init_block_id,
                     variant: GotoVariant::Continue,
-                    loc,
+                    loc: span_to_loc(for_in.body.span()),
                 })
             });
 
