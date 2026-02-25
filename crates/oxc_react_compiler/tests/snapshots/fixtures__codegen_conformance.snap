@@ -3,7 +3,7 @@ source: crates/oxc_react_compiler/tests/fixtures.rs
 assertion_line: 5214
 expression: snapshot
 ---
-Codegen conformance: 507/1040 passed (48.8%)
+Codegen conformance: 513/1040 passed (49.3%)
 
 Failure breakdown:
   parse_error:    27
@@ -11,7 +11,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:502
+  output_mismatch:496
   no_expected:    1
 
 Failed fixtures:
@@ -284,7 +284,6 @@ Failed fixtures:
   [output_mismatch] merge-consecutive-scopes-no-deps.js
   [output_mismatch] merge-consecutive-scopes-objects.js
   [output_mismatch] merge-consecutive-scopes.js
-  [output_mismatch] merge-nested-scopes-with-same-inputs.js
   [output_mismatch] method-call-computed.js
   [output_mismatch] method-call-fn-call.js
   [output_mismatch] method-call.js
@@ -312,10 +311,7 @@ Failed fixtures:
   [output_mismatch] object-entries-mutation.js
   [output_mismatch] object-expression-captures-function-with-global-mutation.js
   [output_mismatch] object-expression-computed-key-modified-during-after-construction-sequence-expr.js
-  [output_mismatch] object-expression-computed-key-modified-during-after-construction.js
-  [output_mismatch] object-expression-computed-key-object-mutated-later.js
   [output_mismatch] object-expression-computed-member.js
-  [output_mismatch] object-expression-member-expr-call.js
   [output_mismatch] object-keys.js
   [output_mismatch] object-literal-method-derived-in-ternary-consequent.js
   [output_mismatch] object-literal-method-in-ternary-consequent.js
@@ -365,7 +361,6 @@ Failed fixtures:
   [output_mismatch] reactive-dependency-fixpoint.js
   [output_mismatch] reactive-dependency-object-captured-with-reactive-mutated.js
   [output_mismatch] reactive-ref.tsx
-  [output_mismatch] reactive-scope-grouping.js
   [output_mismatch] reactive-scopes.js
   [output_mismatch] reactivity-analysis-interleaved-reactivity.js
   [output_mismatch] readonly-object-method-calls-mutable-lambda.js
@@ -510,7 +505,6 @@ Failed fixtures:
   [output_mismatch] type-provider-store-capture.tsx
   [output_mismatch] type-provider-tagged-template-expression.js
   [output_mismatch] type-test-field-load-binary-op.js
-  [output_mismatch] type-test-field-store.js
   [output_mismatch] type-test-polymorphic.js
   [output_mismatch] type-test-return-type-inference.js
   [output_mismatch] unary-expr.js
