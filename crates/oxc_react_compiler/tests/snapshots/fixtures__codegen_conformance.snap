@@ -2,15 +2,15 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 421/1040 passed (40.5%)
+Codegen conformance: 425/1040 passed (40.9%)
 
 Failure breakdown:
   parse_error:    27
   no_function:    2
   lower_error:    0
-  pipeline_error: 13
+  pipeline_error: 21
   panic:          0
-  output_mismatch:576
+  output_mismatch:564
   no_expected:    1
 
 Failed fixtures:
@@ -34,7 +34,7 @@ Failed fixtures:
   [output_mismatch] allow-global-reassignment-in-effect.js
   [output_mismatch] allow-merge-refs-pattern.js
   [output_mismatch] allow-modify-global-in-callback-jsx.js
-  [output_mismatch] allow-mutate-global-in-effect-fixpoint.js
+  [pipeline_error] allow-mutate-global-in-effect-fixpoint.js
   [output_mismatch] allow-mutating-ref-in-callback-passed-to-jsx-indirect.tsx
   [output_mismatch] allow-mutating-ref-in-callback-passed-to-jsx.tsx
   [output_mismatch] allow-mutating-ref-property-in-callback-passed-to-jsx-indirect.tsx
@@ -80,7 +80,6 @@ Failed fixtures:
   [output_mismatch] builtin-jsx-tag-lowered-between-mutations.js
   [output_mismatch] call-with-independently-memoizable-arg.js
   [output_mismatch] capture-indirect-mutate-alias-iife.js
-  [output_mismatch] capture-indirect-mutate-alias.js
   [output_mismatch] capture-param-mutate.js
   [output_mismatch] capture-ref-for-later-mutation.tsx
   [output_mismatch] capture_mutate-across-fns-iife.js
@@ -94,9 +93,7 @@ Failed fixtures:
   [output_mismatch] capturing-func-alias-mutate.js
   [output_mismatch] capturing-func-alias-receiver-computed-mutate.js
   [output_mismatch] capturing-func-alias-receiver-mutate.js
-  [output_mismatch] capturing-func-mutate-2.js
   [output_mismatch] capturing-func-mutate-3.js
-  [output_mismatch] capturing-func-mutate-nested.js
   [output_mismatch] capturing-func-mutate.js
   [output_mismatch] capturing-func-no-mutate.js
   [output_mismatch] capturing-func-simple-alias-iife.js
@@ -248,8 +245,6 @@ Failed fixtures:
   [output_mismatch] hoisting-let-declaration-without-initialization.js
   [output_mismatch] hoisting-member-expression.js
   [output_mismatch] hoisting-nested-block-statements.js
-  [output_mismatch] hoisting-nested-const-declaration-2.js
-  [output_mismatch] hoisting-nested-let-declaration-2.js
   [output_mismatch] hoisting-reassigned-let-declaration.js
   [output_mismatch] hoisting-reassigned-twice-let-declaration.js
   [output_mismatch] hoisting-recursive-call-within-lambda.js
@@ -311,7 +306,6 @@ Failed fixtures:
   [output_mismatch] jsx-ternary-local-variable.tsx
   [output_mismatch] labeled-break-within-label-loop.ts
   [output_mismatch] lambda-array-access-member-expr-captured.ts
-  [output_mismatch] lambda-array-access-member-expr-param.ts
   [output_mismatch] lambda-capture-returned-alias.js
   [output_mismatch] lambda-mutate-shadowed-object.js
   [output_mismatch] lambda-mutated-non-reactive-to-reactive.js
@@ -366,11 +360,10 @@ Failed fixtures:
   [output_mismatch] object-expression-computed-key.js
   [output_mismatch] object-expression-computed-member.js
   [output_mismatch] object-expression-member-expr-call.js
-  [pipeline_error] object-keys.js
+  [output_mismatch] object-keys.js
   [output_mismatch] object-literal-method-derived-in-ternary-consequent.js
   [output_mismatch] object-literal-method-in-ternary-consequent.js
   [output_mismatch] object-method-maybe-alias.js
-  [output_mismatch] object-method-shorthand-3.js
   [output_mismatch] object-method-shorthand-aliased-mutate-after.js
   [output_mismatch] object-method-shorthand-derived-value.js
   [output_mismatch] object-method-shorthand-hook-dep.js
@@ -396,8 +389,8 @@ Failed fixtures:
   [output_mismatch] phi-type-inference-array-push-consecutive-phis.js
   [output_mismatch] phi-type-inference-array-push.js
   [output_mismatch] phi-type-inference-property-store.js
-  [output_mismatch] preserve-memo-deps-conditional-property-chain-less-precise-deps.js
-  [output_mismatch] preserve-memo-deps-conditional-property-chain.js
+  [pipeline_error] preserve-memo-deps-conditional-property-chain-less-precise-deps.js
+  [pipeline_error] preserve-memo-deps-conditional-property-chain.js
   [output_mismatch] preserve-memo-deps-optional-property-chain.js
   [output_mismatch] primitive-as-dep-nested-scope.js
   [output_mismatch] primitive-reassigned-loop-force-scopes-enabled.js
@@ -426,7 +419,6 @@ Failed fixtures:
   [output_mismatch] reactive-scopes-if.js
   [output_mismatch] reactive-scopes.js
   [output_mismatch] reactivity-analysis-interleaved-reactivity.js
-  [output_mismatch] reactivity-via-aliased-mutation-lambda.js
   [output_mismatch] readonly-object-method-calls-mutable-lambda.js
   [output_mismatch] readonly-object-method-calls.js
   [output_mismatch] reanimated-no-memo-arg.js
@@ -452,7 +444,7 @@ Failed fixtures:
   [output_mismatch] ref-current-optional-field-no-added-to-dep.js
   [output_mismatch] ref-current-write-not-added-to-dep.js
   [output_mismatch] ref-in-effect.js
-  [output_mismatch] ref-parameter-mutate-in-effect.js
+  [pipeline_error] ref-parameter-mutate-in-effect.js
   [output_mismatch] renaming-jsx-tag-lowercase.tsx
   [output_mismatch] reordering-across-blocks.js
   [parse_error] repeated-dependencies-more-precise.js
@@ -508,7 +500,6 @@ Failed fixtures:
   [output_mismatch] repro-unmerged-fbt-call-merge-overlapping-reactive-scopes.js
   [output_mismatch] repro-unreachable-code-early-return-in-useMemo.js
   [output_mismatch] repro-useMemo-if-else-both-early-return.js
-  [output_mismatch] repro.js
   [output_mismatch] resolve-react-hooks-based-on-import-name.js
   [output_mismatch] rest-param-with-identifier.js
   [parse_error] return-ref-callback-structure.js
@@ -603,7 +594,12 @@ Failed fixtures:
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js
   [output_mismatch] useCallback-maybe-modify-free-variable-dont-preserve-memoization-guarantee.js
   [output_mismatch] useCallback-maybe-modify-free-variable-preserve-memoization-guarantee.js
+  [pipeline_error] useCallback-multiple-callbacks-modifying-same-ref-preserve-memoization.js
   [parse_error] useCallback-ref-in-render.js
+  [pipeline_error] useCallback-set-ref-nested-property-preserve-memoization.js
+  [pipeline_error] useCallback-set-ref-nested-property.js
+  [pipeline_error] useCallback-set-ref-value-dont-preserve-memoization.js
+  [pipeline_error] useCallback-set-ref-value-preserve-memoization.js
   [output_mismatch] useContext-maybe-mutate-context-in-callback.js
   [output_mismatch] useContext-read-context-in-callback-if-condition.js
   [output_mismatch] useContext-read-context-in-callback.js
