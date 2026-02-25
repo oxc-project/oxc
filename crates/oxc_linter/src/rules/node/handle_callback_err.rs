@@ -35,20 +35,18 @@ impl ErrorPattern {
     }
 }
 
+/// The rule takes a single string option: the name of the error parameter.
+///
+/// This can be either:
+/// - an exact name (e.g. `"err"`, `"error"`)
+/// - a regexp pattern (e.g. `"^(err|error)$"`)
+///
+/// If the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.
+///
+/// Default: `"err"`.
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct HandleCallbackErrConfig {
-    /// Name of the first callback parameter to treat as the error parameter.
-    ///
-    /// This can be either:
-    /// - an exact name (e.g. `"err"`, `"error"`)
-    /// - a regexp pattern (e.g. `"^(err|error)$"`)
-    ///
-    /// If the configured name of the error variable begins with a `^` it is considered to be a regexp pattern.
-    ///
-    /// Default: `"err"`.
-    pattern: String,
-}
+pub struct HandleCallbackErrConfig(String, ());
 
 #[derive(Debug, Default, Clone)]
 pub struct HandleCallbackErr(Box<ErrorPattern>);
