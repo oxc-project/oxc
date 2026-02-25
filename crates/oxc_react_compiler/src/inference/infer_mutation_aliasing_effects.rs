@@ -1320,36 +1320,25 @@ fn compute_instruction_effects(
             }
         }
 
-        // LoadLocal: Assign (direct value flow)
-        // If the source is frozen, use ImmutableCapture instead (matching TS applyEffect for Assign
-        // with frozen source: emits ImmutableCapture and marks into as Frozen).
+        // LoadLocal: always Assign (direct value flow).
+        // The TS reference unconditionally emits Assign for LoadLocal (line 2203-2205 of
+        // InferMutationAliasingEffects.ts). The frozen check is NOT applied here — frozen
+        // semantics are handled later during the Assign/CreateFrom resolution in
+        // InferMutationAliasingRanges. Emitting ImmutableCapture here would prevent alias
+        // edges from being created in the ranges pass, breaking mutation propagation through
+        // aliases (e.g. `obj` -> `aliasedObj` via `identity(obj)`).
         InstructionValue::LoadLocal(v) => {
-            if is_frozen(state, &v.place) {
-                effects.push(AliasingEffect::ImmutableCapture {
-                    from: v.place.clone(),
-                    into: lvalue.clone(),
-                });
-            } else {
-                effects
-                    .push(AliasingEffect::Assign { from: v.place.clone(), into: lvalue.clone() });
-            }
+            effects.push(AliasingEffect::Assign { from: v.place.clone(), into: lvalue.clone() });
         }
 
-        // LoadContext: CreateFrom (loading from mutable box)
-        // If the source is frozen, use ImmutableCapture instead (matching TS applyEffect for
-        // CreateFrom with frozen source: emits Create(Frozen) + ImmutableCapture).
+        // LoadContext: always CreateFrom (loading from mutable box).
+        // The TS reference unconditionally emits CreateFrom for LoadContext (line 2128-2135).
+        // Same reasoning as LoadLocal above — no frozen check here.
         InstructionValue::LoadContext(v) => {
-            if is_frozen(state, &v.place) {
-                effects.push(AliasingEffect::ImmutableCapture {
-                    from: v.place.clone(),
-                    into: lvalue.clone(),
-                });
-            } else {
-                effects.push(AliasingEffect::CreateFrom {
-                    from: v.place.clone(),
-                    into: lvalue.clone(),
-                });
-            }
+            effects.push(AliasingEffect::CreateFrom {
+                from: v.place.clone(),
+                into: lvalue.clone(),
+            });
         }
 
         // StoreLocal: Assign to lvalue target + Assign to instruction lvalue

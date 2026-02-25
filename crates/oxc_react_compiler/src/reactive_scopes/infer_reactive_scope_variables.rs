@@ -237,6 +237,67 @@ fn assign_scopes_to_identifiers(
             // Apply to instruction-value-specific lvalues and operands
             apply_scope_to_instruction_value(&mut instr.value, id_to_scope);
         }
+
+        // Apply scopes to terminal operands.
+        // In the TS reference, Identifier objects are shared by reference, so modifying
+        // them in the DisjointSet.forEach callback automatically updates all places.
+        // In Rust, each place has its own copy of the Identifier, so we must explicitly
+        // update terminal operands as well.
+        apply_scope_to_terminal(&mut block.terminal, id_to_scope);
+    }
+}
+
+/// Apply scope assignments to all operand places in a terminal.
+fn apply_scope_to_terminal(
+    terminal: &mut crate::hir::Terminal,
+    id_to_scope: &FxHashMap<IdentifierId, (Box<ReactiveScope>, MutableRange)>,
+) {
+    use crate::hir::Terminal;
+
+    fn apply(
+        place: &mut crate::hir::Place,
+        id_to_scope: &FxHashMap<IdentifierId, (Box<ReactiveScope>, MutableRange)>,
+    ) {
+        if let Some((scope, range)) = id_to_scope.get(&place.identifier.id) {
+            place.identifier.scope = Some(scope.clone());
+            place.identifier.mutable_range = *range;
+        }
+    }
+
+    match terminal {
+        Terminal::Throw(t) => apply(&mut t.value, id_to_scope),
+        Terminal::Return(t) => apply(&mut t.value, id_to_scope),
+        Terminal::If(t) => apply(&mut t.test, id_to_scope),
+        Terminal::Branch(t) => apply(&mut t.test, id_to_scope),
+        Terminal::Switch(t) => {
+            apply(&mut t.test, id_to_scope);
+            for case in &mut t.cases {
+                if let Some(ref mut test) = case.test {
+                    apply(test, id_to_scope);
+                }
+            }
+        }
+        Terminal::Try(t) => {
+            if let Some(ref mut binding) = t.handler_binding {
+                apply(binding, id_to_scope);
+            }
+        }
+        Terminal::Unsupported(_)
+        | Terminal::Unreachable(_)
+        | Terminal::Goto(_)
+        | Terminal::For(_)
+        | Terminal::ForOf(_)
+        | Terminal::ForIn(_)
+        | Terminal::DoWhile(_)
+        | Terminal::While(_)
+        | Terminal::Logical(_)
+        | Terminal::Ternary(_)
+        | Terminal::Optional(_)
+        | Terminal::Label(_)
+        | Terminal::Sequence(_)
+        | Terminal::MaybeThrow(_)
+        | Terminal::Scope(_)
+        | Terminal::PrunedScope(_) => {}
     }
 }
 
