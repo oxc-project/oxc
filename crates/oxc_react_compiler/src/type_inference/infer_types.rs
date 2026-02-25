@@ -162,6 +162,11 @@ fn apply(func: &mut HIRFunction, unifier: &ResolvedTypes) {
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     for block_id in block_ids {
         if let Some(block) = func.body.blocks.get_mut(&block_id) {
+            // Apply to phi nodes (TS: phi.place.identifier.type = unifier.get(...))
+            for phi in &mut block.phis {
+                resolve_place(&mut phi.place, unifier);
+            }
+
             for instr in &mut block.instructions {
                 // Apply to lvalue
                 resolve_place(&mut instr.lvalue, unifier);
@@ -170,6 +175,14 @@ fn apply(func: &mut HIRFunction, unifier: &ResolvedTypes) {
                 apply_to_instruction_value(&mut instr.value, unifier);
             }
         }
+    }
+
+    // Apply to context operands.
+    // In TS, context Place objects share identity with instruction lvalue/operand
+    // Place objects, so type updates propagate automatically. In Rust, these are
+    // separate clones, so we must resolve them explicitly.
+    for ctx_place in &mut func.context {
+        resolve_place(ctx_place, unifier);
     }
 
     // Apply to returns
