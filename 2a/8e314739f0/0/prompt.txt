@@ -1,0 +1,9 @@
+https://github.com/oxc-project/oxc/issues/17266
+
+---
+
+create pr
+
+---
+
+expr.span().start can be a single var

@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "2a8e314739f0",
+  "session_id": "9bf81207-5b5f-4141-b216-f29986b364ba",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-25T06:17:44.670076Z",
+  "branch": "fix/codegen-jsx-comments",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "crates/oxc_codegen/src/gen.rs"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "7c97be00-f06e-4a7c-ba2c-8c4fd2de40fa",
+  "checkpoint_transcript_start": 323,
+  "transcript_lines_at_start": 323,
+  "token_usage": {
+    "input_tokens": 7,
+    "cache_creation_tokens": 2843,
+    "cache_read_tokens": 360848,
+    "output_tokens": 201,
+    "api_call_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-25T06:17:44.531444Z",
+    "agent_lines": 3,
+    "human_added": 2435,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2438,
+    "agent_percentage": 0.12305168170631665
+  }
+}

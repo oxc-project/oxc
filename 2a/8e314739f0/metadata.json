@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "2a8e314739f0",
+  "strategy": "manual-commit",
+  "branch": "fix/codegen-jsx-comments",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "crates/oxc_codegen/src/gen.rs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/2a/8e314739f0/0/metadata.json",
+      "transcript": "/2a/8e314739f0/0/full.jsonl",
+      "context": "/2a/8e314739f0/0/context.md",
+      "content_hash": "/2a/8e314739f0/0/content_hash.txt",
+      "prompt": "/2a/8e314739f0/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 7,
+    "cache_creation_tokens": 2843,
+    "cache_read_tokens": 360848,
+    "output_tokens": 201,
+    "api_call_count": 5
+  }
+}
