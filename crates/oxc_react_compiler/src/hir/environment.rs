@@ -12,7 +12,9 @@ use super::{
     hir_types::{
         Effect, HIRFunction, IdentifierName, NonLocalBinding, ReactFunctionType, ValueKind,
     },
-    object_shape::{FunctionSignature, HookKind, ShapeRegistry},
+    object_shape::{
+        BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID, FunctionSignature, HookKind, ShapeRegistry,
+    },
     types::{FunctionType, ObjectType, Type},
 };
 
@@ -528,10 +530,12 @@ impl Environment {
     /// Get the default hook type for unrecognized hooks.
     ///
     /// Corresponds to `#getCustomHookType()` in the TS version.
+    /// Returns a `Function` type with the `DefaultNonmutatingHook` shape_id,
+    /// which has `hookKind: Custom`. This is critical for the flatten pass
+    /// (`FlattenScopesWithHooksOrUse`) to detect hook calls via the type system.
     fn get_custom_hook_type(&self) -> Global {
-        // Default non-mutating hook: restParam=Freeze, returnValueKind=Frozen
         Global::Typed(Type::Function(FunctionType {
-            shape_id: None,
+            shape_id: Some(BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID.to_string()),
             return_type: Box::new(Type::Poly),
             is_constructor: false,
         }))

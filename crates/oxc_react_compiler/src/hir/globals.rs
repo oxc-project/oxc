@@ -9,8 +9,9 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use super::{
     hir_types::{Effect, ValueKind, ValueReason},
     object_shape::{
-        BUILT_IN_ARRAY_ID, BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID,
-        BUILT_IN_OBJECT_ID, BUILT_IN_SET_ID, BUILT_IN_USE_ACTION_STATE_HOOK_ID,
+        BUILT_IN_ARRAY_ID, BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID, BUILT_IN_EFFECT_EVENT_ID,
+        BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID, BUILT_IN_SET_ID,
+        BUILT_IN_USE_ACTION_STATE_HOOK_ID,
         BUILT_IN_USE_ACTION_STATE_ID, BUILT_IN_USE_CONTEXT_HOOK_ID, BUILT_IN_USE_EFFECT_EVENT_ID,
         BUILT_IN_USE_EFFECT_HOOK_ID, BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID,
         BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID, BUILT_IN_USE_OPERATOR_ID,
@@ -920,6 +921,24 @@ pub fn default_shapes() -> ShapeRegistry {
 
     // ReanimatedSharedValueId: empty shape
     add_object(&mut registry, super::object_shape::REANIMATED_SHARED_VALUE_ID, Vec::new());
+
+    // DefaultNonmutatingHook: the default shape for custom hooks detected by name.
+    // Port of `DefaultNonmutatingHook` from ObjectShape.ts.
+    // This shape has `hookKind: Custom` so that `get_hook_kind_for_type` can identify
+    // hook calls via the type system (critical for FlattenScopesWithHooksOrUse).
+    add_hook(
+        &mut registry,
+        Some(BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID),
+        FunctionSignature {
+            rest_param: Some(Effect::Freeze),
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Frozen,
+            return_value_reason: Some(ValueReason::HookReturn),
+            callee_effect: Effect::Read,
+            hook_kind: Some(HookKind::Custom),
+            ..FunctionSignature::default()
+        },
+    );
 
     registry
 }
