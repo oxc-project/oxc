@@ -35,7 +35,6 @@ working directory: fixtures/suppression_report_only_from_one_file
   help: Delete this console statement.
 
 Found 0 warnings and 4 errors.
-'oxlint-suppressions.json' has been updated.
 Finished in <variable>ms on 2 files with 56 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
