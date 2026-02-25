@@ -159,6 +159,20 @@ impl NoUnusedVars {
             return true;
         }
 
+        let is_interface_type_parameter = match nodes.parent_kind(declaration_id) {
+            AstKind::TSInterfaceDeclaration(_) => true,
+            AstKind::TSTypeParameterDeclaration(_) => {
+                matches!(
+                    nodes.parent_kind(nodes.parent_id(declaration_id)),
+                    AstKind::TSInterfaceDeclaration(_)
+                )
+            }
+            _ => false,
+        };
+        if !is_interface_type_parameter {
+            return false;
+        }
+
         // type parameters used within type declarations in ambient ts module
         // blocks are required for declaration merging to work, since signatures
         // must match.
