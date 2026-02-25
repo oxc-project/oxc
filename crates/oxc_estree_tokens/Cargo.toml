@@ -25,7 +25,5 @@ oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
-
-rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

@@ -1,4 +1,3 @@
-use rustc_hash::FxHashMap;
 use serde::Serialize;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
@@ -117,6 +116,13 @@ fn to_estree_tokens<'a>(
     let mut span_converter = span_converter.converter();
 
     let mut estree_tokens = ArenaVec::with_capacity_in(tokens.len(), allocator);
+
+    // If no overrides, use `u32::MAX` as span start.
+    // No token can start at `u32::MAX`, since source text is capped at `u32::MAX` bytes length.
+    let mut overrides = context.overrides.into_iter();
+    let (mut next_override_start, mut next_override_kind) =
+        overrides.next().unwrap_or((u32::MAX, TokenKindOverride::Identifier));
+
     for token in tokens {
         let kind = token.kind();
         let source_value = &source_text[token.start() as usize..token.end() as usize];
@@ -127,9 +133,16 @@ fn to_estree_tokens<'a>(
             span_converter.convert_offset(&mut start);
             span_converter.convert_offset(&mut end);
         }
-        let span_utf16 = Span::new(start, end);
 
-        let mut token_override = context.overrides.get(&span_utf16.start).copied();
+        let mut token_override = if next_override_start == start {
+            let override_kind = next_override_kind;
+            (next_override_start, next_override_kind) =
+                overrides.next().unwrap_or((u32::MAX, TokenKindOverride::Identifier));
+            Some(override_kind)
+        } else {
+            None
+        };
+
         // Exclude legacy keyword identifiers if option is set
         if matches!(token_override, Some(TokenKindOverride::Identifier))
             && options.exclude_legacy_keyword_identifiers
@@ -178,10 +191,9 @@ pub struct EstreeTokenContext {
     // Options
     jsx_namespace_jsx_identifiers: bool,
     member_expr_in_jsx_expression_jsx_identifiers: bool,
-    /// Token kind overrides keyed by span start position.
-    /// Each token maps to a single `TokenKindOverride` indicating how its token type
-    /// should differ from the default determined by `Kind`.
-    overrides: FxHashMap<u32, TokenKindOverride>,
+    /// Token kind overrides, stored in source order.
+    /// Each entry is `(token_start_position, override)`.
+    overrides: Vec<(u32, TokenKindOverride)>,
     // State
     jsx_expression_depth: usize,
     jsx_member_expression_depth: usize,
@@ -190,11 +202,13 @@ pub struct EstreeTokenContext {
 
 impl EstreeTokenContext {
     fn set_override(&mut self, span: Span, token_override: TokenKindOverride) {
-        let previous = self.overrides.insert(span.start, token_override);
         debug_assert!(
-            previous.is_none(),
-            "Double override: span {span:?} already has {previous:?}, setting {token_override:?}"
+            self.overrides.last().is_none_or(|&(prev_start, _)| span.start > prev_start),
+            "Out of order: {span:?} ({token_override:?}) not after previous start {}",
+            self.overrides.last().unwrap().0,
         );
+
+        self.overrides.push((span.start, token_override));
     }
 }
 
