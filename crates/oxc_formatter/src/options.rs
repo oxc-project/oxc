@@ -953,10 +953,10 @@ impl fmt::Display for Expand {
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum OperatorPosition {
-    /// When binary expressions wrap lines, print operators at the start of new lines.
+    /// Default behavior; when binary expressions wrap lines, print operators at the start of new lines.
     #[default]
     Start,
-    // Default behavior; when binary expressions wrap lines, print operators at the end of previous lines.
+    /// When binary expressions wrap lines, print operators at the end of previous lines.
     End,
 }
 
