@@ -2214,10 +2214,1007 @@ pub fn lower_block_statement(
     builder: &mut HirBuilder,
     stmts: &[LowerableStatement<'_>],
 ) -> Result<(), CompilerError> {
+    // =========================================================================
+    // Hoisting analysis (port of BlockStatement handling in TS BuildHIR.ts)
+    //
+    // Collect all hoistable bindings in this block scope. For each statement,
+    // before lowering it, scan for references to not-yet-declared bindings
+    // that appear inside inner functions. For each such reference, emit a
+    // `DeclareContext` with the appropriate Hoisted* kind so that the variable
+    // becomes a context variable (matching the TS reference behavior).
+    // =========================================================================
+    let mut hoistable: rustc_hash::FxHashMap<String, HoistableBinding> =
+        rustc_hash::FxHashMap::default();
+
+    // Phase 1: collect all bindings declared in this block.
     for stmt in stmts {
+        collect_hoistable_bindings_from_statement(stmt, &mut hoistable);
+    }
+
+    // Phase 2: for each statement, hoist as needed, then lower.
+    for stmt in stmts {
+        // Scan the statement for references to hoistable identifiers in inner functions.
+        let mut will_hoist: Vec<String> = Vec::new();
+        let fn_depth_start = if matches!(stmt, LowerableStatement::FunctionDeclaration(_)) {
+            1
+        } else {
+            0
+        };
+        scan_for_hoistable_refs(stmt, fn_depth_start, &hoistable, &mut will_hoist);
+
+        // Remove bindings that are declared by this statement from hoistable set.
+        remove_declared_bindings_from_statement(stmt, &mut hoistable);
+
+        // Emit DeclareContext for each hoisted identifier.
+        for name in &will_hoist {
+            if builder.is_hoisted_identifier(name) {
+                continue; // Already hoisted
+            }
+            let Some(binding_info) = hoistable.get(name).cloned() else {
+                continue;
+            };
+            let kind = binding_info.hoisted_kind();
+
+            // Resolve the binding to get a Place. The binding should already
+            // be known via scope_binding_names (pre-collected) or declared in
+            // the bindings map.
+            let loc = GENERATED_SOURCE;
+            let decl_place = builder.declare_binding(name, binding_info.binding_kind(), loc);
+
+            let lvalue = create_temporary_place(builder.environment_mut(), loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue,
+                value: InstructionValue::DeclareContext(DeclareContext {
+                    lvalue_kind: kind,
+                    lvalue_place: decl_place,
+                    loc,
+                }),
+                effects: None,
+                loc,
+            });
+            builder.add_hoisted_identifier(name);
+        }
+
         lower_statement(builder, stmt)?;
     }
     Ok(())
+}
+
+/// Information about a hoistable binding in a block scope.
+#[derive(Clone, Debug)]
+struct HoistableBinding {
+    /// The original declaration kind from the source.
+    decl_kind: ast::VariableDeclarationKind,
+    /// Whether this is a function declaration.
+    is_function_decl: bool,
+}
+
+impl HoistableBinding {
+    /// Get the hoisted `InstructionKind` for this binding.
+    fn hoisted_kind(&self) -> InstructionKind {
+        if self.is_function_decl {
+            InstructionKind::HoistedFunction
+        } else {
+            match self.decl_kind {
+                ast::VariableDeclarationKind::Const
+                | ast::VariableDeclarationKind::Var
+                | ast::VariableDeclarationKind::Using
+                | ast::VariableDeclarationKind::AwaitUsing => InstructionKind::HoistedConst,
+                ast::VariableDeclarationKind::Let => InstructionKind::HoistedLet,
+            }
+        }
+    }
+
+    /// Get the `BindingKind` for declaring this binding.
+    fn binding_kind(&self) -> BindingKind {
+        if self.is_function_decl {
+            BindingKind::Let // function declarations are hoisted as let
+        } else {
+            match self.decl_kind {
+                ast::VariableDeclarationKind::Const
+                | ast::VariableDeclarationKind::Using
+                | ast::VariableDeclarationKind::AwaitUsing => BindingKind::Const,
+                ast::VariableDeclarationKind::Let => BindingKind::Let,
+                ast::VariableDeclarationKind::Var => BindingKind::Var,
+            }
+        }
+    }
+}
+
+/// Collect all binding names declared in a statement.
+fn collect_hoistable_bindings_from_statement(
+    stmt: &LowerableStatement<'_>,
+    hoistable: &mut rustc_hash::FxHashMap<String, HoistableBinding>,
+) {
+    match stmt {
+        LowerableStatement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                collect_binding_names_from_pattern(&declarator.id, decl.kind, hoistable);
+            }
+        }
+        LowerableStatement::FunctionDeclaration(func) => {
+            if let Some(id) = &func.id {
+                hoistable.insert(
+                    id.name.to_string(),
+                    HoistableBinding {
+                        decl_kind: ast::VariableDeclarationKind::Let,
+                        is_function_decl: true,
+                    },
+                );
+            }
+        }
+        LowerableStatement::ForStatement(for_stmt) => {
+            if let Some(ast::ForStatementInit::VariableDeclaration(decl)) = &for_stmt.init {
+                for declarator in &decl.declarations {
+                    collect_binding_names_from_pattern(&declarator.id, decl.kind, hoistable);
+                }
+            }
+        }
+        LowerableStatement::ForOfStatement(for_of) => {
+            if let ast::ForStatementLeft::VariableDeclaration(decl) = &for_of.left {
+                for declarator in &decl.declarations {
+                    collect_binding_names_from_pattern(&declarator.id, decl.kind, hoistable);
+                }
+            }
+        }
+        LowerableStatement::ForInStatement(for_in) => {
+            if let ast::ForStatementLeft::VariableDeclaration(decl) = &for_in.left {
+                for declarator in &decl.declarations {
+                    collect_binding_names_from_pattern(&declarator.id, decl.kind, hoistable);
+                }
+            }
+        }
+        LowerableStatement::BlockStatement(block) => {
+            for child_stmt in &block.body {
+                let child = convert_statement(child_stmt);
+                collect_hoistable_bindings_from_statement(&child, hoistable);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Collect binding names from a binding pattern.
+fn collect_binding_names_from_pattern(
+    pattern: &ast::BindingPattern<'_>,
+    kind: ast::VariableDeclarationKind,
+    hoistable: &mut rustc_hash::FxHashMap<String, HoistableBinding>,
+) {
+    match pattern {
+        ast::BindingPattern::BindingIdentifier(ident) => {
+            hoistable.insert(
+                ident.name.to_string(),
+                HoistableBinding { decl_kind: kind, is_function_decl: false },
+            );
+        }
+        ast::BindingPattern::ObjectPattern(obj) => {
+            for prop in &obj.properties {
+                collect_binding_names_from_pattern(&prop.value, kind, hoistable);
+            }
+            if let Some(rest) = &obj.rest {
+                collect_binding_names_from_pattern(&rest.argument, kind, hoistable);
+            }
+        }
+        ast::BindingPattern::ArrayPattern(arr) => {
+            for elem in arr.elements.iter().flatten() {
+                collect_binding_names_from_pattern(elem, kind, hoistable);
+            }
+            if let Some(rest) = &arr.rest {
+                collect_binding_names_from_pattern(&rest.argument, kind, hoistable);
+            }
+        }
+        ast::BindingPattern::AssignmentPattern(assign) => {
+            collect_binding_names_from_pattern(&assign.left, kind, hoistable);
+        }
+    }
+}
+
+/// Remove bindings declared by a statement from the hoistable set.
+/// This is called after scanning but before lowering, to mark that subsequent
+/// statements no longer need hoisting for these names.
+fn remove_declared_bindings_from_statement(
+    stmt: &LowerableStatement<'_>,
+    hoistable: &mut rustc_hash::FxHashMap<String, HoistableBinding>,
+) {
+    match stmt {
+        LowerableStatement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                remove_binding_names_from_pattern(&declarator.id, hoistable);
+            }
+        }
+        LowerableStatement::FunctionDeclaration(func) => {
+            if let Some(id) = &func.id {
+                hoistable.remove(id.name.as_str());
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Remove binding names from a binding pattern from the hoistable set.
+fn remove_binding_names_from_pattern(
+    pattern: &ast::BindingPattern<'_>,
+    hoistable: &mut rustc_hash::FxHashMap<String, HoistableBinding>,
+) {
+    match pattern {
+        ast::BindingPattern::BindingIdentifier(ident) => {
+            hoistable.remove(ident.name.as_str());
+        }
+        ast::BindingPattern::ObjectPattern(obj) => {
+            for prop in &obj.properties {
+                remove_binding_names_from_pattern(&prop.value, hoistable);
+            }
+            if let Some(rest) = &obj.rest {
+                remove_binding_names_from_pattern(&rest.argument, hoistable);
+            }
+        }
+        ast::BindingPattern::ArrayPattern(arr) => {
+            for elem in arr.elements.iter().flatten() {
+                remove_binding_names_from_pattern(elem, hoistable);
+            }
+            if let Some(rest) = &arr.rest {
+                remove_binding_names_from_pattern(&rest.argument, hoistable);
+            }
+        }
+        ast::BindingPattern::AssignmentPattern(assign) => {
+            remove_binding_names_from_pattern(&assign.left, hoistable);
+        }
+    }
+}
+
+/// Scan a statement for references to hoistable identifiers that appear in inner functions.
+/// `fn_depth` tracks the nesting depth of function expressions (0 = top level).
+fn scan_for_hoistable_refs(
+    stmt: &LowerableStatement<'_>,
+    fn_depth: u32,
+    hoistable: &rustc_hash::FxHashMap<String, HoistableBinding>,
+    will_hoist: &mut Vec<String>,
+) {
+    match stmt {
+        LowerableStatement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                if let Some(init) = &declarator.init {
+                    scan_expr_for_hoistable_refs(init, fn_depth, hoistable, will_hoist);
+                }
+            }
+        }
+        LowerableStatement::ExpressionStatement(expr_stmt) => {
+            scan_expr_for_hoistable_refs(&expr_stmt.expression, fn_depth, hoistable, will_hoist);
+        }
+        LowerableStatement::ReturnStatement(ret) => {
+            if let Some(arg) = &ret.argument {
+                scan_expr_for_hoistable_refs(arg, fn_depth, hoistable, will_hoist);
+            }
+        }
+        LowerableStatement::IfStatement(if_stmt) => {
+            scan_expr_for_hoistable_refs(&if_stmt.test, fn_depth, hoistable, will_hoist);
+            let cons = convert_statement(&if_stmt.consequent);
+            scan_for_hoistable_refs(&cons, fn_depth, hoistable, will_hoist);
+            if let Some(alt) = &if_stmt.alternate {
+                let alt = convert_statement(alt);
+                scan_for_hoistable_refs(&alt, fn_depth, hoistable, will_hoist);
+            }
+        }
+        LowerableStatement::WhileStatement(while_stmt) => {
+            scan_expr_for_hoistable_refs(&while_stmt.test, fn_depth, hoistable, will_hoist);
+            let body = convert_statement(&while_stmt.body);
+            scan_for_hoistable_refs(&body, fn_depth, hoistable, will_hoist);
+        }
+        LowerableStatement::DoWhileStatement(do_while) => {
+            let body = convert_statement(&do_while.body);
+            scan_for_hoistable_refs(&body, fn_depth, hoistable, will_hoist);
+            scan_expr_for_hoistable_refs(&do_while.test, fn_depth, hoistable, will_hoist);
+        }
+        LowerableStatement::ForStatement(for_stmt) => {
+            if let Some(init) = &for_stmt.init {
+                match init {
+                    ast::ForStatementInit::VariableDeclaration(decl) => {
+                        for declarator in &decl.declarations {
+                            if let Some(init_expr) = &declarator.init {
+                                scan_expr_for_hoistable_refs(
+                                    init_expr,
+                                    fn_depth,
+                                    hoistable,
+                                    will_hoist,
+                                );
+                            }
+                        }
+                    }
+                    _ => {
+                        scan_expr_for_hoistable_refs(
+                            init.to_expression(),
+                            fn_depth,
+                            hoistable,
+                            will_hoist,
+                        );
+                    }
+                }
+            }
+            if let Some(test) = &for_stmt.test {
+                scan_expr_for_hoistable_refs(test, fn_depth, hoistable, will_hoist);
+            }
+            if let Some(update) = &for_stmt.update {
+                scan_expr_for_hoistable_refs(update, fn_depth, hoistable, will_hoist);
+            }
+            let body = convert_statement(&for_stmt.body);
+            scan_for_hoistable_refs(&body, fn_depth, hoistable, will_hoist);
+        }
+        LowerableStatement::ForOfStatement(for_of) => {
+            scan_expr_for_hoistable_refs(&for_of.right, fn_depth, hoistable, will_hoist);
+            let body = convert_statement(&for_of.body);
+            scan_for_hoistable_refs(&body, fn_depth, hoistable, will_hoist);
+        }
+        LowerableStatement::ForInStatement(for_in) => {
+            scan_expr_for_hoistable_refs(&for_in.right, fn_depth, hoistable, will_hoist);
+            let body = convert_statement(&for_in.body);
+            scan_for_hoistable_refs(&body, fn_depth, hoistable, will_hoist);
+        }
+        LowerableStatement::ThrowStatement(throw) => {
+            scan_expr_for_hoistable_refs(&throw.argument, fn_depth, hoistable, will_hoist);
+        }
+        LowerableStatement::SwitchStatement(switch) => {
+            scan_expr_for_hoistable_refs(&switch.discriminant, fn_depth, hoistable, will_hoist);
+            for case in &switch.cases {
+                if let Some(test) = &case.test {
+                    scan_expr_for_hoistable_refs(test, fn_depth, hoistable, will_hoist);
+                }
+                for s in &case.consequent {
+                    let s = convert_statement(s);
+                    scan_for_hoistable_refs(&s, fn_depth, hoistable, will_hoist);
+                }
+            }
+        }
+        LowerableStatement::BlockStatement(block) => {
+            for s in &block.body {
+                let s = convert_statement(s);
+                scan_for_hoistable_refs(&s, fn_depth, hoistable, will_hoist);
+            }
+        }
+        LowerableStatement::LabeledStatement(labeled) => {
+            let body = convert_statement(&labeled.body);
+            scan_for_hoistable_refs(&body, fn_depth, hoistable, will_hoist);
+        }
+        LowerableStatement::TryStatement(try_stmt) => {
+            for s in &try_stmt.block.body {
+                let s = convert_statement(s);
+                scan_for_hoistable_refs(&s, fn_depth, hoistable, will_hoist);
+            }
+            if let Some(handler) = &try_stmt.handler {
+                for s in &handler.body.body {
+                    let s = convert_statement(s);
+                    scan_for_hoistable_refs(&s, fn_depth, hoistable, will_hoist);
+                }
+            }
+        }
+        LowerableStatement::FunctionDeclaration(func) => {
+            // Function declarations enter an inner function scope.
+            // Filter out names bound in the function (params + local decls).
+            if let Some(body) = &func.body {
+                let filtered = filter_hoistable_for_inner_function(
+                    hoistable,
+                    &func.params,
+                    &body.statements,
+                );
+                for s in &body.statements {
+                    let s = convert_statement(s);
+                    scan_for_hoistable_refs(&s, fn_depth + 1, &filtered, will_hoist);
+                }
+            }
+        }
+        LowerableStatement::BreakStatement(_)
+        | LowerableStatement::ContinueStatement(_)
+        | LowerableStatement::DebuggerStatement
+        | LowerableStatement::EmptyStatement => {}
+    }
+}
+
+/// Scan an expression for references to hoistable identifiers.
+fn scan_expr_for_hoistable_refs(
+    expr: &ast::Expression<'_>,
+    fn_depth: u32,
+    hoistable: &rustc_hash::FxHashMap<String, HoistableBinding>,
+    will_hoist: &mut Vec<String>,
+) {
+    match expr {
+        ast::Expression::Identifier(ident) => {
+            // Only hoist if we're inside an inner function (fn_depth > 0)
+            if fn_depth > 0
+                && hoistable.contains_key(ident.name.as_str())
+                && !will_hoist.contains(&ident.name.to_string())
+            {
+                will_hoist.push(ident.name.to_string());
+            }
+        }
+        ast::Expression::AssignmentExpression(assign) => {
+            scan_expr_for_hoistable_refs(&assign.right, fn_depth, hoistable, will_hoist);
+            scan_assignment_target_for_hoistable_refs(
+                &assign.left,
+                fn_depth,
+                hoistable,
+                will_hoist,
+            );
+        }
+        ast::Expression::UpdateExpression(update) => {
+            scan_simple_assignment_target_for_hoistable_refs(
+                &update.argument,
+                fn_depth,
+                hoistable,
+                will_hoist,
+            );
+        }
+        ast::Expression::BinaryExpression(bin) => {
+            scan_expr_for_hoistable_refs(&bin.left, fn_depth, hoistable, will_hoist);
+            scan_expr_for_hoistable_refs(&bin.right, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::LogicalExpression(logical) => {
+            scan_expr_for_hoistable_refs(&logical.left, fn_depth, hoistable, will_hoist);
+            scan_expr_for_hoistable_refs(&logical.right, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::UnaryExpression(unary) => {
+            scan_expr_for_hoistable_refs(&unary.argument, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::ConditionalExpression(cond) => {
+            scan_expr_for_hoistable_refs(&cond.test, fn_depth, hoistable, will_hoist);
+            scan_expr_for_hoistable_refs(&cond.consequent, fn_depth, hoistable, will_hoist);
+            scan_expr_for_hoistable_refs(&cond.alternate, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::CallExpression(call) => {
+            scan_expr_for_hoistable_refs(&call.callee, fn_depth, hoistable, will_hoist);
+            for arg in &call.arguments {
+                match arg {
+                    ast::Argument::SpreadElement(spread) => {
+                        scan_expr_for_hoistable_refs(
+                            &spread.argument,
+                            fn_depth,
+                            hoistable,
+                            will_hoist,
+                        );
+                    }
+                    _ => {
+                        scan_expr_for_hoistable_refs(
+                            arg.to_expression(),
+                            fn_depth,
+                            hoistable,
+                            will_hoist,
+                        );
+                    }
+                }
+            }
+        }
+        ast::Expression::NewExpression(new_expr) => {
+            scan_expr_for_hoistable_refs(&new_expr.callee, fn_depth, hoistable, will_hoist);
+            for arg in &new_expr.arguments {
+                match arg {
+                    ast::Argument::SpreadElement(spread) => {
+                        scan_expr_for_hoistable_refs(
+                            &spread.argument,
+                            fn_depth,
+                            hoistable,
+                            will_hoist,
+                        );
+                    }
+                    _ => {
+                        scan_expr_for_hoistable_refs(
+                            arg.to_expression(),
+                            fn_depth,
+                            hoistable,
+                            will_hoist,
+                        );
+                    }
+                }
+            }
+        }
+        ast::Expression::StaticMemberExpression(member) => {
+            scan_expr_for_hoistable_refs(&member.object, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::ComputedMemberExpression(member) => {
+            scan_expr_for_hoistable_refs(&member.object, fn_depth, hoistable, will_hoist);
+            scan_expr_for_hoistable_refs(&member.expression, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::PrivateFieldExpression(pf) => {
+            scan_expr_for_hoistable_refs(&pf.object, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::ArrayExpression(arr) => {
+            for elem in &arr.elements {
+                match elem {
+                    ast::ArrayExpressionElement::SpreadElement(spread) => {
+                        scan_expr_for_hoistable_refs(
+                            &spread.argument,
+                            fn_depth,
+                            hoistable,
+                            will_hoist,
+                        );
+                    }
+                    ast::ArrayExpressionElement::Elision(_) => {}
+                    _ => {
+                        scan_expr_for_hoistable_refs(
+                            elem.to_expression(),
+                            fn_depth,
+                            hoistable,
+                            will_hoist,
+                        );
+                    }
+                }
+            }
+        }
+        ast::Expression::ObjectExpression(obj) => {
+            for prop in &obj.properties {
+                match prop {
+                    ast::ObjectPropertyKind::SpreadProperty(spread) => {
+                        scan_expr_for_hoistable_refs(
+                            &spread.argument,
+                            fn_depth,
+                            hoistable,
+                            will_hoist,
+                        );
+                    }
+                    ast::ObjectPropertyKind::ObjectProperty(prop) => {
+                        if prop.computed {
+                            scan_expr_for_hoistable_refs(
+                                prop.key.to_expression(),
+                                fn_depth,
+                                hoistable,
+                                will_hoist,
+                            );
+                        }
+                        scan_expr_for_hoistable_refs(&prop.value, fn_depth, hoistable, will_hoist);
+                    }
+                }
+            }
+        }
+        ast::Expression::TemplateLiteral(tpl) => {
+            for sub in &tpl.expressions {
+                scan_expr_for_hoistable_refs(sub, fn_depth, hoistable, will_hoist);
+            }
+        }
+        ast::Expression::TaggedTemplateExpression(tagged) => {
+            scan_expr_for_hoistable_refs(&tagged.tag, fn_depth, hoistable, will_hoist);
+            for sub in &tagged.quasi.expressions {
+                scan_expr_for_hoistable_refs(sub, fn_depth, hoistable, will_hoist);
+            }
+        }
+        ast::Expression::SequenceExpression(seq) => {
+            for sub in &seq.expressions {
+                scan_expr_for_hoistable_refs(sub, fn_depth, hoistable, will_hoist);
+            }
+        }
+        ast::Expression::AwaitExpression(await_expr) => {
+            scan_expr_for_hoistable_refs(&await_expr.argument, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::YieldExpression(yield_expr) => {
+            if let Some(arg) = &yield_expr.argument {
+                scan_expr_for_hoistable_refs(arg, fn_depth, hoistable, will_hoist);
+            }
+        }
+        ast::Expression::ArrowFunctionExpression(arrow) => {
+            // Enter inner function scope. Filter out names bound in the arrow
+            // function (params + local declarations) so they don't shadow outer
+            // hoistable bindings. This matches the TS reference which uses
+            // `id.scope.getBinding(id.node.name)` for proper scope resolution.
+            let filtered = filter_hoistable_for_inner_function(
+                hoistable,
+                &arrow.params,
+                &arrow.body.statements,
+            );
+            for s in &arrow.body.statements {
+                let s = convert_statement(s);
+                scan_for_hoistable_refs(&s, fn_depth + 1, &filtered, will_hoist);
+            }
+        }
+        ast::Expression::FunctionExpression(func) => {
+            // Enter inner function scope with filtered hoistable map.
+            if let Some(body) = &func.body {
+                let filtered = filter_hoistable_for_inner_function(
+                    hoistable,
+                    &func.params,
+                    &body.statements,
+                );
+                // Also exclude the function's own name (named function expressions)
+                let mut filtered = filtered;
+                if let Some(id) = &func.id {
+                    filtered.remove(id.name.as_str());
+                }
+                for s in &body.statements {
+                    let s = convert_statement(s);
+                    scan_for_hoistable_refs(&s, fn_depth + 1, &filtered, will_hoist);
+                }
+            }
+        }
+        ast::Expression::ChainExpression(chain) => match &chain.expression {
+            ast::ChainElement::CallExpression(call) => {
+                scan_expr_for_hoistable_refs(&call.callee, fn_depth, hoistable, will_hoist);
+                for arg in &call.arguments {
+                    match arg {
+                        ast::Argument::SpreadElement(spread) => {
+                            scan_expr_for_hoistable_refs(
+                                &spread.argument,
+                                fn_depth,
+                                hoistable,
+                                will_hoist,
+                            );
+                        }
+                        _ => {
+                            scan_expr_for_hoistable_refs(
+                                arg.to_expression(),
+                                fn_depth,
+                                hoistable,
+                                will_hoist,
+                            );
+                        }
+                    }
+                }
+            }
+            ast::ChainElement::StaticMemberExpression(member) => {
+                scan_expr_for_hoistable_refs(&member.object, fn_depth, hoistable, will_hoist);
+            }
+            ast::ChainElement::ComputedMemberExpression(member) => {
+                scan_expr_for_hoistable_refs(&member.object, fn_depth, hoistable, will_hoist);
+                scan_expr_for_hoistable_refs(
+                    &member.expression,
+                    fn_depth,
+                    hoistable,
+                    will_hoist,
+                );
+            }
+            ast::ChainElement::TSNonNullExpression(ts_nn) => {
+                scan_expr_for_hoistable_refs(&ts_nn.expression, fn_depth, hoistable, will_hoist);
+            }
+            ast::ChainElement::PrivateFieldExpression(pf) => {
+                scan_expr_for_hoistable_refs(&pf.object, fn_depth, hoistable, will_hoist);
+            }
+        },
+        ast::Expression::ParenthesizedExpression(paren) => {
+            scan_expr_for_hoistable_refs(&paren.expression, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::TSAsExpression(ts_as) => {
+            scan_expr_for_hoistable_refs(&ts_as.expression, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::TSSatisfiesExpression(ts_sat) => {
+            scan_expr_for_hoistable_refs(&ts_sat.expression, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::TSNonNullExpression(ts_nn) => {
+            scan_expr_for_hoistable_refs(&ts_nn.expression, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::TSTypeAssertion(ts_ta) => {
+            scan_expr_for_hoistable_refs(&ts_ta.expression, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::JSXElement(jsx) => {
+            scan_jsx_element_for_hoistable_refs(jsx, fn_depth, hoistable, will_hoist);
+        }
+        ast::Expression::JSXFragment(frag) => {
+            for child in &frag.children {
+                scan_jsx_child_for_hoistable_refs(child, fn_depth, hoistable, will_hoist);
+            }
+        }
+        // Literals and other leaf expressions
+        _ => {}
+    }
+}
+
+/// Scan an assignment target for hoistable refs.
+fn scan_assignment_target_for_hoistable_refs(
+    target: &ast::AssignmentTarget<'_>,
+    fn_depth: u32,
+    hoistable: &rustc_hash::FxHashMap<String, HoistableBinding>,
+    will_hoist: &mut Vec<String>,
+) {
+    match target {
+        ast::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+            if fn_depth > 0
+                && hoistable.contains_key(ident.name.as_str())
+                && !will_hoist.contains(&ident.name.to_string())
+            {
+                will_hoist.push(ident.name.to_string());
+            }
+        }
+        ast::AssignmentTarget::StaticMemberExpression(member) => {
+            scan_expr_for_hoistable_refs(&member.object, fn_depth, hoistable, will_hoist);
+        }
+        ast::AssignmentTarget::ComputedMemberExpression(member) => {
+            scan_expr_for_hoistable_refs(&member.object, fn_depth, hoistable, will_hoist);
+            scan_expr_for_hoistable_refs(&member.expression, fn_depth, hoistable, will_hoist);
+        }
+        ast::AssignmentTarget::ArrayAssignmentTarget(arr) => {
+            for elem in arr.elements.iter().flatten() {
+                scan_assignment_target_maybe_default_for_hoistable_refs(
+                    elem, fn_depth, hoistable, will_hoist,
+                );
+            }
+        }
+        ast::AssignmentTarget::ObjectAssignmentTarget(obj) => {
+            for prop in &obj.properties {
+                match prop {
+                    ast::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
+                        if fn_depth > 0
+                            && hoistable.contains_key(ident.binding.name.as_str())
+                            && !will_hoist.contains(&ident.binding.name.to_string())
+                        {
+                            will_hoist.push(ident.binding.name.to_string());
+                        }
+                    }
+                    ast::AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) => {
+                        scan_assignment_target_maybe_default_for_hoistable_refs(
+                            &prop.binding,
+                            fn_depth,
+                            hoistable,
+                            will_hoist,
+                        );
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Scan an assignment target (maybe with default) for hoistable refs.
+fn scan_assignment_target_maybe_default_for_hoistable_refs(
+    target: &ast::AssignmentTargetMaybeDefault<'_>,
+    fn_depth: u32,
+    hoistable: &rustc_hash::FxHashMap<String, HoistableBinding>,
+    will_hoist: &mut Vec<String>,
+) {
+    match target {
+        ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
+            scan_expr_for_hoistable_refs(&with_default.init, fn_depth, hoistable, will_hoist);
+            scan_assignment_target_for_hoistable_refs(
+                &with_default.binding,
+                fn_depth,
+                hoistable,
+                will_hoist,
+            );
+        }
+        _ => {
+            scan_assignment_target_for_hoistable_refs(
+                target.to_assignment_target(),
+                fn_depth,
+                hoistable,
+                will_hoist,
+            );
+        }
+    }
+}
+
+/// Scan a simple assignment target for hoistable refs (for update expressions).
+fn scan_simple_assignment_target_for_hoistable_refs(
+    target: &ast::SimpleAssignmentTarget<'_>,
+    fn_depth: u32,
+    hoistable: &rustc_hash::FxHashMap<String, HoistableBinding>,
+    will_hoist: &mut Vec<String>,
+) {
+    match target {
+        ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+            if fn_depth > 0
+                && hoistable.contains_key(ident.name.as_str())
+                && !will_hoist.contains(&ident.name.to_string())
+            {
+                will_hoist.push(ident.name.to_string());
+            }
+        }
+        ast::SimpleAssignmentTarget::StaticMemberExpression(member) => {
+            scan_expr_for_hoistable_refs(&member.object, fn_depth, hoistable, will_hoist);
+        }
+        ast::SimpleAssignmentTarget::ComputedMemberExpression(member) => {
+            scan_expr_for_hoistable_refs(&member.object, fn_depth, hoistable, will_hoist);
+            scan_expr_for_hoistable_refs(&member.expression, fn_depth, hoistable, will_hoist);
+        }
+        _ => {}
+    }
+}
+
+/// Scan a JSX element for hoistable refs.
+fn scan_jsx_element_for_hoistable_refs(
+    element: &ast::JSXElement<'_>,
+    fn_depth: u32,
+    hoistable: &rustc_hash::FxHashMap<String, HoistableBinding>,
+    will_hoist: &mut Vec<String>,
+) {
+    // Scan opening element name and attributes
+    if let ast::JSXElementName::IdentifierReference(ident) = &element.opening_element.name {
+        if fn_depth > 0
+            && hoistable.contains_key(ident.name.as_str())
+            && !will_hoist.contains(&ident.name.to_string())
+        {
+            will_hoist.push(ident.name.to_string());
+        }
+    }
+    for attr in &element.opening_element.attributes {
+        match attr {
+            ast::JSXAttributeItem::Attribute(attr) => {
+                if let Some(value) = &attr.value {
+                    if let ast::JSXAttributeValue::ExpressionContainer(container) = value {
+                        if let ast::JSXExpression::EmptyExpression(_) = &container.expression {
+                            // skip
+                        } else {
+                            scan_expr_for_hoistable_refs(
+                                container.expression.to_expression(),
+                                fn_depth,
+                                hoistable,
+                                will_hoist,
+                            );
+                        }
+                    }
+                }
+            }
+            ast::JSXAttributeItem::SpreadAttribute(spread) => {
+                scan_expr_for_hoistable_refs(&spread.argument, fn_depth, hoistable, will_hoist);
+            }
+        }
+    }
+    for child in &element.children {
+        scan_jsx_child_for_hoistable_refs(child, fn_depth, hoistable, will_hoist);
+    }
+}
+
+/// Scan a JSX child for hoistable refs.
+fn scan_jsx_child_for_hoistable_refs(
+    child: &ast::JSXChild<'_>,
+    fn_depth: u32,
+    hoistable: &rustc_hash::FxHashMap<String, HoistableBinding>,
+    will_hoist: &mut Vec<String>,
+) {
+    match child {
+        ast::JSXChild::ExpressionContainer(container) => {
+            if let ast::JSXExpression::EmptyExpression(_) = &container.expression {
+                // skip
+            } else {
+                scan_expr_for_hoistable_refs(
+                    container.expression.to_expression(),
+                    fn_depth,
+                    hoistable,
+                    will_hoist,
+                );
+            }
+        }
+        ast::JSXChild::Element(element) => {
+            scan_jsx_element_for_hoistable_refs(element, fn_depth, hoistable, will_hoist);
+        }
+        ast::JSXChild::Spread(spread) => {
+            scan_expr_for_hoistable_refs(&spread.expression, fn_depth, hoistable, will_hoist);
+        }
+        _ => {}
+    }
+}
+
+/// Collect all binding names from a function's scope (parameters + local declarations).
+///
+/// This is used during hoisting analysis to determine which names are shadowed
+/// inside an inner function, so that references to those names inside the function
+/// are not incorrectly treated as references to outer hoistable bindings.
+///
+/// The TS reference uses Babel's `id.scope.getBinding(id.node.name)` which resolves
+/// each identifier to its actual binding. This function provides a lightweight
+/// approximation by collecting all names that would be bound within the function scope.
+fn collect_function_scope_binding_names(
+    params: &ast::FormalParameters<'_>,
+    body_stmts: &[ast::Statement<'_>],
+) -> rustc_hash::FxHashSet<String> {
+    let mut names: rustc_hash::FxHashSet<String> = rustc_hash::FxHashSet::default();
+
+    // Collect parameter names
+    for param in &params.items {
+        collect_binding_pattern_names(&param.pattern, &mut names);
+    }
+    if let Some(rest) = &params.rest {
+        collect_binding_pattern_names(&rest.rest.argument, &mut names);
+    }
+
+    // Collect local declaration names from the function body
+    collect_statement_binding_names_recursive(body_stmts, &mut names);
+
+    names
+}
+
+/// Recursively collect all `let`/`const`/`var`/function declaration names from statements.
+/// This traverses into blocks and other compound statements to find all declarations.
+fn collect_statement_binding_names_recursive(
+    stmts: &[ast::Statement<'_>],
+    names: &mut rustc_hash::FxHashSet<String>,
+) {
+    for stmt in stmts {
+        match stmt {
+            ast::Statement::VariableDeclaration(decl) => {
+                for declarator in &decl.declarations {
+                    collect_binding_pattern_names(&declarator.id, names);
+                }
+            }
+            ast::Statement::FunctionDeclaration(func) => {
+                if let Some(id) = &func.id {
+                    names.insert(id.name.to_string());
+                }
+            }
+            ast::Statement::BlockStatement(block) => {
+                collect_statement_binding_names_recursive(&block.body, names);
+            }
+            ast::Statement::IfStatement(if_stmt) => {
+                collect_statement_binding_names_from_single(&if_stmt.consequent, names);
+                if let Some(alt) = &if_stmt.alternate {
+                    collect_statement_binding_names_from_single(alt, names);
+                }
+            }
+            ast::Statement::WhileStatement(while_stmt) => {
+                collect_statement_binding_names_from_single(&while_stmt.body, names);
+            }
+            ast::Statement::DoWhileStatement(do_while) => {
+                collect_statement_binding_names_from_single(&do_while.body, names);
+            }
+            ast::Statement::ForStatement(for_stmt) => {
+                if let Some(ast::ForStatementInit::VariableDeclaration(decl)) = &for_stmt.init {
+                    for declarator in &decl.declarations {
+                        collect_binding_pattern_names(&declarator.id, names);
+                    }
+                }
+                collect_statement_binding_names_from_single(&for_stmt.body, names);
+            }
+            ast::Statement::ForOfStatement(for_of) => {
+                if let ast::ForStatementLeft::VariableDeclaration(decl) = &for_of.left {
+                    for declarator in &decl.declarations {
+                        collect_binding_pattern_names(&declarator.id, names);
+                    }
+                }
+                collect_statement_binding_names_from_single(&for_of.body, names);
+            }
+            ast::Statement::ForInStatement(for_in) => {
+                if let ast::ForStatementLeft::VariableDeclaration(decl) = &for_in.left {
+                    for declarator in &decl.declarations {
+                        collect_binding_pattern_names(&declarator.id, names);
+                    }
+                }
+                collect_statement_binding_names_from_single(&for_in.body, names);
+            }
+            ast::Statement::SwitchStatement(switch) => {
+                for case in &switch.cases {
+                    collect_statement_binding_names_recursive(&case.consequent, names);
+                }
+            }
+            ast::Statement::TryStatement(try_stmt) => {
+                collect_statement_binding_names_recursive(&try_stmt.block.body, names);
+                if let Some(handler) = &try_stmt.handler {
+                    if let Some(param) = &handler.param {
+                        collect_binding_pattern_names(&param.pattern, names);
+                    }
+                    collect_statement_binding_names_recursive(&handler.body.body, names);
+                }
+                if let Some(finalizer) = &try_stmt.finalizer {
+                    collect_statement_binding_names_recursive(&finalizer.body, names);
+                }
+            }
+            ast::Statement::LabeledStatement(labeled) => {
+                collect_statement_binding_names_from_single(&labeled.body, names);
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Helper for single statements (not slices).
+fn collect_statement_binding_names_from_single(
+    stmt: &ast::Statement<'_>,
+    names: &mut rustc_hash::FxHashSet<String>,
+) {
+    collect_statement_binding_names_recursive(std::slice::from_ref(stmt), names);
+}
+
+/// Create a filtered hoistable map that excludes names bound within an inner function.
+///
+/// When scanning an inner function for hoistable references, any names that are
+/// declared within that function (as parameters or local variables) shadow the
+/// outer hoistable bindings and should not be treated as references to the outer scope.
+fn filter_hoistable_for_inner_function(
+    hoistable: &rustc_hash::FxHashMap<String, HoistableBinding>,
+    params: &ast::FormalParameters<'_>,
+    body_stmts: &[ast::Statement<'_>],
+) -> rustc_hash::FxHashMap<String, HoistableBinding> {
+    let inner_names = collect_function_scope_binding_names(params, body_stmts);
+    if inner_names.is_empty() {
+        return hoistable.clone();
+    }
+    hoistable
+        .iter()
+        .filter(|(name, _)| !inner_names.contains(name.as_str()))
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect()
 }
 
 /// A statement that can be lowered to HIR.
@@ -3040,7 +4037,7 @@ fn lower_statement_with_label(
                                     id: InstructionId(0),
                                     lvalue,
                                     value: InstructionValue::StoreContext(StoreContext {
-                                        lvalue_kind: InstructionKind::Let,
+                                        lvalue_kind: kind,
                                         lvalue_place: decl_place,
                                         value,
                                         loc,

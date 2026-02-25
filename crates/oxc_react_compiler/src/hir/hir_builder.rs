@@ -132,6 +132,11 @@ pub struct HirBuilder {
     /// The set of context identifiers (variables captured by inner closures).
     context_identifiers: ContextIdentifiers,
 
+    /// The set of identifiers that have been hoisted (declared before their
+    /// textual position because they are referenced by inner functions).
+    /// Corresponds to `#hoistedIdentifiers` in the TS `Environment`.
+    hoisted_identifiers: FxHashSet<String>,
+
     /// All binding names that will be declared in this function's scope.
     ///
     /// Pre-collected from the AST before lowering begins, this set includes
@@ -166,6 +171,7 @@ impl HirBuilder {
             bindings: FxHashMap::default(),
             next_binding_key: 0,
             context_identifiers,
+            hoisted_identifiers: FxHashSet::default(),
             scope_binding_names: FxHashSet::default(),
         }
     }
@@ -353,6 +359,22 @@ impl HirBuilder {
             return self.context_identifiers.contains(name);
         }
         false
+    }
+
+    /// Add a name to the context identifiers set and the hoisted identifiers set.
+    ///
+    /// This corresponds to `Environment.addHoistedIdentifier()` in the TS version,
+    /// which adds the identifier to both `#contextIdentifiers` and `#hoistedIdentifiers`.
+    pub fn add_hoisted_identifier(&mut self, name: &str) {
+        self.context_identifiers.insert(name.to_string());
+        self.hoisted_identifiers.insert(name.to_string());
+    }
+
+    /// Check if a name has already been hoisted.
+    ///
+    /// This corresponds to `Environment.isHoistedIdentifier()` in the TS version.
+    pub fn is_hoisted_identifier(&self, name: &str) -> bool {
+        self.hoisted_identifiers.contains(name)
     }
 
     /// Set the scope binding names for this function.
