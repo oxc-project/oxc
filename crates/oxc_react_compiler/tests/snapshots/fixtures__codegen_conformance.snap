@@ -1,17 +1,16 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 3693
 expression: snapshot
 ---
-Codegen conformance: 396/1040 passed (38.1%)
+Codegen conformance: 400/1040 passed (38.5%)
 
 Failure breakdown:
   parse_error:    27
   no_function:    2
   lower_error:    0
-  pipeline_error: 13
+  pipeline_error: 35
   panic:          0
-  output_mismatch:601
+  output_mismatch:575
   no_expected:    1
 
 Failed fixtures:
@@ -32,6 +31,7 @@ Failed fixtures:
   [output_mismatch] allow-assigning-ref-accessing-function-to-object-property-if-not-mutated.js
   [pipeline_error] allow-global-mutation-in-effect-indirect-usecallback.js
   [output_mismatch] allow-global-mutation-in-effect-indirect.js
+  [pipeline_error] allow-global-mutation-unused-usecallback.js
   [output_mismatch] allow-global-reassignment-in-effect-indirect.js
   [output_mismatch] allow-global-reassignment-in-effect.js
   [output_mismatch] allow-merge-refs-pattern.js
@@ -51,7 +51,6 @@ Failed fixtures:
   [parse_error] allow-ref-type-cast-in-render.js
   [output_mismatch] array-access-assignment.js
   [output_mismatch] array-at-closure.js
-  [output_mismatch] array-at-effect.js
   [output_mismatch] array-at-mutate-after-capture.js
   [output_mismatch] array-concat-should-capture.ts
   [output_mismatch] array-from-arg1-captures-arg0.js
@@ -71,10 +70,10 @@ Failed fixtures:
   [output_mismatch] arrow-expr-directive.js
   [output_mismatch] assignment-variations-complex-lvalue-array.js
   [output_mismatch] assignment-variations.js
-  [output_mismatch] babel-existing-react-import.js
-  [output_mismatch] babel-existing-react-kitchensink-import.js
-  [output_mismatch] babel-existing-react-namespace-import.js
-  [output_mismatch] babel-existing-react-runtime-import.js
+  [pipeline_error] babel-existing-react-import.js
+  [pipeline_error] babel-existing-react-kitchensink-import.js
+  [pipeline_error] babel-existing-react-namespace-import.js
+  [pipeline_error] babel-existing-react-runtime-import.js
   [output_mismatch] block-scoping-switch-variable-scoping.js
   [output_mismatch] bug-capturing-func-maybealias-captured-mutate.ts
   [output_mismatch] bug-ref-prefix-postfix-operator.js
@@ -141,7 +140,7 @@ Failed fixtures:
   [output_mismatch] conditional-early-return.js
   [output_mismatch] conditional-on-mutable.js
   [output_mismatch] conflict-codegen-instrument-forget.js
-  [output_mismatch] consecutive-use-memo.ts
+  [pipeline_error] consecutive-use-memo.ts
   [output_mismatch] console-readonly.js
   [output_mismatch] const-propagation-into-function-expression-global.js
   [output_mismatch] const-propagation-into-function-expression-primitive.js
@@ -154,7 +153,7 @@ Failed fixtures:
   [output_mismatch] constant-propagation-unary-number.js
   [output_mismatch] constant-propagation-unary.js
   [output_mismatch] constant-propagation-while.js
-  [output_mismatch] context-variable-as-jsx-element-tag.js
+  [pipeline_error] context-variable-as-jsx-element-tag.js
   [output_mismatch] context-variable-reactive-explicit-control-flow.js
   [output_mismatch] context-variable-reactive-implicit-control-flow.js
   [output_mismatch] context-variable-reassigned-objectmethod.js
@@ -201,7 +200,7 @@ Failed fixtures:
   [output_mismatch] dominator.js
   [output_mismatch] dont-memoize-primitive-function-call-non-escaping-useMemo.js
   [output_mismatch] drop-methodcall-usecallback.js
-  [output_mismatch] drop-methodcall-usememo.js
+  [pipeline_error] drop-methodcall-usememo.js
   [output_mismatch] early-return-nested-early-return-within-reactive-scope.js
   [output_mismatch] early-return-no-declarations-reassignments-dependencies.js
   [output_mismatch] early-return-within-reactive-scope.js
@@ -283,7 +282,6 @@ Failed fixtures:
   [output_mismatch] immutable-hooks.js
   [output_mismatch] inadvertent-mutability-readonly-lambda.js
   [output_mismatch] incompatible-destructuring-kinds.js
-  [output_mismatch] independent.js
   [output_mismatch] independently-memoize-object-property.js
   [no_function] infer-function-React-memo.js
   [output_mismatch] infer-function-expression-component.js
@@ -354,7 +352,7 @@ Failed fixtures:
   [output_mismatch] mutation-within-capture-and-mutablerange.tsx
   [output_mismatch] mutation-within-jsx-and-break.tsx
   [output_mismatch] mutation-within-jsx.tsx
-  [output_mismatch] name-anonymous-functions.js
+  [pipeline_error] name-anonymous-functions.js
   [output_mismatch] nested-function-shadowed-identifiers.js
   [output_mismatch] nested-function-with-param-as-captured-dep.ts
   [output_mismatch] nested-optional-chains.ts
@@ -419,7 +417,6 @@ Failed fixtures:
   [pipeline_error] preserve-memo-deps-conditional-property-chain.js
   [output_mismatch] preserve-memo-deps-optional-property-chain.js
   [output_mismatch] primitive-as-dep-nested-scope.js
-  [output_mismatch] primitive-as-dep.js
   [output_mismatch] primitive-reassigned-loop-force-scopes-enabled.js
   [output_mismatch] prop-capturing-function-1.js
   [output_mismatch] property-assignment.js
@@ -446,8 +443,6 @@ Failed fixtures:
   [output_mismatch] reactive-scopes-if.js
   [output_mismatch] reactive-scopes.js
   [output_mismatch] reactivity-analysis-interleaved-reactivity.js
-  [output_mismatch] reactivity-analysis-reactive-via-mutation-of-computed-load.js
-  [output_mismatch] reactivity-analysis-reactive-via-mutation-of-property-load.js
   [output_mismatch] reactivity-via-aliased-mutation-lambda.js
   [output_mismatch] readonly-object-method-calls-mutable-lambda.js
   [output_mismatch] readonly-object-method-calls.js
@@ -488,7 +483,7 @@ Failed fixtures:
   [output_mismatch] repro-dont-memoize-array-with-capturing-map-after-hook.js
   [output_mismatch] repro-dont-memoize-array-with-mutable-map-after-hook.js
   [output_mismatch] repro-duplicate-instruction-from-merge-consecutive-scopes.js
-  [output_mismatch] repro-false-positive-ref-validation-in-use-effect.js
+  [pipeline_error] repro-false-positive-ref-validation-in-use-effect.js
   [output_mismatch] repro-for-in-in-try.js
   [output_mismatch] repro-for-loop-in-try.js
   [output_mismatch] repro-for-of-in-try.js
@@ -509,18 +504,17 @@ Failed fixtures:
   [output_mismatch] repro-mutate-result-of-function-call-with-frozen-argument-in-function-expression.js
   [output_mismatch] repro-mutate-result-of-method-call-on-frozen-value-in-function-expression.js
   [output_mismatch] repro-nested-try-catch-in-usememo.js
-  [output_mismatch] repro-no-declarations-in-reactive-scope-with-early-return.js
+  [pipeline_error] repro-no-declarations-in-reactive-scope-with-early-return.js
   [output_mismatch] repro-no-value-for-temporary-reactive-scope-with-early-return.js
   [output_mismatch] repro-no-value-for-temporary.js
   [output_mismatch] repro-object-expression-computed-key-modified-during-after-construction-hoisted-sequence-expr.js
   [pipeline_error] repro-object-fromEntries-entries.js
   [output_mismatch] repro-preds-undefined-try-catch-return-primitive.js
-  [output_mismatch] repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency.js
   [parse_error] repro-propagate-type-of-ternary-jsx.js
   [parse_error] repro-propagate-type-of-ternary-nested.js
   [output_mismatch] repro-reassign-props.js
   [output_mismatch] repro-ref-mutable-range.tsx
-  [output_mismatch] repro-renaming-conflicting-decls.js
+  [pipeline_error] repro-renaming-conflicting-decls.js
   [output_mismatch] repro-returned-inner-fn-mutates-context.js
   [output_mismatch] repro-returned-inner-fn-reassigns-context.js
   [output_mismatch] repro-scope-missing-mutable-range.js
@@ -533,6 +527,7 @@ Failed fixtures:
   [output_mismatch] repro-unreachable-code-early-return-in-useMemo.js
   [output_mismatch] repro-useMemo-if-else-both-early-return.js
   [output_mismatch] repro.js
+  [output_mismatch] resolve-react-hooks-based-on-import-name.js
   [output_mismatch] rest-param-with-identifier.js
   [parse_error] return-ref-callback-structure.js
   [parse_error] return-ref-callback.js
@@ -604,10 +599,10 @@ Failed fixtures:
   [parse_error] type-alias-used-as-variable-annotation_.flow.js
   [parse_error] type-alias.flow.js
   [parse_error] type-cast-expression.flow.js
-  [output_mismatch] type-provider-log-default-import.tsx
-  [output_mismatch] type-provider-log.tsx
-  [output_mismatch] type-provider-store-capture-namespace-import.tsx
-  [output_mismatch] type-provider-store-capture.tsx
+  [pipeline_error] type-provider-log-default-import.tsx
+  [pipeline_error] type-provider-log.tsx
+  [pipeline_error] type-provider-store-capture-namespace-import.tsx
+  [pipeline_error] type-provider-store-capture.tsx
   [output_mismatch] type-provider-tagged-template-expression.js
   [output_mismatch] type-test-field-load-binary-op.js
   [output_mismatch] type-test-polymorphic.js
@@ -627,31 +622,31 @@ Failed fixtures:
   [output_mismatch] useActionState-dispatch-considered-as-non-reactive.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-dont-preserve-memoization.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js
-  [output_mismatch] useCallback-maybe-modify-free-variable-dont-preserve-memoization-guarantee.js
+  [pipeline_error] useCallback-maybe-modify-free-variable-dont-preserve-memoization-guarantee.js
   [pipeline_error] useCallback-maybe-modify-free-variable-preserve-memoization-guarantee.js
   [parse_error] useCallback-ref-in-render.js
   [output_mismatch] useContext-maybe-mutate-context-in-callback.js
   [output_mismatch] useContext-read-context-in-callback-if-condition.js
   [output_mismatch] useContext-read-context-in-callback.js
   [output_mismatch] useEffect-arg-memoized.js
-  [output_mismatch] useEffect-nested-lambdas.js
+  [pipeline_error] useEffect-nested-lambdas.js
   [output_mismatch] useEffect-snap-test.js
   [parse_error] useImperativeHandle-ref-mutate.js
   [output_mismatch] useMemo-if-else-multiple-return.js
-  [output_mismatch] useMemo-independently-memoizeable.js
   [output_mismatch] useMemo-inlining-block-return.js
   [output_mismatch] useMemo-inverted-if.js
   [output_mismatch] useMemo-logical.js
-  [output_mismatch] useMemo-mabye-modified-free-variable-dont-preserve-memoization-guarantees.js
+  [pipeline_error] useMemo-mabye-modified-free-variable-dont-preserve-memoization-guarantees.js
   [pipeline_error] useMemo-mabye-modified-free-variable-preserve-memoization-guarantees.js
-  [output_mismatch] useMemo-maybe-modified-later-dont-preserve-memoization-guarantees.js
+  [pipeline_error] useMemo-maybe-modified-later-dont-preserve-memoization-guarantees.js
   [pipeline_error] useMemo-maybe-modified-later-preserve-memoization-guarantees.js
   [output_mismatch] useMemo-multiple-if-else.js
   [output_mismatch] useMemo-multiple-returns.js
+  [pipeline_error] useMemo-named-function.ts
   [output_mismatch] useMemo-nested-ifs.js
   [output_mismatch] useMemo-switch-no-fallthrough.js
   [output_mismatch] useMemo-switch-return.js
-  [output_mismatch] useMemo-with-optional.js
+  [pipeline_error] useMemo-with-optional.js
   [output_mismatch] useReducer-returned-dispatcher-is-non-reactive.js
   [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-listener.js
   [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-with-ref.js

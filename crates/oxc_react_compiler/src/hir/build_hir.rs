@@ -2235,11 +2235,8 @@ pub fn lower_block_statement(
     for stmt in stmts {
         // Scan the statement for references to hoistable identifiers in inner functions.
         let mut will_hoist: Vec<String> = Vec::new();
-        let fn_depth_start = if matches!(stmt, LowerableStatement::FunctionDeclaration(_)) {
-            1
-        } else {
-            0
-        };
+        let fn_depth_start =
+            if matches!(stmt, LowerableStatement::FunctionDeclaration(_)) { 1 } else { 0 };
         scan_for_hoistable_refs(stmt, fn_depth_start, &hoistable, &mut will_hoist);
 
         // Remove bindings that are declared by this statement from hoistable set.
@@ -2513,10 +2510,7 @@ fn scan_for_hoistable_refs(
                         for declarator in &decl.declarations {
                             if let Some(init_expr) = &declarator.init {
                                 scan_expr_for_hoistable_refs(
-                                    init_expr,
-                                    fn_depth,
-                                    hoistable,
-                                    will_hoist,
+                                    init_expr, fn_depth, hoistable, will_hoist,
                                 );
                             }
                         }
@@ -2591,11 +2585,8 @@ fn scan_for_hoistable_refs(
             // Function declarations enter an inner function scope.
             // Filter out names bound in the function (params + local decls).
             if let Some(body) = &func.body {
-                let filtered = filter_hoistable_for_inner_function(
-                    hoistable,
-                    &func.params,
-                    &body.statements,
-                );
+                let filtered =
+                    filter_hoistable_for_inner_function(hoistable, &func.params, &body.statements);
                 for s in &body.statements {
                     let s = convert_statement(s);
                     scan_for_hoistable_refs(&s, fn_depth + 1, &filtered, will_hoist);
@@ -2805,11 +2796,8 @@ fn scan_expr_for_hoistable_refs(
         ast::Expression::FunctionExpression(func) => {
             // Enter inner function scope with filtered hoistable map.
             if let Some(body) = &func.body {
-                let filtered = filter_hoistable_for_inner_function(
-                    hoistable,
-                    &func.params,
-                    &body.statements,
-                );
+                let filtered =
+                    filter_hoistable_for_inner_function(hoistable, &func.params, &body.statements);
                 // Also exclude the function's own name (named function expressions)
                 let mut filtered = filtered;
                 if let Some(id) = &func.id {
@@ -2850,12 +2838,7 @@ fn scan_expr_for_hoistable_refs(
             }
             ast::ChainElement::ComputedMemberExpression(member) => {
                 scan_expr_for_hoistable_refs(&member.object, fn_depth, hoistable, will_hoist);
-                scan_expr_for_hoistable_refs(
-                    &member.expression,
-                    fn_depth,
-                    hoistable,
-                    will_hoist,
-                );
+                scan_expr_for_hoistable_refs(&member.expression, fn_depth, hoistable, will_hoist);
             }
             ast::ChainElement::TSNonNullExpression(ts_nn) => {
                 scan_expr_for_hoistable_refs(&ts_nn.expression, fn_depth, hoistable, will_hoist);

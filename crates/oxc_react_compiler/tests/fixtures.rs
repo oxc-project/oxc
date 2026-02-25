@@ -1011,11 +1011,18 @@ fn normalize_code(s: &str) -> String {
     // actual and expected to normalize the comparison.
     let no_dead_exprs = remove_dead_expression_statements(&propagated);
 
+    // Step 11b: remove dead block statements.
+    // Our codegen may emit standalone block statements like `{ identifier }` or `{}`
+    // containing just a single identifier expression statement. These are dead code
+    // (e.g., unused destructured bindings emitted as `{ b }` when only `a` is used).
+    // The reference compiler omits these entirely.
+    let no_dead_blocks = remove_dead_block_statements(&no_dead_exprs);
+
     // Step 12: remove dead constant declarations.
     // Our codegen sometimes emits `const x = VALUE` where x is never used
     // afterwards (the value was constant-propagated). The reference compiler
     // removes these dead declarations entirely.
-    let no_dead_consts = remove_dead_const_declarations(&no_dead_exprs);
+    let no_dead_consts = remove_dead_const_declarations(&no_dead_blocks);
 
     // Step 13: normalize orphan phi-init temp references.
     // After temp renumbering and inlining, patterns like `let x = tN` may remain
@@ -1850,13 +1857,252 @@ fn remove_dead_expression_statements(s: &str) -> String {
                 matches!(prev, "=" | "!=" | "!==" | "==" | "===" | "||" | "&&" | "?" | "(" | ",");
             let next_is_stmt_start = matches!(
                 next,
-                "let" | "const" | "var" | "if" | "return" | "for" | "while" | "switch"
-                    | "try" | "throw" | "do" | "}" | ""
+                "let"
+                    | "const"
+                    | "var"
+                    | "if"
+                    | "return"
+                    | "for"
+                    | "while"
+                    | "switch"
+                    | "try"
+                    | "throw"
+                    | "do"
+                    | "}"
+                    | ""
             ) || next.starts_with("t")
                 && next[1..].chars().all(|c| c.is_ascii_digit());
             if prev_is_stmt_end && !prev_is_operator && next_is_stmt_start {
                 continue;
             }
+        }
+        result.push(token);
+    }
+    result.join(" ")
+}
+
+/// Remove dead block statements from normalized code.
+///
+/// Detects patterns like `{ identifier }` (a standalone block containing a single
+/// identifier expression statement) at statement boundaries and removes them.
+/// Also removes empty blocks `{ }` at statement boundaries.
+///
+/// These dead blocks appear when our codegen emits unused destructured bindings
+/// as expression statements wrapped in blocks (e.g., `{ b }` when only `a` is used
+/// from `{ a, b } = props`). The reference compiler omits them entirely.
+///
+/// Works on whitespace-collapsed, single-line normalized code (token stream).
+fn remove_dead_block_statements(s: &str) -> String {
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    if tokens.len() < 3 {
+        return s.to_string();
+    }
+
+    /// Check whether the token preceding `{` indicates that `{ ... }` is an
+    /// expression context (object literal) where removal would be wrong.
+    fn prev_is_expr_context(prev: &str) -> bool {
+        matches!(
+            prev,
+            "=" | "("
+                | ","
+                | "return"
+                | "?"
+                | ":"
+                | "=>"
+                | "||"
+                | "&&"
+                | "??"
+                | "!=="
+                | "==="
+                | "=="
+                | "!="
+                | "+="
+                | "-="
+                | "*="
+                | "/="
+                | "||="
+                | "&&="
+                | "??="
+                | "..."
+                | "+"
+                | "-"
+                | "*"
+                | "/"
+                | "%"
+                | "**"
+                | "|"
+                | "&"
+                | "^"
+                | "<<"
+                | ">>"
+                | ">>>"
+                | "<"
+                | ">"
+                | "<="
+                | ">="
+                | "instanceof"
+                | "case"
+        )
+    }
+
+    /// Check whether the token preceding `{` indicates that `{` starts a
+    /// meaningful block body (control flow body, function body, etc.) that
+    /// must NOT be removed.
+    fn prev_starts_block_body(prev: &str) -> bool {
+        // Block-initiating keywords: `else {`, `try {`, `finally {`, `do {`, `catch {`
+        if matches!(prev, "else" | "try" | "finally" | "do" | "catch") {
+            return true;
+        }
+        // After `:` suffix — labeled statement body
+        if prev.ends_with(':') {
+            return true;
+        }
+        // After `)` — could be control flow condition OR function call.
+        // A function call like `_c(2)` or `foo()` ends with `)` but the `{`
+        // that follows is a NEW block statement, not its body.
+        // A control flow condition like `a)` (tail of `if ($[0] !== a)`) also
+        // ends with `)`.
+        //
+        // Heuristic: if the token starts with a letter/underscore/$ AND contains
+        // `(` (i.e., it looks like a complete function call `name(...)`), then
+        // it's NOT a block-initiating condition — it's just a statement.
+        // Otherwise (the token is just a closing fragment like `a)` or `cond)`),
+        // assume it's the end of a control flow condition.
+        if prev.ends_with(')') {
+            // Check if this looks like a complete function call: starts with
+            // identifier char and contains `(`
+            let starts_with_ident =
+                prev.starts_with(|c: char| c.is_ascii_alphabetic() || c == '_' || c == '$');
+            let has_open_paren = prev.contains('(');
+            if starts_with_ident && has_open_paren {
+                // Looks like `foo(...)` or `_c(2)` — function call, not control flow
+                return false;
+            }
+            // Otherwise assume control flow condition close
+            return true;
+        }
+        false
+    }
+
+    // Identify ranges (start_idx, end_idx exclusive) to remove.
+    let mut dead_ranges: Vec<(usize, usize)> = Vec::new();
+    let mut i = 0;
+    while i < tokens.len() {
+        // Pattern: `{` identifier `}` at a statement boundary
+        if tokens[i] == "{" && i + 2 < tokens.len() && tokens[i + 2] == "}" {
+            let inner = tokens[i + 1];
+            // Check the inner token is a simple identifier (not a keyword, not an operator,
+            // not a complex expression). A simple identifier contains only alphanumeric,
+            // underscore, `$`, or `.` (for member expressions like `y.b`).
+            let is_simple_ident = !inner.is_empty()
+                && inner
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$' || c == '.');
+
+            // Also must not be a keyword that could be a statement
+            let is_keyword = matches!(
+                inner,
+                "let"
+                    | "const"
+                    | "var"
+                    | "if"
+                    | "else"
+                    | "return"
+                    | "for"
+                    | "while"
+                    | "switch"
+                    | "try"
+                    | "throw"
+                    | "do"
+                    | "break"
+                    | "continue"
+                    | "function"
+                    | "class"
+                    | "new"
+                    | "delete"
+                    | "typeof"
+                    | "void"
+                    | "in"
+                    | "of"
+                    | "true"
+                    | "false"
+                    | "null"
+                    | "undefined"
+            );
+
+            if is_simple_ident && !is_keyword {
+                let prev = if i > 0 { tokens[i - 1] } else { "" };
+
+                if !prev_is_expr_context(prev) && !prev_starts_block_body(prev) {
+                    // Also check the token AFTER the `}` - it should be a statement
+                    // start to confirm this is a dead block and not e.g. part of
+                    // destructuring like `const { a } = ...`
+                    let after_close = if i + 3 < tokens.len() { tokens[i + 3] } else { "" };
+
+                    // The token after `}` must not be `=` (destructuring: `{ a } = ...`)
+                    // and must look like a statement start or another identifier.
+                    let after_is_assignment = after_close == "=";
+                    if !after_is_assignment {
+                        let after_is_stmt_like = matches!(
+                            after_close,
+                            "let"
+                                | "const"
+                                | "var"
+                                | "if"
+                                | "return"
+                                | "for"
+                                | "while"
+                                | "switch"
+                                | "try"
+                                | "throw"
+                                | "do"
+                                | "}"
+                                | "{"
+                                | "function"
+                                | ""
+                                | "else"
+                        ) || after_close.starts_with("$[")
+                            || (after_close.starts_with('t')
+                                && after_close.len() > 1
+                                && after_close[1..].chars().all(|c| c.is_ascii_digit()));
+
+                        // Also accept when after_close is a simple identifier (next statement
+                        // might start with an identifier expression like `mutate(...)`)
+                        let after_is_ident_start = !after_close.is_empty()
+                            && after_close
+                                .chars()
+                                .next()
+                                .is_some_and(|c| c.is_ascii_alphabetic() || c == '_' || c == '$');
+
+                        if after_is_stmt_like || after_is_ident_start {
+                            dead_ranges.push((i, i + 3));
+                            i += 3;
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+
+        i += 1;
+    }
+
+    if dead_ranges.is_empty() {
+        return s.to_string();
+    }
+
+    // Build result excluding dead ranges
+    let mut result: Vec<&str> = Vec::with_capacity(tokens.len());
+    let mut range_idx = 0;
+    for (idx, token) in tokens.iter().enumerate() {
+        if range_idx < dead_ranges.len()
+            && idx >= dead_ranges[range_idx].0
+            && idx < dead_ranges[range_idx].1
+        {
+            if idx + 1 == dead_ranges[range_idx].1 {
+                range_idx += 1;
+            }
+            continue;
         }
         result.push(token);
     }

@@ -1397,8 +1397,7 @@ fn visit_block(
                         // First, try to resolve the continue target on the control flow stack.
                         // This is the normal case when we're inside a loop.
                         if cx.get_continue_target(goto.block).is_some() {
-                            let continue_stmt =
-                                visit_continue(cx, goto.block, goto.id, goto.loc)?;
+                            let continue_stmt = visit_continue(cx, goto.block, goto.id, goto.loc)?;
                             statements.push(continue_stmt);
                         } else {
                             // If the continue target is not on the control flow stack, this
