@@ -8,8 +8,8 @@
 use rustc_hash::FxHashSet;
 
 use crate::hir::{
-    ArrayPatternElement, BlockKind, HIRFunction, Identifier, IdentifierId, InstructionKind,
-    InstructionValue, ObjectPatternProperty, Pattern,
+    ArrayPatternElement, BlockKind, DeclareLocal, HIRFunction, Identifier, IdentifierId,
+    InstructionKind, InstructionValue, ObjectPatternProperty, Pattern,
     visitors::{each_instruction_value_operand, each_pattern_operand, each_terminal_operand},
 };
 
@@ -68,13 +68,17 @@ pub fn dead_code_elimination(func: &mut HIRFunction) {
         // Prune unused phi nodes (TS lines 45-49)
         block.phis.retain(|phi| state.is_id_or_name_used(&phi.place.identifier));
 
-        // Rewrite destructure patterns to remove unused properties/items
-        for instr in &mut block.instructions {
-            rewrite_instruction(instr, &state);
-        }
-
         // Retain only instructions whose lvalue is referenced
         block.instructions.retain(|instr| state.is_id_or_name_used(&instr.lvalue.identifier));
+
+        // Rewrite retained instructions (but skip block-value instructions)
+        let instr_count = block.instructions.len();
+        for i in 0..instr_count {
+            let is_block_value = block.kind != BlockKind::Block && i == instr_count - 1;
+            if !is_block_value {
+                rewrite_instruction(&mut block.instructions[i], &state);
+            }
+        }
     }
 
     // Prune unreferenced context variables
@@ -217,6 +221,19 @@ fn rewrite_instruction(instr: &mut crate::hir::Instruction, state: &DceState) {
                 }
             }
         }
+    } else if let InstructionValue::StoreLocal(v) = &instr.value {
+        // Port of TS lines 253-270: StoreLocal -> DeclareLocal rewrite.
+        // If this is a const/let declaration where the variable is accessed later,
+        // but the value is always overwritten before being read (i.e. the initializer
+        // value is never read), we rewrite to a DeclareLocal so that the initializer
+        // value can be DCE'd.
+        if v.lvalue.kind != InstructionKind::Reassign
+            && !state.is_id_used(&v.lvalue.place.identifier)
+        {
+            let lvalue = v.lvalue.clone();
+            let loc = v.loc;
+            instr.value = InstructionValue::DeclareLocal(DeclareLocal { lvalue, loc });
+        }
     }
 }
 
@@ -267,6 +284,10 @@ fn pruneable_value(value: &InstructionValue, state: &DceState) -> bool {
                 !is_id_or_name_used
             }
         }
+
+        // Updates are pruneable if the specific instance being assigned is never read
+        InstructionValue::PostfixUpdate(v) => !state.is_id_used(&v.lvalue.identifier),
+        InstructionValue::PrefixUpdate(v) => !state.is_id_used(&v.lvalue.identifier),
 
         // Most other values have side effects and cannot be pruned
         _ => false,

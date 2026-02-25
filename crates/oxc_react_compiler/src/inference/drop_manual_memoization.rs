@@ -16,7 +16,7 @@ use crate::{
         Instruction, InstructionId, InstructionValue, ManualMemoDependency,
         ManualMemoDependencyRoot, Place,
         environment::Environment,
-        hir_builder::{create_temporary_place, mark_instruction_ids},
+        hir_builder::{compute_rpo_order, create_temporary_place, mark_instruction_ids},
     },
 };
 
@@ -164,7 +164,13 @@ pub fn drop_manual_memoization(func: &mut HIRFunction) -> Result<(), CompilerErr
     //   - If validation is enabled, queue StartMemoize/FinishMemoize markers
     let mut queued_inserts: FxHashMap<InstructionId, Instruction> = FxHashMap::default();
 
-    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
+    // Iterate blocks in reverse-postorder (RPO) to match the TS reference,
+    // which stores blocks in RPO order in its Map. RPO ensures that when
+    // `collect_temporaries` builds cross-block dependency chains (e.g. for
+    // optional member expressions like `arg?.items`), predecessor blocks are
+    // processed before their successors, so `maybe_deps` entries are available
+    // when needed.
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     // Destructure to allow independent borrows of env and body
     let HIRFunction { ref mut env, ref mut body, .. } = *func;
     for block_id in &block_ids {

@@ -930,7 +930,24 @@ fn format_full_function(func: &CodegenFunction) -> String {
     let name = func.id.as_deref().unwrap_or("anonymous");
     let params = func.params.join(", ");
     let body = format!("{func}"); // uses Display impl for the body
-    format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}")
+    let mut result = format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}");
+
+    // Append outlined functions after the main function body.
+    // The reference compiler emits these as top-level function declarations
+    // immediately following the main function, e.g.:
+    //   function Component(props) { ... }
+    //   function _temp(item) { ... }
+    for outlined in &func.outlined {
+        let outlined_fn = &outlined.fn_;
+        let o_async = if outlined_fn.is_async { "async " } else { "" };
+        let o_star = if outlined_fn.generator { "*" } else { "" };
+        let o_name = outlined_fn.id.as_deref().unwrap_or("_temp");
+        let o_params = outlined_fn.params.join(", ");
+        let o_body = format!("{outlined_fn}");
+        result.push_str(&format!("\n{o_async}function {o_star}{o_name}({o_params}) {{\n{o_body}}}"));
+    }
+
+    result
 }
 
 /// Normalize a code string for comparison. This makes comparison resilient to
@@ -4241,7 +4258,52 @@ fn extract_function_from_expected(code: &str) -> Option<String> {
         }
     }
 
-    let func_lines: Vec<&str> = lines[func_start..func_end].to_vec();
+    // After the main function's closing brace, scan for outlined function
+    // declarations (e.g. `function _temp(...)`) and include them.
+    // These appear as top-level function declarations immediately after the
+    // main function in the expected output.
+    let mut overall_end = func_end;
+    {
+        let mut scan_pos = func_end;
+        while scan_pos < lines.len() {
+            // Skip blank lines between functions.
+            let trimmed = lines.get(scan_pos).map(|l| l.trim()).unwrap_or("");
+            if trimmed.is_empty() {
+                scan_pos += 1;
+                continue;
+            }
+            // Check if this line starts an outlined function declaration.
+            // Outlined functions are named `_temp`, `_temp2`, etc.
+            if trimmed.starts_with("function _temp") {
+                // Find the closing brace of this outlined function.
+                let mut odepth: i32 = 0;
+                let mut oend = lines.len();
+                for (i, line) in lines[scan_pos..].iter().enumerate() {
+                    for ch in line.chars() {
+                        if ch == '{' {
+                            odepth += 1;
+                        } else if ch == '}' {
+                            odepth -= 1;
+                            if odepth == 0 {
+                                oend = scan_pos + i + 1;
+                                break;
+                            }
+                        }
+                    }
+                    if odepth == 0 && oend != lines.len() {
+                        break;
+                    }
+                }
+                overall_end = oend;
+                scan_pos = oend;
+            } else {
+                // Not an outlined function — stop scanning.
+                break;
+            }
+        }
+    }
+
+    let func_lines: Vec<&str> = lines[func_start..overall_end].to_vec();
     let joined = func_lines.join("\n");
 
     // Strip "export default " or "export " prefix if present.
