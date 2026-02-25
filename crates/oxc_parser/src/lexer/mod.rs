@@ -5,6 +5,8 @@
 //!     * [rustc](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
 
+use std::mem;
+
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, Vec as ArenaVec};
@@ -71,6 +73,7 @@ pub enum LexerContext {
 enum FinishTokenMode {
     Push,
     Replace,
+    Discard,
 }
 
 pub struct Lexer<'a, C: Config> {
@@ -251,13 +254,15 @@ impl<'a, C: Config> Lexer<'a, C> {
     pub fn first_token(&mut self) -> Token {
         // HashbangComment ::
         //     `#!` SingleLineCommentChars?
-        let kind = if let Some([b'#', b'!']) = self.peek_2_bytes() {
+        if let Some([b'#', b'!']) = self.peek_2_bytes() {
             // SAFETY: Next 2 bytes are `#!`
-            unsafe { self.read_hashbang_comment() }
+            let kind = unsafe { self.read_hashbang_comment() };
+            // Hashbangs are not included in tokens
+            self.finish_next_inner(kind, FinishTokenMode::Discard)
         } else {
-            self.read_next_token()
-        };
-        self.finish_next(kind)
+            let kind = self.read_next_token();
+            self.finish_next(kind)
+        }
     }
 
     /// Read next token in file.
@@ -295,7 +300,7 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.token.set_kind(kind);
         self.token.set_end(self.offset());
         let token = self.token;
-        if self.config.tokens() && !matches!(token.kind(), Kind::Eof | Kind::HashbangComment) {
+        if self.config.tokens() {
             match mode {
                 FinishTokenMode::Push => self.tokens.push(token),
                 FinishTokenMode::Replace => {
@@ -305,6 +310,7 @@ impl<'a, C: Config> Lexer<'a, C> {
                     let last = self.tokens.last_mut().unwrap();
                     *last = token;
                 }
+                FinishTokenMode::Discard => {}
             }
         }
         self.trivia_builder.handle_token(token);
@@ -323,11 +329,27 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     pub(crate) fn take_tokens(&mut self) -> ArenaVec<'a, Token> {
-        std::mem::replace(&mut self.tokens, ArenaVec::new_in(self.allocator))
+        mem::replace(&mut self.tokens, ArenaVec::new_in(self.allocator))
     }
 
     pub(crate) fn set_tokens(&mut self, tokens: ArenaVec<'a, Token>) {
         self.tokens = tokens;
+    }
+
+    /// Finalize tokens and return them.
+    /// Called at very end of parsing.
+    pub(crate) fn finalize_tokens(&mut self) -> ArenaVec<'a, Token> {
+        if self.config.tokens() {
+            // Tokens are enabled. Discard last token, which is `Eof`.
+            let mut tokens = self.take_tokens();
+            let last_token = tokens.pop();
+            debug_assert!(last_token.is_some_and(|token| token.kind() == Kind::Eof));
+            tokens
+        } else {
+            // Tokens are disabled. Just return an empty vec.
+            debug_assert!(self.tokens.is_empty());
+            ArenaVec::new_in(self.allocator)
+        }
     }
 
     /// Advance source cursor to end of file.

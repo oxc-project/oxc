@@ -85,7 +85,7 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, Dummy};
+use oxc_allocator::{Allocator, Box as ArenaBox, Dummy, Vec as ArenaVec};
 use oxc_ast::{
     AstBuilder,
     ast::{Expression, Program},
@@ -526,12 +526,18 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             }
         }
 
+        let tokens = if panicked {
+            ArenaVec::new_in(self.ast.allocator)
+        } else {
+            self.lexer.finalize_tokens()
+        };
+
         ParserReturn {
             program,
             module_record,
             errors,
             irregular_whitespaces,
-            tokens: self.lexer.take_tokens(),
+            tokens,
             panicked,
             is_flow_language,
         }
@@ -616,9 +622,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             }
         }
 
-        if let Some(tokens) = original_tokens {
-            self.lexer.take_tokens();
-            self.lexer.set_tokens(tokens);
+        if let Some(original_tokens) = original_tokens {
+            self.lexer.set_tokens(original_tokens);
         }
     }
 
