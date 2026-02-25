@@ -1,26 +1,72 @@
-use serde::Serialize;
-
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16, walk};
+use oxc_estree::{
+    CompactFormatter, Config, ESTree, ESTreeSerializer, JsonSafeString, PrettyFormatter,
+    Serializer, StructSerializer,
+};
 use oxc_parser::{Kind, Token};
 use oxc_span::{GetSpan, Span};
 
-#[derive(Serialize)]
-pub struct EstreeToken<'a> {
-    #[serde(rename = "type")]
-    pub token_type: &'static str,
-    pub value: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub regex: Option<EstreeRegExpToken<'a>>,
-    pub start: u32,
-    pub end: u32,
+/// Serializer config for tokens.
+/// We never include ranges, so use this custom config which returns `false` for `ranges()`.
+/// This allows compiler to remove the branch which checks if should print ranges from `serialize_span`.
+struct TokenConfig;
+
+impl Config for TokenConfig {
+    const INCLUDE_TS_FIELDS: bool = false;
+    const FIXES: bool = false;
+
+    #[expect(clippy::inline_always)] // It's a no-op
+    #[inline(always)]
+    fn new(_ranges: bool) -> Self {
+        Self
+    }
+
+    // Never include ranges, so always return `false`.
+    // `#[inline(always)]` to ensure compiler removes dead code resulting from the static value
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn ranges(&self) -> bool {
+        false
+    }
 }
 
-#[derive(Serialize)]
+type CompactTokenSerializer = ESTreeSerializer<TokenConfig, CompactFormatter>;
+type PrettyTokenSerializer = ESTreeSerializer<TokenConfig, PrettyFormatter>;
+
+pub struct EstreeToken<'a> {
+    pub token_type: &'static str,
+    pub value: &'a str,
+    pub regex: Option<EstreeRegExpToken<'a>>,
+    pub span: Span,
+}
+
 pub struct EstreeRegExpToken<'a> {
     pub pattern: &'a str,
     pub flags: &'a str,
+}
+
+impl ESTree for EstreeToken<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString(self.token_type));
+        state.serialize_field("value", &self.value);
+        if let Some(regex) = &self.regex {
+            state.serialize_field("regex", regex);
+        }
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for EstreeRegExpToken<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("pattern", &self.pattern);
+        state.serialize_field("flags", &self.flags);
+        state.end();
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -75,9 +121,16 @@ pub fn to_estree_tokens_json(
     options: EstreeTokenOptions,
     allocator: &Allocator,
 ) -> String {
+    // Estimated size of a single token serialized to JSON, in bytes.
+    // TODO: Estimate this better based on real-world usage.
+    const BYTES_PER_TOKEN: usize = 64;
+
     let estree_tokens =
         to_estree_tokens(tokens, program, source_text, span_converter, options, allocator);
-    serde_json::to_string(&estree_tokens).unwrap_or_default()
+    let mut serializer =
+        CompactTokenSerializer::with_capacity(estree_tokens.len() * BYTES_PER_TOKEN, false);
+    estree_tokens.serialize(&mut serializer);
+    serializer.into_string()
 }
 
 /// Serialize tokens to pretty-printed JSON.
@@ -95,9 +148,16 @@ pub fn to_estree_tokens_pretty_json(
     options: EstreeTokenOptions,
     allocator: &Allocator,
 ) -> String {
+    // Estimated size of a single token serialized to JSON, in bytes.
+    // TODO: Estimate this better based on real-world usage.
+    const BYTES_PER_TOKEN: usize = 64;
+
     let estree_tokens =
         to_estree_tokens(tokens, program, source_text, span_converter, options, allocator);
-    serde_json::to_string_pretty(&estree_tokens).unwrap_or_default()
+    let mut serializer =
+        PrettyTokenSerializer::with_capacity(estree_tokens.len() * BYTES_PER_TOKEN, false);
+    estree_tokens.serialize(&mut serializer);
+    serializer.into_string()
 }
 
 /// Convert `Token`s to `EstreeToken`s.
@@ -132,8 +192,8 @@ fn to_estree_tokens<'a>(
 
     for token in tokens {
         let kind = token.kind();
-        let mut start = token.start();
-        let mut end = token.end();
+        let start = token.start();
+        let end = token.end();
 
         // Compare override start against original UTF-8 token start (before span conversion)
         let token_type = if next_override_start == start {
@@ -172,12 +232,12 @@ fn to_estree_tokens<'a>(
         };
 
         // Convert offsets to UTF-16
+        let mut span = Span::new(start, end);
         if let Some(span_converter) = span_converter.as_mut() {
-            span_converter.convert_offset(&mut start);
-            span_converter.convert_offset(&mut end);
+            span_converter.convert_span(&mut span);
         }
 
-        estree_tokens.push(EstreeToken { token_type, value, regex, start, end });
+        estree_tokens.push(EstreeToken { token_type, value, regex, span });
     }
 
     estree_tokens
