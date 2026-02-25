@@ -19,7 +19,7 @@ export function runExecutable(
   if (tsgolintPath) {
     serverEnv.OXLINT_TSGOLINT_PATH = tsgolintPath;
   }
-  // when the binary path ends with `oxlint/bin/oxlint` or a common js extension, we should run it with `node`
+  // when the binary path ends with a common js extension (e.g. `oxlint/bin/oxlint.mjs`), we should run it with `node`
   // the path is defined in `ConfigService.searchNodeModulesBin`
   const isNode =
     binaryPath.endsWith(".js") ||

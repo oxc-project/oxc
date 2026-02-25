@@ -23,13 +23,13 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "bin": {
-    "oxlint": "bin/oxlint"
+    "oxlint": "bin/oxlint.mjs"
   },
   "files": [
     "configuration_schema.json",
     "dist",
     "README.md",
-    "bin/oxlint"
+    "bin/oxlint.mjs"
   ],
   "type": "module",
   "main": "dist/index.js",

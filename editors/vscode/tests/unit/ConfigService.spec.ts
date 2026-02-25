@@ -49,12 +49,12 @@ suite("ConfigService", () => {
       const oxfmtPath = (await service.getOxfmtServerBinPath())!;
       const cwd = process.env.VSCODE_CWD!.replace(`${sep}editors${sep}vscode`, "");
 
-      // it targets the oxc project's oxlint/bin/oxlint path
+      // it targets the oxc project's oxfmt/bin/oxfmt.mjs path
       strictEqual(oxfmtPath.startsWith(cwd), true, "path should start with cwd");
       strictEqual(
-        oxfmtPath.endsWith(`oxfmt${sep}bin${sep}oxfmt`),
+        oxfmtPath.endsWith(`oxfmt${sep}bin${sep}oxfmt.mjs`),
         true,
-        "path should end with oxfmt/bin/oxfmt",
+        "path should end with oxfmt/bin/oxfmt.mjs",
       );
     });
 
@@ -115,12 +115,12 @@ suite("ConfigService", () => {
       const oxlintPath = (await service.getOxlintServerBinPath())!;
       const cwd = process.env.VSCODE_CWD!.replace(`${sep}editors${sep}vscode`, "");
 
-      // it targets the oxc project's oxlint/bin/oxlint path
+      // it targets the oxc project's oxlint/bin/oxlint.mjs path
       strictEqual(oxlintPath.startsWith(cwd), true, "path should start with cwd");
       strictEqual(
-        oxlintPath.endsWith(`oxlint${sep}bin${sep}oxlint`),
+        oxlintPath.endsWith(`oxlint${sep}bin${sep}oxlint.mjs`),
         true,
-        "path should end with oxlint/bin/oxlint",
+        "path should end with oxlint/bin/oxlint.mjs",
       );
     });
 

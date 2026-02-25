@@ -23,13 +23,13 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "bin": {
-    "oxfmt": "bin/oxfmt"
+    "oxfmt": "bin/oxfmt.mjs"
   },
   "files": [
     "configuration_schema.json",
     "dist",
     "README.md",
-    "bin/oxfmt"
+    "bin/oxfmt.mjs"
   ],
   "type": "module",
   "main": "dist/index.js",
