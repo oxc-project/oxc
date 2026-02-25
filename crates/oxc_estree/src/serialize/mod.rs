@@ -15,12 +15,12 @@ mod primitives;
 mod sequences;
 mod strings;
 mod structs;
-use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
-use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
+pub use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
+pub use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
 pub use structs::{ESTreeSpan, FlatStructSerializer, StructSerializer};
