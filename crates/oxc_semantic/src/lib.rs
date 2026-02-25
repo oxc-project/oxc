@@ -33,7 +33,7 @@ mod checker;
 mod class;
 mod diagnostics;
 mod is_global_reference;
-#[cfg(feature = "linter")]
+#[cfg(feature = "jsdoc")]
 mod jsdoc;
 mod label;
 mod multi_index_vec;
@@ -46,9 +46,11 @@ mod unresolved_stack;
 pub use ast_types_bitset::AstTypesBitset;
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use is_global_reference::IsGlobalReference;
-#[cfg(feature = "linter")]
-pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
+#[cfg(feature = "jsdoc")]
+pub use jsdoc::JSDocFinder;
 pub use node::{AstNode, AstNodes};
+#[cfg(feature = "jsdoc")]
+pub use oxc_jsdoc::{JSDoc, JSDocTag};
 pub use scoping::Scoping;
 pub use stats::Stats;
 
@@ -84,7 +86,7 @@ pub struct Semantic<'a> {
     irregular_whitespaces: Box<[Span]>,
 
     /// Parsed JSDoc comments.
-    #[cfg(feature = "linter")]
+    #[cfg(feature = "jsdoc")]
     jsdoc: JSDocFinder<'a>,
 
     unused_labels: Vec<NodeId>,
@@ -185,7 +187,7 @@ impl<'a> Semantic<'a> {
     /// Parsed [`JSDoc`] comments.
     ///
     /// Will be empty if JSDoc parsing is disabled.
-    #[cfg(feature = "linter")]
+    #[cfg(feature = "jsdoc")]
     pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         &self.jsdoc
     }

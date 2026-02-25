@@ -1971,6 +1971,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_jsdoc"
+version = "0.115.0"
+dependencies = [
+ "oxc_ast",
+ "oxc_span",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_language_server"
 version = "1.41.0"
 dependencies = [
@@ -2301,6 +2310,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_ecmascript",
  "oxc_index",
+ "oxc_jsdoc",
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
