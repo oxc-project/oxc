@@ -675,13 +675,12 @@ impl Runtime {
                             }
                         };
 
-                        let (mut messages, disable_directives, suppression) =
+                        let (mut messages, disable_directives) =
                             me.linter.run_with_disable_directives(
                                 path,
                                 context_sub_hosts,
                                 allocator_guard,
                                 me.js_allocator_pool(),
-                                suppression_file_check,
                             );
 
                         // Store the disable directives for this file
@@ -692,38 +691,8 @@ impl Runtime {
                                 .insert(path.to_path_buf(), disable_directives);
                         }
 
-                        if let Some(suppression_detected) = suppression
-                            && !ignore_suppression
-                        {
-                            let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
-
-                            let suppression_file = if let Some(file) = suppression_file_check {
-                                file
-                            } else {
-                                &SuppressionFile::default()
-                            };
-
-                            let diffs = SuppressionManager::diff_filename(
-                                suppression_file,
-                                &suppression_detected,
-                                &filename,
-                            );
-
-                            if !diffs.is_empty() && !is_updating_suppression_file {
-                                let errors = diffs.into_iter().map(Into::into).collect();
-                                let diagnostics =
-                                    DiagnosticService::wrap_diagnostics(&me.cwd, path, "", errors);
-                                tx_error.send(diagnostics).unwrap();
-                            } else if !diffs.is_empty() && is_updating_suppression_file {
-                                let diff_suppression_sender = suppression_diff_channel.clone();
-
-                                for diff in diffs {
-                                    diff_suppression_sender.send(diff.clone()).unwrap();
-                                }
-                            }
-                        }
-
                         if me.linter.options().fix.is_some() {
+                            let a = messages.len();
                             let fix_result = Fixer::new(
                                 dep.source_text,
                                 messages,
@@ -740,7 +709,42 @@ impl Runtime {
                                     .to_mut()
                                     .replace_range(start..end, &fix_result.fixed_code);
                             }
+                            println!("FIXING before {}, after {}", a, fix_result.messages.len());
                             messages = fix_result.messages;
+                        }
+
+                        if let Some(suppression_file) = suppression_file_check {
+                            let (filtered_diagnostics, runtime_suppression_tracking) =
+                                SuppressionManager::suppress_lint_diagnostics(
+                                    suppression_file,
+                                    messages,
+                                );
+
+                            if let Some(suppression_detected) = runtime_suppression_tracking {
+                                let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
+
+                                let diffs = SuppressionManager::diff_filename(
+                                    suppression_file,
+                                    &suppression_detected,
+                                    &filename,
+                                );
+
+                                if !diffs.is_empty() && !is_updating_suppression_file {
+                                    let errors = diffs.into_iter().map(Into::into).collect();
+                                    let diagnostics = DiagnosticService::wrap_diagnostics(
+                                        &me.cwd, path, "", errors,
+                                    );
+                                    tx_error.send(diagnostics).unwrap();
+                                } else if !diffs.is_empty() && is_updating_suppression_file {
+                                    let diff_suppression_sender = suppression_diff_channel.clone();
+
+                                    for diff in diffs {
+                                        diff_suppression_sender.send(diff.clone()).unwrap();
+                                    }
+                                }
+                            }
+
+                            messages = filtered_diagnostics;
                         }
 
                         if !messages.is_empty() {
@@ -774,6 +778,7 @@ impl Runtime {
         }
 
         if have_at_least_one_diff && suppression_manager.is_updating_file() {
+            suppression_manager.has_been_updated();
             suppression_manager.write(self.cwd.join("oxlint-suppressions.json").as_path()).unwrap();
         }
     }
@@ -840,9 +845,9 @@ impl Runtime {
 
                         let path = Path::new(&module_to_lint.path);
 
-                        let (section_messages, disable_directives, _) = me
+                        let (section_messages, disable_directives) = me
                             .linter
-                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool(), None);
+                            .run_with_disable_directives(path, context_sub_hosts, allocator_guard, me.js_allocator_pool());
 
                         if let Some(disable_directives) = disable_directives {
                             me.disable_directives_map

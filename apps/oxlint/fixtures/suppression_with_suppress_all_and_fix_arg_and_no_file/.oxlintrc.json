@@ -2,5 +2,6 @@
   "plugins": ["eslint"],
   "rules": {
     "prefer-const": "error"
-  }
+  },
+  "ignorePatterns": ["files/test-backup.js"]
 }

@@ -1576,7 +1576,7 @@ mod suppression {
             "fixtures/suppression_with_suppress_all_and_fix_arg_and_file/oxlint-suppressions-expected.json",
         );
         let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-backup.json",
+            "fixtures/suppression_with_suppress_all_and_fix_arg_and_file/oxlint-suppressions-backup.json",
         );
 
         let args = &["--fix", "--suppress-all"];
@@ -1596,6 +1596,18 @@ mod suppression {
 
         fs::remove_file(cwd.join(fixture_path)).unwrap();
         fs::copy(backup_buf, cwd.join(fixture_path)).unwrap();
+
+        fs::remove_file(
+            cwd.join("fixtures/suppression_with_suppress_all_and_fix_arg_and_file/files/test.js"),
+        )
+        .unwrap();
+        fs::copy(
+            cwd.join(
+                "fixtures/suppression_with_suppress_all_and_fix_arg_and_file/files/test-backup.js",
+            ),
+            cwd.join("fixtures/suppression_with_suppress_all_and_fix_arg_and_file/files/test.js"),
+        )
+        .unwrap();
     }
 
     #[test]
@@ -1619,7 +1631,19 @@ mod suppression {
             "oxlint-suppression found in fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file/oxlint-suppressions.json"
         );
 
-        //pending cleanup of the test file
+        fs::remove_file(
+            cwd.join(
+                "fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file/files/test.js",
+            ),
+        )
+        .unwrap();
+        fs::copy(
+            cwd.join(
+                "fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file/files/test-backup.js",
+            ),
+            cwd.join("fixtures/suppression_with_suppress_all_and_fix_arg_and_no_file/files/test.js"),
+        )
+        .unwrap();
     }
 
     #[test]
