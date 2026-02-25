@@ -2,15 +2,15 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 386/1040 passed (37.1%)
+Codegen conformance: 388/1040 passed (37.3%)
 
 Failure breakdown:
   parse_error:    27
   no_function:    2
   lower_error:    0
-  pipeline_error: 16
+  pipeline_error: 15
   panic:          0
-  output_mismatch:608
+  output_mismatch:607
   no_expected:    1
 
 Failed fixtures:
@@ -266,8 +266,7 @@ Failed fixtures:
   [output_mismatch] hoisting-reassigned-twice-let-declaration.js
   [output_mismatch] hoisting-recursive-call-within-lambda.js
   [output_mismatch] hoisting-recursive-call.ts
-  [output_mismatch] hoisting-repro-variable-used-in-assignment.js
-  [pipeline_error] hoisting-setstate-captured-indirectly-jsx.js
+  [output_mismatch] hoisting-setstate-captured-indirectly-jsx.js
   [output_mismatch] hoisting-simple-const-declaration.js
   [output_mismatch] hoisting-simple-function-expression.js
   [output_mismatch] hoisting-simple-let-declaration.js
@@ -519,7 +518,6 @@ Failed fixtures:
   [output_mismatch] repro-no-declarations-in-reactive-scope-with-early-return.js
   [output_mismatch] repro-no-value-for-temporary-reactive-scope-with-early-return.js
   [output_mismatch] repro-no-value-for-temporary.js
-  [output_mismatch] repro-non-identifier-object-keys.ts
   [output_mismatch] repro-object-expression-computed-key-modified-during-after-construction-hoisted-sequence-expr.js
   [pipeline_error] repro-object-fromEntries-entries.js
   [output_mismatch] repro-preds-undefined-try-catch-return-primitive.js

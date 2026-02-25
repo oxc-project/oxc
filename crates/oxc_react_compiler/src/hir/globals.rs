@@ -10,16 +10,15 @@ use super::{
     hir_types::{Effect, ValueKind, ValueReason},
     object_shape::{
         BUILT_IN_ARRAY_ID, BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID,
-        BUILT_IN_OBJECT_ID, BUILT_IN_SET_ID, BUILT_IN_USE_ACTION_STATE_ID,
-        BUILT_IN_USE_ACTION_STATE_HOOK_ID, BUILT_IN_USE_CONTEXT_HOOK_ID,
-        BUILT_IN_USE_EFFECT_EVENT_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
-        BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID, BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID,
-        BUILT_IN_USE_OPERATOR_ID, BUILT_IN_USE_OPTIMISTIC_HOOK_ID, BUILT_IN_USE_OPTIMISTIC_ID,
-        BUILT_IN_USE_REDUCER_HOOK_ID, BUILT_IN_USE_REDUCER_ID, BUILT_IN_USE_REF_HOOK_ID,
-        BUILT_IN_USE_REF_ID, BUILT_IN_USE_STATE_HOOK_ID, BUILT_IN_USE_STATE_ID,
-        BUILT_IN_USE_TRANSITION_HOOK_ID, BUILT_IN_USE_TRANSITION_ID,
-        BUILT_IN_WEAK_MAP_ID, BUILT_IN_WEAK_SET_ID, FunctionSignature, HookKind, ShapeRegistry,
-        add_function, add_hook, add_object,
+        BUILT_IN_OBJECT_ID, BUILT_IN_SET_ID, BUILT_IN_USE_ACTION_STATE_HOOK_ID,
+        BUILT_IN_USE_ACTION_STATE_ID, BUILT_IN_USE_CONTEXT_HOOK_ID, BUILT_IN_USE_EFFECT_EVENT_ID,
+        BUILT_IN_USE_EFFECT_HOOK_ID, BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID,
+        BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID, BUILT_IN_USE_OPERATOR_ID,
+        BUILT_IN_USE_OPTIMISTIC_HOOK_ID, BUILT_IN_USE_OPTIMISTIC_ID, BUILT_IN_USE_REDUCER_HOOK_ID,
+        BUILT_IN_USE_REDUCER_ID, BUILT_IN_USE_REF_HOOK_ID, BUILT_IN_USE_REF_ID,
+        BUILT_IN_USE_STATE_HOOK_ID, BUILT_IN_USE_STATE_ID, BUILT_IN_USE_TRANSITION_HOOK_ID,
+        BUILT_IN_USE_TRANSITION_ID, BUILT_IN_WEAK_MAP_ID, BUILT_IN_WEAK_SET_ID, FunctionSignature,
+        HookKind, ShapeRegistry, add_function, add_hook, add_object,
     },
     types::{FunctionType, ObjectType, Type},
 };
@@ -766,12 +765,7 @@ pub fn default_shapes() -> ShapeRegistry {
             ..FunctionSignature::default()
         };
         // Register the SetState shape with the well-known id so is_set_state_type() matches
-        add_function(
-            &mut registry,
-            Some(BUILT_IN_SET_STATE_ID),
-            Vec::new(),
-            set_state_sig,
-        );
+        add_function(&mut registry, Some(BUILT_IN_SET_STATE_ID), Vec::new(), set_state_sig);
         let set_state_fn = Type::Function(FunctionType {
             shape_id: Some(BUILT_IN_SET_STATE_ID.to_string()),
             return_type: Box::new(Type::Primitive),

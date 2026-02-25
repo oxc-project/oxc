@@ -49,6 +49,12 @@ struct BindingEntry {
     identifier: Identifier,
     /// The binding kind.
     kind: BindingKind,
+    /// Whether this entry was eagerly pre-declared (before the actual declaration
+    /// was processed). Pre-declared entries are created when an inner function
+    /// captures a variable that hasn't been declared yet in the sequential lowering
+    /// (e.g., hoisted references). When the real declaration is processed later,
+    /// the pre-declared entry is upgraded to a normal entry.
+    pre_declared: bool,
 }
 
 /// A work-in-progress block that does not yet have a terminal.
@@ -125,6 +131,18 @@ pub struct HirBuilder {
 
     /// The set of context identifiers (variables captured by inner closures).
     context_identifiers: ContextIdentifiers,
+
+    /// All binding names that will be declared in this function's scope.
+    ///
+    /// Pre-collected from the AST before lowering begins, this set includes
+    /// ALL variable/function declarations in the function body, regardless of
+    /// their position. This mimics Babel's scope analysis which knows about all
+    /// bindings before any lowering occurs.
+    ///
+    /// Used by `gather_captured_context` to correctly identify captured variables
+    /// even when the capturing function appears before the variable declaration
+    /// in the source (e.g., `const foo = () => bar; const bar = 3;`).
+    scope_binding_names: FxHashSet<String>,
 }
 
 impl HirBuilder {
@@ -148,6 +166,7 @@ impl HirBuilder {
             bindings: FxHashMap::default(),
             next_binding_key: 0,
             context_identifiers,
+            scope_binding_names: FxHashSet::default(),
         }
     }
 
@@ -197,6 +216,18 @@ impl HirBuilder {
             if entry.declaration_key == declaration_key {
                 return entry.identifier.clone();
             }
+            // If the existing entry was pre-declared (eagerly created for hoisted
+            // references), upgrade it to a normal entry with the real declaration key.
+            // This ensures that the pre-declared identifier is reused when the actual
+            // declaration is processed later.
+            if entry.pre_declared {
+                let identifier = entry.identifier.clone();
+                if let Some(entry) = self.bindings.get_mut(name) {
+                    entry.declaration_key = declaration_key;
+                    entry.pre_declared = false;
+                }
+                return identifier;
+            }
         }
 
         // Try to find a unique name (handle shadowing)
@@ -207,6 +238,15 @@ impl HirBuilder {
             if let Some(existing) = self.bindings.get(&candidate) {
                 if existing.declaration_key == declaration_key {
                     return existing.identifier.clone();
+                }
+                // If the existing entry was pre-declared, upgrade it
+                if existing.pre_declared {
+                    let identifier = existing.identifier.clone();
+                    if let Some(existing) = self.bindings.get_mut(&candidate) {
+                        existing.declaration_key = declaration_key;
+                        existing.pre_declared = false;
+                    }
+                    return identifier;
                 }
                 // Name collision with a different declaration - try next suffix
                 candidate = format!("{original_name}_{index}");
@@ -234,6 +274,7 @@ impl HirBuilder {
                 declaration_key,
                 identifier: identifier.clone(),
                 kind: BindingKind::Let,
+                pre_declared: false,
             },
         );
         identifier
@@ -276,6 +317,7 @@ impl HirBuilder {
                 declaration_key: self.next_binding_key,
                 identifier,
                 kind,
+                pre_declared: false,
             },
         );
         self.next_binding_key += 1;
@@ -311,6 +353,70 @@ impl HirBuilder {
             return self.context_identifiers.contains(name);
         }
         false
+    }
+
+    /// Set the scope binding names for this function.
+    ///
+    /// This should be called before lowering the function body, with a set of
+    /// ALL binding names that will be declared in this function's scope.
+    /// This enables `has_scope_binding` to identify captured variables even
+    /// when they haven't been declared yet in the sequential lowering.
+    pub fn set_scope_binding_names(&mut self, names: FxHashSet<String>) {
+        self.scope_binding_names = names;
+    }
+
+    /// Check if a name is declared anywhere in this function's scope.
+    ///
+    /// Unlike `resolve_identifier`, this checks the pre-collected set of ALL
+    /// bindings, not just those declared so far in the sequential lowering.
+    /// This is used by `gather_captured_context` to correctly identify captured
+    /// variables in hoisted references.
+    pub fn has_scope_binding(&self, name: &str) -> bool {
+        self.bindings.contains_key(name) || self.scope_binding_names.contains(name)
+    }
+
+    /// Eagerly pre-declare a binding that hasn't been declared yet in the
+    /// sequential lowering but is needed for captured context resolution.
+    ///
+    /// Creates a real HIR Identifier and binding entry marked as `pre_declared`.
+    /// When `declare_binding` is called later for the same name (during the
+    /// actual variable declaration processing), `resolve_binding` will recognize
+    /// the pre-declared entry and reuse its identifier.
+    pub fn pre_declare_binding(&mut self, name: &str, loc: SourceLocation) -> Place {
+        // If already in bindings, return the existing one
+        if let Some(entry) = self.bindings.get(name) {
+            return Place {
+                identifier: entry.identifier.clone(),
+                effect: Effect::Unknown,
+                reactive: false,
+                loc,
+            };
+        }
+
+        let key = self.next_binding_key;
+        self.next_binding_key += 1;
+
+        let id = self.env.next_identifier_id();
+        let identifier = Identifier {
+            id,
+            declaration_id: DeclarationId(id.0),
+            name: Some(IdentifierName::Named(name.to_string())),
+            mutable_range: MutableRange::default(),
+            scope: None,
+            type_: make_type(),
+            loc,
+        };
+        self.env.add_new_reference(name);
+        self.bindings.insert(
+            name.to_string(),
+            BindingEntry {
+                declaration_key: key,
+                identifier: identifier.clone(),
+                kind: BindingKind::Let,
+                pre_declared: true,
+            },
+        );
+        Place { identifier, effect: Effect::Unknown, reactive: false, loc }
     }
 
     /// Push an instruction onto the current block.
