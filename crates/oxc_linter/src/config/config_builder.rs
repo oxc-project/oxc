@@ -263,6 +263,7 @@ impl ConfigStoreBuilder {
             env: oxlintrc.env,
             globals: oxlintrc.globals,
             path: Some(oxlintrc.path),
+            options: oxlintrc.options,
         };
 
         let mut builder = Self {
@@ -329,6 +330,11 @@ impl ConfigStoreBuilder {
     #[inline]
     pub fn plugins(&self) -> LintPlugins {
         self.config.plugins
+    }
+
+    #[inline]
+    pub fn type_aware(&self) -> Option<bool> {
+        self.config.options.type_aware
     }
 
     #[cfg(test)]
@@ -1361,6 +1367,29 @@ mod test {
             extends_plugin_config.plugins(),
             "Extending a config with a plugin is the same as adding it directly"
         );
+    }
+
+    #[test]
+    fn test_extends_options() {
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/type_aware_true.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.type_aware, Some(true));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/type_aware_true.json"],
+                "options": {"typeAware": false }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.type_aware, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/type_aware_false.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.type_aware, Some(false));
     }
 
     #[test]

@@ -347,6 +347,7 @@ impl CliRunner {
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+        let type_aware = self.options.type_aware || config_store.type_aware_enabled();
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
@@ -393,12 +394,12 @@ impl CliRunner {
             }
         }
 
-        let number_of_rules = linter.number_of_rules(self.options.type_aware);
+        let number_of_rules = linter.number_of_rules(type_aware);
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
-            .with_type_aware(self.options.type_aware)
+            .with_type_aware(type_aware)
             .with_type_check(self.options.type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
@@ -1241,6 +1242,43 @@ mod test {
     fn test_tsgolint_config() {
         // TODO: test with other rules as well once diagnostics are more stable
         let args = &["--type-aware", "-c", "config-test.json"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_via_config_file() {
+        let args = &["-c", "config-type-aware.json"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_applies_to_overrides() {
+        let args = &["-c", "config-type-aware-with-overrides.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false() {
+        let args = &["-c", "config-type-aware-false.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false_overridden_by_cli_flag() {
+        let args =
+            &["--type-aware", "-c", "config-type-aware-false.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false_disables_overrides() {
+        let args =
+            &["-c", "config-type-aware-false-with-overrides.json", "no-floating-promises.ts"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 

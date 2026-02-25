@@ -296,6 +296,24 @@ type: `string`
 Path or package name of the plugin
 
 
+## options
+
+type: `object`
+
+
+Options for the linter.
+
+
+### options.typeAware
+
+type: `boolean`
+
+
+Enable rules that require type information.
+
+Equivalent to passing `--type-aware` on the CLI.
+
+
 ## overrides
 
 type: `array`

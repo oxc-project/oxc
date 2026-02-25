@@ -23,16 +23,23 @@ use schemars::JsonSchema;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_fallthrough_case_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected a `break` statement before `case`.").with_label(span)
+    OxcDiagnostic::warn("Expected a `break` statement before `case`.")
+        .with_help("Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.")
+        .with_label(span)
 }
 
 fn no_fallthrough_default_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Expected a `break` statement before `default`.").with_label(span)
+    OxcDiagnostic::warn("Expected a `break` statement before `default`.")
+        .with_help("Use a `break` statement to prevent fallthrough, or add a comment to indicate intentional fallthrough.")
+        .with_label(span)
 }
 
 fn no_unused_fallthrough_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Found a comment that would permit fallthrough, but case cannot fall through.",
+    )
+    .with_help(
+        "Remove the fallthrough comment or add code that allows fallthrough (e.g. remove `break`).",
     )
     .with_label(span)
 }

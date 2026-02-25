@@ -12946,7 +12946,7 @@ Negative Passed: 4588/4588 (100.00%)
  38 │ {
     ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-private-field-on-object-destructuring.js:31:13]
  30 │   destructureX() {
  31 │     const { #x: x } = this;
@@ -19635,7 +19635,7 @@ Negative Passed: 4588/4588 (100.00%)
  18 │ });
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-fn-inside-class.js:25:11]
  24 │   field = {
  25 │     async #m() {}
@@ -19643,7 +19643,7 @@ Negative Passed: 4588/4588 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-fn.js:24:9]
  23 │ var o = {
  24 │   async #m() {}
@@ -19651,7 +19651,15 @@ Negative Passed: 4588/4588 (100.00%)
  25 │ };
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-fn.js:24:9]
+ 23 │ var o = {
+ 24 │   async #m() {}
+    ·         ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-gen-inside-class.js:25:13]
  24 │   field = {
  25 │     async * #m() {}
@@ -19659,7 +19667,7 @@ Negative Passed: 4588/4588 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-gen.js:24:11]
  23 │ var o = {
  24 │   async * #m() {}
@@ -19667,7 +19675,15 @@ Negative Passed: 4588/4588 (100.00%)
  25 │ };
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-async-gen.js:24:11]
+ 23 │ var o = {
+ 24 │   async * #m() {}
+    ·           ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-gen-inside-class.js:25:7]
  24 │   field = {
  25 │     * #m() {}
@@ -19675,7 +19691,7 @@ Negative Passed: 4588/4588 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-gen.js:24:5]
  23 │ var o = {
  24 │   * #m() {}
@@ -19683,7 +19699,15 @@ Negative Passed: 4588/4588 (100.00%)
  25 │ };
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-gen.js:24:5]
+ 23 │ var o = {
+ 24 │   * #m() {}
+    ·     ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-get-method-inside-class.js:25:9]
  24 │   field = {
  25 │     get #m() {}
@@ -19691,7 +19715,7 @@ Negative Passed: 4588/4588 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-get-method.js:24:7]
  23 │ var o = {
  24 │   get #m() {}
@@ -19699,7 +19723,15 @@ Negative Passed: 4588/4588 (100.00%)
  25 │ };
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-get-method.js:24:7]
+ 23 │ var o = {
+ 24 │   get #m() {}
+    ·       ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-method-inside-class.js:25:5]
  24 │   field = {
  25 │     #m() {}
@@ -19707,7 +19739,7 @@ Negative Passed: 4588/4588 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-method.js:24:3]
  23 │ var o = {
  24 │   #m() {}
@@ -19715,7 +19747,15 @@ Negative Passed: 4588/4588 (100.00%)
  25 │ };
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed outside class bodies
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-method.js:24:3]
+ 23 │ var o = {
+ 24 │   #m() {}
+    ·   ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed in property names
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-set-method-inside-class.js:25:9]
  24 │   field = {
  25 │     set #m(x) {}
@@ -19723,7 +19763,15 @@ Negative Passed: 4588/4588 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Private identifier '#m' is not allowed in property names
+    ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-set-method.js:24:7]
+ 23 │ var o = {
+ 24 │   set #m(x) {}
+    ·       ──
+ 25 │ };
+    ╰────
+
+  × Private identifier '#m' is not allowed outside class bodies
     ╭─[test262/test/language/expressions/object/method-definition/private-name-early-error-set-method.js:24:7]
  23 │ var o = {
  24 │   set #m(x) {}
@@ -32151,7 +32199,7 @@ Negative Passed: 4588/4588 (100.00%)
  38 │ {
     ╰────
 
-  × Unexpected token
+  × Private identifier '#x' is not allowed in property names
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-private-field-on-object-destructuring.js:31:13]
  30 │   destructureX() {
  31 │     const { #x: x } = this;
