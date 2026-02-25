@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 417/1040 passed (40.1%)
+Codegen conformance: 421/1040 passed (40.5%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 13
   panic:          0
-  output_mismatch:580
+  output_mismatch:576
   no_expected:    1
 
 Failed fixtures:
@@ -20,7 +20,6 @@ Failed fixtures:
   [output_mismatch] alias-while.js
   [output_mismatch] aliased-nested-scope-fn-expr.tsx
   [output_mismatch] aliased-nested-scope-truncated-dep.tsx
-  [output_mismatch] align-scope-starts-within-cond.ts
   [output_mismatch] align-scopes-iife-return-modified-later-logical.ts
   [output_mismatch] align-scopes-reactive-scope-overlaps-if.ts
   [output_mismatch] align-scopes-reactive-scope-overlaps-label.ts
@@ -158,7 +157,6 @@ Failed fixtures:
   [output_mismatch] context-variable-reassigned-reactive-capture.js
   [output_mismatch] context-variable-reassigned-two-lambdas.js
   [output_mismatch] createElement-freeze.js
-  [output_mismatch] dce-loop.js
   [output_mismatch] declare-reassign-variable-in-closure.js
   [output_mismatch] deeply-nested-function-expressions-with-params.js
   [output_mismatch] default-param-array-with-unary.js
@@ -355,7 +353,6 @@ Failed fixtures:
   [output_mismatch] nonmutated-spread-props.js
   [output_mismatch] nonmutating-capture-in-unsplittable-memo-block.ts
   [output_mismatch] nonreactive-noescaping-dependency-can-inline-into-consuming-scope.js
-  [output_mismatch] obj-literal-cached-in-if-else.js
   [output_mismatch] obj-literal-mutated-after-if-else.js
   [output_mismatch] obj-mutated-after-if-else-with-alias.js
   [output_mismatch] obj-mutated-after-if-else.js
@@ -597,7 +594,6 @@ Failed fixtures:
   [output_mismatch] unlabeled-break-within-label-loop.ts
   [output_mismatch] unused-conditional.js
   [output_mismatch] unused-object-element-with-rest.js
-  [output_mismatch] update-expression-constant-propagation.js
   [output_mismatch] update-expression-in-sequence.js
   [output_mismatch] use-callback-simple.js
   [output_mismatch] use-effect-cleanup-reassigns.js
