@@ -174,9 +174,17 @@ fn classify_value(value: &InstructionValue, opts: &PruneOptions<'_>) -> Memoizat
         | InstructionValue::RegExpLiteral(_)
         | InstructionValue::TaggedTemplateExpression(_)
         | InstructionValue::PropertyStore(_)
-        | InstructionValue::ComputedStore(_)
-        | InstructionValue::StoreContext(_)
-        | InstructionValue::DeclareContext(_) => MemoizationLevel::Memoized,
+        | InstructionValue::ComputedStore(_) => MemoizationLevel::Memoized,
+
+        // StoreContext: the instruction's outer lvalue is Conditional,
+        // but the inner target (context variable) is Memoized (handled in collect_in_block).
+        // This matches TS where StoreContext's outer lvalue is Conditional.
+        InstructionValue::StoreContext(_) => MemoizationLevel::Conditional,
+
+        // DeclareContext: the instruction's outer lvalue is Unmemoized,
+        // but the inner target (context variable) is Memoized (handled in collect_in_block).
+        // This matches TS where DeclareContext's outer lvalue is Unmemoized.
+        InstructionValue::DeclareContext(_) => MemoizationLevel::Unmemoized,
 
         // Values that propagate memoization from their dependencies
         InstructionValue::LoadLocal(_)
@@ -225,12 +233,15 @@ fn classify_value(value: &InstructionValue, opts: &PruneOptions<'_>) -> Memoizat
             }
         }
 
-        // StoreGlobal, DeclareLocal, UnsupportedNode — always Never
-        // (DeclareLocal is Unmemoized in TS but Never here; StoreGlobal has
-        // Unmemoized lvalue in TS; these don't affect forceMemoizePrimitives)
-        InstructionValue::StoreGlobal(_)
-        | InstructionValue::UnsupportedNode(_)
-        | InstructionValue::DeclareLocal(_) => MemoizationLevel::Never,
+        // DeclareLocal: outer lvalue is Unmemoized (TS line 627),
+        // inner target is Unmemoized (handled in collect_in_block).
+        InstructionValue::DeclareLocal(_) => MemoizationLevel::Unmemoized,
+
+        // StoreGlobal: outer lvalue is Unmemoized (TS line 678).
+        InstructionValue::StoreGlobal(_) => MemoizationLevel::Unmemoized,
+
+        // UnsupportedNode: Never
+        InstructionValue::UnsupportedNode(_) => MemoizationLevel::Never,
     }
 }
 
@@ -429,16 +440,30 @@ fn collect_in_block(
                     lvalue_entries.push((lvalue_id, level));
                 }
 
-                // For StoreLocal/DeclareLocal, also process the inner target
+                // For StoreLocal/DeclareLocal/StoreContext/DeclareContext/Destructure,
+                // also process the inner target. Each instruction kind has specific
+                // memoization levels matching TS `computeMemoizationInputs`.
                 if let ReactiveValue::Instruction(iv) = &instr.value {
                     match iv.as_ref() {
                         InstructionValue::StoreLocal(v) => {
+                            // TS: StoreLocal inner target = Conditional
                             let target_id = state.resolve(v.lvalue.place.identifier.declaration_id);
-                            lvalue_entries.push((target_id, level));
+                            lvalue_entries.push((target_id, MemoizationLevel::Conditional));
+                        }
+                        InstructionValue::StoreContext(v) => {
+                            // TS: StoreContext inner target = Memoized ("Should never be pruned")
+                            let target_id = state.resolve(v.lvalue_place.identifier.declaration_id);
+                            lvalue_entries.push((target_id, MemoizationLevel::Memoized));
                         }
                         InstructionValue::DeclareLocal(v) => {
+                            // TS: DeclareLocal inner target = Unmemoized
                             let target_id = state.resolve(v.lvalue.place.identifier.declaration_id);
-                            lvalue_entries.push((target_id, MemoizationLevel::Never));
+                            lvalue_entries.push((target_id, MemoizationLevel::Unmemoized));
+                        }
+                        InstructionValue::DeclareContext(v) => {
+                            // TS: DeclareContext inner target = Memoized
+                            let target_id = state.resolve(v.lvalue_place.identifier.declaration_id);
+                            lvalue_entries.push((target_id, MemoizationLevel::Memoized));
                         }
                         InstructionValue::Destructure(v) => {
                             for place in
