@@ -5,8 +5,8 @@
 /// the `.expect.md` files.
 use std::path::Path;
 
-use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
 use oxc_react_compiler::entrypoint::options::CompilationMode;
+use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
 use oxc_react_compiler::hir::ReactFunctionType;
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
 use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
@@ -860,9 +860,7 @@ fn run_pipeline_for_codegen(
                     _ => {}
                 }
             }
-            Statement::VariableDeclaration(decl)
-                if decl.kind == VariableDeclarationKind::Const =>
-            {
+            Statement::VariableDeclaration(decl) if decl.kind == VariableDeclarationKind::Const => {
                 if let Some(d) = decl.declarations.first() {
                     use oxc_ast::ast::Expression;
                     match &d.init {
@@ -1573,9 +1571,7 @@ fn inline_temp_to_temp_aliases(s: &str) -> String {
         let mut pos = 0;
 
         while pos < result_bytes.len() {
-            if pos + name_len <= result_bytes.len()
-                && &result_bytes[pos..pos + name_len] == bytes
-            {
+            if pos + name_len <= result_bytes.len() && &result_bytes[pos..pos + name_len] == bytes {
                 let at_start = pos == 0
                     || (!result_bytes[pos - 1].is_ascii_alphanumeric()
                         && result_bytes[pos - 1] != b'_');
@@ -1787,14 +1783,12 @@ fn remove_dead_expression_statements(s: &str) -> String {
         // - Next token is a statement start (let, const, if, return, etc.)
         if token.starts_with('[') && token.ends_with(']') && token.len() > 2 {
             let inner = &token[1..token.len() - 1];
-            let is_simple_array = inner
-                .split(',')
-                .all(|part| {
-                    let p = part.trim();
-                    !p.is_empty()
-                        && p.chars()
-                            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.' || c == '$')
-                });
+            let is_simple_array = inner.split(',').all(|part| {
+                let p = part.trim();
+                !p.is_empty()
+                    && p.chars()
+                        .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.' || c == '$')
+            });
             if is_simple_array {
                 let prev = result.last().copied().unwrap_or("");
                 let next = tokens.get(idx + 1).copied().unwrap_or("");
@@ -1804,8 +1798,19 @@ fn remove_dead_expression_statements(s: &str) -> String {
                     || prev.chars().last().is_some_and(|c| c.is_ascii_alphanumeric() || c == '_');
                 let next_is_stmt_start = matches!(
                     next,
-                    "let" | "const" | "var" | "if" | "return" | "for" | "while" | "switch"
-                        | "try" | "throw" | "do" | "}" | ""
+                    "let"
+                        | "const"
+                        | "var"
+                        | "if"
+                        | "return"
+                        | "for"
+                        | "while"
+                        | "switch"
+                        | "try"
+                        | "throw"
+                        | "do"
+                        | "}"
+                        | ""
                 );
                 // Also check that prev is not an assignment operator
                 let prev_is_operator =
@@ -2094,10 +2099,7 @@ fn normalize_phi_initializers(s: &str) -> String {
         if next == "=" || next == "+=" || next == "-=" || next == "*=" || next == "/=" {
             let is_decl = i > 0 && matches!(tokens[i - 1], "let" | "const" | "var");
             if !is_decl
-                && name
-                    .chars()
-                    .next()
-                    .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+                && name.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
                 && !name.starts_with("$[")
             {
                 reassigned.insert(name);
@@ -2141,19 +2143,13 @@ fn remove_dead_update_expressions(s: &str) -> String {
         let tok = tokens[i];
         let is_postfix = tok.len() > 2
             && (tok.ends_with("++") || tok.ends_with("--"))
-            && tok[..tok.len() - 2]
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '_');
+            && tok[..tok.len() - 2].chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
         let is_prefix = tok.len() > 2
             && (tok.starts_with("++") || tok.starts_with("--"))
             && tok[2..].chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
 
         if is_postfix || is_prefix {
-            let var_name = if is_postfix {
-                &tok[..tok.len() - 2]
-            } else {
-                &tok[2..]
-            };
+            let var_name = if is_postfix { &tok[..tok.len() - 2] } else { &tok[2..] };
             let mut found_reassign = false;
             for j in (i + 1)..tokens.len().min(i + 4) {
                 if tokens[j] == var_name && j + 1 < tokens.len() && tokens[j + 1] == "=" {
@@ -2202,7 +2198,11 @@ fn normalize_grouping_parens(s: &str) -> String {
             if !has_nested && j < len && chars[j] == ')' {
                 let inner: String = chars[i + 1..j].iter().collect();
                 let inner_trimmed = inner.trim();
-                let before: String = if i >= 4 { chars[i - 4..i].iter().collect() } else { chars[..i].iter().collect() };
+                let before: String = if i >= 4 {
+                    chars[i - 4..i].iter().collect()
+                } else {
+                    chars[..i].iter().collect()
+                };
                 let after_start = (j + 1).min(len);
                 let after_end = (j + 5).min(len);
                 let after: String = chars[after_start..after_end].iter().collect();
@@ -2386,9 +2386,7 @@ fn normalize_jsx_parens(s: &str) -> String {
             // Look back for `/>` or `</tagname>`
             let prev_slice = &s[..i];
             if prev_slice.ends_with("/>")
-                || prev_slice
-                    .rfind("</")
-                    .is_some_and(|p| s[p..i].ends_with('>'))
+                || prev_slice.rfind("</").is_some_and(|p| s[p..i].ends_with('>'))
             {
                 // Skip the closing paren
                 i += 1;
@@ -2446,9 +2444,7 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
 
     fn is_temp_name(name: &str) -> bool {
         let b = name.as_bytes();
-        b.len() >= 2
-            && (b[0] == b't' || b[0] == b'T')
-            && b[1..].iter().all(|c| c.is_ascii_digit())
+        b.len() >= 2 && (b[0] == b't' || b[0] == b'T') && b[1..].iter().all(|c| c.is_ascii_digit())
     }
 
     fn extract_ident(bytes: &[u8], pos: usize) -> Option<(String, usize)> {
@@ -2462,10 +2458,7 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
         while end < len && is_ident_char(bytes[end]) {
             end += 1;
         }
-        Some((
-            std::str::from_utf8(&bytes[pos..end]).unwrap().to_string(),
-            end,
-        ))
+        Some((std::str::from_utf8(&bytes[pos..end]).unwrap().to_string(), end))
     }
 
     /// Find the position of the matching closing brace for an opening brace at `open_pos`.
@@ -2485,10 +2478,7 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
     }
 
     /// Find all positions of `$[N] = NAME` (whole word) in a byte slice.
-    fn find_cache_stores(
-        body_bytes: &[u8],
-        name: &str,
-    ) -> Vec<(usize, usize)> {
+    fn find_cache_stores(body_bytes: &[u8], name: &str) -> Vec<(usize, usize)> {
         // Returns (position_of_$, slot_number)
         let blen = body_bytes.len();
         let name_bytes = name.as_bytes();
@@ -2506,7 +2496,8 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
                 let digit_end = k;
                 if digit_end > digit_start && k + 4 + name_len <= blen + 1 {
                     // Parse slot number
-                    let slot_str = std::str::from_utf8(&body_bytes[digit_start..digit_end]).unwrap();
+                    let slot_str =
+                        std::str::from_utf8(&body_bytes[digit_start..digit_end]).unwrap();
                     if let Ok(slot) = slot_str.parse::<usize>() {
                         // Check for `] = NAME`
                         let suffix = format!("] = {name}");
@@ -2515,8 +2506,8 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
                             && &body_bytes[k..k + suffix_bytes.len()] == suffix_bytes
                         {
                             let after_pos = k + suffix_bytes.len();
-                            let at_boundary = after_pos >= blen
-                                || !is_ident_char(body_bytes[after_pos]);
+                            let at_boundary =
+                                after_pos >= blen || !is_ident_char(body_bytes[after_pos]);
                             if at_boundary {
                                 results.push((dollar_pos, slot));
                             }
@@ -2590,11 +2581,8 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
     for (name, indices) in &by_name {
         // For multi-declaration (2+): check later declarations for scope-output pattern.
         // For single-declaration (1): check if the sole declaration is a scope-output.
-        let check_indices: Vec<usize> = if indices.len() >= 2 {
-            indices[1..].to_vec()
-        } else {
-            indices.clone()
-        };
+        let check_indices: Vec<usize> =
+            if indices.len() >= 2 { indices[1..].to_vec() } else { indices.clone() };
         let is_single_decl = indices.len() == 1;
 
         for &idx in &check_indices {
@@ -2690,8 +2678,7 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
                 while j + name_len <= len {
                     if &bytes[j..j + name_len] == name_bytes {
                         let left_ok = j == 0 || !is_ident_char(bytes[j - 1]);
-                        let right_ok =
-                            j + name_len >= len || !is_ident_char(bytes[j + name_len]);
+                        let right_ok = j + name_len >= len || !is_ident_char(bytes[j + name_len]);
                         if left_ok && right_ok {
                             rename_positions.push(j);
                             j += name_len;
@@ -2748,8 +2735,8 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
                             && bytes[k + 1] == b' '
                             && &bytes[k + 2..k + 2 + name_len] == name_bytes
                         {
-                            let at_boundary = k + 2 + name_len >= len
-                                || !is_ident_char(bytes[k + 2 + name_len]);
+                            let at_boundary =
+                                k + 2 + name_len >= len || !is_ident_char(bytes[k + 2 + name_len]);
                             if at_boundary {
                                 rename_positions.push(k + 2);
                                 break;
@@ -2798,10 +2785,7 @@ fn promote_scope_output_vars_to_temps(s: &str) -> String {
 
             if rename_positions.len() >= 3 {
                 // Need at least: decl, one assignment, one cache load
-                scope_outputs.push(ScopeOutput {
-                    name: name.clone(),
-                    rename_positions,
-                });
+                scope_outputs.push(ScopeOutput { name: name.clone(), rename_positions });
             }
         }
     }
@@ -2906,9 +2890,7 @@ fn disambiguate_reused_temps(s: &str) -> String {
     // Helper: check if position `pos` is at a word boundary on the right
     fn right_boundary(bytes: &[u8], pos: usize, len: usize) -> bool {
         pos >= len
-            || (!bytes[pos].is_ascii_alphanumeric()
-                && bytes[pos] != b'_'
-                && bytes[pos] != b'$')
+            || (!bytes[pos].is_ascii_alphanumeric() && bytes[pos] != b'_' && bytes[pos] != b'$')
     }
 
     // Pass 1: find ALL declaration points for temp names and their brace depth.
@@ -2918,10 +2900,10 @@ fn disambiguate_reused_temps(s: &str) -> String {
     //   - function parameter: `(tN` at start of params
     struct TempDecl {
         name: String,
-        pos: usize,        // position of the 't'/'T' in the declaration
-        end_pos: usize,    // position past the last digit
-        brace_depth: usize,       // actual brace depth at the position
-        effective_depth: usize,   // scope depth for finding enclosing block
+        pos: usize,             // position of the 't'/'T' in the declaration
+        end_pos: usize,         // position past the last digit
+        brace_depth: usize,     // actual brace depth at the position
+        effective_depth: usize, // scope depth for finding enclosing block
     }
 
     let mut decls: Vec<TempDecl> = Vec::new();
@@ -2937,7 +2919,9 @@ fn disambiguate_reused_temps(s: &str) -> String {
                 depth = depth.saturating_sub(1);
                 i += 1;
             }
-            b't' | b'T' if i + 1 < len && bytes[i + 1].is_ascii_digit() && left_boundary(bytes, i) => {
+            b't' | b'T'
+                if i + 1 < len && bytes[i + 1].is_ascii_digit() && left_boundary(bytes, i) =>
+            {
                 let start = i;
                 i += 1;
                 while i < len && bytes[i].is_ascii_digit() {
@@ -2981,12 +2965,15 @@ fn disambiguate_reused_temps(s: &str) -> String {
                             // For destructuring declarations, the brace_depth includes
                             // the destructuring pattern's own `{`, which is not a real
                             // scope block. Use depth - 1 for the effective scope.
-                            let effective_depth = if is_real_destr {
-                                depth.saturating_sub(1)
-                            } else {
-                                depth
-                            };
-                            decls.push(TempDecl { name, pos: start, end_pos: i, brace_depth: depth, effective_depth });
+                            let effective_depth =
+                                if is_real_destr { depth.saturating_sub(1) } else { depth };
+                            decls.push(TempDecl {
+                                name,
+                                pos: start,
+                                end_pos: i,
+                                brace_depth: depth,
+                                effective_depth,
+                            });
                         }
                     }
                     continue;
@@ -3088,12 +3075,7 @@ fn disambiguate_reused_temps(s: &str) -> String {
                 scope_end += 1;
             }
 
-            renames.push(Rename {
-                original: name.clone(),
-                replacement,
-                scope_start,
-                scope_end,
-            });
+            renames.push(Rename { original: name.clone(), replacement, scope_start, scope_end });
         }
     }
 
@@ -3206,8 +3188,10 @@ fn renumber_plain_temps(s: &str) -> String {
         }
         // Check for `t` or `T` followed by digit, at a word boundary.
         if (bytes[i] == b't' || bytes[i] == b'T') && i + 1 < len && bytes[i + 1].is_ascii_digit() {
-            let at_boundary =
-                i == 0 || (!bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_' && bytes[i - 1] != b'$');
+            let at_boundary = i == 0
+                || (!bytes[i - 1].is_ascii_alphanumeric()
+                    && bytes[i - 1] != b'_'
+                    && bytes[i - 1] != b'$');
             if at_boundary {
                 let start = i;
                 let is_upper = bytes[i] == b'T';
@@ -3216,8 +3200,8 @@ fn renumber_plain_temps(s: &str) -> String {
                     i += 1;
                 }
                 // Make sure the next char is NOT alphanumeric or _ (word boundary)
-                let end_boundary =
-                    i >= len || (!bytes[i].is_ascii_alphanumeric() && bytes[i] != b'_' && bytes[i] != b'$');
+                let end_boundary = i >= len
+                    || (!bytes[i].is_ascii_alphanumeric() && bytes[i] != b'_' && bytes[i] != b'$');
                 if end_boundary {
                     let original = std::str::from_utf8(&bytes[start..i]).unwrap();
                     mapping.entry(original.to_string()).or_insert_with(|| {
@@ -3295,16 +3279,18 @@ fn renumber_plain_temps(s: &str) -> String {
             }
         }
         if (bytes[i] == b't' || bytes[i] == b'T') && i + 1 < len && bytes[i + 1].is_ascii_digit() {
-            let at_boundary =
-                i == 0 || (!bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_' && bytes[i - 1] != b'$');
+            let at_boundary = i == 0
+                || (!bytes[i - 1].is_ascii_alphanumeric()
+                    && bytes[i - 1] != b'_'
+                    && bytes[i - 1] != b'$');
             if at_boundary {
                 let start = i;
                 i += 1;
                 while i < len && bytes[i].is_ascii_digit() {
                     i += 1;
                 }
-                let end_boundary =
-                    i >= len || (!bytes[i].is_ascii_alphanumeric() && bytes[i] != b'_' && bytes[i] != b'$');
+                let end_boundary = i >= len
+                    || (!bytes[i].is_ascii_alphanumeric() && bytes[i] != b'_' && bytes[i] != b'$');
                 if end_boundary {
                     let original = std::str::from_utf8(&bytes[start..i]).unwrap();
                     if let Some(replacement) = mapping.get(original) {
@@ -3621,8 +3607,8 @@ fn codegen_conformance_inner() {
                 // Fallback 2: if expected has no memoization (_c() absent) and matches
                 // the source, this is an identity transform. Our compiler may over-memoize
                 // but the expected behavior is "source unchanged".
-                let is_identity_expected = !expected_func.contains("_c(")
-                    && !expected_func.contains("useMemoCache");
+                let is_identity_expected =
+                    !expected_func.contains("_c(") && !expected_func.contains("useMemoCache");
                 if is_identity_expected {
                     let source_func = extract_function_from_expected(&source);
                     let source_norm = source_func.as_ref().map(|s| normalize_code_quotes(s));
@@ -3821,7 +3807,11 @@ fn test_near_miss_diagnostic() {
             let a_c = a_part.split("_c(").nth(1).and_then(|s| s.split(')').next());
             let e_c = e_part.split("_c(").nth(1).and_then(|s| s.split(')').next());
             if a_c != e_c {
-                scope_structure_issues.push((&nm.name, a_c.unwrap_or("?").to_string(), e_c.unwrap_or("?").to_string()));
+                scope_structure_issues.push((
+                    &nm.name,
+                    a_c.unwrap_or("?").to_string(),
+                    e_c.unwrap_or("?").to_string(),
+                ));
             } else {
                 // Same _c() count — likely temp renumbering or small codegen diff
                 temp_renumber_issues.push(&nm.name);
@@ -3837,7 +3827,10 @@ fn test_near_miss_diagnostic() {
     for name in &no_memo_issues[..no_memo_issues.len().min(20)] {
         println!("  {}", name);
     }
-    println!("\n--- FUNCTION OUTLINING (_temp missing): {} fixtures ---", function_outline_issues.len());
+    println!(
+        "\n--- FUNCTION OUTLINING (_temp missing): {} fixtures ---",
+        function_outline_issues.len()
+    );
     for name in &function_outline_issues[..function_outline_issues.len().min(20)] {
         println!("  {}", name);
     }
@@ -4291,7 +4284,10 @@ fn test_debug_five_pipeline_error_fixtures() {
         let path = fixtures_dir.join(name);
         let source = match std::fs::read_to_string(&path) {
             Ok(s) => s,
-            Err(e) => { eprintln!("[{name}] Cannot read file: {e}"); continue; }
+            Err(e) => {
+                eprintln!("[{name}] Cannot read file: {e}");
+                continue;
+            }
         };
         let result = run_pipeline_for_codegen(&source, *source_type);
         match &result {
@@ -4423,19 +4419,34 @@ fn test_debug_promote_scope_output() {
     eprintln!("OUTPUT: {result}");
     let so = "__SCOPE_OUT_0__";
     // The declaration should be renamed
-    assert!(result.contains(&format!("let {so} if")), "Second let should be renamed, got: {result}");
+    assert!(
+        result.contains(&format!("let {so} if")),
+        "Second let should be renamed, got: {result}"
+    );
     // The condition `$[0] !== y` should NOT be renamed (it's the original var)
     assert!(result.contains("$[0] !== y"), "Condition should keep original y, got: {result}");
     // LHS of assignment should be renamed
-    assert!(result.contains(&format!("{so} = [y]")), "LHS should be scope output, RHS should be original y, got: {result}");
+    assert!(
+        result.contains(&format!("{so} = [y]")),
+        "LHS should be scope output, RHS should be original y, got: {result}"
+    );
     // Cache key $[0] = y should NOT be renamed
     assert!(result.contains("$[0] = y"), "Cache key should keep original y, got: {result}");
     // Cache value $[1] = y should be renamed (last store)
-    assert!(result.contains(&format!("$[1] = {so}")), "Cache value store should be renamed, got: {result}");
+    assert!(
+        result.contains(&format!("$[1] = {so}")),
+        "Cache value store should be renamed, got: {result}"
+    );
     // Cache load should be renamed
-    assert!(result.contains(&format!("{so} = $[1]")), "Cache load should be renamed, got: {result}");
+    assert!(
+        result.contains(&format!("{so} = $[1]")),
+        "Cache load should be renamed, got: {result}"
+    );
     // Return should be renamed
-    assert!(result.ends_with(&format!("return {so}")), "Return should use scope output, got: {result}");
+    assert!(
+        result.ends_with(&format!("return {so}")),
+        "Return should use scope output, got: {result}"
+    );
 
     // Case [6]: let x ... let x if ($[0] !== z) { x = [z] $[0] = z $[1] = x } else { x = $[1] } return x
     // Expected:  let x ... let t0 if ($[0] !== z) { t0 = [z] $[0] = z $[1] = t0 } else { t0 = $[1] } return t0
@@ -4443,10 +4454,47 @@ fn test_debug_promote_scope_output() {
     let result2 = promote_scope_output_vars_to_temps(input2);
     eprintln!("\nINPUT2:  {input2}");
     eprintln!("OUTPUT2: {result2}");
-    assert!(result2.contains(&format!("let {so} if")), "Second let x should be renamed, got: {result2}");
+    assert!(
+        result2.contains(&format!("let {so} if")),
+        "Second let x should be renamed, got: {result2}"
+    );
     assert!(result2.contains(&format!("{so} = [z]")), "LHS should be scope output, got: {result2}");
     assert!(result2.contains("$[0] = z"), "Cache key should keep original z, got: {result2}");
-    assert!(result2.contains(&format!("$[1] = {so}")), "Cache value should be renamed, got: {result2}");
+    assert!(
+        result2.contains(&format!("$[1] = {so}")),
+        "Cache value should be renamed, got: {result2}"
+    );
+}
+
+/// Regression test: recursive arrow function capturing its own name from outer scope
+/// should NOT be outlined (it has non-empty context due to self-reference).
+#[test]
+fn test_recursive_arrow_not_outlined() {
+    let source = r#"function Foo(value) {
+  const factorial = (x) => {
+    if (x <= 1) {
+      return 1;
+    } else {
+      return x * factorial(x - 1);
+    }
+  };
+  return factorial(value);
+}"#;
+
+    let result = run_pipeline_for_codegen(source, oxc_span::SourceType::jsx());
+    match result {
+        Ok(func) => {
+            let output = format_full_function(&func);
+            // The function should be inlined (not outlined to _temp)
+            assert!(
+                !output.contains("_temp"),
+                "Recursive arrow function should NOT be outlined to _temp. Output: {output}"
+            );
+        }
+        Err(e) => {
+            panic!("Pipeline should succeed for recursive arrow function: {e}");
+        }
+    }
 }
 
 // ===========================================================================

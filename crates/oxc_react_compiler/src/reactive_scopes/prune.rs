@@ -75,10 +75,9 @@ fn terminal_has_return(terminal: &crate::hir::ReactiveTerminal) -> bool {
             block_has_return(&t.consequent)
                 || t.alternate.as_ref().is_some_and(|alt| block_has_return(alt))
         }
-        ReactiveTerminal::Switch(t) => t
-            .cases
-            .iter()
-            .any(|case| case.block.as_ref().is_some_and(|b| block_has_return(b))),
+        ReactiveTerminal::Switch(t) => {
+            t.cases.iter().any(|case| case.block.as_ref().is_some_and(|b| block_has_return(b)))
+        }
         ReactiveTerminal::While(t) => block_has_return(&t.r#loop),
         ReactiveTerminal::DoWhile(t) => block_has_return(&t.r#loop),
         ReactiveTerminal::For(t) => block_has_return(&t.r#loop),
@@ -86,9 +85,9 @@ fn terminal_has_return(terminal: &crate::hir::ReactiveTerminal) -> bool {
         ReactiveTerminal::ForIn(t) => block_has_return(&t.r#loop),
         ReactiveTerminal::Label(t) => block_has_return(&t.block),
         ReactiveTerminal::Try(t) => block_has_return(&t.block) || block_has_return(&t.handler),
-        ReactiveTerminal::Break(_)
-        | ReactiveTerminal::Continue(_)
-        | ReactiveTerminal::Throw(_) => false,
+        ReactiveTerminal::Break(_) | ReactiveTerminal::Continue(_) | ReactiveTerminal::Throw(_) => {
+            false
+        }
     }
 }
 

@@ -481,16 +481,12 @@ fn effects_from_signature(
                 captures.push(place.clone());
             }
             Effect::ConditionallyMutate => {
-                effects.push(AliasingEffect::MutateTransitiveConditionally {
-                    value: place.clone(),
-                });
+                effects
+                    .push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
             }
             Effect::ConditionallyMutateIterator => {
                 // For iterables: capture into return value
-                effects.push(AliasingEffect::Capture {
-                    from: place.clone(),
-                    into: lvalue.clone(),
-                });
+                effects.push(AliasingEffect::Capture { from: place.clone(), into: lvalue.clone() });
             }
             Effect::Freeze => {
                 effects.push(AliasingEffect::Freeze {
@@ -509,9 +505,8 @@ fn effects_from_signature(
             }
             _ => {
                 // Unknown or other: conservative
-                effects.push(AliasingEffect::MutateTransitiveConditionally {
-                    value: place.clone(),
-                });
+                effects
+                    .push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
             }
         }
     };
@@ -545,10 +540,8 @@ fn effects_from_signature(
         } else {
             for cap in &captures {
                 for store in &stores {
-                    effects.push(AliasingEffect::Capture {
-                        from: cap.clone(),
-                        into: store.clone(),
-                    });
+                    effects
+                        .push(AliasingEffect::Capture { from: cap.clone(), into: store.clone() });
                 }
             }
         }

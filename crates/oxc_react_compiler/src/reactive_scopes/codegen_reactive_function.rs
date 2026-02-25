@@ -1542,9 +1542,8 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
                     let children_str: Vec<String> =
                         children.iter().map(|c| codegen_jsx_child(cx, c)).collect();
                     // Check if any child is a JSX text node (not wrapped in { })
-                    let has_text_child = children_str.iter().any(|c| {
-                        !c.starts_with('{') && !c.starts_with('<')
-                    });
+                    let has_text_child =
+                        children_str.iter().any(|c| !c.starts_with('{') && !c.starts_with('<'));
                     if children_str.len() > 1 && !has_text_child {
                         // Multi-child, all expression containers/elements: emit with newlines
                         let joined = join_jsx_children_multiline(&children_str);
@@ -2001,11 +2000,7 @@ fn codegen_jsx_child(cx: &CodegenContext, place: &Place) -> String {
         // When a temp is promoted/named (e.g. after scope caching), it's just
         // a variable reference like `t0` and needs `{ t0 }` wrapping.
         let expr = codegen_place_to_expression(cx, place);
-        if expr.starts_with('<') {
-            expr
-        } else {
-            format!("{{{expr}}}")
-        }
+        if expr.starts_with('<') { expr } else { format!("{{{expr}}}") }
     } else {
         // All other expressions get wrapped in expression containers
         format!("{{{}}}", codegen_place_to_expression(cx, place))
@@ -2127,6 +2122,10 @@ fn codegen_primitive(value: &PrimitiveValueKind) -> String {
 }
 
 /// Escape special characters in a double-quoted string literal.
+///
+/// Handles all standard JavaScript escape sequences so that decoded string values
+/// (where the parser has already resolved escape sequences like `\b` into their
+/// actual character values) are correctly re-encoded for output.
 fn escape_string(s: &str) -> String {
     let mut result = String::with_capacity(s.len());
     for c in s.chars() {
@@ -2136,6 +2135,16 @@ fn escape_string(s: &str) -> String {
             '\n' => result.push_str("\\n"),
             '\r' => result.push_str("\\r"),
             '\t' => result.push_str("\\t"),
+            '\u{0008}' => result.push_str("\\b"),
+            '\u{000C}' => result.push_str("\\f"),
+            '\u{000B}' => result.push_str("\\v"),
+            '\0' => result.push_str("\\0"),
+            c if c.is_control() => {
+                // Escape other control characters as \uXXXX
+                for unit in c.encode_utf16(&mut [0; 2]) {
+                    result.push_str(&format!("\\u{unit:04x}"));
+                }
+            }
             _ => result.push(c),
         }
     }
@@ -2153,6 +2162,15 @@ fn escape_string_single_quote(s: &str) -> String {
             '\n' => result.push_str("\\n"),
             '\r' => result.push_str("\\r"),
             '\t' => result.push_str("\\t"),
+            '\u{0008}' => result.push_str("\\b"),
+            '\u{000C}' => result.push_str("\\f"),
+            '\u{000B}' => result.push_str("\\v"),
+            '\0' => result.push_str("\\0"),
+            c if c.is_control() => {
+                for unit in c.encode_utf16(&mut [0; 2]) {
+                    result.push_str(&format!("\\u{unit:04x}"));
+                }
+            }
             _ => result.push(c),
         }
     }

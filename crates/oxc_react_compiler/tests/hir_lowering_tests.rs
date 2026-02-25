@@ -1146,4 +1146,42 @@ mod invariants {
         assert_eq!(hir1.body.entry, BlockId(0), "Entry should be BlockId(0)");
         assert_eq!(hir2.body.entry, BlockId(0), "Entry should be BlockId(0)");
     }
+
+    /// Verify that a recursive arrow function captures its own name from the outer scope.
+    #[test]
+    fn recursive_arrow_captures_own_name() {
+        let source = r#"function Foo(value) {
+            const factorial = (x) => {
+                if (x <= 1) {
+                    return 1;
+                } else {
+                    return x * factorial(x - 1);
+                }
+            };
+            return factorial(value);
+        }"#;
+
+        let hir = lower_function_source(source);
+
+        // Find all FunctionExpression instructions and check their context
+        let mut found = false;
+        for block in hir.body.blocks.values() {
+            for instr in &block.instructions {
+                if let InstructionValue::FunctionExpression(fe) = &instr.value {
+                    found = true;
+                    let ctx = &fe.lowered_func.func.context;
+                    assert!(
+                        !ctx.is_empty(),
+                        "Arrow function capturing 'factorial' should have non-empty context, but context is empty!"
+                    );
+                    // Verify factorial is in the context
+                    let has_factorial = ctx.iter().any(|p| {
+                        matches!(&p.identifier.name, Some(oxc_react_compiler::hir::IdentifierName::Named(n)) if n == "factorial")
+                    });
+                    assert!(has_factorial, "Context should contain 'factorial'");
+                }
+            }
+        }
+        assert!(found, "Expected to find at least one FunctionExpression instruction");
+    }
 }
