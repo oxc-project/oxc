@@ -6,13 +6,12 @@
 ///
 /// These passes flatten (remove) reactive scopes that cannot be correctly
 /// memoized due to being inside loops or containing hook calls.
-use rustc_hash::FxHashSet;
 
 use crate::hir::{
-    BlockId, HIRFunction, IdentifierId, InstructionValue, LabelTerminal, PrunedScopeTerminal,
+    BlockId, HIRFunction, Identifier, InstructionValue, LabelTerminal, PrunedScopeTerminal,
     Terminal, environment::get_hook_kind_for_type,
+    object_shape::BUILT_IN_USE_OPERATOR_ID,
 };
-use crate::utils::hook_declaration::is_hook_name;
 
 /// Flatten reactive loops -- removes reactive scopes inside loops.
 ///
@@ -86,26 +85,23 @@ pub fn flatten_reactive_loops_hir(func: &mut HIRFunction) {
 /// Hooks must be called unconditionally and in consistent order, so they
 /// cannot be inside conditionally-executed reactive scopes. This pass finds
 /// and removes any scopes that transitively contain a hook or use call.
+///
+/// Port of `flattenScopesWithHooksOrUseHIR` from
+/// `ReactiveScopes/FlattenScopesWithHooksOrUseHIR.ts`.
+///
+/// The TS version relies entirely on the type system (`getHookKind` and
+/// `isUseOperator`) to identify hook calls. After InferTypes runs, each
+/// identifier that refers to a hook has a `Function` type whose `shapeId`
+/// points to a shape with `hookKind` set. This works for:
+/// - Direct hook calls: `useState(0)` — the `useState` global is typed
+/// - Method hook calls: `React.useState(0)` — `PropertyLoad` resolves the
+///   property type via the shapes or the `isHookName` fallback in
+///   `getPropertyType`, which returns a type with `hookKind: Custom`.
 pub fn flatten_scopes_with_hooks_or_use_hir(func: &mut HIRFunction) {
     let mut block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     block_ids.sort();
 
-    // Phase 1: Forward pass to identify hook identifiers by name
-    let mut hook_identifiers: FxHashSet<IdentifierId> = FxHashSet::default();
-    for &block_id in &block_ids {
-        let Some(block) = func.body.blocks.get(&block_id) else {
-            continue;
-        };
-        for instr in &block.instructions {
-            if let InstructionValue::LoadGlobal(v) = &instr.value
-                && is_hook_name(v.binding.name())
-            {
-                hook_identifiers.insert(instr.lvalue.identifier.id);
-            }
-        }
-    }
-
-    // Phase 2: Find scopes that contain hook calls
+    // Find scopes that contain hook calls
     let mut active_scopes: Vec<(BlockId, BlockId)> = Vec::new(); // (block_id, fallthrough)
     let mut prune: Vec<BlockId> = Vec::new();
 
@@ -121,19 +117,10 @@ pub fn flatten_scopes_with_hooks_or_use_hir(func: &mut HIRFunction) {
         for instr in &block.instructions {
             let is_hook_call = match &instr.value {
                 InstructionValue::CallExpression(v) => {
-                    hook_identifiers.contains(&v.callee.identifier.id)
-                        || is_use_operator_by_name(v.callee.identifier.name.as_ref())
-                        || get_hook_kind_for_type(&func.env, &v.callee.identifier.type_).is_some()
+                    is_hook_or_use(&func.env, &v.callee.identifier)
                 }
                 InstructionValue::MethodCall(v) => {
-                    hook_identifiers.contains(&v.property.identifier.id)
-                        || is_use_operator_by_name(v.property.identifier.name.as_ref())
-                        || v.property
-                            .identifier
-                            .name
-                            .as_ref()
-                            .is_some_and(|n| is_hook_name(n.value()))
-                        || get_hook_kind_for_type(&func.env, &v.property.identifier.type_).is_some()
+                    is_hook_or_use(&func.env, &v.property.identifier)
                 }
                 _ => false,
             };
@@ -150,7 +137,7 @@ pub fn flatten_scopes_with_hooks_or_use_hir(func: &mut HIRFunction) {
         }
     }
 
-    // Phase 3: Prune the identified scopes
+    // Prune the identified scopes
     for id in prune {
         let Some(block) = func.body.blocks.get(&id) else {
             continue;
@@ -198,10 +185,41 @@ pub fn flatten_scopes_with_hooks_or_use_hir(func: &mut HIRFunction) {
     }
 }
 
-/// Check if an identifier name matches the `use` operator pattern.
+/// Check if an identifier is a hook call or `use` operator.
 ///
-/// In the TS version, `isUseOperator` checks the type system for `BuiltInUseOperator`.
-/// Since we don't have the full type system, we check by name: exactly "use".
-fn is_use_operator_by_name(name: Option<&crate::hir::IdentifierName>) -> bool {
-    name.is_some_and(|n| n.value() == "use")
+/// Port of the inline check in the TS version:
+/// ```ts
+/// getHookKind(fn.env, callee.identifier) != null || isUseOperator(callee.identifier)
+/// ```
+///
+/// This checks the identifier's type: if it has a `Function` type with a shape
+/// that has `hookKind` set, it's a hook. If its shape_id is `BuiltInUseOperator`,
+/// it's a `use()` call.
+fn is_hook_or_use(
+    env: &crate::hir::environment::Environment,
+    identifier: &Identifier,
+) -> bool {
+    // Check getHookKind: type-based hook detection
+    if get_hook_kind_for_type(env, &identifier.type_).is_some() {
+        return true;
+    }
+    // Check isUseOperator: type-based use() detection
+    if is_use_operator(identifier) {
+        return true;
+    }
+    false
+}
+
+/// Check if an identifier is the `use` operator.
+///
+/// Port of `isUseOperator` from `HIR/HIR.ts`:
+/// ```ts
+/// id.type.kind === 'Function' && id.type.shapeId === 'BuiltInUseOperator'
+/// ```
+fn is_use_operator(id: &Identifier) -> bool {
+    matches!(
+        &id.type_,
+        crate::hir::types::Type::Function(f)
+            if f.shape_id.as_deref() == Some(BUILT_IN_USE_OPERATOR_ID)
+    )
 }

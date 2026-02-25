@@ -125,6 +125,7 @@ pub const BUILT_IN_SET_OPTIMISTIC_ID: &str = "BuiltInSetOptimistic";
 pub const BUILT_IN_START_TRANSITION_ID: &str = "BuiltInStartTransition";
 pub const BUILT_IN_USE_EFFECT_EVENT_ID: &str = "BuiltInUseEffectEvent";
 pub const BUILT_IN_EFFECT_EVENT_ID: &str = "BuiltInEffectEventFunction";
+pub const BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID: &str = "DefaultNonmutatingHook";
 pub const REANIMATED_SHARED_VALUE_ID: &str = "ReanimatedSharedValueId";
 
 // =====================================================================================
