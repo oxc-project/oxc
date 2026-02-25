@@ -120,6 +120,14 @@ pub struct PruneOptions {
     /// reachable from escaping values). When false, they are `Unmemoized` (only
     /// memoized if explicitly forced). Corresponds to `!enableForest` in the TS.
     pub memoize_jsx_elements: bool,
+
+    /// When true, primitive-producing instructions (Primitive, BinaryExpression,
+    /// UnaryExpression, TemplateLiteral, LoadGlobal, etc.) are treated as
+    /// `Conditional` instead of `Never`. This ensures scopes that transitively
+    /// depend on primitives are preserved when manual memoization validation is
+    /// enabled. Corresponds to `forceMemoizePrimitives` in the TS, which is set
+    /// to `enableForest || enablePreserveExistingMemoizationGuarantees`.
+    pub force_memoize_primitives: bool,
 }
 
 /// Prune reactive scopes whose values don't escape the function.
@@ -143,7 +151,9 @@ pub fn prune_non_escaping_scopes(func: &mut ReactiveFunction, opts: &PruneOption
     let memoized = compute_memoized_identifiers(&mut state);
 
     // Phase 3: Prune scopes whose declarations aren't in the memoized set
-    prune_in_block(&mut func.body, &memoized);
+    let mut pruned_scopes = FxHashSet::default();
+    let mut reassignments = FxHashMap::default();
+    prune_in_block(&mut func.body, &memoized, &mut pruned_scopes, &mut reassignments);
 }
 
 /// Determine the MemoizationLevel for an instruction value.
@@ -176,8 +186,7 @@ fn classify_value(value: &InstructionValue, opts: &PruneOptions) -> MemoizationL
         | InstructionValue::PrefixUpdate(_)
         | InstructionValue::PostfixUpdate(_)
         | InstructionValue::GetIterator(_)
-        | InstructionValue::IteratorNext(_)
-        | InstructionValue::NextPropertyOf(_) => MemoizationLevel::Conditional,
+        | InstructionValue::IteratorNext(_) => MemoizationLevel::Conditional,
 
         // JSX — memoize when `memoizeJsxElements` is true (the default when `enableForest` is false)
         InstructionValue::JsxExpression(_) | InstructionValue::JsxFragment(_) => {
@@ -188,20 +197,34 @@ fn classify_value(value: &InstructionValue, opts: &PruneOptions) -> MemoizationL
             }
         }
 
-        // Primitives and other cheap-to-compare values — never memoize
+        // Primitives and other cheap-to-compare values — never memoize by default.
+        // When `force_memoize_primitives` is true (enablePreserveExistingMemoizationGuarantees
+        // or enableForest), these become `Conditional` so that scopes transitively
+        // reachable from them are preserved for manual memoization validation.
         InstructionValue::Primitive(_)
         | InstructionValue::JsxText(_)
         | InstructionValue::BinaryExpression(_)
         | InstructionValue::UnaryExpression(_)
         | InstructionValue::TemplateLiteral(_)
         | InstructionValue::LoadGlobal(_)
-        | InstructionValue::StoreGlobal(_)
         | InstructionValue::MetaProperty(_)
         | InstructionValue::Debugger(_)
         | InstructionValue::ComputedDelete(_)
         | InstructionValue::PropertyDelete(_)
         | InstructionValue::StartMemoize(_)
         | InstructionValue::FinishMemoize(_)
+        | InstructionValue::NextPropertyOf(_) => {
+            if opts.force_memoize_primitives {
+                MemoizationLevel::Conditional
+            } else {
+                MemoizationLevel::Never
+            }
+        }
+
+        // StoreGlobal, DeclareLocal, UnsupportedNode — always Never
+        // (DeclareLocal is Unmemoized in TS but Never here; StoreGlobal has
+        // Unmemoized lvalue in TS; these don't affect forceMemoizePrimitives)
+        InstructionValue::StoreGlobal(_)
         | InstructionValue::UnsupportedNode(_)
         | InstructionValue::DeclareLocal(_) => MemoizationLevel::Never,
     }
@@ -559,12 +582,22 @@ fn force_memoize_scope_dependencies(
 // Phase 3: Prune scopes
 // =====================================================================================
 
-fn prune_in_block(block: &mut ReactiveBlock, memoized: &FxHashSet<DeclarationId>) {
+fn prune_in_block(
+    block: &mut ReactiveBlock,
+    memoized: &FxHashSet<DeclarationId>,
+    pruned_scopes: &mut FxHashSet<ScopeId>,
+    reassignments: &mut FxHashMap<crate::hir::DeclarationId, Vec<crate::hir::Identifier>>,
+) {
     let mut i = 0;
     while i < block.len() {
         match &mut block[i] {
             ReactiveStatement::Scope(scope) => {
-                prune_in_block(&mut scope.instructions, memoized);
+                prune_in_block(
+                    &mut scope.instructions,
+                    memoized,
+                    pruned_scopes,
+                    reassignments,
+                );
 
                 // Keep scopes with early returns (matches TS behavior)
                 if scope.scope.early_return_value.is_some() {
@@ -591,6 +624,8 @@ fn prune_in_block(block: &mut ReactiveBlock, memoized: &FxHashSet<DeclarationId>
                         .any(|ident| memoized.contains(&ident.declaration_id));
 
                 if !has_memoized_output {
+                    // Record pruned scope ID for FinishMemoize handling
+                    pruned_scopes.insert(scope.scope.id);
                     // Scope doesn't need memoization — flatten it
                     let instructions = std::mem::take(&mut scope.instructions);
                     block.splice(i..=i, instructions);
@@ -598,41 +633,128 @@ fn prune_in_block(block: &mut ReactiveBlock, memoized: &FxHashSet<DeclarationId>
                 }
             }
             ReactiveStatement::PrunedScope(scope) => {
-                prune_in_block(&mut scope.instructions, memoized);
+                prune_in_block(
+                    &mut scope.instructions,
+                    memoized,
+                    pruned_scopes,
+                    reassignments,
+                );
             }
             ReactiveStatement::Terminal(term) => {
-                prune_in_terminal(&mut term.terminal, memoized);
+                prune_in_terminal(&mut term.terminal, memoized, pruned_scopes, reassignments);
             }
-            ReactiveStatement::Instruction(_) => {}
+            ReactiveStatement::Instruction(instr_stmt) => {
+                // Track reassignments and set FinishMemoize.pruned, matching TS
+                // PruneScopesTransform.transformInstruction
+                let value = &instr_stmt.instruction.value;
+                if let ReactiveValue::Instruction(iv) = value {
+                    match iv.as_ref() {
+                        InstructionValue::StoreLocal(v) => {
+                            if v.lvalue.kind == crate::hir::InstructionKind::Reassign {
+                                let entry = reassignments
+                                    .entry(v.lvalue.place.identifier.declaration_id)
+                                    .or_default();
+                                entry.push(v.value.identifier.clone());
+                            }
+                        }
+                        InstructionValue::LoadLocal(v) => {
+                            if v.place.identifier.scope.is_some()
+                                && let Some(lval) = &instr_stmt.instruction.lvalue
+                                && lval.identifier.scope.is_none()
+                            {
+                                let entry = reassignments
+                                    .entry(lval.identifier.declaration_id)
+                                    .or_default();
+                                entry.push(v.place.identifier.clone());
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                // Check FinishMemoize: set pruned=true if all decls' scopes were pruned
+                if let ReactiveValue::Instruction(iv) = &instr_stmt.instruction.value {
+                    if let InstructionValue::FinishMemoize(fm) = iv.as_ref() {
+                        let decls: Vec<crate::hir::Identifier> =
+                            if fm.decl.identifier.scope.is_none() {
+                                reassignments
+                                    .get(&fm.decl.identifier.declaration_id)
+                                    .map_or_else(
+                                        || vec![fm.decl.identifier.clone()],
+                                        |ids| ids.clone(),
+                                    )
+                            } else {
+                                vec![fm.decl.identifier.clone()]
+                            };
+
+                        let all_pruned = decls.iter().all(|decl| {
+                            decl.scope.is_none()
+                                || decl
+                                    .scope
+                                    .as_ref()
+                                    .is_some_and(|s| pruned_scopes.contains(&s.id))
+                        });
+
+                        if all_pruned {
+                            // Set pruned=true on the FinishMemoize instruction
+                            // We need to get a mutable reference to the InstructionValue
+                            if let ReactiveValue::Instruction(iv) =
+                                &mut instr_stmt.instruction.value
+                            {
+                                if let InstructionValue::FinishMemoize(fm) = iv.as_mut() {
+                                    fm.pruned = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
         i += 1;
     }
 }
 
-fn prune_in_terminal(terminal: &mut ReactiveTerminal, memoized: &FxHashSet<DeclarationId>) {
+fn prune_in_terminal(
+    terminal: &mut ReactiveTerminal,
+    memoized: &FxHashSet<DeclarationId>,
+    pruned_scopes: &mut FxHashSet<ScopeId>,
+    reassignments: &mut FxHashMap<DeclarationId, Vec<crate::hir::Identifier>>,
+) {
     match terminal {
         ReactiveTerminal::If(t) => {
-            prune_in_block(&mut t.consequent, memoized);
+            prune_in_block(&mut t.consequent, memoized, pruned_scopes, reassignments);
             if let Some(alt) = &mut t.alternate {
-                prune_in_block(alt, memoized);
+                prune_in_block(alt, memoized, pruned_scopes, reassignments);
             }
         }
         ReactiveTerminal::Switch(t) => {
             for case in &mut t.cases {
                 if let Some(block) = &mut case.block {
-                    prune_in_block(block, memoized);
+                    prune_in_block(block, memoized, pruned_scopes, reassignments);
                 }
             }
         }
-        ReactiveTerminal::While(t) => prune_in_block(&mut t.r#loop, memoized),
-        ReactiveTerminal::DoWhile(t) => prune_in_block(&mut t.r#loop, memoized),
-        ReactiveTerminal::For(t) => prune_in_block(&mut t.r#loop, memoized),
-        ReactiveTerminal::ForOf(t) => prune_in_block(&mut t.r#loop, memoized),
-        ReactiveTerminal::ForIn(t) => prune_in_block(&mut t.r#loop, memoized),
-        ReactiveTerminal::Label(t) => prune_in_block(&mut t.block, memoized),
+        ReactiveTerminal::While(t) => {
+            prune_in_block(&mut t.r#loop, memoized, pruned_scopes, reassignments);
+        }
+        ReactiveTerminal::DoWhile(t) => {
+            prune_in_block(&mut t.r#loop, memoized, pruned_scopes, reassignments);
+        }
+        ReactiveTerminal::For(t) => {
+            prune_in_block(&mut t.r#loop, memoized, pruned_scopes, reassignments);
+        }
+        ReactiveTerminal::ForOf(t) => {
+            prune_in_block(&mut t.r#loop, memoized, pruned_scopes, reassignments);
+        }
+        ReactiveTerminal::ForIn(t) => {
+            prune_in_block(&mut t.r#loop, memoized, pruned_scopes, reassignments);
+        }
+        ReactiveTerminal::Label(t) => {
+            prune_in_block(&mut t.block, memoized, pruned_scopes, reassignments);
+        }
         ReactiveTerminal::Try(t) => {
-            prune_in_block(&mut t.block, memoized);
-            prune_in_block(&mut t.handler, memoized);
+            prune_in_block(&mut t.block, memoized, pruned_scopes, reassignments);
+            prune_in_block(&mut t.handler, memoized, pruned_scopes, reassignments);
         }
         ReactiveTerminal::Break(_)
         | ReactiveTerminal::Continue(_)

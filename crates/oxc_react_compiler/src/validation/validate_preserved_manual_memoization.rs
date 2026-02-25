@@ -35,6 +35,7 @@ pub fn validate_preserved_manual_memoization(func: &ReactiveFunction) -> Result<
         manual_memo_state: None,
         scopes: FxHashSet::default(),
         pruned_scopes: FxHashSet::default(),
+        active_scopes: FxHashSet::default(),
         temporaries: FxHashMap::default(),
     };
 
@@ -62,6 +63,10 @@ struct VisitorState {
     manual_memo_state: Option<ManualMemoBlockState>,
     scopes: FxHashSet<ScopeId>,
     pruned_scopes: FxHashSet<ScopeId>,
+    /// Scopes/pruned scopes we are currently inside (started but not finished).
+    /// Instructions inside these scopes should not fail validation because
+    /// the scope is still being traversed.
+    active_scopes: FxHashSet<ScopeId>,
     temporaries: FxHashMap<IdentifierId, ManualMemoDependency>,
 }
 
@@ -255,6 +260,14 @@ fn visit_block(block: &ReactiveBlock, state: &mut VisitorState) {
 }
 
 fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState) {
+    // Mark scope as active during traversal so that instructions inside it
+    // (e.g., StartMemoize operands) don't produce false-positive errors when
+    // referencing this scope before it completes.
+    state.active_scopes.insert(scope_block.scope.id);
+    for id in &scope_block.scope.merged {
+        state.active_scopes.insert(*id);
+    }
+
     // First traverse the scope contents
     visit_block(&scope_block.instructions, state);
 
@@ -274,15 +287,19 @@ fn visit_scope(scope_block: &ReactiveScopeBlock, state: &mut VisitorState) {
         }
     }
 
-    // Record this scope as completed
+    // Move from active to completed
+    state.active_scopes.remove(&scope_block.scope.id);
     state.scopes.insert(scope_block.scope.id);
     for id in &scope_block.scope.merged {
+        state.active_scopes.remove(id);
         state.scopes.insert(*id);
     }
 }
 
 fn visit_pruned_scope(scope_block: &PrunedReactiveScopeBlock, state: &mut VisitorState) {
+    state.active_scopes.insert(scope_block.scope.id);
     visit_block(&scope_block.instructions, state);
+    state.active_scopes.remove(&scope_block.scope.id);
     state.pruned_scopes.insert(scope_block.scope.id);
 }
 
@@ -384,6 +401,7 @@ fn visit_instruction(instruction: &ReactiveInstruction, state: &mut VisitorState
                     if let Some(ref scope) = operand.identifier.scope
                         && !state.scopes.contains(&scope.id)
                         && !state.pruned_scopes.contains(&scope.id)
+                        && !state.active_scopes.contains(&scope.id)
                     {
                         state.errors.push_diagnostic(
                             CompilerDiagnostic::create(
@@ -444,6 +462,7 @@ fn visit_instruction(instruction: &ReactiveInstruction, state: &mut VisitorState
                             for decl_ident in &decls {
                                 if let Some(ref scope) = decl_ident.scope
                                     && !state.scopes.contains(&scope.id)
+                                    && !state.active_scopes.contains(&scope.id)
                                 {
                                     state.errors.push_diagnostic(
                                         CompilerDiagnostic::create(
