@@ -75,7 +75,6 @@ fn untyped_globals() -> FxHashSet<String> {
         "Number",
         "String",
         "Boolean",
-        "globalThis",
     ]
     .iter()
     .map(|s| (*s).to_string())
@@ -1663,4 +1662,30 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
     globals.insert("NaN".to_string(), Global::Typed(Type::Primitive));
     globals.insert("Infinity".to_string(), Global::Typed(Type::Primitive));
     globals.insert("null".to_string(), Global::Typed(Type::Primitive));
+
+    // --- Recursive global types: globalThis and global ---
+    //
+    // Port of `Globals.ts` lines 933-941: both `globalThis` and `global` are
+    // registered as objects whose properties mirror the typed globals. This allows
+    // patterns like `global.console.log(x)` or `globalThis.Array.from(...)` to
+    // resolve types correctly through property access chains.
+    let typed_global_props: Vec<(String, Type)> = globals
+        .iter()
+        .filter_map(|(name, global)| match global {
+            Global::Typed(t) => Some((name.clone(), t.clone())),
+            _ => None,
+        })
+        .collect();
+
+    let global_this_shape_id = add_object(shapes, "Global$globalThis", typed_global_props.clone());
+    globals.insert(
+        "globalThis".to_string(),
+        Global::Typed(Type::Object(ObjectType { shape_id: Some(global_this_shape_id) })),
+    );
+
+    let global_shape_id = add_object(shapes, "Global$global", typed_global_props);
+    globals.insert(
+        "global".to_string(),
+        Global::Typed(Type::Object(ObjectType { shape_id: Some(global_shape_id) })),
+    );
 }

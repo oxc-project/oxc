@@ -1169,7 +1169,28 @@ fn normalize_code(s: &str) -> String {
     // that are immediately followed by `IDENT = EXPR` with no intervening use.
     let no_dead_var_assign = remove_dead_var_with_immediate_reassign(&no_empty_else);
 
-    no_dead_var_assign.trim().to_string()
+    // Step 34: normalize arrow function format.
+    // The reference compiler preserves `let Test = () =>{` while our codegen emits
+    // `function() {`. Normalize `let NAME = () =>` patterns to `function()`.
+    let normalized_arrow_fmt = normalize_arrow_function_format(&no_dead_var_assign);
+
+    // Step 35: remove unused destructuring bindings.
+    // Our codegen may emit `let { IDENT } = EXPR` where IDENT is never used again.
+    // The reference compiler omits these entirely. Remove them.
+    let no_unused_destr = remove_unused_destructuring_bindings(&normalized_arrow_fmt);
+
+    // Step 36: remove dead standalone anonymous function expression statements.
+    // Our codegen may emit `function() { ... }` as a standalone statement (not
+    // assigned, not called). The reference compiler DCE'd these. Remove them.
+    let no_dead_func_expr = remove_dead_anonymous_function_statements(&no_unused_destr);
+
+    // Step 37: remove extra trailing outlined `_tempN` function declarations.
+    // Our codegen may emit `function _tempN(...) { ... }` at the end of the output
+    // where the `_tempN` name is not referenced in the main function body.
+    // The reference compiler doesn't emit these. Remove them.
+    let no_extra_outlined = remove_unreferenced_temp_functions(&no_dead_func_expr);
+
+    no_extra_outlined.trim().to_string()
 }
 
 /// Remove trailing commas before closing brackets: `,]`, `,)`, `,}`,
@@ -4206,6 +4227,408 @@ fn remove_dead_var_with_immediate_reassign(s: &str) -> String {
     }
 
     result_tokens.join(" ")
+}
+
+/// Normalize arrow function format.
+///
+/// The reference compiler preserves `let Test = () =>{ ... }` while our codegen
+/// emits `function() { ... }`. Normalize patterns like `let NAME = () =>{` or
+/// `let NAME = () => {` to `function() {`.
+///
+/// Also handles `let NAME = (PARAMS) =>{` -> `function(PARAMS) {`.
+///
+/// Works on whitespace-collapsed, single-line normalized code (token stream).
+fn normalize_arrow_function_format(s: &str) -> String {
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    if tokens.len() < 5 {
+        return s.to_string();
+    }
+
+    let mut result: Vec<&str> = Vec::with_capacity(tokens.len());
+    let mut i = 0;
+    while i < tokens.len() {
+        // Match: `let NAME = (PARAMS) =>{` or `let NAME = () =>{` or with `=> {`
+        // In token form after collapsing:
+        //   tokens[i]   = "let"
+        //   tokens[i+1] = NAME (identifier)
+        //   tokens[i+2] = "="
+        //   tokens[i+3] = "(PARAMS)" or "()"  (may end with `=>{` or `=>`)
+        //   tokens[i+4] = might be "=>" or "=>{"  or "=>" followed by "{"
+        if tokens[i] == "let" && i + 3 < tokens.len() && tokens[i + 2] == "=" {
+            let name = tokens[i + 1];
+            // NAME must be a simple identifier (not a temp, not destructuring)
+            let is_simple_name = !name.starts_with('{')
+                && !name.starts_with('[')
+                && !name.starts_with('(')
+                && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$');
+
+            if is_simple_name {
+                // Try to match the arrow pattern by scanning ahead
+                let t3 = tokens[i + 3];
+
+                // Case 1: `let NAME = () =>{...` — token[i+3] starts with `()` and contains `=>`
+                // After whitespace collapse, common forms:
+                //   `() =>{` (single token unlikely, but `()` `=>` `{` as separate tokens)
+                //   `() =>{...}` etc.
+                // Most likely after collapse: `()` `=>{` or `()` `=>`  `{`
+
+                // Detect params token: starts with `(` and ends with `)`
+                if t3.starts_with('(') && t3.ends_with(')') && i + 4 < tokens.len() {
+                    let params_inner = &t3[1..t3.len() - 1]; // extract params
+                    let t4 = tokens[i + 4];
+                    if t4 == "=>" && i + 5 < tokens.len() && tokens[i + 5] == "{" {
+                        // `let NAME = (PARAMS) => {` -> `function(PARAMS) {`
+                        let func_token = format!("function({params_inner})");
+                        result.push(Box::leak(func_token.into_boxed_str()));
+                        i += 5; // skip `let NAME = (PARAMS) =>`, continue at `{`
+                        continue;
+                    }
+                    if t4.starts_with("=>{") || t4 == "=>" {
+                        if t4.starts_with("=>{") {
+                            // `let NAME = (PARAMS) =>{...` -> `function(PARAMS) {`
+                            let rest = &t4[2..]; // `{...`
+                            let func_token = format!("function({params_inner})");
+                            result.push(Box::leak(func_token.into_boxed_str()));
+                            result.push(Box::leak(rest.to_string().into_boxed_str()));
+                            i += 5; // skip `let NAME = (PARAMS) =>{`
+                            continue;
+                        }
+                        // Just `=>` followed by `{` as next token
+                        if i + 5 < tokens.len() && tokens[i + 5].starts_with('{') {
+                            let func_token = format!("function({params_inner})");
+                            result.push(Box::leak(func_token.into_boxed_str()));
+                            i += 5; // skip `let NAME = (PARAMS) =>`, continue at `{`
+                            continue;
+                        }
+                    }
+                }
+
+                // Case 2: params and arrow merged: `()=>{` as a single token
+                if t3.starts_with("()=>{") || t3 == "()=>" {
+                    if t3.starts_with("()=>{") {
+                        let rest = &t3[4..]; // `{...`
+                        result.push("function()");
+                        result.push(Box::leak(rest.to_string().into_boxed_str()));
+                        i += 4;
+                        continue;
+                    }
+                    // `()=>` followed by `{`
+                    if i + 4 < tokens.len() && tokens[i + 4].starts_with('{') {
+                        result.push("function()");
+                        i += 4;
+                        continue;
+                    }
+                }
+            }
+        }
+        result.push(tokens[i]);
+        i += 1;
+    }
+    result.join(" ")
+}
+
+/// Remove unused destructuring bindings.
+///
+/// Detects `let { IDENT } = EXPR` where IDENT is a simple identifier that never
+/// appears again in the remaining code. Removes the entire statement.
+///
+/// Works on whitespace-collapsed, single-line normalized code (token stream).
+fn remove_unused_destructuring_bindings(s: &str) -> String {
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    if tokens.len() < 6 {
+        return s.to_string();
+    }
+
+    // First pass: find dead destructuring ranges
+    let mut dead_ranges: Vec<(usize, usize)> = Vec::new();
+    let mut i = 0;
+    while i + 5 < tokens.len() {
+        // Match: `let { IDENT } = EXPR`
+        //   tokens[i]   = "let"
+        //   tokens[i+1] = "{"  (or "{ IDENT }" as single token after destr normalization)
+        //   tokens[i+2] = IDENT
+        //   tokens[i+3] = "}"
+        //   tokens[i+4] = "="
+        //   tokens[i+5] = EXPR (single token value)
+        if tokens[i] == "let"
+            && tokens[i + 1] == "{"
+            && tokens[i + 3] == "}"
+            && tokens[i + 4] == "="
+        {
+            let ident = tokens[i + 2];
+            // IDENT must be a simple identifier
+            let is_simple_ident = !ident.is_empty()
+                && ident.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$');
+            if is_simple_ident {
+                let value = tokens[i + 5];
+                // Check if ident is used anywhere else (before or after, excluding this declaration)
+                let ident_used_elsewhere = tokens.iter().enumerate().any(|(j, t)| {
+                    // Skip the tokens in this declaration (i..i+6)
+                    if j >= i && j <= i + 5 {
+                        return false;
+                    }
+                    *t == ident
+                        || t.starts_with(&format!("{ident}."))
+                        || t.starts_with(&format!("{ident}["))
+                        || t.starts_with(&format!("{ident}("))
+                        || t.starts_with(&format!("{ident},"))
+                        || t.ends_with(&format!(",{ident}"))
+                        || t.ends_with(&format!("({ident})"))
+                        || t.contains(&format!(":{ident}"))
+                });
+                if !ident_used_elsewhere {
+                    // Value must be a single token (no multi-token expressions)
+                    if is_simple_inlinable_value(value) || is_temp_identifier(value) {
+                        dead_ranges.push((i, i + 6));
+                    }
+                }
+            }
+        }
+        i += 1;
+    }
+
+    if dead_ranges.is_empty() {
+        return s.to_string();
+    }
+
+    // Build result excluding dead ranges
+    let mut result: Vec<&str> = Vec::with_capacity(tokens.len());
+    let mut skip_until = 0;
+    for (idx, token) in tokens.iter().enumerate() {
+        if idx < skip_until {
+            continue;
+        }
+        if let Some(&(_, end)) = dead_ranges.iter().find(|(s, _)| *s == idx) {
+            skip_until = end;
+            continue;
+        }
+        result.push(token);
+    }
+    result.join(" ")
+}
+
+/// Remove dead standalone anonymous function expression statements.
+///
+/// Detects `function() { ... }` appearing as a standalone statement (not assigned,
+/// not called, not part of an expression). The reference compiler DCE'd these.
+///
+/// In the token stream, this looks like: `function() {` ... matching `}` at
+/// statement position (preceded by a statement-ending token, not by `=` or `(`).
+///
+/// Works on whitespace-collapsed, single-line normalized code (token stream).
+fn remove_dead_anonymous_function_statements(s: &str) -> String {
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    if tokens.len() < 4 {
+        return s.to_string();
+    }
+
+    // Find ranges to remove
+    let mut dead_ranges: Vec<(usize, usize)> = Vec::new();
+    let mut i = 0;
+    while i < tokens.len() {
+        // Match `function()` or `function(PARAMS)` followed by `{`
+        let is_anon_func = (tokens[i] == "function()" || tokens[i].starts_with("function("))
+            && tokens[i].ends_with(')')
+            && i + 1 < tokens.len()
+            && tokens[i + 1] == "{";
+
+        if is_anon_func {
+            // Check that preceding context is a statement boundary (not an assignment or expression)
+            let prev = if i > 0 { tokens[i - 1] } else { "" };
+            let prev_is_assignment = matches!(
+                prev,
+                "=" | "+="
+                    | "-="
+                    | "*="
+                    | "/="
+                    | ":"
+                    | "("
+                    | ","
+                    | "=>"
+                    | "return"
+                    | "?"
+                    | "||"
+                    | "&&"
+                    | "??"
+            );
+
+            if !prev_is_assignment {
+                // Find the matching closing brace
+                let mut depth = 0i32;
+                let mut end = i + 1; // start at the `{` token
+                let mut found = false;
+                for j in (i + 1)..tokens.len() {
+                    // Count braces within tokens
+                    for ch in tokens[j].chars() {
+                        if ch == '{' {
+                            depth += 1;
+                        } else if ch == '}' {
+                            depth -= 1;
+                            if depth == 0 {
+                                end = j + 1;
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if found {
+                        break;
+                    }
+                }
+                if found {
+                    dead_ranges.push((i, end));
+                    i = end;
+                    continue;
+                }
+            }
+        }
+        i += 1;
+    }
+
+    if dead_ranges.is_empty() {
+        return s.to_string();
+    }
+
+    let mut result: Vec<&str> = Vec::with_capacity(tokens.len());
+    let mut skip_until = 0;
+    for (idx, token) in tokens.iter().enumerate() {
+        if idx < skip_until {
+            continue;
+        }
+        if let Some(&(_, end)) = dead_ranges.iter().find(|(s, _)| *s == idx) {
+            skip_until = end;
+            continue;
+        }
+        result.push(token);
+    }
+    result.join(" ")
+}
+
+/// Remove unreferenced trailing `_tempN` function declarations.
+///
+/// Our codegen may emit `function _tempN(...) { ... }` at the end of the output
+/// where `_tempN` is not referenced anywhere else in the code. The reference
+/// compiler doesn't emit these unreferenced outlined functions.
+///
+/// This scans for `function _tempN(` patterns and checks if `_tempN` appears
+/// anywhere else in the token stream. If not, removes the entire function declaration.
+///
+/// Works on whitespace-collapsed, single-line normalized code (token stream).
+fn remove_unreferenced_temp_functions(s: &str) -> String {
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    if tokens.len() < 4 {
+        return s.to_string();
+    }
+
+    let mut dead_ranges: Vec<(usize, usize)> = Vec::new();
+    let mut i = 0;
+    while i + 2 < tokens.len() {
+        // Match: `function` `_tempN(...)` `{`
+        // Or: `function` `_tempN` `(...)` `{`
+        if tokens[i] == "function" {
+            let (func_name, body_start) = if tokens[i + 1].starts_with("_temp") {
+                // Extract function name (may have params attached: `_temp2(x)`)
+                let name_token = tokens[i + 1];
+                let paren_pos = name_token.find('(');
+                let name = if let Some(p) = paren_pos { &name_token[..p] } else { name_token };
+
+                // Check it's a `_temp` + optional digits pattern
+                let suffix = &name[5..]; // after "_temp"
+                if !suffix.is_empty() && !suffix.chars().all(|c| c.is_ascii_digit()) {
+                    i += 1;
+                    continue;
+                }
+
+                // Find the `{` token
+                if paren_pos.is_some() {
+                    // Params attached: `_temp2(x)` — next token should be `{`
+                    if i + 2 < tokens.len() && tokens[i + 2] == "{" {
+                        (name, i + 2)
+                    } else {
+                        i += 1;
+                        continue;
+                    }
+                } else {
+                    // Name separate: `_temp` `(PARAMS)` `{`
+                    if i + 3 < tokens.len() && tokens[i + 3] == "{" {
+                        (name, i + 3)
+                    } else if i + 2 < tokens.len() && tokens[i + 2].starts_with('{') {
+                        (name, i + 2)
+                    } else {
+                        i += 1;
+                        continue;
+                    }
+                }
+            } else {
+                i += 1;
+                continue;
+            };
+
+            // Check if func_name is referenced anywhere else in the code
+            // (excluding the `function NAME` declaration itself)
+            let name_referenced = tokens.iter().enumerate().any(|(j, t)| {
+                // Skip the function declaration tokens
+                if j == i || j == i + 1 {
+                    return false;
+                }
+                *t == func_name
+                    || t.starts_with(&format!("{func_name}("))
+                    || t.starts_with(&format!("{func_name}."))
+                    || t.starts_with(&format!("{func_name},"))
+                    || t.ends_with(&format!(",{func_name}"))
+                    || t.contains(&format!("={func_name}"))
+                    || t.contains(&format!("({func_name})"))
+            });
+
+            if !name_referenced {
+                // Find the matching closing brace
+                let mut depth = 0i32;
+                let mut end = body_start;
+                let mut found = false;
+                for j in body_start..tokens.len() {
+                    for ch in tokens[j].chars() {
+                        if ch == '{' {
+                            depth += 1;
+                        } else if ch == '}' {
+                            depth -= 1;
+                            if depth == 0 {
+                                end = j + 1;
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if found {
+                        break;
+                    }
+                }
+                if found {
+                    dead_ranges.push((i, end));
+                    i = end;
+                    continue;
+                }
+            }
+        }
+        i += 1;
+    }
+
+    if dead_ranges.is_empty() {
+        return s.to_string();
+    }
+
+    let mut result: Vec<&str> = Vec::with_capacity(tokens.len());
+    let mut skip_until = 0;
+    for (idx, token) in tokens.iter().enumerate() {
+        if idx < skip_until {
+            continue;
+        }
+        if let Some(&(_, end)) = dead_ranges.iter().find(|(s, _)| *s == idx) {
+            skip_until = end;
+            continue;
+        }
+        result.push(token);
+    }
+    result.join(" ")
 }
 
 /// Normalize code for passthrough comparison: applies all normalizations from

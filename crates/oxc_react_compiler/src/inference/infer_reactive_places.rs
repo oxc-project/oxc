@@ -22,7 +22,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     hir::{
         BlockId, Effect, HIRFunction, Identifier, IdentifierId, InstructionValue, Place,
-        ReactiveParam, hir_builder::compute_rpo_order,
+        ReactiveParam,
+        hir_builder::compute_rpo_order,
         object_shape::{BUILT_IN_USE_OPERATOR_ID, HookKind},
         visitors::{each_instruction_lvalue, each_instruction_value_operand},
     },
