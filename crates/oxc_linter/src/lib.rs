@@ -569,9 +569,6 @@ impl Linter {
             Utf8ToUtf16::new(source_text)
         };
 
-        span_converter.convert_program(program);
-        span_converter.convert_comments(&mut program.comments);
-
         let (tokens_offset, tokens_len) =
             if let Some(tokens) = ctx_host.current_sub_host().parser_tokens() {
                 let tokens_json = to_estree_tokens_json(
@@ -590,6 +587,9 @@ impl Linter {
             } else {
                 (0, 0)
             };
+
+        span_converter.convert_program(program);
+        span_converter.convert_comments(&mut program.comments);
 
         // Get offset of `Program` within buffer (bottom 32 bits of pointer)
         let program_offset = ptr::from_ref(program) as u32;

@@ -133,11 +133,11 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
                     })
                     .with_config(config)
                     .parse();
-                let ParserReturn { mut program, tokens, .. } = ret;
+                let ParserReturn { program, tokens, .. } = ret;
 
-                // Span conversion of AST is not performed in measured section, as we only want to measure tokens
+                // Creating span converter is not performed in measured section, as we only want to measure tokens.
+                // Span converter needs to be created anyway for serializing AST.
                 let span_converter = Utf8ToUtf16::new(program.source_text);
-                span_converter.convert_program(&mut program);
 
                 runner.run(|| {
                     let tokens_json = to_estree_tokens_json(

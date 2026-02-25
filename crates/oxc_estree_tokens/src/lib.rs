@@ -62,6 +62,9 @@ impl EstreeTokenOptions {
 
 /// Serialize tokens to JSON.
 ///
+/// `program` must have unconverted UTF-8 byte offset spans (as returned by the parser).
+/// Token span conversion to UTF-16 is handled internally.
+///
 /// `source_text` must be the original source text, prior to BOM removal.
 /// i.e. BOM must be present on start of `source_text`, if the file has a BOM.
 pub fn to_estree_tokens_json(
@@ -78,6 +81,9 @@ pub fn to_estree_tokens_json(
 }
 
 /// Serialize tokens to pretty-printed JSON.
+///
+/// `program` must have unconverted UTF-8 byte offset spans (as returned by the parser).
+/// Token span conversion to UTF-16 is handled internally.
 ///
 /// `source_text` must be the original source text, prior to BOM removal.
 /// i.e. BOM must be present on start of `source_text`, if the file has a BOM.
@@ -126,15 +132,10 @@ fn to_estree_tokens<'a>(
 
     for token in tokens {
         let kind = token.kind();
-        let mut value = &source_text[token.start() as usize..token.end() as usize];
-
         let mut start = token.start();
         let mut end = token.end();
-        if let Some(span_converter) = span_converter.as_mut() {
-            span_converter.convert_offset(&mut start);
-            span_converter.convert_offset(&mut end);
-        }
 
+        // Compare override start against original UTF-8 token start (before span conversion)
         let token_type = if next_override_start == start {
             let token_type = match next_override_kind {
                 TokenKindOverride::Identifier => "Identifier",
@@ -150,6 +151,8 @@ fn to_estree_tokens<'a>(
         } else {
             get_token_type(kind)
         };
+
+        let mut value = &source_text[start as usize..end as usize];
 
         if kind == Kind::PrivateIdentifier {
             value = &value[1..];
@@ -167,6 +170,12 @@ fn to_estree_tokens<'a>(
         } else {
             None
         };
+
+        // Convert offsets to UTF-16
+        if let Some(span_converter) = span_converter.as_mut() {
+            span_converter.convert_offset(&mut start);
+            span_converter.convert_offset(&mut end);
+        }
 
         estree_tokens.push(EstreeToken { token_type, value, regex, start, end });
     }

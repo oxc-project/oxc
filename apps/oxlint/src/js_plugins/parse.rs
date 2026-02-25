@@ -214,9 +214,6 @@ unsafe fn parse_raw_impl(
                 Utf8ToUtf16::new(source_text)
             };
 
-            span_converter.convert_program(program);
-            span_converter.convert_comments(&mut program.comments);
-
             let tokens_json = to_estree_tokens_json(
                 &tokens,
                 program,
@@ -225,6 +222,10 @@ unsafe fn parse_raw_impl(
                 EstreeTokenOptions::linter(),
                 &allocator,
             );
+
+            span_converter.convert_program(program);
+            span_converter.convert_comments(&mut program.comments);
+
             let tokens_json = allocator.alloc_str(&tokens_json);
             let tokens_offset = tokens_json.as_ptr() as u32;
             #[expect(clippy::cast_possible_truncation)]
