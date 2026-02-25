@@ -28,17 +28,31 @@ impl InternalFormatter for DefaultOutputFormatter {
         let time = Self::get_execution_time(&lint_command_info.start_time);
         let s = if lint_command_info.number_of_files == 1 { "" } else { "s" };
 
-        if let Some(number_of_rules) = lint_command_info.number_of_rules {
-            Some(format!(
+        let mut output = if let Some(number_of_rules) = lint_command_info.number_of_rules {
+            format!(
                 "Finished in {time} on {} file{s} with {} rules using {} threads.\n",
                 lint_command_info.number_of_files, number_of_rules, lint_command_info.threads_count
-            ))
+            )
         } else {
-            Some(format!(
+            format!(
                 "Finished in {time} on {} file{s} using {} threads.\n",
                 lint_command_info.number_of_files, lint_command_info.threads_count
-            ))
+            )
+        };
+
+        if let Some(ref timings) = lint_command_info.rule_timings {
+            output.push('\n');
+            output.push_str(&format_timing_table(timings, lint_command_info.start_time));
         }
+
+        if let Some(ref overhead) = lint_command_info.overhead_timings {
+            if !overhead.is_empty() {
+                output.push('\n');
+                output.push_str(&format_overhead_section(overhead));
+            }
+        }
+
+        Some(output)
     }
 
     #[cfg(not(any(test, feature = "testing")))]
@@ -59,6 +73,45 @@ impl DefaultOutputFormatter {
         let ms = duration.as_millis();
         if ms < 1000 { format!("{ms}ms") } else { format!("{:.1}s", duration.as_secs_f64()) }
     }
+}
+
+/// Render a per-rule timing table (top 10 rules by total time).
+/// `Relative` is expressed as a percentage of the wall-clock run time.
+fn format_timing_table(timings: &[(String, Duration, u64)], wall_clock: Duration) -> String {
+    let top: Vec<_> = timings.iter().take(10).collect();
+    if top.is_empty() {
+        return String::new();
+    }
+
+    let rule_col = top.iter().map(|(n, _, _)| n.len()).max().unwrap_or(4).max(4);
+    let wall_ms = wall_clock.as_secs_f64() * 1000.0;
+
+    let mut out = String::new();
+    out.push_str(&format!("{:<w$} | Time (ms) | Relative\n", "Rule", w = rule_col));
+    out.push_str(&format!("{:-<w$}-|----------:|---------:\n", "", w = rule_col));
+    for (name, dur, _) in &top {
+        let ms = dur.as_secs_f64() * 1000.0;
+        let rel = if wall_ms > 0.0 { ms / wall_ms * 100.0 } else { 0.0 };
+        out.push_str(&format!("{:<w$} | {:>9.2} | {:>7.1}%\n", name, ms, rel, w = rule_col));
+    }
+    out
+}
+
+/// Render an overhead section for non-rule costs (e.g. tsgolint setup, JS bridge).
+fn format_overhead_section(overhead: &[(String, Duration)]) -> String {
+    if overhead.is_empty() {
+        return String::new();
+    }
+
+    let name_col = overhead.iter().map(|(n, _)| n.len()).max().unwrap_or(8).max(8);
+    let mut out = String::new();
+    out.push_str(&format!("{:<w$} | Time (ms)\n", "Overhead", w = name_col));
+    out.push_str(&format!("{:-<w$}-|----------:\n", "", w = name_col));
+    for (name, dur) in overhead {
+        let ms = dur.as_secs_f64() * 1000.0;
+        out.push_str(&format!("{:<w$} | {:>9.2}\n", name, ms, w = name_col));
+    }
+    out
 }
 
 /// Pretty-prints diagnostics. Primarily meant for human-readable output in a terminal.
@@ -184,6 +237,8 @@ mod test {
             number_of_rules: Some(10),
             threads_count: 12,
             start_time: Duration::new(1, 0),
+            rule_timings: None,
+            overhead_timings: None,
         });
 
         assert!(result.is_some());
@@ -201,6 +256,8 @@ mod test {
             number_of_rules: None,
             threads_count: 12,
             start_time: Duration::new(1, 0),
+            rule_timings: None,
+            overhead_timings: None,
         });
 
         assert!(result.is_some());

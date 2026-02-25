@@ -141,7 +141,7 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
 /// Result returned by `lintFile` JS callback.
 #[derive(Clone, Debug, Deserialize)]
 pub enum LintFileReturnValue {
-    Success(Vec<LintFileResult>),
+    Success { diagnostics: Vec<LintFileResult>, timings: Option<Vec<f64>> },
     Failure(String),
 }
 
@@ -199,12 +199,14 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             if status == Status::Ok {
                 match rx.recv() {
                     // `lintFile` returns `null` if no diagnostics reported, and no error occurred
-                    Ok(Ok(None)) => Ok(Vec::new()),
+                    Ok(Ok(None)) => Ok((Vec::new(), None)),
                     // `lintFile` returns JSON string if diagnostics reported, or an error occurred
                     Ok(Ok(Some(json))) => {
                         match serde_json::from_str(&json) {
                             // Diagnostics reported
-                            Ok(LintFileReturnValue::Success(diagnostics)) => Ok(diagnostics),
+                            Ok(LintFileReturnValue::Success { diagnostics, timings }) => {
+                                Ok((diagnostics, timings))
+                            }
                             // Error occurred on JS side
                             Ok(LintFileReturnValue::Failure(err)) => Err(err),
                             // JSON deserialization failure.

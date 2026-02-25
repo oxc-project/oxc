@@ -179,6 +179,8 @@ mod test {
                 number_of_rules: Some(0),
                 start_time: Duration::new(0, 0),
                 threads_count: 1,
+                rule_timings: None,
+                overhead_timings: None,
             })
             .unwrap();
         assert_eq!(

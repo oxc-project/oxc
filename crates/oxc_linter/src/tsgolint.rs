@@ -6,6 +6,7 @@ use std::{
     iter, mem,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
 use oxc_allocator::Allocator;
@@ -17,7 +18,9 @@ use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
-use crate::{CompositeFix, FixKind, Fixer, Message, PossibleFixes, WEBSITE_BASE_RULES_URL};
+use crate::{
+    CompositeFix, FixKind, Fixer, Message, PossibleFixes, TimingStore, WEBSITE_BASE_RULES_URL,
+};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -37,6 +40,8 @@ pub struct TsGoLintState {
     fix_suggestions: bool,
     /// If `true`, include TypeScript compiler syntactic and semantic diagnostics.
     type_check: bool,
+    /// Optional timing store for per-rule timing data.
+    timing_store: Option<Arc<TimingStore>>,
 }
 
 impl TsGoLintState {
@@ -52,6 +57,7 @@ impl TsGoLintState {
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
+            timing_store: None,
         }
     }
 
@@ -74,6 +80,7 @@ impl TsGoLintState {
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
+            timing_store: None,
         })
     }
 
@@ -93,6 +100,13 @@ impl TsGoLintState {
     #[must_use]
     pub fn with_type_check(mut self, yes: bool) -> Self {
         self.type_check = yes;
+        self
+    }
+
+    /// Enable per-rule timing. Timings are accumulated into `store`.
+    #[must_use]
+    pub fn with_timing(mut self, store: Arc<TimingStore>) -> Self {
+        self.timing_store = Some(store);
         self
     }
 
@@ -125,6 +139,12 @@ impl TsGoLintState {
         let cwd = self.cwd.clone();
         let sender_for_fixes = error_sender.clone();
 
+        let timing_store = self.timing_store.clone();
+
+        // Record wall-clock start for the entire subprocess invocation so we can
+        // compute program-load time = total - sum(per-rule times).
+        let subprocess_start = std::time::Instant::now();
+
         let handler = std::thread::spawn(move || {
             let mut child = self.spawn_tsgolint(&json_input)?;
 
@@ -132,7 +152,7 @@ impl TsGoLintState {
 
             // Process stdout stream in a separate thread to send diagnostics as they arrive
             let stdout_handler = std::thread::spawn(
-                move || -> Result<Vec<(PathBuf, String, Vec<Message>)>, String> {
+                move || -> Result<(Vec<(PathBuf, String, Vec<Message>)>, rustc_hash::FxHashMap<String, f64>), String> {
                     let disable_directives_map = disable_directives_map
                         .lock()
                         .expect("disable_directives_map mutex poisoned");
@@ -144,12 +164,16 @@ impl TsGoLintState {
                         error_sender,
                     );
 
+                    let mut rule_timings: rustc_hash::FxHashMap<String, f64> = rustc_hash::FxHashMap::default();
                     let msg_iter = TsGoLintMessageStream::new(stdout);
 
                     for msg in msg_iter {
                         match msg {
                             Ok(TsGoLintMessage::Error(err)) => {
                                 return Err(err.error);
+                            }
+                            Ok(TsGoLintMessage::Timing(timings)) => {
+                                rule_timings = timings;
                             }
                             Ok(TsGoLintMessage::Diagnostic(tsgolint_diagnostic)) => {
                                 match tsgolint_diagnostic {
@@ -203,7 +227,7 @@ impl TsGoLintState {
                         }
                     }
 
-                    Ok(diagnostic_handler.into_messages_requiring_fixes())
+                    Ok((diagnostic_handler.into_messages_requiring_fixes(), rule_timings))
                 },
             );
 
@@ -212,24 +236,40 @@ impl TsGoLintState {
             let stdout_result = stdout_handler.join();
 
             if !exit_status.success() {
-                return Err(
-                    if let Some(err) = &stdout_result.ok().and_then(std::result::Result::err) {
-                        format!("exit status: {exit_status}, error: {err}")
-                    } else {
-                        format!("exit status: {exit_status}")
-                    },
-                );
+                return Err(if let Some(err) = &stdout_result.ok().and_then(|r| r.err()) {
+                    format!("exit status: {exit_status}, error: {err}")
+                } else {
+                    format!("exit status: {exit_status}")
+                });
             }
 
             match stdout_result {
-                Ok(Ok(messages)) => Ok(messages),
+                Ok(Ok((messages, timings))) => Ok((messages, timings)),
                 Ok(Err(err)) => Err(format!("exit status: {exit_status}, error: {err}")),
                 Err(_) => Err("Failed to join stdout processing thread".to_string()),
             }
         });
 
-        match handler.join() {
-            Ok(Ok(messages_requiring_fixes)) => {
+        let handler_result = handler.join();
+        let subprocess_dur = subprocess_start.elapsed();
+
+        match handler_result {
+            Ok(Ok((messages_requiring_fixes, rule_timings))) => {
+                if let Some(store) = timing_store {
+                    // Overhead = total subprocess time minus sum of per-rule times reported by
+                    // tsgolint. This captures TypeScript program loading and other setup costs.
+                    let rule_total_ms: f64 = rule_timings.values().sum();
+                    let rule_total_dur = Duration::from_secs_f64(rule_total_ms / 1000.0);
+                    let setup_dur = subprocess_dur.saturating_sub(rule_total_dur);
+                    store.record_overhead("Type-aware linting setup", setup_dur);
+
+                    let local: rustc_hash::FxHashMap<String, (Duration, u64)> = rule_timings
+                        .into_iter()
+                        .map(|(name, ms)| (name, (Duration::from_secs_f64(ms / 1000.0), 1)))
+                        .collect();
+                    store.merge(local);
+                }
+
                 for (path, source_text, messages) in messages_requiring_fixes {
                     let source_type = SourceType::from_path(&path)
                         .ok()
@@ -437,6 +477,9 @@ impl TsGoLintState {
                                     result.push(Message::new(diagnostic, PossibleFixes::None));
                                 }
                             }
+                        }
+                        Ok(TsGoLintMessage::Timing(_)) => {
+                            // lint_source is used in tests/LSP; timing data is ignored here.
                         }
                         Err(e) => {
                             return Err(e);
@@ -664,6 +707,8 @@ struct TsGoLintErrorPayload {
 pub enum TsGoLintMessage {
     Diagnostic(TsGoLintDiagnostic),
     Error(TsGoLintError),
+    /// Per-rule timing data: rule_name → milliseconds.
+    Timing(rustc_hash::FxHashMap<String, f64>),
 }
 
 #[derive(Debug, Clone)]
@@ -824,6 +869,13 @@ pub struct LabeledRange {
 pub enum MessageType {
     Error = 0,
     Diagnostic = 1,
+    Timing = 2,
+}
+
+/// Per-rule timing payload from tsgolint: rule_name → milliseconds.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TsGoLintTimingPayload {
+    pub timings: rustc_hash::FxHashMap<String, f64>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -844,6 +896,7 @@ impl TryFrom<u8> for MessageType {
         match value {
             0 => Ok(Self::Error),
             1 => Ok(Self::Diagnostic),
+            2 => Ok(Self::Timing),
             _ => Err(InvalidMessageType(value)),
         }
     }
@@ -1110,6 +1163,11 @@ fn parse_single_message(
                 .map_err(TsGoLintMessageParseError::InvalidErrorPayload)?;
 
             Ok(TsGoLintMessage::Error(TsGoLintError { error: error_payload.error }))
+        }
+        MessageType::Timing => {
+            let timing_payload = serde_json::from_str::<TsGoLintTimingPayload>(&payload_str)
+                .map_err(TsGoLintMessageParseError::InvalidDiagnosticPayload)?;
+            Ok(TsGoLintMessage::Timing(timing_payload.timings))
         }
         MessageType::Diagnostic => {
             let diagnostic_payload =

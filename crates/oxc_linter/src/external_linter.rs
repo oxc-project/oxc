@@ -58,7 +58,7 @@ pub type ExternalLinterLintFileCb = Arc<
                 Option<String>,
                 // Allocator
                 &Allocator,
-            ) -> Result<Vec<LintFileResult>, String>
+            ) -> Result<(Vec<LintFileResult>, Option<Vec<f64>>), String>
             + Sync
             + Send,
     >,

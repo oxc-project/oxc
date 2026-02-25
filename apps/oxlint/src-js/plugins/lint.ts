@@ -27,7 +27,7 @@ import { walkProgram } from '../generated/walk.js';
 
 import { walkProgram, ancestors } from "../generated/walk.js";
 
-import type { AfterHook, BufferWithArrays } from "./types.ts";
+import type { AfterHook, BufferWithArrays, Visitor } from "./types.ts";
 
 // Buffers cache.
 //
@@ -38,6 +38,26 @@ export const buffers: (BufferWithArrays | null)[] = [];
 
 // Array of `after` hooks to run after traversal. This array reused for every file.
 const afterHooks: AfterHook[] = [];
+
+// Whether per-rule timing is enabled (set via `TIMING` environment variable).
+const TIMING_ENABLED = typeof process !== "undefined" && process.env["TIMING"] !== undefined;
+
+// Per-rule timing accumulator for the current file (ms). Indexed parallel to `ruleIds`.
+// `null` when timing is disabled.
+let currentRuleTimes: number[] | null = null;
+
+function wrapVisitorForTiming(visitor: Visitor, times: number[], idx: number): Visitor {
+  const wrapped: Visitor = Object.create(null);
+  for (const key of Object.keys(visitor) as (keyof Visitor)[]) {
+    const fn = visitor[key] as (node: never) => void;
+    wrapped[key] = (node: never) => {
+      const t0 = performance.now();
+      fn(node);
+      times[idx] += performance.now() - t0;
+    };
+  }
+  return wrapped;
+}
 
 /**
  * Lint a file.
@@ -78,11 +98,18 @@ export function lintFile(
 
     let ret: string | null = null;
 
-    // Avoid JSON serialization in common case that there are no diagnostics to report
-    if (diagnostics.length !== 0) {
+    if (TIMING_ENABLED) {
+      // When timing, always serialize so Rust receives the timings even for files with no diagnostics.
       // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side, but we assume it's cheaper to leave it
       // in place and let `serde` skip over it on Rust side, than to iterate over all diagnostics and remove it here.
-      ret = JSON.stringify({ Success: diagnostics });
+      ret = JSON.stringify({ Success: { diagnostics, timings: currentRuleTimes } });
+      diagnostics.length = 0;
+      currentRuleTimes = null;
+    } else if (diagnostics.length !== 0) {
+      // Avoid JSON serialization in common case that there are no diagnostics to report
+      // Note: `messageId` field of `DiagnosticReport` is not needed on Rust side, but we assume it's cheaper to leave it
+      // in place and let `serde` skip over it on Rust side, than to iterate over all diagnostics and remove it here.
+      ret = JSON.stringify({ Success: { diagnostics, timings: null } });
 
       // Empty `diagnostics` array, so it starts empty when linting next file
       diagnostics.length = 0;
@@ -178,6 +205,11 @@ export function lintFileImpl(
   setSettingsForFile(settingsJSON);
   setGlobalsForFile(globalsJSON);
 
+  // Initialize per-rule timing array if timing is enabled
+  if (TIMING_ENABLED) {
+    currentRuleTimes = new Array(ruleIds.length).fill(0);
+  }
+
   // Get visitors for this file from all rules
   initCompiledVisitor();
 
@@ -202,20 +234,49 @@ export function lintFileImpl(
     if (visitor === null) {
       // Rule defined with `create` method
       debugAssertIsNonNull(ruleDetails.rule.create);
-      visitor = ruleDetails.rule.create(ruleDetails.context);
+      if (TIMING_ENABLED) {
+        const t0 = performance.now();
+        visitor = ruleDetails.rule.create(ruleDetails.context);
+        currentRuleTimes![i] += performance.now() - t0;
+      } else {
+        visitor = ruleDetails.rule.create(ruleDetails.context);
+      }
     } else {
       // Rule defined with `createOnce` method
       const { beforeHook, afterHook } = ruleDetails;
       if (beforeHook !== null) {
         // If `before` hook returns `false`, skip this rule
-        const shouldRun = beforeHook();
+        let shouldRun: boolean | void;
+        if (TIMING_ENABLED) {
+          const t0 = performance.now();
+          shouldRun = beforeHook();
+          currentRuleTimes![i] += performance.now() - t0;
+        } else {
+          shouldRun = beforeHook();
+        }
         if (shouldRun === false) continue;
       }
       // Note: If `before` hook returned `false`, `after` hook is not called
-      if (afterHook !== null) afterHooks.push(afterHook);
+      if (afterHook !== null) {
+        if (TIMING_ENABLED) {
+          const idx = i;
+          const originalHook = afterHook;
+          afterHooks.push(() => {
+            const t0 = performance.now();
+            originalHook();
+            currentRuleTimes![idx] += performance.now() - t0;
+          });
+        } else {
+          afterHooks.push(afterHook);
+        }
+      }
     }
 
-    addVisitorToCompiled(visitor);
+    if (TIMING_ENABLED) {
+      addVisitorToCompiled(wrapVisitorForTiming(visitor, currentRuleTimes!, i));
+    } else {
+      addVisitorToCompiled(visitor);
+    }
   }
 
   const visitorState = finalizeCompiledVisitor();

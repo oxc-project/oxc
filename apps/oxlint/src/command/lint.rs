@@ -247,6 +247,11 @@ pub struct OutputOptions {
     /// `checkstyle`, `default`, `github`, `gitlab`, `json`, `junit`, `stylish`, `unix`
     #[bpaf(long, short, fallback(OutputFormat::Default), hide_usage)]
     pub format: OutputFormat,
+
+    /// Print a table of per-rule execution times at the end of the run.
+    /// Can also be enabled by setting the `TIMING` environment variable.
+    #[bpaf(switch, hide_usage)]
+    pub timing: bool,
 }
 
 /// Enable/Disable Plugins

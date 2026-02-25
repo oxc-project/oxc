@@ -67,6 +67,12 @@ pub struct LintCommandInfo {
     pub threads_count: usize,
     /// Some reporters want to output the duration it took to finished the task
     pub start_time: Duration,
+    /// Per-rule timing data, sorted by total duration descending.
+    /// `None` when `--timing` / `TIMING` env var was not set.
+    pub rule_timings: Option<Vec<(String, Duration, u64)>>,
+    /// Non-rule overhead timings (e.g. tsgolint program load, JS plugin bridge).
+    /// `None` when `--timing` / `TIMING` env var was not set.
+    pub overhead_timings: Option<Vec<(String, Duration)>>,
 }
 
 /// An Interface for the different output formats.
