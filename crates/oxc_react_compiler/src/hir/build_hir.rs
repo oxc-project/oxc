@@ -13,11 +13,11 @@ use crate::{
         FunctionExpressionType, FunctionExpressionValue, GetIterator, GotoTerminal, GotoVariant,
         HIRFunction, IfTerminal, Instruction, InstructionId, InstructionKind, InstructionValue,
         IteratorNext, LValue, LValuePattern, LabelTerminal, LoadContext, LoadLocal,
-        LogicalTerminal, LoweredFunction, NextPropertyOf, NonLocalBinding, ObjectPatternProperty,
-        ObjectMethodValue, ObjectProperty, ObjectPropertyKey, ObjectPropertyType, OptionalTerminal, PrimitiveValue,
-        PrimitiveValueKind, ReactFunctionType, ReturnVariant, SequenceTerminal, SpreadPattern,
-        StoreContext, StoreGlobal, StoreLocal, SwitchTerminal, TemplateLiteralQuasi, Terminal,
-        TernaryTerminal, TryTerminal, WhileTerminal,
+        LogicalTerminal, LoweredFunction, NextPropertyOf, NonLocalBinding, ObjectMethodValue,
+        ObjectPatternProperty, ObjectProperty, ObjectPropertyKey, ObjectPropertyType,
+        OptionalTerminal, PrimitiveValue, PrimitiveValueKind, ReactFunctionType, ReturnVariant,
+        SequenceTerminal, SpreadPattern, StoreContext, StoreGlobal, StoreLocal, SwitchTerminal,
+        TemplateLiteralQuasi, Terminal, TernaryTerminal, TryTerminal, WhileTerminal,
         environment::Environment,
         find_context_identifiers::{find_context_identifiers, find_context_identifiers_arrow},
         hir_builder::{BindingKind, HirBuilder, VariableBinding, create_temporary_place},
@@ -1259,6 +1259,138 @@ fn extract_function_loc(func: &LowerableFunction<'_>) -> SourceLocation {
     }
 }
 
+/// Collect all binding names declared in a function's scope.
+///
+/// This performs a shallow walk of the function body (not recursing into inner
+/// functions) to collect ALL variable and function declaration names. This
+/// mimics Babel's scope analysis which pre-knows all bindings before lowering.
+///
+/// Used to populate `HirBuilder::scope_binding_names` so that
+/// `gather_captured_context` can correctly identify captured variables even
+/// when the capturing function appears before the variable declaration.
+fn collect_all_scope_binding_names(func: &LowerableFunction<'_>) -> rustc_hash::FxHashSet<String> {
+    let mut names = rustc_hash::FxHashSet::default();
+
+    // Collect parameter names
+    let params = match func {
+        LowerableFunction::Function(f) => &f.params,
+        LowerableFunction::ArrowFunction(a) => &a.params,
+    };
+    for param in &params.items {
+        collect_binding_pattern_names(&param.pattern, &mut names);
+    }
+    if let Some(rest) = &params.rest {
+        collect_binding_pattern_names(&rest.rest.argument, &mut names);
+    }
+
+    // Collect body binding names
+    match func {
+        LowerableFunction::Function(f) => {
+            if let Some(body) = &f.body {
+                for stmt in &body.statements {
+                    collect_stmt_binding_names(stmt, &mut names);
+                }
+            }
+        }
+        LowerableFunction::ArrowFunction(a) => {
+            for stmt in &a.body.statements {
+                collect_stmt_binding_names(stmt, &mut names);
+            }
+        }
+    }
+
+    names
+}
+
+/// Collect binding names from a statement (shallow - doesn't recurse into inner functions).
+fn collect_stmt_binding_names(
+    stmt: &ast::Statement<'_>,
+    names: &mut rustc_hash::FxHashSet<String>,
+) {
+    match stmt {
+        ast::Statement::VariableDeclaration(decl) => {
+            for declarator in &decl.declarations {
+                collect_binding_pattern_names(&declarator.id, names);
+            }
+        }
+        ast::Statement::FunctionDeclaration(func) => {
+            if let Some(id) = &func.id {
+                names.insert(id.name.to_string());
+            }
+        }
+        ast::Statement::BlockStatement(block) => {
+            for s in &block.body {
+                collect_stmt_binding_names(s, names);
+            }
+        }
+        ast::Statement::IfStatement(if_stmt) => {
+            collect_stmt_binding_names(&if_stmt.consequent, names);
+            if let Some(alt) = &if_stmt.alternate {
+                collect_stmt_binding_names(alt, names);
+            }
+        }
+        ast::Statement::WhileStatement(while_stmt) => {
+            collect_stmt_binding_names(&while_stmt.body, names);
+        }
+        ast::Statement::DoWhileStatement(do_while) => {
+            collect_stmt_binding_names(&do_while.body, names);
+        }
+        ast::Statement::ForStatement(for_stmt) => {
+            if let Some(ast::ForStatementInit::VariableDeclaration(decl)) = &for_stmt.init {
+                for declarator in &decl.declarations {
+                    collect_binding_pattern_names(&declarator.id, names);
+                }
+            }
+            collect_stmt_binding_names(&for_stmt.body, names);
+        }
+        ast::Statement::ForOfStatement(for_of) => {
+            if let ast::ForStatementLeft::VariableDeclaration(decl) = &for_of.left {
+                for declarator in &decl.declarations {
+                    collect_binding_pattern_names(&declarator.id, names);
+                }
+            }
+            collect_stmt_binding_names(&for_of.body, names);
+        }
+        ast::Statement::ForInStatement(for_in) => {
+            if let ast::ForStatementLeft::VariableDeclaration(decl) = &for_in.left {
+                for declarator in &decl.declarations {
+                    collect_binding_pattern_names(&declarator.id, names);
+                }
+            }
+            collect_stmt_binding_names(&for_in.body, names);
+        }
+        ast::Statement::TryStatement(try_stmt) => {
+            for s in &try_stmt.block.body {
+                collect_stmt_binding_names(s, names);
+            }
+            if let Some(handler) = &try_stmt.handler {
+                if let Some(param) = &handler.param {
+                    collect_binding_pattern_names(&param.pattern, names);
+                }
+                for s in &handler.body.body {
+                    collect_stmt_binding_names(s, names);
+                }
+            }
+            if let Some(finalizer) = &try_stmt.finalizer {
+                for s in &finalizer.body {
+                    collect_stmt_binding_names(s, names);
+                }
+            }
+        }
+        ast::Statement::SwitchStatement(switch) => {
+            for case in &switch.cases {
+                for s in &case.consequent {
+                    collect_stmt_binding_names(s, names);
+                }
+            }
+        }
+        ast::Statement::LabeledStatement(labeled) => {
+            collect_stmt_binding_names(&labeled.body, names);
+        }
+        _ => {}
+    }
+}
+
 /// Lower an oxc AST function into HIR.
 ///
 /// Port of `lower()` from `HIR/BuildHIR.ts` (lines 72-264).
@@ -1277,6 +1409,14 @@ pub fn lower(
     };
 
     let mut builder = HirBuilder::new(env.clone(), None, context_identifiers);
+
+    // Pre-collect all binding names in this function's scope before lowering.
+    // This mimics Babel's scope analysis which knows about all bindings before
+    // any lowering occurs. It enables `gather_captured_context` to correctly
+    // identify captured variables even when the capturing function appears before
+    // the variable declaration (e.g., `const foo = () => bar; const bar = 3;`).
+    let scope_binding_names = collect_all_scope_binding_names(func);
+    builder.set_scope_binding_names(scope_binding_names);
 
     // Extract function metadata
     let (id, generator, is_async) = extract_function_metadata(func);
@@ -1335,25 +1475,37 @@ pub fn lower(
 ///
 /// This corresponds to `gatherCapturedContext()` in the TS reference.
 /// For each identifier referenced by the inner function, check if it exists
-/// as a binding in the outer builder. If so, it is a captured context variable.
+/// as a binding in the outer function's scope. If so, it is a captured
+/// context variable.
+///
+/// Uses `has_scope_binding()` to check against ALL bindings in the outer
+/// function's scope (pre-collected from the AST), not just those declared
+/// so far in the sequential lowering. This correctly handles hoisted
+/// references (e.g., `const foo = () => bar; const bar = 3;`).
+///
+/// For variables that haven't been declared yet in the builder, uses
+/// `pre_declare_binding()` to eagerly create a binding entry. When the
+/// actual declaration is processed later, `resolve_binding` will recognize
+/// the pre-declared entry and reuse its identifier.
 ///
 /// Returns a map from variable name to source location for each captured variable.
 fn gather_captured_context(
     func: &LowerableFunction<'_>,
-    outer_builder: &HirBuilder,
+    outer_builder: &mut HirBuilder,
 ) -> rustc_hash::FxHashMap<String, SourceLocation> {
     // Collect all identifiers referenced by the inner function
     // We use a simple approach: walk the inner function body collecting all
     // Identifier references, then intersect with outer builder's bindings.
     let mut captured = rustc_hash::FxHashMap::default();
 
-    // Get all binding names from the outer builder
     // Walk the inner function body to find free variable references
     let inner_refs = collect_inner_function_references(func);
 
     for (name, loc) in inner_refs {
-        // Check if the name is bound in the outer function's scope
-        if let VariableBinding::Identifier { .. } = outer_builder.resolve_identifier(&name) {
+        // Check if the name is bound anywhere in the outer function's scope.
+        // This uses the pre-collected scope_binding_names set which knows about
+        // ALL declarations, including those not yet processed in the sequential lowering.
+        if outer_builder.has_scope_binding(&name) {
             captured.insert(name, loc);
         }
     }
@@ -1715,8 +1867,64 @@ fn collect_expression_refs(expr: &ast::Expression<'_>, refs: &mut Vec<(String, S
                 collect_jsx_child_refs(child, refs);
             }
         }
-        // Literals, function expressions, and other expression types
-        // that don't reference identifiers (or have their own scope)
+        // FunctionExpression and ArrowFunctionExpression: recurse into the
+        // function body to find transitive captures. The TS reference uses
+        // Babel's fn.traverse() which traverses into nested functions, so
+        // `const f0 = function() { z.b = 1; }` correctly captures `z` from
+        // the outer scope even though the reference is inside a nested function.
+        //
+        // We collect refs from the nested function's body but filter out
+        // any references to the nested function's own parameters and local
+        // declarations, since those are not captures from the outer scope.
+        ast::Expression::FunctionExpression(func) => {
+            let mut nested_declared = rustc_hash::FxHashSet::default();
+            // Declare function's own name
+            if let Some(id) = &func.id {
+                nested_declared.insert(id.name.to_string());
+            }
+            // Declare parameters
+            for param in &func.params.items {
+                collect_binding_pattern_names(&param.pattern, &mut nested_declared);
+            }
+            if let Some(rest) = &func.params.rest {
+                collect_binding_pattern_names(&rest.rest.argument, &mut nested_declared);
+            }
+            // Collect refs from body, tracking nested declarations
+            if let Some(body) = &func.body {
+                let mut nested_refs = Vec::new();
+                for stmt in &body.statements {
+                    collect_statement_refs(stmt, &mut nested_refs, &mut nested_declared);
+                }
+                // Only add refs that are NOT declared within the nested function
+                for r in nested_refs {
+                    if !nested_declared.contains(&r.0) {
+                        refs.push(r);
+                    }
+                }
+            }
+        }
+        ast::Expression::ArrowFunctionExpression(arrow) => {
+            let mut nested_declared = rustc_hash::FxHashSet::default();
+            // Declare parameters
+            for param in &arrow.params.items {
+                collect_binding_pattern_names(&param.pattern, &mut nested_declared);
+            }
+            if let Some(rest) = &arrow.params.rest {
+                collect_binding_pattern_names(&rest.rest.argument, &mut nested_declared);
+            }
+            // Collect refs from body, tracking nested declarations
+            let mut nested_refs = Vec::new();
+            for stmt in &arrow.body.statements {
+                collect_statement_refs(stmt, &mut nested_refs, &mut nested_declared);
+            }
+            // Only add refs that are NOT declared within the nested function
+            for r in nested_refs {
+                if !nested_declared.contains(&r.0) {
+                    refs.push(r);
+                }
+            }
+        }
+        // Literals and other expression types that don't reference identifiers
         _ => {}
     }
 }
@@ -1866,9 +2074,6 @@ fn lower_function_to_value(
     // 1. Gather captured context from the inner function
     let captured_context = gather_captured_context(func, outer_builder);
 
-    // 2. Recursively lower the inner function with ReactFunctionType::Other
-    let env = outer_builder.environment();
-
     // Find context identifiers for the inner function
     let context_identifiers = match func {
         LowerableFunction::Function(f) => find_context_identifiers(f),
@@ -1881,28 +2086,57 @@ fn lower_function_to_value(
         merged_context.insert(name.clone());
     }
 
+    // Phase 1: Resolve captured context variables on the OUTER builder FIRST.
+    // This must happen before cloning the environment, because pre_declare_binding
+    // allocates new IdentifierIds from the outer builder's environment. If we cloned
+    // the environment first, the inner builder would have a stale ID counter and
+    // could allocate the same IDs, causing collisions (e.g., both parameter `x` and
+    // captured `factorial` would get the same IdentifierId).
+    let mut context_entries: Vec<(String, SourceLocation, crate::hir::Place, BindingKind)> =
+        Vec::new();
+    for (name, ctx_loc) in &captured_context {
+        match outer_builder.resolve_identifier(name) {
+            VariableBinding::Identifier { identifier, binding_kind } => {
+                // Variable is already declared in the outer builder — use its identifier
+                context_entries.push((
+                    name.clone(),
+                    *ctx_loc,
+                    crate::hir::Place {
+                        identifier,
+                        effect: crate::hir::Effect::Unknown,
+                        reactive: false,
+                        loc: *ctx_loc,
+                    },
+                    binding_kind,
+                ));
+            }
+            VariableBinding::NonLocal(_) => {
+                // Variable is not yet declared in the outer builder (hoisted reference —
+                // e.g., `const foo = () => bar; const bar = 3;`).
+                // Eagerly pre-declare it so it gets a real HIR identifier that will be
+                // reused when the actual declaration is processed later.
+                let place = outer_builder.pre_declare_binding(name, *ctx_loc);
+                context_entries.push((name.clone(), *ctx_loc, place, BindingKind::Let));
+            }
+        }
+    }
+
+    // Phase 2: NOW clone the environment — it has up-to-date ID counters that
+    // include any identifiers allocated by pre_declare_binding above.
+    let env = outer_builder.environment();
     let mut inner_builder = HirBuilder::new(env.clone(), None, merged_context);
 
-    // Resolve captured context variables in the inner builder to build the context Vec<Place>
-    // Use the OUTER builder's identifier so that context places share the same IdentifierId
-    // as the outer scope's variables. This enables reactivity propagation through closures.
+    // Pre-collect scope binding names for the inner function too, so nested
+    // functions can also correctly identify captured hoisted variables.
+    let inner_scope_names = collect_all_scope_binding_names(func);
+    inner_builder.set_scope_binding_names(inner_scope_names);
+
+    // Phase 3: Register the resolved context variables on the inner builder
+    // and build the context places vector.
     let mut context_places = Vec::new();
-    for (name, ctx_loc) in &captured_context {
-        if let VariableBinding::Identifier { identifier, binding_kind } =
-            outer_builder.resolve_identifier(name)
-        {
-            inner_builder.register_outer_binding(name, identifier.clone(), binding_kind);
-            context_places.push(crate::hir::Place {
-                identifier,
-                effect: crate::hir::Effect::Unknown,
-                reactive: false,
-                loc: *ctx_loc,
-            });
-        } else {
-            // Fallback: if not found in outer builder (shouldn't happen), create new
-            let place = inner_builder.declare_binding(name, BindingKind::Let, *ctx_loc);
-            context_places.push(place);
-        }
+    for (name, _ctx_loc, place, binding_kind) in context_entries {
+        inner_builder.register_outer_binding(&name, place.identifier.clone(), binding_kind);
+        context_places.push(place);
     }
 
     // Extract function metadata
@@ -3250,7 +3484,8 @@ pub fn lower_expression(
                                         }
                                         other => other,
                                     };
-                                    lower_value_to_temporary(builder, method_value, method_loc)?.place
+                                    lower_value_to_temporary(builder, method_value, method_loc)?
+                                        .place
                                 }
                                 _ => {
                                     // Fallback: non-function method (shouldn't happen normally)

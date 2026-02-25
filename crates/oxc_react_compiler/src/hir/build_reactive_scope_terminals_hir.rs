@@ -16,8 +16,8 @@ use crate::compiler_error::GENERATED_SOURCE;
 use crate::hir::hir_builder::{each_terminal_successor, mark_instruction_ids, mark_predecessors};
 use crate::hir::hir_types::{
     BasicBlock, BlockId, BlockKind, BlockMap, GotoTerminal, GotoVariant, HIRFunction, Hir,
-    Instruction, InstructionId, InstructionValue, MutableRange, ReactiveScope, ReactiveScopeTerminal, ScopeId,
-    Terminal, UnreachableTerminal,
+    Instruction, InstructionId, InstructionValue, MutableRange, ReactiveScope,
+    ReactiveScopeTerminal, ScopeId, Terminal, UnreachableTerminal,
 };
 use crate::hir::visitors::{
     each_instruction_lvalue, each_instruction_operand, each_terminal_operand,
@@ -442,10 +442,7 @@ fn sync_instruction_value_identifiers(
 }
 
 /// Update identifiers in terminal operands.
-fn sync_terminal_identifiers(
-    terminal: &mut Terminal,
-    map: &FxHashMap<ScopeId, MutableRange>,
-) {
+fn sync_terminal_identifiers(terminal: &mut Terminal, map: &FxHashMap<ScopeId, MutableRange>) {
     use crate::hir::visitors::map_terminal_operands;
     map_terminal_operands(terminal, &mut |mut place| {
         sync_identifier_scope(&mut place.identifier, map);
