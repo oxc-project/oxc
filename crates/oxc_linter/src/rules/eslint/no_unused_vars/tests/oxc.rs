@@ -1265,6 +1265,8 @@ fn test_namespaces() {
             }
         }
         ",
+        "declare module 'bun:test' { type Matchers2<T> = {} }",
+        "declare module 'bun:test' { class MyClass<T> {} }",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
