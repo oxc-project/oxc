@@ -1690,7 +1690,17 @@ fn codegen_function_expression(
                     if inner_fn.body.len() == 1 && func_expr.lowered_func.func.directives.is_empty()
                     {
                         if let CodegenStatement::Return(Some(expr)) = &inner_fn.body[0] {
-                            format!("{async_prefix}({params_str}) => {expr}")
+                            // Babel wraps ConditionalExpression in parens when used
+                            // as a concise arrow body to avoid parser ambiguity
+                            let needs_parens = {
+                                let s = expr.replace("??", "__");
+                                s.contains(" ? ")
+                            };
+                            if needs_parens {
+                                format!("{async_prefix}({params_str}) => ({expr})")
+                            } else {
+                                format!("{async_prefix}({params_str}) => {expr}")
+                            }
                         } else {
                             let body_str = format_codegen_body(&inner_fn);
                             format!("{async_prefix}({params_str}) => {{{body_str}}}")
