@@ -1027,7 +1027,16 @@ fn codegen_terminal(
         ReactiveTerminal::For(t) => {
             let init = codegen_for_init(cx, &t.init);
             let test = codegen_reactive_value_to_expression(cx, &t.test);
-            let update = t.update.as_ref().map(|u| codegen_reactive_value_to_expression(cx, u));
+            let update = t.update.as_ref().map(|u| {
+                let s = codegen_reactive_value_to_expression(cx, u);
+                // Strip outer parens from the update expression — they're unnecessary
+                // in for-loop update position and the reference compiler doesn't emit them.
+                if s.starts_with('(') && s.ends_with(')') {
+                    s[1..s.len() - 1].to_string()
+                } else {
+                    s
+                }
+            });
             let body = codegen_block(cx, &t.r#loop);
             Some(CodegenStatement::For { init: Some(init), test: Some(test), update, body })
         }
@@ -2373,10 +2382,12 @@ fn codegen_for_of_in_init(
 fn codegen_for_of_collection(cx: &mut CodegenContext, init: &ReactiveValue) -> String {
     if let ReactiveValue::Sequence(seq) = init
         && let Some(first) = seq.instructions.first()
-        && let ReactiveValue::Instruction(boxed) = &first.value
-        && let InstructionValue::GetIterator(iter) = boxed.as_ref()
     {
-        return codegen_place_to_expression(cx, &iter.collection);
+        if let ReactiveValue::Instruction(boxed) = &first.value {
+            if let InstructionValue::GetIterator(iter) = boxed.as_ref() {
+                return codegen_place_to_expression(cx, &iter.collection);
+            }
+        }
     }
     codegen_reactive_value_to_expression(cx, init)
 }

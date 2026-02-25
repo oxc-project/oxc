@@ -65,6 +65,9 @@ pub fn dead_code_elimination(func: &mut HIRFunction) {
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
 
+        // Prune unused phi nodes (TS lines 45-49)
+        block.phis.retain(|phi| state.is_id_or_name_used(&phi.place.identifier));
+
         // Rewrite destructure patterns to remove unused properties/items
         for instr in &mut block.instructions {
             rewrite_instruction(instr, &state);
@@ -125,6 +128,17 @@ fn find_referenced_identifiers(func: &HIRFunction) -> DceState {
                         for operand in each_instruction_value_operand(&instr.value) {
                             state.reference(&operand.identifier);
                         }
+                    }
+                }
+            }
+
+            // Mark phi operands as referenced if the phi output is used.
+            // Port of TS lines 175-181: if a phi's output place is referenced,
+            // then all its operand identifiers must also be referenced.
+            for phi in &block.phis {
+                if state.is_id_or_name_used(&phi.place.identifier) {
+                    for operand in phi.operands.values() {
+                        state.reference(&operand.identifier);
                     }
                 }
             }

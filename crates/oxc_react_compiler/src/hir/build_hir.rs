@@ -14,7 +14,7 @@ use crate::{
         HIRFunction, IfTerminal, Instruction, InstructionId, InstructionKind, InstructionValue,
         IteratorNext, LValue, LValuePattern, LabelTerminal, LoadContext, LoadLocal,
         LogicalTerminal, LoweredFunction, NextPropertyOf, NonLocalBinding, ObjectPatternProperty,
-        ObjectProperty, ObjectPropertyKey, ObjectPropertyType, OptionalTerminal, PrimitiveValue,
+        ObjectMethodValue, ObjectProperty, ObjectPropertyKey, ObjectPropertyType, OptionalTerminal, PrimitiveValue,
         PrimitiveValueKind, ReactFunctionType, ReturnVariant, SequenceTerminal, SpreadPattern,
         StoreContext, StoreGlobal, StoreLocal, SwitchTerminal, TemplateLiteralQuasi, Terminal,
         TernaryTerminal, TryTerminal, WhileTerminal,
@@ -2005,8 +2005,8 @@ pub enum LowerableStatement<'a> {
     SwitchStatement(&'a ast::SwitchStatement<'a>),
     LabeledStatement(&'a ast::LabeledStatement<'a>),
     FunctionDeclaration(&'a ast::Function<'a>),
-    BreakStatement,
-    ContinueStatement,
+    BreakStatement(Option<&'a str>),
+    ContinueStatement(Option<&'a str>),
     DebuggerStatement,
     EmptyStatement,
 }
@@ -2130,8 +2130,8 @@ fn lower_statement_with_label(
         // =====================================================================
         // BreakStatement
         // =====================================================================
-        LowerableStatement::BreakStatement => {
-            let target = builder.lookup_break(None)?;
+        LowerableStatement::BreakStatement(label) => {
+            let target = builder.lookup_break(*label)?;
             builder.terminate(
                 Terminal::Goto(GotoTerminal {
                     id: InstructionId(0),
@@ -2146,8 +2146,8 @@ fn lower_statement_with_label(
         // =====================================================================
         // ContinueStatement
         // =====================================================================
-        LowerableStatement::ContinueStatement => {
-            let target = builder.lookup_continue(None)?;
+        LowerableStatement::ContinueStatement(label) => {
+            let target = builder.lookup_continue(*label)?;
             builder.terminate(
                 Terminal::Goto(GotoTerminal {
                     id: InstructionId(0),
@@ -3225,17 +3225,51 @@ pub fn lower_expression(
                     }
                     LowerableObjectProperty::Property { key, value, method, .. } => {
                         let lowered_key = lower_object_property_key(builder, key)?;
-                        let value_result = lower_expression(builder, value)?;
-                        let property_type = if *method {
-                            ObjectPropertyType::Method
+                        if *method {
+                            // Port of lowerObjectMethod() from BuildHIR.ts lines 1491-1506.
+                            // For methods, emit an ObjectMethod instruction instead of
+                            // FunctionExpression so codegen can reconstruct the method syntax.
+                            let method_loc = span_to_loc(*span);
+                            let place = match value {
+                                LowerableExpression::FunctionExpression { func, span: fn_span } => {
+                                    let fn_loc = span_to_loc(*fn_span);
+                                    let lowerable_func = LowerableFunction::Function(func);
+                                    let func_instr = lower_function_to_value(
+                                        builder,
+                                        &lowerable_func,
+                                        FunctionExpressionType::FunctionExpression,
+                                        fn_loc,
+                                    )?;
+                                    // Convert FunctionExpression → ObjectMethod
+                                    let method_value = match func_instr {
+                                        InstructionValue::FunctionExpression(fe) => {
+                                            InstructionValue::ObjectMethod(ObjectMethodValue {
+                                                loc: method_loc,
+                                                lowered_func: fe.lowered_func,
+                                            })
+                                        }
+                                        other => other,
+                                    };
+                                    lower_value_to_temporary(builder, method_value, method_loc)?.place
+                                }
+                                _ => {
+                                    // Fallback: non-function method (shouldn't happen normally)
+                                    lower_expression(builder, value)?.place
+                                }
+                            };
+                            lowered_props.push(ObjectPatternProperty::Property(ObjectProperty {
+                                key: lowered_key,
+                                property_type: ObjectPropertyType::Method,
+                                place,
+                            }));
                         } else {
-                            ObjectPropertyType::Property
-                        };
-                        lowered_props.push(ObjectPatternProperty::Property(ObjectProperty {
-                            key: lowered_key,
-                            property_type,
-                            place: value_result.place,
-                        }));
+                            let value_result = lower_expression(builder, value)?;
+                            lowered_props.push(ObjectPatternProperty::Property(ObjectProperty {
+                                key: lowered_key,
+                                property_type: ObjectPropertyType::Property,
+                                place: value_result.place,
+                            }));
+                        }
                     }
                 }
             }
