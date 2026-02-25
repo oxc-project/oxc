@@ -17,7 +17,7 @@ use crate::{
     compiler_error::{CompilerError, SourceLocation},
     hir::{
         BlockId, Effect, HIRFunction, Identifier, IdentifierId, InstructionId, InstructionValue,
-        Place, ReactiveParam, Terminal, ValueKind, ValueReason,
+        Place, ReactiveParam, Terminal, ValueKind, ValueReason, hir_builder::compute_rpo_order,
     },
     inference::aliasing_effects::{AliasingEffect, CreateFunctionKind, MutationReason},
 };
@@ -513,10 +513,9 @@ pub fn infer_mutation_aliasing_ranges(
     }
     state.create(&func.returns, NodeValue::Object);
 
-    // Process blocks in insertion order (RPO), matching the TS reference which
-    // iterates `fn.body.blocks.values()` (Map preserves insertion order).
-    // The pipeline ensures RPO ordering via reverse_postorder_blocks before this pass.
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    // Process blocks in RPO order, matching the TS reference which
+    // iterates `fn.body.blocks.values()` (Map preserves insertion order = RPO).
+    let block_ids: Vec<BlockId> = compute_rpo_order(func.body.entry, &func.body.blocks);
 
     let mut seen_blocks: FxHashSet<BlockId> = FxHashSet::default();
 
@@ -807,8 +806,8 @@ pub fn infer_mutation_aliasing_ranges(
     }
 
     // ===== Phase 2: Set legacy Effect on each Place =====
-    // Use insertion order (RPO) to match the TS reference.
-    let block_ids_sorted: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    // Use RPO order to match the TS reference.
+    let block_ids_sorted: Vec<BlockId> = compute_rpo_order(func.body.entry, &func.body.blocks);
 
     for &block_id in &block_ids_sorted {
         let block = func.body.blocks.get_mut(&block_id).map(|b| {
@@ -1778,7 +1777,7 @@ fn apply_range_updates(func: &mut HIRFunction, updates: &FxHashMap<IdentifierId,
     update_place_range(&mut func.returns, updates);
 
     // Update all places in blocks
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else {
             continue;
@@ -2233,7 +2232,7 @@ fn sync_mutable_ranges(func: &mut HIRFunction) {
     }
     sync_place(&canonical, &mut func.returns);
 
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else {
             continue;

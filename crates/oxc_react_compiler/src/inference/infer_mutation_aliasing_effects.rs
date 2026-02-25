@@ -17,11 +17,12 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     hir::{
-        BlockId, Effect, HIRFunction, IdentifierId, Instruction, InstructionValue, Place,
-        ReactFunctionType, ReactiveParam, ValueKind, ValueReason,
-        hir_builder::each_terminal_successor, visitors::each_terminal_operand,
+        BlockId, Effect, FunctionExpressionValue, HIRFunction, IdentifierId, Instruction,
+        InstructionValue, Place, ReactFunctionType, ReactiveParam, ValueKind, ValueReason,
+        hir_builder::{compute_rpo_order, each_terminal_successor},
+        visitors::each_terminal_operand,
     },
-    inference::aliasing_effects::AliasingEffect,
+    inference::aliasing_effects::{AliasingEffect, AliasingSignature},
 };
 
 /// Abstract value representation for a place during inference.
@@ -60,11 +61,19 @@ struct InferenceState {
     values: FxHashMap<IdentifierId, AbstractValue>,
     /// Map from identifier ID to the set of identifiers it may alias
     aliases: FxHashMap<IdentifierId, FxHashSet<IdentifierId>>,
+    /// Map from identifier ID to the FunctionExpressionValue it was defined as.
+    /// Used to resolve Apply effects for locally-defined functions with known
+    /// aliasing effects (port of TS `state.values(place)` returning FunctionExpression).
+    function_values: FxHashMap<IdentifierId, FunctionExpressionValue>,
 }
 
 impl InferenceState {
     fn empty() -> Self {
-        Self { values: FxHashMap::default(), aliases: FxHashMap::default() }
+        Self {
+            values: FxHashMap::default(),
+            aliases: FxHashMap::default(),
+            function_values: FxHashMap::default(),
+        }
     }
 
     /// Define a place with a given abstract value.
@@ -109,6 +118,13 @@ impl InferenceState {
                 if aliases.insert(alias) {
                     changed = true;
                 }
+            }
+        }
+
+        for (&id, other_fn) in &other.function_values {
+            if !self.function_values.contains_key(&id) {
+                self.function_values.insert(id, other_fn.clone());
+                changed = true;
             }
         }
 
@@ -237,7 +253,7 @@ pub fn infer_mutation_aliasing_effects(
     // For blocks reached during fixpoint iteration, compute effects from abstract state.
     // For unreachable blocks, set empty effects (not None) so downstream passes
     // (infer_mutation_aliasing_ranges) still process them correctly.
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else {
             continue;
@@ -332,12 +348,19 @@ fn infer_instruction_effects(
         // Object/array/function/regexp/iterator values create mutable values
         InstructionValue::ObjectExpression(_)
         | InstructionValue::ArrayExpression(_)
-        | InstructionValue::FunctionExpression(_)
-        | InstructionValue::ObjectMethod(_)
         | InstructionValue::RegExpLiteral(_)
         | InstructionValue::GetIterator(_)
         | InstructionValue::IteratorNext(_)
         | InstructionValue::NextPropertyOf(_) => {
+            state.define(&instr.lvalue, AbstractValue::mutable());
+        }
+
+        // FunctionExpression / ObjectMethod: mutable + track for Apply resolution
+        InstructionValue::FunctionExpression(v) => {
+            state.define(&instr.lvalue, AbstractValue::mutable());
+            state.function_values.insert(lvalue_id, v.clone());
+        }
+        InstructionValue::ObjectMethod(_) => {
             state.define(&instr.lvalue, AbstractValue::mutable());
         }
 
@@ -354,6 +377,10 @@ fn infer_instruction_effects(
                 state.define(&instr.lvalue, val);
                 state.add_alias(v.place.identifier.id, lvalue_id);
             }
+            // Propagate function value tracking through LoadLocal
+            if let Some(fn_val) = state.function_values.get(&v.place.identifier.id).cloned() {
+                state.function_values.insert(lvalue_id, fn_val);
+            }
         }
 
         InstructionValue::LoadContext(v) => {
@@ -367,6 +394,10 @@ fn infer_instruction_effects(
             if let Some(val) = state.get(&v.value).cloned() {
                 state.define(&v.lvalue.place, val);
                 state.add_alias(v.value.identifier.id, v.lvalue.place.identifier.id);
+            }
+            // Propagate function value tracking through StoreLocal
+            if let Some(fn_val) = state.function_values.get(&v.value.identifier.id).cloned() {
+                state.function_values.insert(v.lvalue.place.identifier.id, fn_val);
             }
         }
 
@@ -652,6 +683,294 @@ fn is_frozen(state: &InferenceState, place: &crate::hir::Place) -> bool {
     }
 }
 
+/// Build an `AliasingSignature` from a locally-defined function expression.
+///
+/// Port of `buildSignatureFromFunctionExpression` from `InferMutationAliasingEffects.ts`
+/// (lines 2758-2779).
+///
+/// This extracts the parameter identifiers, the return identifier, and the
+/// aliasing effects from a function expression that was previously analysed by
+/// `analyse_functions`.
+fn build_signature_from_function_expression(
+    func_expr: &FunctionExpressionValue,
+) -> AliasingSignature {
+    let inner_func = &func_expr.lowered_func.func;
+    let mut params = Vec::new();
+    let mut rest = None;
+    for param in &inner_func.params {
+        match param {
+            ReactiveParam::Place(p) => {
+                params.push(p.identifier.id);
+            }
+            ReactiveParam::Spread(s) => {
+                rest = Some(s.place.identifier.id);
+            }
+        }
+    }
+    // TS uses `makeIdentifierId(0)` for receiver — a dummy ID that won't match
+    // any real identifier. We use IdentifierId(0) for the same purpose.
+    // If there's no rest param, the TS creates a temporary place. Since we only
+    // use this to key substitutions (and unused params are harmless), we use a
+    // sentinel value.
+    AliasingSignature {
+        receiver: IdentifierId(0),
+        params,
+        rest,
+        returns: inner_func.returns.identifier.id,
+        effects: inner_func.aliasing_effects.clone().unwrap_or_default(),
+        temporaries: Vec::new(),
+    }
+}
+
+/// Substitute an `AliasingSignature`'s placeholder identifiers with actual
+/// call-site values and produce concrete aliasing effects.
+///
+/// Port of `computeEffectsForSignature` from `InferMutationAliasingEffects.ts`
+/// (lines 2563-2756).
+///
+/// The substitution table maps each formal parameter, receiver, return value,
+/// and context variable to the corresponding call-site place. The signature's
+/// effects are then rewritten using these substitutions.
+fn compute_effects_for_signature(
+    signature: &AliasingSignature,
+    lvalue: &Place,
+    receiver: &Place,
+    args: &[crate::hir::CallArg],
+    context: &[Place],
+) -> Option<Vec<AliasingEffect>> {
+    use crate::hir::CallArg;
+
+    // Arity check: not enough args, or too many without a rest param
+    if signature.params.len() > args.len() {
+        return None;
+    }
+    if args.len() > signature.params.len() && signature.rest.is_none() {
+        return None;
+    }
+
+    // Build substitution table: IdentifierId -> Vec<Place>
+    let mut substitutions: FxHashMap<IdentifierId, Vec<Place>> = FxHashMap::default();
+    substitutions.insert(signature.receiver, vec![receiver.clone()]);
+    substitutions.insert(signature.returns, vec![lvalue.clone()]);
+
+    for (i, arg) in args.iter().enumerate() {
+        let (place, is_spread) = match arg {
+            CallArg::Place(p) => (p, false),
+            CallArg::Spread(s) => (&s.place, true),
+        };
+        if i >= signature.params.len() || is_spread {
+            // Goes into rest param
+            let Some(rest_id) = signature.rest else {
+                return None;
+            };
+            substitutions.entry(rest_id).or_default().push(place.clone());
+        } else {
+            substitutions.insert(signature.params[i], vec![place.clone()]);
+        }
+    }
+
+    // Context variables from function expressions reference identifiers in the
+    // outer scope — populate substitutions so they map to themselves.
+    for operand in context {
+        substitutions.insert(operand.identifier.id, vec![operand.clone()]);
+    }
+
+    // Create temporaries
+    // Note: TS creates actual temporary places with new IDs. For simplicity,
+    // we skip temporaries since the signatures from function expressions have
+    // none (temporaries is always []).
+
+    let mut effects = Vec::new();
+
+    for effect in &signature.effects {
+        match effect {
+            // Binary effects (from -> into)
+            AliasingEffect::MaybeAlias { from, into }
+            | AliasingEffect::Assign { from, into }
+            | AliasingEffect::ImmutableCapture { from, into }
+            | AliasingEffect::Alias { from, into }
+            | AliasingEffect::CreateFrom { from, into }
+            | AliasingEffect::Capture { from, into } => {
+                let from_places = substitutions.get(&from.identifier.id).cloned().unwrap_or_default();
+                let into_places = substitutions.get(&into.identifier.id).cloned().unwrap_or_default();
+                for from_place in &from_places {
+                    for into_place in &into_places {
+                        // Reconstruct the same effect variant with substituted places
+                        let substituted = match effect {
+                            AliasingEffect::MaybeAlias { .. } => AliasingEffect::MaybeAlias {
+                                from: from_place.clone(),
+                                into: into_place.clone(),
+                            },
+                            AliasingEffect::Assign { .. } => AliasingEffect::Assign {
+                                from: from_place.clone(),
+                                into: into_place.clone(),
+                            },
+                            AliasingEffect::ImmutableCapture { .. } => {
+                                AliasingEffect::ImmutableCapture {
+                                    from: from_place.clone(),
+                                    into: into_place.clone(),
+                                }
+                            }
+                            AliasingEffect::Alias { .. } => AliasingEffect::Alias {
+                                from: from_place.clone(),
+                                into: into_place.clone(),
+                            },
+                            AliasingEffect::CreateFrom { .. } => AliasingEffect::CreateFrom {
+                                from: from_place.clone(),
+                                into: into_place.clone(),
+                            },
+                            AliasingEffect::Capture { .. } => AliasingEffect::Capture {
+                                from: from_place.clone(),
+                                into: into_place.clone(),
+                            },
+                            _ => unreachable!(),
+                        };
+                        effects.push(substituted);
+                    }
+                }
+            }
+
+            // Error/diagnostic effects (place-based)
+            AliasingEffect::Impure { place, error } => {
+                let places = substitutions.get(&place.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    effects.push(AliasingEffect::Impure { place: p, error: error.clone() });
+                }
+            }
+            AliasingEffect::MutateFrozen { place, error } => {
+                let places = substitutions.get(&place.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    effects.push(AliasingEffect::MutateFrozen { place: p, error: error.clone() });
+                }
+            }
+            AliasingEffect::MutateGlobal { place, error } => {
+                let places = substitutions.get(&place.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    effects.push(AliasingEffect::MutateGlobal { place: p, error: error.clone() });
+                }
+            }
+            AliasingEffect::Render { place } => {
+                let places = substitutions.get(&place.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    effects.push(AliasingEffect::Render { place: p });
+                }
+            }
+
+            // Mutation effects (value-based)
+            AliasingEffect::Mutate { value, reason } => {
+                let places = substitutions.get(&value.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    effects.push(AliasingEffect::Mutate { value: p, reason: reason.clone() });
+                }
+            }
+            AliasingEffect::MutateTransitive { value } => {
+                let places = substitutions.get(&value.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    effects.push(AliasingEffect::MutateTransitive { value: p });
+                }
+            }
+            AliasingEffect::MutateTransitiveConditionally { value } => {
+                let places = substitutions.get(&value.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    effects.push(AliasingEffect::MutateTransitiveConditionally { value: p });
+                }
+            }
+            AliasingEffect::MutateConditionally { value } => {
+                let places = substitutions.get(&value.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    effects.push(AliasingEffect::MutateConditionally { value: p });
+                }
+            }
+
+            // Freeze
+            AliasingEffect::Freeze { value, reason } => {
+                let places = substitutions.get(&value.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    effects.push(AliasingEffect::Freeze { value: p, reason: *reason });
+                }
+            }
+
+            // Create
+            AliasingEffect::Create { into, value, reason } => {
+                let places = substitutions.get(&into.identifier.id).cloned().unwrap_or_default();
+                for p in places {
+                    effects.push(AliasingEffect::Create {
+                        into: p,
+                        value: *value,
+                        reason: *reason,
+                    });
+                }
+            }
+
+            // Apply: recursively substitute
+            AliasingEffect::Apply {
+                receiver: apply_recv,
+                function,
+                mutates_function,
+                args: apply_args,
+                into: apply_into,
+                signature: apply_sig,
+                loc,
+            } => {
+                let recv_sub = substitutions.get(&apply_recv.identifier.id);
+                if recv_sub.map_or(true, |v| v.len() != 1) {
+                    return None;
+                }
+                let fn_sub = substitutions.get(&function.identifier.id);
+                if fn_sub.map_or(true, |v| v.len() != 1) {
+                    return None;
+                }
+                let into_sub = substitutions.get(&apply_into.identifier.id);
+                if into_sub.map_or(true, |v| v.len() != 1) {
+                    return None;
+                }
+                let mut new_args = Vec::new();
+                for arg in apply_args {
+                    match arg {
+                        crate::inference::aliasing_effects::ApplyArg::Hole => {
+                            new_args.push(crate::inference::aliasing_effects::ApplyArg::Hole);
+                        }
+                        crate::inference::aliasing_effects::ApplyArg::Place(p) => {
+                            let arg_sub = substitutions.get(&p.identifier.id);
+                            if arg_sub.map_or(true, |v| v.len() != 1) {
+                                return None;
+                            }
+                            new_args.push(crate::inference::aliasing_effects::ApplyArg::Place(
+                                arg_sub.unwrap()[0].clone(),
+                            ));
+                        }
+                        crate::inference::aliasing_effects::ApplyArg::Spread(s) => {
+                            let arg_sub = substitutions.get(&s.place.identifier.id);
+                            if arg_sub.map_or(true, |v| v.len() != 1) {
+                                return None;
+                            }
+                            new_args.push(crate::inference::aliasing_effects::ApplyArg::Spread(
+                                crate::hir::SpreadPattern { place: arg_sub.unwrap()[0].clone() },
+                            ));
+                        }
+                    }
+                }
+                effects.push(AliasingEffect::Apply {
+                    receiver: recv_sub.unwrap()[0].clone(),
+                    function: fn_sub.unwrap()[0].clone(),
+                    mutates_function: *mutates_function,
+                    args: new_args,
+                    into: Box::new(into_sub.unwrap()[0].clone()),
+                    signature: apply_sig.clone(),
+                    loc: *loc,
+                });
+            }
+
+            // CreateFunction: not expected in signatures from function expressions
+            AliasingEffect::CreateFunction { .. } => {
+                // TS throws a todo error here; we skip it for now
+            }
+        }
+    }
+
+    Some(effects)
+}
+
 /// Compute the aliasing effects for an instruction.
 ///
 /// Port of `computeSignatureForInstruction` from `InferMutationAliasingEffects.ts`.
@@ -754,13 +1073,39 @@ fn compute_instruction_effects(
         // precise effects based on the declared parameter effects. Otherwise, fall
         // back to the conservative behavior.
         InstructionValue::CallExpression(v) => {
-            // Try to get function signature from callee's type
+            // 1. Check if callee is a locally-defined FunctionExpression with known effects.
+            //    Port of the Apply effect handler from TS applyEffect (lines 1016-1067):
+            //    When calling a locally declared function whose aliasing effects are known,
+            //    we build a signature from the function expression, substitute params/context
+            //    with actual call-site values, and emit the substituted effects instead of
+            //    conservative fallback.
+            if let Some(func_expr) = state.function_values.get(&v.callee.identifier.id) {
+                if func_expr.lowered_func.func.aliasing_effects.is_some() {
+                    let signature = build_signature_from_function_expression(func_expr);
+                    let context_vars = &func_expr.lowered_func.func.context;
+                    if let Some(sig_effects) = compute_effects_for_signature(
+                        &signature,
+                        lvalue,
+                        &v.callee, // receiver = callee for CallExpression
+                        &v.args,
+                        context_vars,
+                    ) {
+                        // TS: MutateTransitiveConditionally(function) + substituted effects
+                        effects.push(AliasingEffect::MutateTransitiveConditionally {
+                            value: v.callee.clone(),
+                        });
+                        effects.extend(sig_effects);
+                        return effects;
+                    }
+                }
+            }
+            // 2. Try to get function signature from callee's type (legacy signature)
             let sig = env.get_function_signature(&v.callee.identifier.type_);
             if let Some(sig) = sig {
                 let sig = sig.clone();
                 return effects_from_signature(&sig, &v.callee, &v.args, lvalue);
             }
-            // Conservative fallback: callee may also be mutated (mutatesFunction=true)
+            // 3. Conservative fallback: callee may also be mutated (mutatesFunction=true)
             effects.push(AliasingEffect::MutateTransitiveConditionally { value: v.callee.clone() });
             for arg in &v.args {
                 let place = match arg {
@@ -778,14 +1123,32 @@ fn compute_instruction_effects(
             });
         }
         InstructionValue::MethodCall(v) => {
-            // Try to get function signature from the property's type (the method)
+            // 1. Check if the method (property) is a locally-defined FunctionExpression
+            if let Some(func_expr) = state.function_values.get(&v.property.identifier.id) {
+                if func_expr.lowered_func.func.aliasing_effects.is_some() {
+                    let signature = build_signature_from_function_expression(func_expr);
+                    let context_vars = &func_expr.lowered_func.func.context;
+                    if let Some(sig_effects) = compute_effects_for_signature(
+                        &signature,
+                        lvalue,
+                        &v.receiver, // receiver for MethodCall
+                        &v.args,
+                        context_vars,
+                    ) {
+                        // TS: for MethodCall, mutatesCallee=false so no MutateTransitiveConditionally on function
+                        effects.extend(sig_effects);
+                        return effects;
+                    }
+                }
+            }
+            // 2. Try to get function signature from the property's type (the method)
             let sig = env.get_function_signature(&v.property.identifier.type_);
             if let Some(sig) = sig {
                 let sig = sig.clone();
                 // For method calls, the receiver is the callee_or_receiver
                 return effects_from_signature(&sig, &v.receiver, &v.args, lvalue);
             }
-            // Conservative fallback: receiver is conditionally mutated
+            // 3. Conservative fallback: receiver is conditionally mutated
             effects
                 .push(AliasingEffect::MutateTransitiveConditionally { value: v.receiver.clone() });
             for arg in &v.args {

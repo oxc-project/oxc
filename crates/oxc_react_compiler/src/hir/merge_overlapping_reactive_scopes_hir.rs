@@ -19,6 +19,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     hir::{
         HIRFunction, InstructionId, InstructionValue, MutableRange, Place, ReactiveScope, ScopeId,
+        hir_builder::compute_rpo_order,
         visitors::{each_instruction_lvalue, each_instruction_operand, each_terminal_operand},
     },
     reactive_scopes::infer_reactive_scope_variables::is_mutable,
@@ -111,7 +112,7 @@ fn collect_scope_info(func: &HIRFunction) -> ScopeInfo {
     let mut scope_ranges: FxHashMap<ScopeId, MutableRange> = FxHashMap::default();
     let mut place_scopes: Vec<PlaceScopeEntry> = Vec::new();
 
-    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
 
     for (block_idx, block_id) in block_ids.iter().enumerate() {
         let block = &func.body.blocks[block_id];
@@ -367,7 +368,7 @@ fn get_overlapping_reactive_scopes(
 ) -> DisjointSet<ScopeId> {
     let mut state = TraversalState { joined: DisjointSet::new(), active_scopes: Vec::new() };
 
-    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
 
     for block_id in &block_ids {
         let block = &func.body.blocks[block_id];
@@ -412,7 +413,7 @@ fn rewrite_scopes(
     scope_mapping: &FxHashMap<ScopeId, ScopeId>,
     merged_ranges: &FxHashMap<ScopeId, MutableRange>,
 ) {
-    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
 
     for place_entry in &scopes_info.place_scopes {
         let original_scope_id = place_entry.original_scope_id;

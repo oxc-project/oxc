@@ -10,6 +10,7 @@
 use crate::compiler_error::CompilerError;
 use crate::hir::{
     Effect, HIRFunction, IdentifierId, InstructionId, InstructionValue, MutableRange,
+    hir_builder::compute_rpo_order,
 };
 use crate::inference::aliasing_effects::AliasingEffect;
 use crate::inference::infer_mutation_aliasing_effects::{
@@ -28,7 +29,7 @@ use rustc_hash::FxHashSet;
 /// # Errors
 /// Returns a `CompilerError` if mutation aliasing inference fails for any nested function.
 pub fn analyse_functions(func: &mut HIRFunction) -> Result<(), CompilerError> {
-    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
 

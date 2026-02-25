@@ -8,7 +8,8 @@
 /// memoized due to being inside loops or containing hook calls.
 use crate::hir::{
     BlockId, HIRFunction, Identifier, InstructionValue, LabelTerminal, PrunedScopeTerminal,
-    Terminal, environment::get_hook_kind_for_type, object_shape::BUILT_IN_USE_OPERATOR_ID,
+    Terminal, environment::get_hook_kind_for_type, hir_builder::compute_rpo_order,
+    object_shape::BUILT_IN_USE_OPERATOR_ID,
 };
 
 /// Flatten reactive loops -- removes reactive scopes inside loops.
@@ -17,8 +18,7 @@ use crate::hir::{
 /// cannot be correctly memoized with a single cache slot. Any `Scope` terminal
 /// found while a loop is active is converted to a `PrunedScope` terminal.
 pub fn flatten_reactive_loops_hir(func: &mut HIRFunction) {
-    let mut block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
-    block_ids.sort();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
 
     let mut active_loops: Vec<BlockId> = Vec::new();
 
@@ -96,8 +96,7 @@ pub fn flatten_reactive_loops_hir(func: &mut HIRFunction) {
 ///   property type via the shapes or the `isHookName` fallback in
 ///   `getPropertyType`, which returns a type with `hookKind: Custom`.
 pub fn flatten_scopes_with_hooks_or_use_hir(func: &mut HIRFunction) {
-    let mut block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
-    block_ids.sort();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
 
     // Find scopes that contain hook calls
     let mut active_scopes: Vec<(BlockId, BlockId)> = Vec::new(); // (block_id, fallthrough)
