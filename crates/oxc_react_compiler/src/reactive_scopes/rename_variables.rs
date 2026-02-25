@@ -18,7 +18,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::hir::{
     DeclarationId, HIRFunction, Identifier, IdentifierName, InstructionValue, ReactiveBlock,
     ReactiveFunction, ReactiveInstruction, ReactiveParam, ReactiveStatement, ReactiveTerminal,
-    ReactiveValue,
+    ReactiveValue, hir_builder::compute_rpo_order,
 };
 
 // =====================================================================================
@@ -629,7 +629,11 @@ fn visit_hir_function(func: &mut HIRFunction, scopes: &mut Scopes) {
             }
         }
     }
-    for block in func.body.blocks.values_mut() {
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
+    for block_id in &block_ids {
+        let Some(block) = func.body.blocks.get_mut(block_id) else {
+            continue;
+        };
         for instr in &mut block.instructions {
             visit_hir_instruction(instr, scopes);
             match &mut instr.value {
@@ -799,7 +803,9 @@ fn collect_globals_from_value(value: &ReactiveValue, names: &mut FxHashSet<Strin
 }
 
 fn collect_globals_from_hir_function(func: &HIRFunction, names: &mut FxHashSet<String>) {
-    for block in func.body.blocks.values() {
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
+    for block_id in &block_ids {
+        let Some(block) = func.body.blocks.get(block_id) else { continue };
         for instr in &block.instructions {
             match &instr.value {
                 InstructionValue::LoadGlobal(v) => {

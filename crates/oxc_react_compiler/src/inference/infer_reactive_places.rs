@@ -22,7 +22,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     hir::{
         BlockId, Effect, HIRFunction, Identifier, IdentifierId, InstructionValue, Place,
-        ReactiveParam,
+        ReactiveParam, hir_builder::compute_rpo_order,
         object_shape::{BUILT_IN_USE_OPERATOR_ID, HookKind},
         visitors::{each_instruction_lvalue, each_instruction_value_operand},
     },
@@ -319,9 +319,8 @@ pub fn infer_reactive_places(func: &mut HIRFunction) {
         place.reactive = true;
     }
 
-    // Build a sorted list of block IDs for deterministic iteration.
-    let mut block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
-    block_ids.sort();
+    // Build a RPO-ordered list of block IDs for deterministic iteration.
+    let block_ids: Vec<BlockId> = compute_rpo_order(func.body.entry, &func.body.blocks);
 
     loop {
         // Phase 1: Pre-compute control dominator info for all blocks.
@@ -589,7 +588,7 @@ fn propagate_reactivity_to_inner_functions(
     is_outermost: bool,
     reactive_identifiers: &mut ReactivityMap,
 ) {
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in block_ids {
         // First pass: collect which instructions have nested functions
         let nested_func_indices: Vec<usize> = {

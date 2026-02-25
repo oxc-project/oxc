@@ -29,9 +29,22 @@ use crate::{
 /// Returns the identifier's scope if the instruction `id` is within the scope's range.
 ///
 /// Port of `getPlaceScope` from `HIR/HIR.ts`.
-fn get_place_scope(id: InstructionId, place: &Place) -> Option<&ReactiveScope> {
+///
+/// In the TS reference, all identifiers sharing a scope hold a reference to the same
+/// `ReactiveScope` object. When the align pass mutates `scope.range.end`, all references
+/// see the update immediately. In Rust, each identifier owns a cloned copy of the scope.
+/// During the align pass, `scope_range_updates` tracks the latest range for each scope.
+/// This overload checks `scope_range_updates` first so that the "is scope active?" check
+/// uses the most up-to-date range, matching TS reference semantics.
+fn get_place_scope<'a>(
+    id: InstructionId,
+    place: &'a Place,
+    scope_range_updates: &FxHashMap<ScopeId, MutableRange>,
+) -> Option<&'a ReactiveScope> {
     let scope = place.identifier.scope.as_ref()?;
-    if id >= scope.range.start && id < scope.range.end { Some(scope) } else { None }
+    // Use the updated range if available, otherwise fall back to the identifier's range
+    let range = scope_range_updates.get(&scope.id).copied().unwrap_or(scope.range);
+    if id >= range.start && id < range.end { Some(scope) } else { None }
 }
 
 // =====================================================================================
@@ -53,7 +66,7 @@ pub fn align_method_call_scopes(func: &mut HIRFunction) {
     // Track all scope ranges by ScopeId for later merging
     let mut scope_ranges: FxHashMap<ScopeId, MutableRange> = FxHashMap::default();
 
-    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in &block_ids {
         let Some(block) = func.body.blocks.get(block_id) else {
             continue;
@@ -227,7 +240,7 @@ fn find_scopes_to_merge(
 /// must be in the same ReactiveBlock as object method definitions must be inlined.
 pub fn align_object_method_scopes(func: &mut HIRFunction) {
     // Handle inner functions first: recurse into nested functions
-    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in &block_ids {
         let Some(block) = func.body.blocks.get_mut(block_id) else {
             continue;
@@ -584,7 +597,7 @@ fn record_place(
     seen: &mut FxHashSet<ScopeId>,
     scope_range_updates: &mut FxHashMap<ScopeId, MutableRange>,
 ) {
-    let scope = get_place_scope(id, place);
+    let scope = get_place_scope(id, place, scope_range_updates);
     let Some(scope) = scope else { return };
     let scope_id = scope.id;
 
@@ -618,7 +631,7 @@ fn apply_scope_range_updates(
         }
     }
 
-    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else {
             continue;
