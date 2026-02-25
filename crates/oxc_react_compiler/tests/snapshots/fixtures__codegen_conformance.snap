@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 484/1040 passed (46.5%)
+Codegen conformance: 489/1040 passed (47.0%)
 
 Failure breakdown:
   parse_error:    27
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:525
+  output_mismatch:520
   no_expected:    1
 
 Failed fixtures:
@@ -78,7 +78,6 @@ Failed fixtures:
   [output_mismatch] capture-ref-for-later-mutation.tsx
   [output_mismatch] capture_mutate-across-fns.js
   [output_mismatch] capturing-arrow-function-1.js
-  [output_mismatch] capturing-func-mutate-3.js
   [output_mismatch] capturing-func-mutate.js
   [output_mismatch] capturing-func-no-mutate.js
   [output_mismatch] capturing-func-simple-alias-iife.js
@@ -92,7 +91,6 @@ Failed fixtures:
   [output_mismatch] capturing-function-member-expr-arguments.js
   [output_mismatch] capturing-function-member-expr-call.js
   [output_mismatch] capturing-function-renamed-ref.js
-  [output_mismatch] capturing-function-shadow-captured.js
   [output_mismatch] capturing-function-skip-computed-path.js
   [output_mismatch] capturing-function-within-block.js
   [output_mismatch] capturing-member-expr.js
@@ -111,7 +109,6 @@ Failed fixtures:
   [output_mismatch] concise-arrow-expr.js
   [output_mismatch] conditional-early-return.js
   [output_mismatch] conditional-on-mutable.js
-  [output_mismatch] console-readonly.js
   [output_mismatch] const-propagation-into-function-expression-global.js
   [output_mismatch] const-propagation-into-function-expression-primitive.js
   [output_mismatch] constant-prop-to-object-method.js
@@ -250,7 +247,6 @@ Failed fixtures:
   [output_mismatch] invalid-set-state-in-effect-verbose-force-update.js
   [output_mismatch] invalid-set-state-in-effect-verbose-non-local-derived.js
   [output_mismatch] invalid-setState-in-useEffect-namespace.js
-  [output_mismatch] invalid-setState-in-useEffect-transitive.js
   [output_mismatch] invalid-setState-in-useEffect.js
   [output_mismatch] invalid-unused-usememo.js
   [output_mismatch] jsx-attribute-with-jsx-element-value.js
@@ -520,7 +516,6 @@ Failed fixtures:
   [output_mismatch] try-catch-within-mutable-range.js
   [output_mismatch] try-catch-within-object-method-returns-caught-value.js
   [output_mismatch] ts-enum-inline.tsx
-  [output_mismatch] ts-non-null-expression-default-value.tsx
   [parse_error] type-alias-used-as-annotation_.flow.js
   [parse_error] type-alias-used-as-variable-annotation_.flow.js
   [parse_error] type-alias.flow.js

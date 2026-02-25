@@ -26,8 +26,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
     DeclarationId, InstructionValue, Place, ReactiveBlock, ReactiveFunction, ReactiveStatement,
-    ReactiveTerminal, ReactiveValue, ScopeId,
-    object_shape::ShapeRegistry,
+    ReactiveTerminal, ReactiveValue, ScopeId, object_shape::ShapeRegistry,
 };
 
 // =====================================================================================
