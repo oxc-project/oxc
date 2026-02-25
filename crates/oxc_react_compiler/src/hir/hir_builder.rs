@@ -1003,27 +1003,36 @@ pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
             }
         }
         Terminal::For(t) => {
+            // TS eachTerminalSuccessor only yields init for 'for' terminals.
+            // The other blocks (test, update, loop) are reached transitively
+            // through the control flow within init/test/update, not directly
+            // from the for-terminal's block.
             successors.push(t.init);
-            successors.push(t.test);
-            if let Some(update) = t.update {
-                successors.push(update);
-            }
-            successors.push(t.r#loop);
         }
         Terminal::ForOf(t) => {
+            // TS eachTerminalSuccessor only yields init for 'for-of' terminals.
             successors.push(t.init);
-            successors.push(t.test);
-            successors.push(t.r#loop);
         }
         Terminal::ForIn(t) => {
+            // TS eachTerminalSuccessor only yields init for 'for-in' terminals.
             successors.push(t.init);
-            successors.push(t.r#loop);
         }
         Terminal::DoWhile(t) => {
+            // TS eachTerminalSuccessor only yields loop for 'do-while' terminals.
+            // However, we also include test to avoid regressions from changing the
+            // predecessor structure for do-while loops. The test block's predecessor
+            // set affects SSA phi creation and downstream dependency analysis.
+            // TODO: Match TS exactly (only yield loop) once the dependency analysis
+            // is fixed to handle the reduced predecessor set correctly.
             successors.push(t.r#loop);
             successors.push(t.test);
         }
         Terminal::While(t) => {
+            // TS eachTerminalSuccessor only yields test for 'while' terminals.
+            // However, we also include loop to avoid regressions from changing the
+            // predecessor structure for while loops.
+            // TODO: Match TS exactly (only yield test) once the dependency analysis
+            // is fixed to handle the reduced predecessor set correctly.
             successors.push(t.test);
             successors.push(t.r#loop);
         }
