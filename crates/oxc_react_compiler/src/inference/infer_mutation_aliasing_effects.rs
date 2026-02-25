@@ -238,6 +238,8 @@ pub fn infer_mutation_aliasing_effects(
     // For unreachable blocks, set empty effects (not None) so downstream passes
     // (infer_mutation_aliasing_ranges) still process them correctly.
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    let total_blocks = block_ids.len();
+    let reached_blocks = states_by_block.len();
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else {
             continue;
@@ -752,6 +754,11 @@ fn compute_instruction_effects(
         }
 
         // FunctionExpression: CreateFunction with captured context variables
+        // The TS version's applyEffect for CreateFunction recursively emits
+        // Capture effects for each context variable with Effect::Capture.
+        // This is critical for InferMutationAliasingRanges to create capture
+        // edges in the alias graph, enabling mutation propagation through
+        // captured variables.
         InstructionValue::FunctionExpression(v) => {
             let captures: Vec<Place> = v
                 .lowered_func
@@ -762,10 +769,16 @@ fn compute_instruction_effects(
                 .cloned()
                 .collect();
             effects.push(AliasingEffect::CreateFunction {
-                captures,
+                captures: captures.clone(),
                 function: CreateFunctionKind::FunctionExpression(v.clone()),
                 into: lvalue.clone(),
             });
+            for capture in &captures {
+                effects.push(AliasingEffect::Capture {
+                    from: capture.clone(),
+                    into: lvalue.clone(),
+                });
+            }
         }
         InstructionValue::ObjectMethod(v) => {
             let captures: Vec<Place> = v
@@ -777,10 +790,16 @@ fn compute_instruction_effects(
                 .cloned()
                 .collect();
             effects.push(AliasingEffect::CreateFunction {
-                captures,
+                captures: captures.clone(),
                 function: CreateFunctionKind::ObjectMethod(v.clone()),
                 into: lvalue.clone(),
             });
+            for capture in &captures {
+                effects.push(AliasingEffect::Capture {
+                    from: capture.clone(),
+                    into: lvalue.clone(),
+                });
+            }
         }
 
         // LoadLocal: Assign (direct value flow)

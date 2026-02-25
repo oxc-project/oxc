@@ -474,8 +474,42 @@ pub fn infer_mutation_aliasing_ranges(
         let place = param_place(param);
         state.create(place, NodeValue::Object);
     }
+    // Context variables: After SSA renaming, func.context operand ids may differ from
+    // the ids used in LoadContext/StoreContext instructions (in TS these are reference
+    // types that stay in sync; in Rust they're cloned values that diverge).
+    // We build a mapping from declaration_id -> context operand id, then also create
+    // nodes for any LoadContext/StoreContext place ids that differ, linking them via
+    // alias edges so mutation propagation works correctly.
+    let mut ctx_decl_to_id: FxHashMap<crate::hir::DeclarationId, IdentifierId> =
+        FxHashMap::default();
     for ctx in &func.context {
         state.create(ctx, NodeValue::Object);
+        ctx_decl_to_id.insert(ctx.identifier.declaration_id, ctx.identifier.id);
+    }
+    // Pre-scan instructions for LoadContext/StoreContext to find diverged ids.
+    // When SSA creates different ids for the same context variable, we need the
+    // graph to treat them as the same node. The simplest approach: don't create
+    // a separate node — instead, add the SSA-renamed id as an ADDITIONAL key
+    // pointing to the same context variable's existing node.
+    // Build a remap table: SSA-renamed context id → original context id.
+    // After SSA, LoadContext/StoreContext may reference different ids than func.context.
+    // In TS these are reference types that stay in sync; in Rust they're cloned values.
+    let mut ctx_ssa_remap: FxHashMap<IdentifierId, IdentifierId> = FxHashMap::default();
+    for block in func.body.blocks.values() {
+        for instr in &block.instructions {
+            let ctx_place = match &instr.value {
+                InstructionValue::LoadContext(v) => Some(&v.place),
+                InstructionValue::StoreContext(v) => Some(&v.lvalue_place),
+                _ => None,
+            };
+            if let Some(place) = ctx_place {
+                if let Some(&original_id) = ctx_decl_to_id.get(&place.identifier.declaration_id) {
+                    if place.identifier.id != original_id {
+                        ctx_ssa_remap.insert(place.identifier.id, original_id);
+                    }
+                }
+            }
+        }
     }
     state.create(&func.returns, NodeValue::Object);
 
@@ -520,6 +554,17 @@ pub fn infer_mutation_aliasing_ranges(
         seen_blocks.insert(block_id);
 
         // Process instruction effects
+        // Helper: remap SSA-renamed context variable ids back to original ids
+        let remap = |place: &Place| -> Place {
+            if let Some(&original_id) = ctx_ssa_remap.get(&place.identifier.id) {
+                Place {
+                    identifier: crate::hir::Identifier { id: original_id, ..place.identifier.clone() },
+                    ..place.clone()
+                }
+            } else {
+                place.clone()
+            }
+        };
         for instr in &block.instructions {
             let Some(effects) = &instr.effects else {
                 continue;
@@ -541,36 +586,40 @@ pub fn infer_mutation_aliasing_ranges(
                     AliasingEffect::CreateFrom { from, into } => {
                         let i = index;
                         index += 1;
-                        state.create_from(i, from, into);
+                        let from_remapped = remap(from);
+                        state.create_from(i, &from_remapped, into);
                     }
                     AliasingEffect::Assign { from, into } => {
+                        let from_remapped = remap(from);
+                        let into_remapped = remap(into);
                         // If the node doesn't exist yet, create it
-                        if !state.nodes.contains_key(&into.identifier.id) {
-                            state.create(into, NodeValue::Object);
+                        if !state.nodes.contains_key(&into_remapped.identifier.id) {
+                            state.create(&into_remapped, NodeValue::Object);
                         }
                         let i = index;
                         index += 1;
-                        state.assign(i, from, into);
+                        state.assign(i, &from_remapped, &into_remapped);
                     }
                     AliasingEffect::Alias { from, into } => {
                         let i = index;
                         index += 1;
-                        state.assign(i, from, into);
+                        state.assign(i, &remap(from), &remap(into));
                     }
                     AliasingEffect::MaybeAlias { from, into } => {
                         let i = index;
                         index += 1;
-                        state.maybe_alias(i, from, into);
+                        state.maybe_alias(i, &remap(from), &remap(into));
                     }
                     AliasingEffect::Capture { from, into } => {
                         let i = index;
                         index += 1;
-                        state.capture(i, from, into);
+                        state.capture(i, &remap(from), &remap(into));
                     }
                     AliasingEffect::MutateTransitive { value }
                     | AliasingEffect::MutateTransitiveConditionally { value } => {
                         let i = index;
                         index += 1;
+                        let remapped = remap(value);
                         let kind = if matches!(effect, AliasingEffect::MutateTransitive { .. }) {
                             MutationKind::Definite
                         } else {
@@ -581,7 +630,7 @@ pub fn infer_mutation_aliasing_ranges(
                             id: instr.id,
                             transitive: true,
                             kind,
-                            place_id: value.identifier.id,
+                            place_id: remapped.identifier.id,
                             loc: value.loc,
                             reason: None,
                         });
@@ -590,6 +639,7 @@ pub fn infer_mutation_aliasing_ranges(
                     | AliasingEffect::MutateConditionally { value } => {
                         let i = index;
                         index += 1;
+                        let remapped = remap(value);
                         let (kind, reason) = match effect {
                             AliasingEffect::Mutate { reason, .. } => {
                                 (MutationKind::Definite, reason.clone())
@@ -601,7 +651,7 @@ pub fn infer_mutation_aliasing_ranges(
                             id: instr.id,
                             transitive: false,
                             kind,
-                            place_id: value.identifier.id,
+                            place_id: remapped.identifier.id,
                             loc: value.loc,
                             reason,
                         });
@@ -615,7 +665,8 @@ pub fn infer_mutation_aliasing_ranges(
                     AliasingEffect::Render { place } => {
                         let i = index;
                         index += 1;
-                        renders.push(DeferredRender { index: i, place_id: place.identifier.id });
+                        let remapped = remap(place);
+                        renders.push(DeferredRender { index: i, place_id: remapped.identifier.id });
                         function_effects.push(effect.clone());
                     }
                     // ImmutableCapture, Freeze, Apply — no graph action in this pass
@@ -637,7 +688,7 @@ pub fn infer_mutation_aliasing_ranges(
         if let Terminal::Return(ret) = &block.terminal {
             let i = index;
             index += 1;
-            state.assign(i, &ret.value, &func.returns);
+            state.assign(i, &remap(&ret.value), &func.returns);
         }
 
         // Handle MaybeThrow and Return terminal effects
