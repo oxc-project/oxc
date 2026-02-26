@@ -2,6 +2,7 @@ import { runCli } from "./bindings";
 import {
   initExternalFormatter,
   formatEmbeddedCode,
+  formatEmbeddedDoc,
   formatFile,
   sortTailwindClasses,
   disposeExternalFormatter,
@@ -28,6 +29,7 @@ void (async () => {
     args,
     initExternalFormatter,
     formatEmbeddedCode,
+    formatEmbeddedDoc,
     formatFile,
     sortTailwindClasses,
   );

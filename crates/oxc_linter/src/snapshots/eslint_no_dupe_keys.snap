@@ -74,20 +74,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe-keys): Duplicate key '10'
-   ╭─[no_dupe_keys.tsx:1:11]
- 1 │ var x = { 1_0: 1, 10: 2 };
-   ·           ─┬─     ─┬
-   ·            │       ╰── and duplicated here
-   ·            ╰── Key is first defined here
-   ╰────
-  help: Consider removing the duplicated key
-
   ⚠ eslint(no-dupe-keys): Duplicate key '1'
    ╭─[no_dupe_keys.tsx:1:11]
  1 │ var x = { 1n: 1, 1: 2 };
    ·           ─┬     ┬
    ·            │     ╰── and duplicated here
+   ·            ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key '10'
+   ╭─[no_dupe_keys.tsx:1:11]
+ 1 │ var x = { 1_0: 1, 10: 2 };
+   ·           ─┬─     ─┬
+   ·            │       ╰── and duplicated here
    ·            ╰── Key is first defined here
    ╰────
   help: Consider removing the duplicated key
@@ -102,15 +102,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing the duplicated key
 
   ⚠ eslint(no-dupe-keys): Duplicate key 'bar'
-   ╭─[no_dupe_keys.tsx:2:3]
+   ╭─[no_dupe_keys.tsx:2:15]
  1 │ var foo = {
- 2 │   bar: 1,
-   ·   ─┬─
-   ·    ╰── Key is first defined here
- 3 │   bar: 1,
-   ·   ─┬─
-   ·    ╰── and duplicated here
- 4 │ }
+ 2 │               bar: 1,
+   ·               ─┬─
+   ·                ╰── Key is first defined here
+ 3 │               bar: 1,
+   ·               ─┬─
+   ·                ╰── and duplicated here
+ 4 │             }
    ╰────
   help: Consider removing the duplicated key
 
@@ -147,5 +147,59 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───────┬──────      ──────┬─────
    ·                   │                  ╰── and duplicated here
    ·                   ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key '__proto__'
+   ╭─[no_dupe_keys.tsx:1:12]
+ 1 │ var x = { ['__proto__']: null, ['__proto__']: null };
+   ·            ─────┬─────          ─────┬─────
+   ·                 │                    ╰── and duplicated here
+   ·                 ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key '__proto__'
+   ╭─[no_dupe_keys.tsx:1:12]
+ 1 │ var x = { ['__proto__']: null, __proto__ };
+   ·            ─────┬─────         ────┬────
+   ·                 │                  ╰── and duplicated here
+   ·                 ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key '__proto__'
+   ╭─[no_dupe_keys.tsx:1:12]
+ 1 │ var x = { ['__proto__']: null, __proto__() {} };
+   ·            ─────┬─────         ────┬────
+   ·                 │                  ╰── and duplicated here
+   ·                 ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key '__proto__'
+   ╭─[no_dupe_keys.tsx:1:12]
+ 1 │ var x = { ['__proto__']: null, get __proto__() {} };
+   ·            ─────┬─────             ────┬────
+   ·                 │                      ╰── and duplicated here
+   ·                 ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key '__proto__'
+   ╭─[no_dupe_keys.tsx:1:12]
+ 1 │ var x = { ['__proto__']: null, set __proto__(value) {} };
+   ·            ─────┬─────             ────┬────
+   ·                 │                      ╰── and duplicated here
+   ·                 ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
+  ⚠ eslint(no-dupe-keys): Duplicate key 'a'
+   ╭─[no_dupe_keys.tsx:1:28]
+ 1 │ var x = { __proto__: null, a: 5, a: 6 };
+   ·                            ┬     ┬
+   ·                            │     ╰── and duplicated here
+   ·                            ╰── Key is first defined here
    ╰────
   help: Consider removing the duplicated key

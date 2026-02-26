@@ -10,7 +10,10 @@ use crate::{
 };
 
 fn no_extra_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("extra non-null assertion").with_label(span)
+    OxcDiagnostic::warn("extra non-null assertion")
+        .with_help("Remove the redundant non-null assertion operator (`!`).")
+        .with_note("The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
