@@ -35,6 +35,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
+    "prettier-plugin-astro": "0.14.1",
     "tinypool": "2.1.0"
   },
   "napi": {

@@ -190,6 +190,16 @@ pub struct FormatConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vue_indent_script_and_style: Option<bool>,
+    /// Enable/disable attribute shorthand if attribute name and expression are the same in Astro.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub astro_allow_shorthand: Option<bool>,
+    /// Skip formatting of the frontmatter in Astro files.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub astro_skip_frontmatter: Option<bool>,
 
     // ============================================================================================
     // Below are our own extensions, handled by Oxfmt
@@ -980,6 +990,7 @@ pub fn sync_external_options(options: &FormatOptions, config: &mut Value) {
 static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     "html",
     "vue",
+    "astro",
     "angular",
     "glimmer",
 };
@@ -992,6 +1003,7 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
 static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     // "html",
     "vue",
+    "astro",
     // "markdown",
     // "mdx",
 };
@@ -1559,6 +1571,45 @@ mod tests_sync_external_options {
             plugin_obj.get("filepath"),
             Some(&Value::String("/tmp/foo/bar/App.vue".to_string()))
         );
+    }
+
+    #[test]
+    #[cfg(feature = "napi")]
+    fn test_finalize_external_options_astro_parser() {
+        use std::path::PathBuf;
+
+        let json_string = r#"{
+            "printWidth": 100,
+            "astroAllowShorthand": true,
+            "astroSkipFrontmatter": false,
+            "experimentalSortImports": { "order": "asc" }
+        }"#;
+        let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
+
+        let strategy = super::super::FormatFileStrategy::ExternalFormatter {
+            path: PathBuf::from("/tmp/foo/Layout.astro"),
+            parser_name: "astro",
+        };
+        finalize_external_options(&mut raw_config, &strategy);
+
+        let obj = raw_config.as_object().unwrap();
+
+        // Astro is in OXFMT_PARSERS, so _oxfmtPluginOptionsJson should be set
+        let plugin_options_json = obj
+            .get("_oxfmtPluginOptionsJson")
+            .and_then(Value::as_str)
+            .expect("Expected `_oxfmtPluginOptionsJson` to be set for astro parser");
+
+        let plugin_options: Value = serde_json::from_str(plugin_options_json).unwrap();
+        let plugin_obj = plugin_options.as_object().unwrap();
+        assert_eq!(
+            plugin_obj.get("filepath"),
+            Some(&Value::String("/tmp/foo/Layout.astro".to_string()))
+        );
+
+        // Astro-specific options are passed through to Prettier (not removed)
+        assert_eq!(obj.get("astroAllowShorthand"), Some(&Value::Bool(true)));
+        assert_eq!(obj.get("astroSkipFrontmatter"), Some(&Value::Bool(false)));
     }
 }
 

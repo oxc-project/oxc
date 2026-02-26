@@ -21,6 +21,7 @@ export default defineConfig({
     "@prettier/plugin-pug",
     "@shopify/prettier-plugin-liquid",
     "@zackad/prettier-plugin-twig",
+    // Cannot bundle: @astrojs/compiler loads astro.wasm at runtime via file path
     "prettier-plugin-astro",
     "prettier-plugin-marko",
     "prettier-plugin-svelte",

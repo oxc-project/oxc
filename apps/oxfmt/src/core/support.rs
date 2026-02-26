@@ -203,6 +203,9 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     if extension == Some("vue") {
         return Some("vue");
     }
+    if extension == Some("astro") {
+        return Some("astro");
+    }
     if extension == Some("mjml") {
         return Some("mjml");
     }
@@ -399,6 +402,8 @@ mod tests {
             ("email.mjml", Some("mjml")),
             // Vue
             ("App.vue", Some("vue")),
+            // Astro
+            ("Layout.astro", Some("astro")),
             // CSS
             ("styles.css", Some("css")),
             ("app.wxss", Some("css")),

@@ -87,7 +87,10 @@ export type FormatFileParam = {
 export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
   const prettier = await loadPrettier();
 
+  // Enable Astro plugin when parser is "astro"
+  await setupAstroPlugin(options);
   // Enable Tailwind CSS plugin for non-JS files if needed
+  // NOTE: Tailwind must come after framework plugins (Astro, etc.) to wrap their printers
   await setupTailwindPlugin(options);
   // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
   // NOTE: This must be last since Prettier plugins are applied in order
@@ -162,6 +165,32 @@ export async function sortTailwindClasses({
   });
 
   return sorter.sortClassAttributes(classes);
+}
+
+// ---
+// Astro support
+// ---
+
+let astroPluginCache: typeof import("prettier-plugin-astro");
+
+async function loadAstroPlugin(): Promise<typeof import("prettier-plugin-astro")> {
+  if (astroPluginCache) return astroPluginCache;
+
+  astroPluginCache = await import("prettier-plugin-astro");
+  return astroPluginCache;
+}
+
+/**
+ * Load Astro plugin when parser is "astro".
+ * The parser name is set by Rust side based on file extension.
+ */
+async function setupAstroPlugin(options: Options): Promise<void> {
+  if (options.parser !== "astro") return;
+
+  const astroPlugin = await loadAstroPlugin();
+
+  options.plugins ??= [];
+  options.plugins.push(astroPlugin as Plugin);
 }
 
 // ---
