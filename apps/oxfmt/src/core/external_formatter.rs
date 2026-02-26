@@ -28,13 +28,13 @@ pub type JsInitExternalFormatterCb = ThreadsafeFunction<
 >;
 
 /// Type alias for the callback function signature.
-/// Takes (options, code) as arguments and returns formatted code.
+/// Takes (options, code) as arguments and returns a wrapped result.
 /// The `options` object includes `parser` field set by Rust side.
 pub type JsFormatEmbeddedCb = ThreadsafeFunction<
     // Input arguments
     FnArgs<(Value, String)>, // (options, code)
     // Return type (what JS function returns)
-    Promise<String>,
+    Promise<Value>,
     // Arguments (repeated)
     FnArgs<(Value, String)>,
     // Error status
@@ -141,7 +141,7 @@ impl std::fmt::Debug for ExternalFormatter {
 impl ExternalFormatter {
     /// Create an [`ExternalFormatter`] from JS callbacks.
     ///
-    /// The ThreadsafeFunctions are wrapped in `Arc<Mutex<Option<...>>>` to allow
+    /// The ThreadsafeFunctions are wrapped in `Arc<RwLock<Option<...>>>` to allow
     /// explicit cleanup via the `cleanup()` method. This prevents use-after-free
     /// crashes on Node.js exit when V8 cleans up global handles.
     pub fn new(
@@ -351,7 +351,7 @@ fn wrap_format_embedded(
             let status = cb.call_async(FnArgs::from((options, code.to_string()))).await;
             match status {
                 Ok(promise) => match promise.await {
-                    Ok(formatted_code) => Ok(formatted_code),
+                    Ok(result) => parse_embedded_callback_result(result),
                     Err(err) => Err(err.reason.clone()),
                 },
                 Err(err) => Err(err.reason.clone()),
@@ -360,6 +360,39 @@ fn wrap_format_embedded(
         drop(guard);
         result
     })
+}
+
+/// Parse embedded formatter callback result.
+///
+/// New callback contract:
+/// - `{ ok: true, code: string }` on success
+/// - `{ ok: false, error: string }` on recoverable formatting failure
+///
+/// Legacy fallback:
+/// - plain `string` is also accepted as success.
+fn parse_embedded_callback_result(value: Value) -> Result<String, String> {
+    let invalid_response =
+        || "Invalid embedded formatter response (expected `{ ok, code|error }`)".to_string();
+
+    match value {
+        Value::String(code) => Ok(code),
+        Value::Object(map) => {
+            let Some(ok) = map.get("ok").and_then(Value::as_bool) else {
+                return Err(invalid_response());
+            };
+            if ok {
+                map.get("code")
+                    .and_then(Value::as_str)
+                    .map(ToString::to_string)
+                    .ok_or_else(invalid_response)
+            } else {
+                let err =
+                    map.get("error").and_then(Value::as_str).unwrap_or("Unknown embedded error");
+                Err(err.to_string())
+            }
+        }
+        _ => Err(invalid_response()),
+    }
 }
 
 /// Wrap JS `formatFile` callback as a normal Rust function.

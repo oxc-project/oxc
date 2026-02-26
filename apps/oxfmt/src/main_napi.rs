@@ -36,7 +36,9 @@ pub async fn run_cli(
     args: Vec<String>,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
-    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
+    #[napi(
+        ts_arg_type = "(options: Record<string, any>, code: string) => Promise<{ ok: boolean; code?: string; error?: string }>"
+    )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
@@ -140,7 +142,9 @@ pub async fn format(
     options: Option<Value>,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
-    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
+    #[napi(
+        ts_arg_type = "(options: Record<string, any>, code: string) => Promise<{ ok: boolean; code?: string; error?: string }>"
+    )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
@@ -176,7 +180,9 @@ pub async fn js_text_to_doc(
     parent_context: String,
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
-    #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
+    #[napi(
+        ts_arg_type = "(options: Record<string, any>, code: string) => Promise<{ ok: boolean; code?: string; error?: string }>"
+    )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,

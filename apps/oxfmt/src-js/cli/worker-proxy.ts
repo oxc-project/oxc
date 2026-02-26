@@ -2,6 +2,7 @@ import Tinypool from "tinypool";
 import { resolvePlugins } from "../libs/apis";
 import type {
   FormatEmbeddedCodeParam,
+  FormatEmbeddedCodeResult,
   FormatFileParam,
   SortTailwindClassesArgs,
 } from "../libs/apis";
@@ -34,10 +35,13 @@ export async function disposeExternalFormatter(): Promise<void> {
 export async function formatEmbeddedCode(
   options: FormatEmbeddedCodeParam["options"],
   code: string,
-): Promise<string> {
+): Promise<FormatEmbeddedCodeResult> {
   return pool!
-    .run({ options, code } satisfies FormatEmbeddedCodeParam, { name: "formatEmbeddedCode" })
-    .catch(rethrowAsError);
+    .run({ options, code } satisfies FormatEmbeddedCodeParam, {
+      name: "formatEmbeddedCode",
+    })
+    .then((formatted) => ({ ok: true, code: formatted }))
+    .catch((err) => ({ ok: false, error: errorToMessage(err) }));
 }
 
 export async function formatFile(
@@ -68,10 +72,19 @@ export async function sortTailwindClasses(
 function rethrowAsError(err: unknown): never {
   if (err instanceof Error) throw err;
   if (err !== null && typeof err === "object") {
-    const obj = err as { name: string; message: string };
-    const newErr = new Error(obj.message);
-    newErr.name = obj.name;
+    const obj = err as { name?: unknown; message?: unknown };
+    const newErr = new Error(errorToMessage(err));
+    if (typeof obj.name === "string") newErr.name = obj.name;
     throw newErr;
   }
   throw new Error(String(err));
+}
+
+function errorToMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err !== null && typeof err === "object") {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return String(err);
 }

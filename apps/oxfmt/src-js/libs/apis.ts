@@ -49,6 +49,10 @@ export type FormatEmbeddedCodeParam = {
   options: Options;
 };
 
+export type FormatEmbeddedCodeResult =
+  | { ok: true; code: string }
+  | { ok: false; error: string };
+
 /**
  * Format xxx-in-js code snippets
  *
@@ -70,6 +74,21 @@ export async function formatEmbeddedCode({
   // - Or, code has syntax errors
   // In such cases, Rust side will fallback to original code
   return prettier.format(code, options);
+}
+
+/**
+ * `formatEmbeddedCode()` wrapper that never rejects.
+ * Rust side receives a resolved object and handles fallback behavior there.
+ */
+export async function formatEmbeddedCodeSafe(
+  args: FormatEmbeddedCodeParam,
+): Promise<FormatEmbeddedCodeResult> {
+  try {
+    const code = await formatEmbeddedCode(args);
+    return { ok: true, code };
+  } catch (err) {
+    return { ok: false, error: errorToMessage(err) };
+  }
 }
 
 // ---
@@ -190,4 +209,13 @@ async function setupOxfmtPlugin(options: Options): Promise<void> {
 
   options.plugins ??= [];
   options.plugins.push(oxcPlugin);
+}
+
+function errorToMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err !== null && typeof err === "object") {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return String(err);
 }
