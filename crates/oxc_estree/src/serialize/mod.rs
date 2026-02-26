@@ -34,13 +34,12 @@ pub trait ESTree {
 }
 
 /// Trait for serializers.
-//
-// This trait contains public methods.
-// Internal methods we don't want to expose outside this crate are in [`SerializerPrivate`] trait.
-#[expect(private_bounds)]
-pub trait Serializer: SerializerPrivate {
+pub trait Serializer {
     /// `true` if output should contain TS fields
     const INCLUDE_TS_FIELDS: bool;
+
+    /// Type of `Formatter` this serializer uses.
+    type Formatter: Formatter;
 
     /// Type of struct serializer this serializer uses.
     type StructSerializer: StructSerializer;
@@ -62,12 +61,6 @@ pub trait Serializer: SerializerPrivate {
     /// These nodes cannot be serialized to JSON, because JSON doesn't support `BigInt`s or `RegExp`s.
     /// "Fix paths" can be used on JS side to locate these nodes and set their `value` fields correctly.
     fn record_fix_path(&mut self);
-}
-
-/// Trait containing internal methods of [`Serializer`]s that we don't want to expose outside this crate.
-trait SerializerPrivate: Sized {
-    /// Formatter type
-    type Formatter: Formatter;
 
     /// Get mutable reference to buffer.
     fn buffer_mut(&mut self) -> &mut CodeBuffer;
@@ -181,6 +174,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
     /// `true` if output should contain TS fields
     const INCLUDE_TS_FIELDS: bool = C::INCLUDE_TS_FIELDS;
 
+    type Formatter = F;
     type StructSerializer = ESTreeStructSerializer<'s, C, F>;
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
 
@@ -235,10 +229,6 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
 
         self.fixes_buffer.print_ascii_byte(b']');
     }
-}
-
-impl<C: Config, F: Formatter> SerializerPrivate for &mut ESTreeSerializer<C, F> {
-    type Formatter = F;
 
     /// Get mutable reference to buffer.
     #[inline(always)]
