@@ -2,9 +2,22 @@
   "cli_version": "0.4.2",
   "checkpoint_id": "5f8af813c1d2",
   "strategy": "manual-commit",
-  "branch": "refactor/extract-oxc-jsdoc",
-  "checkpoints_count": 1,
+  "branch": "feat/formatter-jsdoc",
+  "checkpoints_count": 5,
   "files_touched": [
+    "crates/oxc_formatter/Cargo.toml",
+    "crates/oxc_formatter/src/formatter/jsdoc.rs",
+    "crates/oxc_formatter/src/formatter/mod.rs",
+    "crates/oxc_formatter/src/formatter/trivia.rs",
+    "crates/oxc_formatter/src/options.rs",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/basic.js",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/basic.js.snap",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/indented.js",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/indented.js.snap",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/options.json",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/tags.js",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/tags.js.snap",
+    "crates/oxc_formatter/tests/fixtures/mod.rs",
     "crates/oxc_semantic/Cargo.toml",
     "crates/oxc_semantic/src/builder.rs",
     "crates/oxc_semantic/src/lib.rs"
@@ -16,13 +29,20 @@
       "context": "/5f/8af813c1d2/0/context.md",
       "content_hash": "/5f/8af813c1d2/0/content_hash.txt",
       "prompt": "/5f/8af813c1d2/0/prompt.txt"
+    },
+    {
+      "metadata": "/5f/8af813c1d2/1/metadata.json",
+      "transcript": "/5f/8af813c1d2/1/full.jsonl",
+      "context": "/5f/8af813c1d2/1/context.md",
+      "content_hash": "/5f/8af813c1d2/1/content_hash.txt",
+      "prompt": "/5f/8af813c1d2/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 39,
-    "cache_creation_tokens": 26606,
-    "cache_read_tokens": 5150675,
-    "output_tokens": 1445,
-    "api_call_count": 35
+    "input_tokens": 176,
+    "cache_creation_tokens": 457435,
+    "cache_read_tokens": 17033028,
+    "output_tokens": 12380,
+    "api_call_count": 160
   }
 }

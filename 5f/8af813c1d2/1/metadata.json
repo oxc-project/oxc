@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "5f8af813c1d2",
+  "session_id": "ab0deaaa-8551-4c55-be46-47fb1d5fca93",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-26T06:22:37.903869Z",
+  "branch": "feat/formatter-jsdoc",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "crates/oxc_formatter/Cargo.toml",
+    "crates/oxc_formatter/src/formatter/jsdoc.rs",
+    "crates/oxc_formatter/src/formatter/mod.rs",
+    "crates/oxc_formatter/src/formatter/trivia.rs",
+    "crates/oxc_formatter/src/options.rs",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/basic.js",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/basic.js.snap",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/indented.js",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/indented.js.snap",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/options.json",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/tags.js",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/tags.js.snap",
+    "crates/oxc_formatter/tests/fixtures/mod.rs"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 137,
+    "cache_creation_tokens": 430829,
+    "cache_read_tokens": 11882353,
+    "output_tokens": 10935,
+    "api_call_count": 125
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-26T06:22:37.794724Z",
+    "agent_lines": 1189,
+    "human_added": 7315,
+    "human_modified": 4,
+    "human_removed": 0,
+    "total_committed": 8507,
+    "agent_percentage": 13.976725049958857
+  }
+}
