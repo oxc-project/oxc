@@ -19,7 +19,8 @@ use oxc_span::SourceType;
 
 pub use crate::ast_nodes::{AstNode, AstNodes};
 pub use crate::external_formatter::{
-    EmbeddedFormatterCallback, ExternalCallbacks, TailwindCallback,
+    EmbeddedDocFormatterCallback, EmbeddedFormatterCallback, EmbeddedIR, ExternalCallbacks,
+    TailwindCallback,
 };
 pub use crate::formatter::GroupId;
 pub use crate::formatter::format_element::tag::{DedentMode, Tag};

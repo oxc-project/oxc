@@ -14,9 +14,9 @@ use oxc_span::SourceType;
 
 use crate::{
     core::{
-        ExternalFormatter, FormatFileStrategy, FormatResult, JsFormatEmbeddedCb, JsFormatFileCb,
-        JsInitExternalFormatterCb, JsSortTailwindClassesCb, ResolvedOptions, SourceFormatter,
-        resolve_options_from_value,
+        ExternalFormatter, FormatFileStrategy, FormatResult, JsFormatEmbeddedCb,
+        JsFormatEmbeddedDocCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
+        ResolvedOptions, SourceFormatter, resolve_options_from_value,
     },
     prettier_compat::to_prettier_doc,
 };
@@ -52,6 +52,7 @@ pub fn run(
     parent_context: &str,
     init_external_formatter_cb: JsInitExternalFormatterCb,
     format_embedded_cb: JsFormatEmbeddedCb,
+    format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     format_file_cb: JsFormatFileCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<String> {
@@ -72,6 +73,7 @@ pub fn run(
             oxfmt_plugin_options_json,
             init_external_formatter_cb,
             format_embedded_cb,
+            format_embedded_doc_cb,
             format_file_cb,
             sort_tailwind_classes_cb,
         )?
@@ -92,6 +94,7 @@ fn run_full(
     oxfmt_plugin_options_json: &str,
     init_external_formatter_cb: JsInitExternalFormatterCb,
     format_embedded_cb: JsFormatEmbeddedCb,
+    format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     format_file_cb: JsFormatFileCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<Value> {
@@ -105,6 +108,7 @@ fn run_full(
     let external_formatter = ExternalFormatter::new(
         init_external_formatter_cb,
         format_embedded_cb,
+        format_embedded_doc_cb,
         format_file_cb,
         sort_tailwind_classes_cb,
     );

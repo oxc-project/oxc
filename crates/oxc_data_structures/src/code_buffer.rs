@@ -538,6 +538,17 @@ impl CodeBuffer {
         unsafe { self.buf.set_len(len + bytes) };
     }
 
+    /// Remove trailing whitespace (spaces and tabs) from the buffer.
+    ///
+    /// This trims trailing whitespace before line breaks, matching Prettier's `trimEnd(out)` behavior.
+    /// <https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/document/printer/printer.js#L535>
+    #[inline]
+    pub fn trim_trailing_ascii_whitespace(&mut self) {
+        while self.buf.last().is_some_and(|&b| b == b' ' || b == b'\t') {
+            self.buf.pop();
+        }
+    }
+
     /// Get contents of buffer as a byte slice.
     ///
     /// # Example

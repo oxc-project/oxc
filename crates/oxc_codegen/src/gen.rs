@@ -2666,6 +2666,11 @@ impl Gen for MethodDefinition<'_> {
             p.print_str("static");
             p.print_soft_space();
         }
+        if self.r#override {
+            p.print_space_before_identifier();
+            p.print_str("override");
+            p.print_soft_space();
+        }
         match &self.kind {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
             MethodDefinitionKind::Get => {
@@ -2746,6 +2751,11 @@ impl Gen for PropertyDefinition<'_> {
         if self.r#static {
             p.print_space_before_identifier();
             p.print_str("static");
+            p.print_soft_space();
+        }
+        if self.r#override {
+            p.print_space_before_identifier();
+            p.print_str("override");
             p.print_soft_space();
         }
         if self.readonly {
