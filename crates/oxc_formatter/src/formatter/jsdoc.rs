@@ -147,9 +147,8 @@ pub fn format_jsdoc_comment<'a>(
                 let comment_text = comment_part.parsed();
                 let comment_text = comment_text.trim();
                 let mut tag_line = format!("@{kind}");
-                if let Some(t) = type_part
-                    .as_ref()
-                    .map(oxc_jsdoc::parser::jsdoc_parts::JSDocTagTypePart::parsed)
+                if let Some(t) =
+                    type_part.as_ref().map(oxc_jsdoc::parser::jsdoc_parts::JSDocTagTypePart::parsed)
                 {
                     let normalized = normalize_type(t);
                     tag_line.push(' ');
@@ -192,8 +191,11 @@ pub fn format_jsdoc_comment<'a>(
                 } else if has_structured_content(comment_text) {
                     // Multi-line structured content: first paragraph on tag line, rest below
                     let should_capitalize = should_capitalize_tag(kind, options);
-                    let text =
-                        if should_capitalize { capitalize_first(comment_text) } else { comment_text.to_string() };
+                    let text = if should_capitalize {
+                        capitalize_first(comment_text)
+                    } else {
+                        comment_text.to_string()
+                    };
                     let (first_line, rest) = split_first_paragraph(&text);
                     let first_joined = first_line.split_whitespace().collect::<Vec<_>>().join(" ");
                     let mut tag_line = format!("@{kind} {first_joined}");
@@ -202,7 +204,8 @@ pub fn format_jsdoc_comment<'a>(
                         wrap_text(rest, available_width, &mut lines);
                     }
                 } else {
-                    let comment_text = comment_text.split_whitespace().collect::<Vec<_>>().join(" ");
+                    let comment_text =
+                        comment_text.split_whitespace().collect::<Vec<_>>().join(" ");
                     let should_capitalize = should_capitalize_tag(kind, options);
                     let desc = if should_capitalize {
                         capitalize_first(&comment_text)
@@ -282,9 +285,9 @@ fn tags_need_separator(prev: &str, current: &str) -> bool {
             // Short metadata tags that commonly appear together
             "constant" | "name" | "summary" | "description" | "module" | "file" | "internal"
             | "public" | "private" | "protected" | "readonly" | "abstract" | "virtual"
-            | "static" | "override" | "deprecated" | "since" | "version" | "author"
-            | "license" | "category" | "memberof" | "namespace" | "class" | "interface"
-            | "enum" | "type" | "satisfies" | "default" | "defaultValue" => 4,
+            | "static" | "override" | "deprecated" | "since" | "version" | "author" | "license"
+            | "category" | "memberof" | "namespace" | "class" | "interface" | "enum" | "type"
+            | "satisfies" | "default" | "defaultValue" => 4,
             "see" | "link" => 5,
             _ => u8::MAX, // Each unique "other" tag is its own group
         }
@@ -335,11 +338,8 @@ fn format_tag_with_type_name_comment_lines(
     }
 
     // Strip leading dash prefix (` - description` is common for @param)
-    let (dash_prefix, stripped_comment) = if let Some(rest) = comment.strip_prefix("- ") {
-        (" - ", rest)
-    } else {
-        (" ", comment)
-    };
+    let (dash_prefix, stripped_comment) =
+        if let Some(rest) = comment.strip_prefix("- ") { (" - ", rest) } else { (" ", comment) };
 
     if has_structured_content(stripped_comment) {
         // Structured content: put first paragraph on tag line, rest below
@@ -360,11 +360,7 @@ fn format_tag_with_type_name_comment_lines(
     } else {
         // Simple content: join into single line
         let joined = stripped_comment.split_whitespace().collect::<Vec<_>>().join(" ");
-        let desc = if options.capitalize_descriptions {
-            capitalize_first(&joined)
-        } else {
-            joined
-        };
+        let desc = if options.capitalize_descriptions { capitalize_first(&joined) } else { joined };
         let mut tag_line = tag_prefix;
         tag_line.push_str(dash_prefix);
         tag_line.push_str(&desc);
@@ -390,8 +386,11 @@ fn format_tag_with_type_comment_lines(
     }
 
     if has_structured_content(comment) {
-        let text =
-            if options.capitalize_descriptions { capitalize_first(comment) } else { comment.to_string() };
+        let text = if options.capitalize_descriptions {
+            capitalize_first(comment)
+        } else {
+            comment.to_string()
+        };
         // Try to put the first plain text line on the same line as the tag
         let (first_line, rest) = split_first_paragraph(&text);
         let first_joined = first_line.split_whitespace().collect::<Vec<_>>().join(" ");
@@ -540,10 +539,8 @@ fn split_first_paragraph(text: &str) -> (&str, &str) {
         let trimmed = line.trim();
         if i > 0 && (trimmed.is_empty() || is_structured_line(trimmed)) {
             // Find byte offset of this line
-            let byte_offset = text
-                .match_indices('\n')
-                .nth(i - 1)
-                .map_or(text.len(), |(pos, _)| pos + 1);
+            let byte_offset =
+                text.match_indices('\n').nth(i - 1).map_or(text.len(), |(pos, _)| pos + 1);
             let first = text[..byte_offset].trim_end();
             let rest = text[byte_offset..].trim_start_matches('\n');
             return (first, rest);
@@ -619,7 +616,8 @@ fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
         while i + 1 < raw_lines.len() {
             let next = raw_lines[i + 1];
             let next_trimmed = next.trim();
-            if next_trimmed.is_empty() || is_structured_line(next_trimmed) || next.starts_with(' ') {
+            if next_trimmed.is_empty() || is_structured_line(next_trimmed) || next.starts_with(' ')
+            {
                 break;
             }
             paragraph.push(' ');
