@@ -87,6 +87,14 @@
       ],
       "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
     },
+    "jsdoc": {
+      "description": "Format JSDoc comments.\n\nBased on [prettier-plugin-jsdoc](https://github.com/hosseinmd/prettier-plugin-jsdoc).\nNormalizes tags, capitalizes descriptions, converts to single-line when possible,\nand removes empty JSDoc comments.\n\n- Default: Disabled",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Format JSDoc comments.\n\nBased on [prettier-plugin-jsdoc](https://github.com/hosseinmd/prettier-plugin-jsdoc).\nNormalizes tags, capitalizes descriptions, converts to single-line when possible,\nand removes empty JSDoc comments.\n\n- Default: Disabled"
+    },
     "jsxSingleQuote": {
       "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
       "type": [
@@ -389,6 +397,14 @@
             "null"
           ],
           "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
+        },
+        "jsdoc": {
+          "description": "Format JSDoc comments.\n\nBased on [prettier-plugin-jsdoc](https://github.com/hosseinmd/prettier-plugin-jsdoc).\nNormalizes tags, capitalizes descriptions, converts to single-line when possible,\nand removes empty JSDoc comments.\n\n- Default: Disabled",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Format JSDoc comments.\n\nBased on [prettier-plugin-jsdoc](https://github.com/hosseinmd/prettier-plugin-jsdoc).\nNormalizes tags, capitalizes descriptions, converts to single-line when possible,\nand removes empty JSDoc comments.\n\n- Default: Disabled"
         },
         "jsxSingleQuote": {
           "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
