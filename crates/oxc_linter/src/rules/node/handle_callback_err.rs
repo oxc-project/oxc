@@ -46,7 +46,7 @@ impl ErrorPattern {
 /// Default: `"err"`.
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct HandleCallbackErrConfig(String, ());
+pub struct HandleCallbackErrConfig(String);
 
 #[derive(Debug, Default, Clone)]
 pub struct HandleCallbackErr(Box<ErrorPattern>);
