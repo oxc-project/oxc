@@ -8,6 +8,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import A from 'bar.js';
    ·             ───────────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:13]
@@ -15,6 +16,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import a from 'bar.js';
    ·             ───────────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:13]
@@ -22,6 +24,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import {a, d} from 'bar.js';
    ·             ────────────────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:13]
@@ -29,6 +32,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import * as bar from 'bar.js';
    ·             ──────────────────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Expected 'Multiple' syntax before 'Single' syntax.
    ╭─[sort_imports.tsx:2:13]
@@ -36,6 +40,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import {b, c} from 'bar.js';
    ·             ────────────────────────────
    ╰────
+  help: Import declarations should be sorted by the used member syntax, following the order specified in the 'memberSyntaxSortOrder' option.
 
   ⚠ eslint(sort-imports): Expected 'All' syntax before 'Single' syntax.
    ╭─[sort_imports.tsx:2:13]
@@ -43,6 +48,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import * as b from 'bar.js';
    ·             ────────────────────────────
    ╰────
+  help: Import declarations should be sorted by the used member syntax, following the order specified in the 'memberSyntaxSortOrder' option.
 
   ⚠ eslint(sort-imports): Expected 'None' syntax before 'Single' syntax.
    ╭─[sort_imports.tsx:2:13]
@@ -50,6 +56,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import 'bar.js';
    ·             ────────────────
    ╰────
+  help: Import declarations should be sorted by the used member syntax, following the order specified in the 'memberSyntaxSortOrder' option.
 
   ⚠ eslint(sort-imports): Expected 'All' syntax before 'Single' syntax.
    ╭─[sort_imports.tsx:2:13]
@@ -57,6 +64,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import * as a from 'foo.js';
    ·             ────────────────────────────
    ╰────
+  help: Import declarations should be sorted by the used member syntax, following the order specified in the 'memberSyntaxSortOrder' option.
 
   ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:12]
@@ -64,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ─
    ╰────
   help: Replace `b, a, d, c` with `a, b, c, d`.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:12]
@@ -72,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import {e, f, g, h} from 'bar.js';
    ╰────
   help: Replace `b, a, d, c` with `a, b, c, d`.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'B' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:12]
@@ -79,30 +89,35 @@ source: crates/oxc_linter/src/tester.rs
    ·            ─
    ╰────
   help: Replace `a, B, c, D` with `B, D, a, c`.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:30]
  1 │ import {zzzzz, /* comment */ aaaaa} from 'foo.js';
    ·                              ─────
    ╰────
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:30]
  1 │ import {zzzzz /* comment */, aaaaa} from 'foo.js';
    ·                              ─────
    ╰────
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:30]
  1 │ import {/* comment */ zzzzz, aaaaa} from 'foo.js';
    ·                              ─────
    ╰────
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:16]
  1 │ import {zzzzz, aaaaa /* comment */} from 'foo.js';
    ·                ─────
    ╰────
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'qux' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:6:17]
@@ -122,6 +137,7 @@ source: crates/oxc_linter/src/tester.rs
                         foo,
                         baz as qux,
                         zoo`.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:13]
@@ -129,6 +145,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import a from 'a';
    ·             ──────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:13]
@@ -136,6 +153,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import a from 'a';
    ·             ──────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:13]
@@ -143,18 +161,21 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import a from 'a';
    ·             ──────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:19]
  1 │ import b from 'b';import a from 'a';
    ·                   ──────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:34]
  1 │ import b from 'b'; /* comment */ import a from 'a';
    ·                                  ──────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:13]
@@ -162,6 +183,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import a from 'a';
    ·             ──────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:28]
@@ -169,6 +191,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             /* comment 2 */import a from 'a';
    ·                            ──────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:35]
@@ -176,6 +199,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │                 comment line 2 */ import { a } from 'a';
    ·                                   ──────────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:23]
@@ -183,6 +207,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │ ╭─▶             from 'b'; import a
  3 │ ╰─▶             from 'a';
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:32]
@@ -190,6 +215,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │ ╭─▶             'b'; /* comment */ import
  3 │ ╰─▶              { a } from 'a';
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:3:13]
@@ -197,6 +223,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╭─▶             import
  4 │ ╰─▶                 { a } from 'a';
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:4:13]
@@ -204,6 +231,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │             import a from 'a';
    ·             ──────────────────
    ╰────
+  help: Reorder import declarations alphabetically by the first member or alias name.
 
   ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:3:25]
@@ -212,3 +240,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─
    ╰────
   help: Replace `c, a` with `a, c`.
+  note: Reorder the members in the import declaration alphabetically.
