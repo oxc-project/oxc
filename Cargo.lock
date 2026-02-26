@@ -1929,6 +1929,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
+ "oxc_jsdoc",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",

@@ -3,8 +3,8 @@ use std::{env::current_dir, fs, path::Path};
 use oxc_allocator::Allocator;
 use oxc_formatter::{
     ArrowParentheses, BracketSameLine, BracketSpacing, FormatOptions, Formatter, IndentStyle,
-    IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
-    get_parse_options,
+    IndentWidth, JsdocOptions, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
+    TrailingCommas, get_parse_options,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -127,6 +127,22 @@ fn parse_format_options(json: &OptionSet) -> FormatOptions {
                         "consistent" => QuoteProperties::Consistent,
                         _ => QuoteProperties::default(),
                     };
+                }
+            }
+            "jsdoc" => {
+                if let Some(b) = value.as_bool() {
+                    if b {
+                        options.jsdoc = Some(JsdocOptions::default());
+                    }
+                } else if let Some(obj) = value.as_object() {
+                    let mut jsdoc = JsdocOptions::default();
+                    if let Some(b) = obj.get("capitalizeDescriptions").and_then(serde_json::Value::as_bool) {
+                        jsdoc.capitalize_descriptions = b;
+                    }
+                    if let Some(b) = obj.get("singleLineWhenPossible").and_then(serde_json::Value::as_bool) {
+                        jsdoc.single_line_when_possible = b;
+                    }
+                    options.jsdoc = Some(jsdoc);
                 }
             }
             _ => {}

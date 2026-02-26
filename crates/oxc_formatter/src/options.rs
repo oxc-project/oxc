@@ -79,6 +79,10 @@ pub struct FormatOptions {
     /// When enabled, class strings will be collected and passed to a callback for sorting.
     /// Defaults to None (disabled).
     pub sort_tailwindcss: Option<SortTailwindcssOptions>,
+
+    /// JSDoc comment formatting options.
+    /// When `None`, JSDoc comments pass through unchanged.
+    pub jsdoc: Option<JsdocOptions>,
 }
 
 /// Options for Tailwind CSS class sorting.
@@ -126,6 +130,22 @@ pub struct SortTailwindcssOptions {
     pub preserve_duplicates: bool,
 }
 
+/// Options for JSDoc comment formatting.
+/// Based on [prettier-plugin-jsdoc](https://github.com/hosseinmd/prettier-plugin-jsdoc).
+#[derive(Debug, Clone)]
+pub struct JsdocOptions {
+    /// Capitalize the first letter of tag descriptions. Default: `true`.
+    pub capitalize_descriptions: bool,
+    /// Convert short JSDoc to single-line form when possible. Default: `true`.
+    pub single_line_when_possible: bool,
+}
+
+impl Default for JsdocOptions {
+    fn default() -> Self {
+        Self { capitalize_descriptions: true, single_line_when_possible: true }
+    }
+}
+
 impl FormatOptions {
     pub fn new() -> Self {
         Self {
@@ -148,6 +168,7 @@ impl FormatOptions {
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
             sort_imports: None,
             sort_tailwindcss: None,
+            jsdoc: None,
         }
     }
 
@@ -175,7 +196,8 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
         writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
         writeln!(f, "Sort imports: {:?}", self.sort_imports)?;
-        writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)
+        writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)?;
+        writeln!(f, "JSDoc: {:?}", self.jsdoc)
     }
 }
 

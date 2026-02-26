@@ -63,6 +63,7 @@ use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{JsLabels, write};
 
+use super::jsdoc;
 use super::prelude::*;
 
 /// Returns true if:
@@ -418,6 +419,30 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 
 impl<'a> Format<'a> for Comment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        // Try JSDoc formatting if enabled and this is a JSDoc comment
+        if matches!(self.content, CommentContent::Jsdoc)
+            && self.is_multiline_block()
+            && let Some(jsdoc_options) = &f.options().jsdoc
+        {
+            let source: &str = &f.source_text();
+            let print_width = f.options().line_width.value();
+            let indent_width = f.options().indent_width.value();
+            let indent_column = jsdoc::source_indent_column(source, self.span.start, indent_width);
+            if let Some(formatted) = jsdoc::format_jsdoc_comment(
+                self,
+                source,
+                f.allocator(),
+                jsdoc_options,
+                print_width,
+                indent_column,
+            ) {
+                if !formatted.is_empty() {
+                    write!(f, [text(formatted)]);
+                }
+                return;
+            }
+        }
+
         let content = f.source_text().text_for(&self.span);
         if self.is_multiline_block() {
             let mut lines = LineTerminatorSplitter::new(content);

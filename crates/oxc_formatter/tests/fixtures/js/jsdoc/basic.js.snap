@@ -1,0 +1,170 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Single-line type tag
+/** @type {string} */
+const a = "hello";
+
+// Multi-line to single-line conversion
+/**
+ * @type {number}
+ */
+const b = 42;
+
+// Empty JSDoc removal
+/**
+ *
+ */
+const c = true;
+
+// Description only
+/**
+ * this is a description.
+ */
+function foo() {}
+
+// Tag normalization: @return → @returns
+/**
+ * @return {string} the result
+ */
+function bar() { return ""; }
+
+// Tag normalization: @arg → @param
+/**
+ * @arg {number} x the value
+ */
+function baz(x) {}
+
+// Tag normalization: @yield → @yields
+/**
+ * @yield {number}
+ */
+function* gen() {}
+
+// Capitalization
+/**
+ * @param {string} name - the user's name
+ */
+function greet(name) {}
+
+// Type whitespace normalization
+/**
+ * @type {  string  |  number  }
+ */
+const d = "hello";
+
+// Multiple params
+/**
+ * @param {string} a - first param
+ * @param {number} b - second param
+ * @param {boolean} c - third param
+ */
+function multi(a, b, c) {}
+
+==================== Output ====================
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
+// Single-line type tag
+/** @type {string} */
+const a = "hello";
+
+// Multi-line to single-line conversion
+/** @type {number} */
+const b = 42;
+
+// Empty JSDoc removal
+const c = true;
+
+// Description only
+/**
+ * This is a description.
+ */
+function foo() {}
+
+// Tag normalization: @return → @returns
+/** @returns {string} The result */
+function bar() {
+  return "";
+}
+
+// Tag normalization: @arg → @param
+/** @param {number} x - The value */
+function baz(x) {}
+
+// Tag normalization: @yield → @yields
+/** @yields {number} */
+function* gen() {}
+
+// Capitalization
+/** @param {string} name - The user's name */
+function greet(name) {}
+
+// Type whitespace normalization
+/** @type {string | number} */
+const d = "hello";
+
+// Multiple params
+/**
+ * @param {string} a - First param
+ *
+ * @param {number} b - Second param
+ *
+ * @param {boolean} c - Third param
+ */
+function multi(a, b, c) {}
+
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
+// Single-line type tag
+/** @type {string} */
+const a = "hello";
+
+// Multi-line to single-line conversion
+/** @type {number} */
+const b = 42;
+
+// Empty JSDoc removal
+const c = true;
+
+// Description only
+/**
+ * This is a description.
+ */
+function foo() {}
+
+// Tag normalization: @return → @returns
+/** @returns {string} The result */
+function bar() {
+  return "";
+}
+
+// Tag normalization: @arg → @param
+/** @param {number} x - The value */
+function baz(x) {}
+
+// Tag normalization: @yield → @yields
+/** @yields {number} */
+function* gen() {}
+
+// Capitalization
+/** @param {string} name - The user's name */
+function greet(name) {}
+
+// Type whitespace normalization
+/** @type {string | number} */
+const d = "hello";
+
+// Multiple params
+/**
+ * @param {string} a - First param
+ *
+ * @param {number} b - Second param
+ *
+ * @param {boolean} c - Third param
+ */
+function multi(a, b, c) {}
+
+===================== End =====================

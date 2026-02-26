@@ -27,6 +27,7 @@ pub mod format_element;
 mod format_extensions;
 pub mod formatter;
 pub mod group_id;
+pub mod jsdoc;
 pub mod macros;
 pub mod prelude;
 pub mod printer;
