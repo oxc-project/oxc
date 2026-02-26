@@ -51,7 +51,8 @@ pub fn format_jsdoc_comment<'a>(
 
     let jsdoc = JSDoc::new(inner, comment.span);
 
-    let description = jsdoc.comment().parsed();
+    let description = jsdoc.comment().parsed_preserving_indent();
+    let description = description.trim().to_string();
     let tags = jsdoc.tags();
 
     // Empty JSDoc (no description, no tags) — remove it
@@ -74,7 +75,6 @@ pub fn format_jsdoc_comment<'a>(
 
     // Format the description
     if !description.is_empty() {
-        let description = normalize_comment_text(&description);
         let desc = if options.capitalize_descriptions {
             capitalize_first(&description)
         } else {
@@ -331,18 +331,86 @@ fn format_tag_with_type_comment(
     result
 }
 
-/// Normalize multiline comment text into a single line.
-/// Joins lines with spaces and collapses multiple whitespace.
+/// Normalize multiline tag comment text into a single line.
+/// Only joins plain continuation lines — preserves list items, paragraph breaks,
+/// and other structured content.
 fn normalize_comment_text(text: &str) -> String {
+    // If it contains structured content (lists, paragraph breaks, separators),
+    // don't normalize — return as-is with trimmed lines
+    if has_structured_content(text) {
+        return text.to_string();
+    }
     text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+/// Check if text contains structured content that should not be collapsed.
+fn has_structured_content(text: &str) -> bool {
+    for line in text.lines() {
+        let trimmed = line.trim();
+        // Empty line = paragraph break
+        if trimmed.is_empty() {
+            return true;
+        }
+        // Markdown list items
+        if trimmed.starts_with("- ") || trimmed.starts_with("* ") || trimmed.starts_with("+ ") {
+            return true;
+        }
+        // Numbered list items (e.g., "1. ", "2. ")
+        if starts_with_numbered_list(trimmed) {
+            return true;
+        }
+        // Visual separators (lines of repeated characters)
+        if trimmed.len() >= 5 && trimmed.chars().all(|c| c == '=' || c == '-' || c == '*') {
+            return true;
+        }
+    }
+    false
+}
+
+/// Check if a line starts with a numbered list pattern like "1. ", "2. ".
+fn starts_with_numbered_list(s: &str) -> bool {
+    let mut chars = s.chars();
+    if let Some(first) = chars.next()
+        && first.is_ascii_digit()
+    {
+        for ch in chars {
+            if ch == '.' {
+                return true;
+            }
+            if !ch.is_ascii_digit() {
+                return false;
+            }
+        }
+    }
+    false
+}
+
 /// Normalize whitespace in type expressions: `  string  |  number  ` → `string | number`.
+/// For multi-line types, first strip JSDoc `*` line prefixes before normalizing.
 fn normalize_type(t: &str) -> String {
+    // First, strip JSDoc `*` prefixes from each line if multi-line
+    let cleaned = if t.contains('\n') {
+        t.lines()
+            .map(|line| {
+                let trimmed = line.trim_start();
+                if let Some(rest) = trimmed.strip_prefix("* ") {
+                    rest.trim_end()
+                } else if let Some(rest) = trimmed.strip_prefix('*') {
+                    rest.trim_end()
+                } else {
+                    trimmed.trim_end()
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    } else {
+        t.to_string()
+    };
+
     // Collapse internal whitespace
-    let mut result = String::with_capacity(t.len());
+    let mut result = String::with_capacity(cleaned.len());
     let mut prev_space = false;
-    for ch in t.trim().chars() {
+    for ch in cleaned.trim().chars() {
         if ch.is_whitespace() {
             if !prev_space {
                 result.push(' ');
@@ -380,14 +448,82 @@ fn capitalize_first(s: &str) -> String {
 }
 
 /// Wrap text at word boundaries to fit within `max_width`.
+/// Joins consecutive plain text lines into paragraphs before wrapping,
+/// but preserves list items, code fence blocks, and paragraph breaks.
 fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
-    for paragraph in text.split('\n') {
-        if paragraph.is_empty() {
-            lines.push(String::new());
+    let raw_lines: Vec<&str> = text.split('\n').collect();
+    let mut i = 0;
+    let mut in_code_fence = false;
+    while i < raw_lines.len() {
+        let line = raw_lines[i];
+        let trimmed = line.trim();
+
+        // Inside a code fence: preserve lines verbatim until closing fence
+        if in_code_fence {
+            lines.push(line.to_string());
+            if trimmed.starts_with("```") {
+                in_code_fence = false;
+            }
+            i += 1;
             continue;
         }
-        wrap_single_paragraph(paragraph, max_width, lines);
+
+        if trimmed.is_empty() {
+            lines.push(String::new());
+            i += 1;
+            continue;
+        }
+
+        // Code fence opening: start verbatim block
+        if trimmed.starts_with("```") {
+            lines.push(trimmed.to_string());
+            in_code_fence = true;
+            i += 1;
+            continue;
+        }
+
+        // If this line starts structured content, output it directly
+        if is_structured_line(trimmed) {
+            lines.push(trimmed.to_string());
+            i += 1;
+            continue;
+        }
+
+        // Join consecutive plain text lines into a paragraph
+        let mut paragraph = trimmed.to_string();
+        while i + 1 < raw_lines.len() {
+            let next = raw_lines[i + 1].trim();
+            if next.is_empty() || is_structured_line(next) {
+                break;
+            }
+            paragraph.push(' ');
+            paragraph.push_str(next);
+            i += 1;
+        }
+        wrap_single_paragraph(&paragraph, max_width, lines);
+        i += 1;
     }
+}
+
+/// Check if a line is structured content that should not be joined with adjacent lines.
+fn is_structured_line(trimmed: &str) -> bool {
+    // Markdown list items
+    if trimmed.starts_with("- ") || trimmed.starts_with("* ") || trimmed.starts_with("+ ") {
+        return true;
+    }
+    // Numbered list items
+    if starts_with_numbered_list(trimmed) {
+        return true;
+    }
+    // Visual separators
+    if trimmed.len() >= 5 && trimmed.chars().all(|c| c == '=' || c == '-' || c == '*') {
+        return true;
+    }
+    // Code fence
+    if trimmed.starts_with("```") {
+        return true;
+    }
+    false
 }
 
 /// Wrap a single paragraph of text.
