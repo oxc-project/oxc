@@ -29,7 +29,8 @@ pub fn source_indent_column(source_text: &str, position: u32, tab_width: u8) -> 
 /// Attempt to format a JSDoc comment. Returns `Some(formatted)` if the comment
 /// was successfully reformatted, or `None` if it should be left unchanged.
 ///
-/// `content` is the full comment text including `/**` and `*/`.
+/// The full comment text, including the `/**` and `*/` delimiters, is obtained
+/// from `comment.span.source_text(source_text)`.
 pub fn format_jsdoc_comment<'a>(
     comment: &Comment,
     source_text: &str,
@@ -39,6 +40,11 @@ pub fn format_jsdoc_comment<'a>(
     indent_column: usize,
 ) -> Option<&'a str> {
     let content = comment.span.source_text(source_text);
+
+    // Need at least `/** */` (5 chars) to have inner content
+    if content.len() < 5 {
+        return None;
+    }
 
     // Extract the inner content between `/**` and `*/`
     let inner = &content[3..content.len() - 2];
@@ -82,7 +88,7 @@ pub fn format_jsdoc_comment<'a>(
 
         // Tags that use type_name_comment pattern
         match kind {
-            "param" | "property" | "prop" | "arg" | "typedef" | "template" => {
+            "param" | "property" | "typedef" | "template" => {
                 let (type_part, name_part, comment_part) = tag.type_name_comment();
                 let mut tag_line = format_tag_with_type_name_comment(
                     kind,
@@ -361,12 +367,11 @@ fn wrap_tag_line(tag_line: &mut String, max_width: usize, lines: &mut Vec<String
         } else if current_line.len() + 1 + word.len() > max_width && !first {
             lines.push(current_line);
             current_line = word.to_string();
-            first = false;
         } else {
             current_line.push(' ');
             current_line.push_str(word);
-            first = false;
         }
+        first = false;
     }
     if !current_line.is_empty() {
         lines.push(current_line);
