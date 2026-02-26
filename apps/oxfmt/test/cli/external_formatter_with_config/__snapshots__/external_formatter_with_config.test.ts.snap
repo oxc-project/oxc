@@ -1,6 +1,32 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`external_formatter_with_config > should pass config options to prettier 1`] = `
+exports[`external_formatter_with_config > should pass config options to prettier for astro 1`] = `
+"--- FILE -----------
+test.astro
+--- BEFORE ---------
+---
+import {foo} from "bar";
+const title="Hello World with a long title that exceeds print width";
+---
+<div>
+        <span>{title}</span>
+</div>
+
+--- AFTER ----------
+---
+import { foo } from 'bar';
+const title =
+	'Hello World with a long title that exceeds print width';
+---
+
+<div>
+	<span>{title}</span>
+</div>
+
+--------------------"
+`;
+
+exports[`external_formatter_with_config > should pass config options to prettier for vue 1`] = `
 "--- FILE -----------
 test.vue
 --- BEFORE ---------

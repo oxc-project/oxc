@@ -88,9 +88,11 @@ describe("oxfmtrc overrides", () => {
   // .oxfmtrc.json:
   //   experimentalSortPackageJson: false
   //   vueIndentScriptAndStyle: false
+  //   astroSkipFrontmatter: false
   //   overrides: [
   //     { files: ["sorted/package.json"], options: { experimentalSortPackageJson: true } },
-  //     { files: ["indented.vue"], options: { vueIndentScriptAndStyle: true } }
+  //     { files: ["indented.vue"], options: { vueIndentScriptAndStyle: true } },
+  //     { files: ["skipped.astro"], options: { astroSkipFrontmatter: true } }
   //   ]
   //
   // Expected:
@@ -98,6 +100,8 @@ describe("oxfmtrc overrides", () => {
   // - unsorted/package.json: keys NOT sorted (original order preserved)
   // - indented.vue: script/style content indented
   // - not-indented.vue: script/style content NOT indented
+  // - skipped.astro: frontmatter NOT formatted (skip enabled)
+  // - not-skipped.astro: frontmatter formatted (skip disabled, base config)
   //
   // This test verifies overrides work for external formatter path (Prettier)
   it("Prettier options override - only enabled for specific files", async () => {

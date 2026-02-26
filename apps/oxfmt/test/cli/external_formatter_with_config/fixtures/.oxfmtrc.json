@@ -3,5 +3,6 @@
   "useTabs": true,
   "singleQuote": true,
   "embeddedLanguageFormatting": "auto",
-  "vueIndentScriptAndStyle": true
+  "vueIndentScriptAndStyle": true,
+  "astroAllowShorthand": true
 }

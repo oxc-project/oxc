@@ -270,5 +270,50 @@ const count = ref(0);
   <div>{{ count }}</div>
 </template>
 
+--------------------
+
+--- FILE -----------
+app.astro
+--- BEFORE ---------
+---
+import z from "z";
+  import a from "a";
+    import m from "m";
+
+const count = 0;
+---
+<html>
+  <body>
+    <div class="p-4 flex m-0">{count}</div>
+    <button class="m-2 p-1 flex">Click</button>
+    <script>
+      import z from "z";
+      import a from "a";
+      const   y  =   2;
+    </script>
+  </body>
+</html>
+
+--- AFTER ----------
+---
+import a from "a";
+import m from "m";
+import z from "z";
+
+const count = 0;
+---
+
+<html>
+  <body>
+    <div class="m-0 flex p-4">{count}</div>
+    <button class="m-2 flex p-1">Click</button>
+    <script>
+      import a from "a";
+      import z from "z";
+      const y = 2;
+    </script>
+  </body>
+</html>
+
 --------------------"
 `;

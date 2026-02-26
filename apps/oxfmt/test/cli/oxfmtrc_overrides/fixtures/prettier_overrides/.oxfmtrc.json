@@ -1,6 +1,7 @@
 {
   "experimentalSortPackageJson": false,
   "vueIndentScriptAndStyle": false,
+  "astroSkipFrontmatter": false,
   "overrides": [
     {
       "files": ["sorted/package.json"],
@@ -12,6 +13,12 @@
       "files": ["indented.vue"],
       "options": {
         "vueIndentScriptAndStyle": true
+      }
+    },
+    {
+      "files": ["skipped.astro"],
+      "options": {
+        "astroSkipFrontmatter": true
       }
     }
   ]

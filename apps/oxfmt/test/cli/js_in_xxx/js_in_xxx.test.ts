@@ -14,6 +14,8 @@ describe("js-in-xxx", () => {
         // NOTE: For now, Vue files are still handled by Prettier
         "app.vue",
         "multi-script.vue",
+        // NOTE: For now, Astro files are still handled by Prettier
+        "app.astro",
       ],
       ["--config", "oxfmtrc-full.json"],
     );
