@@ -13,21 +13,22 @@ const FIXTURES_DIR = join(
 const EXCLUDE = new Set([
   "format.test.js",
   "comment-tag.js", // /* GraphQL */ comment tag (not yet supported)
-  "expressions.js", // graphql() function call pattern (not yet supported)
-  "graphql.js", // graphql() function call pattern (not yet supported)
 ]);
 
 const files = (await readdir(FIXTURES_DIR))
   .filter((f) => f.endsWith(".js") && !EXCLUDE.has(f))
+  .map((f) => join(FIXTURES_DIR, f))
   .sort();
+
+files.push("./test/cli/embedded_languages/fixtures/graphql.js");
 
 let matchCount = 0;
 let mismatchCount = 0;
 let errorCount = 0;
 
-for (const file of files) {
-  const filePath = join(FIXTURES_DIR, file);
+for (const filePath of files) {
   const source = await readFile(filePath, "utf8");
+  const file = filePath.split("/").slice(-2).join("/");
 
   const prettierOutput = await prettier.format(source, {
     parser: "babel",

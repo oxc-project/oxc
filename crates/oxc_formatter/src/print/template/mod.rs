@@ -39,6 +39,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
         if embed::try_format_css_template(self, f) {
             return;
         }
+        // graphql(`...`) function call
+        if embed::try_format_graphql_call(self, f) {
+            return;
+        }
         let template = TemplateLike::TemplateLiteral(self);
         write!(f, template);
     }

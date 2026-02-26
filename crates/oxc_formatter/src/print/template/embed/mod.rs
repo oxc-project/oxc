@@ -45,6 +45,24 @@ fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
     }
 }
 
+/// Try to format a template literal inside a `graphql()` function call.
+/// Returns `true` if formatting was performed, `false` if not applicable.
+///
+/// NOTE: when this fires for a single-argument call,
+/// `arguments.rs` also applies a "hugging" layout (`graphql(`…`)` with no trailing comma).
+/// See `is_graphql_call_with_single_template_arg()` in `arguments.rs`.
+pub(super) fn try_format_graphql_call<'a>(
+    template: &AstNode<'a, TemplateLiteral<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    let AstNodes::CallExpression(call) = template.parent() else { return false };
+    let Expression::Identifier(ident) = &call.callee else { return false };
+    if ident.name.as_str() != "graphql" {
+        return false;
+    }
+    graphql::format_graphql_doc(template, f)
+}
+
 /// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
 /// Returns `true` if formatting was attempted, `false` if not applicable.
 pub(super) fn try_format_css_template<'a>(
