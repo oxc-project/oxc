@@ -5,9 +5,7 @@
   "branch": "feat/formatter-jsdoc",
   "checkpoints_count": 2,
   "files_touched": [
-    "apps/oxfmt/src/core/oxfmtrc.rs",
     "crates/oxc_formatter/src/formatter/jsdoc.rs",
-    "crates/oxc_jsdoc/src/parser/jsdoc_parts.rs",
     "crates/oxc_semantic/Cargo.toml",
     "crates/oxc_semantic/src/builder.rs",
     "crates/oxc_semantic/src/lib.rs"
@@ -29,10 +27,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 158,
-    "cache_creation_tokens": 110480,
-    "cache_read_tokens": 16315702,
-    "output_tokens": 7810,
-    "api_call_count": 148
+    "input_tokens": 151,
+    "cache_creation_tokens": 133486,
+    "cache_read_tokens": 13856569,
+    "output_tokens": 7812,
+    "api_call_count": 139
   }
 }

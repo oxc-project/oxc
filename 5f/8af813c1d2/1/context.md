@@ -60,3 +60,26 @@ resolve conversation on the pr
 
 build oxfmt, run it in /Users/boshen/oxc/oxlint-ecosystem-ci/repos and see if jsdoc changes make sense
 
+### Prompt 11
+
+commit and push
+
+### Prompt 12
+
+need to fix ci https://github.com/oxc-project/oxc/pull/19738
+
+### Prompt 13
+
+test oxfmt with jsdoc in /Users/boshen/oxc/oxlint-ecosystem-ci/repos/kibana, run oxfmt without jsdoc first and commit, then run with jsdoc and take a look at the diff
+
+### Prompt 14
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze the conversation:
+
+1. **Initial context**: The conversation was continued from a previous session that implemented JSDoc formatting for oxc formatter. The previous session had already implemented the core feature, and snapshots were accepted.
+
+2. **User: "create pr"** - Created a PR with the JSDoc formatt...
+

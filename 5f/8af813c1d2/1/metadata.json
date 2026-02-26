@@ -3,32 +3,30 @@
   "checkpoint_id": "5f8af813c1d2",
   "session_id": "ab0deaaa-8551-4c55-be46-47fb1d5fca93",
   "strategy": "manual-commit",
-  "created_at": "2026-02-26T07:15:14.036428Z",
+  "created_at": "2026-02-26T08:56:01.103376Z",
   "branch": "feat/formatter-jsdoc",
   "checkpoints_count": 1,
   "files_touched": [
-    "apps/oxfmt/src/core/oxfmtrc.rs",
-    "crates/oxc_formatter/src/formatter/jsdoc.rs",
-    "crates/oxc_jsdoc/src/parser/jsdoc_parts.rs"
+    "crates/oxc_formatter/src/formatter/jsdoc.rs"
   ],
   "agent": "Claude Code",
-  "transcript_identifier_at_start": "18e6872b-f7b6-430e-b9b4-8f8fc364263b",
-  "checkpoint_transcript_start": 688,
-  "transcript_lines_at_start": 688,
+  "transcript_identifier_at_start": "b83dd017-ba8e-46d0-846d-798ec9710702",
+  "checkpoint_transcript_start": 1598,
+  "transcript_lines_at_start": 1598,
   "token_usage": {
-    "input_tokens": 119,
-    "cache_creation_tokens": 83874,
-    "cache_read_tokens": 11165027,
-    "output_tokens": 6365,
-    "api_call_count": 113
+    "input_tokens": 112,
+    "cache_creation_tokens": 106880,
+    "cache_read_tokens": 8705894,
+    "output_tokens": 6367,
+    "api_call_count": 104
   },
   "initial_attribution": {
-    "calculated_at": "2026-02-26T07:15:13.661591Z",
-    "agent_lines": 133,
-    "human_added": 2439,
-    "human_modified": 0,
+    "calculated_at": "2026-02-26T08:56:00.848781Z",
+    "agent_lines": 0,
+    "human_added": 2575,
+    "human_modified": 9,
     "human_removed": 0,
-    "total_committed": 2572,
-    "agent_percentage": 5.171073094867807
+    "total_committed": 2575,
+    "agent_percentage": 0
   }
 }
