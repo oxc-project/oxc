@@ -21,6 +21,20 @@ pub enum Run {
     OnType,
 }
 
+/// Controls the display severity of bulk-suppressed violations in the LSP.
+///
+/// Only relevant when `showSuppressedViolations` is `true`.
+#[derive(Debug, Serialize, Deserialize, Default, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum SuppressedViolationSeverity {
+    /// Keep the original Error/Warning severity (visual distinction via `UNNECESSARY` tag only).
+    #[default]
+    Original,
+    Hint,
+    Warning,
+    Error,
+}
+
 #[derive(Debug, Default, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct LintOptions {
@@ -33,6 +47,17 @@ pub struct LintOptions {
     pub type_aware: bool,
     pub disable_nested_config: bool,
     pub fix_kind: LintFixKindFlag,
+    /// Show bulk-suppressed violations (from `oxlint-suppressions.json`) as faded diagnostics.
+    ///
+    /// When `true`, suppressed violations appear with the `UNNECESSARY` tag (faded in VS Code /
+    /// neovim-lsp) and without code-action fixes.
+    /// When `false` (default), suppressed violations are hidden entirely.
+    pub show_suppressed_violations: bool,
+    /// Override the LSP severity for suppressed violations.
+    ///
+    /// Defaults to [`SuppressedViolationSeverity::Original`], which preserves the rule's own
+    /// Error/Warning level (with visual distinction via the `UNNECESSARY` tag only).
+    pub suppressed_violation_severity: SuppressedViolationSeverity,
 }
 
 #[derive(Debug, Default, Serialize, PartialEq, Eq, Deserialize, Clone)]
@@ -137,6 +162,16 @@ impl TryFrom<Value> for LintOptions {
                     Some(&"all") => LintFixKindFlag::All,
                     _ => LintFixKindFlag::default(),
                 }),
+            show_suppressed_violations: object
+                .get("showSuppressedViolations")
+                .and_then(|key| serde_json::from_value::<bool>(key.clone()).ok())
+                .unwrap_or(false),
+            suppressed_violation_severity: object
+                .get("suppressedViolationSeverity")
+                .and_then(|key| {
+                    serde_json::from_value::<SuppressedViolationSeverity>(key.clone()).ok()
+                })
+                .unwrap_or_default(),
         })
     }
 }

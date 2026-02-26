@@ -18,7 +18,7 @@ use tracing::{debug, error, warn};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner, LintRunnerBuilder,
-    LintServiceOptions, Linter, Oxlintrc, read_to_string,
+    LintServiceOptions, Linter, Oxlintrc, SuppressionManager, read_to_string,
 };
 
 use oxc_language_server::{
@@ -39,7 +39,7 @@ use crate::{
             generate_inverted_diagnostics, message_to_lsp_diagnostic,
         },
         lsp_file_system::LspFileSystem,
-        options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
+        options::{LintOptions as LSPLintOptions, Run, SuppressedViolationSeverity, UnusedDisableDirectives},
         utils::normalize_path,
     },
 };
@@ -192,22 +192,36 @@ impl ServerLinterBuilder {
             }
         }
 
-        let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
-            .with_type_aware(options.type_aware)
-            .with_fix_kind(fix_kind)
-            .build()
-        {
+        // Load bulk suppressions for the LSP "show faded" path when enabled.
+        let lsp_suppression_manager = if options.show_suppressed_violations {
+            let suppression_path = root_path.join("oxlint-suppressions.json");
+            Some(SuppressionManager::load(&suppression_path, false, false))
+        } else {
+            None
+        };
+
+        let runner = match {
+            let mut builder = LintRunnerBuilder::new(lint_service_options.clone(), linter)
+                .with_type_aware(options.type_aware)
+                .with_fix_kind(fix_kind);
+            if let Some(ref mgr) = lsp_suppression_manager {
+                builder = builder.with_suppression_manager(mgr.clone());
+            }
+            builder.build()
+        } {
             Ok(runner) => runner,
             Err(e) => {
                 warn!("Failed to initialize type-aware linting: {e}");
                 let linter =
                     Linter::new(lint_options, config_store_clone, external_linter.cloned())
                         .with_workspace_uri(Some(root_uri.as_str()));
-                LintRunnerBuilder::new(lint_service_options, linter)
+                let mut builder = LintRunnerBuilder::new(lint_service_options, linter)
                     .with_type_aware(false)
-                    .with_fix_kind(fix_kind)
-                    .build()
-                    .expect("Failed to build LintRunner without type-aware linting")
+                    .with_fix_kind(fix_kind);
+                if let Some(mgr) = lsp_suppression_manager {
+                    builder = builder.with_suppression_manager(mgr);
+                }
+                builder.build().expect("Failed to build LintRunner without type-aware linting")
             }
         };
 
@@ -219,6 +233,8 @@ impl ServerLinterBuilder {
             extended_paths,
             runner,
             lint_options.report_unused_directive,
+            options.show_suppressed_violations,
+            options.suppressed_violation_severity,
         )
     }
 }
@@ -411,6 +427,10 @@ pub struct ServerLinter {
     code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
     runner: LintRunner,
     unused_directives_severity: Option<AllowWarnDeny>,
+    /// Whether to show bulk-suppressed violations (from `oxlint-suppressions.json`) as faded diagnostics.
+    show_suppressed_violations: bool,
+    /// LSP severity to use for suppressed violations. Only relevant when `show_suppressed_violations` is `true`.
+    suppressed_violation_severity: SuppressedViolationSeverity,
 }
 
 impl Tool for ServerLinter {
@@ -657,6 +677,8 @@ impl ServerLinter {
         extended_paths: FxHashSet<PathBuf>,
         runner: LintRunner,
         unused_directives_severity: Option<AllowWarnDeny>,
+        show_suppressed_violations: bool,
+        suppressed_violation_severity: SuppressedViolationSeverity,
     ) -> Self {
         Self {
             run,
@@ -667,6 +689,8 @@ impl ServerLinter {
             code_actions: Arc::new(ConcurrentHashMap::default()),
             runner,
             unused_directives_severity,
+            show_suppressed_violations,
+            suppressed_violation_severity,
         }
     }
 
@@ -762,18 +786,26 @@ impl ServerLinter {
         let mut fs = LspFileSystem::default();
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
-        let mut messages: Vec<DiagnosticReport> =
-            match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
-                Ok(results) => results
-                    .into_iter()
-                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
-                    .collect(),
-                Err(e) => {
-                    // clear disable directives on error to prevent stale directives
-                    self.runner.directives_coordinator().remove(path);
-                    return Err(e);
-                }
-            };
+        let suppressed_severity = self.suppressed_violation_severity;
+        let files = &[Arc::from(path.as_os_str())];
+        let run_result = if self.show_suppressed_violations {
+            self.runner.run_source_marking_suppressed(files, &fs)
+        } else {
+            self.runner.run_source(files, &fs)
+        };
+        let mut messages: Vec<DiagnosticReport> = match run_result {
+            Ok(results) => results
+                .into_iter()
+                .map(|message| {
+                    message_to_lsp_diagnostic(message, uri, source_text, rope, suppressed_severity)
+                })
+                .collect(),
+            Err(e) => {
+                // clear disable directives on error to prevent stale directives
+                self.runner.directives_coordinator().remove(path);
+                return Err(e);
+            }
+        };
 
         messages.append(&mut generate_inverted_diagnostics(&messages, uri));
 
@@ -804,6 +836,8 @@ impl ServerLinter {
             || old_options.unused_disable_directives != new_options.unused_disable_directives
             // TODO: only the TsgoLinter needs to be dropped or created
             || old_options.type_aware != new_options.type_aware
+            || old_options.show_suppressed_violations != new_options.show_suppressed_violations
+            || old_options.suppressed_violation_severity != new_options.suppressed_violation_severity
     }
 
     /// Check if the linter is responsible for the given URI.

@@ -238,6 +238,12 @@ pub struct Message {
     pub span: Span,
     fixed: bool,
     pub section_offset: u32,
+    /// Whether this violation is suppressed by `oxlint-suppressions.json`.
+    ///
+    /// Suppressed violations are kept in the message list (rather than dropped)
+    /// when the caller requests mark-mode suppression (e.g. the LSP layer).
+    /// CLI callers use drop-mode and will never see messages with `suppressed = true`.
+    pub suppressed: bool,
 }
 
 impl Message {
@@ -250,7 +256,7 @@ impl Message {
             .map(|span| Span::new(span.offset() as u32, (span.offset() + span.len()) as u32))
             .unwrap_or_default();
 
-        Self { error, span, fixes, fixed: false, section_offset: 0 }
+        Self { error, span, fixes, fixed: false, section_offset: 0, suppressed: false }
     }
 
     #[must_use]

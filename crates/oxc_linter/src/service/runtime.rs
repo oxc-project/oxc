@@ -653,26 +653,18 @@ impl Runtime {
                             return;
                         }
 
-                        let tmp_pin = concurrent_tracking_map.pin();
-
-                        let suppression_file_check = {
-                            if ignore_suppression {
-                                None
-                            } else if let Ok(file_path) = path.strip_prefix(&self.cwd) {
-                                let filename = Filename::new(file_path);
-
-                                let key_arc = Arc::from(filename);
-
-                                let suppression_data = tmp_pin.get(&key_arc);
-
-                                Some(&SuppressionFile::new(
-                                    file_exists,
-                                    self.linter.options.suppress_all,
-                                    suppression_data,
-                                ))
-                            } else {
-                                Some(&SuppressionFile::default())
-                            }
+                        let suppression_file_check = if ignore_suppression {
+                            None
+                        } else if let Ok(file_path) = path.strip_prefix(&self.cwd) {
+                            let filename = Filename::new(file_path);
+                            let suppression_data = concurrent_tracking_map.get(&filename);
+                            Some(SuppressionFile::new(
+                                file_exists,
+                                self.linter.options.suppress_all,
+                                suppression_data,
+                            ))
+                        } else {
+                            Some(SuppressionFile::default())
                         };
 
                         let (mut messages, disable_directives) =
@@ -716,7 +708,7 @@ impl Runtime {
                         if let Some(suppression_file) = suppression_file_check {
                             let (filtered_diagnostics, runtime_suppression_tracking) =
                                 SuppressionManager::suppress_lint_diagnostics(
-                                    suppression_file,
+                                    &suppression_file,
                                     messages,
                                 );
 
@@ -724,7 +716,7 @@ impl Runtime {
                                 let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
 
                                 let diffs = SuppressionManager::diff_filename(
-                                    suppression_file,
+                                    &suppression_file,
                                     &suppression_detected,
                                     &filename,
                                 );

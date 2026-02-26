@@ -25,6 +25,11 @@ pub struct LintRunner {
     directives_store: DirectivesStore,
     /// Current working directory
     cwd: PathBuf,
+    /// Bulk suppression data for the LSP mark-mode path.
+    ///
+    /// `None` in normal CLI usage (CLI handles suppressions via `lint_files`).
+    /// `Some` when the LSP wants to show suppressed violations as faded diagnostics.
+    lsp_suppression_manager: Option<SuppressionManager>,
 }
 
 /// Manages disable directives across all linting engines.
@@ -142,6 +147,7 @@ pub struct LintRunnerBuilder {
     lint_service_options: LintServiceOptions,
     silent: bool,
     fix_kind: FixKind,
+    lsp_suppression_manager: Option<SuppressionManager>,
 }
 
 impl LintRunnerBuilder {
@@ -153,6 +159,7 @@ impl LintRunnerBuilder {
             lint_service_options,
             silent: false,
             fix_kind: FixKind::None,
+            lsp_suppression_manager: None,
         }
     }
 
@@ -177,6 +184,12 @@ impl LintRunnerBuilder {
     #[must_use]
     pub fn with_fix_kind(mut self, fix_kind: FixKind) -> Self {
         self.fix_kind = fix_kind;
+        self
+    }
+
+    #[must_use]
+    pub fn with_suppression_manager(mut self, suppression_manager: SuppressionManager) -> Self {
+        self.lsp_suppression_manager = Some(suppression_manager);
         self
     }
 
@@ -207,6 +220,7 @@ impl LintRunnerBuilder {
             type_aware_linter,
             directives_store: directives_coordinator,
             cwd,
+            lsp_suppression_manager: self.lsp_suppression_manager,
         })
     }
 }
@@ -257,6 +271,44 @@ impl LintRunner {
         }
 
         Ok(messages)
+    }
+
+    /// Run linting and return all messages, marking bulk-suppressed violations with
+    /// `message.suppressed = true` instead of dropping them.
+    ///
+    /// This is intended for the LSP, which wants to show suppressed violations as
+    /// faded/de-emphasized diagnostics rather than hiding them entirely.
+    ///
+    /// # Errors
+    /// Returns an error if type-aware linting fails.
+    pub fn run_source_marking_suppressed(
+        &self,
+        files: &[Arc<OsStr>],
+        file_system: &(dyn crate::RuntimeFileSystem + Sync + Send),
+    ) -> Result<Vec<Message>, String> {
+        let mut messages = self.lint_service.run_source(file_system, files.to_owned());
+
+        if let Some(type_aware_linter) = &self.type_aware_linter {
+            let tsgo_messages =
+                type_aware_linter.lint_source(files, file_system, self.directives_store.map())?;
+            messages.extend(tsgo_messages);
+        }
+
+        // Apply bulk suppressions in Mark mode: suppressed violations are kept with
+        // `message.suppressed = true`.
+        if let Some(ref mgr) = self.lsp_suppression_manager {
+            for file in files {
+                let path = Path::new(file.as_ref());
+                mgr.mark_suppressed(path, &mut messages);
+            }
+        }
+
+        Ok(messages)
+    }
+
+    /// Whether this runner has LSP suppression data loaded.
+    pub fn has_suppressions(&self) -> bool {
+        self.lsp_suppression_manager.is_some()
     }
 
     /// Report unused disable directives

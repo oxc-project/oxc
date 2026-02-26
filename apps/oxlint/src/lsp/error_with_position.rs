@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use oxc_span::Span;
 use tower_lsp_server::ls_types::{
     self, CodeDescription, Diagnostic, DiagnosticRelatedInformation, DiagnosticSeverity,
-    NumberOrString, Position, Range, Uri,
+    DiagnosticTag, NumberOrString, Position, Range, Uri,
 };
 
 use oxc_data_structures::rope::{Rope, get_line_column};
@@ -11,6 +11,8 @@ use oxc_diagnostics::{OxcCode, Severity};
 use oxc_linter::{
     AllowWarnDeny, DisableDirectives, Fix, FixKind, Message, PossibleFixes, RuleCommentType,
 };
+
+use crate::lsp::options::SuppressedViolationSeverity;
 
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
@@ -56,8 +58,21 @@ pub fn message_to_lsp_diagnostic(
     uri: &Uri,
     source_text: &str,
     rope: &Rope,
+    suppressed_severity: SuppressedViolationSeverity,
 ) -> DiagnosticReport {
-    let severity = miette_severity_to_lsp_severity(message.error.severity);
+    let suppressed = message.suppressed;
+    let severity = if suppressed {
+        match suppressed_severity {
+            SuppressedViolationSeverity::Original => {
+                miette_severity_to_lsp_severity(message.error.severity)
+            }
+            SuppressedViolationSeverity::Hint => DiagnosticSeverity::HINT,
+            SuppressedViolationSeverity::Warning => DiagnosticSeverity::WARNING,
+            SuppressedViolationSeverity::Error => DiagnosticSeverity::ERROR,
+        }
+    } else {
+        miette_severity_to_lsp_severity(message.error.severity)
+    };
 
     let related_information = message.error.labels.as_ref().map(|spans| {
         spans
@@ -115,6 +130,8 @@ pub fn message_to_lsp_diagnostic(
             std::borrow::Cow::Borrowed("Fix this problem")
         };
 
+    let tags = if suppressed { Some(vec![DiagnosticTag::UNNECESSARY]) } else { None };
+
     let diagnostic = Diagnostic {
         range,
         severity: Some(severity),
@@ -123,9 +140,15 @@ pub fn message_to_lsp_diagnostic(
         source: Some("oxc".into()),
         code_description,
         related_information,
-        tags: None,
+        tags,
         data: None,
     };
+
+    // Suppressed violations have no code actions — the suppression JSON is the record, not
+    // inline comments. Showing fix/ignore actions would be confusing.
+    if suppressed {
+        return DiagnosticReport { diagnostic, code_action: None };
+    }
 
     let mut fixed_content = vec![];
     // Convert PossibleFixes directly to PossibleFixContent
