@@ -74,6 +74,31 @@ impl ESTree for EstreeRegExpToken<'_> {
     }
 }
 
+/// Token type for identifiers (and keywords which are used as identifiers).
+///
+/// Despite the name, this type is also used for tokens with `"Keyword"` or `"PrivateIdentifier"`
+/// type — it covers any token whose value is guaranteed JSON-safe.
+///
+/// This is a separate type from `EstreeToken` for two reasons:
+/// 1. It has no `regex` field (identifiers never have regex data).
+/// 2. Value is wrapped in `JsonSafeString` during serialization, skipping escape-checking.
+///    Identifier names are guaranteed JSON-safe (no quotes, backslashes, or control characters).
+struct EstreeIdentToken<'a> {
+    token_type: &'static str,
+    value: &'a str,
+    span: Span,
+}
+
+impl ESTree for EstreeIdentToken<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString(self.token_type));
+        state.serialize_field("value", &JsonSafeString(self.value));
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct EstreeTokenOptions {
     pub exclude_legacy_keyword_identifiers: bool,
@@ -222,7 +247,13 @@ impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
 
     /// Emit the token at `start` as `"Identifier"`, unless it's a legacy keyword
     /// and `exclude_legacy_keyword_identifiers` is set (in which case it gets its default type).
-    fn emit_identifier(&mut self, start: u32) {
+    ///
+    /// `name` is the decoded identifier name from the AST node.
+    /// When the token has no escapes, `name` points into the source text, same as slicing it.
+    /// When the token has escapes and `decode_identifier_escapes` is enabled, `name` provides
+    /// the decoded value. Only when escapes are present but decoding is disabled do we need to
+    /// fall back to slicing the raw source text (preserving the escape sequences in the output).
+    fn emit_identifier(&mut self, start: u32, name: &str) {
         let token = self.advance_to(start);
         let token_type = if self.options.exclude_legacy_keyword_identifiers
             && matches!(token.kind(), Kind::Yield | Kind::Let | Kind::Static)
@@ -231,7 +262,24 @@ impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
         } else {
             "Identifier"
         };
-        self.emit_token(token, token_type);
+
+        // Use `name` from AST node in most cases — it's JSON-safe so can skip escape checking.
+        // Only fall back to raw source text when the token contains escapes and decoding is disabled,
+        // since raw escape sequences contain `\` which needs JSON escaping.
+        if self.options.decode_identifier_escapes || !token.escaped() {
+            self.serialize_ident_token(token, token_type, name);
+        } else {
+            #[cold]
+            #[inline(never)]
+            fn emit<S: SequenceSerializer>(
+                ctx: &mut EstreeTokenContext<'_, S>,
+                token: &Token,
+                token_type: &'static str,
+            ) {
+                ctx.emit_token(token, token_type);
+            }
+            emit(self, token, token_type);
+        }
     }
 
     /// Consume all tokens before `start` (emitting them with default types),
@@ -255,38 +303,42 @@ impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
 
     /// Serialize a single token.
     fn emit_token(&mut self, token: &Token, token_type: &'static str) {
-        let kind = token.kind();
-        let start = token.start();
-        let end = token.end();
-        let value = &self.source_text[start as usize..end as usize];
-        let value = if kind == Kind::PrivateIdentifier { &value[1..] } else { value };
-
-        let decoded;
-        let value = if self.options.decode_identifier_escapes
-            && token.escaped()
-            && (kind.is_identifier_name() || kind == Kind::PrivateIdentifier)
-            && value.contains("\\u")
-        {
-            decoded = decode_js_unicode_escapes(value);
-            decoded.as_str()
-        } else {
-            value
-        };
-
-        let regex = if kind == Kind::RegExp {
+        let value = &self.source_text[token.start() as usize..token.end() as usize];
+        let regex = if token.kind() == Kind::RegExp {
             regex_parts(value).map(|(pattern, flags)| EstreeRegExpToken { pattern, flags })
         } else {
             None
         };
+        self.serialize_token(token, token_type, value, regex);
+    }
 
+    /// Convert span to UTF-16 and serialize token.
+    fn serialize_token(
+        &mut self,
+        token: &Token,
+        token_type: &'static str,
+        value: &str,
+        regex: Option<EstreeRegExpToken<'_>>,
+    ) {
         // Convert offsets to UTF-16
-        let mut span = Span::new(start, end);
+        let mut span = Span::new(token.start(), token.end());
         if let Some(converter) = self.span_converter.as_mut() {
             converter.convert_span(&mut span);
         }
 
         let estree_token = EstreeToken { token_type, value, regex, span };
         self.seq.serialize_element(&estree_token);
+    }
+
+    /// Serialize a token whose value is guaranteed JSON-safe, skipping escape-checking.
+    fn serialize_ident_token(&mut self, token: &Token, token_type: &'static str, value: &str) {
+        // Convert offsets to UTF-16
+        let mut span = Span::new(token.start(), token.end());
+        if let Some(converter) = self.span_converter.as_mut() {
+            converter.convert_span(&mut span);
+        }
+
+        self.seq.serialize_element(&EstreeIdentToken { token_type, value, span });
     }
 
     /// Serialize all remaining tokens and close the sequence.
@@ -371,7 +423,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
         {
             self.emit_token_at(identifier.span.start, "JSXIdentifier");
         } else {
-            self.emit_identifier(identifier.span.start);
+            self.emit_identifier(identifier.span.start, &identifier.name);
         }
     }
 
@@ -383,16 +435,36 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
         {
             self.emit_token_at(identifier.span.start, "JSXIdentifier");
         } else {
-            self.emit_identifier(identifier.span.start);
+            self.emit_identifier(identifier.span.start, &identifier.name);
         }
     }
 
     fn visit_binding_identifier(&mut self, identifier: &BindingIdentifier<'a>) {
-        self.emit_identifier(identifier.span.start);
+        self.emit_identifier(identifier.span.start, &identifier.name);
     }
 
     fn visit_label_identifier(&mut self, identifier: &LabelIdentifier<'a>) {
-        self.emit_identifier(identifier.span.start);
+        self.emit_identifier(identifier.span.start, &identifier.name);
+    }
+
+    fn visit_private_identifier(&mut self, identifier: &PrivateIdentifier<'a>) {
+        let token = self.advance_to(identifier.span.start);
+
+        // `identifier.name` has `#` stripped and escapes decoded by the parser, and is JSON-safe.
+        // Only fall back to slicing raw source text when the token contains escapes and decoding
+        // is disabled, since raw escape sequences contain `\` which needs JSON escaping.
+        if self.options.decode_identifier_escapes || !token.escaped() {
+            self.serialize_ident_token(token, "PrivateIdentifier", &identifier.name);
+        } else {
+            #[cold]
+            #[inline(never)]
+            fn emit<S: SequenceSerializer>(ctx: &mut EstreeTokenContext<'_, S>, token: &Token) {
+                // Strip leading `#`
+                let value = &ctx.source_text[token.start() as usize + 1..token.end() as usize];
+                ctx.serialize_token(token, "PrivateIdentifier", value, None);
+            }
+            emit(self, token);
+        }
     }
 
     fn visit_ts_this_parameter(&mut self, parameter: &TSThisParameter<'a>) {
@@ -561,47 +633,4 @@ fn regex_parts(raw: &str) -> Option<(&str, &str)> {
     }
 
     None
-}
-
-fn decode_js_unicode_escapes(raw: &str) -> String {
-    debug_assert!(raw.contains("\\u"));
-
-    let bytes = raw.as_bytes();
-    let mut output = String::with_capacity(raw.len());
-    let mut i = 0;
-
-    while i < bytes.len() {
-        if bytes[i] == b'\\' && i + 1 < bytes.len() && bytes[i + 1] == b'u' {
-            // `\u{...}`
-            if i + 2 < bytes.len() && bytes[i + 2] == b'{' {
-                let mut j = i + 3;
-                while j < bytes.len() && bytes[j] != b'}' {
-                    j += 1;
-                }
-                if j < bytes.len()
-                    && j > i + 3
-                    && let Ok(codepoint) = u32::from_str_radix(&raw[i + 3..j], 16)
-                    && let Some(ch) = char::from_u32(codepoint)
-                {
-                    output.push(ch);
-                    i = j + 1;
-                    continue;
-                }
-            // `\uXXXX`
-            } else if i + 6 <= bytes.len()
-                && let Ok(codepoint) = u32::from_str_radix(&raw[i + 2..i + 6], 16)
-                && let Some(ch) = char::from_u32(codepoint)
-            {
-                output.push(ch);
-                i += 6;
-                continue;
-            }
-        }
-
-        let ch = raw[i..].chars().next().unwrap();
-        output.push(ch);
-        i += ch.len_utf8();
-    }
-
-    output
 }
