@@ -135,7 +135,7 @@ function foo(n) {
 }
 
 // @prop → @property normalization
-/** @property {string} name - The name */
+/** @property {string} name The name */
 const config = {};
 
 // Param without type
@@ -203,7 +203,7 @@ function foo(n) {
 }
 
 // @prop → @property normalization
-/** @property {string} name - The name */
+/** @property {string} name The name */
 const config = {};
 
 // Param without type

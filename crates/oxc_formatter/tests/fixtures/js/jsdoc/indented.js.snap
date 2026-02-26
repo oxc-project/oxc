@@ -56,9 +56,7 @@ class MyClass {
    * Does something useful.
    *
    * @param {Object} opts - Options
-   *
    * @param {string} opts.name - The name
-   *
    * @param {number} opts.age - The age
    */
   complex(opts) {}
@@ -94,9 +92,7 @@ class MyClass {
    * Does something useful.
    *
    * @param {Object} opts - Options
-   *
    * @param {string} opts.name - The name
-   *
    * @param {number} opts.age - The age
    */
   complex(opts) {}

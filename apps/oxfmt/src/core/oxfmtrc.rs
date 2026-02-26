@@ -8,8 +8,8 @@ use serde_json::Value;
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
     EmbeddedLanguageFormatting, Expand, FormatOptions, GroupEntry, ImportModifier, ImportSelector,
-    IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
+    IndentStyle, IndentWidth, JsdocOptions, LineEnding, LineWidth, QuoteProperties, QuoteStyle,
+    Semicolons, SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -221,6 +221,16 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalSortPackageJson")]
     pub sort_package_json: Option<SortPackageJsonUserConfig>,
+
+    /// Format JSDoc comments.
+    ///
+    /// Based on [prettier-plugin-jsdoc](https://github.com/hosseinmd/prettier-plugin-jsdoc).
+    /// Normalizes tags, capitalizes descriptions, converts to single-line when possible,
+    /// and removes empty JSDoc comments.
+    ///
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub jsdoc: Option<bool>,
 
     /// Sort Tailwind CSS classes.
     ///
@@ -523,6 +533,10 @@ impl FormatConfig {
                 preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
                 preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
             });
+        }
+
+        if self.jsdoc == Some(true) {
+            format_options.jsdoc = Some(JsdocOptions::default());
         }
 
         // Currently, there is a no options for TOML formatter

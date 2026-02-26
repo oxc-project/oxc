@@ -90,7 +90,7 @@ function bar() {
 }
 
 // Tag normalization: @arg → @param
-/** @param {number} x - The value */
+/** @param {number} x The value */
 function baz(x) {}
 
 // Tag normalization: @yield → @yields
@@ -108,9 +108,7 @@ const d = "hello";
 // Multiple params
 /**
  * @param {string} a - First param
- *
  * @param {number} b - Second param
- *
  * @param {boolean} c - Third param
  */
 function multi(a, b, c) {}
@@ -142,7 +140,7 @@ function bar() {
 }
 
 // Tag normalization: @arg → @param
-/** @param {number} x - The value */
+/** @param {number} x The value */
 function baz(x) {}
 
 // Tag normalization: @yield → @yields
@@ -160,9 +158,7 @@ const d = "hello";
 // Multiple params
 /**
  * @param {string} a - First param
- *
  * @param {number} b - Second param
- *
  * @param {boolean} c - Third param
  */
 function multi(a, b, c) {}

@@ -74,6 +74,7 @@ pub fn format_jsdoc_comment<'a>(
 
     // Format the description
     if !description.is_empty() {
+        let description = normalize_comment_text(&description);
         let desc = if options.capitalize_descriptions {
             capitalize_first(&description)
         } else {
@@ -83,8 +84,20 @@ pub fn format_jsdoc_comment<'a>(
     }
 
     // Format tags
+    let mut prev_kind: Option<&str> = None;
     for tag in tags {
         let kind = normalize_tag_kind(tag.kind.parsed());
+
+        // Add blank line separator: between description and first tag,
+        // or when tag group changes (e.g. @param group → @returns)
+        let needs_separator = if !lines.is_empty() && lines.last().is_some_and(|l| !l.is_empty()) {
+            prev_kind.is_none_or(|prev| tag_group(prev) != tag_group(kind))
+        } else {
+            false
+        };
+        if needs_separator {
+            lines.push(String::new());
+        }
 
         // Tags that use type_name_comment pattern
         match kind {
@@ -101,10 +114,6 @@ pub fn format_jsdoc_comment<'a>(
                     &comment_part.parsed(),
                     options,
                 );
-                // If first tag and there's a description, add blank line separator
-                if !lines.is_empty() && lines.last().is_some_and(|l| !l.is_empty()) {
-                    lines.push(String::new());
-                }
                 // Wrap if needed, but keep the tag on the first line
                 wrap_tag_line(&mut tag_line, available_width, &mut lines);
             }
@@ -118,21 +127,25 @@ pub fn format_jsdoc_comment<'a>(
                     &comment_part.parsed(),
                     options,
                 );
-                if !lines.is_empty() && lines.last().is_some_and(|l| !l.is_empty()) {
-                    lines.push(String::new());
-                }
                 wrap_tag_line(&mut tag_line, available_width, &mut lines);
             }
             "example" => {
-                // Preserve @example content verbatim
-                if !lines.is_empty() && lines.last().is_some_and(|l| !l.is_empty()) {
-                    lines.push(String::new());
-                }
-                let comment_text = tag.comment().parsed();
+                // Preserve @example content verbatim with indentation
+                let comment_text = tag.comment().parsed_preserving_indent();
                 lines.push(format!("@{kind}"));
                 if !comment_text.is_empty() {
                     for line in comment_text.lines() {
+                        // Skip empty leading/trailing lines from the raw content
+                        if line.trim().is_empty()
+                            && lines.last().is_some_and(|l| l == &format!("@{kind}"))
+                        {
+                            continue;
+                        }
                         lines.push(line.to_string());
+                    }
+                    // Remove trailing empty lines from example
+                    while lines.last().is_some_and(String::is_empty) {
+                        lines.pop();
                     }
                 }
             }
@@ -142,19 +155,43 @@ pub fn format_jsdoc_comment<'a>(
                 let mut tag_line = if comment_text.is_empty() {
                     format!("@{kind}")
                 } else {
-                    let desc = if options.capitalize_descriptions {
+                    let comment_text = normalize_comment_text(&comment_text);
+                    // Only capitalize tags that contain descriptive text,
+                    // not identifier-like tags (@name, @category, @see, etc.)
+                    let should_capitalize = options.capitalize_descriptions
+                        && !matches!(
+                            kind,
+                            "name"
+                                | "category"
+                                | "see"
+                                | "since"
+                                | "version"
+                                | "author"
+                                | "module"
+                                | "namespace"
+                                | "memberof"
+                                | "requires"
+                                | "license"
+                                | "borrows"
+                                | "extends"
+                                | "augments"
+                                | "implements"
+                                | "mixes"
+                                | "override"
+                                | "access"
+                        );
+                    let desc = if should_capitalize {
                         capitalize_first(&comment_text)
                     } else {
                         comment_text
                     };
                     format!("@{kind} {desc}")
                 };
-                if !lines.is_empty() && lines.last().is_some_and(|l| !l.is_empty()) {
-                    lines.push(String::new());
-                }
                 wrap_tag_line(&mut tag_line, available_width, &mut lines);
             }
         }
+
+        prev_kind = Some(kind);
     }
 
     // Try single-line form
@@ -204,6 +241,23 @@ fn normalize_tag_kind(kind: &str) -> &str {
     }
 }
 
+/// Group tags into categories for blank line separation.
+/// Tags in the same group are not separated by blank lines.
+fn tag_group(kind: &str) -> u8 {
+    match kind {
+        // Parameter-like tags
+        "param" | "property" | "this" | "template" | "typedef" => 0,
+        // Return-like tags
+        "returns" | "yields" => 1,
+        // Error tags
+        "throws" => 2,
+        // Example tags
+        "example" => 3,
+        // Everything else gets its own group based on kind
+        _ => 4,
+    }
+}
+
 /// Format a tag with `{type} name comment` pattern (e.g., @param).
 fn format_tag_with_type_name_comment(
     kind: &str,
@@ -228,14 +282,20 @@ fn format_tag_with_type_name_comment(
     }
 
     if !comment.is_empty() {
-        // Strip existing "- " prefix; we always re-add it
-        let stripped = comment.strip_prefix("- ").unwrap_or(comment);
+        // Normalize multiline comment text into a single line
+        let comment = normalize_comment_text(comment);
+        // Preserve the original dash prefix style
+        let (prefix, stripped) = if let Some(rest) = comment.strip_prefix("- ") {
+            (" - ", rest)
+        } else {
+            (" ", comment.as_str())
+        };
         let desc = if options.capitalize_descriptions {
             capitalize_first(stripped)
         } else {
             stripped.to_string()
         };
-        result.push_str(" - ");
+        result.push_str(prefix);
         result.push_str(&desc);
     }
 
@@ -260,16 +320,21 @@ fn format_tag_with_type_comment(
     }
 
     if !comment.is_empty() {
-        let desc = if options.capitalize_descriptions {
-            capitalize_first(comment)
-        } else {
-            comment.to_string()
-        };
+        // Normalize multiline comment text into a single line
+        let comment = normalize_comment_text(comment);
+        let desc =
+            if options.capitalize_descriptions { capitalize_first(&comment) } else { comment };
         result.push(' ');
         result.push_str(&desc);
     }
 
     result
+}
+
+/// Normalize multiline comment text into a single line.
+/// Joins lines with spaces and collapses multiple whitespace.
+fn normalize_comment_text(text: &str) -> String {
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 /// Normalize whitespace in type expressions: `  string  |  number  ` → `string | number`.
@@ -350,6 +415,7 @@ fn wrap_single_paragraph(text: &str, max_width: usize, lines: &mut Vec<String>) 
 }
 
 /// Wrap a tag line, keeping the tag on the first line and wrapping continuations.
+/// Continuation lines are not indented — they appear as plain text after ` * `.
 fn wrap_tag_line(tag_line: &mut String, max_width: usize, lines: &mut Vec<String>) {
     if tag_line.len() <= max_width {
         lines.push(std::mem::take(tag_line));
@@ -366,7 +432,8 @@ fn wrap_tag_line(tag_line: &mut String, max_width: usize, lines: &mut Vec<String
             current_line.push_str(word);
         } else if current_line.len() + 1 + word.len() > max_width && !first {
             lines.push(current_line);
-            current_line = word.to_string();
+            // Indent continuation lines to align with text after the tag
+            current_line = format!("  {word}");
         } else {
             current_line.push(' ');
             current_line.push_str(word);

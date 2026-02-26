@@ -88,6 +88,31 @@ impl<'a> JSDocCommentPart<'a> {
         )
     }
 
+    /// Returns the content preserving internal indentation.
+    /// Only strips the leading `* ` prefix from each line, but keeps indentation after the prefix.
+    /// Useful for `@example` blocks where code indentation must be preserved.
+    pub fn parsed_preserving_indent(&self) -> String {
+        if self.raw.lines().count() == 1 {
+            return self.raw.trim().to_string();
+        }
+
+        self.raw
+            .lines()
+            .map(|line| {
+                let trimmed = line.trim_start();
+                // Strip leading `*` and at most one space after it
+                if let Some(rest) = trimmed.strip_prefix("* ") {
+                    rest
+                } else if let Some(rest) = trimmed.strip_prefix('*') {
+                    rest
+                } else {
+                    trimmed
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
     /// Returns the content of the comment part without leading `*` in each line.
     pub fn parsed(&self) -> String {
         // If single line, there is no leading `*`
