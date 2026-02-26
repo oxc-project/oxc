@@ -71,7 +71,8 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import {b, a, d, c} from 'foo.js';
    ·            ─
    ╰────
-  help: Reorder the members in the import declaration alphabetically.
+  help: Replace `b, a, d, c` with `a, b, c, d`.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:12]
@@ -79,42 +80,44 @@ source: crates/oxc_linter/src/tester.rs
    ·            ─
  2 │             import {e, f, g, h} from 'bar.js';
    ╰────
-  help: Reorder the members in the import declaration alphabetically.
+  help: Replace `b, a, d, c` with `a, b, c, d`.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'B' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:12]
  1 │ import {a, B, c, D} from 'foo.js';
    ·            ─
    ╰────
-  help: Reorder the members in the import declaration alphabetically.
+  help: Replace `a, B, c, D` with `B, D, a, c`.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:30]
  1 │ import {zzzzz, /* comment */ aaaaa} from 'foo.js';
    ·                              ─────
    ╰────
-  help: Reorder the members in the import declaration alphabetically.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:30]
  1 │ import {zzzzz /* comment */, aaaaa} from 'foo.js';
    ·                              ─────
    ╰────
-  help: Reorder the members in the import declaration alphabetically.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:30]
  1 │ import {/* comment */ zzzzz, aaaaa} from 'foo.js';
    ·                              ─────
    ╰────
-  help: Reorder the members in the import declaration alphabetically.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:16]
  1 │ import {zzzzz, aaaaa /* comment */} from 'foo.js';
    ·                ─────
    ╰────
-  help: Reorder the members in the import declaration alphabetically.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Member 'qux' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:6:17]
@@ -123,7 +126,18 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────
  7 │                 bar,
    ╰────
-  help: Reorder the members in the import declaration alphabetically.
+  help: Replace `boop,
+                        foo,
+                        zoo,
+                        baz as qux,
+                        bar,
+                        beep` with `bar,
+                        beep,
+                        boop,
+                        foo,
+                        baz as qux,
+                        zoo`.
+  note: Reorder the members in the import declaration alphabetically.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:13]
@@ -225,4 +239,5 @@ source: crates/oxc_linter/src/tester.rs
  3 │             import { c, a } from 'c';
    ·                         ─
    ╰────
-  help: Reorder the members in the import declaration alphabetically.
+  help: Replace `c, a` with `a, c`.
+  note: Reorder the members in the import declaration alphabetically.

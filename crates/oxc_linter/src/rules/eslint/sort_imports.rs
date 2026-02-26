@@ -38,7 +38,7 @@ fn sort_members_alphabetically_diagnostic(name: &str, span: Span) -> OxcDiagnost
     OxcDiagnostic::warn(format!(
         "Member '{name}' of the import declaration should be sorted alphabetically."
     ))
-    .with_help("Reorder the members in the import declaration alphabetically.")
+    .with_note("Reorder the members in the import declaration alphabetically.")
     .with_label(span)
 }
 
