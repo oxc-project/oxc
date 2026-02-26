@@ -1,6 +1,6 @@
 //! A string builder for constructing source code.
 
-use std::iter;
+use std::{iter, ptr};
 
 use crate::assert_unchecked;
 
@@ -449,6 +449,138 @@ impl CodeBuffer {
         self.buf.extend_from_slice(bytes);
     }
 
+    /// Print a series of strings into the buffer.
+    ///
+    /// This is more efficient than making multiple [`print_str`] calls, because it only does one bounds check,
+    /// instead of one per string.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the sum of length of all strings exceeds `usize::MAX`.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxc_data_structures::code_buffer::CodeBuffer;
+    /// let mut json = CodeBuffer::new();
+    /// json.print_str("[");
+    ///
+    /// const TYPE: &str = "Thing";
+    /// let names = ["foo", "bar", "baz"];
+    ///
+    /// for (index, name) in names.into_iter().enumerate() {
+    ///   if index == 0 {
+    ///     json.print_strs_array([r#"{"type":""#, TYPE, r#"","name":""#, name, r#""}"#]);
+    ///   } else {
+    ///     json.print_strs_array([",", r#"{"type":""#, TYPE, r#"","name":""#, name, r#""}"#]);
+    ///   }
+    /// }
+    ///
+    /// json.print_str("]");
+    ///
+    /// let json = json.into_string();
+    /// assert_eq!(
+    ///   json,
+    ///   r#"[{"type":"Thing","name":"foo"},{"type":"Thing","name":"bar"},{"type":"Thing","name":"baz"}]"#
+    /// );
+    /// ```
+    ///
+    /// [`print_str`]: Self::print_str
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn print_strs_array<const N: usize>(&mut self, strings: [&str; N]) {
+        // Calculate total length of all the strings concatenated.
+        //
+        // We have to use `checked_add` here to guard against additions wrapping around
+        // if some of the input `&str`s are very long, or there's many of them.
+        //
+        // However, `&str`s have max length of `isize::MAX`.
+        // https://users.rust-lang.org/t/does-str-reliably-have-length-isize-max/126777
+        // Use `assert_unchecked!` to communicate this invariant to compiler, which allows it to
+        // optimize out the overflow checks where some of `strings` are static, so their size is known.
+        //
+        // e.g. `buf.print_strs_array(["\"", name, "\"", ":"])`, for example,
+        // requires no checks at all, because the static parts have total length of 3 bytes,
+        // and `name` has max length of `isize::MAX`. `isize::MAX as usize + 3` cannot overflow `usize`.
+        // Compiler can see that, and removes the overflow check.
+        // https://godbolt.org/z/MGh44Yz5d
+        #[expect(clippy::checked_conversions)]
+        let total_strings_len = strings.iter().fold(0usize, |total_len, s| {
+            let len = s.len();
+            // SAFETY: `&str`s have maximum length of `isize::MAX`
+            unsafe { assert_unchecked!(len <= (isize::MAX as usize)) };
+            total_len.checked_add(len).unwrap()
+        });
+
+        // Do actual pushing of the strings into `buf` in a separate function, to ensure that `print_strs_array`
+        // is inlined, so that compiler has knowledge to remove the overflow checks above.
+        // When some of `strings` are static, this function is usually only a few instructions.
+        // Compiler can choose whether or not to inline `print_strs_array_with_total_len`.
+        // SAFETY: `total_strings_len` has been calculated correctly above.
+        unsafe { self.print_strs_array_with_total_len(strings, total_strings_len) }
+    }
+
+    /// Print a series of strings into the buffer, with provided `total_strings_len`.
+    ///
+    /// # SAFETY
+    /// `total_strings_len` must be the total length of all `strings` concatenated.
+    unsafe fn print_strs_array_with_total_len<const N: usize>(
+        &mut self,
+        strings: [&str; N],
+        total_strings_len: usize,
+    ) {
+        // Reserve `total_strings_len` bytes for the strings to be written into
+        self.reserve(total_strings_len);
+
+        // Write each string into `buf`, without bounds checks
+
+        let current_len = self.buf.len();
+        // SAFETY: `buf.ptr + buf.len` is within bounds of `buf`'s allocation.
+        let start_ptr = unsafe { self.buf.as_mut_ptr().add(current_len) };
+        let mut dst_ptr = start_ptr;
+
+        // Get new length of `buf` after all `strings` are written.
+        // `current_len + total_strings_len` must be `<= isize::MAX` otherwise `self.reserve(total_strings_len)`
+        // would have panicked. Therefore this addition cannot wrap around.
+        let new_len = current_len + total_strings_len;
+
+        #[cfg(not(debug_assertions))]
+        // SAFETY: `new_len` is original length of `buf` plus the total length of all strings concatenated.
+        // We're going to write those strings into `buf`, so all bytes in `buf` up to `new_len` will be initialized.
+        // In release mode, nothing in the code in the rest of this function can panic, so we can write the new length
+        // early, which should be a little bit cheaper than writing it after, as the register containing `new_len`
+        // is now free, and can be re-used in the code below.
+        unsafe {
+            self.buf.set_len(new_len);
+        }
+
+        for str in strings {
+            let src_ptr = str.as_ptr();
+            let len = str.len();
+
+            // SAFETY:
+            // `src` is obtained from a `&str` with length `len`, so is valid for reading `len` bytes.
+            // `dst_ptr` must be within bounds of `buf`'s allocation, because we reserved sufficient space.
+            // for all the strings. So is `dst_ptr + len`.
+            // `u8` has no alignment requirements, so `src_ptr` and `dst_ptr` are sufficiently aligned.
+            // No overlapping, because we're copying from an existing `&str` to newly reserved space in `buf`.
+            unsafe { ptr::copy_nonoverlapping(src_ptr, dst_ptr, len) };
+
+            // SAFETY: We allocated sufficient capacity for all the strings concatenated.
+            // So `dst_ptr.add(len)` cannot go out of bounds.
+            dst_ptr = unsafe { dst_ptr.add(len) };
+        }
+
+        debug_assert_eq!(dst_ptr as usize - start_ptr as usize, total_strings_len);
+
+        #[cfg(debug_assertions)]
+        // SAFETY: `new_len` is original length of `buf` plus the total length of all strings concatenated.
+        // We've written those strings into `buf`, so all bytes in `buf` up to `new_len` are now initialized.
+        // In debug mode, we need to write the new length last, because the `debug_assert!` above could panic.
+        unsafe {
+            self.buf.set_len(new_len);
+        }
+    }
+
     /// Print a sequence of bytes, without checking that the buffer still contains a valid UTF-8 string.
     ///
     /// # SAFETY
@@ -671,6 +803,31 @@ mod test {
         assert_eq!(code.len(), 3);
         assert_eq!(code.as_bytes(), &[b'f', b'o', b'o']);
         assert_eq!(String::from(code), "foo");
+    }
+
+    #[test]
+    fn print_strs_array() {
+        // Standard operation
+        let mut code = CodeBuffer::new();
+        let name = "foo";
+        let value = "123";
+        code.print_strs_array(["const ", name, " = ", value, ";"]);
+        assert_eq!(String::from(code), "const foo = 123;");
+
+        // Empty array
+        let mut code = CodeBuffer::new();
+        code.print_strs_array([]);
+        assert_eq!(String::from(code), "");
+
+        // Array of empty strings
+        let mut code = CodeBuffer::new();
+        code.print_strs_array(["", "", ""]);
+        assert_eq!(String::from(code), "");
+
+        // Array containing empty and non-empty strings
+        let mut code = CodeBuffer::new();
+        code.print_strs_array(["", "foo", "", "bar", "", "qux", ""]);
+        assert_eq!(String::from(code), "foobarqux");
     }
 
     #[test]
