@@ -91,12 +91,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ class MyClass implements Number {}
    ·                          ──────
    ╰────
+  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:31]
  1 │ interface MyInterface extends Number {}
    ·                               ──────
    ╰────
+  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:15]
