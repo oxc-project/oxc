@@ -136,10 +136,14 @@ fn parse_format_options(json: &OptionSet) -> FormatOptions {
                     }
                 } else if let Some(obj) = value.as_object() {
                     let mut jsdoc = JsdocOptions::default();
-                    if let Some(b) = obj.get("capitalizeDescriptions").and_then(serde_json::Value::as_bool) {
+                    if let Some(b) =
+                        obj.get("capitalizeDescriptions").and_then(serde_json::Value::as_bool)
+                    {
                         jsdoc.capitalize_descriptions = b;
                     }
-                    if let Some(b) = obj.get("singleLineWhenPossible").and_then(serde_json::Value::as_bool) {
+                    if let Some(b) =
+                        obj.get("singleLineWhenPossible").and_then(serde_json::Value::as_bool)
+                    {
                         jsdoc.single_line_when_possible = b;
                     }
                     options.jsdoc = Some(jsdoc);
