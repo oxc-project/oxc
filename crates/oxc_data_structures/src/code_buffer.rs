@@ -147,6 +147,15 @@ impl CodeBuffer {
         self.buf.len()
     }
 
+    /// Obtain the underlying buffer.
+    ///
+    /// # SAFETY
+    /// Caller must ensure that any mutations to the buffer leave it containing a valid UTF-8 string.
+    #[inline]
+    pub unsafe fn inner_mut(&mut self) -> &mut Vec<u8> {
+        &mut self.buf
+    }
+
     /// Returns the capacity of the buffer in bytes.
     ///
     /// This is *not* the same as capacity in characters,

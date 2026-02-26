@@ -1907,6 +1907,7 @@ dependencies = [
 name = "oxc_estree_tokens"
 version = "0.115.0"
 dependencies = [
+ "itoa",
  "oxc_ast",
  "oxc_ast_visit",
  "oxc_estree",

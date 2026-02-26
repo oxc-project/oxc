@@ -2,6 +2,8 @@ use oxc_data_structures::code_buffer::CodeBuffer;
 
 /// Formatter trait.
 pub trait Formatter {
+    const IS_COMPACT: bool;
+
     /// Create new [`Formatter`].
     fn new() -> Self;
 
@@ -30,6 +32,8 @@ pub trait Formatter {
 pub struct CompactFormatter;
 
 impl Formatter for CompactFormatter {
+    const IS_COMPACT: bool = true;
+
     #[inline(always)]
     fn new() -> Self {
         Self
@@ -71,6 +75,8 @@ pub struct PrettyFormatter {
 }
 
 impl Formatter for PrettyFormatter {
+    const IS_COMPACT: bool = false;
+
     #[inline(always)]
     fn new() -> Self {
         Self { indent: 0 }

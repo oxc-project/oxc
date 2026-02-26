@@ -25,3 +25,4 @@ oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_estree = { workspace = true, features = ["serialize"] }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true, features = ["serialize"] }
+itoa = { workspace = true }

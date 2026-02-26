@@ -1,5 +1,7 @@
 use std::slice::Iter;
 
+use itoa::Buffer as ItoaBuffer;
+
 use oxc_ast::ast::*;
 use oxc_ast_visit::{
     Visit,
@@ -7,7 +9,7 @@ use oxc_ast_visit::{
     walk,
 };
 use oxc_estree::{
-    CompactFormatter, Config, ESTree, ESTreeSerializer, JsonSafeString, PrettyFormatter,
+    CompactFormatter, Config, ESTree, ESTreeSerializer, Formatter, JsonSafeString, PrettyFormatter,
     SequenceSerializer, Serializer, StructSerializer,
 };
 use oxc_parser::{Kind, Token};
@@ -90,7 +92,81 @@ struct EstreeIdentToken<'a> {
 }
 
 impl ESTree for EstreeIdentToken<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
+    fn serialize<S: Serializer>(&self, mut serializer: S) {
+        if S::Formatter::IS_COMPACT {
+            static STR: &str = "{\"type\":\",\"value\":\",\"start\":,\"end\":";
+            static TYPE_PREFIX: &str = "{\"type\":\"";
+            static VALUE_PREFIX: &str = "\",\"value\":\"";
+            static START_PREFIX: &str = "\",\"start\":";
+            static END_PREFIX: &str = ",\"end\":";
+            static POSTFIX: u8 = b'}';
+            const MAX_U32_LEN: usize = 10;
+
+            // SAFETY: We push only valid UTF-8 strings to `buffer`
+            let buffer = unsafe { serializer.buffer_mut().inner_mut() };
+
+            // +2 for the 2 overlapping `"`s
+            // +1 for the following comma
+            buffer.reserve(
+                STR.len()
+                    + 2
+                    + 1
+                    + MAX_U32_LEN
+                    + MAX_U32_LEN
+                    + self.token_type.len()
+                    + self.value.len(),
+            );
+
+            // SAFETY: So safe!
+            unsafe {
+                let start_ptr = buffer.as_mut_ptr();
+                let mut ptr = start_ptr.add(buffer.len());
+
+                // type
+                ptr.copy_from_nonoverlapping(STR.as_ptr(), 16);
+                ptr.add(TYPE_PREFIX.len())
+                    .copy_from_nonoverlapping(self.token_type.as_ptr(), self.token_type.len());
+                ptr = ptr.add(TYPE_PREFIX.len() + self.token_type.len());
+
+                // value
+                ptr.copy_from_nonoverlapping(STR.as_ptr().add(TYPE_PREFIX.len() - 1), 16);
+                ptr.add(VALUE_PREFIX.len())
+                    .copy_from_nonoverlapping(self.value.as_ptr(), self.value.len());
+                ptr = ptr.add(VALUE_PREFIX.len() + self.value.len());
+
+                // start
+                ptr.copy_from_nonoverlapping(
+                    STR.as_ptr().add(TYPE_PREFIX.len() - 1 + VALUE_PREFIX.len() - 1),
+                    16,
+                );
+                let mut itoa_buffer = ItoaBuffer::new();
+                let start_str = itoa_buffer.format(self.span.start);
+                // TODO: This is UB. Not all bytes of the buffer are initialized.
+                ptr.add(START_PREFIX.len()).copy_from_nonoverlapping(start_str.as_ptr(), 16);
+                ptr = ptr.add(START_PREFIX.len() + start_str.len());
+
+                // end
+                ptr.copy_from_nonoverlapping(
+                    STR.as_ptr()
+                        .add(TYPE_PREFIX.len() - 1 + VALUE_PREFIX.len() - 1 + START_PREFIX.len()),
+                    8,
+                );
+                let end_str = itoa_buffer.format(self.span.end);
+                // TODO: This is UB. Not all bytes of the buffer are initialized.
+                ptr.add(END_PREFIX.len()).copy_from_nonoverlapping(end_str.as_ptr(), 16);
+                ptr = ptr.add(END_PREFIX.len() + end_str.len());
+
+                // postfix
+                ptr.write(POSTFIX);
+                ptr = ptr.add(1);
+
+                let new_len = ptr.offset_from_unsigned(start_ptr);
+                buffer.set_len(new_len);
+            }
+
+            return;
+        }
+
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString(self.token_type));
         state.serialize_field("value", &JsonSafeString(self.value));
