@@ -325,6 +325,11 @@ impl ConfigStore {
         self.base.base.config.options.type_aware.unwrap_or(false)
     }
 
+    /// Whether type-checking diagnostics are enabled in the root config.
+    pub fn type_check_enabled(&self) -> bool {
+        self.base.base.config.options.type_check.unwrap_or(false)
+    }
+
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
         if self.nested_configs.is_empty() {
             &self.base
@@ -1154,7 +1159,7 @@ mod test {
             vec![],
             OxlintCategories::default(),
             LintConfig {
-                options: OxlintOptions { type_aware: Some(true) },
+                options: OxlintOptions { type_aware: Some(true), ..OxlintOptions::default() },
                 ..LintConfig::default()
             },
             ResolvedOxlintOverrides::new(vec![]),
@@ -1174,5 +1179,34 @@ mod test {
         );
         let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
         assert!(!store.type_aware_enabled());
+    }
+
+    #[test]
+    fn test_type_check_enabled_from_root_config() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig {
+                options: OxlintOptions { type_check: Some(true), ..OxlintOptions::default() },
+                ..LintConfig::default()
+            },
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(store.type_check_enabled());
+    }
+
+    #[test]
+    fn test_type_check_disabled_by_default() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(!store.type_check_enabled());
     }
 }
