@@ -91,7 +91,7 @@ pub fn format_jsdoc_comment<'a>(
         // Add blank line separator: between description and first tag,
         // or when tag group changes (e.g. @param group → @returns)
         let needs_separator = if !lines.is_empty() && lines.last().is_some_and(|l| !l.is_empty()) {
-            prev_kind.is_none_or(|prev| tag_group(prev) != tag_group(kind))
+            prev_kind.is_none_or(|prev| tags_need_separator(prev, kind))
         } else {
             false
         };
@@ -103,30 +103,64 @@ pub fn format_jsdoc_comment<'a>(
         match kind {
             "param" | "property" | "typedef" | "template" => {
                 let (type_part, name_part, comment_part) = tag.type_name_comment();
-                let mut tag_line = format_tag_with_type_name_comment(
+                // Preserve optional [] brackets around param names
+                let name_str = name_part.as_ref().map(|n| {
+                    if n.optional {
+                        // Preserve [name] or [name = default] form
+                        n.raw().to_string()
+                    } else {
+                        n.parsed().to_string()
+                    }
+                });
+                let comment_text = comment_part.parsed_preserving_indent();
+                let comment_text = comment_text.trim();
+                format_tag_with_type_name_comment_lines(
                     kind,
                     type_part
                         .as_ref()
                         .map(oxc_jsdoc::parser::jsdoc_parts::JSDocTagTypePart::parsed),
-                    name_part
-                        .as_ref()
-                        .map(oxc_jsdoc::parser::jsdoc_parts::JSDocTagTypeNamePart::parsed),
-                    &comment_part.parsed(),
+                    name_str.as_deref(),
+                    comment_text,
                     options,
+                    available_width,
+                    &mut lines,
                 );
-                // Wrap if needed, but keep the tag on the first line
-                wrap_tag_line(&mut tag_line, available_width, &mut lines);
             }
-            "returns" | "yields" | "throws" | "type" | "satisfies" | "default" | "remarks" => {
+            "returns" | "yields" | "throws" | "type" | "satisfies" => {
                 let (type_part, comment_part) = tag.type_comment();
-                let mut tag_line = format_tag_with_type_comment(
+                let comment_text = comment_part.parsed_preserving_indent();
+                let comment_text = comment_text.trim();
+                format_tag_with_type_comment_lines(
                     kind,
                     type_part
                         .as_ref()
                         .map(oxc_jsdoc::parser::jsdoc_parts::JSDocTagTypePart::parsed),
-                    &comment_part.parsed(),
+                    comment_text,
                     options,
+                    available_width,
+                    &mut lines,
                 );
+            }
+            "default" | "defaultValue" => {
+                // @default/@defaultValue — never capitalize (values are code literals)
+                let (type_part, comment_part) = tag.type_comment();
+                let comment_text = comment_part.parsed();
+                let comment_text = comment_text.trim();
+                let mut tag_line = format!("@{kind}");
+                if let Some(t) = type_part
+                    .as_ref()
+                    .map(oxc_jsdoc::parser::jsdoc_parts::JSDocTagTypePart::parsed)
+                {
+                    let normalized = normalize_type(t);
+                    tag_line.push(' ');
+                    tag_line.push('{');
+                    tag_line.push_str(&normalized);
+                    tag_line.push('}');
+                }
+                if !comment_text.is_empty() {
+                    tag_line.push(' ');
+                    tag_line.push_str(comment_text);
+                }
                 wrap_tag_line(&mut tag_line, available_width, &mut lines);
             }
             "example" => {
@@ -151,43 +185,33 @@ pub fn format_jsdoc_comment<'a>(
             }
             _ => {
                 // Generic tag: @kind comment
-                let comment_text = tag.comment().parsed();
-                let mut tag_line = if comment_text.is_empty() {
-                    format!("@{kind}")
+                let comment_text = tag.comment().parsed_preserving_indent();
+                let comment_text = comment_text.trim();
+                if comment_text.is_empty() {
+                    lines.push(format!("@{kind}"));
+                } else if has_structured_content(comment_text) {
+                    // Multi-line structured content: first paragraph on tag line, rest below
+                    let should_capitalize = should_capitalize_tag(kind, options);
+                    let text =
+                        if should_capitalize { capitalize_first(comment_text) } else { comment_text.to_string() };
+                    let (first_line, rest) = split_first_paragraph(&text);
+                    let first_joined = first_line.split_whitespace().collect::<Vec<_>>().join(" ");
+                    let mut tag_line = format!("@{kind} {first_joined}");
+                    wrap_tag_line(&mut tag_line, available_width, &mut lines);
+                    if !rest.is_empty() {
+                        wrap_text(rest, available_width, &mut lines);
+                    }
                 } else {
-                    let comment_text = normalize_comment_text(&comment_text);
-                    // Only capitalize tags that contain descriptive text,
-                    // not identifier-like tags (@name, @category, @see, etc.)
-                    let should_capitalize = options.capitalize_descriptions
-                        && !matches!(
-                            kind,
-                            "name"
-                                | "category"
-                                | "see"
-                                | "since"
-                                | "version"
-                                | "author"
-                                | "module"
-                                | "namespace"
-                                | "memberof"
-                                | "requires"
-                                | "license"
-                                | "borrows"
-                                | "extends"
-                                | "augments"
-                                | "implements"
-                                | "mixes"
-                                | "override"
-                                | "access"
-                        );
+                    let comment_text = comment_text.split_whitespace().collect::<Vec<_>>().join(" ");
+                    let should_capitalize = should_capitalize_tag(kind, options);
                     let desc = if should_capitalize {
                         capitalize_first(&comment_text)
                     } else {
                         comment_text
                     };
-                    format!("@{kind} {desc}")
-                };
-                wrap_tag_line(&mut tag_line, available_width, &mut lines);
+                    let mut tag_line = format!("@{kind} {desc}");
+                    wrap_tag_line(&mut tag_line, available_width, &mut lines);
+                }
             }
         }
 
@@ -241,126 +265,188 @@ fn normalize_tag_kind(kind: &str) -> &str {
     }
 }
 
-/// Group tags into categories for blank line separation.
-/// Tags in the same group are not separated by blank lines.
-fn tag_group(kind: &str) -> u8 {
-    match kind {
-        // Parameter-like tags
-        "param" | "property" | "this" | "template" | "typedef" => 0,
-        // Return-like tags
-        "returns" | "yields" => 1,
-        // Error tags
-        "throws" => 2,
-        // Example tags
-        "example" => 3,
-        // Everything else gets its own group based on kind
-        _ => 4,
+/// Check if two consecutive tags should be separated by a blank line.
+/// Tags in the same "group" are not separated.
+fn tags_need_separator(prev: &str, current: &str) -> bool {
+    // Same tag kind → no separator (e.g. @param, @param)
+    if prev == current {
+        return false;
     }
+    // Tags in the same group → no separator
+    let group = |kind: &str| -> u8 {
+        match kind {
+            "param" | "property" | "this" | "template" | "typedef" => 0,
+            "returns" | "yields" => 1,
+            "throws" => 2,
+            "example" => 3,
+            // Short metadata tags that commonly appear together
+            "constant" | "name" | "summary" | "description" | "module" | "file" | "internal"
+            | "public" | "private" | "protected" | "readonly" | "abstract" | "virtual"
+            | "static" | "override" | "deprecated" | "since" | "version" | "author"
+            | "license" | "category" | "memberof" | "namespace" | "class" | "interface"
+            | "enum" | "type" | "satisfies" | "default" | "defaultValue" => 4,
+            "see" | "link" => 5,
+            _ => u8::MAX, // Each unique "other" tag is its own group
+        }
+    };
+    let pg = group(prev);
+    let cg = group(current);
+    // If both are in a known group, compare group numbers
+    if pg != u8::MAX && cg != u8::MAX {
+        return pg != cg;
+    }
+    // Otherwise, different tags always get a separator
+    true
 }
 
-/// Format a tag with `{type} name comment` pattern (e.g., @param).
-fn format_tag_with_type_name_comment(
+/// Build tag prefix: `@kind {type} name` or `@kind {type}` etc.
+fn build_tag_prefix(kind: &str, type_str: Option<&str>, name: Option<&str>) -> String {
+    let mut result = format!("@{kind}");
+    if let Some(t) = type_str {
+        let normalized = normalize_type(t);
+        result.push(' ');
+        result.push('{');
+        result.push_str(&normalized);
+        result.push('}');
+    }
+    if let Some(n) = name {
+        result.push(' ');
+        result.push_str(n);
+    }
+    result
+}
+
+/// Format a tag with `{type} name comment` pattern (e.g., @param),
+/// handling structured multi-line content properly.
+fn format_tag_with_type_name_comment_lines(
     kind: &str,
     type_str: Option<&str>,
     name: Option<&str>,
     comment: &str,
     options: &JsdocOptions,
-) -> String {
-    let mut result = format!("@{kind}");
+    available_width: usize,
+    lines: &mut Vec<String>,
+) {
+    let tag_prefix = build_tag_prefix(kind, type_str, name);
 
-    if let Some(t) = type_str {
-        let normalized = normalize_type(t);
-        result.push(' ');
-        result.push('{');
-        result.push_str(&normalized);
-        result.push('}');
+    if comment.is_empty() {
+        lines.push(tag_prefix);
+        return;
     }
 
-    if let Some(n) = name {
-        result.push(' ');
-        result.push_str(n);
-    }
+    // Strip leading dash prefix (` - description` is common for @param)
+    let (dash_prefix, stripped_comment) = if let Some(rest) = comment.strip_prefix("- ") {
+        (" - ", rest)
+    } else {
+        (" ", comment)
+    };
 
-    if !comment.is_empty() {
-        // Normalize multiline comment text into a single line
-        let comment = normalize_comment_text(comment);
-        // Preserve the original dash prefix style
-        let (prefix, stripped) = if let Some(rest) = comment.strip_prefix("- ") {
-            (" - ", rest)
+    if has_structured_content(stripped_comment) {
+        // Structured content: put first paragraph on tag line, rest below
+        let text = if options.capitalize_descriptions {
+            capitalize_first(stripped_comment)
         } else {
-            (" ", comment.as_str())
+            stripped_comment.to_string()
         };
+        let (first_line, rest) = split_first_paragraph(&text);
+        let first_joined = first_line.split_whitespace().collect::<Vec<_>>().join(" ");
+        let mut tag_line = tag_prefix;
+        tag_line.push_str(dash_prefix);
+        tag_line.push_str(&first_joined);
+        wrap_tag_line(&mut tag_line, available_width, lines);
+        if !rest.is_empty() {
+            wrap_text(rest, available_width, lines);
+        }
+    } else {
+        // Simple content: join into single line
+        let joined = stripped_comment.split_whitespace().collect::<Vec<_>>().join(" ");
         let desc = if options.capitalize_descriptions {
-            capitalize_first(stripped)
+            capitalize_first(&joined)
         } else {
-            stripped.to_string()
+            joined
         };
-        result.push_str(prefix);
-        result.push_str(&desc);
+        let mut tag_line = tag_prefix;
+        tag_line.push_str(dash_prefix);
+        tag_line.push_str(&desc);
+        wrap_tag_line(&mut tag_line, available_width, lines);
     }
-
-    result
 }
 
-/// Format a tag with `{type} comment` pattern (e.g., @returns).
-fn format_tag_with_type_comment(
+/// Format a tag with `{type} comment` pattern (e.g., @returns),
+/// handling structured multi-line content properly.
+fn format_tag_with_type_comment_lines(
     kind: &str,
     type_str: Option<&str>,
     comment: &str,
     options: &JsdocOptions,
-) -> String {
-    let mut result = format!("@{kind}");
+    available_width: usize,
+    lines: &mut Vec<String>,
+) {
+    let tag_prefix = build_tag_prefix(kind, type_str, None);
 
-    if let Some(t) = type_str {
-        let normalized = normalize_type(t);
-        result.push(' ');
-        result.push('{');
-        result.push_str(&normalized);
-        result.push('}');
+    if comment.is_empty() {
+        lines.push(tag_prefix);
+        return;
     }
 
-    if !comment.is_empty() {
-        // Normalize multiline comment text into a single line
-        let comment = normalize_comment_text(comment);
+    if has_structured_content(comment) {
+        let text =
+            if options.capitalize_descriptions { capitalize_first(comment) } else { comment.to_string() };
+        // Try to put the first plain text line on the same line as the tag
+        let (first_line, rest) = split_first_paragraph(&text);
+        let first_joined = first_line.split_whitespace().collect::<Vec<_>>().join(" ");
+        let mut tag_line = tag_prefix;
+        tag_line.push(' ');
+        tag_line.push_str(&first_joined);
+        wrap_tag_line(&mut tag_line, available_width, lines);
+        if !rest.is_empty() {
+            wrap_text(rest, available_width, lines);
+        }
+    } else {
+        let comment = comment.split_whitespace().collect::<Vec<_>>().join(" ");
         let desc =
             if options.capitalize_descriptions { capitalize_first(&comment) } else { comment };
-        result.push(' ');
-        result.push_str(&desc);
+        let mut tag_line = tag_prefix;
+        tag_line.push(' ');
+        tag_line.push_str(&desc);
+        wrap_tag_line(&mut tag_line, available_width, lines);
     }
-
-    result
 }
 
-/// Normalize multiline tag comment text into a single line.
-/// Only joins plain continuation lines — preserves list items, paragraph breaks,
-/// and other structured content.
-fn normalize_comment_text(text: &str) -> String {
-    // If it contains structured content (lists, paragraph breaks, separators),
-    // don't normalize — return as-is with trimmed lines
-    if has_structured_content(text) {
-        return text.to_string();
-    }
-    text.split_whitespace().collect::<Vec<_>>().join(" ")
+/// Check whether a tag kind should have its comment capitalized.
+fn should_capitalize_tag(kind: &str, options: &JsdocOptions) -> bool {
+    options.capitalize_descriptions
+        && !matches!(
+            kind,
+            "name"
+                | "category"
+                | "see"
+                | "since"
+                | "version"
+                | "author"
+                | "module"
+                | "namespace"
+                | "memberof"
+                | "requires"
+                | "license"
+                | "borrows"
+                | "extends"
+                | "augments"
+                | "implements"
+                | "mixes"
+                | "override"
+                | "access"
+                | "alias"
+                | "default"
+                | "defaultValue"
+        )
 }
 
 /// Check if text contains structured content that should not be collapsed.
 fn has_structured_content(text: &str) -> bool {
     for line in text.lines() {
         let trimmed = line.trim();
-        // Empty line = paragraph break
-        if trimmed.is_empty() {
-            return true;
-        }
-        // Markdown list items
-        if trimmed.starts_with("- ") || trimmed.starts_with("* ") || trimmed.starts_with("+ ") {
-            return true;
-        }
-        // Numbered list items (e.g., "1. ", "2. ")
-        if starts_with_numbered_list(trimmed) {
-            return true;
-        }
-        // Visual separators (lines of repeated characters)
-        if trimmed.len() >= 5 && trimmed.chars().all(|c| c == '=' || c == '-' || c == '*') {
+        if is_structured_line(trimmed) || trimmed.is_empty() {
             return true;
         }
     }
@@ -447,6 +533,25 @@ fn capitalize_first(s: &str) -> String {
     }
 }
 
+/// Split text into the first plain paragraph and the rest.
+/// The first paragraph is everything before the first structured line or blank line.
+fn split_first_paragraph(text: &str) -> (&str, &str) {
+    for (i, line) in text.lines().enumerate() {
+        let trimmed = line.trim();
+        if i > 0 && (trimmed.is_empty() || is_structured_line(trimmed)) {
+            // Find byte offset of this line
+            let byte_offset = text
+                .match_indices('\n')
+                .nth(i - 1)
+                .map_or(text.len(), |(pos, _)| pos + 1);
+            let first = text[..byte_offset].trim_end();
+            let rest = text[byte_offset..].trim_start_matches('\n');
+            return (first, rest);
+        }
+    }
+    (text, "")
+}
+
 /// Wrap text at word boundaries to fit within `max_width`.
 /// Joins consecutive plain text lines into paragraphs before wrapping,
 /// but preserves list items, code fence blocks, and paragraph breaks.
@@ -486,18 +591,39 @@ fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
         if is_structured_line(trimmed) {
             lines.push(trimmed.to_string());
             i += 1;
+            // Also output continuation lines (indented non-structured lines)
+            while i < raw_lines.len() {
+                let next = raw_lines[i];
+                let next_trimmed = next.trim();
+                // Stop at empty lines, new structured lines, or non-indented lines
+                if next_trimmed.is_empty()
+                    || is_structured_line(next_trimmed)
+                    || !next.starts_with(' ')
+                {
+                    break;
+                }
+                // Preserve the relative indentation
+                let leading_spaces = next.len() - next.trim_start().len();
+                if leading_spaces > 0 {
+                    lines.push(format!("{}{next_trimmed}", " ".repeat(leading_spaces)));
+                } else {
+                    lines.push(next_trimmed.to_string());
+                }
+                i += 1;
+            }
             continue;
         }
 
         // Join consecutive plain text lines into a paragraph
         let mut paragraph = trimmed.to_string();
         while i + 1 < raw_lines.len() {
-            let next = raw_lines[i + 1].trim();
-            if next.is_empty() || is_structured_line(next) {
+            let next = raw_lines[i + 1];
+            let next_trimmed = next.trim();
+            if next_trimmed.is_empty() || is_structured_line(next_trimmed) || next.starts_with(' ') {
                 break;
             }
             paragraph.push(' ');
-            paragraph.push_str(next);
+            paragraph.push_str(next_trimmed);
             i += 1;
         }
         wrap_single_paragraph(&paragraph, max_width, lines);
@@ -507,6 +633,10 @@ fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
 
 /// Check if a line is structured content that should not be joined with adjacent lines.
 fn is_structured_line(trimmed: &str) -> bool {
+    // Empty line (paragraph break)
+    if trimmed.is_empty() {
+        return true;
+    }
     // Markdown list items
     if trimmed.starts_with("- ") || trimmed.starts_with("* ") || trimmed.starts_with("+ ") {
         return true;
@@ -515,12 +645,24 @@ fn is_structured_line(trimmed: &str) -> bool {
     if starts_with_numbered_list(trimmed) {
         return true;
     }
-    // Visual separators
+    // Visual separators (lines of repeated characters)
     if trimmed.len() >= 5 && trimmed.chars().all(|c| c == '=' || c == '-' || c == '*') {
         return true;
     }
     // Code fence
     if trimmed.starts_with("```") {
+        return true;
+    }
+    // Markdown table row (starts and ends with |, or is a separator row like |---|---|)
+    if trimmed.starts_with('|') {
+        return true;
+    }
+    // Markdown heading
+    if trimmed.starts_with('#') {
+        return true;
+    }
+    // Markdown blockquote
+    if trimmed.starts_with('>') {
         return true;
     }
     false

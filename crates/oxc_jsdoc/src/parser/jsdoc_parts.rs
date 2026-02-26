@@ -234,6 +234,12 @@ impl<'a> JSDocTagTypeNamePart<'a> {
         Self { raw: part_content, span, optional, default }
     }
 
+    /// Returns the raw type name string as written in source.
+    /// May include optional brackets like `[foo]` or `[foo = default]`.
+    pub fn raw(&self) -> &'a str {
+        self.raw
+    }
+
     /// Returns the type name itself.
     /// `.raw` may be like `[foo = var]`, so extract the name
     pub fn parsed(&self) -> &'a str {
