@@ -2811,6 +2811,14 @@ fn test() {
             })();
           }, [obj.a]);
         }",
+        // IIFE: method calls inside IIFE should still collect base object
+        r"function MyComponent({ obj }) {
+          return useMemo(() => {
+            return (() => {
+              obj.method();
+            })();
+          }, [obj]);
+        }",
     ];
 
     let fail = vec![
