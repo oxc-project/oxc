@@ -44,3 +44,7 @@ Let me chronologically analyze the conversation:
 
 create pr
 
+### Prompt 7
+
+address review comments https://github.com/oxc-project/oxc/pull/19738
+
