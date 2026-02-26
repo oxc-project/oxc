@@ -9,8 +9,8 @@ use crate::{
     api::{format_api, text_to_doc_api},
     cli::{FormatRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
-        ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
-        JsSortTailwindClassesCb, utils,
+        ExternalFormatter, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
+        JsInitExternalFormatterCb, JsSortTailwindClassesCb, utils,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -38,6 +38,8 @@ pub async fn run_cli(
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
+    #[napi(ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[]>")]
+    format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[]>")]
@@ -77,6 +79,7 @@ pub async fn run_cli(
     let external_formatter = ExternalFormatter::new(
         init_external_formatter_cb,
         format_embedded_cb,
+        format_embedded_doc_cb,
         format_file_cb,
         sort_tailwindcss_classes_cb,
     );
@@ -142,6 +145,8 @@ pub async fn format(
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
+    #[napi(ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[]>")]
+    format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[]>")]
@@ -153,6 +158,7 @@ pub async fn format(
         options,
         init_external_formatter_cb,
         format_embedded_cb,
+        format_embedded_doc_cb,
         format_file_cb,
         sort_tailwind_classes_cb,
     );
@@ -178,6 +184,8 @@ pub async fn js_text_to_doc(
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_embedded_cb: JsFormatEmbeddedCb,
+    #[napi(ts_arg_type = "(options: Record<string, any>, texts: string[]) => Promise<string[]>")]
+    format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, code: string) => Promise<string>")]
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[]>")]
@@ -192,6 +200,7 @@ pub async fn js_text_to_doc(
         &parent_context,
         init_external_formatter_cb,
         format_embedded_cb,
+        format_embedded_doc_cb,
         format_file_cb,
         sort_tailwind_classes_cb,
     )

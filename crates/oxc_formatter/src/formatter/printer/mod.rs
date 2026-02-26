@@ -127,6 +127,7 @@ impl<'a> Printer<'a> {
 
                 // Only print a newline if the current line isn't already empty
                 if self.state.line_width > 0 {
+                    self.state.buffer.trim_trailing_ascii_whitespace();
                     self.print_char('\n');
                     self.state.has_empty_line = false;
                 }

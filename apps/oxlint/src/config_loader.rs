@@ -376,9 +376,17 @@ impl<'a> ConfigLoader<'a> {
                 .and_then(|root| path.parent().map(|parent| parent == root))
                 .unwrap_or(false);
 
-            if builder.type_aware().is_some() && !is_root_config {
-                errors.push(ConfigLoadError::Diagnostic(nested_type_aware_not_supported(&path)));
-                continue;
+            if !is_root_config {
+                if builder.type_aware().is_some() {
+                    errors
+                        .push(ConfigLoadError::Diagnostic(nested_type_aware_not_supported(&path)));
+                    continue;
+                }
+                if builder.type_check().is_some() {
+                    errors
+                        .push(ConfigLoadError::Diagnostic(nested_type_check_not_supported(&path)));
+                    continue;
+                }
             }
 
             let extended_paths = builder.extended_paths.clone();
@@ -633,6 +641,14 @@ fn nested_type_aware_not_supported(path: &Path) -> OxcDiagnostic {
     .with_help("Move `options.typeAware` to the root configuration file.")
 }
 
+fn nested_type_check_not_supported(path: &Path) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "The `options.typeCheck` option is only supported in the root config, but it was found in {}.",
+        path.display()
+    ))
+    .with_help("Move `options.typeCheck` to the root configuration file.")
+}
+
 #[cfg(test)]
 mod test {
     use std::path::{Path, PathBuf};
@@ -655,10 +671,15 @@ mod test {
     }
 
     #[cfg(feature = "napi")]
-    fn make_js_config(path: PathBuf, type_aware: Option<bool>) -> JsConfigResult {
-        let mut config: oxc_linter::Oxlintrc =
-            serde_json::from_value(serde_json::json!({ "options": { "typeAware": type_aware } }))
-                .unwrap();
+    fn make_js_config(
+        path: PathBuf,
+        type_aware: Option<bool>,
+        type_check: Option<bool>,
+    ) -> JsConfigResult {
+        let mut config: oxc_linter::Oxlintrc = serde_json::from_value(serde_json::json!({
+            "options": { "typeAware": type_aware, "typeCheck": type_check }
+        }))
+        .unwrap();
         config.path = path.clone();
         if let Some(config_dir) = path.parent() {
             config.set_config_dir(config_dir);
@@ -773,7 +794,7 @@ mod test {
         let js_loader = make_js_loader(move |paths| {
             Ok(paths
                 .into_iter()
-                .map(|path| make_js_config(PathBuf::from(path), Some(true)))
+                .map(|path| make_js_config(PathBuf::from(path), Some(true), None))
                 .collect())
         });
         let loader = loader.with_js_config_loader(Some(&js_loader));
@@ -783,6 +804,31 @@ mod test {
             .unwrap();
 
         assert_eq!(config.options.type_aware, Some(true));
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_root_oxlint_config_ts_allows_type_check() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let root_path = root_dir.path().join("oxlint.config.ts");
+        std::fs::write(&root_path, "export default {};").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let js_loader = make_js_loader(move |paths| {
+            Ok(paths
+                .into_iter()
+                .map(|path| make_js_config(PathBuf::from(path), None, Some(true)))
+                .collect())
+        });
+        let loader = loader.with_js_config_loader(Some(&js_loader));
+
+        let config = loader
+            .load_root_config(root_dir.path(), Some(&PathBuf::from("oxlint.config.ts")))
+            .unwrap();
+
+        assert_eq!(config.options.type_check, Some(true));
     }
 
     #[cfg(feature = "napi")]
@@ -799,7 +845,32 @@ mod test {
         let js_loader = make_js_loader(move |paths| {
             Ok(paths
                 .into_iter()
-                .map(|path| make_js_config(PathBuf::from(path), Some(false)))
+                .map(|path| make_js_config(PathBuf::from(path), Some(false), None))
+                .collect())
+        });
+        loader = loader.with_js_config_loader(Some(&js_loader));
+
+        let (_configs, errors) = loader
+            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
+        assert_eq!(errors.len(), 1);
+        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_nested_oxlint_config_ts_rejects_type_check() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_path = root_dir.path().join("nested/oxlint.config.ts");
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(&nested_path, "export default {};").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let js_loader = make_js_loader(move |paths| {
+            Ok(paths
+                .into_iter()
+                .map(|path| make_js_config(PathBuf::from(path), None, Some(false)))
                 .collect())
         });
         loader = loader.with_js_config_loader(Some(&js_loader));
@@ -826,10 +897,45 @@ mod test {
                 .into_iter()
                 .map(|path| {
                     let path = PathBuf::from(path);
-                    let mut config = make_js_config(path.clone(), None).config;
+                    let mut config = make_js_config(path.clone(), None, None).config;
                     config.extends_configs = vec![
                         serde_json::from_value(
                             serde_json::json!({ "options": { "typeAware": true } }),
+                        )
+                        .unwrap(),
+                    ];
+                    JsConfigResult { path, config }
+                })
+                .collect())
+        });
+        loader = loader.with_js_config_loader(Some(&js_loader));
+
+        let (_configs, errors) = loader
+            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
+        assert_eq!(errors.len(), 1);
+        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_nested_oxlint_config_ts_rejects_type_check_from_extends() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_path = root_dir.path().join("nested/oxlint.config.ts");
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(&nested_path, "export default {};").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let js_loader = make_js_loader(move |paths| {
+            Ok(paths
+                .into_iter()
+                .map(|path| {
+                    let path = PathBuf::from(path);
+                    let mut config = make_js_config(path.clone(), None, None).config;
+                    config.extends_configs = vec![
+                        serde_json::from_value(
+                            serde_json::json!({ "options": { "typeCheck": true } }),
                         )
                         .unwrap(),
                     ];

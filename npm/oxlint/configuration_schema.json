@@ -501,6 +501,14 @@
             "null"
           ],
           "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI."
+        },
+        "typeCheck": {
+          "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI."
         }
       },
       "additionalProperties": false,
