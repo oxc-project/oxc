@@ -103,6 +103,10 @@ export type FormatOptions = Pick<
   sortTailwindcss?: SortTailwindcssOptions;
   /** @deprecated Use `sortTailwindcss` instead. */
   experimentalTailwindcss?: SortTailwindcssOptions;
+  /** Enable/disable attribute shorthand if attribute name and expression are the same in Astro. (Default: `false`) */
+  astroAllowShorthand?: boolean;
+  /** Skip formatting of the frontmatter in Astro files. (Default: `false`) */
+  astroSkipFrontmatter?: boolean;
 } & Record<string, unknown>; // Also allow additional options for we don't have typed yet.
 
 /**

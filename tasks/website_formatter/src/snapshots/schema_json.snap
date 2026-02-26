@@ -20,6 +20,22 @@ expression: json
       ],
       "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`"
     },
+    "astroAllowShorthand": {
+      "description": "Enable/disable attribute shorthand if attribute name and expression are the same in Astro.\n\n- Default: `false`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Enable/disable attribute shorthand if attribute name and expression are the same in Astro.\n\n- Default: `false`"
+    },
+    "astroSkipFrontmatter": {
+      "description": "Skip formatting of the frontmatter in Astro files.\n\n- Default: `false`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Skip formatting of the frontmatter in Astro files.\n\n- Default: `false`"
+    },
     "bracketSameLine": {
       "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`",
       "type": [
@@ -333,6 +349,22 @@ expression: json
             }
           ],
           "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`"
+        },
+        "astroAllowShorthand": {
+          "description": "Enable/disable attribute shorthand if attribute name and expression are the same in Astro.\n\n- Default: `false`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Enable/disable attribute shorthand if attribute name and expression are the same in Astro.\n\n- Default: `false`"
+        },
+        "astroSkipFrontmatter": {
+          "description": "Skip formatting of the frontmatter in Astro files.\n\n- Default: `false`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Skip formatting of the frontmatter in Astro files.\n\n- Default: `false`"
         },
         "bracketSameLine": {
           "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`",

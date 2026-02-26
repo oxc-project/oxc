@@ -22,6 +22,26 @@ Include parentheses around a sole arrow function parameter.
 - Default: `"always"`
 
 
+## astroAllowShorthand
+
+type: `boolean`
+
+
+Enable/disable attribute shorthand if attribute name and expression are the same in Astro.
+
+- Default: `false`
+
+
+## astroSkipFrontmatter
+
+type: `boolean`
+
+
+Skip formatting of the frontmatter in Astro files.
+
+- Default: `false`
+
+
 ## bracketSameLine
 
 type: `boolean`
@@ -175,6 +195,26 @@ type: `"always" | "avoid"`
 Include parentheses around a sole arrow function parameter.
 
 - Default: `"always"`
+
+
+##### overrides[n].options.astroAllowShorthand
+
+type: `boolean`
+
+
+Enable/disable attribute shorthand if attribute name and expression are the same in Astro.
+
+- Default: `false`
+
+
+##### overrides[n].options.astroSkipFrontmatter
+
+type: `boolean`
+
+
+Skip formatting of the frontmatter in Astro files.
+
+- Default: `false`
 
 
 ##### overrides[n].options.bracketSameLine
