@@ -4,7 +4,7 @@ use oxc_allocator::{Allocator, Box, Dummy, Vec};
 use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, Span};
 
-use crate::{ParserImpl, diagnostics, lexer::Kind};
+use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 /// Represents either a closing JSX element or fragment.
 enum JSXClosing<'a> {
@@ -20,7 +20,7 @@ impl<'a> Dummy<'a> for JSXClosing<'a> {
     }
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `<`

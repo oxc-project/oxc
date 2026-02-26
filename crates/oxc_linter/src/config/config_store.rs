@@ -320,6 +320,11 @@ impl ConfigStore {
         self.base.base.config.plugins
     }
 
+    /// Whether type-aware linting is enabled in the root config.
+    pub fn type_aware_enabled(&self) -> bool {
+        self.base.base.config.options.type_aware.unwrap_or(false)
+    }
+
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
         if self.nested_configs.is_empty() {
             &self.base
@@ -377,6 +382,7 @@ mod test {
             categories::OxlintCategories,
             config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
             overrides::GlobSet,
+            oxlintrc::OxlintOptions,
         },
         rule::Rule,
         rules::{
@@ -782,6 +788,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            options: OxlintOptions::default(),
         };
 
         // Set up categories to enable restriction rules
@@ -869,6 +876,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            options: OxlintOptions::default(),
         };
 
         // Set up categories
@@ -974,6 +982,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            options: OxlintOptions::default(),
         };
 
         // Set up categories
@@ -1136,5 +1145,34 @@ mod test {
         assert_eq!(severity, AllowWarnDeny::Deny);
         // `options_id` should not equal the base options ID
         assert_ne!(options_id, base_options_id);
+    }
+
+    #[test]
+    fn test_type_aware_enabled_from_root_config() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig {
+                options: OxlintOptions { type_aware: Some(true) },
+                ..LintConfig::default()
+            },
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(store.type_aware_enabled());
+    }
+
+    #[test]
+    fn test_type_aware_disabled_by_default() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(!store.type_aware_enabled());
     }
 }

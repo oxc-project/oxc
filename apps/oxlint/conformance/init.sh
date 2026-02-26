@@ -53,9 +53,23 @@ yarn
 # Install `eslint-plugin-react-hooks` dependency
 cd packages/eslint-plugin-react-hooks
 yarn add eslint-plugin-react-hooks
+cd ../..
+
+# @overlookmotel says: @camc314 added the next block to this script, but it doesn't seem to work on my machine.
+# Presumably it's because we're using different versions of `yarn`, but I can't track down the problem exactly.
+# So I'm commenting it out again for now.
+
+# Ensure `eslint-plugin-react-hooks` can be resolved from the React tests directory.
+# In recent React workspace setups this is already satisfied after `yarn`, and forcing
+# `yarn add` here can fail with workspace invariant errors.
+# if ! node -e "require.resolve('eslint-plugin-react-hooks/package.json')" >/dev/null 2>&1; then
+#   cd packages/eslint-plugin-react-hooks
+#   yarn add eslint-plugin-react-hooks
+#   cd ../..
+# fi
 
 # Return to `submodules` directory
-cd ../../..
+cd ..
 
 ###############################################################################
 # Stylistic

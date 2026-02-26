@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   release:
+    if: github.repository == 'oxc-project/oxc'
     name: Release NAPI Minify
     uses: ./.github/workflows/reusable_release_napi.yml
     with:

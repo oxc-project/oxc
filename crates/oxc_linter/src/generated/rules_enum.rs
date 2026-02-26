@@ -637,6 +637,7 @@ pub use crate::rules::unicorn::prefer_math_min_max::PreferMathMinMax as UnicornP
 pub use crate::rules::unicorn::prefer_math_trunc::PreferMathTrunc as UnicornPreferMathTrunc;
 pub use crate::rules::unicorn::prefer_modern_dom_apis::PreferModernDomApis as UnicornPreferModernDomApis;
 pub use crate::rules::unicorn::prefer_modern_math_apis::PreferModernMathApis as UnicornPreferModernMathApis;
+pub use crate::rules::unicorn::prefer_module::PreferModule as UnicornPreferModule;
 pub use crate::rules::unicorn::prefer_native_coercion_functions::PreferNativeCoercionFunctions as UnicornPreferNativeCoercionFunctions;
 pub use crate::rules::unicorn::prefer_negative_index::PreferNegativeIndex as UnicornPreferNegativeIndex;
 pub use crate::rules::unicorn::prefer_node_protocol::PreferNodeProtocol as UnicornPreferNodeProtocol;
@@ -657,6 +658,7 @@ pub use crate::rules::unicorn::prefer_string_slice::PreferStringSlice as Unicorn
 pub use crate::rules::unicorn::prefer_string_starts_ends_with::PreferStringStartsEndsWith as UnicornPreferStringStartsEndsWith;
 pub use crate::rules::unicorn::prefer_string_trim_start_end::PreferStringTrimStartEnd as UnicornPreferStringTrimStartEnd;
 pub use crate::rules::unicorn::prefer_structured_clone::PreferStructuredClone as UnicornPreferStructuredClone;
+pub use crate::rules::unicorn::prefer_ternary::PreferTernary as UnicornPreferTernary;
 pub use crate::rules::unicorn::prefer_top_level_await::PreferTopLevelAwait as UnicornPreferTopLevelAwait;
 pub use crate::rules::unicorn::prefer_type_error::PreferTypeError as UnicornPreferTypeError;
 pub use crate::rules::unicorn::relative_url_style::RelativeUrlStyle as UnicornRelativeUrlStyle;
@@ -1225,6 +1227,7 @@ pub enum RuleEnum {
     UnicornPreferMathTrunc(UnicornPreferMathTrunc),
     UnicornPreferModernDomApis(UnicornPreferModernDomApis),
     UnicornPreferModernMathApis(UnicornPreferModernMathApis),
+    UnicornPreferModule(UnicornPreferModule),
     UnicornPreferNativeCoercionFunctions(UnicornPreferNativeCoercionFunctions),
     UnicornPreferNegativeIndex(UnicornPreferNegativeIndex),
     UnicornPreferNodeProtocol(UnicornPreferNodeProtocol),
@@ -1245,6 +1248,7 @@ pub enum RuleEnum {
     UnicornPreferStringStartsEndsWith(UnicornPreferStringStartsEndsWith),
     UnicornPreferStringTrimStartEnd(UnicornPreferStringTrimStartEnd),
     UnicornPreferStructuredClone(UnicornPreferStructuredClone),
+    UnicornPreferTernary(UnicornPreferTernary),
     UnicornPreferTopLevelAwait(UnicornPreferTopLevelAwait),
     UnicornPreferTypeError(UnicornPreferTypeError),
     UnicornRelativeUrlStyle(UnicornRelativeUrlStyle),
@@ -1986,8 +1990,8 @@ const UNICORN_PREFER_MATH_MIN_MAX_ID: usize =
 const UNICORN_PREFER_MATH_TRUNC_ID: usize = UNICORN_PREFER_MATH_MIN_MAX_ID + 1usize;
 const UNICORN_PREFER_MODERN_DOM_APIS_ID: usize = UNICORN_PREFER_MATH_TRUNC_ID + 1usize;
 const UNICORN_PREFER_MODERN_MATH_APIS_ID: usize = UNICORN_PREFER_MODERN_DOM_APIS_ID + 1usize;
-const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize =
-    UNICORN_PREFER_MODERN_MATH_APIS_ID + 1usize;
+const UNICORN_PREFER_MODULE_ID: usize = UNICORN_PREFER_MODERN_MATH_APIS_ID + 1usize;
+const UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID: usize = UNICORN_PREFER_MODULE_ID + 1usize;
 const UNICORN_PREFER_NEGATIVE_INDEX_ID: usize =
     UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID + 1usize;
 const UNICORN_PREFER_NODE_PROTOCOL_ID: usize = UNICORN_PREFER_NEGATIVE_INDEX_ID + 1usize;
@@ -2011,7 +2015,8 @@ const UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID: usize = UNICORN_PREFER_STRING_S
 const UNICORN_PREFER_STRING_TRIM_START_END_ID: usize =
     UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID + 1usize;
 const UNICORN_PREFER_STRUCTURED_CLONE_ID: usize = UNICORN_PREFER_STRING_TRIM_START_END_ID + 1usize;
-const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = UNICORN_PREFER_STRUCTURED_CLONE_ID + 1usize;
+const UNICORN_PREFER_TERNARY_ID: usize = UNICORN_PREFER_STRUCTURED_CLONE_ID + 1usize;
+const UNICORN_PREFER_TOP_LEVEL_AWAIT_ID: usize = UNICORN_PREFER_TERNARY_ID + 1usize;
 const UNICORN_PREFER_TYPE_ERROR_ID: usize = UNICORN_PREFER_TOP_LEVEL_AWAIT_ID + 1usize;
 const UNICORN_RELATIVE_URL_STYLE_ID: usize = UNICORN_PREFER_TYPE_ERROR_ID + 1usize;
 const UNICORN_REQUIRE_ARRAY_JOIN_SEPARATOR_ID: usize = UNICORN_RELATIVE_URL_STYLE_ID + 1usize;
@@ -2794,6 +2799,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UNICORN_PREFER_MATH_TRUNC_ID,
             Self::UnicornPreferModernDomApis(_) => UNICORN_PREFER_MODERN_DOM_APIS_ID,
             Self::UnicornPreferModernMathApis(_) => UNICORN_PREFER_MODERN_MATH_APIS_ID,
+            Self::UnicornPreferModule(_) => UNICORN_PREFER_MODULE_ID,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UNICORN_PREFER_NATIVE_COERCION_FUNCTIONS_ID
             }
@@ -2816,6 +2822,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => UNICORN_PREFER_STRING_STARTS_ENDS_WITH_ID,
             Self::UnicornPreferStringTrimStartEnd(_) => UNICORN_PREFER_STRING_TRIM_START_END_ID,
             Self::UnicornPreferStructuredClone(_) => UNICORN_PREFER_STRUCTURED_CLONE_ID,
+            Self::UnicornPreferTernary(_) => UNICORN_PREFER_TERNARY_ID,
             Self::UnicornPreferTopLevelAwait(_) => UNICORN_PREFER_TOP_LEVEL_AWAIT_ID,
             Self::UnicornPreferTypeError(_) => UNICORN_PREFER_TYPE_ERROR_ID,
             Self::UnicornRelativeUrlStyle(_) => UNICORN_RELATIVE_URL_STYLE_ID,
@@ -3588,6 +3595,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::NAME,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::NAME,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::NAME,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::NAME,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::NAME
             }
@@ -3610,6 +3618,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => UnicornPreferStringStartsEndsWith::NAME,
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::NAME,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::NAME,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::NAME,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::NAME,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::NAME,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::NAME,
@@ -4414,6 +4423,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::CATEGORY,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::CATEGORY,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::CATEGORY,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::CATEGORY,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::CATEGORY
             }
@@ -4440,6 +4450,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::CATEGORY,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::CATEGORY,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::CATEGORY,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::CATEGORY,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::CATEGORY,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::CATEGORY,
@@ -5219,6 +5230,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::FIX,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::FIX,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::FIX,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::FIX,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::FIX
             }
@@ -5241,6 +5253,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => UnicornPreferStringStartsEndsWith::FIX,
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::FIX,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::FIX,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::FIX,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::FIX,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::FIX,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::FIX,
@@ -6154,6 +6167,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::documentation(),
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::documentation(),
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::documentation(),
+            Self::UnicornPreferModule(_) => UnicornPreferModule::documentation(),
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::documentation()
             }
@@ -6192,6 +6206,7 @@ impl RuleEnum {
                 UnicornPreferStringTrimStartEnd::documentation()
             }
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::documentation(),
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::documentation(),
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::documentation(),
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::documentation(),
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::documentation(),
@@ -7870,6 +7885,8 @@ impl RuleEnum {
                 UnicornPreferModernMathApis::config_schema(generator)
                     .or_else(|| UnicornPreferModernMathApis::schema(generator))
             }
+            Self::UnicornPreferModule(_) => UnicornPreferModule::config_schema(generator)
+                .or_else(|| UnicornPreferModule::schema(generator)),
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::config_schema(generator)
                     .or_else(|| UnicornPreferNativeCoercionFunctions::schema(generator))
@@ -7938,6 +7955,8 @@ impl RuleEnum {
                 UnicornPreferStructuredClone::config_schema(generator)
                     .or_else(|| UnicornPreferStructuredClone::schema(generator))
             }
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::config_schema(generator)
+                .or_else(|| UnicornPreferTernary::schema(generator)),
             Self::UnicornPreferTopLevelAwait(_) => {
                 UnicornPreferTopLevelAwait::config_schema(generator)
                     .or_else(|| UnicornPreferTopLevelAwait::schema(generator))
@@ -8895,6 +8914,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => "unicorn",
             Self::UnicornPreferModernDomApis(_) => "unicorn",
             Self::UnicornPreferModernMathApis(_) => "unicorn",
+            Self::UnicornPreferModule(_) => "unicorn",
             Self::UnicornPreferNativeCoercionFunctions(_) => "unicorn",
             Self::UnicornPreferNegativeIndex(_) => "unicorn",
             Self::UnicornPreferNodeProtocol(_) => "unicorn",
@@ -8915,6 +8935,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(_) => "unicorn",
             Self::UnicornPreferStringTrimStartEnd(_) => "unicorn",
             Self::UnicornPreferStructuredClone(_) => "unicorn",
+            Self::UnicornPreferTernary(_) => "unicorn",
             Self::UnicornPreferTopLevelAwait(_) => "unicorn",
             Self::UnicornPreferTypeError(_) => "unicorn",
             Self::UnicornRelativeUrlStyle(_) => "unicorn",
@@ -10738,6 +10759,9 @@ impl RuleEnum {
             Self::UnicornPreferModernMathApis(_) => Ok(Self::UnicornPreferModernMathApis(
                 UnicornPreferModernMathApis::from_configuration(value)?,
             )),
+            Self::UnicornPreferModule(_) => {
+                Ok(Self::UnicornPreferModule(UnicornPreferModule::from_configuration(value)?))
+            }
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 Ok(Self::UnicornPreferNativeCoercionFunctions(
                     UnicornPreferNativeCoercionFunctions::from_configuration(value)?,
@@ -10804,6 +10828,9 @@ impl RuleEnum {
             Self::UnicornPreferStructuredClone(_) => Ok(Self::UnicornPreferStructuredClone(
                 UnicornPreferStructuredClone::from_configuration(value)?,
             )),
+            Self::UnicornPreferTernary(_) => {
+                Ok(Self::UnicornPreferTernary(UnicornPreferTernary::from_configuration(value)?))
+            }
             Self::UnicornPreferTopLevelAwait(_) => Ok(Self::UnicornPreferTopLevelAwait(
                 UnicornPreferTopLevelAwait::from_configuration(value)?,
             )),
@@ -11826,6 +11853,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.to_configuration(),
             Self::UnicornPreferModernDomApis(rule) => rule.to_configuration(),
             Self::UnicornPreferModernMathApis(rule) => rule.to_configuration(),
+            Self::UnicornPreferModule(rule) => rule.to_configuration(),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.to_configuration(),
             Self::UnicornPreferNegativeIndex(rule) => rule.to_configuration(),
             Self::UnicornPreferNodeProtocol(rule) => rule.to_configuration(),
@@ -11846,6 +11874,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.to_configuration(),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.to_configuration(),
             Self::UnicornPreferStructuredClone(rule) => rule.to_configuration(),
+            Self::UnicornPreferTernary(rule) => rule.to_configuration(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.to_configuration(),
             Self::UnicornPreferTypeError(rule) => rule.to_configuration(),
             Self::UnicornRelativeUrlStyle(rule) => rule.to_configuration(),
@@ -12526,6 +12555,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run(node, ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.run(node, ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.run(node, ctx),
+            Self::UnicornPreferModule(rule) => rule.run(node, ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run(node, ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.run(node, ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.run(node, ctx),
@@ -12546,6 +12576,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run(node, ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run(node, ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.run(node, ctx),
+            Self::UnicornPreferTernary(rule) => rule.run(node, ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run(node, ctx),
             Self::UnicornPreferTypeError(rule) => rule.run(node, ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run(node, ctx),
@@ -13224,6 +13255,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run_once(ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.run_once(ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.run_once(ctx),
+            Self::UnicornPreferModule(rule) => rule.run_once(ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_once(ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.run_once(ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_once(ctx),
@@ -13244,6 +13276,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_once(ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run_once(ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.run_once(ctx),
+            Self::UnicornPreferTernary(rule) => rule.run_once(ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_once(ctx),
             Self::UnicornPreferTypeError(rule) => rule.run_once(ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_once(ctx),
@@ -14008,6 +14041,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferModule(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -14030,6 +14064,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::UnicornPreferTernary(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornPreferTypeError(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14718,6 +14753,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.should_run(ctx),
             Self::UnicornPreferModernDomApis(rule) => rule.should_run(ctx),
             Self::UnicornPreferModernMathApis(rule) => rule.should_run(ctx),
+            Self::UnicornPreferModule(rule) => rule.should_run(ctx),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.should_run(ctx),
             Self::UnicornPreferNegativeIndex(rule) => rule.should_run(ctx),
             Self::UnicornPreferNodeProtocol(rule) => rule.should_run(ctx),
@@ -14738,6 +14774,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.should_run(ctx),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.should_run(ctx),
             Self::UnicornPreferStructuredClone(rule) => rule.should_run(ctx),
+            Self::UnicornPreferTernary(rule) => rule.should_run(ctx),
             Self::UnicornPreferTopLevelAwait(rule) => rule.should_run(ctx),
             Self::UnicornPreferTypeError(rule) => rule.should_run(ctx),
             Self::UnicornRelativeUrlStyle(rule) => rule.should_run(ctx),
@@ -15640,6 +15677,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::IS_TSGOLINT_RULE,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::IS_TSGOLINT_RULE,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::IS_TSGOLINT_RULE,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::IS_TSGOLINT_RULE,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::IS_TSGOLINT_RULE
             }
@@ -15678,6 +15716,7 @@ impl RuleEnum {
                 UnicornPreferStringTrimStartEnd::IS_TSGOLINT_RULE
             }
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::IS_TSGOLINT_RULE,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::IS_TSGOLINT_RULE,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::IS_TSGOLINT_RULE,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::IS_TSGOLINT_RULE,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::IS_TSGOLINT_RULE,
@@ -16545,6 +16584,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::HAS_CONFIG,
             Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::HAS_CONFIG,
             Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::HAS_CONFIG,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::HAS_CONFIG,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
                 UnicornPreferNativeCoercionFunctions::HAS_CONFIG
             }
@@ -16571,6 +16611,7 @@ impl RuleEnum {
             }
             Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::HAS_CONFIG,
             Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::HAS_CONFIG,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::HAS_CONFIG,
             Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::HAS_CONFIG,
             Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::HAS_CONFIG,
             Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::HAS_CONFIG,
@@ -17271,6 +17312,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.types_info(),
             Self::UnicornPreferModernDomApis(rule) => rule.types_info(),
             Self::UnicornPreferModernMathApis(rule) => rule.types_info(),
+            Self::UnicornPreferModule(rule) => rule.types_info(),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.types_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.types_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.types_info(),
@@ -17291,6 +17333,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.types_info(),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.types_info(),
             Self::UnicornPreferStructuredClone(rule) => rule.types_info(),
+            Self::UnicornPreferTernary(rule) => rule.types_info(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.types_info(),
             Self::UnicornPreferTypeError(rule) => rule.types_info(),
             Self::UnicornRelativeUrlStyle(rule) => rule.types_info(),
@@ -17969,6 +18012,7 @@ impl RuleEnum {
             Self::UnicornPreferMathTrunc(rule) => rule.run_info(),
             Self::UnicornPreferModernDomApis(rule) => rule.run_info(),
             Self::UnicornPreferModernMathApis(rule) => rule.run_info(),
+            Self::UnicornPreferModule(rule) => rule.run_info(),
             Self::UnicornPreferNativeCoercionFunctions(rule) => rule.run_info(),
             Self::UnicornPreferNegativeIndex(rule) => rule.run_info(),
             Self::UnicornPreferNodeProtocol(rule) => rule.run_info(),
@@ -17989,6 +18033,7 @@ impl RuleEnum {
             Self::UnicornPreferStringStartsEndsWith(rule) => rule.run_info(),
             Self::UnicornPreferStringTrimStartEnd(rule) => rule.run_info(),
             Self::UnicornPreferStructuredClone(rule) => rule.run_info(),
+            Self::UnicornPreferTernary(rule) => rule.run_info(),
             Self::UnicornPreferTopLevelAwait(rule) => rule.run_info(),
             Self::UnicornPreferTypeError(rule) => rule.run_info(),
             Self::UnicornRelativeUrlStyle(rule) => rule.run_info(),
@@ -18771,6 +18816,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferMathTrunc(UnicornPreferMathTrunc::default()),
         RuleEnum::UnicornPreferModernDomApis(UnicornPreferModernDomApis::default()),
         RuleEnum::UnicornPreferModernMathApis(UnicornPreferModernMathApis::default()),
+        RuleEnum::UnicornPreferModule(UnicornPreferModule::default()),
         RuleEnum::UnicornPreferNativeCoercionFunctions(
             UnicornPreferNativeCoercionFunctions::default(),
         ),
@@ -18793,6 +18839,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::UnicornPreferStringStartsEndsWith(UnicornPreferStringStartsEndsWith::default()),
         RuleEnum::UnicornPreferStringTrimStartEnd(UnicornPreferStringTrimStartEnd::default()),
         RuleEnum::UnicornPreferStructuredClone(UnicornPreferStructuredClone::default()),
+        RuleEnum::UnicornPreferTernary(UnicornPreferTernary::default()),
         RuleEnum::UnicornPreferTopLevelAwait(UnicornPreferTopLevelAwait::default()),
         RuleEnum::UnicornPreferTypeError(UnicornPreferTypeError::default()),
         RuleEnum::UnicornRelativeUrlStyle(UnicornRelativeUrlStyle::default()),

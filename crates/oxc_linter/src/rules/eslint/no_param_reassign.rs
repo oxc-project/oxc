@@ -22,11 +22,14 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule};
 
 fn assignment_to_param_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Assignment to function parameter '{name}'.")).with_label(span)
+    OxcDiagnostic::warn(format!("Assignment to function parameter '{name}'."))
+        .with_help("Consider using a different variable to avoid unintended side effects on the parameter.")
+        .with_label(span)
 }
 
 fn assignment_to_param_property_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Assignment to property of function parameter '{name}'."))
+        .with_help("Consider using a different variable to avoid unintended side effects on the parameter's properties.")
         .with_label(span)
 }
 

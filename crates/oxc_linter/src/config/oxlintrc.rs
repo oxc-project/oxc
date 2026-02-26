@@ -21,6 +21,30 @@ use super::{
     settings::OxlintSettings,
 };
 
+/// Options for the linter.
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(default, deny_unknown_fields, rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct OxlintOptions {
+    /// Enable rules that require type information.
+    ///
+    /// Equivalent to passing `--type-aware` on the CLI.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_aware: Option<bool>,
+}
+
+impl OxlintOptions {
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.type_aware.is_none()
+    }
+
+    #[must_use]
+    pub fn merge(&self, other: &OxlintOptions) -> Self {
+        Self { type_aware: self.type_aware.or(other.type_aware) }
+    }
+}
+
 /// Oxlint Configuration File
 ///
 /// This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
@@ -150,6 +174,9 @@ pub struct Oxlintrc {
     /// Add, remove, or otherwise reconfigure rules for specific files or groups of files.
     #[serde(skip_serializing_if = "OxlintOverrides::is_empty")]
     pub overrides: OxlintOverrides,
+    /// Oxlint config options.
+    #[serde(skip_serializing_if = "OxlintOptions::is_empty")]
+    pub options: OxlintOptions,
     /// Absolute path to the configuration file.
     #[serde(skip)]
     pub path: PathBuf,
@@ -286,6 +313,7 @@ impl Oxlintrc {
         };
 
         let schema = self.schema.clone().or(other.schema);
+        let options = self.options.merge(&other.options);
 
         Oxlintrc {
             schema,
@@ -297,6 +325,7 @@ impl Oxlintrc {
             env,
             globals,
             overrides,
+            options,
             path: self.path.clone(),
             ignore_patterns: self.ignore_patterns.clone(),
             extends: self.extends.clone(),
@@ -360,6 +389,38 @@ mod test {
         assert_eq!(config.env, OxlintEnv::default());
         assert_eq!(config.path, PathBuf::default());
         assert_eq!(config.extends, Vec::<PathBuf>::default());
+        assert_eq!(config.options.type_aware, None);
+    }
+
+    #[test]
+    fn test_oxlintrc_type_aware_deserialize() {
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeAware": true } })).unwrap();
+        assert_eq!(config.options.type_aware, Some(true));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeAware": false } })).unwrap();
+        assert_eq!(config.options.type_aware, Some(false));
+    }
+
+    #[test]
+    fn test_oxlintrc_top_level_type_aware_rejected() {
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "typeAware": true }));
+        assert!(config.is_err());
+    }
+
+    #[test]
+    fn test_oxlintrc_merge_type_aware() {
+        let mut root: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeAware": true } })).unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+
+        let mut base: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "typeAware": false } })).unwrap();
+        base.path = PathBuf::from("/root/base.json");
+
+        let merged = root.merge(base);
+        assert_eq!(merged.options.type_aware, Some(true));
     }
 
     #[test]

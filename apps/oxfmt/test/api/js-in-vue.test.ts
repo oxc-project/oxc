@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
 
-// NOTE: For now, Vue files are still handled by Prettier
+// NOTE: For now, Vue files are partially handled by Prettier
+
 describe("Format js-in-vue with prettier-plugin-oxfmt", () => {
   it("should format .vue w/ sort-imports", async () => {
     const input = `

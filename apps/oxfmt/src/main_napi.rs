@@ -162,26 +162,15 @@ pub async fn format(
 
 // ---
 
-#[napi(object)]
-pub struct TextToDocResult {
-    /// The formatted code.
-    pub doc: String,
-    /// Parse and format errors.
-    pub errors: Vec<OxcError>,
-}
-
 /// NAPI based `textToDoc` API entry point for `prettier-plugin-oxfmt`.
 ///
 /// This API is specialized for JS/TS snippets embedded in non-JS files.
-/// Unlike `format()`, it is called only for JS/TS-in-xxx `textToDoc` flow.
-///
-/// # Panics
-/// Panics if the current working directory cannot be determined.
+/// Unlike `format()`, it is called only for js-in-xxx `textToDoc()` flow.
 #[expect(clippy::allow_attributes)]
 #[allow(clippy::trailing_empty_array, clippy::unused_async)] // https://github.com/napi-rs/napi-rs/issues/2758
 #[napi]
 pub async fn js_text_to_doc(
-    filename: String,
+    source_ext: String,
     source_text: String,
     oxfmt_plugin_options_json: String,
     parent_context: String,
@@ -193,9 +182,11 @@ pub async fn js_text_to_doc(
     format_file_cb: JsFormatFileCb,
     #[napi(ts_arg_type = "(options: Record<string, any>, classes: string[]) => Promise<string[]>")]
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
-) -> TextToDocResult {
-    match text_to_doc_api::run(
-        &filename,
+) -> Option<String> {
+    utils::init_tracing();
+
+    text_to_doc_api::run(
+        &source_ext,
         &source_text,
         &oxfmt_plugin_options_json,
         &parent_context,
@@ -203,8 +194,5 @@ pub async fn js_text_to_doc(
         format_embedded_cb,
         format_file_cb,
         sort_tailwind_classes_cb,
-    ) {
-        Ok(doc) => TextToDocResult { doc, errors: vec![] },
-        Err(errors) => TextToDocResult { doc: String::new(), errors },
-    }
+    )
 }

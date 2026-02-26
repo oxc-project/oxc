@@ -3,14 +3,14 @@ use oxc_ast::ast::*;
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{ModifierFlags, Modifiers},
 };
 
 use super::FunctionKind;
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
     /// `ObjectLiteral`[Yield, Await] :
     ///     { }
@@ -174,6 +174,14 @@ impl<'a> ParserImpl<'a> {
             Kind::LBrack => {
                 computed = true;
                 PropertyKey::from(self.parse_computed_property_name())
+            }
+            Kind::PrivateIdentifier => {
+                let private_ident = self.parse_private_identifier();
+                self.error(diagnostics::private_identifier_in_property_name(
+                    &private_ident.name,
+                    private_ident.span,
+                ));
+                PropertyKey::PrivateIdentifier(self.alloc(private_ident))
             }
             _ => {
                 let ident = self.parse_identifier_name();

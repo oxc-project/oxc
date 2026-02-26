@@ -1,4 +1,4 @@
-use std::{borrow::Cow, hash::Hash};
+use std::{borrow::Cow, fmt::Write, hash::Hash};
 
 use itertools::Itertools;
 use lazy_regex::Regex;
@@ -65,7 +65,12 @@ fn async_effect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_error_code_scope(SCOPE)
 }
 
-fn missing_dependency_diagnostic(hook_name: &str, deps: &[Name<'_>], span: Span) -> OxcDiagnostic {
+fn missing_dependency_diagnostic(
+    hook_name: &str,
+    deps: &[Name<'_>],
+    span: Span,
+    mutable_ref_dependency: Option<&str>,
+) -> OxcDiagnostic {
     let single = deps.len() == 1;
     let deps_pretty = if single {
         format!("'{}'", deps[0])
@@ -94,14 +99,23 @@ fn missing_dependency_diagnostic(hook_name: &str, deps: &[Name<'_>], span: Span)
         })
         .chain(std::iter::once(span.primary()));
 
-    OxcDiagnostic::warn(if single {
+    let mut message = if single {
         format!("React Hook {hook_name} has a missing dependency: {deps_pretty}")
     } else {
         format!("React Hook {hook_name} has missing dependencies: {deps_pretty}")
-    })
-    .with_labels(labels)
-    .with_help("Either include it or remove the dependency array.")
-    .with_error_code_scope(SCOPE)
+    };
+
+    if let Some(dep) = mutable_ref_dependency {
+        let _ = write!(
+            message,
+            ". Mutable values like '{dep}' aren't valid dependencies because mutating them doesn't re-render the component."
+        );
+    }
+
+    OxcDiagnostic::warn(message)
+        .with_labels(labels)
+        .with_help("Either include it or remove the dependency array.")
+        .with_error_code_scope(SCOPE)
 }
 
 fn unnecessary_dependency_diagnostic(hook_name: &str, dep_name: &str, span: Span) -> OxcDiagnostic {
@@ -380,6 +394,7 @@ impl Rule for ExhaustiveDeps {
                                                         hook_name,
                                                         &[Name::from(ident.as_ref())],
                                                         dependencies_node.span(),
+                                                        None,
                                                     ));
                                                     None
                                                 }
@@ -396,6 +411,7 @@ impl Rule for ExhaustiveDeps {
                                             hook_name,
                                             &[Name::from(ident.as_ref())],
                                             dependencies_node.span(),
+                                            None,
                                         ));
                                         None
                                     }
@@ -562,13 +578,22 @@ impl Rule for ExhaustiveDeps {
         for dependency in &declared_dependencies {
             if let Some(symbol_id) = dependency.symbol_id {
                 let dependency_scope_id = ctx.scoping().symbol_scope_id(symbol_id);
+                let is_ref_current_non_dependency = dependency.chain.len() == 1
+                    && dependency.chain[0] == "current"
+                    && !is_identifier_a_dependency(
+                        dependency.name,
+                        dependency.reference_id,
+                        dependency.span,
+                        ctx,
+                        component_scope_id,
+                    );
                 if !(ctx
                     .semantic()
                     .scoping()
                     .scope_ancestors(component_scope_id)
                     .skip(1)
                     .contains(&dependency_scope_id)
-                    || dependency.chain.len() == 1 && dependency.chain[0] == "current")
+                    || is_ref_current_non_dependency)
                 {
                     continue;
                 }
@@ -584,27 +609,72 @@ impl Rule for ExhaustiveDeps {
             );
         }
 
-        let undeclared_deps = found_dependencies.difference(&declared_dependencies).filter(|dep| {
-            if declared_dependencies.iter().any(|decl_dep| dep.contains(decl_dep)) {
-                return false;
-            }
+        let undeclared_deps = found_dependencies
+            .difference(&declared_dependencies)
+            .filter(|dep| {
+                // `foo.current` reads should be attributed to `foo` when `foo` is also tracked.
+                // This matches react-hooks behavior for ref-like values passed as props.
+                if dep.chain.last().is_some_and(|part| part == "current") {
+                    let mut base_chain = dep.chain.clone();
+                    base_chain.pop();
+                    let base_dependency = Dependency {
+                        span: dep.span,
+                        name: dep.name,
+                        reference_id: dep.reference_id,
+                        symbol_id: dep.symbol_id,
+                        chain: base_chain,
+                    };
+                    if found_dependencies.contains(&base_dependency) {
+                        return false;
+                    }
+                }
 
-            if !is_identifier_a_dependency(
-                dep.name,
-                dep.reference_id,
-                dep.span,
-                ctx,
-                component_scope_id,
-            ) {
-                return false;
-            }
-            true
-        });
+                if declared_dependencies.iter().any(|decl_dep| dep.contains(decl_dep)) {
+                    return false;
+                }
 
-        if undeclared_deps.clone().count() > 0 {
-            let undeclared = undeclared_deps.map(Name::from).collect::<Vec<_>>();
+                if !is_identifier_a_dependency(
+                    dep.name,
+                    dep.reference_id,
+                    dep.span,
+                    ctx,
+                    component_scope_id,
+                ) {
+                    return false;
+                }
+                true
+            })
+            .collect::<Vec<_>>();
+
+        if !undeclared_deps.is_empty() {
+            let undeclared = undeclared_deps.iter().copied().map(Name::from).collect::<Vec<_>>();
+            let mutable_ref_dependency = declared_dependencies.iter().find_map(|declared_dep| {
+                if !declared_dep.chain.last().is_some_and(|part| part == "current") {
+                    return None;
+                }
+
+                let mut base_chain = declared_dep.chain.clone();
+                base_chain.pop();
+                let base_dependency = Dependency {
+                    span: declared_dep.span,
+                    name: declared_dep.name,
+                    reference_id: declared_dep.reference_id,
+                    symbol_id: declared_dep.symbol_id,
+                    chain: base_chain,
+                };
+                undeclared_deps
+                    .iter()
+                    .copied()
+                    .any(|dep| dep == &base_dependency)
+                    .then(|| declared_dep.to_string())
+            });
             ctx.diagnostic_with_dangerous_suggestion(
-                missing_dependency_diagnostic(hook_name, &undeclared, dependencies_node.span()),
+                missing_dependency_diagnostic(
+                    hook_name,
+                    &undeclared,
+                    dependencies_node.span(),
+                    mutable_ref_dependency.as_deref(),
+                ),
                 |fixer| fix::append_dependencies(fixer, &undeclared, dependencies_node.as_ref()),
             );
         }
@@ -1364,6 +1434,17 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                     let symbol_id =
                         self.semantic.scoping().get_reference(source.reference_id).symbol_id();
                     if needs_full_chain || (destructured_props.is_empty() && !did_see_ref) {
+                        if it.property.name == "current" {
+                            // Track base object (`ref`) alongside `.current` reads so missing dep
+                            // diagnostics can prefer the reactive identity over the mutable field.
+                            self.found_dependencies.insert(Dependency {
+                                name: source.name,
+                                reference_id: source.reference_id,
+                                span: source.span,
+                                chain: source.chain.clone(),
+                                symbol_id,
+                            });
+                        }
                         self.found_dependencies.insert(Dependency {
                             name: source.name,
                             reference_id: source.reference_id,
@@ -2691,6 +2772,7 @@ fn test() {
             useEffect(setup, []);
           }
         ",
+        "function MyComponent4({ myRef }) { useCallback(() => { console.log(myRef.current); }, [myRef]); }",
     ];
 
     let fail = vec![
@@ -4165,6 +4247,14 @@ fn test() {
             useMemo(callback, []);
           }
         }",
+        r"function MyComponent({ myRef }) {
+    useCallback(() => { console.log(myRef.current); }, [myRef.current]);
+    // React Hook useCallback has a missing dependency: 'myRef'. Either include it or remove the dependency array. Mutable values like 'myRef.current' aren't valid dependencies because mutating them doesn't re-render the component.
+}",
+        r"function MyComponent2({ myRef }) {
+    useCallback(() => { console.log(myRef.current); }, []);
+    // React Hook useCallback has a missing dependency: 'myRef'. Either include it or remove the dependency array.
+}",
     ];
 
     let pass_additional_hooks = vec![(

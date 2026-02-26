@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=default parser-error.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+
+  x Expected `;` but found `:`
+   ,-[parser-error.js:3:9]
+ 2 |   commands = [];
+ 3 |   client: Example
+   :         |
+   :         `-- `;` expected
+ 4 | 
+   `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

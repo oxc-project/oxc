@@ -187,7 +187,7 @@ fn test() {
         ("{ var foo = 1 }", None),
         ("if (true) { var foo = 1 }", None),
         ("var foo = 1", None),
-        ("declare var foo = 2;", None),
+        ("declare var foo: 2;", None),
         ("function foo() { var let; }", None),
         ("function foo() { var { let } = {}; }", None),
         (
@@ -221,7 +221,7 @@ fn test() {
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
         ),
-        ("declare var foo = 2;", "declare let foo = 2;"),
+        ("declare var foo: 2;", "declare let foo: 2;"),
     ];
 
     Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

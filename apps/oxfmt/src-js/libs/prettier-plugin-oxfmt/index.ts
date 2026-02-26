@@ -32,6 +32,7 @@ const oxfmtParser: Parser<Doc> = {
 export const parsers: Record<string, Parser> = {
   // Override default JS/TS parsers
   babel: oxfmtParser,
+  "babel-ts": oxfmtParser,
   typescript: oxfmtParser,
 };
 

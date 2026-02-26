@@ -1059,7 +1059,10 @@ fn should_skip_diagnostic(
     path: &Path,
     tsgolint_diagnostic: &TsGoLintRuleDiagnostic,
 ) -> bool {
-    let span = tsgolint_diagnostic.span;
+    let span = tsgolint_diagnostic
+        .labeled_ranges
+        .first()
+        .map_or(tsgolint_diagnostic.span, |range| Span::new(range.range.pos, range.range.end));
 
     if let Some(directives) = disable_directives_map.get(path) {
         directives.contains(&tsgolint_diagnostic.rule, span)

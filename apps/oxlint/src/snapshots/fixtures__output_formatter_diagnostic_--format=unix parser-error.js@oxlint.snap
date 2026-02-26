@@ -1,0 +1,13 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=unix parser-error.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+parser-error.js:3:9: Expected `;` but found `:` [Error]
+
+1 problem
+----------
+CLI result: LintFoundErrors
+----------

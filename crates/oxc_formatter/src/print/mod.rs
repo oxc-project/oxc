@@ -11,6 +11,7 @@ mod call_like_expression;
 mod class;
 mod decorators;
 mod export_declarations;
+mod fragment;
 mod function;
 mod function_type;
 mod import_declaration;
@@ -37,6 +38,7 @@ pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
+pub use fragment::{FormatVueBindingParams, FormatVueScriptGeneric};
 pub use function::FormatFunctionOptions;
 
 use cow_utils::CowUtils;
