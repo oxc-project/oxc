@@ -21,7 +21,9 @@ fn operator_assignment_diagnostic(mode: Mode, span: Span, operator: &str) -> Oxc
     } else {
         format!("Assignment (=) can be replaced with operator assignment ({operator}).")
     };
-    OxcDiagnostic::warn(msg).with_label(span)
+    OxcDiagnostic::warn(msg)
+        .with_help("Ensure consistent use of operator assignment shorthand based on the configured preference.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Serialize, JsonSchema)]
