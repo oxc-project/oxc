@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──
  4 │             }
    ╰────
+  help: Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give "Up" an explicit initializer (for example `= 0` or `= 'Up'`).
 
   ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:3:15]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──
  4 │               Down,
    ╰────
+  help: Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give "Up" an explicit initializer (for example `= 0` or `= 'Up'`).
 
   ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Down" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:4:15]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
  5 │             }
    ╰────
+  help: Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give "Down" an explicit initializer (for example `= 0` or `= 'Down'`).
 
   ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Down" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:4:15]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
  5 │             }
    ╰────
+  help: Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give "Down" an explicit initializer (for example `= 0` or `= 'Down'`).
 
   ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:3:15]
@@ -41,3 +45,4 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──
  4 │               Down = 'Down',
    ╰────
+  help: Using default numerical values for enum members can cause bugs later on if the enum is modified. Instead give "Up" an explicit initializer (for example `= 0` or `= 'Up'`).
