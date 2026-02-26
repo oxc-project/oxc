@@ -48,3 +48,15 @@ create pr
 
 address review comments https://github.com/oxc-project/oxc/pull/19738
 
+### Prompt 8
+
+continue resolve comment
+
+### Prompt 9
+
+resolve conversation on the pr
+
+### Prompt 10
+
+build oxfmt, run it in /Users/boshen/oxc/oxlint-ecosystem-ci/repos and see if jsdoc changes make sense
+

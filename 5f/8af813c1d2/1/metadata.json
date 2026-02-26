@@ -3,39 +3,32 @@
   "checkpoint_id": "5f8af813c1d2",
   "session_id": "ab0deaaa-8551-4c55-be46-47fb1d5fca93",
   "strategy": "manual-commit",
-  "created_at": "2026-02-26T06:34:58.207262Z",
+  "created_at": "2026-02-26T07:15:14.036428Z",
   "branch": "feat/formatter-jsdoc",
   "checkpoints_count": 1,
   "files_touched": [
-    "crates/oxc_formatter/Cargo.toml",
+    "apps/oxfmt/src/core/oxfmtrc.rs",
     "crates/oxc_formatter/src/formatter/jsdoc.rs",
-    "crates/oxc_formatter/src/formatter/mod.rs",
-    "crates/oxc_formatter/src/formatter/trivia.rs",
-    "crates/oxc_formatter/src/options.rs",
-    "crates/oxc_formatter/tests/fixtures/js/jsdoc/basic.js",
-    "crates/oxc_formatter/tests/fixtures/js/jsdoc/indented.js",
-    "crates/oxc_formatter/tests/fixtures/js/jsdoc/options.json",
-    "crates/oxc_formatter/tests/fixtures/js/jsdoc/tags.js",
-    "crates/oxc_formatter/tests/fixtures/mod.rs"
+    "crates/oxc_jsdoc/src/parser/jsdoc_parts.rs"
   ],
   "agent": "Claude Code",
-  "transcript_identifier_at_start": "6a781ed6-73d0-4aa9-9ed8-474f86c56931",
-  "checkpoint_transcript_start": 606,
-  "transcript_lines_at_start": 606,
+  "transcript_identifier_at_start": "18e6872b-f7b6-430e-b9b4-8f8fc364263b",
+  "checkpoint_transcript_start": 688,
+  "transcript_lines_at_start": 688,
   "token_usage": {
-    "input_tokens": 16,
-    "cache_creation_tokens": 13908,
-    "cache_read_tokens": 667787,
-    "output_tokens": 481,
-    "api_call_count": 14
+    "input_tokens": 119,
+    "cache_creation_tokens": 83874,
+    "cache_read_tokens": 11165027,
+    "output_tokens": 6365,
+    "api_call_count": 113
   },
   "initial_attribution": {
-    "calculated_at": "2026-02-26T06:34:58.077622Z",
-    "agent_lines": 0,
-    "human_added": 2448,
-    "human_modified": 6,
+    "calculated_at": "2026-02-26T07:15:13.661591Z",
+    "agent_lines": 133,
+    "human_added": 2439,
+    "human_modified": 0,
     "human_removed": 0,
-    "total_committed": 2448,
-    "agent_percentage": 0
+    "total_committed": 2572,
+    "agent_percentage": 5.171073094867807
   }
 }
