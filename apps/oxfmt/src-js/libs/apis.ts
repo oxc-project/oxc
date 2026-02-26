@@ -49,9 +49,7 @@ export type FormatEmbeddedCodeParam = {
   options: Options;
 };
 
-export type FormatEmbeddedCodeResult =
-  | { ok: true; code: string }
-  | { ok: false; error: string };
+export type FormatEmbeddedCodeResult = { ok: true; code: string } | { ok: false; error: string };
 
 /**
  * Format xxx-in-js code snippets
