@@ -1,7 +1,7 @@
-use std::{hash::BuildHasherDefault, path::Path, sync::Arc};
+use std::{path::Path, sync::Arc};
 
 use oxc_diagnostics::OxcDiagnostic;
-use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::Message;
 
@@ -12,11 +12,7 @@ pub use tracking::{
     SuppressionTracking,
 };
 
-type StaticSuppressionMap = papaya::HashMap<
-    Arc<Filename>,
-    FxHashMap<RuleName, DiagnosticCounts>,
-    BuildHasherDefault<FxHasher>,
->;
+type StaticSuppressionMap = Arc<FxHashMap<Filename, FxHashMap<RuleName, DiagnosticCounts>>>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum OxlintSuppressionFileAction {
@@ -95,26 +91,10 @@ impl SuppressionManager {
     }
 
     pub fn concurrent_map(&self) -> StaticSuppressionMap {
-        let concurrent_papaya = papaya::HashMap::builder()
-            .hasher(BuildHasherDefault::default())
-            .resize_mode(papaya::ResizeMode::Blocking)
-            .build();
-
-        if !self.file_exists {
-            return concurrent_papaya;
-        }
-
-        let Some(ref file) = self.suppressions_by_file else {
-            return concurrent_papaya;
-        };
-
-        for file_key in file.suppressions().keys() {
-            concurrent_papaya
-                .pin()
-                .insert(Arc::new(file_key.clone()), file.suppressions()[file_key].clone());
-        }
-
-        concurrent_papaya
+        self.suppressions_by_file
+            .as_ref()
+            .map(|f| Arc::clone(f.suppressions()))
+            .unwrap_or_default()
     }
 
     pub fn is_updating_file(&self) -> bool {
@@ -228,13 +208,11 @@ impl SuppressionManager {
             let mut suppression_tracking: FxHashMap<RuleName, DiagnosticCounts> =
                 FxHashMap::default();
             for message in diagnostics {
-                if let Some(violation_count) = suppression_tracking.get_mut(&message.into()) {
-                    violation_count.count += 1;
-                } else {
-                    suppression_tracking.insert(message.into(), DiagnosticCounts { count: 1 });
-                }
+                suppression_tracking
+                    .entry(message.into())
+                    .or_insert(DiagnosticCounts { count: 0 })
+                    .count += 1;
             }
-
             suppression_tracking
         };
 
@@ -255,15 +233,13 @@ impl SuppressionManager {
                 let diagnostics_filtered = lint_diagnostics
                     .into_iter()
                     .filter(|message| {
-                        let Some(count_file) = recorded_violations.get(&message.into()) else {
+                        let key = RuleName::from(message);
+                        let Some(count_file) = recorded_violations.get(&key) else {
                             return true;
                         };
-
-                        let Some(count_runtime) = runtime_suppression_tracking.get(&message.into())
-                        else {
+                        let Some(count_runtime) = runtime_suppression_tracking.get(&key) else {
                             return false;
                         };
-
                         count_file.count < count_runtime.count
                     })
                     .collect();
