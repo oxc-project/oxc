@@ -345,34 +345,47 @@ impl WorkspaceWorker {
         let mut unregistrations = vec![];
         let mut diagnostics: Option<Vec<(Uri, Vec<Diagnostic>)>> = None;
 
-        let mut tools = self.tools.write().await;
-        debug_assert_eq!(
-            tools.len(),
-            self.builders.len(),
-            "tools and builders must have the same length"
-        );
-        for (tool, builder) in tools.iter_mut().zip(self.builders.iter()) {
-            let builder: &dyn ToolBuilder = builder.as_ref();
-            let change = change_handler(tool, builder);
+        // Phase 1: acquire write lock, apply replacements, record which indices changed.
+        let replaced_indices: Vec<usize> = {
+            let mut tools = self.tools.write().await;
+            debug_assert_eq!(
+                tools.len(),
+                self.builders.len(),
+                "tools and builders must have the same length"
+            );
+            let mut replaced = vec![];
+            for (idx, (tool, builder)) in tools.iter_mut().zip(self.builders.iter()).enumerate() {
+                let builder: &dyn ToolBuilder = builder.as_ref();
+                let change = change_handler(tool, builder);
 
-            if let Some(patterns) = change.watch_patterns {
-                unregistrations.push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
-                if !patterns.is_empty() {
-                    registrations.push(registration_tool_watcher_id(
-                        tool.name(),
-                        &self.root_uri,
-                        patterns,
-                    ));
+                if let Some(patterns) = change.watch_patterns {
+                    unregistrations
+                        .push(unregistration_tool_watcher_id(tool.name(), &self.root_uri));
+                    if !patterns.is_empty() {
+                        registrations.push(registration_tool_watcher_id(
+                            tool.name(),
+                            &self.root_uri,
+                            patterns,
+                        ));
+                    }
+                }
+                if let Some(replaced_tool) = change.tool {
+                    *tool = replaced_tool;
+                    *needs_diagnostic_refresh = true;
+                    replaced.push(idx);
                 }
             }
-            if let Some(replaced_tool) = change.tool {
-                *tool = replaced_tool;
-                *needs_diagnostic_refresh = true;
+            replaced
+            // write lock dropped here
+        };
 
-                let Some(file_system) = file_system else {
-                    continue;
-                };
-
+        // Phase 2: re-run diagnostics under a read lock (only for replaced tools).
+        if let Some(file_system) = file_system
+            && !replaced_indices.is_empty()
+        {
+            let tools = self.tools.read().await;
+            for &idx in &replaced_indices {
+                let tool = &tools[idx];
                 for uri in file_system.keys() {
                     let content = file_system.get(&uri).map(|(_, content)| content);
                     let Ok(mut reports) = tool.run_diagnostic(&uri, content.as_deref()) else {
