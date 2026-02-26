@@ -9,6 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────────
  4 │                   
    ╰────
+  help: Use a static property key, or use a Map/Set for dynamic keys.
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:3:13]
@@ -17,6 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────
  4 │                   
    ╰────
+  help: Use a static property key, or use a Map/Set for dynamic keys.
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:3:13]
@@ -25,6 +27,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────────────────
  4 │                   
    ╰────
+  help: Use a static property key, or use a Map/Set for dynamic keys.
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:3:13]
@@ -33,6 +36,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────────────────
  4 │                   
    ╰────
+  help: Use a static property key, or use a Map/Set for dynamic keys.
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:3:13]
@@ -41,6 +45,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────
  4 │                   
    ╰────
+  help: Use a static property key, or use a Map/Set for dynamic keys.
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:4:13]
@@ -49,6 +54,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────────
  5 │                   
    ╰────
+  help: Use a static property key, or use a Map/Set for dynamic keys.
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:4:13]
@@ -57,6 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────────────────
  5 │                   
    ╰────
+  help: Use a static property key, or use a Map/Set for dynamic keys.
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:4:13]
@@ -65,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────────────────
  5 │                   
    ╰────
+  help: Use a static property key, or use a Map/Set for dynamic keys.
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:3:13]
@@ -73,6 +81,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────────────
  4 │                   
    ╰────
+  help: Use a static property key, or use a Map/Set for dynamic keys.
 
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:3:13]
@@ -81,3 +90,4 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────────────
  4 │                   
    ╰────
+  help: Use a static property key, or use a Map/Set for dynamic keys.
