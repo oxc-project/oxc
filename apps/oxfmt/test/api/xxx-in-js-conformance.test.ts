@@ -12,33 +12,21 @@ describe("Prettier conformance for graphql-in-js", () => {
     "format.test.js",
     "comment-tag.js", // /* GraphQL */
   ]);
-  // TODO: Fix in next PR
-  //   graphqlFixtures.push(
-  //     {
-  //       name: "inline/gql-trailing-space.js",
-  //       content: `export const schema = gql\`
-  //   type Mutation {
-  //     create__TYPE_NAME__(input: Create__TYPE_NAME__Input!): __TYPE_NAME__!
-  //       @skipAuth
-  //     update__TYPE_NAME__(
-  //       id: Int!
-  //       input: Update__TYPE_NAME__Input!
-  //     ): __TYPE_NAME__! @skipAuth
-  //     delete__TYPE_NAME__(id: Int!): __TYPE_NAME__! @skipAuth
-  //   }
-  // \`
-  // `,
-  //     },
-  //   );
+
   graphqlFixtures.push({
-    name: "inline/gql-dummy.js",
+    name: "inline/gql-trailing-space.js",
     content: `export const schema = gql\`
-  type Relation {
-    id: Int!
-    name: String!
+  type Mutation {
+    create__TYPE_NAME__(input: Create__TYPE_NAME__Input!): __TYPE_NAME__!
+      @skipAuth
+    update__TYPE_NAME__(
+      id: Int!
+      input: Update__TYPE_NAME__Input!
+    ): __TYPE_NAME__! @skipAuth
+    delete__TYPE_NAME__(id: Int!): __TYPE_NAME__! @skipAuth
   }
-  \`
-  `,
+\`
+`,
   });
 
   describe.concurrent.each(graphqlFixtures)("$name", ({ name, content }) => {
