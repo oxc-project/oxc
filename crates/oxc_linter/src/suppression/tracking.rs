@@ -84,10 +84,7 @@ where
 #[serde(default)]
 pub struct SuppressionTracking {
     version: String,
-    #[serde(
-        deserialize_with = "deserialize_arc_map",
-        serialize_with = "serialize_arc_map"
-    )]
+    #[serde(deserialize_with = "deserialize_arc_map", serialize_with = "serialize_arc_map")]
     suppressions: AllSuppressionsMap,
 }
 

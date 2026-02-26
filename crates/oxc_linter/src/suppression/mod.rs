@@ -91,10 +91,7 @@ impl SuppressionManager {
     }
 
     pub fn concurrent_map(&self) -> StaticSuppressionMap {
-        self.suppressions_by_file
-            .as_ref()
-            .map(|f| Arc::clone(f.suppressions()))
-            .unwrap_or_default()
+        self.suppressions_by_file.as_ref().map(|f| Arc::clone(f.suppressions())).unwrap_or_default()
     }
 
     pub fn is_updating_file(&self) -> bool {
