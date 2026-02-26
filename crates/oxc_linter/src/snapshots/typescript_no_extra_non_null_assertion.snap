@@ -7,57 +7,67 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const foo: { bar: number } | null = null; const bar = foo!!!.bar;
    ·                                                           ▲
    ╰────
+  help: Remove the redundant non-null assertion operator (`!`).
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:58]
  1 │ const foo: { bar: number } | null = null; const bar = foo!!!.bar;
    ·                                                          ▲
    ╰────
+  help: Remove the redundant non-null assertion operator (`!`).
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:58]
  1 │ const foo: { bar: number } | null = null; const bar = foo!!.bar; 
    ·                                                          ▲
    ╰────
+  help: Remove the redundant non-null assertion operator (`!`).
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:62]
  1 │ function foo(bar: number | undefined) { const a: number = bar!!; }
    ·                                                              ▲
    ╰────
+  help: Remove the redundant non-null assertion operator (`!`).
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:47]
  1 │ function foo(bar?: { n: number }) { return bar!?.n; }
    ·                                               ▲
    ╰────
+  help: Remove the redundant non-null assertion operator (`!`).
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:47]
  1 │ function foo(bar?: { n: number }) { return bar!?.(); }
    ·                                               ▲
    ╰────
+  help: Remove the redundant non-null assertion operator (`!`).
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:59]
  1 │ const foo: { bar: number } | null = null; const bar = (foo!)!.bar;
    ·                                                           ▲
    ╰────
+  help: Remove the redundant non-null assertion operator (`!`).
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:48]
  1 │ function foo(bar?: { n: number }) { return (bar!)?.n; }
    ·                                                ▲
    ╰────
+  help: Remove the redundant non-null assertion operator (`!`).
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:49]
  1 │ function foo(bar?: { n: number }) { return (bar)!?.n; }
    ·                                                 ▲
    ╰────
+  help: Remove the redundant non-null assertion operator (`!`).
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:48]
  1 │ function foo(bar?: { n: number }) { return (bar!)?.(); }
    ·                                                ▲
    ╰────
+  help: Remove the redundant non-null assertion operator (`!`).
