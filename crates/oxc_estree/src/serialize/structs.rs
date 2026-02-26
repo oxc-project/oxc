@@ -98,9 +98,7 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
             formatter.before_later_element(buffer);
         }
 
-        buffer.print_ascii_byte(b'"');
-        buffer.print_str(key);
-        buffer.print_str("\":");
+        buffer.print_strs_array(["\"", key, "\":"]);
         formatter.before_field_value(buffer);
         value.serialize(&mut *self.serializer);
     }
