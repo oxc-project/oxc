@@ -278,6 +278,12 @@ importers:
         specifier: '>=0.15.0'
         version: 0.15.0
 
+  npm/oxlint-plugin-eslint:
+    dependencies:
+      eslint:
+        specifier: '>=8.0.0'
+        version: 9.39.2(jiti@2.6.1)
+
   npm/oxlint-plugins: {}
 
   npm/runtime: {}
