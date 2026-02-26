@@ -8,6 +8,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                           ▲
    ╰────
   help: Remove the redundant non-null assertion operator (`!`).
+  note: The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:58]
@@ -15,6 +16,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                          ▲
    ╰────
   help: Remove the redundant non-null assertion operator (`!`).
+  note: The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:58]
@@ -22,6 +24,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                          ▲
    ╰────
   help: Remove the redundant non-null assertion operator (`!`).
+  note: The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:62]
@@ -29,6 +32,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                              ▲
    ╰────
   help: Remove the redundant non-null assertion operator (`!`).
+  note: The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:47]
@@ -36,6 +40,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                               ▲
    ╰────
   help: Remove the redundant non-null assertion operator (`!`).
+  note: The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:47]
@@ -43,6 +48,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                               ▲
    ╰────
   help: Remove the redundant non-null assertion operator (`!`).
+  note: The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:59]
@@ -50,6 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                           ▲
    ╰────
   help: Remove the redundant non-null assertion operator (`!`).
+  note: The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:48]
@@ -57,6 +64,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                ▲
    ╰────
   help: Remove the redundant non-null assertion operator (`!`).
+  note: The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:49]
@@ -64,6 +72,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                 ▲
    ╰────
   help: Remove the redundant non-null assertion operator (`!`).
+  note: The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.
 
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:48]
@@ -71,3 +80,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                ▲
    ╰────
   help: Remove the redundant non-null assertion operator (`!`).
+  note: The non-null assertion operator in TypeScript, written as `!`, tells the compiler that an expression is definitely not `null` or `undefined` at that point. Chaining multiple non-null assertions on the same expression does not provide any additional safety and is redundant.
