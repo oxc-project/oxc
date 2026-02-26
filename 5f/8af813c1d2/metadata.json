@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "5f8af813c1d2",
+  "strategy": "manual-commit",
+  "branch": "feat/formatter-jsdoc",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/oxfmt/src/core/oxfmtrc.rs",
+    "crates/oxc_formatter/src/formatter/jsdoc.rs",
+    "crates/oxc_jsdoc/src/parser/jsdoc_parts.rs",
+    "crates/oxc_semantic/Cargo.toml",
+    "crates/oxc_semantic/src/builder.rs",
+    "crates/oxc_semantic/src/lib.rs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/5f/8af813c1d2/0/metadata.json",
+      "transcript": "/5f/8af813c1d2/0/full.jsonl",
+      "context": "/5f/8af813c1d2/0/context.md",
+      "content_hash": "/5f/8af813c1d2/0/content_hash.txt",
+      "prompt": "/5f/8af813c1d2/0/prompt.txt"
+    },
+    {
+      "metadata": "/5f/8af813c1d2/1/metadata.json",
+      "transcript": "/5f/8af813c1d2/1/full.jsonl",
+      "context": "/5f/8af813c1d2/1/context.md",
+      "content_hash": "/5f/8af813c1d2/1/content_hash.txt",
+      "prompt": "/5f/8af813c1d2/1/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 158,
+    "cache_creation_tokens": 110480,
+    "cache_read_tokens": 16315702,
+    "output_tokens": 7810,
+    "api_call_count": 148
+  }
+}

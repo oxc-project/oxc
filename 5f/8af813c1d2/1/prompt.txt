@@ -1,0 +1,387 @@
+Implement the following plan:
+
+# Plan: Port prettier-plugin-jsdoc to oxc formatter
+
+## Context
+
+Port [prettier-plugin-jsdoc](https://github.com/hosseinmd/prettier-plugin-jsdoc) formatting to `oxfmt`. The oxc formatter already detects JSDoc comments (`CommentContent::Jsdoc`) and `oxc_jsdoc` crate parses JSDoc into structured parts. We need to reconstruct formatted JSDoc text from parsed parts.
+
+## Approach
+
+Pre-rendered text via `StringBuilder` on the arena allocator, emitted as `FormatElement::Text` in `impl Format for Comment`. Default-true options first, snapshot testing for all cases.
+
+## Implementation
+
+### Step 1: Add dependency and create module
+
+- `crates/oxc_formatter/Cargo.toml` — add `oxc_jsdoc = { workspace = true }`
+- `crates/oxc_formatter/src/formatter/mod.rs` — add `pub mod jsdoc;`
+- Create `crates/oxc_formatter/src/formatter/jsdoc.rs`
+
+### Step 2: Core formatting function
+
+`crates/oxc_formatter/src/formatter/jsdoc.rs`:
+
+```rust
+pub fn format_jsdoc_comment<'a>(
+    comment: &Comment,
+    source_text: &str,
+    allocator: &'a Allocator,
+    print_width: u16,
+    indent_column: usize,
+) -> Option<&'a str>
+```
+
+Uses `JSDoc::new(content, span)` where content is between `/**` and `*/`.
+
+**Default-true formatting rules (Phase 1):**
+1. Capitalize first letter of descriptions (`jsdocCapitalizeDescription: true`)
+2. Single-line conversion when possible (`jsdocCommentLineStrategy: "singleLine"`)
+3. Normalize whitespace in `{type}` expressions
+4. Consistent ` * ` prefix alignment
+5. Single space after tag kind
+6. Trim trailing whitespace per line
+7. Tag normalization: `@return` → `@returns`, `@arg` → `@param`, `@yield` → `@yields`
+8. Description word-wrapping to `printWidth`
+9. Empty JSDoc removal
+
+**Preserve verbatim:**
+- `@example` code blocks
+- Inline code in backticks
+
+### Step 3: Integrate into trivia.rs
+
+`crates/oxc_formatter/src/formatter/trivia.rs` line 419, in `impl Format for Comment`:
+
+```rust
+if matches!(self.content, CommentContent::Jsdoc) && self.is_multiline_block() {
+    if let Some(formatted) = jsdoc::format_jsdoc_comment(...) {
+        write!(f, [text(formatted)]);
+        return;
+    }
+    // Fall through to default rendering
+}
+```
+
+### Step 4: Options
+
+`crates/oxc_formatter/src/options.rs` — add `pub jsdoc: Option<JsdocOptions>` to `FormatOptions`:
+
+```rust
+pub struct JsdocOptions {
+    pub capitalize_descriptions: bool,      // default: true
+    pub single_line_when_possible: bool,    // default: true
+    // Future (default false):
+    // pub enforce_description_period: bool,
+    // pub vertical_alignment: bool,
+    // pub separate_tag_groups: bool,
+    // pub separate_returns_from_param: bool,
+    // pub prefer_code_fences: bool,
+}
+```
+
+When `jsdoc` is `None`, JSDoc comments pass through unchanged (matching `sort_imports` pattern).
+
+### Step 5: Snapshot tests
+
+Create test fixtures and snapshot tests under `crates/oxc_formatter/tests/` covering all prettier-plugin-jsdoc test categories:
+
+- **Core formatting**: whitespace normalization, star alignment, tag spacing
+- **Descriptions**: capitalization, word wrapping, markdown preservation
+- **Type normalization**: `{  string  }` → `{string}`
+- **Tag normalization**: `@return` → `@returns`, `@arg` → `@param`
+- **Single-line conversion**: short JSDoc → `/** @type {string} */`
+- **`@example` preservation**: code blocks kept verbatim
+- **Empty comment removal**
+- **Multi-tag alignment**
+- **`@param` with types, names, optional params**
+- **`@returns` / `@yields` / `@throws`**
+- **`@template` / `@callback` / `@typedef`**
+- **Dotted/nested param names** (`@param {object} opts`, `@param {string} opts.name`)
+- **TypeScript-specific** JSDoc patterns
+- **React/JSX** component JSDoc
+- **`@default` tag** handling
+- **`@remarks` tag**
+- **Line wrapping** at various print widths
+
+Use `insta` for snapshot testing (already a dev-dependency of `oxc_formatter`).
+
+### Step 6: Future options (default false, later PRs)
+
+- `enforce_description_period` — add `.` at end of descriptions
+- `vertical_alignment` — align param names/descriptions in columns
+- `separate_tag_groups` — blank line between tag groups
+- `separate_returns_from_param` — blank line before `@returns`
+- `prefer_code_fences` — wrap `@example` in triple backticks
+- `tag_order` — custom tag sorting
+
+## Key Files
+
+| File | Change |
+|------|--------|
+| `crates/oxc_formatter/Cargo.toml` | Add `oxc_jsdoc` dep |
+| `crates/oxc_formatter/src/formatter/mod.rs` | Register `jsdoc` module |
+| `crates/oxc_formatter/src/formatter/jsdoc.rs` | **New** — JSDoc formatting logic |
+| `crates/oxc_formatter/src/formatter/trivia.rs` | Intercept JSDoc in `impl Format for Comment` |
+| `crates/oxc_formatter/src/options.rs` | Add `JsdocOptions` |
+| `crates/oxc_formatter/tests/jsdoc/` | **New** — snapshot test fixtures |
+
+## Reuse
+
+| Source | What |
+|--------|------|
+| `oxc_jsdoc::JSDoc::new()` | Parse JSDoc content |
+| `JSDocTag::type_name_comment()` etc. | Extract structured tag parts |
+| `JSDocCommentPart::parsed()` | Clean description text |
+| `oxc_allocator::StringBuilder` | Arena-allocated string building |
+
+## Verification
+
+1. `cargo check -p oxc_formatter` — compiles
+2. `cargo test -p oxc_formatter` — all tests pass including new snapshots
+3. `cargo run -p oxc_prettier_conformance` — unaffected (JSDoc formatting is opt-in)
+4. `just ready` — full CI check
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.REDACTED.jsonl
+
+---
+
+address the indent column todo
+
+---
+
+gs
+
+---
+
+gs
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze the conversation:
+
+1. **Initial Request**: User provided a detailed plan to port prettier-plugin-jsdoc formatting to oxc formatter. The plan outlined 6 steps with specific files, code patterns, and formatting rules.
+
+2. **Exploration Phase**: I explored the codebase to understand:
+   - `oxc_formatter` structure (Cargo.toml, mod.rs, trivia.rs, options.rs)
+   - `oxc_jsdoc` parsing API (JSDoc, JSDocTag, JSDocCommentPart, etc.)
+   - Comment struct fields and formatting pipeline
+   - Test infrastructure (build.rs auto-generates tests from fixtures/)
+
+3. **Implementation Phase**:
+   - Added `oxc_jsdoc` dependency to Cargo.toml
+   - Added `pub mod jsdoc;` to formatter/mod.rs
+   - Added `JsdocOptions` struct and `jsdoc: Option<JsdocOptions>` to FormatOptions
+   - Created `formatter/jsdoc.rs` with core formatting logic
+   - Integrated into trivia.rs's `impl Format for Comment`
+
+4. **Errors encountered**:
+   - `CommentNewlines` import path: needed `oxc_ast::ast::CommentNewlines` not `oxc_ast::CommentNewlines`
+   - Capitalization test failure: `- the name` wasn't being capitalized because `-` isn't ascii_lowercase. Fixed by stripping `- ` prefix before capitalizing.
+   - Multiple clippy issues: redundant clone, redundant closures, `map_or` simplification, `format!` appended to String, collapsed if statement, cast_possible_truncation
+   - `SourceText` doesn't have `as_str()` - needed `&f.source_text()` since it derefs to str
+   - `JSDocTagTypePart::parsed` path needed to be `oxc_jsdoc::parser::jsdoc_parts::JSDocTagTypePart::parsed`
+   - Test for `source_indent_column` had wrong position for CRLF case (6 vs 7)
+   - Clippy: `&options` unnecessary reference in test helper
+
+5. **User feedback**:
+   - "address the indent column todo" - I computed indent from source text
+   - "need tests" - I added comprehensive unit tests
+   - "prefer insta snapshot test in crates/oxc_formatter/tests" - I added fixture-based insta snapshot tests
+
+6. **Current state**: 
+   - Removed most inline unit tests from jsdoc.rs, keeping only helper function tests
+   - Added 3 fixture files (basic.js, tags.js, indented.js) with options.json enabling jsdoc
+   - Added jsdoc option parsing to tests/fixtures/mod.rs
+   - Snapshots were accepted
+   - Need to verify tests pass after the final edit, run fmt and lint
+
+Summary:
+1. Primary Request and Intent:
+   - Port [prettier-plugin-jsdoc](https://github.com/hosseinmd/prettier-plugin-jsdoc) formatting to oxc formatter (`oxfmt`)
+   - Implement as opt-in via `Option<JsdocOptions>` on `FormatOptions`
+   - Use `oxc_jsdoc` crate for parsing, `StringBuilder` for arena-allocated output
+   - Default-true options: capitalize descriptions, single-line conversion
+   - Formatting rules: tag normalization, type whitespace normalization, word wrapping, `@example` preservation, empty JSDoc removal
+   - Address the indent column TODO (compute from source text)
+   - Add tests, preferring insta snapshot tests in `crates/oxc_formatter/tests/`
+
+2. Key Technical Concepts:
+   - Oxc formatter two-phase architecture: `Format` trait builds IR, `Printer` resolves indentation
+   - `oxc_jsdoc::JSDoc::new(inner_content, span)` parses JSDoc between `/**` and `*/`
+   - `JSDocTag::type_name_comment()` / `type_comment()` / `comment()` for structured tag parsing
+   - `JSDocCommentPart::parsed()` returns cleaned text (strips `*` prefixes, trims)
+   - `JSDocTagTypePart::parsed()` returns type without `{}`, trimmed
+   - `StringBuilder` for arena-allocated string building with `into_str()` for `&'a str`
+   - Insta snapshot testing framework with auto-generated test functions from `build.rs`
+   - Comment formatting happens in `impl Format for Comment` in `trivia.rs`
+   - `CommentContent::Jsdoc` variant identifies JSDoc comments
+   - `FormatOptions` uses `#[derive(Default)]` so `Option<JsdocOptions>` defaults to `None`
+
+3. Files and Code Sections:
+
+   - **`crates/oxc_formatter/Cargo.toml`**
+     - Added `oxc_jsdoc` dependency
+     ```toml
+     oxc_jsdoc = { workspace = true }
+     ```
+
+   - **`crates/oxc_formatter/src/formatter/mod.rs`**
+     - Registered jsdoc module (rustfmt moved it alphabetically)
+     ```rust
+     pub mod jsdoc;
+     ```
+
+   - **`crates/oxc_formatter/src/options.rs`**
+     - Added `JsdocOptions` struct and field on `FormatOptions`
+     ```rust
+     #[derive(Debug, Clone)]
+     pub struct JsdocOptions {
+         pub capitalize_descriptions: bool,      // default: true
+         pub single_line_when_possible: bool,    // default: true
+     }
+     
+     impl Default for JsdocOptions {
+         fn default() -> Self {
+             Self { capitalize_descriptions: true, single_line_when_possible: true }
+         }
+     }
+     ```
+     - Added `pub jsdoc: Option<JsdocOptions>` to `FormatOptions`, updated `new()` and `Display`
+
+   - **`crates/oxc_formatter/src/formatter/jsdoc.rs`** (NEW - core implementation)
+     - `source_indent_column(source_text, position, tab_width) -> usize` — computes visual column from source
+     - `format_jsdoc_comment(comment, source_text, allocator, options, print_width, indent_column) -> Option<&'a str>` — main entry point
+     - `normalize_tag_kind(kind) -> &str` — `@return`→`@returns`, `@arg`→`@param`, `@yield`→`@yields`, `@prop`→`@property`
+     - `format_tag_with_type_name_comment(kind, type_str, name, comment, options) -> String`
+     - `format_tag_with_type_comment(kind, type_str, comment, options) -> String`
+     - `normalize_type(t) -> String` — collapse whitespace in type expressions
+     - `capitalize_first(s) -> String` — capitalize first letter, skip backtick-quoted code
+     - `wrap_text`, `wrap_single_paragraph`, `wrap_tag_line` — word wrapping
+     - `can_be_single_line(lines, available_width) -> bool`
+     - Unit tests for `source_indent_column`, `normalize_tag_kind`, `capitalize_first`, `normalize_type`
+
+   - **`crates/oxc_formatter/src/formatter/trivia.rs`**
+     - Added `use super::jsdoc;`
+     - Intercept JSDoc comments at start of `impl Format for Comment`:
+     ```rust
+     if matches!(self.content, CommentContent::Jsdoc)
+         && self.is_multiline_block()
+         && let Some(jsdoc_options) = &f.options().jsdoc
+     {
+         let source: &str = &f.source_text();
+         let print_width = f.options().line_width.value();
+         let indent_width = f.options().indent_width.value();
+         let indent_column = jsdoc::source_indent_column(source, self.span.start, indent_width);
+         if let Some(formatted) = jsdoc::format_jsdoc_comment(
+             self, source, f.allocator(), jsdoc_options, print_width, indent_column,
+         ) {
+             if !formatted.is_empty() {
+                 write!(f, [text(formatted)]);
+             }
+             return;
+         }
+     }
+     ```
+
+   - **`crates/oxc_formatter/tests/fixtures/mod.rs`**
+     - Added `JsdocOptions` import
+     - Added `"jsdoc"` option parsing in `parse_format_options`:
+     ```rust
+     "jsdoc" => {
+         if let Some(b) = value.as_bool() {
+             if b { options.jsdoc = Some(JsdocOptions::default()); }
+         } else if let Some(obj) = value.as_object() {
+             let mut jsdoc = JsdocOptions::default();
+             if let Some(b) = obj.get("capitalizeDescriptions").and_then(|v| v.as_bool()) {
+                 jsdoc.capitalize_descriptions = b;
+             }
+             if let Some(b) = obj.get("singleLineWhenPossible").and_then(|v| v.as_bool()) {
+                 jsdoc.single_line_when_possible = b;
+             }
+             options.jsdoc = Some(jsdoc);
+         }
+     }
+     ```
+
+   - **`crates/oxc_formatter/tests/fixtures/js/jsdoc/options.json`** (NEW)
+     ```json
+     [{ "jsdoc": true }]
+     ```
+
+   - **`crates/oxc_formatter/tests/fixtures/js/jsdoc/basic.js`** (NEW)
+     - Tests: single-line type, multi-line→single-line conversion, empty JSDoc removal, description capitalization, tag normalization (`@return`→`@returns`, `@arg`→`@param`, `@yield`→`@yields`), type whitespace normalization, multiple params
+
+   - **`crates/oxc_formatter/tests/fixtures/js/jsdoc/tags.js`** (NEW)
+     - Tests: `@returns` with type+description, type-only, `@throws`, `@deprecated`, `@internal`, `@template`, `@typedef`, description+tags combo, `@example` preservation, `@prop`→`@property`, param without type, param without description
+
+   - **`crates/oxc_formatter/tests/fixtures/js/jsdoc/indented.js`** (NEW)
+     - Tests: JSDoc inside class methods, nested functions, if blocks (indentation handling)
+
+   - **Snapshot files accepted**: `basic.js.snap`, `tags.js.snap`, `indented.js.snap`
+
+4. Errors and Fixes:
+   - **`CommentNewlines` import**: `oxc_ast::CommentNewlines` doesn't exist; fixed to `oxc_ast::ast::CommentNewlines`
+   - **Capitalization of `- the name`**: The dash prefix wasn't stripped before capitalizing; fixed by `comment.strip_prefix("- ").unwrap_or(comment)` before `capitalize_first`
+   - **Clippy `redundant clone`**: `description.clone()` in else branch; fixed by just using `description` (owned String)
+   - **Clippy `redundant closure`**: `.map(|t| t.parsed())`; fixed to `.map(JSDocTagTypePart::parsed)` with full path
+   - **Clippy `map_or` simplification**: `.map_or(false, |l| !l.is_empty())`; fixed to `.is_some_and(|l| !l.is_empty())`
+   - **Clippy `format!` appended to String**: `result.push_str(&format!(" {{{normalized}}}"))` ; fixed to separate `push` calls
+   - **Clippy collapsed if**: Nested `if` in trivia.rs; merged with `&& let Some(...)` pattern
+   - **Clippy `cast_possible_truncation`**: `source.len() as u32` in test; fixed with `#[expect(clippy::cast_possible_truncation)]`
+   - **`SourceText` has no `as_str()`**: Fixed to `let source: &str = &f.source_text();` (uses Deref)
+   - **Wrong import path for JSDocTagTypePart**: Needed `oxc_jsdoc::parser::jsdoc_parts::JSDocTagTypePart::parsed`
+   - **`source_indent_column` CRLF test**: Position 6 was wrong for `"x\r\n    /**"` — should be 7 (4 spaces start at index 3, position 7 is where `/**` starts)
+   - **Clippy unnecessary reference**: `&options` in test helper; fixed to `options`
+
+5. Problem Solving:
+   - Solved indent column problem by computing from source text (scanning backwards to line start, measuring whitespace with tab expansion) rather than needing printer state
+   - Solved JSDoc formatting integration by intercepting at the beginning of `impl Format for Comment` before the normal comment rendering path
+   - Empty JSDoc returns `""` which the trivia.rs caller skips writing (effectively removing the comment)
+
+6. All User Messages:
+   - "Implement the following plan: [detailed plan for porting prettier-plugin-jsdoc to oxc formatter]"
+   - "address the indent column todo"
+   - "gs" (git status)
+   - "need tests"
+   - "gs" (git status)
+   - "prefer insta snapshot test in crates/oxc_formatter/tests"
+   - "gs" (git status)
+
+7. Pending Tasks:
+   - Run `cargo test -p oxc_formatter`, `just fmt`, and `just lint` after the final edit to jsdoc.rs (removing inline integration tests, keeping only helper unit tests)
+   - Verify all tests pass (4 unit tests in jsdoc.rs + 3 insta snapshot tests + 193 existing tests)
+   - The full `just ready` check has not been run yet
+
+8. Current Work:
+   I had just replaced the large inline test section in `jsdoc.rs` with a minimal set of 4 unit tests (testing only internal helper functions: `source_indent_column`, `normalize_tag_kind`, `capitalize_first`, `normalize_type`). The integration-level tests were moved to insta snapshot fixtures at `tests/fixtures/js/jsdoc/`. The snapshots have been accepted. The last edit succeeded but I haven't yet run the tests/lint to verify everything still passes after this final cleanup.
+
+9. Optional Next Step:
+   Run `cargo test -p oxc_formatter` and `just lint` to verify the final state compiles and all tests pass after removing the inline integration tests from `jsdoc.rs`. This directly follows from the user's request to "prefer insta snapshot test in crates/oxc_formatter/tests".
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+create pr
+
+---
+
+address review comments https://github.com/oxc-project/oxc/pull/19738
+
+---
+
+continue resolve comment
+
+---
+
+resolve conversation on the pr
+
+---
+
+build oxfmt, run it in /Users/boshen/oxc/oxlint-ecosystem-ci/repos and see if jsdoc changes make sense

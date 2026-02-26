@@ -1,0 +1,57 @@
+Implement the following plan:
+
+# Plan: Fix trailing expression in object rest spread assignment (#7389 issue 1)
+
+## Context
+
+The object rest spread transformer produces suboptimal output for destructuring assignments like `({ a2, ...b2 } = c2)`. The trailing reference `_c` in the sequence expression is unnecessary when the expression result isn't used.
+
+## Problem
+
+Current output:
+```js
+_c = c2, {a2} = _c, b2 = babelHelpers.objectWithoutProperties(_c, ["a2"]), _c;
+//                                                                          ^^ unnecessary
+```
+
+The trailing `_c` is only needed when the expression's value is consumed (e.g., `console.log(({ a, ...b } = c))`).
+
+## Fix
+
+**File**: `crates/oxc_transformer/src/es2018/object_rest_spread.rs` (lines 278-281)
+
+At line 278, there's already a TODO. Before adding the trailing reference on line 281, check if the immediate parent context is an `ExpressionStatement`. The code already iterates ancestors at line 225 to find the `ExpressionStatementExpression` ancestor — we can check if this is the direct parent of the assignment expression (i.e., the assignment is the top-level expression in the statement, not nested in another expression).
+
+Specifically: check `ctx.ancestors()` — if the first ancestor is `ExpressionStatementExpression`, skip the trailing reference. If the first ancestor is something else (e.g., `CallExpressionArguments`, `SequenceExpressionExpressions`), keep it.
+
+## Test update
+
+Update `tasks/transform_conformance/overrides/babel-plugin-transform-object-rest-spread/test/fixtures/object-rest/assignment-expression/output.js`:
+
+Line 3 changes from:
+```js
+_c = c2, {a2} = _c, b2 = babelHelpers.objectWithoutProperties(_c, ["a2"]), _c;
+```
+To:
+```js
+_c = c2, {a2} = _c, b2 = babelHelpers.objectWithoutProperties(_c, ["a2"]);
+```
+
+## Verification
+
+```bash
+cargo test -p oxc_transformer
+cargo run -p oxc_transform_conformance
+just lint
+```
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.claude/projects/-Users-boshen-oxc-oxc2/56624738-c3ac-4333-b3d7-d68d07393e20.jsonl
+
+---
+
+why output mismatch from bable snap
+
+---
+
+create pr

@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "4f93d36a19b7",
+  "session_id": "e878cf8c-6cf3-4a96-a1d3-8f439ab37d77",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-11T11:58:25.628416Z",
+  "branch": "fix/no-fallthrough-default-not-last",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "crates/oxc_linter/src/rules/eslint/no_fallthrough.rs"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 25,
+    "cache_creation_tokens": 25266,
+    "cache_read_tokens": 703731,
+    "output_tokens": 1125,
+    "api_call_count": 21
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-11T11:58:25.611336Z",
+    "agent_lines": 15,
+    "human_added": 1890,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1905,
+    "agent_percentage": 0.7874015748031495
+  }
+}
