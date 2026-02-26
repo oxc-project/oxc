@@ -117,7 +117,9 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
     // Sort by start position so adjacent fixes are applied correctly, then drop
     // any edit whose range overlaps the previous one.
     text_edits.sort_unstable_by(|a, b| {
-        a.range.start.line
+        a.range
+            .start
+            .line
             .cmp(&b.range.start.line)
             .then(a.range.start.character.cmp(&b.range.start.character))
     });
