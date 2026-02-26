@@ -1,0 +1,147 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should format .astro <script> blocks 1`] = `
+"---
+const title = "Hello";
+---
+
+<html>
+  <body>
+    <h1>{title}</h1>
+    <script>
+      import a from "a";
+      import z from "z";
+      const y = 2;
+    </script>
+  </body>
+</html>
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should format .astro frontmatter w/ sort-imports 1`] = `
+"---
+import a from "a";
+import m from "m";
+import z from "z";
+
+const x = 1;
+---
+
+<div>{x}</div>
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should format .astro frontmatter-only (no template) 1`] = `
+"---
+import a from "a";
+import z from "z";
+export const prerender = true;
+---
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should format .astro w/ Tailwind class sorting 1`] = `
+"---
+const title = "Hello";
+---
+
+<div class="flex p-4">text</div>
+<div class="flex p-4">text</div>
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should format .astro with multiple <script> blocks 1`] = `
+"---
+const title = "Hello";
+---
+
+<html>
+  <body>
+    <h1>{title}</h1>
+    <script>
+      const a = 1;
+    </script>
+    <script>
+      const b = 2;
+    </script>
+  </body>
+</html>
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should format .astro without frontmatter 1`] = `
+"<div class="p-4 flex">
+  <p>Hello</p>
+</div>
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should handle .astro with TypeScript in frontmatter 1`] = `
+"---
+interface Props {
+  title: string;
+  count: number;
+}
+
+const { title, count } = Astro.props;
+---
+
+<h1>{title} ({count})</h1>
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should handle .astro with class:list directive 1`] = `
+"---
+const isActive = true;
+---
+
+<div class:list={["base", { active: isActive }]}>text</div>
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should handle .astro with client:load directives 1`] = `
+"---
+import Counter from "../components/Counter";
+---
+
+<Counter client:load />
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should handle .astro with set:html directive 1`] = `
+"---
+const rawHtml = "<em>Hello</em>";
+---
+
+<div set:html={rawHtml} />
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should handle <script is:inline> 1`] = `
+"---
+const title = "Hello";
+---
+
+<script is:inline>
+  const x = 1;
+</script>
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should handle empty frontmatter 1`] = `
+"---
+
+---
+
+<div>hello</div>
+"
+`;
+
+exports[`Format js-in-astro with prettier-plugin-oxfmt > should pass astroAllowShorthand option 1`] = `
+"---
+const title = "Hello";
+---
+
+<Component {title} />
+"
+`;
