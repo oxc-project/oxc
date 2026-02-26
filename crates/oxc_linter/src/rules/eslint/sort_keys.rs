@@ -59,7 +59,7 @@ pub struct SortKeysConfig(SortOrder, SortKeysOptions);
 
 fn sort_properties_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Object keys should be sorted")
-        .with_help("Sort keys alphabetically according to the configured order (asc or desc).")
+        .with_note("Sort keys alphabetically according to the configured order (asc or desc).")
         .with_label(span)
 }
 

@@ -7,245 +7,269 @@ source: crates/oxc_linter/src/tester.rs
  1 │ x = x + y
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x + y` with `x += y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (-=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x - y
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x - y` with `x -= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (*=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x * y
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x * y` with `x *= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (*=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = y * x
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (*=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = (y * z) * x
    · ───────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (/=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x / y
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x / y` with `x /= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (%=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x % y
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x % y` with `x %= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (<<=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x << y
    · ──────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x << y` with `x <<= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (>>=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x >> y
    · ──────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x >> y` with `x >>= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (>>>=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x >>> y
    · ───────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x >>> y` with `x >>>= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (&=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x & y
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x & y` with `x &= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (^=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x ^ y
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x ^ y` with `x ^= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (|=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x | y
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x | y` with `x |= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (-=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x[0] = x[0] - y
    · ───────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x[0] = x[0] - y` with `x[0] -= y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (*=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x.y[z['a']][0].b = x.y[z['a']][0].b * 2
    · ───────────────────────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x + y
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x + y` with `x += y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = (x + y)
    · ───────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = (x + y)` with `x += y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x + (y)
    · ───────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x = x + (y)` with `x += (y)`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ x += (y)
    · ────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x += (y)` with `x = x + (y)`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ x += y
    · ──────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x += y` with `x = x + y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo.bar = foo.bar + baz
    · ───────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo.bar = foo.bar + baz` with `foo.bar += baz`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo.bar += baz
    · ──────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo.bar += baz` with `foo.bar = foo.bar + baz`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ this.foo = this.foo + bar
    · ─────────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `this.foo = this.foo + bar` with `this.foo += bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ this.foo += bar
    · ───────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `this.foo += bar` with `this.foo = this.foo + bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo.bar.baz = foo.bar.baz + qux
    · ───────────────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo.bar.baz += qux
    · ──────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ this.foo.bar = this.foo.bar + baz
    · ─────────────────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ this.foo.bar += baz
    · ───────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo[bar] = foo[bar] + baz
    · ─────────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ this[foo] = this[foo] + bar
    · ───────────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (>>>=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo[bar] >>>= baz
    · ─────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (>>>=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ this[foo] >>>= bar
    · ──────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (/=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo[5] = foo[5] / baz
    · ─────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo[5] = foo[5] / baz` with `foo[5] /= baz`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (/=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ this[5] = this[5] / foo
    · ───────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `this[5] = this[5] / foo` with `this[5] /= foo`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:6]
  1 │ /*1*/x/*2*/./*3*/y/*4*/= x.y +/*5*/z/*6*/./*7*/w/*8*/;
    ·      ───────────────────────────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x/*2*/./*3*/y/*4*/= x.y +/*5*/z/*6*/./*7*/w` with `x/*2*/./*3*/y/*4*/+=/*5*/z/*6*/./*7*/w`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
@@ -257,249 +281,289 @@ source: crates/oxc_linter/src/tester.rs
  6 │ │                . //6
  7 │ ╰─▶              w;
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x // 1
+        			 . // 2
+        			 y // 3
+        			 = x.y + //4
+        			 z //5
+        			 . //6
+        			 w` with `x // 1
+        			 . // 2
+        			 y // 3
+        			 += //4
+        			 z //5
+        			 . //6
+        			 w`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = /*1*/ x + y
    · ───────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ ╭─▶ x = //1
  2 │ ╰─▶              x + y
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x.y = x/*1*/.y + z
    · ──────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ ╭─▶ x.y = x. //1
  2 │ ╰─▶              y + z
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x /*1*/ + y
    · ───────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ ╭─▶ x = x //1
  2 │ ╰─▶              + y
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:6]
  1 │ /*1*/x +=/*2*/y/*3*/;
    ·      ──────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x +=/*2*/y` with `x = x +/*2*/y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ ╭─▶ x +=//1
  2 │ ╰─▶              y
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x +=//1
+        			 y` with `x = x +//1
+        			 y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:7]
  1 │ (/*1*/x += y)
    ·       ──────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x += y` with `x = x + y`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ x/*1*/+=  y
    · ───────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ ╭─▶ x //1
  2 │ ╰─▶              +=  y
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ (/*1*/x) +=  y
    · ──────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ x/*1*/.y +=  z
    · ──────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ ╭─▶ x.//1
  2 │ ╰─▶              y +=  z
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (^=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ (foo.bar) ^= ((((((((((((((((baz))))))))))))))))
    · ────────────────────────────────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `(foo.bar) ^= ((((((((((((((((baz))))))))))))))))` with `(foo.bar) = (foo.bar) ^ ((((((((((((((((baz))))))))))))))))`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (**=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo = foo ** bar
    · ────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo = foo ** bar` with `foo **= bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (**=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo **= bar
    · ───────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo **= bar` with `foo = foo ** bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (*=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo *= bar + 1
    · ──────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo *= bar + 1` with `foo = foo * (bar + 1)`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (-=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo -= bar - baz
    · ────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo -= bar - baz` with `foo = foo - (bar - baz)`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo += bar + baz
    · ────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo += bar + baz` with `foo = foo + (bar + baz)`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo += bar = 1
    · ──────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo += bar = 1` with `foo = foo + (bar = 1)`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (*=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo *= (bar + 1)
    · ────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo *= (bar + 1)` with `foo = foo * (bar + 1)`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo+=-bar
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo+=-bar` with `foo= foo+-bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (/=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo/=bar
    · ────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo/=bar` with `foo= foo/bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (/=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo/=/**/bar
    · ────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo/=/**/bar` with `foo= foo/ /**/bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (/=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ ╭─▶ foo/=//
  2 │ ╰─▶             bar
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo/=//
+        			bar` with `foo= foo/ //
+        			bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (/=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo/=/^bar$/
    · ────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo/=/^bar$/` with `foo= foo/ /^bar$/`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo+=+bar
    · ─────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo+=+bar` with `foo= foo+ +bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo+= +bar
    · ──────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo+= +bar` with `foo= foo+ +bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo+=/**/+bar
    · ─────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo+=/**/+bar` with `foo= foo+/**/+bar`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ foo+=+bar===baz
    · ───────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `foo+=+bar===baz` with `foo= foo+(+bar===baz)`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ (obj?.a).b = (obj?.a).b + y
    · ───────────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ obj.a = obj?.a + b
    · ──────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `obj.a = obj?.a + b` with `obj.a += b`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ x += + (() => {})
    · ─────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x += + (() => {})` with `x = x + + (() => {})`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.
 
   ⚠ eslint(operator-assignment): Unexpected operator assignment (+=) shorthand.
    ╭─[operator_assignment.tsx:1:1]
  1 │ x += + /** fooo */ (() => {})
    · ─────────────────────────────
    ╰────
-  help: Ensure consistent use of operator assignment shorthand based on the configured preference.
+  help: Replace `x += + /** fooo */ (() => {})` with `x = x + + /** fooo */ (() => {})`.
+  note: Ensure consistent use of operator assignment shorthand based on the configured preference.

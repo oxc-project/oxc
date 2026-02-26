@@ -22,7 +22,7 @@ fn operator_assignment_diagnostic(mode: Mode, span: Span, operator: &str) -> Oxc
         format!("Assignment (=) can be replaced with operator assignment ({operator}).")
     };
     OxcDiagnostic::warn(msg)
-        .with_help("Ensure consistent use of operator assignment shorthand based on the configured preference.")
+        .with_note("Ensure consistent use of operator assignment shorthand based on the configured preference.")
         .with_label(span)
 }
 
