@@ -16,11 +16,15 @@ use oxc_ast::{
     },
     match_expression,
 };
-use oxc_ast_visit::{Visit, walk::walk_function_body};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_arrow_function_expression, walk_function, walk_function_body},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, Semantic, SymbolId};
 use oxc_span::{Atom, GetSpan, Span};
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     AstNode,
@@ -1384,6 +1388,24 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         }
 
         self.stack.pop();
+    }
+
+    fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
+        // Reset is_callee_of_call_expr when entering a nested function boundary.
+        // Without this, IIFEs like `(() => { obj.a })()` would incorrectly
+        // treat property reads inside the arrow body as method call callees,
+        // collecting `obj` instead of `obj.a`.
+        let was_callee = self.is_callee_of_call_expr;
+        self.is_callee_of_call_expr = false;
+        walk_arrow_function_expression(self, it);
+        self.is_callee_of_call_expr = was_callee;
+    }
+
+    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
+        let was_callee = self.is_callee_of_call_expr;
+        self.is_callee_of_call_expr = false;
+        walk_function(self, it, flags);
+        self.is_callee_of_call_expr = was_callee;
     }
 
     fn visit_static_member_expression(&mut self, it: &StaticMemberExpression<'a>) {
@@ -2773,6 +2795,22 @@ fn test() {
           }
         ",
         "function MyComponent4({ myRef }) { useCallback(() => { console.log(myRef.current); }, [myRef]); }",
+        // IIFE: property reads inside arrow IIFE should be collected as member expressions
+        r"function MyComponent({ obj, flag }) {
+          return useMemo(() => {
+            return (() => {
+              return flag ? obj.a : obj.b;
+            })();
+          }, [obj.a, obj.b, flag]);
+        }",
+        // IIFE: property reads inside function expression IIFE
+        r"function MyComponent({ obj }) {
+          return useMemo(() => {
+            return (function() {
+              return obj.a;
+            })();
+          }, [obj.a]);
+        }",
     ];
 
     let fail = vec![
@@ -4255,6 +4293,14 @@ fn test() {
     useCallback(() => { console.log(myRef.current); }, []);
     // React Hook useCallback has a missing dependency: 'myRef'. Either include it or remove the dependency array.
 }",
+        // IIFE: missing member expression deps inside arrow IIFE
+        r"function MyComponent({ obj, flag }) {
+          return useMemo(() => {
+            return (() => {
+              return flag ? obj.a : obj.b;
+            })();
+          }, []);
+        }",
     ];
 
     let pass_additional_hooks = vec![(
