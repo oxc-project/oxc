@@ -223,9 +223,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
             }
             match *part {
                 TracePathPart::Key(key) => {
-                    self.fixes_buffer.print_ascii_byte(b'"');
-                    self.fixes_buffer.print_str(key);
-                    self.fixes_buffer.print_ascii_byte(b'"');
+                    self.fixes_buffer.print_strs_array(["\"", key, "\""]);
                 }
                 TracePathPart::Index(index) => {
                     let mut buffer = ItoaBuffer::new();
