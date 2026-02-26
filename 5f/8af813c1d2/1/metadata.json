@@ -3,32 +3,41 @@
   "checkpoint_id": "5f8af813c1d2",
   "session_id": "ab0deaaa-8551-4c55-be46-47fb1d5fca93",
   "strategy": "manual-commit",
-  "created_at": "2026-02-26T07:15:14.036428Z",
+  "created_at": "2026-02-26T09:29:25.317498Z",
   "branch": "feat/formatter-jsdoc",
   "checkpoints_count": 1,
   "files_touched": [
     "apps/oxfmt/src/core/oxfmtrc.rs",
+    "crates/oxc_formatter/Cargo.toml",
     "crates/oxc_formatter/src/formatter/jsdoc.rs",
+    "crates/oxc_formatter/src/formatter/mod.rs",
+    "crates/oxc_formatter/src/formatter/trivia.rs",
+    "crates/oxc_formatter/src/options.rs",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/basic.js",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/indented.js",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/options.json",
+    "crates/oxc_formatter/tests/fixtures/js/jsdoc/tags.js",
+    "crates/oxc_formatter/tests/fixtures/mod.rs",
     "crates/oxc_jsdoc/src/parser/jsdoc_parts.rs"
   ],
   "agent": "Claude Code",
-  "transcript_identifier_at_start": "18e6872b-f7b6-430e-b9b4-8f8fc364263b",
-  "checkpoint_transcript_start": 688,
-  "transcript_lines_at_start": 688,
+  "transcript_identifier_at_start": "0c7c035c-5dee-4ad7-ac5f-f5c2368e4f73",
+  "checkpoint_transcript_start": 2235,
+  "transcript_lines_at_start": 2235,
   "token_usage": {
-    "input_tokens": 119,
-    "cache_creation_tokens": 83874,
-    "cache_read_tokens": 11165027,
-    "output_tokens": 6365,
-    "api_call_count": 113
+    "input_tokens": 76,
+    "cache_creation_tokens": 68765,
+    "cache_read_tokens": 7929813,
+    "output_tokens": 6060,
+    "api_call_count": 74
   },
   "initial_attribution": {
-    "calculated_at": "2026-02-26T07:15:13.661591Z",
-    "agent_lines": 133,
-    "human_added": 2439,
-    "human_modified": 0,
+    "calculated_at": "2026-02-26T09:29:24.957927Z",
+    "agent_lines": 205,
+    "human_added": 2487,
+    "human_modified": 19,
     "human_removed": 0,
-    "total_committed": 2572,
-    "agent_percentage": 5.171073094867807
+    "total_committed": 2711,
+    "agent_percentage": 7.561785319070453
   }
 }
