@@ -338,17 +338,22 @@ impl CliRunner {
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
+        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+        let type_aware = self.options.type_aware || config_store.type_aware_enabled();
+        let type_check = self.options.type_check || config_store.type_check_enabled();
+        let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
+
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
             ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
             _ => None,
         };
-        let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
-
-        let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
-        let type_aware = self.options.type_aware || config_store.type_aware_enabled();
-        let type_check = self.options.type_check || config_store.type_check_enabled();
+        let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
+            &output_formatter,
+            &warning_options,
+            &misc_options,
+            max_warnings,
+        );
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
@@ -466,13 +471,14 @@ impl CliRunner {
         reporter: &OutputFormatter,
         warning_options: &WarningOptions,
         misc_options: &MiscOptions,
+        max_warnings: Option<usize>,
     ) -> (DiagnosticService, DiagnosticSender) {
         let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
         (
             service
                 .with_quiet(warning_options.quiet)
                 .with_silent(misc_options.silent)
-                .with_max_warnings(warning_options.max_warnings),
+                .with_max_warnings(max_warnings),
             sender,
         )
     }
@@ -1309,6 +1315,18 @@ mod test {
     fn test_tsgolint_type_check_false_overridden_by_cli_flag() {
         let args = &["--type-check", "-c", "config-type-check-false.json"];
         Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_via_config_file() {
+        let args = &["-c", "config-max-warnings.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_max_warnings_overridden_by_cli_flag() {
+        let args = &["--max-warnings", "1", "-c", "config-max-warnings.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
     }
 
     #[test]

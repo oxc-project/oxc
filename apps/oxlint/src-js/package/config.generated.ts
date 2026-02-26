@@ -324,6 +324,12 @@ export interface OxlintOptions {
    * Equivalent to passing `--type-check` on the CLI.
    */
   typeCheck?: boolean | null;
+  /**
+   * Specify a warning threshold. Exits with an error status if warnings exceed this value.
+   *
+   * Equivalent to passing `--max-warnings` on the CLI.
+   */
+  maxWarnings?: number | null;
 }
 export interface OxlintOverride {
   /**

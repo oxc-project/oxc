@@ -387,6 +387,12 @@ impl<'a> ConfigLoader<'a> {
                         .push(ConfigLoadError::Diagnostic(nested_type_check_not_supported(&path)));
                     continue;
                 }
+                if builder.max_warnings().is_some() {
+                    errors.push(ConfigLoadError::Diagnostic(nested_max_warnings_not_supported(
+                        &path,
+                    )));
+                    continue;
+                }
             }
 
             let extended_paths = builder.extended_paths.clone();
@@ -647,6 +653,14 @@ fn nested_type_check_not_supported(path: &Path) -> OxcDiagnostic {
         path.display()
     ))
     .with_help("Move `options.typeCheck` to the root configuration file.")
+}
+
+fn nested_max_warnings_not_supported(path: &Path) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "The `options.maxWarnings` option is only supported in the root config, but it was found in {}.",
+        path.display()
+    ))
+    .with_help("Move `options.maxWarnings` to the root configuration file.")
 }
 
 #[cfg(test)]
