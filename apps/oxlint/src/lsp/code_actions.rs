@@ -110,12 +110,31 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
             continue;
         }
 
-        // when source.fixAll.oxc we collect all changes at ones
-        // and return them as one workspace edit.
-        // it is possible that one fix will change the range for the next fix
-        // see oxc-project/oxc#10422
         text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
     }
 
-    text_edits
+    // LSP spec requires text edits in a WorkspaceEdit to be non-overlapping.
+    // Sort by start position so adjacent fixes are applied correctly, then drop
+    // any edit whose range overlaps the previous one.
+    text_edits.sort_unstable_by(|a, b| {
+        a.range.start.line
+            .cmp(&b.range.start.line)
+            .then(a.range.start.character.cmp(&b.range.start.character))
+    });
+
+    let mut result: Vec<TextEdit> = Vec::with_capacity(text_edits.len());
+    for edit in text_edits {
+        if let Some(last) = result.last() {
+            let last_end = last.range.end;
+            let start = edit.range.start;
+            let overlaps = start.line < last_end.line
+                || (start.line == last_end.line && start.character < last_end.character);
+            if overlaps {
+                debug!("Skipping overlapping fix at {:?}", edit.range);
+                continue;
+            }
+        }
+        result.push(edit);
+    }
+    result
 }

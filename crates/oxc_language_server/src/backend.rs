@@ -628,6 +628,11 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri.clone(), content.clone());
         }
 
+        // Invalidate cached code actions whenever the document changes.
+        // Without this, stale actions (computed against a prior document version) can be
+        // applied to the current content, producing corrupted output.
+        worker.remove_uri_cache(&uri).await;
+
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic_on_change(&uri, content.as_deref()).await {
                 Err(err) => {
