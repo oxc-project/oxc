@@ -81,23 +81,33 @@ ${afterContent}
 // ---
 
 function normalizeOutput(output: string, cwd: string): string {
-  let normalized = output;
-
-  // Normalize timing information
-  normalized = normalized.replace(/\d+(?:\.\d+)?s|\d+ms/g, "<variable>ms");
-  // Normalize thread count (e.g., "using 8 threads" -> "using 1 threads")
-  normalized = normalized.replace(/using \d+ threads/g, "using 1 threads");
-  // Normalize path separators (Windows compatibility)
-  normalized = normalized.replace(/\\/g, "/");
-  // Replace absolute paths
   const cwdPath = cwd.replace(/\\/g, "/");
-  normalized = normalized.replace(new RegExp(RegExp.escape(cwdPath), "g"), "<cwd>");
-  // Replace repo root path
   const repoRoot = join(import.meta.dirname, "..", "..", "..", "..");
   const rootPath = repoRoot.replace(/\\/g, "/");
-  normalized = normalized.replace(new RegExp(RegExp.escape(rootPath), "g"), "<cwd>");
 
-  return normalized;
+  return (
+    output
+      // Normalize timing information
+      .replace(/\d+(?:\.\d+)?s|\d+ms/g, "<variable>ms")
+      // Normalize path separators (Windows compatibility)
+      .replace(/\\/g, "/")
+      // Replace absolute paths
+      .replace(new RegExp(RegExp.escape(cwdPath), "g"), "<cwd>")
+      .replace(new RegExp(RegExp.escape(rootPath), "g"), "<cwd>")
+      // Strip ANSI escape codes (e.g. from Prettier error messages)
+      // eslint-disable-next-line no-control-regex
+      .replace(/\x1b\[[0-9;]*m/g, "")
+      // Normalize miette Unicode theme to ASCII
+      .replace(/×/g, "x")
+      .replace(/╭/g, ",")
+      .replace(/─/g, "-")
+      .replace(/│/g, "|")
+      .replace(/·/g, ":")
+      .replace(/┬/g, "|")
+      .replace(/╰/g, "`")
+      // Trim trailing whitespace per line
+      .replace(/[^\S\n]+$/gm, "")
+  );
 }
 
 function formatSnapshot(cwd: string, args: string[], { stdout, stderr, exitCode }: Result): string {
