@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use lazy_regex::Regex;
 use oxc_ast::{AstKind, ast::FormalParameters};
 use oxc_diagnostics::OxcDiagnostic;
@@ -6,7 +8,11 @@ use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn handle_callback_err_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected error to be handled.")
@@ -14,7 +20,7 @@ fn handle_callback_err_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, JsonSchema)]
 enum ErrorPattern {
     Plain(String),
     Regex(Regex),
@@ -35,6 +41,23 @@ impl ErrorPattern {
     }
 }
 
+fn deserialize_error_pattern<'de, D>(deserializer: D) -> Result<Box<ErrorPattern>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s = <Cow<str>>::deserialize(deserializer)?;
+
+    let pattern = {
+        if s.starts_with('^') {
+            Regex::new(&s).map_or_else(|_| ErrorPattern::Plain(s.to_string()), ErrorPattern::Regex)
+        } else {
+            ErrorPattern::Plain(s.to_string())
+        }
+    };
+
+    Ok(Box::new(pattern))
+}
+
 /// The rule takes a single string option: the name of the error parameter.
 ///
 /// This can be either:
@@ -48,8 +71,10 @@ impl ErrorPattern {
 #[serde(rename_all = "camelCase", default)]
 pub struct HandleCallbackErrConfig(String);
 
-#[derive(Debug, Default, Clone)]
-pub struct HandleCallbackErr(Box<ErrorPattern>);
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+pub struct HandleCallbackErr(
+    #[serde(deserialize_with = "deserialize_error_pattern")] Box<ErrorPattern>,
+);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -108,20 +133,7 @@ declare_oxc_lint!(
 
 impl Rule for HandleCallbackErr {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let pattern = value
-            .get(0)
-            .and_then(serde_json::Value::as_str)
-            .map(|s| {
-                if s.starts_with('^') {
-                    Regex::new(s)
-                        .map_or_else(|_| ErrorPattern::Plain(s.to_string()), ErrorPattern::Regex)
-                } else {
-                    ErrorPattern::Plain(s.to_string())
-                }
-            })
-            .unwrap_or_default();
-
-        Ok(Self(Box::new(pattern)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
