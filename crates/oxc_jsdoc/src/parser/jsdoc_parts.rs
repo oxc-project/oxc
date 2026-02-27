@@ -88,6 +88,23 @@ impl<'a> JSDocCommentPart<'a> {
         )
     }
 
+    /// Returns the content of the comment part without leading `*` prefix in each line,
+    /// but preserves empty lines (paragraph structure).
+    ///
+    /// Unlike `parsed()` which filters out empty lines, this method keeps them
+    /// to preserve paragraph breaks and vertical structure in the original text.
+    pub fn parsed_preserving_whitespace(&self) -> String {
+        if self.raw.lines().count() == 1 {
+            return self.raw.trim().to_string();
+        }
+
+        self.raw
+            .lines()
+            .map(|line| line.trim().strip_prefix('*').unwrap_or(line).trim())
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
     /// Returns the content of the comment part without leading `*` in each line.
     pub fn parsed(&self) -> String {
         // If single line, there is no leading `*`
@@ -207,6 +224,12 @@ impl<'a> JSDocTagTypeNamePart<'a> {
         let default = optional && part_content.contains('=');
 
         Self { raw: part_content, span, optional, default }
+    }
+
+    /// Returns the raw text including brackets for optional/default params.
+    /// e.g. `[name]`, `[name = default]`
+    pub fn raw(&self) -> &'a str {
+        self.raw
     }
 
     /// Returns the type name itself.
