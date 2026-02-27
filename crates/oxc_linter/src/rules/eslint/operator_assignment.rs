@@ -26,9 +26,7 @@ fn operator_assignment_diagnostic(mode: Mode, span: Span, operator: &str) -> Oxc
     } else {
         format!("Use '{operator}' shorthand instead of '='.")
     };
-    OxcDiagnostic::warn(msg)
-        .with_note(help)
-        .with_label(span)
+    OxcDiagnostic::warn(msg).with_note(help).with_label(span)
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Serialize, JsonSchema)]
