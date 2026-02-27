@@ -332,6 +332,16 @@ fn enter_ssa_impl(
                     // Register nested function's blocks in the builder
                     builder.register_blocks_from(&lowered_func.func);
 
+                    // Mark the inner entry block as fully sealed: its only
+                    // predecessor is the current outer block (block_id) which
+                    // has already been visited. In the TS reference,
+                    // `unsealedPreds.get(block)` returns `undefined` for the
+                    // inner entry, and JS `undefined > 0` is `false`, so the
+                    // incomplete-phi path is skipped. In Rust we must
+                    // explicitly set 0 so that `get_id_at` can resolve
+                    // through the (already-sealed) predecessor.
+                    builder.unsealed_preds.insert(entry_id, 0);
+
                     // Save the unknown set — nested function processing may add
                     // entries with colliding numeric IDs that would contaminate
                     // the outer function's SSA renaming.
