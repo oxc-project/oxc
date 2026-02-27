@@ -1209,3 +1209,16 @@ describe("Tailwind CSS Sorting in Embedded HTML (Tagged Template Literals)", () 
     expect(result.errors).toStrictEqual([]);
   });
 });
+
+describe("Tailwind CSS Sorting in CSS (@apply)", () => {
+  it("should sort @apply classes in CSS files", async () => {
+    const input = `.btn { @apply p-4 flex; }`;
+
+    const result = await format("test.css", input, {
+      sortTailwindcss: {},
+    });
+
+    expect(result.code).toContain("@apply flex p-4;");
+    expect(result.errors).toStrictEqual([]);
+  });
+});

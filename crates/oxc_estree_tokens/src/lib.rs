@@ -6,6 +6,7 @@ use oxc_ast_visit::{
     utf8_to_utf16::{Utf8ToUtf16, Utf8ToUtf16Converter},
     walk,
 };
+use oxc_data_structures::assert_unchecked;
 use oxc_estree::{
     CompactFormatter, Config, ESTree, ESTreeSerializer, JsonSafeString, PrettyFormatter,
     SequenceSerializer, Serializer, StructSerializer,
@@ -41,7 +42,7 @@ type CompactTokenSerializer = ESTreeSerializer<TokenConfig, CompactFormatter>;
 type PrettyTokenSerializer = ESTreeSerializer<TokenConfig, PrettyFormatter>;
 
 pub struct EstreeToken<'a> {
-    pub token_type: &'static str,
+    pub token_type: TokenType,
     pub value: &'a str,
     pub regex: Option<EstreeRegExpToken<'a>>,
     pub span: Span,
@@ -55,7 +56,7 @@ pub struct EstreeRegExpToken<'a> {
 impl ESTree for EstreeToken<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString(self.token_type));
+        state.serialize_field("type", &JsonSafeString(self.token_type.as_str()));
         state.serialize_field("value", &self.value);
         if let Some(regex) = &self.regex {
             state.serialize_field("regex", regex);
@@ -73,6 +74,42 @@ impl ESTree for EstreeRegExpToken<'_> {
         state.end();
     }
 }
+
+/// Token type.
+/// Wrapped in a module to ensure `TokenType` can only be constructed via `TokenType::new`.
+mod token_type {
+    use super::*;
+
+    const TOKEN_TYPE_MAX_LEN: usize = 17; // PrivateIdentifier, RegularExpression
+
+    /// Token type.
+    ///
+    /// Just a wrapper around a `&'static str`.
+    /// Purpose of this type is to inform the compiler that the `&str` has a short length,
+    /// which allows it to remove bounds checks when concatenating multiple strings.
+    #[derive(Clone, Copy, PartialEq, Eq)]
+    #[repr(transparent)]
+    pub struct TokenType(&'static str);
+
+    #[expect(clippy::inline_always)]
+    impl TokenType {
+        #[inline(always)]
+        pub const fn new(name: &'static str) -> Self {
+            assert!(name.len() <= TOKEN_TYPE_MAX_LEN);
+            Self(name)
+        }
+
+        #[inline(always)]
+        pub const fn as_str(&self) -> &'static str {
+            let s = self.0;
+            // SAFETY: `TokenType` can only be constructed via `TokenType::new`,
+            // which ensures `s.len() <= TOKEN_TYPE_MAX_LEN`
+            unsafe { assert_unchecked!(s.len() <= TOKEN_TYPE_MAX_LEN) };
+            s
+        }
+    }
+}
+use token_type::TokenType;
 
 #[derive(Debug, Clone, Copy)]
 pub struct EstreeTokenOptions {
@@ -215,7 +252,7 @@ struct EstreeTokenContext<'b, S: SequenceSerializer> {
 impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
     /// Serialize all tokens before `start` with default types,
     /// then serialize the token at `start` with the given `token_type`.
-    fn emit_token_at(&mut self, start: u32, token_type: &'static str) {
+    fn emit_token_at(&mut self, start: u32, token_type: TokenType) {
         let token = self.advance_to(start);
         self.emit_token(token, token_type);
     }
@@ -227,9 +264,9 @@ impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
         let token_type = if self.options.exclude_legacy_keyword_identifiers
             && matches!(token.kind(), Kind::Yield | Kind::Let | Kind::Static)
         {
-            "Keyword"
+            TokenType::new("Keyword")
         } else {
-            "Identifier"
+            TokenType::new("Identifier")
         };
         self.emit_token(token, token_type);
     }
@@ -254,7 +291,7 @@ impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
     }
 
     /// Serialize a single token.
-    fn emit_token(&mut self, token: &Token, token_type: &'static str) {
+    fn emit_token(&mut self, token: &Token, token_type: TokenType) {
         let kind = token.kind();
         let start = token.start();
         let end = token.end();
@@ -306,7 +343,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
         ) {
             match type_name {
                 TSTypeName::ThisExpression(this_expression) => {
-                    ctx.emit_token_at(this_expression.span.start, "Identifier");
+                    ctx.emit_token_at(this_expression.span.start, TokenType::new("Identifier"));
                 }
                 TSTypeName::QualifiedName(qualified_name) => {
                     collect_type_query_this(ctx, &qualified_name.left);
@@ -317,7 +354,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
 
         match &type_query.expr_name {
             TSTypeQueryExprName::ThisExpression(this_expression) => {
-                self.emit_token_at(this_expression.span.start, "Identifier");
+                self.emit_token_at(this_expression.span.start, TokenType::new("Identifier"));
             }
             TSTypeQueryExprName::QualifiedName(qualified_name) => {
                 collect_type_query_this(self, &qualified_name.left);
@@ -369,7 +406,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
             && self.jsx_member_expression_depth > 0
             && self.jsx_computed_member_depth == 0
         {
-            self.emit_token_at(identifier.span.start, "JSXIdentifier");
+            self.emit_token_at(identifier.span.start, TokenType::new("JSXIdentifier"));
         } else {
             self.emit_identifier(identifier.span.start);
         }
@@ -381,7 +418,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
             && self.jsx_member_expression_depth > 0
             && self.jsx_computed_member_depth == 0
         {
-            self.emit_token_at(identifier.span.start, "JSXIdentifier");
+            self.emit_token_at(identifier.span.start, TokenType::new("JSXIdentifier"));
         } else {
             self.emit_identifier(identifier.span.start);
         }
@@ -396,7 +433,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
     }
 
     fn visit_ts_this_parameter(&mut self, parameter: &TSThisParameter<'a>) {
-        self.emit_token_at(parameter.this_span.start, "Identifier");
+        self.emit_token_at(parameter.this_span.start, TokenType::new("Identifier"));
         walk::walk_ts_this_parameter(self, parameter);
     }
 
@@ -441,12 +478,12 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
     }
 
     fn visit_jsx_identifier(&mut self, identifier: &JSXIdentifier<'a>) {
-        self.emit_token_at(identifier.span.start, "JSXIdentifier");
+        self.emit_token_at(identifier.span.start, TokenType::new("JSXIdentifier"));
     }
 
     fn visit_jsx_element_name(&mut self, name: &JSXElementName<'a>) {
         if let JSXElementName::IdentifierReference(identifier) = name {
-            self.emit_token_at(identifier.span.start, "JSXIdentifier");
+            self.emit_token_at(identifier.span.start, TokenType::new("JSXIdentifier"));
         } else {
             walk::walk_jsx_element_name(self, name);
         }
@@ -454,7 +491,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
 
     fn visit_jsx_member_expression_object(&mut self, object: &JSXMemberExpressionObject<'a>) {
         if let JSXMemberExpressionObject::IdentifierReference(identifier) = object {
-            self.emit_token_at(identifier.span.start, "JSXIdentifier");
+            self.emit_token_at(identifier.span.start, TokenType::new("JSXIdentifier"));
         } else {
             walk::walk_jsx_member_expression_object(self, object);
         }
@@ -462,8 +499,8 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
 
     fn visit_jsx_namespaced_name(&mut self, name: &JSXNamespacedName<'a>) {
         if self.options.jsx_namespace_jsx_identifiers {
-            self.emit_token_at(name.namespace.span.start, "JSXIdentifier");
-            self.emit_token_at(name.name.span.start, "JSXIdentifier");
+            self.emit_token_at(name.namespace.span.start, TokenType::new("JSXIdentifier"));
+            self.emit_token_at(name.name.span.start, TokenType::new("JSXIdentifier"));
         }
         // When `!jsx_namespace_jsx_identifiers`, these tokens retain their default type
     }
@@ -509,7 +546,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
         self.visit_jsx_attribute_name(&attribute.name);
         match &attribute.value {
             Some(JSXAttributeValue::StringLiteral(string_literal)) => {
-                self.emit_token_at(string_literal.span.start, "JSXText");
+                self.emit_token_at(string_literal.span.start, TokenType::new("JSXText"));
             }
             Some(value) => self.visit_jsx_attribute_value(value),
             None => {}
@@ -517,23 +554,23 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
     }
 }
 
-fn get_token_type(kind: Kind) -> &'static str {
+fn get_token_type(kind: Kind) -> TokenType {
     match kind {
-        Kind::Ident | Kind::Await => "Identifier",
-        Kind::PrivateIdentifier => "PrivateIdentifier",
-        Kind::JSXText => "JSXText",
-        Kind::Str => "String",
-        Kind::RegExp => "RegularExpression",
+        Kind::Ident | Kind::Await => TokenType::new("Identifier"),
+        Kind::PrivateIdentifier => TokenType::new("PrivateIdentifier"),
+        Kind::JSXText => TokenType::new("JSXText"),
+        Kind::Str => TokenType::new("String"),
+        Kind::RegExp => TokenType::new("RegularExpression"),
         Kind::NoSubstitutionTemplate
         | Kind::TemplateHead
         | Kind::TemplateMiddle
-        | Kind::TemplateTail => "Template",
-        Kind::True | Kind::False => "Boolean",
-        Kind::Null => "Null",
-        _ if kind.is_number() => "Numeric",
-        _ if kind.is_contextual_keyword() => "Identifier",
-        _ if kind.is_any_keyword() => "Keyword",
-        _ => "Punctuator",
+        | Kind::TemplateTail => TokenType::new("Template"),
+        Kind::True | Kind::False => TokenType::new("Boolean"),
+        Kind::Null => TokenType::new("Null"),
+        _ if kind.is_number() => TokenType::new("Numeric"),
+        _ if kind.is_contextual_keyword() => TokenType::new("Identifier"),
+        _ if kind.is_any_keyword() => TokenType::new("Keyword"),
+        _ => TokenType::new("Punctuator"),
     }
 }
 

@@ -2,6 +2,7 @@ import Tinypool from "tinypool";
 import { resolvePlugins } from "../libs/apis";
 import type {
   FormatEmbeddedCodeParam,
+  FormatEmbeddedDocParam,
   FormatFileParam,
   SortTailwindClassesArgs,
 } from "../libs/apis";
@@ -37,6 +38,17 @@ export async function formatEmbeddedCode(
 ): Promise<string> {
   return pool!
     .run({ options, code } satisfies FormatEmbeddedCodeParam, { name: "formatEmbeddedCode" })
+    .catch(rethrowAsError);
+}
+
+export async function formatEmbeddedDoc(
+  options: FormatEmbeddedDocParam["options"],
+  texts: string[],
+): Promise<string[]> {
+  return pool!
+    .run({ options, texts } satisfies FormatEmbeddedDocParam, {
+      name: "formatEmbeddedDoc",
+    })
     .catch(rethrowAsError);
 }
 
