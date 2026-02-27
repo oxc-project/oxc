@@ -37,10 +37,21 @@ pub fn run_pipeline(
     // Phase 1: HIR-level passes
     // =========================================================================
 
+    // 0. HIR cleanup — the TS compiler runs these at the end of HIR building
+    // (HIRBuilder.ts:392-398). We run them here at the start of the pipeline to
+    // remove unreachable blocks left over from HIR construction (e.g. dead
+    // do-while loops whose body unconditionally breaks, unreachable for-update
+    // blocks, or try-catch blocks whose handler is unreachable).
+    crate::hir::hir_builder::reverse_postorder_blocks(&mut func.body);
+    crate::hir::hir_builder::remove_unreachable_for_updates(&mut func.body);
+    crate::hir::hir_builder::remove_dead_do_while_statements(&mut func.body);
+    crate::hir::hir_builder::remove_unnecessary_try_catch(&mut func.body);
+
     // 1. MarkInstructionIds — assign unique IDs to all instructions and terminals.
     // The TS compiler calls markInstructionIds at the end of HIR building (HIRBuilder.ts:397).
     // This is critical: without unique IDs, mutable range tracking is broken.
     crate::hir::hir_builder::mark_instruction_ids(&mut func.body);
+    crate::hir::hir_builder::mark_predecessors(&mut func.body);
 
     // 2. PruneMaybeThrows
     crate::optimization::prune_maybe_throws::prune_maybe_throws(func);
