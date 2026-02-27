@@ -1,7 +1,7 @@
 use oxc_index::IndexVec;
 
 use crate::traits::ModuleStore;
-use crate::types::{ImportEdge, ModuleIdx};
+use crate::types::{ModuleIdx, SymbolRef};
 
 use super::Module;
 
@@ -29,25 +29,29 @@ impl DefaultModuleGraph {
 }
 
 impl ModuleStore for DefaultModuleGraph {
+    type ModuleIdx = ModuleIdx;
+    type SymbolRef = SymbolRef;
     type Module = Module;
 
-    fn module(&self, idx: ModuleIdx) -> &Module {
-        &self.modules[idx]
-    }
-
-    fn module_mut(&mut self, idx: ModuleIdx) -> &mut Module {
-        &mut self.modules[idx]
+    fn module(&self, idx: ModuleIdx) -> Option<&Module> {
+        self.modules.get(idx)
     }
 
     fn modules_len(&self) -> usize {
         self.modules.len()
     }
 
-    fn iter_modules(&self) -> impl Iterator<Item = (ModuleIdx, &Module)> {
-        self.modules.iter_enumerated()
+    fn for_each_module(&self, f: &mut dyn FnMut(ModuleIdx, &Module)) {
+        for (idx, module) in self.modules.iter_enumerated() {
+            f(idx, module);
+        }
     }
 
-    fn dependencies(&self, idx: ModuleIdx) -> &[ImportEdge] {
-        &self.modules[idx].dependencies
+    fn for_each_dependency(&self, idx: ModuleIdx, f: &mut dyn FnMut(ModuleIdx)) {
+        if let Some(module) = self.modules.get(idx) {
+            for dep in &module.dependencies {
+                f(dep.target);
+            }
+        }
     }
 }

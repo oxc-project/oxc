@@ -19,9 +19,9 @@ pub struct Module {
     /// Whether this module has ESM syntax.
     pub has_module_syntax: bool,
 
-    /// Named exports: export_name → LocalExport.
+    /// Named exports: export_name -> LocalExport.
     pub named_exports: FxHashMap<CompactString, LocalExport>,
-    /// Named imports: local_symbol → NamedImport.
+    /// Named imports: local_symbol -> NamedImport.
     pub named_imports: FxHashMap<SymbolRef, NamedImport>,
     /// Import records (resolved).
     pub import_records: Vec<ResolvedImportRecord>,
@@ -41,20 +41,11 @@ pub struct Module {
 }
 
 impl ModuleInfo for Module {
+    type ModuleIdx = ModuleIdx;
+    type SymbolRef = SymbolRef;
+
     fn module_idx(&self) -> ModuleIdx {
         self.idx
-    }
-
-    fn named_exports(&self) -> &FxHashMap<CompactString, LocalExport> {
-        &self.named_exports
-    }
-
-    fn named_imports(&self) -> &FxHashMap<SymbolRef, NamedImport> {
-        &self.named_imports
-    }
-
-    fn import_records(&self) -> &[ResolvedImportRecord] {
-        &self.import_records
     }
 
     fn default_export_ref(&self) -> SymbolRef {
@@ -65,15 +56,49 @@ impl ModuleInfo for Module {
         self.namespace_object_ref
     }
 
-    fn star_export_entries(&self) -> &[StarExportEntry] {
-        &self.star_export_entries
-    }
-
-    fn indirect_export_entries(&self) -> &[IndirectExportEntry] {
-        &self.indirect_export_entries
-    }
-
     fn has_module_syntax(&self) -> bool {
         self.has_module_syntax
+    }
+
+    fn for_each_named_export(&self, f: &mut dyn FnMut(&str, SymbolRef)) {
+        for (name, local_export) in &self.named_exports {
+            f(name.as_str(), local_export.local_symbol);
+        }
+    }
+
+    fn for_each_named_import(&self, f: &mut dyn FnMut(SymbolRef, &str, usize, bool)) {
+        for named_import in self.named_imports.values() {
+            let is_ns = named_import.imported_name.as_str() == "*";
+            f(
+                named_import.local_symbol,
+                named_import.imported_name.as_str(),
+                named_import.record_idx.index(),
+                is_ns,
+            );
+        }
+    }
+
+    fn import_record_count(&self) -> usize {
+        self.import_records.len()
+    }
+
+    fn import_record_resolved_module(&self, idx: usize) -> Option<ModuleIdx> {
+        self.import_records.get(idx)?.resolved_module
+    }
+
+    fn for_each_star_export(&self, f: &mut dyn FnMut(ModuleIdx)) {
+        for entry in &self.star_export_entries {
+            if let Some(target) = entry.resolved_module {
+                f(target);
+            }
+        }
+    }
+
+    fn for_each_indirect_export(&self, f: &mut dyn FnMut(&str, &str, ModuleIdx)) {
+        for entry in &self.indirect_export_entries {
+            if let Some(target) = entry.resolved_module {
+                f(entry.exported_name.as_str(), entry.imported_name.as_str(), target);
+            }
+        }
     }
 }

@@ -1,27 +1,31 @@
+use std::fmt::Debug;
+use std::hash::Hash;
+
 use compact_str::CompactString;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::traits::{ModuleInfo, ModuleStore, SymbolGraph};
-use crate::types::{MatchImportKind, ModuleIdx, ResolvedExport, SymbolRef};
+use crate::types::MatchImportKind;
 
-/// Resolved exports for each module: export_name → ResolvedExport.
-type ResolvedExportsMap = FxHashMap<CompactString, ResolvedExport>;
+/// A resolved export: the final symbol that an export name maps to.
+/// Generic over the symbol reference type.
+pub type ResolvedExportsMap<S> = FxHashMap<CompactString, crate::types::ResolvedExport<S>>;
 
 /// Result of the binding phase.
-pub struct BindingResult {
-    /// Resolved exports per module.
-    pub resolved_exports: FxHashMap<ModuleIdx, ResolvedExportsMap>,
-    /// Errors: (module, import_name, kind).
-    pub errors: Vec<BindingError>,
+pub struct BindingResult<Idx: Copy + Eq + Hash + Debug, Sym: Copy + Eq + Hash + Debug> {
+    /// Resolved exports per module, keyed by module index.
+    pub resolved_exports: FxHashMap<Idx, ResolvedExportsMap<Sym>>,
+    /// Errors encountered during binding.
+    pub errors: Vec<BindingError<Idx>>,
 }
 
 /// An error from the binding phase.
 #[derive(Debug)]
-pub enum BindingError {
+pub enum BindingError<Idx: Debug> {
     /// An import could not be matched to any export.
-    UnresolvedImport { module: ModuleIdx, import_name: CompactString },
+    UnresolvedImport { module: Idx, import_name: CompactString },
     /// An import is ambiguous (multiple `export *` provide the same name).
-    AmbiguousImport { module: ModuleIdx, import_name: CompactString, candidates: Vec<SymbolRef> },
+    AmbiguousImport { module: Idx, import_name: CompactString },
 }
 
 /// Resolve all imports to exports across the module graph.
@@ -31,42 +35,47 @@ pub enum BindingError {
 /// 2. Propagate star re-exports (merge, detect ambiguity)
 /// 3. Match each import to target's resolved exports
 /// 4. Link symbols via `SymbolGraph::link()`
-pub fn bind_imports_and_exports<S, M>(store: &M, symbols: &mut S) -> Vec<BindingError>
+///
+/// Returns a `BindingResult` containing the resolved exports per module
+/// and any binding errors.
+pub fn bind_imports_and_exports<M, S>(
+    store: &M,
+    symbols: &mut S,
+) -> BindingResult<M::ModuleIdx, M::SymbolRef>
 where
-    S: SymbolGraph,
     M: ModuleStore,
+    S: SymbolGraph<SymbolRef = M::SymbolRef>,
 {
-    let module_count = store.modules_len();
-    if module_count == 0 {
-        return Vec::new();
+    // Collect all module indices first.
+    let mut module_indices: Vec<M::ModuleIdx> = Vec::with_capacity(store.modules_len());
+    store.for_each_module(&mut |idx, _| {
+        module_indices.push(idx);
+    });
+
+    if module_indices.is_empty() {
+        return BindingResult { resolved_exports: FxHashMap::default(), errors: Vec::new() };
     }
 
     // Phase 1: Initialize resolved exports from local exports.
-    let mut resolved_exports: Vec<ResolvedExportsMap> = Vec::with_capacity(module_count);
+    let mut resolved_exports: FxHashMap<M::ModuleIdx, ResolvedExportsMap<M::SymbolRef>> =
+        FxHashMap::default();
 
-    for i in 0..module_count {
-        let idx = ModuleIdx::from_usize(i);
-        let module = store.module(idx);
-        let mut exports = FxHashMap::default();
+    for &idx in &module_indices {
+        let Some(module) = store.module(idx) else { continue };
+        let mut exports: ResolvedExportsMap<M::SymbolRef> = FxHashMap::default();
 
-        for (name, local_export) in module.named_exports() {
+        module.for_each_named_export(&mut |name, symbol_ref| {
             exports.insert(
-                name.clone(),
-                ResolvedExport {
-                    symbol_ref: local_export.local_symbol,
-                    potentially_ambiguous: None,
-                },
+                CompactString::from(name),
+                crate::types::ResolvedExport { symbol_ref, potentially_ambiguous: None },
             );
-        }
+        });
 
-        resolved_exports.push(exports);
+        resolved_exports.insert(idx, exports);
     }
 
     // Phase 2: Propagate star re-exports.
-    // For each module with star exports, merge in the exports from target modules.
-    // Use DFS with cycle detection.
-    for i in 0..module_count {
-        let idx = ModuleIdx::from_usize(i);
+    for &idx in &module_indices {
         let mut visited = FxHashSet::default();
         add_exports_for_star(store, idx, &mut resolved_exports, &mut visited);
     }
@@ -74,38 +83,30 @@ where
     // Phase 3: Match imports to resolved exports and link symbols.
     let mut errors = Vec::new();
 
-    for i in 0..module_count {
-        let idx = ModuleIdx::from_usize(i);
-        let module = store.module(idx);
+    for &idx in &module_indices {
+        let Some(module) = store.module(idx) else { continue };
 
-        // Collect imports to process (avoid borrowing store while mutating symbols).
-        let imports: Vec<_> = module
-            .named_imports()
-            .values()
-            .map(|ni| (ni.local_symbol, ni.imported_name.clone(), ni.record_idx, ni.is_type))
-            .collect();
+        // Collect imports to process (avoid borrow issues).
+        let mut imports: Vec<(M::SymbolRef, CompactString, usize, bool)> = Vec::new();
+        module.for_each_named_import(&mut |local_symbol, imported_name, record_idx, is_ns| {
+            imports.push((local_symbol, CompactString::from(imported_name), record_idx, is_ns));
+        });
 
-        let import_records: Vec<_> =
-            module.import_records().iter().map(|r| r.resolved_module).collect();
-
-        for (local_symbol, imported_name, record_idx, _is_type) in imports {
+        for (local_symbol, imported_name, record_idx, is_ns) in imports {
             // Find the target module from the import record.
-            let record_idx_usize = record_idx.index();
-            let target_module = if record_idx_usize < import_records.len() {
-                import_records[record_idx_usize]
-            } else {
-                None
-            };
+            let Some(module) = store.module(idx) else { continue };
+            let target_module = module.import_record_resolved_module(record_idx);
 
             let Some(target_idx) = target_module else {
                 continue;
             };
 
             // Handle namespace imports.
-            if imported_name.as_str() == "*" {
-                let target = store.module(target_idx);
-                let ns_ref = target.namespace_object_ref();
-                symbols.link(local_symbol, ns_ref);
+            if is_ns || imported_name.as_str() == "*" {
+                if let Some(target) = store.module(target_idx) {
+                    let ns_ref = target.namespace_object_ref();
+                    symbols.link(local_symbol, ns_ref);
+                }
                 continue;
             }
 
@@ -124,11 +125,10 @@ where
                 MatchImportKind::Namespace { namespace_ref } => {
                     symbols.link(local_symbol, namespace_ref);
                 }
-                MatchImportKind::Ambiguous { candidates } => {
+                MatchImportKind::Ambiguous { .. } => {
                     errors.push(BindingError::AmbiguousImport {
                         module: idx,
                         import_name: imported_name.clone(),
-                        candidates,
                     });
                 }
                 MatchImportKind::Cycle => {
@@ -144,82 +144,95 @@ where
         }
     }
 
-    errors
+    BindingResult { resolved_exports, errors }
 }
 
 /// Recursively add exports from star re-exports into the resolved exports map.
 fn add_exports_for_star<M: ModuleStore>(
     store: &M,
-    module_idx: ModuleIdx,
-    resolved_exports: &mut [ResolvedExportsMap],
-    visited: &mut FxHashSet<ModuleIdx>,
+    module_idx: M::ModuleIdx,
+    resolved_exports: &mut FxHashMap<M::ModuleIdx, ResolvedExportsMap<M::SymbolRef>>,
+    visited: &mut FxHashSet<M::ModuleIdx>,
 ) {
     if !visited.insert(module_idx) {
-        // Cycle detected — stop recursion.
         return;
     }
 
-    let module = store.module(module_idx);
-    let star_entries: Vec<_> =
-        module.star_export_entries().iter().filter_map(|entry| entry.resolved_module).collect();
+    let Some(module) = store.module(module_idx) else {
+        visited.remove(&module_idx);
+        return;
+    };
 
-    // Also collect indirect exports that reference other modules.
-    let indirect_entries: Vec<_> = module
-        .indirect_export_entries()
-        .iter()
-        .filter_map(|entry| {
-            let target = entry.resolved_module?;
-            Some((entry.exported_name.clone(), entry.imported_name.clone(), target))
-        })
-        .collect();
+    // Collect star export targets.
+    let mut star_targets: Vec<M::ModuleIdx> = Vec::new();
+    module.for_each_star_export(&mut |target| {
+        star_targets.push(target);
+    });
+
+    // Collect indirect exports.
+    let mut indirect_entries: Vec<(CompactString, CompactString, M::ModuleIdx)> = Vec::new();
+    module.for_each_indirect_export(&mut |exported_name, imported_name, target| {
+        indirect_entries.push((
+            CompactString::from(exported_name),
+            CompactString::from(imported_name),
+            target,
+        ));
+    });
 
     // Process indirect re-exports first: `export { x } from './foo'`
     for (exported_name, imported_name, target_idx) in indirect_entries {
-        // Recursively ensure target's star exports are resolved.
         add_exports_for_star(store, target_idx, resolved_exports, visited);
 
-        let target_exports = &resolved_exports[target_idx.index()];
-        if let Some(resolved) = target_exports.get(&imported_name) {
+        if let Some(target_exports) = resolved_exports.get(&target_idx)
+            && let Some(resolved) = target_exports.get(&imported_name)
+        {
             let resolved_clone = resolved.clone();
-            let my_exports = &mut resolved_exports[module_idx.index()];
-            // Don't shadow explicit local exports.
-            my_exports.entry(exported_name).or_insert(resolved_clone);
+            if let Some(my_exports) = resolved_exports.get_mut(&module_idx) {
+                my_exports.entry(exported_name).or_insert(resolved_clone);
+            }
         }
     }
 
     // Process star re-exports: `export * from './foo'`
-    for target_idx in star_entries {
-        // Recursively ensure target's star exports are resolved.
+    for target_idx in star_targets {
         add_exports_for_star(store, target_idx, resolved_exports, visited);
 
         // Merge target's exports into this module.
         // Skip "default" — star re-exports never include default.
-        let target_exports: Vec<_> = resolved_exports[target_idx.index()]
-            .iter()
-            .filter(|(name, _)| name.as_str() != "default")
-            .map(|(name, export)| (name.clone(), export.clone()))
-            .collect();
+        let target_entries: Vec<(CompactString, crate::types::ResolvedExport<M::SymbolRef>)> =
+            resolved_exports
+                .get(&target_idx)
+                .map(|exports| {
+                    exports
+                        .iter()
+                        .filter(|(name, _)| name.as_str() != "default")
+                        .map(|(name, export)| (name.clone(), export.clone()))
+                        .collect()
+                })
+                .unwrap_or_default();
 
-        let my_exports = &mut resolved_exports[module_idx.index()];
-        for (name, export) in target_exports {
-            match my_exports.get(&name) {
-                Some(existing) if existing.symbol_ref == export.symbol_ref => {
-                    // Same symbol — no conflict.
-                }
-                Some(existing) => {
-                    // Different symbol — mark as potentially ambiguous.
-                    let mut candidates = existing.potentially_ambiguous.clone().unwrap_or_default();
-                    candidates.push(export.symbol_ref);
-                    my_exports.insert(
-                        name,
-                        ResolvedExport {
-                            symbol_ref: existing.symbol_ref,
-                            potentially_ambiguous: Some(candidates),
-                        },
-                    );
-                }
-                None => {
-                    my_exports.insert(name, export);
+        if let Some(my_exports) = resolved_exports.get_mut(&module_idx) {
+            for (name, export) in target_entries {
+                match my_exports.get(&name) {
+                    Some(existing) if existing.symbol_ref == export.symbol_ref => {
+                        // Same symbol — no conflict.
+                    }
+                    Some(existing) => {
+                        // Different symbol — mark as potentially ambiguous.
+                        let mut candidates =
+                            existing.potentially_ambiguous.clone().unwrap_or_default();
+                        candidates.push(export.symbol_ref);
+                        my_exports.insert(
+                            name,
+                            crate::types::ResolvedExport {
+                                symbol_ref: existing.symbol_ref,
+                                potentially_ambiguous: Some(candidates),
+                            },
+                        );
+                    }
+                    None => {
+                        my_exports.insert(name, export);
+                    }
                 }
             }
         }
@@ -229,18 +242,20 @@ fn add_exports_for_star<M: ModuleStore>(
 }
 
 /// Match an import name against a module's resolved exports.
-fn match_import(
-    target_idx: ModuleIdx,
+fn match_import<Idx: Copy + Eq + Hash + Debug, Sym: Copy + Eq + Hash + Debug>(
+    target_idx: Idx,
     import_name: &str,
-    resolved_exports: &[ResolvedExportsMap],
-    cycle_detector: &mut FxHashSet<(ModuleIdx, CompactString)>,
-) -> MatchImportKind {
+    resolved_exports: &FxHashMap<Idx, ResolvedExportsMap<Sym>>,
+    cycle_detector: &mut FxHashSet<(Idx, CompactString)>,
+) -> MatchImportKind<Sym> {
     let key = (target_idx, CompactString::from(import_name));
     if !cycle_detector.insert(key) {
         return MatchImportKind::Cycle;
     }
 
-    let target_exports = &resolved_exports[target_idx.index()];
+    let Some(target_exports) = resolved_exports.get(&target_idx) else {
+        return MatchImportKind::NoMatch;
+    };
 
     match target_exports.get(import_name) {
         Some(resolved) => {

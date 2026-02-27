@@ -97,19 +97,34 @@ fn test_module_graph_basic() {
 
     // Verify ModuleStore trait
     assert_eq!(graph.modules_len(), 2);
-    assert!(graph.module(idx_a).has_module_syntax());
-    assert_eq!(graph.module(idx_a).module_idx(), idx_a);
-    assert_eq!(graph.dependencies(idx_a).len(), 1);
-    assert_eq!(graph.dependencies(idx_a)[0].target, idx_b);
-    assert_eq!(graph.dependencies(idx_b).len(), 0);
+    let module_a_ref = graph.module(idx_a).unwrap();
+    assert!(module_a_ref.has_module_syntax());
+    assert_eq!(module_a_ref.module_idx(), idx_a);
 
-    // Verify exports
-    assert!(graph.module(idx_a).named_exports().contains_key("bar"));
-    assert!(graph.module(idx_b).named_exports().contains_key("foo"));
+    // Verify dependencies via for_each_dependency
+    let mut deps_a = Vec::new();
+    graph.for_each_dependency(idx_a, &mut |dep| deps_a.push(dep));
+    assert_eq!(deps_a.len(), 1);
+    assert_eq!(deps_a[0], idx_b);
 
-    // Verify iter
-    let modules: Vec<_> = graph.iter_modules().collect();
-    assert_eq!(modules.len(), 2);
+    let mut deps_b = Vec::new();
+    graph.for_each_dependency(idx_b, &mut |dep| deps_b.push(dep));
+    assert_eq!(deps_b.len(), 0);
+
+    // Verify exports via for_each_named_export
+    let mut a_exports = Vec::new();
+    module_a_ref.for_each_named_export(&mut |name, _| a_exports.push(name.to_string()));
+    assert!(a_exports.contains(&"bar".to_string()));
+
+    let module_b_ref = graph.module(idx_b).unwrap();
+    let mut b_exports = Vec::new();
+    module_b_ref.for_each_named_export(&mut |name, _| b_exports.push(name.to_string()));
+    assert!(b_exports.contains(&"foo".to_string()));
+
+    // Verify for_each_module
+    let mut module_count = 0;
+    graph.for_each_module(&mut |_, _| module_count += 1);
+    assert_eq!(module_count, 2);
 }
 
 #[test]
@@ -217,8 +232,10 @@ fn test_builder_circular() {
     assert!(result.errors.is_empty());
 
     // Both should have dependencies
-    let deps_a = result.graph.dependencies(ModuleIdx::from_usize(0));
-    let deps_b = result.graph.dependencies(ModuleIdx::from_usize(1));
+    let mut deps_a = Vec::new();
+    result.graph.for_each_dependency(ModuleIdx::from_usize(0), &mut |dep| deps_a.push(dep));
+    let mut deps_b = Vec::new();
+    result.graph.for_each_dependency(ModuleIdx::from_usize(1), &mut |dep| deps_b.push(dep));
     assert_eq!(deps_a.len(), 1);
     assert_eq!(deps_b.len(), 1);
 }
@@ -226,7 +243,7 @@ fn test_builder_circular() {
 #[test]
 fn test_builder_reexport() {
     use oxc_module_graph::default::ModuleGraphBuilder;
-    use oxc_module_graph::traits::{ModuleInfo, ModuleStore};
+    use oxc_module_graph::traits::ModuleStore;
 
     let entry = fixtures_dir().join("reexport.js");
     let result = ModuleGraphBuilder::new().build(&[entry]);
@@ -235,9 +252,10 @@ fn test_builder_reexport() {
     assert_eq!(result.graph.modules_len(), 3);
 
     // reexport.js should have star_export_entries and indirect_export_entries
-    let reexport_module = result.graph.module(ModuleIdx::from_usize(0));
-    assert!(!reexport_module.star_export_entries().is_empty());
-    assert!(!reexport_module.indirect_export_entries().is_empty());
+    // Access them directly on the Module struct (not via trait).
+    let reexport_module = result.graph.module(ModuleIdx::from_usize(0)).unwrap();
+    assert!(!reexport_module.star_export_entries.is_empty());
+    assert!(!reexport_module.indirect_export_entries.is_empty());
 }
 
 // --- Stage 4: Binding algorithm tests ---
@@ -330,9 +348,9 @@ fn test_bind_named_import() {
     use oxc_module_graph::bind_imports_and_exports;
     use oxc_module_graph::traits::SymbolGraph;
 
-    let (mut graph, mut db) = two_module_graph_with_binding("foo", "foo");
+    let (graph, mut db) = two_module_graph_with_binding("foo", "foo");
 
-    bind_imports_and_exports(&mut graph, &mut db);
+    let _result = bind_imports_and_exports(&graph, &mut db);
 
     // After binding, A's local "foo" should be linked to B's "foo"
     let idx_a = ModuleIdx::from_usize(0);
@@ -352,9 +370,9 @@ fn test_bind_unresolved_import() {
     use oxc_module_graph::traits::SymbolGraph;
 
     // A imports "bar" but B only exports "foo"
-    let (mut graph, mut db) = two_module_graph_with_binding("foo", "bar");
+    let (graph, mut db) = two_module_graph_with_binding("foo", "bar");
 
-    bind_imports_and_exports(&mut graph, &mut db);
+    let _result = bind_imports_and_exports(&graph, &mut db);
 
     // A's local "bar" should NOT be linked (no match)
     let idx_a = ModuleIdx::from_usize(0);
@@ -472,7 +490,7 @@ fn test_bind_star_reexport() {
         dependencies: Vec::new(),
     });
 
-    bind_imports_and_exports(&mut graph, &mut db);
+    let _result = bind_imports_and_exports(&graph, &mut db);
 
     // A's "foo" should link through B's star re-export to C's "foo"
     let canonical = db.canonical_ref_for(sym_a_foo);

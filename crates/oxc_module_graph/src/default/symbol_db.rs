@@ -42,6 +42,8 @@ impl SymbolRefDb {
 }
 
 impl SymbolGraph for SymbolRefDb {
+    type SymbolRef = SymbolRef;
+
     fn canonical_ref_for(&self, symbol: SymbolRef) -> SymbolRef {
         let mut current = symbol;
         loop {

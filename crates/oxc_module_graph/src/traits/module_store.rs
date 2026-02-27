@@ -1,4 +1,5 @@
-use crate::types::{ImportEdge, ModuleIdx};
+use std::fmt::Debug;
+use std::hash::Hash;
 
 use super::ModuleInfo;
 
@@ -6,22 +7,29 @@ use super::ModuleInfo;
 ///
 /// This trait abstracts over different module storage strategies.
 /// Rolldown can implement this on `ModuleTable`,
-/// while the default implementation uses `ModuleGraph`.
+/// while the default implementation uses `DefaultModuleGraph`.
+///
+/// Uses callback-based iteration (`for_each_*`) instead of returning
+/// concrete iterators or slices, so consumers can use any internal
+/// storage (e.g., `IndexVec`, `Vec<Option<..>>`, etc.).
 pub trait ModuleStore {
-    type Module: ModuleInfo;
+    /// The module index type.
+    type ModuleIdx: Copy + Eq + Hash + Debug;
+    /// The symbol reference type.
+    type SymbolRef: Copy + Eq + Hash + Debug;
+    /// The module type.
+    type Module: ModuleInfo<ModuleIdx = Self::ModuleIdx, SymbolRef = Self::SymbolRef>;
 
     /// Get a reference to a module by index.
-    fn module(&self, idx: ModuleIdx) -> &Self::Module;
-
-    /// Get a mutable reference to a module by index.
-    fn module_mut(&mut self, idx: ModuleIdx) -> &mut Self::Module;
+    /// Returns `None` if the index is out of bounds or the module is not a normal module.
+    fn module(&self, idx: Self::ModuleIdx) -> Option<&Self::Module>;
 
     /// The number of modules in the store.
     fn modules_len(&self) -> usize;
 
     /// Iterate over all modules with their indices.
-    fn iter_modules(&self) -> impl Iterator<Item = (ModuleIdx, &Self::Module)>;
+    fn for_each_module(&self, f: &mut dyn FnMut(Self::ModuleIdx, &Self::Module));
 
-    /// The import edges (dependencies) for a given module.
-    fn dependencies(&self, idx: ModuleIdx) -> &[ImportEdge];
+    /// Iterate over the dependency module indices for a given module.
+    fn for_each_dependency(&self, idx: Self::ModuleIdx, f: &mut dyn FnMut(Self::ModuleIdx));
 }

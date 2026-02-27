@@ -1,3 +1,6 @@
+use std::fmt::Debug;
+use std::hash::Hash;
+
 use compact_str::CompactString;
 use oxc_span::Span;
 
@@ -49,13 +52,16 @@ pub struct LocalExport {
 }
 
 /// A resolved export: the final symbol that an export name maps to.
+///
+/// Generic over the symbol reference type so both oxc's `SymbolRef`
+/// and Rolldown's `SymbolRef` can be used.
 #[derive(Debug, Clone)]
-pub struct ResolvedExport {
+pub struct ResolvedExport<S: Copy + Eq + Hash + Debug = SymbolRef> {
     /// The symbol that this export resolves to.
-    pub symbol_ref: SymbolRef,
+    pub symbol_ref: S,
     /// If this export is potentially ambiguous (multiple `export *` provide it),
     /// these are the other candidate symbols.
-    pub potentially_ambiguous: Option<Vec<SymbolRef>>,
+    pub potentially_ambiguous: Option<Vec<S>>,
 }
 
 /// An import record after module resolution.
@@ -108,13 +114,13 @@ pub struct IndirectExportEntry {
 
 /// Result of matching an import to an export.
 #[derive(Debug, Clone)]
-pub enum MatchImportKind {
+pub enum MatchImportKind<S: Copy + Eq + Hash + Debug = SymbolRef> {
     /// Successfully resolved to a single symbol.
-    Normal { symbol_ref: SymbolRef },
+    Normal { symbol_ref: S },
     /// Resolved to a namespace object.
-    Namespace { namespace_ref: SymbolRef },
+    Namespace { namespace_ref: S },
     /// Ambiguous: multiple `export *` provide the same name.
-    Ambiguous { candidates: Vec<SymbolRef> },
+    Ambiguous { candidates: Vec<S> },
     /// Circular import detected during resolution.
     Cycle,
     /// No matching export found.
