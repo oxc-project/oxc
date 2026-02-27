@@ -94,10 +94,15 @@ function normalizeOutput(output: string, cwd: string): string {
       // Replace absolute paths
       .replace(new RegExp(RegExp.escape(cwdPath), "g"), "<cwd>")
       .replace(new RegExp(RegExp.escape(rootPath), "g"), "<cwd>")
+      // NOTE: These redundant processes are necessary to obtain stable snapshots in CI.
+      // In Oxfmt, there are 2 kinds of errors displayed
+      // - on the Rust side using `miette`
+      // - on the JS side by `prettier`
+      // and in order to handle them in one place, it needs to be done outside of Oxfmt.
       // Strip ANSI escape codes (e.g. from Prettier error messages)
-      // eslint-disable-next-line no-control-regex
+      // oxlint-disable-next-line no-control-regex
       .replace(/\x1b\[[0-9;]*m/g, "")
-      // Normalize miette Unicode theme to ASCII
+      // Normalize `miette` Unicode theme to ASCII
       .replace(/×/g, "x")
       .replace(/╭/g, ",")
       .replace(/─/g, "-")
@@ -105,7 +110,7 @@ function normalizeOutput(output: string, cwd: string): string {
       .replace(/·/g, ":")
       .replace(/┬/g, "|")
       .replace(/╰/g, "`")
-      // Trim trailing whitespace per line
+      // Trim trailing whitespace per line for sure
       .replace(/[^\S\n]+$/gm, "")
   );
 }
