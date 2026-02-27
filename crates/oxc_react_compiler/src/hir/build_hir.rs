@@ -63,8 +63,25 @@ fn lower_params(
         let loc = span_to_loc(param.span);
         match &param.pattern {
             ast::BindingPattern::BindingIdentifier(ident) => {
-                let place = builder.declare_binding(&ident.name, BindingKind::Param, loc);
-                result.push(crate::hir::ReactiveParam::Place(place));
+                if let Some(default_expr) = &param.initializer {
+                    // Parameter with a default value: `function f(x = defaultVal) {}`
+                    // In the oxc AST, FormalParameter stores the default in `initializer`
+                    // (not as an AssignmentPattern in the BindingPattern, per oxc AST docs).
+                    // We must create a temporary for the actual parameter slot, then emit
+                    // a conditional to resolve the default, matching TS reference behavior.
+                    let param_place = create_promoted_temporary(builder, loc);
+                    result.push(crate::hir::ReactiveParam::Place(param_place.clone()));
+                    lower_identifier_param_with_default(
+                        builder,
+                        ident,
+                        default_expr,
+                        param_place,
+                        loc,
+                    )?;
+                } else {
+                    let place = builder.declare_binding(&ident.name, BindingKind::Param, loc);
+                    result.push(crate::hir::ReactiveParam::Place(place));
+                }
             }
             // Destructured parameters: create a promoted temporary for the overall param,
             // then emit Destructure instructions to extract individual bindings.
@@ -224,6 +241,169 @@ fn create_promoted_temporary(builder: &mut HirBuilder, loc: SourceLocation) -> c
         loc,
     };
     crate::hir::Place { identifier, effect: crate::hir::Effect::Unknown, reactive: false, loc }
+}
+
+/// Lower a `BindingIdentifier` parameter that has a default value.
+///
+/// This corresponds to the `isAssignmentPattern()` branch in the TS reference
+/// (BuildHIR.ts lines 130-151) applied to a simple identifier parameter.
+///
+/// For `function f(x = defaultVal) {}`:
+/// - The parameter slot is `param_place` (a promoted temporary, e.g. `t0`)
+/// - Emits: `let t1 = t0 === undefined ? defaultVal : t0`
+/// - Then: `let x = t1` (StoreLocal)
+fn lower_identifier_param_with_default(
+    builder: &mut HirBuilder,
+    ident: &ast::BindingIdentifier<'_>,
+    default_expr: &ast::Expression<'_>,
+    param_place: crate::hir::Place,
+    loc: SourceLocation,
+) -> Result<(), CompilerError> {
+    let ident_loc = span_to_loc(ident.span);
+
+    // Create a temporary to hold the resolved value (either provided or default).
+    let temp = create_promoted_temporary(builder, ident_loc);
+
+    let test_block = builder.reserve(BlockKind::Value);
+    let continuation_block = builder.reserve(builder.current_block_kind());
+    let continuation_id = continuation_block.id;
+
+    // Consequent: use the default value (when param_place === undefined).
+    let lowerable_default = convert_expression(default_expr);
+    let consequent_block = builder.enter(BlockKind::Value, |builder, _block_id| {
+        if let Ok(result) = lower_expression(builder, &lowerable_default) {
+            let lvalue = create_temporary_place(builder.environment_mut(), ident_loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue,
+                value: InstructionValue::StoreLocal(StoreLocal {
+                    lvalue: LValue { place: temp.clone(), kind: InstructionKind::Const },
+                    value: result.place,
+                    loc: ident_loc,
+                }),
+                effects: None,
+                loc: ident_loc,
+            });
+        } else {
+            let undef_place = create_temporary_place(builder.environment_mut(), ident_loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue: undef_place.clone(),
+                value: lower_undefined(ident_loc),
+                effects: None,
+                loc: ident_loc,
+            });
+            let lvalue = create_temporary_place(builder.environment_mut(), ident_loc);
+            builder.push(Instruction {
+                id: InstructionId(0),
+                lvalue,
+                value: InstructionValue::StoreLocal(StoreLocal {
+                    lvalue: LValue { place: temp.clone(), kind: InstructionKind::Const },
+                    value: undef_place,
+                    loc: ident_loc,
+                }),
+                effects: None,
+                loc: ident_loc,
+            });
+        }
+        Terminal::Goto(GotoTerminal {
+            id: InstructionId(0),
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            loc: ident_loc,
+        })
+    });
+
+    // Alternate: use the provided value (when param_place !== undefined).
+    let alternate_block = builder.enter(BlockKind::Value, |builder, _block_id| {
+        let lvalue = create_temporary_place(builder.environment_mut(), ident_loc);
+        builder.push(Instruction {
+            id: InstructionId(0),
+            lvalue,
+            value: InstructionValue::StoreLocal(StoreLocal {
+                lvalue: LValue { place: temp.clone(), kind: InstructionKind::Const },
+                value: param_place.clone(),
+                loc: ident_loc,
+            }),
+            effects: None,
+            loc: ident_loc,
+        });
+        Terminal::Goto(GotoTerminal {
+            id: InstructionId(0),
+            block: continuation_id,
+            variant: GotoVariant::Break,
+            loc: ident_loc,
+        })
+    });
+
+    // Emit the ternary terminal.
+    builder.terminate_with_continuation(
+        Terminal::Ternary(TernaryTerminal {
+            id: InstructionId(0),
+            test: test_block.id,
+            fallthrough: continuation_id,
+            loc: ident_loc,
+        }),
+        test_block,
+    );
+
+    // In the test block: compare param_place === undefined.
+    let undef = lower_value_to_temporary(builder, lower_undefined(ident_loc), ident_loc)?;
+    let test_result = lower_value_to_temporary(
+        builder,
+        InstructionValue::BinaryExpression(crate::hir::BinaryExpressionValue {
+            operator: oxc_syntax::operator::BinaryOperator::StrictEquality,
+            left: param_place,
+            right: undef.place,
+            loc: ident_loc,
+        }),
+        ident_loc,
+    )?;
+
+    builder.terminate_with_continuation(
+        Terminal::Branch(BranchTerminal {
+            id: InstructionId(0),
+            test: test_result.place,
+            consequent: consequent_block,
+            alternate: alternate_block,
+            fallthrough: continuation_id,
+            loc: ident_loc,
+        }),
+        continuation_block,
+    );
+
+    // Now declare the identifier and store the resolved temporary into it.
+    let decl_place = builder.declare_binding(&ident.name, BindingKind::Let, ident_loc);
+    if builder.is_context_identifier(&ident.name) {
+        let lvalue = create_temporary_place(builder.environment_mut(), loc);
+        builder.push(Instruction {
+            id: InstructionId(0),
+            lvalue,
+            value: InstructionValue::StoreContext(StoreContext {
+                lvalue_kind: InstructionKind::Let,
+                lvalue_place: decl_place,
+                value: temp,
+                loc,
+            }),
+            effects: None,
+            loc,
+        });
+    } else {
+        let lvalue = create_temporary_place(builder.environment_mut(), loc);
+        builder.push(Instruction {
+            id: InstructionId(0),
+            lvalue,
+            value: InstructionValue::StoreLocal(StoreLocal {
+                lvalue: LValue { place: decl_place, kind: InstructionKind::Let },
+                value: temp,
+                loc,
+            }),
+            effects: None,
+            loc,
+        });
+    }
+
+    Ok(())
 }
 
 /// Lower a destructuring declaration (ObjectPattern or ArrayPattern) to HIR.
