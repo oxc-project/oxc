@@ -3825,7 +3825,6 @@ impl Gen for TSInterfaceHeritage<'_> {
 
 impl Gen for TSEnumDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_indent();
         if self.declare {
             p.print_str("declare ");
         }
