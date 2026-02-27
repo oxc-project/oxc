@@ -155,10 +155,8 @@ mod tests {
         end_line: u32,
         end_char: u32,
     ) -> LinterCodeAction {
-        let range = Range::new(
-            Position::new(start_line, start_char),
-            Position::new(end_line, end_char),
-        );
+        let range =
+            Range::new(Position::new(start_line, start_char), Position::new(end_line, end_char));
         LinterCodeAction {
             range,
             fixed_content: vec![FixedContent {
