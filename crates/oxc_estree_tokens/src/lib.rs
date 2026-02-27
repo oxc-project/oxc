@@ -400,6 +400,13 @@ impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
         }
     }
 
+    /// Emit the `this` keyword at `start` as `"Identifier"`.
+    /// Used for `this` in TS type queries and TS `this` parameters.
+    fn emit_this_identifier(&mut self, start: u32) {
+        let token = self.advance_to(start);
+        self.serialize_ident_token(token, TokenType::new("Identifier"), "this");
+    }
+
     /// Emit the token at `start` as `"JSXIdentifier"`.
     /// JSX identifier names are guaranteed JSON-safe (no unicode escapes, no special characters).
     fn emit_jsx_identifier(&mut self, start: u32, name: &str) {
@@ -471,7 +478,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
         ) {
             match type_name {
                 TSTypeName::ThisExpression(this_expression) => {
-                    ctx.emit_token_at(this_expression.span.start, TokenType::new("Identifier"));
+                    ctx.emit_this_identifier(this_expression.span.start);
                 }
                 TSTypeName::QualifiedName(qualified_name) => {
                     collect_type_query_this(ctx, &qualified_name.left);
@@ -482,7 +489,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
 
         match &type_query.expr_name {
             TSTypeQueryExprName::ThisExpression(this_expression) => {
-                self.emit_token_at(this_expression.span.start, TokenType::new("Identifier"));
+                self.emit_this_identifier(this_expression.span.start);
             }
             TSTypeQueryExprName::QualifiedName(qualified_name) => {
                 collect_type_query_this(self, &qualified_name.left);
@@ -602,7 +609,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
     }
 
     fn visit_ts_this_parameter(&mut self, parameter: &TSThisParameter<'a>) {
-        self.emit_token_at(parameter.this_span.start, TokenType::new("Identifier"));
+        self.emit_this_identifier(parameter.this_span.start);
         walk::walk_ts_this_parameter(self, parameter);
     }
 
