@@ -278,6 +278,10 @@ pub fn to_oxfmt_options(config: FormatConfig) -> Result<OxfmtOptions, String> {
         });
     }
 
+    if config.jsdoc == Some(true) {
+        format_options.jsdoc = Some(oxc_formatter::JsdocOptions::default());
+    }
+
     // Currently, there is a no options for TOML formatter
     let toml_options = build_toml_options(&format_options);
 
