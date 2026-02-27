@@ -882,9 +882,7 @@ pub fn infer_mutation_aliasing_ranges(
     //
     // This sync ensures that when later passes (e.g., InferReactiveScopeVariables)
     // check operand mutable ranges, they see the same range as the lvalue definition.
-    // TODO: sync_mutable_ranges causes net regression (310→308) due to over-extending
-    // ranges for phi operands from different branches. Needs phi-aware exclusion logic.
-    // sync_mutable_ranges(func);
+    sync_mutable_ranges(func);
 
     // ===== Phase 3: Compute external effects for params/context/returns =====
     let returns_id = func.returns.identifier.id;
@@ -2200,9 +2198,8 @@ fn sync_mutable_ranges(func: &mut HIRFunction) {
     for block in func.body.blocks.values() {
         for phi in &block.phis {
             merge_range(&mut canonical, &phi.place);
-            for operand in phi.operands.values() {
-                merge_range(&mut canonical, operand);
-            }
+            // Skip phi operands in Step 1 — they come from different branches
+            // and merging them contaminates the canonical range
         }
         for instr in &block.instructions {
             // Top-level lvalue

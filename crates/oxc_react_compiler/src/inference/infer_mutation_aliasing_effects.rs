@@ -1335,10 +1335,8 @@ fn compute_instruction_effects(
         // The TS reference unconditionally emits CreateFrom for LoadContext (line 2128-2135).
         // Same reasoning as LoadLocal above — no frozen check here.
         InstructionValue::LoadContext(v) => {
-            effects.push(AliasingEffect::CreateFrom {
-                from: v.place.clone(),
-                into: lvalue.clone(),
-            });
+            effects
+                .push(AliasingEffect::CreateFrom { from: v.place.clone(), into: lvalue.clone() });
         }
 
         // StoreLocal: Assign to lvalue target + Assign to instruction lvalue

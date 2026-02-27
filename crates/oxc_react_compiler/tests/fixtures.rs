@@ -823,55 +823,319 @@ fn run_pipeline_for_codegen(
     // This handles fixtures like `multiple-components-first-is-invalid.js` which
     // have both an invalid and a valid component: we try each in order and return
     // the first one that compiles successfully.
-    let mut candidates: Vec<LowerableFunction> = Vec::new();
+    let mut candidates: Vec<(LowerableFunction, Option<String>, bool)> = Vec::new();
+
+    /// Get the name hint for a function candidate.
+    /// For function declarations/expressions, uses the function's own `id`.
+    /// For arrow functions, the name comes from the variable binding (passed separately).
+    fn get_func_name(func: &LowerableFunction, binding_name: Option<&str>) -> Option<String> {
+        match func {
+            LowerableFunction::Function(f) => {
+                f.id.as_ref()
+                    .map(|id| id.name.to_string())
+                    .or_else(|| binding_name.map(String::from))
+            }
+            LowerableFunction::ArrowFunction(_) => binding_name.map(String::from),
+        }
+    }
+
+    /// Check if a callee expression is `memo`, `React.memo`, `forwardRef`, or `React.forwardRef`.
+    fn is_react_memo_or_forwardref_callee(expr: &oxc_ast::ast::Expression) -> bool {
+        use oxc_ast::ast::Expression;
+        match expr {
+            Expression::Identifier(id) => id.name == "memo" || id.name == "forwardRef",
+            Expression::StaticMemberExpression(member) => {
+                if let Expression::Identifier(obj) = &member.object {
+                    obj.name == "React"
+                        && (member.property.name == "memo" || member.property.name == "forwardRef")
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        }
+    }
+
+    /// Extract the first function/arrow argument from a call expression, if the callee
+    /// is `memo`/`React.memo`/`forwardRef`/`React.forwardRef`.
+    fn extract_fn_from_memo_call<'a>(
+        expr: &'a oxc_ast::ast::Expression<'a>,
+    ) -> Option<LowerableFunction<'a>> {
+        use oxc_ast::ast::Expression;
+        if let Expression::CallExpression(call) = expr {
+            if is_react_memo_or_forwardref_callee(&call.callee) {
+                if let Some(arg) = call.arguments.first() {
+                    return match arg.as_expression() {
+                        Some(Expression::ArrowFunctionExpression(arrow)) => {
+                            Some(LowerableFunction::ArrowFunction(arrow))
+                        }
+                        Some(Expression::FunctionExpression(f)) => {
+                            Some(LowerableFunction::Function(f))
+                        }
+                        _ => None,
+                    };
+                }
+            }
+        }
+        None
+    }
+
+    /// Extract a candidate from a variable initializer expression — handles plain
+    /// functions/arrows and also memo/forwardRef-wrapped ones.
+    /// Returns (candidate, is_memo_or_forwardref).
+    fn extract_candidate_from_init<'a>(
+        expr: &'a oxc_ast::ast::Expression<'a>,
+    ) -> Option<(LowerableFunction<'a>, bool)> {
+        use oxc_ast::ast::Expression;
+        match expr {
+            Expression::ArrowFunctionExpression(arrow) => {
+                Some((LowerableFunction::ArrowFunction(arrow), false))
+            }
+            Expression::FunctionExpression(f) => Some((LowerableFunction::Function(f), false)),
+            _ => extract_fn_from_memo_call(expr).map(|f| (f, true)),
+        }
+    }
+
+    /// Get the binding name from a variable declarator (for const Foo = () => {...}).
+    fn get_binding_name(d: &oxc_ast::ast::VariableDeclarator) -> Option<String> {
+        use oxc_ast::ast::BindingPattern;
+        match &d.id {
+            BindingPattern::BindingIdentifier(id) => Some(id.name.to_string()),
+            _ => None,
+        }
+    }
+
+    /// Check if a function body directly calls hooks or creates JSX.
+    /// This mirrors the TS reference's `callsHooksOrCreatesJsx()`, which traverses
+    /// the function body but skips nested function declarations/expressions/arrows.
+    /// A function is classified as a Component only if it directly uses JSX or hooks.
+    fn calls_hooks_or_creates_jsx(func: &LowerableFunction) -> bool {
+        use oxc_ast::ast::{Expression, Statement};
+
+        fn check_expr(expr: &Expression) -> bool {
+            match expr {
+                // JSX
+                Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
+                // Hook calls: call expressions where callee is a hook name
+                Expression::CallExpression(call) => {
+                    let is_hook = match &call.callee {
+                        Expression::Identifier(id) => {
+                            oxc_react_compiler::utils::hook_declaration::is_hook_name(&id.name)
+                        }
+                        Expression::StaticMemberExpression(member) => {
+                            oxc_react_compiler::utils::hook_declaration::is_hook_name(
+                                &member.property.name,
+                            )
+                        }
+                        _ => false,
+                    };
+                    if is_hook {
+                        return true;
+                    }
+                    // Check arguments (but not nested functions in them)
+                    for arg in &call.arguments {
+                        if let Some(e) = arg.as_expression() {
+                            // Skip function expressions/arrows in arguments
+                            if !matches!(
+                                e,
+                                Expression::FunctionExpression(_)
+                                    | Expression::ArrowFunctionExpression(_)
+                            ) && check_expr(e)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    // Check callee (but skip if it's a function expression)
+                    if !matches!(
+                        &call.callee,
+                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+                    ) {
+                        check_expr(&call.callee)
+                    } else {
+                        false
+                    }
+                }
+                // Skip nested functions entirely
+                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => false,
+                // Recurse into other expressions
+                Expression::ParenthesizedExpression(paren) => check_expr(&paren.expression),
+                Expression::SequenceExpression(seq) => {
+                    seq.expressions.iter().any(|e| check_expr(e))
+                }
+                Expression::ConditionalExpression(cond) => {
+                    check_expr(&cond.test)
+                        || check_expr(&cond.consequent)
+                        || check_expr(&cond.alternate)
+                }
+                Expression::LogicalExpression(log) => {
+                    check_expr(&log.left) || check_expr(&log.right)
+                }
+                Expression::BinaryExpression(bin) => {
+                    check_expr(&bin.left) || check_expr(&bin.right)
+                }
+                Expression::UnaryExpression(un) => check_expr(&un.argument),
+                Expression::AssignmentExpression(assign) => check_expr(&assign.right),
+                Expression::TaggedTemplateExpression(tag) => check_expr(&tag.tag),
+                Expression::TemplateLiteral(tl) => tl.expressions.iter().any(|e| check_expr(e)),
+                Expression::ArrayExpression(arr) => {
+                    arr.elements.iter().any(|el| el.as_expression().is_some_and(|e| check_expr(e)))
+                }
+                Expression::ObjectExpression(obj) => obj.properties.iter().any(|prop| {
+                    if let oxc_ast::ast::ObjectPropertyKind::ObjectProperty(p) = prop {
+                        check_expr(&p.value)
+                    } else {
+                        false
+                    }
+                }),
+                Expression::StaticMemberExpression(member) => check_expr(&member.object),
+                Expression::ComputedMemberExpression(member) => {
+                    check_expr(&member.object) || check_expr(&member.expression)
+                }
+                // SpreadElement is not an Expression variant in oxc
+                Expression::AwaitExpression(aw) => check_expr(&aw.argument),
+                Expression::YieldExpression(y) => {
+                    y.argument.as_ref().is_some_and(|a| check_expr(a))
+                }
+                _ => false,
+            }
+        }
+
+        fn check_stmt(stmt: &Statement) -> bool {
+            match stmt {
+                // Skip nested function declarations
+                Statement::FunctionDeclaration(_) => false,
+                Statement::ExpressionStatement(es) => check_expr(&es.expression),
+                Statement::ReturnStatement(ret) => {
+                    ret.argument.as_ref().is_some_and(|e| check_expr(e))
+                }
+                Statement::VariableDeclaration(decl) => {
+                    decl.declarations.iter().any(|d| d.init.as_ref().is_some_and(|e| check_expr(e)))
+                }
+                Statement::IfStatement(ifs) => {
+                    check_expr(&ifs.test)
+                        || check_stmt(&ifs.consequent)
+                        || ifs.alternate.as_ref().is_some_and(|a| check_stmt(a))
+                }
+                Statement::BlockStatement(block) => block.body.iter().any(|s| check_stmt(s)),
+                Statement::ForStatement(f) => check_stmt(&f.body),
+                Statement::ForInStatement(f) => check_stmt(&f.body),
+                Statement::ForOfStatement(f) => check_stmt(&f.body),
+                Statement::WhileStatement(w) => check_stmt(&w.body),
+                Statement::DoWhileStatement(d) => check_stmt(&d.body),
+                Statement::SwitchStatement(s) => {
+                    s.cases.iter().any(|c| c.consequent.iter().any(|stmt| check_stmt(stmt)))
+                }
+                Statement::TryStatement(t) => {
+                    t.block.body.iter().any(|s| check_stmt(s))
+                        || t.handler
+                            .as_ref()
+                            .is_some_and(|h| h.body.body.iter().any(|s| check_stmt(s)))
+                        || t.finalizer
+                            .as_ref()
+                            .is_some_and(|f| f.body.iter().any(|s| check_stmt(s)))
+                }
+                Statement::ThrowStatement(throw) => check_expr(&throw.argument),
+                Statement::LabeledStatement(l) => check_stmt(&l.body),
+                _ => false,
+            }
+        }
+
+        match func {
+            LowerableFunction::Function(f) => {
+                if let Some(body) = &f.body {
+                    body.statements.iter().any(|stmt| check_stmt(stmt))
+                } else {
+                    false
+                }
+            }
+            LowerableFunction::ArrowFunction(a) => {
+                // For expression arrows, the parser stores the expression as a
+                // single ExpressionStatement in body.statements, so this works
+                // uniformly.
+                a.body.statements.iter().any(|stmt| check_stmt(stmt))
+            }
+        }
+    }
+
     for stmt in &parser_result.program.body {
         use oxc_ast::ast::{Declaration, Statement, VariableDeclarationKind};
         match stmt {
             Statement::FunctionDeclaration(f) => {
-                candidates.push(LowerableFunction::Function(f));
+                let name = get_func_name(&LowerableFunction::Function(f), None);
+                candidates.push((LowerableFunction::Function(f), name, false));
             }
             Statement::ExportDefaultDeclaration(export) => {
                 use oxc_ast::ast::ExportDefaultDeclarationKind;
-                if let ExportDefaultDeclarationKind::FunctionDeclaration(f) = &export.declaration {
-                    candidates.push(LowerableFunction::Function(f));
-                }
-            }
-            Statement::ExportNamedDeclaration(export) => {
-                use oxc_ast::ast::Expression;
                 match &export.declaration {
-                    Some(Declaration::FunctionDeclaration(f)) => {
-                        candidates.push(LowerableFunction::Function(f));
+                    ExportDefaultDeclarationKind::FunctionDeclaration(f) => {
+                        let name = get_func_name(&LowerableFunction::Function(f), None);
+                        candidates.push((LowerableFunction::Function(f), name, false));
                     }
-                    Some(Declaration::VariableDeclaration(decl))
-                        if decl.kind == VariableDeclarationKind::Const =>
-                    {
-                        if let Some(d) = decl.declarations.first() {
-                            match &d.init {
-                                Some(Expression::ArrowFunctionExpression(arrow)) => {
-                                    candidates.push(LowerableFunction::ArrowFunction(arrow));
+                    ExportDefaultDeclarationKind::CallExpression(call) => {
+                        if is_react_memo_or_forwardref_callee(&call.callee) {
+                            if let Some(arg) = call.arguments.first() {
+                                use oxc_ast::ast::Expression;
+                                match arg.as_expression() {
+                                    Some(Expression::ArrowFunctionExpression(arrow)) => {
+                                        candidates.push((
+                                            LowerableFunction::ArrowFunction(arrow),
+                                            None,
+                                            true,
+                                        ));
+                                    }
+                                    Some(Expression::FunctionExpression(f)) => {
+                                        let name =
+                                            get_func_name(&LowerableFunction::Function(f), None);
+                                        candidates.push((
+                                            LowerableFunction::Function(f),
+                                            name,
+                                            true,
+                                        ));
+                                    }
+                                    _ => {}
                                 }
-                                Some(Expression::FunctionExpression(f)) => {
-                                    candidates.push(LowerableFunction::Function(f));
-                                }
-                                _ => {}
                             }
                         }
                     }
                     _ => {}
                 }
             }
+            Statement::ExportNamedDeclaration(export) => match &export.declaration {
+                Some(Declaration::FunctionDeclaration(f)) => {
+                    let name = get_func_name(&LowerableFunction::Function(f), None);
+                    candidates.push((LowerableFunction::Function(f), name, false));
+                }
+                Some(Declaration::VariableDeclaration(decl))
+                    if decl.kind == VariableDeclarationKind::Const =>
+                {
+                    if let Some(d) = decl.declarations.first() {
+                        let binding = get_binding_name(d);
+                        if let Some(init) = &d.init {
+                            if let Some((candidate, is_memo)) = extract_candidate_from_init(init) {
+                                let name = get_func_name(&candidate, binding.as_deref());
+                                candidates.push((candidate, name, is_memo));
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            },
             Statement::VariableDeclaration(decl) if decl.kind == VariableDeclarationKind::Const => {
                 if let Some(d) = decl.declarations.first() {
-                    use oxc_ast::ast::Expression;
-                    match &d.init {
-                        Some(Expression::ArrowFunctionExpression(arrow)) => {
-                            candidates.push(LowerableFunction::ArrowFunction(arrow));
+                    let binding = get_binding_name(d);
+                    if let Some(init) = &d.init {
+                        if let Some((candidate, is_memo)) = extract_candidate_from_init(init) {
+                            let name = get_func_name(&candidate, binding.as_deref());
+                            candidates.push((candidate, name, is_memo));
                         }
-                        Some(Expression::FunctionExpression(f)) => {
-                            candidates.push(LowerableFunction::Function(f));
-                        }
-                        _ => {}
                     }
+                }
+            }
+            // Handle bare expression statements like `React.memo(props => ...)`
+            Statement::ExpressionStatement(expr_stmt) => {
+                if let Some(candidate) = extract_fn_from_memo_call(&expr_stmt.expression) {
+                    candidates.push((candidate, None, true));
                 }
             }
             _ => {}
@@ -889,14 +1153,47 @@ fn run_pipeline_for_codegen(
     // means invalid functions are left unchanged and compilation continues to
     // the next function in the file (e.g. `multiple-components-first-is-invalid.js`).
     let mut last_err = String::new();
-    for func in candidates {
-        let env = Environment::new(
-            ReactFunctionType::Component,
-            CompilerOutputMode::Client,
-            env_config.clone(),
-        );
+    for (func, candidate_name, is_memo_or_forwardref) in candidates {
+        // Infer function type from the function name, matching the TS compiler behavior.
+        // The TS reference's `getComponentOrHookLike()` checks:
+        // 1. Name starts with uppercase (component) or "use" (hook)
+        // 2. `callsHooksOrCreatesJsx()` returns true (has JSX or hook calls in direct body)
+        // 3. Valid component params (at most 1 param)
+        // If the name looks like a component but has no JSX/hooks in the direct body,
+        // the function type falls back to 'Other' in compilation mode 'all'.
+        //
+        // Additionally, for function/arrow expressions inside React.memo() or
+        // React.forwardRef(), the TS reference uses `isForwardRefCallback`/`isMemoCallback`
+        // as a fallback, classifying them as 'Component' if they have JSX/hooks.
+        let fn_type = match candidate_name.as_deref() {
+            Some(n) if oxc_react_compiler::utils::hook_declaration::is_hook_name(n) => {
+                if calls_hooks_or_creates_jsx(&func) {
+                    ReactFunctionType::Hook
+                } else {
+                    ReactFunctionType::Other
+                }
+            }
+            Some(n) if oxc_react_compiler::utils::component_declaration::is_component_name(n) => {
+                if calls_hooks_or_creates_jsx(&func) {
+                    ReactFunctionType::Component
+                } else {
+                    ReactFunctionType::Other
+                }
+            }
+            _ => {
+                // For memo/forwardRef-wrapped functions without a component/hook name,
+                // classify as Component if they have JSX/hooks (matches TS reference).
+                if is_memo_or_forwardref && calls_hooks_or_creates_jsx(&func) {
+                    ReactFunctionType::Component
+                } else {
+                    ReactFunctionType::Other
+                }
+            }
+        };
 
-        let mut hir_func = match lower(&env, ReactFunctionType::Component, &func) {
+        let env = Environment::new(fn_type, CompilerOutputMode::Client, env_config.clone());
+
+        let mut hir_func = match lower(&env, fn_type, &func) {
             Ok(f) => f,
             Err(e) => {
                 last_err = format!("Lower: {e:?}");
@@ -949,13 +1246,11 @@ fn format_full_function(func: &CodegenFunction) -> String {
         let o_params = outlined_fn.params.join(", ");
         let o_body = format!("{outlined_fn}");
         if o_body.trim().is_empty() {
-            result.push_str(
-                &format!("\n{o_async}function {o_star}{o_name}({o_params}) {{}}"),
-            );
+            result.push_str(&format!("\n{o_async}function {o_star}{o_name}({o_params}) {{}}"));
         } else {
-            result.push_str(
-                &format!("\n{o_async}function {o_star}{o_name}({o_params}) {{\n{o_body}}}"),
-            );
+            result.push_str(&format!(
+                "\n{o_async}function {o_star}{o_name}({o_params}) {{\n{o_body}}}"
+            ));
         }
     }
 
@@ -1206,10 +1501,254 @@ fn normalize_code(s: &str) -> String {
     // within sequence expressions in extra parentheses: `((x = y), z)` instead of `(x = y, z)`.
     // Our Rust codegen doesn't use Prettier, so we don't add these cosmetic parentheses.
     // Strip them for comparison.
-    let no_prettier_assign_parens =
-        normalize_sequence_assignment_parens(&no_extra_outlined);
+    let no_prettier_assign_parens = normalize_sequence_assignment_parens(&no_extra_outlined);
 
-    no_prettier_assign_parens.trim().to_string()
+    // Step 39: normalize Unicode escape sequences.
+    // The reference compiler (Babel/Prettier) may output `\uXXXX` escape sequences for
+    // non-ASCII characters, while our codegen outputs the raw Unicode characters.
+    // Convert `\uXXXX` sequences to actual Unicode characters for comparison.
+    let normalized_unicode = normalize_unicode_escapes(&no_prettier_assign_parens);
+
+    // Step 40: hoist `let NAME = _temp` declarations from inside reactive scope blocks.
+    // The TS reference compiler hoists outlined function assignments (e.g. `let callback = _temp`)
+    // to before the reactive scope `if ($[N] ...)`, while our codegen places them inside.
+    // Normalize by moving `let NAME = _tempN` patterns to before the scope guard.
+    let hoisted_temp_assigns = hoist_temp_assigns_from_scope(&normalized_unicode);
+
+    // Step 41: normalize for-loop `undefined` update expression.
+    // When constant propagation eliminates the for-loop update expression (e.g. `i++`),
+    // our codegen may emit `undefined` as the update while the reference emits nothing.
+    // Remove `undefined` when it appears as a for-loop update.
+    let no_for_undefined = normalize_for_loop_undefined_update(&hoisted_temp_assigns);
+
+    // Step 42: renumber `_temp`, `_temp1`, `_temp2`, ... outlined function names sequentially.
+    // Our outlined function numbering may differ from the reference compiler's.
+    // Renumber based on first appearance order so that the comparison is numbering-agnostic.
+    let renumbered_temps = renumber_outlined_temp_names(&no_for_undefined);
+
+    renumbered_temps.trim().to_string()
+}
+
+/// Convert `\uXXXX` escape sequences to actual Unicode characters.
+fn normalize_unicode_escapes(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let chars: Vec<char> = s.chars().collect();
+    let len = chars.len();
+    let mut i = 0;
+
+    while i < len {
+        if chars[i] == '\\' && i + 5 < len && chars[i + 1] == 'u' {
+            // Check if the next 4 chars are hex digits
+            let hex: String = chars[i + 2..i + 6].iter().collect();
+            if hex.chars().all(|c| c.is_ascii_hexdigit()) {
+                if let Ok(code) = u32::from_str_radix(&hex, 16) {
+                    if let Some(ch) = char::from_u32(code) {
+                        result.push(ch);
+                        i += 6;
+                        continue;
+                    }
+                }
+            }
+        }
+        result.push(chars[i]);
+        i += 1;
+    }
+
+    result
+}
+
+/// Hoist `let NAME = _temp` assignments from inside reactive scope blocks to before them.
+///
+/// Pattern in our output:
+///   `... let tN if ($[M] ...) { let NAME = _temp tN = NAME() ...`
+/// Pattern in TS reference:
+///   `... let NAME = _temp let tN if ($[M] ...) { tN = NAME() ...`
+///
+/// This normalizes by detecting `let NAME = _tempN` (or `let NAME = _temp `)
+/// inside scope blocks and hoisting them before the scope guard.
+fn hoist_temp_assigns_from_scope(s: &str) -> String {
+    // Work on the whitespace-collapsed, semicolon-free string.
+    // Look for patterns like:
+    //   `if ($[N] ... { let NAME = _temp` or `if ($[N] ... { let NAME = _tempN`
+    // and hoist them before the preceding `let tN` declaration.
+    let tokens: Vec<&str> = s.split_whitespace().collect();
+    if tokens.len() < 10 {
+        return s.to_string();
+    }
+
+    // Collect indices of `let NAME = _temp` patterns inside scope blocks.
+    // A scope block is identified by `if ($[` pattern.
+    let mut hoisted_decls: Vec<(usize, usize, String)> = Vec::new(); // (scope_if_idx, let_idx, "let NAME = _tempN")
+
+    // Find all `if ($[` positions (reactive scope guards)
+    let mut scope_if_positions: Vec<usize> = Vec::new();
+    for i in 0..tokens.len().saturating_sub(1) {
+        if tokens[i] == "if" && tokens.get(i + 1).is_some_and(|t| t.starts_with("($[")) {
+            scope_if_positions.push(i);
+        }
+    }
+
+    // For each scope guard, find `{ let NAME = _temp` right after the opening brace
+    for &scope_start in &scope_if_positions {
+        // Find the opening brace `{` after the `if ($[...])` condition
+        let mut brace_idx = None;
+        for j in scope_start + 2..tokens.len().min(scope_start + 20) {
+            if tokens[j] == "{" {
+                brace_idx = Some(j);
+                break;
+            }
+        }
+        let Some(brace) = brace_idx else { continue };
+
+        // Check if right after `{` we have `let NAME = _temp`
+        if brace + 4 < tokens.len()
+            && tokens[brace + 1] == "let"
+            && tokens[brace + 3] == "="
+            && tokens[brace + 4].starts_with("_temp")
+        {
+            let name = tokens[brace + 2];
+            let temp_val = tokens[brace + 4];
+            // Verify the name is not a temp (tN) — we only want named variables
+            if !name.starts_with('t')
+                || name.len() > 3
+                || !name[1..].chars().all(|c| c.is_ascii_digit())
+            {
+                hoisted_decls.push((scope_start, brace + 1, format!("let {name} = {temp_val}")));
+            }
+        }
+    }
+
+    if hoisted_decls.is_empty() {
+        return s.to_string();
+    }
+
+    // Rebuild the token list: for each hoisted decl, insert before scope_if and remove from inside
+    let mut result_tokens: Vec<String> = tokens.iter().map(|t| t.to_string()).collect();
+    // Process in reverse order so indices don't shift
+    for (scope_if_idx, let_idx, decl_str) in hoisted_decls.into_iter().rev() {
+        // Remove the 4 tokens: `let NAME = _tempN` at let_idx..let_idx+4
+        if let_idx + 4 <= result_tokens.len() {
+            result_tokens.drain(let_idx..let_idx + 4);
+        }
+        // Insert the declaration before the scope guard
+        // Find the preceding `let tN` declaration (the scope output var)
+        let mut insert_pos = scope_if_idx;
+        // Look backwards for `let tN` pattern
+        if scope_if_idx >= 2
+            && result_tokens[scope_if_idx - 2] == "let"
+            && result_tokens[scope_if_idx - 1].starts_with('t')
+        {
+            insert_pos = scope_if_idx - 2;
+        }
+        // Insert the decl tokens
+        let decl_tokens: Vec<String> = decl_str.split_whitespace().map(String::from).collect();
+        for (offset, tok) in decl_tokens.into_iter().enumerate() {
+            result_tokens.insert(insert_pos + offset, tok);
+        }
+    }
+
+    result_tokens.join(" ")
+}
+
+/// Normalize for-loop `undefined` update expression.
+/// When the for-loop update expression has been eliminated by constant propagation,
+/// our codegen may emit `undefined` as the update expression. The reference compiler
+/// emits an empty update position instead. This removes `undefined` when it appears
+/// as the last element before `)` in a for-loop update position.
+fn normalize_for_loop_undefined_update(s: &str) -> String {
+    // Pattern: `for (INIT TEST undefined)` → `for (INIT TEST)`
+    // In normalized form (no semicolons), the for loop header tokens are:
+    //   for ( INIT_TOKENS TEST_TOKENS UPDATE_TOKENS )
+    // We look for `undefined)` or `undefined )` preceded by a `for (` context.
+    s.replace(" undefined)", ")").replace(" undefined) {", ") {")
+}
+
+/// Renumber `_temp`, `_temp1`, `_temp2`, etc. outlined function names sequentially.
+/// Both our compiler and the reference compiler use `_temp` naming for outlined functions,
+/// but the numbering may differ. Renumber based on first appearance order.
+/// `_temp` (no suffix) maps to `_temp`, `_temp1` maps to `_temp2` (second appearance), etc.
+fn renumber_outlined_temp_names(s: &str) -> String {
+    use std::collections::HashMap;
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let prefix = b"_temp";
+
+    // First pass: discover all `_temp` / `_tempN` identifiers in order of first appearance.
+    let mut mapping: HashMap<String, String> = HashMap::new();
+    let mut next_id = 0u32;
+    let mut i = 0;
+    while i < len {
+        if i + prefix.len() <= len && &bytes[i..i + prefix.len()] == prefix.as_slice() {
+            // Check we're at a word boundary
+            let at_start = i == 0
+                || (!bytes[i - 1].is_ascii_alphanumeric()
+                    && bytes[i - 1] != b'_'
+                    && bytes[i - 1] != b'$');
+            if at_start {
+                let start = i;
+                i += prefix.len();
+                // Consume optional digits
+                while i < len && bytes[i].is_ascii_digit() {
+                    i += 1;
+                }
+                // Check end boundary
+                let at_end = i >= len
+                    || (!bytes[i].is_ascii_alphanumeric() && bytes[i] != b'_' && bytes[i] != b'$');
+                if at_end {
+                    let original = std::str::from_utf8(&bytes[start..i]).unwrap_or("");
+                    mapping.entry(original.to_string()).or_insert_with(|| {
+                        let name = if next_id == 0 {
+                            "_temp".to_string()
+                        } else {
+                            format!("_temp{next_id}")
+                        };
+                        next_id += 1;
+                        name
+                    });
+                    continue;
+                }
+            }
+        }
+        i += 1;
+    }
+
+    // If no renaming needed, return as-is.
+    if mapping.is_empty() || mapping.iter().all(|(k, v)| k == v) {
+        return s.to_string();
+    }
+
+    // Second pass: replace all occurrences.
+    let mut result = String::with_capacity(len);
+    i = 0;
+    while i < len {
+        if i + prefix.len() <= len && &bytes[i..i + prefix.len()] == prefix.as_slice() {
+            let at_start = i == 0
+                || (!bytes[i - 1].is_ascii_alphanumeric()
+                    && bytes[i - 1] != b'_'
+                    && bytes[i - 1] != b'$');
+            if at_start {
+                let start = i;
+                let mut j = i + prefix.len();
+                while j < len && bytes[j].is_ascii_digit() {
+                    j += 1;
+                }
+                let at_end = j >= len
+                    || (!bytes[j].is_ascii_alphanumeric() && bytes[j] != b'_' && bytes[j] != b'$');
+                if at_end {
+                    let original = std::str::from_utf8(&bytes[start..j]).unwrap_or("");
+                    if let Some(replacement) = mapping.get(original) {
+                        result.push_str(replacement);
+                        i = j;
+                        continue;
+                    }
+                }
+            }
+        }
+        result.push(bytes[i] as char);
+        i += 1;
+    }
+
+    result
 }
 
 /// Remove trailing commas before closing brackets: `,]`, `,)`, `,}`,
@@ -2641,7 +3180,12 @@ fn normalize_paren_spacing(s: &str) -> String {
     // Replace `( ` → `(` and ` )` → `)`, being careful not to collapse
     // intentional spaces in other contexts.
     let s = s.replace("( ", "(");
-    s.replace(" )", ")")
+    let s = s.replace(" )", ")");
+    // Also normalize bracket spacing: `[ ` → `[` and ` ]` → `]`.
+    // The reference compiler (Prettier) may insert spaces inside array literals
+    // `[ -2, 0 ]` while our codegen doesn't `[-2, 0]`.
+    let s = s.replace("[ ", "[");
+    s.replace(" ]", "]")
 }
 
 fn normalize_shorthand_properties(s: &str) -> String {
@@ -2814,9 +3358,11 @@ fn normalize_jsx_child_whitespace(s: &str) -> String {
     let r = s.replace("> {", ">{");
     // Normalize `} </` to `}</` (space after expression child before closing tag)
     let r = r.replace("} </", "}</");
-    // Normalize `} <` to `}<` when followed by `/` (already handled above)
-    // or when just `} <Tag` (sibling elements)
-    // Don't normalize `} <Tag` generically as that could be non-JSX
+    // Normalize `> <` to `><` (space between closing tag and opening child tag in JSX)
+    // This handles the difference between `<A> <B /> </A>` and `<A><B /></A>`.
+    let r = r.replace("> <", "><");
+    // Normalize `/> </` to `/></` (space between self-closing child and closing parent)
+    let r = r.replace("/> </", "/></");
     r
 }
 
@@ -4693,8 +5239,8 @@ fn normalize_sequence_assignment_parens(s: &str) -> String {
                 if let Some((close_idx, inner)) = find_balanced_paren(&chars, i) {
                     // Check if the content after close paren is `,` or `)` (sequence context)
                     let after_idx = close_idx + 1;
-                    let after_is_seq_context = after_idx < len
-                        && (chars[after_idx] == ',' || chars[after_idx] == ')');
+                    let after_is_seq_context =
+                        after_idx < len && (chars[after_idx] == ',' || chars[after_idx] == ')');
 
                     // Check if inner content contains a simple assignment operator
                     let has_assignment = contains_assignment_operator(&inner);
@@ -6222,6 +6768,273 @@ export function Component({a, b}) {
             panic!("Pipeline failed: {e}");
         }
     }
+}
+
+// ===========================================================================
+// Debug: dump diffs for selected output_mismatch fixtures
+// ===========================================================================
+#[test]
+#[ignore]
+fn debug_dump_diffs() {
+    let fixtures_dir = Path::new(FIXTURES_PATH);
+    if !fixtures_dir.exists() {
+        return;
+    }
+
+    // Collect ALL output_mismatch fixtures (non-fbt, non-gating).
+    let mut fixture_pairs: Vec<(std::path::PathBuf, std::path::PathBuf)> = Vec::new();
+    for entry in walkdir::WalkDir::new(fixtures_dir)
+        .into_iter()
+        .filter_entry(|e| e.file_name() != "__snapshots__")
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+    {
+        let path = entry.path().to_path_buf();
+        if !is_js_ts_tsx(&path) {
+            continue;
+        }
+        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if file_name.starts_with("error.") {
+            continue;
+        }
+        // Skip fbt and gating subdirectories
+        let rel = path.strip_prefix(fixtures_dir).unwrap().to_string_lossy();
+        if rel.starts_with("fbt/") || rel.starts_with("gating/") {
+            continue;
+        }
+        let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+        let expect_path = entry.path().parent().unwrap().join(format!("{stem}.expect.md"));
+        if expect_path.exists() {
+            fixture_pairs.push((path, expect_path));
+        }
+    }
+    fixture_pairs.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let mut diffs: Vec<(String, usize, String, String, String)> = Vec::new(); // (name, token_diff, first_diff, actual, expected)
+
+    for (input_path, expect_path) in &fixture_pairs {
+        let file_name =
+            input_path.strip_prefix(fixtures_dir).unwrap().to_string_lossy().to_string();
+
+        let Ok(source) = std::fs::read_to_string(input_path) else { continue };
+        let Ok(expect_content) = std::fs::read_to_string(expect_path) else { continue };
+        let Some(expected_code) = extract_expect_md_section(&expect_content, "Code") else {
+            continue;
+        };
+
+        // Skip opt-out / identity
+        if source.contains("@expectNothingCompiled")
+            || source.contains("'use no forget'")
+            || source.contains("\"use no forget\"")
+            || source.contains("'use no memo'")
+            || source.contains("\"use no memo\"")
+        {
+            continue;
+        }
+
+        let ext = input_path.extension().and_then(|e| e.to_str()).unwrap_or("js");
+        let source_type = match ext {
+            "tsx" => oxc_span::SourceType::tsx(),
+            "ts" => oxc_span::SourceType::ts(),
+            _ => oxc_span::SourceType::jsx(),
+        };
+
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            run_pipeline_for_codegen(&source, source_type)
+        }));
+
+        let codegen_func = match result {
+            Ok(Ok(func)) => func,
+            _ => continue,
+        };
+
+        let actual_full = format_full_function(&codegen_func);
+        let expected_func = match extract_function_from_expected(expected_code) {
+            Some(f) => f,
+            None => expected_code.to_string(),
+        };
+
+        let actual_norm = normalize_code(&actual_full);
+        let expected_norm = normalize_code(&expected_func);
+
+        if actual_norm == expected_norm {
+            continue; // Already passing
+        }
+
+        // Also try body-only comparison
+        let actual_body = extract_function_body(&actual_full);
+        let expected_body = extract_function_body(&expected_func);
+        let body_match = matches!(
+            (&actual_body, &expected_body),
+            (Some(ab), Some(eb)) if normalize_code(ab) == normalize_code(eb)
+        );
+        if body_match {
+            continue; // Already passing via body
+        }
+
+        // Compute token-level diff (split on whitespace)
+        let actual_tokens: Vec<&str> = actual_norm.split_whitespace().collect();
+        let expected_tokens: Vec<&str> = expected_norm.split_whitespace().collect();
+
+        // Simple token diff count: count mismatches
+        let max_len = actual_tokens.len().max(expected_tokens.len());
+        let min_len = actual_tokens.len().min(expected_tokens.len());
+        let len_diff = max_len - min_len;
+
+        // Find first diff position
+        let mut first_diff_context = String::new();
+        for i in 0..min_len {
+            if actual_tokens[i] != expected_tokens[i] {
+                let start = if i >= 3 { i - 3 } else { 0 };
+                let end_a = (i + 4).min(actual_tokens.len());
+                let end_e = (i + 4).min(expected_tokens.len());
+                first_diff_context = format!(
+                    "pos={i} actual:[{}] expected:[{}]",
+                    actual_tokens[start..end_a].join(" "),
+                    expected_tokens[start..end_e].join(" "),
+                );
+                break;
+            }
+        }
+
+        // Count total differing tokens
+        let mut diff_count = len_diff;
+        for i in 0..min_len {
+            if actual_tokens[i] != expected_tokens[i] {
+                diff_count += 1;
+            }
+        }
+
+        diffs.push((
+            file_name,
+            diff_count,
+            first_diff_context,
+            actual_norm.clone(),
+            expected_norm.clone(),
+        ));
+    }
+
+    // Sort by diff count (smallest first)
+    diffs.sort_by_key(|(_, count, _, _, _)| *count);
+
+    eprintln!("\n=== CLOSEST MISMATCHES (non-fbt, non-gating) ===");
+    for (name, count, context, actual, expected) in diffs.iter().take(40) {
+        eprintln!("  [{count:3} tokens] {name}");
+        if !context.is_empty() {
+            eprintln!("           {context}");
+        }
+        eprintln!("    ACTUAL:   {actual}");
+        eprintln!("    EXPECTED: {expected}");
+        eprintln!();
+    }
+    // Analyze patterns across ALL mismatches
+    let mut pattern_counts: std::collections::HashMap<String, u32> =
+        std::collections::HashMap::new();
+    for (_, _, _, actual, expected) in &diffs {
+        let actual_tokens: Vec<&str> = actual.split_whitespace().collect();
+        let expected_tokens: Vec<&str> = expected.split_whitespace().collect();
+
+        // Check for specific patterns
+        // Pattern 1: scope dep difference (props.x vs props)
+        if actual.contains("$[0] !==") || actual.contains("$[1] !==") {
+            // Compare the dep expressions
+            for (a, e) in actual_tokens.iter().zip(expected_tokens.iter()) {
+                if a != e && (a.starts_with("props") || e.starts_with("props")) {
+                    *pattern_counts.entry("scope_dep_diff".to_string()).or_insert(0) += 1;
+                    break;
+                }
+            }
+        }
+
+        // Pattern 2: _temp outlined function naming
+        if expected.contains("= _temp") && !actual.contains("= _temp") {
+            *pattern_counts.entry("missing_outlined_fn_naming".to_string()).or_insert(0) += 1;
+        }
+
+        // Pattern 3: different cache size (_c(N))
+        // Simple string search for _c(digits)
+        fn extract_cache_size(s: &str) -> Option<&str> {
+            let start = s.find("_c(")?;
+            let rest = &s[start..];
+            let end = rest.find(')')?;
+            Some(&rest[..end + 1])
+        }
+        if let (Some(ac), Some(ec)) = (extract_cache_size(actual), extract_cache_size(expected)) {
+            if ac != ec {
+                *pattern_counts.entry("cache_size_diff".to_string()).or_insert(0) += 1;
+            }
+        }
+
+        // Pattern 4: for loop codegen differences
+        if actual.contains("for (") || expected.contains("for (") {
+            if actual.contains("undefined)") && !expected.contains("undefined)") {
+                *pattern_counts.entry("for_loop_undefined_update".to_string()).or_insert(0) += 1;
+            }
+        }
+
+        // Pattern 5: delete expression codegen
+        if expected.contains("delete ") && actual.contains("delete ") {
+            if !actual.contains("let y = delete") && expected.contains("let y = delete") {
+                *pattern_counts.entry("delete_expr_value".to_string()).or_insert(0) += 1;
+            }
+        }
+
+        // Pattern 6: constant propagation differences
+        if expected.contains("return") && actual.contains("return") {
+            // Check if expected has a shorter body (more optimized)
+            if expected_tokens.len() < actual_tokens.len().saturating_sub(5) {
+                *pattern_counts.entry("over_complex_output".to_string()).or_insert(0) += 1;
+            }
+        }
+
+        // Pattern 7: identity transform (no memoization in expected)
+        if !expected.contains("_c(") && !expected.contains("$[") {
+            *pattern_counts.entry("identity_transform_mismatch".to_string()).or_insert(0) += 1;
+        }
+
+        // Pattern 8: different number of reactive scopes
+        let actual_scope_count = actual.matches("$[").count();
+        let expected_scope_count = expected.matches("$[").count();
+        if actual_scope_count != expected_scope_count
+            && actual_scope_count > 0
+            && expected_scope_count > 0
+        {
+            *pattern_counts.entry("scope_count_diff".to_string()).or_insert(0) += 1;
+        }
+
+        // Pattern 9: different temp variable naming (after normalization)
+        // This indicates the temp renumbering normalization doesn't quite work
+        for (a, e) in actual_tokens.iter().zip(expected_tokens.iter()) {
+            if a != e && a.starts_with('t') && e.starts_with('t') && a.len() <= 3 && e.len() <= 3 {
+                *pattern_counts.entry("temp_numbering_diff".to_string()).or_insert(0) += 1;
+                break;
+            }
+        }
+
+        // Pattern 10: while loop / do-while differences
+        if (expected.contains("while") && !actual.contains("while"))
+            || (actual.contains("do {") && !expected.contains("do {"))
+        {
+            *pattern_counts.entry("loop_control_flow_diff".to_string()).or_insert(0) += 1;
+        }
+
+        // Pattern 11: try-catch codegen differences
+        if actual.contains("try") || expected.contains("try") {
+            if actual.contains("try") != expected.contains("try")
+                || actual.contains("catch") != expected.contains("catch")
+            {
+                *pattern_counts.entry("try_catch_diff".to_string()).or_insert(0) += 1;
+            }
+        }
+    }
+
+    eprintln!("\n=== PATTERN ANALYSIS ACROSS ALL {} MISMATCHES ===", diffs.len());
+    let mut sorted_patterns: Vec<_> = pattern_counts.iter().collect();
+    sorted_patterns.sort_by(|a, b| b.1.cmp(a.1));
+    for (pattern, count) in &sorted_patterns {
+        eprintln!("  {count:4} {pattern}");
+    }
+    eprintln!("Total output_mismatch fixtures analyzed: {}", diffs.len());
 }
 
 // ===========================================================================

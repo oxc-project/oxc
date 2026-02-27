@@ -899,10 +899,16 @@ fn codegen_reactive_scope(
         )));
     }
 
-    // Process declarations: sorted for determinism
+    // Process declarations: sorted for determinism, deduplicated by declaration_id.
+    // After SSA renaming, multiple IdentifierIds may share the same DeclarationId
+    // (i.e., the same source-level variable). The TS reference prevents duplicates
+    // in PropagateScopeDependenciesHIR by checking declarationId before inserting.
+    // We deduplicate here to ensure each source variable gets exactly one cache slot.
     let mut decls: Vec<(&IdentifierId, &ReactiveScopeDeclaration)> =
         scope.declarations.iter().collect();
     decls.sort_by(|(_, a), (_, b)| compare_scope_declaration(a, b));
+    let mut seen_declaration_ids: FxHashSet<DeclarationId> = FxHashSet::default();
+    decls.retain(|(_, decl)| seen_declaration_ids.insert(decl.identifier.declaration_id));
 
     let mut first_output_index: Option<u32> = None;
     let mut cache_loads: Vec<CacheLoad> = Vec::new();
@@ -1005,8 +1011,7 @@ fn codegen_terminal(
         ReactiveTerminal::Continue(t) => codegen_continue(t),
         ReactiveTerminal::Return(t) => {
             let value = codegen_place_to_expression(cx, &t.value);
-            let is_conditional =
-                cx.arrow_paren_temps.contains(&t.value.identifier.declaration_id);
+            let is_conditional = cx.arrow_paren_temps.contains(&t.value.identifier.declaration_id);
             if value == "undefined" {
                 Some(CodegenStatement::Return { value: None, is_conditional: false })
             } else {
@@ -1708,7 +1713,9 @@ fn codegen_function_expression(
                     // and no directives on the lowered function
                     if inner_fn.body.len() == 1 && func_expr.lowered_func.func.directives.is_empty()
                     {
-                        if let CodegenStatement::Return { value: Some(expr), is_conditional } = &inner_fn.body[0] {
+                        if let CodegenStatement::Return { value: Some(expr), is_conditional } =
+                            &inner_fn.body[0]
+                        {
                             // Babel wraps ConditionalExpression / SequenceExpression
                             // in parens when used as a concise arrow body. We detect
                             // this via the `is_conditional` flag (populated by the

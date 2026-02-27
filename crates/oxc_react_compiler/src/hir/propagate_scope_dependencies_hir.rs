@@ -26,9 +26,8 @@ use crate::hir::types::{ObjectType, PropertyLiteral, Type};
 
 use super::hir_types::{
     BasicBlock, BlockId, DeclarationId, DependencyPath, DependencyPathEntry, HIRFunction,
-    Identifier, IdentifierId, Instruction, InstructionId, InstructionKind, InstructionValue,
-    ManualMemoDependencyRoot, Place, ReactiveScope, ReactiveScopeDependency, ScopeId,
-    Terminal,
+    Identifier, IdentifierId, Instruction, InstructionId, InstructionKind, InstructionValue, Place,
+    ReactiveScope, ReactiveScopeDependency, ScopeId, Terminal,
 };
 use super::visitors::{
     each_instruction_operand, each_instruction_value_operand, each_pattern_operand,
@@ -596,63 +595,6 @@ fn collect_temporaries_sidemap(
     used_outside_declaring_scope: &FxHashSet<DeclarationId>,
 ) -> FxHashMap<IdentifierId, TempReactiveScopeDependency> {
     let mut temporaries = FxHashMap::default();
-    if std::env::var("DEBUG_TEMPORARIES").is_ok() {
-        // Print outer function params
-        let params_info: Vec<_> = func
-            .params
-            .iter()
-            .map(|p| match p {
-                super::hir_types::ReactiveParam::Place(pp) => {
-                    (pp.identifier.id, pp.identifier.name.clone())
-                }
-                super::hir_types::ReactiveParam::Spread(s) => {
-                    (s.place.identifier.id, s.place.identifier.name.clone())
-                }
-            })
-            .collect();
-        eprintln!("[TEMP_OUTER] params: {:?}", params_info);
-        // Only print ALL instructions if this is the "props" function
-        let has_props = params_info.iter().any(|(_, name)| {
-            name.as_ref()
-                .map(|n| matches!(n, super::hir_types::IdentifierName::Named(s) if s == "props"))
-                .unwrap_or(false)
-        });
-        for block in func.body.blocks.values() {
-            for instr in &block.instructions {
-                let kind = match &instr.value {
-                    InstructionValue::FunctionExpression(v) => format!(
-                        "FunctionExpression(ctx={:?})",
-                        v.lowered_func
-                            .func
-                            .context
-                            .iter()
-                            .map(|p| (p.identifier.id, p.identifier.name.clone()))
-                            .collect::<Vec<_>>()
-                    ),
-                    InstructionValue::StartMemoize(v) => format!(
-                        "StartMemoize(deps={:?})",
-                        v.deps.as_ref().map(|d| d
-                            .iter()
-                            .map(|dep| match &dep.root {
-                                ManualMemoDependencyRoot::NamedLocal { value, .. } => (
-                                    value.identifier.id,
-                                    value.identifier.name.clone(),
-                                    dep.path.len()
-                                ),
-                                _ => (IdentifierId(0), None, 0),
-                            })
-                            .collect::<Vec<_>>())
-                    ),
-                    other if has_props => format!("{:?}", std::mem::discriminant(other)),
-                    _ => continue,
-                };
-                eprintln!(
-                    "[TEMP_OUTER] lvalue={:?}({:?}) {}",
-                    instr.lvalue.identifier.id, instr.lvalue.identifier.name, kind
-                );
-            }
-        }
-    }
     collect_temporaries_sidemap_impl(func, used_outside_declaring_scope, &mut temporaries, None);
     temporaries
 }
@@ -663,37 +605,6 @@ fn collect_temporaries_sidemap_impl(
     temporaries: &mut FxHashMap<IdentifierId, TempReactiveScopeDependency>,
     inner_fn_context: Option<InstructionId>,
 ) {
-    if std::env::var("DEBUG_TEMPORARIES").is_ok() && inner_fn_context.is_some() {
-        eprintln!(
-            "[TEMP_IMPL] inner_fn context: {:?}",
-            func.context
-                .iter()
-                .map(|p| (p.identifier.id, p.identifier.name.clone()))
-                .collect::<Vec<_>>()
-        );
-        for block in func.body.blocks.values() {
-            for instr in &block.instructions {
-                let kind = match &instr.value {
-                    InstructionValue::LoadLocal(v) => format!(
-                        "LoadLocal({:?}:{:?})",
-                        v.place.identifier.id, v.place.identifier.name
-                    ),
-                    InstructionValue::LoadContext(v) => format!(
-                        "LoadContext({:?}:{:?})",
-                        v.place.identifier.id, v.place.identifier.name
-                    ),
-                    InstructionValue::PropertyLoad(v) => {
-                        format!("PropertyLoad({:?}.{:?})", v.object.identifier.id, v.property)
-                    }
-                    _ => format!("{:?}", std::mem::discriminant(&instr.value)),
-                };
-                eprintln!(
-                    "[TEMP_IMPL] instr lvalue={:?}({:?}) kind={}",
-                    instr.lvalue.identifier.id, instr.lvalue.identifier.name, kind
-                );
-            }
-        }
-    }
     for block in func.body.blocks.values() {
         for instr in &block.instructions {
             let orig_instr_id = instr.id;
@@ -710,24 +621,7 @@ fn collect_temporaries_sidemap_impl(
                     {
                         let property =
                             get_property(&v.object, &v.property, false, v.loc, temporaries);
-                        if std::env::var("DEBUG_TEMPORARIES").is_ok() {
-                            eprintln!(
-                                "[TEMP_PROPLOAD_INSERT] lvalue={:?} → {:?}(id={:?}) path_len={}",
-                                instr.lvalue.identifier.id,
-                                property.identifier.name,
-                                property.identifier.id,
-                                property.path.len()
-                            );
-                        }
                         temporaries.insert(instr.lvalue.identifier.id, property);
-                    } else if std::env::var("DEBUG_TEMPORARIES").is_ok() {
-                        eprintln!(
-                            "[TEMP_PROPLOAD_SKIP_NO_OBJ] lvalue={:?} obj={:?}({:?}) prop={:?}",
-                            instr.lvalue.identifier.id,
-                            v.object.identifier.id,
-                            v.object.identifier.name,
-                            v.property
-                        );
                     }
                 }
                 InstructionValue::LoadLocal(v)
@@ -767,15 +661,6 @@ fn collect_temporaries_sidemap_impl(
                                 .iter()
                                 .any(|ctx| ctx.identifier.id == v.place.identifier.id))
                     {
-                        if std::env::var("DEBUG_TEMPORARIES").is_ok() {
-                            eprintln!(
-                                "[TEMP_LOADCTX] lvalue={:?} → {:?}(id={:?}) inner_fn={:?}",
-                                instr.lvalue.identifier.id,
-                                v.place.identifier.name,
-                                v.place.identifier.id,
-                                inner_fn_context
-                            );
-                        }
                         temporaries.insert(
                             instr.lvalue.identifier.id,
                             TempReactiveScopeDependency {
@@ -848,6 +733,12 @@ struct DependencyCollectionContext<'a> {
     /// Each entry is (scope_id, identifier_id, identifier, declaring_scope).
     scope_declaration_mutations: Vec<(ScopeId, IdentifierId, Identifier, ReactiveScope)>,
 
+    /// Shadow tracker to prevent duplicate declaration mutations.
+    /// The TS reference mutates `scope.declarations` in-place so subsequent checks
+    /// within the same traversal see the updated state. In Rust we defer mutations,
+    /// so we need this set to avoid queueing the same (scope, declaration) twice.
+    pending_scope_declarations: FxHashSet<(ScopeId, DeclarationId)>,
+
     /// Collected scope reassignment mutations to apply after the main traversal.
     /// Each entry is (scope_id, identifier).
     scope_reassignment_mutations: Vec<(ScopeId, Identifier)>,
@@ -868,6 +759,7 @@ impl<'a> DependencyCollectionContext<'a> {
             processed_instrs_in_optional,
             inner_fn_context: None,
             scope_declaration_mutations: Vec::new(),
+            pending_scope_declarations: FxHashSet::default(),
             scope_reassignment_mutations: Vec::new(),
         }
     }
@@ -990,8 +882,12 @@ impl<'a> DependencyCollectionContext<'a> {
                 let is_active = self.is_scope_active_in_stack(scope);
                 let has_decl = scope.declarations.values().any(|decl| {
                     decl.identifier.declaration_id == maybe_dep.identifier.declaration_id
-                });
+                }) || self
+                    .pending_scope_declarations
+                    .contains(&(scope.id, maybe_dep.identifier.declaration_id));
                 if !is_active && !has_decl {
+                    self.pending_scope_declarations
+                        .insert((scope.id, maybe_dep.identifier.declaration_id));
                     // Collect the mutation for later application
                     self.scope_declaration_mutations.push((
                         scope.id,
@@ -1106,26 +1002,23 @@ fn handle_instruction(instr: &Instruction, context: &mut DependencyCollectionCon
         }
         InstructionValue::DeclareContext(v) => {
             if v.lvalue_kind.convert_hoisted().is_none() {
-                context.declare(
-                    &v.lvalue_place.identifier,
-                    Decl { id, scope: context.scopes.clone() },
-                );
-                // Context variables may be declared before their reactive scope starts
-                // (e.g. DeclareContext at instruction 1, scope starts at instruction 2).
-                // In that case, the Decl stored by declare() has an empty scope stack,
-                // and visitDependency won't add the variable as a scope declaration.
-                // If InferReactiveScopeVariables already assigned a scope to this
-                // identifier, proactively register it as a scope declaration.
-                if context.scopes.value().is_none() {
+                // In the TS reference, DeclareContext's mutable range starts at the
+                // instruction itself, so the scope (from InferReactiveScopeVariables)
+                // is already active when declare() is called. In Rust, DeclareContext's
+                // mutable range starts later (at the first StoreContext), so the scope
+                // may not yet be active. To match TS behavior, when the current scope
+                // stack is empty but the identifier has an assigned scope, use that
+                // scope so visitDependency can later add it as a scope declaration.
+                let decl_scope = if context.scopes.value().is_none() {
                     if let Some(ref var_scope) = v.lvalue_place.identifier.scope {
-                        context.scope_declaration_mutations.push((
-                            var_scope.id,
-                            v.lvalue_place.identifier.id,
-                            v.lvalue_place.identifier.clone(),
-                            var_scope.as_ref().clone(),
-                        ));
+                        Stack::empty().push(var_scope.as_ref().clone())
+                    } else {
+                        context.scopes.clone()
                     }
-                }
+                } else {
+                    context.scopes.clone()
+                };
+                context.declare(&v.lvalue_place.identifier, Decl { id, scope: decl_scope });
             }
         }
         InstructionValue::Destructure(v) => {
@@ -1141,23 +1034,19 @@ fn handle_instruction(instr: &Instruction, context: &mut DependencyCollectionCon
             if !context.has_declared(&v.lvalue_place.identifier)
                 || v.lvalue_kind != InstructionKind::Reassign
             {
-                context.declare(
-                    &v.lvalue_place.identifier,
-                    Decl { id, scope: context.scopes.clone() },
-                );
-                // Same fix as DeclareContext: context variables stored before their
-                // reactive scope starts have an empty scope stack, so visitDependency
-                // won't add them as scope declarations. Proactively register them.
-                if context.scopes.value().is_none() {
+                // Same scope compensation as DeclareContext: when the current scope
+                // stack is empty but the identifier has an assigned scope, use that
+                // scope to match TS behavior.
+                let decl_scope = if context.scopes.value().is_none() {
                     if let Some(ref var_scope) = v.lvalue_place.identifier.scope {
-                        context.scope_declaration_mutations.push((
-                            var_scope.id,
-                            v.lvalue_place.identifier.id,
-                            v.lvalue_place.identifier.clone(),
-                            var_scope.as_ref().clone(),
-                        ));
+                        Stack::empty().push(var_scope.as_ref().clone())
+                    } else {
+                        context.scopes.clone()
                     }
-                }
+                } else {
+                    context.scopes.clone()
+                };
+                context.declare(&v.lvalue_place.identifier, Decl { id, scope: decl_scope });
             }
 
             for operand in each_instruction_value_operand(&instr.value) {
@@ -1327,10 +1216,7 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
 
     // Build a ReactiveScopeDependency map from merged_temporaries for hoistable analysis
     let temporaries_for_hoistable: FxHashMap<IdentifierId, ReactiveScopeDependency> =
-        merged_temporaries
-            .iter()
-            .map(|(&id, temp)| (id, temp.to_scope_dependency()))
-            .collect();
+        merged_temporaries.iter().map(|(&id, temp)| (id, temp.to_scope_dependency())).collect();
 
     // Collect hoistable property loads
     let hoistable = super::collect_hoistable_property_loads::collect_hoistable_property_loads(

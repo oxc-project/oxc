@@ -1188,3 +1188,59 @@ mod invariants {
         assert!(found, "Expected to find at least one FunctionExpression instruction");
     }
 }
+
+/// Test that capturing-func-mutate produces correct memo slot count.
+///
+/// When context variables (captured by closures) are used across scopes,
+/// the merge pass should correctly merge scopes and prune intermediate
+/// declarations, producing _c(3) instead of _c(5).
+#[test]
+fn test_capturing_func_mutate_scope_declarations() {
+    let source = r#"
+import {mutate} from 'shared-runtime';
+
+function Component({a, b}) {
+  let z = {a};
+  let y = {b: {b}};
+  let x = function () {
+    z.a = 2;
+    mutate(y.b);
+  };
+  x();
+  return [y, z];
+}
+"#;
+
+    let allocator = oxc_allocator::Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    assert!(parser_result.errors.is_empty(), "Parse errors: {:?}", parser_result.errors);
+
+    let func = parser_result.program.body.iter().find_map(|stmt| match stmt {
+        oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+        _ => None,
+    });
+    assert!(func.is_some(), "No function declaration found in source");
+    let func = func.unwrap();
+
+    let env = Environment::new(
+        ReactFunctionType::Component,
+        CompilerOutputMode::Client,
+        EnvironmentConfig::default(),
+    );
+
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func).expect("lowering failed");
+
+    // Run the full pipeline
+    let codegen = oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env)
+        .expect("pipeline failed");
+
+    // Should produce _c(3): 2 dependency slots (a, b) + 1 output slot (the array [y, z]).
+    // Previously produced _c(5) because y and z were incorrectly kept as separate declarations.
+    assert_eq!(
+        codegen.memo_slots_used, 3,
+        "Expected 3 memo slots (2 deps + 1 output), got {}. \
+         y and z should be pruned from declarations after scope merge.",
+        codegen.memo_slots_used,
+    );
+}

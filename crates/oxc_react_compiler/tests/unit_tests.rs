@@ -262,19 +262,19 @@ mod logger_tests {
 
     #[test]
     fn should_compile_component() {
-        let result = should_compile_function(Some("Component"), &[], CompilationMode::Infer);
+        let result = should_compile_function(Some("Component"), &[], CompilationMode::Infer, false);
         assert_eq!(result, Some(ReactFunctionType::Component));
     }
 
     #[test]
     fn should_compile_hook() {
-        let result = should_compile_function(Some("useMyHook"), &[], CompilationMode::Infer);
+        let result = should_compile_function(Some("useMyHook"), &[], CompilationMode::Infer, false);
         assert_eq!(result, Some(ReactFunctionType::Hook));
     }
 
     #[test]
     fn should_not_compile_regular_function() {
-        let result = should_compile_function(Some("helper"), &[], CompilationMode::Infer);
+        let result = should_compile_function(Some("helper"), &[], CompilationMode::Infer, false);
         assert_eq!(result, None);
     }
 
@@ -284,6 +284,7 @@ mod logger_tests {
             Some("helper"),
             &["use memo".to_string()],
             CompilationMode::Infer,
+            false,
         );
         assert!(result.is_some());
     }
@@ -294,27 +295,51 @@ mod logger_tests {
             Some("Component"),
             &["use no memo".to_string()],
             CompilationMode::Infer,
+            false,
         );
         assert_eq!(result, None);
     }
 
     #[test]
     fn annotation_mode_requires_directive() {
-        let result = should_compile_function(Some("Component"), &[], CompilationMode::Annotation);
+        let result =
+            should_compile_function(Some("Component"), &[], CompilationMode::Annotation, false);
         assert_eq!(result, None);
 
         let result = should_compile_function(
             Some("Component"),
             &["use memo".to_string()],
             CompilationMode::Annotation,
+            false,
         );
         assert!(result.is_some());
     }
 
     #[test]
     fn all_mode_compiles_everything() {
-        let result = should_compile_function(Some("helper"), &[], CompilationMode::All);
+        let result = should_compile_function(Some("helper"), &[], CompilationMode::All, false);
         assert!(result.is_some());
+    }
+
+    #[test]
+    fn memo_callback_compiles_as_component_in_infer_mode() {
+        // An anonymous function inside React.memo() should compile as a Component
+        let result = should_compile_function(None, &[], CompilationMode::Infer, true);
+        assert_eq!(result, Some(ReactFunctionType::Component));
+    }
+
+    #[test]
+    fn memo_callback_compiles_as_component_in_all_mode() {
+        // An anonymous function inside React.memo() should compile as a Component
+        let result = should_compile_function(None, &[], CompilationMode::All, true);
+        assert_eq!(result, Some(ReactFunctionType::Component));
+    }
+
+    #[test]
+    fn forwardref_callback_not_compiled_without_flag() {
+        // Without is_memo_or_forwardref_arg, an anonymous function should not compile in Infer mode
+        let result = should_compile_function(None, &[], CompilationMode::Infer, false);
+        assert_eq!(result, None);
     }
 
     #[test]
@@ -574,10 +599,12 @@ fn test_console_method_type_resolution() {
 #[test]
 fn test_context_variable_debug() {
     use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
-    use oxc_react_compiler::hir::{ReactFunctionType, InstructionValue};
     use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
-    use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
+    use oxc_react_compiler::hir::environment::{
+        CompilerOutputMode, Environment, EnvironmentConfig,
+    };
     use oxc_react_compiler::hir::print_hir::print_function;
+    use oxc_react_compiler::hir::{InstructionValue, ReactFunctionType};
 
     let source = r#"function Component(p) {
   let x;
@@ -589,25 +616,26 @@ fn test_context_variable_debug() {
 }
 "#;
     let allocator = oxc_allocator::Allocator::default();
-    let parser_result = oxc_parser::Parser::new(&allocator, source, oxc_span::SourceType::jsx()).parse();
+    let parser_result =
+        oxc_parser::Parser::new(&allocator, source, oxc_span::SourceType::jsx()).parse();
     assert!(parser_result.errors.is_empty(), "Parse errors: {:?}", parser_result.errors);
 
     let env_config = EnvironmentConfig::default();
-    let env = Environment::new(
-        ReactFunctionType::Component,
-        CompilerOutputMode::Client,
-        env_config,
-    );
+    let env =
+        Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config);
 
-    let func_decl = parser_result.program.body.iter().find_map(|stmt| {
-        if let oxc_ast::ast::Statement::FunctionDeclaration(f) = stmt {
-            Some(f)
-        } else {
-            None
-        }
-    }).expect("Expected function declaration");
+    let func_decl = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| {
+            if let oxc_ast::ast::Statement::FunctionDeclaration(f) = stmt { Some(f) } else { None }
+        })
+        .expect("Expected function declaration");
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &LowerableFunction::Function(func_decl)).expect("Lower failed");
+    let mut hir_func =
+        lower(&env, ReactFunctionType::Component, &LowerableFunction::Function(func_decl))
+            .expect("Lower failed");
 
     // Print HIR before pipeline
     println!("=== HIR after lowering (before pipeline) ===");
@@ -623,40 +651,101 @@ fn test_context_variable_debug() {
         println!("Block {}:", block_id.0);
         for instr in &block.instructions {
             let lid = &instr.lvalue.identifier;
-            let scope_info = lid.scope.as_ref().map(|s| format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)).unwrap_or_default();
-            println!("  [{}] lvalue={:?}:{:?} mr=[{}-{}] reactive={} {}",
-                instr.id.0, lid.id, lid.name, lid.mutable_range.start.0, lid.mutable_range.end.0,
-                instr.lvalue.reactive, scope_info);
+            let scope_info = lid
+                .scope
+                .as_ref()
+                .map(|s| format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0))
+                .unwrap_or_default();
+            println!(
+                "  [{}] lvalue={:?}:{:?} mr=[{}-{}] reactive={} {}",
+                instr.id.0,
+                lid.id,
+                lid.name,
+                lid.mutable_range.start.0,
+                lid.mutable_range.end.0,
+                instr.lvalue.reactive,
+                scope_info
+            );
 
             match &instr.value {
                 InstructionValue::DeclareContext(v) => {
                     let id = &v.lvalue_place.identifier;
-                    let si = id.scope.as_ref().map(|s| format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)).unwrap_or_default();
-                    println!("    DeclareContext {:?}:{:?} mr=[{}-{}] reactive={} {}",
-                        id.id, id.name, id.mutable_range.start.0, id.mutable_range.end.0, v.lvalue_place.reactive, si);
+                    let si = id
+                        .scope
+                        .as_ref()
+                        .map(|s| {
+                            format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)
+                        })
+                        .unwrap_or_default();
+                    println!(
+                        "    DeclareContext {:?}:{:?} mr=[{}-{}] reactive={} {}",
+                        id.id,
+                        id.name,
+                        id.mutable_range.start.0,
+                        id.mutable_range.end.0,
+                        v.lvalue_place.reactive,
+                        si
+                    );
                 }
                 InstructionValue::StoreContext(v) => {
                     let id = &v.lvalue_place.identifier;
-                    let si = id.scope.as_ref().map(|s| format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)).unwrap_or_default();
-                    println!("    StoreContext {:?}:{:?} mr=[{}-{}] reactive={} {}",
-                        id.id, id.name, id.mutable_range.start.0, id.mutable_range.end.0, v.lvalue_place.reactive, si);
+                    let si = id
+                        .scope
+                        .as_ref()
+                        .map(|s| {
+                            format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)
+                        })
+                        .unwrap_or_default();
+                    println!(
+                        "    StoreContext {:?}:{:?} mr=[{}-{}] reactive={} {}",
+                        id.id,
+                        id.name,
+                        id.mutable_range.start.0,
+                        id.mutable_range.end.0,
+                        v.lvalue_place.reactive,
+                        si
+                    );
                     let vid = &v.value.identifier;
-                    println!("    value: {:?}:{:?} mr=[{}-{}] reactive={}",
-                        vid.id, vid.name, vid.mutable_range.start.0, vid.mutable_range.end.0, v.value.reactive);
+                    println!(
+                        "    value: {:?}:{:?} mr=[{}-{}] reactive={}",
+                        vid.id,
+                        vid.name,
+                        vid.mutable_range.start.0,
+                        vid.mutable_range.end.0,
+                        v.value.reactive
+                    );
                 }
                 InstructionValue::LoadContext(v) => {
                     let id = &v.place.identifier;
-                    let si = id.scope.as_ref().map(|s| format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)).unwrap_or_default();
-                    println!("    LoadContext {:?}:{:?} mr=[{}-{}] reactive={} {}",
-                        id.id, id.name, id.mutable_range.start.0, id.mutable_range.end.0, v.place.reactive, si);
+                    let si = id
+                        .scope
+                        .as_ref()
+                        .map(|s| {
+                            format!("scope={} [{}-{}]", s.id.0, s.range.start.0, s.range.end.0)
+                        })
+                        .unwrap_or_default();
+                    println!(
+                        "    LoadContext {:?}:{:?} mr=[{}-{}] reactive={} {}",
+                        id.id,
+                        id.name,
+                        id.mutable_range.start.0,
+                        id.mutable_range.end.0,
+                        v.place.reactive,
+                        si
+                    );
                 }
                 InstructionValue::FunctionExpression(v) => {
                     println!("    FunctionExpression context:");
                     for c in &v.lowered_func.func.context {
-                        println!("      {:?}:{:?} mr=[{}-{}] effect={:?} reactive={}",
-                            c.identifier.id, c.identifier.name,
-                            c.identifier.mutable_range.start.0, c.identifier.mutable_range.end.0,
-                            c.effect, c.reactive);
+                        println!(
+                            "      {:?}:{:?} mr=[{}-{}] effect={:?} reactive={}",
+                            c.identifier.id,
+                            c.identifier.name,
+                            c.identifier.mutable_range.start.0,
+                            c.identifier.mutable_range.end.0,
+                            c.effect,
+                            c.reactive
+                        );
                     }
                 }
                 _ => {}
@@ -668,10 +757,20 @@ fn test_context_variable_debug() {
     println!("=== Terminal types ===");
     for (&block_id, block) in &hir_func.body.blocks {
         let terminal_type = match &block.terminal {
-            oxc_react_compiler::hir::Terminal::Scope(s) => format!("Scope(body={}, fallthrough={}, scope_id={}, range=[{}-{}], deps={}, decls={})",
-                s.block.0, s.fallthrough.0, s.scope.id.0, s.scope.range.start.0, s.scope.range.end.0,
-                s.scope.dependencies.len(), s.scope.declarations.len()),
-            oxc_react_compiler::hir::Terminal::PrunedScope(s) => format!("PrunedScope(body={}, fallthrough={}, scope_id={})", s.block.0, s.fallthrough.0, s.scope.id.0),
+            oxc_react_compiler::hir::Terminal::Scope(s) => format!(
+                "Scope(body={}, fallthrough={}, scope_id={}, range=[{}-{}], deps={}, decls={})",
+                s.block.0,
+                s.fallthrough.0,
+                s.scope.id.0,
+                s.scope.range.start.0,
+                s.scope.range.end.0,
+                s.scope.dependencies.len(),
+                s.scope.declarations.len()
+            ),
+            oxc_react_compiler::hir::Terminal::PrunedScope(s) => format!(
+                "PrunedScope(body={}, fallthrough={}, scope_id={})",
+                s.block.0, s.fallthrough.0, s.scope.id.0
+            ),
             oxc_react_compiler::hir::Terminal::Goto(g) => format!("Goto({})", g.block.0),
             oxc_react_compiler::hir::Terminal::Return(_) => "Return".to_string(),
             t => format!("{:?}", std::mem::discriminant(t)),
@@ -683,7 +782,10 @@ fn test_context_variable_debug() {
         Ok(codegen_func) => {
             let output = format!("{codegen_func}");
             println!("=== Codegen output ===\n{output}");
-            assert!(output.contains("_c("), "Expected memoization (_c) in output but got:\n{output}");
+            assert!(
+                output.contains("_c("),
+                "Expected memoization (_c) in output but got:\n{output}"
+            );
         }
         Err(e) => {
             panic!("Pipeline error: {e:?}");
