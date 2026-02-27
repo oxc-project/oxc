@@ -7,6 +7,7 @@ import {
   sortTailwindClasses,
 } from "./libs/apis";
 import type { Options } from "prettier";
+import type { PluginConfig as SveltePluginConfig } from "prettier-plugin-svelte";
 
 // napi-JS `oxfmt` API entry point
 // See also `format()` function in `./src/main_napi.rs`
@@ -111,6 +112,8 @@ export type FormatOptions = Pick<
   sortTailwindcss?: SortTailwindcssOptions;
   /** @deprecated Use `sortTailwindcss` instead. */
   experimentalTailwindcss?: SortTailwindcssOptions;
+  /** Svelte formatting options. */
+  svelte?: SvelteOptions;
 } & Record<string, unknown>; // Also allow additional options for we don't have typed yet.
 
 /**
@@ -182,3 +185,14 @@ export type SortTailwindcssOptions = {
 
 /** @deprecated Use `SortTailwindcssOptions` instead. */
 export type TailwindcssOptions = SortTailwindcssOptions;
+
+/**
+ * Configuration options for Svelte formatting.
+ * See https://github.com/sveltejs/prettier-plugin-svelte#options
+ */
+export type SvelteOptions = {
+  sortOrder?: SveltePluginConfig["svelteSortOrder"];
+  strictMode?: SveltePluginConfig["svelteStrictMode"];
+  allowShorthand?: SveltePluginConfig["svelteAllowShorthand"];
+  indentScriptAndStyle?: SveltePluginConfig["svelteIndentScriptAndStyle"];
+};

@@ -232,6 +232,16 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
     pub sort_tailwindcss: Option<SortTailwindcssConfig>,
+
+    /// Svelte formatting options.
+    ///
+    /// These options are passed through to `prettier-plugin-svelte`.
+    /// Option names omit the `svelte` prefix used in the original plugin.
+    /// (e.g., `sortOrder` instead of `svelteSortOrder`)
+    ///
+    /// - Default: All plugin defaults
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub svelte: Option<SvelteConfig>,
 }
 
 impl FormatConfig {
@@ -914,6 +924,40 @@ pub struct SortTailwindcssConfig {
 
 // ---
 
+/// Configuration options for Svelte formatting.
+///
+/// These options are passed through to `prettier-plugin-svelte`.
+/// Option names omit the `svelte` prefix used in the original plugin.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SvelteConfig {
+    /// Sort order for Svelte component sections.
+    ///
+    /// Join the keywords:
+    /// `options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`
+    ///
+    /// - Default: `"options-scripts-markup-styles"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_order: Option<String>,
+    /// More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub strict_mode: Option<bool>,
+    /// Allow attribute shorthand when attribute name and expression match.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allow_shorthand: Option<bool>,
+    /// Indent code inside `<script>` and `<style>` tags.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub indent_script_and_style: Option<bool>,
+}
+
+// ---
+
 /// Resolved format options from `FormatConfig`.
 ///
 /// Contains `FormatOptions` for `oxc_formatter` plus additional Oxfmt-specific options.
@@ -980,6 +1024,7 @@ pub fn sync_external_options(options: &FormatOptions, config: &mut Value) {
 static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     "html",
     "vue",
+    "svelte",
     "angular",
     "glimmer",
     "css",
@@ -994,6 +1039,7 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
 static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     // "html",
     "vue",
+    "svelte",
     // "markdown",
     // "mdx",
 };
@@ -1039,6 +1085,27 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
             }
         }
         obj.insert("_useTailwindPlugin".to_string(), Value::Number(1.into()));
+    }
+
+    // Svelte plugin is required for .svelte files (parser plugin)
+    #[cfg(feature = "napi")]
+    if matches!(
+        strategy,
+        FormatFileStrategy::ExternalFormatter { parser_name, .. } if *parser_name == "svelte"
+    ) {
+        if let Some(svelte) = obj.get("svelte").and_then(|v| v.as_object()).cloned() {
+            for (src, dst) in [
+                ("sortOrder", "svelteSortOrder"),
+                ("strictMode", "svelteStrictMode"),
+                ("allowShorthand", "svelteAllowShorthand"),
+                ("indentScriptAndStyle", "svelteIndentScriptAndStyle"),
+            ] {
+                if let Some(value) = svelte.get(src).cloned() {
+                    obj.insert(dst.to_string(), value);
+                }
+            }
+        }
+        obj.insert("_useSveltePlugin".to_string(), Value::Number(1.into()));
     }
 
     // Build oxfmt plugin options JSON for js-in-xxx parsers
@@ -1089,6 +1156,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
         "sortImports",
         "sortTailwindcss",
         "sortPackageJson",
+        "svelte",
         "insertFinalNewline",
         "overrides",
         "ignorePatterns",

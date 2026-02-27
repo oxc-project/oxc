@@ -212,6 +212,18 @@
       ],
       "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
     },
+    "svelte": {
+      "description": "Svelte formatting options.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin.\n(e.g., `sortOrder` instead of `svelteSortOrder`)\n\n- Default: All plugin defaults",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SvelteConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Svelte formatting options.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin.\n(e.g., `sortOrder` instead of `svelteSortOrder`)\n\n- Default: All plugin defaults"
+    },
     "tabWidth": {
       "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",
       "type": [
@@ -503,6 +515,18 @@
             }
           ],
           "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
+        },
+        "svelte": {
+          "description": "Svelte formatting options.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin.\n(e.g., `sortOrder` instead of `svelteSortOrder`)\n\n- Default: All plugin defaults",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SvelteConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "markdownDescription": "Svelte formatting options.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin.\n(e.g., `sortOrder` instead of `svelteSortOrder`)\n\n- Default: All plugin defaults"
         },
         "tabWidth": {
           "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",
@@ -829,6 +853,45 @@
           "markdownDescription": "Path to your Tailwind CSS stylesheet (v4).\n\nNOTE: Paths are resolved relative to the Oxfmt configuration file.\n\n- Default: Installed Tailwind CSS's `theme.css`"
         }
       }
+    },
+    "SvelteConfig": {
+      "description": "Configuration options for Svelte formatting.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin.",
+      "type": "object",
+      "properties": {
+        "allowShorthand": {
+          "description": "Allow attribute shorthand when attribute name and expression match.\n\n- Default: `true`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Allow attribute shorthand when attribute name and expression match.\n\n- Default: `true`"
+        },
+        "indentScriptAndStyle": {
+          "description": "Indent code inside `<script>` and `<style>` tags.\n\n- Default: `true`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Indent code inside `<script>` and `<style>` tags.\n\n- Default: `true`"
+        },
+        "sortOrder": {
+          "description": "Sort order for Svelte component sections.\n\nJoin the keywords:\n`options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`\n\n- Default: `\"options-scripts-markup-styles\"`",
+          "type": [
+            "string",
+            "null"
+          ],
+          "markdownDescription": "Sort order for Svelte component sections.\n\nJoin the keywords:\n`options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`\n\n- Default: `\"options-scripts-markup-styles\"`"
+        },
+        "strictMode": {
+          "description": "More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.\n\n- Default: `false`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.\n\n- Default: `false`"
+        }
+      },
+      "markdownDescription": "Configuration options for Svelte formatting.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin."
     },
     "TrailingCommaConfig": {
       "type": "string",

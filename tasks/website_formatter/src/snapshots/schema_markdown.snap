@@ -684,6 +684,63 @@ NOTE: Paths are resolved relative to the Oxfmt configuration file.
 - Default: Installed Tailwind CSS's `theme.css`
 
 
+##### overrides[n].options.svelte
+
+type: `object`
+
+
+Svelte formatting options.
+
+These options are passed through to `prettier-plugin-svelte`.
+Option names omit the `svelte` prefix used in the original plugin.
+(e.g., `sortOrder` instead of `svelteSortOrder`)
+
+- Default: All plugin defaults
+
+
+###### overrides[n].options.svelte.allowShorthand
+
+type: `boolean`
+
+
+Allow attribute shorthand when attribute name and expression match.
+
+- Default: `true`
+
+
+###### overrides[n].options.svelte.indentScriptAndStyle
+
+type: `boolean`
+
+
+Indent code inside `<script>` and `<style>` tags.
+
+- Default: `true`
+
+
+###### overrides[n].options.svelte.sortOrder
+
+type: `string`
+
+
+Sort order for Svelte component sections.
+
+Join the keywords:
+`options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`
+
+- Default: `"options-scripts-markup-styles"`
+
+
+###### overrides[n].options.svelte.strictMode
+
+type: `boolean`
+
+
+More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.
+
+- Default: `false`
+
+
 ##### overrides[n].options.tabWidth
 
 type: `integer`
@@ -1143,6 +1200,63 @@ Path to your Tailwind CSS stylesheet (v4).
 NOTE: Paths are resolved relative to the Oxfmt configuration file.
 
 - Default: Installed Tailwind CSS's `theme.css`
+
+
+## svelte
+
+type: `object`
+
+
+Svelte formatting options.
+
+These options are passed through to `prettier-plugin-svelte`.
+Option names omit the `svelte` prefix used in the original plugin.
+(e.g., `sortOrder` instead of `svelteSortOrder`)
+
+- Default: All plugin defaults
+
+
+### svelte.allowShorthand
+
+type: `boolean`
+
+
+Allow attribute shorthand when attribute name and expression match.
+
+- Default: `true`
+
+
+### svelte.indentScriptAndStyle
+
+type: `boolean`
+
+
+Indent code inside `<script>` and `<style>` tags.
+
+- Default: `true`
+
+
+### svelte.sortOrder
+
+type: `string`
+
+
+Sort order for Svelte component sections.
+
+Join the keywords:
+`options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`
+
+- Default: `"options-scripts-markup-styles"`
+
+
+### svelte.strictMode
+
+type: `boolean`
+
+
+More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.
+
+- Default: `false`
 
 
 ## tabWidth

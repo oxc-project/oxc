@@ -19,7 +19,9 @@
   },
   "dependencies": {
     "prettier": "3.8.1",
+    "prettier-plugin-svelte": "3.5.0",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.3997fbd",
+    "svelte": "5.53.5",
     "tinypool": "2.1.0"
   },
   "devDependencies": {
