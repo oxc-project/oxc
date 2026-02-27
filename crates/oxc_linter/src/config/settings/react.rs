@@ -139,23 +139,23 @@ enum CustomComponent {
     // they exist so the generated TypeScript types accept the documented forms.
     ObjectWithLinkAttr {
         name: CompactStr,
-        #[serde(rename = "linkAttribute")]
+        #[serde(rename = "linkAttribute", alias = "attribute")]
         link_attribute: CompactStr,
     },
     ObjectWithLinkAttrs {
         name: CompactStr,
-        #[serde(rename = "linkAttribute")]
+        #[serde(rename = "linkAttribute", alias = "attributes")]
         link_attributes: Vec<CompactStr>,
     },
     // Schema-visible variants for `formAttribute`.
     ObjectWithFormAttr {
         name: CompactStr,
-        #[serde(rename = "formAttribute")]
+        #[serde(rename = "formAttribute", alias = "attribute")]
         form_attribute: CompactStr,
     },
     ObjectWithFormAttrs {
         name: CompactStr,
-        #[serde(rename = "formAttribute")]
+        #[serde(rename = "formAttribute", alias = "attributes")]
         form_attributes: Vec<CompactStr>,
     },
 }
