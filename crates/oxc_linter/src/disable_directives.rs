@@ -1089,18 +1089,20 @@ pub fn full_comment_delete_span(content_span: Span, source_text: &str) -> Span {
     let end = content_span.end as usize;
 
     // Expand to include delimiters
-    let (comment_start, comment_end) =
-        if start >= 2 && src[start - 2] == b'/' && src[start - 1] == b'/' {
-            // Line comment: `// ...`
-            (start - 2, end)
-        } else if start >= 2 && src[start - 2] == b'/' && src[start - 1] == b'*' {
-            // Block comment: `/* ... */`
-            (start - 2, (end + 2).min(src.len()))
-        } else {
-            // Shouldn't happen, but fall back to content span
-            debug_assert!(false, "content_span does not appear to be preceded by comment delimiters");
-            (start, end)
-        };
+    let (comment_start, comment_end) = if start >= 2
+        && src[start - 2] == b'/'
+        && src[start - 1] == b'/'
+    {
+        // Line comment: `// ...`
+        (start - 2, end)
+    } else if start >= 2 && src[start - 2] == b'/' && src[start - 1] == b'*' {
+        // Block comment: `/* ... */`
+        (start - 2, (end + 2).min(src.len()))
+    } else {
+        // Shouldn't happen, but fall back to content span
+        debug_assert!(false, "content_span does not appear to be preceded by comment delimiters");
+        (start, end)
+    };
 
     // Find line boundaries
     let line_start =
@@ -1446,10 +1448,7 @@ function test() {
         let src = "let x = 1;\n// eslint-disable-next-line\nlet y = 2;\n";
         // content_span covers " eslint-disable-next-line" (after "//")
         let content = Span::new(13, 38);
-        assert_eq!(
-            &src[content.start as usize..content.end as usize],
-            " eslint-disable-next-line"
-        );
+        assert_eq!(&src[content.start as usize..content.end as usize], " eslint-disable-next-line");
         let result = full_comment_delete_span(content, src);
         // Should delete entire line including trailing newline
         assert_eq!(result, Span::new(11, 39));
@@ -1498,10 +1497,7 @@ function test() {
     fn comment_at_start_of_file() {
         let src = "// eslint-disable-next-line\nlet x = 1;\n";
         let content = Span::new(2, 27);
-        assert_eq!(
-            &src[content.start as usize..content.end as usize],
-            " eslint-disable-next-line"
-        );
+        assert_eq!(&src[content.start as usize..content.end as usize], " eslint-disable-next-line");
         let result = full_comment_delete_span(content, src);
         assert_eq!(result, Span::new(0, 28));
         assert_eq!(
@@ -1514,27 +1510,18 @@ function test() {
     fn comment_at_end_of_file_no_trailing_newline() {
         let src = "let x = 1;\n// eslint-disable-next-line";
         let content = Span::new(13, 38);
-        assert_eq!(
-            &src[content.start as usize..content.end as usize],
-            " eslint-disable-next-line"
-        );
+        assert_eq!(&src[content.start as usize..content.end as usize], " eslint-disable-next-line");
         let result = full_comment_delete_span(content, src);
         // Should delete from line start to EOF
         assert_eq!(result, Span::new(11, 38));
-        assert_eq!(
-            &src[result.start as usize..result.end as usize],
-            "// eslint-disable-next-line"
-        );
+        assert_eq!(&src[result.start as usize..result.end as usize], "// eslint-disable-next-line");
     }
 
     #[test]
     fn crlf_line_endings() {
         let src = "let x = 1;\r\n// eslint-disable-next-line\r\nlet y = 2;\r\n";
         let content = Span::new(14, 39);
-        assert_eq!(
-            &src[content.start as usize..content.end as usize],
-            " eslint-disable-next-line"
-        );
+        assert_eq!(&src[content.start as usize..content.end as usize], " eslint-disable-next-line");
         let result = full_comment_delete_span(content, src);
         // Should delete from after previous \n to after the \n of this line
         assert_eq!(result, Span::new(12, 41));
@@ -1548,10 +1535,7 @@ function test() {
     fn line_comment_with_leading_whitespace() {
         let src = "let x = 1;\n    // eslint-disable-next-line\nlet y = 2;\n";
         let content = Span::new(17, 42);
-        assert_eq!(
-            &src[content.start as usize..content.end as usize],
-            " eslint-disable-next-line"
-        );
+        assert_eq!(&src[content.start as usize..content.end as usize], " eslint-disable-next-line");
         let result = full_comment_delete_span(content, src);
         // Should delete entire line including leading whitespace
         assert_eq!(result, Span::new(11, 43));
@@ -1570,9 +1554,6 @@ function test() {
         let result = full_comment_delete_span(content, src);
         // Should delete from start of `/*` line through end of `*/` line
         assert_eq!(result, Span::new(11, 32));
-        assert_eq!(
-            &src[result.start as usize..result.end as usize],
-            "/*\neslint-disable\n*/\n"
-        );
+        assert_eq!(&src[result.start as usize..result.end as usize], "/*\neslint-disable\n*/\n");
     }
 }
