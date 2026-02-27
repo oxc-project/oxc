@@ -3597,6 +3597,10 @@ impl Gen for TSTypeParameterInstantiation<'_> {
 
 impl Gen for TSIndexSignature<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
+        if self.r#static {
+            p.print_str("static");
+            p.print_soft_space();
+        }
         if self.readonly {
             p.print_str("readonly ");
         }
