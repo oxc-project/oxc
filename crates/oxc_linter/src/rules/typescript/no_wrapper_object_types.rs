@@ -12,15 +12,6 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 fn no_wrapper_object_types(ident_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use wrapper object types.")
         .with_help(format!(
-            "Replace `{ident_name}` with `{}`.",
-            ident_name.cow_to_ascii_lowercase()
-        ))
-        .with_label(span)
-}
-
-fn no_wrapper_object_types_non_fixable(ident_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use wrapper object types.")
-        .with_help(format!(
             "`{ident_name}` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `{}` for values, and in `extends`/`implements` use an interface/object shape instead.",
             ident_name.cow_to_ascii_lowercase()
         ))
@@ -108,7 +99,7 @@ impl Rule for NoWrapperObjectTypes {
                     fixer.replace(ident_span, ident_name.cow_to_ascii_lowercase().to_string())
                 });
             } else {
-                ctx.diagnostic(no_wrapper_object_types_non_fixable(ident_name, ident_span));
+                ctx.diagnostic(no_wrapper_object_types(ident_name, ident_span));
             }
         }
     }
