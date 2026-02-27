@@ -264,10 +264,15 @@ fn pruneable_value(value: &InstructionValue, state: &DceState) -> bool {
         // DeclareLocal with unreferenced lvalue can be pruned
         InstructionValue::DeclareLocal(v) => !state.is_id_or_name_used(&v.lvalue.place.identifier),
 
-        // StoreLocal: only const/let declarations can be pruned, not reassignments
+        // StoreLocal: Reassignments can be pruned if the specific instance being
+        // assigned is never read. Declarations are pruneable only if the named
+        // variable is never read later.
         InstructionValue::StoreLocal(v) => {
-            v.lvalue.kind != InstructionKind::Reassign
-                && !state.is_id_or_name_used(&v.lvalue.place.identifier)
+            if v.lvalue.kind == InstructionKind::Reassign {
+                !state.is_id_used(&v.lvalue.place.identifier)
+            } else {
+                !state.is_id_or_name_used(&v.lvalue.place.identifier)
+            }
         }
 
         // Destructure: pruneable if all pattern operands are unused
