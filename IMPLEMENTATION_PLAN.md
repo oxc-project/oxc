@@ -2,7 +2,7 @@
 
 ## Context
 
-`oxc_module_graph` (in oxc repo, already implemented with 17 passing tests) provides trait-based cross-module analysis with a generic `bind_imports_and_exports` algorithm. Rolldown has its own ~940-line implementation. We want to replace Rolldown's core binding logic with oxc_module_graph's shared algorithm.
+`oxc_module_graph` (in oxc repo, already implemented with 17 passing tests) provides trait-based cross-module analysis with a generic `bind_imports_and_exports` algorithm. Rolldown has its own ~1050-line implementation. We want to replace Rolldown's core binding logic with oxc_module_graph's shared algorithm.
 
 **Challenge:** The current oxc_module_graph traits use concrete types that don't match Rolldown's types. We need to refactor the traits to use associated types so Rolldown can implement them directly.
 
@@ -26,9 +26,14 @@ The shared algorithm replaces part (1); parts (2-5) remain as Rolldown-specific 
 | `FxHashMap<SymbolRef, NamedImport>` | `FxIndexMap<SymbolRef, NamedImport>` | Different collection |
 | `StarExportEntry` struct | `ImportRecordMeta::IsExportStar` flag | Different representation |
 
-## Stage 1: Refactor oxc_module_graph traits to use associated types [Complete]
+## Stage 1: Refactor oxc_module_graph traits to use associated types
 
-### SymbolGraph
+### Status: Complete (committed)
+- 17/17 tests passing
+- Zero clippy warnings
+- Formatting clean
+
+### Trait signatures (final)
 
 ```rust
 pub trait SymbolGraph {
@@ -37,64 +42,31 @@ pub trait SymbolGraph {
     fn link(&mut self, from: Self::SymbolRef, to: Self::SymbolRef);
     fn symbol_name(&self, symbol: Self::SymbolRef) -> &str;
 }
-```
 
-### ModuleInfo — uses callback-based iteration instead of concrete collection refs
-
-```rust
 pub trait ModuleInfo {
     type ModuleIdx: Copy + Eq + Hash + Debug;
     type SymbolRef: Copy + Eq + Hash + Debug;
-
     fn module_idx(&self) -> Self::ModuleIdx;
     fn default_export_ref(&self) -> Self::SymbolRef;
     fn namespace_object_ref(&self) -> Self::SymbolRef;
     fn has_module_syntax(&self) -> bool;
-
-    fn for_each_named_export(&self, f: &mut dyn FnMut(&str, Self::SymbolRef));
+    fn for_each_named_export(&self, f: &mut dyn FnMut(&str, Self::SymbolRef, bool));
     fn for_each_named_import(&self, f: &mut dyn FnMut(Self::SymbolRef, &str, usize, bool));
     fn import_record_count(&self) -> usize;
     fn import_record_resolved_module(&self, idx: usize) -> Option<Self::ModuleIdx>;
     fn for_each_star_export(&self, f: &mut dyn FnMut(Self::ModuleIdx));
     fn for_each_indirect_export(&self, f: &mut dyn FnMut(&str, &str, Self::ModuleIdx));
 }
-```
 
-### ModuleStore
-
-```rust
 pub trait ModuleStore {
     type ModuleIdx: Copy + Eq + Hash + Debug;
     type SymbolRef: Copy + Eq + Hash + Debug;
     type Module: ModuleInfo<ModuleIdx = Self::ModuleIdx, SymbolRef = Self::SymbolRef>;
-
     fn module(&self, idx: Self::ModuleIdx) -> Option<&Self::Module>;
     fn modules_len(&self) -> usize;
     fn for_each_module(&self, f: &mut dyn FnMut(Self::ModuleIdx, &Self::Module));
     fn for_each_dependency(&self, idx: Self::ModuleIdx, f: &mut dyn FnMut(Self::ModuleIdx));
 }
-```
-
-### Binding algorithm returns BindingResult with associated types
-
-```rust
-pub struct ResolvedExport<S> {
-    pub symbol_ref: S,
-    pub potentially_ambiguous: Option<Vec<S>>,
-}
-
-pub struct BindingResult<Idx, Sym> {
-    pub resolved_exports: FxHashMap<Idx, FxHashMap<CompactString, ResolvedExport<Sym>>>,
-    pub errors: Vec<BindingError<Idx>>,
-}
-
-pub fn bind_imports_and_exports<M, S>(
-    store: &M,
-    symbols: &mut S,
-) -> BindingResult<M::ModuleIdx, M::SymbolRef>
-where
-    M: ModuleStore,
-    S: SymbolGraph<SymbolRef = M::SymbolRef>,
 ```
 
 ### Files modified (oxc repo)
@@ -114,168 +86,118 @@ where
 - `crates/oxc_module_graph/src/default/symbol_db.rs`
 - `crates/oxc_module_graph/tests/integration.rs`
 
-### Status: Complete
-- 17/17 tests passing
-- Zero clippy warnings
-- Formatting clean
-
 ## Stage 2: Implement traits in Rolldown
 
-**Status: Not Started**
+### Status: Complete
+- `cargo check -p rolldown_common` passes
+- `cargo check -p rolldown` passes (only pre-existing warnings)
 
-### Files to create (rolldown repo)
+### Files created (rolldown repo)
 
 - `crates/rolldown_common/src/oxc_module_graph_impls.rs` — all 3 trait impls
 
-### Files to modify (rolldown repo)
+### Files modified (rolldown repo)
 
-- `crates/rolldown_common/Cargo.toml` — add path dep: `oxc_module_graph = { path = "../../oxc/crates/oxc_module_graph" }`
-- `crates/rolldown_common/src/lib.rs` — register module
+- `crates/rolldown_common/Cargo.toml` — added `oxc_module_graph = { path = "../../../oxc/crates/oxc_module_graph" }`
+- `crates/rolldown_common/src/lib.rs` — registered `oxc_module_graph_impls` module
 
-### Trait impls sketch
+### Trait impls (actual)
 
-```rust
-// SymbolGraph for SymbolRefDb — direct delegation
-impl oxc_module_graph::SymbolGraph for SymbolRefDb {
-    type SymbolRef = crate::SymbolRef;
-    fn canonical_ref_for(&self, s: Self::SymbolRef) -> Self::SymbolRef { self.canonical_ref_for(s) }
-    fn link(&mut self, from: Self::SymbolRef, to: Self::SymbolRef) { self.link(from, to); }
-    fn symbol_name(&self, s: Self::SymbolRef) -> &str { s.name(self) }
-}
+- `SymbolGraph for SymbolRefDb` — direct delegation to existing methods
+- `ModuleInfo for NormalModule` — adapts field names (`imported_as` for `local_symbol`, `Specifier` for imported name, `ImportRecordIdx::from_raw` for index conversion), passes `came_from_commonjs` from `LocalExport`
+- `ModuleStore for ModuleTable` — skips `Module::External` variants, iterates `Module::Normal` only
 
-// ModuleInfo for NormalModule — adapt field names
-impl oxc_module_graph::ModuleInfo for NormalModule {
-    type ModuleIdx = crate::ModuleIdx;
-    type SymbolRef = crate::SymbolRef;
-    fn module_idx(&self) -> Self::ModuleIdx { self.idx }
-    fn namespace_object_ref(&self) -> Self::SymbolRef { self.ecma_view.namespace_object_ref }
-    fn default_export_ref(&self) -> Self::SymbolRef { self.ecma_view.default_export_ref }
-    fn has_module_syntax(&self) -> bool { self.ecma_view.def_format.is_esm() }
-    fn for_each_named_export(&self, f: &mut dyn FnMut(&str, Self::SymbolRef)) {
-        for (name, export) in &self.ecma_view.named_exports {
-            f(name.as_str(), export.referenced);
-        }
-    }
-    fn for_each_named_import(&self, f: &mut dyn FnMut(Self::SymbolRef, &str, usize, bool)) {
-        for (sym, import) in &self.ecma_view.named_imports {
-            let (name, is_ns) = match &import.imported {
-                Specifier::Star => ("*", true),
-                Specifier::Literal(s) => (s.as_str(), false),
-            };
-            f(*sym, name, import.record_idx.index(), is_ns);
-        }
-    }
-    fn import_record_count(&self) -> usize { self.ecma_view.import_records.len() }
-    fn import_record_resolved_module(&self, idx: usize) -> Option<Self::ModuleIdx> {
-        self.ecma_view.import_records.get(ImportRecordIdx::from_usize(idx))?.resolved_module
-    }
-    fn for_each_star_export(&self, f: &mut dyn FnMut(Self::ModuleIdx)) {
-        for rec in self.ecma_view.import_records.iter() {
-            if rec.meta.contains(ImportRecordMeta::IsExportStar) {
-                if let Some(m) = rec.resolved_module { f(m); }
-            }
-        }
-    }
-    fn for_each_indirect_export(&self, _f: &mut dyn FnMut(&str, &str, Self::ModuleIdx)) {
-        // Rolldown handles indirect exports differently (through named_exports + named_imports)
-        // This may need adjustment based on how Rolldown represents `export { x } from './foo'`
-    }
-}
+## Stage 3: CJS-aware resolved exports + `build_resolved_exports` API
 
-// ModuleStore for ModuleTable — skip External modules
-impl oxc_module_graph::ModuleStore for ModuleTable {
-    type ModuleIdx = crate::ModuleIdx;
-    type SymbolRef = crate::SymbolRef;
-    type Module = NormalModule;
-    fn module(&self, idx: Self::ModuleIdx) -> Option<&NormalModule> {
-        match &self.modules[idx] { Module::Normal(m) => Some(m), _ => None }
-    }
-    fn modules_len(&self) -> usize { self.modules.len() }
-    fn for_each_module(&self, f: &mut dyn FnMut(Self::ModuleIdx, &NormalModule)) {
-        for (idx, m) in self.modules.iter_enumerated() {
-            if let Module::Normal(m) = m { f(idx, m); }
-        }
-    }
-    fn for_each_dependency(&self, idx: Self::ModuleIdx, f: &mut dyn FnMut(Self::ModuleIdx)) {
-        if let Module::Normal(m) = &self.modules[idx] {
-            for rec in m.ecma_view.import_records.iter() {
-                if let Some(target) = rec.resolved_module { f(target); }
-            }
-        }
-    }
-}
-```
+### Status: Complete
+- 17/17 tests passing in oxc_module_graph
+- Zero clippy warnings
+- `cargo check -p rolldown` passes
 
-## Stage 3: Replace core binding in LinkStage
+### Design: Modular algorithm split
 
-**Status: Not Started**
+Instead of replacing Rolldown's entire binding at once, we split the algorithm:
 
-### File to modify
-- `crates/rolldown/src/stages/link_stage/bind_imports_and_exports.rs`
+**Phase 1 (shared, `build_resolved_exports`):**
+- Initialize resolved exports from local exports (with `came_from_cjs` flag)
+- Propagate star re-exports with CJS-aware semantics
+- Returns `FxHashMap<ModuleIdx, ResolvedExportsMap<SymbolRef>>`
 
-### What changes
+**Phase 2 (consumer-specific):**
+- Import matching — stays in Rolldown due to CJS/external/dynamic fallback complexity
+- The default `bind_imports_and_exports` provides a simple ESM-only Phase 2
 
-**Before** (current Rolldown, ~240 lines for core binding):
-```rust
-pub(super) fn bind_imports_and_exports(&mut self) {
-    // 1. Initialize resolved_exports (parallel)     ← REPLACE
-    // 2. Add exports for export stars               ← REPLACE
-    // 3. Match imports with exports (BindContext)    ← REPLACE
-    // 4. External import binding merger              ← KEEP (Rolldown-specific)
-    // 5. Ambiguity resolution                        ← KEEP (Rolldown-specific)
-    // 6. update_cjs_module_meta                      ← KEEP (Rolldown-specific)
-    // 7. resolve_member_expr_refs                    ← KEEP (Rolldown-specific)
-}
-```
+### Changes made (oxc repo)
 
-**After:**
-```rust
-pub(super) fn bind_imports_and_exports(&mut self) {
-    // 1-3. Core binding via shared algorithm
-    let result = oxc_module_graph::bind_imports_and_exports(
-        &self.module_table,
-        &mut self.symbols,
-    );
-    // Store resolved_exports into metas
-    for (idx, exports) in result.resolved_exports.into_iter().enumerate() {
-        self.metas[ModuleIdx::from_usize(idx)].resolved_exports = exports;
-    }
+1. **Extended `ModuleInfo::for_each_named_export`** with `came_from_cjs: bool` parameter
+   - Trait signature: `fn for_each_named_export(&self, f: &mut dyn FnMut(&str, Self::SymbolRef, bool))`
+   - Default impl passes `false` (pure ESM modules)
 
-    // 4. External import binding merger (Rolldown-specific)
-    // ... existing code ...
+2. **Added `came_from_cjs: bool` to `ResolvedExport<S>`**
+   - Tracks CJS origin through star re-export chains
 
-    // 5. Ambiguity resolution (Rolldown-specific)
-    // ... existing code ...
+3. **CJS-aware star re-export logic in `add_exports_for_star`:**
+   - ESM "default" exports skipped during `export *` (standard behavior)
+   - CJS "default" exports propagated through `export *`
+   - Ambiguity detection suppressed when existing export `came_from_cjs`
 
-    // 6-7. CJS meta + member expr resolution
-    self.update_cjs_module_meta();
-    self.resolve_member_expr_refs(...);
-}
-```
+4. **Extracted `build_resolved_exports` as public function**
+   - Phase 1 only: init exports + star re-export propagation
+   - Rolldown can call this directly and do its own Phase 2 import matching
+   - `bind_imports_and_exports` now delegates to `build_resolved_exports` internally
 
-### What gets removed from Rolldown
-- `add_exports_for_export_star()` static method (~70 lines)
-- `BindImportsAndExportsContext` struct and `match_imports_with_exports()` (~150 lines)
-- `advance_import_tracker()` (~65 lines)
-- `match_import_with_export()` (~120 lines)
-- `ImportTracker`, `MatchingContext`, `MatchImportKind`, `ImportStatus` types
+### Changes made (rolldown repo)
+
+- Updated `for_each_named_export` impl to pass `export.came_from_commonjs`
+
+### Files modified
+
+**oxc repo:**
+- `crates/oxc_module_graph/src/traits/module_info.rs` — extended callback signature
+- `crates/oxc_module_graph/src/types/import_export.rs` — added `came_from_cjs` to `ResolvedExport`
+- `crates/oxc_module_graph/src/algo/binding.rs` — CJS-aware logic, extracted `build_resolved_exports`
+- `crates/oxc_module_graph/src/algo/mod.rs` — re-export `build_resolved_exports`
+- `crates/oxc_module_graph/src/lib.rs` — re-export at crate root, updated doc comments
+- `crates/oxc_module_graph/src/default/module.rs` — updated impl to pass `false`
+- `crates/oxc_module_graph/tests/integration.rs` — updated closure signatures
+
+**rolldown repo:**
+- `crates/rolldown_common/src/oxc_module_graph_impls.rs` — updated `for_each_named_export`
+
+## Stage 4: Replace Phase 1 in Rolldown's LinkStage
+
+### Status: Complete
+- All 1,680 Rolldown tests pass (0 failures)
+
+- `cargo check -p rolldown` passes (only pre-existing warnings)
+- Replaced Phase 1 init + star re-export propagation with `oxc_module_graph::build_resolved_exports`
+- Removed dead `add_exports_for_export_star()` method (~67 lines)
+- Removed unused `EcmaModuleAstUsage` import
+
+### Changes made (rolldown repo)
+
+1. **Extended `for_each_star_export`** in `oxc_module_graph_impls.rs` to also yield `IsCjsReexport` targets
+2. **Added `oxc_module_graph` dep** to `crates/rolldown/Cargo.toml`
+3. **Replaced Phase 1** in `bind_imports_and_exports()` with `oxc_module_graph::build_resolved_exports(&self.module_table)` call
+4. **Converted result** from `FxHashMap<ModuleIdx, FxHashMap<CompactString, ResolvedExport<SymbolRef>>>` to Rolldown's `FxHashMap<CompactStr, ResolvedExport>` format
+5. **Removed** `add_exports_for_export_star()` method and unused `EcmaModuleAstUsage` import
+
+### Files modified (rolldown repo)
+
+- `crates/rolldown_common/src/oxc_module_graph_impls.rs` — extended `for_each_star_export` with IsCjsReexport
+- `crates/rolldown/Cargo.toml` — added `oxc_module_graph` path dependency
+- `crates/rolldown/src/stages/link_stage/bind_imports_and_exports.rs` — replaced Phase 1, removed dead code
 
 ### What stays in Rolldown
-- External import binding merger (~20 lines)
-- Ambiguity resolution filter (~20 lines)
-- `update_cjs_module_meta()` (~50 lines)
-- `resolve_member_expr_refs()` (~200 lines)
+- Phase 2 import matching (CJS interop, external handling, dynamic fallback, shim missing exports)
+- External import binding merger
+- Ambiguity resolution filter
+- `update_cjs_module_meta()`
+- `resolve_member_expr_refs()`
 
-## Verification
-
-```bash
-# In oxc repo — ensure refactored traits still pass
-cargo test -p oxc_module_graph
-cargo clippy -p oxc_module_graph
-
-# In rolldown repo — ensure all existing tests pass
-cargo test -p rolldown_common
-cargo test -p rolldown
-# Run the full test suite to validate no regressions
-pnpm test
-```
+### Test results
+- 53 unit tests passed
+- 834 fixture tests passed (58 ignored — pre-existing)
+- 745 rollup compat tests passed (11 ignored — pre-existing)
+- 47 JSX tests passed
+- 1 test262 test passed

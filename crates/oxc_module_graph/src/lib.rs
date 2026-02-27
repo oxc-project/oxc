@@ -65,7 +65,7 @@
 //!     fn default_export_ref(&self) -> Self::SymbolRef;
 //!     fn namespace_object_ref(&self) -> Self::SymbolRef;
 //!     fn has_module_syntax(&self) -> bool;
-//!     fn for_each_named_export(&self, f: &mut dyn FnMut(&str, Self::SymbolRef));
+//!     fn for_each_named_export(&self, f: &mut dyn FnMut(&str, Self::SymbolRef, bool));
 //!     fn for_each_named_import(&self, f: &mut dyn FnMut(Self::SymbolRef, &str, usize, bool));
 //!     fn import_record_count(&self) -> usize;
 //!     fn import_record_resolved_module(&self, idx: usize) -> Option<Self::ModuleIdx>;
@@ -164,5 +164,6 @@ pub use traits::{ModuleInfo, ModuleStore, SymbolGraph};
 
 // Re-export algorithms at crate root.
 pub use algo::{
-    BindingError, BindingResult, bind_imports_and_exports, find_cycles, topological_sort,
+    BindingError, BindingResult, bind_imports_and_exports, build_resolved_exports, find_cycles,
+    topological_sort,
 };
