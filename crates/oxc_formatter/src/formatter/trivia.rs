@@ -418,6 +418,26 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 
 impl<'a> Format<'a> for Comment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        // JSDoc formatting: if enabled, try to format JSDoc comments
+        if self.is_jsdoc()
+            && let Some(jsdoc_options) = &f.options().jsdoc
+        {
+            let source: &str = &f.source_text();
+            let available_width = f.options().line_width.value() as usize;
+            if let Some(formatted) = super::jsdoc::format_jsdoc_comment(
+                self,
+                jsdoc_options,
+                source,
+                f.allocator(),
+                available_width,
+            ) {
+                if !formatted.is_empty() {
+                    write!(f, [text(formatted)]);
+                }
+                return;
+            }
+        }
+
         let content = f.source_text().text_for(&self.span);
         if self.is_multiline_block() {
             let mut lines = LineTerminatorSplitter::new(content);
