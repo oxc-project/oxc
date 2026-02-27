@@ -4,7 +4,7 @@ use std::hash::Hash;
 use compact_str::CompactString;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::traits::{ModuleInfo, ModuleStore, SymbolGraph};
+use crate::traits::{ImportMatcher, ModuleInfo, ModuleStore, SymbolGraph};
 use crate::types::MatchImportKind;
 
 /// A resolved export: the final symbol that an export name maps to.
@@ -110,7 +110,7 @@ pub fn bind_imports_and_exports<M, S>(
 ) -> BindingResult<M::ModuleIdx, M::SymbolRef>
 where
     M: ModuleStore,
-    S: SymbolGraph<SymbolRef = M::SymbolRef>,
+    S: SymbolGraph<ModuleIdx = M::ModuleIdx, SymbolRef = M::SymbolRef>,
 {
     let resolved_exports = build_resolved_exports(store);
 
@@ -167,6 +167,12 @@ where
                     symbols.link(local_symbol, symbol_ref);
                 }
                 MatchImportKind::Namespace { namespace_ref } => {
+                    symbols.link(local_symbol, namespace_ref);
+                }
+                MatchImportKind::NormalAndNamespace { namespace_ref, .. } => {
+                    // In the basic binding algorithm, treat as namespace link.
+                    // Consumers using `match_imports` with an `ImportMatcher`
+                    // get full control over this variant.
                     symbols.link(local_symbol, namespace_ref);
                 }
                 MatchImportKind::Ambiguous { .. } => {
@@ -336,4 +342,423 @@ fn match_import<Idx: Copy + Eq + Hash + Debug, Sym: Copy + Eq + Hash + Debug>(
         }
         None => MatchImportKind::NoMatch,
     }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 with re-export chain following + ImportMatcher callbacks
+// ---------------------------------------------------------------------------
+
+/// Match all imports to resolved exports, following re-export chains.
+///
+/// This is the full Phase 2 algorithm that replaces the simple lookup in
+/// `bind_imports_and_exports`. It:
+///
+/// 1. Iterates all modules' named imports
+/// 2. For namespace imports: links to the target's `namespace_object_ref`
+/// 3. For named imports: follows re-export chains (if a resolved symbol is
+///    itself an import in its owning module, recurses)
+/// 4. Calls [`ImportMatcher`] callbacks for consumer-specific behavior
+///    (CJS interop, external modules, dynamic fallback)
+/// 5. Links symbols via `SymbolGraph::link()`
+///
+/// Returns binding errors (unresolved/ambiguous imports).
+#[expect(clippy::implicit_hasher)]
+pub fn match_imports<M, S, C>(
+    store: &M,
+    symbols: &mut S,
+    resolved_exports: &FxHashMap<M::ModuleIdx, ResolvedExportsMap<M::SymbolRef>>,
+    matcher: &mut C,
+) -> Vec<BindingError<M::ModuleIdx>>
+where
+    M: ModuleStore,
+    S: SymbolGraph<ModuleIdx = M::ModuleIdx, SymbolRef = M::SymbolRef>,
+    C: ImportMatcher<ModuleIdx = M::ModuleIdx, SymbolRef = M::SymbolRef>,
+{
+    let mut errors = Vec::new();
+
+    // Collect all module indices first.
+    let mut module_indices: Vec<M::ModuleIdx> = Vec::with_capacity(store.modules_len());
+    store.for_each_module(&mut |idx, _| {
+        module_indices.push(idx);
+    });
+
+    for &idx in &module_indices {
+        let Some(module) = store.module(idx) else { continue };
+
+        // Collect imports to process (avoid borrow issues with callbacks).
+        let mut imports: Vec<(M::SymbolRef, CompactString, usize, bool)> = Vec::new();
+        module.for_each_named_import(&mut |local_symbol, imported_name, record_idx, is_ns| {
+            imports.push((local_symbol, CompactString::from(imported_name), record_idx, is_ns));
+        });
+
+        for (local_symbol, imported_name, record_idx, is_ns) in imports {
+            let Some(module) = store.module(idx) else { continue };
+            let target_idx = module.import_record_resolved_module(record_idx);
+
+            let Some(target_idx) = target_idx else {
+                continue;
+            };
+
+            // Handle namespace imports.
+            if is_ns || imported_name.as_str() == "*" {
+                // Allow consumer to override (e.g., CJS uses importer_record.namespace_ref).
+                if let Some(kind) =
+                    matcher.on_before_match(idx, record_idx, target_idx, &imported_name, true)
+                {
+                    apply_match(symbols, local_symbol, &kind);
+                    matcher.on_resolved(idx, local_symbol, &kind, &[]);
+                    continue;
+                }
+
+                match store.module(target_idx) {
+                    Some(target) => {
+                        let ns_ref = target.namespace_object_ref();
+                        symbols.link(local_symbol, ns_ref);
+                    }
+                    None => {
+                        if let Some(kind) =
+                            matcher.on_missing_module(idx, record_idx, target_idx, &imported_name, true)
+                        {
+                            apply_match(symbols, local_symbol, &kind);
+                        }
+                    }
+                }
+                continue;
+            }
+
+            // Resolve with re-export chain following.
+            let mut visited = FxHashSet::default();
+            let mut reexport_chain = Vec::new();
+            let result = resolve_import(
+                store,
+                symbols,
+                idx,
+                record_idx,
+                target_idx,
+                &imported_name,
+                resolved_exports,
+                matcher,
+                &mut visited,
+                &mut reexport_chain,
+            );
+
+            matcher.on_resolved(idx, local_symbol, &result, &reexport_chain);
+
+            match &result {
+                MatchImportKind::Normal { symbol_ref } => {
+                    symbols.link(local_symbol, *symbol_ref);
+                }
+                MatchImportKind::Namespace { namespace_ref } => {
+                    symbols.link(local_symbol, *namespace_ref);
+                }
+                // NormalAndNamespace: consumer handles via on_resolved (e.g., namespace_alias).
+                // Cycle: circular dependency — leave the symbol unlinked.
+                MatchImportKind::NormalAndNamespace { .. } | MatchImportKind::Cycle => {}
+                MatchImportKind::Ambiguous { .. } => {
+                    errors.push(BindingError::AmbiguousImport {
+                        module: idx,
+                        import_name: imported_name.clone(),
+                    });
+                }
+                MatchImportKind::NoMatch => {
+                    errors.push(BindingError::UnresolvedImport {
+                        module: idx,
+                        import_name: imported_name.clone(),
+                    });
+                }
+            }
+        }
+    }
+
+    errors
+}
+
+/// Apply a `MatchImportKind` result by linking the local symbol.
+fn apply_match<S: SymbolGraph>(
+    symbols: &mut S,
+    local_symbol: S::SymbolRef,
+    kind: &MatchImportKind<S::SymbolRef>,
+) {
+    match kind {
+        MatchImportKind::Normal { symbol_ref } => {
+            symbols.link(local_symbol, *symbol_ref);
+        }
+        MatchImportKind::Namespace { namespace_ref }
+        | MatchImportKind::NormalAndNamespace { namespace_ref, .. } => {
+            symbols.link(local_symbol, *namespace_ref);
+        }
+        MatchImportKind::Ambiguous { .. }
+        | MatchImportKind::Cycle
+        | MatchImportKind::NoMatch => {}
+    }
+}
+
+/// Recursively resolve an import name against a target module's resolved exports,
+/// following re-export chains.
+///
+/// `importer_idx` and `importer_record_idx` identify which import record triggered
+/// this lookup. These are passed to `ImportMatcher` callbacks so consumers can look
+/// up per-record data (e.g., Rolldown's `import_record.namespace_ref`).
+///
+/// If a resolved export symbol is itself a named import in its owning module,
+/// this function recurses into that module's import target — this is the
+/// "re-export chain following" that the simple `match_import` does not do.
+#[expect(clippy::too_many_arguments)]
+fn resolve_import<M, S, C>(
+    store: &M,
+    symbols: &S,
+    importer_idx: M::ModuleIdx,
+    importer_record_idx: usize,
+    target_idx: M::ModuleIdx,
+    import_name: &str,
+    resolved_exports: &FxHashMap<M::ModuleIdx, ResolvedExportsMap<M::SymbolRef>>,
+    matcher: &mut C,
+    visited: &mut FxHashSet<(M::ModuleIdx, CompactString)>,
+    reexport_chain: &mut Vec<M::SymbolRef>,
+) -> MatchImportKind<M::SymbolRef>
+where
+    M: ModuleStore,
+    S: SymbolGraph<ModuleIdx = M::ModuleIdx, SymbolRef = M::SymbolRef>,
+    C: ImportMatcher<ModuleIdx = M::ModuleIdx, SymbolRef = M::SymbolRef>,
+{
+    // Cycle detection.
+    let key = (target_idx, CompactString::from(import_name));
+    if !visited.insert(key) {
+        return MatchImportKind::Cycle;
+    }
+
+    // Check if target module exists.
+    if store.module(target_idx).is_none() {
+        return matcher
+            .on_missing_module(importer_idx, importer_record_idx, target_idx, import_name, false)
+            .unwrap_or(MatchImportKind::NoMatch);
+    }
+
+    // Allow short-circuit (CJS, external, etc.).
+    if let Some(kind) = matcher.on_before_match(importer_idx, importer_record_idx, target_idx, import_name, false) {
+        return kind;
+    }
+
+    // Look up in resolved exports.
+    let Some(target_exports) = resolved_exports.get(&target_idx) else {
+        return matcher
+            .on_no_match(target_idx, import_name)
+            .unwrap_or(MatchImportKind::NoMatch);
+    };
+
+    match target_exports.get(import_name) {
+        Some(resolved) => {
+            // Handle ambiguous exports by recursively resolving each candidate.
+            if let Some(candidates) = &resolved.potentially_ambiguous {
+                return resolve_ambiguous(
+                    store,
+                    symbols,
+                    resolved.symbol_ref,
+                    candidates,
+                    resolved_exports,
+                    matcher,
+                    visited,
+                    reexport_chain,
+                );
+            }
+
+            // Handle came_from_cjs.
+            if resolved.came_from_cjs
+                && let Some(kind) =
+                    matcher.on_cjs_match(target_idx, import_name, resolved.symbol_ref)
+            {
+                return kind;
+            }
+
+            let symbol = resolved.symbol_ref;
+
+            // Check if the resolved symbol is itself an import (re-export chain).
+            let owner_idx = symbols.symbol_owner(symbol);
+            if let Some(owner_module) = store.module(owner_idx)
+                && let Some((re_imported_name, re_record_idx, re_is_ns)) =
+                    owner_module.symbol_import_info(symbol)
+            {
+                // Record this symbol in the re-export chain.
+                reexport_chain.push(symbol);
+
+                if re_is_ns {
+                    // The re-export resolves to a namespace import — stop here.
+                    if let Some(re_target) =
+                        owner_module.import_record_resolved_module(re_record_idx)
+                    {
+                        if let Some(ns_module) = store.module(re_target) {
+                            return MatchImportKind::Namespace {
+                                namespace_ref: ns_module.namespace_object_ref(),
+                            };
+                        }
+                        // Target not in store (external) — delegate to consumer.
+                        return matcher
+                            .on_missing_module(
+                                owner_idx,
+                                re_record_idx,
+                                re_target,
+                                import_name,
+                                true,
+                            )
+                            .unwrap_or(MatchImportKind::NoMatch);
+                    }
+                    return MatchImportKind::NoMatch;
+                }
+
+                // Recurse into the re-exported import's target.
+                // The importer is now the owner module (re-exporter),
+                // and the record_idx is the re-export's import record.
+                if let Some(re_target) =
+                    owner_module.import_record_resolved_module(re_record_idx)
+                {
+                    // If the next target is external/missing (not in the store),
+                    // stop the chain here and return the current symbol as-is.
+                    // The intermediate symbol's own import from the external will
+                    // be handled when match_imports processes that module's imports,
+                    // setting up namespace_alias etc. correctly.
+                    if store.module(re_target).is_none() {
+                        return MatchImportKind::Normal { symbol_ref: symbol };
+                    }
+                    return resolve_import(
+                        store,
+                        symbols,
+                        owner_idx,
+                        re_record_idx,
+                        re_target,
+                        re_imported_name,
+                        resolved_exports,
+                        matcher,
+                        visited,
+                        reexport_chain,
+                    );
+                }
+            }
+
+            MatchImportKind::Normal { symbol_ref: symbol }
+        }
+        None => {
+            // Not found — ask matcher for dynamic fallback.
+            matcher
+                .on_no_match(target_idx, import_name)
+                .unwrap_or(MatchImportKind::NoMatch)
+        }
+    }
+}
+
+/// Resolve potentially ambiguous exports by recursively resolving each candidate
+/// and comparing results.
+///
+/// If all candidates resolve to the same symbol, it's not truly ambiguous.
+/// If they resolve to different symbols, return `Ambiguous`.
+fn resolve_ambiguous<M, S, C>(
+    store: &M,
+    symbols: &S,
+    primary: M::SymbolRef,
+    candidates: &[M::SymbolRef],
+    resolved_exports: &FxHashMap<M::ModuleIdx, ResolvedExportsMap<M::SymbolRef>>,
+    matcher: &mut C,
+    visited: &mut FxHashSet<(M::ModuleIdx, CompactString)>,
+    reexport_chain: &mut Vec<M::SymbolRef>,
+) -> MatchImportKind<M::SymbolRef>
+where
+    M: ModuleStore,
+    S: SymbolGraph<ModuleIdx = M::ModuleIdx, SymbolRef = M::SymbolRef>,
+    C: ImportMatcher<ModuleIdx = M::ModuleIdx, SymbolRef = M::SymbolRef>,
+{
+    // Try to resolve the primary candidate.
+    let primary_result = try_resolve_symbol(
+        store,
+        symbols,
+        primary,
+        resolved_exports,
+        matcher,
+        visited,
+        reexport_chain,
+    );
+
+    // Try to resolve each additional candidate.
+    for &candidate in candidates {
+        let candidate_result = try_resolve_symbol(
+            store,
+            symbols,
+            candidate,
+            resolved_exports,
+            matcher,
+            visited,
+            reexport_chain,
+        );
+
+        // Compare: if both resolve to the same symbol, not truly ambiguous.
+        let is_same = match (&primary_result, &candidate_result) {
+            (
+                MatchImportKind::Normal { symbol_ref: a },
+                MatchImportKind::Normal { symbol_ref: b },
+            )
+            | (
+                MatchImportKind::Namespace { namespace_ref: a },
+                MatchImportKind::Namespace { namespace_ref: b },
+            ) => a == b,
+            // If one is Cycle or NoMatch, prefer the resolved one.
+            (MatchImportKind::Cycle | MatchImportKind::NoMatch, _)
+            | (_, MatchImportKind::Cycle | MatchImportKind::NoMatch) => true,
+            // Different resolved symbols — truly ambiguous.
+            _ => false,
+        };
+        if !is_same {
+            let mut all = vec![primary];
+            all.extend_from_slice(candidates);
+            return MatchImportKind::Ambiguous { candidates: all };
+        }
+    }
+
+    primary_result
+}
+
+/// Try to resolve a single symbol through re-export chains.
+///
+/// If the symbol is a named import in its owning module, follow the chain.
+/// Otherwise, return it as a `Normal` match.
+fn try_resolve_symbol<M, S, C>(
+    store: &M,
+    symbols: &S,
+    symbol: M::SymbolRef,
+    resolved_exports: &FxHashMap<M::ModuleIdx, ResolvedExportsMap<M::SymbolRef>>,
+    matcher: &mut C,
+    visited: &mut FxHashSet<(M::ModuleIdx, CompactString)>,
+    reexport_chain: &mut Vec<M::SymbolRef>,
+) -> MatchImportKind<M::SymbolRef>
+where
+    M: ModuleStore,
+    S: SymbolGraph<ModuleIdx = M::ModuleIdx, SymbolRef = M::SymbolRef>,
+    C: ImportMatcher<ModuleIdx = M::ModuleIdx, SymbolRef = M::SymbolRef>,
+{
+    let owner_idx = symbols.symbol_owner(symbol);
+    if let Some(owner_module) = store.module(owner_idx)
+        && let Some((re_imported_name, re_record_idx, re_is_ns)) =
+            owner_module.symbol_import_info(symbol)
+        && let Some(re_target) = owner_module.import_record_resolved_module(re_record_idx)
+    {
+        // Namespace import (`import * as foo; export { foo }`) — resolve to namespace object.
+        if re_is_ns {
+            if let Some(ns_module) = store.module(re_target) {
+                return MatchImportKind::Namespace {
+                    namespace_ref: ns_module.namespace_object_ref(),
+                };
+            }
+            return MatchImportKind::NoMatch;
+        }
+        return resolve_import(
+            store,
+            symbols,
+            owner_idx,
+            re_record_idx,
+            re_target,
+            re_imported_name,
+            resolved_exports,
+            matcher,
+            visited,
+            reexport_chain,
+        );
+    }
+    MatchImportKind::Normal { symbol_ref: symbol }
 }

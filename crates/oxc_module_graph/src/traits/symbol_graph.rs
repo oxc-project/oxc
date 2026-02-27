@@ -7,6 +7,8 @@ use std::hash::Hash;
 /// Rolldown can implement this on its own `SymbolRefDb`,
 /// while the default implementation uses the built-in `SymbolRefDb`.
 pub trait SymbolGraph {
+    /// The module index type (must match `ModuleStore::ModuleIdx`).
+    type ModuleIdx: Copy + Eq + Hash + Debug;
     /// The symbol reference type (e.g., `SymbolRef` in oxc, or Rolldown's own `SymbolRef`).
     type SymbolRef: Copy + Eq + Hash + Debug;
 
@@ -21,4 +23,10 @@ pub trait SymbolGraph {
 
     /// Get the declared name of a symbol.
     fn symbol_name(&self, symbol: Self::SymbolRef) -> &str;
+
+    /// Get the owning module of a symbol.
+    ///
+    /// This is needed by the re-export-chain-following algorithm to look up
+    /// whether a resolved export symbol is itself an import in its owning module.
+    fn symbol_owner(&self, symbol: Self::SymbolRef) -> Self::ModuleIdx;
 }

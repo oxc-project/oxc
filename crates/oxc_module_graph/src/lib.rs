@@ -160,10 +160,10 @@ pub mod traits;
 pub mod types;
 
 // Re-export core traits at crate root for convenience.
-pub use traits::{ModuleInfo, ModuleStore, SymbolGraph};
+pub use traits::{DefaultImportMatcher, ImportMatcher, ModuleInfo, ModuleStore, SymbolGraph};
 
 // Re-export algorithms at crate root.
 pub use algo::{
     BindingError, BindingResult, bind_imports_and_exports, build_resolved_exports, find_cycles,
-    topological_sort,
+    match_imports, topological_sort,
 };
