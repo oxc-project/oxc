@@ -604,6 +604,11 @@ impl Gen for CatchClause<'_> {
             p.print_soft_space();
             p.print_ascii_byte(b'(');
             param.pattern.print(p, ctx);
+            if let Some(type_annotation) = &param.type_annotation {
+                p.print_colon();
+                p.print_soft_space();
+                type_annotation.print(p, ctx);
+            }
             p.print_ascii_byte(b')');
         }
         p.print_soft_space();

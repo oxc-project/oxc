@@ -36,6 +36,7 @@ fn cases() {
     test_same("class E {\n\tsubscribe!: string;\n}\n");
     test_same("class F {\n\taccessor value!: string;\n}\n");
     test_same("export { type as as };\n");
+    test_same("try {} catch (e: unknown) {} finally {}\n");
 }
 
 #[test]
