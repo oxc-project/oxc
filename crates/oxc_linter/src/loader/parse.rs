@@ -1,7 +1,7 @@
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::Program;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_parser::{ParseOptions, Parser};
+use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
 use oxc_span::Span;
 use oxc_syntax::module_record::ModuleRecord;
 use vue_oxc_toolkit::VueOxcParser;
@@ -12,6 +12,7 @@ pub struct LinterParseResult<'a> {
     pub program: Program<'a>,
     pub irregular_whitespaces: Box<[Span]>,
     pub module_record: ModuleRecord<'a>,
+    pub tokens: ArenaVec<'a, Token>,
 }
 
 impl<'a> LinterParseResult<'a> {
@@ -19,8 +20,9 @@ impl<'a> LinterParseResult<'a> {
         program: Program<'a>,
         irregular_whitespaces: Box<[Span]>,
         module_record: ModuleRecord<'a>,
+        tokens: ArenaVec<'a, Token>,
     ) -> Self {
-        Self { program, irregular_whitespaces, module_record }
+        Self { program, irregular_whitespaces, module_record, tokens }
     }
 }
 
@@ -37,16 +39,26 @@ macro_rules! parse_options {
 pub fn parse_javascript_source<'a>(
     allocator: &'a Allocator,
     source: JavaScriptSource<'a>,
+    collect_tokens: bool,
 ) -> (Result<LinterParseResult<'a>, Vec<OxcDiagnostic>>, JavaScriptSource<'a>) {
     let ret = Parser::new(allocator, source.source_text, source.source_type)
         .with_options(parse_options!())
+        .with_config(RuntimeParserConfig::new(collect_tokens))
         .parse();
 
     if !ret.errors.is_empty() {
         return (Err(if ret.is_flow_language { vec![] } else { ret.errors }), source);
     }
 
-    (Ok(LinterParseResult::new(ret.program, ret.irregular_whitespaces, ret.module_record)), source)
+    (
+        Ok(LinterParseResult::new(
+            ret.program,
+            ret.irregular_whitespaces,
+            ret.module_record,
+            ret.tokens,
+        )),
+        source,
+    )
 }
 
 pub fn parse_vue_source<'a>(
@@ -61,7 +73,12 @@ pub fn parse_vue_source<'a>(
     }
 
     vec![(
-        Ok(LinterParseResult::new(ret.program, ret.irregular_whitespaces, ret.module_record)),
+        Ok(LinterParseResult::new(
+            ret.program,
+            ret.irregular_whitespaces,
+            ret.module_record,
+            ArenaVec::new_in(allocator),
+        )),
         source,
     )]
 }

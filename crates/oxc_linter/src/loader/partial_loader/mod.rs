@@ -25,6 +25,7 @@ impl PartialLoader {
         allocator: &'a Allocator,
         ext: &str,
         source_text: &'a str,
+        collect_tokens: bool,
     ) -> PossibleParseResult<'a> {
         let sources = match ext {
             "astro" => AstroPartialLoader::new(source_text).parse(),
@@ -32,7 +33,12 @@ impl PartialLoader {
             _ => return None,
         };
 
-        Some(sources.into_iter().map(|source| parse_javascript_source(allocator, source)).collect())
+        Some(
+            sources
+                .into_iter()
+                .map(|source| parse_javascript_source(allocator, source, collect_tokens))
+                .collect(),
+        )
     }
 }
 
