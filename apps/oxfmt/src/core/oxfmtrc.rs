@@ -975,19 +975,21 @@ pub fn sync_external_options(options: &FormatOptions, config: &mut Value) {
     // Other options defined independently by plugins are also left as they are.
 }
 
-/// Parsers that can embed JS/TS code and benefit from Tailwind plugin
+/// Parsers(files) that benefit from Tailwind plugin
 #[cfg(feature = "napi")]
 static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     "html",
     "vue",
     "angular",
     "glimmer",
+    "css",
+    "scss",
+    "less",
 };
 
-/// Parsers that can embed JS/TS code and benefit from oxfmt plugin.
+/// Parsers(files) that can embed JS/TS code and benefit from oxfmt plugin.
 /// For now, expressions are not supported.
-/// - e.g. `__vue_expression` in `vue`
-/// - e.g. `__ng_directive` in `angular`
+/// - e.g. `__vue_expression` in `vue`, `__ng_directive` in `angular`
 #[cfg(feature = "napi")]
 static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     // "html",

@@ -276,7 +276,7 @@ impl ExternalFormatter {
         let embedded_doc_callback: Option<EmbeddedDocFormatterCallback> = if needs_embedded {
             let format_embedded_doc = Arc::clone(&self.format_embedded_doc);
             let options_for_doc = options.clone();
-            Some(Arc::new(move |language: &str, texts: &[&str]| {
+            Some(Arc::new(move |allocator, group_id_builder, language: &str, texts: &[&str]| {
                 let Some(parser_name) = language_to_prettier_parser(language) else {
                     return Err(format!("Unsupported language: {language}"));
                 };
@@ -302,7 +302,7 @@ impl ExternalFormatter {
                                     serde_json::from_str(&doc_json_str).map_err(|err| {
                                         format!("Failed to parse Doc JSON: {err}")
                                     })?;
-                                from_prettier_doc::doc_json_to_embedded_ir(&doc_json)
+                                from_prettier_doc::to_format_elements_for_template(&doc_json, allocator, group_id_builder)
                             })
                             .collect()
                     })

@@ -1909,6 +1909,7 @@ version = "0.115.0"
 dependencies = [
  "oxc_ast",
  "oxc_ast_visit",
+ "oxc_data_structures",
  "oxc_estree",
  "oxc_parser",
  "oxc_span",

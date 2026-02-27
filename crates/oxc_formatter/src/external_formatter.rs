@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
-use super::formatter::format_element::{LineMode, PrintMode};
+use oxc_allocator::Allocator;
+
+use super::formatter::{FormatElement, group_id::UniqueGroupIdBuilder};
 
 /// Callback function type for formatting embedded code.
 /// Takes (tag_name, code) and returns formatted code or an error.
@@ -9,13 +11,24 @@ pub type EmbeddedFormatterCallback =
 
 /// Callback function type for formatting embedded code via Doc in batch.
 ///
-/// Takes (tag_name, texts) and returns one `Vec<EmbeddedIR>` per input.
-/// Used for the Doc→IR path (e.g., `printToDoc` → Doc JSON → `EmbeddedIR`).
+/// Takes (allocator, group_id_builder, tag_name, texts) and returns one `Vec<FormatElement<'a>>` per input.
+/// Used for the Doc→IR path (e.g., `JS:printToDoc()` → Doc JSON → `Rust:FormatElement`).
+///
+/// The `&Allocator` allows the callback to allocate arena strings for `FormatElement::Text`.
+/// The `&UniqueGroupIdBuilder` allows the callback to create `GroupId`s for group/conditional constructs.
 ///
 /// For GraphQL, each quasi is a separate text (`texts.len() == quasis.len()`).
 /// For CSS/HTML, quasis are joined with placeholders into a single text (`texts.len() == 1`).
-pub type EmbeddedDocFormatterCallback =
-    Arc<dyn Fn(&str, &[&str]) -> Result<Vec<Vec<EmbeddedIR>>, String> + Send + Sync>;
+pub type EmbeddedDocFormatterCallback = Arc<
+    dyn for<'a> Fn(
+            &'a Allocator,
+            &UniqueGroupIdBuilder,
+            &str,
+            &[&str],
+        ) -> Result<Vec<Vec<FormatElement<'a>>>, String>
+        + Send
+        + Sync,
+>;
 
 /// Callback function type for sorting Tailwind CSS classes.
 /// Takes classes and returns the sorted versions.
@@ -79,23 +92,29 @@ impl ExternalCallbacks {
 
     /// Format embedded code as Doc in batch.
     ///
-    /// Takes multiple texts and returns one `Vec<EmbeddedIR>` per input text.
+    /// Takes multiple texts and returns one `Vec<FormatElement<'a>>` per input text.
     /// The caller is responsible for interleaving the results with JS expressions.
     ///
     /// # Arguments
+    /// * `allocator` - The arena allocator for allocating strings in `FormatElement::Text`
+    /// * `group_id_builder` - Builder for creating unique `GroupId`s
     /// * `tag_name` - The template tag (e.g., "css", "gql", "html")
     /// * `texts` - The code texts to format (multiple quasis for GraphQL, single joined text for CSS/HTML)
     ///
     /// # Returns
-    /// * `Some(Ok(Vec<Vec<EmbeddedIR>>))` - The formatted code as a vector of `EmbeddedIR` for each input text
+    /// * `Some(Ok(Vec<Vec<FormatElement<'a>>>))` - The formatted code as FormatElements for each input text
     /// * `Some(Err(String))` - An error message if formatting failed
     /// * `None` - No embedded formatter callback is set
-    pub fn format_embedded_doc(
+    pub fn format_embedded_doc<'a>(
         &self,
+        allocator: &'a Allocator,
+        group_id_builder: &UniqueGroupIdBuilder,
         tag_name: &str,
         texts: &[&str],
-    ) -> Option<Result<Vec<Vec<EmbeddedIR>>, String>> {
-        self.embedded_doc_formatter.as_ref().map(|cb| cb(tag_name, texts))
+    ) -> Option<Result<Vec<Vec<FormatElement<'a>>>, String>> {
+        self.embedded_doc_formatter
+            .as_ref()
+            .map(|cb| cb(allocator, group_id_builder, tag_name, texts))
     }
 
     /// Sort Tailwind CSS classes.
@@ -115,59 +134,4 @@ impl ExternalCallbacks {
             None => classes,
         }
     }
-}
-
-// ---
-
-/// Owned intermediate IR for embedded language formatting.
-///
-/// This type bridges the callback boundary between `apps/oxfmt` (or other callers) and `oxc_formatter`.
-/// Unlike `FormatElement<'a>`, it has no lifetime parameter and owns all its data,
-/// so it can be returned from `Arc<dyn Fn>` callbacks.
-///
-/// The `oxc_formatter` side converts `EmbeddedIR` → `FormatElement<'a>` using the allocator.
-#[derive(Debug, Clone)]
-pub enum EmbeddedIR {
-    Space,
-    HardSpace,
-    Line(LineMode),
-    ExpandParent,
-    /// Owned string (unlike `FormatElement::Text` which borrows from the arena).
-    Text(String),
-    LineSuffixBoundary,
-    // --- Tag equivalents (all fields pub, no lifetime) ---
-    StartIndent,
-    EndIndent,
-    /// Positive integer only. Converted to `Tag::StartAlign(Align(NonZeroU8))`.
-    StartAlign(u8),
-    EndAlign,
-    /// - `to_root: false` → `DedentMode::Level`
-    /// - `to_root: true` → `DedentMode::Root`
-    StartDedent {
-        to_root: bool,
-    },
-    EndDedent {
-        to_root: bool,
-    },
-    /// `id` is a numeric group ID (mapped to `GroupId` via `HashMap<u32, GroupId>`).
-    StartGroup {
-        id: Option<u32>,
-        should_break: bool,
-    },
-    EndGroup,
-    /// `mode` = Break or Flat, `group_id` references a group by numeric ID.
-    StartConditionalContent {
-        mode: PrintMode,
-        group_id: Option<u32>,
-    },
-    EndConditionalContent,
-    /// GroupId is mandatory (matches `Tag::StartIndentIfGroupBreaks(GroupId)`).
-    StartIndentIfGroupBreaks(u32),
-    EndIndentIfGroupBreaks(u32),
-    StartFill,
-    EndFill,
-    StartEntry,
-    EndEntry,
-    StartLineSuffix,
-    EndLineSuffix,
 }
