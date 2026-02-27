@@ -2780,6 +2780,9 @@ impl Gen for PropertyDefinition<'_> {
         if self.optional {
             p.print_ascii_byte(b'?');
         }
+        if self.definite {
+            p.print_ascii_byte(b'!');
+        }
         if let Some(type_annotation) = &self.type_annotation {
             p.print_colon();
             p.print_soft_space();
