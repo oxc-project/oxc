@@ -27,11 +27,7 @@ pub fn convert_expression<'a>(expr: &'a ast::Expression<'a>) -> LowerableExpress
         }
         ast::Expression::NullLiteral(lit) => LowerableExpression::NullLiteral(lit.span),
         ast::Expression::Identifier(ident) => {
-            if ident.name == "undefined" {
-                LowerableExpression::Undefined(ident.span)
-            } else {
-                LowerableExpression::Identifier(ident.name.to_string(), ident.span)
-            }
+            LowerableExpression::Identifier(ident.name.to_string(), ident.span)
         }
         ast::Expression::RegExpLiteral(lit) => LowerableExpression::RegExpLiteral {
             pattern: lit.regex.pattern.text.to_string(),

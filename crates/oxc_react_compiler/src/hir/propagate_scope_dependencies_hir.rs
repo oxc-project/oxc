@@ -27,7 +27,7 @@ use crate::hir::types::{ObjectType, PropertyLiteral, Type};
 use super::hir_types::{
     BasicBlock, BlockId, DeclarationId, DependencyPath, DependencyPathEntry, HIRFunction,
     Identifier, IdentifierId, Instruction, InstructionId, InstructionKind, InstructionValue,
-    ManualMemoDependencyRoot, MutableRange, Place, ReactiveScope, ReactiveScopeDependency, ScopeId,
+    ManualMemoDependencyRoot, Place, ReactiveScope, ReactiveScopeDependency, ScopeId,
     Terminal,
 };
 use super::visitors::{
@@ -749,19 +749,15 @@ fn collect_temporaries_sidemap_impl(
                         );
                     }
                 }
-                InstructionValue::LoadContext(_)
+                InstructionValue::LoadContext(v)
                     if instr.lvalue.identifier.name.is_none() && !used_outside =>
                 {
-                    let InstructionValue::LoadContext(v) = &instr.value else { continue };
-                    // Port of the TS condition: (LoadLocal || isLoadContextMutable) &&
-                    // lvalue.name == null && place.name != null && !usedOutside.
-                    //
                     // In Rust, context identifiers (including params like `props` captured by
                     // inner closures) are lowered as LoadContext. After IIFE inlining, these
                     // LoadContext instructions remain in the outer function body — whereas in
                     // TS they would have been LoadLocal. To match TS behavior, we add ALL
-                    // LoadContext instructions with a named source to the temporaries sidemap,
-                    // not just mutable ones. This allows PropertyLoad chains like
+                    // LoadContext instructions with a named source to the temporaries sidemap.
+                    // This allows PropertyLoad chains like
                     // `LoadContext(props) → tmp43; PropertyLoad(tmp43, "value") → tmp44`
                     // to resolve to `{props, path=[value]}` as a scope dependency.
                     if v.place.identifier.name.is_some()
@@ -979,15 +975,6 @@ impl<'a> DependencyCollectionContext<'a> {
         // we collect mutations in a side-table and apply them in a second pass.
         let original_declaration =
             self.declarations.get(&maybe_dep.identifier.declaration_id).cloned();
-        if std::env::var("DEBUG_VISIT_DEP").is_ok() {
-            eprintln!(
-                "[VISIT_DEP] maybe_dep id={:?} decl_id={:?} name={:?} original_decl={}",
-                maybe_dep.identifier.id,
-                maybe_dep.identifier.declaration_id,
-                maybe_dep.identifier.name,
-                original_declaration.is_some()
-            );
-        }
         if let Some(ref original_decl) = original_declaration
             && let Some(declaring_scope) = original_decl.scope.value()
         {
@@ -1004,13 +991,6 @@ impl<'a> DependencyCollectionContext<'a> {
                 let has_decl = scope.declarations.values().any(|decl| {
                     decl.identifier.declaration_id == maybe_dep.identifier.declaration_id
                 });
-                if std::env::var("DEBUG_VISIT_DEP").is_ok() {
-                    eprintln!(
-                        "[VISIT_DEP]   scope @{}: active={} has_decl={} → {}",
-                        scope.id.0, is_active, has_decl,
-                        if !is_active && !has_decl { "ADD DECLARATION" } else { "skip" }
-                    );
-                }
                 if !is_active && !has_decl {
                     // Collect the mutation for later application
                     self.scope_declaration_mutations.push((
@@ -1317,25 +1297,6 @@ fn collect_dependencies(
 }
 
 // =====================================================================================
-// keyByScopeId — re-key a block-indexed map by scope ID
-// =====================================================================================
-
-fn key_by_scope_id<T: Clone>(
-    func: &HIRFunction,
-    source: &FxHashMap<BlockId, T>,
-) -> FxHashMap<ScopeId, T> {
-    let mut keyed = FxHashMap::default();
-    for block in func.body.blocks.values() {
-        if let Terminal::Scope(t) = &block.terminal
-            && let Some(value) = source.get(&t.block)
-        {
-            keyed.insert(t.scope.id, value.clone());
-        }
-    }
-    keyed
-}
-
-// =====================================================================================
 // Main entry point
 // =====================================================================================
 
@@ -1351,11 +1312,11 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
 
     // Collect optional chain sidemap
     let opt_chain =
-        super::collect_optional_chain_dependencies::collect_optional_chain_dependencies(func);
+        super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(func);
 
     // Merge temporaries with optional chain temporaries
     let mut merged_temporaries = temporaries;
-    for (id, dep) in &opt_chain.dependencies {
+    for (id, dep) in &opt_chain.temporaries_read_in_optional {
         merged_temporaries.entry(*id).or_insert_with(|| TempReactiveScopeDependency {
             identifier: dep.identifier.clone(),
             reactive: dep.reactive,
@@ -1364,11 +1325,23 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
         });
     }
 
-    // Collect hoistable property loads
-    let hoistable = super::collect_hoistable_property_loads::collect_hoistable_property_loads(func);
+    // Build a ReactiveScopeDependency map from merged_temporaries for hoistable analysis
+    let temporaries_for_hoistable: FxHashMap<IdentifierId, ReactiveScopeDependency> =
+        merged_temporaries
+            .iter()
+            .map(|(&id, temp)| (id, temp.to_scope_dependency()))
+            .collect();
 
-    // Key hoistable by scope ID
-    let hoistable_by_scope = key_by_scope_id(func, &hoistable.non_null_by_block);
+    // Collect hoistable property loads
+    let hoistable = super::collect_hoistable_property_loads::collect_hoistable_property_loads(
+        func,
+        &temporaries_for_hoistable,
+        &opt_chain.hoistable_objects,
+    );
+
+    // Key hoistable by scope ID, resolving PropertyPathNodes to full paths
+    let hoistable_by_scope =
+        super::collect_hoistable_property_loads::key_by_scope_id_with_registry(func, &hoistable);
 
     let processed_instrs = opt_chain.processed_instrs_in_optional;
 
@@ -1422,48 +1395,8 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
 
             // Apply dependencies
             if let Some(deps) = scope_deps_map.get(&scope.id) {
-                let hoistable_ids = hoistable_by_scope.get(&scope.id).cloned().unwrap_or_default();
-
-                let hoistable_paths: Vec<ReactiveScopeDependency> = hoistable_ids
-                    .iter()
-                    .map(|&id| {
-                        let ident = if let Some(temp) = merged_temporaries.get(&id) {
-                            temp.identifier.clone()
-                        } else {
-                            Identifier {
-                                id,
-                                declaration_id: DeclarationId(id.0),
-                                name: None,
-                                mutable_range: MutableRange::default(),
-                                scope: None,
-                                type_: Type::Primitive,
-                                loc: SourceLocation::Generated,
-                            }
-                        };
-                        ReactiveScopeDependency {
-                            identifier: ident,
-                            reactive: false,
-                            path: vec![],
-                            loc: SourceLocation::Generated,
-                        }
-                    })
-                    .collect();
-
-                if std::env::var("DEBUG_HOISTABLE").is_ok() {
-                    let tree_hoistable: Vec<_> = hoistable_paths
-                        .iter()
-                        .map(|hp| (hp.identifier.id, hp.identifier.name.clone()))
-                        .collect();
-                    eprintln!(
-                        "[SCOPE_DEPS] scope={:?} hoistable_ids={:?} tree_hoistable_ids={:?}",
-                        scope.id, &hoistable_ids, tree_hoistable
-                    );
-                    let dep_info: Vec<_> = deps
-                        .iter()
-                        .map(|d| (d.identifier.id, d.identifier.name.clone(), d.path.len()))
-                        .collect();
-                    eprintln!("[SCOPE_DEPS] scope={:?} deps={:?}", scope.id, dep_info);
-                }
+                let hoistable_paths: Vec<ReactiveScopeDependency> =
+                    hoistable_by_scope.get(&scope.id).cloned().unwrap_or_default();
 
                 let mut tree = ReactiveScopeDependencyTree::new(hoistable_paths);
                 for dep in deps {

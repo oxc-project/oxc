@@ -694,18 +694,21 @@ mod expression_lowering {
     }
 
     #[test]
-    fn undefined_produces_primitive() {
+    fn undefined_produces_load_global() {
         let hir = lower_function_source("function Component() { let x = undefined; }");
 
         let has_undefined = hir.body.blocks.values().any(|block| {
             block.instructions.iter().any(|instr| match &instr.value {
-                InstructionValue::Primitive(prim) => {
-                    matches!(&prim.value, oxc_react_compiler::hir::PrimitiveValueKind::Undefined)
+                InstructionValue::LoadGlobal(v) => {
+                    matches!(
+                        &v.binding,
+                        oxc_react_compiler::hir::NonLocalBinding::Global { name } if name == "undefined"
+                    )
                 }
                 _ => false,
             })
         });
-        assert!(has_undefined, "Expected a Primitive(Undefined) instruction");
+        assert!(has_undefined, "Expected a LoadGlobal(undefined) instruction");
     }
 
     #[test]

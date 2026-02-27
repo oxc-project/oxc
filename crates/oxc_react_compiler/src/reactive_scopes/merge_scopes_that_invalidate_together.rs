@@ -421,9 +421,12 @@ fn merge_in_block(
         // The first statement is the surviving scope
         let mut surviving = old_block[index].clone();
         index += 1;
-        // Absorb subsequent statements into the surviving scope
-        while index <= entry.to {
-            if index > old_block.len() - 1 {
+        // Absorb subsequent statements into the surviving scope.
+        // Note: `entry.to` is exclusive (set to `i + 1` when the last scope
+        // at index `i` is merged), matching the TS reference which uses
+        // `while (index < entry.to)`.
+        while index < entry.to {
+            if index >= old_block.len() {
                 break;
             }
             let stmt = &old_block[index];

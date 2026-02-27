@@ -100,7 +100,10 @@ pub enum CodegenStatement {
     /// An if statement: `if (test) { consequent } else { alternate }`
     If { test: String, consequent: Vec<CodegenStatement>, alternate: Option<Vec<CodegenStatement>> },
     /// A return statement: `return expr;`
-    Return(Option<String>),
+    /// `is_conditional` is true when the returned expression is a ternary,
+    /// sequence, or optional-call expression that needs parenthesisation in
+    /// concise arrow body position.
+    Return { value: Option<String>, is_conditional: bool },
     /// A for statement: `for (init; test; update) { body }`
     For {
         init: Option<String>,
@@ -245,6 +248,11 @@ pub struct CodegenContext {
     /// Used for IIFE parenthesization: when a function expression temp is used
     /// as a callee, it needs wrapping as `(fn)()` to avoid parsing ambiguity.
     fn_expr_temps: FxHashSet<DeclarationId>,
+    /// Temporaries that hold ternary (conditional), sequence, or optional-call
+    /// expressions.  These need parenthesisation when used as a concise arrow
+    /// function body (Babel's printer adds parens automatically; we must do it
+    /// explicitly).
+    arrow_paren_temps: FxHashSet<DeclarationId>,
     /// Whether we are currently generating code inside an optional-chain Sequence
     /// (the `Sequence` node wrapped by an `OptionalCall`).
     ///
@@ -282,6 +290,7 @@ impl CodegenContext {
             assignment_temps: FxHashSet::default(),
             logical_temps: FxHashMap::default(),
             fn_expr_temps: FxHashSet::default(),
+            arrow_paren_temps: FxHashSet::default(),
             inside_optional_chain: false,
         }
     }
@@ -378,7 +387,7 @@ pub fn codegen_function(
     let mut body = codegen_block(&mut cx, &reactive_fn.body);
 
     // Remove trailing `return undefined` / `return;`
-    if matches!(body.last(), Some(CodegenStatement::Return(None))) {
+    if matches!(body.last(), Some(CodegenStatement::Return { value: None, .. })) {
         body.pop();
     }
 
@@ -976,7 +985,7 @@ fn codegen_reactive_scope(
         let name = identifier_name(&early_return.value);
         statements.push(CodegenStatement::If {
             test: format!("{name} !== Symbol.for(\"{EARLY_RETURN_SENTINEL}\")"),
-            consequent: vec![CodegenStatement::Return(Some(name))],
+            consequent: vec![CodegenStatement::Return { value: Some(name), is_conditional: false }],
             alternate: None,
         });
     }
@@ -996,10 +1005,12 @@ fn codegen_terminal(
         ReactiveTerminal::Continue(t) => codegen_continue(t),
         ReactiveTerminal::Return(t) => {
             let value = codegen_place_to_expression(cx, &t.value);
+            let is_conditional =
+                cx.arrow_paren_temps.contains(&t.value.identifier.declaration_id);
             if value == "undefined" {
-                Some(CodegenStatement::Return(None))
+                Some(CodegenStatement::Return { value: None, is_conditional: false })
             } else {
-                Some(CodegenStatement::Return(Some(value)))
+                Some(CodegenStatement::Return { value: Some(value), is_conditional })
             }
         }
         ReactiveTerminal::Throw(t) => {
@@ -1269,6 +1280,14 @@ fn codegen_instruction_nullable(
         }
         ReactiveValue::Ternary(_) | ReactiveValue::Sequence(_) | ReactiveValue::OptionalCall(_) => {
             let value_str = codegen_reactive_value_to_expression(cx, &instr.value);
+            // Track these temps for arrow-body parenthesisation: Babel's printer
+            // auto-wraps ConditionalExpression / SequenceExpression in parens when
+            // used as a concise arrow body; we must do it explicitly.
+            if let Some(lval) = &instr.lvalue {
+                if lval.identifier.name.is_none() {
+                    cx.arrow_paren_temps.insert(lval.identifier.declaration_id);
+                }
+            }
             // For Sequence values, the inner sequence may contain a Logical expression
             // that was stored as a temp. Propagate the logical operator tracking to
             // this instruction's lvalue so parent logical expressions can detect mixing.
@@ -1689,10 +1708,14 @@ fn codegen_function_expression(
                     // and no directives on the lowered function
                     if inner_fn.body.len() == 1 && func_expr.lowered_func.func.directives.is_empty()
                     {
-                        if let CodegenStatement::Return(Some(expr)) = &inner_fn.body[0] {
-                            // Babel wraps ConditionalExpression in parens when used
-                            // as a concise arrow body to avoid parser ambiguity
-                            let needs_parens = {
+                        if let CodegenStatement::Return { value: Some(expr), is_conditional } = &inner_fn.body[0] {
+                            // Babel wraps ConditionalExpression / SequenceExpression
+                            // in parens when used as a concise arrow body. We detect
+                            // this via the `is_conditional` flag (populated by the
+                            // inner function's own codegen pass), and also apply a
+                            // string-based heuristic for cross-context cases where
+                            // the reactive IR doesn't track the ternary temp.
+                            let needs_parens = *is_conditional || {
                                 let s = expr.replace("??", "__");
                                 s.contains(" ? ")
                             };
@@ -1959,12 +1982,27 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
             let test = codegen_reactive_value_to_expression(cx, &ternary.test);
             let consequent = codegen_reactive_value_to_expression(cx, &ternary.consequent);
             let alternate = codegen_reactive_value_to_expression(cx, &ternary.alternate);
-            // Wrap the test expression in parens if it's a logical/ternary
-            // expression, matching Babel's code generator behaviour.
-            let test = if matches!(&*ternary.test, ReactiveValue::Ternary(_)) {
+            // Wrap subexpressions in parens to match Babel's code generator.
+            // Test: wrap nested ternary (already handled before).
+            let test = if matches!(effective_value(&ternary.test), ReactiveValue::Ternary(_)) {
                 format!("({test})")
             } else {
                 test
+            };
+            // Consequent: wrap nested ternary or NullishCoalescing.
+            let consequent = match effective_value(&ternary.consequent) {
+                ReactiveValue::Ternary(_) => format!("({consequent})"),
+                ReactiveValue::Logical(l) if l.operator == LogicalOperator::Coalesce => {
+                    format!("({consequent})")
+                }
+                _ => consequent,
+            };
+            // Alternate: wrap NullishCoalescing.
+            let alternate = match effective_value(&ternary.alternate) {
+                ReactiveValue::Logical(l) if l.operator == LogicalOperator::Coalesce => {
+                    format!("({alternate})")
+                }
+                _ => alternate,
             };
             format!("{test} ? {consequent} : {alternate}")
         }
@@ -2251,7 +2289,11 @@ fn codegen_label(id: crate::hir::BlockId) -> String {
 fn codegen_primitive(value: &PrimitiveValueKind) -> String {
     match value {
         PrimitiveValueKind::Number(n) => {
-            if *n < 0.0 {
+            // Negative zero: JS `(-0).toString()` returns "0", and Babel's codegen
+            // emits `0` for the value `-0`. Match that behavior.
+            if *n == 0.0 && n.is_sign_negative() {
+                "0".to_string()
+            } else if *n < 0.0 {
                 format!("-{}", -n)
             } else {
                 format!("{n}")
@@ -2775,7 +2817,7 @@ fn write_statement(
             }
             writeln!(f, "{pad}}}")
         }
-        CodegenStatement::Return(arg) => match arg {
+        CodegenStatement::Return { value, .. } => match value {
             Some(val) => writeln!(f, "{pad}return {val};"),
             None => writeln!(f, "{pad}return;"),
         },
