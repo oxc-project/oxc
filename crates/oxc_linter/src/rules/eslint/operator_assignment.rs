@@ -21,8 +21,13 @@ fn operator_assignment_diagnostic(mode: Mode, span: Span, operator: &str) -> Oxc
     } else {
         format!("Assignment (=) can be replaced with operator assignment ({operator}).")
     };
+    let help = if Mode::Never == mode {
+        format!("Replace '{operator}' with a regular '=' assignment.")
+    } else {
+        format!("Use '{operator}' shorthand instead of '='.")
+    };
     OxcDiagnostic::warn(msg)
-        .with_note("Ensure consistent use of operator assignment shorthand based on the configured preference.")
+        .with_note(help)
         .with_label(span)
 }
 
