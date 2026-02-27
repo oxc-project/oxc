@@ -48,6 +48,7 @@ fn test_module_graph_basic() {
         idx: idx_a,
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports,
         named_imports,
         import_records: vec![ResolvedImportRecord {
@@ -83,6 +84,7 @@ fn test_module_graph_basic() {
         idx: idx_b,
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: named_exports_b,
         named_imports: FxHashMap::default(),
         import_records: vec![],
@@ -288,6 +290,7 @@ fn two_module_graph_with_binding(
         idx: idx_b,
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: named_exports_b,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -318,6 +321,7 @@ fn two_module_graph_with_binding(
         idx: idx_a,
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -432,6 +436,7 @@ fn test_bind_star_reexport() {
         idx: idx_a,
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -454,6 +459,7 @@ fn test_bind_star_reexport() {
         idx: idx_b,
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: FxHashMap::default(),
         named_imports: FxHashMap::default(),
         import_records: vec![ResolvedImportRecord {
@@ -480,6 +486,7 @@ fn test_bind_star_reexport() {
         idx: idx_c,
         path: PathBuf::from("/c.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_c,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -529,6 +536,7 @@ fn simple_graph(edges: &[(usize, usize)]) -> DefaultModuleGraph {
             idx,
             path: PathBuf::from(format!("/mod{i}.js")),
             has_module_syntax: true,
+            is_commonjs: false,
             named_exports: FxHashMap::default(),
             named_imports: FxHashMap::default(),
             import_records: Vec::new(),
@@ -704,6 +712,7 @@ fn test_match_imports_reexport_chain() {
         idx: idx_a,
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -726,6 +735,7 @@ fn test_match_imports_reexport_chain() {
         idx: idx_b,
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_b,
         named_imports: named_imports_b,
         import_records: vec![ResolvedImportRecord {
@@ -748,6 +758,7 @@ fn test_match_imports_reexport_chain() {
         idx: idx_c,
         path: PathBuf::from("/c.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_c,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -873,6 +884,7 @@ fn test_match_imports_deep_chain() {
         idx: idx_a,
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -895,6 +907,7 @@ fn test_match_imports_deep_chain() {
         idx: idx_b,
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_b,
         named_imports: named_imports_b,
         import_records: vec![ResolvedImportRecord {
@@ -917,6 +930,7 @@ fn test_match_imports_deep_chain() {
         idx: idx_c,
         path: PathBuf::from("/c.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_c,
         named_imports: named_imports_c,
         import_records: vec![ResolvedImportRecord {
@@ -939,6 +953,7 @@ fn test_match_imports_deep_chain() {
         idx: idx_d,
         path: PathBuf::from("/d.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_d,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1036,6 +1051,7 @@ fn test_match_imports_circular_reexport() {
         idx: idx_a,
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -1058,6 +1074,7 @@ fn test_match_imports_circular_reexport() {
         idx: idx_b,
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_b,
         named_imports: named_imports_b,
         import_records: vec![ResolvedImportRecord {
@@ -1080,6 +1097,7 @@ fn test_match_imports_circular_reexport() {
         idx: idx_c,
         path: PathBuf::from("/c.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_c,
         named_imports: named_imports_c,
         import_records: vec![ResolvedImportRecord {
@@ -1240,6 +1258,7 @@ fn test_match_imports_namespace() {
         idx: idx_a,
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -1262,6 +1281,7 @@ fn test_match_imports_namespace() {
         idx: idx_b,
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_b,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1373,6 +1393,7 @@ fn test_match_imports_on_resolved_chain() {
         idx: idx_a,
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -1395,6 +1416,7 @@ fn test_match_imports_on_resolved_chain() {
         idx: idx_b,
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_b,
         named_imports: named_imports_b,
         import_records: vec![ResolvedImportRecord {
@@ -1417,6 +1439,7 @@ fn test_match_imports_on_resolved_chain() {
         idx: idx_c,
         path: PathBuf::from("/c.js"),
         has_module_syntax: true,
+        is_commonjs: false,
         named_exports: exports_c,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1437,4 +1460,244 @@ fn test_match_imports_on_resolved_chain() {
     let chains = chains.borrow();
     assert_eq!(chains.len(), 1, "Expected 1 re-export chain (A→B→C)");
     assert_eq!(chains[0], vec![sym_b_val], "Chain should contain B's val symbol");
+}
+
+// ── dynamic exports tests ──────────────────────────────────────────────────
+
+#[test]
+fn test_dynamic_exports_cjs_module() {
+    // CJS module → dynamic
+    use oxc_module_graph::compute_has_dynamic_exports;
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx = ModuleIdx::from_usize(0);
+
+    graph.add_module(Module {
+        idx,
+        path: PathBuf::from("/cjs.js"),
+        has_module_syntax: false,
+        is_commonjs: true,
+        named_exports: FxHashMap::default(),
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: dummy_symbol_ref(idx, 0),
+        namespace_object_ref: dummy_symbol_ref(idx, 1),
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: Vec::new(),
+    });
+
+    let dynamic = compute_has_dynamic_exports(&graph);
+    assert!(dynamic.contains(&idx), "CJS module should have dynamic exports");
+}
+
+#[test]
+fn test_dynamic_exports_external_star_target() {
+    // ESM with export * from external (not in store) → dynamic
+    use oxc_module_graph::compute_has_dynamic_exports;
+    use oxc_module_graph::types::StarExportEntry;
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_external = ModuleIdx::from_usize(1); // not added to graph
+
+    graph.add_module(Module {
+        idx: idx_a,
+        path: PathBuf::from("/a.js"),
+        has_module_syntax: true,
+        is_commonjs: false,
+        named_exports: FxHashMap::default(),
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: dummy_symbol_ref(idx_a, 0),
+        namespace_object_ref: dummy_symbol_ref(idx_a, 1),
+        star_export_entries: vec![StarExportEntry {
+            module_request: CompactString::new("external"),
+            resolved_module: Some(idx_external),
+            span: oxc_span::Span::default(),
+        }],
+        indirect_export_entries: Vec::new(),
+        dependencies: Vec::new(),
+    });
+
+    let dynamic = compute_has_dynamic_exports(&graph);
+    assert!(
+        dynamic.contains(&idx_a),
+        "Module with export * from external should have dynamic exports"
+    );
+}
+
+#[test]
+fn test_dynamic_exports_transitive_from_cjs() {
+    // ESM export * from CJS → dynamic (transitive)
+    use oxc_module_graph::compute_has_dynamic_exports;
+    use oxc_module_graph::types::StarExportEntry;
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_esm = ModuleIdx::from_usize(0);
+    let idx_cjs = ModuleIdx::from_usize(1);
+
+    graph.add_module(Module {
+        idx: idx_esm,
+        path: PathBuf::from("/esm.js"),
+        has_module_syntax: true,
+        is_commonjs: false,
+        named_exports: FxHashMap::default(),
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: dummy_symbol_ref(idx_esm, 0),
+        namespace_object_ref: dummy_symbol_ref(idx_esm, 1),
+        star_export_entries: vec![StarExportEntry {
+            module_request: CompactString::new("./cjs"),
+            resolved_module: Some(idx_cjs),
+            span: oxc_span::Span::default(),
+        }],
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./cjs"),
+            target: idx_cjs,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_cjs,
+        path: PathBuf::from("/cjs.js"),
+        has_module_syntax: false,
+        is_commonjs: true,
+        named_exports: FxHashMap::default(),
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: dummy_symbol_ref(idx_cjs, 2),
+        namespace_object_ref: dummy_symbol_ref(idx_cjs, 3),
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: Vec::new(),
+    });
+
+    let dynamic = compute_has_dynamic_exports(&graph);
+    assert!(dynamic.contains(&idx_esm), "ESM with export * from CJS should have dynamic exports");
+    assert!(dynamic.contains(&idx_cjs), "CJS module itself should have dynamic exports");
+}
+
+#[test]
+fn test_dynamic_exports_pure_esm_not_dynamic() {
+    // Pure ESM → not dynamic
+    use oxc_module_graph::compute_has_dynamic_exports;
+    use oxc_module_graph::types::StarExportEntry;
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let mut exports_b = FxHashMap::default();
+    exports_b.insert(
+        CompactString::new("foo"),
+        LocalExport {
+            exported_name: CompactString::new("foo"),
+            local_symbol: dummy_symbol_ref(idx_b, 0),
+        },
+    );
+
+    graph.add_module(Module {
+        idx: idx_a,
+        path: PathBuf::from("/a.js"),
+        has_module_syntax: true,
+        is_commonjs: false,
+        named_exports: FxHashMap::default(),
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: dummy_symbol_ref(idx_a, 0),
+        namespace_object_ref: dummy_symbol_ref(idx_a, 1),
+        star_export_entries: vec![StarExportEntry {
+            module_request: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            span: oxc_span::Span::default(),
+        }],
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./b"),
+            target: idx_b,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_b,
+        path: PathBuf::from("/b.js"),
+        has_module_syntax: true,
+        is_commonjs: false,
+        named_exports: exports_b,
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: dummy_symbol_ref(idx_b, 1),
+        namespace_object_ref: dummy_symbol_ref(idx_b, 2),
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: Vec::new(),
+    });
+
+    let dynamic = compute_has_dynamic_exports(&graph);
+    assert!(dynamic.is_empty(), "Pure ESM modules should not have dynamic exports");
+}
+
+#[test]
+fn test_dynamic_exports_cycle_no_infinite_loop() {
+    // Cycle: A export* from B, B export* from A — should not infinite loop
+    use oxc_module_graph::compute_has_dynamic_exports;
+    use oxc_module_graph::types::StarExportEntry;
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    graph.add_module(Module {
+        idx: idx_a,
+        path: PathBuf::from("/a.js"),
+        has_module_syntax: true,
+        is_commonjs: false,
+        named_exports: FxHashMap::default(),
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: dummy_symbol_ref(idx_a, 0),
+        namespace_object_ref: dummy_symbol_ref(idx_a, 1),
+        star_export_entries: vec![StarExportEntry {
+            module_request: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            span: oxc_span::Span::default(),
+        }],
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./b"),
+            target: idx_b,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_b,
+        path: PathBuf::from("/b.js"),
+        has_module_syntax: true,
+        is_commonjs: false,
+        named_exports: FxHashMap::default(),
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: dummy_symbol_ref(idx_b, 2),
+        namespace_object_ref: dummy_symbol_ref(idx_b, 3),
+        star_export_entries: vec![StarExportEntry {
+            module_request: CompactString::new("./a"),
+            resolved_module: Some(idx_a),
+            span: oxc_span::Span::default(),
+        }],
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./a"),
+            target: idx_a,
+            is_type: false,
+        }],
+    });
+
+    // Should complete without hanging; pure ESM cycle → not dynamic
+    let dynamic = compute_has_dynamic_exports(&graph);
+    assert!(dynamic.is_empty(), "Pure ESM cycle should not have dynamic exports");
 }

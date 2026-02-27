@@ -150,6 +150,7 @@ pub trait SymbolGraph {
 ## Shared Types
 
 ### `ModuleIdx`
+
 ```rust
 oxc_index::define_index_type! {
     pub struct ModuleIdx = u32;
@@ -157,6 +158,7 @@ oxc_index::define_index_type! {
 ```
 
 ### `SymbolRef`
+
 ```rust
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SymbolRef {
@@ -166,6 +168,7 @@ pub struct SymbolRef {
 ```
 
 ### Import/Export Types
+
 ```rust
 pub struct NamedImport {
     pub imported_name: CompactStr,     // "foo" in `import { foo }`
@@ -206,6 +209,7 @@ pub enum MatchImportKind {
 ```
 
 ### `ModuleRecord` (owned)
+
 Copied from `oxc_linter::module_record` pattern — owned version of `oxc_syntax::module_record::ModuleRecord<'a>` with `From` conversions. Used by default implementations. Rolldown doesn't need this; it has its own `EcmaView`.
 
 ## Algorithms (Generic Over Traits)
@@ -262,32 +266,37 @@ let errors = oxc_module_graph::bind_imports_and_exports(&module_table, &mut symb
 
 ## Key Files to Reuse/Reference
 
-| File | Why |
-|------|-----|
-| `oxc/crates/oxc_syntax/src/module_record.rs` | Arena `ModuleRecord<'a>` — source for owned conversion |
-| `oxc/crates/oxc_linter/src/module_record.rs` | Owned `ModuleRecord` + `From` impls — same pattern |
-| `oxc/crates/oxc_linter/src/module_graph_visitor.rs` | Graph traversal reference |
-| `oxc/crates/oxc_linter/src/service/runtime.rs` | Resolver setup + parallel graph building |
-| `oxc/crates/oxc_syntax/src/symbol.rs` | `SymbolId` index type pattern |
-| `oxc/crates/oxc_semantic/src/scoping.rs` | `Scoping` type for default impl |
-| `rolldown/crates/rolldown_common/src/types/symbol_ref_db.rs` | Rolldown's SymbolRefDb design |
-| `rolldown/crates/rolldown/src/stages/link_stage/bind_imports_and_exports.rs` | Binding algorithm reference |
+| File                                                                         | Why                                                    |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `oxc/crates/oxc_syntax/src/module_record.rs`                                 | Arena `ModuleRecord<'a>` — source for owned conversion |
+| `oxc/crates/oxc_linter/src/module_record.rs`                                 | Owned `ModuleRecord` + `From` impls — same pattern     |
+| `oxc/crates/oxc_linter/src/module_graph_visitor.rs`                          | Graph traversal reference                              |
+| `oxc/crates/oxc_linter/src/service/runtime.rs`                               | Resolver setup + parallel graph building               |
+| `oxc/crates/oxc_syntax/src/symbol.rs`                                        | `SymbolId` index type pattern                          |
+| `oxc/crates/oxc_semantic/src/scoping.rs`                                     | `Scoping` type for default impl                        |
+| `rolldown/crates/rolldown_common/src/types/symbol_ref_db.rs`                 | Rolldown's SymbolRefDb design                          |
+| `rolldown/crates/rolldown/src/stages/link_stage/bind_imports_and_exports.rs` | Binding algorithm reference                            |
 
 ## Implementation Stages
 
 ### Stage 1: Core Types + Traits — Complete
+
 **Goal**: Define `ModuleIdx`, `SymbolRef`, shared import/export types, and the 3 core traits (`ModuleInfo`, `ModuleStore`, `SymbolGraph`).
 
 ### Stage 2: Default Implementations — Complete
+
 **Goal**: `Module`, `ModuleGraph`, `SymbolRefDb` — concrete types implementing the traits. Owned `ModuleRecord` with `From` conversions.
 
 ### Stage 3: Graph Builder + Resolution — Complete
+
 **Goal**: `ModuleGraphBuilder` using `oxc_parser` + `oxc_semantic` + `oxc_resolver`. BFS from entry points.
 
 ### Stage 4: Binding Algorithm — Complete
+
 **Goal**: `bind_imports_and_exports()` generic over traits. Named/default/namespace imports, re-exports, star re-exports, ambiguity detection.
 
 ### Stage 5: Graph Algorithms + Polish — Complete
+
 **Goal**: `topological_sort()`, `find_cycles()`, docs, integration tests. 17 tests passing.
 
 ## Verification

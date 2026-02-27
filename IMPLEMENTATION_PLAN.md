@@ -7,6 +7,7 @@
 **Challenge:** The current oxc_module_graph traits use concrete types that don't match Rolldown's types. We need to refactor the traits to use associated types so Rolldown can implement them directly.
 
 **Rolldown's binding has 5 parts:**
+
 1. **Core binding** (init exports → star re-exports → match imports → link symbols) — **replaceable** by oxc_module_graph
 2. **CJS interop** (CommonJS detection, dynamic fallback, namespace aliases) — stays in Rolldown as `ImportMatcher` callbacks
 3. **External import merging** (ESM facade symbols) — stays in Rolldown
@@ -121,9 +122,11 @@ Update Rolldown's existing trait impls to match the new trait signatures from St
 ### 6a: Update Rolldown trait impls for new trait methods
 
 **Files to modify (rolldown repo):**
+
 - `crates/rolldown_common/src/oxc_module_graph_impls.rs`
 
 **Changes:**
+
 1. Add `type ModuleIdx = ModuleIdx;` to `SymbolGraph for SymbolRefDb`
 2. Add `fn symbol_owner(&self, symbol: SymbolRef) -> ModuleIdx` — return `symbol.owner`
 3. Add `fn symbol_import_info(&self, symbol: SymbolRef) -> Option<(&str, usize, bool)>` to `ModuleInfo for NormalModule`:
@@ -133,6 +136,7 @@ Update Rolldown's existing trait impls to match the new trait signatures from St
 ### 6b: Create `RolldownImportMatcher`
 
 **Files to modify (rolldown repo):**
+
 - `crates/rolldown/src/stages/link_stage/bind_imports_and_exports.rs`
 
 Create a struct implementing `ImportMatcher`:
@@ -228,11 +232,13 @@ impl ImportMatcher for RolldownImportMatcher<'_> {
 **In `bind_imports_and_exports()`** (rolldown's `bind_imports_and_exports.rs`):
 
 Replace:
+
 ```rust
 self.match_imports_with_exports(&resolved_exports);
 ```
 
 With:
+
 ```rust
 let mut matcher = RolldownImportMatcher { ... };
 let errors = oxc_module_graph::match_imports(
@@ -248,6 +254,7 @@ let errors = oxc_module_graph::match_imports(
 ### 6d: Remove dead code
 
 **Remove from Rolldown:**
+
 - `match_imports_with_exports()` method
 - `match_import_with_export()` method
 - `advance_import_tracker()` method
@@ -257,6 +264,7 @@ let errors = oxc_module_graph::match_imports(
 - `MatchImportKindNormal` struct
 
 ### Estimated code changes
+
 - **Remove from Rolldown:** ~280 lines
 - **Add to Rolldown:** ~100 lines (`RolldownImportMatcher` impl + call site)
 - **Net reduction:** ~180 lines
@@ -266,6 +274,7 @@ let errors = oxc_module_graph::match_imports(
 Rolldown currently uses `FxHashMap<CompactStr, ResolvedExport>` per module (stored in `LinkingMetadata`), while `oxc_module_graph::match_imports` expects `FxHashMap<ModuleIdx, FxHashMap<CompactString, ResolvedExport<SymbolRef>>>`.
 
 Options:
+
 1. **Convert at call site** — map Rolldown's per-module `resolved_exports` into the oxc format before calling `match_imports`. Simple but allocates.
 2. **Store oxc format directly** — change `LinkingMetadata` to store the oxc format from `build_resolved_exports`, avoid the Rolldown format entirely. Requires updating downstream consumers.
 3. **Dual storage** — keep both formats temporarily. Wasteful but safe for incremental migration.
@@ -283,25 +292,27 @@ cargo test -p rolldown            # All tests pass
 ## Summary of all changes across both repos
 
 ### oxc repo (Stages 1, 3, 5)
-| File | Change |
-|------|--------|
-| `traits/module_info.rs` | Associated types, `for_each_*` callbacks, `symbol_import_info` |
-| `traits/module_store.rs` | Associated types, `for_each_*` callbacks |
-| `traits/symbol_graph.rs` | Associated types, `symbol_owner` |
-| `traits/import_matcher.rs` | **NEW** — `ImportMatcher` trait + `DefaultImportMatcher` |
-| `traits/mod.rs` | Re-export `ImportMatcher`, `DefaultImportMatcher` |
-| `types/import_export.rs` | `came_from_cjs` on `ResolvedExport`, `NormalAndNamespace` on `MatchImportKind` |
-| `algo/binding.rs` | CJS-aware star re-exports, `build_resolved_exports`, `match_imports`, `resolve_import`, `resolve_ambiguous` |
-| `algo/mod.rs` | Re-export `build_resolved_exports`, `match_imports` |
-| `lib.rs` | Re-export all new public items |
-| `default/module.rs` | `symbol_import_info` impl |
-| `default/symbol_db.rs` | `symbol_owner` impl, `ModuleIdx` associated type |
-| `tests/integration.rs` | 24 tests (7 new for match_imports) |
+
+| File                       | Change                                                                                                      |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `traits/module_info.rs`    | Associated types, `for_each_*` callbacks, `symbol_import_info`                                              |
+| `traits/module_store.rs`   | Associated types, `for_each_*` callbacks                                                                    |
+| `traits/symbol_graph.rs`   | Associated types, `symbol_owner`                                                                            |
+| `traits/import_matcher.rs` | **NEW** — `ImportMatcher` trait + `DefaultImportMatcher`                                                    |
+| `traits/mod.rs`            | Re-export `ImportMatcher`, `DefaultImportMatcher`                                                           |
+| `types/import_export.rs`   | `came_from_cjs` on `ResolvedExport`, `NormalAndNamespace` on `MatchImportKind`                              |
+| `algo/binding.rs`          | CJS-aware star re-exports, `build_resolved_exports`, `match_imports`, `resolve_import`, `resolve_ambiguous` |
+| `algo/mod.rs`              | Re-export `build_resolved_exports`, `match_imports`                                                         |
+| `lib.rs`                   | Re-export all new public items                                                                              |
+| `default/module.rs`        | `symbol_import_info` impl                                                                                   |
+| `default/symbol_db.rs`     | `symbol_owner` impl, `ModuleIdx` associated type                                                            |
+| `tests/integration.rs`     | 24 tests (7 new for match_imports)                                                                          |
 
 ### rolldown repo (Stages 2, 4, 6)
-| File | Change |
-|------|--------|
-| `rolldown_common/src/oxc_module_graph_impls.rs` | All trait impls: `ModuleInfo`, `ModuleStore`, `SymbolGraph` |
-| `rolldown_common/Cargo.toml` | `oxc_module_graph` dependency |
-| `rolldown/Cargo.toml` | `oxc_module_graph` dependency |
+
+| File                                                         | Change                                                       |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `rolldown_common/src/oxc_module_graph_impls.rs`              | All trait impls: `ModuleInfo`, `ModuleStore`, `SymbolGraph`  |
+| `rolldown_common/Cargo.toml`                                 | `oxc_module_graph` dependency                                |
+| `rolldown/Cargo.toml`                                        | `oxc_module_graph` dependency                                |
 | `rolldown/src/stages/link_stage/bind_imports_and_exports.rs` | Phase 1 replaced (Stage 4), Phase 2 to be replaced (Stage 6) |

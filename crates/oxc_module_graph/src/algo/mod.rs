@@ -1,5 +1,6 @@
 mod binding;
 mod cycles;
+mod dynamic_exports;
 mod topo_sort;
 
 pub use binding::{
@@ -7,4 +8,5 @@ pub use binding::{
     build_resolved_exports, match_imports,
 };
 pub use cycles::find_cycles;
+pub use dynamic_exports::compute_has_dynamic_exports;
 pub use topo_sort::topological_sort;

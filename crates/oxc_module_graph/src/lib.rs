@@ -134,6 +134,15 @@
 //! let cycles = find_cycles(&graph);
 //! ```
 //!
+//! ## `compute_has_dynamic_exports`
+//!
+//! Identifies modules whose exports are not statically analyzable because they
+//! (transitively) `export *` from a CommonJS or external module.
+//!
+//! ```rust,ignore
+//! let dynamic_modules = compute_has_dynamic_exports(&graph);
+//! ```
+//!
 //! # Default implementations
 //!
 //! For tools that do not need to plug in custom types, the [`default`] module
@@ -164,6 +173,6 @@ pub use traits::{DefaultImportMatcher, ImportMatcher, ModuleInfo, ModuleStore, S
 
 // Re-export algorithms at crate root.
 pub use algo::{
-    BindingError, BindingResult, bind_imports_and_exports, build_resolved_exports, find_cycles,
-    match_imports, topological_sort,
+    BindingError, BindingResult, bind_imports_and_exports, build_resolved_exports,
+    compute_has_dynamic_exports, find_cycles, match_imports, topological_sort,
 };
