@@ -26,7 +26,9 @@ fn unexpected_syntax_order_diagnostic(
 ) -> OxcDiagnostic {
     let order_str = sort_order.iter().join(", ");
     OxcDiagnostic::warn(format!("Expected '{curr_kind}' syntax before '{prev_kind}' syntax."))
-        .with_help(format!("Use the memberSyntaxSortOrder [{order_str}] to determine the correct order."))
+        .with_help(format!(
+            "Use the memberSyntaxSortOrder [{order_str}] to determine the correct order."
+        ))
         .with_label(span)
 }
 
