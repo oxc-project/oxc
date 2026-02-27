@@ -23,6 +23,7 @@ doctest = false
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_data_structures = { workspace = true, features = ["stack", "code_buffer"] }
+oxc_jsdoc = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true }
