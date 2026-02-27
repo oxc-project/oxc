@@ -313,6 +313,14 @@ export interface OxlintGlobals {
  */
 export interface OxlintOptions {
   /**
+   * Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
+   *
+   * Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
+   * CLI flags take precedence over this value when both are set.
+   * Only supported in the root configuration file.
+   */
+  reportUnusedDisableDirectives?: AllowWarnDeny | null;
+  /**
    * Ensure warnings produce a non-zero exit code.
    *
    * Equivalent to passing `--deny-warnings` on the CLI.
@@ -324,14 +332,6 @@ export interface OxlintOptions {
    * Equivalent to passing `--max-warnings` on the CLI.
    */
   maxWarnings?: number | null;
-  /**
-   * Report unused disable directives (e.g. `// eslint-disable-line`).
-   *
-   * Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
-   * CLI flags take precedence over this value when both are set.
-   * Only supported in the root configuration file.
-   */
-  reportUnusedDisableDirectives?: AllowWarnDeny | null;
   /**
    * Enable rules that require type information.
    *

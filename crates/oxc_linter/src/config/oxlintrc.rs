@@ -46,7 +46,7 @@ pub struct OxlintOptions {
     /// Equivalent to passing `--max-warnings` on the CLI.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_warnings: Option<usize>,
-    /// Report unused disable directives (e.g. `// eslint-disable-line`).
+    /// Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
     ///
     /// Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
     /// CLI flags take precedence over this value when both are set.
