@@ -15,18 +15,28 @@ use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_member_expression};
 
-fn operator_assignment_diagnostic(mode: Mode, span: Span, operator: &str) -> OxcDiagnostic {
+fn operator_assignment_diagnostic(
+    mode: Mode,
+    span: Span,
+    operator: &str,
+    can_fix: bool,
+) -> OxcDiagnostic {
     let msg = if Mode::Never == mode {
         format!("Unexpected operator assignment ({operator}) shorthand.")
     } else {
         format!("Assignment (=) can be replaced with operator assignment ({operator}).")
     };
-    let help = if Mode::Never == mode {
-        format!("Replace '{operator}' with a regular '=' assignment.")
-    } else {
-        format!("Use '{operator}' shorthand instead of '='.")
-    };
-    OxcDiagnostic::warn(msg).with_note(help).with_label(span)
+    let mut diagnostic = OxcDiagnostic::warn(msg).with_label(span);
+
+    if !can_fix {
+        diagnostic = diagnostic.with_note(if Mode::Never == mode {
+            format!("Replace '{operator}' with a regular '=' assignment.")
+        } else {
+            format!("Use '{operator}' shorthand instead of '='.")
+        });
+    }
+
+    diagnostic
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Copy, Serialize, JsonSchema)]
@@ -134,7 +144,7 @@ fn verify(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
         let replace_operator = format!("{}=", binary_operator.as_str());
         if check_is_same_reference(left, &binary_expr.left, ctx) {
             ctx.diagnostic_with_fix(
-                operator_assignment_diagnostic(mode, expr.span, &replace_operator),
+                operator_assignment_diagnostic(mode, expr.span, &replace_operator, true),
                 |fixer| {
                     if !can_be_fixed(left) {
                         return fixer.noop();
@@ -167,7 +177,12 @@ fn verify(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
             );
         } else if check_is_same_reference(left, &binary_expr.right, ctx) && is_commutative_operator
         {
-            ctx.diagnostic(operator_assignment_diagnostic(mode, expr.span, &replace_operator));
+            ctx.diagnostic(operator_assignment_diagnostic(
+                mode,
+                expr.span,
+                &replace_operator,
+                false,
+            ));
         }
     }
 }
@@ -175,7 +190,7 @@ fn verify(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
 fn prohibit(expr: &AssignmentExpression, mode: Mode, ctx: &LintContext) {
     if !expr.operator.is_assign() && !expr.operator.is_logical() {
         ctx.diagnostic_with_dangerous_fix(
-operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str()),
+operator_assignment_diagnostic(mode, expr.span, expr.operator.as_str(), true),
         |fixer| {
                 if !can_be_fixed(&expr.left) {
                     return fixer.noop();
