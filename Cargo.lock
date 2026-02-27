@@ -2153,6 +2153,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_module_graph"
+version = "0.115.0"
+dependencies = [
+ "compact_str",
+ "oxc_allocator",
+ "oxc_index",
+ "oxc_parser",
+ "oxc_resolver",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_napi"
 version = "0.115.0"
 dependencies = [
