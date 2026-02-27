@@ -2632,14 +2632,25 @@ fn codegen_dependency(dep: &ReactiveScopeDependency) -> String {
 fn codegen_for_init(cx: &mut CodegenContext, init: &ReactiveValue) -> String {
     match init {
         ReactiveValue::Sequence(seq) => {
-            // Process sequence instructions to build variable declarations
+            // Process sequence instructions to build variable declarations.
+            // In a for-init like `let i = 0, length = items.length`, only the
+            // first declaration gets the `let`/`const` keyword; subsequent ones
+            // in the same comma-separated list omit it.
             let mut parts: Vec<String> = Vec::new();
+            let mut first_var_kind: Option<VarKind> = None;
             for instr in &seq.instructions {
                 if let Some(stmt) = codegen_instruction_nullable(cx, instr) {
                     match stmt {
                         CodegenStatement::VariableDeclaration { kind, name, init } => {
                             let init_str = init.map_or(String::new(), |i| format!(" = {i}"));
-                            parts.push(format!("{} {name}{init_str}", kind.as_str()));
+                            if first_var_kind.is_none() {
+                                first_var_kind = Some(kind);
+                                parts.push(format!("{} {name}{init_str}", kind.as_str()));
+                            } else {
+                                // Subsequent declarations in the same for-init
+                                // omit the keyword (comma-separated declarators).
+                                parts.push(format!("{name}{init_str}"));
+                            }
                         }
                         CodegenStatement::ExpressionStatement(expr) => {
                             parts.push(expr);
