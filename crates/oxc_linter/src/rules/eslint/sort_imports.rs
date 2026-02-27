@@ -21,28 +21,20 @@ use crate::{
 fn unexpected_syntax_order_diagnostic(
     curr_kind: &ImportKind,
     prev_kind: &ImportKind,
-    sort_order: &MemberSyntaxSortOrder,
     span: Span,
 ) -> OxcDiagnostic {
-    let order_str = sort_order.iter().join(", ");
     OxcDiagnostic::warn(format!("Expected '{curr_kind}' syntax before '{prev_kind}' syntax."))
-        .with_help(format!(
-            "Use the memberSyntaxSortOrder [{order_str}] to determine the correct order."
-        ))
         .with_label(span)
 }
 
 fn sort_imports_alphabetically_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Imports should be sorted alphabetically.")
-        .with_help("Reorder import declarations alphabetically by the first member or alias name.")
-        .with_label(span)
+    OxcDiagnostic::warn("Imports should be sorted alphabetically.").with_label(span)
 }
 
 fn sort_members_alphabetically_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Member '{name}' of the import declaration should be sorted alphabetically."
     ))
-    .with_note("Reorder the members in the import declaration alphabetically.")
     .with_label(span)
 }
 
@@ -203,7 +195,6 @@ impl SortImports {
                     ctx.diagnostic(unexpected_syntax_order_diagnostic(
                         current_kind,
                         previous_kind,
-                        &self.member_syntax_sort_order,
                         current.span,
                     ));
                 }
