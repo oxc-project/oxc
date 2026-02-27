@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   check:
+    if: github.repository == 'oxc-project/oxc'
     name: Check version
     runs-on: ubuntu-slim
     outputs:

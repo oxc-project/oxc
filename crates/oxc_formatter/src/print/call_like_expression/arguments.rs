@@ -77,6 +77,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                         && is_test_call_expression(call))
             })
             || is_multiline_template_only_args(self, f.source_text())
+            || is_graphql_call_with_single_template_arg(self, call_expression)
             || is_react_hook_with_deps_array(self, f.comments())
         {
             return write!(
@@ -1092,6 +1093,19 @@ fn is_multiline_template_only_args(arguments: &[Argument], source_text: SourceTe
         .unwrap()
         .as_expression()
         .is_some_and(|expr| is_multiline_template_starting_on_same_line(expr, source_text))
+}
+
+/// Returns `true` if `arguments` is a single template literal inside a `graphql()` call.
+/// This triggers the "hugging" layout where the backtick is adjacent to `(`.
+fn is_graphql_call_with_single_template_arg<'a>(
+    arguments: &[Argument],
+    call: Option<&&AstNode<'a, CallExpression<'a>>>,
+) -> bool {
+    arguments.len() == 1
+        && matches!(arguments.first(), Some(Argument::TemplateLiteral(_)))
+        && call.is_some_and(
+            |c| matches!(&c.callee, Expression::Identifier(id) if id.name.as_str() == "graphql"),
+        )
 }
 
 /// This function is used to check if the code is a hook-like code:

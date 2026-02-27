@@ -17,12 +17,12 @@ use super::{
     },
 };
 use crate::{
-    Context, ParserImpl, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::{Kind, parse_big_int, parse_float, parse_int},
     modifiers::Modifiers,
 };
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_paren_expression(&mut self) -> Expression<'a> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
@@ -872,16 +872,22 @@ impl<'a> ParserImpl<'a> {
                     continue;
                 }
 
-                if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft)
-                    && let Some(arguments) =
+                if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
+                    if let Some(arguments) =
                         self.try_parse(Self::parse_type_arguments_in_expression)
-                {
-                    lhs = self.ast.expression_ts_instantiation(
-                        self.end_span(lhs_span),
-                        lhs,
-                        arguments,
-                    );
-                    continue;
+                    {
+                        lhs = self.ast.expression_ts_instantiation(
+                            self.end_span(lhs_span),
+                            lhs,
+                            arguments,
+                        );
+                        continue;
+                    }
+                    // `re_lex_as_typescript_l_angle` may have popped the original token
+                    // (e.g. `<<`) from the collected token stream. Rewind restored the
+                    // parser's current token, so write it back to the stream.
+                    // This is a no-op when tokens are statically disabled (`NoTokensLexerConfig`).
+                    self.lexer.rewrite_last_collected_token(self.token);
                 }
             }
 
@@ -1023,10 +1029,16 @@ impl<'a> ParserImpl<'a> {
 
             let mut type_arguments = None;
             if question_dot {
-                if self.is_ts
-                    && let Some(args) = self.try_parse(Self::parse_type_arguments_in_expression)
-                {
-                    type_arguments = Some(args);
+                if self.is_ts {
+                    if let Some(args) = self.try_parse(Self::parse_type_arguments_in_expression) {
+                        type_arguments = Some(args);
+                    } else {
+                        // `re_lex_as_typescript_l_angle` may have popped the original token
+                        // (e.g. `<<`) from the collected token stream. Rewind restored the
+                        // parser's current token, so write it back to the stream.
+                        // This is a no-op when tokens are statically disabled (`NoTokensLexerConfig`).
+                        self.lexer.rewrite_last_collected_token(self.token);
+                    }
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {
                     lhs = self.parse_tagged_template(lhs_span, lhs, question_dot, type_arguments);

@@ -198,6 +198,10 @@ export interface Oxlintrc {
    */
   jsPlugins?: null | ExternalPluginEntry[];
   /**
+   * Oxlint config options.
+   */
+  options?: OxlintOptions;
+  /**
    * Add, remove, or otherwise reconfigure rules for specific files or groups of files.
    */
   overrides?: OxlintOverrides;
@@ -303,6 +307,23 @@ export interface OxlintEnv {
  */
 export interface OxlintGlobals {
   [k: string]: GlobalValue;
+}
+/**
+ * Options for the linter.
+ */
+export interface OxlintOptions {
+  /**
+   * Enable rules that require type information.
+   *
+   * Equivalent to passing `--type-aware` on the CLI.
+   */
+  typeAware?: boolean | null;
+  /**
+   * Enable experimental type checking (includes TypeScript compiler diagnostics).
+   *
+   * Equivalent to passing `--type-check` on the CLI.
+   */
+  typeCheck?: boolean | null;
 }
 export interface OxlintOverride {
   /**

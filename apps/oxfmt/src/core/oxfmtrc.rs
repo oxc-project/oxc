@@ -975,23 +975,25 @@ pub fn sync_external_options(options: &FormatOptions, config: &mut Value) {
     // Other options defined independently by plugins are also left as they are.
 }
 
-/// Parsers that can embed JS/TS code and benefit from Tailwind plugin
+/// Parsers(files) that benefit from Tailwind plugin
 #[cfg(feature = "napi")]
 static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     "html",
     "vue",
     "angular",
     "glimmer",
+    "css",
+    "scss",
+    "less",
 };
 
-/// Parsers that can embed JS/TS code and benefit from oxfmt plugin.
+/// Parsers(files) that can embed JS/TS code and benefit from oxfmt plugin.
 /// For now, expressions are not supported.
-/// - e.g. `__vue_expression` in `vue`
-/// - e.g. `__ng_directive` in `angular`
+/// - e.g. `__vue_expression` in `vue`, `__ng_directive` in `angular`
 #[cfg(feature = "napi")]
 static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     // "html",
-    // "vue",
+    "vue",
     // "markdown",
     // "mdx",
 };
@@ -1041,7 +1043,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
 
     // Build oxfmt plugin options JSON for js-in-xxx parsers
     #[cfg(feature = "napi")]
-    if let FormatFileStrategy::ExternalFormatter { parser_name, .. } = strategy
+    if let FormatFileStrategy::ExternalFormatter { path, parser_name } = strategy
         && OXFMT_PARSERS.contains(parser_name)
     {
         let mut oxfmt_plugin_options = serde_json::Map::new();
@@ -1067,8 +1069,15 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
             }
         }
 
-        // In embedded contexts, final newline is useless
-        oxfmt_plugin_options.insert("insertFinalNewline".to_string(), false.into());
+        // NOTE: Pass the parent file path so embedded JS/TS formatting
+        // uses the same path for Tailwind config resolution as the parent file.
+        // This is needed for ts-in-(markdown|mdx),
+        // which Prettier overrides the full path with a `dummy.ts(x)`...
+        // This filepath roundtrips:
+        // Rust → JS (Prettier plugin options) → Rust (text_to_doc_api),
+        // where it becomes `filepath_override` in `ResolvedOptions::OxcFormatter`.
+        oxfmt_plugin_options
+            .insert("filepath".to_string(), Value::String(path.to_string_lossy().to_string()));
 
         if let Ok(json_str) = serde_json::to_string(&Value::Object(oxfmt_plugin_options)) {
             obj.insert("_oxfmtPluginOptionsJson".to_string(), Value::String(json_str));
@@ -1520,6 +1529,38 @@ mod tests_sync_external_options {
         assert!(!obj.contains_key("overrides"));
         assert!(!obj.contains_key("ignorePatterns"));
         assert!(!obj.contains_key("sortImports"));
+    }
+
+    #[test]
+    #[cfg(feature = "napi")]
+    fn test_finalize_external_options_sets_oxfmt_plugin_filepath() {
+        use std::path::PathBuf;
+
+        let json_string = r#"{
+            "printWidth": 100,
+            "singleQuote": true,
+            "experimentalSortImports": { "order": "asc" }
+        }"#;
+        let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
+
+        let strategy = super::super::FormatFileStrategy::ExternalFormatter {
+            path: PathBuf::from("/tmp/foo/bar/App.vue"),
+            parser_name: "vue",
+        };
+        finalize_external_options(&mut raw_config, &strategy);
+
+        let obj = raw_config.as_object().unwrap();
+        let plugin_options_json = obj
+            .get("_oxfmtPluginOptionsJson")
+            .and_then(Value::as_str)
+            .expect("Expected `_oxfmtPluginOptionsJson` to be set");
+
+        let plugin_options: Value = serde_json::from_str(plugin_options_json).unwrap();
+        let plugin_obj = plugin_options.as_object().unwrap();
+        assert_eq!(
+            plugin_obj.get("filepath"),
+            Some(&Value::String("/tmp/foo/bar/App.vue".to_string()))
+        );
     }
 }
 

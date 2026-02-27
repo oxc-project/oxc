@@ -547,8 +547,6 @@ fn property_access_may_have_side_effects<'a>(
             !(matches!(object, Expression::ArrayExpression(_))
                 || object.value_type(ctx).is_string())
         }
-        // `import.meta.url` is spec-defined and side-effect free.
-        "url" if matches!(object.without_parentheses(), Expression::MetaProperty(_)) => false,
         _ => true,
     }
 }

@@ -2,7 +2,7 @@ use oxc_data_structures::code_buffer::CodeBuffer;
 
 use super::{
     Config, ESTree, ESTreeSequenceSerializer, ESTreeSerializer, Formatter, Serializer,
-    SerializerPrivate, TracePathPart,
+    TracePathPart,
 };
 
 /// Trait for struct serializers.
@@ -98,9 +98,7 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
             formatter.before_later_element(buffer);
         }
 
-        buffer.print_ascii_byte(b'"');
-        buffer.print_str(key);
-        buffer.print_str("\":");
+        buffer.print_strs_array(["\"", key, "\":"]);
         formatter.before_field_value(buffer);
         value.serialize(&mut *self.serializer);
     }
@@ -224,6 +222,7 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
     /// `true` if output should contain TS fields
     const INCLUDE_TS_FIELDS: bool = P::Config::INCLUDE_TS_FIELDS;
 
+    type Formatter = P::Formatter;
     type StructSerializer = Self;
     type SequenceSerializer = ESTreeSequenceSerializer<'p, P::Config, P::Formatter>;
 
@@ -249,10 +248,6 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
     fn ranges(&self) -> bool {
         self.0.ranges()
     }
-}
-
-impl<P: StructSerializer> SerializerPrivate for FlatStructSerializer<'_, P> {
-    type Formatter = P::Formatter;
 
     fn buffer_mut(&mut self) -> &mut CodeBuffer {
         const {

@@ -18,9 +18,9 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33285 | 100.0% |
-| Passing     | 33005 |  99.2% |
+| Passing     | 33006 |  99.2% |
 | Failing     |     0 |   0.0% |
-| Skipped     |   280 |   0.8% |
+| Skipped     |   279 |   0.8% |
 
 ## Fully Passing Rules
 
@@ -275,7 +275,7 @@
 - `prefer-named-capture-group` (57 tests)
 - `prefer-numeric-literals` (87 tests)
 - `prefer-object-has-own` (92 tests) (1 skipped)
-- `prefer-object-spread` (87 tests) (3 skipped)
+- `prefer-object-spread` (87 tests) (2 skipped)
 - `prefer-promise-reject-errors` (65 tests)
 - `prefer-reflect` (49 tests)
 - `prefer-regex-literals` (251 tests) (3 skipped)

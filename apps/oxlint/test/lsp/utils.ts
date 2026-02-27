@@ -367,6 +367,7 @@ export async function fixMultiWorkspaceFixture(
 type OxlintLSPConfig = {
   fixKind?: string;
   configPath?: string;
+  typeAware?: boolean;
 };
 
 async function getDiagnosticSnapshot(

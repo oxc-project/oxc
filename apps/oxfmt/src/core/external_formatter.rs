@@ -9,8 +9,11 @@ use serde_json::Value;
 use tracing::debug_span;
 
 use oxc_formatter::{
-    EmbeddedFormatterCallback, ExternalCallbacks, FormatOptions, TailwindCallback,
+    EmbeddedDocFormatterCallback, EmbeddedFormatterCallback, ExternalCallbacks, FormatOptions,
+    TailwindCallback,
 };
+
+use crate::prettier_compat::from_prettier_doc;
 
 /// Type alias for the init external formatter callback function signature.
 /// Takes num_threads as argument and returns plugin languages.
@@ -37,6 +40,22 @@ pub type JsFormatEmbeddedCb = ThreadsafeFunction<
     Promise<String>,
     // Arguments (repeated)
     FnArgs<(Value, String)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// Type alias for the Doc-path callback function signature (batch).
+/// Takes (options, texts[]) as arguments and returns Doc JSON string[] (one per text).
+/// The `options` object includes `parser` field set by Rust side.
+pub type JsFormatEmbeddedDocCb = ThreadsafeFunction<
+    // Input arguments
+    FnArgs<(Value, Vec<String>)>, // (options, texts)
+    // Return type (what JS function returns)
+    Promise<Vec<String>>,
+    // Arguments (repeated)
+    FnArgs<(Value, Vec<String>)>,
     // Error status
     Status,
     // CalleeHandled
@@ -80,6 +99,7 @@ pub type JsSortTailwindClassesCb = ThreadsafeFunction<
 struct TsfnHandles {
     init: Arc<RwLock<Option<JsInitExternalFormatterCb>>>,
     format_embedded: Arc<RwLock<Option<JsFormatEmbeddedCb>>>,
+    format_embedded_doc: Arc<RwLock<Option<JsFormatEmbeddedDocCb>>>,
     format_file: Arc<RwLock<Option<JsFormatFileCb>>>,
     sort_tailwind: Arc<RwLock<Option<JsSortTailwindClassesCb>>>,
 }
@@ -89,6 +109,7 @@ impl TsfnHandles {
     fn cleanup(&self) {
         let _ = self.init.write().unwrap().take();
         let _ = self.format_embedded.write().unwrap().take();
+        let _ = self.format_embedded_doc.write().unwrap().take();
         let _ = self.format_file.write().unwrap().take();
         let _ = self.sort_tailwind.write().unwrap().take();
     }
@@ -99,6 +120,11 @@ impl TsfnHandles {
 /// The `options` Value is owned and includes `parser` set by the caller.
 type FormatEmbeddedWithConfigCallback =
     Arc<dyn Fn(Value, &str) -> Result<String, String> + Send + Sync>;
+
+/// Callback function type for formatting embedded code via Doc IR path (batch).
+/// Takes (options, texts) and returns Doc JSON strings (one per text) or an error.
+type FormatEmbeddedDocWithConfigCallback =
+    Arc<dyn Fn(Value, &[&str]) -> Result<Vec<String>, String> + Send + Sync>;
 
 /// Callback function type for formatting files with config.
 /// Takes (options, code) and returns formatted code or an error.
@@ -123,6 +149,7 @@ pub struct ExternalFormatter {
     handles: TsfnHandles,
     pub init: InitExternalFormatterCallback,
     pub format_embedded: FormatEmbeddedWithConfigCallback,
+    pub format_embedded_doc: FormatEmbeddedDocWithConfigCallback,
     pub format_file: FormatFileWithConfigCallback,
     pub sort_tailwindcss_classes: TailwindWithConfigCallback,
 }
@@ -132,6 +159,7 @@ impl std::fmt::Debug for ExternalFormatter {
         f.debug_struct("ExternalFormatter")
             .field("init", &"<callback>")
             .field("format_embedded", &"<callback>")
+            .field("format_embedded_doc", &"<callback>")
             .field("format_file", &"<callback>")
             .field("sort_tailwindcss_classes", &"<callback>")
             .finish()
@@ -147,12 +175,14 @@ impl ExternalFormatter {
     pub fn new(
         init_cb: JsInitExternalFormatterCb,
         format_embedded_cb: JsFormatEmbeddedCb,
+        format_embedded_doc_cb: JsFormatEmbeddedDocCb,
         format_file_cb: JsFormatFileCb,
         sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
     ) -> Self {
         // Wrap TSFNs in Arc<RwLock<Option<...>>> so they can be explicitly dropped
         let init_handle = Arc::new(RwLock::new(Some(init_cb)));
         let format_embedded_handle = Arc::new(RwLock::new(Some(format_embedded_cb)));
+        let format_embedded_doc_handle = Arc::new(RwLock::new(Some(format_embedded_doc_cb)));
         let format_file_handle = Arc::new(RwLock::new(Some(format_file_cb)));
         let sort_tailwind_handle = Arc::new(RwLock::new(Some(sort_tailwindcss_classes_cb)));
 
@@ -160,18 +190,21 @@ impl ExternalFormatter {
         let handles = TsfnHandles {
             init: Arc::clone(&init_handle),
             format_embedded: Arc::clone(&format_embedded_handle),
+            format_embedded_doc: Arc::clone(&format_embedded_doc_handle),
             format_file: Arc::clone(&format_file_handle),
             sort_tailwind: Arc::clone(&sort_tailwind_handle),
         };
 
         let rust_init = wrap_init_external_formatter(init_handle);
-        let rust_format_embedded = wrap_format_embedded(format_embedded_handle);
+        let rust_format_embedded = wrap_format_embedded(Arc::clone(&format_embedded_handle));
+        let rust_format_embedded_doc = wrap_format_embedded_doc(format_embedded_doc_handle);
         let rust_format_file = wrap_format_file(format_file_handle);
         let rust_tailwind = wrap_sort_tailwind_classes(sort_tailwind_handle);
         Self {
             handles,
             init: rust_init,
             format_embedded: rust_format_embedded,
+            format_embedded_doc: rust_format_embedded_doc,
             format_file: rust_format_file,
             sort_tailwindcss_classes: rust_tailwind,
         }
@@ -240,6 +273,44 @@ impl ExternalFormatter {
             None
         };
 
+        let embedded_doc_callback: Option<EmbeddedDocFormatterCallback> = if needs_embedded {
+            let format_embedded_doc = Arc::clone(&self.format_embedded_doc);
+            let options_for_doc = options.clone();
+            Some(Arc::new(move |allocator, group_id_builder, language: &str, texts: &[&str]| {
+                let Some(parser_name) = language_to_prettier_parser(language) else {
+                    return Err(format!("Unsupported language: {language}"));
+                };
+                debug_span!("oxfmt::external::format_embedded_doc", parser = parser_name)
+                    .in_scope(|| {
+                        let mut options = options_for_doc.clone();
+                        if let Value::Object(ref mut map) = options {
+                            map.insert(
+                                "parser".to_string(),
+                                Value::String(parser_name.to_string()),
+                            );
+                        }
+                        let doc_json_strs =
+                            (format_embedded_doc)(options, texts).map_err(|err| {
+                                format!(
+                                    "Failed to get Doc for embedded code (parser '{parser_name}'): {err}"
+                                )
+                            })?;
+                        doc_json_strs
+                            .into_iter()
+                            .map(|doc_json_str| {
+                                let doc_json: serde_json::Value =
+                                    serde_json::from_str(&doc_json_str).map_err(|err| {
+                                        format!("Failed to parse Doc JSON: {err}")
+                                    })?;
+                                from_prettier_doc::to_format_elements_for_template(&doc_json, allocator, group_id_builder)
+                            })
+                            .collect()
+                    })
+            }))
+        } else {
+            None
+        };
+
         let needs_tailwind = format_options.sort_tailwindcss.is_some();
         let tailwind_callback: Option<TailwindCallback> = if needs_tailwind {
             let sort_tailwindcss_classes = Arc::clone(&self.sort_tailwindcss_classes);
@@ -253,6 +324,7 @@ impl ExternalFormatter {
 
         ExternalCallbacks::new()
             .with_embedded_formatter(embedded_callback)
+            .with_embedded_doc_formatter(embedded_doc_callback)
             .with_tailwind(tailwind_callback)
     }
 
@@ -270,11 +342,15 @@ impl ExternalFormatter {
             handles: TsfnHandles {
                 init: Arc::new(RwLock::new(None)),
                 format_embedded: Arc::new(RwLock::new(None)),
+                format_embedded_doc: Arc::new(RwLock::new(None)),
                 format_file: Arc::new(RwLock::new(None)),
                 sort_tailwind: Arc::new(RwLock::new(None)),
             },
             init: Arc::new(|_| Err("Dummy init called".to_string())),
             format_embedded: Arc::new(|_, _| Err("Dummy format_embedded called".to_string())),
+            format_embedded_doc: Arc::new(|_, _: &[&str]| {
+                Err("Dummy format_embedded_doc called".to_string())
+            }),
             format_file: Arc::new(|_, _| Err("Dummy format_file called".to_string())),
             sort_tailwindcss_classes: Arc::new(|_, _| vec![]),
         }
@@ -352,6 +428,32 @@ fn wrap_format_embedded(
             match status {
                 Ok(promise) => match promise.await {
                     Ok(formatted_code) => Ok(formatted_code),
+                    Err(err) => Err(err.reason.clone()),
+                },
+                Err(err) => Err(err.reason.clone()),
+            }
+        });
+        drop(guard);
+        result
+    })
+}
+
+/// Wrap JS `formatEmbeddedDoc` callback as a normal Rust function (batch).
+/// The `options` Value is received with `parser` already set by the caller.
+fn wrap_format_embedded_doc(
+    cb_handle: Arc<RwLock<Option<JsFormatEmbeddedDocCb>>>,
+) -> FormatEmbeddedDocWithConfigCallback {
+    Arc::new(move |options: Value, texts: &[&str]| {
+        let guard = cb_handle.read().unwrap();
+        let Some(cb) = guard.as_ref() else {
+            return Err("JS callback unavailable (environment shutting down)".to_string());
+        };
+        let texts_owned: Vec<String> = texts.iter().map(|t| (*t).to_string()).collect();
+        let result = block_on(async {
+            let status = cb.call_async(FnArgs::from((options, texts_owned))).await;
+            match status {
+                Ok(promise) => match promise.await {
+                    Ok(doc_jsons) => Ok(doc_jsons),
                     Err(err) => Err(err.reason.clone()),
                 },
                 Err(err) => Err(err.reason.clone()),

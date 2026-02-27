@@ -4,7 +4,7 @@ use oxc_allocator::Dummy;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-use crate::{ParserImpl, diagnostics, lexer::Kind};
+use crate::{ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
 /// Fatal parsing error.
 #[derive(Debug, Clone)]
@@ -15,7 +15,7 @@ pub struct FatalError {
     pub errors_len: usize,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     pub(crate) fn set_unexpected(&mut self) {
         // The lexer should have reported a more meaningful diagnostic
@@ -105,7 +105,7 @@ impl<'a> ParserImpl<'a> {
 // error, we detect these patterns and provide helpful guidance on how to resolve the conflict.
 //
 // Inspired by rust-lang/rust#106242
-impl ParserImpl<'_> {
+impl<C: Config> ParserImpl<'_, C> {
     /// Check if the current position looks like a merge conflict marker.
     ///
     /// Detects the following Git conflict markers:

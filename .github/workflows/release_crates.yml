@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   release:
+    if: github.repository == 'oxc-project/oxc'
     name: Release crates
     runs-on: ubuntu-latest
     permissions:

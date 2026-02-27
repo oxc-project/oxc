@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.115.0] - 2026-02-23
+
+### 🚀 Features
+
+- e814049 oxc_data_structure/rope: Add `get_offset_from_line_and_column` (#18133) (Sysix)
+
 ## [0.114.0] - 2026-02-16
 
 ### 📚 Documentation

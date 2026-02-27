@@ -165,6 +165,7 @@ impl ServerLinterBuilder {
         }
 
         let config_store = ConfigStore::new(base_config, nested_configs, external_plugin_store);
+        let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
 
         // Send JS plugins config to JS side
@@ -193,7 +194,7 @@ impl ServerLinterBuilder {
         }
 
         let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
-            .with_type_aware(options.type_aware)
+            .with_type_aware(type_aware)
             .with_fix_kind(fix_kind)
             .build()
         {
@@ -354,7 +355,7 @@ impl ServerLinterBuilder {
             loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
         }
 
-        let (configs, errors) = loader.load_discovered(config_paths);
+        let (configs, errors) = loader.load_discovered_with_root_dir(root_path, config_paths);
 
         for error in errors {
             if let Some(path) = error.path() {
@@ -500,7 +501,7 @@ impl Tool for ServerLinter {
             watchers.push(normalize_path(pattern).to_string_lossy().to_string());
         }
 
-        if options.type_aware {
+        if options.type_aware.unwrap_or(self.runner.has_type_aware()) {
             watchers.push("**/tsconfig*.json".to_string());
         }
 
@@ -1334,6 +1335,28 @@ mod test {
             }),
         );
         tester.test_and_snapshot_single_file("no-floating-promises/index.ts");
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_config_file_type_aware_used_when_lsp_not_set() {
+        let tester = Tester::new("fixtures/lsp/tsgolint/type_aware_config", json!({}));
+        tester.test_and_snapshot_single_file("test.ts");
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_config_file_type_aware_disabled_when_lsp_set() {
+        let tester =
+            Tester::new("fixtures/lsp/tsgolint/type_aware_config", json!({ "typeAware": false }));
+        tester.test_and_snapshot_single_file("test-with-lsp-config.ts");
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_nested_config_file_type_aware_is_rejected() {
+        let tester = Tester::new("fixtures/lsp/tsgolint/nested_type_aware", json!({}));
+        tester.test_and_snapshot_multiple_file(&["test-root.ts", "nested/test.ts"]);
     }
 
     #[test]

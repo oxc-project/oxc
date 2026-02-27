@@ -75,6 +75,15 @@
       ],
       "markdownDescription": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are experimental and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```"
     },
+    "options": {
+      "description": "Oxlint config options.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintOptions"
+        }
+      ],
+      "markdownDescription": "Oxlint config options."
+    },
     "overrides": {
       "description": "Add, remove, or otherwise reconfigure rules for specific files or groups of files.",
       "allOf": [
@@ -480,6 +489,30 @@
         "$ref": "#/definitions/GlobalValue"
       },
       "markdownDescription": "Add or remove global variables.\n\nFor each global variable, set the corresponding value equal to `\"writable\"`\nto allow the variable to be overwritten or `\"readonly\"` to disallow overwriting.\n\nGlobals can be disabled by setting their value to `\"off\"`. For example, in\nan environment where most Es2015 globals are available but `Promise` is unavailable,\nyou might use this config:\n\n```json\n\n{\n\"$schema\": \"./node_modules/oxlint/configuration_schema.json\",\n\"env\": {\n\"es6\": true\n},\n\"globals\": {\n\"Promise\": \"off\"\n}\n}\n\n```\n\nYou may also use `\"readable\"` or `false` to represent `\"readonly\"`, and\n`\"writeable\"` or `true` to represent `\"writable\"`."
+    },
+    "OxlintOptions": {
+      "description": "Options for the linter.",
+      "type": "object",
+      "properties": {
+        "typeAware": {
+          "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI."
+        },
+        "typeCheck": {
+          "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI."
+        }
+      },
+      "additionalProperties": false,
+      "markdownDescription": "Options for the linter."
     },
     "OxlintOverride": {
       "type": "object",

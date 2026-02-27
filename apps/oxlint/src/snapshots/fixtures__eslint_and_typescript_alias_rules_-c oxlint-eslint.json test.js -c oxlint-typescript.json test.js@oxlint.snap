@@ -13,6 +13,7 @@ working directory: fixtures/eslint_and_typescript_alias_rules
    :                                ^^^^
  5 | 
    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
 
 Found 0 warnings and 1 error.
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.
@@ -32,6 +33,7 @@ working directory: fixtures/eslint_and_typescript_alias_rules
    :                                ^^^^
  5 | 
    `----
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
 
 Found 0 warnings and 1 error.
 Finished in <variable>ms on 1 file with 1 rules using 1 threads.

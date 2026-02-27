@@ -3,6 +3,50 @@
 
 # stdout
 ```
+  x tokens-plugin(tokens): Identifier ("a")
+   ,-[files/bom.js:1:4]
+ 1 | ﻿a = b;
+   : ^
+   `----
+
+  x tokens-plugin(tokens): Tokens and comments:
+  | Identifier        loc= 1:0 - 1:1    range= 0-1     "a"
+  | Punctuator        loc= 1:2 - 1:3    range= 2-3     "="
+  | Identifier        loc= 1:4 - 1:5    range= 4-5     "b"
+  | Punctuator        loc= 1:5 - 1:6    range= 5-6     ";"
+   ,-[files/bom.js:1:4]
+ 1 | ﻿a = b;
+   : ^^^^^^^
+   `----
+
+  x tokens-plugin(tokens): Tokens:
+  | Identifier        loc= 1:0 - 1:1    range= 0-1     "a"
+  | Punctuator        loc= 1:2 - 1:3    range= 2-3     "="
+  | Identifier        loc= 1:4 - 1:5    range= 4-5     "b"
+  | Punctuator        loc= 1:5 - 1:6    range= 5-6     ";"
+   ,-[files/bom.js:1:4]
+ 1 | ﻿a = b;
+   : ^^^^^^^
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=")
+   ,-[files/bom.js:1:6]
+ 1 | ﻿a = b;
+   :   ^
+   `----
+
+  x tokens-plugin(tokens): Identifier ("b")
+   ,-[files/bom.js:1:8]
+ 1 | ﻿a = b;
+   :     ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/bom.js:1:9]
+ 1 | ﻿a = b;
+   :      ^
+   `----
+
   x tokens-plugin(tokens): Keyword ("const")
    ,-[files/generic_arrow.ts:1:1]
  1 | const obj = {
@@ -463,7 +507,7 @@
    `----
 
   x tokens-plugin(tokens): RegularExpression ("/abc/gu")
-  |   regex: {"flags":"gu","pattern":"abc"}
+  |   regex: {"pattern":"abc","flags":"gu"}
    ,-[files/index.js:6:9]
  5 | // Another comment
  6 | let y = /abc/gu;
@@ -1071,8 +1115,407 @@
    :  ^
    `----
 
-Found 0 warnings and 109 errors.
-Finished in Xms on 4 files with 1 rules using X threads.
+  x tokens-plugin(tokens): Line (" `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`")
+   ,-[files/ts_angle_relex.ts:1:1]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | const a = n << 2;
+   `----
+
+  x tokens-plugin(tokens): Tokens and comments:
+  | Line              loc= 1:0 - 1:90   range= 0-90    " `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`"
+  | Keyword           loc= 2:0 - 2:5    range= 91-96   "const"
+  | Identifier        loc= 2:6 - 2:7    range= 97-98   "a"
+  | Punctuator        loc= 2:8 - 2:9    range= 99-100  "="
+  | Identifier        loc= 2:10 - 2:11  range= 101-102 "n"
+  | Punctuator        loc= 2:12 - 2:14  range= 103-105 "<<"
+  | Numeric           loc= 2:15 - 2:16  range= 106-107 "2"
+  | Punctuator        loc= 2:16 - 2:17  range= 107-108 ";"
+  | Line              loc= 4:0 - 4:52   range= 110-162 " Successful type argument parsing with `<` and `>`"
+  | Keyword           loc= 5:0 - 5:5    range= 163-168 "const"
+  | Identifier        loc= 5:6 - 5:7    range= 169-170 "b"
+  | Punctuator        loc= 5:8 - 5:9    range= 171-172 "="
+  | Identifier        loc= 5:10 - 5:12  range= 173-175 "id"
+  | Punctuator        loc= 5:12 - 5:13  range= 175-176 "<"
+  | Identifier        loc= 5:13 - 5:19  range= 176-182 "number"
+  | Punctuator        loc= 5:19 - 5:20  range= 182-183 ">"
+  | Punctuator        loc= 5:20 - 5:21  range= 183-184 "("
+  | Numeric           loc= 5:21 - 5:23  range= 184-186 "42"
+  | Punctuator        loc= 5:23 - 5:24  range= 186-187 ")"
+  | Punctuator        loc= 5:24 - 5:25  range= 187-188 ";"
+  | Line              loc= 7:0 - 7:88   range= 190-278 " `>` after type args is disambiguated: speculatively tried as end of type args, fails,"
+  | Line              loc= 8:0 - 8:48   range= 279-327 " rewinds to binary expression `n < (1 >> (0))`"
+  | Keyword           loc= 9:0 - 9:5    range= 328-333 "const"
+  | Identifier        loc= 9:6 - 9:7    range= 334-335 "c"
+  | Punctuator        loc= 9:8 - 9:9    range= 336-337 "="
+  | Identifier        loc= 9:10 - 9:11  range= 338-339 "n"
+  | Punctuator        loc= 9:11 - 9:12  range= 339-340 "<"
+  | Numeric           loc= 9:12 - 9:13  range= 340-341 "1"
+  | Punctuator        loc= 9:13 - 9:15  range= 341-343 ">>"
+  | Punctuator        loc= 9:15 - 9:16  range= 343-344 "("
+  | Numeric           loc= 9:16 - 9:17  range= 344-345 "0"
+  | Punctuator        loc= 9:17 - 9:18  range= 345-346 ")"
+  | Punctuator        loc= 9:18 - 9:19  range= 346-347 ";"
+   ,-[files/ts_angle_relex.ts:1:1]
+ 1 | ,-> // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | |   const a = n << 2;
+ 3 | |   
+ 4 | |   // Successful type argument parsing with `<` and `>`
+ 5 | |   const b = id<number>(42);
+ 6 | |   
+ 7 | |   // `>` after type args is disambiguated: speculatively tried as end of type args, fails,
+ 8 | |   // rewinds to binary expression `n < (1 >> (0))`
+ 9 | `-> const c = n<1>>(0);
+   `----
+
+  x tokens-plugin(tokens): Tokens:
+  | Keyword           loc= 2:0 - 2:5    range= 91-96   "const"
+  | Identifier        loc= 2:6 - 2:7    range= 97-98   "a"
+  | Punctuator        loc= 2:8 - 2:9    range= 99-100  "="
+  | Identifier        loc= 2:10 - 2:11  range= 101-102 "n"
+  | Punctuator        loc= 2:12 - 2:14  range= 103-105 "<<"
+  | Numeric           loc= 2:15 - 2:16  range= 106-107 "2"
+  | Punctuator        loc= 2:16 - 2:17  range= 107-108 ";"
+  | Keyword           loc= 5:0 - 5:5    range= 163-168 "const"
+  | Identifier        loc= 5:6 - 5:7    range= 169-170 "b"
+  | Punctuator        loc= 5:8 - 5:9    range= 171-172 "="
+  | Identifier        loc= 5:10 - 5:12  range= 173-175 "id"
+  | Punctuator        loc= 5:12 - 5:13  range= 175-176 "<"
+  | Identifier        loc= 5:13 - 5:19  range= 176-182 "number"
+  | Punctuator        loc= 5:19 - 5:20  range= 182-183 ">"
+  | Punctuator        loc= 5:20 - 5:21  range= 183-184 "("
+  | Numeric           loc= 5:21 - 5:23  range= 184-186 "42"
+  | Punctuator        loc= 5:23 - 5:24  range= 186-187 ")"
+  | Punctuator        loc= 5:24 - 5:25  range= 187-188 ";"
+  | Keyword           loc= 9:0 - 9:5    range= 328-333 "const"
+  | Identifier        loc= 9:6 - 9:7    range= 334-335 "c"
+  | Punctuator        loc= 9:8 - 9:9    range= 336-337 "="
+  | Identifier        loc= 9:10 - 9:11  range= 338-339 "n"
+  | Punctuator        loc= 9:11 - 9:12  range= 339-340 "<"
+  | Numeric           loc= 9:12 - 9:13  range= 340-341 "1"
+  | Punctuator        loc= 9:13 - 9:15  range= 341-343 ">>"
+  | Punctuator        loc= 9:15 - 9:16  range= 343-344 "("
+  | Numeric           loc= 9:16 - 9:17  range= 344-345 "0"
+  | Punctuator        loc= 9:17 - 9:18  range= 345-346 ")"
+  | Punctuator        loc= 9:18 - 9:19  range= 346-347 ";"
+   ,-[files/ts_angle_relex.ts:1:1]
+ 1 | ,-> // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | |   const a = n << 2;
+ 3 | |   
+ 4 | |   // Successful type argument parsing with `<` and `>`
+ 5 | |   const b = id<number>(42);
+ 6 | |   
+ 7 | |   // `>` after type args is disambiguated: speculatively tried as end of type args, fails,
+ 8 | |   // rewinds to binary expression `n < (1 >> (0))`
+ 9 | `-> const c = n<1>>(0);
+   `----
+
+  x tokens-plugin(tokens): Keyword ("const")
+   ,-[files/ts_angle_relex.ts:2:1]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | const a = n << 2;
+   : ^^^^^
+ 3 | 
+   `----
+
+  x tokens-plugin(tokens): Identifier ("a")
+   ,-[files/ts_angle_relex.ts:2:7]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | const a = n << 2;
+   :       ^
+ 3 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=")
+   ,-[files/ts_angle_relex.ts:2:9]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | const a = n << 2;
+   :         ^
+ 3 | 
+   `----
+
+  x tokens-plugin(tokens): Identifier ("n")
+   ,-[files/ts_angle_relex.ts:2:11]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | const a = n << 2;
+   :           ^
+ 3 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("<<")
+   ,-[files/ts_angle_relex.ts:2:13]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | const a = n << 2;
+   :             ^^
+ 3 | 
+   `----
+
+  x tokens-plugin(tokens): Numeric ("2")
+   ,-[files/ts_angle_relex.ts:2:16]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | const a = n << 2;
+   :                ^
+ 3 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/ts_angle_relex.ts:2:17]
+ 1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
+ 2 | const a = n << 2;
+   :                 ^
+ 3 | 
+   `----
+
+  x tokens-plugin(tokens): Line (" Successful type argument parsing with `<` and `>`")
+   ,-[files/ts_angle_relex.ts:4:1]
+ 3 | 
+ 4 | // Successful type argument parsing with `<` and `>`
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 5 | const b = id<number>(42);
+   `----
+
+  x tokens-plugin(tokens): Keyword ("const")
+   ,-[files/ts_angle_relex.ts:5:1]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   : ^^^^^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Identifier ("b")
+   ,-[files/ts_angle_relex.ts:5:7]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   :       ^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=")
+   ,-[files/ts_angle_relex.ts:5:9]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   :         ^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Identifier ("id")
+   ,-[files/ts_angle_relex.ts:5:11]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   :           ^^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("<")
+   ,-[files/ts_angle_relex.ts:5:13]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   :             ^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Identifier ("number")
+   ,-[files/ts_angle_relex.ts:5:14]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   :              ^^^^^^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator (">")
+   ,-[files/ts_angle_relex.ts:5:20]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   :                    ^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("(")
+   ,-[files/ts_angle_relex.ts:5:21]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   :                     ^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Numeric ("42")
+   ,-[files/ts_angle_relex.ts:5:22]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   :                      ^^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator (")")
+   ,-[files/ts_angle_relex.ts:5:24]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   :                        ^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/ts_angle_relex.ts:5:25]
+ 4 | // Successful type argument parsing with `<` and `>`
+ 5 | const b = id<number>(42);
+   :                         ^
+ 6 | 
+   `----
+
+  x tokens-plugin(tokens): Line (" `>` after type args is disambiguated: speculatively tried as end of type args, fails,")
+   ,-[files/ts_angle_relex.ts:7:1]
+ 6 | 
+ 7 | // `>` after type args is disambiguated: speculatively tried as end of type args, fails,
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+   `----
+
+  x tokens-plugin(tokens): Line (" rewinds to binary expression `n < (1 >> (0))`")
+   ,-[files/ts_angle_relex.ts:8:1]
+ 7 | // `>` after type args is disambiguated: speculatively tried as end of type args, fails,
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 | const c = n<1>>(0);
+   `----
+
+  x tokens-plugin(tokens): Keyword ("const")
+   ,-[files/ts_angle_relex.ts:9:1]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   : ^^^^^
+   `----
+
+  x tokens-plugin(tokens): Identifier ("c")
+   ,-[files/ts_angle_relex.ts:9:7]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   :       ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=")
+   ,-[files/ts_angle_relex.ts:9:9]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   :         ^
+   `----
+
+  x tokens-plugin(tokens): Identifier ("n")
+   ,-[files/ts_angle_relex.ts:9:11]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   :           ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("<")
+   ,-[files/ts_angle_relex.ts:9:12]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   :            ^
+   `----
+
+  x tokens-plugin(tokens): Numeric ("1")
+   ,-[files/ts_angle_relex.ts:9:13]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   :             ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator (">>")
+   ,-[files/ts_angle_relex.ts:9:14]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   :              ^^
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("(")
+   ,-[files/ts_angle_relex.ts:9:16]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   :                ^
+   `----
+
+  x tokens-plugin(tokens): Numeric ("0")
+   ,-[files/ts_angle_relex.ts:9:17]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   :                 ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator (")")
+   ,-[files/ts_angle_relex.ts:9:18]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   :                  ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/ts_angle_relex.ts:9:19]
+ 8 | // rewinds to binary expression `n < (1 >> (0))`
+ 9 | const c = n<1>>(0);
+   :                   ^
+   `----
+
+  x tokens-plugin(tokens): Identifier ("a")
+   ,-[files/unicode.js:1:1]
+ 1 | a;
+   : ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
+  x tokens-plugin(tokens): Tokens and comments:
+  | Identifier        loc= 1:0 - 1:1    range= 0-1     "a"
+  | Punctuator        loc= 1:1 - 1:2    range= 1-2     ";"
+  | Line              loc= 2:0 - 2:13   range= 3-16    " 😀🤪😆😎🤮"
+  | Identifier        loc= 3:0 - 3:1    range= 17-18   "b"
+  | Punctuator        loc= 3:1 - 3:2    range= 18-19   ";"
+   ,-[files/unicode.js:1:1]
+ 1 | ,-> a;
+ 2 | |   // 😀🤪😆😎🤮
+ 3 | `-> b;
+   `----
+
+  x tokens-plugin(tokens): Tokens:
+  | Identifier        loc= 1:0 - 1:1    range= 0-1     "a"
+  | Punctuator        loc= 1:1 - 1:2    range= 1-2     ";"
+  | Identifier        loc= 3:0 - 3:1    range= 17-18   "b"
+  | Punctuator        loc= 3:1 - 3:2    range= 18-19   ";"
+   ,-[files/unicode.js:1:1]
+ 1 | ,-> a;
+ 2 | |   // 😀🤪😆😎🤮
+ 3 | `-> b;
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/unicode.js:1:2]
+ 1 | a;
+   :  ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
+  x tokens-plugin(tokens): Line (" 😀🤪😆😎🤮")
+   ,-[files/unicode.js:2:1]
+ 1 | a;
+ 2 | // 😀🤪😆😎🤮
+   : ^^^^^^^^^^^^^
+ 3 | b;
+   `----
+
+  x tokens-plugin(tokens): Identifier ("b")
+   ,-[files/unicode.js:3:1]
+ 2 | // 😀🤪😆😎🤮
+ 3 | b;
+   : ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/unicode.js:3:2]
+ 2 | // 😀🤪😆😎🤮
+ 3 | b;
+   :  ^
+   `----
+
+Found 0 warnings and 157 errors.
+Finished in Xms on 7 files with 1 rules using X threads.
 ```
 
 # stderr

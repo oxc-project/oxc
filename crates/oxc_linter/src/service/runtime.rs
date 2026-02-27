@@ -19,8 +19,9 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet, FxHasher};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool};
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Vec as ArenaVec};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
+use oxc_parser::Token;
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
@@ -129,6 +130,8 @@ struct SectionContent<'a> {
     /// None if section parsing failed. The corresponding item with the same index in
     /// `ProcessedModule.section_module_records` would be `Err(Vec<OxcDiagnostic>)`.
     semantic: Option<Semantic<'a>>,
+    /// None if section parsing failed, or token collection was not requested.
+    parser_tokens: Option<ArenaVec<'a, Token>>,
 }
 
 /// A module with its source text and semantic, ready to be linted.
@@ -621,6 +624,7 @@ impl Runtime {
                                         Arc::clone(&module_record),
                                         section.source.start,
                                         section.source.framework_options,
+                                        section.parser_tokens,
                                     ))
                                 }
                                 Err(messages) => {
@@ -740,6 +744,7 @@ impl Runtime {
                                         Arc::clone(&module_record),
                                         section.source.start,
                                         section.source.framework_options,
+                                        section.parser_tokens,
                                     ))
                                 }
                                 Err(diagnostics) => {
@@ -813,7 +818,8 @@ impl Runtime {
                                     section.semantic.unwrap(),
                                     Arc::clone(&module_record),
                                     section.source.start,
-                                    section.source.framework_options
+                                    section.source.framework_options,
+                                    section.parser_tokens,
                                 )),
                                 Err(errors) => {
                                     if !errors.is_empty() {
@@ -958,12 +964,14 @@ impl Runtime {
         allocator: &'a Allocator,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
-        let section_sources = PartialLoader::parse(allocator, ext, source_text)
+        let collect_tokens = self.linter.has_external_linter();
+        let section_sources = PartialLoader::parse(allocator, ext, source_text, collect_tokens)
             .or_else(|| TransformLoader::parse(allocator, ext, source_text))
             .unwrap_or_else(|| {
                 vec![parse_javascript_source(
                     allocator,
-                    JavaScriptSource::new(source_text, source_type),
+                    JavaScriptSource::partial(source_text, source_type, 0),
+                    collect_tokens,
                 )]
             });
 
@@ -971,13 +979,20 @@ impl Runtime {
             [Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1],
         >::with_capacity(section_sources.len());
         for (result, section_source) in section_sources {
-            match self.process_source_section(path, allocator, check_syntax_errors, result) {
-                Ok((record, semantic)) => {
+            match self.process_source_section(
+                path,
+                allocator,
+                check_syntax_errors,
+                collect_tokens,
+                result,
+            ) {
+                Ok((record, semantic, parser_tokens)) => {
                     section_module_records.push(Ok(record));
                     if let Some(sections) = &mut out_sections {
                         sections.push(SectionContent {
                             source: section_source,
                             semantic: Some(semantic),
+                            parser_tokens,
                         });
                     }
                 }
@@ -998,7 +1013,11 @@ impl Runtime {
 
                     section_module_records.push(Err(err));
                     if let Some(sections) = &mut out_sections {
-                        sections.push(SectionContent { source: section_source, semantic: None });
+                        sections.push(SectionContent {
+                            source: section_source,
+                            semantic: None,
+                            parser_tokens: None,
+                        });
                     }
                 }
             }
@@ -1006,13 +1025,16 @@ impl Runtime {
         section_module_records
     }
 
+    #[expect(clippy::type_complexity)]
     fn process_source_section<'a>(
         &self,
         path: &Path,
         allocator: &'a Allocator,
         check_syntax_errors: bool,
+        collect_tokens: bool,
         parse_result: Result<LinterParseResult<'a>, Vec<OxcDiagnostic>>,
-    ) -> Result<(ResolvedModuleRecord, Semantic<'a>), Vec<OxcDiagnostic>> {
+    ) -> Result<(ResolvedModuleRecord, Semantic<'a>, Option<ArenaVec<'a, Token>>), Vec<OxcDiagnostic>>
+    {
         let parse_result = parse_result?;
 
         let semantic_ret = SemanticBuilder::new()
@@ -1048,6 +1070,12 @@ impl Runtime {
                 })
                 .collect();
         }
-        Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic))
+
+        let parser_tokens = collect_tokens.then_some(parse_result.tokens);
+        Ok((
+            ResolvedModuleRecord { module_record, resolved_module_requests },
+            semantic,
+            parser_tokens,
+        ))
     }
 }
