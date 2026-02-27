@@ -1,18 +1,18 @@
-use rustc_hash::FxHashMap;
-
+use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 
 use crate::{
     ast_nodes::AstNode,
-    external_formatter::EmbeddedIR,
-    formatter::{Formatter, format_element::LineMode, prelude::*},
+    formatter::{
+        FormatElement, Formatter,
+        format_element::{LineMode, TextWidth},
+        prelude::*,
+    },
     print::template::{
         FormatTemplateExpression, FormatTemplateExpressionOptions, TemplateExpression,
     },
     write,
 };
-
-use super::write_embedded_ir;
 
 /// Format a GraphQL template literal via the Doc→IR path.
 ///
@@ -87,26 +87,30 @@ pub(super) fn format_graphql_doc<'a>(
     let all_irs = if texts_to_format.is_empty() {
         vec![]
     } else {
-        let Some(Ok(irs)) = f
-            .context()
-            .external_callbacks()
-            .format_embedded_doc("tagged-graphql", &texts_to_format)
-        else {
+        let allocator = f.allocator();
+        let group_id_builder = f.group_id_builder();
+        let Some(Ok(irs)) = f.context().external_callbacks().format_embedded_doc(
+            allocator,
+            group_id_builder,
+            "tagged-graphql",
+            &texts_to_format,
+        ) else {
             return false;
         };
         irs
     };
 
     // Phase 3: Build `ir_parts` by mapping formatted results back to original indices.
-    // Use `into_iter` to take ownership and avoid cloning `Vec<EmbeddedIR>`.
+    // Use `into_iter` to take ownership and avoid cloning.
     let mut irs_iter = all_irs.into_iter();
-    let mut ir_parts: Vec<Option<Vec<EmbeddedIR>>> = Vec::with_capacity(num_quasis);
+    let mut ir_parts: Vec<Option<Vec<FormatElement<'a>>>> = Vec::with_capacity(num_quasis);
     for (idx, info) in infos.iter().enumerate() {
         if format_index_map[idx].is_some() {
             ir_parts.push(irs_iter.next());
         } else if info.comments_only {
             // Build IR for comment-only quasis manually
-            let comment_ir = build_graphql_comment_ir(info.text);
+            let comment_ir =
+                build_graphql_comment_ir(info.text, f.allocator(), f.options().indent_width);
             ir_parts.push(comment_ir);
         } else {
             ir_parts.push(None);
@@ -127,15 +131,14 @@ pub(super) fn format_graphql_doc<'a>(
     // Phase 4: Write the template structure
     // `["`", indent([hardline, join(hardline, parts)]), hardline, "`"]`
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/graphql.js#L68C10-L68C73
-    let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
-        let mut group_id_map = FxHashMap::default();
+    let format_content = format_once(|f: &mut Formatter<'_, 'a>| {
         let mut has_prev_part = false;
 
-        for (idx, maybe_ir) in ir_parts.iter().enumerate() {
+        for (idx, mut maybe_ir) in ir_parts.into_iter().enumerate() {
             let is_first = idx == 0;
             let is_last = idx == num_quasis - 1;
 
-            if let Some(ir) = maybe_ir {
+            if let Some(ir) = maybe_ir.take() {
                 if !is_first && infos[idx].starts_with_blank_line {
                     if has_prev_part {
                         write!(f, [empty_line()]);
@@ -143,7 +146,7 @@ pub(super) fn format_graphql_doc<'a>(
                 } else if has_prev_part {
                     write!(f, [hard_line_break()]);
                 }
-                write_embedded_ir(ir, f, &mut group_id_map);
+                f.write_elements(ir);
                 has_prev_part = true;
             } else if !is_first && !is_last && infos[idx].starts_with_blank_line && has_prev_part {
                 write!(f, [empty_line()]);
@@ -188,9 +191,14 @@ struct QuasiInfo<'a> {
 /// <https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/graphql.js#L71>
 ///
 /// Extracts comment lines, joins with hardline, and preserves blank lines between comment groups.
-fn build_graphql_comment_ir(text: &str) -> Option<Vec<EmbeddedIR>> {
+fn build_graphql_comment_ir<'a>(
+    text: &str,
+    allocator: &'a Allocator,
+    indent_width: crate::IndentWidth,
+) -> Option<Vec<FormatElement<'a>>> {
+    // This comes from `.cooked`, which has normalized line terminators
     let lines: Vec<&str> = text.split('\n').map(str::trim).collect();
-    let mut parts: Vec<EmbeddedIR> = vec![];
+    let mut parts: Vec<FormatElement<'a>> = vec![];
     let mut seen_comment = false;
 
     for (i, line) in lines.iter().enumerate() {
@@ -199,16 +207,20 @@ fn build_graphql_comment_ir(text: &str) -> Option<Vec<EmbeddedIR>> {
         }
 
         if i > 0 && lines[i - 1].is_empty() && seen_comment {
-            // Blank line before this comment group → emit empty line + text
-            parts.push(EmbeddedIR::Line(LineMode::Empty));
-            parts.push(EmbeddedIR::ExpandParent);
-            parts.push(EmbeddedIR::Text((*line).to_string()));
+            // Blank line before this comment group -> emit empty line + text
+            parts.push(FormatElement::Line(LineMode::Empty));
+            parts.push(FormatElement::ExpandParent);
+            let arena_text = allocator.alloc_str(line);
+            let width = TextWidth::from_text(arena_text, indent_width);
+            parts.push(FormatElement::Text { text: arena_text, width });
         } else {
             if seen_comment {
-                parts.push(EmbeddedIR::Line(LineMode::Hard));
-                parts.push(EmbeddedIR::ExpandParent);
+                parts.push(FormatElement::Line(LineMode::Hard));
+                parts.push(FormatElement::ExpandParent);
             }
-            parts.push(EmbeddedIR::Text((*line).to_string()));
+            let arena_text = allocator.alloc_str(line);
+            let width = TextWidth::from_text(arena_text, indent_width);
+            parts.push(FormatElement::Text { text: arena_text, width });
         }
 
         seen_comment = true;

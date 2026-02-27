@@ -1,37 +1,89 @@
+use std::num::NonZeroU8;
+
+use rustc_hash::FxHashMap;
 use serde_json::Value;
 
-use oxc_formatter::{EmbeddedIR, LineMode, PrintMode};
+use oxc_allocator::{Allocator, StringBuilder};
+use oxc_formatter::{
+    Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
+    PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
+};
 
 /// Marker string used to represent `-Infinity` in JSON.
 /// JS side replaces `-Infinity` with this string before `JSON.stringify()`.
 /// See `src-js/lib/apis.ts` for details.
 const NEGATIVE_INFINITY_MARKER: &str = "__NEGATIVE_INFINITY__";
 
-/// Converts a Prettier Doc JSON value into a flat `Vec<EmbeddedIR>`.
-///
-/// This is the reverse of `to_prettier_doc.rs` which converts `FormatElement` → Prettier Doc JSON.
-/// The Doc JSON comes from Prettier's `__debug.printToDoc()` API.
-pub fn doc_json_to_embedded_ir(doc: &Value) -> Result<Vec<EmbeddedIR>, String> {
+/// Converts a Prettier Doc JSON value into a flat `Vec<FormatElement<'a>>`,
+/// with template-specific text escaping applied as post-processing.
+pub fn to_format_elements_for_template<'a>(
+    doc: &Value,
+    allocator: &'a Allocator,
+    group_id_builder: &UniqueGroupIdBuilder,
+) -> Result<Vec<FormatElement<'a>>, String> {
+    let mut ctx = FmtCtx::new(allocator, group_id_builder);
     let mut out = vec![];
-    convert_doc(doc, &mut out)?;
+    convert_doc(doc, &mut out, &mut ctx)?;
 
-    strip_trailing_hardline(&mut out);
-    collapse_consecutive_hardlines(&mut out);
+    postprocess(&mut out, |fe| {
+        if let FormatElement::Text { text, width } = fe {
+            // Some characters (e.g. backticks) should be escaped in template literals
+            let escaped = escape_template_characters(text, allocator);
+            if !std::ptr::eq(*text, escaped) {
+                *text = escaped;
+                // NOTE: `IndentWidth` only affects tab character width calculation.
+                // If a `Doc = string` node contained `\t` (e.g. inside a string literal like `"\t"`?),
+                // the width could be miscalculated when `options.indent_width` != 2.
+                // However, the default value is sufficient in practice.
+                *width = TextWidth::from_text(escaped, IndentWidth::default());
+            }
+        }
+    });
 
     Ok(out)
 }
 
-fn convert_doc(doc: &Value, out: &mut Vec<EmbeddedIR>) -> Result<(), String> {
+// ---
+
+/// Conversion context holding the allocator, group ID builder, and group ID mapping.
+struct FmtCtx<'a, 'b> {
+    allocator: &'a Allocator,
+    group_id_builder: &'b UniqueGroupIdBuilder,
+    /// Maps numeric group IDs from Prettier Doc JSON to real `GroupId`s.
+    group_id_map: FxHashMap<u32, GroupId>,
+}
+
+impl<'a, 'b> FmtCtx<'a, 'b> {
+    fn new(allocator: &'a Allocator, group_id_builder: &'b UniqueGroupIdBuilder) -> Self {
+        Self { allocator, group_id_builder, group_id_map: FxHashMap::default() }
+    }
+
+    fn resolve_group_id(&mut self, id: u32) -> GroupId {
+        *self.group_id_map.entry(id).or_insert_with(|| self.group_id_builder.group_id("xxx-in-js"))
+    }
+}
+
+fn convert_doc<'a>(
+    doc: &Value,
+    out: &mut Vec<FormatElement<'a>>,
+    ctx: &mut FmtCtx<'a, '_>,
+) -> Result<(), String> {
     match doc {
         Value::String(s) => {
             if !s.is_empty() {
-                out.push(EmbeddedIR::Text(s.clone()));
+                let text = ctx.allocator.alloc_str(s);
+                // NOTE: `IndentWidth` only affects tab character width calculation.
+                // If a `Doc = string` node contained `\t` (e.g. inside a string literal like `"\t"`?),
+                // the width could be miscalculated when `options.indent_width` != 2.
+                // However, the default value is sufficient in practice.
+                let width = TextWidth::from_text(text, IndentWidth::default());
+                out.push(FormatElement::Text { text, width });
             }
             Ok(())
         }
         Value::Array(arr) => {
             for item in arr {
-                convert_doc(item, out)?;
+                convert_doc(item, out, ctx)?;
             }
             Ok(())
         }
@@ -41,32 +93,31 @@ fn convert_doc(doc: &Value, out: &mut Vec<EmbeddedIR>) -> Result<(), String> {
             };
             match doc_type {
                 "line" => {
-                    convert_line(obj, out);
+                    convert_line(obj, out, ctx);
                     Ok(())
                 }
-                "group" => convert_group(obj, out),
-                "indent" => convert_indent(obj, out),
-                "align" => convert_align(obj, out),
-                "if-break" => convert_if_break(obj, out),
-                "indent-if-break" => convert_indent_if_break(obj, out),
-                "fill" => convert_fill(obj, out),
-                "line-suffix" => convert_line_suffix(obj, out),
+                "group" => convert_group(obj, out, ctx),
+                "indent" => convert_indent(obj, out, ctx),
+                "align" => convert_align(obj, out, ctx),
+                "if-break" => convert_if_break(obj, out, ctx),
+                "indent-if-break" => convert_indent_if_break(obj, out, ctx),
+                "fill" => convert_fill(obj, out, ctx),
+                "line-suffix" => convert_line_suffix(obj, out, ctx),
                 "line-suffix-boundary" => {
-                    out.push(EmbeddedIR::LineSuffixBoundary);
+                    out.push(FormatElement::LineSuffixBoundary);
                     Ok(())
                 }
                 "break-parent" => {
-                    out.push(EmbeddedIR::ExpandParent);
+                    out.push(FormatElement::ExpandParent);
                     Ok(())
                 }
                 "label" => {
-                    // Label is transparent in Prettier's printer (just processes contents)
                     if let Some(contents) = obj.get("contents") {
-                        convert_doc(contents, out)?;
+                        convert_doc(contents, out, ctx)?;
                     }
                     Ok(())
                 }
-                "cursor" => Ok(()), // Ignore cursor markers
+                "cursor" => Ok(()),
                 "trim" => Err("Unsupported Doc type: 'trim'".to_string()),
                 _ => Err(format!("Unknown Doc type: '{doc_type}'")),
             }
@@ -76,31 +127,34 @@ fn convert_doc(doc: &Value, out: &mut Vec<EmbeddedIR>) -> Result<(), String> {
     }
 }
 
-fn convert_line(obj: &serde_json::Map<String, Value>, out: &mut Vec<EmbeddedIR>) {
+fn convert_line<'a>(
+    obj: &serde_json::Map<String, Value>,
+    out: &mut Vec<FormatElement<'a>>,
+    ctx: &FmtCtx<'a, '_>,
+) {
     let hard = obj.get("hard").and_then(Value::as_bool).unwrap_or(false);
     let soft = obj.get("soft").and_then(Value::as_bool).unwrap_or(false);
     let literal = obj.get("literal").and_then(Value::as_bool).unwrap_or(false);
 
     if hard && literal {
-        // literalline: newline without indent, plus break-parent
-        // Reverse of to_prettier_doc.rs: Text("\n") → literalline
-        out.push(EmbeddedIR::Text("\n".to_string()));
-        out.push(EmbeddedIR::ExpandParent);
+        let arena_text = ctx.allocator.alloc_str("\n");
+        let width = TextWidth::multiline(0);
+        out.push(FormatElement::Text { text: arena_text, width });
+        out.push(FormatElement::ExpandParent);
     } else if hard {
-        out.push(EmbeddedIR::Line(LineMode::Hard));
+        out.push(FormatElement::Line(LineMode::Hard));
     } else if soft {
-        out.push(EmbeddedIR::Line(LineMode::Soft));
+        out.push(FormatElement::Line(LineMode::Soft));
     } else {
-        out.push(EmbeddedIR::Line(LineMode::SoftOrSpace));
+        out.push(FormatElement::Line(LineMode::SoftOrSpace));
     }
 }
 
-fn convert_group(
+fn convert_group<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<EmbeddedIR>,
+    out: &mut Vec<FormatElement<'a>>,
+    ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
-    // Bail out on expandedStates (conditionalGroup)
-    // Even in Prettier, only JS and YAML use this.
     if obj.contains_key("expandedStates") {
         return Err("Unsupported: group with 'expandedStates' (conditionalGroup)".to_string());
     }
@@ -108,147 +162,155 @@ fn convert_group(
     let should_break = obj.get("break").and_then(Value::as_bool).unwrap_or(false);
     let id = extract_group_id(obj, "id")?;
 
-    out.push(EmbeddedIR::StartGroup { id, should_break });
+    let gid = id.map(|n| ctx.resolve_group_id(n));
+    let mode = if should_break { GroupMode::Expand } else { GroupMode::Flat };
+    out.push(FormatElement::Tag(Tag::StartGroup(Group::new().with_id(gid).with_mode(mode))));
     if let Some(contents) = obj.get("contents") {
-        convert_doc(contents, out)?;
+        convert_doc(contents, out, ctx)?;
     }
-    out.push(EmbeddedIR::EndGroup);
+    out.push(FormatElement::Tag(Tag::EndGroup));
     Ok(())
 }
 
-fn convert_indent(
+fn convert_indent<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<EmbeddedIR>,
+    out: &mut Vec<FormatElement<'a>>,
+    ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
-    out.push(EmbeddedIR::StartIndent);
+    out.push(FormatElement::Tag(Tag::StartIndent));
     if let Some(contents) = obj.get("contents") {
-        convert_doc(contents, out)?;
+        convert_doc(contents, out, ctx)?;
     }
-    out.push(EmbeddedIR::EndIndent);
+    out.push(FormatElement::Tag(Tag::EndIndent));
     Ok(())
 }
 
-fn convert_align(
+fn convert_align<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<EmbeddedIR>,
+    out: &mut Vec<FormatElement<'a>>,
+    ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
     let n = &obj["n"];
 
     match n {
-        // Numeric value
         Value::Number(num) => {
             if let Some(i) = num.as_i64() {
                 if i == 0 {
-                    // n=0: transparent (no-op), just emit contents
                     if let Some(contents) = obj.get("contents") {
-                        convert_doc(contents, out)?;
+                        convert_doc(contents, out, ctx)?;
                     }
                     return Ok(());
                 } else if i == -1 {
-                    // dedent (one level)
-                    out.push(EmbeddedIR::StartDedent { to_root: false });
+                    out.push(FormatElement::Tag(Tag::StartDedent(DedentMode::Level)));
                     if let Some(contents) = obj.get("contents") {
-                        convert_doc(contents, out)?;
+                        convert_doc(contents, out, ctx)?;
                     }
-                    out.push(EmbeddedIR::EndDedent { to_root: false });
+                    out.push(FormatElement::Tag(Tag::EndDedent(DedentMode::Level)));
                     return Ok(());
                 } else if i > 0 && i <= 255 {
                     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
                     let count = i as u8;
-                    out.push(EmbeddedIR::StartAlign(count));
-                    if let Some(contents) = obj.get("contents") {
-                        convert_doc(contents, out)?;
+                    if let Some(nz) = NonZeroU8::new(count) {
+                        out.push(FormatElement::Tag(Tag::StartAlign(Align::new(nz))));
+                        if let Some(contents) = obj.get("contents") {
+                            convert_doc(contents, out, ctx)?;
+                        }
+                        out.push(FormatElement::Tag(Tag::EndAlign));
+                        return Ok(());
                     }
-                    out.push(EmbeddedIR::EndAlign);
-                    return Ok(());
                 }
             }
-            // Fallthrough: n is a float or out of range
             Err(format!("Unsupported align value: {n}"))
         }
-        // -Infinity marker string
         Value::String(s) if s == NEGATIVE_INFINITY_MARKER => {
-            // dedentToRoot
-            out.push(EmbeddedIR::StartDedent { to_root: true });
+            out.push(FormatElement::Tag(Tag::StartDedent(DedentMode::Root)));
             if let Some(contents) = obj.get("contents") {
-                convert_doc(contents, out)?;
+                convert_doc(contents, out, ctx)?;
             }
-            out.push(EmbeddedIR::EndDedent { to_root: true });
+            out.push(FormatElement::Tag(Tag::EndDedent(DedentMode::Root)));
             Ok(())
         }
         _ => Err(format!("Unsupported align value: {n}")),
     }
 }
 
-fn convert_if_break(
+fn convert_if_break<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<EmbeddedIR>,
+    out: &mut Vec<FormatElement<'a>>,
+    ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
-    let group_id = extract_group_id(obj, "groupId")?;
+    let group_id_num = extract_group_id(obj, "groupId")?;
+    let gid = group_id_num.map(|n| ctx.resolve_group_id(n));
 
     // Break branch
-    out.push(EmbeddedIR::StartConditionalContent { mode: PrintMode::Expanded, group_id });
+    out.push(FormatElement::Tag(Tag::StartConditionalContent(
+        Condition::new(PrintMode::Expanded).with_group_id(gid),
+    )));
     if let Some(break_contents) = obj.get("breakContents") {
-        convert_doc(break_contents, out)?;
+        convert_doc(break_contents, out, ctx)?;
     }
-    out.push(EmbeddedIR::EndConditionalContent);
+    out.push(FormatElement::Tag(Tag::EndConditionalContent));
 
     // Flat branch
-    out.push(EmbeddedIR::StartConditionalContent { mode: PrintMode::Flat, group_id });
+    out.push(FormatElement::Tag(Tag::StartConditionalContent(
+        Condition::new(PrintMode::Flat).with_group_id(gid),
+    )));
     if let Some(flat_contents) = obj.get("flatContents") {
-        convert_doc(flat_contents, out)?;
+        convert_doc(flat_contents, out, ctx)?;
     }
-    out.push(EmbeddedIR::EndConditionalContent);
+    out.push(FormatElement::Tag(Tag::EndConditionalContent));
 
     Ok(())
 }
 
-fn convert_indent_if_break(
+fn convert_indent_if_break<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<EmbeddedIR>,
+    out: &mut Vec<FormatElement<'a>>,
+    ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
-    // negate is not supported
-    // Even in Prettier, HTML only uses `indentIfBreak()`, but `negate` is never used in the codebase!
     if obj.get("negate").and_then(Value::as_bool).unwrap_or(false) {
         return Err("Unsupported: indent-if-break with 'negate'".to_string());
     }
-    let Some(group_id) = extract_group_id(obj, "groupId")? else {
+    let Some(group_id_num) = extract_group_id(obj, "groupId")? else {
         return Err("indent-if-break requires 'groupId'".to_string());
     };
+    let gid = ctx.resolve_group_id(group_id_num);
 
-    out.push(EmbeddedIR::StartIndentIfGroupBreaks(group_id));
+    out.push(FormatElement::Tag(Tag::StartIndentIfGroupBreaks(gid)));
     if let Some(contents) = obj.get("contents") {
-        convert_doc(contents, out)?;
+        convert_doc(contents, out, ctx)?;
     }
-    out.push(EmbeddedIR::EndIndentIfGroupBreaks(group_id));
+    out.push(FormatElement::Tag(Tag::EndIndentIfGroupBreaks(gid)));
     Ok(())
 }
 
-fn convert_fill(
+fn convert_fill<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<EmbeddedIR>,
+    out: &mut Vec<FormatElement<'a>>,
+    ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
-    out.push(EmbeddedIR::StartFill);
+    out.push(FormatElement::Tag(Tag::StartFill));
     if let Some(Value::Array(parts)) = obj.get("parts") {
         for part in parts {
-            out.push(EmbeddedIR::StartEntry);
-            convert_doc(part, out)?;
-            out.push(EmbeddedIR::EndEntry);
+            out.push(FormatElement::Tag(Tag::StartEntry));
+            convert_doc(part, out, ctx)?;
+            out.push(FormatElement::Tag(Tag::EndEntry));
         }
     }
-    out.push(EmbeddedIR::EndFill);
+    out.push(FormatElement::Tag(Tag::EndFill));
     Ok(())
 }
 
-fn convert_line_suffix(
+fn convert_line_suffix<'a>(
     obj: &serde_json::Map<String, Value>,
-    out: &mut Vec<EmbeddedIR>,
+    out: &mut Vec<FormatElement<'a>>,
+    ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
-    out.push(EmbeddedIR::StartLineSuffix);
+    out.push(FormatElement::Tag(Tag::StartLineSuffix));
     if let Some(contents) = obj.get("contents") {
-        convert_doc(contents, out)?;
+        convert_doc(contents, out, ctx)?;
     }
-    out.push(EmbeddedIR::EndLineSuffix);
+    out.push(FormatElement::Tag(Tag::EndLineSuffix));
     Ok(())
 }
 
@@ -269,51 +331,46 @@ fn extract_group_id(
     }
 }
 
-/// Strip trailing `hardline` pattern from the IR.
+// ---
+
+/// Post-process `FormatElement`s:
+/// - strip trailing hardline
+/// - collapse consecutive hardlines into empty lines
 ///
-/// Prettier's internal `textToDoc()` behavior which calls `stripTrailingHardline()` before returning.
-/// `__debug.printToDoc()` does not do this, so we need to handle it here.
-/// <https://github.com/prettier/prettier/blob/96596de06d9421e8cfffce21430b904ffbea73f1/src/main/multiparser.js#L131>
-///
-/// Prettier's `hardline` is `[line(hard), break-parent]`,
-/// which maps to `[Line(Hard), ExpandParent]` in EmbeddedIR.
-fn strip_trailing_hardline(ir: &mut Vec<EmbeddedIR>) {
+/// And apply a per-element callback for custom transformations.
+fn postprocess<'a>(ir: &mut Vec<FormatElement<'a>>, mut each: impl FnMut(&mut FormatElement<'a>)) {
+    // Strip trailing `hardline` pattern from FormatElement output.
+    // Trailing line is useless for embedded parts.
     if ir.len() >= 2
-        && matches!(ir[ir.len() - 1], EmbeddedIR::ExpandParent)
-        && matches!(ir[ir.len() - 2], EmbeddedIR::Line(LineMode::Hard))
+        && matches!(ir[ir.len() - 1], FormatElement::ExpandParent)
+        && matches!(ir[ir.len() - 2], FormatElement::Line(LineMode::Hard))
     {
         ir.truncate(ir.len() - 2);
     }
-}
 
-/// Collapse consecutive `[Line(Hard), ExpandParent, Line(Hard), ExpandParent]` into `[Line(Empty), ExpandParent]`.
-///
-/// In Prettier's Doc format, a blank line is represented as `hardline,
-/// hardline` which expands to `[Line(Hard), ExpandParent, Line(Hard), ExpandParent]`.
-/// However, oxc_formatter's printer needs `Line(Empty)` to produce a blank line (double newline).
-fn collapse_consecutive_hardlines(ir: &mut Vec<EmbeddedIR>) {
-    if ir.len() < 4 {
-        return;
-    }
-
+    // Collapse consecutive `[Line(Hard), ExpandParent, Line(Hard), ExpandParent]` into `[Line(Empty), ExpandParent]`.
+    //
+    // In Prettier's Doc format, a blank line is represented as `hardline,
+    // hardline` which expands to `[Line(Hard), ExpandParent, Line(Hard), ExpandParent]`.
+    // However, `oxc_formatter`'s printer needs `Line(Empty)` instead.
     let mut write = 0;
     let mut read = 0;
     while read < ir.len() {
-        // Check for the 4-element pattern: Line(Hard), ExpandParent, Line(Hard), ExpandParent
         if read + 3 < ir.len()
-            && matches!(ir[read], EmbeddedIR::Line(LineMode::Hard))
-            && matches!(ir[read + 1], EmbeddedIR::ExpandParent)
-            && matches!(ir[read + 2], EmbeddedIR::Line(LineMode::Hard))
-            && matches!(ir[read + 3], EmbeddedIR::ExpandParent)
+            && matches!(ir[read], FormatElement::Line(LineMode::Hard))
+            && matches!(ir[read + 1], FormatElement::ExpandParent)
+            && matches!(ir[read + 2], FormatElement::Line(LineMode::Hard))
+            && matches!(ir[read + 3], FormatElement::ExpandParent)
         {
-            ir[write] = EmbeddedIR::Line(LineMode::Empty);
-            ir[write + 1] = EmbeddedIR::ExpandParent;
+            ir[write] = FormatElement::Line(LineMode::Empty);
+            ir[write + 1] = FormatElement::ExpandParent;
             write += 2;
             read += 4;
         } else {
             if write != read {
                 ir[write] = ir[read].clone();
             }
+            each(&mut ir[write]);
             write += 1;
             read += 1;
         }
@@ -322,199 +379,42 @@ fn collapse_consecutive_hardlines(ir: &mut Vec<EmbeddedIR>) {
     ir.truncate(write);
 }
 
-// ---
+/// Escape characters that would break template literal syntax.
+///
+/// Equivalent to Prettier's `uncookTemplateElementValue`:
+/// `cookedValue.replaceAll(/([\\`]|\$\{)/gu, String.raw`\$1`);`
+fn escape_template_characters<'a>(s: &'a str, allocator: &'a Allocator) -> &'a str {
+    let bytes = s.as_bytes();
+    let len = bytes.len();
 
-#[cfg(test)]
-mod tests {
-    use serde_json::json;
+    // Fast path: scan for characters that need escaping.
+    let first_escape = (0..len).find(|&i| {
+        let ch = bytes[i];
+        ch == b'\\' || ch == b'`' || (ch == b'$' && i + 1 < len && bytes[i + 1] == b'{')
+    });
 
-    use super::*;
+    let Some(first) = first_escape else {
+        return s;
+    };
 
-    #[test]
-    fn test_simple_string() {
-        let doc = json!("hello");
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        assert_eq!(ir.len(), 1);
-        assert!(matches!(&ir[0], EmbeddedIR::Text(s) if s == "hello"));
+    // Slow path: build escaped string in the arena.
+    let mut result = StringBuilder::with_capacity_in(len + 1, allocator);
+    result.push_str(&s[..first]);
+
+    let mut i = first;
+    while i < len {
+        let ch = bytes[i];
+        if ch == b'\\' || ch == b'`' {
+            result.push('\\');
+            result.push(ch as char);
+        } else if ch == b'$' && i + 1 < len && bytes[i + 1] == b'{' {
+            result.push_str("\\${");
+            i += 1; // skip '{'
+        } else {
+            result.push(ch as char);
+        }
+        i += 1;
     }
 
-    #[test]
-    fn test_array() {
-        let doc = json!(["a", "b"]);
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        assert_eq!(ir.len(), 2);
-    }
-
-    #[test]
-    fn test_line_modes() {
-        let soft = json!({"type": "line", "soft": true});
-        let ir = doc_json_to_embedded_ir(&soft).unwrap();
-        assert!(matches!(ir[0], EmbeddedIR::Line(LineMode::Soft)));
-
-        let hard = json!({"type": "line", "hard": true});
-        let ir = doc_json_to_embedded_ir(&hard).unwrap();
-        assert!(matches!(ir[0], EmbeddedIR::Line(LineMode::Hard)));
-
-        let literal = json!({"type": "line", "hard": true, "literal": true});
-        let ir = doc_json_to_embedded_ir(&literal).unwrap();
-        assert!(matches!(&ir[0], EmbeddedIR::Text(s) if s == "\n"));
-        assert!(matches!(ir[1], EmbeddedIR::ExpandParent));
-    }
-
-    #[test]
-    fn test_group() {
-        let doc = json!({"type": "group", "contents": "hello", "break": true, "id": 1});
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        assert!(matches!(&ir[0], EmbeddedIR::StartGroup { id: Some(1), should_break: true }));
-        assert!(matches!(&ir[1], EmbeddedIR::Text(s) if s == "hello"));
-        assert!(matches!(ir[2], EmbeddedIR::EndGroup));
-    }
-
-    #[test]
-    fn test_indent() {
-        let doc = json!({"type": "indent", "contents": "x"});
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        assert!(matches!(ir[0], EmbeddedIR::StartIndent));
-        assert!(matches!(ir[2], EmbeddedIR::EndIndent));
-    }
-
-    #[test]
-    fn test_if_break_two_branches() {
-        let doc = json!({
-            "type": "if-break",
-            "breakContents": "broken",
-            "flatContents": "flat"
-        });
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        // Break branch
-        assert!(matches!(
-            &ir[0],
-            EmbeddedIR::StartConditionalContent { mode: PrintMode::Expanded, group_id: None }
-        ));
-        assert!(matches!(&ir[1], EmbeddedIR::Text(s) if s == "broken"));
-        assert!(matches!(ir[2], EmbeddedIR::EndConditionalContent));
-        // Flat branch
-        assert!(matches!(
-            &ir[3],
-            EmbeddedIR::StartConditionalContent { mode: PrintMode::Flat, group_id: None }
-        ));
-        assert!(matches!(&ir[4], EmbeddedIR::Text(s) if s == "flat"));
-        assert!(matches!(ir[5], EmbeddedIR::EndConditionalContent));
-    }
-
-    #[test]
-    fn test_align_dedent() {
-        let doc = json!({"type": "align", "n": -1, "contents": "x"});
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        assert!(matches!(ir[0], EmbeddedIR::StartDedent { to_root: false }));
-    }
-
-    #[test]
-    fn test_align_dedent_to_root() {
-        let doc = json!({"type": "align", "n": "__NEGATIVE_INFINITY__", "contents": "x"});
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        assert!(matches!(ir[0], EmbeddedIR::StartDedent { to_root: true }));
-    }
-
-    #[test]
-    fn test_label_transparent() {
-        let doc = json!({"type": "label", "label": {"hug": false}, "contents": "inner"});
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        assert_eq!(ir.len(), 1);
-        assert!(matches!(&ir[0], EmbeddedIR::Text(s) if s == "inner"));
-    }
-
-    #[test]
-    fn test_unknown_type_bail_out() {
-        let doc = json!({"type": "unknown_thing"});
-        assert!(doc_json_to_embedded_ir(&doc).is_err());
-    }
-
-    #[test]
-    fn test_trim_bail_out() {
-        let doc = json!({"type": "trim"});
-        assert!(doc_json_to_embedded_ir(&doc).is_err());
-    }
-
-    #[test]
-    fn test_expanded_states_bail_out() {
-        let doc = json!({"type": "group", "contents": "", "expandedStates": []});
-        assert!(doc_json_to_embedded_ir(&doc).is_err());
-    }
-
-    #[test]
-    fn test_strip_trailing_hardline() {
-        // hardline = [line(hard), break-parent]
-        let doc = json!(["hello", {"type": "line", "hard": true}, {"type": "break-parent"}]);
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        // Trailing hardline should be stripped
-        assert_eq!(ir.len(), 1);
-        assert!(matches!(&ir[0], EmbeddedIR::Text(s) if s == "hello"));
-    }
-
-    #[test]
-    fn test_no_strip_when_not_trailing_hardline() {
-        // Only Line(Hard) without ExpandParent — should not strip
-        let doc = json!(["hello", {"type": "line", "hard": true}]);
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        assert_eq!(ir.len(), 2);
-        assert!(matches!(ir[1], EmbeddedIR::Line(LineMode::Hard)));
-    }
-
-    #[test]
-    fn test_fill() {
-        let doc = json!({"type": "fill", "parts": ["a", {"type": "line"}, "b"]});
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        assert!(matches!(ir[0], EmbeddedIR::StartFill));
-        assert!(matches!(ir[1], EmbeddedIR::StartEntry));
-        assert!(matches!(&ir[2], EmbeddedIR::Text(s) if s == "a"));
-        assert!(matches!(ir[3], EmbeddedIR::EndEntry));
-        // separator
-        assert!(matches!(ir[4], EmbeddedIR::StartEntry));
-        assert!(matches!(ir[5], EmbeddedIR::Line(LineMode::SoftOrSpace)));
-        assert!(matches!(ir[6], EmbeddedIR::EndEntry));
-        // second content
-        assert!(matches!(ir[7], EmbeddedIR::StartEntry));
-        assert!(matches!(&ir[8], EmbeddedIR::Text(s) if s == "b"));
-        assert!(matches!(ir[9], EmbeddedIR::EndEntry));
-        assert!(matches!(ir[10], EmbeddedIR::EndFill));
-    }
-
-    #[test]
-    fn test_collapse_consecutive_hardlines_to_empty_line() {
-        // Two hardlines in sequence: [Line(Hard), ExpandParent, Line(Hard), ExpandParent]
-        // should collapse to [Line(Empty), ExpandParent]
-        let doc = json!([
-            "hello",
-            {"type": "line", "hard": true},
-            {"type": "break-parent"},
-            {"type": "line", "hard": true},
-            {"type": "break-parent"},
-            "world"
-        ]);
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        // "hello" + Line(Empty) + ExpandParent + "world"
-        assert_eq!(ir.len(), 4);
-        assert!(matches!(&ir[0], EmbeddedIR::Text(s) if s == "hello"));
-        assert!(matches!(ir[1], EmbeddedIR::Line(LineMode::Empty)));
-        assert!(matches!(ir[2], EmbeddedIR::ExpandParent));
-        assert!(matches!(&ir[3], EmbeddedIR::Text(s) if s == "world"));
-    }
-
-    #[test]
-    fn test_single_hardline_not_collapsed() {
-        // Single hardline should remain as-is
-        let doc = json!([
-            "hello",
-            {"type": "line", "hard": true},
-            {"type": "break-parent"},
-            "world"
-        ]);
-        let ir = doc_json_to_embedded_ir(&doc).unwrap();
-        assert_eq!(ir.len(), 4);
-        assert!(matches!(&ir[0], EmbeddedIR::Text(s) if s == "hello"));
-        assert!(matches!(ir[1], EmbeddedIR::Line(LineMode::Hard)));
-        assert!(matches!(ir[2], EmbeddedIR::ExpandParent));
-        assert!(matches!(&ir[3], EmbeddedIR::Text(s) if s == "world"));
-    }
+    result.into_str()
 }

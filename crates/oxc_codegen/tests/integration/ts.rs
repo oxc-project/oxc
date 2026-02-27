@@ -8,6 +8,22 @@ use crate::{
 #[test]
 fn cases() {
     test_same("({ foo(): string {} });\n");
+    test_same("({ method(this: Foo): void {} });\n");
+    test_same("({ methodWithParam(this: Foo, bar: string): void {} });\n");
+    test_same("type T = (A | B)[];\n");
+    test_same("type T = (A & B)[];\n");
+    test_same("type T = (keyof A)[];\n");
+    test_same("type T = (() => A)[];\n");
+    test_same("type T = (new () => A)[];\n");
+    test_same("type T = (A extends B ? C : D)[];\n");
+    test_same("type T = (A | B)[K];\n");
+    test_same("type T = (A & B)[K];\n");
+    test_same("type T = (keyof A)[K];\n");
+    test_same("type T = (A extends B ? C : D)[K];\n");
+    test_same("type T = A extends (B extends C ? D : E) ? F : G;\n");
+    test_same("type T = (A extends B ? C : D) extends E ? F : G;\n");
+    test_same("type T = A & (B extends C ? D : E);\n");
+    test_same("type T = (A | B) & C;\n");
     test_same("interface I<in out T,> {}\n");
     test_same("function F<const in out T,>() {}\n");
     test_same("class C {\n\tp = await(0);\n}\n");
@@ -17,7 +33,13 @@ fn cases() {
     test_same("class B {\n\tconstructor(override readonly a: number) {}\n}\n");
     test_same("class C extends B {\n\toverride show(): void;\n\toverride hide(): void;\n}\n");
     test_same("class D extends B {\n\toverride readonly x: number;\n}\n");
+    test_same(
+        "declare namespace ns {\n\tclass Foo {}\n\tenum Bar {}\n\ttype Baz = undefined;\n}\n",
+    );
+    test_same("class E {\n\tsubscribe!: string;\n}\n");
+    test_same("class F {\n\taccessor value!: string;\n}\n");
     test_same("export { type as as };\n");
+    test_same("try {} catch (e: unknown) {} finally {}\n");
 }
 
 #[test]

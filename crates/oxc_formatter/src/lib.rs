@@ -19,15 +19,16 @@ use oxc_span::SourceType;
 
 pub use crate::ast_nodes::{AstNode, AstNodes};
 pub use crate::external_formatter::{
-    EmbeddedDocFormatterCallback, EmbeddedFormatterCallback, EmbeddedIR, ExternalCallbacks,
-    TailwindCallback,
+    EmbeddedDocFormatterCallback, EmbeddedFormatterCallback, ExternalCallbacks, TailwindCallback,
 };
-pub use crate::formatter::GroupId;
-pub use crate::formatter::format_element::tag::{DedentMode, Tag};
+pub use crate::formatter::format_element::tag::{
+    Align, Condition, DedentMode, Group, GroupMode, Tag,
+};
 pub use crate::formatter::format_element::{
-    BestFittingElement, FormatElement, LineMode, PrintMode,
+    BestFittingElement, FormatElement, LineMode, PrintMode, TextWidth,
 };
 pub use crate::formatter::{Format, Formatted};
+pub use crate::formatter::{GroupId, UniqueGroupIdBuilder};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
 pub use crate::print::{FormatVueBindingParams, FormatVueScriptGeneric};

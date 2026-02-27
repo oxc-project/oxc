@@ -66,7 +66,7 @@ impl From<GroupId> for u32 {
 }
 
 /// Builder to construct unique group ids that are unique if created with the same builder.
-pub(super) struct UniqueGroupIdBuilder {
+pub struct UniqueGroupIdBuilder {
     next_id: AtomicU32,
 }
 
