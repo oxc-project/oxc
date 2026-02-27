@@ -1640,6 +1640,13 @@ impl Gen for ObjectProperty<'_> {
                     type_parameters.print(p, ctx);
                 }
                 p.print_ascii_byte(b'(');
+                if let Some(this_param) = &func.this_param {
+                    this_param.print(p, ctx);
+                    if !func.params.is_empty() || func.params.rest.is_some() {
+                        p.print_ascii_byte(b',');
+                        p.print_soft_space();
+                    }
+                }
                 func.params.print(p, ctx);
                 p.print_ascii_byte(b')');
                 if let Some(return_type) = &func.return_type {

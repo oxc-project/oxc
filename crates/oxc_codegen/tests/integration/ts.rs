@@ -8,6 +8,8 @@ use crate::{
 #[test]
 fn cases() {
     test_same("({ foo(): string {} });\n");
+    test_same("({ method(this: Foo): void {} });\n");
+    test_same("({ methodWithParam(this: Foo, bar: string): void {} });\n");
     test_same("interface I<in out T,> {}\n");
     test_same("function F<const in out T,>() {}\n");
     test_same("class C {\n\tp = await(0);\n}\n");
