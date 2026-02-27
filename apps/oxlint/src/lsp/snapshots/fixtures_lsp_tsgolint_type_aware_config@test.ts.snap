@@ -67,6 +67,42 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
+Title: Add void operator to ignore.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 0,
+        },
+    },
+    new_text: "void ",
+}
+
+
+CodeAction: 
+Title: Add await operator.
+Is Preferred: Some(false)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 0,
+        },
+    },
+    new_text: "await ",
+}
+
+
+CodeAction: 
 Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
@@ -103,4 +139,19 @@ TextEdit: TextEdit {
 
 
 ########### Fix All Action
-None
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 0,
+        },
+    },
+    new_text: "void ",
+}

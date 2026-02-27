@@ -38,8 +38,8 @@ pub struct LintOptions {
 #[derive(Debug, Default, Serialize, PartialEq, Eq, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum LintFixKindFlag {
-    #[default]
     SafeFix,
+    #[default]
     SafeFixOrSuggestion,
     DangerousFix,
     DangerousFixOrSuggestion,
@@ -177,7 +177,7 @@ mod test {
         assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Allow);
         assert_eq!(options.type_aware, None);
         assert!(!options.disable_nested_config);
-        assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFix);
+        assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFixOrSuggestion);
     }
 
     #[test]
