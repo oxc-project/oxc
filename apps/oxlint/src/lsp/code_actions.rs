@@ -129,11 +129,11 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
 
     let mut result: Vec<TextEdit> = Vec::with_capacity(text_edits.len());
     for edit in text_edits {
-        if let Some(last) = result.last() {
-            if range_overlaps(last.range, edit.range) {
-                debug!("Skipping overlapping fix at {:?}", edit.range);
-                continue;
-            }
+        if let Some(last) = result.last()
+            && range_overlaps(last.range, edit.range)
+        {
+            debug!("Skipping overlapping fix at {:?}", edit.range);
+            continue;
         }
         result.push(edit);
     }
