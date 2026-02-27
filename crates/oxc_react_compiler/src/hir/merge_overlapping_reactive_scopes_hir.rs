@@ -417,10 +417,8 @@ fn rewrite_scopes(
         // Look up the root scope id for this place's scope. If the scope was
         // merged, its root may differ; if it IS the root of a merged group,
         // we still need to update its range.
-        let root_scope_id = scope_mapping
-            .get(&original_scope_id)
-            .copied()
-            .unwrap_or(original_scope_id);
+        let root_scope_id =
+            scope_mapping.get(&original_scope_id).copied().unwrap_or(original_scope_id);
 
         // Get the merged range for the root scope. If this scope was not part
         // of any merge group, there is no merged_range entry and we skip it.

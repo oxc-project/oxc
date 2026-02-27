@@ -159,10 +159,8 @@ fn evaluate_instruction(constants: &mut Constants, instr: &mut Instruction) -> O
         InstructionValue::StartMemoize(v) => {
             if let Some(deps) = &mut v.deps {
                 for dep in deps {
-                    if let crate::hir::ManualMemoDependencyRoot::NamedLocal {
-                        value,
-                        constant,
-                    } = &mut dep.root
+                    if let crate::hir::ManualMemoDependencyRoot::NamedLocal { value, constant } =
+                        &mut dep.root
                     {
                         let place_value = read(constants, value);
                         if matches!(place_value, Some(Constant::Primitive(_))) {

@@ -149,8 +149,7 @@ fn match_optional_test_block(
         }
 
         // Invariant: StoreLocal value matches PropertyLoad lvalue
-        if store_local.value.identifier.id
-            != consequent_block.instructions[0].lvalue.identifier.id
+        if store_local.value.identifier.id != consequent_block.instructions[0].lvalue.identifier.id
         {
             return None;
         }

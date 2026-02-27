@@ -11,15 +11,15 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::compiler_error::SourceLocation;
+use crate::hir::object_shape::{
+    BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID,
+};
+use crate::hir::types::{FunctionType, ObjectType, Type};
 use crate::hir::{
     DeclarationId, InstructionId, InstructionKind, InstructionValue, ReactiveBlock,
     ReactiveFunction, ReactiveInstruction, ReactiveScope, ReactiveScopeBlock,
     ReactiveScopeDependency, ReactiveStatement,
 };
-use crate::hir::object_shape::{
-    BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID,
-};
-use crate::hir::types::{FunctionType, ObjectType, Type};
 
 /// Entry point: merge reactive scopes that invalidate together.
 pub fn merge_reactive_scopes_that_invalidate_together(func: &mut ReactiveFunction) {
@@ -63,14 +63,6 @@ fn visit_stmt_for_usage(
             visit_terminal_for_usage(&term_stmt.terminal, last_usage);
         }
         ReactiveStatement::Scope(scope_block) => {
-            // Visit scope dependencies and declarations as "usages"
-            for dep in &scope_block.scope.dependencies {
-                update_last_usage(
-                    last_usage,
-                    dep.identifier.declaration_id,
-                    scope_block.scope.range.end,
-                );
-            }
             visit_block_for_usage(&scope_block.instructions, last_usage);
         }
         ReactiveStatement::PrunedScope(pruned) => {
@@ -130,19 +122,17 @@ fn visit_terminal_for_usage(
 ) {
     use crate::hir::ReactiveTerminal;
 
-    let visit_place =
-        |place: &crate::hir::Place,
-         id: InstructionId,
-         lu: &mut FxHashMap<DeclarationId, InstructionId>| {
-            update_last_usage(lu, place.identifier.declaration_id, id);
-        };
+    let visit_place = |place: &crate::hir::Place,
+                       id: InstructionId,
+                       lu: &mut FxHashMap<DeclarationId, InstructionId>| {
+        update_last_usage(lu, place.identifier.declaration_id, id);
+    };
 
-    let visit_rv =
-        |rv: &crate::hir::ReactiveValue,
-         id: InstructionId,
-         lu: &mut FxHashMap<DeclarationId, InstructionId>| {
-            visit_reactive_value_for_usage(rv, id, lu);
-        };
+    let visit_rv = |rv: &crate::hir::ReactiveValue,
+                    id: InstructionId,
+                    lu: &mut FxHashMap<DeclarationId, InstructionId>| {
+        visit_reactive_value_for_usage(rv, id, lu);
+    };
 
     match terminal {
         ReactiveTerminal::If(t) => {
@@ -278,7 +268,7 @@ fn merge_in_block(
     let mut current: Option<MergedScope> = None;
     let mut merged: Vec<MergedScope> = Vec::new();
 
-    let mut reset = |current: &mut Option<MergedScope>, merged: &mut Vec<MergedScope>| {
+    let reset = |current: &mut Option<MergedScope>, merged: &mut Vec<MergedScope>| {
         if let Some(c) = current.take() {
             if c.to > c.from + 1 {
                 merged.push(c);
@@ -306,6 +296,7 @@ fn merge_in_block(
                             | InstructionValue::JsxText(_)
                             | InstructionValue::LoadGlobal(_)
                             | InstructionValue::LoadLocal(_)
+                            | InstructionValue::LoadContext(_)
                             | InstructionValue::Primitive(_)
                             | InstructionValue::PropertyLoad(_)
                             | InstructionValue::TemplateLiteral(_)
@@ -324,7 +315,7 @@ fn merge_in_block(
                         if let Some(lvalue) = &instr.lvalue {
                             c.lvalues.insert(lvalue.identifier.declaration_id);
                         }
-                        // Track temporaries for LoadLocal
+                        // Track temporaries for LoadLocal / LoadContext
                         if let crate::hir::ReactiveValue::Instruction(iv) = &instr.value {
                             match iv.as_ref() {
                                 InstructionValue::LoadLocal(ll) => {
@@ -335,15 +326,26 @@ fn merge_in_block(
                                         );
                                     }
                                 }
+                                InstructionValue::LoadContext(lc) => {
+                                    // LoadContext is the Rust equivalent of LoadLocal
+                                    // for context variables (captured by closures).
+                                    // The TS reference uses LoadLocal for these.
+                                    if let Some(lvalue) = &instr.lvalue {
+                                        temporaries.insert(
+                                            lvalue.identifier.declaration_id,
+                                            lc.place.identifier.declaration_id,
+                                        );
+                                    }
+                                }
                                 InstructionValue::StoreLocal(sl) => {
                                     // Track lvalues from StoreLocal
-                                    c.lvalues
-                                        .insert(sl.lvalue.place.identifier.declaration_id);
+                                    c.lvalues.insert(sl.lvalue.place.identifier.declaration_id);
                                     // Follow temporary chain
-                                    let source_decl =
-                                        sl.value.identifier.declaration_id;
-                                    let resolved =
-                                        temporaries.get(&source_decl).copied().unwrap_or(source_decl);
+                                    let source_decl = sl.value.identifier.declaration_id;
+                                    let resolved = temporaries
+                                        .get(&source_decl)
+                                        .copied()
+                                        .unwrap_or(source_decl);
                                     temporaries.insert(
                                         sl.lvalue.place.identifier.declaration_id,
                                         resolved,
@@ -390,11 +392,8 @@ fn merge_in_block(
                 } else {
                     // No current merge candidate: start one if eligible
                     if scope_is_eligible_for_merging(scope_block) {
-                        current = Some(MergedScope {
-                            from: i,
-                            to: i + 1,
-                            lvalues: FxHashSet::default(),
-                        });
+                        current =
+                            Some(MergedScope { from: i, to: i + 1, lvalues: FxHashSet::default() });
                     }
                 }
             }
@@ -444,8 +443,7 @@ fn merge_in_block(
                         // Prune declarations no longer needed
                         update_scope_declarations(&mut surv.scope, last_usage);
                         // Move instructions
-                        surv.instructions
-                            .extend(absorbed_scope.instructions.clone());
+                        surv.instructions.extend(absorbed_scope.instructions.clone());
                         surv.scope.merged.insert(absorbed_scope.scope.id);
                     }
                 }
@@ -658,9 +656,7 @@ fn scope_is_eligible_for_merging(scope_block: &ReactiveScopeBlock) -> bool {
 /// Check if a type is guaranteed to produce a new value when re-evaluated.
 fn is_always_invalidating_type(type_: &Type) -> bool {
     match type_ {
-        Type::Object(ObjectType {
-            shape_id: Some(id),
-        }) => {
+        Type::Object(ObjectType { shape_id: Some(id) }) => {
             matches!(
                 id.as_str(),
                 BUILT_IN_ARRAY_ID | BUILT_IN_OBJECT_ID | BUILT_IN_FUNCTION_ID | BUILT_IN_JSX_ID

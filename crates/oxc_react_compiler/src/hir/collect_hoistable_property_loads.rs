@@ -16,9 +16,9 @@ use crate::hir::environment::get_hook_kind_for_type;
 use crate::hir::types::PropertyLiteral;
 
 use super::hir_types::{
-    BasicBlock, BlockId, CallArg, DependencyPathEntry, HIRFunction, Identifier, IdentifierId,
-    InstructionId, InstructionValue, JsxAttribute, LoweredFunction, ReactFunctionType,
-    ReactiveParam, ReactiveScopeDependency, ScopeId, Terminal,
+    BlockId, CallArg, DependencyPathEntry, HIRFunction, Identifier, IdentifierId, InstructionId,
+    InstructionValue, JsxAttribute, LoweredFunction, ReactFunctionType, ReactiveParam,
+    ReactiveScopeDependency, ScopeId, Terminal,
 };
 
 // =============================================================================
@@ -98,11 +98,8 @@ impl PropertyPathRegistry {
     ) -> PropertyPathNode {
         // Check if child already exists
         let parent_data = &self.nodes[parent.0 as usize];
-        let map = if entry.optional {
-            &parent_data.optional_properties
-        } else {
-            &parent_data.properties
-        };
+        let map =
+            if entry.optional { &parent_data.optional_properties } else { &parent_data.properties };
         if let Some(&existing) = map.get(&entry.property) {
             return existing;
         }
@@ -230,7 +227,7 @@ pub fn key_by_scope_id_with_registry(
     hoistable: &HoistablePropertyLoads,
 ) -> FxHashMap<ScopeId, Vec<ReactiveScopeDependency>> {
     let mut keyed = FxHashMap::default();
-    for block in func.body.blocks.values() {
+    for (_block_id, block) in &func.body.blocks {
         if let Terminal::Scope(t) = &block.terminal {
             if let Some(info) = hoistable.block_infos.get(&t.block) {
                 let paths: Vec<ReactiveScopeDependency> = info
@@ -331,22 +328,22 @@ fn collect_non_nulls_in_blocks(
         && matches!(&func.params[0], ReactiveParam::Place(_))
     {
         if let ReactiveParam::Place(place) = &func.params[0] {
-            let node = context.registry.get_or_create_identifier(
-                &place.identifier,
-                true,
-                place.loc,
-            );
+            let node =
+                context.registry.get_or_create_identifier(&place.identifier, true, place.loc);
             known_non_null_identifiers.insert(node);
         }
     }
 
     let mut nodes = FxHashMap::default();
 
-    // We need to iterate blocks in order. Collect block ids first.
-    let block_entries: Vec<(BlockId, BasicBlock)> =
-        func.body.blocks.iter().map(|(&id, b)| (id, b.clone())).collect();
+    // Iterate blocks in order by collecting block IDs first.
+    // IMPORTANT: We must NOT clone the blocks, because LoweredFunctionKey uses
+    // raw pointer identity for Box<HIRFunction>. Cloning would create new heap
+    // allocations, breaking the pointer-based lookup in assumed_invoked_fns.
+    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
-    for (block_id, block) in &block_entries {
+    for block_id in &block_ids {
+        let block = &func.body.blocks[block_id];
         let mut assumed_non_null_objects: FxHashSet<PropertyPathNode> =
             known_non_null_identifiers.clone();
 
@@ -396,8 +393,10 @@ fn collect_non_nulls_in_blocks(
                     // Transfer the registry to inner context temporarily
                     std::mem::swap(&mut context.registry, &mut inner_context.registry);
 
-                    let inner_hoistable_map =
-                        collect_hoistable_property_loads_impl(&fe.lowered_func.func, &mut inner_context);
+                    let inner_hoistable_map = collect_hoistable_property_loads_impl(
+                        &fe.lowered_func.func,
+                        &mut inner_context,
+                    );
 
                     // Transfer registry back
                     std::mem::swap(&mut context.registry, &mut inner_context.registry);
@@ -419,11 +418,7 @@ fn collect_non_nulls_in_blocks(
                                 ..
                             } = &dep.root
                             {
-                                if !is_immutable_at_instr(
-                                    &value.identifier,
-                                    instr.id,
-                                    context,
-                                ) {
+                                if !is_immutable_at_instr(&value.identifier, instr.id, context) {
                                     continue;
                                 }
                                 for i in 0..dep.path.len() {
@@ -583,19 +578,18 @@ fn recursively_propagate_non_null(
 
     let neighbor_accesses = set_intersect(&done_neighbor_sets);
 
-    let prev_objects = nodes
-        .get(&node_id)
-        .map(|info| info.assumed_non_null_objects.clone())
-        .unwrap_or_default();
+    let prev_objects =
+        nodes.get(&node_id).map(|info| info.assumed_non_null_objects.clone()).unwrap_or_default();
 
     let mut merged_objects = set_union(&prev_objects, &neighbor_accesses);
     reduce_maybe_optional_chains(&mut merged_objects, registry);
 
     let objects_changed = !set_equal(&prev_objects, &merged_objects);
 
-    nodes.entry(node_id).or_insert_with(|| BlockInfo {
-        assumed_non_null_objects: FxHashSet::default(),
-    }).assumed_non_null_objects = merged_objects;
+    nodes
+        .entry(node_id)
+        .or_insert_with(|| BlockInfo { assumed_non_null_objects: FxHashSet::default() })
+        .assumed_non_null_objects = merged_objects;
 
     traversal_state.insert(node_id, TraversalStatus::Done);
     changed |= objects_changed;
@@ -610,11 +604,8 @@ fn reduce_maybe_optional_chains(
     nodes_set: &mut FxHashSet<PropertyPathNode>,
     registry: &mut PropertyPathRegistry,
 ) {
-    let optional_chain_nodes: FxHashSet<PropertyPathNode> = nodes_set
-        .iter()
-        .copied()
-        .filter(|&n| registry.get_has_optional(n))
-        .collect();
+    let optional_chain_nodes: FxHashSet<PropertyPathNode> =
+        nodes_set.iter().copied().filter(|&n| registry.get_has_optional(n)).collect();
 
     if optional_chain_nodes.is_empty() {
         return;
@@ -633,8 +624,7 @@ fn reduce_maybe_optional_chains(
             let orig_loc = full_path.loc;
             let orig_path = full_path.path.clone();
 
-            let mut curr_node =
-                registry.get_or_create_identifier(&identifier, reactive, orig_loc);
+            let mut curr_node = registry.get_or_create_identifier(&identifier, reactive, orig_loc);
 
             for entry in &orig_path {
                 // If the base is known to be non-null, replace with a non-optional load
@@ -782,10 +772,8 @@ fn get_assumed_invoked_functions_inner(
     }
 
     // Propagate: if a function is hoistable, all functions it may invoke are too
-    let entries: Vec<(LoweredFunctionKey, FxHashSet<LoweredFunctionKey>)> = temporaries
-        .values()
-        .map(|t| (t.lowered_fn, t.may_invoke.clone()))
-        .collect();
+    let entries: Vec<(LoweredFunctionKey, FxHashSet<LoweredFunctionKey>)> =
+        temporaries.values().map(|t| (t.lowered_fn, t.may_invoke.clone())).collect();
     for (fn_key, may_invoke) in &entries {
         if hoistable_functions.contains(fn_key) {
             for called in may_invoke {
