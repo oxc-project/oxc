@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 883/1416 passed (62.4%)
+Codegen conformance: 886/1416 passed (62.6%)
 
 Failure breakdown:
   parse_error:    35
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 12
   panic:          0
-  output_mismatch:475
+  output_mismatch:472
   no_expected:    7
 
 Failed fixtures:
@@ -115,7 +115,6 @@ Failed fixtures:
   [output_mismatch] effect-derived-computations/derived-state-from-default-props.js
   [parse_error] effect-derived-computations/effect-with-cleanup-function-depending-on-derived-computation-value.js
   [output_mismatch] effect-derived-computations/function-expression-mutation-edge-case.js
-  [output_mismatch] escape-analysis-destructured-rest-element.js
   [output_mismatch] evaluation-order-mutate-call-after-dependency-load.ts
   [output_mismatch] evaluation-order-mutate-store-after-dependency-load.ts
   [output_mismatch] exhaustive-deps/exhaustive-deps-allow-nonreactive-stable-types-as-extra-deps.js
@@ -438,7 +437,6 @@ Failed fixtures:
   [parse_error] repro-invalid-destructuring-reassignment-undefined-variable.js
   [output_mismatch] repro-invalid-pruned-scope-leaks-value-via-alias.ts
   [output_mismatch] repro-invalid-pruned-scope-leaks-value.ts
-  [output_mismatch] repro-local-mutation-of-new-object-from-destructured-prop.js
   [output_mismatch] repro-memoize-array-with-immutable-map-after-hook.js
   [output_mismatch] repro-memoize-for-of-collection-when-loop-body-returns.js
   [output_mismatch] repro-missing-dependency-if-within-while.js
@@ -454,7 +452,6 @@ Failed fixtures:
   [output_mismatch] repro-preds-undefined-try-catch-return-primitive.js
   [parse_error] repro-propagate-type-of-ternary-jsx.js
   [parse_error] repro-propagate-type-of-ternary-nested.js
-  [output_mismatch] repro-reassign-props.js
   [output_mismatch] repro-ref-mutable-range.tsx
   [output_mismatch] repro-renaming-conflicting-decls.js
   [output_mismatch] repro-returned-inner-fn-mutates-context.js
