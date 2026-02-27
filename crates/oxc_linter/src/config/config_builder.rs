@@ -337,6 +337,11 @@ impl ConfigStoreBuilder {
         self.config.options.type_aware
     }
 
+    #[inline]
+    pub fn type_check(&self) -> Option<bool> {
+        self.config.options.type_check
+    }
+
     #[cfg(test)]
     pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
         self.rules.insert(rule, severity);
@@ -1390,6 +1395,26 @@ mod test {
             r#"{ "extends": ["fixtures/extends_config/options/type_aware_false.json"] }"#,
         );
         assert_eq!(config.base.config.options.type_aware, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/type_check_true.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.type_check, Some(true));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/type_check_true.json"],
+                "options": {"typeCheck": false }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.type_check, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/type_check_false.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.type_check, Some(false));
     }
 
     #[test]

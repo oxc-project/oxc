@@ -107,6 +107,17 @@ Accessing a global variable named `arguments` does not have a side effect. We in
 console.log(arguments); // ReferenceError: arguments is not defined
 ```
 
+### `Function.prototype.toString` is not relied on
+
+Code does not depend on [`Function.prototype.toString()`](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-function.prototype.tostring) returning specific source text. Minification renames variables and parameters, simplifies expressions (`true` → `!0`), restructures statements (fusing with the comma operator, converting `while` to `for`), removes whitespace, and may eliminate function bodies entirely (e.g. IIFE inlining). All of these change the string returned by `.toString()`.
+
+```javascript
+const serialize = (fn) => fn.toString();
+serialize((x) => {
+  return x * 2;
+}); // Relied on to contain "return"
+```
+
 ## Optional Assumptions
 
 ### No Reliance on Function.prototype.name

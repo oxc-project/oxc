@@ -348,6 +348,7 @@ impl CliRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_aware = self.options.type_aware || config_store.type_aware_enabled();
+        let type_check = self.options.type_check || config_store.type_check_enabled();
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
@@ -400,7 +401,7 @@ impl CliRunner {
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(type_aware)
-            .with_type_check(self.options.type_check)
+            .with_type_check(type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
             .build()
@@ -1286,6 +1287,27 @@ mod test {
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_error() {
         let args = &["--type-aware", "--type-check"];
+        Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_via_config_file() {
+        let args = &["-c", "config-type-check.json"];
+        Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_false_via_config_file() {
+        let args = &["-c", "config-type-check-false.json"];
+        Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_false_overridden_by_cli_flag() {
+        let args = &["--type-check", "-c", "config-type-check-false.json"];
         Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
     }
 
