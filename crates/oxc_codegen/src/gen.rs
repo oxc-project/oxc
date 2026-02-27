@@ -3190,9 +3190,21 @@ impl Gen for TSIntersectionType<'_> {
 
 impl Gen for TSConditionalType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.check_type.print(p, ctx);
+        p.wrap(
+            matches!(
+                &self.check_type,
+                TSType::TSFunctionType(_)
+                    | TSType::TSConstructorType(_)
+                    | TSType::TSConditionalType(_)
+            ),
+            |p| {
+                self.check_type.print(p, ctx);
+            },
+        );
         p.print_str(" extends ");
-        self.extends_type.print(p, ctx);
+        p.wrap(matches!(self.extends_type, TSType::TSConditionalType(_)), |p| {
+            self.extends_type.print(p, ctx);
+        });
         p.print_str(" ? ");
         self.true_type.print(p, ctx);
         p.print_str(" : ");

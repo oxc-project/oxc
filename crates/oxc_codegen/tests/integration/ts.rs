@@ -20,6 +20,8 @@ fn cases() {
     test_same("type T = (A & B)[K];\n");
     test_same("type T = (keyof A)[K];\n");
     test_same("type T = (A extends B ? C : D)[K];\n");
+    test_same("type T = A extends (B extends C ? D : E) ? F : G;\n");
+    test_same("type T = (A extends B ? C : D) extends E ? F : G;\n");
     test_same("type T = A & (B extends C ? D : E);\n");
     test_same("type T = (A | B) & C;\n");
     test_same("interface I<in out T,> {}\n");
