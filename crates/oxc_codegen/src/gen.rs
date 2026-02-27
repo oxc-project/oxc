@@ -3094,7 +3094,9 @@ impl Gen for TSType<'_> {
 
 impl Gen for TSArrayType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.element_type.print(p, ctx);
+        p.wrap(parenthesize_check_type_of_postfix_type(&self.element_type), |p| {
+            self.element_type.print(p, ctx);
+        });
         p.print_str("[]");
     }
 }
@@ -3107,10 +3109,30 @@ impl Gen for TSTupleType<'_> {
     }
 }
 
-fn parenthesize_check_type_of_conditional_type(ty: &TSType<'_>) -> bool {
+fn parenthesize_check_type_of_union_type(ty: &TSType<'_>) -> bool {
     matches!(
         ty,
-        TSType::TSFunctionType(_) | TSType::TSConstructorType(_) | TSType::TSConditionalType(_)
+        TSType::TSFunctionType(_)
+            | TSType::TSConstructorType(_)
+            | TSType::TSConditionalType(_)
+            | TSType::TSInferType(_)
+    )
+}
+
+fn parenthesize_check_type_of_intersection_type(ty: &TSType<'_>) -> bool {
+    matches!(ty, TSType::TSUnionType(_)) || parenthesize_check_type_of_union_type(ty)
+}
+
+fn parenthesize_check_type_of_postfix_type(ty: &TSType<'_>) -> bool {
+    matches!(
+        ty,
+        TSType::TSUnionType(_)
+            | TSType::TSIntersectionType(_)
+            | TSType::TSFunctionType(_)
+            | TSType::TSConstructorType(_)
+            | TSType::TSConditionalType(_)
+            | TSType::TSInferType(_)
+            | TSType::TSTypeOperatorType(_)
     )
 }
 
@@ -3119,14 +3141,14 @@ impl Gen for TSUnionType<'_> {
         let Some((first, rest)) = self.types.split_first() else {
             return;
         };
-        p.wrap(parenthesize_check_type_of_conditional_type(first), |p| {
+        p.wrap(parenthesize_check_type_of_union_type(first), |p| {
             first.print(p, ctx);
         });
         for item in rest {
             p.print_soft_space();
             p.print_ascii_byte(b'|');
             p.print_soft_space();
-            p.wrap(parenthesize_check_type_of_conditional_type(item), |p| {
+            p.wrap(parenthesize_check_type_of_union_type(item), |p| {
                 item.print(p, ctx);
             });
         }
@@ -3146,12 +3168,16 @@ impl Gen for TSIntersectionType<'_> {
         let Some((first, rest)) = self.types.split_first() else {
             return;
         };
-        first.print(p, ctx);
+        p.wrap(parenthesize_check_type_of_intersection_type(first), |p| {
+            first.print(p, ctx);
+        });
         for item in rest {
             p.print_soft_space();
             p.print_ascii_byte(b'&');
             p.print_soft_space();
-            item.print(p, ctx);
+            p.wrap(parenthesize_check_type_of_intersection_type(item), |p| {
+                item.print(p, ctx);
+            });
         }
     }
 }
@@ -3177,7 +3203,9 @@ impl Gen for TSInferType<'_> {
 
 impl Gen for TSIndexedAccessType<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        self.object_type.print(p, ctx);
+        p.wrap(parenthesize_check_type_of_postfix_type(&self.object_type), |p| {
+            self.object_type.print(p, ctx);
+        });
         p.print_ascii_byte(b'[');
         self.index_type.print(p, ctx);
         p.print_ascii_byte(b']');

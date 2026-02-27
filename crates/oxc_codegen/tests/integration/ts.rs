@@ -10,6 +10,18 @@ fn cases() {
     test_same("({ foo(): string {} });\n");
     test_same("({ method(this: Foo): void {} });\n");
     test_same("({ methodWithParam(this: Foo, bar: string): void {} });\n");
+    test_same("type T = (A | B)[];\n");
+    test_same("type T = (A & B)[];\n");
+    test_same("type T = (keyof A)[];\n");
+    test_same("type T = (() => A)[];\n");
+    test_same("type T = (new () => A)[];\n");
+    test_same("type T = (A extends B ? C : D)[];\n");
+    test_same("type T = (A | B)[K];\n");
+    test_same("type T = (A & B)[K];\n");
+    test_same("type T = (keyof A)[K];\n");
+    test_same("type T = (A extends B ? C : D)[K];\n");
+    test_same("type T = A & (B extends C ? D : E);\n");
+    test_same("type T = (A | B) & C;\n");
     test_same("interface I<in out T,> {}\n");
     test_same("function F<const in out T,>() {}\n");
     test_same("class C {\n\tp = await(0);\n}\n");
