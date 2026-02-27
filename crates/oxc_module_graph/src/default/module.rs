@@ -18,6 +18,8 @@ pub struct Module {
     pub path: PathBuf,
     /// Whether this module has ESM syntax.
     pub has_module_syntax: bool,
+    /// Whether this module uses CommonJS.
+    pub is_commonjs: bool,
 
     /// Named exports: export_name -> LocalExport.
     pub named_exports: FxHashMap<CompactString, LocalExport>,
@@ -58,6 +60,10 @@ impl ModuleInfo for Module {
 
     fn has_module_syntax(&self) -> bool {
         self.has_module_syntax
+    }
+
+    fn is_commonjs(&self) -> bool {
+        self.is_commonjs
     }
 
     fn for_each_named_export(&self, f: &mut dyn FnMut(&str, SymbolRef, bool)) {
@@ -102,10 +108,7 @@ impl ModuleInfo for Module {
         }
     }
 
-    fn symbol_import_info(
-        &self,
-        symbol: SymbolRef,
-    ) -> Option<(&str, usize, bool)> {
+    fn symbol_import_info(&self, symbol: SymbolRef) -> Option<(&str, usize, bool)> {
         let import = self.named_imports.get(&symbol)?;
         let is_ns = import.imported_name.as_str() == "*";
         Some((import.imported_name.as_str(), import.record_idx.index(), is_ns))

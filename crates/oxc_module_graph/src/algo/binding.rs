@@ -264,9 +264,7 @@ fn add_exports_for_star<M: ModuleStore>(
                 .map(|exports| {
                     exports
                         .iter()
-                        .filter(|(name, export)| {
-                            name.as_str() != "default" || export.came_from_cjs
-                        })
+                        .filter(|(name, export)| name.as_str() != "default" || export.came_from_cjs)
                         .map(|(name, export)| (name.clone(), export.clone()))
                         .collect()
                 })
@@ -416,9 +414,13 @@ where
                         symbols.link(local_symbol, ns_ref);
                     }
                     None => {
-                        if let Some(kind) =
-                            matcher.on_missing_module(idx, record_idx, target_idx, &imported_name, true)
-                        {
+                        if let Some(kind) = matcher.on_missing_module(
+                            idx,
+                            record_idx,
+                            target_idx,
+                            &imported_name,
+                            true,
+                        ) {
                             apply_match(symbols, local_symbol, &kind);
                         }
                     }
@@ -487,9 +489,7 @@ fn apply_match<S: SymbolGraph>(
         | MatchImportKind::NormalAndNamespace { namespace_ref, .. } => {
             symbols.link(local_symbol, *namespace_ref);
         }
-        MatchImportKind::Ambiguous { .. }
-        | MatchImportKind::Cycle
-        | MatchImportKind::NoMatch => {}
+        MatchImportKind::Ambiguous { .. } | MatchImportKind::Cycle | MatchImportKind::NoMatch => {}
     }
 }
 
@@ -535,15 +535,15 @@ where
     }
 
     // Allow short-circuit (CJS, external, etc.).
-    if let Some(kind) = matcher.on_before_match(importer_idx, importer_record_idx, target_idx, import_name, false) {
+    if let Some(kind) =
+        matcher.on_before_match(importer_idx, importer_record_idx, target_idx, import_name, false)
+    {
         return kind;
     }
 
     // Look up in resolved exports.
     let Some(target_exports) = resolved_exports.get(&target_idx) else {
-        return matcher
-            .on_no_match(target_idx, import_name)
-            .unwrap_or(MatchImportKind::NoMatch);
+        return matcher.on_no_match(target_idx, import_name).unwrap_or(MatchImportKind::NoMatch);
     };
 
     match target_exports.get(import_name) {
@@ -608,9 +608,7 @@ where
                 // Recurse into the re-exported import's target.
                 // The importer is now the owner module (re-exporter),
                 // and the record_idx is the re-export's import record.
-                if let Some(re_target) =
-                    owner_module.import_record_resolved_module(re_record_idx)
-                {
+                if let Some(re_target) = owner_module.import_record_resolved_module(re_record_idx) {
                     // If the next target is external/missing (not in the store),
                     // stop the chain here and return the current symbol as-is.
                     // The intermediate symbol's own import from the external will
@@ -638,9 +636,7 @@ where
         }
         None => {
             // Not found — ask matcher for dynamic fallback.
-            matcher
-                .on_no_match(target_idx, import_name)
-                .unwrap_or(MatchImportKind::NoMatch)
+            matcher.on_no_match(target_idx, import_name).unwrap_or(MatchImportKind::NoMatch)
         }
     }
 }
