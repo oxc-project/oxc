@@ -8,6 +8,7 @@ use tracing::instrument;
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
+use oxc_formatter_json::{JsonFormatError, JsonFormatOptions, format_json};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -75,6 +76,37 @@ impl SourceFormatter {
                 FormatFileStrategy::OxfmtToml { .. },
                 ResolvedOptions::OxfmtToml { toml_options, insert_final_newline },
             ) => (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline),
+            (
+                FormatFileStrategy::OxcFormatterJson { path },
+                ResolvedOptions::OxcFormatterJson {
+                    json_format_options,
+                    external_options,
+                    insert_final_newline,
+                },
+            ) => (
+                Self::format_by_json_formatter(source_text, path, *json_format_options).or_else(
+                    |err| {
+                        if err.is_parse_error() {
+                            #[cfg(feature = "napi")]
+                            {
+                                return self.format_by_external_formatter(
+                                    source_text,
+                                    path,
+                                    "json",
+                                    external_options,
+                                );
+                            }
+                        }
+
+                        let _ = external_options;
+                        Err(OxcDiagnostic::error(format!(
+                            "Failed to format JSON file: {}\n{err}",
+                            path.display()
+                        )))
+                    },
+                ),
+                insert_final_newline,
+            ),
             #[cfg(feature = "napi")]
             (
                 FormatFileStrategy::ExternalFormatter { path, parser_name },
@@ -200,6 +232,15 @@ impl SourceFormatter {
     #[instrument(level = "debug", name = "oxfmt::format::oxc_toml", skip_all)]
     fn format_by_toml(source_text: &str, options: oxc_toml::Options) -> String {
         oxc_toml::format(source_text, options)
+    }
+
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_json", skip_all)]
+    fn format_by_json_formatter(
+        source_text: &str,
+        _path: &Path,
+        options: JsonFormatOptions,
+    ) -> Result<String, JsonFormatError> {
+        format_json(source_text, options)
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).

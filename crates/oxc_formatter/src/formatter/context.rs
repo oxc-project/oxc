@@ -9,6 +9,10 @@ use crate::{
     external_formatter::ExternalCallbacks, formatter::FormatElement, options::FormatOptions,
 };
 
+use oxc_formatter_core::{
+    FormatContext as CoreFormatContext, FormatContextExt as CoreFormatContextExt,
+};
+
 use super::{Comments, SourceText};
 
 /// Entry in the Tailwind context stack, tracking whether we're inside a Tailwind class context.
@@ -272,5 +276,34 @@ impl<'ast> FormatContext<'ast> {
     /// Get a mutable reference to the current Tailwind context, if any.
     pub fn tailwind_context_mut(&mut self) -> Option<&mut TailwindContextEntry> {
         self.tailwind_context_stack.last_mut()
+    }
+}
+
+impl<'ast> CoreFormatContext<'ast> for FormatContext<'ast> {
+    type Options = FormatOptions;
+
+    fn options(&self) -> &Self::Options {
+        &self.options
+    }
+
+    fn allocator(&self) -> &'ast Allocator {
+        self.allocator
+    }
+}
+
+impl<'ast> CoreFormatContextExt<'ast> for FormatContext<'ast> {
+    type Comments = Comments<'ast>;
+    type SourceText = SourceText<'ast>;
+
+    fn comments(&self) -> &Self::Comments {
+        &self.comments
+    }
+
+    fn comments_mut(&mut self) -> &mut Self::Comments {
+        &mut self.comments
+    }
+
+    fn source_text(&self) -> Self::SourceText {
+        self.source_text
     }
 }

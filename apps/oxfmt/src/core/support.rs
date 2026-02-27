@@ -16,6 +16,10 @@ pub enum FormatFileStrategy {
     OxfmtToml {
         path: PathBuf,
     },
+    /// JSON files formatted by oxc native JSON formatter.
+    OxcFormatterJson {
+        path: PathBuf,
+    },
     ExternalFormatter {
         path: PathBuf,
         parser_name: &'static str,
@@ -59,6 +63,10 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
         }
 
         let extension = path.extension().and_then(|ext| ext.to_str());
+        if is_native_json_extension(extension) {
+            return Ok(Self::OxcFormatterJson { path });
+        }
+
         if let Some(parser_name) = get_external_parser_name(file_name, extension) {
             return Ok(Self::ExternalFormatter { path, parser_name });
         }
@@ -70,13 +78,17 @@ impl TryFrom<PathBuf> for FormatFileStrategy {
 impl FormatFileStrategy {
     #[cfg(not(feature = "napi"))]
     pub fn can_format_without_external(&self) -> bool {
-        matches!(self, Self::OxcFormatter { .. } | Self::OxfmtToml { .. })
+        matches!(
+            self,
+            Self::OxcFormatter { .. } | Self::OxfmtToml { .. } | Self::OxcFormatterJson { .. }
+        )
     }
 
     pub fn path(&self) -> &Path {
         match self {
             Self::OxcFormatter { path, .. }
             | Self::OxfmtToml { path }
+            | Self::OxcFormatterJson { path }
             | Self::ExternalFormatter { path, .. }
             | Self::ExternalFormatterPackageJson { path, .. } => path,
         }
@@ -147,15 +159,10 @@ static TOML_FILENAMES: phf::Set<&'static str> = phf_set! {
 fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<&'static str> {
     // JSON and variants
     // NOTE: `package.json` is handled separately in `FormatFileStrategy::try_from()`
-    if file_name == "composer.json" || extension == Some("importmap") {
+    if extension == Some("importmap") {
         return Some("json-stringify");
     }
     if JSON_FILENAMES.contains(file_name) {
-        return Some("json");
-    }
-    if let Some(ext) = extension
-        && JSON_EXTENSIONS.contains(ext)
-    {
         return Some("json");
     }
     if let Some(ext) = extension
@@ -235,6 +242,10 @@ fn get_external_parser_name(file_name: &str, extension: Option<&str>) -> Option<
     }
 
     None
+}
+
+fn is_native_json_extension(extension: Option<&str>) -> bool {
+    extension.is_some_and(|ext| JSON_EXTENSIONS.contains(ext))
 }
 
 static JSON_EXTENSIONS: phf::Set<&'static str> = phf_set! {
@@ -383,10 +394,10 @@ mod tests {
     #[test]
     fn test_get_external_parser_name() {
         let test_cases = vec![
-            // JSON (NOTE: `package.json` is handled in TryFrom, not here)
+            // JSON external only (native `.json`/JSON_EXTENSIONS are handled in TryFrom)
             ("config.importmap", Some("json-stringify")),
-            ("data.json", Some("json")),
-            ("schema.avsc", Some("json")),
+            ("data.json", None),
+            ("schema.avsc", None),
             ("config.code-workspace", Some("jsonc")),
             ("settings.json5", Some("json5")),
             // HTML
@@ -444,7 +455,20 @@ mod tests {
         assert!(matches!(source, FormatFileStrategy::ExternalFormatterPackageJson { .. }));
 
         let source = FormatFileStrategy::try_from(PathBuf::from("composer.json")).unwrap();
-        assert!(matches!(source, FormatFileStrategy::ExternalFormatter { .. }));
+        assert!(matches!(source, FormatFileStrategy::OxcFormatterJson { .. }));
+    }
+
+    #[test]
+    fn test_native_json_files() {
+        let json_files = vec!["data.json", "schema.avsc", "config.geojson", "state.tfstate"];
+
+        for file_name in json_files {
+            let result = FormatFileStrategy::try_from(PathBuf::from(file_name));
+            assert!(
+                matches!(result, Ok(FormatFileStrategy::OxcFormatterJson { .. })),
+                "`{file_name}` should be detected as native JSON"
+            );
+        }
     }
 
     #[test]

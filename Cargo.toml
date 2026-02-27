@@ -140,6 +140,8 @@ oxc_traverse = { version = "0.115.0", path = "crates/oxc_traverse" } # AST trave
 
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
+oxc_formatter_core = { path = "crates/oxc_formatter_core" } # Language-agnostic formatter core
+oxc_formatter_json = { path = "crates/oxc_formatter_json" } # Native JSON formatter
 oxc_language_server = { path = "crates/oxc_language_server", default-features = false } # Language server
 oxc_linter = { path = "crates/oxc_linter" } # Linting engine
 oxc_macros = { path = "crates/oxc_macros" } # Proc macros
@@ -164,6 +166,7 @@ unicode-id-start = "1" # Unicode identifier validation
 
 #
 javascript-globals = "1.4.0" # JavaScript global definitions
+json5 = "0.4.1" # JSON5 parser
 json-strip-comments = "3.1.0" # Strip JSON comments
 oxc-browserslist = "2.2.0" # Browser compatibility queries
 oxc_index = { version = "4.1.0", features = ["nonmax", "serde"] } # Type-safe indices

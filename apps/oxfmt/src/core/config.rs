@@ -9,6 +9,11 @@ use serde_json::Value;
 use tracing::instrument;
 
 use oxc_formatter::FormatOptions;
+use oxc_formatter_core::{
+    IndentStyle as CoreIndentStyle, IndentWidth as CoreIndentWidth, LineEnding as CoreLineEnding,
+    LineWidth as CoreLineWidth,
+};
+use oxc_formatter_json::JsonFormatOptions;
 use oxc_toml::Options as TomlFormatterOptions;
 
 use super::{
@@ -93,6 +98,13 @@ pub enum ResolvedOptions {
     },
     /// For TOML files.
     OxfmtToml { toml_options: TomlFormatterOptions, insert_final_newline: bool },
+    /// For JSON files formatted by native JSON formatter.
+    OxcFormatterJson {
+        json_format_options: Box<JsonFormatOptions>,
+        /// For parse-error fallback to external formatter.
+        external_options: Value,
+        insert_final_newline: bool,
+    },
     /// For non-JS files formatted by external formatter (Prettier).
     #[cfg(feature = "napi")]
     ExternalFormatter { external_options: Value, insert_final_newline: bool },
@@ -133,6 +145,11 @@ impl ResolvedOptions {
             FormatFileStrategy::OxfmtToml { .. } => {
                 ResolvedOptions::OxfmtToml { toml_options, insert_final_newline }
             }
+            FormatFileStrategy::OxcFormatterJson { .. } => ResolvedOptions::OxcFormatterJson {
+                json_format_options: Box::new(json_format_options_from(&format_options)),
+                external_options,
+                insert_final_newline,
+            },
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatter { .. } => {
                 ResolvedOptions::ExternalFormatter { external_options, insert_final_newline }
@@ -160,6 +177,25 @@ impl ResolvedOptions {
             unreachable!("`filepath_override` is only applicable for `OxcFormatter` options");
         };
         *filepath_override = Some(filepath);
+    }
+}
+
+fn json_format_options_from(options: &FormatOptions) -> JsonFormatOptions {
+    let indent_style =
+        if options.indent_style.is_tab() { CoreIndentStyle::Tab } else { CoreIndentStyle::Space };
+
+    let line_ending = match options.line_ending {
+        oxc_formatter::LineEnding::Lf => CoreLineEnding::Lf,
+        oxc_formatter::LineEnding::Crlf => CoreLineEnding::Crlf,
+        oxc_formatter::LineEnding::Cr => CoreLineEnding::Cr,
+    };
+
+    JsonFormatOptions {
+        indent_style,
+        indent_width: CoreIndentWidth::try_from(options.indent_width.value()).unwrap_or_default(),
+        line_ending,
+        line_width: CoreLineWidth::try_from(options.line_width.value()).unwrap_or_default(),
+        always_expand: false,
     }
 }
 

@@ -1,6 +1,5 @@
 use std::ops::Deref;
 
-use oxc_formatter_core::SourceTextExt;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     identifier::is_white_space_single_line,
@@ -254,12 +253,6 @@ impl<'a> SourceText<'a> {
         }
 
         0
-    }
-}
-
-impl<'a> SourceTextExt<Comments<'a>> for SourceText<'a> {
-    fn get_lines_before(&self, span: Span, comments: &Comments<'a>) -> usize {
-        SourceText::get_lines_before(self, span, comments)
     }
 }
 

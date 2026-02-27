@@ -16,18 +16,31 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
+use oxc_formatter_core::{
+    IndentStyle as CoreIndentStyle, IndentWidth as CoreIndentWidth, LineEnding as CoreLineEnding,
+    LineWidth as CoreLineWidth,
+};
+use oxc_formatter_json::{JsonFormatOptions, format_json};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-use crate::{ignore_list::IGNORE_TESTS, options::TestRunnerOptions, spec::parse_spec};
+use crate::{
+    ignore_list::IGNORE_TESTS,
+    options::{TestLanguage, TestRunnerOptions},
+    spec::parse_spec,
+};
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
-    use crate::options::TestLanguage;
     TestRunner::new(TestRunnerOptions::default()).run();
     TestRunner::new(TestRunnerOptions {
         language: TestLanguage::Ts,
+        ..TestRunnerOptions::default()
+    })
+    .run();
+    TestRunner::new(TestRunnerOptions {
+        language: TestLanguage::Json,
         ..TestRunnerOptions::default()
     })
     .run();
@@ -216,6 +229,16 @@ impl TestRunner {
                 !options.experimental_operator_position.is_start()
                     && !options.experimental_ternaries
             })
+            .filter(|(_, snapshot_options)| {
+                if let TestLanguage::Json = self.options.language {
+                    // Native JSON formatter currently targets json-stringify behavior.
+                    return snapshot_options
+                        .iter()
+                        .find(|(key, _)| key == "parsers")
+                        .is_some_and(|(_, value)| value.contains("json-stringify"));
+                }
+                true
+            })
             .collect::<Vec<_>>();
 
         let snapshots =
@@ -242,9 +265,13 @@ impl TestRunner {
                 )
                 .unwrap();
 
-                let Some(actual) =
-                    Self::run_oxc_formatter(path, &source_text, format_options.clone())
-                else {
+                let Some(actual) = Self::run_formatter(
+                    self.options.language,
+                    path,
+                    &source_text,
+                    format_options.clone(),
+                    snapshot_options,
+                ) else {
                     // Skip the test if parsing failed
                     if self.options.debug {
                         println!("  => Skipped (parsing failed)");
@@ -400,24 +427,59 @@ impl TestRunner {
         input
     }
 
-    fn run_oxc_formatter(
+    fn run_formatter(
+        language: TestLanguage,
         path: &Path,
         source_text: &str,
         format_options: FormatOptions,
+        snapshot_options: &[(String, String)],
     ) -> Option<String> {
-        let allocator = Allocator::default();
+        match language {
+            TestLanguage::Json => {
+                let always_expand = snapshot_options
+                    .iter()
+                    .find(|(key, _)| key == "parsers")
+                    .is_some_and(|(_, value)| value.contains("json-stringify"));
 
-        let source_type = SourceType::from_path(path).unwrap();
-        let source_type = enable_jsx_source_type(source_type);
+                if !always_expand {
+                    return None;
+                }
 
-        let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(get_parse_options())
-            .parse();
-        if !ret.errors.is_empty() {
-            return None;
+                let json_format_options = JsonFormatOptions {
+                    indent_style: if format_options.indent_style.is_tab() {
+                        CoreIndentStyle::Tab
+                    } else {
+                        CoreIndentStyle::Space
+                    },
+                    indent_width: CoreIndentWidth::try_from(format_options.indent_width.value())
+                        .unwrap_or_default(),
+                    line_ending: match format_options.line_ending {
+                        oxc_formatter::LineEnding::Lf => CoreLineEnding::Lf,
+                        oxc_formatter::LineEnding::Crlf => CoreLineEnding::Crlf,
+                        oxc_formatter::LineEnding::Cr => CoreLineEnding::Cr,
+                    },
+                    line_width: CoreLineWidth::try_from(format_options.line_width.value())
+                        .unwrap_or_default(),
+                    always_expand,
+                };
+
+                format_json(source_text, json_format_options).ok()
+            }
+            TestLanguage::Js | TestLanguage::Ts => {
+                let allocator = Allocator::default();
+
+                let source_type = SourceType::from_path(path).unwrap();
+                let source_type = enable_jsx_source_type(source_type);
+
+                let ret = Parser::new(&allocator, source_text, source_type)
+                    .with_options(get_parse_options())
+                    .parse();
+                if !ret.errors.is_empty() {
+                    return None;
+                }
+
+                Some(Formatter::new(&allocator, format_options).build(&ret.program))
+            }
         }
-
-        let formatted = Formatter::new(&allocator, format_options).build(&ret.program);
-        Some(formatted)
     }
 }
