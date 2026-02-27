@@ -7,109 +7,123 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let value: BigInt;
    ·            ──────
    ╰────
-  help: `BigInt` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `bigint` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `BigInt` with `bigint`.
+  note: `BigInt` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `bigint` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
  1 │ let value: Boolean;
    ·            ───────
    ╰────
-  help: `Boolean` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `boolean` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Boolean` with `boolean`.
+  note: `Boolean` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `boolean` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
  1 │ let value: Number;
    ·            ──────
    ╰────
-  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Number` with `number`.
+  note: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
  1 │ let value: Object;
    ·            ──────
    ╰────
-  help: `Object` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `object` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Object` with `object`.
+  note: `Object` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `object` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
  1 │ let value: String;
    ·            ──────
    ╰────
-  help: `String` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `string` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `String` with `string`.
+  note: `String` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `string` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
  1 │ let value: Symbol;
    ·            ──────
    ╰────
-  help: `Symbol` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `symbol` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Symbol` with `symbol`.
+  note: `Symbol` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `symbol` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
  1 │ let value: Number | Symbol;
    ·            ──────
    ╰────
-  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Number` with `number`.
+  note: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:21]
  1 │ let value: Number | Symbol;
    ·                     ──────
    ╰────
-  help: `Symbol` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `symbol` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Symbol` with `symbol`.
+  note: `Symbol` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `symbol` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:24]
  1 │ let value: { property: Number };
    ·                        ──────
    ╰────
-  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Number` with `number`.
+  note: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:6]
  1 │ 0 as Number;
    ·      ──────
    ╰────
-  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Number` with `number`.
+  note: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:15]
  1 │ type MyType = Number;
    ·               ──────
    ╰────
-  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Number` with `number`.
+  note: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:16]
  1 │ type MyType = [Number];
    ·                ──────
    ╰────
-  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Number` with `number`.
+  note: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:26]
  1 │ class MyClass implements Number {}
    ·                          ──────
    ╰────
-  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
+  note: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:31]
  1 │ interface MyInterface extends Number {}
    ·                               ──────
    ╰────
-  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
+  note: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:15]
  1 │ type MyType = Number & String;
    ·               ──────
    ╰────
-  help: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `Number` with `number`.
+  note: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:24]
  1 │ type MyType = Number & String;
    ·                        ──────
    ╰────
-  help: `String` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `string` for values, and in `extends`/`implements` use an interface/object shape instead.
+  help: Replace `String` with `string`.
+  note: `String` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `string` for values, and in `extends`/`implements` use an interface/object shape instead.
