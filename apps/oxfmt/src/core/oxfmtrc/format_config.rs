@@ -122,7 +122,7 @@ pub struct FormatConfig {
     /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_spacing: Option<bool>,
-    /// Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
+    /// Put the `>` of a multi-line HTML (HTML, JSX, Vue, Svelte, Angular) element at the end of the last line,
     /// instead of being alone on the next line (does not apply to self closing elements).
     ///
     /// - Default: `false`
@@ -136,7 +136,7 @@ pub struct FormatConfig {
     /// - Default: `"preserve"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub object_wrap: Option<ObjectWrapConfig>,
-    /// Enforce single attribute per line in HTML, Vue, and JSX.
+    /// Enforce single attribute per line in HTML, Vue, Svelte, and JSX.
     ///
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -151,7 +151,7 @@ pub struct FormatConfig {
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
 
-    /// Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+    /// Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue/Svelte, etc.) in the file.
     ///
     /// NOTE: XXX-in-JS support is incomplete.
     ///
@@ -171,7 +171,7 @@ pub struct FormatConfig {
     /// - Default: `"preserve"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prose_wrap: Option<ProseWrapConfig>,
-    /// Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
+    /// Specify the global whitespace sensitivity for HTML, Vue, Svelte, Angular, and Handlebars.
     ///
     /// - Default: `"css"`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -223,6 +223,16 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
     pub sort_tailwindcss: Option<SortTailwindcssConfig>,
+
+    /// Svelte formatting options.
+    ///
+    /// These options are passed through to `prettier-plugin-svelte`.
+    /// Option names omit the `svelte` prefix used in the original plugin.
+    /// (e.g., `sortOrder` instead of `svelteSortOrder`)
+    ///
+    /// - Default: All plugin defaults
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub svelte: Option<FormatSvelteConfig>,
 }
 
 impl FormatConfig {
@@ -612,6 +622,40 @@ pub struct SortTailwindcssConfig {
     /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preserve_duplicates: Option<bool>,
+}
+
+// ---
+
+/// Configuration options for Svelte formatting.
+///
+/// These options are passed through to `prettier-plugin-svelte`.
+/// Option names omit the `svelte` prefix used in the original plugin.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct FormatSvelteConfig {
+    /// Sort order for Svelte component sections.
+    ///
+    /// Join the keywords:
+    /// `options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`
+    ///
+    /// - Default: `"options-scripts-markup-styles"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_order: Option<String>,
+    /// More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub strict_mode: Option<bool>,
+    /// Allow attribute shorthand when attribute name and expression match.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allow_shorthand: Option<bool>,
+    /// Indent code inside `<script>` and `<style>` tags.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub indent_script_and_style: Option<bool>,
 }
 
 // ---

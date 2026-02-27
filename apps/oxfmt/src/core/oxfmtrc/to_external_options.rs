@@ -63,6 +63,7 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     "css",
     "scss",
     "less",
+    "svelte",
 };
 
 /// Parsers(files) that can embed JS/TS code and benefit from oxfmt plugin.
@@ -72,6 +73,7 @@ static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
 static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
     // "html",
     "vue",
+    "svelte",
     // "markdown",
     // "mdx",
 };
@@ -117,6 +119,27 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
             }
         }
         obj.insert("_useTailwindPlugin".to_string(), Value::Number(1.into()));
+    }
+
+    // Svelte plugin is required for `.svelte` files
+    #[cfg(feature = "napi")]
+    if matches!(
+        strategy,
+        FormatFileStrategy::ExternalFormatter { parser_name, .. } if *parser_name == "svelte"
+    ) {
+        if let Some(svelte) = obj.get("svelte").and_then(|v| v.as_object()).cloned() {
+            for (src, dst) in [
+                ("sortOrder", "svelteSortOrder"),
+                ("strictMode", "svelteStrictMode"),
+                ("allowShorthand", "svelteAllowShorthand"),
+                ("indentScriptAndStyle", "svelteIndentScriptAndStyle"),
+            ] {
+                if let Some(value) = svelte.get(src).cloned() {
+                    obj.insert(dst.to_string(), value);
+                }
+            }
+        }
+        obj.insert("_useSveltePlugin".to_string(), Value::Number(1.into()));
     }
 
     // Build oxfmt plugin options JSON for js-in-xxx parsers
@@ -167,6 +190,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
         "sortImports",
         "sortTailwindcss",
         "sortPackageJson",
+        "svelte",
         "insertFinalNewline",
         "overrides",
         "ignorePatterns",

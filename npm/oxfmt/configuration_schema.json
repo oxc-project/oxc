@@ -17,12 +17,12 @@
       "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`"
     },
     "bracketSameLine": {
-      "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`",
+      "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Svelte, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`",
       "type": [
         "boolean",
         "null"
       ],
-      "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`"
+      "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Svelte, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`"
     },
     "bracketSpacing": {
       "description": "Print spaces between brackets in object literals.\n\n- Default: `true`",
@@ -33,7 +33,7 @@
       "markdownDescription": "Print spaces between brackets in object literals.\n\n- Default: `true`"
     },
     "embeddedLanguageFormatting": {
-      "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`",
+      "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue/Svelte, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`",
       "anyOf": [
         {
           "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
@@ -42,7 +42,7 @@
           "type": "null"
         }
       ],
-      "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`"
+      "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue/Svelte, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`"
     },
     "endOfLine": {
       "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
@@ -57,7 +57,7 @@
       "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
     },
     "htmlWhitespaceSensitivity": {
-      "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`",
+      "description": "Specify the global whitespace sensitivity for HTML, Vue, Svelte, Angular, and Handlebars.\n\n- Default: `\"css\"`",
       "anyOf": [
         {
           "$ref": "#/definitions/HtmlWhitespaceSensitivityConfig"
@@ -66,7 +66,7 @@
           "type": "null"
         }
       ],
-      "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`"
+      "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Svelte, Angular, and Handlebars.\n\n- Default: `\"css\"`"
     },
     "ignorePatterns": {
       "description": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`",
@@ -161,12 +161,12 @@
       "markdownDescription": "Print semicolons at the ends of statements.\n\n- Default: `true`"
     },
     "singleAttributePerLine": {
-      "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`",
+      "description": "Enforce single attribute per line in HTML, Vue, Svelte, and JSX.\n\n- Default: `false`",
       "type": [
         "boolean",
         "null"
       ],
-      "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
+      "markdownDescription": "Enforce single attribute per line in HTML, Vue, Svelte, and JSX.\n\n- Default: `false`"
     },
     "singleQuote": {
       "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
@@ -211,6 +211,18 @@
         }
       ],
       "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
+    },
+    "svelte": {
+      "description": "Svelte formatting options.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin.\n(e.g., `sortOrder` instead of `svelteSortOrder`)\n\n- Default: All plugin defaults",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/FormatSvelteConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Svelte formatting options.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin.\n(e.g., `sortOrder` instead of `svelteSortOrder`)\n\n- Default: All plugin defaults"
     },
     "tabWidth": {
       "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",
@@ -331,12 +343,12 @@
           "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`"
         },
         "bracketSameLine": {
-          "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`",
+          "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Svelte, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`",
           "type": [
             "boolean",
             "null"
           ],
-          "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`"
+          "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Svelte, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`"
         },
         "bracketSpacing": {
           "description": "Print spaces between brackets in object literals.\n\n- Default: `true`",
@@ -347,7 +359,7 @@
           "markdownDescription": "Print spaces between brackets in object literals.\n\n- Default: `true`"
         },
         "embeddedLanguageFormatting": {
-          "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`",
+          "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue/Svelte, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`",
           "anyOf": [
             {
               "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
@@ -356,7 +368,7 @@
               "type": "null"
             }
           ],
-          "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`"
+          "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue/Svelte, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`"
         },
         "endOfLine": {
           "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
@@ -371,7 +383,7 @@
           "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
         },
         "htmlWhitespaceSensitivity": {
-          "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`",
+          "description": "Specify the global whitespace sensitivity for HTML, Vue, Svelte, Angular, and Handlebars.\n\n- Default: `\"css\"`",
           "anyOf": [
             {
               "$ref": "#/definitions/HtmlWhitespaceSensitivityConfig"
@@ -380,7 +392,7 @@
               "type": "null"
             }
           ],
-          "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`"
+          "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Svelte, Angular, and Handlebars.\n\n- Default: `\"css\"`"
         },
         "insertFinalNewline": {
           "description": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`",
@@ -453,12 +465,12 @@
           "markdownDescription": "Print semicolons at the ends of statements.\n\n- Default: `true`"
         },
         "singleAttributePerLine": {
-          "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`",
+          "description": "Enforce single attribute per line in HTML, Vue, Svelte, and JSX.\n\n- Default: `false`",
           "type": [
             "boolean",
             "null"
           ],
-          "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
+          "markdownDescription": "Enforce single attribute per line in HTML, Vue, Svelte, and JSX.\n\n- Default: `false`"
         },
         "singleQuote": {
           "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
@@ -504,6 +516,18 @@
           ],
           "markdownDescription": "Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
         },
+        "svelte": {
+          "description": "Svelte formatting options.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin.\n(e.g., `sortOrder` instead of `svelteSortOrder`)\n\n- Default: All plugin defaults",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FormatSvelteConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "markdownDescription": "Svelte formatting options.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin.\n(e.g., `sortOrder` instead of `svelteSortOrder`)\n\n- Default: All plugin defaults"
+        },
         "tabWidth": {
           "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",
           "type": [
@@ -543,6 +567,45 @@
           "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Default: `false`"
         }
       }
+    },
+    "FormatSvelteConfig": {
+      "description": "Configuration options for Svelte formatting.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin.",
+      "type": "object",
+      "properties": {
+        "allowShorthand": {
+          "description": "Allow attribute shorthand when attribute name and expression match.\n\n- Default: `true`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Allow attribute shorthand when attribute name and expression match.\n\n- Default: `true`"
+        },
+        "indentScriptAndStyle": {
+          "description": "Indent code inside `<script>` and `<style>` tags.\n\n- Default: `true`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Indent code inside `<script>` and `<style>` tags.\n\n- Default: `true`"
+        },
+        "sortOrder": {
+          "description": "Sort order for Svelte component sections.\n\nJoin the keywords:\n`options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`\n\n- Default: `\"options-scripts-markup-styles\"`",
+          "type": [
+            "string",
+            "null"
+          ],
+          "markdownDescription": "Sort order for Svelte component sections.\n\nJoin the keywords:\n`options`, `scripts`, `markup`, `styles` with a `-` in the order you want; or `none`\n\n- Default: `\"options-scripts-markup-styles\"`"
+        },
+        "strictMode": {
+          "description": "More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.\n\n- Default: `false`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "More strict HTML syntax: Quotes in attributes, no self-closing DOM tags.\n\n- Default: `false`"
+        }
+      },
+      "markdownDescription": "Configuration options for Svelte formatting.\n\nThese options are passed through to `prettier-plugin-svelte`.\nOption names omit the `svelte` prefix used in the original plugin."
     },
     "HtmlWhitespaceSensitivityConfig": {
       "type": "string",

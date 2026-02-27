@@ -6,10 +6,6 @@ import {
   formatEmbeddedDoc,
   sortTailwindClasses,
 } from "./libs/apis";
-
-// napi-JS `oxfmt` API entry point
-// See also `format()` function in `./src/main_napi.rs`
-
 // Types are auto-generated from the JSON Schema.
 // See `config.generated.ts` for the full list of generated types.
 import type {
@@ -17,7 +13,11 @@ import type {
   SortImportsConfig,
   SortPackageJsonConfig,
   SortTailwindcssConfig,
+  FormatSvelteConfig,
 } from "./config.generated";
+
+// napi-JS `oxfmt` API entry point
+// See also `format()` function in `./src/main_napi.rs`
 
 /**
  * Configuration options for the `format()` API.
@@ -40,6 +40,7 @@ export type SortPackageJsonOptions = SortPackageJsonConfig;
 export type SortTailwindcssOptions = SortTailwindcssConfig;
 /** @deprecated Use `SortTailwindcssOptions` instead. */
 export type TailwindcssOptions = SortTailwindcssConfig;
+export type FormatSvelteOptions = FormatSvelteConfig;
 
 /**
  * Format the given source text according to the specified options.
@@ -62,6 +63,8 @@ export async function format(fileName: string, sourceText: string, options?: For
 
 /**
  * Format a JS/TS snippet for Prettier `textToDoc()` plugin flow.
+ *
+ * NOTE: This is an internal API
  */
 export async function jsTextToDoc(
   sourceExt: string,
