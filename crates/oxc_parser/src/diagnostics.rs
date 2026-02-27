@@ -1086,7 +1086,7 @@ pub fn decorator_on_overload(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn as_in_ts(span: Span) -> OxcDiagnostic {
-    ts_error("8037", "Type assertion expressions can only be used in TypeScript files.")
+    ts_error("8016", "Type assertion expressions can only be used in TypeScript files.")
         .with_label(span)
 }
 

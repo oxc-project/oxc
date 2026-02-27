@@ -7443,7 +7443,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ Foo<number>(1);
    ╰────
 
-  × TS(8037): Type assertion expressions can only be used in TypeScript files.
+  × TS(8016): Type assertion expressions can only be used in TypeScript files.
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:1:1]
  1 │ 0 as number;
    · ───────────
