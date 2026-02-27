@@ -31,13 +31,13 @@ pub type JsInitExternalFormatterCb = ThreadsafeFunction<
 >;
 
 /// Type alias for the callback function signature.
-/// Takes (options, code) as arguments and returns formatted code.
+/// Takes (options, code) as arguments and returns formatted code or null on error.
 /// The `options` object includes `parser` field set by Rust side.
 pub type JsFormatEmbeddedCb = ThreadsafeFunction<
     // Input arguments
     FnArgs<(Value, String)>, // (options, code)
     // Return type (what JS function returns)
-    Promise<String>,
+    Promise<Option<String>>,
     // Arguments (repeated)
     FnArgs<(Value, String)>,
     // Error status
@@ -47,13 +47,13 @@ pub type JsFormatEmbeddedCb = ThreadsafeFunction<
 >;
 
 /// Type alias for the Doc-path callback function signature (batch).
-/// Takes (options, texts[]) as arguments and returns Doc JSON string[] (one per text).
+/// Takes (options, texts[]) as arguments and returns Doc JSON string[] (one per text) or null on error.
 /// The `options` object includes `parser` field set by Rust side.
 pub type JsFormatEmbeddedDocCb = ThreadsafeFunction<
     // Input arguments
     FnArgs<(Value, Vec<String>)>, // (options, texts)
     // Return type (what JS function returns)
-    Promise<Vec<String>>,
+    Promise<Option<Vec<String>>>,
     // Arguments (repeated)
     FnArgs<(Value, Vec<String>)>,
     // Error status
@@ -79,11 +79,11 @@ pub type JsFormatFileCb = ThreadsafeFunction<
 >;
 
 /// Type alias for Tailwind class processing callback.
-/// Takes (options, classes) and returns sorted array.
+/// Takes (options, classes) and returns sorted array or null on error.
 /// The `filepath` is included in `options`.
 pub type JsSortTailwindClassesCb = ThreadsafeFunction<
     FnArgs<(Value, Vec<String>)>, // Input: (options, classes)
-    Promise<Vec<String>>,         // Return: promise of sorted array
+    Promise<Option<Vec<String>>>, // Return: promise of sorted array or null
     FnArgs<(Value, Vec<String>)>,
     Status,
     false,
@@ -427,7 +427,10 @@ fn wrap_format_embedded(
             let status = cb.call_async(FnArgs::from((options, code.to_string()))).await;
             match status {
                 Ok(promise) => match promise.await {
-                    Ok(formatted_code) => Ok(formatted_code),
+                    Ok(Some(formatted_code)) => Ok(formatted_code),
+                    Ok(None) => Err("Embedded formatting failed".to_string()),
+                    // JS side never rejects; it returns `null` on error instead.
+                    // `Err` here would only come from a napi-rs internal failure.
                     Err(err) => Err(err.reason.clone()),
                 },
                 Err(err) => Err(err.reason.clone()),
@@ -453,7 +456,10 @@ fn wrap_format_embedded_doc(
             let status = cb.call_async(FnArgs::from((options, texts_owned))).await;
             match status {
                 Ok(promise) => match promise.await {
-                    Ok(doc_jsons) => Ok(doc_jsons),
+                    Ok(Some(doc_jsons)) => Ok(doc_jsons),
+                    Ok(None) => Err("Embedded doc formatting failed".to_string()),
+                    // JS side never rejects; it returns `null` on error instead.
+                    // `Err` here would only come from a napi-rs internal failure.
                     Err(err) => Err(err.reason.clone()),
                 },
                 Err(err) => Err(err.reason.clone()),
@@ -503,11 +509,11 @@ fn wrap_sort_tailwind_classes(
             let args = FnArgs::from((options.clone(), classes.clone()));
             match cb.call_async(args).await {
                 Ok(promise) => match promise.await {
-                    Ok(sorted) => sorted,
-                    // Return original classes on error
-                    Err(_) => classes,
+                    Ok(Some(sorted)) => sorted,
+                    // JS side never rejects; it returns `null` on error instead.
+                    // `Err` here would only come from a napi-rs internal failure.
+                    Ok(None) | Err(_) => classes,
                 },
-                // Return original classes on error
                 Err(_) => classes,
             }
         });
