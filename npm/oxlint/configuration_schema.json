@@ -495,7 +495,7 @@
       "type": "object",
       "properties": {
         "reportUnusedDisableDirectives": {
-          "description": "Report unused disable directives (e.g. `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file.",
+          "description": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file.",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -504,7 +504,7 @@
               "type": "null"
             }
           ],
-          "markdownDescription": "Report unused disable directives (e.g. `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file."
+          "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file."
         },
         "typeAware": {
           "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.",

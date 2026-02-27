@@ -343,10 +343,17 @@ impl CliRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
+        // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-            ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
-            _ => config_store.report_unused_disable_directives(),
+            ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
+                Some(severity)
+            }
+            ReportUnusedDirectives::WithSeverity(Some(_)) => None,
+            _ => match config_store.report_unused_disable_directives() {
+                Some(severity) if severity.is_warn_deny() => Some(severity),
+                _ => None,
+            },
         };
         let type_aware = self.options.type_aware || config_store.type_aware_enabled();
         let type_check = self.options.type_check || config_store.type_check_enabled();
@@ -1049,6 +1056,26 @@ mod test {
     #[test]
     fn test_report_unused_directives() {
         let args = &["-c", ".oxlintrc.json", "--report-unused-disable-directives"];
+
+        Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_report_unused_directives_from_config() {
+        // Verify that `reportUnusedDisableDirectives` in the config file enables reporting
+        // without needing a CLI flag.
+        let args = &["-c", ".oxlintrc-with-rudd.json"];
+
+        Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_report_unused_directives_cli_overrides_config() {
+        // Verify that the CLI flag takes precedence over the config file value.
+        // Config has `reportUnusedDisableDirectives: "warn"`, but CLI passes `off`,
+        // so no unused-directive diagnostics should be reported.
+        let args =
+            &["-c", ".oxlintrc-with-rudd.json", "--report-unused-disable-directives-severity=off"];
 
         Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
     }
