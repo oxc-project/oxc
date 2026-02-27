@@ -42,6 +42,7 @@ impl SymbolRefDb {
 }
 
 impl SymbolGraph for SymbolRefDb {
+    type ModuleIdx = ModuleIdx;
     type SymbolRef = SymbolRef;
 
     fn canonical_ref_for(&self, symbol: SymbolRef) -> SymbolRef {
@@ -62,5 +63,9 @@ impl SymbolGraph for SymbolRefDb {
 
     fn symbol_name(&self, symbol: SymbolRef) -> &str {
         &self.modules[symbol.owner].names[symbol.symbol]
+    }
+
+    fn symbol_owner(&self, symbol: SymbolRef) -> ModuleIdx {
+        symbol.owner
     }
 }

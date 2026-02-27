@@ -101,4 +101,13 @@ impl ModuleInfo for Module {
             }
         }
     }
+
+    fn symbol_import_info(
+        &self,
+        symbol: SymbolRef,
+    ) -> Option<(&str, usize, bool)> {
+        let import = self.named_imports.get(&symbol)?;
+        let is_ns = import.imported_name.as_str() == "*";
+        Some((import.imported_name.as_str(), import.record_idx.index(), is_ns))
+    }
 }

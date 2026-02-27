@@ -125,6 +125,11 @@ pub enum MatchImportKind<S: Copy + Eq + Hash + Debug = SymbolRef> {
     Normal { symbol_ref: S },
     /// Resolved to a namespace object.
     Namespace { namespace_ref: S },
+    /// Resolved to a namespace object with a property access alias.
+    ///
+    /// Used for CJS interop and dynamic-export fallback: the import
+    /// becomes `namespace_ref.alias` (e.g., `require("mod").foo`).
+    NormalAndNamespace { namespace_ref: S, alias: CompactString },
     /// Ambiguous: multiple `export *` provide the same name.
     Ambiguous { candidates: Vec<S> },
     /// Circular import detected during resolution.

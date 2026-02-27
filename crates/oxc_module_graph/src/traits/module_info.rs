@@ -58,4 +58,17 @@ pub trait ModuleInfo {
 
     /// Iterate indirect exports as `(exported_name, imported_name, resolved_module)`.
     fn for_each_indirect_export(&self, f: &mut dyn FnMut(&str, &str, Self::ModuleIdx));
+
+    /// If the given symbol is a named import in this module, return its import info.
+    ///
+    /// Returns `Some((imported_name, record_idx, is_namespace))` if the symbol
+    /// is a named import, `None` otherwise.
+    ///
+    /// This is needed by the re-export-chain-following algorithm: when a
+    /// resolved export symbol turns out to be an import in its owning module,
+    /// the algorithm recurses into that module's import target.
+    fn symbol_import_info(
+        &self,
+        symbol: Self::SymbolRef,
+    ) -> Option<(&str, usize, bool)>;
 }

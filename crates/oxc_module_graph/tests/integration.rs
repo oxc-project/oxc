@@ -4,7 +4,7 @@ use compact_str::CompactString;
 use oxc_module_graph::default::{DefaultModuleGraph, Module, SymbolRefDb};
 use oxc_module_graph::traits::{ModuleInfo, ModuleStore, SymbolGraph};
 use oxc_module_graph::types::{
-    ImportEdge, ImportKind, ImportRecordIdx, LocalExport, ModuleIdx, NamedImport,
+    ImportEdge, ImportKind, ImportRecordIdx, LocalExport, MatchImportKind, ModuleIdx, NamedImport,
     ResolvedImportRecord, SymbolRef,
 };
 use rustc_hash::FxHashMap;
@@ -629,4 +629,812 @@ fn test_find_cycles_self_loop() {
     let cycles = find_cycles(&graph);
     assert_eq!(cycles.len(), 1, "Should find self-loop");
     assert_eq!(cycles[0].len(), 1, "Self-loop is a single-module cycle");
+}
+
+// --- Stage 6: match_imports with re-export chain following ---
+
+/// Test: A imports "foo" from B, B re-exports "foo" from C via `export { foo } from './c'`.
+/// The chain: A.foo → B.foo → C.foo. match_imports should follow the chain.
+#[test]
+fn test_match_imports_reexport_chain() {
+    use oxc_module_graph::traits::SymbolGraph;
+    use oxc_module_graph::{DefaultImportMatcher, build_resolved_exports, match_imports};
+
+    let mut graph = DefaultModuleGraph::new();
+    let mut db = SymbolRefDb::new();
+    db.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    // Module C: local export "foo"
+    let sym_c_foo = db.add_symbol(idx_c, "foo".to_string());
+    let sym_c_default = db.add_symbol(idx_c, "__default__".to_string());
+    let sym_c_ns = db.add_symbol(idx_c, "__namespace__".to_string());
+
+    let mut exports_c = FxHashMap::default();
+    exports_c.insert(
+        CompactString::new("foo"),
+        LocalExport { exported_name: CompactString::new("foo"), local_symbol: sym_c_foo },
+    );
+
+    // Module B: imports "foo" from C and re-exports it via `export { foo } from './c'`
+    // To model this: B has a named import for "foo" from C, and a named export "foo" pointing
+    // to the same local symbol (which is also a named import).
+    let sym_b_foo = db.add_symbol(idx_b, "foo".to_string());
+    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
+
+    let mut named_imports_b = FxHashMap::default();
+    named_imports_b.insert(
+        sym_b_foo,
+        NamedImport {
+            imported_name: CompactString::new("foo"),
+            local_symbol: sym_b_foo,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+
+    let mut exports_b = FxHashMap::default();
+    exports_b.insert(
+        CompactString::new("foo"),
+        LocalExport { exported_name: CompactString::new("foo"), local_symbol: sym_b_foo },
+    );
+
+    // Module A: imports "foo" from B
+    let sym_a_foo = db.add_symbol(idx_a, "foo".to_string());
+    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
+
+    let mut named_imports_a = FxHashMap::default();
+    named_imports_a.insert(
+        sym_a_foo,
+        NamedImport {
+            imported_name: CompactString::new("foo"),
+            local_symbol: sym_a_foo,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+
+    // Add modules
+    graph.add_module(Module {
+        idx: idx_a,
+        path: PathBuf::from("/a.js"),
+        has_module_syntax: true,
+        named_exports: FxHashMap::default(),
+        named_imports: named_imports_a,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_a_default,
+        namespace_object_ref: sym_a_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./b"),
+            target: idx_b,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_b,
+        path: PathBuf::from("/b.js"),
+        has_module_syntax: true,
+        named_exports: exports_b,
+        named_imports: named_imports_b,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_b_default,
+        namespace_object_ref: sym_b_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./c"),
+            target: idx_c,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_c,
+        path: PathBuf::from("/c.js"),
+        has_module_syntax: true,
+        named_exports: exports_c,
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: sym_c_default,
+        namespace_object_ref: sym_c_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: Vec::new(),
+    });
+
+    let resolved_exports = build_resolved_exports(&graph);
+    let mut matcher = DefaultImportMatcher::default();
+    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
+
+    assert!(errors.is_empty(), "Expected no errors, got: {errors:?}");
+
+    // A's "foo" should follow the chain through B to C's "foo"
+    let canonical = db.canonical_ref_for(sym_a_foo);
+    assert_eq!(canonical, sym_c_foo, "A's foo should follow re-export chain to C's foo");
+}
+
+/// Test: A imports "bar" from B, B has no export "bar". match_imports returns UnresolvedImport.
+#[test]
+fn test_match_imports_unresolved() {
+    use oxc_module_graph::{DefaultImportMatcher, build_resolved_exports, match_imports};
+
+    let (graph, mut db) = two_module_graph_with_binding("foo", "bar");
+
+    let resolved_exports = build_resolved_exports(&graph);
+    let mut matcher = DefaultImportMatcher::default();
+    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
+
+    assert_eq!(errors.len(), 1, "Expected 1 unresolved import error");
+}
+
+/// Test: 3-level re-export chain: A → B → C → D. A imports "x", B re-exports from C,
+/// C re-exports from D, D has the local export.
+#[test]
+fn test_match_imports_deep_chain() {
+    use oxc_module_graph::traits::SymbolGraph;
+    use oxc_module_graph::{DefaultImportMatcher, build_resolved_exports, match_imports};
+
+    let mut graph = DefaultModuleGraph::new();
+    let mut db = SymbolRefDb::new();
+    db.ensure_modules(4);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+    let idx_d = ModuleIdx::from_usize(3);
+
+    // D: local export "x"
+    let sym_d_x = db.add_symbol(idx_d, "x".to_string());
+    let sym_d_default = db.add_symbol(idx_d, "__default__".to_string());
+    let sym_d_ns = db.add_symbol(idx_d, "__namespace__".to_string());
+
+    let mut exports_d = FxHashMap::default();
+    exports_d.insert(
+        CompactString::new("x"),
+        LocalExport { exported_name: CompactString::new("x"), local_symbol: sym_d_x },
+    );
+
+    // C: import "x" from D, re-export as "x"
+    let sym_c_x = db.add_symbol(idx_c, "x".to_string());
+    let sym_c_default = db.add_symbol(idx_c, "__default__".to_string());
+    let sym_c_ns = db.add_symbol(idx_c, "__namespace__".to_string());
+
+    let mut named_imports_c = FxHashMap::default();
+    named_imports_c.insert(
+        sym_c_x,
+        NamedImport {
+            imported_name: CompactString::new("x"),
+            local_symbol: sym_c_x,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+    let mut exports_c = FxHashMap::default();
+    exports_c.insert(
+        CompactString::new("x"),
+        LocalExport { exported_name: CompactString::new("x"), local_symbol: sym_c_x },
+    );
+
+    // B: import "x" from C, re-export as "x"
+    let sym_b_x = db.add_symbol(idx_b, "x".to_string());
+    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
+
+    let mut named_imports_b = FxHashMap::default();
+    named_imports_b.insert(
+        sym_b_x,
+        NamedImport {
+            imported_name: CompactString::new("x"),
+            local_symbol: sym_b_x,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+    let mut exports_b = FxHashMap::default();
+    exports_b.insert(
+        CompactString::new("x"),
+        LocalExport { exported_name: CompactString::new("x"), local_symbol: sym_b_x },
+    );
+
+    // A: import "x" from B
+    let sym_a_x = db.add_symbol(idx_a, "x".to_string());
+    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
+
+    let mut named_imports_a = FxHashMap::default();
+    named_imports_a.insert(
+        sym_a_x,
+        NamedImport {
+            imported_name: CompactString::new("x"),
+            local_symbol: sym_a_x,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+
+    // Add all modules
+    graph.add_module(Module {
+        idx: idx_a,
+        path: PathBuf::from("/a.js"),
+        has_module_syntax: true,
+        named_exports: FxHashMap::default(),
+        named_imports: named_imports_a,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_a_default,
+        namespace_object_ref: sym_a_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./b"),
+            target: idx_b,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_b,
+        path: PathBuf::from("/b.js"),
+        has_module_syntax: true,
+        named_exports: exports_b,
+        named_imports: named_imports_b,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_b_default,
+        namespace_object_ref: sym_b_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./c"),
+            target: idx_c,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_c,
+        path: PathBuf::from("/c.js"),
+        has_module_syntax: true,
+        named_exports: exports_c,
+        named_imports: named_imports_c,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./d"),
+            resolved_module: Some(idx_d),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_c_default,
+        namespace_object_ref: sym_c_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./d"),
+            target: idx_d,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_d,
+        path: PathBuf::from("/d.js"),
+        has_module_syntax: true,
+        named_exports: exports_d,
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: sym_d_default,
+        namespace_object_ref: sym_d_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: Vec::new(),
+    });
+
+    let resolved_exports = build_resolved_exports(&graph);
+    let mut matcher = DefaultImportMatcher::default();
+    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
+
+    assert!(errors.is_empty(), "Expected no errors, got: {errors:?}");
+
+    // A's "x" should follow the chain A → B → C → D to D's "x"
+    let canonical = db.canonical_ref_for(sym_a_x);
+    assert_eq!(canonical, sym_d_x, "A's x should follow 3-level chain to D's x");
+}
+
+/// Test: Circular re-export chain. A imports "x" from B, B re-exports "x" from C,
+/// C re-exports "x" from B. Should detect cycle and not hang.
+#[test]
+fn test_match_imports_circular_reexport() {
+    use oxc_module_graph::{DefaultImportMatcher, build_resolved_exports, match_imports};
+
+    let mut graph = DefaultModuleGraph::new();
+    let mut db = SymbolRefDb::new();
+    db.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    // B: import "x" from C, export "x" (which is the import)
+    let sym_b_x = db.add_symbol(idx_b, "x".to_string());
+    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
+
+    let mut named_imports_b = FxHashMap::default();
+    named_imports_b.insert(
+        sym_b_x,
+        NamedImport {
+            imported_name: CompactString::new("x"),
+            local_symbol: sym_b_x,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+    let mut exports_b = FxHashMap::default();
+    exports_b.insert(
+        CompactString::new("x"),
+        LocalExport { exported_name: CompactString::new("x"), local_symbol: sym_b_x },
+    );
+
+    // C: import "x" from B, export "x" (which is the import)
+    let sym_c_x = db.add_symbol(idx_c, "x".to_string());
+    let sym_c_default = db.add_symbol(idx_c, "__default__".to_string());
+    let sym_c_ns = db.add_symbol(idx_c, "__namespace__".to_string());
+
+    let mut named_imports_c = FxHashMap::default();
+    named_imports_c.insert(
+        sym_c_x,
+        NamedImport {
+            imported_name: CompactString::new("x"),
+            local_symbol: sym_c_x,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+    let mut exports_c = FxHashMap::default();
+    exports_c.insert(
+        CompactString::new("x"),
+        LocalExport { exported_name: CompactString::new("x"), local_symbol: sym_c_x },
+    );
+
+    // A: import "x" from B
+    let sym_a_x = db.add_symbol(idx_a, "x".to_string());
+    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
+
+    let mut named_imports_a = FxHashMap::default();
+    named_imports_a.insert(
+        sym_a_x,
+        NamedImport {
+            imported_name: CompactString::new("x"),
+            local_symbol: sym_a_x,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+
+    graph.add_module(Module {
+        idx: idx_a,
+        path: PathBuf::from("/a.js"),
+        has_module_syntax: true,
+        named_exports: FxHashMap::default(),
+        named_imports: named_imports_a,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_a_default,
+        namespace_object_ref: sym_a_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./b"),
+            target: idx_b,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_b,
+        path: PathBuf::from("/b.js"),
+        has_module_syntax: true,
+        named_exports: exports_b,
+        named_imports: named_imports_b,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_b_default,
+        namespace_object_ref: sym_b_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./c"),
+            target: idx_c,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_c,
+        path: PathBuf::from("/c.js"),
+        has_module_syntax: true,
+        named_exports: exports_c,
+        named_imports: named_imports_c,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_c_default,
+        namespace_object_ref: sym_c_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./b"),
+            target: idx_b,
+            is_type: false,
+        }],
+    });
+
+    let resolved_exports = build_resolved_exports(&graph);
+    let mut matcher = DefaultImportMatcher::default();
+    // This should not hang — cycle detection kicks in.
+    let _errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
+
+    // A's "x" should remain unlinked (cycle detected).
+    let canonical = db.canonical_ref_for(sym_a_x);
+    assert_eq!(canonical, sym_a_x, "A's x should remain unlinked due to cycle");
+}
+
+/// Test: Custom ImportMatcher that short-circuits for a "cjs" module.
+/// NormalAndNamespace results are NOT linked by match_imports — the consumer
+/// handles them in on_resolved (e.g., setting namespace_alias in Rolldown).
+#[test]
+fn test_match_imports_custom_matcher() {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    use oxc_module_graph::traits::{ImportMatcher, SymbolGraph};
+    use oxc_module_graph::{build_resolved_exports, match_imports};
+
+    struct CjsMatcher {
+        cjs_module: ModuleIdx,
+        cjs_ns_ref: SymbolRef,
+        /// Collected NormalAndNamespace results: (local_symbol, namespace_ref, alias)
+        ns_alias_results: Rc<RefCell<Vec<(SymbolRef, SymbolRef, CompactString)>>>,
+    }
+
+    impl ImportMatcher for CjsMatcher {
+        type ModuleIdx = ModuleIdx;
+        type SymbolRef = SymbolRef;
+
+        fn on_before_match(
+            &mut self,
+            _importer_idx: ModuleIdx,
+            _record_idx: usize,
+            target_idx: ModuleIdx,
+            import_name: &str,
+            _is_namespace: bool,
+        ) -> Option<MatchImportKind<SymbolRef>> {
+            if target_idx == self.cjs_module {
+                Some(MatchImportKind::NormalAndNamespace {
+                    namespace_ref: self.cjs_ns_ref,
+                    alias: CompactString::new(import_name),
+                })
+            } else {
+                None
+            }
+        }
+
+        fn on_resolved(
+            &mut self,
+            _importer_idx: ModuleIdx,
+            local_symbol: SymbolRef,
+            resolved: &MatchImportKind<SymbolRef>,
+            _reexport_chain: &[SymbolRef],
+        ) {
+            if let MatchImportKind::NormalAndNamespace { namespace_ref, alias } = resolved {
+                self.ns_alias_results.borrow_mut().push((
+                    local_symbol,
+                    *namespace_ref,
+                    alias.clone(),
+                ));
+            }
+        }
+    }
+
+    let (graph, mut db) = two_module_graph_with_binding("foo", "foo");
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let b_ns_ref = dummy_symbol_ref(idx_b, 2);
+
+    let resolved_exports = build_resolved_exports(&graph);
+    let ns_alias_results = Rc::new(RefCell::new(Vec::new()));
+    let mut matcher = CjsMatcher {
+        cjs_module: idx_b,
+        cjs_ns_ref: b_ns_ref,
+        ns_alias_results: Rc::clone(&ns_alias_results),
+    };
+    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
+
+    assert!(errors.is_empty(), "Expected no errors, got: {errors:?}");
+
+    // NormalAndNamespace is collected by on_resolved, not linked.
+    let results = ns_alias_results.borrow();
+    assert_eq!(results.len(), 1, "Expected 1 NormalAndNamespace result");
+    let (local, ns_ref, alias) = &results[0];
+    let idx_a = ModuleIdx::from_usize(0);
+    let a_foo = dummy_symbol_ref(idx_a, 0);
+    assert_eq!(*local, a_foo, "Local symbol should be A's foo");
+    assert_eq!(*ns_ref, b_ns_ref, "Namespace ref should be B's namespace");
+    assert_eq!(alias.as_str(), "foo", "Alias should be 'foo'");
+
+    // A's "foo" should NOT be linked (NormalAndNamespace doesn't link).
+    let canonical = db.canonical_ref_for(a_foo);
+    assert_eq!(canonical, a_foo, "A's foo should remain unlinked for NormalAndNamespace");
+}
+
+/// Test: Namespace import (`import * as ns from './b'`) links to namespace_object_ref.
+#[test]
+fn test_match_imports_namespace() {
+    use oxc_module_graph::traits::SymbolGraph;
+    use oxc_module_graph::{DefaultImportMatcher, build_resolved_exports, match_imports};
+
+    let mut graph = DefaultModuleGraph::new();
+    let mut db = SymbolRefDb::new();
+    db.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    // Module B: exports "foo"
+    let sym_b_foo = db.add_symbol(idx_b, "foo".to_string());
+    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
+
+    let mut exports_b = FxHashMap::default();
+    exports_b.insert(
+        CompactString::new("foo"),
+        LocalExport { exported_name: CompactString::new("foo"), local_symbol: sym_b_foo },
+    );
+
+    // Module A: `import * as ns from './b'`
+    let sym_a_ns_local = db.add_symbol(idx_a, "ns".to_string());
+    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
+
+    let mut named_imports_a = FxHashMap::default();
+    named_imports_a.insert(
+        sym_a_ns_local,
+        NamedImport {
+            imported_name: CompactString::new("*"),
+            local_symbol: sym_a_ns_local,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+
+    graph.add_module(Module {
+        idx: idx_a,
+        path: PathBuf::from("/a.js"),
+        has_module_syntax: true,
+        named_exports: FxHashMap::default(),
+        named_imports: named_imports_a,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_a_default,
+        namespace_object_ref: sym_a_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./b"),
+            target: idx_b,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_b,
+        path: PathBuf::from("/b.js"),
+        has_module_syntax: true,
+        named_exports: exports_b,
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: sym_b_default,
+        namespace_object_ref: sym_b_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: Vec::new(),
+    });
+
+    let resolved_exports = build_resolved_exports(&graph);
+    let mut matcher = DefaultImportMatcher::default();
+    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
+
+    assert!(errors.is_empty(), "Expected no errors, got: {errors:?}");
+
+    // A's namespace import should link to B's namespace object ref.
+    let canonical = db.canonical_ref_for(sym_a_ns_local);
+    assert_eq!(canonical, sym_b_ns, "Namespace import should link to B's namespace_object_ref");
+}
+
+/// Test: on_resolved callback is called with the re-export chain.
+#[test]
+fn test_match_imports_on_resolved_chain() {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    use oxc_module_graph::traits::ImportMatcher;
+    use oxc_module_graph::{build_resolved_exports, match_imports};
+
+    struct ChainTracker {
+        chains: Rc<RefCell<Vec<Vec<SymbolRef>>>>,
+    }
+
+    impl ImportMatcher for ChainTracker {
+        type ModuleIdx = ModuleIdx;
+        type SymbolRef = SymbolRef;
+
+        fn on_resolved(
+            &mut self,
+            _importer_idx: ModuleIdx,
+            _local_symbol: SymbolRef,
+            _resolved: &MatchImportKind<SymbolRef>,
+            reexport_chain: &[SymbolRef],
+        ) {
+            if !reexport_chain.is_empty() {
+                self.chains.borrow_mut().push(reexport_chain.to_vec());
+            }
+        }
+    }
+
+    let mut graph = DefaultModuleGraph::new();
+    let mut db = SymbolRefDb::new();
+    db.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    // C: local export "val"
+    let sym_c_val = db.add_symbol(idx_c, "val".to_string());
+    let sym_c_default = db.add_symbol(idx_c, "__default__".to_string());
+    let sym_c_ns = db.add_symbol(idx_c, "__namespace__".to_string());
+
+    let mut exports_c = FxHashMap::default();
+    exports_c.insert(
+        CompactString::new("val"),
+        LocalExport { exported_name: CompactString::new("val"), local_symbol: sym_c_val },
+    );
+
+    // B: import "val" from C, re-export "val"
+    let sym_b_val = db.add_symbol(idx_b, "val".to_string());
+    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
+
+    let mut named_imports_b = FxHashMap::default();
+    named_imports_b.insert(
+        sym_b_val,
+        NamedImport {
+            imported_name: CompactString::new("val"),
+            local_symbol: sym_b_val,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+    let mut exports_b = FxHashMap::default();
+    exports_b.insert(
+        CompactString::new("val"),
+        LocalExport { exported_name: CompactString::new("val"), local_symbol: sym_b_val },
+    );
+
+    // A: import "val" from B
+    let sym_a_val = db.add_symbol(idx_a, "val".to_string());
+    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
+
+    let mut named_imports_a = FxHashMap::default();
+    named_imports_a.insert(
+        sym_a_val,
+        NamedImport {
+            imported_name: CompactString::new("val"),
+            local_symbol: sym_a_val,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+
+    graph.add_module(Module {
+        idx: idx_a,
+        path: PathBuf::from("/a.js"),
+        has_module_syntax: true,
+        named_exports: FxHashMap::default(),
+        named_imports: named_imports_a,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_a_default,
+        namespace_object_ref: sym_a_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./b"),
+            target: idx_b,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_b,
+        path: PathBuf::from("/b.js"),
+        has_module_syntax: true,
+        named_exports: exports_b,
+        named_imports: named_imports_b,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+        }],
+        default_export_ref: sym_b_default,
+        namespace_object_ref: sym_b_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: vec![ImportEdge {
+            specifier: CompactString::new("./c"),
+            target: idx_c,
+            is_type: false,
+        }],
+    });
+
+    graph.add_module(Module {
+        idx: idx_c,
+        path: PathBuf::from("/c.js"),
+        has_module_syntax: true,
+        named_exports: exports_c,
+        named_imports: FxHashMap::default(),
+        import_records: Vec::new(),
+        default_export_ref: sym_c_default,
+        namespace_object_ref: sym_c_ns,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies: Vec::new(),
+    });
+
+    let resolved_exports = build_resolved_exports(&graph);
+    let chains = Rc::new(RefCell::new(Vec::new()));
+    let mut tracker = ChainTracker { chains: Rc::clone(&chains) };
+    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut tracker);
+
+    assert!(errors.is_empty(), "Expected no errors, got: {errors:?}");
+
+    let chains = chains.borrow();
+    assert_eq!(chains.len(), 1, "Expected 1 re-export chain (A→B→C)");
+    assert_eq!(chains[0], vec![sym_b_val], "Chain should contain B's val symbol");
 }
