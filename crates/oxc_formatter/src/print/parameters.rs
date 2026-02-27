@@ -220,6 +220,7 @@ pub struct ParameterList<'a, 'b> {
     list: &'b AstNode<'a, FormalParameters<'a>>,
     this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
     layout: Option<ParameterLayout>,
+    trailing_separator_override: Option<TrailingSeparator>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -261,7 +262,16 @@ impl<'a, 'b> ParameterList<'a, 'b> {
         this: Option<&'b AstNode<'a, TSThisParameter<'a>>>,
         layout: ParameterLayout,
     ) -> Self {
-        Self { list, this, layout: Some(layout) }
+        Self { list, this, layout: Some(layout), trailing_separator_override: None }
+    }
+
+    /// Suppresses trailing commas regardless of the `trailingComma` option.
+    /// This is used for fragment formatting like `v-for="(item, index) in items"`.
+    ///                                                    ^^^^^^^^^^^
+    #[must_use]
+    pub fn with_omit_trailing_separator(mut self) -> Self {
+        self.trailing_separator_override = Some(TrailingSeparator::Omit);
+        self
     }
 }
 
@@ -276,6 +286,8 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                 // added there either.
                 let trailing_separator = if has_trailing_rest {
                     TrailingSeparator::Disallowed
+                } else if let Some(ts) = self.trailing_separator_override {
+                    ts
                 } else {
                     FormatTrailingCommas::All.trailing_separator(f.options())
                 };

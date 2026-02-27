@@ -7,6 +7,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ interface Foo {}
    · ────────────────
    ╰────
+  help: Add members to this interface, or use a type alias if it is intentionally empty.
 
   × Expected `{` but found `EOF`
    ╭─[no_empty_interface.tsx:1:25]
@@ -20,6 +21,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────────
  7 │ 
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:6:13]
@@ -28,6 +30,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────────
  7 │ 
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:6:13]
@@ -36,6 +39,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────────
  7 │ 
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:6:13]
@@ -44,6 +48,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────────
  7 │ 
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:6:13]
@@ -52,18 +57,21 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────────
  7 │                   
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:1:1]
  1 │ interface Foo extends Array<number> {}
    · ──────────────────────────────────────
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:1:1]
  1 │ interface Foo extends Array<number | {}> {}
    · ───────────────────────────────────────────
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:5:13]
@@ -72,6 +80,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────────────────────────
  6 │                   
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:3:13]
@@ -80,6 +89,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────────────
  4 │                   
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:2:13]
@@ -88,6 +98,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────────────────────
  3 │                   
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.
 
   ⚠ typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype
    ╭─[no_empty_interface.tsx:4:22]
@@ -96,3 +107,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ────────────────────────────
  5 │             }
    ╰────
+  help: Remove this interface and use the extended type directly or add members to this interface.

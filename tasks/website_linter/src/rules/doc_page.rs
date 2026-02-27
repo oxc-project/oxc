@@ -188,7 +188,21 @@ const source = `{}`;{}
         }
         let mut rendered = section.to_md(&self.renderer);
         if rendered.trim().is_empty() {
-            return rendered;
+            // For primitive types (e.g. a single string argument) with no child
+            // sections, render the section's own type and default info directly.
+            let mut parts = String::new();
+            if let Some(ref instance_type) = section.instance_type
+                && !instance_type.is_empty()
+            {
+                write!(parts, "\ntype: `{instance_type}`\n").unwrap();
+            }
+            if let Some(ref default) = section.default {
+                write!(parts, "\ndefault: `{default}`\n").unwrap();
+            }
+            if parts.trim().is_empty() {
+                return rendered;
+            }
+            rendered = parts;
         }
 
         // Check if this is an enum-based config (oneOf with single-value enums)

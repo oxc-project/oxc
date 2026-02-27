@@ -1,0 +1,31 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c config-type-aware-with-overrides.json no-floating-promises.ts
+working directory: fixtures/tsgolint
+----------
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+   ,-[no-floating-promises.ts:2:1]
+ 1 | const promise = new Promise((resolve, _reject) => resolve("value"));
+ 2 | promise;
+   : ^^^^^^^^
+ 3 | 
+   `----
+  help: Consider using this expression or removing it
+
+  x typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
+   ,-[no-floating-promises.ts:2:1]
+ 1 | const promise = new Promise((resolve, _reject) => resolve("value"));
+ 2 | promise;
+   : ^^^^^^^^
+ 3 | 
+   `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
+Found 1 warning and 1 error.
+Finished in <variable>ms on 1 file with 106 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

@@ -78,7 +78,7 @@ pub struct FormatOptions {
     /// Enable Tailwind CSS class sorting in JSX class/className attributes.
     /// When enabled, class strings will be collected and passed to a callback for sorting.
     /// Defaults to None (disabled).
-    pub sort_tailwindcss: Option<TailwindcssOptions>,
+    pub sort_tailwindcss: Option<SortTailwindcssOptions>,
 }
 
 /// Options for Tailwind CSS class sorting.
@@ -86,7 +86,7 @@ pub struct FormatOptions {
 ///
 /// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
 #[derive(Debug, Default, Clone)]
-pub struct TailwindcssOptions {
+pub struct SortTailwindcssOptions {
     /// Path to your Tailwind CSS configuration file (v3).
     ///
     /// Note: Paths are resolved relative to the Oxfmt configuration file.
