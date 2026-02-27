@@ -1,5 +1,11 @@
 use std::ops::Deref;
 
+use icu_segmenter::GraphemeClusterSegmenter;
+use lazy_regex::Regex;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
     BindingIdentifier, BindingPattern, BindingProperty, IdentifierName, PrivateIdentifier,
@@ -7,13 +13,12 @@ use oxc_ast::ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
-use schemars::JsonSchema;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
-use icu_segmenter::GraphemeClusterSegmenter;
-use lazy_regex::Regex;
-use serde::Serialize;
-use serde_json::Value;
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn id_length_is_too_short_diagnostic(span: Span, config_min: u64) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Identifier name is too short (< {config_min}).")).with_label(span)
@@ -26,7 +31,7 @@ fn id_length_is_too_long_diagnostic(span: Span, config_max: u64) -> OxcDiagnosti
 const DEFAULT_MAX_LENGTH: u64 = u64::MAX;
 const DEFAULT_MIN_LENGTH: u64 = 2;
 
-#[derive(Debug, Default, Clone, PartialEq, JsonSchema, Serialize)]
+#[derive(Debug, Default, Clone, PartialEq, JsonSchema, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum PropertyKind {
     #[default]
@@ -34,13 +39,7 @@ enum PropertyKind {
     Never,
 }
 
-impl PropertyKind {
-    pub fn from(raw: &str) -> Self {
-        if raw == "never" { PropertyKind::Never } else { PropertyKind::default() }
-    }
-}
-
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct IdLength(Box<IdLengthConfig>);
 
 impl Deref for IdLength {
@@ -51,11 +50,12 @@ impl Deref for IdLength {
     }
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct IdLengthConfig {
     /// An array of regex patterns for identifiers to exclude from the rule.
     /// For example, `["^x.*"]` would exclude all identifiers starting with "x".
+    #[serde(deserialize_with = "deserialize_exception_patterns")]
     exception_patterns: Vec<Regex>,
     /// An array of identifier names that are excluded from the rule.
     /// For example, `["x", "y", "z"]` would allow single-letter identifiers "x", "y", and "z".
@@ -65,6 +65,9 @@ pub struct IdLengthConfig {
     max: u64,
     /// The minimum number of graphemes required in an identifier.
     min: u64,
+    /// Whether to check TypeScript generic type parameter names.
+    /// Defaults to `true`.
+    check_generic: bool,
     /// When set to `"never"`, property names are not checked for length.
     /// When set to `"always"` (default), property names are checked just like other identifiers.
     properties: PropertyKind,
@@ -77,9 +80,22 @@ impl Default for IdLengthConfig {
             exceptions: vec![],
             max: DEFAULT_MAX_LENGTH,
             min: DEFAULT_MIN_LENGTH,
+            check_generic: true,
             properties: PropertyKind::default(),
         }
     }
+}
+
+fn deserialize_exception_patterns<'de, D>(deserializer: D) -> Result<Vec<Regex>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+
+    Vec::<String>::deserialize(deserializer)?
+        .into_iter()
+        .map(|pattern| Regex::new(&pattern).map_err(D::Error::custom))
+        .collect()
 }
 
 declare_oxc_lint!(
@@ -167,38 +183,7 @@ declare_oxc_lint!(
 
 impl Rule for IdLength {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let object = value.get(0).and_then(Value::as_object);
-
-        Ok(Self(Box::new(IdLengthConfig {
-            exception_patterns: object
-                .and_then(|map| map.get("exceptionPatterns"))
-                .and_then(Value::as_array)
-                .unwrap_or(&vec![])
-                .iter()
-                .filter_map(|val| val.as_str().and_then(|val| Regex::new(val).ok()))
-                .collect(),
-            exceptions: object
-                .and_then(|map| map.get("exceptions"))
-                .and_then(Value::as_array)
-                .unwrap_or(&vec![])
-                .iter()
-                .filter_map(|val| val.as_str())
-                .map(ToString::to_string)
-                .collect(),
-            max: object
-                .and_then(|map| map.get("max"))
-                .and_then(Value::as_u64)
-                .unwrap_or(DEFAULT_MAX_LENGTH),
-            min: object
-                .and_then(|map| map.get("min"))
-                .and_then(Value::as_u64)
-                .unwrap_or(DEFAULT_MIN_LENGTH),
-            properties: object
-                .and_then(|map| map.get("properties"))
-                .and_then(Value::as_str)
-                .map(PropertyKind::from)
-                .unwrap_or_default(),
-        })))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -245,6 +230,9 @@ impl IdLength {
         }
 
         let parent_node = ctx.nodes().parent_node(node.id());
+        if !self.check_generic && matches!(parent_node.kind(), AstKind::TSTypeParameter(_)) {
+            return;
+        }
 
         match parent_node.kind() {
             AstKind::ImportSpecifier(import_specifier) => {
@@ -595,6 +583,10 @@ fn test() {
         ("class Foo { #abc() {} }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         ("class Foo { abc = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         ("class Foo { #abc = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
+        (
+            "export type Example<T> = T extends Array<infer U> ? U : never;",
+            Some(serde_json::json!([{ "min": 2, "checkGeneric": false }])),
+        ),
         ("var 𠮟 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var 葛󠄀 = 2", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6 },
         ("var a = { 𐌘: 1 };", Some(serde_json::json!([{ "min": 1, "max": 1 }]))), // { "ecmaVersion": 6, },
@@ -713,6 +705,10 @@ fn test() {
         ("class Foo { #abcdefg() {} }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         ("class Foo { abcdefg = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
         ("class Foo { #abcdefg = 1 }", Some(serde_json::json!([{ "max": 3 }]))), // { "ecmaVersion": 2022 },
+        (
+            "export type Example<T> = T extends Array<infer U> ? U : never;",
+            Some(serde_json::json!([{ "min": 2, "checkGeneric": true }])),
+        ),
         ("var 𠮟 = 2", None),              // { "ecmaVersion": 6 },
         ("var 葛󠄀 = 2", None),              // { "ecmaVersion": 6 },
         ("var myObj = { 𐌘: 1 };", None),   // { "ecmaVersion": 6, },

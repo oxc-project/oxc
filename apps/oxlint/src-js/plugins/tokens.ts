@@ -3,7 +3,9 @@
  */
 
 import { ast, initAst } from "./source_code.ts";
-import { parseTokens } from "./tokens_parse.ts";
+import { buffer, textDecoder } from "./source_code.ts";
+import { getNodeLoc } from "./location.ts";
+import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Comment, Node, NodeOrToken } from "./types.ts";
@@ -125,6 +127,17 @@ type TokenOrComment = Token | Comment;
 // This object is reused over and over to avoid creating a new options object on each call.
 const INCLUDE_COMMENTS_SKIP_OPTIONS: SkipOptions = { includeComments: true, skip: 0 };
 
+// Prototype for `Token` objects, which calculates `loc` property lazily.
+const TokenProto = Object.create(Object.prototype, {
+  loc: {
+    // Note: Not configurable
+    get() {
+      return getNodeLoc(this);
+    },
+    enumerable: true,
+  },
+});
+
 // Tokens for the current file parsed by TS-ESLint.
 // Created lazily only when needed.
 export let tokens: Token[] | null = null;
@@ -133,12 +146,38 @@ export let tokensAndComments: TokenOrComment[] | null = null;
 
 /**
  * Initialize TS-ESLint tokens for current file.
- *
- * Caller must ensure `filePath` and `sourceText` are initialized before calling this function.
  */
 export function initTokens() {
-  // Use TypeScript parser to get tokens
-  tokens = parseTokens();
+  debugAssert(tokens === null, "Tokens already initialized");
+
+  // Get tokens JSON from buffer, and deserialize it
+  debugAssertIsNonNull(buffer);
+
+  const { uint32 } = buffer;
+  const tokensJsonLen = uint32[TOKENS_LEN_POS_32];
+  if (tokensJsonLen === 0) {
+    tokens = [];
+    return;
+  }
+
+  const tokensJsonOffset = uint32[TOKENS_OFFSET_POS_32];
+  const tokensJson = textDecoder.decode(
+    buffer.subarray(tokensJsonOffset, tokensJsonOffset + tokensJsonLen),
+  );
+  tokens = JSON.parse(tokensJson) as Token[];
+
+  // Add `range` property to each token, and set prototype of each to `TokenProto` which provides getter for `loc`
+  for (const token of tokens) {
+    const { start, end } = token;
+    debugAssert(
+      typeof start === "number" && typeof end === "number",
+      "Precomputed tokens should include `start` and `end`",
+    );
+
+    token.range = [start, end];
+    // `TokenProto` provides getter for `loc`
+    Object.setPrototypeOf(token, TokenProto);
+  }
 
   // Check `tokens` have valid ranges and are in ascending order
   debugCheckValidRanges(tokens, "token");

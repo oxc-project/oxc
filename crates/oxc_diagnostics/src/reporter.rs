@@ -139,15 +139,6 @@ impl Info {
             }
 
             message = diagnostic.to_string();
-            // Our messages usually are in format `eslint(rule): message`.
-            // Trim off before the colon.
-            if let Some((_, msg)) = message.split_once(':') {
-                // Equivalent to `message = msg.trim().to_string()`, but operates in place
-                let msg = msg.trim();
-                let start = msg.as_ptr() as usize - message.as_str().as_ptr() as usize;
-                message.truncate(start + msg.len());
-                message.replace_range(..start, "");
-            }
         }
 
         Self { start, end, filename, message, severity, rule_id }

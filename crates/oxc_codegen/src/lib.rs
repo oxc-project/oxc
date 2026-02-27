@@ -898,6 +898,7 @@ impl<'a> Codegen<'a> {
 
     #[cfg(not(feature = "sourcemap"))]
     #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping(&mut self, _span: Span) {}
 
     #[cfg(feature = "sourcemap")]
@@ -921,6 +922,7 @@ impl<'a> Codegen<'a> {
 
     #[cfg(not(feature = "sourcemap"))]
     #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping_end(&mut self, _span: Span) {}
 
     #[cfg(feature = "sourcemap")]
@@ -934,5 +936,6 @@ impl<'a> Codegen<'a> {
 
     #[cfg(not(feature = "sourcemap"))]
     #[inline]
+    #[expect(clippy::needless_pass_by_ref_mut, clippy::unused_self)]
     fn add_source_mapping_for_name(&mut self, _span: Span, _name: &str) {}
 }

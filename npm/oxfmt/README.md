@@ -30,7 +30,7 @@
 [ci-badge]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
 [ci-url]: https://github.com/oxc-project/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
 [npm-badge]: https://img.shields.io/npm/v/oxfmt/latest?color=brightgreen
-[npm-url]: https://www.npmjs.com/package/oxfmt/v/latest
+[npm-url]: https://npmx.dev/package/oxfmt/v/latest
 [code-size-badge]: https://img.shields.io/github/languages/code-size/oxc-project/oxc
 [code-size-url]: https://github.com/oxc-project/oxc
 [code-coverage-badge]: https://codecov.io/github/oxc-project/oxc/branch/main/graph/badge.svg
@@ -38,7 +38,7 @@
 [sponsors-badge]: https://img.shields.io/github/sponsors/Boshen
 [sponsors-url]: https://github.com/sponsors/Boshen
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
-[playground-url]: https://oxc-playground.netlify.app
+[playground-url]: https://playground.oxc.rs/
 
 </div>
 

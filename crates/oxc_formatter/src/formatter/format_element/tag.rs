@@ -12,10 +12,10 @@ pub enum Tag {
     StartIndent,
     EndIndent,
 
-    /// Variant of [TagKind::Indent] that indents content by a number of spaces. For example, `Align(2)`
+    /// Variant of `Indent` that indents content by a number of spaces. For example, `Align(2)`
     /// indents any content following a line break by an additional two spaces.
     ///
-    /// Nesting (Aligns)[TagKind::Align] has the effect that all except the most inner align are handled as (Indent)[TagKind::Indent].
+    /// Nesting Aligns has the effect that all except the most inner align are handled as `Indent`.
     StartAlign(Align),
     EndAlign,
 
@@ -158,11 +158,13 @@ impl Group {
         Self { id: None, mode: Cell::new(GroupMode::Flat) }
     }
 
+    #[must_use]
     pub fn with_id(mut self, id: Option<GroupId>) -> Self {
         self.id = id;
         self
     }
 
+    #[must_use]
     pub fn with_mode(mut self, mode: GroupMode) -> Self {
         self.mode = Cell::new(mode);
         self
@@ -208,6 +210,7 @@ impl Condition {
         Self { mode, group_id: None }
     }
 
+    #[must_use]
     pub fn with_group_id(mut self, id: Option<GroupId>) -> Self {
         self.group_id = id;
         self
@@ -216,12 +219,20 @@ impl Condition {
     pub fn mode(&self) -> PrintMode {
         self.mode
     }
+
+    pub fn group_id(&self) -> Option<GroupId> {
+        self.group_id
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Align(pub(crate) NonZeroU8);
 
 impl Align {
+    pub fn new(count: NonZeroU8) -> Self {
+        Self(count)
+    }
+
     pub fn count(&self) -> NonZeroU8 {
         self.0
     }

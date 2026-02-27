@@ -57,6 +57,7 @@ impl SourceFormatter {
                 ResolvedOptions::OxcFormatter {
                     format_options,
                     external_options,
+                    filepath_override,
                     insert_final_newline,
                 },
             ) => (
@@ -66,6 +67,7 @@ impl SourceFormatter {
                     *source_type,
                     *format_options,
                     external_options,
+                    filepath_override.as_deref(),
                 ),
                 insert_final_newline,
             ),
@@ -129,6 +131,7 @@ impl SourceFormatter {
         source_type: SourceType,
         format_options: FormatOptions,
         mut external_options: Value,
+        filepath_override: Option<&Path>,
     ) -> Result<String, OxcDiagnostic> {
         let source_type = enable_jsx_source_type(source_type);
         let allocator = self.allocator_pool.get();
@@ -150,10 +153,14 @@ impl SourceFormatter {
 
             // Set `filepath` on options for Prettier plugins that depend on it,
             // and for the Tailwind sorter to resolve config.
+            // `filepath_override` is `Some` in js-in-xxx flow (via `textToDoc()`),
+            // where `path` is a dummy like `embedded.ts` but callbacks need the parent file path.
+            // See `oxfmtrc::finalize_external_options()` for where this filepath originates.
             if let Value::Object(ref mut map) = external_options {
+                let filepath = filepath_override.unwrap_or(path);
                 map.insert(
                     "filepath".to_string(),
-                    Value::String(path.to_string_lossy().to_string()),
+                    Value::String(filepath.to_string_lossy().to_string()),
                 );
             }
 
@@ -162,7 +169,7 @@ impl SourceFormatter {
 
         #[cfg(not(feature = "napi"))]
         let external_callbacks = {
-            let _ = (path, external_options);
+            let _ = (path, external_options, filepath_override);
             None
         };
 
@@ -219,10 +226,23 @@ impl SourceFormatter {
         }
 
         external_formatter.format_file(external_options, source_text).map_err(|err| {
-            OxcDiagnostic::error(format!(
-                "Failed to format file with external formatter: {}\n{err}",
-                path.display()
-            ))
+            // NOTE: We are trying to make the error from oxc_formatter and external_formatter (Prettier) look similar.
+            // Ideally, we would unify them into `OxcDiagnostic`,
+            // which would eliminate the need for relative path conversion.
+            // However, doing so would require:
+            // - Parsing Prettier's error messages
+            // - Converting span information from UTF-16 to UTF-8
+            // This is a non-trivial amount of work, so for now, just leave this as a best effort.
+            let relative = std::env::current_dir()
+                .ok()
+                .and_then(|cwd| path.strip_prefix(cwd).ok().map(Path::to_path_buf));
+            let display_path = relative.as_deref().unwrap_or(path).to_string_lossy();
+            let message = if let Some((first, rest)) = err.split_once('\n') {
+                format!("{first}\n[{display_path}]\n{rest}")
+            } else {
+                format!("{err}\n[{display_path}]")
+            };
+            OxcDiagnostic::error(message)
         })
     }
 

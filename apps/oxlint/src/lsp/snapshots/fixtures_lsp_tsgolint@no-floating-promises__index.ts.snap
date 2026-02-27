@@ -111,7 +111,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -129,7 +129,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -183,7 +183,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -201,7 +201,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -255,7 +255,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -273,7 +273,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -327,7 +327,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add void operator to ignore.
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -345,7 +345,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Promises must be awaited, add void operator to ignore.
+Title: Add await operator.
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {

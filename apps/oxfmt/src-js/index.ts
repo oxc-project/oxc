@@ -1,5 +1,11 @@
 import { format as napiFormat, jsTextToDoc as napiJsTextToDoc } from "./bindings";
-import { resolvePlugins, formatEmbeddedCode, formatFile, sortTailwindClasses } from "./libs/apis";
+import {
+  resolvePlugins,
+  formatEmbeddedCode,
+  formatEmbeddedDoc,
+  formatFile,
+  sortTailwindClasses,
+} from "./libs/apis";
 import type { Options } from "prettier";
 
 // napi-JS `oxfmt` API entry point
@@ -18,6 +24,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     options ?? {},
     resolvePlugins,
     (options, code) => formatEmbeddedCode({ options, code }),
+    (options, texts) => formatEmbeddedDoc({ options, texts }),
     (options, code) => formatFile({ options, code }),
     (options, classes) => sortTailwindClasses({ options, classes }),
   );
@@ -27,18 +34,19 @@ export async function format(fileName: string, sourceText: string, options?: For
  * Format a JS/TS snippet for Prettier `textToDoc()` plugin flow.
  */
 export async function jsTextToDoc(
-  fileName: string,
+  sourceExt: string,
   sourceText: string,
   oxfmtPluginOptionsJson: string,
   parentContext: string,
 ) {
   return napiJsTextToDoc(
-    fileName,
+    sourceExt,
     sourceText,
     oxfmtPluginOptionsJson,
     parentContext,
     resolvePlugins,
     (options, code) => formatEmbeddedCode({ options, code }),
+    (options, texts) => formatEmbeddedDoc({ options, texts }),
     (_options, _code) => Promise.reject(/* Unreachable */),
     (options, classes) => sortTailwindClasses({ options, classes }),
   );
@@ -91,15 +99,18 @@ export type FormatOptions = Pick<
   printWidth?: number;
   /** Whether to insert a final newline at the end of the file. (Default: `true`) */
   insertFinalNewline?: boolean;
-  /** Experimental: Sort import statements. Disabled by default. */
+  /** Sort import statements. Disabled by default. */
+  sortImports?: SortImportsOptions;
+  /** @deprecated Use `sortImports` instead. */
   experimentalSortImports?: SortImportsOptions;
-  /** Experimental: Sort `package.json` keys. (Default: `true`) */
-  experimentalSortPackageJson?: boolean;
-  /**
-   * Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
-   * (Default: disabled)
-   */
-  experimentalTailwindcss?: TailwindcssOptions;
+  /** Sort `package.json` keys. (Default: `true`) */
+  sortPackageJson?: boolean | SortPackageJsonOptions;
+  /** @deprecated Use `sortPackageJson` instead. */
+  experimentalSortPackageJson?: boolean | SortPackageJsonOptions;
+  /** Enable Tailwind CSS class sorting. (Default: disabled) */
+  sortTailwindcss?: SortTailwindcssOptions;
+  /** @deprecated Use `sortTailwindcss` instead. */
+  experimentalTailwindcss?: SortTailwindcssOptions;
 } & Record<string, unknown>; // Also allow additional options for we don't have typed yet.
 
 /**
@@ -137,10 +148,18 @@ export type SortImportsOptions = {
 };
 
 /**
+ * Configuration options for sort package.json.
+ */
+export type SortPackageJsonOptions = {
+  /** Sort the `scripts` field alphabetically. (Default: `false`) */
+  sortScripts?: boolean;
+};
+
+/**
  * Configuration options for Tailwind CSS class sorting.
  * See https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
  */
-export type TailwindcssOptions = {
+export type SortTailwindcssOptions = {
   /** Path to Tailwind config file (v3). e.g., `"./tailwind.config.js"` */
   config?: string;
   /** Path to Tailwind stylesheet (v4). e.g., `"./src/app.css"` */
@@ -160,3 +179,6 @@ export type TailwindcssOptions = {
   /** Preserve duplicate classes. (Default: `false`) */
   preserveDuplicates?: boolean;
 };
+
+/** @deprecated Use `SortTailwindcssOptions` instead. */
+export type TailwindcssOptions = SortTailwindcssOptions;

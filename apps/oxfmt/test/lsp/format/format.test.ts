@@ -1,6 +1,7 @@
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { formatFixture, formatFixtureContent } from "../utils";
+import { createLspConnection, formatFixture, formatFixtureContent } from "../utils";
+import { pathToFileURL } from "node:url";
 
 const FIXTURES_DIR = join(import.meta.dirname, "fixtures");
 
@@ -30,6 +31,37 @@ describe("LSP formatting", () => {
       ["editorconfig/test.ts", "typescript"],
     ])("should apply config from %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
+    });
+  });
+
+  describe("config options in nested workspace folders", () => {
+    it.each([
+      ["nested-workspaces/test.ts", "nested-workspaces/second/test.ts"],
+      ["nested-workspaces-with-config/test.ts", "nested-workspaces-with-config/second/test.ts"],
+    ])("should respect nested oxfmt config with nested workspace folders %s", async (...paths) => {
+      await using client = createLspConnection();
+      const dirUris = paths.map((path) => pathToFileURL(dirname(join(FIXTURES_DIR, path))).href);
+      await client.initialize(
+        [
+          { uri: dirUris[0], name: "test" },
+          { uri: dirUris[1], name: "test-2" },
+        ],
+        {},
+        [
+          {
+            workspaceUri: dirUris[0],
+            options: null,
+          },
+          {
+            workspaceUri: dirUris[1],
+            options: null,
+          },
+        ],
+      );
+      for (const path of paths) {
+        // oxlint-disable-next-line no-await-in-loop
+        expect(await formatFixture(FIXTURES_DIR, path, "typescript", client)).toMatchSnapshot();
+      }
     });
   });
 

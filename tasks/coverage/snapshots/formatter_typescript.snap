@@ -1,4 +1,4 @@
-commit: ad04bf74
+commit: 34725489
 
 formatter_typescript Summary:
 AST Parsed     : 9834/9834 (100.00%)
@@ -24,11 +24,11 @@ Expected `{` but found `Identifier`
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/parenthesizedExpressionInternalComments.ts
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeInferenceSameSource1.ts
-An implementation cannot be declared in ambient contexts.
+Initializers are not allowed in ambient contexts.An implementation cannot be declared in ambient contexts.
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/typeAssertionToGenericFunctionType.ts
 Unexpected token
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAssignmentPatternOrder.ts
-An implementation cannot be declared in ambient contexts.
+Initializers are not allowed in ambient contexts.Initializers are not allowed in ambient contexts.An implementation cannot be declared in ambient contexts.
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringReassignsRightHandSide.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/emitExponentiationOperatorInTempalteString4.ts

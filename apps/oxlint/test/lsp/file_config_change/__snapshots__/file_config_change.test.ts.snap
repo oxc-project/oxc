@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`diagnostics after config change > should get refreshed diagnostics config from severity-change/test.ts 1`] = `
+"=== Before Config Change ===
+
+--- FILE -----------
+severity-change/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+--------------------
+
+=== After Config Change ===
+
+--- FILE -----------
+severity-change/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+--------------------"
+`;
+
+exports[`diagnostics after config change > should get refreshed diagnostics config from ts-config/test.ts 1`] = `
+"=== Before Config Change ===
+
+--- FILE -----------
+ts-config/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+--------------------
+
+=== After Config Change ===
+
+--- FILE -----------
+ts-config/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+--------------------"
+`;

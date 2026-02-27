@@ -1,6 +1,6 @@
 {
   "name": "oxfmt-app",
-  "version": "0.33.0",
+  "version": "0.35.0",
   "private": true,
   "description": "Internal development package for oxfmt. For the published package.json template, see `npm/oxfmt/package.json`.",
   "license": "MIT",
@@ -14,7 +14,8 @@
     "build-napi-test": "pnpm run build-napi",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
-    "test": "vitest --dir test run"
+    "test": "vitest --dir test run",
+    "download-prettier-fixtures": "node scripts/download-prettier-fixtures.js"
   },
   "dependencies": {
     "prettier": "3.8.1",
@@ -25,6 +26,7 @@
     "@arethetypeswrong/core": "catalog:",
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
+    "degit": "^2.8.4",
     "execa": "^9.6.0",
     "tsdown": "catalog:",
     "vitest": "catalog:",

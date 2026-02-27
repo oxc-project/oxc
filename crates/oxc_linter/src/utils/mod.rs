@@ -13,7 +13,6 @@ use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 mod comment;
 mod config;
-mod edit_distance;
 mod express;
 mod jest;
 mod jsdoc;
@@ -29,8 +28,8 @@ mod vitest;
 mod vue;
 
 pub use self::{
-    comment::*, config::*, edit_distance::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*,
-    react::*, react_perf::*, regex::*, typescript::*, unicorn::*, url::*, vitest::*, vue::*,
+    comment::*, config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*,
+    react_perf::*, regex::*, typescript::*, unicorn::*, url::*, vitest::*, vue::*,
 };
 
 /// List of Jest rules that have Vitest equivalents.
@@ -38,7 +37,7 @@ pub use self::{
 // the crates/oxc_linter/data/vitest_compatible_jest_rules.json
 // file is also updated. The JSON file is used by the oxlint-migrate
 // and eslint-plugin-oxlint repos to keep everything synced.
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 42] = [
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 43] = [
     "consistent-test-it",
     "expect-expect",
     "max-expects",
@@ -70,6 +69,7 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 42] = [
     "prefer-hooks-on-top",
     "prefer-lowercase-title",
     "prefer-mock-promise-shorthand",
+    "prefer-mock-return-shorthand",
     "prefer-spy-on",
     "prefer-strict-equal",
     "prefer-to-be",

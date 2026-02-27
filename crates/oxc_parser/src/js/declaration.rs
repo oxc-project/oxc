@@ -3,9 +3,9 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use super::VariableDeclarationParent;
-use crate::{ParserImpl, StatementContext, diagnostics, lexer::Kind};
+use crate::{ParserConfig as Config, ParserImpl, StatementContext, diagnostics, lexer::Kind};
 
-impl<'a> ParserImpl<'a> {
+impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
 
@@ -135,6 +135,12 @@ impl<'a> ParserImpl<'a> {
             init,
             definite.is_some(),
         );
+        if self.ctx.has_ambient()
+            && let Some(init) = &decl.init
+            && !(decl.kind.is_const() && decl.type_annotation.is_none())
+        {
+            self.error(diagnostics::initializers_not_allowed_in_ambient_contexts(init.span()));
+        }
         if decl_parent == VariableDeclarationParent::Statement {
             self.check_missing_initializer(&decl);
         }

@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_promise_with_context};
 
 fn zero_or_one_argument_required_diagnostic(
     span: Span,
@@ -71,7 +71,7 @@ impl Rule for ValidParams {
             return;
         };
 
-        let Some(prop_name) = is_promise(call_expr) else {
+        let Some(prop_name) = is_promise_with_context(call_expr, ctx) else {
             return;
         };
 
@@ -148,6 +148,7 @@ fn test() {
         "somePromise().finally(() => {})",
         "promiseReference.finally(callback)",
         "promiseReference.finally(() => {})",
+        "const globalExceptionFilter = new GlobalExceptionFilter(); globalExceptionFilter.catch(exception, host)",
         "Promise.all([
 			  Promise.resolve(1),
 			  Promise.resolve(2),
