@@ -50,6 +50,8 @@ constcat = { workspace = true }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
 fast-glob = { workspace = true }
+icu_collator = { workspace = true }
+icu_locale = { workspace = true }
 icu_segmenter = { workspace = true }
 ignore = { workspace = true }
 indexmap = { workspace = true, features = ["rayon"] }
