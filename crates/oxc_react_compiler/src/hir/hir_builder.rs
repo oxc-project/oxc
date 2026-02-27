@@ -904,6 +904,62 @@ pub fn remove_unnecessary_try_catch(func: &mut Hir) {
     }
 }
 
+/// Port of `removeUnreachableForUpdates` from HIRBuilder.ts.
+///
+/// If a `for` terminal's update block has been removed (unreachable), set it to None.
+pub fn remove_unreachable_for_updates(body: &mut Hir) {
+    let block_ids: Vec<BlockId> = body.blocks.keys().copied().collect();
+    for block_id in block_ids {
+        let should_clear = {
+            let Some(block) = body.blocks.get(&block_id) else { continue };
+            if let Terminal::For(t) = &block.terminal {
+                t.update.is_some_and(|update| !body.blocks.contains_key(&update))
+            } else {
+                false
+            }
+        };
+        if should_clear {
+            if let Some(block) = body.blocks.get_mut(&block_id)
+                && let Terminal::For(t) = &mut block.terminal
+            {
+                t.update = None;
+            }
+        }
+    }
+}
+
+/// Port of `removeDeadDoWhileStatements` from HIRBuilder.ts.
+///
+/// If the test condition of a DoWhile is unreachable, replace the terminal
+/// with a goto to the loop block.
+pub fn remove_dead_do_while_statements(body: &mut Hir) {
+    let block_ids: Vec<BlockId> = body.blocks.keys().copied().collect();
+    for block_id in block_ids {
+        let replacement = {
+            let Some(block) = body.blocks.get(&block_id) else { continue };
+            if let Terminal::DoWhile(t) = &block.terminal {
+                if !body.blocks.contains_key(&t.test) {
+                    Some(Terminal::Goto(super::hir_types::GotoTerminal {
+                        id: t.id,
+                        block: t.r#loop,
+                        variant: GotoVariant::Break,
+                        loc: t.loc,
+                    }))
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        };
+        if let Some(new_terminal) = replacement {
+            if let Some(block) = body.blocks.get_mut(&block_id) {
+                block.terminal = new_terminal;
+            }
+        }
+    }
+}
+
 // =====================================================================================
 // Terminal helper functions
 // =====================================================================================

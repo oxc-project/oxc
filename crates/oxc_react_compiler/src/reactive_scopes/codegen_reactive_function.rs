@@ -1204,19 +1204,34 @@ fn codegen_instruction_nullable(
             }
             InstructionValue::StartMemoize(_) | InstructionValue::FinishMemoize(_) => None,
             InstructionValue::Debugger(_) => Some(CodegenStatement::Debugger),
-            // Delete expressions are side effects that must always be emitted as
-            // expression statements. If we let them fall through to the default
-            // `codegen_instruction_to_statement` path, they would be stored as
-            // temporaries (when the lvalue is unnamed) and silently dropped.
+            // Delete expressions are side effects. When their result is not
+            // consumed (unnamed lvalue), emit as expression statements so the
+            // side effect is not silently dropped. When the result IS consumed
+            // (named lvalue), fall through to the default path that produces
+            // `let y = delete x.prop`.
             InstructionValue::PropertyDelete(del) => {
+                let has_named_lvalue =
+                    instr.lvalue.as_ref().is_some_and(|lv| lv.identifier.name.is_some());
                 let object = codegen_place_to_expression(cx, &del.object);
                 let member = codegen_member_access(cx, &object, &del.property);
-                Some(CodegenStatement::ExpressionStatement(format!("delete {member}")))
+                let value_str = format!("delete {member}");
+                if has_named_lvalue {
+                    codegen_instruction_to_statement(cx, instr, &value_str)
+                } else {
+                    Some(CodegenStatement::ExpressionStatement(value_str))
+                }
             }
             InstructionValue::ComputedDelete(del) => {
+                let has_named_lvalue =
+                    instr.lvalue.as_ref().is_some_and(|lv| lv.identifier.name.is_some());
                 let object = codegen_place_to_expression(cx, &del.object);
                 let property = codegen_place_to_expression(cx, &del.property);
-                Some(CodegenStatement::ExpressionStatement(format!("delete {object}[{property}]")))
+                let value_str = format!("delete {object}[{property}]");
+                if has_named_lvalue {
+                    codegen_instruction_to_statement(cx, instr, &value_str)
+                } else {
+                    Some(CodegenStatement::ExpressionStatement(value_str))
+                }
             }
             InstructionValue::ObjectMethod(method) => {
                 // Store object method for later use by ObjectExpression codegen.
