@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 869/1416 passed (61.4%)
+Codegen conformance: 883/1416 passed (62.4%)
 
 Failure breakdown:
   parse_error:    35
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 12
   panic:          0
-  output_mismatch:489
+  output_mismatch:475
   no_expected:    7
 
 Failed fixtures:
@@ -118,9 +118,7 @@ Failed fixtures:
   [output_mismatch] escape-analysis-destructured-rest-element.js
   [output_mismatch] evaluation-order-mutate-call-after-dependency-load.ts
   [output_mismatch] evaluation-order-mutate-store-after-dependency-load.ts
-  [output_mismatch] exhaustive-deps/compile-files-with-exhaustive-deps-violation-in-effects.js
   [output_mismatch] exhaustive-deps/exhaustive-deps-allow-nonreactive-stable-types-as-extra-deps.js
-  [output_mismatch] exhaustive-deps/exhaustive-deps-effect-events.js
   [output_mismatch] fast-refresh-reloading.js
   [output_mismatch] fbt/bug-fbt-plural-multiple-function-calls.ts
   [output_mismatch] fbt/bug-fbt-plural-multiple-mixed-call-tag.tsx
@@ -216,7 +214,6 @@ Failed fixtures:
   [output_mismatch] hook-call-freezes-captured-memberexpr.tsx
   [parse_error] hook-declaration-basic.flow.js
   [output_mismatch] hook-noAlias.js
-  [output_mismatch] hook-ref-callback.js
   [output_mismatch] hooks-freeze-arguments.js
   [output_mismatch] hooks-freeze-possibly-mutable-arguments.js
   [output_mismatch] idx-method-no-outlining-wildcard.js
@@ -245,8 +242,6 @@ Failed fixtures:
   [output_mismatch] inner-function/nullable-objects/return-object-of-functions.js
   [output_mismatch] inner-memo-value-not-promoted-to-outer-scope-dynamic.js
   [output_mismatch] invalid-set-state-in-effect-verbose-derived-event.js
-  [output_mismatch] invalid-set-state-in-effect-verbose-force-update.js
-  [output_mismatch] invalid-set-state-in-effect-verbose-non-local-derived.js
   [output_mismatch] invalid-setState-in-useEffect-namespace.js
   [output_mismatch] invalid-setState-in-useEffect.js
   [output_mismatch] invalid-unused-usememo.js
@@ -425,8 +420,6 @@ Failed fixtures:
   [output_mismatch] reduce-reactive-deps/jump-unpoisoned/jump-target-within-scope-loop-break.ts
   [output_mismatch] reduce-reactive-deps/memberexpr-join-optional-chain2.ts
   [output_mismatch] reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
-  [output_mismatch] ref-in-effect.js
-  [output_mismatch] ref-parameter-mutate-in-effect.js
   [output_mismatch] reordering-across-blocks.js
   [parse_error] repeated-dependencies-more-precise.js
   [parse_error] repro-aliased-capture-aliased-mutate.js
@@ -438,7 +431,6 @@ Failed fixtures:
   [pipeline_error] repro-dont-memoize-array-with-capturing-map-after-hook.js
   [output_mismatch] repro-dont-memoize-array-with-mutable-map-after-hook.js
   [output_mismatch] repro-duplicate-instruction-from-merge-consecutive-scopes.js
-  [output_mismatch] repro-false-positive-ref-validation-in-use-effect.js
   [output_mismatch] repro-for-loop-in-try.js
   [output_mismatch] repro-for-of-in-try.js
   [output_mismatch] repro-independently-memoized-property-load-for-method-call.js
@@ -502,10 +494,6 @@ Failed fixtures:
   [output_mismatch] ssa-renaming-unconditional-with-mutation.js
   [output_mismatch] ssa-renaming-with-mutation.js
   [output_mismatch] ssa-while-no-reassign.js
-  [output_mismatch] ssr/optimize-ssr.js
-  [output_mismatch] ssr/ssr-infer-event-handlers-from-setState.js
-  [output_mismatch] ssr/ssr-infer-event-handlers-from-startTransition.js
-  [output_mismatch] ssr/ssr-use-reducer.js
   [output_mismatch] switch-non-final-default.js
   [output_mismatch] switch.js
   [output_mismatch] temporary-at-start-of-value-block.js
@@ -541,7 +529,6 @@ Failed fixtures:
   [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js
   [parse_error] useCallback-ref-in-render.js
-  [output_mismatch] useEffect-arg-memoized.js
   [output_mismatch] useEffect-nested-lambdas.js
   [output_mismatch] useEffect-snap-test.js
   [parse_error] useImperativeHandle-ref-mutate.js
@@ -556,7 +543,6 @@ Failed fixtures:
   [output_mismatch] useMemo-switch-no-fallthrough.js
   [output_mismatch] useMemo-switch-return.js
   [output_mismatch] useMemo-with-optional.js
-  [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-listener.js
   [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-with-ref.js
   [output_mismatch] validate-no-set-state-in-render-uncalled-function-with-mutable-range-is-valid.js
   [output_mismatch] weakmap-constructor.js

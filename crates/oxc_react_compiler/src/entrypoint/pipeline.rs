@@ -318,6 +318,7 @@ pub fn run_pipeline(
         force_memoize_primitives: env.config.enable_forest
             || env.config.enable_preserve_existing_memoization_guarantees,
         shapes: &env.shapes,
+        env,
     };
     crate::reactive_scopes::prune_non_escaping_scopes::prune_non_escaping_scopes(
         &mut reactive_function,

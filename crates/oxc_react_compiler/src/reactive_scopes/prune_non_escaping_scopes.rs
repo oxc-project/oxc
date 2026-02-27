@@ -132,6 +132,9 @@ pub struct PruneOptions<'a> {
     /// Reference to the shape registry for looking up function signatures
     /// (e.g., to check `noAlias` on call expressions).
     pub shapes: &'a ShapeRegistry,
+
+    /// Reference to the environment for type-based hook detection.
+    pub env: &'a crate::hir::environment::Environment,
 }
 
 /// Prune reactive scopes whose values don't escape the function.
@@ -637,7 +640,11 @@ fn collect_in_block(
                     // hook's function signature has noAlias=true.
                     match iv.as_ref() {
                         InstructionValue::CallExpression(call) => {
-                            if is_hook_name_identifier(&call.callee)
+                            if crate::hir::environment::get_hook_kind_for_type(
+                                opts.env,
+                                &call.callee.identifier.type_,
+                            )
+                            .is_some()
                                 && !has_no_alias(opts.shapes, &call.callee)
                             {
                                 for arg in &call.args {
@@ -651,7 +658,11 @@ fn collect_in_block(
                             }
                         }
                         InstructionValue::MethodCall(call) => {
-                            if is_hook_name_identifier(&call.property)
+                            if crate::hir::environment::get_hook_kind_for_type(
+                                opts.env,
+                                &call.property.identifier.type_,
+                            )
+                            .is_some()
                                 && !has_no_alias(opts.shapes, &call.property)
                             {
                                 for arg in &call.args {
@@ -755,15 +766,6 @@ fn collect_in_terminal(
     }
 }
 
-/// Check if a place looks like a hook name (starts with "use" + uppercase letter).
-fn is_hook_name_identifier(place: &Place) -> bool {
-    match &place.identifier.name {
-        Some(crate::hir::IdentifierName::Named(name)) => {
-            name.starts_with("use") && name.len() > 3 && name.as_bytes()[3].is_ascii_uppercase()
-        }
-        _ => false,
-    }
-}
 
 // =====================================================================================
 // Phase 2: Compute memoized identifiers via DFS
