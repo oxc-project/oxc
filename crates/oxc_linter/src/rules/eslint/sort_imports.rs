@@ -24,7 +24,6 @@ fn unexpected_syntax_order_diagnostic(
     span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected '{curr_kind}' syntax before '{prev_kind}' syntax."))
-        .with_help(format!("Move this import declaration higher, before the '{prev_kind}' import, or adjust the 'memberSyntaxSortOrder' option."))
         .with_label(span)
 }
 

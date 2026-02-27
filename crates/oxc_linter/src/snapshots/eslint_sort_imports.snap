@@ -40,7 +40,6 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import {b, c} from 'bar.js';
    ·             ────────────────────────────
    ╰────
-  help: Move this import declaration higher, before the 'Single' import, or adjust the 'memberSyntaxSortOrder' option.
 
   ⚠ eslint(sort-imports): Expected 'All' syntax before 'Single' syntax.
    ╭─[sort_imports.tsx:2:13]
@@ -48,7 +47,6 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import * as b from 'bar.js';
    ·             ────────────────────────────
    ╰────
-  help: Move this import declaration higher, before the 'Single' import, or adjust the 'memberSyntaxSortOrder' option.
 
   ⚠ eslint(sort-imports): Expected 'None' syntax before 'Single' syntax.
    ╭─[sort_imports.tsx:2:13]
@@ -56,7 +54,6 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import 'bar.js';
    ·             ────────────────
    ╰────
-  help: Move this import declaration higher, before the 'Single' import, or adjust the 'memberSyntaxSortOrder' option.
 
   ⚠ eslint(sort-imports): Expected 'All' syntax before 'Single' syntax.
    ╭─[sort_imports.tsx:2:13]
@@ -64,7 +61,6 @@ source: crates/oxc_linter/src/tester.rs
  2 │             import * as a from 'foo.js';
    ·             ────────────────────────────
    ╰────
-  help: Move this import declaration higher, before the 'Single' import, or adjust the 'memberSyntaxSortOrder' option.
 
   ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:12]
