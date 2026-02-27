@@ -338,15 +338,16 @@ impl CliRunner {
         let mut options =
             LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
-        let report_unused_directives = match inline_config_options.report_unused_directives {
-            ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-            ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
-            _ => None,
-        };
         let (mut diagnostic_service, tx_error) =
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
+
+        let report_unused_directives = match inline_config_options.report_unused_directives {
+            ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
+            ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
+            _ => config_store.report_unused_disable_directives(),
+        };
         let type_aware = self.options.type_aware || config_store.type_aware_enabled();
         let type_check = self.options.type_check || config_store.type_check_enabled();
 

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::{LintPlugins, utils::read_to_string};
+use crate::{AllowWarnDeny, LintPlugins, utils::read_to_string};
 
 use super::{
     categories::OxlintCategories,
@@ -36,12 +36,21 @@ pub struct OxlintOptions {
     /// Equivalent to passing `--type-check` on the CLI.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_check: Option<bool>,
+    /// Report unused disable directives (e.g. `// eslint-disable-line`).
+    ///
+    /// Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
+    /// CLI flags take precedence over this value when both are set.
+    /// Only supported in the root configuration file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub report_unused_disable_directives: Option<AllowWarnDeny>,
 }
 
 impl OxlintOptions {
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.type_aware.is_none() && self.type_check.is_none()
+        self.type_aware.is_none()
+            && self.type_check.is_none()
+            && self.report_unused_disable_directives.is_none()
     }
 
     #[must_use]
@@ -49,6 +58,9 @@ impl OxlintOptions {
         Self {
             type_aware: self.type_aware.or(other.type_aware),
             type_check: self.type_check.or(other.type_check),
+            report_unused_disable_directives: self
+                .report_unused_disable_directives
+                .or(other.report_unused_disable_directives),
         }
     }
 }
@@ -399,6 +411,7 @@ mod test {
         assert_eq!(config.extends, Vec::<PathBuf>::default());
         assert_eq!(config.options.type_aware, None);
         assert_eq!(config.options.type_check, None);
+        assert_eq!(config.options.report_unused_disable_directives, None);
     }
 
     #[test]
@@ -418,6 +431,24 @@ mod test {
         let config: Oxlintrc =
             serde_json::from_value(json!({ "options": { "typeCheck": false } })).unwrap();
         assert_eq!(config.options.type_check, Some(false));
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "warn" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "error" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        let config: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "off" } }),
+        )
+        .unwrap();
+        assert_eq!(config.options.report_unused_disable_directives, Some(AllowWarnDeny::Allow));
     }
 
     #[test]
@@ -444,6 +475,31 @@ mod test {
         let merged = root.merge(base);
         assert_eq!(merged.options.type_aware, Some(true));
         assert_eq!(merged.options.type_check, Some(false));
+
+        // root wins over base for reportUnusedDisableDirectives
+        let mut root: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "error" } }),
+        )
+        .unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "warn" } }),
+        )
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(merged.options.report_unused_disable_directives, Some(AllowWarnDeny::Deny));
+
+        // base value propagates when root does not set the field
+        let mut root: Oxlintrc = serde_json::from_value(json!({})).unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "reportUnusedDisableDirectives": "warn" } }),
+        )
+        .unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(merged.options.report_unused_disable_directives, Some(AllowWarnDeny::Warn));
     }
 
     #[test]
