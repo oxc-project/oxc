@@ -12,7 +12,9 @@ use crate::{
 };
 
 fn no_nonoctal_decimal_escape_diagnostic(escape_sequence: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Don't use '{escape_sequence}' escape sequence.")).with_label(span)
+    OxcDiagnostic::warn(format!("Don't use '{escape_sequence}' escape sequence."))
+        .with_help("Use the actual character or a valid escape sequence instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
