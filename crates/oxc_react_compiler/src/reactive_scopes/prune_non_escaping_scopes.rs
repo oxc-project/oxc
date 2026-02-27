@@ -455,6 +455,14 @@ fn collect_in_block(
                                 lvalue_entries.push((lvalue_id, level));
                             }
                         }
+                        InstructionValue::PropertyLoad(v) => {
+                            custom_rvalues = true;
+                            operand_ids.push(v.object.identifier.declaration_id);
+                            if let Some(lvalue) = &instr.lvalue {
+                                let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
+                                lvalue_entries.push((lvalue_id, level));
+                            }
+                        }
                         // PrefixUpdate / PostfixUpdate (TS lines 634-647):
                         // value.lvalue is an extra lvalue at Conditional,
                         // only value.value is an rvalue
