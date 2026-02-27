@@ -46,13 +46,7 @@ type PrettyTokenSerializer = ESTreeSerializer<TokenConfig, PrettyFormatter>;
 pub struct EstreeToken<'a> {
     pub token_type: TokenType,
     pub value: &'a str,
-    pub regex: Option<EstreeRegExpToken<'a>>,
     pub span: Span,
-}
-
-pub struct EstreeRegExpToken<'a> {
-    pub pattern: &'a str,
-    pub flags: &'a str,
 }
 
 impl ESTree for EstreeToken<'_> {
@@ -60,19 +54,47 @@ impl ESTree for EstreeToken<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString(self.token_type.as_str()));
         state.serialize_field("value", &self.value);
-        if let Some(regex) = &self.regex {
-            state.serialize_field("regex", regex);
-        }
         state.serialize_span(self.span);
         state.end();
     }
 }
 
+/// Token type for RegExps.
+///
+/// This is a separate type from `EstreeToken` because RegExp tokens have a nested `regex` object
+/// containing `flags` and `pattern`, and the token type is always `"RegularExpression"`.
+/// Pattern is taken from the AST node (`RegExpLiteral.regex.pattern.text`), and flags are sliced
+/// from source text to preserve the original order (the AST stores flags as a bitfield which
+/// would alphabetize them).
+struct EstreeRegExpToken<'a> {
+    value: &'a str,
+    regex: RegExpData<'a>,
+    span: Span,
+}
+
+/// The `regex` sub-object inside a `RegularExpression` token.
+struct RegExpData<'a> {
+    pattern: &'a str,
+    flags: &'a str,
+}
+
 impl ESTree for EstreeRegExpToken<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("RegularExpression"));
+        state.serialize_field("value", &self.value);
+        state.serialize_field("regex", &self.regex);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for RegExpData<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
         state.serialize_field("pattern", &self.pattern);
-        state.serialize_field("flags", &self.flags);
+        // Flags are single ASCII letters (d, g, i, m, s, u, v, y) — always JSON-safe
+        state.serialize_field("flags", &JsonSafeString(self.flags));
         state.end();
     }
 }
@@ -397,33 +419,21 @@ impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
         unreachable!("Expected token at position {start}");
     }
 
-    /// Serialize a single token.
+    /// Serialize a single token using its raw source text as the value.
     fn emit_token(&mut self, token: &Token, token_type: TokenType) {
         let value = &self.source_text[token.start() as usize..token.end() as usize];
-        let regex = if token.kind() == Kind::RegExp {
-            regex_parts(value).map(|(pattern, flags)| EstreeRegExpToken { pattern, flags })
-        } else {
-            None
-        };
-        self.serialize_token(token, token_type, value, regex);
+        self.serialize_token(token, token_type, value);
     }
 
     /// Convert span to UTF-16 and serialize token.
-    fn serialize_token(
-        &mut self,
-        token: &Token,
-        token_type: TokenType,
-        value: &str,
-        regex: Option<EstreeRegExpToken<'_>>,
-    ) {
+    fn serialize_token(&mut self, token: &Token, token_type: TokenType, value: &str) {
         // Convert offsets to UTF-16
         let mut span = Span::new(token.start(), token.end());
         if let Some(converter) = self.span_converter.as_mut() {
             converter.convert_span(&mut span);
         }
 
-        let estree_token = EstreeToken { token_type, value, regex, span };
-        self.seq.serialize_element(&estree_token);
+        self.seq.serialize_element(&EstreeToken { token_type, value, span });
     }
 
     /// Serialize a token whose value is guaranteed JSON-safe, skipping escape-checking.
@@ -561,10 +571,29 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
             fn emit<S: SequenceSerializer>(ctx: &mut EstreeTokenContext<'_, S>, token: &Token) {
                 // Strip leading `#`
                 let value = &ctx.source_text[token.start() as usize + 1..token.end() as usize];
-                ctx.serialize_token(token, TokenType::new("PrivateIdentifier"), value, None);
+                ctx.serialize_token(token, TokenType::new("PrivateIdentifier"), value);
             }
             emit(self, token);
         }
+    }
+
+    fn visit_reg_exp_literal(&mut self, regexp: &RegExpLiteral<'a>) {
+        let token = self.advance_to(regexp.span.start);
+
+        let value = regexp.raw.as_deref().unwrap();
+        let pattern = regexp.regex.pattern.text.as_str();
+
+        // Flags start after opening `/`, pattern, and closing `/`
+        let flags = &value[pattern.len() + 2..];
+        let regex = RegExpData { pattern, flags };
+
+        // Convert offsets to UTF-16
+        let mut span = Span::new(token.start(), token.end());
+        if let Some(converter) = self.span_converter.as_mut() {
+            converter.convert_span(&mut span);
+        }
+
+        self.seq.serialize_element(&EstreeRegExpToken { value, regex, span });
     }
 
     fn visit_ts_this_parameter(&mut self, parameter: &TSThisParameter<'a>) {
@@ -707,30 +736,4 @@ fn get_token_type(kind: Kind) -> TokenType {
         _ if kind.is_any_keyword() => TokenType::new("Keyword"),
         _ => TokenType::new("Punctuator"),
     }
-}
-
-fn regex_parts(raw: &str) -> Option<(&str, &str)> {
-    let bytes = raw.as_bytes();
-    if bytes.first() != Some(&b'/') {
-        return None;
-    }
-
-    let mut escaped = false;
-    let mut in_character_class = false;
-    for index in 1..bytes.len() {
-        let byte = bytes[index];
-        if escaped {
-            escaped = false;
-            continue;
-        }
-        match byte {
-            b'\\' => escaped = true,
-            b'[' if !in_character_class => in_character_class = true,
-            b']' if in_character_class => in_character_class = false,
-            b'/' if !in_character_class => return Some((&raw[1..index], &raw[index + 1..])),
-            _ => {}
-        }
-    }
-
-    None
 }
