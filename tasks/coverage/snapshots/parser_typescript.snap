@@ -20631,7 +20631,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try inserting a semicolon here
 
-  × TS(8016): Type satisfaction expressions can only be used in TypeScript files.
+  × TS(8037): Type satisfaction expressions can only be used in TypeScript files.
    ╭─[typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts:1:9]
  1 │ var v = undefined satisfies 1;
    ·         ─────────────────────
