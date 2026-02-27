@@ -1564,5 +1564,20 @@ function test() {
                 "    // eslint-disable-next-line\n"
             );
         }
+
+        #[test]
+        fn multiline_block_comment_own_lines() {
+            let src = "let x = 1;\n/*\neslint-disable\n*/\nlet y = 2;\n";
+            // content_span: between /* and */ -> "\neslint-disable\n"
+            let content = Span::new(13, 29);
+            assert_eq!(&src[content.start as usize..content.end as usize], "\neslint-disable\n");
+            let result = full_comment_delete_span(content, src);
+            // Should delete from start of `/*` line through end of `*/` line
+            assert_eq!(result, Span::new(11, 32));
+            assert_eq!(
+                &src[result.start as usize..result.end as usize],
+                "/*\neslint-disable\n*/\n"
+            );
+        }
     }
 }
