@@ -85,24 +85,13 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
     let mut text_edits: Vec<TextEdit> = vec![];
 
     for action in actions {
-        if action.fixed_content.is_empty() {
-            continue;
-        }
-
-        // for a real linter fix, we expect at least 3 fixes
-        if action.fixed_content.len() == 2 {
-            debug!("Multiple fixes found, but only ignore fixes available");
-            #[cfg(debug_assertions)]
-            {
-                debug_assert!(action.fixed_content[0].message.starts_with("Disable"));
-                debug_assert!(action.fixed_content[0].message.ends_with("for this line"));
-            }
-            continue;
-        }
-
-        // For multiple fixes, we take the first one as a representative fix.
         // Applying all possible fixes at once is not possible in this context.
-        let fixed_content = action.fixed_content.into_iter().next().unwrap();
+        // Search for the first "real" fix for the rule, and ignore the rest of the fixes for the same rule.
+        let Some(fixed_content) = action.fixed_content.into_iter().find(|fixed| {
+            matches!(fixed.lsp_kind, FixedContentKind::LintRule | FixedContentKind::UnusedDirective)
+        }) else {
+            continue;
+        };
 
         // Only safe fixes or suggestions are applied in "fix all" action/command.
         if !FixKind::SafeFixOrSuggestion.can_apply(fixed_content.kind) {
