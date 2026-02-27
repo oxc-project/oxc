@@ -438,15 +438,11 @@ fn collect_in_block(
                         InstructionValue::ComputedStore(v) => {
                             custom_rvalues = true;
                             operand_ids.push(v.value.identifier.declaration_id);
-                            let object_id =
-                                state.resolve(v.object.identifier.declaration_id);
-                            lvalue_entries
-                                .push((object_id, MemoizationLevel::Conditional));
+                            let object_id = state.resolve(v.object.identifier.declaration_id);
+                            lvalue_entries.push((object_id, MemoizationLevel::Conditional));
                             if let Some(lvalue) = &instr.lvalue {
-                                let lvalue_id =
-                                    state.resolve(lvalue.identifier.declaration_id);
-                                lvalue_entries
-                                    .push((lvalue_id, MemoizationLevel::Conditional));
+                                let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
+                                lvalue_entries.push((lvalue_id, MemoizationLevel::Conditional));
                             }
                         }
                         // ComputedLoad / PropertyLoad (TS lines 698-710):
@@ -455,8 +451,7 @@ fn collect_in_block(
                             custom_rvalues = true;
                             operand_ids.push(v.object.identifier.declaration_id);
                             if let Some(lvalue) = &instr.lvalue {
-                                let lvalue_id =
-                                    state.resolve(lvalue.identifier.declaration_id);
+                                let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
                                 lvalue_entries.push((lvalue_id, level));
                             }
                         }
@@ -466,29 +461,21 @@ fn collect_in_block(
                         InstructionValue::PrefixUpdate(v) => {
                             custom_rvalues = true;
                             operand_ids.push(v.value.identifier.declaration_id);
-                            let inner_lvalue_id =
-                                state.resolve(v.lvalue.identifier.declaration_id);
-                            lvalue_entries
-                                .push((inner_lvalue_id, MemoizationLevel::Conditional));
+                            let inner_lvalue_id = state.resolve(v.lvalue.identifier.declaration_id);
+                            lvalue_entries.push((inner_lvalue_id, MemoizationLevel::Conditional));
                             if let Some(lvalue) = &instr.lvalue {
-                                let lvalue_id =
-                                    state.resolve(lvalue.identifier.declaration_id);
-                                lvalue_entries
-                                    .push((lvalue_id, MemoizationLevel::Conditional));
+                                let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
+                                lvalue_entries.push((lvalue_id, MemoizationLevel::Conditional));
                             }
                         }
                         InstructionValue::PostfixUpdate(v) => {
                             custom_rvalues = true;
                             operand_ids.push(v.value.identifier.declaration_id);
-                            let inner_lvalue_id =
-                                state.resolve(v.lvalue.identifier.declaration_id);
-                            lvalue_entries
-                                .push((inner_lvalue_id, MemoizationLevel::Conditional));
+                            let inner_lvalue_id = state.resolve(v.lvalue.identifier.declaration_id);
+                            lvalue_entries.push((inner_lvalue_id, MemoizationLevel::Conditional));
                             if let Some(lvalue) = &instr.lvalue {
-                                let lvalue_id =
-                                    state.resolve(lvalue.identifier.declaration_id);
-                                lvalue_entries
-                                    .push((lvalue_id, MemoizationLevel::Conditional));
+                                let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
+                                lvalue_entries.push((lvalue_id, MemoizationLevel::Conditional));
                             }
                         }
                         _ => {}
@@ -549,8 +536,8 @@ fn collect_in_block(
                                     for item in &arr.items {
                                         match item {
                                             crate::hir::ArrayPatternElement::Place(p) => {
-                                                let target_id = state
-                                                    .resolve(p.identifier.declaration_id);
+                                                let target_id =
+                                                    state.resolve(p.identifier.declaration_id);
                                                 lvalue_entries.push((
                                                     target_id,
                                                     MemoizationLevel::Conditional,
@@ -559,10 +546,8 @@ fn collect_in_block(
                                             crate::hir::ArrayPatternElement::Spread(s) => {
                                                 let target_id = state
                                                     .resolve(s.place.identifier.declaration_id);
-                                                lvalue_entries.push((
-                                                    target_id,
-                                                    MemoizationLevel::Memoized,
-                                                ));
+                                                lvalue_entries
+                                                    .push((target_id, MemoizationLevel::Memoized));
                                             }
                                             crate::hir::ArrayPatternElement::Hole => {}
                                         }
@@ -582,10 +567,8 @@ fn collect_in_block(
                                             crate::hir::ObjectPatternProperty::Spread(s) => {
                                                 let target_id = state
                                                     .resolve(s.place.identifier.declaration_id);
-                                                lvalue_entries.push((
-                                                    target_id,
-                                                    MemoizationLevel::Memoized,
-                                                ));
+                                                lvalue_entries
+                                                    .push((target_id, MemoizationLevel::Memoized));
                                             }
                                         }
                                     }

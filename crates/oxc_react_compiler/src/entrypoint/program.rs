@@ -17,10 +17,16 @@ pub struct ProgramCompilationResult {
 }
 
 /// Determine if a function should be compiled based on the compilation mode.
+///
+/// `is_memo_or_forwardref_arg` should be true when the function is the callback
+/// argument of `React.memo()`, `memo()`, `React.forwardRef()`, or `forwardRef()`.
+/// This mirrors the TS reference's `getComponentOrHookLike()` which falls back to
+/// memo/forwardRef detection for anonymous function/arrow expressions.
 pub fn should_compile_function(
     name: Option<&str>,
     directives: &[String],
     mode: CompilationMode,
+    is_memo_or_forwardref_arg: bool,
 ) -> Option<ReactFunctionType> {
     // Check for opt-out directives
     for directive in directives {
@@ -38,8 +44,16 @@ pub fn should_compile_function(
             if has_opt_in { Some(ReactFunctionType::Other) } else { None }
         }
         CompilationMode::All => {
-            // Compile everything
-            Some(infer_function_type(name))
+            // Compile everything — infer type from name, then fall back to
+            // memo/forwardRef detection, then 'Other'.
+            let inferred = infer_function_type(name);
+            if inferred != ReactFunctionType::Other {
+                Some(inferred)
+            } else if is_memo_or_forwardref_arg {
+                Some(ReactFunctionType::Component)
+            } else {
+                Some(ReactFunctionType::Other)
+            }
         }
         CompilationMode::Infer => {
             // Compile if annotated, or if it looks like a component/hook
@@ -49,7 +63,14 @@ pub fn should_compile_function(
             match name {
                 Some(n) if is_component_name(n) => Some(ReactFunctionType::Component),
                 Some(n) if is_hook_name(n) => Some(ReactFunctionType::Hook),
-                _ => None,
+                _ => {
+                    // Fall back to memo/forwardRef detection for function/arrow expressions
+                    if is_memo_or_forwardref_arg {
+                        Some(ReactFunctionType::Component)
+                    } else {
+                        None
+                    }
+                }
             }
         }
         CompilationMode::Syntax => {
