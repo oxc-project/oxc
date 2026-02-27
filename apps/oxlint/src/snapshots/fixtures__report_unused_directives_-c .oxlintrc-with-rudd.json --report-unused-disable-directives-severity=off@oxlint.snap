@@ -1,0 +1,112 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc-with-rudd.json --report-unused-disable-directives-severity=off
+working directory: fixtures/report_unused_directives
+----------
+
+  ! eslint(no-console): Unexpected console statement.
+   ,-[test-multiple-scripts.vue:7:1]
+ 6 | // eslint-disable-next-line no-debugger
+ 7 | console.log('regular script');
+   : ^^^^^^^^^^^
+ 8 | 
+   `----
+  help: Delete this console statement.
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test-multiple-scripts.vue:10:1]
+  9 | // eslint-disable-next-line no-console
+ 10 | debugger;
+    : ^^^^^^^^^
+ 11 | </script>
+    `----
+  help: Remove the debugger statement
+
+  ! eslint(no-console): Unexpected console statement.
+    ,-[test-multiple-scripts.vue:31:1]
+ 30 | // oxlint-disable-next-line no-debugger, no-for-loop
+ 31 | console.log("complete line");
+    : ^^^^^^^^^^^
+ 32 | 
+    `----
+  help: Delete this console statement.
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.astro:11:1]
+ 10 | // eslint-disable-next-line no-console
+ 11 | debugger;
+    : ^^^^^^^^^
+ 12 | ---
+    `----
+  help: Remove the debugger statement
+
+  ! eslint(no-console): Unexpected console statement.
+    ,-[test.astro:32:1]
+ 31 | // oxlint-disable-next-line no-debugger, no-for-loop
+ 32 | console.log("complete line");
+    : ^^^^^^^^^^^
+ 33 | 
+    `----
+  help: Delete this console statement.
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.js:10:1]
+  9 | // eslint-disable-next-line no-console
+ 10 | debugger;
+    : ^^^^^^^^^
+ 11 | 
+    `----
+  help: Remove the debugger statement
+
+  ! eslint(no-console): Unexpected console statement.
+    ,-[test.js:27:1]
+ 26 | // oxlint-disable-next-line no-debugger, no-for-loop
+ 27 | console.log("complete line");
+    : ^^^^^^^^^^^
+ 28 | 
+    `----
+  help: Delete this console statement.
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.svelte:11:1]
+ 10 | // eslint-disable-next-line no-console
+ 11 | debugger;
+    : ^^^^^^^^^
+ 12 | 
+    `----
+  help: Remove the debugger statement
+
+  ! eslint(no-console): Unexpected console statement.
+    ,-[test.svelte:28:1]
+ 27 | // oxlint-disable-next-line no-debugger, no-for-loop
+ 28 | console.log("complete line");
+    : ^^^^^^^^^^^
+ 29 | 
+    `----
+  help: Delete this console statement.
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+    ,-[test.vue:15:1]
+ 14 | // eslint-disable-next-line no-console
+ 15 | debugger;
+    : ^^^^^^^^^
+ 16 | 
+    `----
+  help: Remove the debugger statement
+
+  ! eslint(no-console): Unexpected console statement.
+    ,-[test.vue:32:1]
+ 31 | // oxlint-disable-next-line no-debugger, no-for-loop
+ 32 | console.log("complete line");
+    : ^^^^^^^^^^^
+ 33 | 
+    `----
+  help: Delete this console statement.
+
+Found 11 warnings and 0 errors.
+Finished in <variable>ms on 5 files with 94 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
