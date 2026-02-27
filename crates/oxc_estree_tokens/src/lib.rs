@@ -400,6 +400,13 @@ impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
         }
     }
 
+    /// Emit the token at `start` as `"JSXIdentifier"`.
+    /// JSX identifier names are guaranteed JSON-safe (no unicode escapes, no special characters).
+    fn emit_jsx_identifier(&mut self, start: u32, name: &str) {
+        let token = self.advance_to(start);
+        self.serialize_ident_token(token, TokenType::new("JSXIdentifier"), name);
+    }
+
     /// Consume all tokens before `start` (emitting them with default types),
     /// and return the token at `start`.
     fn advance_to(&mut self, start: u32) -> &'b Token {
@@ -520,14 +527,12 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
     }
 
     fn visit_identifier_name(&mut self, identifier: &IdentifierName<'a>) {
-        // `JSXIdentifier` takes priority over `Identifier` in `token_type`,
-        // so `"Identifier"` is redundant when `"JSXIdentifier"` is set.
         if self.options.member_expr_in_jsx_expression_jsx_identifiers
             && self.jsx_expression_depth > 0
             && self.jsx_member_expression_depth > 0
             && self.jsx_computed_member_depth == 0
         {
-            self.emit_token_at(identifier.span.start, TokenType::new("JSXIdentifier"));
+            self.emit_jsx_identifier(identifier.span.start, &identifier.name);
         } else {
             self.emit_identifier(identifier.span.start, &identifier.name);
         }
@@ -539,7 +544,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
             && self.jsx_member_expression_depth > 0
             && self.jsx_computed_member_depth == 0
         {
-            self.emit_token_at(identifier.span.start, TokenType::new("JSXIdentifier"));
+            self.emit_jsx_identifier(identifier.span.start, &identifier.name);
         } else {
             self.emit_identifier(identifier.span.start, &identifier.name);
         }
@@ -642,12 +647,12 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
     }
 
     fn visit_jsx_identifier(&mut self, identifier: &JSXIdentifier<'a>) {
-        self.emit_token_at(identifier.span.start, TokenType::new("JSXIdentifier"));
+        self.emit_jsx_identifier(identifier.span.start, &identifier.name);
     }
 
     fn visit_jsx_element_name(&mut self, name: &JSXElementName<'a>) {
         if let JSXElementName::IdentifierReference(identifier) = name {
-            self.emit_token_at(identifier.span.start, TokenType::new("JSXIdentifier"));
+            self.emit_jsx_identifier(identifier.span.start, &identifier.name);
         } else {
             walk::walk_jsx_element_name(self, name);
         }
@@ -655,7 +660,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
 
     fn visit_jsx_member_expression_object(&mut self, object: &JSXMemberExpressionObject<'a>) {
         if let JSXMemberExpressionObject::IdentifierReference(identifier) = object {
-            self.emit_token_at(identifier.span.start, TokenType::new("JSXIdentifier"));
+            self.emit_jsx_identifier(identifier.span.start, &identifier.name);
         } else {
             walk::walk_jsx_member_expression_object(self, object);
         }
@@ -663,8 +668,8 @@ impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
 
     fn visit_jsx_namespaced_name(&mut self, name: &JSXNamespacedName<'a>) {
         if self.options.jsx_namespace_jsx_identifiers {
-            self.emit_token_at(name.namespace.span.start, TokenType::new("JSXIdentifier"));
-            self.emit_token_at(name.name.span.start, TokenType::new("JSXIdentifier"));
+            self.emit_jsx_identifier(name.namespace.span.start, &name.namespace.name);
+            self.emit_jsx_identifier(name.name.span.start, &name.name.name);
         }
         // When `!jsx_namespace_jsx_identifiers`, these tokens retain their default type
     }
