@@ -216,8 +216,7 @@ fn visit_scope(scope_block: &mut crate::hir::ReactiveScopeBlock, scopes: &mut Sc
         scopes.visit(&mut early_return.value);
     }
 
-    // Then traverse scope instructions (no extra enter — traverseScope just visits the block)
-    traverse_block(&mut scope_block.instructions, scopes);
+    visit_block(&mut scope_block.instructions, scopes);
 }
 
 fn visit_pruned_scope(
