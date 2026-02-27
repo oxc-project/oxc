@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 868/1416 passed (61.3%)
+Codegen conformance: 869/1416 passed (61.4%)
 
 Failure breakdown:
   parse_error:    35
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 12
   panic:          0
-  output_mismatch:490
+  output_mismatch:489
   no_expected:    7
 
 Failed fixtures:
@@ -158,7 +158,6 @@ Failed fixtures:
   [output_mismatch] for-in-statement.js
   [output_mismatch] for-logical.js
   [output_mismatch] for-loop-with-value-block-initializer.js
-  [output_mismatch] for-multiple-variable-declarations-in-initializer.js
   [output_mismatch] for-of-destructure.js
   [output_mismatch] for-of-immutable-collection.js
   [output_mismatch] for-of-iterator-of-immutable-collection.js
