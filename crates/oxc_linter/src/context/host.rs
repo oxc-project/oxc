@@ -16,7 +16,9 @@ use oxc_span::{SourceType, Span};
 use crate::{
     AllowWarnDeny, FrameworkFlags,
     config::{LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings},
-    disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
+    disable_directives::{
+        DisableDirectives, DisableDirectivesBuilder, RuleCommentType, full_comment_delete_span,
+    },
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::{self, FrameworkOptions},
     module_record::ModuleRecord,
@@ -332,7 +334,7 @@ impl<'a> ContextHost<'a> {
                             .with_label(span)
                             .with_severity(rule_severity),
                         PossibleFixes::Single(
-                            Fix::delete(span)
+                            Fix::delete(full_comment_delete_span(span, source_text))
                                 .with_kind(FixKind::Suggestion)
                                 .with_message(fix_message),
                         ),
