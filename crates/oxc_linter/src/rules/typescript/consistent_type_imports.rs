@@ -23,14 +23,22 @@ use crate::{
 };
 
 fn no_import_type_annotations_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`import()` type annotations are forbidden.").with_label(span)
+    OxcDiagnostic::warn("`import()` type annotations are forbidden.")
+        .with_help("Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type` or use a regular import if the type is also used as a value.")
+        .with_note("Using `import()` in type annotations can make code harder to understand and maintain. Regular type imports are clearer and allow better tooling support.")
+        .with_label(span)
 }
 
 fn avoid_import_type_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use an `import` instead of an `import type`.").with_label(span)
+    OxcDiagnostic::warn("Use an `import` instead of an `import type`.")
+        .with_help("Replace `import type` with a regular `import`. For example, change `import type { Type } from 'module'` to `import { Type } from 'module'`.")
+        .with_note("When configured to prefer value imports, this rule ensures that imports are not unnecessarily marked as type-only. Regular imports allow flexibility if the import is later used as a value (e.g., with decorators that require runtime references), and can help avoid side-effect import issues that can occur when using inline type imports (see the `no-import-type-side-effects` rule). Modern bundlers can still effectively tree-shake unused regular imports.")
+        .with_label(span)
 }
 fn type_over_value_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("All imports in the declaration are only used as types. Use `import type`.")
+        .with_help("Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.")
+        .with_note("Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.")
         .with_label(span)
 }
 
