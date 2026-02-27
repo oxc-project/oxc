@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "prettier": "^3.6.1",
+    "prettier-plugin-jsdoc": "^1.8.0"
+  }
+}
