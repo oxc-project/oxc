@@ -146,8 +146,7 @@ fn evaluate_phi(phi: &crate::hir::Phi, constants: &Constants) -> Option<Constant
 }
 
 fn evaluate_instruction(constants: &mut Constants, instr: &mut Instruction) -> Option<Constant> {
-    // Handle FunctionExpression and ObjectMethod recursion first, since they need
-    // exclusive mutable access to the nested function body.
+    // Handle cases that need exclusive mutable access to the instruction value.
     match &mut instr.value {
         InstructionValue::FunctionExpression(v) => {
             constant_propagation_impl(&mut v.lowered_func.func, constants);
@@ -155,6 +154,23 @@ fn evaluate_instruction(constants: &mut Constants, instr: &mut Instruction) -> O
         }
         InstructionValue::ObjectMethod(v) => {
             constant_propagation_impl(&mut v.lowered_func.func, constants);
+            return None;
+        }
+        InstructionValue::StartMemoize(v) => {
+            if let Some(deps) = &mut v.deps {
+                for dep in deps {
+                    if let crate::hir::ManualMemoDependencyRoot::NamedLocal {
+                        value,
+                        constant,
+                    } = &mut dep.root
+                    {
+                        let place_value = read(constants, value);
+                        if matches!(place_value, Some(Constant::Primitive(_))) {
+                            *constant = true;
+                        }
+                    }
+                }
+            }
             return None;
         }
         _ => {}
@@ -175,6 +191,20 @@ fn evaluate_instruction(constants: &mut Constants, instr: &mut Instruction) -> O
             let place_value = read(constants, &v.value);
             if let Some(ref c) = place_value {
                 constants.insert(v.lvalue.place.identifier.id, c.clone());
+            }
+            place_value
+        }
+        InstructionValue::LoadContext(v) => {
+            let place_value = constants.get(&v.place.identifier.id).cloned();
+            if let Some(ref c) = place_value {
+                instr.value = constant_to_instruction_value(c, instr.value.loc());
+            }
+            place_value
+        }
+        InstructionValue::StoreContext(v) => {
+            let place_value = read(constants, &v.value);
+            if let Some(ref c) = place_value {
+                constants.insert(v.lvalue_place.identifier.id, c.clone());
             }
             place_value
         }

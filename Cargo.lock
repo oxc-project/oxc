@@ -2238,6 +2238,7 @@ dependencies = [
  "oxc_syntax",
  "rustc-hash",
  "sha2",
+ "walkdir",
 ]
 
 [[package]]

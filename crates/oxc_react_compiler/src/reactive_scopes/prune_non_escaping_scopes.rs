@@ -173,8 +173,11 @@ fn classify_value(value: &InstructionValue, opts: &PruneOptions<'_>) -> Memoizat
         | InstructionValue::ObjectMethod(_)
         | InstructionValue::RegExpLiteral(_)
         | InstructionValue::TaggedTemplateExpression(_)
-        | InstructionValue::PropertyStore(_)
-        | InstructionValue::ComputedStore(_) => MemoizationLevel::Memoized,
+        | InstructionValue::PropertyStore(_) => MemoizationLevel::Memoized,
+
+        // ComputedStore: outer lvalue is Conditional (TS lines 711-726).
+        // The object acts as an lvalue and only value.value is an rvalue.
+        InstructionValue::ComputedStore(_) => MemoizationLevel::Conditional,
 
         // StoreContext: the instruction's outer lvalue is Conditional,
         // but the inner target (context variable) is Memoized (handled in collect_in_block).
@@ -336,7 +339,7 @@ fn has_no_alias(shapes: &ShapeRegistry, place: &Place) -> bool {
 ///
 /// In the TS, for `CallExpression`, `MethodCall`, `TaggedTemplateExpression`,
 /// `ArrayExpression`, `ObjectExpression`, `NewExpression`, `PropertyStore`,
-/// `FunctionExpression`, `ObjectMethod`, `RegExpLiteral`, `ComputedStore`:
+/// `FunctionExpression`, `ObjectMethod`, `RegExpLiteral`:
 /// mutable operands are treated as additional lvalues (they alias the result).
 fn collect_mutable_operand_lvalues(
     value: &InstructionValue,
@@ -419,9 +422,82 @@ fn collect_in_block(
                 let instr = &instr_stmt.instruction;
                 let level = classify_reactive_value(&instr.value, opts);
 
-                // Collect operands (rvalues)
+                // Collect operands (rvalues) — may be overridden for specific instruction kinds
                 let mut operand_ids = Vec::new();
-                collect_operands(&instr.value, &mut operand_ids, opts.shapes);
+                let mut custom_rvalues = false;
+
+                // Collect all lvalues (instruction lvalue + any inner lvalues from StoreLocal etc.)
+                let mut lvalue_entries: Vec<(DeclarationId, MemoizationLevel)> = Vec::new();
+
+                // For specific instruction kinds, use custom rvalue/lvalue logic matching TS
+                if let ReactiveValue::Instruction(iv) = &instr.value {
+                    match iv.as_ref() {
+                        // ComputedStore (TS lines 711-726):
+                        // object is an lvalue at Conditional, outer lvalue at Conditional,
+                        // only value.value is an rvalue
+                        InstructionValue::ComputedStore(v) => {
+                            custom_rvalues = true;
+                            operand_ids.push(v.value.identifier.declaration_id);
+                            let object_id =
+                                state.resolve(v.object.identifier.declaration_id);
+                            lvalue_entries
+                                .push((object_id, MemoizationLevel::Conditional));
+                            if let Some(lvalue) = &instr.lvalue {
+                                let lvalue_id =
+                                    state.resolve(lvalue.identifier.declaration_id);
+                                lvalue_entries
+                                    .push((lvalue_id, MemoizationLevel::Conditional));
+                            }
+                        }
+                        // ComputedLoad / PropertyLoad (TS lines 698-710):
+                        // Only value.object is an rvalue, not value.property
+                        InstructionValue::ComputedLoad(v) => {
+                            custom_rvalues = true;
+                            operand_ids.push(v.object.identifier.declaration_id);
+                            if let Some(lvalue) = &instr.lvalue {
+                                let lvalue_id =
+                                    state.resolve(lvalue.identifier.declaration_id);
+                                lvalue_entries.push((lvalue_id, level));
+                            }
+                        }
+                        // PrefixUpdate / PostfixUpdate (TS lines 634-647):
+                        // value.lvalue is an extra lvalue at Conditional,
+                        // only value.value is an rvalue
+                        InstructionValue::PrefixUpdate(v) => {
+                            custom_rvalues = true;
+                            operand_ids.push(v.value.identifier.declaration_id);
+                            let inner_lvalue_id =
+                                state.resolve(v.lvalue.identifier.declaration_id);
+                            lvalue_entries
+                                .push((inner_lvalue_id, MemoizationLevel::Conditional));
+                            if let Some(lvalue) = &instr.lvalue {
+                                let lvalue_id =
+                                    state.resolve(lvalue.identifier.declaration_id);
+                                lvalue_entries
+                                    .push((lvalue_id, MemoizationLevel::Conditional));
+                            }
+                        }
+                        InstructionValue::PostfixUpdate(v) => {
+                            custom_rvalues = true;
+                            operand_ids.push(v.value.identifier.declaration_id);
+                            let inner_lvalue_id =
+                                state.resolve(v.lvalue.identifier.declaration_id);
+                            lvalue_entries
+                                .push((inner_lvalue_id, MemoizationLevel::Conditional));
+                            if let Some(lvalue) = &instr.lvalue {
+                                let lvalue_id =
+                                    state.resolve(lvalue.identifier.declaration_id);
+                                lvalue_entries
+                                    .push((lvalue_id, MemoizationLevel::Conditional));
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                if !custom_rvalues {
+                    collect_operands(&instr.value, &mut operand_ids, opts.shapes);
+                }
 
                 // Resolve all operand IDs upfront
                 let resolved_operands: Vec<DeclarationId> =
@@ -432,12 +508,12 @@ fn collect_in_block(
                     state.ensure_identifier(resolved);
                 }
 
-                // Collect all lvalues (instruction lvalue + any inner lvalues from StoreLocal etc.)
-                let mut lvalue_entries: Vec<(DeclarationId, MemoizationLevel)> = Vec::new();
-
-                if let Some(lvalue) = &instr.lvalue {
-                    let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
-                    lvalue_entries.push((lvalue_id, level));
+                // For non-custom cases, add the outer lvalue with the classified level
+                if !custom_rvalues {
+                    if let Some(lvalue) = &instr.lvalue {
+                        let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
+                        lvalue_entries.push((lvalue_id, level));
+                    }
                 }
 
                 // For StoreLocal/DeclareLocal/StoreContext/DeclareContext/Destructure,
@@ -466,17 +542,60 @@ fn collect_in_block(
                             lvalue_entries.push((target_id, MemoizationLevel::Memoized));
                         }
                         InstructionValue::Destructure(v) => {
-                            for place in
-                                crate::hir::visitors::each_pattern_operand(&v.lvalue.pattern)
-                            {
-                                let target_id = state.resolve(place.identifier.declaration_id);
-                                lvalue_entries.push((target_id, level));
+                            // TS: computePatternLValues — spread elements get Memoized,
+                            // regular elements get Conditional (TS lines 354-391)
+                            match &v.lvalue.pattern {
+                                crate::hir::Pattern::Array(arr) => {
+                                    for item in &arr.items {
+                                        match item {
+                                            crate::hir::ArrayPatternElement::Place(p) => {
+                                                let target_id = state
+                                                    .resolve(p.identifier.declaration_id);
+                                                lvalue_entries.push((
+                                                    target_id,
+                                                    MemoizationLevel::Conditional,
+                                                ));
+                                            }
+                                            crate::hir::ArrayPatternElement::Spread(s) => {
+                                                let target_id = state
+                                                    .resolve(s.place.identifier.declaration_id);
+                                                lvalue_entries.push((
+                                                    target_id,
+                                                    MemoizationLevel::Memoized,
+                                                ));
+                                            }
+                                            crate::hir::ArrayPatternElement::Hole => {}
+                                        }
+                                    }
+                                }
+                                crate::hir::Pattern::Object(obj) => {
+                                    for prop in &obj.properties {
+                                        match prop {
+                                            crate::hir::ObjectPatternProperty::Property(p) => {
+                                                let target_id = state
+                                                    .resolve(p.place.identifier.declaration_id);
+                                                lvalue_entries.push((
+                                                    target_id,
+                                                    MemoizationLevel::Conditional,
+                                                ));
+                                            }
+                                            crate::hir::ObjectPatternProperty::Spread(s) => {
+                                                let target_id = state
+                                                    .resolve(s.place.identifier.declaration_id);
+                                                lvalue_entries.push((
+                                                    target_id,
+                                                    MemoizationLevel::Memoized,
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                         _ => {}
                     }
 
-                    // Collect mutable operands as additional lvalues (Issue 3).
+                    // Collect mutable operands as additional lvalues.
                     // In the TS, for CallExpression, MethodCall, TaggedTemplateExpression,
                     // ArrayExpression, ObjectExpression, NewExpression, PropertyStore,
                     // FunctionExpression, ObjectMethod, RegExpLiteral: mutable operands

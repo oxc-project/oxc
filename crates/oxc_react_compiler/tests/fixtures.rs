@@ -4978,9 +4978,13 @@ fn codegen_conformance_inner() {
 
     // Collect all eligible fixture paths (non-error, with matching .expect.md).
     let mut fixture_pairs: Vec<(std::path::PathBuf, std::path::PathBuf)> = Vec::new();
-    for entry in std::fs::read_dir(fixtures_dir).expect("Failed to read fixtures dir") {
-        let entry = entry.expect("Failed to read dir entry");
-        let path = entry.path();
+    for entry in walkdir::WalkDir::new(fixtures_dir)
+        .into_iter()
+        .filter_entry(|e| e.file_name() != "__snapshots__")
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+    {
+        let path = entry.path().to_path_buf();
 
         if !is_js_ts_tsx(&path) {
             continue;
@@ -4994,7 +4998,7 @@ fn codegen_conformance_inner() {
 
         // Find the matching .expect.md file.
         let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-        let expect_path = fixtures_dir.join(format!("{stem}.expect.md"));
+        let expect_path = entry.path().parent().unwrap().join(format!("{stem}.expect.md"));
         if expect_path.exists() {
             fixture_pairs.push((path, expect_path));
         }
@@ -5006,7 +5010,7 @@ fn codegen_conformance_inner() {
 
     for (input_path, expect_path) in &fixture_pairs {
         let file_name =
-            input_path.file_name().and_then(|n| n.to_str()).unwrap_or("<unknown>").to_string();
+            input_path.strip_prefix(fixtures_dir).unwrap().to_string_lossy().to_string();
 
         let Ok(source) = std::fs::read_to_string(input_path) else {
             failed.push((file_name, FailureCategory::ParseError));
@@ -5226,9 +5230,13 @@ fn test_near_miss_diagnostic() {
     }
 
     let mut fixture_pairs: Vec<(std::path::PathBuf, std::path::PathBuf)> = Vec::new();
-    for entry in std::fs::read_dir(fixtures_dir).expect("Failed to read fixtures dir") {
-        let entry = entry.expect("Failed to read dir entry");
-        let path = entry.path();
+    for entry in walkdir::WalkDir::new(fixtures_dir)
+        .into_iter()
+        .filter_entry(|e| e.file_name() != "__snapshots__")
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+    {
+        let path = entry.path().to_path_buf();
         if !is_js_ts_tsx(&path) {
             continue;
         }
@@ -5237,7 +5245,7 @@ fn test_near_miss_diagnostic() {
             continue;
         }
         let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-        let expect_path = fixtures_dir.join(format!("{stem}.expect.md"));
+        let expect_path = entry.path().parent().unwrap().join(format!("{stem}.expect.md"));
         if expect_path.exists() {
             fixture_pairs.push((path, expect_path));
         }
@@ -5255,7 +5263,7 @@ fn test_near_miss_diagnostic() {
 
     for (input_path, expect_path) in &fixture_pairs {
         let file_name =
-            input_path.file_name().and_then(|n| n.to_str()).unwrap_or("<unknown>").to_string();
+            input_path.strip_prefix(fixtures_dir).unwrap().to_string_lossy().to_string();
         let Ok(source) = std::fs::read_to_string(input_path) else { continue };
         let Ok(expect_content) = std::fs::read_to_string(expect_path) else { continue };
         let Some(expected_code) = extract_expect_md_section(&expect_content, "Code") else {
@@ -5411,9 +5419,13 @@ fn test_token_near_miss() {
     }
 
     let mut fixture_pairs: Vec<(std::path::PathBuf, std::path::PathBuf)> = Vec::new();
-    for entry in std::fs::read_dir(fixtures_dir).expect("Failed to read fixtures dir") {
-        let entry = entry.expect("Failed to read dir entry");
-        let path = entry.path();
+    for entry in walkdir::WalkDir::new(fixtures_dir)
+        .into_iter()
+        .filter_entry(|e| e.file_name() != "__snapshots__")
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+    {
+        let path = entry.path().to_path_buf();
         if !is_js_ts_tsx(&path) {
             continue;
         }
@@ -5422,7 +5434,7 @@ fn test_token_near_miss() {
             continue;
         }
         let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-        let expect_path = fixtures_dir.join(format!("{stem}.expect.md"));
+        let expect_path = entry.path().parent().unwrap().join(format!("{stem}.expect.md"));
         if expect_path.exists() {
             fixture_pairs.push((path, expect_path));
         }
@@ -5431,7 +5443,7 @@ fn test_token_near_miss() {
 
     for (input_path, expect_path) in &fixture_pairs {
         let file_name =
-            input_path.file_name().and_then(|n| n.to_str()).unwrap_or("<unknown>").to_string();
+            input_path.strip_prefix(fixtures_dir).unwrap().to_string_lossy().to_string();
         let Ok(source) = std::fs::read_to_string(input_path) else { continue };
         let Ok(expect_content) = std::fs::read_to_string(expect_path) else { continue };
         let Some(expected_code) = extract_expect_md_section(&expect_content, "Code") else {
