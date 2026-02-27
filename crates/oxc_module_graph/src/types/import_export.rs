@@ -62,6 +62,12 @@ pub struct ResolvedExport<S: Copy + Eq + Hash + Debug = SymbolRef> {
     /// If this export is potentially ambiguous (multiple `export *` provide it),
     /// these are the other candidate symbols.
     pub potentially_ambiguous: Option<Vec<S>>,
+    /// Whether this export originated from CommonJS (`exports.foo = 1`).
+    ///
+    /// This affects star re-export semantics:
+    /// - CJS "default" exports are **not** skipped during `export *` propagation
+    /// - Ambiguity detection is suppressed when an existing export came from CJS
+    pub came_from_cjs: bool,
 }
 
 /// An import record after module resolution.

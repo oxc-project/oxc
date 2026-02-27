@@ -28,8 +28,15 @@ pub trait ModuleInfo {
     /// Whether this module has ESM syntax (`import`/`export`).
     fn has_module_syntax(&self) -> bool;
 
-    /// Iterate named exports as `(name, symbol_ref)` pairs.
-    fn for_each_named_export(&self, f: &mut dyn FnMut(&str, Self::SymbolRef));
+    /// Iterate named exports as `(name, symbol_ref, came_from_cjs)` triples.
+    ///
+    /// - `name`: the exported name
+    /// - `symbol_ref`: the local symbol being exported
+    /// - `came_from_cjs`: `true` if this export originated from CommonJS
+    ///   (e.g., `exports.foo = 1`). Affects star re-export semantics:
+    ///   CJS "default" exports are propagated through `export *`, and
+    ///   ambiguity detection is suppressed for CJS-originated exports.
+    fn for_each_named_export(&self, f: &mut dyn FnMut(&str, Self::SymbolRef, bool));
 
     /// Iterate named imports as `(local_symbol, imported_name, record_idx, is_namespace)`.
     ///

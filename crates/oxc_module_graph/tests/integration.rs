@@ -113,12 +113,12 @@ fn test_module_graph_basic() {
 
     // Verify exports via for_each_named_export
     let mut a_exports = Vec::new();
-    module_a_ref.for_each_named_export(&mut |name, _| a_exports.push(name.to_string()));
+    module_a_ref.for_each_named_export(&mut |name, _, _| a_exports.push(name.to_string()));
     assert!(a_exports.contains(&"bar".to_string()));
 
     let module_b_ref = graph.module(idx_b).unwrap();
     let mut b_exports = Vec::new();
-    module_b_ref.for_each_named_export(&mut |name, _| b_exports.push(name.to_string()));
+    module_b_ref.for_each_named_export(&mut |name, _, _| b_exports.push(name.to_string()));
     assert!(b_exports.contains(&"foo".to_string()));
 
     // Verify for_each_module

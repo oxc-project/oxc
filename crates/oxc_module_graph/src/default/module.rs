@@ -60,9 +60,9 @@ impl ModuleInfo for Module {
         self.has_module_syntax
     }
 
-    fn for_each_named_export(&self, f: &mut dyn FnMut(&str, SymbolRef)) {
+    fn for_each_named_export(&self, f: &mut dyn FnMut(&str, SymbolRef, bool)) {
         for (name, local_export) in &self.named_exports {
-            f(name.as_str(), local_export.local_symbol);
+            f(name.as_str(), local_export.local_symbol, false);
         }
     }
 
