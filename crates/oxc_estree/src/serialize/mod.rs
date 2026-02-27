@@ -35,8 +35,11 @@ pub trait ESTree {
 
 /// Trait for serializers.
 pub trait Serializer {
-    /// `true` if output should contain TS fields
+    /// `true` if output should contain TS fields.
     const INCLUDE_TS_FIELDS: bool;
+
+    /// `true` if serializer's formatter produces compact JSON (not pretty-printed JSON).
+    const IS_COMPACT: bool = Self::Formatter::IS_COMPACT;
 
     /// Type of `Formatter` this serializer uses.
     type Formatter: Formatter;
