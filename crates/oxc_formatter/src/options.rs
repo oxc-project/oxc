@@ -93,11 +93,23 @@ pub struct JsdocOptions {
     pub capitalize_descriptions: bool,
     /// Convert short JSDoc to single-line when possible. Default: true.
     pub single_line_when_possible: bool,
+    /// Add blank lines between different tag groups (e.g. between @param and @returns). Default: false.
+    pub separate_tag_groups: bool,
+    /// Add a blank line between the last @param and @returns. Default: false.
+    pub separate_returns_from_param: bool,
+    /// Add spaces inside JSDoc type braces: `{string}` → `{ string }`. Default: false.
+    pub bracket_spacing: bool,
 }
 
 impl Default for JsdocOptions {
     fn default() -> Self {
-        Self { capitalize_descriptions: true, single_line_when_possible: true }
+        Self {
+            capitalize_descriptions: true,
+            single_line_when_possible: true,
+            separate_tag_groups: false,
+            separate_returns_from_param: false,
+            bracket_spacing: false,
+        }
     }
 }
 

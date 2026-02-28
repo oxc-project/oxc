@@ -37,14 +37,10 @@ function greet(name) {}
 /** @returns {string} The greeting */
 function hello() {}
 
-/**
- * Already Capitalized
- */
+/** Already Capitalized */
 const x = 1;
 
-/**
- * `backtick` should not capitalize
- */
+/** `backtick` should not capitalize */
 const y = 2;
 
 /** @param {number} x - 123 starts with number */
@@ -59,14 +55,10 @@ function greet(name) {}
 /** @returns {string} The greeting */
 function hello() {}
 
-/**
- * Already Capitalized
- */
+/** Already Capitalized */
 const x = 1;
 
-/**
- * `backtick` should not capitalize
- */
+/** `backtick` should not capitalize */
 const y = 2;
 
 /** @param {number} x - 123 starts with number */
