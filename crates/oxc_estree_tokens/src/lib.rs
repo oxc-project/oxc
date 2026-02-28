@@ -497,33 +497,19 @@ impl<'b, S: SequenceSerializer> EstreeTokenContext<'b, S> {
 }
 
 impl<'a, S: SequenceSerializer> Visit<'a> for EstreeTokenContext<'_, S> {
-    fn visit_ts_type_query(&mut self, type_query: &TSTypeQuery<'a>) {
-        fn collect_type_query_this<S: SequenceSerializer>(
-            ctx: &mut EstreeTokenContext<'_, S>,
-            type_name: &TSTypeName<'_>,
-        ) {
-            match type_name {
-                TSTypeName::ThisExpression(this_expression) => {
-                    ctx.emit_this_identifier_at(this_expression.span.start);
-                }
-                TSTypeName::QualifiedName(qualified_name) => {
-                    collect_type_query_this(ctx, &qualified_name.left);
-                }
-                TSTypeName::IdentifierReference(_) => {}
+    fn visit_ts_type_name(&mut self, type_name: &TSTypeName<'a>) {
+        // `this` is emitted as `Identifier` token instead of `Keyword`
+        match type_name {
+            TSTypeName::ThisExpression(this_expr) => {
+                self.emit_this_identifier_at(this_expr.span.start);
+            }
+            TSTypeName::IdentifierReference(ident) => {
+                self.visit_identifier_reference(ident);
+            }
+            TSTypeName::QualifiedName(qualified_name) => {
+                self.visit_ts_qualified_name(qualified_name);
             }
         }
-
-        match &type_query.expr_name {
-            TSTypeQueryExprName::ThisExpression(this_expression) => {
-                self.emit_this_identifier_at(this_expression.span.start);
-            }
-            TSTypeQueryExprName::QualifiedName(qualified_name) => {
-                collect_type_query_this(self, &qualified_name.left);
-            }
-            TSTypeQueryExprName::IdentifierReference(_) | TSTypeQueryExprName::TSImportType(_) => {}
-        }
-
-        walk::walk_ts_type_query(self, type_query);
     }
 
     fn visit_ts_import_type(&mut self, import_type: &TSImportType<'a>) {
