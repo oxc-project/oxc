@@ -21,16 +21,19 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Vec as ArenaVec};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
+use oxc_parser::Token;
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
 use crate::{
-    Fixer, Linter, Message, PossibleFixes,
+    Fixer, LINTABLE_EXTENSIONS, Linter, Message, PossibleFixes,
     context::ContextSubHost,
     disable_directives::DisableDirectives,
-    loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
+    loader::{
+        JavaScriptSource, LinterParseResult, PartialLoader, TransformLoader,
+        parse_javascript_source,
+    },
     module_record::ModuleRecord,
     utils::read_to_arena_str,
 };
@@ -318,7 +321,7 @@ impl Runtime {
     ) -> Option<Result<(SourceType, &'a str), Error>> {
         let source_type = SourceType::from_path(path);
         let not_supported_yet =
-            source_type.as_ref().is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext));
+            source_type.as_ref().is_err_and(|_| !LINTABLE_EXTENSIONS.contains(&ext));
         if not_supported_yet {
             return None;
         }
@@ -876,10 +879,7 @@ impl Runtime {
     ) -> Option<ProcessedModule<'a>> {
         let ext = Path::new(path).extension().and_then(OsStr::to_str)?;
 
-        if SourceType::from_path(Path::new(path))
-            .as_ref()
-            .is_err_and(|_| !LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext))
-        {
+        if !LINTABLE_EXTENSIONS.contains(&ext) {
             return None;
         }
 
@@ -964,19 +964,27 @@ impl Runtime {
         allocator: &'a Allocator,
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
-        let section_sources = PartialLoader::parse(ext, source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
+        let collect_tokens = self.linter.has_external_linter();
+        let section_sources = PartialLoader::parse(allocator, ext, source_text, collect_tokens)
+            .or_else(|| TransformLoader::parse(allocator, ext, source_text))
+            .unwrap_or_else(|| {
+                vec![parse_javascript_source(
+                    allocator,
+                    JavaScriptSource::partial(source_text, source_type, 0),
+                    collect_tokens,
+                )]
+            });
 
         let mut section_module_records = SmallVec::<
             [Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1],
         >::with_capacity(section_sources.len());
-        for section_source in section_sources {
+        for (result, section_source) in section_sources {
             match self.process_source_section(
                 path,
                 allocator,
-                section_source.source_text,
-                section_source.source_type,
                 check_syntax_errors,
+                collect_tokens,
+                result,
             ) {
                 Ok((record, semantic, parser_tokens)) => {
                     section_module_records.push(Ok(record));
@@ -1022,38 +1030,27 @@ impl Runtime {
         &self,
         path: &Path,
         allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
         check_syntax_errors: bool,
+        collect_tokens: bool,
+        parse_result: Result<LinterParseResult<'a>, Vec<OxcDiagnostic>>,
     ) -> Result<(ResolvedModuleRecord, Semantic<'a>, Option<ArenaVec<'a, Token>>), Vec<OxcDiagnostic>>
     {
-        let collect_tokens = self.linter.has_external_linter();
-        let ret = Parser::new(allocator, source_text, source_type)
-            .with_options(ParseOptions {
-                parse_regular_expression: true,
-                allow_return_outside_function: true,
-                ..ParseOptions::default()
-            })
-            .with_config(RuntimeParserConfig::new(collect_tokens))
-            .parse();
-
-        if !ret.errors.is_empty() {
-            return Err(if ret.is_flow_language { vec![] } else { ret.errors });
-        }
+        let parse_result = parse_result?;
 
         let semantic_ret = SemanticBuilder::new()
             .with_cfg(true)
             .with_check_syntax_error(check_syntax_errors)
-            .build(allocator.alloc(ret.program));
+            .build(allocator.alloc(parse_result.program));
 
         if !semantic_ret.errors.is_empty() {
             return Err(semantic_ret.errors);
         }
 
         let mut semantic = semantic_ret.semantic;
-        semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
+        semantic.set_irregular_whitespaces(parse_result.irregular_whitespaces);
 
-        let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
+        let module_record =
+            Arc::new(ModuleRecord::new(path, &parse_result.module_record, &semantic));
 
         let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 
@@ -1073,7 +1070,8 @@ impl Runtime {
                 })
                 .collect();
         }
-        let parser_tokens = collect_tokens.then_some(ret.tokens);
+
+        let parser_tokens = collect_tokens.then_some(parse_result.tokens);
         Ok((
             ResolvedModuleRecord { module_record, resolved_module_requests },
             semantic,

@@ -17,9 +17,9 @@ use serde_json::Value;
 use crate::{
     AstNode,
     ast_util::get_declaration_from_reference_id,
-    context::LintContext,
-    frameworks::FrameworkOptions,
+    context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
+    utils::is_in_vue_setup,
 };
 
 fn max_props_diagnostic(span: Span, cur: usize, limit: usize) -> OxcDiagnostic {
@@ -84,15 +84,15 @@ impl Rule for MaxProps {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if ctx.frameworks_options() == FrameworkOptions::VueSetup {
+        if is_in_vue_setup(ctx, node.scope_id()) {
             self.run_on_setup(node, ctx);
         } else {
             self.run_on_options(node, ctx);
         }
     }
 
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.file_extension().is_some_and(|ext| ext == "vue")
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_vue()
     }
 }
 

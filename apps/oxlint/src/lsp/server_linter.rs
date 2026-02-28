@@ -1233,6 +1233,7 @@ mod test {
         Tester::new("fixtures/lsp/frameworks", json!({})).test_and_snapshot_multiple_file(&[
             "astro/debugger.astro",
             "vue/debugger.vue",
+            "vue/debugger-ts.vue",
             "svelte/debugger.svelte",
             "nextjs/[[..rest]]/debugger.ts",
         ]);

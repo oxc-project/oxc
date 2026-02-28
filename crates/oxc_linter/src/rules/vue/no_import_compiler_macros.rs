@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_import_compiler_macros_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is a compiler macro and doesn't need to be imported."))
@@ -128,7 +128,7 @@ impl Rule for NoImportCompilerMacros {
                 }
             };
 
-            if ctx.frameworks_options() == FrameworkOptions::VueSetup {
+            if ctx.frameworks().is_vue() {
                 // it is safe to removing the import inside `<script setup>`,
                 // because the macro can be referenced globally.
                 ctx.diagnostic_with_fix(

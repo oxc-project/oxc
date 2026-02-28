@@ -1,0 +1,31 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: fixtures/vue/debugger.vue fixtures/vue/debugger-ts.vue
+working directory: 
+----------
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[fixtures/vue/debugger-ts.vue:7:5]
+ 6 |     let foo: T; // test ts syntax
+ 7 |     debugger;
+   :     ^^^^^^^^^
+ 8 | </script>
+   `----
+  help: Remove the debugger statement
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[fixtures/vue/debugger.vue:6:5]
+ 5 | <script>
+ 6 |     debugger
+   :     ^^^^^^^^
+ 7 | </script>
+   `----
+  help: Remove the debugger statement
+
+Found 2 warnings and 0 errors.
+Finished in <variable>ms on 2 files with 93 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

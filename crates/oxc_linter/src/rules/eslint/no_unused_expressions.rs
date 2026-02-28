@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, SPAN, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::Value;
@@ -68,6 +68,10 @@ declare_oxc_lint!(
 
 impl Rule for NoUnusedExpressions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if node.span() == SPAN {
+            return;
+        }
+
         let AstKind::ExpressionStatement(expression_stmt) = node.kind() else {
             return;
         };

@@ -5,9 +5,11 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    frameworks::FrameworkOptions,
     rule::Rule,
-    utils::{DefineMacroProblem, check_define_macro_call_expression, has_default_exports_property},
+    utils::{
+        DefineMacroProblem, check_define_macro_call_expression, has_default_exports_property,
+        is_in_vue_setup,
+    },
 };
 
 fn has_type_and_arguments_diagnostic(span: Span) -> OxcDiagnostic {
@@ -139,7 +141,7 @@ impl Rule for ValidDefineEmits {
     fn run_once(&self, ctx: &LintContext) {
         let mut found: Option<Span> = None;
 
-        let has_other_script_emits = has_default_exports_property(&ctx.other_file_hosts(), "emits");
+        let has_other_script_emits = has_default_exports_property(ctx, "emits");
         for node in ctx.nodes() {
             let AstKind::CallExpression(call_expr) = node.kind() else {
                 continue;
@@ -151,6 +153,10 @@ impl Rule for ValidDefineEmits {
                 .get_identifier_reference()
                 .is_none_or(|reference| reference.name != "defineEmits")
             {
+                continue;
+            }
+
+            if !is_in_vue_setup(ctx, node.scope_id()) {
                 continue;
             }
 
@@ -179,7 +185,7 @@ impl Rule for ValidDefineEmits {
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.frameworks_options() == FrameworkOptions::VueSetup
+        ctx.frameworks().is_vue()
     }
 }
 
@@ -380,7 +386,7 @@ fn test() {
         ),
         (
             "
-                  <script>
+                  <script lang='ts'>
                   export default { emits: [] }
                   </script>
                   <script setup lang='ts'>

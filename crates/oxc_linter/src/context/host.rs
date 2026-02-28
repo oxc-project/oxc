@@ -36,7 +36,7 @@ pub struct ContextSubHost<'a> {
     /// Information about specific rules that should be disabled or enabled, via comment directives like
     /// `eslint-disable` or `eslint-disable-next-line`.
     pub(super) disable_directives: DisableDirectives,
-    // Specific framework options, for example, whether the context is inside `<script setup>` in Vue files.
+    // Specific framework options for the current script block.
     pub(super) framework_options: FrameworkOptions,
     /// Parser tokens collected during parsing, when available.
     pub(super) parser_tokens: Option<ArenaVec<'a, Token>>,
@@ -472,6 +472,10 @@ impl<'a> ContextHost<'a> {
 
             self.frameworks.set(FrameworkFlags::Vitest, vitest_like);
             self.frameworks.set(FrameworkFlags::Jest, jest_like);
+        }
+
+        if self.file_extension().is_some_and(|ext| ext == "vue") {
+            self.frameworks.insert(FrameworkFlags::Vue);
         }
 
         self

@@ -732,7 +732,6 @@ pub(crate) mod vue {
     pub mod max_props;
     pub mod no_arrow_functions_in_watch;
     pub mod no_deprecated_destroyed_lifecycle;
-    pub mod no_export_in_script_setup;
     pub mod no_import_compiler_macros;
     pub mod no_lifecycle_after_await;
     pub mod no_multiple_slot_args;

@@ -173,8 +173,8 @@ source: crates/oxc_linter/src/tester.rs
   help: Rename the file to 'foo-bar.tsx'
 
   ⚠ eslint-plugin-unicorn(filename-case): Filename should be in kebab-case
-   ╭─[filename_case.tsx:1:9]
+   ╭─[filename_case.tsx:1:1]
  1 │ <script></script><script setup></script>
-   ·         ▲
+   · ▲
    ╰────
   help: Rename the file to 'foo-bar.vue'
