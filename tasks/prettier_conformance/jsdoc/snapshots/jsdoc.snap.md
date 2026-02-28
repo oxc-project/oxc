@@ -1,8 +1,7 @@
-jsdoc compatibility: 114/116 (98.28%)
+jsdoc compatibility: 115/116 (99.14%)
 
 # Failed
 
 | Fixture | Ratio |
 | :------ | :---: |
-| descriptions/011-nested-list.ts | 29.63% |
 | descriptions/032-jsx-tsx-css.ts | 86.49% |

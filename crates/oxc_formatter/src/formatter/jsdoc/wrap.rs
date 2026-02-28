@@ -309,6 +309,198 @@ fn wrap_paragraph(
     }
 }
 
+// ──────────────────────────────────────────────────
+// Nested list handling
+// ──────────────────────────────────────────────────
+
+/// A node in a nested list tree.
+struct ListItemNode {
+    text: String,
+    marker_type: ListMarkerType,
+    children: Vec<ListItemNode>,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum ListMarkerType {
+    Ordered,
+    Unordered,
+}
+
+/// Check if the description text is a pure nested list (all non-blank lines
+/// are list items, with at least one top-level and one indented item).
+/// Returns false for mixed content (paragraphs, code blocks, headers + lists).
+pub fn has_nested_lists(text: &str) -> bool {
+    let mut has_top_level_list = false;
+    let mut has_indented_list = false;
+    for line in text.lines() {
+        let leading = line.len() - line.trim_start().len();
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        // If any non-blank line is NOT a list item, this is mixed content
+        if parse_list_item(trimmed).is_none() {
+            return false;
+        }
+        if leading == 0 {
+            has_top_level_list = true;
+        } else {
+            has_indented_list = true;
+        }
+    }
+    has_top_level_list && has_indented_list
+}
+
+struct ParsedListLine {
+    indent: usize,
+    text: String,
+    marker_type: ListMarkerType,
+}
+
+/// Build a tree of nested list items from flat (depth, text, marker_type) tuples.
+fn build_list_tree(
+    items: &[(usize, &str, ListMarkerType)],
+    target_depth: usize,
+) -> Vec<ListItemNode> {
+    let mut result = Vec::new();
+    let mut i = 0;
+    while i < items.len() {
+        let (depth, text, marker_type) = items[i];
+        if depth < target_depth {
+            break;
+        }
+        if depth == target_depth {
+            // Collect children: all items after this one at deeper depth,
+            // up until the next item at the same or lesser depth
+            let mut end = i + 1;
+            while end < items.len() && items[end].0 > target_depth {
+                end += 1;
+            }
+            let children = if end > i + 1 {
+                build_list_tree(&items[i + 1..end], target_depth + 1)
+            } else {
+                Vec::new()
+            };
+            result.push(ListItemNode { text: text.to_string(), marker_type, children });
+            i = end;
+        } else {
+            i += 1;
+        }
+    }
+    result
+}
+
+/// Parse flat input lines into a tree of nested list items.
+/// Uses leading whitespace to determine nesting depth.
+fn parse_nested_list(text: &str) -> Vec<ListItemNode> {
+    let mut parsed = Vec::new();
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let leading = line.len() - line.trim_start().len();
+        if let Some(p) = parse_list_item(trimmed) {
+            let rest = trimmed[p.rest_start..].trim().to_string();
+            let marker_type = if p.normalized_prefix.contains('.') {
+                ListMarkerType::Ordered
+            } else {
+                ListMarkerType::Unordered
+            };
+            parsed.push(ParsedListLine { indent: leading, text: rest, marker_type });
+        }
+    }
+
+    if parsed.is_empty() {
+        return Vec::new();
+    }
+
+    // Determine indent levels: collect unique indents and sort them
+    let mut indent_levels: Vec<usize> = parsed.iter().map(|p| p.indent).collect();
+    indent_levels.sort_unstable();
+    indent_levels.dedup();
+
+    // Assign depth based on indent level position
+    let depth_of = |indent: usize| -> usize {
+        indent_levels.iter().position(|&i| i == indent).unwrap_or(0)
+    };
+
+    let items: Vec<(usize, &str, ListMarkerType)> = parsed
+        .iter()
+        .map(|p| (depth_of(p.indent), p.text.as_str(), p.marker_type))
+        .collect();
+
+    build_list_tree(&items, 0)
+}
+
+/// Serialize a nested list tree into output lines with proper indentation.
+/// Uses remark-style indentation:
+/// - Level 0: indent 0
+/// - Level 1: indent = parent marker width (3 for ordered)
+/// - Level 2+: indent = parent indent + parent marker width + parent marker width
+///   (accounts for content column + extra indent for readability)
+fn serialize_nested_list(
+    nodes: &[ListItemNode],
+    depth: usize,
+    indent: usize,
+    capitalize: bool,
+    lines: &mut Vec<String>,
+) {
+    if nodes.is_empty() {
+        return;
+    }
+
+    let indent_str = " ".repeat(indent);
+    let mut counter = 0u32;
+
+    for node in nodes {
+        let has_children = !node.children.is_empty();
+
+        // Build marker
+        let marker = if node.marker_type == ListMarkerType::Ordered {
+            counter += 1;
+            format!("{counter}. ")
+        } else {
+            "- ".to_string()
+        };
+
+        // Format text
+        let text = if capitalize {
+            super::normalize::capitalize_first(&node.text)
+        } else {
+            node.text.clone()
+        };
+
+        lines.push(format!("{indent_str}{marker}{text}"));
+
+        if has_children {
+            // Add blank line before sub-list (remark spread item behavior)
+            lines.push(String::new());
+
+            // Calculate child indent
+            let marker_width = marker.len();
+            let child_indent = if depth == 0 {
+                // Level 0 → Level 1: just marker width
+                indent + marker_width
+            } else {
+                // Level N → Level N+1: content column + marker width
+                indent + marker_width + marker_width
+            };
+
+            serialize_nested_list(&node.children, depth + 1, child_indent, capitalize, lines);
+        }
+    }
+}
+
+/// Format a nested list description.
+pub fn format_nested_list(text: &str, capitalize: bool, lines: &mut Vec<String>) {
+    let tree = parse_nested_list(text);
+    if tree.is_empty() {
+        return;
+    }
+    serialize_nested_list(&tree, 0, 0, capitalize, lines);
+}
+
 /// Wrap text into lines, preserving structured content (lists, code blocks, tables, etc.)
 /// and wrapping plain paragraphs to the given max width.
 ///
