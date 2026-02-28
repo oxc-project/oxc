@@ -1,10 +1,9 @@
-use std::fmt::Debug;
-use std::hash::Hash;
-
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::traits::{ModuleInfo, ModuleStore};
-use crate::types::ImportKind;
+use crate::graph::ModuleGraph;
+use crate::hooks::LinkConfig;
+use crate::module::Module;
+use crate::types::{ImportKind, ModuleIdx};
 
 /// Configuration for execution order computation.
 pub struct ExecOrderConfig {
@@ -13,11 +12,11 @@ pub struct ExecOrderConfig {
 }
 
 /// Result of execution order computation.
-pub struct ExecOrderResult<I: Copy + Eq + Hash + Debug> {
+pub struct ExecOrderResult {
     /// Module indices in execution order.
-    pub sorted: Vec<I>,
+    pub sorted: Vec<ModuleIdx>,
     /// Detected circular dependencies (each cycle as a list of module indices).
-    pub cycles: Vec<Vec<I>>,
+    pub cycles: Vec<Vec<ModuleIdx>>,
 }
 
 /// Compute execution order for the module graph using DFS post-order.
@@ -25,52 +24,32 @@ pub struct ExecOrderResult<I: Copy + Eq + Hash + Debug> {
 /// This matches the JavaScript module evaluation order defined by the spec:
 /// dependencies are evaluated before their dependents, and the order of
 /// imports within a module determines sibling priority.
-///
-/// - `entries`: entry module indices, processed in order (last entry = highest priority)
-/// - `runtime`: optional runtime module index, processed first via DFS (always ends up first
-///   in result since it has no dependencies)
-/// - `config`: controls whether dynamic imports are followed
-pub fn compute_exec_order<M: ModuleStore>(
-    store: &M,
-    entries: &[M::ModuleIdx],
-    runtime: Option<M::ModuleIdx>,
-    config: &ExecOrderConfig,
-) -> ExecOrderResult<M::ModuleIdx> {
+pub fn compute_exec_order(graph: &ModuleGraph, config: &LinkConfig) -> ExecOrderResult {
     let mut result = Vec::new();
     let mut visited = FxHashSet::default();
     let mut cycles = Vec::new();
 
-    // Stack-based DFS to avoid deep recursion.
-    // Each entry is processed; entries are pushed in reverse order so
-    // the first entry is processed first.
-    let mut stack: Vec<StackEntry<M::ModuleIdx>> = Vec::new();
+    let mut stack: Vec<StackEntry> = Vec::new();
 
     // Push entries in reverse so first entry is processed first (LIFO).
-    for &entry in entries.iter().rev() {
+    for &entry in graph.entries().iter().rev() {
         stack.push(StackEntry::Enter(entry));
     }
 
     // Runtime module is pushed last (on top of stack) so it's processed first.
-    // It goes through the normal DFS path rather than being pre-added.
-    if let Some(rt) = runtime {
+    if let Some(rt) = graph.runtime() {
         stack.push(StackEntry::Enter(rt));
     }
 
-    // Track the DFS path for proper cycle detection.
-    // `dfs_path` is the current path from root to current node.
-    // `path_set` maps module index to its position in `dfs_path` for O(1) lookup.
-    let mut dfs_path: Vec<M::ModuleIdx> = Vec::new();
-    let mut path_set: FxHashMap<M::ModuleIdx, usize> = FxHashMap::default();
+    let mut dfs_path: Vec<ModuleIdx> = Vec::new();
+    let mut path_set: FxHashMap<ModuleIdx, usize> = FxHashMap::default();
 
     while let Some(item) = stack.pop() {
         match item {
             StackEntry::Enter(idx) => {
                 if visited.contains(&idx) {
-                    // Already fully visited — check for cycle (back-edge).
                     if let Some(&pos) = path_set.get(&idx) {
-                        // Back-edge detected: collect full cycle path.
-                        let mut cycle: Vec<M::ModuleIdx> =
-                            dfs_path[pos..].to_vec();
+                        let mut cycle: Vec<ModuleIdx> = dfs_path[pos..].to_vec();
                         cycle.push(idx);
                         cycles.push(cycle);
                     }
@@ -81,38 +60,35 @@ pub fn compute_exec_order<M: ModuleStore>(
                     continue;
                 }
 
-                // Push onto DFS path.
                 let pos = dfs_path.len();
                 dfs_path.push(idx);
                 path_set.insert(idx, pos);
 
-                // Push exit marker so we know when to finalize this module.
                 stack.push(StackEntry::Exit(idx));
 
-                // Get import records and push dependencies in reverse order.
-                let Some(module) = store.module(idx) else {
-                    continue;
-                };
-
+                // Get dependencies based on module type.
                 let mut deps = Vec::new();
-                module.for_each_import_record(&mut |_rec_idx, resolved, kind| {
-                    let follow = match kind {
-                        ImportKind::Dynamic => config.include_dynamic_imports,
-                        ImportKind::Static | ImportKind::Require => true,
-                        ImportKind::HotAccept => false, // HMR-only, not a graph edge
-                    };
-                    if follow && let Some(target) = resolved {
-                        deps.push(target);
+                match graph.modules.get(idx) {
+                    Some(Module::Normal(module)) => {
+                        for rec in &module.import_records {
+                            let follow = match rec.kind {
+                                ImportKind::Dynamic => config.include_dynamic_imports,
+                                ImportKind::Static | ImportKind::Require => true,
+                                ImportKind::HotAccept => false,
+                            };
+                            if follow && let Some(target) = rec.resolved_module {
+                                deps.push(target);
+                            }
+                        }
                     }
-                });
+                    Some(Module::External(_)) | None => {}
+                }
 
-                // Push in reverse so first dependency is processed first.
                 for &dep in deps.iter().rev() {
                     stack.push(StackEntry::Enter(dep));
                 }
             }
             StackEntry::Exit(idx) => {
-                // Pop from DFS path.
                 dfs_path.pop();
                 path_set.remove(&idx);
                 result.push(idx);
@@ -123,9 +99,7 @@ pub fn compute_exec_order<M: ModuleStore>(
     ExecOrderResult { sorted: result, cycles }
 }
 
-enum StackEntry<I> {
-    /// Module to be entered (pre-order).
-    Enter(I),
-    /// Module to be finalized (post-order).
-    Exit(I),
+enum StackEntry {
+    Enter(ModuleIdx),
+    Exit(ModuleIdx),
 }

@@ -6,20 +6,22 @@ use compact_str::CompactString;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
+use oxc_ast::ast::{ArrowFunctionExpression, AwaitExpression, Function, Program};
+use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_resolver::{ResolveOptions, Resolver};
-use oxc_semantic::SemanticBuilder;
+use oxc_semantic::{Scoping, SemanticBuilder};
 use oxc_span::SourceType;
 use oxc_syntax::module_record as syntax;
+use oxc_syntax::scope::ScopeFlags;
 use oxc_syntax::symbol::SymbolId;
 
+use crate::graph::ModuleGraph;
+use crate::module::{ExternalModule, NormalModule, SideEffects};
 use crate::types::{
-    ImportEdge, ImportKind, ImportRecordIdx, IndirectExportEntry, LocalExport, ModuleIdx,
-    NamedImport, ResolvedImportRecord, StarExportEntry, SymbolRef,
+    ImportKind, ImportRecordIdx, IndirectExportEntry, LocalExport, ModuleIdx, NamedImport,
+    ResolvedImportRecord, StarExportEntry, SymbolRef,
 };
-
-use super::module::Module;
-use super::{DefaultModuleGraph, SymbolRefDb};
 
 /// Errors from building the module graph.
 #[derive(Debug)]
@@ -48,25 +50,23 @@ impl std::fmt::Display for BuildError {
 /// Result of building a module graph.
 pub struct BuildResult {
     /// The constructed module graph.
-    pub graph: DefaultModuleGraph,
-    /// The symbol database.
-    pub symbols: SymbolRefDb,
+    pub graph: ModuleGraph,
     /// Non-fatal errors encountered during building.
     pub errors: Vec<BuildError>,
 }
 
-/// Builds a `DefaultModuleGraph` from entry points.
+/// Builds a `ModuleGraph` from entry points.
 ///
 /// Uses `oxc_parser` + `oxc_semantic` to parse files,
 /// and `oxc_resolver` to resolve import specifiers via BFS.
 #[derive(Debug)]
 pub struct ModuleGraphBuilder {
     /// The module graph being built.
-    pub graph: DefaultModuleGraph,
-    /// The symbol database being built.
-    pub symbols: SymbolRefDb,
+    pub graph: ModuleGraph,
     /// Maps absolute paths to module indices (deduplication).
     path_to_idx: FxHashMap<PathBuf, ModuleIdx>,
+    /// Maps external specifiers to module indices (deduplication).
+    external_specifier_to_idx: FxHashMap<CompactString, ModuleIdx>,
     /// Non-fatal errors.
     errors: Vec<BuildError>,
 }
@@ -74,17 +74,14 @@ pub struct ModuleGraphBuilder {
 impl ModuleGraphBuilder {
     pub fn new() -> Self {
         Self {
-            graph: DefaultModuleGraph::new(),
-            symbols: SymbolRefDb::new(),
+            graph: ModuleGraph::new(),
             path_to_idx: FxHashMap::default(),
+            external_specifier_to_idx: FxHashMap::default(),
             errors: Vec::new(),
         }
     }
 
     /// Build the module graph starting from the given entry point paths.
-    ///
-    /// Performs BFS: parse each file, resolve its import specifiers,
-    /// and enqueue newly discovered modules.
     pub fn build(mut self, entries: &[PathBuf]) -> BuildResult {
         let resolver = Resolver::new(ResolveOptions {
             extensions: vec![
@@ -105,6 +102,7 @@ impl ModuleGraphBuilder {
         });
 
         let mut queue: VecDeque<PathBuf> = VecDeque::new();
+        let mut entry_indices = Vec::new();
 
         // Enqueue entry points.
         for entry in entries {
@@ -115,11 +113,14 @@ impl ModuleGraphBuilder {
             };
             let canonical = fs::canonicalize(&abs).unwrap_or(abs);
             if !self.path_to_idx.contains_key(&canonical) {
-                let idx = self.graph.next_idx();
+                let idx = self.graph.alloc_module_idx();
                 self.path_to_idx.insert(canonical.clone(), idx);
+                entry_indices.push(idx);
                 queue.push_back(canonical);
             }
         }
+
+        self.graph.set_entries(entry_indices);
 
         // BFS
         while let Some(path) = queue.pop_front() {
@@ -127,7 +128,7 @@ impl ModuleGraphBuilder {
             self.process_module(&resolver, &path, idx, &mut queue);
         }
 
-        BuildResult { graph: self.graph, symbols: self.symbols, errors: self.errors }
+        BuildResult { graph: self.graph, errors: self.errors }
     }
 
     fn process_module(
@@ -160,26 +161,21 @@ impl ModuleGraphBuilder {
         let sem_ret = SemanticBuilder::new().build(&ret.program);
         let scoping = sem_ret.semantic.into_scoping();
 
-        // Ensure symbol DB has space
-        let next_module_count = idx.index() + 1;
-        self.symbols.ensure_modules(next_module_count);
-
         // Copy all symbols from scoping into our SymbolRefDb
         let symbol_count = scoping.symbols_len();
         #[expect(clippy::cast_possible_truncation)]
         for sym_id_raw in 0..symbol_count {
             let sym_id = SymbolId::from_raw_unchecked(sym_id_raw as u32);
             let name = scoping.symbol_name(sym_id).to_string();
-            self.symbols.add_symbol(idx, name);
+            self.graph.add_symbol(idx, name);
         }
 
         let module_record = &ret.module_record;
 
-        // Build named exports
-        let named_exports = build_named_exports(idx, module_record);
+        // Build named exports (Fix 1: use real SymbolIds from scoping)
+        let named_exports = build_named_exports(idx, module_record, &scoping);
 
         // Build specifier→record_idx mapping for named imports.
-        // Import records are created in `requested_modules` iteration order.
         let specifier_to_record_idx: FxHashMap<&str, usize> = module_record
             .requested_modules
             .keys()
@@ -187,32 +183,36 @@ impl ModuleGraphBuilder {
             .map(|(i, k)| (k.as_str(), i))
             .collect();
 
-        // Build named imports
-        let named_imports = build_named_imports(idx, module_record, &specifier_to_record_idx);
+        // Build named imports (Fix 1: use real SymbolIds from scoping)
+        let named_imports =
+            build_named_imports(idx, module_record, &scoping, &specifier_to_record_idx);
 
-        // Resolve imports and build import records + dependency edges
+        // Resolve imports and build import records (Fix 4: creates ExternalModules for bare specifiers)
         let dir = path.parent().unwrap_or(Path::new("."));
-        let (import_records, dependencies) =
-            self.resolve_imports(resolver, dir, module_record, queue);
+        let import_records = self.resolve_imports(resolver, dir, module_record, queue);
 
-        // Star export entries
-        let star_export_entries = build_star_exports(module_record, &self.path_to_idx);
+        // Star export entries (Fix 2: resolve targets via resolver)
+        let star_export_entries =
+            build_star_exports(module_record, resolver, dir, &self.path_to_idx);
 
-        // Indirect export entries
-        let indirect_export_entries = build_indirect_exports(module_record, &self.path_to_idx);
+        // Indirect export entries (Fix 2: resolve targets via resolver)
+        let indirect_export_entries =
+            build_indirect_exports(module_record, resolver, dir, &self.path_to_idx);
 
         // Default export ref and namespace object ref
-        // We use synthetic symbols if needed
         let default_export_ref = self.get_or_create_symbol(idx, "__default__");
         let namespace_object_ref = self.get_or_create_symbol(idx, "__namespace__");
 
-        let module = Module {
+        // Fix 3: detect top-level await from AST
+        let tla = has_top_level_await(&ret.program);
+
+        let module = NormalModule {
             idx,
             path: path.to_path_buf(),
             has_module_syntax: module_record.has_module_syntax,
             is_commonjs: false,
-            has_top_level_await: false,
-            side_effects: Some(true),
+            has_top_level_await: tla,
+            side_effects: SideEffects::True,
             named_exports,
             named_imports,
             import_records,
@@ -220,78 +220,98 @@ impl ModuleGraphBuilder {
             namespace_object_ref,
             star_export_entries,
             indirect_export_entries,
-            dependencies,
+            // Link-time results — initialized to defaults.
+            resolved_exports: FxHashMap::default(),
+            has_dynamic_exports: false,
+            is_tla_or_contains_tla: false,
+            propagated_side_effects: false,
+            exec_order: u32::MAX,
         };
 
-        self.graph.add_module(module);
+        self.graph.add_normal_module(module);
     }
 
     /// Resolve static ESM imports from `requested_modules`.
     ///
-    /// This only processes static `import`/`export` declarations since
-    /// `oxc_syntax::ModuleRecord` is ESM-only. Dynamic imports (`import()`),
-    /// CommonJS (`require()`), and HMR (`import.meta.hot.accept()`) are not
-    /// detected here. For full import kind support, consumers should extend
-    /// the builder or construct modules manually with the appropriate
-    /// `ImportKind` variants.
+    /// When resolution fails for a bare specifier (not starting with `.` or `/`),
+    /// an `ExternalModule` is created so the graph can represent unresolvable
+    /// dependencies like `"react"` or `"lodash"`.
     fn resolve_imports(
         &mut self,
         resolver: &Resolver,
         dir: &Path,
         module_record: &syntax::ModuleRecord,
         queue: &mut VecDeque<PathBuf>,
-    ) -> (Vec<ResolvedImportRecord>, Vec<ImportEdge>) {
+    ) -> Vec<ResolvedImportRecord> {
         let mut import_records = Vec::new();
-        let mut dependencies = Vec::new();
 
         for (specifier, _) in &module_record.requested_modules {
             let specifier_str = specifier.as_str();
-            let resolved = resolver.resolve(dir, specifier_str).ok();
 
-            let target_idx = resolved.as_ref().map(|res| {
-                let resolved_path = res.path().to_path_buf();
-                if let Some(&existing_idx) = self.path_to_idx.get(&resolved_path) {
-                    existing_idx
-                } else {
-                    // Allocate the next available index.
-                    // path_to_idx.len() is the count of all known modules.
-                    let new_idx = ModuleIdx::from_usize(self.path_to_idx.len());
-                    self.path_to_idx.insert(resolved_path.clone(), new_idx);
-                    queue.push_back(resolved_path);
-                    new_idx
+            let target_idx = match resolver.resolve(dir, specifier_str) {
+                Ok(res) => {
+                    let resolved_path = res.path().to_path_buf();
+                    if let Some(&existing_idx) = self.path_to_idx.get(&resolved_path) {
+                        Some(existing_idx)
+                    } else {
+                        let new_idx = self.graph.alloc_module_idx();
+                        self.path_to_idx.insert(resolved_path.clone(), new_idx);
+                        queue.push_back(resolved_path);
+                        Some(new_idx)
+                    }
                 }
-            });
+                Err(_) => {
+                    // Fix 4: Create ExternalModule for bare specifiers
+                    if !specifier_str.starts_with('.')
+                        && !specifier_str.starts_with('/')
+                        && !specifier_str.starts_with('#')
+                    {
+                        let compact_spec = CompactString::from(specifier_str);
+                        if let Some(&existing_idx) =
+                            self.external_specifier_to_idx.get(&compact_spec)
+                        {
+                            Some(existing_idx)
+                        } else {
+                            let ext_idx = self.graph.alloc_module_idx();
+                            let ns_ref =
+                                self.graph.add_symbol(ext_idx, format!("{specifier_str}_ns"));
+                            self.graph.add_external_module(ExternalModule {
+                                idx: ext_idx,
+                                specifier: compact_spec.clone(),
+                                side_effects: SideEffects::True,
+                                namespace_ref: ns_ref,
+                                exec_order: u32::MAX,
+                            });
+                            self.external_specifier_to_idx.insert(compact_spec, ext_idx);
+                            Some(ext_idx)
+                        }
+                    } else {
+                        None // Truly unresolvable relative import
+                    }
+                }
+            };
 
             import_records.push(ResolvedImportRecord {
                 specifier: CompactString::from(specifier_str),
                 resolved_module: target_idx,
                 kind: ImportKind::Static,
             });
-
-            if let Some(target) = target_idx {
-                dependencies.push(ImportEdge {
-                    specifier: CompactString::from(specifier_str),
-                    target,
-                    is_type: false,
-                });
-            }
         }
 
-        (import_records, dependencies)
+        import_records
     }
 
     fn add_empty_module(&mut self, idx: ModuleIdx, path: &Path) {
-        self.symbols.ensure_modules(idx.index() + 1);
         let default_ref = self.get_or_create_symbol(idx, "__default__");
         let ns_ref = self.get_or_create_symbol(idx, "__namespace__");
 
-        let module = Module {
+        let module = NormalModule {
             idx,
             path: path.to_path_buf(),
             has_module_syntax: false,
             is_commonjs: false,
             has_top_level_await: false,
-            side_effects: Some(true),
+            side_effects: SideEffects::True,
             named_exports: FxHashMap::default(),
             named_imports: FxHashMap::default(),
             import_records: Vec::new(),
@@ -299,13 +319,17 @@ impl ModuleGraphBuilder {
             namespace_object_ref: ns_ref,
             star_export_entries: Vec::new(),
             indirect_export_entries: Vec::new(),
-            dependencies: Vec::new(),
+            resolved_exports: FxHashMap::default(),
+            has_dynamic_exports: false,
+            is_tla_or_contains_tla: false,
+            propagated_side_effects: false,
+            exec_order: u32::MAX,
         };
-        self.graph.add_module(module);
+        self.graph.add_normal_module(module);
     }
 
     fn get_or_create_symbol(&mut self, module: ModuleIdx, name: &str) -> SymbolRef {
-        self.symbols.add_symbol(module, name.to_string())
+        self.graph.add_symbol(module, name.to_string())
     }
 }
 
@@ -315,12 +339,46 @@ impl Default for ModuleGraphBuilder {
     }
 }
 
+/// Detect top-level `await` by visiting the AST.
+///
+/// By not recursing into `Function` or `ArrowFunctionExpression`, we only find
+/// `await` at the module's top level (including top-level class static blocks,
+/// which is correct — those are evaluated at module evaluation time).
+fn has_top_level_await(program: &Program) -> bool {
+    struct TlaDetector {
+        found: bool,
+    }
+
+    impl<'a> Visit<'a> for TlaDetector {
+        fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
+            // Don't recurse — await inside functions is not top-level.
+        }
+
+        fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {
+            // Don't recurse — await inside arrows is not top-level.
+        }
+
+        fn visit_await_expression(&mut self, _it: &AwaitExpression<'a>) {
+            self.found = true;
+        }
+    }
+
+    let mut detector = TlaDetector { found: false };
+    detector.visit_program(program);
+    detector.found
+}
+
 /// Build named exports from the module record.
+///
+/// Uses the `Scoping` from semantic analysis to look up real `SymbolId`s
+/// for each export's local binding.
 fn build_named_exports(
     idx: ModuleIdx,
     record: &syntax::ModuleRecord,
+    scoping: &Scoping,
 ) -> FxHashMap<CompactString, LocalExport> {
     let mut exports = FxHashMap::default();
+    let root_scope = scoping.root_scope_id();
 
     for entry in &record.local_export_entries {
         let export_name = match &entry.export_name {
@@ -336,11 +394,14 @@ fn build_named_exports(
             syntax::ExportLocalName::Null => continue,
         };
 
-        // Use a synthetic symbol based on the name.
-        // In a real implementation, we'd map to the semantic SymbolId.
-        #[expect(clippy::cast_possible_truncation)]
-        let symbol = SymbolRef::new(idx, SymbolId::from_raw_unchecked(exports.len() as u32));
-        _ = local_name;
+        // Look up the real SymbolId from semantic analysis.
+        let symbol = if let Some(sym_id) = scoping.find_binding(root_scope, local_name.into()) {
+            SymbolRef::new(idx, sym_id)
+        } else {
+            // Fallback for edge cases (e.g., `export default <expr>` with no binding).
+            #[expect(clippy::cast_possible_truncation)]
+            SymbolRef::new(idx, SymbolId::from_raw_unchecked(exports.len() as u32))
+        };
 
         exports.insert(
             export_name.clone(),
@@ -353,30 +414,38 @@ fn build_named_exports(
 
 /// Build named imports from the module record.
 ///
-/// `specifier_to_record_idx` maps import specifiers to their position in
-/// the `requested_modules` iteration order, which matches the import record
-/// indices built by `resolve_imports`.
+/// Uses the `Scoping` from semantic analysis to look up real `SymbolId`s
+/// for each import's local binding.
 fn build_named_imports(
     idx: ModuleIdx,
     record: &syntax::ModuleRecord,
+    scoping: &Scoping,
     specifier_to_record_idx: &FxHashMap<&str, usize>,
 ) -> FxHashMap<SymbolRef, NamedImport> {
     let mut imports = FxHashMap::default();
+    let root_scope = scoping.root_scope_id();
 
-    for (i, entry) in record.import_entries.iter().enumerate() {
+    for entry in &record.import_entries {
         let imported_name = match &entry.import_name {
             syntax::ImportImportName::Name(ns) => CompactString::from(ns.name.as_str()),
             syntax::ImportImportName::NamespaceObject => CompactString::new("*"),
             syntax::ImportImportName::Default(_) => CompactString::new("default"),
         };
 
-        #[expect(clippy::cast_possible_truncation)]
-        let local_symbol = SymbolRef::new(idx, SymbolId::from_raw_unchecked(i as u32));
+        let local_name = entry.local_name.name.as_str();
 
-        let record_idx = specifier_to_record_idx
-            .get(entry.module_request.name.as_str())
-            .copied()
-            .unwrap_or(0);
+        // Look up the real SymbolId from semantic analysis.
+        let local_symbol = if let Some(sym_id) = scoping.find_binding(root_scope, local_name.into())
+        {
+            SymbolRef::new(idx, sym_id)
+        } else {
+            // Fallback: use import count as synthetic ID.
+            #[expect(clippy::cast_possible_truncation)]
+            SymbolRef::new(idx, SymbolId::from_raw_unchecked(imports.len() as u32))
+        };
+
+        let record_idx =
+            specifier_to_record_idx.get(entry.module_request.name.as_str()).copied().unwrap_or(0);
 
         imports.insert(
             local_symbol,
@@ -392,37 +461,49 @@ fn build_named_imports(
     imports
 }
 
-/// Build star export entries.
+/// Build star export entries, resolving module targets via the resolver.
 fn build_star_exports(
     record: &syntax::ModuleRecord,
+    resolver: &Resolver,
+    dir: &Path,
     path_to_idx: &FxHashMap<PathBuf, ModuleIdx>,
 ) -> Vec<StarExportEntry> {
-    let _ = path_to_idx;
     record
         .star_export_entries
         .iter()
         .filter_map(|entry| {
             let module_request = entry.module_request.as_ref()?;
+            let specifier = module_request.name.as_str();
+
+            // Resolve the module specifier to find the target module index.
+            let resolved_module = resolver
+                .resolve(dir, specifier)
+                .ok()
+                .and_then(|res| path_to_idx.get(&res.path().to_path_buf()).copied());
+
             Some(StarExportEntry {
-                module_request: CompactString::from(module_request.name.as_str()),
-                resolved_module: None, // Will be resolved in binding phase
+                module_request: CompactString::from(specifier),
+                resolved_module,
                 span: entry.span,
             })
         })
         .collect()
 }
 
-/// Build indirect export entries.
+/// Build indirect export entries, resolving module targets via the resolver.
 fn build_indirect_exports(
     record: &syntax::ModuleRecord,
+    resolver: &Resolver,
+    dir: &Path,
     path_to_idx: &FxHashMap<PathBuf, ModuleIdx>,
 ) -> Vec<IndirectExportEntry> {
-    let _ = path_to_idx;
     record
         .indirect_export_entries
         .iter()
         .filter_map(|entry| {
             let module_request = entry.module_request.as_ref()?;
+            let specifier = module_request.name.as_str();
+
             let exported_name = match &entry.export_name {
                 syntax::ExportExportName::Name(ns) => CompactString::from(ns.name.as_str()),
                 syntax::ExportExportName::Default(_) => CompactString::new("default"),
@@ -436,11 +517,17 @@ fn build_indirect_exports(
                 syntax::ExportImportName::Null => return None,
             };
 
+            // Resolve the module specifier to find the target module index.
+            let resolved_module = resolver
+                .resolve(dir, specifier)
+                .ok()
+                .and_then(|res| path_to_idx.get(&res.path().to_path_buf()).copied());
+
             Some(IndirectExportEntry {
                 exported_name,
                 imported_name,
-                module_request: CompactString::from(module_request.name.as_str()),
-                resolved_module: None,
+                module_request: CompactString::from(specifier),
+                resolved_module,
                 span: entry.span,
             })
         })
