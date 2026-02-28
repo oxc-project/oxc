@@ -95,10 +95,10 @@ impl ESTree for ESTreeSafeToken<'_> {
 /// Token whose value may not be JSON-safe.
 ///
 /// Used for strings, templates, regexes, JSXText.
-pub struct ESTreeUnsafeToken<'a> {
-    pub token_type: TokenType,
-    pub value: &'a str,
-    pub span: Span,
+struct ESTreeUnsafeToken<'a> {
+    token_type: TokenType,
+    value: &'a str,
+    span: Span,
 }
 
 impl ESTree for ESTreeUnsafeToken<'_> {
