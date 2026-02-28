@@ -1,0 +1,96 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:24]
+ 1 │ import { helper } from '../../../utils/helper';
+   ·                        ───────────────────────
+   ╰────
+  help: Replace `../../../utils/helper` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:24]
+ 1 │ import { helper } from '../../../../src/utils/helper';
+   ·                        ──────────────────────────────
+   ╰────
+  help: Replace `../../../../src/utils/helper` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:24]
+ 1 │ import { helper } from "../../../utils/helper";
+   ·                        ───────────────────────
+   ╰────
+  help: Replace `../../../utils/helper` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:24]
+ 1 │ import { helper } from '../../../utils/helper.ts';
+   ·                        ──────────────────────────
+   ╰────
+  help: Replace `../../../utils/helper.ts` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:24]
+ 1 │ export { helper } from '../../../utils/helper';
+   ·                        ───────────────────────
+   ╰────
+  help: Replace `../../../utils/helper` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:15]
+ 1 │ export * from '../../../utils/helper';
+   ·               ───────────────────────
+   ╰────
+  help: Replace `../../../utils/helper` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:24]
+ 1 │ import { helper } from '../../../utils/index';
+   ·                        ──────────────────────
+   ╰────
+  help: Replace `../../../utils/index` with `@utils`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:8]
+ 1 │ import '../../../utils/helper';
+   ·        ───────────────────────
+   ╰────
+  help: Replace `../../../utils/helper` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:29]
+ 1 │ import type { Helper } from '../../../utils/helper';
+   ·                             ───────────────────────
+   ╰────
+  help: Replace `../../../utils/helper` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:24]
+ 1 │ import { helper } from '../../../utils/helper';
+   ·                        ───────────────────────
+   ╰────
+  help: Replace `../../../utils/helper` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:24]
+ 1 │ import { helper } from '../../../utils/helper';
+   ·                        ───────────────────────
+   ╰────
+  help: Replace `../../../utils/helper` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:1:24]
+ 1 │ import { helper } from '../../../utils/helper';
+   ·                        ───────────────────────
+ 2 │ import { helper as helper2 } from '../../../utils/helper';
+   ╰────
+  help: Replace `../../../utils/helper` with `@/utils/helper`.
+
+  ⚠ eslint-plugin-import(prefer-shortest-imports): Use the shortest import specifier.
+   ╭─[prefer-shortest-imports/src/features/nested/deep/feature.ts:2:35]
+ 1 │ import { helper } from '../../../utils/helper';
+ 2 │ import { helper as helper2 } from '../../../utils/helper';
+   ·                                   ───────────────────────
+   ╰────
+  help: Replace `../../../utils/helper` with `@/utils/helper`.

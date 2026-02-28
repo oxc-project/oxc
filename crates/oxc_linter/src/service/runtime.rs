@@ -32,7 +32,9 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    utils::read_to_arena_str,
+    utils::{
+        PreferredSpecifierComputer, load_tsconfig_path_aliases, read_to_arena_str,
+    },
 };
 
 use super::LintServiceOptions;
@@ -43,7 +45,8 @@ type ModulesByPath =
 pub struct Runtime {
     cwd: Box<Path>,
     pub(super) linter: Linter,
-    resolver: Option<Resolver>,
+    resolver: Option<Arc<Resolver>>,
+    preferred_specifier_computer: Option<Arc<PreferredSpecifierComputer>>,
 
     /// Pool of allocators for parsing and linting.
     allocator_pool: AllocatorPool,
@@ -246,7 +249,19 @@ impl Runtime {
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         let allocator_pool = AllocatorPool::new(thread_count);
 
-        let resolver = options.cross_module.then(|| Self::get_resolver(options.tsconfig));
+        let tsconfig_path = options.tsconfig.clone();
+        let resolver =
+            options.cross_module.then(|| Arc::new(Self::get_resolver(tsconfig_path.clone())));
+        let tsconfig_path_aliases = tsconfig_path
+            .as_deref()
+            .and_then(load_tsconfig_path_aliases)
+            .filter(|aliases| !aliases.is_empty());
+        let preferred_specifier_computer = resolver.as_ref().map(|r| {
+            Arc::new(PreferredSpecifierComputer::new(
+                Arc::clone(r),
+                tsconfig_path_aliases,
+            ))
+        });
 
         Self {
             allocator_pool,
@@ -255,6 +270,7 @@ impl Runtime {
             cwd: options.cwd,
             linter,
             resolver,
+            preferred_specifier_computer,
             modules_by_path: papaya::HashMap::builder()
                 .hasher(BuildHasherDefault::default())
                 .resize_mode(papaya::ResizeMode::Blocking)
@@ -545,6 +561,7 @@ impl Runtime {
 
             // Now all dependencies in this group are processed.
             // Writing to `loaded_modules` based on `module_paths_and_resolved_requests`
+            let preferred_computer = &self.preferred_specifier_computer;
             module_paths_and_resolved_requests.par_drain(..).for_each(|(path, requested_module_paths)| {
                 if requested_module_paths.is_empty() {
                     return;
@@ -567,6 +584,9 @@ impl Runtime {
                             continue;
                         };
                         loaded_modules.insert(request.specifier, Arc::downgrade(dep_module_record));
+                    }
+                    if let Some(computer) = preferred_computer {
+                        record.set_preferred_specifier_computer(Arc::clone(computer));
                     }
                 }
             });
@@ -1057,9 +1077,7 @@ impl Runtime {
 
         let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 
-        // If import plugin is enabled.
         if let Some(resolver) = &self.resolver {
-            // Retrieve all dependent modules from this module.
             let dir = path.parent().unwrap();
             resolved_module_requests = module_record
                 .requested_modules
@@ -1068,7 +1086,9 @@ impl Runtime {
                     let resolution = resolver.resolve(dir, specifier).ok()?;
                     Some(ResolvedModuleRequest {
                         specifier: specifier.clone(),
-                        resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),
+                        resolved_requested_path: Arc::<OsStr>::from(
+                            resolution.path().as_os_str(),
+                        ),
                     })
                 })
                 .collect();

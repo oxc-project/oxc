@@ -36,6 +36,7 @@ pub(crate) mod import {
     pub mod no_unassigned_import;
     pub mod no_webpack_loader_syntax;
     pub mod prefer_default_export;
+    pub mod prefer_shortest_imports;
     pub mod unambiguous;
 }
 

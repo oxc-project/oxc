@@ -12,6 +12,8 @@ use oxc_semantic::Semantic;
 use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::module_record::RequestedModule;
 
+use crate::utils::PreferredSpecifierComputer;
+
 /// ESM Module Record
 ///
 /// All data inside this data structure are for ESM, no commonjs data is allowed.
@@ -49,6 +51,10 @@ pub struct ModuleRecord {
     ///
     /// Use [ModuleRecord::get_loaded_module] to get a `ModuleRecord`.
     loaded_modules: RwLock<FxHashMap<CompactStr, Weak<ModuleRecord>>>,
+    /// Preferred shortest specifier for each requested module.
+    preferred_specifiers: RwLock<FxHashMap<CompactStr, CompactStr>>,
+    /// Preferred non-relative specifier for each requested module.
+    preferred_non_relative_specifiers: RwLock<FxHashMap<CompactStr, CompactStr>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -85,6 +91,10 @@ pub struct ModuleRecord {
     /// `export default name`
     ///         ^^^^^^^ span
     pub export_default: Option<Span>,
+
+    /// Lazily computes preferred specifiers on first access.
+    /// Set by the runtime after the module graph is populated.
+    preferred_specifier_computer: OnceLock<Arc<PreferredSpecifierComputer>>,
 }
 
 impl fmt::Debug for ModuleRecord {
@@ -99,11 +109,26 @@ impl fmt::Debug for ModuleRecord {
             .reduce(|acc, key| format!("{acc}, {key}"))
             .unwrap_or_default();
         let loaded_modules = format!("{{ {loaded_modules} }}");
+        let format_map_keys = |m: &RwLock<FxHashMap<CompactStr, CompactStr>>| {
+            let keys = m
+                .read()
+                .unwrap()
+                .keys()
+                .map(ToString::to_string)
+                .reduce(|acc, key| format!("{acc}, {key}"))
+                .unwrap_or_default();
+            format!("{{ {keys} }}")
+        };
         f.debug_struct("ModuleRecord")
             .field("has_module_syntax", &self.has_module_syntax)
             .field("resolved_absolute_path", &self.resolved_absolute_path)
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
+            .field("preferred_specifiers", &format_map_keys(&self.preferred_specifiers))
+            .field(
+                "preferred_non_relative_specifiers",
+                &format_map_keys(&self.preferred_non_relative_specifiers),
+            )
             .field("import_entries", &self.import_entries)
             .field("local_export_entries", &self.local_export_entries)
             .field("indirect_export_entries", &self.indirect_export_entries)
@@ -536,6 +561,56 @@ impl ModuleRecord {
     pub fn get_loaded_module(&self, key: &str) -> Option<Arc<ModuleRecord>> {
         let loaded_modules = self.loaded_modules();
         loaded_modules.get(key).map(|weak| Weak::upgrade(weak).unwrap())
+    }
+
+    pub(crate) fn set_preferred_specifier_computer(
+        &self,
+        computer: Arc<PreferredSpecifierComputer>,
+    ) {
+        let _ = self.preferred_specifier_computer.set(computer);
+    }
+
+    /// Returns the shortest preferred specifier for the given import key,
+    /// computing and caching on first access.
+    pub fn preferred_specifier(&self, key: &str) -> Option<CompactStr> {
+        if let Some(cached) = self.preferred_specifiers.read().unwrap().get(key) {
+            return Some(cached.clone());
+        }
+        self.compute_and_cache_preferred(key);
+        self.preferred_specifiers.read().unwrap().get(key).cloned()
+    }
+
+    /// Returns the shortest non-relative specifier for the given import key,
+    /// computing and caching on first access.
+    pub fn preferred_non_relative_specifier(&self, key: &str) -> Option<CompactStr> {
+        if let Some(cached) = self.preferred_non_relative_specifiers.read().unwrap().get(key) {
+            return Some(cached.clone());
+        }
+        self.compute_and_cache_preferred(key);
+        self.preferred_non_relative_specifiers.read().unwrap().get(key).cloned()
+    }
+
+    fn compute_and_cache_preferred(&self, key: &str) {
+        let Some(computer) = self.preferred_specifier_computer.get() else {
+            return;
+        };
+        let Some(from_dir) = self.resolved_absolute_path.parent() else {
+            return;
+        };
+        let Some(dep) = self.get_loaded_module(key) else {
+            return;
+        };
+        let (pref, pref_non_rel) =
+            computer.compute(from_dir, key, &dep.resolved_absolute_path);
+        if let Some(p) = pref {
+            self.preferred_specifiers.write().unwrap().insert(CompactStr::from(key), p);
+        }
+        if let Some(p) = pref_non_rel {
+            self.preferred_non_relative_specifiers
+                .write()
+                .unwrap()
+                .insert(CompactStr::from(key), p);
+        }
     }
 
     pub(crate) fn exported_bindings_from_star_export(
