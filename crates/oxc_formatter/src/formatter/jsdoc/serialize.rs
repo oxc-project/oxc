@@ -440,7 +440,11 @@ pub fn format_jsdoc_comment<'a>(
         }
     }
 
-    // Post-process: format code in fenced code blocks and indented code blocks
+    // Post-process: format code in fenced code blocks and indented code blocks.
+    // format_indented_code_blocks must skip lines inside fenced code blocks and
+    // @example tags, since those have already been formatted by their respective
+    // processors and may contain 4+ space indentation that is NOT a markdown
+    // indented code block.
     format_fenced_code_blocks(&mut content_lines, wrap_width, format_options);
     format_indented_code_blocks(&mut content_lines, wrap_width, format_options);
 
@@ -1049,14 +1053,49 @@ fn format_fenced_code_blocks(
 
 /// Post-process content lines to format indented code blocks (4-space indented).
 /// These are blocks of consecutive lines starting with 4+ spaces, typically
-/// between blank lines.
+/// between blank lines in description text (markdown indented code blocks).
+///
+/// Skips lines inside fenced code blocks (``` ... ```) and @example tag
+/// content, since those regions may contain 4+ space indentation from the
+/// formatter's own output that should not be re-processed.
 fn format_indented_code_blocks(
     content_lines: &mut Vec<String>,
     wrap_width: usize,
     format_options: &FormatOptions,
 ) {
     let mut i = 0;
+    let mut in_fenced_block = false;
+    let mut in_example_tag = false;
     while i < content_lines.len() {
+        let line = &content_lines[i];
+
+        // Track fenced code blocks so we don't re-format code inside them
+        if line.starts_with("```") {
+            in_fenced_block = !in_fenced_block;
+            i += 1;
+            continue;
+        }
+        if in_fenced_block {
+            i += 1;
+            continue;
+        }
+
+        // Track @example tag regions: starts with "@example" line,
+        // continues through indented content until a blank line or new tag
+        if line.starts_with('@') {
+            in_example_tag = line.starts_with("@example");
+            i += 1;
+            continue;
+        }
+        if in_example_tag {
+            // @example content continues until a blank line or a non-indented line
+            if line.is_empty() {
+                in_example_tag = false;
+            }
+            i += 1;
+            continue;
+        }
+
         if content_lines[i].starts_with("    ") {
             // Found start of indented code block
             let start = i;
