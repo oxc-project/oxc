@@ -6,9 +6,11 @@ mod side_effects;
 mod tla;
 
 pub use binding::{
-    BindingError, BindingResult, ResolvedExportsMap, bind_imports_and_exports,
-    build_resolved_exports, match_imports,
+    BindingError, ResolvedExportsMap, bind_imports_and_exports, build_resolved_exports,
+    match_imports,
 };
+// Used by ModuleGraph::link() internally.
+pub(crate) use binding::match_imports_collect;
 pub use cycles::find_cycles;
 pub use dynamic_exports::compute_has_dynamic_exports;
 pub use exec_order::{ExecOrderConfig, ExecOrderResult, compute_exec_order};

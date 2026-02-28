@@ -1,6 +1,7 @@
 use rustc_hash::FxHashSet;
 
-use crate::traits::{ModuleInfo, ModuleStore};
+use crate::graph::ModuleGraph;
+use crate::types::ModuleIdx;
 
 /// Compute which modules are affected by top-level `await`.
 ///
@@ -12,19 +13,17 @@ use crate::traits::{ModuleInfo, ModuleStore};
 /// dynamic imports are always async regardless.
 ///
 /// Returns the set of module indices that are TLA or contain a TLA dependency.
-pub fn compute_tla<M: ModuleStore>(store: &M) -> FxHashSet<M::ModuleIdx> {
+pub fn compute_tla(graph: &ModuleGraph) -> FxHashSet<ModuleIdx> {
     let mut result = FxHashSet::default();
 
-    // Collect all module indices.
-    let mut all_indices: Vec<M::ModuleIdx> = Vec::with_capacity(store.modules_len());
-    store.for_each_module(&mut |idx, _| {
-        all_indices.push(idx);
-    });
+    // Collect normal module indices.
+    let all_indices: Vec<ModuleIdx> =
+        graph.modules.iter_enumerated().filter_map(|(idx, m)| m.as_normal().map(|_| idx)).collect();
 
     // Early return: count modules with TLA. If none, skip traversal.
     let tla_count = all_indices
         .iter()
-        .filter(|&&idx| store.module(idx).is_some_and(ModuleInfo::has_top_level_await))
+        .filter(|&&idx| graph.normal_module(idx).is_some_and(|m| m.has_top_level_await))
         .count();
     if tla_count == 0 {
         return result;
@@ -33,7 +32,7 @@ pub fn compute_tla<M: ModuleStore>(store: &M) -> FxHashSet<M::ModuleIdx> {
     for idx in all_indices {
         if !result.contains(&idx) {
             let mut visiting = FxHashSet::default();
-            check_tla(store, idx, &mut result, &mut visiting);
+            check_tla(graph, idx, &mut result, &mut visiting);
         }
     }
 
@@ -41,42 +40,35 @@ pub fn compute_tla<M: ModuleStore>(store: &M) -> FxHashSet<M::ModuleIdx> {
 }
 
 /// Recursively check if a module is TLA-affected.
-///
-/// Uses `visiting` for cycle detection and `result` as a cache.
-fn check_tla<M: ModuleStore>(
-    store: &M,
-    idx: M::ModuleIdx,
-    result: &mut FxHashSet<M::ModuleIdx>,
-    visiting: &mut FxHashSet<M::ModuleIdx>,
+fn check_tla(
+    graph: &ModuleGraph,
+    idx: ModuleIdx,
+    result: &mut FxHashSet<ModuleIdx>,
+    visiting: &mut FxHashSet<ModuleIdx>,
 ) -> bool {
-    // Already confirmed TLA.
     if result.contains(&idx) {
         return true;
     }
 
-    // Cycle — treat as not TLA to break recursion.
     if !visiting.insert(idx) {
         return false;
     }
 
-    let Some(module) = store.module(idx) else {
+    let Some(module) = graph.normal_module(idx) else {
         return false;
     };
 
     // Direct TLA.
-    if module.has_top_level_await() {
+    if module.has_top_level_await {
         result.insert(idx);
         return true;
     }
 
     // Check static dependencies only.
-    let mut static_deps = Vec::new();
-    store.for_each_static_dependency(idx, &mut |dep| {
-        static_deps.push(dep);
-    });
+    let static_deps: Vec<ModuleIdx> = module.static_dependencies().collect();
 
     for dep in static_deps {
-        if check_tla(store, dep, result, visiting) {
+        if check_tla(graph, dep, result, visiting) {
             result.insert(idx);
             return true;
         }

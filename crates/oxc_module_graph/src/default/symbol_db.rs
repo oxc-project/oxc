@@ -1,7 +1,6 @@
 use oxc_index::IndexVec;
 use oxc_syntax::symbol::SymbolId;
 
-use crate::traits::SymbolGraph;
 use crate::types::{ModuleIdx, SymbolRef};
 
 /// Per-module symbol table: stores name + link for each symbol.
@@ -13,7 +12,7 @@ struct ModuleSymbols {
     links: IndexVec<SymbolId, SymbolRef>,
 }
 
-/// Default symbol database — implements union-find across modules.
+/// Symbol database — implements union-find across modules.
 #[derive(Debug, Default)]
 pub struct SymbolRefDb {
     modules: IndexVec<ModuleIdx, ModuleSymbols>,
@@ -39,13 +38,9 @@ impl SymbolRefDb {
         symbols.links.push(sym_ref);
         sym_ref
     }
-}
 
-impl SymbolGraph for SymbolRefDb {
-    type ModuleIdx = ModuleIdx;
-    type SymbolRef = SymbolRef;
-
-    fn canonical_ref_for(&self, symbol: SymbolRef) -> SymbolRef {
+    /// Follow link chains to find the canonical (final) symbol.
+    pub fn canonical_ref_for(&self, symbol: SymbolRef) -> SymbolRef {
         let mut current = symbol;
         loop {
             let next = self.modules[current.owner].links[current.symbol];
@@ -56,16 +51,18 @@ impl SymbolGraph for SymbolRefDb {
         }
     }
 
-    fn link(&mut self, from: SymbolRef, to: SymbolRef) {
-        // Set the link for `from` to point to `to`.
+    /// Link `from` to resolve to `to`.
+    pub fn link(&mut self, from: SymbolRef, to: SymbolRef) {
         self.modules[from.owner].links[from.symbol] = to;
     }
 
-    fn symbol_name(&self, symbol: SymbolRef) -> &str {
+    /// Get the declared name of a symbol.
+    pub fn symbol_name(&self, symbol: SymbolRef) -> &str {
         &self.modules[symbol.owner].names[symbol.symbol]
     }
 
-    fn symbol_owner(&self, symbol: SymbolRef) -> ModuleIdx {
+    /// Get the owning module of a symbol.
+    pub fn symbol_owner(symbol: SymbolRef) -> ModuleIdx {
         symbol.owner
     }
 }

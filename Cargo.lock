@@ -2157,6 +2157,8 @@ version = "0.115.0"
 dependencies = [
  "compact_str",
  "oxc_allocator",
+ "oxc_ast",
+ "oxc_ast_visit",
  "oxc_index",
  "oxc_parser",
  "oxc_resolver",

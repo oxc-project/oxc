@@ -1,28 +1,26 @@
 use rustc_hash::FxHashSet;
 
-use crate::traits::{ModuleInfo, ModuleStore};
+use crate::graph::ModuleGraph;
+use crate::types::ModuleIdx;
 
 /// Compute which modules have dynamic exports due to `export *` chains.
 ///
 /// A module has dynamic exports if:
-/// 1. It uses CommonJS (`is_commonjs()` is true), OR
-/// 2. It has `export *` targeting an external module (not in the store), OR
+/// 1. It uses CommonJS (`is_commonjs` is true), OR
+/// 2. It has `export *` targeting an external module, OR
 /// 3. It has `export *` from a module that itself has dynamic exports (transitive)
 ///
 /// Returns the set of module indices that have dynamic exports.
-pub fn compute_has_dynamic_exports<M: ModuleStore>(store: &M) -> FxHashSet<M::ModuleIdx> {
+pub fn compute_has_dynamic_exports(graph: &ModuleGraph) -> FxHashSet<ModuleIdx> {
     let mut result = FxHashSet::default();
 
-    // Collect all module indices.
-    let mut all_indices: Vec<M::ModuleIdx> = Vec::with_capacity(store.modules_len());
-    store.for_each_module(&mut |idx, _| {
-        all_indices.push(idx);
-    });
+    let all_indices: Vec<ModuleIdx> =
+        graph.modules.iter_enumerated().filter_map(|(idx, m)| m.as_normal().map(|_| idx)).collect();
 
     for idx in all_indices {
         if !result.contains(&idx) {
             let mut visiting = FxHashSet::default();
-            check_dynamic(store, idx, &mut result, &mut visiting);
+            check_dynamic(graph, idx, &mut result, &mut visiting);
         }
     }
 
@@ -30,52 +28,42 @@ pub fn compute_has_dynamic_exports<M: ModuleStore>(store: &M) -> FxHashSet<M::Mo
 }
 
 /// Recursively check if a module has dynamic exports.
-///
-/// Uses `visiting` for cycle detection to avoid infinite recursion.
-/// Uses `result` as a cache of already-confirmed dynamic modules.
-fn check_dynamic<M: ModuleStore>(
-    store: &M,
-    idx: M::ModuleIdx,
-    result: &mut FxHashSet<M::ModuleIdx>,
-    visiting: &mut FxHashSet<M::ModuleIdx>,
+fn check_dynamic(
+    graph: &ModuleGraph,
+    idx: ModuleIdx,
+    result: &mut FxHashSet<ModuleIdx>,
+    visiting: &mut FxHashSet<ModuleIdx>,
 ) -> bool {
-    // Already confirmed dynamic.
     if result.contains(&idx) {
         return true;
     }
 
-    // Cycle — treat as not dynamic to avoid infinite recursion.
     if !visiting.insert(idx) {
         return false;
     }
 
-    let Some(module) = store.module(idx) else {
-        // Module not in store (external) — not directly checked here,
-        // but handled by the star export target check below.
+    let Some(module) = graph.normal_module(idx) else {
         return false;
     };
 
     // CJS modules always have dynamic exports.
-    if module.is_commonjs() {
+    if module.is_commonjs {
         result.insert(idx);
         return true;
     }
 
     // Check star export targets.
-    let mut star_targets = Vec::new();
-    module.for_each_star_export(&mut |target| {
-        star_targets.push(target);
-    });
+    let star_targets: Vec<ModuleIdx> = module.star_export_modules().collect();
 
     for target in star_targets {
-        // External module (not in store) → dynamic.
-        if store.module(target).is_none() {
+        // External module → dynamic.
+        if graph.external_module(target).is_some() {
             result.insert(idx);
             return true;
         }
 
         // Transitive: if target has dynamic exports, so do we.
-        if check_dynamic(store, target, result, visiting) {
+        if check_dynamic(graph, target, result, visiting) {
             result.insert(idx);
             return true;
         }

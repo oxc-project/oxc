@@ -1,11 +1,14 @@
 use std::path::PathBuf;
 
 use compact_str::CompactString;
-use oxc_module_graph::default::{DefaultModuleGraph, Module, SymbolRefDb};
-use oxc_module_graph::traits::{ModuleInfo, ModuleStore, SymbolGraph};
+use oxc_module_graph::default::SymbolRefDb;
 use oxc_module_graph::types::{
-    ImportEdge, ImportKind, ImportRecordIdx, LocalExport, MatchImportKind, ModuleIdx, NamedImport,
-    ResolvedImportRecord, SymbolRef,
+    ImportKind, ImportRecordIdx, LocalExport, ModuleIdx, NamedImport, ResolvedImportRecord,
+    StarExportEntry, SymbolRef,
+};
+use oxc_module_graph::{
+    ModuleGraph, NormalModule, SideEffects, bind_imports_and_exports, compute_exec_order,
+    compute_has_dynamic_exports, compute_tla, determine_side_effects, find_cycles,
 };
 use rustc_hash::FxHashMap;
 
@@ -14,11 +17,43 @@ fn dummy_symbol_ref(module: ModuleIdx, id: u32) -> SymbolRef {
     SymbolRef::new(module, SymbolId::from_raw_unchecked(id))
 }
 
+/// Helper: create a NormalModule with minimal fields.
+fn make_normal_module(
+    idx: ModuleIdx,
+    path: &str,
+    named_exports: FxHashMap<CompactString, LocalExport>,
+    named_imports: FxHashMap<SymbolRef, NamedImport>,
+    import_records: Vec<ResolvedImportRecord>,
+    default_export_ref: SymbolRef,
+    namespace_object_ref: SymbolRef,
+) -> NormalModule {
+    NormalModule {
+        idx,
+        path: PathBuf::from(path),
+        has_module_syntax: true,
+        is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: SideEffects::True,
+        named_exports,
+        named_imports,
+        import_records,
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        default_export_ref,
+        namespace_object_ref,
+        resolved_exports: FxHashMap::default(),
+        has_dynamic_exports: false,
+        is_tla_or_contains_tla: false,
+        propagated_side_effects: false,
+        exec_order: u32::MAX,
+    }
+}
+
 #[test]
 fn test_module_graph_basic() {
-    let mut graph = DefaultModuleGraph::new();
+    let mut graph = ModuleGraph::new();
 
-    let idx_a = graph.next_idx();
+    let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
     // Module A: imports `foo` from B, exports `bar`
@@ -44,13 +79,13 @@ fn test_module_graph_basic() {
         LocalExport { exported_name: CompactString::new("bar"), local_symbol: sym_bar },
     );
 
-    let module_a = Module {
+    graph.add_normal_module(NormalModule {
         idx: idx_a,
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
         has_top_level_await: false,
-        side_effects: Some(true),
+        side_effects: SideEffects::True,
         named_exports,
         named_imports,
         import_records: vec![ResolvedImportRecord {
@@ -62,14 +97,12 @@ fn test_module_graph_basic() {
         namespace_object_ref: ns_ref,
         star_export_entries: vec![],
         indirect_export_entries: vec![],
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    };
-
-    graph.add_module(module_a);
+        resolved_exports: FxHashMap::default(),
+        has_dynamic_exports: false,
+        is_tla_or_contains_tla: false,
+        propagated_side_effects: false,
+        exec_order: u32::MAX,
+    });
 
     // Module B: exports `foo`
     let sym_foo_b = dummy_symbol_ref(idx_b, 0);
@@ -82,55 +115,52 @@ fn test_module_graph_basic() {
         LocalExport { exported_name: CompactString::new("foo"), local_symbol: sym_foo_b },
     );
 
-    let module_b = Module {
-        idx: idx_b,
-        path: PathBuf::from("/b.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: named_exports_b,
-        named_imports: FxHashMap::default(),
-        import_records: vec![],
-        default_export_ref: default_ref_b,
-        namespace_object_ref: ns_ref_b,
-        star_export_entries: vec![],
-        indirect_export_entries: vec![],
-        dependencies: vec![],
-    };
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        named_exports_b,
+        FxHashMap::default(),
+        vec![],
+        default_ref_b,
+        ns_ref_b,
+    ));
 
-    graph.add_module(module_b);
-
-    // Verify ModuleStore trait
+    // Verify basic queries
     assert_eq!(graph.modules_len(), 2);
-    let module_a_ref = graph.module(idx_a).unwrap();
-    assert!(module_a_ref.has_module_syntax());
-    assert_eq!(module_a_ref.module_idx(), idx_a);
+    let module_a_ref = graph.normal_module(idx_a).unwrap();
+    assert!(module_a_ref.has_module_syntax);
+    assert_eq!(module_a_ref.idx, idx_a);
 
-    // Verify dependencies via for_each_dependency
-    let mut deps_a = Vec::new();
-    graph.for_each_dependency(idx_a, &mut |dep| deps_a.push(dep));
+    // Verify dependencies via import records
+    let deps_a: Vec<ModuleIdx> = graph
+        .normal_module(idx_a)
+        .unwrap()
+        .import_records
+        .iter()
+        .filter_map(|r| r.resolved_module)
+        .collect();
     assert_eq!(deps_a.len(), 1);
     assert_eq!(deps_a[0], idx_b);
 
-    let mut deps_b = Vec::new();
-    graph.for_each_dependency(idx_b, &mut |dep| deps_b.push(dep));
+    let deps_b: Vec<ModuleIdx> = graph
+        .normal_module(idx_b)
+        .unwrap()
+        .import_records
+        .iter()
+        .filter_map(|r| r.resolved_module)
+        .collect();
     assert_eq!(deps_b.len(), 0);
 
-    // Verify exports via for_each_named_export
-    let mut a_exports = Vec::new();
-    module_a_ref.for_each_named_export(&mut |name, _, _| a_exports.push(name.to_string()));
+    // Verify exports
+    let a_exports: Vec<String> = module_a_ref.named_exports.keys().map(|k| k.to_string()).collect();
     assert!(a_exports.contains(&"bar".to_string()));
 
-    let module_b_ref = graph.module(idx_b).unwrap();
-    let mut b_exports = Vec::new();
-    module_b_ref.for_each_named_export(&mut |name, _, _| b_exports.push(name.to_string()));
+    let module_b_ref = graph.normal_module(idx_b).unwrap();
+    let b_exports: Vec<String> = module_b_ref.named_exports.keys().map(|k| k.to_string()).collect();
     assert!(b_exports.contains(&"foo".to_string()));
 
-    // Verify for_each_module
-    let mut module_count = 0;
-    graph.for_each_module(&mut |_, _| module_count += 1);
-    assert_eq!(module_count, 2);
+    // Verify module count
+    assert_eq!(graph.modules_len(), 2);
 }
 
 #[test]
@@ -144,16 +174,13 @@ fn test_symbol_ref_db() {
     let sym_a = db.add_symbol(module_a, "foo".to_string());
     let sym_b = db.add_symbol(module_b, "bar".to_string());
 
-    // Initially, each symbol is canonical
     assert_eq!(db.canonical_ref_for(sym_a), sym_a);
     assert_eq!(db.canonical_ref_for(sym_b), sym_b);
 
-    // Link sym_a -> sym_b
     db.link(sym_a, sym_b);
     assert_eq!(db.canonical_ref_for(sym_a), sym_b);
     assert_eq!(db.canonical_ref_for(sym_b), sym_b);
 
-    // Names
     assert_eq!(db.symbol_name(sym_a), "foo");
     assert_eq!(db.symbol_name(sym_b), "bar");
 }
@@ -171,7 +198,6 @@ fn test_symbol_ref_db_chain() {
     let s1 = db.add_symbol(m1, "y".to_string());
     let s2 = db.add_symbol(m2, "z".to_string());
 
-    // Chain: s0 -> s1 -> s2
     db.link(s0, s1);
     db.link(s1, s2);
 
@@ -205,7 +231,7 @@ fn test_module_record_from_syntax() {
     assert!(record.export_default.is_some());
 }
 
-// --- Stage 3: Builder tests ---
+// --- Builder tests ---
 
 fn fixtures_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
@@ -214,13 +240,10 @@ fn fixtures_dir() -> PathBuf {
 #[test]
 fn test_builder_basic() {
     use oxc_module_graph::default::ModuleGraphBuilder;
-    use oxc_module_graph::traits::ModuleStore;
 
     let entry = fixtures_dir().join("entry.js");
     let result = ModuleGraphBuilder::new().build(&[entry]);
 
-    // entry.js imports dep.js and dep2.js; dep2.js imports dep.js
-    // Total: 3 modules
     assert_eq!(result.graph.modules_len(), 3);
     assert!(result.errors.is_empty(), "Unexpected errors: {:?}", result.errors);
 }
@@ -228,20 +251,29 @@ fn test_builder_basic() {
 #[test]
 fn test_builder_circular() {
     use oxc_module_graph::default::ModuleGraphBuilder;
-    use oxc_module_graph::traits::ModuleStore;
 
     let entry = fixtures_dir().join("circular_a.js");
     let result = ModuleGraphBuilder::new().build(&[entry]);
 
-    // circular_a.js <-> circular_b.js
     assert_eq!(result.graph.modules_len(), 2);
     assert!(result.errors.is_empty());
 
-    // Both should have dependencies
-    let mut deps_a = Vec::new();
-    result.graph.for_each_dependency(ModuleIdx::from_usize(0), &mut |dep| deps_a.push(dep));
-    let mut deps_b = Vec::new();
-    result.graph.for_each_dependency(ModuleIdx::from_usize(1), &mut |dep| deps_b.push(dep));
+    let deps_a: Vec<ModuleIdx> = result
+        .graph
+        .normal_module(ModuleIdx::from_usize(0))
+        .unwrap()
+        .import_records
+        .iter()
+        .filter_map(|r| r.resolved_module)
+        .collect();
+    let deps_b: Vec<ModuleIdx> = result
+        .graph
+        .normal_module(ModuleIdx::from_usize(1))
+        .unwrap()
+        .import_records
+        .iter()
+        .filter_map(|r| r.resolved_module)
+        .collect();
     assert_eq!(deps_a.len(), 1);
     assert_eq!(deps_b.len(), 1);
 }
@@ -249,40 +281,149 @@ fn test_builder_circular() {
 #[test]
 fn test_builder_reexport() {
     use oxc_module_graph::default::ModuleGraphBuilder;
-    use oxc_module_graph::traits::ModuleStore;
 
     let entry = fixtures_dir().join("reexport.js");
     let result = ModuleGraphBuilder::new().build(&[entry]);
 
-    // reexport.js imports dep.js and dep2.js; dep2.js imports dep.js
     assert_eq!(result.graph.modules_len(), 3);
 
-    // reexport.js should have star_export_entries and indirect_export_entries
-    // Access them directly on the Module struct (not via trait).
-    let reexport_module = result.graph.module(ModuleIdx::from_usize(0)).unwrap();
+    let reexport_module = result.graph.normal_module(ModuleIdx::from_usize(0)).unwrap();
     assert!(!reexport_module.star_export_entries.is_empty());
     assert!(!reexport_module.indirect_export_entries.is_empty());
 }
 
-// --- Stage 4: Binding algorithm tests ---
+#[test]
+fn test_builder_tla_detection() {
+    use oxc_module_graph::default::ModuleGraphBuilder;
 
-/// Helper to build a two-module graph manually for binding tests.
-/// Module A imports `import_name` from Module B which exports it.
-fn two_module_graph_with_binding(
-    export_name: &str,
-    import_name: &str,
-) -> (DefaultModuleGraph, SymbolRefDb) {
-    let mut graph = DefaultModuleGraph::new();
-    let mut db = SymbolRefDb::new();
-    db.ensure_modules(2);
+    // Module with top-level await should have has_top_level_await = true
+    let entry = fixtures_dir().join("tla.js");
+    let result = ModuleGraphBuilder::new().build(&[entry]);
+
+    assert!(result.errors.is_empty(), "Unexpected errors: {:?}", result.errors);
+    let module = result.graph.normal_module(ModuleIdx::from_usize(0)).unwrap();
+    assert!(module.has_top_level_await, "Expected has_top_level_await to be true for TLA module");
+
+    // Module with await only inside a function should have has_top_level_await = false
+    let entry = fixtures_dir().join("no_tla.js");
+    let result = ModuleGraphBuilder::new().build(&[entry]);
+
+    assert!(result.errors.is_empty(), "Unexpected errors: {:?}", result.errors);
+    let module = result.graph.normal_module(ModuleIdx::from_usize(0)).unwrap();
+    assert!(
+        !module.has_top_level_await,
+        "Expected has_top_level_await to be false for non-TLA module"
+    );
+}
+
+#[test]
+fn test_builder_external_modules() {
+    use oxc_module_graph::default::ModuleGraphBuilder;
+
+    let entry = fixtures_dir().join("external_import.js");
+    let result = ModuleGraphBuilder::new().build(&[entry]);
+
+    assert!(result.errors.is_empty(), "Unexpected errors: {:?}", result.errors);
+
+    // The entry module itself + 2 external modules (react, lodash).
+    // "react" appears twice in import statements but should be deduplicated to one ExternalModule.
+    let normal_count = result.graph.normal_modules().count();
+    assert_eq!(normal_count, 1, "Expected exactly 1 normal module");
+
+    // Count external modules
+    let external_count = result.graph.modules.iter().filter(|m| m.as_external().is_some()).count();
+    assert_eq!(external_count, 2, "Expected 2 external modules (react, lodash)");
+
+    // The entry module's import records should all have resolved_module set
+    let entry_module = result.graph.normal_module(ModuleIdx::from_usize(0)).unwrap();
+    for record in &entry_module.import_records {
+        assert!(
+            record.resolved_module.is_some(),
+            "Expected all import records to have resolved_module, but '{}' has None",
+            record.specifier
+        );
+    }
+}
+
+#[test]
+fn test_builder_symbol_mapping() {
+    use oxc_module_graph::default::ModuleGraphBuilder;
+
+    let entry = fixtures_dir().join("symbol_export.js");
+    let result = ModuleGraphBuilder::new().build(&[entry]);
+
+    assert!(result.errors.is_empty(), "Unexpected errors: {:?}", result.errors);
+
+    let module = result.graph.normal_module(ModuleIdx::from_usize(0)).unwrap();
+
+    // Verify exports exist
+    assert!(module.named_exports.contains_key("foo"), "Expected 'foo' export");
+    assert!(module.named_exports.contains_key("bar"), "Expected 'bar' export");
+    assert!(module.named_exports.contains_key("baz"), "Expected 'baz' export");
+
+    // Verify each export's symbol maps to a real name in the symbol db
+    for (export_name, local_export) in &module.named_exports {
+        let sym_name = result.graph.symbol_name(local_export.local_symbol);
+        assert_eq!(
+            sym_name, export_name,
+            "Expected export '{}' symbol name to match, got '{}'",
+            export_name, sym_name
+        );
+    }
+
+    // Verify that different exports have different SymbolIds
+    let foo_sym = module.named_exports["foo"].local_symbol;
+    let bar_sym = module.named_exports["bar"].local_symbol;
+    let baz_sym = module.named_exports["baz"].local_symbol;
+    assert_ne!(foo_sym, bar_sym, "foo and bar should have different symbols");
+    assert_ne!(foo_sym, baz_sym, "foo and baz should have different symbols");
+    assert_ne!(bar_sym, baz_sym, "bar and baz should have different symbols");
+}
+
+#[test]
+fn test_builder_reexport_resolved_targets() {
+    use oxc_module_graph::default::ModuleGraphBuilder;
+
+    let entry = fixtures_dir().join("reexport.js");
+    let result = ModuleGraphBuilder::new().build(&[entry]);
+
+    assert!(result.errors.is_empty(), "Unexpected errors: {:?}", result.errors);
+
+    let reexport_module = result.graph.normal_module(ModuleIdx::from_usize(0)).unwrap();
+
+    // Star exports should have resolved targets (not None)
+    for star in &reexport_module.star_export_entries {
+        assert!(
+            star.resolved_module.is_some(),
+            "Expected star export '{}' to have a resolved module target",
+            star.module_request
+        );
+    }
+
+    // Indirect exports should have resolved targets (not None)
+    for indirect in &reexport_module.indirect_export_entries {
+        assert!(
+            indirect.resolved_module.is_some(),
+            "Expected indirect export '{}' to have a resolved module target",
+            indirect.module_request
+        );
+    }
+}
+
+// --- Binding algorithm tests ---
+
+/// Helper to build a two-module graph for binding tests.
+fn two_module_graph_with_binding(export_name: &str, import_name: &str) -> ModuleGraph {
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
 
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
     // Module B: exports `export_name`
-    let sym_b_export = db.add_symbol(idx_b, export_name.to_string());
-    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
-    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
+    let sym_b_export = graph.add_symbol(idx_b, export_name.to_string());
+    let sym_b_default = graph.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = graph.add_symbol(idx_b, "__namespace__".to_string());
 
     let mut named_exports_b = FxHashMap::default();
     named_exports_b.insert(
@@ -290,27 +431,10 @@ fn two_module_graph_with_binding(
         LocalExport { exported_name: CompactString::new(export_name), local_symbol: sym_b_export },
     );
 
-    let module_b = Module {
-        idx: idx_b,
-        path: PathBuf::from("/b.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: named_exports_b,
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: sym_b_default,
-        namespace_object_ref: sym_b_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: Vec::new(),
-    };
-
     // Module A: imports `import_name` from B
-    let sym_a_local = db.add_symbol(idx_a, import_name.to_string());
-    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
-    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
+    let sym_a_local = graph.add_symbol(idx_a, import_name.to_string());
+    let sym_a_default = graph.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = graph.add_symbol(idx_a, "__namespace__".to_string());
 
     let mut named_imports_a = FxHashMap::default();
     named_imports_a.insert(
@@ -323,95 +447,75 @@ fn two_module_graph_with_binding(
         },
     );
 
-    let module_a = Module {
-        idx: idx_a,
-        path: PathBuf::from("/a.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: named_imports_a,
-        import_records: vec![ResolvedImportRecord {
+    // Add modules in order
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        named_imports_a,
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_a_default,
-        namespace_object_ref: sym_a_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    };
+        sym_a_default,
+        sym_a_ns,
+    ));
 
-    // Add modules in order
-    graph.add_module(module_a);
-    graph.add_module(module_b);
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        named_exports_b,
+        FxHashMap::default(),
+        Vec::new(),
+        sym_b_default,
+        sym_b_ns,
+    ));
 
-    (graph, db)
+    graph
 }
 
 #[test]
 fn test_bind_named_import() {
-    use oxc_module_graph::bind_imports_and_exports;
-    use oxc_module_graph::traits::SymbolGraph;
+    let mut graph = two_module_graph_with_binding("foo", "foo");
 
-    let (graph, mut db) = two_module_graph_with_binding("foo", "foo");
+    bind_imports_and_exports(&mut graph);
 
-    let _result = bind_imports_and_exports(&graph, &mut db);
-
-    // After binding, A's local "foo" should be linked to B's "foo"
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
-    // A's first symbol (local "foo") should canonicalize to B's first symbol
     let a_foo = dummy_symbol_ref(idx_a, 0);
     let b_foo = dummy_symbol_ref(idx_b, 0);
 
-    let canonical = db.canonical_ref_for(a_foo);
+    let canonical = graph.canonical_ref(a_foo);
     assert_eq!(canonical, b_foo, "A's foo should link to B's foo");
 }
 
 #[test]
 fn test_bind_unresolved_import() {
-    use oxc_module_graph::bind_imports_and_exports;
-    use oxc_module_graph::traits::SymbolGraph;
+    let mut graph = two_module_graph_with_binding("foo", "bar");
 
-    // A imports "bar" but B only exports "foo"
-    let (graph, mut db) = two_module_graph_with_binding("foo", "bar");
+    bind_imports_and_exports(&mut graph);
 
-    let _result = bind_imports_and_exports(&graph, &mut db);
-
-    // A's local "bar" should NOT be linked (no match)
     let idx_a = ModuleIdx::from_usize(0);
     let a_bar = dummy_symbol_ref(idx_a, 0);
-    let canonical = db.canonical_ref_for(a_bar);
+    let canonical = graph.canonical_ref(a_bar);
     assert_eq!(canonical, a_bar, "A's bar should remain unlinked");
 }
 
 #[test]
 fn test_bind_star_reexport() {
-    use oxc_module_graph::bind_imports_and_exports;
-    use oxc_module_graph::default::Module;
-    use oxc_module_graph::traits::SymbolGraph;
-    use oxc_module_graph::types::StarExportEntry;
-
-    let mut graph = DefaultModuleGraph::new();
-    let mut db = SymbolRefDb::new();
-    db.ensure_modules(3);
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
 
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
     let idx_c = ModuleIdx::from_usize(2);
 
     // Module C: exports "foo"
-    let sym_c_foo = db.add_symbol(idx_c, "foo".to_string());
-    let sym_c_default = db.add_symbol(idx_c, "__default__".to_string());
-    let sym_c_ns = db.add_symbol(idx_c, "__namespace__".to_string());
+    let sym_c_foo = graph.add_symbol(idx_c, "foo".to_string());
+    let sym_c_default = graph.add_symbol(idx_c, "__default__".to_string());
+    let sym_c_ns = graph.add_symbol(idx_c, "__namespace__".to_string());
 
     let mut exports_c = FxHashMap::default();
     exports_c.insert(
@@ -419,14 +523,14 @@ fn test_bind_star_reexport() {
         LocalExport { exported_name: CompactString::new("foo"), local_symbol: sym_c_foo },
     );
 
-    // Module B: `export * from './c'` (star re-export)
-    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
-    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
+    // Module B: `export * from './c'`
+    let sym_b_default = graph.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = graph.add_symbol(idx_b, "__namespace__".to_string());
 
     // Module A: `import { foo } from './b'`
-    let sym_a_foo = db.add_symbol(idx_a, "foo".to_string());
-    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
-    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
+    let sym_a_foo = graph.add_symbol(idx_a, "foo".to_string());
+    let sym_a_default = graph.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = graph.add_symbol(idx_a, "__namespace__".to_string());
 
     let mut named_imports_a = FxHashMap::default();
     named_imports_a.insert(
@@ -439,130 +543,90 @@ fn test_bind_star_reexport() {
         },
     );
 
-    // Add modules in order
-    graph.add_module(Module {
-        idx: idx_a,
-        path: PathBuf::from("/a.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: named_imports_a,
-        import_records: vec![ResolvedImportRecord {
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        named_imports_a,
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_a_default,
-        namespace_object_ref: sym_a_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    });
+        sym_a_default,
+        sym_a_ns,
+    ));
 
-    graph.add_module(Module {
-        idx: idx_b,
-        path: PathBuf::from("/b.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: FxHashMap::default(),
-        import_records: vec![ResolvedImportRecord {
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./c"),
             resolved_module: Some(idx_c),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_b_default,
-        namespace_object_ref: sym_b_ns,
-        star_export_entries: vec![StarExportEntry {
-            module_request: CompactString::new("./c"),
-            resolved_module: Some(idx_c),
-            span: oxc_span::Span::new(0, 0),
-        }],
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./c"),
-            target: idx_c,
-            is_type: false,
-        }],
-    });
+        sym_b_default,
+        sym_b_ns,
+    );
+    module_b.star_export_entries = vec![StarExportEntry {
+        module_request: CompactString::new("./c"),
+        resolved_module: Some(idx_c),
+        span: oxc_span::Span::new(0, 0),
+    }];
+    graph.add_normal_module(module_b);
 
-    graph.add_module(Module {
-        idx: idx_c,
-        path: PathBuf::from("/c.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_c,
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: sym_c_default,
-        namespace_object_ref: sym_c_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: Vec::new(),
-    });
+    graph.add_normal_module(make_normal_module(
+        idx_c,
+        "/c.js",
+        exports_c,
+        FxHashMap::default(),
+        Vec::new(),
+        sym_c_default,
+        sym_c_ns,
+    ));
 
-    let _result = bind_imports_and_exports(&graph, &mut db);
+    bind_imports_and_exports(&mut graph);
 
-    // A's "foo" should link through B's star re-export to C's "foo"
-    let canonical = db.canonical_ref_for(sym_a_foo);
+    let canonical = graph.canonical_ref(sym_a_foo);
     assert_eq!(canonical, sym_c_foo, "A's foo should link through B's star export to C's foo");
 }
 
-// --- Stage 5: Graph algorithm tests ---
+// --- Graph algorithm tests ---
 
 /// Helper to build a simple graph with no imports/symbols for graph algorithm tests.
-fn simple_graph(edges: &[(usize, usize)]) -> DefaultModuleGraph {
-    use oxc_module_graph::default::Module;
-
-    // Find max module index.
+fn simple_graph(edges: &[(usize, usize)]) -> ModuleGraph {
     #[expect(clippy::tuple_array_conversions)]
     let max_idx = edges.iter().flat_map(|&(a, b)| [a, b]).max().map_or(0, |m| m + 1);
 
-    let mut graph = DefaultModuleGraph::new();
-    let mut db = SymbolRefDb::new();
-    db.ensure_modules(max_idx);
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(max_idx);
 
     for i in 0..max_idx {
         let idx = ModuleIdx::from_usize(i);
-        let default_ref = db.add_symbol(idx, "__default__".to_string());
-        let ns_ref = db.add_symbol(idx, "__namespace__".to_string());
+        let default_ref = graph.add_symbol(idx, "__default__".to_string());
+        let ns_ref = graph.add_symbol(idx, "__namespace__".to_string());
 
-        let deps: Vec<ImportEdge> = edges
+        let import_records: Vec<ResolvedImportRecord> = edges
             .iter()
             .filter(|&&(from, _)| from == i)
-            .map(|&(_, to)| ImportEdge {
+            .map(|&(_, to)| ResolvedImportRecord {
                 specifier: CompactString::new(format!("./mod{to}")),
-                target: ModuleIdx::from_usize(to),
-                is_type: false,
+                resolved_module: Some(ModuleIdx::from_usize(to)),
+                kind: ImportKind::Static,
             })
             .collect();
 
-        graph.add_module(Module {
+        graph.add_normal_module(make_normal_module(
             idx,
-            path: PathBuf::from(format!("/mod{i}.js")),
-            has_module_syntax: true,
-            is_commonjs: false,
-            has_top_level_await: false,
-            side_effects: Some(true),
-            named_exports: FxHashMap::default(),
-            named_imports: FxHashMap::default(),
-            import_records: Vec::new(),
-            default_export_ref: default_ref,
-            namespace_object_ref: ns_ref,
-            star_export_entries: Vec::new(),
-            indirect_export_entries: Vec::new(),
-            dependencies: deps,
-        });
+            &format!("/mod{i}.js"),
+            FxHashMap::default(),
+            FxHashMap::default(),
+            import_records,
+            default_ref,
+            ns_ref,
+        ));
     }
 
     graph
@@ -570,9 +634,6 @@ fn simple_graph(edges: &[(usize, usize)]) -> DefaultModuleGraph {
 
 #[test]
 fn test_find_cycles_none() {
-    use oxc_module_graph::find_cycles;
-
-    // A(0) -> B(1) -> C(2) — no cycles
     let graph = simple_graph(&[(0, 1), (1, 2)]);
     let cycles = find_cycles(&graph);
     assert!(cycles.is_empty(), "DAG should have no cycles");
@@ -580,9 +641,6 @@ fn test_find_cycles_none() {
 
 #[test]
 fn test_find_cycles_simple() {
-    use oxc_module_graph::find_cycles;
-
-    // A(0) -> B(1) -> A(0)
     let graph = simple_graph(&[(0, 1), (1, 0)]);
     let cycles = find_cycles(&graph);
     assert_eq!(cycles.len(), 1, "Should find one cycle");
@@ -591,11 +649,6 @@ fn test_find_cycles_simple() {
 
 #[test]
 fn test_find_cycles_multiple() {
-    use oxc_module_graph::find_cycles;
-
-    // Two independent cycles:
-    // A(0) -> B(1) -> A(0)
-    // C(2) -> D(3) -> C(2)
     let graph = simple_graph(&[(0, 1), (1, 0), (2, 3), (3, 2)]);
     let cycles = find_cycles(&graph);
     assert_eq!(cycles.len(), 2, "Should find two cycles");
@@ -603,36 +656,27 @@ fn test_find_cycles_multiple() {
 
 #[test]
 fn test_find_cycles_self_loop() {
-    use oxc_module_graph::find_cycles;
-
-    // A(0) -> A(0) (self-referencing)
     let graph = simple_graph(&[(0, 0)]);
     let cycles = find_cycles(&graph);
     assert_eq!(cycles.len(), 1, "Should find self-loop");
     assert_eq!(cycles[0].len(), 1, "Self-loop is a single-module cycle");
 }
 
-// --- Stage 6: match_imports with re-export chain following ---
+// --- match_imports with re-export chain following ---
 
-/// Test: A imports "foo" from B, B re-exports "foo" from C via `export { foo } from './c'`.
-/// The chain: A.foo → B.foo → C.foo. match_imports should follow the chain.
 #[test]
 fn test_match_imports_reexport_chain() {
-    use oxc_module_graph::traits::SymbolGraph;
-    use oxc_module_graph::{DefaultImportMatcher, build_resolved_exports, match_imports};
-
-    let mut graph = DefaultModuleGraph::new();
-    let mut db = SymbolRefDb::new();
-    db.ensure_modules(3);
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
 
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
     let idx_c = ModuleIdx::from_usize(2);
 
     // Module C: local export "foo"
-    let sym_c_foo = db.add_symbol(idx_c, "foo".to_string());
-    let sym_c_default = db.add_symbol(idx_c, "__default__".to_string());
-    let sym_c_ns = db.add_symbol(idx_c, "__namespace__".to_string());
+    let sym_c_foo = graph.add_symbol(idx_c, "foo".to_string());
+    let sym_c_default = graph.add_symbol(idx_c, "__default__".to_string());
+    let sym_c_ns = graph.add_symbol(idx_c, "__namespace__".to_string());
 
     let mut exports_c = FxHashMap::default();
     exports_c.insert(
@@ -640,12 +684,10 @@ fn test_match_imports_reexport_chain() {
         LocalExport { exported_name: CompactString::new("foo"), local_symbol: sym_c_foo },
     );
 
-    // Module B: imports "foo" from C and re-exports it via `export { foo } from './c'`
-    // To model this: B has a named import for "foo" from C, and a named export "foo" pointing
-    // to the same local symbol (which is also a named import).
-    let sym_b_foo = db.add_symbol(idx_b, "foo".to_string());
-    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
-    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
+    // Module B: imports "foo" from C and re-exports it
+    let sym_b_foo = graph.add_symbol(idx_b, "foo".to_string());
+    let sym_b_default = graph.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = graph.add_symbol(idx_b, "__namespace__".to_string());
 
     let mut named_imports_b = FxHashMap::default();
     named_imports_b.insert(
@@ -657,7 +699,6 @@ fn test_match_imports_reexport_chain() {
             is_type: false,
         },
     );
-
     let mut exports_b = FxHashMap::default();
     exports_b.insert(
         CompactString::new("foo"),
@@ -665,9 +706,9 @@ fn test_match_imports_reexport_chain() {
     );
 
     // Module A: imports "foo" from B
-    let sym_a_foo = db.add_symbol(idx_a, "foo".to_string());
-    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
-    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
+    let sym_a_foo = graph.add_symbol(idx_a, "foo".to_string());
+    let sym_a_default = graph.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = graph.add_symbol(idx_a, "__namespace__".to_string());
 
     let mut named_imports_a = FxHashMap::default();
     named_imports_a.insert(
@@ -680,109 +721,63 @@ fn test_match_imports_reexport_chain() {
         },
     );
 
-    // Add modules
-    graph.add_module(Module {
-        idx: idx_a,
-        path: PathBuf::from("/a.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: named_imports_a,
-        import_records: vec![ResolvedImportRecord {
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        named_imports_a,
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_a_default,
-        namespace_object_ref: sym_a_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    });
+        sym_a_default,
+        sym_a_ns,
+    ));
 
-    graph.add_module(Module {
-        idx: idx_b,
-        path: PathBuf::from("/b.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_b,
-        named_imports: named_imports_b,
-        import_records: vec![ResolvedImportRecord {
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        exports_b,
+        named_imports_b,
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./c"),
             resolved_module: Some(idx_c),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_b_default,
-        namespace_object_ref: sym_b_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./c"),
-            target: idx_c,
-            is_type: false,
-        }],
-    });
+        sym_b_default,
+        sym_b_ns,
+    ));
 
-    graph.add_module(Module {
-        idx: idx_c,
-        path: PathBuf::from("/c.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_c,
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: sym_c_default,
-        namespace_object_ref: sym_c_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: Vec::new(),
-    });
+    graph.add_normal_module(make_normal_module(
+        idx_c,
+        "/c.js",
+        exports_c,
+        FxHashMap::default(),
+        Vec::new(),
+        sym_c_default,
+        sym_c_ns,
+    ));
 
-    let resolved_exports = build_resolved_exports(&graph);
-    let mut matcher = DefaultImportMatcher::default();
-    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
+    bind_imports_and_exports(&mut graph);
 
-    assert!(errors.is_empty(), "Expected no errors, got: {errors:?}");
-
-    // A's "foo" should follow the chain through B to C's "foo"
-    let canonical = db.canonical_ref_for(sym_a_foo);
+    let canonical = graph.canonical_ref(sym_a_foo);
     assert_eq!(canonical, sym_c_foo, "A's foo should follow re-export chain to C's foo");
 }
 
-/// Test: A imports "bar" from B, B has no export "bar". match_imports returns UnresolvedImport.
 #[test]
 fn test_match_imports_unresolved() {
-    use oxc_module_graph::{DefaultImportMatcher, build_resolved_exports, match_imports};
+    let mut graph = two_module_graph_with_binding("foo", "bar");
 
-    let (graph, mut db) = two_module_graph_with_binding("foo", "bar");
+    bind_imports_and_exports(&mut graph);
 
-    let resolved_exports = build_resolved_exports(&graph);
-    let mut matcher = DefaultImportMatcher::default();
-    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
-
-    assert_eq!(errors.len(), 1, "Expected 1 unresolved import error");
+    assert!(!graph.binding_errors().is_empty(), "Expected unresolved import error");
 }
 
-/// Test: 3-level re-export chain: A → B → C → D. A imports "x", B re-exports from C,
-/// C re-exports from D, D has the local export.
 #[test]
 fn test_match_imports_deep_chain() {
-    use oxc_module_graph::traits::SymbolGraph;
-    use oxc_module_graph::{DefaultImportMatcher, build_resolved_exports, match_imports};
-
-    let mut graph = DefaultModuleGraph::new();
-    let mut db = SymbolRefDb::new();
-    db.ensure_modules(4);
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(4);
 
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
@@ -790,9 +785,9 @@ fn test_match_imports_deep_chain() {
     let idx_d = ModuleIdx::from_usize(3);
 
     // D: local export "x"
-    let sym_d_x = db.add_symbol(idx_d, "x".to_string());
-    let sym_d_default = db.add_symbol(idx_d, "__default__".to_string());
-    let sym_d_ns = db.add_symbol(idx_d, "__namespace__".to_string());
+    let sym_d_x = graph.add_symbol(idx_d, "x".to_string());
+    let sym_d_default = graph.add_symbol(idx_d, "__default__".to_string());
+    let sym_d_ns = graph.add_symbol(idx_d, "__namespace__".to_string());
 
     let mut exports_d = FxHashMap::default();
     exports_d.insert(
@@ -801,9 +796,9 @@ fn test_match_imports_deep_chain() {
     );
 
     // C: import "x" from D, re-export as "x"
-    let sym_c_x = db.add_symbol(idx_c, "x".to_string());
-    let sym_c_default = db.add_symbol(idx_c, "__default__".to_string());
-    let sym_c_ns = db.add_symbol(idx_c, "__namespace__".to_string());
+    let sym_c_x = graph.add_symbol(idx_c, "x".to_string());
+    let sym_c_default = graph.add_symbol(idx_c, "__default__".to_string());
+    let sym_c_ns = graph.add_symbol(idx_c, "__namespace__".to_string());
 
     let mut named_imports_c = FxHashMap::default();
     named_imports_c.insert(
@@ -822,9 +817,9 @@ fn test_match_imports_deep_chain() {
     );
 
     // B: import "x" from C, re-export as "x"
-    let sym_b_x = db.add_symbol(idx_b, "x".to_string());
-    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
-    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
+    let sym_b_x = graph.add_symbol(idx_b, "x".to_string());
+    let sym_b_default = graph.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = graph.add_symbol(idx_b, "__namespace__".to_string());
 
     let mut named_imports_b = FxHashMap::default();
     named_imports_b.insert(
@@ -843,9 +838,9 @@ fn test_match_imports_deep_chain() {
     );
 
     // A: import "x" from B
-    let sym_a_x = db.add_symbol(idx_a, "x".to_string());
-    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
-    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
+    let sym_a_x = graph.add_symbol(idx_a, "x".to_string());
+    let sym_a_default = graph.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = graph.add_symbol(idx_a, "__namespace__".to_string());
 
     let mut named_imports_a = FxHashMap::default();
     named_imports_a.insert(
@@ -858,128 +853,74 @@ fn test_match_imports_deep_chain() {
         },
     );
 
-    // Add all modules
-    graph.add_module(Module {
-        idx: idx_a,
-        path: PathBuf::from("/a.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: named_imports_a,
-        import_records: vec![ResolvedImportRecord {
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        named_imports_a,
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_a_default,
-        namespace_object_ref: sym_a_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    });
-
-    graph.add_module(Module {
-        idx: idx_b,
-        path: PathBuf::from("/b.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_b,
-        named_imports: named_imports_b,
-        import_records: vec![ResolvedImportRecord {
+        sym_a_default,
+        sym_a_ns,
+    ));
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        exports_b,
+        named_imports_b,
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./c"),
             resolved_module: Some(idx_c),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_b_default,
-        namespace_object_ref: sym_b_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./c"),
-            target: idx_c,
-            is_type: false,
-        }],
-    });
-
-    graph.add_module(Module {
-        idx: idx_c,
-        path: PathBuf::from("/c.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_c,
-        named_imports: named_imports_c,
-        import_records: vec![ResolvedImportRecord {
+        sym_b_default,
+        sym_b_ns,
+    ));
+    graph.add_normal_module(make_normal_module(
+        idx_c,
+        "/c.js",
+        exports_c,
+        named_imports_c,
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./d"),
             resolved_module: Some(idx_d),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_c_default,
-        namespace_object_ref: sym_c_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./d"),
-            target: idx_d,
-            is_type: false,
-        }],
-    });
+        sym_c_default,
+        sym_c_ns,
+    ));
+    graph.add_normal_module(make_normal_module(
+        idx_d,
+        "/d.js",
+        exports_d,
+        FxHashMap::default(),
+        Vec::new(),
+        sym_d_default,
+        sym_d_ns,
+    ));
 
-    graph.add_module(Module {
-        idx: idx_d,
-        path: PathBuf::from("/d.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_d,
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: sym_d_default,
-        namespace_object_ref: sym_d_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: Vec::new(),
-    });
+    bind_imports_and_exports(&mut graph);
 
-    let resolved_exports = build_resolved_exports(&graph);
-    let mut matcher = DefaultImportMatcher::default();
-    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
-
-    assert!(errors.is_empty(), "Expected no errors, got: {errors:?}");
-
-    // A's "x" should follow the chain A → B → C → D to D's "x"
-    let canonical = db.canonical_ref_for(sym_a_x);
+    let canonical = graph.canonical_ref(sym_a_x);
     assert_eq!(canonical, sym_d_x, "A's x should follow 3-level chain to D's x");
 }
 
-/// Test: Circular re-export chain. A imports "x" from B, B re-exports "x" from C,
-/// C re-exports "x" from B. Should detect cycle and not hang.
 #[test]
 fn test_match_imports_circular_reexport() {
-    use oxc_module_graph::{DefaultImportMatcher, build_resolved_exports, match_imports};
-
-    let mut graph = DefaultModuleGraph::new();
-    let mut db = SymbolRefDb::new();
-    db.ensure_modules(3);
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
 
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
     let idx_c = ModuleIdx::from_usize(2);
 
-    // B: import "x" from C, export "x" (which is the import)
-    let sym_b_x = db.add_symbol(idx_b, "x".to_string());
-    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
-    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
+    // B: import "x" from C, export "x"
+    let sym_b_x = graph.add_symbol(idx_b, "x".to_string());
+    let sym_b_default = graph.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = graph.add_symbol(idx_b, "__namespace__".to_string());
 
     let mut named_imports_b = FxHashMap::default();
     named_imports_b.insert(
@@ -997,10 +938,10 @@ fn test_match_imports_circular_reexport() {
         LocalExport { exported_name: CompactString::new("x"), local_symbol: sym_b_x },
     );
 
-    // C: import "x" from B, export "x" (which is the import)
-    let sym_c_x = db.add_symbol(idx_c, "x".to_string());
-    let sym_c_default = db.add_symbol(idx_c, "__default__".to_string());
-    let sym_c_ns = db.add_symbol(idx_c, "__namespace__".to_string());
+    // C: import "x" from B, export "x"
+    let sym_c_x = graph.add_symbol(idx_c, "x".to_string());
+    let sym_c_default = graph.add_symbol(idx_c, "__default__".to_string());
+    let sym_c_ns = graph.add_symbol(idx_c, "__namespace__".to_string());
 
     let mut named_imports_c = FxHashMap::default();
     named_imports_c.insert(
@@ -1019,9 +960,9 @@ fn test_match_imports_circular_reexport() {
     );
 
     // A: import "x" from B
-    let sym_a_x = db.add_symbol(idx_a, "x".to_string());
-    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
-    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
+    let sym_a_x = graph.add_symbol(idx_a, "x".to_string());
+    let sym_a_default = graph.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = graph.add_symbol(idx_a, "__namespace__".to_string());
 
     let mut named_imports_a = FxHashMap::default();
     named_imports_a.insert(
@@ -1034,463 +975,84 @@ fn test_match_imports_circular_reexport() {
         },
     );
 
-    graph.add_module(Module {
-        idx: idx_a,
-        path: PathBuf::from("/a.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: named_imports_a,
-        import_records: vec![ResolvedImportRecord {
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        named_imports_a,
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_a_default,
-        namespace_object_ref: sym_a_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    });
-
-    graph.add_module(Module {
-        idx: idx_b,
-        path: PathBuf::from("/b.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_b,
-        named_imports: named_imports_b,
-        import_records: vec![ResolvedImportRecord {
+        sym_a_default,
+        sym_a_ns,
+    ));
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        exports_b,
+        named_imports_b,
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./c"),
             resolved_module: Some(idx_c),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_b_default,
-        namespace_object_ref: sym_b_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./c"),
-            target: idx_c,
-            is_type: false,
-        }],
-    });
-
-    graph.add_module(Module {
-        idx: idx_c,
-        path: PathBuf::from("/c.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_c,
-        named_imports: named_imports_c,
-        import_records: vec![ResolvedImportRecord {
+        sym_b_default,
+        sym_b_ns,
+    ));
+    graph.add_normal_module(make_normal_module(
+        idx_c,
+        "/c.js",
+        exports_c,
+        named_imports_c,
+        vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
         }],
-        default_export_ref: sym_c_default,
-        namespace_object_ref: sym_c_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    });
+        sym_c_default,
+        sym_c_ns,
+    ));
 
-    let resolved_exports = build_resolved_exports(&graph);
-    let mut matcher = DefaultImportMatcher::default();
-    // This should not hang — cycle detection kicks in.
-    let _errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
+    // Should not hang — cycle detection kicks in.
+    bind_imports_and_exports(&mut graph);
 
-    // A's "x" should remain unlinked (cycle detected).
-    let canonical = db.canonical_ref_for(sym_a_x);
+    let canonical = graph.canonical_ref(sym_a_x);
     assert_eq!(canonical, sym_a_x, "A's x should remain unlinked due to cycle");
 }
 
-/// Test: Custom ImportMatcher that short-circuits for a "cjs" module.
-/// NormalAndNamespace results are NOT linked by match_imports — the consumer
-/// handles them in on_resolved (e.g., setting namespace_alias in Rolldown).
-#[test]
-fn test_match_imports_custom_matcher() {
-    use std::cell::RefCell;
-    use std::rc::Rc;
+// --- Dynamic exports tests ---
 
-    use oxc_module_graph::traits::{ImportMatcher, SymbolGraph};
-    use oxc_module_graph::{build_resolved_exports, match_imports};
-
-    struct CjsMatcher {
-        cjs_module: ModuleIdx,
-        cjs_ns_ref: SymbolRef,
-        /// Collected NormalAndNamespace results: (local_symbol, namespace_ref, alias)
-        ns_alias_results: Rc<RefCell<Vec<(SymbolRef, SymbolRef, CompactString)>>>,
-    }
-
-    impl ImportMatcher for CjsMatcher {
-        type ModuleIdx = ModuleIdx;
-        type SymbolRef = SymbolRef;
-
-        fn on_before_match(
-            &mut self,
-            _importer_idx: ModuleIdx,
-            _record_idx: usize,
-            target_idx: ModuleIdx,
-            import_name: &str,
-            _is_namespace: bool,
-        ) -> Option<MatchImportKind<SymbolRef>> {
-            if target_idx == self.cjs_module {
-                Some(MatchImportKind::NormalAndNamespace {
-                    namespace_ref: self.cjs_ns_ref,
-                    alias: CompactString::new(import_name),
-                })
-            } else {
-                None
-            }
-        }
-
-        fn on_resolved(
-            &mut self,
-            _importer_idx: ModuleIdx,
-            local_symbol: SymbolRef,
-            resolved: &MatchImportKind<SymbolRef>,
-            _reexport_chain: &[SymbolRef],
-        ) {
-            if let MatchImportKind::NormalAndNamespace { namespace_ref, alias } = resolved {
-                self.ns_alias_results.borrow_mut().push((
-                    local_symbol,
-                    *namespace_ref,
-                    alias.clone(),
-                ));
-            }
-        }
-    }
-
-    let (graph, mut db) = two_module_graph_with_binding("foo", "foo");
-    let idx_b = ModuleIdx::from_usize(1);
-
-    let b_ns_ref = dummy_symbol_ref(idx_b, 2);
-
-    let resolved_exports = build_resolved_exports(&graph);
-    let ns_alias_results = Rc::new(RefCell::new(Vec::new()));
-    let mut matcher = CjsMatcher {
-        cjs_module: idx_b,
-        cjs_ns_ref: b_ns_ref,
-        ns_alias_results: Rc::clone(&ns_alias_results),
-    };
-    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
-
-    assert!(errors.is_empty(), "Expected no errors, got: {errors:?}");
-
-    // NormalAndNamespace is collected by on_resolved, not linked.
-    let results = ns_alias_results.borrow();
-    assert_eq!(results.len(), 1, "Expected 1 NormalAndNamespace result");
-    let (local, ns_ref, alias) = &results[0];
-    let idx_a = ModuleIdx::from_usize(0);
-    let a_foo = dummy_symbol_ref(idx_a, 0);
-    assert_eq!(*local, a_foo, "Local symbol should be A's foo");
-    assert_eq!(*ns_ref, b_ns_ref, "Namespace ref should be B's namespace");
-    assert_eq!(alias.as_str(), "foo", "Alias should be 'foo'");
-
-    // A's "foo" should NOT be linked (NormalAndNamespace doesn't link).
-    let canonical = db.canonical_ref_for(a_foo);
-    assert_eq!(canonical, a_foo, "A's foo should remain unlinked for NormalAndNamespace");
+fn make_simple_module(
+    graph: &mut ModuleGraph,
+    idx: ModuleIdx,
+    _path: &str,
+) -> (SymbolRef, SymbolRef) {
+    let default_ref = graph.add_symbol(idx, "__default__".to_string());
+    let ns_ref = graph.add_symbol(idx, "__namespace__".to_string());
+    (default_ref, ns_ref)
 }
-
-/// Test: Namespace import (`import * as ns from './b'`) links to namespace_object_ref.
-#[test]
-fn test_match_imports_namespace() {
-    use oxc_module_graph::traits::SymbolGraph;
-    use oxc_module_graph::{DefaultImportMatcher, build_resolved_exports, match_imports};
-
-    let mut graph = DefaultModuleGraph::new();
-    let mut db = SymbolRefDb::new();
-    db.ensure_modules(2);
-
-    let idx_a = ModuleIdx::from_usize(0);
-    let idx_b = ModuleIdx::from_usize(1);
-
-    // Module B: exports "foo"
-    let sym_b_foo = db.add_symbol(idx_b, "foo".to_string());
-    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
-    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
-
-    let mut exports_b = FxHashMap::default();
-    exports_b.insert(
-        CompactString::new("foo"),
-        LocalExport { exported_name: CompactString::new("foo"), local_symbol: sym_b_foo },
-    );
-
-    // Module A: `import * as ns from './b'`
-    let sym_a_ns_local = db.add_symbol(idx_a, "ns".to_string());
-    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
-    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
-
-    let mut named_imports_a = FxHashMap::default();
-    named_imports_a.insert(
-        sym_a_ns_local,
-        NamedImport {
-            imported_name: CompactString::new("*"),
-            local_symbol: sym_a_ns_local,
-            record_idx: ImportRecordIdx::from_usize(0),
-            is_type: false,
-        },
-    );
-
-    graph.add_module(Module {
-        idx: idx_a,
-        path: PathBuf::from("/a.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: named_imports_a,
-        import_records: vec![ResolvedImportRecord {
-            specifier: CompactString::new("./b"),
-            resolved_module: Some(idx_b),
-            kind: ImportKind::Static,
-        }],
-        default_export_ref: sym_a_default,
-        namespace_object_ref: sym_a_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    });
-
-    graph.add_module(Module {
-        idx: idx_b,
-        path: PathBuf::from("/b.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_b,
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: sym_b_default,
-        namespace_object_ref: sym_b_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: Vec::new(),
-    });
-
-    let resolved_exports = build_resolved_exports(&graph);
-    let mut matcher = DefaultImportMatcher::default();
-    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut matcher);
-
-    assert!(errors.is_empty(), "Expected no errors, got: {errors:?}");
-
-    // A's namespace import should link to B's namespace object ref.
-    let canonical = db.canonical_ref_for(sym_a_ns_local);
-    assert_eq!(canonical, sym_b_ns, "Namespace import should link to B's namespace_object_ref");
-}
-
-/// Test: on_resolved callback is called with the re-export chain.
-#[test]
-fn test_match_imports_on_resolved_chain() {
-    use std::cell::RefCell;
-    use std::rc::Rc;
-
-    use oxc_module_graph::traits::ImportMatcher;
-    use oxc_module_graph::{build_resolved_exports, match_imports};
-
-    struct ChainTracker {
-        chains: Rc<RefCell<Vec<Vec<SymbolRef>>>>,
-    }
-
-    impl ImportMatcher for ChainTracker {
-        type ModuleIdx = ModuleIdx;
-        type SymbolRef = SymbolRef;
-
-        fn on_resolved(
-            &mut self,
-            _importer_idx: ModuleIdx,
-            _local_symbol: SymbolRef,
-            _resolved: &MatchImportKind<SymbolRef>,
-            reexport_chain: &[SymbolRef],
-        ) {
-            if !reexport_chain.is_empty() {
-                self.chains.borrow_mut().push(reexport_chain.to_vec());
-            }
-        }
-    }
-
-    let mut graph = DefaultModuleGraph::new();
-    let mut db = SymbolRefDb::new();
-    db.ensure_modules(3);
-
-    let idx_a = ModuleIdx::from_usize(0);
-    let idx_b = ModuleIdx::from_usize(1);
-    let idx_c = ModuleIdx::from_usize(2);
-
-    // C: local export "val"
-    let sym_c_val = db.add_symbol(idx_c, "val".to_string());
-    let sym_c_default = db.add_symbol(idx_c, "__default__".to_string());
-    let sym_c_ns = db.add_symbol(idx_c, "__namespace__".to_string());
-
-    let mut exports_c = FxHashMap::default();
-    exports_c.insert(
-        CompactString::new("val"),
-        LocalExport { exported_name: CompactString::new("val"), local_symbol: sym_c_val },
-    );
-
-    // B: import "val" from C, re-export "val"
-    let sym_b_val = db.add_symbol(idx_b, "val".to_string());
-    let sym_b_default = db.add_symbol(idx_b, "__default__".to_string());
-    let sym_b_ns = db.add_symbol(idx_b, "__namespace__".to_string());
-
-    let mut named_imports_b = FxHashMap::default();
-    named_imports_b.insert(
-        sym_b_val,
-        NamedImport {
-            imported_name: CompactString::new("val"),
-            local_symbol: sym_b_val,
-            record_idx: ImportRecordIdx::from_usize(0),
-            is_type: false,
-        },
-    );
-    let mut exports_b = FxHashMap::default();
-    exports_b.insert(
-        CompactString::new("val"),
-        LocalExport { exported_name: CompactString::new("val"), local_symbol: sym_b_val },
-    );
-
-    // A: import "val" from B
-    let sym_a_val = db.add_symbol(idx_a, "val".to_string());
-    let sym_a_default = db.add_symbol(idx_a, "__default__".to_string());
-    let sym_a_ns = db.add_symbol(idx_a, "__namespace__".to_string());
-
-    let mut named_imports_a = FxHashMap::default();
-    named_imports_a.insert(
-        sym_a_val,
-        NamedImport {
-            imported_name: CompactString::new("val"),
-            local_symbol: sym_a_val,
-            record_idx: ImportRecordIdx::from_usize(0),
-            is_type: false,
-        },
-    );
-
-    graph.add_module(Module {
-        idx: idx_a,
-        path: PathBuf::from("/a.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: named_imports_a,
-        import_records: vec![ResolvedImportRecord {
-            specifier: CompactString::new("./b"),
-            resolved_module: Some(idx_b),
-            kind: ImportKind::Static,
-        }],
-        default_export_ref: sym_a_default,
-        namespace_object_ref: sym_a_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    });
-
-    graph.add_module(Module {
-        idx: idx_b,
-        path: PathBuf::from("/b.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_b,
-        named_imports: named_imports_b,
-        import_records: vec![ResolvedImportRecord {
-            specifier: CompactString::new("./c"),
-            resolved_module: Some(idx_c),
-            kind: ImportKind::Static,
-        }],
-        default_export_ref: sym_b_default,
-        namespace_object_ref: sym_b_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./c"),
-            target: idx_c,
-            is_type: false,
-        }],
-    });
-
-    graph.add_module(Module {
-        idx: idx_c,
-        path: PathBuf::from("/c.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_c,
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: sym_c_default,
-        namespace_object_ref: sym_c_ns,
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: Vec::new(),
-    });
-
-    let resolved_exports = build_resolved_exports(&graph);
-    let chains = Rc::new(RefCell::new(Vec::new()));
-    let mut tracker = ChainTracker { chains: Rc::clone(&chains) };
-    let errors = match_imports(&graph, &mut db, &resolved_exports, &mut tracker);
-
-    assert!(errors.is_empty(), "Expected no errors, got: {errors:?}");
-
-    let chains = chains.borrow();
-    assert_eq!(chains.len(), 1, "Expected 1 re-export chain (A→B→C)");
-    assert_eq!(chains[0], vec![sym_b_val], "Chain should contain B's val symbol");
-}
-
-// ── dynamic exports tests ──────────────────────────────────────────────────
 
 #[test]
 fn test_dynamic_exports_cjs_module() {
-    // CJS module → dynamic
-    use oxc_module_graph::compute_has_dynamic_exports;
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(1);
 
-    let mut graph = DefaultModuleGraph::new();
     let idx = ModuleIdx::from_usize(0);
+    let (default_ref, ns_ref) = make_simple_module(&mut graph, idx, "/a.js");
 
-    graph.add_module(Module {
+    let mut module = make_normal_module(
         idx,
-        path: PathBuf::from("/cjs.js"),
-        has_module_syntax: false,
-        is_commonjs: true,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: dummy_symbol_ref(idx, 0),
-        namespace_object_ref: dummy_symbol_ref(idx, 1),
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: Vec::new(),
-    });
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_ref,
+        ns_ref,
+    );
+    module.is_commonjs = true;
+    graph.add_normal_module(module);
 
     let dynamic = compute_has_dynamic_exports(&graph);
     assert!(dynamic.contains(&idx), "CJS module should have dynamic exports");
@@ -1498,947 +1060,879 @@ fn test_dynamic_exports_cjs_module() {
 
 #[test]
 fn test_dynamic_exports_external_star_target() {
-    // ESM with export * from external (not in store) → dynamic
-    use oxc_module_graph::compute_has_dynamic_exports;
-    use oxc_module_graph::types::StarExportEntry;
+    use oxc_module_graph::ExternalModule;
 
-    let mut graph = DefaultModuleGraph::new();
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
     let idx_a = ModuleIdx::from_usize(0);
-    let idx_external = ModuleIdx::from_usize(1); // not added to graph
+    let idx_ext = ModuleIdx::from_usize(1);
 
-    graph.add_module(Module {
-        idx: idx_a,
-        path: PathBuf::from("/a.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: dummy_symbol_ref(idx_a, 0),
-        namespace_object_ref: dummy_symbol_ref(idx_a, 1),
-        star_export_entries: vec![StarExportEntry {
-            module_request: CompactString::new("external"),
-            resolved_module: Some(idx_external),
-            span: oxc_span::Span::default(),
-        }],
-        indirect_export_entries: Vec::new(),
-        dependencies: Vec::new(),
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let ns_ext = graph.add_symbol(idx_ext, "__namespace__".to_string());
+
+    // External module
+    graph.add_external_module(ExternalModule {
+        idx: idx_ext,
+        specifier: CompactString::new("external"),
+        side_effects: SideEffects::True,
+        namespace_ref: ns_ext,
+        exec_order: u32::MAX,
     });
 
-    let dynamic = compute_has_dynamic_exports(&graph);
-    assert!(
-        dynamic.contains(&idx_a),
-        "Module with export * from external should have dynamic exports"
+    // Module A: export * from 'external'
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_a,
+        ns_a,
     );
+    module_a.star_export_entries = vec![StarExportEntry {
+        module_request: CompactString::new("external"),
+        resolved_module: Some(idx_ext),
+        span: oxc_span::Span::new(0, 0),
+    }];
+    graph.add_normal_module(module_a);
+
+    let dynamic = compute_has_dynamic_exports(&graph);
+    assert!(dynamic.contains(&idx_a), "Star export from external should be dynamic");
 }
 
 #[test]
 fn test_dynamic_exports_transitive_from_cjs() {
-    // ESM export * from CJS → dynamic (transitive)
-    use oxc_module_graph::compute_has_dynamic_exports;
-    use oxc_module_graph::types::StarExportEntry;
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
 
-    let mut graph = DefaultModuleGraph::new();
-    let idx_esm = ModuleIdx::from_usize(0);
-    let idx_cjs = ModuleIdx::from_usize(1);
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
 
-    graph.add_module(Module {
-        idx: idx_esm,
-        path: PathBuf::from("/esm.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: dummy_symbol_ref(idx_esm, 0),
-        namespace_object_ref: dummy_symbol_ref(idx_esm, 1),
-        star_export_entries: vec![StarExportEntry {
-            module_request: CompactString::new("./cjs"),
-            resolved_module: Some(idx_cjs),
-            span: oxc_span::Span::default(),
-        }],
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./cjs"),
-            target: idx_cjs,
-            is_type: false,
-        }],
-    });
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
 
-    graph.add_module(Module {
-        idx: idx_cjs,
-        path: PathBuf::from("/cjs.js"),
-        has_module_syntax: false,
-        is_commonjs: true,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: dummy_symbol_ref(idx_cjs, 2),
-        namespace_object_ref: dummy_symbol_ref(idx_cjs, 3),
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: Vec::new(),
-    });
+    // B is CJS
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.is_commonjs = true;
+    graph.add_normal_module(module_b);
+
+    // A: export * from './b'
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_a,
+        ns_a,
+    );
+    module_a.star_export_entries = vec![StarExportEntry {
+        module_request: CompactString::new("./b"),
+        resolved_module: Some(idx_b),
+        span: oxc_span::Span::new(0, 0),
+    }];
+    graph.add_normal_module(module_a);
 
     let dynamic = compute_has_dynamic_exports(&graph);
-    assert!(dynamic.contains(&idx_esm), "ESM with export * from CJS should have dynamic exports");
-    assert!(dynamic.contains(&idx_cjs), "CJS module itself should have dynamic exports");
+    assert!(dynamic.contains(&idx_a), "Transitive star from CJS should be dynamic");
+    assert!(dynamic.contains(&idx_b), "CJS module itself should be dynamic");
 }
 
 #[test]
 fn test_dynamic_exports_pure_esm_not_dynamic() {
-    // Pure ESM → not dynamic
-    use oxc_module_graph::compute_has_dynamic_exports;
-    use oxc_module_graph::types::StarExportEntry;
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
 
-    let mut graph = DefaultModuleGraph::new();
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
-    let mut exports_b = FxHashMap::default();
-    exports_b.insert(
-        CompactString::new("foo"),
-        LocalExport {
-            exported_name: CompactString::new("foo"),
-            local_symbol: dummy_symbol_ref(idx_b, 0),
-        },
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    ));
+
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_a,
+        ns_a,
     );
-
-    graph.add_module(Module {
-        idx: idx_a,
-        path: PathBuf::from("/a.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: dummy_symbol_ref(idx_a, 0),
-        namespace_object_ref: dummy_symbol_ref(idx_a, 1),
-        star_export_entries: vec![StarExportEntry {
-            module_request: CompactString::new("./b"),
-            resolved_module: Some(idx_b),
-            span: oxc_span::Span::default(),
-        }],
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    });
-
-    graph.add_module(Module {
-        idx: idx_b,
-        path: PathBuf::from("/b.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: exports_b,
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: dummy_symbol_ref(idx_b, 1),
-        namespace_object_ref: dummy_symbol_ref(idx_b, 2),
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies: Vec::new(),
-    });
+    module_a.star_export_entries = vec![StarExportEntry {
+        module_request: CompactString::new("./b"),
+        resolved_module: Some(idx_b),
+        span: oxc_span::Span::new(0, 0),
+    }];
+    graph.add_normal_module(module_a);
 
     let dynamic = compute_has_dynamic_exports(&graph);
-    assert!(dynamic.is_empty(), "Pure ESM modules should not have dynamic exports");
+    assert!(!dynamic.contains(&idx_a), "Pure ESM should not have dynamic exports");
 }
 
 #[test]
 fn test_dynamic_exports_cycle_no_infinite_loop() {
-    // Cycle: A export* from B, B export* from A — should not infinite loop
-    use oxc_module_graph::compute_has_dynamic_exports;
-    use oxc_module_graph::types::StarExportEntry;
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
 
-    let mut graph = DefaultModuleGraph::new();
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
-    graph.add_module(Module {
-        idx: idx_a,
-        path: PathBuf::from("/a.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: dummy_symbol_ref(idx_a, 0),
-        namespace_object_ref: dummy_symbol_ref(idx_a, 1),
-        star_export_entries: vec![StarExportEntry {
-            module_request: CompactString::new("./b"),
-            resolved_module: Some(idx_b),
-            span: oxc_span::Span::default(),
-        }],
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./b"),
-            target: idx_b,
-            is_type: false,
-        }],
-    });
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
 
-    graph.add_module(Module {
-        idx: idx_b,
-        path: PathBuf::from("/b.js"),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: FxHashMap::default(),
-        import_records: Vec::new(),
-        default_export_ref: dummy_symbol_ref(idx_b, 2),
-        namespace_object_ref: dummy_symbol_ref(idx_b, 3),
-        star_export_entries: vec![StarExportEntry {
-            module_request: CompactString::new("./a"),
-            resolved_module: Some(idx_a),
-            span: oxc_span::Span::default(),
-        }],
-        indirect_export_entries: Vec::new(),
-        dependencies: vec![ImportEdge {
-            specifier: CompactString::new("./a"),
-            target: idx_a,
-            is_type: false,
-        }],
-    });
+    // A star-exports from B, B star-exports from A (cycle)
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_a,
+        ns_a,
+    );
+    module_a.star_export_entries = vec![StarExportEntry {
+        module_request: CompactString::new("./b"),
+        resolved_module: Some(idx_b),
+        span: oxc_span::Span::new(0, 0),
+    }];
 
-    // Should complete without hanging; pure ESM cycle → not dynamic
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.star_export_entries = vec![StarExportEntry {
+        module_request: CompactString::new("./a"),
+        resolved_module: Some(idx_a),
+        span: oxc_span::Span::new(0, 0),
+    }];
+
+    graph.add_normal_module(module_a);
+    graph.add_normal_module(module_b);
+
+    // Should not hang
     let dynamic = compute_has_dynamic_exports(&graph);
-    assert!(dynamic.is_empty(), "Pure ESM cycle should not have dynamic exports");
+    assert!(!dynamic.contains(&idx_a));
+    assert!(!dynamic.contains(&idx_b));
 }
 
-// ── helper for creating simple modules ─────────────────────────────────────
-
-fn simple_module(
-    idx: ModuleIdx,
-    path: &str,
-    import_records: Vec<ResolvedImportRecord>,
-    dependencies: Vec<ImportEdge>,
-) -> Module {
-    Module {
-        idx,
-        path: PathBuf::from(path),
-        has_module_syntax: true,
-        is_commonjs: false,
-        has_top_level_await: false,
-        side_effects: Some(true),
-        named_exports: FxHashMap::default(),
-        named_imports: FxHashMap::default(),
-        import_records,
-        default_export_ref: dummy_symbol_ref(idx, 0),
-        namespace_object_ref: dummy_symbol_ref(idx, 1),
-        star_export_entries: Vec::new(),
-        indirect_export_entries: Vec::new(),
-        dependencies,
-    }
-}
-
-// ── TLA tests ──────────────────────────────────────────────────────────────
+// --- TLA tests ---
 
 #[test]
 fn test_tla_direct() {
-    // Module with top-level await → in result set
-    use oxc_module_graph::compute_tla;
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(1);
 
-    let mut graph = DefaultModuleGraph::new();
     let idx = ModuleIdx::from_usize(0);
+    let (default_ref, ns_ref) = make_simple_module(&mut graph, idx, "/a.js");
 
-    let mut module = simple_module(idx, "/tla.js", Vec::new(), Vec::new());
+    let mut module = make_normal_module(
+        idx,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_ref,
+        ns_ref,
+    );
     module.has_top_level_await = true;
-    graph.add_module(module);
+    graph.add_normal_module(module);
 
     let tla = compute_tla(&graph);
-    assert!(tla.contains(&idx), "Module with TLA should be in result set");
+    assert!(tla.contains(&idx), "Module with TLA should be in result");
 }
 
 #[test]
 fn test_tla_transitive_static() {
-    // A statically imports B which has TLA → both in result set
-    use oxc_module_graph::compute_tla;
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
 
-    let mut graph = DefaultModuleGraph::new();
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
-    graph.add_module(simple_module(
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    // B has TLA
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.has_top_level_await = true;
+    graph.add_normal_module(module_b);
+
+    // A statically imports B
+    graph.add_normal_module(make_normal_module(
         idx_a,
         "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
         vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
         }],
-        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+        default_a,
+        ns_a,
     ));
 
-    let mut mod_b = simple_module(idx_b, "/b.js", Vec::new(), Vec::new());
-    mod_b.has_top_level_await = true;
-    graph.add_module(mod_b);
-
     let tla = compute_tla(&graph);
-    assert!(tla.contains(&idx_b), "TLA module itself should be in set");
-    assert!(tla.contains(&idx_a), "Static importer of TLA module should be in set");
+    assert!(tla.contains(&idx_a), "Static import of TLA module propagates");
+    assert!(tla.contains(&idx_b));
 }
 
 #[test]
 fn test_tla_dynamic_import_not_propagated() {
-    // A dynamically imports B which has TLA → only B in result set
-    use oxc_module_graph::compute_tla;
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
 
-    let mut graph = DefaultModuleGraph::new();
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
-    graph.add_module(simple_module(
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.has_top_level_await = true;
+    graph.add_normal_module(module_b);
+
+    // A dynamically imports B
+    graph.add_normal_module(make_normal_module(
         idx_a,
         "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
         vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Dynamic,
         }],
-        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+        default_a,
+        ns_a,
     ));
 
-    let mut mod_b = simple_module(idx_b, "/b.js", Vec::new(), Vec::new());
-    mod_b.has_top_level_await = true;
-    graph.add_module(mod_b);
-
     let tla = compute_tla(&graph);
-    assert!(tla.contains(&idx_b), "TLA module should be in set");
-    assert!(!tla.contains(&idx_a), "Dynamic importer should NOT be in TLA set");
+    assert!(!tla.contains(&idx_a), "Dynamic import should not propagate TLA");
+    assert!(tla.contains(&idx_b));
 }
 
 #[test]
 fn test_tla_pure_esm_not_tla() {
-    // Pure ESM without TLA → empty set
-    use oxc_module_graph::compute_tla;
-
-    let mut graph = DefaultModuleGraph::new();
-    let idx = ModuleIdx::from_usize(0);
-    graph.add_module(simple_module(idx, "/pure.js", Vec::new(), Vec::new()));
-
+    let graph = simple_graph(&[(0, 1)]);
     let tla = compute_tla(&graph);
-    assert!(tla.is_empty(), "Pure ESM without TLA should produce empty set");
+    assert!(tla.is_empty(), "No TLA modules means empty result");
 }
 
 #[test]
 fn test_tla_cycle_no_infinite_loop() {
-    // A→B→A cycle, B has TLA → both should be TLA, no infinite loop
-    use oxc_module_graph::compute_tla;
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
 
-    let mut graph = DefaultModuleGraph::new();
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
-    graph.add_module(simple_module(
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    // Circular static imports, A has TLA
+    let mut module_a = make_normal_module(
         idx_a,
         "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
         vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
         }],
-        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
-    ));
+        default_a,
+        ns_a,
+    );
+    module_a.has_top_level_await = true;
+    graph.add_normal_module(module_a);
 
-    let mut mod_b = simple_module(
+    graph.add_normal_module(make_normal_module(
         idx_b,
         "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
         vec![ResolvedImportRecord {
             specifier: CompactString::new("./a"),
             resolved_module: Some(idx_a),
             kind: ImportKind::Static,
         }],
-        vec![ImportEdge { specifier: CompactString::new("./a"), target: idx_a, is_type: false }],
-    );
-    mod_b.has_top_level_await = true;
-    graph.add_module(mod_b);
+        default_b,
+        ns_b,
+    ));
 
     let tla = compute_tla(&graph);
-    assert!(tla.contains(&idx_b), "TLA module in cycle should be in set");
-    // A transitively depends on B which has TLA
-    assert!(tla.contains(&idx_a), "Module statically importing TLA in cycle should be in set");
+    assert!(tla.contains(&idx_a));
+    assert!(tla.contains(&idx_b));
 }
 
-// ── Execution order tests ──────────────────────────────────────────────────
+// --- Exec order tests ---
 
 #[test]
 fn test_exec_order_linear_chain() {
-    // A→B→C: order should be [C, B, A]
-    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+    use oxc_module_graph::LinkConfig;
 
-    let mut graph = DefaultModuleGraph::new();
-    let idx_a = ModuleIdx::from_usize(0);
-    let idx_b = ModuleIdx::from_usize(1);
-    let idx_c = ModuleIdx::from_usize(2);
+    // A -> B -> C
+    let mut graph = simple_graph(&[(0, 1), (1, 2)]);
+    graph.set_entries(vec![ModuleIdx::from_usize(0)]);
 
-    graph.add_module(simple_module(
-        idx_a,
-        "/a.js",
-        vec![ResolvedImportRecord {
-            specifier: CompactString::new("./b"),
-            resolved_module: Some(idx_b),
-            kind: ImportKind::Static,
-        }],
-        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
-    ));
-    graph.add_module(simple_module(
-        idx_b,
-        "/b.js",
-        vec![ResolvedImportRecord {
-            specifier: CompactString::new("./c"),
-            resolved_module: Some(idx_c),
-            kind: ImportKind::Static,
-        }],
-        vec![ImportEdge { specifier: CompactString::new("./c"), target: idx_c, is_type: false }],
-    ));
-    graph.add_module(simple_module(idx_c, "/c.js", Vec::new(), Vec::new()));
+    let config = LinkConfig::default();
+    let result = compute_exec_order(&graph, &config);
 
-    let result = compute_exec_order(
-        &graph,
-        &[idx_a],
-        None,
-        &ExecOrderConfig { include_dynamic_imports: false },
-    );
-
-    assert_eq!(result.sorted, vec![idx_c, idx_b, idx_a]);
+    assert_eq!(result.sorted.len(), 3);
+    // C first, then B, then A (post-order)
+    assert_eq!(result.sorted[0], ModuleIdx::from_usize(2));
+    assert_eq!(result.sorted[1], ModuleIdx::from_usize(1));
+    assert_eq!(result.sorted[2], ModuleIdx::from_usize(0));
 }
 
 #[test]
 fn test_exec_order_diamond() {
-    // A→{B,C}, B→D, C→D: D before B and C, both before A
-    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+    use oxc_module_graph::LinkConfig;
 
-    let mut graph = DefaultModuleGraph::new();
-    let idx_a = ModuleIdx::from_usize(0);
-    let idx_b = ModuleIdx::from_usize(1);
-    let idx_c = ModuleIdx::from_usize(2);
-    let idx_d = ModuleIdx::from_usize(3);
+    // A -> B, A -> C, B -> D, C -> D
+    let mut graph = simple_graph(&[(0, 1), (0, 2), (1, 3), (2, 3)]);
+    graph.set_entries(vec![ModuleIdx::from_usize(0)]);
 
-    graph.add_module(simple_module(
-        idx_a,
-        "/a.js",
-        vec![
-            ResolvedImportRecord {
-                specifier: CompactString::new("./b"),
-                resolved_module: Some(idx_b),
-                kind: ImportKind::Static,
-            },
-            ResolvedImportRecord {
-                specifier: CompactString::new("./c"),
-                resolved_module: Some(idx_c),
-                kind: ImportKind::Static,
-            },
-        ],
-        vec![
-            ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false },
-            ImportEdge { specifier: CompactString::new("./c"), target: idx_c, is_type: false },
-        ],
-    ));
-    graph.add_module(simple_module(
-        idx_b,
-        "/b.js",
-        vec![ResolvedImportRecord {
-            specifier: CompactString::new("./d"),
-            resolved_module: Some(idx_d),
-            kind: ImportKind::Static,
-        }],
-        vec![ImportEdge { specifier: CompactString::new("./d"), target: idx_d, is_type: false }],
-    ));
-    graph.add_module(simple_module(
-        idx_c,
-        "/c.js",
-        vec![ResolvedImportRecord {
-            specifier: CompactString::new("./d"),
-            resolved_module: Some(idx_d),
-            kind: ImportKind::Static,
-        }],
-        vec![ImportEdge { specifier: CompactString::new("./d"), target: idx_d, is_type: false }],
-    ));
-    graph.add_module(simple_module(idx_d, "/d.js", Vec::new(), Vec::new()));
+    let config = LinkConfig::default();
+    let result = compute_exec_order(&graph, &config);
 
-    let result = compute_exec_order(
-        &graph,
-        &[idx_a],
-        None,
-        &ExecOrderConfig { include_dynamic_imports: false },
-    );
-
-    let pos = |idx: ModuleIdx| result.sorted.iter().position(|&x| x == idx).unwrap();
-    assert!(pos(idx_d) < pos(idx_b), "D should come before B");
-    assert!(pos(idx_d) < pos(idx_c), "D should come before C");
-    assert!(pos(idx_b) < pos(idx_a), "B should come before A");
-    assert!(pos(idx_c) < pos(idx_a), "C should come before A");
-}
-
-#[test]
-fn test_exec_order_circular_dependency() {
-    // A→B→A: should complete without hanging, cycle detected
-    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
-
-    let mut graph = DefaultModuleGraph::new();
-    let idx_a = ModuleIdx::from_usize(0);
-    let idx_b = ModuleIdx::from_usize(1);
-
-    graph.add_module(simple_module(
-        idx_a,
-        "/a.js",
-        vec![ResolvedImportRecord {
-            specifier: CompactString::new("./b"),
-            resolved_module: Some(idx_b),
-            kind: ImportKind::Static,
-        }],
-        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
-    ));
-    graph.add_module(simple_module(
-        idx_b,
-        "/b.js",
-        vec![ResolvedImportRecord {
-            specifier: CompactString::new("./a"),
-            resolved_module: Some(idx_a),
-            kind: ImportKind::Static,
-        }],
-        vec![ImportEdge { specifier: CompactString::new("./a"), target: idx_a, is_type: false }],
-    ));
-
-    let result = compute_exec_order(
-        &graph,
-        &[idx_a],
-        None,
-        &ExecOrderConfig { include_dynamic_imports: false },
-    );
-
-    // Both modules should be in the result.
-    assert_eq!(result.sorted.len(), 2);
-    assert!(!result.cycles.is_empty(), "Should detect circular dependency");
-
-    // Verify full cycle path: [A, B, A] — the cycle from A through B back to A.
-    let cycle = &result.cycles[0];
-    assert!(cycle.len() > 1, "Cycle should contain full path, not just a single node");
-    assert_eq!(cycle.first(), cycle.last(), "Cycle should start and end at the same node");
+    assert_eq!(result.sorted.len(), 4);
+    // D should be first (deepest dependency)
+    assert_eq!(result.sorted[0], ModuleIdx::from_usize(3));
 }
 
 #[test]
 fn test_exec_order_dynamic_import_excluded() {
-    // A ─static→ B, A ─dynamic→ C: only A and B when dynamic=false
-    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+    use oxc_module_graph::LinkConfig;
 
-    let mut graph = DefaultModuleGraph::new();
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
-    let idx_c = ModuleIdx::from_usize(2);
 
-    graph.add_module(simple_module(
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    graph.add_normal_module(make_normal_module(
         idx_a,
         "/a.js",
-        vec![
-            ResolvedImportRecord {
-                specifier: CompactString::new("./b"),
-                resolved_module: Some(idx_b),
-                kind: ImportKind::Static,
-            },
-            ResolvedImportRecord {
-                specifier: CompactString::new("./c"),
-                resolved_module: Some(idx_c),
-                kind: ImportKind::Dynamic,
-            },
-        ],
-        vec![
-            ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false },
-            ImportEdge { specifier: CompactString::new("./c"), target: idx_c, is_type: false },
-        ],
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Dynamic,
+        }],
+        default_a,
+        ns_a,
     ));
-    graph.add_module(simple_module(idx_b, "/b.js", Vec::new(), Vec::new()));
-    graph.add_module(simple_module(idx_c, "/c.js", Vec::new(), Vec::new()));
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    ));
 
-    let result = compute_exec_order(
-        &graph,
-        &[idx_a],
-        None,
-        &ExecOrderConfig { include_dynamic_imports: false },
-    );
+    graph.set_entries(vec![idx_a]);
 
-    assert!(result.sorted.contains(&idx_a));
-    assert!(result.sorted.contains(&idx_b));
-    assert!(!result.sorted.contains(&idx_c), "Dynamic import should be excluded");
+    let config = LinkConfig { include_dynamic_imports: false, ..Default::default() };
+    let result = compute_exec_order(&graph, &config);
+
+    assert_eq!(result.sorted.len(), 1, "Dynamic import excluded");
+    assert_eq!(result.sorted[0], idx_a);
 }
 
 #[test]
 fn test_exec_order_dynamic_import_included() {
-    // Same graph but with include_dynamic_imports: true → C included
-    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+    use oxc_module_graph::LinkConfig;
 
-    let mut graph = DefaultModuleGraph::new();
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
-    let idx_c = ModuleIdx::from_usize(2);
 
-    graph.add_module(simple_module(
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    graph.add_normal_module(make_normal_module(
         idx_a,
         "/a.js",
-        vec![
-            ResolvedImportRecord {
-                specifier: CompactString::new("./b"),
-                resolved_module: Some(idx_b),
-                kind: ImportKind::Static,
-            },
-            ResolvedImportRecord {
-                specifier: CompactString::new("./c"),
-                resolved_module: Some(idx_c),
-                kind: ImportKind::Dynamic,
-            },
-        ],
-        vec![
-            ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false },
-            ImportEdge { specifier: CompactString::new("./c"), target: idx_c, is_type: false },
-        ],
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Dynamic,
+        }],
+        default_a,
+        ns_a,
     ));
-    graph.add_module(simple_module(idx_b, "/b.js", Vec::new(), Vec::new()));
-    graph.add_module(simple_module(idx_c, "/c.js", Vec::new(), Vec::new()));
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    ));
 
-    let result = compute_exec_order(
-        &graph,
-        &[idx_a],
-        None,
-        &ExecOrderConfig { include_dynamic_imports: true },
-    );
+    graph.set_entries(vec![idx_a]);
 
-    assert!(result.sorted.contains(&idx_a));
-    assert!(result.sorted.contains(&idx_b));
-    assert!(result.sorted.contains(&idx_c), "Dynamic import should be included");
+    let config = LinkConfig { include_dynamic_imports: true, ..Default::default() };
+    let result = compute_exec_order(&graph, &config);
+
+    assert_eq!(result.sorted.len(), 2, "Dynamic import included");
 }
 
 #[test]
 fn test_exec_order_runtime_first() {
-    // Runtime module always first
-    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+    use oxc_module_graph::LinkConfig;
 
-    let mut graph = DefaultModuleGraph::new();
-    let idx_rt = ModuleIdx::from_usize(0);
-    let idx_entry = ModuleIdx::from_usize(1);
-    let idx_dep = ModuleIdx::from_usize(2);
+    let mut graph = simple_graph(&[(0, 1)]);
 
-    graph.add_module(simple_module(idx_rt, "/runtime.js", Vec::new(), Vec::new()));
-    graph.add_module(simple_module(
-        idx_entry,
-        "/entry.js",
-        vec![ResolvedImportRecord {
-            specifier: CompactString::new("./dep"),
-            resolved_module: Some(idx_dep),
-            kind: ImportKind::Static,
-        }],
-        vec![ImportEdge {
-            specifier: CompactString::new("./dep"),
-            target: idx_dep,
-            is_type: false,
-        }],
+    let idx_rt = ModuleIdx::from_usize(2);
+    graph.symbols.ensure_modules(3);
+    let (default_rt, ns_rt) = make_simple_module(&mut graph, idx_rt, "/runtime.js");
+    graph.add_normal_module(make_normal_module(
+        idx_rt,
+        "/runtime.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_rt,
+        ns_rt,
     ));
-    graph.add_module(simple_module(idx_dep, "/dep.js", Vec::new(), Vec::new()));
 
-    let result = compute_exec_order(
-        &graph,
-        &[idx_entry],
-        Some(idx_rt),
-        &ExecOrderConfig { include_dynamic_imports: false },
-    );
+    graph.set_entries(vec![ModuleIdx::from_usize(0)]);
+    graph.set_runtime(idx_rt);
+
+    let config = LinkConfig::default();
+    let result = compute_exec_order(&graph, &config);
 
     assert_eq!(result.sorted[0], idx_rt, "Runtime should be first");
 }
 
-// ── Side effects tests ─────────────────────────────────────────────────────
+#[test]
+fn test_exec_order_hot_accept_skipped() {
+    use oxc_module_graph::LinkConfig;
+
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::HotAccept,
+        }],
+        default_a,
+        ns_a,
+    ));
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    ));
+
+    graph.set_entries(vec![idx_a]);
+
+    let config = LinkConfig::default();
+    let result = compute_exec_order(&graph, &config);
+
+    assert_eq!(result.sorted.len(), 1, "HotAccept should be skipped");
+    assert_eq!(result.sorted[0], idx_a);
+}
+
+// --- Side effects tests ---
 
 #[test]
 fn test_side_effects_has_side_effects() {
-    // Module with side_effects: Some(true) → true
-    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+    use oxc_module_graph::LinkConfig;
 
-    let mut graph = DefaultModuleGraph::new();
-    let idx = ModuleIdx::from_usize(0);
+    let graph = simple_graph(&[]);
+    let config = LinkConfig::default();
+    let se = determine_side_effects(&graph, &config);
 
-    let mut module = simple_module(idx, "/side.js", Vec::new(), Vec::new());
-    module.side_effects = Some(true);
-    graph.add_module(module);
-
-    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
-    let result = determine_side_effects(&graph, &checker);
-    assert!(result[&idx]);
+    // simple_graph creates modules with SideEffects::True
+    for (_, has) in &se {
+        assert!(*has, "Default modules should have side effects");
+    }
 }
 
 #[test]
 fn test_side_effects_no_treeshake() {
-    // Module with side_effects: None (no-treeshake) → true
-    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+    use oxc_module_graph::LinkConfig;
 
-    let mut graph = DefaultModuleGraph::new();
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(1);
+
     let idx = ModuleIdx::from_usize(0);
+    let (default_ref, ns_ref) = make_simple_module(&mut graph, idx, "/a.js");
 
-    let mut module = simple_module(idx, "/notree.js", Vec::new(), Vec::new());
-    module.side_effects = None;
-    graph.add_module(module);
+    let mut module = make_normal_module(
+        idx,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_ref,
+        ns_ref,
+    );
+    module.side_effects = SideEffects::NoTreeshake;
+    graph.add_normal_module(module);
 
-    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
-    let result = determine_side_effects(&graph, &checker);
-    assert!(result[&idx]);
+    let config = LinkConfig::default();
+    let se = determine_side_effects(&graph, &config);
+    assert_eq!(se[&idx], true, "NoTreeshake should always have side effects");
 }
 
 #[test]
 fn test_side_effects_pure_no_deps() {
-    // Module with side_effects: Some(false), no deps → false
-    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+    use oxc_module_graph::LinkConfig;
 
-    let mut graph = DefaultModuleGraph::new();
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(1);
+
     let idx = ModuleIdx::from_usize(0);
+    let (default_ref, ns_ref) = make_simple_module(&mut graph, idx, "/a.js");
 
-    let mut module = simple_module(idx, "/pure.js", Vec::new(), Vec::new());
-    module.side_effects = Some(false);
-    graph.add_module(module);
+    let mut module = make_normal_module(
+        idx,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_ref,
+        ns_ref,
+    );
+    module.side_effects = SideEffects::False;
+    graph.add_normal_module(module);
 
-    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
-    let result = determine_side_effects(&graph, &checker);
-    assert!(!result[&idx]);
+    let config = LinkConfig::default();
+    let se = determine_side_effects(&graph, &config);
+    assert_eq!(se[&idx], false, "Pure module with no deps should be side-effect free");
 }
 
 #[test]
 fn test_side_effects_transitive() {
-    // A (pure) imports B (side-effectful) → A becomes side-effectful
-    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+    use oxc_module_graph::LinkConfig;
 
-    let mut graph = DefaultModuleGraph::new();
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
-    let mut mod_a = simple_module(
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    // B has side effects
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    ));
+
+    // A is pure but imports B
+    let mut module_a = make_normal_module(
         idx_a,
         "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
         vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
         }],
-        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+        default_a,
+        ns_a,
     );
-    mod_a.side_effects = Some(false);
-    graph.add_module(mod_a);
+    module_a.side_effects = SideEffects::False;
+    graph.add_normal_module(module_a);
 
-    let mut mod_b = simple_module(idx_b, "/b.js", Vec::new(), Vec::new());
-    mod_b.side_effects = Some(true);
-    graph.add_module(mod_b);
-
-    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
-    let result = determine_side_effects(&graph, &checker);
-    assert!(result[&idx_a], "Pure module importing side-effectful should be true");
-    assert!(result[&idx_b]);
+    let config = LinkConfig::default();
+    let se = determine_side_effects(&graph, &config);
+    assert_eq!(se[&idx_a], true, "Pure module importing side-effectful dep is side-effectful");
 }
 
 #[test]
-fn test_side_effects_custom_checker() {
-    // Custom checker: star export edge → side-effectful
-    use oxc_module_graph::types::StarExportEntry;
-    use oxc_module_graph::{SideEffectsChecker, determine_side_effects};
+fn test_side_effects_custom_hooks() {
+    use oxc_module_graph::LinkConfig;
+    use oxc_module_graph::hooks::SideEffectsHooks;
 
-    struct AlwaysSideEffectfulChecker;
-    impl SideEffectsChecker for AlwaysSideEffectfulChecker {
-        type ModuleIdx = ModuleIdx;
-        fn star_export_has_side_effects(&self, _importer: ModuleIdx, _importee: ModuleIdx) -> bool {
+    struct AlwaysSideEffects;
+    impl SideEffectsHooks for AlwaysSideEffects {
+        fn star_export_has_extra_side_effects(
+            &self,
+            _importer: ModuleIdx,
+            _importee: ModuleIdx,
+        ) -> bool {
             true
         }
     }
 
-    let mut graph = DefaultModuleGraph::new();
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
-    let mut mod_a = simple_module(idx_a, "/a.js", Vec::new(), Vec::new());
-    mod_a.side_effects = Some(false);
-    mod_a.star_export_entries = vec![StarExportEntry {
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.side_effects = SideEffects::False;
+    graph.add_normal_module(module_b);
+
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_a,
+        ns_a,
+    );
+    module_a.side_effects = SideEffects::False;
+    module_a.star_export_entries = vec![StarExportEntry {
         module_request: CompactString::new("./b"),
         resolved_module: Some(idx_b),
-        span: oxc_span::Span::default(),
+        span: oxc_span::Span::new(0, 0),
     }];
-    graph.add_module(mod_a);
+    graph.add_normal_module(module_a);
 
-    let mut mod_b = simple_module(idx_b, "/b.js", Vec::new(), Vec::new());
-    mod_b.side_effects = Some(false);
-    graph.add_module(mod_b);
-
-    let checker = AlwaysSideEffectfulChecker;
-    let result = determine_side_effects(&graph, &checker);
-    assert!(result[&idx_a], "Star export with custom checker should be side-effectful");
+    let hooks = AlwaysSideEffects;
+    let config = LinkConfig { side_effects_hooks: Some(&hooks), ..Default::default() };
+    let se = determine_side_effects(&graph, &config);
+    assert_eq!(se[&idx_a], true, "Custom hook should make star-export side-effectful");
 }
 
 #[test]
 fn test_side_effects_cycle_no_infinite_loop() {
-    // A (pure) → B (pure) → A: cycle should not infinite loop
-    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+    use oxc_module_graph::LinkConfig;
 
-    let mut graph = DefaultModuleGraph::new();
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
 
-    let mut mod_a = simple_module(
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let mut module_a = make_normal_module(
         idx_a,
         "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
         vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
         }],
-        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+        default_a,
+        ns_a,
     );
-    mod_a.side_effects = Some(false);
-    graph.add_module(mod_a);
+    module_a.side_effects = SideEffects::False;
+    graph.add_normal_module(module_a);
 
-    let mut mod_b = simple_module(
+    let mut module_b = make_normal_module(
         idx_b,
         "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
         vec![ResolvedImportRecord {
             specifier: CompactString::new("./a"),
             resolved_module: Some(idx_a),
             kind: ImportKind::Static,
         }],
-        vec![ImportEdge { specifier: CompactString::new("./a"), target: idx_a, is_type: false }],
+        default_b,
+        ns_b,
     );
-    mod_b.side_effects = Some(false);
-    graph.add_module(mod_b);
+    module_b.side_effects = SideEffects::False;
+    graph.add_normal_module(module_b);
 
-    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
-    let result = determine_side_effects(&graph, &checker);
-    assert!(!result[&idx_a], "Pure cycle should be side-effect-free");
-    assert!(!result[&idx_b], "Pure cycle should be side-effect-free");
+    let config = LinkConfig::default();
+    let se = determine_side_effects(&graph, &config);
+    // Cycle with both pure should not hang and should be pure
+    assert_eq!(se[&idx_a], false);
+    assert_eq!(se[&idx_b], false);
 }
 
 #[test]
 fn test_side_effects_external_module_propagation() {
-    // A (pure) imports B (external with side effects) → A becomes side-effectful.
-    // Uses a custom ModuleStore that overrides any_module_side_effects for externals.
-    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+    use oxc_module_graph::{ExternalModule, LinkConfig};
 
-    // Custom store that wraps DefaultModuleGraph but adds external module handling.
-    struct StoreWithExternals {
-        inner: DefaultModuleGraph,
-        external_side_effects: FxHashMap<ModuleIdx, Option<bool>>,
-    }
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
 
-    impl ModuleStore for StoreWithExternals {
-        type ModuleIdx = ModuleIdx;
-        type SymbolRef = SymbolRef;
-        type Module = Module;
-
-        fn module(&self, idx: ModuleIdx) -> Option<&Module> {
-            self.inner.module(idx)
-        }
-        fn modules_len(&self) -> usize {
-            self.inner.modules_len()
-        }
-        fn for_each_module(&self, f: &mut dyn FnMut(ModuleIdx, &Module)) {
-            self.inner.for_each_module(f);
-        }
-        fn for_each_dependency(&self, idx: ModuleIdx, f: &mut dyn FnMut(ModuleIdx)) {
-            self.inner.for_each_dependency(idx, f);
-        }
-        fn for_each_static_dependency(&self, idx: ModuleIdx, f: &mut dyn FnMut(ModuleIdx)) {
-            self.inner.for_each_static_dependency(idx, f);
-        }
-        fn any_module_side_effects(&self, idx: ModuleIdx) -> Option<Option<bool>> {
-            // Check external modules first
-            if let Some(&se) = self.external_side_effects.get(&idx) {
-                return Some(se);
-            }
-            // Fall back to normal module lookup
-            self.inner.module(idx).map(oxc_module_graph::ModuleInfo::side_effects)
-        }
-    }
-
-    let mut graph = DefaultModuleGraph::new();
     let idx_a = ModuleIdx::from_usize(0);
-    let idx_ext = ModuleIdx::from_usize(1); // external, not added to graph
+    let idx_ext = ModuleIdx::from_usize(1);
 
-    let mut mod_a = simple_module(
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let ns_ext = graph.add_symbol(idx_ext, "__namespace__".to_string());
+
+    // External module with side effects
+    graph.add_external_module(ExternalModule {
+        idx: idx_ext,
+        specifier: CompactString::new("ext-lib"),
+        side_effects: SideEffects::True,
+        namespace_ref: ns_ext,
+        exec_order: u32::MAX,
+    });
+
+    // A is pure but imports the external
+    let mut module_a = make_normal_module(
         idx_a,
         "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
         vec![ResolvedImportRecord {
-            specifier: CompactString::new("external-pkg"),
+            specifier: CompactString::new("ext-lib"),
             resolved_module: Some(idx_ext),
             kind: ImportKind::Static,
         }],
-        vec![ImportEdge {
-            specifier: CompactString::new("external-pkg"),
-            target: idx_ext,
-            is_type: false,
-        }],
+        default_a,
+        ns_a,
     );
-    mod_a.side_effects = Some(false);
-    graph.add_module(mod_a);
-    // Do NOT add idx_ext — it's external (module() returns None)
+    module_a.side_effects = SideEffects::False;
+    graph.add_normal_module(module_a);
 
-    let mut external_side_effects = FxHashMap::default();
-    external_side_effects.insert(idx_ext, Some(true)); // UserDefined(true)
-    let store = StoreWithExternals { inner: graph, external_side_effects };
-
-    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
-    let result = determine_side_effects(&store, &checker);
-    assert!(
-        result[&idx_a],
-        "Pure module importing side-effectful external should be true"
+    let config = LinkConfig::default();
+    let se = determine_side_effects(&graph, &config);
+    assert_eq!(
+        se[&idx_a], true,
+        "Pure module importing external with side effects should be side-effectful"
     );
 }
 
-#[test]
-fn test_exec_order_hot_accept_skipped() {
-    // A ─static→ B, A ─HotAccept→ C: C should NOT be followed
-    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+// --- Namespace import test ---
 
-    let mut graph = DefaultModuleGraph::new();
+#[test]
+fn test_namespace_import() {
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
     let idx_a = ModuleIdx::from_usize(0);
     let idx_b = ModuleIdx::from_usize(1);
-    let idx_c = ModuleIdx::from_usize(2);
 
-    graph.add_module(simple_module(
-        idx_a,
-        "/a.js",
-        vec![
-            ResolvedImportRecord {
-                specifier: CompactString::new("./b"),
-                resolved_module: Some(idx_b),
-                kind: ImportKind::Static,
-            },
-            ResolvedImportRecord {
-                specifier: CompactString::new("./c"),
-                resolved_module: Some(idx_c),
-                kind: ImportKind::HotAccept,
-            },
-        ],
-        vec![
-            ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false },
-            ImportEdge { specifier: CompactString::new("./c"), target: idx_c, is_type: false },
-        ],
-    ));
-    graph.add_module(simple_module(idx_b, "/b.js", Vec::new(), Vec::new()));
-    graph.add_module(simple_module(idx_c, "/c.js", Vec::new(), Vec::new()));
+    let sym_a_ns_import = graph.add_symbol(idx_a, "ns".to_string());
+    let sym_a_default = graph.add_symbol(idx_a, "__default__".to_string());
+    let sym_a_ns = graph.add_symbol(idx_a, "__namespace__".to_string());
 
-    let result = compute_exec_order(
-        &graph,
-        &[idx_a],
-        None,
-        &ExecOrderConfig { include_dynamic_imports: false },
+    let sym_b_default = graph.add_symbol(idx_b, "__default__".to_string());
+    let sym_b_ns = graph.add_symbol(idx_b, "__namespace__".to_string());
+
+    let mut named_imports_a = FxHashMap::default();
+    named_imports_a.insert(
+        sym_a_ns_import,
+        NamedImport {
+            imported_name: CompactString::new("*"),
+            local_symbol: sym_a_ns_import,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
     );
 
-    assert!(result.sorted.contains(&idx_a));
-    assert!(result.sorted.contains(&idx_b));
-    assert!(!result.sorted.contains(&idx_c), "HotAccept import should be excluded");
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        named_imports_a,
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        sym_a_default,
+        sym_a_ns,
+    ));
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        sym_b_default,
+        sym_b_ns,
+    ));
+
+    bind_imports_and_exports(&mut graph);
+
+    // A's ns import should link to B's namespace object ref
+    let canonical = graph.canonical_ref(sym_a_ns_import);
+    assert_eq!(canonical, sym_b_ns, "Namespace import should link to namespace object ref");
 }
