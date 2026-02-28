@@ -21,9 +21,10 @@ The key insight: **separate the algorithms from the data structures**. Define tr
 │  │   Traits     │  │  Algorithms  │  │  Defaults   │  │
 │  │             │  │              │  │             │  │
 │  │ ModuleInfo  │◄─┤ bind_imports │  │ Module      │  │
-│  │ SymbolGraph │◄─┤ topo_sort    │  │ ModuleGraph │  │
+│  │ SymbolGraph │◄─┤ exec_order   │  │ ModuleGraph │  │
 │  │ ModuleStore │◄─┤ find_cycles  │  │ SymbolRefDb │  │
-│  │             │  │              │  │ Builder     │  │
+│  │ SideEffects │  │ tla          │  │ Builder     │  │
+│  │ Checker     │  │ side_effects │  │             │  │
 │  └─────────────┘  └──────────────┘  └────────────┘  │
 │         ▲                                  ▲         │
 └─────────┼──────────────────────────────────┼─────────┘
@@ -60,8 +61,11 @@ crates/oxc_module_graph/
     algo/
       mod.rs
       binding.rs        -- bind_imports_and_exports<M: ModuleStore, S: SymbolGraph>()
-      topo_sort.rs      -- topological_sort<M: ModuleStore>()
       cycles.rs         -- find_cycles<M: ModuleStore>()
+      exec_order.rs     -- compute_exec_order<M: ModuleStore>()
+      tla.rs            -- compute_tla<M: ModuleStore>()
+      side_effects.rs   -- determine_side_effects<M: ModuleStore, C: SideEffectsChecker>()
+      dynamic_exports.rs -- compute_has_dynamic_exports<M: ModuleStore>()
 
     # Default implementations (batteries-included)
     default/
@@ -228,11 +232,17 @@ where
     //          Link symbols via SymbolGraph::link()
 }
 
-/// Topological sort of module dependencies (Kahn's algorithm).
-pub fn topological_sort<M: ModuleStore>(store: &M, entries: &[ModuleIdx]) -> Option<Vec<ModuleIdx>>;
+/// DFS post-order execution sort with cycle detection.
+pub fn compute_exec_order<M: ModuleStore>(store: &M, entries: &[ModuleIdx], runtime: Option<ModuleIdx>, config: &ExecOrderConfig) -> ExecOrderResult<ModuleIdx>;
 
 /// Find all cycles in the module graph (DFS with on-stack tracking).
 pub fn find_cycles<M: ModuleStore>(store: &M) -> Vec<Vec<ModuleIdx>>;
+
+/// Compute which modules are affected by top-level await.
+pub fn compute_tla<M: ModuleStore>(store: &M) -> FxHashSet<ModuleIdx>;
+
+/// Determine which modules have side effects (transitive propagation).
+pub fn determine_side_effects<M: ModuleStore, C: SideEffectsChecker>(store: &M, checker: &C) -> FxHashMap<ModuleIdx, bool>;
 ```
 
 ## How Rolldown Adopts This
@@ -297,7 +307,7 @@ let errors = oxc_module_graph::bind_imports_and_exports(&module_table, &mut symb
 
 ### Stage 5: Graph Algorithms + Polish — Complete
 
-**Goal**: `topological_sort()`, `find_cycles()`, docs, integration tests. 17 tests passing.
+**Goal**: `compute_exec_order()`, `find_cycles()`, `compute_tla()`, `determine_side_effects()`, docs, integration tests.
 
 ## Verification
 

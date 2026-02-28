@@ -1,7 +1,9 @@
 mod binding;
 mod cycles;
 mod dynamic_exports;
-mod topo_sort;
+mod exec_order;
+mod side_effects;
+mod tla;
 
 pub use binding::{
     BindingError, BindingResult, ResolvedExportsMap, bind_imports_and_exports,
@@ -9,4 +11,6 @@ pub use binding::{
 };
 pub use cycles::find_cycles;
 pub use dynamic_exports::compute_has_dynamic_exports;
-pub use topo_sort::topological_sort;
+pub use exec_order::{ExecOrderConfig, ExecOrderResult, compute_exec_order};
+pub use side_effects::determine_side_effects;
+pub use tla::compute_tla;

@@ -5,8 +5,8 @@ use rustc_hash::FxHashMap;
 
 use crate::traits::ModuleInfo;
 use crate::types::{
-    ImportEdge, IndirectExportEntry, LocalExport, ModuleIdx, NamedImport, ResolvedImportRecord,
-    StarExportEntry, SymbolRef,
+    ImportEdge, ImportKind, IndirectExportEntry, LocalExport, ModuleIdx, NamedImport,
+    ResolvedImportRecord, StarExportEntry, SymbolRef,
 };
 
 /// Default module implementation — stores all import/export data.
@@ -20,6 +20,10 @@ pub struct Module {
     pub has_module_syntax: bool,
     /// Whether this module uses CommonJS.
     pub is_commonjs: bool,
+    /// Whether this module contains top-level `await`.
+    pub has_top_level_await: bool,
+    /// The module's own side-effects state (before propagation).
+    pub side_effects: Option<bool>,
 
     /// Named exports: export_name -> LocalExport.
     pub named_exports: FxHashMap<CompactString, LocalExport>,
@@ -112,5 +116,19 @@ impl ModuleInfo for Module {
         let import = self.named_imports.get(&symbol)?;
         let is_ns = import.imported_name.as_str() == "*";
         Some((import.imported_name.as_str(), import.record_idx.index(), is_ns))
+    }
+
+    fn has_top_level_await(&self) -> bool {
+        self.has_top_level_await
+    }
+
+    fn for_each_import_record(&self, f: &mut dyn FnMut(usize, Option<ModuleIdx>, ImportKind)) {
+        for (i, rec) in self.import_records.iter().enumerate() {
+            f(i, rec.resolved_module, rec.kind);
+        }
+    }
+
+    fn side_effects(&self) -> Option<bool> {
+        self.side_effects
     }
 }

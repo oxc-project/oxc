@@ -32,4 +32,28 @@ pub trait ModuleStore {
 
     /// Iterate over the dependency module indices for a given module.
     fn for_each_dependency(&self, idx: Self::ModuleIdx, f: &mut dyn FnMut(Self::ModuleIdx));
+
+    /// Iterate over static import dependency module indices for a given module.
+    ///
+    /// "Static" means `import` declarations (not `import()` or `require()`).
+    /// This is needed by algorithms like TLA propagation that only follow
+    /// synchronous import edges.
+    fn for_each_static_dependency(&self, idx: Self::ModuleIdx, f: &mut dyn FnMut(Self::ModuleIdx));
+
+    /// Get side-effects status for any module index, including external modules.
+    ///
+    /// Needed because `module()` only returns normal modules, but external modules
+    /// can have user-defined side effects (e.g., from package.json `sideEffects` field).
+    ///
+    /// Returns:
+    /// - `Some(Some(true))` — has side effects
+    /// - `Some(Some(false))` — no side effects
+    /// - `Some(None)` — no-treeshake (always keep)
+    /// - `None` — module not found
+    ///
+    /// Default: delegates to `module().side_effects()`.
+    #[expect(clippy::option_option)]
+    fn any_module_side_effects(&self, idx: Self::ModuleIdx) -> Option<Option<bool>> {
+        self.module(idx).map(ModuleInfo::side_effects)
+    }
 }

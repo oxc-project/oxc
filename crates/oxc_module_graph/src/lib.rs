@@ -36,9 +36,10 @@
 //! │  │    Traits     │  │  Algorithms   │  │   Defaults   │  │
 //! │  │              │  │               │  │              │  │
 //! │  │ ModuleInfo   │◄─┤ bind_imports  │  │ Module       │  │
-//! │  │ ModuleStore  │◄─┤ topo_sort     │  │ ModuleGraph  │  │
+//! │  │ ModuleStore  │◄─┤ exec_order    │  │ ModuleGraph  │  │
 //! │  │ SymbolGraph  │◄─┤ find_cycles   │  │ SymbolRefDb  │  │
-//! │  │              │  │               │  │ Builder      │  │
+//! │  │ SideEffects  │  │ tla           │  │ Builder      │  │
+//! │  │ Checker      │  │ side_effects  │  │              │  │
 //! │  └──────────────┘  └───────────────┘  └──────────────┘  │
 //! │         ▲                                    ▲           │
 //! └─────────┼────────────────────────────────────┼───────────┘
@@ -116,13 +117,33 @@
 //! // result.errors: Vec<BindingError>
 //! ```
 //!
-//! ## `topological_sort`
+//! ## `compute_exec_order`
 //!
-//! Kahn's algorithm over the reachable subgraph from the given entry points.
-//! Returns `Some(ordered)` for a DAG, `None` if cycles exist.
+//! DFS post-order execution sort.  Returns modules in JavaScript evaluation
+//! order, with optional cycle detection and dynamic import inclusion.
 //!
 //! ```rust,ignore
-//! let order = topological_sort(&graph, &[entry_idx]);
+//! let result = compute_exec_order(&graph, &[entry], runtime, &config);
+//! // result.sorted: Vec<ModuleIdx>  — execution order
+//! // result.cycles: Vec<Vec<ModuleIdx>>  — detected cycles
+//! ```
+//!
+//! ## `compute_tla`
+//!
+//! Identifies modules affected by top-level `await`, propagating through
+//! static import edges only.
+//!
+//! ```rust,ignore
+//! let tla_modules = compute_tla(&graph);
+//! ```
+//!
+//! ## `determine_side_effects`
+//!
+//! Propagates side-effects status through import and star-export edges,
+//! with a [`SideEffectsChecker`] callback for consumer-specific logic.
+//!
+//! ```rust,ignore
+//! let side_effects = determine_side_effects(&graph, &checker);
 //! ```
 //!
 //! ## `find_cycles`
@@ -169,10 +190,14 @@ pub mod traits;
 pub mod types;
 
 // Re-export core traits at crate root for convenience.
-pub use traits::{DefaultImportMatcher, ImportMatcher, ModuleInfo, ModuleStore, SymbolGraph};
+pub use traits::{
+    DefaultImportMatcher, DefaultSideEffectsChecker, ImportMatcher, ModuleInfo, ModuleStore,
+    SideEffectsChecker, SymbolGraph,
+};
 
 // Re-export algorithms at crate root.
 pub use algo::{
-    BindingError, BindingResult, bind_imports_and_exports, build_resolved_exports,
-    compute_has_dynamic_exports, find_cycles, match_imports, topological_sort,
+    BindingError, BindingResult, ExecOrderConfig, ExecOrderResult, bind_imports_and_exports,
+    build_resolved_exports, compute_exec_order, compute_has_dynamic_exports, compute_tla,
+    determine_side_effects, find_cycles, match_imports,
 };
