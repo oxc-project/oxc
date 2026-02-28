@@ -178,8 +178,17 @@ impl ModuleGraphBuilder {
         // Build named exports
         let named_exports = build_named_exports(idx, module_record);
 
+        // Build specifier→record_idx mapping for named imports.
+        // Import records are created in `requested_modules` iteration order.
+        let specifier_to_record_idx: FxHashMap<&str, usize> = module_record
+            .requested_modules
+            .keys()
+            .enumerate()
+            .map(|(i, k)| (k.as_str(), i))
+            .collect();
+
         // Build named imports
-        let named_imports = build_named_imports(idx, module_record);
+        let named_imports = build_named_imports(idx, module_record, &specifier_to_record_idx);
 
         // Resolve imports and build import records + dependency edges
         let dir = path.parent().unwrap_or(Path::new("."));
@@ -217,6 +226,14 @@ impl ModuleGraphBuilder {
         self.graph.add_module(module);
     }
 
+    /// Resolve static ESM imports from `requested_modules`.
+    ///
+    /// This only processes static `import`/`export` declarations since
+    /// `oxc_syntax::ModuleRecord` is ESM-only. Dynamic imports (`import()`),
+    /// CommonJS (`require()`), and HMR (`import.meta.hot.accept()`) are not
+    /// detected here. For full import kind support, consumers should extend
+    /// the builder or construct modules manually with the appropriate
+    /// `ImportKind` variants.
     fn resolve_imports(
         &mut self,
         resolver: &Resolver,
@@ -335,9 +352,14 @@ fn build_named_exports(
 }
 
 /// Build named imports from the module record.
+///
+/// `specifier_to_record_idx` maps import specifiers to their position in
+/// the `requested_modules` iteration order, which matches the import record
+/// indices built by `resolve_imports`.
 fn build_named_imports(
     idx: ModuleIdx,
     record: &syntax::ModuleRecord,
+    specifier_to_record_idx: &FxHashMap<&str, usize>,
 ) -> FxHashMap<SymbolRef, NamedImport> {
     let mut imports = FxHashMap::default();
 
@@ -351,12 +373,17 @@ fn build_named_imports(
         #[expect(clippy::cast_possible_truncation)]
         let local_symbol = SymbolRef::new(idx, SymbolId::from_raw_unchecked(i as u32));
 
+        let record_idx = specifier_to_record_idx
+            .get(entry.module_request.name.as_str())
+            .copied()
+            .unwrap_or(0);
+
         imports.insert(
             local_symbol,
             NamedImport {
                 imported_name,
                 local_symbol,
-                record_idx: ImportRecordIdx::from_usize(0), // simplified
+                record_idx: ImportRecordIdx::from_usize(record_idx),
                 is_type: entry.is_type,
             },
         );

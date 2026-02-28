@@ -188,11 +188,11 @@ fn test_module_record_from_syntax() {
     use oxc_span::SourceType;
 
     let allocator = Allocator::default();
-    let source = r#"
+    let source = r"
         import { foo } from './bar';
         export const baz = foo + 1;
         export default 42;
-    "#;
+    ";
 
     let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source, source_type).parse();
@@ -201,7 +201,7 @@ fn test_module_record_from_syntax() {
     assert!(record.has_module_syntax);
     assert_eq!(record.import_entries.len(), 1);
     assert_eq!(record.import_entries[0].module_request.name(), "./bar");
-    assert!(record.local_export_entries.len() >= 1);
+    assert!(!record.local_export_entries.is_empty());
     assert!(record.export_default.is_some());
 }
 
@@ -525,6 +525,7 @@ fn simple_graph(edges: &[(usize, usize)]) -> DefaultModuleGraph {
     use oxc_module_graph::default::Module;
 
     // Find max module index.
+    #[expect(clippy::tuple_array_conversions)]
     let max_idx = edges.iter().flat_map(|&(a, b)| [a, b]).max().map_or(0, |m| m + 1);
 
     let mut graph = DefaultModuleGraph::new();
@@ -2175,7 +2176,7 @@ fn test_side_effects_has_side_effects() {
 
     let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
     let result = determine_side_effects(&graph, &checker);
-    assert_eq!(result[&idx], true);
+    assert!(result[&idx]);
 }
 
 #[test]
@@ -2192,7 +2193,7 @@ fn test_side_effects_no_treeshake() {
 
     let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
     let result = determine_side_effects(&graph, &checker);
-    assert_eq!(result[&idx], true);
+    assert!(result[&idx]);
 }
 
 #[test]
@@ -2209,7 +2210,7 @@ fn test_side_effects_pure_no_deps() {
 
     let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
     let result = determine_side_effects(&graph, &checker);
-    assert_eq!(result[&idx], false);
+    assert!(!result[&idx]);
 }
 
 #[test]
@@ -2240,8 +2241,8 @@ fn test_side_effects_transitive() {
 
     let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
     let result = determine_side_effects(&graph, &checker);
-    assert_eq!(result[&idx_a], true, "Pure module importing side-effectful should be true");
-    assert_eq!(result[&idx_b], true);
+    assert!(result[&idx_a], "Pure module importing side-effectful should be true");
+    assert!(result[&idx_b]);
 }
 
 #[test]
@@ -2277,7 +2278,7 @@ fn test_side_effects_custom_checker() {
 
     let checker = AlwaysSideEffectfulChecker;
     let result = determine_side_effects(&graph, &checker);
-    assert_eq!(result[&idx_a], true, "Star export with custom checker should be side-effectful");
+    assert!(result[&idx_a], "Star export with custom checker should be side-effectful");
 }
 
 #[test]
@@ -2317,8 +2318,8 @@ fn test_side_effects_cycle_no_infinite_loop() {
 
     let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
     let result = determine_side_effects(&graph, &checker);
-    assert_eq!(result[&idx_a], false, "Pure cycle should be side-effect-free");
-    assert_eq!(result[&idx_b], false, "Pure cycle should be side-effect-free");
+    assert!(!result[&idx_a], "Pure cycle should be side-effect-free");
+    assert!(!result[&idx_b], "Pure cycle should be side-effect-free");
 }
 
 #[test]
@@ -2359,7 +2360,7 @@ fn test_side_effects_external_module_propagation() {
                 return Some(se);
             }
             // Fall back to normal module lookup
-            self.inner.module(idx).map(|m| m.side_effects())
+            self.inner.module(idx).map(oxc_module_graph::ModuleInfo::side_effects)
         }
     }
 
@@ -2391,8 +2392,8 @@ fn test_side_effects_external_module_propagation() {
 
     let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
     let result = determine_side_effects(&store, &checker);
-    assert_eq!(
-        result[&idx_a], true,
+    assert!(
+        result[&idx_a],
         "Pure module importing side-effectful external should be true"
     );
 }
