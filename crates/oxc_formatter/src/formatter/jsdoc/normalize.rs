@@ -191,6 +191,262 @@ pub fn convert_setext_headings(text: &str) -> String {
     result.join("\n")
 }
 
+/// Remove markdown horizontal rules (thematic breaks) from description text.
+/// Lines like `---`, `***`, `___`, `- - -`, `* * *` etc. are removed.
+/// Matches remark behavior where thematic breaks are dropped during round-trip.
+pub fn remove_horizontal_rules(text: &str) -> String {
+    let lines: Vec<&str> = text.lines().collect();
+    let mut result: Vec<&str> = Vec::with_capacity(lines.len());
+    let mut in_fenced = false;
+
+    let mut removed_any = false;
+    for line in &lines {
+        // Track fenced code blocks
+        if line.starts_with("```") {
+            in_fenced = !in_fenced;
+            result.push(line);
+            continue;
+        }
+        if in_fenced {
+            result.push(line);
+            continue;
+        }
+        // Skip indented code blocks (4+ spaces)
+        if line.starts_with("    ") {
+            result.push(line);
+            continue;
+        }
+        // Check if line is a horizontal rule
+        let trimmed = line.trim();
+        if is_horizontal_rule(trimmed) {
+            removed_any = true;
+            continue;
+        }
+        result.push(line);
+    }
+
+    if !removed_any {
+        return text.to_string();
+    }
+
+    // Clean up consecutive empty lines only where a horizontal rule was removed
+    let mut cleaned: Vec<&str> = Vec::with_capacity(result.len());
+    for line in &result {
+        if line.trim().is_empty() && cleaned.last().is_some_and(|l: &&str| l.trim().is_empty()) {
+            continue;
+        }
+        cleaned.push(line);
+    }
+    cleaned.join("\n")
+}
+
+/// Check if a line is a markdown horizontal rule (thematic break).
+/// Must be 3 or more of the same character (`-`, `*`, `_`) with optional spaces.
+fn is_horizontal_rule(line: &str) -> bool {
+    if line.len() < 3 {
+        return false;
+    }
+    // Must contain only one type of rule character and spaces
+    let rule_char = line.chars().find(|c| !c.is_whitespace());
+    match rule_char {
+        Some('-' | '*' | '_') => {
+            let rc = rule_char.unwrap();
+            let count = line.chars().filter(|&c| c == rc).count();
+            count >= 3 && line.chars().all(|c| c == rc || c == ' ')
+        }
+        _ => false,
+    }
+}
+
+/// Normalize markdown reference links and definitions.
+/// - Expands shorthand reference links `[text]` → `[text][text]` when a definition exists
+/// - Strips titles from reference definitions `[text]: url 'title'` → `[text]: url`
+///
+/// Matches remark behavior where reference links and definitions are normalized.
+pub fn normalize_reference_links(text: &str) -> String {
+    // First pass: collect reference definition labels
+    let lines: Vec<&str> = text.lines().collect();
+    let mut def_labels: Vec<String> = Vec::new();
+
+    for line in &lines {
+        let trimmed = line.trim();
+        if let Some(label) = parse_reference_definition_label(trimmed) {
+            def_labels.push(label.cow_to_lowercase().into_owned());
+        }
+    }
+
+    if def_labels.is_empty() {
+        return text.to_string();
+    }
+
+    // Second pass: process lines
+    let mut result_lines: Vec<String> = Vec::with_capacity(lines.len());
+    let mut in_fenced = false;
+
+    for line in &lines {
+        if line.starts_with("```") {
+            in_fenced = !in_fenced;
+            result_lines.push(line.to_string());
+            continue;
+        }
+        if in_fenced {
+            result_lines.push(line.to_string());
+            continue;
+        }
+
+        // Process reference definitions: strip titles
+        let trimmed = line.trim();
+        if let Some((label, url)) = parse_reference_definition_parts(trimmed) {
+            result_lines.push(format!("[{label}]: {url}"));
+            continue;
+        }
+
+        // Process text: expand shorthand reference links
+        let expanded = expand_shorthand_reference_links(line, &def_labels);
+        result_lines.push(expanded);
+    }
+
+    result_lines.join("\n")
+}
+
+/// Parse a reference definition label from a line like `[label]: url 'title'`.
+/// Returns the label if this line is a reference definition.
+fn parse_reference_definition_label(line: &str) -> Option<&str> {
+    if !line.starts_with('[') {
+        return None;
+    }
+    let close_bracket = line.find("]:")?;
+    Some(&line[1..close_bracket])
+}
+
+/// Parse a reference definition into (label, url) stripping any title.
+/// `[label]: url 'title'` → Some(("label", "url"))
+fn parse_reference_definition_parts(line: &str) -> Option<(&str, &str)> {
+    if !line.starts_with('[') {
+        return None;
+    }
+    let close_bracket = line.find("]:")?;
+    let label = &line[1..close_bracket];
+    let rest = line[close_bracket + 2..].trim();
+
+    // Strip title (single or double quoted, or parenthesized)
+    let url = strip_reference_title(rest);
+    Some((label, url))
+}
+
+/// Strip the optional title from a reference definition URL.
+/// `http://example.com 'Example title'` → `http://example.com`
+fn strip_reference_title(url_and_title: &str) -> &str {
+    // Title can be in single quotes, double quotes, or parentheses
+    // It must be separated from the URL by whitespace
+    let trimmed = url_and_title.trim();
+    // Check for trailing quoted title
+    for quote in [('\'', '\''), ('"', '"'), ('(', ')')] {
+        if trimmed.ends_with(quote.1) {
+            // Find the matching opening quote, searching from the right
+            if let Some(open_pos) = trimmed[..trimmed.len() - 1].rfind(quote.0) {
+                // Must be preceded by whitespace
+                if open_pos > 0 && trimmed.as_bytes()[open_pos - 1].is_ascii_whitespace() {
+                    return trimmed[..open_pos].trim_end();
+                }
+            }
+        }
+    }
+    trimmed
+}
+
+/// Expand shorthand reference links `[text]` → `[text][text]` when a matching definition exists.
+/// Skips reference definitions, full reference links `[text][label]`, inline links `[text](url)`,
+/// and label parts of full reference links (e.g., the `[1]` in `[text][1]`).
+fn expand_shorthand_reference_links(line: &str, def_labels: &[String]) -> String {
+    let bytes = line.as_bytes();
+    let len = bytes.len();
+    let mut result = String::with_capacity(len + 16);
+    let mut i = 0;
+    let mut prev_was_close_bracket = false;
+
+    while i < len {
+        if bytes[i] == b'[' {
+            // Skip if this `[` immediately follows a `]` — it's the label of a full reference link
+            if prev_was_close_bracket {
+                // Pass through `[label]` part of `[text][label]`
+                if let Some(close) = find_unescaped_bracket(bytes, i + 1) {
+                    result.push_str(&line[i..=close]);
+                    i = close + 1;
+                    prev_was_close_bracket = true;
+                    continue;
+                }
+            }
+
+            // Find closing bracket
+            if let Some(close) = find_unescaped_bracket(bytes, i + 1) {
+                let label = &line[i + 1..close];
+
+                // Check what follows the closing bracket
+                let after = close + 1;
+
+                // Skip if this is a reference definition `[label]: ...`
+                if after < len && bytes[after] == b':' {
+                    result.push_str(&line[i..=close]);
+                    i = close + 1;
+                    prev_was_close_bracket = true;
+                    continue;
+                }
+
+                // Skip if this is already a full reference link `[text][label]` or inline link `[text](url)`
+                if after < len && (bytes[after] == b'[' || bytes[after] == b'(') {
+                    result.push_str(&line[i..=close]);
+                    i = close + 1;
+                    prev_was_close_bracket = true;
+                    continue;
+                }
+
+                // Check if label matches a reference definition
+                if def_labels.contains(&label.cow_to_lowercase().into_owned()) {
+                    result.push_str(&line[i..=close]);
+                    result.push('[');
+                    result.push_str(label);
+                    result.push(']');
+                    i = close + 1;
+                    prev_was_close_bracket = true;
+                    continue;
+                }
+
+                result.push_str(&line[i..=close]);
+                i = close + 1;
+                prev_was_close_bracket = true;
+                continue;
+            }
+        }
+
+        prev_was_close_bracket = bytes[i] == b']';
+        result.push(bytes[i] as char);
+        i += 1;
+    }
+
+    result
+}
+
+/// Find the position of the closing `]` bracket, skipping escaped brackets.
+fn find_unescaped_bracket(bytes: &[u8], start: usize) -> Option<usize> {
+    let mut i = start;
+    while i < bytes.len() {
+        if bytes[i] == b'\\' {
+            i += 2;
+            continue;
+        }
+        if bytes[i] == b']' {
+            return Some(i);
+        }
+        if bytes[i] == b'[' {
+            // Nested brackets — not a simple reference link
+            return None;
+        }
+        i += 1;
+    }
+    None
+}
+
 /// Un-escape markdown backslashes in description text.
 /// `\\` → `\` outside of inline code (backticks) and code fences.
 /// The prettier-plugin-jsdoc processes descriptions through markdown formatting,

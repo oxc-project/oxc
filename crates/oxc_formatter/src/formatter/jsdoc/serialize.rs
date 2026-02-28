@@ -14,9 +14,9 @@ use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
 use super::{
     normalize::{
         capitalize_first, convert_setext_headings, normalize_markdown_emphasis,
-        normalize_tag_kind, normalize_type,
+        normalize_reference_links, normalize_tag_kind, normalize_type,
         normalize_type_preserve_quotes, normalize_type_return, normalize_type_whitespace,
-        strip_optional_type_suffix, unescape_markdown_backslashes,
+        remove_horizontal_rules, strip_optional_type_suffix, unescape_markdown_backslashes,
     },
     wrap::{tokenize_words, wrap_text},
 };
@@ -196,6 +196,389 @@ fn is_tags_group_head(kind: &str) -> bool {
     matches!(kind, "callback" | "typedef")
 }
 
+/// Reorder @param tags to match the function signature parameter order.
+/// Only reorders when:
+/// - All @param tags have type annotations (the plugin skips typeless params)
+/// - The @param names exactly match the function parameters (same set, different order)
+fn reorder_param_tags(
+    effective_tags: &mut [(&oxc_jsdoc::parser::JSDocTag<'_>, &str)],
+    comment: &Comment,
+    source_text: &str,
+) {
+    // Find consecutive @param tags
+    let param_start = effective_tags.iter().position(|(_, kind)| *kind == "param");
+    let Some(param_start) = param_start else {
+        return;
+    };
+    let param_end = effective_tags[param_start..]
+        .iter()
+        .position(|(_, kind)| *kind != "param")
+        .map_or(effective_tags.len(), |pos| param_start + pos);
+
+    if param_end - param_start < 2 {
+        return;
+    }
+
+    // Check that ALL @param tags have type annotations
+    let param_names: Vec<&str> = effective_tags[param_start..param_end]
+        .iter()
+        .filter_map(|(tag, _)| {
+            let (type_part, name_part, _) = tag.type_name_comment();
+            // Must have both type and name
+            type_part?;
+            name_part.map(|n| n.parsed())
+        })
+        .collect();
+
+    if param_names.len() != param_end - param_start {
+        return; // Some params lack types or names — don't reorder
+    }
+
+    // Extract function parameter names from the source text after the comment
+    let fn_params = extract_function_params(comment, source_text);
+    if fn_params.is_empty() {
+        return;
+    }
+
+    // Only reorder if param names exactly match the function params (same set)
+    if param_names.len() != fn_params.len() {
+        return;
+    }
+    let mut sorted_doc = param_names.clone();
+    sorted_doc.sort_unstable();
+    let mut sorted_fn: Vec<&str> = fn_params.iter().map(String::as_str).collect();
+    sorted_fn.sort_unstable();
+    if sorted_doc != sorted_fn {
+        return;
+    }
+
+    // Already in order?
+    if param_names.iter().zip(fn_params.iter()).all(|(a, b)| *a == b.as_str()) {
+        return;
+    }
+
+    // Sort @param tags by their position in the function signature
+    effective_tags[param_start..param_end].sort_by_key(|(tag, _)| {
+        let (_, name_part, _) = tag.type_name_comment();
+        let name = name_part.map_or("", |n| n.parsed());
+        fn_params.iter().position(|p| p == name).unwrap_or(usize::MAX)
+    });
+}
+
+/// Extract function parameter names from the source text after the comment.
+/// Handles `function name(...)`, `name(...)` methods, `name = (...) =>` arrows.
+/// Uses balanced parenthesis matching to handle nested type annotations.
+fn extract_function_params(comment: &Comment, source_text: &str) -> Vec<String> {
+    let after_start = comment.span.end as usize;
+    let after_end = (after_start + 500).min(source_text.len());
+    let after = &source_text[after_start..after_end];
+
+    // Find a function-like construct: look for identifier followed by `(`
+    // Skip whitespace, look for `function`, `async`, method names, arrow patterns
+    let trimmed = after.trim_start();
+
+    // Find the opening `(` of the parameter list.
+    // We look for patterns that indicate a function definition (not a call).
+    let paren_pos = find_function_params_start(trimmed);
+    let Some(paren_start) = paren_pos else {
+        return Vec::new();
+    };
+
+    // Find matching closing `)` with balanced parenthesis counting
+    let Some(paren_end) = find_matching_paren(trimmed, paren_start) else {
+        return Vec::new();
+    };
+
+    let params_str = &trimmed[paren_start + 1..paren_end];
+
+    // Parse parameter names, handling TypeScript type annotations
+    parse_param_names(params_str)
+}
+
+/// Find the start position of function parameter parentheses in the text.
+/// Returns the index of `(` in function-like constructs.
+fn find_function_params_start(text: &str) -> Option<usize> {
+    let bytes = text.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+
+    // Skip `export`, `async`, `default` keywords
+    loop {
+        while i < len && bytes[i].is_ascii_whitespace() {
+            i += 1;
+        }
+        if text[i..].starts_with("export") && i + 6 < len && !bytes[i + 6].is_ascii_alphanumeric() {
+            i += 6;
+            continue;
+        }
+        if text[i..].starts_with("async") && i + 5 < len && !bytes[i + 5].is_ascii_alphanumeric() {
+            i += 5;
+            continue;
+        }
+        if text[i..].starts_with("default")
+            && i + 7 < len
+            && !bytes[i + 7].is_ascii_alphanumeric()
+        {
+            i += 7;
+            continue;
+        }
+        break;
+    }
+
+    while i < len && bytes[i].is_ascii_whitespace() {
+        i += 1;
+    }
+
+    // `function name(`
+    if text[i..].starts_with("function") {
+        i += 8;
+        // Skip optional `*` for generators
+        while i < len && bytes[i].is_ascii_whitespace() {
+            i += 1;
+        }
+        if i < len && bytes[i] == b'*' {
+            i += 1;
+        }
+        // Skip function name
+        while i < len && bytes[i].is_ascii_whitespace() {
+            i += 1;
+        }
+        while i < len && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$') {
+            i += 1;
+        }
+        // Skip TypeScript generics `<T>`
+        if i < len
+            && bytes[i] == b'<'
+            && let Some(end) = find_matching_angle(text, i)
+        {
+            i = end + 1;
+        }
+        while i < len && bytes[i].is_ascii_whitespace() {
+            i += 1;
+        }
+        if i < len && bytes[i] == b'(' {
+            return Some(i);
+        }
+        return None;
+    }
+
+    // `const name = (` or `name(` (method)
+    if i < len && (bytes[i].is_ascii_alphabetic() || bytes[i] == b'_' || bytes[i] == b'$') {
+        // Skip `const`/`let`/`var` keyword
+        if text[i..].starts_with("const ") || text[i..].starts_with("let ") || text[i..].starts_with("var ") {
+            while i < len && !bytes[i].is_ascii_whitespace() {
+                i += 1;
+            }
+            while i < len && bytes[i].is_ascii_whitespace() {
+                i += 1;
+            }
+        }
+
+        // Skip identifier
+        let id_start = i;
+        while i < len && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$') {
+            i += 1;
+        }
+        if i == id_start {
+            return None;
+        }
+
+        // Skip TypeScript generics
+        while i < len && bytes[i].is_ascii_whitespace() {
+            i += 1;
+        }
+        if i < len
+            && bytes[i] == b'<'
+            && let Some(end) = find_matching_angle(text, i)
+        {
+            i = end + 1;
+        }
+
+        while i < len && bytes[i].is_ascii_whitespace() {
+            i += 1;
+        }
+
+        // Direct method: `name(`
+        if i < len && bytes[i] == b'(' {
+            return Some(i);
+        }
+
+        // Arrow: `name = (`
+        if i < len && bytes[i] == b'=' && i + 1 < len && bytes[i + 1] != b'=' {
+            i += 1;
+            while i < len && bytes[i].is_ascii_whitespace() {
+                i += 1;
+            }
+            // Skip `async`
+            if text[i..].starts_with("async")
+                && i + 5 < len
+                && !bytes[i + 5].is_ascii_alphanumeric()
+            {
+                i += 5;
+                while i < len && bytes[i].is_ascii_whitespace() {
+                    i += 1;
+                }
+            }
+            if i < len && bytes[i] == b'(' {
+                return Some(i);
+            }
+        }
+    }
+
+    None
+}
+
+/// Find matching closing angle bracket `>` for TypeScript generics.
+fn find_matching_angle(text: &str, start: usize) -> Option<usize> {
+    let bytes = text.as_bytes();
+    let mut depth = 0;
+    let mut i = start;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'<' => depth += 1,
+            b'>' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(i);
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    None
+}
+
+/// Find matching closing `)` given position of opening `(`.
+fn find_matching_paren(text: &str, start: usize) -> Option<usize> {
+    let bytes = text.as_bytes();
+    let mut depth = 0;
+    let mut i = start;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'(' => depth += 1,
+            b')' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(i);
+                }
+            }
+            b'\'' | b'"' | b'`' => {
+                // Skip string literals
+                let quote = bytes[i];
+                i += 1;
+                while i < bytes.len() && bytes[i] != quote {
+                    if bytes[i] == b'\\' {
+                        i += 1;
+                    }
+                    i += 1;
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    None
+}
+
+/// Parse parameter names from a function parameter list string.
+/// Handles TypeScript type annotations, default values, destructuring, and rest params.
+fn parse_param_names(params_str: &str) -> Vec<String> {
+    let mut names = Vec::new();
+    let mut i = 0;
+    let bytes = params_str.as_bytes();
+    let len = bytes.len();
+
+    while i < len {
+        // Skip whitespace
+        while i < len && bytes[i].is_ascii_whitespace() {
+            i += 1;
+        }
+        if i >= len {
+            break;
+        }
+
+        // Handle destructuring — skip the whole `{...}` or `[...]` structure
+        if bytes[i] == b'{' || bytes[i] == b'[' {
+            let (open, close) = if bytes[i] == b'{' { (b'{', b'}') } else { (b'[', b']') };
+            let mut depth = 0;
+            while i < len {
+                if bytes[i] == open {
+                    depth += 1;
+                } else if bytes[i] == close {
+                    depth -= 1;
+                    if depth == 0 {
+                        i += 1;
+                        break;
+                    }
+                }
+                i += 1;
+            }
+            // Skip type annotation, default value, and comma
+            while i < len && bytes[i] != b',' {
+                i += 1;
+            }
+            if i < len {
+                i += 1; // skip comma
+            }
+            continue;
+        }
+
+        // Handle rest params: `...name`
+        if i + 2 < len && bytes[i] == b'.' && bytes[i + 1] == b'.' && bytes[i + 2] == b'.' {
+            i += 3;
+        }
+
+        // Extract parameter name
+        let name_start = i;
+        while i < len && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$') {
+            i += 1;
+        }
+        if i > name_start {
+            names.push(params_str[name_start..i].to_string());
+        }
+
+        // Skip type annotation (`: Type`), which may include nested parens/angles
+        while i < len && bytes[i] != b',' {
+            match bytes[i] {
+                b'(' => {
+                    if let Some(end) = find_matching_paren(params_str, i) {
+                        i = end + 1;
+                    } else {
+                        i += 1;
+                    }
+                }
+                b'<' => {
+                    if let Some(end) = find_matching_angle(params_str, i) {
+                        i = end + 1;
+                    } else {
+                        i += 1;
+                    }
+                }
+                b'\'' | b'"' => {
+                    let quote = bytes[i];
+                    i += 1;
+                    while i < len && bytes[i] != quote {
+                        if bytes[i] == b'\\' {
+                            i += 1;
+                        }
+                        i += 1;
+                    }
+                    if i < len {
+                        i += 1;
+                    }
+                }
+                _ => i += 1,
+            }
+        }
+        if i < len {
+            i += 1; // skip comma
+        }
+    }
+
+    names
+}
+
 /// Sort tags by priority within groups.
 /// `@typedef` and `@callback` start new groups (TAGS_GROUP_HEAD).
 /// Tags within each group are sorted by weight. Groups maintain their relative order.
@@ -287,6 +670,8 @@ pub fn format_jsdoc_comment<'a>(
     let desc_trimmed = description.trim();
     if !desc_trimmed.is_empty() {
         let desc_normalized = convert_setext_headings(desc_trimmed);
+        let desc_normalized = remove_horizontal_rules(&desc_normalized);
+        let desc_normalized = normalize_reference_links(&desc_normalized);
         let desc_normalized = normalize_markdown_emphasis(&desc_normalized);
         let desc_normalized = unescape_markdown_backslashes(&desc_normalized);
         wrap_text(&desc_normalized, wrap_width, &mut content_lines);
@@ -330,6 +715,9 @@ pub fn format_jsdoc_comment<'a>(
         }
         effective_tags.push((tag, normalized_kind));
     }
+
+    // Reorder @param tags to match the function signature order
+    reorder_param_tags(&mut effective_tags, comment, source_text);
 
     // Format tags
     let mut prev_normalized_kind: Option<&str> = None;
