@@ -104,12 +104,19 @@ impl<'a> JSDocCommentPart<'a> {
             .map(|line| {
                 let trimmed = line.trim();
                 if let Some(rest) = trimmed.strip_prefix('*') {
-                    // Strip at most one leading space after `*` (the conventional ` * ` prefix)
-                    // to preserve any additional indentation (e.g. for indented code blocks)
-                    rest.strip_prefix(' ').unwrap_or(rest)
-                } else {
-                    trimmed
+                    // Strip `*` as a comment continuation prefix UNLESS it looks like
+                    // markdown emphasis (`*word*`). Emphasis has `*` followed by an
+                    // alphanumeric char; continuation prefixes have `*` followed by
+                    // space, backtick, punctuation, or nothing.
+                    let is_emphasis =
+                        rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
+                    if !is_emphasis {
+                        // Strip at most one leading space after `*` (the conventional ` * ` prefix)
+                        // to preserve any additional indentation (e.g. for indented code blocks)
+                        return rest.strip_prefix(' ').unwrap_or(rest);
+                    }
                 }
+                trimmed
             })
             .collect::<Vec<_>>()
             .join("\n")
@@ -124,8 +131,19 @@ impl<'a> JSDocCommentPart<'a> {
 
         self.raw
             .lines()
-            // Trim leading the first `*` in each line
-            .map(|line| line.trim().strip_prefix('*').unwrap_or(line).trim())
+            // Trim leading `*` only when it's a continuation prefix (`* text` or `*` alone),
+            // not when it's a markdown emphasis marker (`*word*`)
+            .map(|line| {
+                let trimmed = line.trim();
+                if let Some(rest) = trimmed.strip_prefix('*') {
+                    let is_emphasis =
+                        rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
+                    if !is_emphasis {
+                        return rest.trim();
+                    }
+                }
+                trimmed
+            })
             .filter(|line| !line.is_empty())
             .collect::<Vec<_>>()
             .join("\n")

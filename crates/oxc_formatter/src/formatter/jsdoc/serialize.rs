@@ -7,7 +7,7 @@ use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
 
 use crate::ExternalCallbacks;
-use crate::options::JsdocOptions;
+use crate::options::{JsdocOptions, QuoteStyle};
 use crate::options::TrailingCommas;
 use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
 
@@ -422,6 +422,7 @@ pub fn format_jsdoc_comment<'a>(
                 tag,
                 should_capitalize,
                 wrap_width,
+                format_options.quote_style,
                 &mut content_lines,
             );
         }
@@ -886,9 +887,10 @@ fn split_object_fields(inner: &str) -> Vec<String> {
 }
 
 /// Format a `@default` / `@defaultValue` value.
-/// Handles JSON-like formatting: spaces after `:` and `,`, inside `{}`, single→double quotes.
+/// Handles JSON-like formatting: spaces after `:` and `,`, inside `{}`.
+/// Converts quotes based on the `quote_style` option.
 /// Non-JSON values (code, plain text) are returned as-is.
-fn format_default_value(value: &str) -> String {
+fn format_default_value(value: &str, quote_style: QuoteStyle) -> String {
     let trimmed = value.trim();
     // Detect if value looks like JSON/object/array literal
     let first_char = trimmed.chars().next().unwrap_or(' ');
@@ -897,32 +899,37 @@ fn format_default_value(value: &str) -> String {
         return trimmed.to_string();
     }
 
+    // Determine target and source quote characters based on quote style.
+    let (target_quote, other_quote) = match quote_style {
+        QuoteStyle::Double => ('"', '\''),
+        QuoteStyle::Single => ('\'', '"'),
+    };
+
     // Format JSON-like values: normalize spacing around `:`, `,`, `{`, `}`, `[`
-    // and convert single-quoted strings to double-quoted strings.
-    // Properly track double-quoted strings to avoid corrupting apostrophes.
+    // and convert quotes based on the quote_style option.
     let mut result = String::with_capacity(trimmed.len() + 16);
     let chars: Vec<char> = trimmed.chars().collect();
     let len = chars.len();
     let mut i = 0;
-    let mut in_double_quote = false;
-    let mut in_single_quote = false;
+    let mut in_target_quote = false;
+    let mut in_other_quote = false;
 
     while i < len {
         let ch = chars[i];
 
-        if in_double_quote {
+        if in_target_quote {
             result.push(ch);
-            if ch == '"' && (i == 0 || chars[i - 1] != '\\') {
-                in_double_quote = false;
+            if ch == target_quote && (i == 0 || chars[i - 1] != '\\') {
+                in_target_quote = false;
             }
             i += 1;
             continue;
         }
 
-        if in_single_quote {
-            if ch == '\'' && (i == 0 || chars[i - 1] != '\\') {
-                result.push('"'); // Close with double quote
-                in_single_quote = false;
+        if in_other_quote {
+            if ch == other_quote && (i == 0 || chars[i - 1] != '\\') {
+                result.push(target_quote); // Close with target quote
+                in_other_quote = false;
             } else {
                 result.push(ch);
             }
@@ -931,13 +938,13 @@ fn format_default_value(value: &str) -> String {
         }
 
         match ch {
-            '"' => {
-                result.push('"');
-                in_double_quote = true;
+            c if c == target_quote => {
+                result.push(target_quote);
+                in_target_quote = true;
             }
-            '\'' => {
-                result.push('"'); // Open with double quote
-                in_single_quote = true;
+            c if c == other_quote => {
+                result.push(target_quote); // Open with target quote
+                in_other_quote = true;
             }
             ':' => {
                 result.push(':');
@@ -1097,6 +1104,28 @@ fn format_external_language(
         Ok(formatted) => Some(formatted.trim_end().to_string()),
         Err(_) => None,
     }
+}
+
+/// Count unescaped backticks on a line and update template literal depth.
+/// Returns the new depth after processing the line.
+fn update_template_depth(line: &str, mut depth: u32) -> u32 {
+    let bytes = line.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'\\' {
+            i += 2; // skip escaped character
+            continue;
+        }
+        if bytes[i] == b'`' {
+            if depth == 0 {
+                depth += 1;
+            } else {
+                depth -= 1;
+            }
+        }
+        i += 1;
+    }
+    depth
 }
 
 /// Post-process content lines to format indented code blocks (4-space indented).
@@ -1271,16 +1300,38 @@ fn format_example_code(
         return;
     }
 
+    // Check for fenced code blocks (```lang ... ```). Triple backticks are
+    // actually valid JavaScript (template literal expressions), so
+    // `format_embedded_js` would parse them as JS and produce wrong output.
+    // Handle fenced blocks by stripping the markers, formatting just the
+    // inner code, and re-adding the fences with proper indentation.
+    let code_lines: Vec<&str> = code.lines().collect();
+    if code_lines.len() >= 2
+        && code_lines[0].starts_with("```")
+        && code_lines.last().is_some_and(|l| l.trim() == "```")
+    {
+        format_example_fenced_block(&code_lines, wrap_width, format_options, content_lines);
+        return;
+    }
+
     // Try formatting the code. The effective print width for @example code is
     // wrap_width - 2 (for the 2-space indent within the comment).
     let effective_width = wrap_width.saturating_sub(2);
     if let Some(formatted) = format_embedded_js(code, effective_width, format_options) {
+        // Add 2-space indent to code structure lines, but NOT to template literal
+        // content. The formatter preserves template literal content verbatim, so
+        // adding indent to those lines would shift them incorrectly.
+        let mut template_depth: u32 = 0;
         for line in formatted.lines() {
             if line.is_empty() {
                 content_lines.push(String::new());
-            } else {
+            } else if template_depth == 0 {
                 content_lines.push(format!("  {line}"));
+            } else {
+                content_lines.push(line.to_string());
             }
+            // Count unescaped backticks to track template literal depth
+            template_depth = update_template_depth(line, template_depth);
         }
         return;
     }
@@ -1294,6 +1345,67 @@ fn format_example_code(
             content_lines.push(format!("  {line_trimmed}"));
         }
     }
+}
+
+/// Handle fenced code blocks inside @example tags.
+/// Strips the ``` markers, formats the inner code, and re-adds fences
+/// with proper 2-space indentation.
+fn format_example_fenced_block(
+    code_lines: &[&str],
+    wrap_width: usize,
+    format_options: &FormatOptions,
+    content_lines: &mut Vec<String>,
+) {
+    let lang_line = code_lines[0];
+    let inner_code: String =
+        code_lines[1..code_lines.len() - 1].to_vec().join("\n");
+    let effective_width = wrap_width.saturating_sub(2);
+
+    // Add opening fence with indent
+    content_lines.push(format!("  {lang_line}"));
+
+    if !inner_code.is_empty() {
+        let lang = lang_line[3..].trim();
+        if is_js_ts_lang(lang) {
+            if let Some(formatted) = format_embedded_js(&inner_code, effective_width, format_options)
+            {
+                let mut template_depth: u32 = 0;
+                for line in formatted.lines() {
+                    if line.is_empty() {
+                        content_lines.push(String::new());
+                    } else if template_depth == 0 {
+                        content_lines.push(format!("  {line}"));
+                    } else {
+                        content_lines.push(line.to_string());
+                    }
+                    template_depth = update_template_depth(line, template_depth);
+                }
+            } else {
+                // Fallback for unparseable inner code
+                for line in inner_code.lines() {
+                    let trimmed = line.trim();
+                    if trimmed.is_empty() {
+                        content_lines.push(String::new());
+                    } else {
+                        content_lines.push(format!("  {trimmed}"));
+                    }
+                }
+            }
+        } else {
+            // Non-JS/TS fenced code: preserve with 2-space indent
+            for line in inner_code.lines() {
+                let trimmed = line.trim();
+                if trimmed.is_empty() {
+                    content_lines.push(String::new());
+                } else {
+                    content_lines.push(format!("  {trimmed}"));
+                }
+            }
+        }
+    }
+
+    // Add closing fence with indent
+    content_lines.push(format!("  {}", code_lines.last().unwrap().trim()));
 }
 
 fn format_example_tag(
@@ -1723,6 +1835,7 @@ fn format_generic_tag(
     tag: &oxc_jsdoc::parser::JSDocTag<'_>,
     should_capitalize: bool,
     wrap_width: usize,
+    quote_style: QuoteStyle,
     content_lines: &mut Vec<String>,
 ) {
     let tag_line = format!("@{normalized_kind}");
@@ -1737,7 +1850,7 @@ fn format_generic_tag(
 
     // For @default/@defaultValue, format JSON-like values
     let desc_text = if matches!(normalized_kind, "default" | "defaultValue") {
-        format_default_value(desc_text)
+        format_default_value(desc_text, quote_style)
     } else if should_capitalize {
         capitalize_first(desc_text)
     } else {

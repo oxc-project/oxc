@@ -30,7 +30,7 @@ function add(a, b) {
  *   ```js
  *   const result = add(1, 2);
  *   console.log(result); // 3
- *   ```;
+ *   ```
  *
  * @param {number} a - First number
  * @param {number} b - Second number
@@ -50,7 +50,7 @@ function add(a, b) {
  *   ```js
  *   const result = add(1, 2);
  *   console.log(result); // 3
- *   ```;
+ *   ```
  *
  * @param {number} a - First number
  * @param {number} b - Second number
