@@ -18,7 +18,7 @@ use super::{
         normalize_type_preserve_quotes, normalize_type_return, normalize_type_whitespace,
         remove_horizontal_rules, strip_optional_type_suffix, unescape_markdown_backslashes,
     },
-    wrap::{tokenize_words, wrap_text},
+    wrap::{format_nested_list, has_nested_lists, tokenize_words, wrap_text},
 };
 
 /// The ` * ` prefix used in multiline JSDoc comments (3 chars).
@@ -674,9 +674,15 @@ pub fn format_jsdoc_comment<'a>(
         let desc_normalized = normalize_reference_links(&desc_normalized);
         let desc_normalized = normalize_markdown_emphasis(&desc_normalized);
         let desc_normalized = unescape_markdown_backslashes(&desc_normalized);
-        wrap_text(&desc_normalized, wrap_width, &mut content_lines);
-        if options.capitalize_descriptions {
-            capitalize_description_lines(&mut content_lines);
+        // Use specialized nested list formatting when the description contains
+        // indented list items (e.g., sub-lists under parent items).
+        if has_nested_lists(&desc_normalized) {
+            format_nested_list(&desc_normalized, options.capitalize_descriptions, &mut content_lines);
+        } else {
+            wrap_text(&desc_normalized, wrap_width, &mut content_lines);
+            if options.capitalize_descriptions {
+                capitalize_description_lines(&mut content_lines);
+            }
         }
     }
 
@@ -1608,6 +1614,23 @@ fn format_indented_code_blocks(
             let end = i;
 
             if start >= end {
+                continue;
+            }
+
+            // Skip blocks that look like nested list items (not code)
+            let looks_like_list = content_lines[start..end].iter().any(|l| {
+                let trimmed = l.trim();
+                !trimmed.is_empty()
+                    && (trimmed.starts_with("- ")
+                        || trimmed.starts_with("* ")
+                        || trimmed.starts_with("+ ")
+                        || trimmed
+                            .chars()
+                            .next()
+                            .is_some_and(|c| c.is_ascii_digit())
+                            && (trimmed.contains(". ") || trimmed.contains("- ")))
+            });
+            if looks_like_list {
                 continue;
             }
 
