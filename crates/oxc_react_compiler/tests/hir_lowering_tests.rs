@@ -17,6 +17,548 @@ use oxc_react_compiler::hir::{
 };
 
 // =====================================================================================
+// Debug: check scope deps for aliased mutation lambda
+// =====================================================================================
+
+#[test]
+#[ignore = "debug only"]
+fn debug_aliased_mutation_lambda_deps() {
+    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::hir::InstructionValue as IV;
+
+    let source = r#"function Component(props) {
+  const x = [];
+  const f = arg => {
+    const y = x;
+    y.push(arg);
+  };
+  f(props.input);
+  return [x[0]];
+}
+"#;
+
+    let allocator = oxc_allocator::Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    assert!(parser_result.errors.is_empty());
+
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| match stmt {
+            oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+            _ => None,
+        })
+        .unwrap();
+
+    let env = oxc_react_compiler::hir::environment::Environment::new(
+        ReactFunctionType::Other,
+        CompilerOutputMode::Client,
+        oxc_react_compiler::hir::environment::EnvironmentConfig::default(),
+    );
+
+    let mut hir_func = lower(&env, ReactFunctionType::Other, &func).unwrap();
+
+    // Print PRE-PIPELINE HIR to understand block structure and property loads
+    println!("=== Pre-pipeline HIR blocks ===");
+    let mut blocks: Vec<_> = hir_func.body.blocks.values().collect();
+    blocks.sort_by_key(|b| b.id);
+    for block in &blocks {
+        println!("Block {:?} (preds: {:?})", block.id, block.preds);
+        for instr in &block.instructions {
+            match &instr.value {
+                IV::LoadLocal(ll) => {
+                    println!(
+                        "  [{:?}] LoadLocal {:?} => lvalue id={:?}, scope={:?}, mutable_range={:?}..{:?}",
+                        instr.id,
+                        ll.place.identifier.name,
+                        instr.lvalue.identifier.id,
+                        instr.lvalue.identifier.scope.as_ref().map(|s| s.id),
+                        instr.lvalue.identifier.mutable_range.start,
+                        instr.lvalue.identifier.mutable_range.end,
+                    );
+                }
+                IV::LoadContext(lc) => {
+                    println!(
+                        "  [{:?}] LoadContext {:?} => lvalue id={:?}, scope={:?}, mutable_range={:?}..{:?}",
+                        instr.id,
+                        lc.place.identifier.name,
+                        instr.lvalue.identifier.id,
+                        instr.lvalue.identifier.scope.as_ref().map(|s| s.id),
+                        instr.lvalue.identifier.mutable_range.start,
+                        instr.lvalue.identifier.mutable_range.end,
+                    );
+                }
+                IV::PropertyLoad(pl) => {
+                    println!(
+                        "  [{:?}] PropertyLoad {:?}.{:?} => lvalue id={:?}, scope={:?}, mutable_range={:?}..{:?}; object_id={:?} name={:?} scope={:?} mutable_range={:?}..{:?}",
+                        instr.id,
+                        pl.object.identifier.name,
+                        pl.property,
+                        instr.lvalue.identifier.id,
+                        instr.lvalue.identifier.scope.as_ref().map(|s| s.id),
+                        instr.lvalue.identifier.mutable_range.start,
+                        instr.lvalue.identifier.mutable_range.end,
+                        pl.object.identifier.id,
+                        pl.object.identifier.name,
+                        pl.object.identifier.scope.as_ref().map(|s| s.id),
+                        pl.object.identifier.mutable_range.start,
+                        pl.object.identifier.mutable_range.end,
+                    );
+                }
+                _ => {
+                    println!("  [{:?}] {:?}", instr.id, std::mem::discriminant(&instr.value));
+                }
+            }
+        }
+        println!("  terminal: {:?}", std::mem::discriminant(&block.terminal));
+        match &block.terminal {
+            Terminal::Scope(s) => {
+                println!("    -> Scope {:?} (body block: {:?})", s.scope.id, s.block)
+            }
+            _ => {}
+        }
+    }
+
+    let result = run_pipeline(&mut hir_func, &env);
+
+    match result {
+        Ok(codegen_func) => {
+            println!("=== Codegen output ===");
+            println!("{}", codegen_func);
+        }
+        Err(e) => {
+            println!("Pipeline error: {:?}", e);
+        }
+    }
+
+    println!("=== Scope dependencies ===");
+    let mut blocks: Vec<_> = hir_func.body.blocks.values().collect();
+    blocks.sort_by_key(|b| b.id);
+    for block in &blocks {
+        match &block.terminal {
+            Terminal::Scope(s) => {
+                println!("Scope {:?} deps:", s.scope.id);
+                for dep in &s.scope.dependencies {
+                    let path_str: Vec<String> = dep
+                        .path
+                        .iter()
+                        .map(|e| format!("{}{}", if e.optional { "?." } else { "." }, e.property))
+                        .collect();
+                    println!("  {:?}{}", dep.identifier.name, path_str.join(""));
+                }
+            }
+            Terminal::PrunedScope(s) => {
+                println!("PrunedScope {:?} deps:", s.scope.id);
+                for dep in &s.scope.dependencies {
+                    let path_str: Vec<String> = dep
+                        .path
+                        .iter()
+                        .map(|e| format!("{}{}", if e.optional { "?." } else { "." }, e.property))
+                        .collect();
+                    println!("  {:?}{}", dep.identifier.name, path_str.join(""));
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+// =====================================================================================
+// Debug: post-pipeline HIR inspection for optional chain issue
+// =====================================================================================
+
+#[test]
+#[ignore = "debug only"]
+fn debug_optional_chain_post_pipeline() {
+    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+    use oxc_react_compiler::hir::InstructionValue as IV;
+
+    let source = r#"
+function Component(props) {
+  let x = [];
+  x.push(props.a?.b);
+  return x;
+}
+"#;
+
+    let allocator = oxc_allocator::Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    assert!(parser_result.errors.is_empty());
+
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| match stmt {
+            oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+            _ => None,
+        })
+        .unwrap();
+
+    let env = Environment::new(
+        ReactFunctionType::Component,
+        CompilerOutputMode::Client,
+        EnvironmentConfig::default(),
+    );
+
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func).unwrap();
+
+    // Run only up to BuildReactiveScopeTerminals (steps 1-33) then inspect
+    // We need to run the full pipeline to see scope terminals
+    let _result = run_pipeline(&mut hir_func, &env).ok();
+
+    // Print final HIR after pipeline
+    let mut blocks: Vec<_> = hir_func.body.blocks.values().collect();
+    blocks.sort_by_key(|b| b.id);
+
+    for block in &blocks {
+        println!("=== Block {:?} ===", block.id);
+        for phi in &block.phis {
+            let operands: Vec<String> = phi
+                .operands
+                .iter()
+                .map(|(block_id, place)| {
+                    format!("from {:?}: id{:?}", block_id, place.identifier.id)
+                })
+                .collect();
+            println!("  PHI id{:?} = phi({})", phi.place.identifier.id, operands.join(", "));
+        }
+        for instr in &block.instructions {
+            let val_str = match &instr.value {
+                IV::LoadLocal(v) => format!(
+                    "LoadLocal(id{:?} {:?})",
+                    v.place.identifier.id, v.place.identifier.name
+                ),
+                IV::LoadContext(v) => format!(
+                    "LoadContext(id{:?} {:?})",
+                    v.place.identifier.id, v.place.identifier.name
+                ),
+                IV::PropertyLoad(v) => {
+                    format!("PropertyLoad(id{:?} . {:?})", v.object.identifier.id, v.property)
+                }
+                IV::StoreLocal(v) => format!(
+                    "StoreLocal(lvalue_place=id{:?}, value=id{:?})",
+                    v.lvalue.place.identifier.id, v.value.identifier.id
+                ),
+                IV::MethodCall(v) => format!(
+                    "MethodCall(receiver=id{:?}, property=id{:?}, args=[{}])",
+                    v.receiver.identifier.id,
+                    v.property.identifier.id,
+                    v.args
+                        .iter()
+                        .map(|a| match a {
+                            oxc_react_compiler::hir::CallArg::Place(p) =>
+                                format!("id{:?}", p.identifier.id),
+                            _ => "...".to_string(),
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                ),
+                _ => format!("{:?}", instr.value).chars().take(80).collect::<String>(),
+            };
+            println!("  [{:?}] id{:?} = {}", instr.id, instr.lvalue.identifier.id, val_str);
+        }
+        let term_str = match &block.terminal {
+            Terminal::Branch(b) => format!(
+                "Branch(test=id{:?}, consequent={:?}, alternate={:?})",
+                b.test.identifier.id, b.consequent, b.alternate
+            ),
+            Terminal::Optional(o) => format!(
+                "Optional(optional={}, test={:?}, fallthrough={:?})",
+                o.optional, o.test, o.fallthrough
+            ),
+            Terminal::Goto(g) => format!("Goto({:?}, {:?})", g.block, g.variant),
+            Terminal::Scope(s) => format!(
+                "Scope(id={:?}, block={:?}, fallthrough={:?}, range={:?})",
+                s.scope.id, s.block, s.fallthrough, s.scope.range
+            ),
+            Terminal::Return(r) => format!("Return(id{:?})", r.value.identifier.id),
+            _ => format!("{:?}", block.terminal).chars().take(200).collect(),
+        };
+        println!("  Terminal: {}", term_str);
+        println!();
+    }
+}
+
+// =====================================================================================
+// Debug: show exact comparison for conditional-member-expr conformance check
+// =====================================================================================
+
+#[test]
+#[ignore = "debug only"]
+fn debug_conformance_comparison() {
+    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+
+    let sources = [(
+        "reduce-reactive-deps/conditional-member-expr",
+        r#"// To preserve the nullthrows behavior and reactive deps of this code,
+// Forget needs to add `props.a` as a dependency (since `props.a.b` is
+// a conditional dependency, i.e. gated behind control flow)
+
+function Component(props) {
+  let x = [];
+  x.push(props.a?.b);
+  return x;
+}
+
+export const FIXTURE_ENTRYPOINT = {
+  fn: Component,
+  params: [{a: null}],
+};
+"#,
+        // expected function body from .expect.md:
+        r#"function Component(props) {
+  const $ = _c(2);
+  let x;
+  if ($[0] !== props.a?.b) {
+    x = [];
+    x.push(props.a?.b);
+    $[0] = props.a?.b;
+    $[1] = x;
+  } else {
+    x = $[1];
+  }
+  return x;
+}"#,
+    )];
+
+    for (name, source, expected_func) in &sources {
+        let allocator = oxc_allocator::Allocator::default();
+        let source_type = oxc_span::SourceType::jsx();
+        let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+        assert!(parser_result.errors.is_empty(), "Parse errors for {name}");
+
+        let func = parser_result
+            .program
+            .body
+            .iter()
+            .find_map(|stmt| match stmt {
+                oxc_ast::ast::Statement::FunctionDeclaration(f) => {
+                    Some(LowerableFunction::Function(f))
+                }
+                _ => None,
+            })
+            .unwrap();
+
+        let env = Environment::new(
+            ReactFunctionType::Component,
+            CompilerOutputMode::Client,
+            EnvironmentConfig::default(),
+        );
+
+        let mut hir_func = lower(&env, ReactFunctionType::Component, &func).unwrap();
+        let result = run_pipeline(&mut hir_func, &env);
+
+        match result {
+            Ok(codegen_func) => {
+                let actual_full = format!("function Component(props) {{\n{}}}", codegen_func);
+                println!("=== {name} ===");
+                println!("--- Actual output ---");
+                println!("{}", actual_full);
+                println!("--- Expected ---");
+                println!("{}", expected_func);
+                // Print diff to see what differs
+                let actual_lines: Vec<&str> = actual_full.lines().collect();
+                let expected_lines: Vec<&str> = expected_func.lines().collect();
+                if actual_lines != expected_lines {
+                    println!("--- Differences ---");
+                    for (i, (a, e)) in actual_lines.iter().zip(expected_lines.iter()).enumerate() {
+                        if a != e {
+                            println!("Line {}: actual=|{}| expected=|{}|", i, a, e);
+                        }
+                    }
+                    if actual_lines.len() != expected_lines.len() {
+                        println!(
+                            "Lengths differ: actual={} expected={}",
+                            actual_lines.len(),
+                            expected_lines.len()
+                        );
+                    }
+                } else {
+                    println!("EXACT MATCH!");
+                }
+            }
+            Err(e) => {
+                println!("Pipeline error for {name}: {:?}", e);
+            }
+        }
+    }
+}
+
+// =====================================================================================
+// Debug: show normalized comparison for conditional-member-expr
+// =====================================================================================
+
+#[test]
+#[ignore = "debug only"]
+fn debug_normalized_comparison() {
+    // This test directly uses the same logic as the conformance test
+    // to understand why conditional-member-expr is failing
+    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+
+    let fixtures_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../tasks/react_compiler/react/compiler/packages/babel-plugin-react-compiler/src/__tests__/fixtures/compiler"
+    );
+
+    let fixture_path =
+        std::path::Path::new(fixtures_path).join("reduce-reactive-deps/conditional-member-expr.js");
+    let expect_path = std::path::Path::new(fixtures_path)
+        .join("reduce-reactive-deps/conditional-member-expr.expect.md");
+
+    println!("Fixture path: {:?}", fixture_path);
+    println!("Fixture exists: {}", fixture_path.exists());
+
+    if !fixture_path.exists() {
+        println!("Fixture not found, skipping");
+        return;
+    }
+
+    // Read and compile
+    let source = std::fs::read_to_string(&fixture_path).unwrap();
+    let expect_content = std::fs::read_to_string(&expect_path).unwrap();
+
+    let allocator = oxc_allocator::Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, &source, source_type).parse();
+    assert!(parser_result.errors.is_empty());
+
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| match stmt {
+            oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+            _ => None,
+        })
+        .unwrap();
+
+    let env = Environment::new(
+        ReactFunctionType::Component,
+        CompilerOutputMode::Client,
+        EnvironmentConfig::default(),
+    );
+
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func).unwrap();
+    let result = run_pipeline(&mut hir_func, &env);
+
+    match result {
+        Ok(codegen_func) => {
+            let actual_full = {
+                let async_prefix = if codegen_func.is_async { "async " } else { "" };
+                let star = if codegen_func.generator { "*" } else { "" };
+                let name = codegen_func.id.as_deref().unwrap_or("anonymous");
+                let params = codegen_func.params.join(", ");
+                let body = format!("{codegen_func}");
+                if body.trim().is_empty() {
+                    format!("{async_prefix}function {star}{name}({params}) {{}}")
+                } else {
+                    format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}")
+                }
+            };
+            println!("=== Actual full ===\n{}\n", actual_full);
+            println!(
+                "=== Expected content (first 500 chars) ===\n{}\n",
+                &expect_content[..expect_content.len().min(500)]
+            );
+        }
+        Err(e) => {
+            println!("Pipeline error: {:?}", e);
+        }
+    }
+}
+
+// =====================================================================================
+// Debug: show scope dependencies for conditional-member-expr
+// =====================================================================================
+// (end of previous debug block)
+
+#[test]
+#[ignore = "debug only"]
+fn debug_conditional_member_expr_deps() {
+    use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
+
+    let source = r#"// @enablePropagateDepsInHIR
+function Component(props) {
+  let x = [];
+  x.push(props.a?.b);
+  return x;
+}
+"#;
+
+    let allocator = oxc_allocator::Allocator::default();
+    let source_type = oxc_span::SourceType::jsx();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    assert!(parser_result.errors.is_empty());
+
+    let func = parser_result
+        .program
+        .body
+        .iter()
+        .find_map(|stmt| match stmt {
+            oxc_ast::ast::Statement::FunctionDeclaration(f) => Some(LowerableFunction::Function(f)),
+            _ => None,
+        })
+        .unwrap();
+
+    // Use same config as conformance test (validate_preserve_existing_memoization_guarantees = false)
+    let mut env_config = EnvironmentConfig::default();
+    env_config.validate_preserve_existing_memoization_guarantees = false;
+    env_config.enable_preserve_existing_memoization_guarantees = false;
+
+    let env =
+        Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config);
+
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func).unwrap();
+    let result = run_pipeline(&mut hir_func, &env);
+
+    match result {
+        Ok(codegen_func) => {
+            println!("=== Codegen output ===");
+            println!("{}", codegen_func);
+        }
+        Err(e) => {
+            println!("Pipeline error: {:?}", e);
+        }
+    }
+
+    // Also print scope dependencies from the HIR
+    println!("=== Scope dependencies ===");
+    let mut blocks: Vec<_> = hir_func.body.blocks.values().collect();
+    blocks.sort_by_key(|b| b.id);
+    for block in &blocks {
+        match &block.terminal {
+            Terminal::Scope(s) => {
+                println!("Scope {:?} deps:", s.scope.id);
+                for dep in &s.scope.dependencies {
+                    let path_str: Vec<String> = dep
+                        .path
+                        .iter()
+                        .map(|e| format!("{}{}", if e.optional { "?." } else { "." }, e.property))
+                        .collect();
+                    println!("  {:?}{}", dep.identifier.name, path_str.join(""));
+                }
+            }
+            Terminal::PrunedScope(s) => {
+                println!("PrunedScope {:?} deps:", s.scope.id);
+                for dep in &s.scope.dependencies {
+                    let path_str: Vec<String> = dep
+                        .path
+                        .iter()
+                        .map(|e| format!("{}{}", if e.optional { "?." } else { "." }, e.property))
+                        .collect();
+                    println!("  {:?}{}", dep.identifier.name, path_str.join(""));
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+// =====================================================================================
 // Helper: parse source, find first function, lower to HIR
 // =====================================================================================
 

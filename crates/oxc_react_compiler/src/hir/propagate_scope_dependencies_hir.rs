@@ -646,14 +646,6 @@ fn collect_temporaries_sidemap_impl(
                 InstructionValue::LoadContext(v)
                     if instr.lvalue.identifier.name.is_none() && !used_outside =>
                 {
-                    // In Rust, context identifiers (including params like `props` captured by
-                    // inner closures) are lowered as LoadContext. After IIFE inlining, these
-                    // LoadContext instructions remain in the outer function body — whereas in
-                    // TS they would have been LoadLocal. To match TS behavior, we add ALL
-                    // LoadContext instructions with a named source to the temporaries sidemap.
-                    // This allows PropertyLoad chains like
-                    // `LoadContext(props) → tmp43; PropertyLoad(tmp43, "value") → tmp44`
-                    // to resolve to `{props, path=[value]}` as a scope dependency.
                     if v.place.identifier.name.is_some()
                         && (inner_fn_context.is_none()
                             || func
@@ -837,6 +829,51 @@ impl<'a> DependencyCollectionContext<'a> {
         self.scopes.find(&|s| s.id == scope.id)
     }
 
+    /// Declare a phi result in `reassignments` so that `check_valid_dependency` can
+    /// correctly determine whether the phi result should be a scope dependency.
+    ///
+    /// In SSA form, phi results have a unique `IdentifierId` that is never stored in
+    /// `reassignments` (since phi nodes are not lowered as regular instructions).
+    /// Without this declaration, `check_valid_dependency` falls back to
+    /// `declarations[declaration_id]`, which finds the variable's first declaration
+    /// (typically a `DeclareLocal` or `let x = 0` before the scope). This causes phi
+    /// results to always appear as external deps, even when ALL operands were assigned
+    /// inside the scope.
+    ///
+    /// The fix: declare the phi result with the MINIMUM instruction id among all
+    /// operand decls. This means:
+    /// - If any operand was assigned before the current scope, the phi inherits that
+    ///   pre-scope id → still a valid dep (correctly mirrors TS behavior where the
+    ///   pre-scope value flows into the phi).
+    /// - If ALL operands were assigned inside the current scope, the phi gets an
+    ///   inside-scope id → NOT a valid dep (correctly mirrors TS where `#reassignments`
+    ///   returns the inside-scope assignment for the same identifier).
+    fn declare_phi_result(&mut self, phi: &crate::hir::hir_types::Phi) {
+        if self.inner_fn_context.is_some() {
+            return;
+        }
+        // Compute the minimum instruction id across all operand decls.
+        let mut min_decl: Option<Decl> = None;
+        for operand_place in phi.operands.values() {
+            let operand_decl = self
+                .reassignments
+                .get(&operand_place.identifier.id)
+                .or_else(|| self.declarations.get(&operand_place.identifier.declaration_id));
+            if let Some(decl) = operand_decl {
+                min_decl = Some(match min_decl {
+                    None => decl.clone(),
+                    Some(ref existing) if decl.id < existing.id => decl.clone(),
+                    Some(existing) => existing,
+                });
+            }
+        }
+        // Declare the phi result in reassignments with the computed min decl.
+        // If no operand decl was found, skip (phi result stays undeclared).
+        if let Some(decl) = min_decl {
+            self.reassignments.insert(phi.place.identifier.id, decl);
+        }
+    }
+
     fn visit_operand(&mut self, place: &Place) {
         let dep = match self.temporaries.get(&place.identifier.id) {
             Some(resolved) => resolved.clone(),
@@ -888,7 +925,6 @@ impl<'a> DependencyCollectionContext<'a> {
                 if !is_active && !has_decl {
                     self.pending_scope_declarations
                         .insert((scope.id, maybe_dep.identifier.declaration_id));
-                    // Collect the mutation for later application
                     self.scope_declaration_mutations.push((
                         scope.id,
                         maybe_dep.identifier.id,
@@ -1053,13 +1089,23 @@ fn handle_instruction(instr: &Instruction, context: &mut DependencyCollectionCon
                 context.visit_operand(operand);
             }
         }
-        InstructionValue::StartMemoize(_) | InstructionValue::FinishMemoize(_) => {
-            // StartMemoize and FinishMemoize contain manually-specified dependency
-            // information from the user's useMemo/useCallback call. Their root Places
-            // should NOT be visited as inferred scope dependencies — doing so would
-            // add coarser-grained deps (e.g. `props`) instead of the user's intended
-            // finer-grained ones (e.g. `props.value`). Scope dependency inference
-            // works independently on the actual instructions inside the scope body.
+        InstructionValue::StartMemoize(_) => {
+            // StartMemoize contains manually-specified dependency information from the user's
+            // useMemo/useCallback call. Its root Places should NOT be visited as inferred scope
+            // dependencies — doing so would add coarser-grained deps (e.g. `props`) instead of
+            // the user's intended finer-grained ones (e.g. `props.value`). Scope dependency
+            // inference works independently on the actual instructions inside the scope body.
+        }
+        InstructionValue::FinishMemoize(fm) => {
+            // FinishMemoize.decl must be visited so that the declaring scope can register it
+            // as an output declaration. This mirrors TypeScript's eachInstructionValueOperand
+            // which yields `instrValue.decl` for FinishMemoize. Without this visit, the scope
+            // that owns the memoized value would have empty declarations, causing
+            // PruneNonEscapingScopes to keep the scope (empty-decls path) without adding it
+            // to `pruned_scopes`, and then FinishMemoize.pruned would never be set to true.
+            // Note: check_valid_dependency returns false when there is no active scope, so
+            // the decl will NOT be added as a scope dependency — only as a declaration.
+            context.visit_operand(&fm.decl);
         }
         InstructionValue::LoadContext(v) => {
             context.visit_operand(&v.place);
@@ -1089,12 +1135,14 @@ fn collect_dependencies(
     func: &HIRFunction,
     temporaries: &FxHashMap<IdentifierId, TempReactiveScopeDependency>,
     processed_instrs_in_optional: &FxHashSet<InstructionId>,
+    intermediate_optional_results: &FxHashSet<IdentifierId>,
 ) -> CollectDependenciesResult {
     fn handle_function(
         func: &HIRFunction,
         context: &mut DependencyCollectionContext,
         scope_traversal: &mut ScopeBlockTraversal,
         temporaries: &FxHashMap<IdentifierId, TempReactiveScopeDependency>,
+        intermediate_optional_results: &FxHashSet<IdentifierId>,
     ) {
         let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
         for &block_id in &block_ids {
@@ -1112,15 +1160,33 @@ fn collect_dependencies(
                 None => {}
             }
 
-            // Record referenced optional chains in phis
+            // Record referenced optional chains in phis.
+            // Skip phi operands that are intermediate results of nested optional chains
+            // (i.e. they are consumed by an outer optional chain and should not be
+            // tracked as deps themselves).
             for phi in &block.phis {
                 for operand_place in phi.operands.values() {
+                    // Skip intermediate optional chain results — they represent partial
+                    // optional chain results (e.g. `a?.b` in `a?.b.c`) that are consumed
+                    // by an outer optional chain.  The outer chain's phi already carries
+                    // the full dep (e.g. `a?.b.c`), so adding `a?.b` here would introduce
+                    // a spurious coarser dep.
+                    if intermediate_optional_results.contains(&operand_place.identifier.id) {
+                        continue;
+                    }
                     if let Some(maybe_optional_chain) =
                         temporaries.get(&operand_place.identifier.id)
                     {
                         context.visit_dependency(maybe_optional_chain.clone());
                     }
                 }
+                // Declare the phi result in `reassignments` so that uses of the phi result
+                // (which has a unique IdentifierId in SSA form) can be correctly evaluated
+                // by `check_valid_dependency`. The phi result inherits the minimum instruction
+                // id from its operands: if all operands were assigned inside the current scope,
+                // the phi result is considered inside-scope (not a dep); if any operand was
+                // assigned before the scope, the phi result can still be a dep.
+                context.declare_phi_result(phi);
             }
 
             for instr in &block.instructions {
@@ -1139,7 +1205,13 @@ fn collect_dependencies(
 
                         let was_none = context.inner_fn_context.is_none();
                         context.enter_inner_fn(instr.id);
-                        handle_function(inner_func, context, scope_traversal, temporaries);
+                        handle_function(
+                            inner_func,
+                            context,
+                            scope_traversal,
+                            temporaries,
+                            intermediate_optional_results,
+                        );
                         context.exit_inner_fn(was_none);
                     }
                     _ => {
@@ -1177,7 +1249,13 @@ fn collect_dependencies(
     }
 
     let mut scope_traversal = ScopeBlockTraversal::new();
-    handle_function(func, &mut context, &mut scope_traversal, temporaries);
+    handle_function(
+        func,
+        &mut context,
+        &mut scope_traversal,
+        temporaries,
+        intermediate_optional_results,
+    );
     CollectDependenciesResult {
         deps: context.deps,
         scope_declaration_mutations: context.scope_declaration_mutations,
@@ -1203,15 +1281,30 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
     let opt_chain =
         super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(func);
 
-    // Merge temporaries with optional chain temporaries
+    // Merge temporaries with optional chain temporaries.
+    //
+    // The TypeScript reference merges as:
+    //   new Map([...temporaries, ...temporariesReadInOptional])
+    // where later entries override earlier ones.  This means
+    // `temporariesReadInOptional` takes priority over `temporaries` for any key
+    // present in both maps.  This is important because
+    // `collect_temporaries_sidemap_impl` may have processed a PropertyLoad from
+    // an optional-chain result and recorded an unresolved entry (e.g. `{
+    // identifier: opt_result1, path: [.value] }`), while
+    // `temporariesReadInOptional` has the correct fully-resolved entry (e.g. `{
+    // identifier: prop2, path: [?.inner, .value] }`).  By giving
+    // `temporariesReadInOptional` priority we avoid the stale entry.
     let mut merged_temporaries = temporaries;
     for (id, dep) in &opt_chain.temporaries_read_in_optional {
-        merged_temporaries.entry(*id).or_insert_with(|| TempReactiveScopeDependency {
-            identifier: dep.identifier.clone(),
-            reactive: dep.reactive,
-            path: dep.path.clone(),
-            loc: dep.loc,
-        });
+        merged_temporaries.insert(
+            *id,
+            TempReactiveScopeDependency {
+                identifier: dep.identifier.clone(),
+                reactive: dep.reactive,
+                path: dep.path.clone(),
+                loc: dep.loc,
+            },
+        );
     }
 
     // Build a ReactiveScopeDependency map from merged_temporaries for hoistable analysis
@@ -1226,13 +1319,92 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
     );
 
     // Key hoistable by scope ID, resolving PropertyPathNodes to full paths
-    let hoistable_by_scope =
+    let mut hoistable_by_scope =
         super::collect_hoistable_property_loads::key_by_scope_id_with_registry(func, &hoistable);
 
+    // Augment hoistable_by_scope with entries from opt_chain.hoistable_objects.
+    //
+    // In the TypeScript HIR, `prop2?.inner.value` is lowered as a single Optional
+    // terminal whose test block contains both LoadLocal(prop2) AND PropertyLoad(prop2, "inner").
+    // The PropertyLoad makes `prop2?.inner` non-null in the test block, which then
+    // propagates backward to the scope body block via CFG analysis.
+    //
+    // In the Rust HIR, `prop2?.inner` is a SEPARATE inner Optional terminal (optional=true)
+    // and `prop2?.inner.value` uses an OUTER Optional terminal (optional=false). The
+    // hoistable dep `{prop2, path: [?.inner]}` is recorded on the OUTER Optional block
+    // (B_outer), which is INSIDE the scope body — not at its boundary. The backward
+    // propagation in collect_hoistable_property_loads fails to carry this info to the
+    // scope body start block because intermediate blocks have multiple successors.
+    //
+    // To match TS behavior, we directly find the scope containing each hoistable_objects
+    // block (by matching instruction IDs against scope ranges) and add the dep to that
+    // scope's hoistable set.
+    if !opt_chain.hoistable_objects.is_empty() {
+        // Build a list of (scope_id, scope_range) from scope terminals.
+        let scope_ranges: Vec<(
+            ScopeId,
+            super::hir_types::InstructionId,
+            super::hir_types::InstructionId,
+        )> = func
+            .body
+            .blocks
+            .values()
+            .filter_map(|b| match &b.terminal {
+                Terminal::Scope(t) => Some((t.scope.id, t.scope.range.start, t.scope.range.end)),
+                Terminal::PrunedScope(t) => {
+                    Some((t.scope.id, t.scope.range.start, t.scope.range.end))
+                }
+                _ => None,
+            })
+            .collect();
+
+        for (opt_block_id, opt_dep) in &opt_chain.hoistable_objects {
+            let Some(opt_block) = func.body.blocks.get(opt_block_id) else { continue };
+
+            // Determine the "representative instruction ID" for this block:
+            // use the first instruction if any, otherwise use the terminal ID.
+            let block_instr_id = if let Some(first_instr) = opt_block.instructions.first() {
+                first_instr.id
+            } else {
+                opt_block.terminal.id()
+            };
+
+            // Find the innermost scope that contains this block.
+            // "Innermost" = smallest range that contains block_instr_id.
+            let mut best: Option<(ScopeId, u32)> = None; // (scope_id, range_len)
+            for &(scope_id, range_start, range_end) in &scope_ranges {
+                if block_instr_id >= range_start && block_instr_id < range_end {
+                    let range_len = range_end.0.saturating_sub(range_start.0);
+                    if best.map_or(true, |(_, best_len)| range_len < best_len) {
+                        best = Some((scope_id, range_len));
+                    }
+                }
+            }
+
+            if let Some((scope_id, _)) = best {
+                let entry = hoistable_by_scope.entry(scope_id).or_default();
+                // Only add if not already present (avoid duplicates).
+                let already_present = entry.iter().any(|existing| {
+                    existing.identifier.declaration_id == opt_dep.identifier.declaration_id
+                        && super::hir_types::are_equal_paths(&existing.path, &opt_dep.path)
+                });
+                if !already_present {
+                    entry.push(opt_dep.clone());
+                }
+            }
+        }
+    }
+
     let processed_instrs = opt_chain.processed_instrs_in_optional;
+    let intermediate_optional_results = opt_chain.intermediate_optional_results;
 
     // Collect dependencies
-    let collect_result = collect_dependencies(func, &merged_temporaries, &processed_instrs);
+    let collect_result = collect_dependencies(
+        func,
+        &merged_temporaries,
+        &processed_instrs,
+        &intermediate_optional_results,
+    );
 
     // Phase 3: Derive minimal dependency set for each scope
     // We need to write dependencies back to the scopes in the terminals.

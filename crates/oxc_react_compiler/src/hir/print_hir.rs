@@ -65,6 +65,19 @@ pub fn print_hir(ir: &Hir) -> String {
             output.push(format!("  predecessor blocks: {}", preds.join(" ")));
         }
 
+        for phi in &block.phis {
+            let operands: Vec<String> = phi
+                .operands
+                .iter()
+                .map(|(bid, place)| format!("bb{}:{}", bid.0, print_place(place)))
+                .collect();
+            output.push(format!(
+                "  phi {} = phi({})",
+                print_place(&phi.place),
+                operands.join(", ")
+            ));
+        }
+
         for instr in &block.instructions {
             output.push(format!("  {}", print_instruction(instr)));
         }

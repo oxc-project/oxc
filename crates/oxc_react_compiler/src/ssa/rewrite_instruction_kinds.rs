@@ -14,7 +14,7 @@ use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE},
     hir::{
         BlockId, BlockKind, DeclarationId, HIRFunction, InstructionKind, InstructionValue, Place,
-        ReactiveParam, visitors::each_pattern_operand,
+        ReactiveParam, hir_builder::compute_rpo_order, visitors::each_pattern_operand,
     },
 };
 
@@ -81,9 +81,20 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
         }
     }
 
-    // Pass 1: Determine kinds and mark reassignments
-    let mut block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
-    block_ids.sort_by_key(|id| id.0);
+    // Pass 1: Determine kinds and mark reassignments.
+    // Iterate blocks in reverse-postorder (RPO), matching the TypeScript
+    // reference which uses `for (const [, block] of fn.body.blocks)` on a Map
+    // that stores blocks in RPO order.  RPO guarantees that dominator blocks are
+    // processed before the blocks they dominate, so a DeclareLocal is always
+    // seen before any StoreLocal/reassignment in a branch or successor block.
+    //
+    // Sorting by block_id can produce a different order than RPO (e.g. when
+    // inner functions are analysed via lower_with_mutation_aliasing, the blocks
+    // may not have monotonically-increasing ids in RPO order), which causes
+    // false "Expected variable not to be defined prior to declaration" errors.
+    // Using compute_rpo_order here ensures correctness regardless of whether
+    // reverse_postorder_blocks has been called before this pass.
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in &block_ids {
         let block_kind = func.body.blocks.get(block_id).map(|b| b.kind);
         let Some(block) = func.body.blocks.get_mut(block_id) else { continue };

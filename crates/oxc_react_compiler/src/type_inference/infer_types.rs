@@ -73,22 +73,71 @@ impl<'a> Unifier<'a> {
             return;
         }
 
+        // Handle Phi types: attempt to collapse the phi to a consensus concrete type.
+        //
+        // Port of TS InferTypes.ts unify() Phi handling (lines 607-633):
+        //   if (type.kind === 'Phi') {
+        //     let candidateType = null;
+        //     for (const operand of type.operands) {
+        //       const resolved = this.get(operand);
+        //       if (candidateType === null) { candidateType = resolved; }
+        //       else if (!typeEquals(resolved, candidateType)) {
+        //         const unionType = tryUnionTypes(resolved, candidateType);
+        //         if (unionType === null) { candidateType = null; break; }
+        //         else { candidateType = unionType; }
+        //       }
+        //     }
+        //     if (candidateType !== null) { this.unify(v, candidateType); return; }
+        //   }
+        //
+        // Key insight: ONLY unify the phi result (left) with the consensus type if ALL
+        // phi operands resolve to the SAME concrete type. If operands disagree (e.g.,
+        // one is a TypeVar, another is Primitive), leave the result as unresolved.
+        // This prevents incorrect backpropagation where one branch's known type
+        // incorrectly sets the type of variables in the other branch.
+        //
+        // Important: we handle (Type::Var, Phi) here before the (Type::Var, _) match arm
+        // to prevent storing Phi types in substitutions. If we stored `x → Phi([...])`,
+        // subsequent resolves of TypeVars chaining to x would return a Phi, causing
+        // (Type::Phi, _) match arm recursion that can overflow the stack.
+        if let (Type::Var(_), Type::Phi(phi_b)) = (&left, right.clone()) {
+            let consensus = self.phi_consensus_type(&phi_b.operands);
+            if let Some(consensus_type) = consensus {
+                self.unify(left, consensus_type);
+            }
+            // If no consensus, leave the TypeVar unresolved (don't store Phi).
+            return;
+        }
+        // Symmetrical case: (Phi, Var) - each phi operand unifies with the var.
+        if let (Type::Phi(phi_a), Type::Var(_)) = (left.clone(), &right) {
+            let consensus = self.phi_consensus_type(&phi_a.operands);
+            if let Some(consensus_type) = consensus {
+                self.unify(consensus_type, right);
+            }
+            return;
+        }
+        // (Phi, non-Var): each phi operand is unified with the right type.
+        if let Type::Phi(phi_a) = left.clone() {
+            for operand in &phi_a.operands {
+                self.unify(operand.clone(), right.clone());
+            }
+            return;
+        }
+        // (non-Var, Phi): unify left with consensus, or with each operand.
+        if let Type::Phi(phi_b) = right.clone() {
+            let consensus = self.phi_consensus_type(&phi_b.operands);
+            if let Some(consensus_type) = consensus {
+                self.unify(left, consensus_type);
+            }
+            return;
+        }
+
         match (&left, &right) {
             (Type::Var(id), _) => {
                 self.substitutions.insert(*id, right);
             }
             (_, Type::Var(id)) => {
                 self.substitutions.insert(*id, left);
-            }
-            (Type::Phi(phi_a), _) => {
-                for operand in &phi_a.operands {
-                    self.unify(operand.clone(), right.clone());
-                }
-            }
-            (_, Type::Phi(phi_b)) => {
-                for operand in &phi_b.operands {
-                    self.unify(left.clone(), operand.clone());
-                }
             }
             (Type::Function(fa), Type::Function(fb)) => {
                 self.unify(*fa.return_type.clone(), *fb.return_type.clone());
@@ -99,14 +148,61 @@ impl<'a> Unifier<'a> {
         }
     }
 
-    /// Resolve a type by following substitutions.
-    fn resolve(&self, ty: Type) -> Type {
-        match &ty {
-            Type::Var(id) => match self.substitutions.get(id) {
-                Some(resolved) => self.resolve(resolved.clone()),
-                None => ty,
-            },
-            _ => ty,
+    /// Try to find a consensus type from a list of phi operands.
+    ///
+    /// Port of the TS InferTypes.ts phi consensus logic (lines 613-627):
+    ///   let candidateType = null;
+    ///   for (const operand of type.operands) {
+    ///     const resolved = this.get(operand);
+    ///     if (candidateType === null) { candidateType = resolved; }
+    ///     else if (!typeEquals(resolved, candidateType)) {
+    ///       const unionType = tryUnionTypes(resolved, candidateType);
+    ///       if (unionType === null) { candidateType = null; break; }
+    ///       else { candidateType = unionType; }
+    ///     }
+    ///   }
+    ///   if (candidateType !== null) { this.unify(v, candidateType); return; }
+    ///
+    /// Key behavior: DOES NOT skip TypeVars. If operand A resolves to TypeVar(x)
+    /// and operand B resolves to `Primitive`, they disagree → no consensus.
+    /// Only returns a type if ALL operands resolve to the SAME type
+    /// (including possibly the same TypeVar, which happens for self-referential phis).
+    fn phi_consensus_type(&self, operands: &[Type]) -> Option<Type> {
+        let mut candidate: Option<Type> = None;
+        for operand in operands {
+            let resolved = self.resolve(operand.clone());
+            match &candidate {
+                None => {
+                    candidate = Some(resolved);
+                }
+                Some(prev) => {
+                    if !type_equals(&resolved, prev) {
+                        // Disagreement: no consensus possible.
+                        // (We don't implement tryUnionTypes for simplicity, since
+                        // it only handles BuiltInMixedReadonlyId which is rarely
+                        // relevant for the ref-type propagation use case.)
+                        return None;
+                    }
+                }
+            }
+        }
+        candidate
+    }
+
+    /// Resolve a type by following substitutions (iterative to avoid stack overflow).
+    fn resolve(&self, mut ty: Type) -> Type {
+        // Iteratively follow Var → substitution chains to avoid stack overflow
+        // for deep chains (e.g. many phi equations creating long Var→Var chains).
+        loop {
+            match ty {
+                Type::Var(id) => match self.substitutions.get(&id) {
+                    Some(resolved) => {
+                        ty = resolved.clone();
+                    }
+                    None => return Type::Var(id),
+                },
+                other => return other,
+            }
         }
     }
 
@@ -122,13 +218,20 @@ struct ResolvedTypes {
 }
 
 impl ResolvedTypes {
-    fn resolve(&self, ty: Type) -> Type {
-        match &ty {
-            Type::Var(id) => match self.substitutions.get(id) {
-                Some(resolved) => self.resolve(resolved.clone()),
-                None => ty,
-            },
-            _ => ty,
+    /// Resolve a type by following substitutions (iterative to avoid stack overflow).
+    fn resolve(&self, mut ty: Type) -> Type {
+        // Iteratively follow Var → substitution chains to avoid stack overflow
+        // for deep chains that can arise from phi node type equations.
+        loop {
+            match ty {
+                Type::Var(id) => match self.substitutions.get(&id) {
+                    Some(resolved) => {
+                        ty = resolved.clone();
+                    }
+                    None => return Type::Var(id),
+                },
+                other => return other,
+            }
         }
     }
 
@@ -295,8 +398,81 @@ fn apply_to_instruction_value(value: &mut InstructionValue, unifier: &ResolvedTy
                 }
             }
         }
-        // Other instruction values don't have nested places that need resolution,
-        // or their places don't participate in function signature resolution.
+        InstructionValue::JsxExpression(v) => {
+            if let crate::hir::JsxTag::Place(p) = &mut v.tag {
+                resolve_place(p, unifier);
+            }
+            for attr in &mut v.props {
+                match attr {
+                    crate::hir::JsxAttribute::Attribute { place, .. } => {
+                        resolve_place(place, unifier);
+                    }
+                    crate::hir::JsxAttribute::Spread { argument } => {
+                        resolve_place(argument, unifier);
+                    }
+                }
+            }
+            if let Some(children) = &mut v.children {
+                for child in children {
+                    resolve_place(child, unifier);
+                }
+            }
+        }
+        InstructionValue::JsxFragment(v) => {
+            for child in &mut v.children {
+                resolve_place(child, unifier);
+            }
+        }
+        InstructionValue::ObjectExpression(v) => {
+            for prop in &mut v.properties {
+                match prop {
+                    crate::hir::ObjectPatternProperty::Property(p) => {
+                        if let crate::hir::ObjectPropertyKey::Computed(key_place) = &mut p.key {
+                            resolve_place(key_place, unifier);
+                        }
+                        resolve_place(&mut p.place, unifier);
+                    }
+                    crate::hir::ObjectPatternProperty::Spread(s) => {
+                        resolve_place(&mut s.place, unifier);
+                    }
+                }
+            }
+        }
+        InstructionValue::ArrayExpression(v) => {
+            for elem in &mut v.elements {
+                match elem {
+                    crate::hir::ArrayExpressionElement::Place(p) => {
+                        resolve_place(p, unifier);
+                    }
+                    crate::hir::ArrayExpressionElement::Spread(s) => {
+                        resolve_place(&mut s.place, unifier);
+                    }
+                    crate::hir::ArrayExpressionElement::Hole => {}
+                }
+            }
+        }
+        InstructionValue::BinaryExpression(v) => {
+            resolve_place(&mut v.left, unifier);
+            resolve_place(&mut v.right, unifier);
+        }
+        InstructionValue::UnaryExpression(v) => {
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::TemplateLiteral(v) => {
+            for expr in &mut v.subexprs {
+                resolve_place(expr, unifier);
+            }
+        }
+        InstructionValue::TaggedTemplateExpression(v) => {
+            resolve_place(&mut v.tag, unifier);
+        }
+        InstructionValue::TypeCastExpression(v) => {
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::PropertyDelete(v) => {
+            resolve_place(&mut v.object, unifier);
+        }
+        // Other instruction values don't have nested places that need resolution.
         _ => {}
     }
 }
@@ -334,7 +510,76 @@ fn generate(func: &HIRFunction) -> Vec<TypeEquation> {
         }
     }
 
+    // Port of TS InferTypes.ts: collect return value types to connect func.returns.
+    // In TS (lines 131, 143-154):
+    //   const returnTypes: Array<Type> = [];
+    //   for (const [_, block] of func.body.blocks) {
+    //     ...
+    //     const terminal = block.terminal;
+    //     if (terminal.kind === 'return') {
+    //       returnTypes.push(terminal.value.identifier.type);
+    //     }
+    //   }
+    //   if (returnTypes.length > 1) {
+    //     yield equation(func.returns.identifier.type, {kind: 'Phi', operands: returnTypes});
+    //   } else if (returnTypes.length === 1) {
+    //     yield equation(func.returns.identifier.type, returnTypes[0]);
+    //   }
+    //
+    // This is critical for propagating return types from inner functions through
+    // FunctionExpression type equations. For example, `() => bar + baz` returns a
+    // Primitive (BinaryExpression), so func.returns.type = Primitive. The
+    // FunctionExpression equation uses `func.returns.identifier.type` as the function's
+    // return type, allowing `foo()` call results to also be typed as Primitive.
+    let mut return_types: Vec<Type> = Vec::new();
     for block in func.body.blocks.values() {
+        if let crate::hir::Terminal::Return(ret) = &block.terminal {
+            return_types.push(ret.value.identifier.type_.clone());
+        }
+    }
+    match return_types.len() {
+        0 => {}
+        1 => {
+            equations.push(TypeEquation {
+                left: func.returns.identifier.type_.clone(),
+                right: return_types.remove(0),
+            });
+        }
+        _ => {
+            equations.push(TypeEquation {
+                left: func.returns.identifier.type_.clone(),
+                right: Type::Phi(crate::hir::types::PhiType { operands: return_types }),
+            });
+        }
+    }
+
+    for block in func.body.blocks.values() {
+        // Generate type equations for phi nodes.
+        //
+        // Port of TS InferTypes.ts lines 133-138:
+        //   for (const phi of block.phis) {
+        //     yield equation(phi.place.identifier.type, {
+        //       kind: 'Phi',
+        //       operands: [...phi.operands.values()].map(id => id.identifier.type),
+        //     });
+        //   }
+        //
+        // This is critical for propagating types through control-flow join points.
+        // For example, `const ref = cond ? useRef() : initialRef` produces a phi
+        // node. Without this equation, the phi result keeps a fresh TypeVar and
+        // is_use_ref_type() never fires, so `ref.current` is not collapsed to `ref`
+        // as a scope dependency.
+        for phi in &block.phis {
+            let operand_types: Vec<Type> =
+                phi.operands.values().map(|p| p.identifier.type_.clone()).collect();
+            if !operand_types.is_empty() {
+                equations.push(TypeEquation {
+                    left: phi.place.identifier.type_.clone(),
+                    right: Type::Phi(crate::hir::types::PhiType { operands: operand_types }),
+                });
+            }
+        }
+
         for instr in &block.instructions {
             generate_instruction_equations(instr, &func.env, &mut equations);
         }
@@ -359,8 +604,18 @@ fn generate_instruction_equations(
         }
         InstructionValue::BinaryExpression(v) => {
             if is_primitive_binary_op(v.operator) {
-                equations.push(TypeEquation { left: lvalue_type, right: Type::Primitive });
+                // Constrain operands to Primitive for primitive binary ops (matches TS InferTypes.ts)
+                equations.push(TypeEquation {
+                    left: v.left.identifier.type_.clone(),
+                    right: Type::Primitive,
+                });
+                equations.push(TypeEquation {
+                    left: v.right.identifier.type_.clone(),
+                    right: Type::Primitive,
+                });
             }
+            // All binary expression results are Primitive (matches TS InferTypes.ts)
+            equations.push(TypeEquation { left: lvalue_type, right: Type::Primitive });
         }
         InstructionValue::LoadLocal(v) => {
             equations
@@ -400,7 +655,27 @@ fn generate_instruction_equations(
                 right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_JSX_ID.to_string()) }),
             });
         }
-        InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_) => {
+        InstructionValue::FunctionExpression(v) => {
+            // Port of TS InferTypes.ts `case 'FunctionExpression': yield* generate(value.loweredFunc.func)`.
+            // Recursively generate type equations for the inner function's instructions.
+            // This is critical for propagating types through LoadContext instructions
+            // inside inner functions (e.g. LoadContext setState → lvalue gets the
+            // TFunction<BuiltInSetState> type, enabling the correct aliasing signature
+            // to be used in InferMutationAliasingEffects instead of the conservative fallback).
+            let inner_eqs = generate(&v.lowered_func.func);
+            equations.extend(inner_eqs);
+            equations.push(TypeEquation {
+                left: lvalue_type,
+                right: Type::Function(FunctionType {
+                    shape_id: Some(BUILT_IN_FUNCTION_ID.to_string()),
+                    return_type: Box::new(v.lowered_func.func.returns.identifier.type_.clone()),
+                    is_constructor: false,
+                }),
+            });
+        }
+        InstructionValue::ObjectMethod(v) => {
+            let inner_eqs = generate(&v.lowered_func.func);
+            equations.extend(inner_eqs);
             equations.push(TypeEquation {
                 left: lvalue_type,
                 right: Type::Function(FunctionType {
@@ -439,6 +714,28 @@ fn generate_instruction_equations(
                     },
                 })),
             });
+        }
+        InstructionValue::NewExpression(v) => {
+            // Port of TypeScript InferTypes.ts `NewExpression` case:
+            // ```ts
+            // const returnType = makeType();
+            // yield equation(value.callee.identifier.type, { kind: 'Function', return: returnType, isConstructor: true });
+            // yield equation(left, returnType);
+            // ```
+            // This allows the constructor's return type (e.g. `new Map()` → Object(BuiltInMap))
+            // to propagate to the lvalue, enabling precise method signature resolution
+            // (e.g. `s.set(...)` on a Map correctly uses Effect.Store + Effect.Capture
+            // rather than the conservative MutateTransitiveConditionally fallback).
+            let return_type = make_type();
+            equations.push(TypeEquation {
+                left: v.callee.identifier.type_.clone(),
+                right: Type::Function(FunctionType {
+                    shape_id: None,
+                    return_type: Box::new(return_type.clone()),
+                    is_constructor: true,
+                }),
+            });
+            equations.push(TypeEquation { left: lvalue_type, right: return_type });
         }
         InstructionValue::CallExpression(v) => {
             // The callee must be a function; its return type equals the lvalue type.

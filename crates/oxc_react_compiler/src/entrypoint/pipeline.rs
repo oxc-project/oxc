@@ -276,6 +276,16 @@ pub fn run_pipeline(
     // AssertValidBlockNesting (again)
     crate::hir::assert_valid_block_nesting::assert_valid_block_nesting(func);
 
+    // 33b. Re-establish RPO order after BuildReactiveScopeTerminals splits blocks.
+    // FlattenReactiveLoopsHIR iterates blocks in insertion order (matching the TS
+    // reference which iterates fn.body.blocks in Map insertion order). After
+    // BuildReactiveScopeTerminals creates new blocks, re-running reverse_postorder_blocks
+    // ensures the loop terminals appear before their loop-body scope blocks, so that
+    // active_loops is populated before we visit the scopes to prune.
+    crate::hir::hir_builder::reverse_postorder_blocks(&mut func.body);
+    crate::hir::hir_builder::mark_instruction_ids(&mut func.body);
+    crate::hir::hir_builder::mark_predecessors(&mut func.body);
+
     // 34. FlattenReactiveLoops
     crate::reactive_scopes::flatten::flatten_reactive_loops_hir(func);
 

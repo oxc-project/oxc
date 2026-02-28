@@ -256,46 +256,78 @@ fn collect_operands(
     value: &ReactiveValue,
     operands: &mut Vec<DeclarationId>,
     shapes: &ShapeRegistry,
+    force_memoize_primitives: bool,
 ) {
     match value {
         ReactiveValue::Instruction(iv) => {
-            collect_instruction_operands(iv, operands, shapes);
+            collect_instruction_operands(iv, operands, shapes, force_memoize_primitives);
         }
         ReactiveValue::Logical(v) => {
-            collect_operands(&v.left, operands, shapes);
-            collect_operands(&v.right, operands, shapes);
+            collect_operands(&v.left, operands, shapes, force_memoize_primitives);
+            collect_operands(&v.right, operands, shapes, force_memoize_primitives);
         }
         ReactiveValue::Ternary(v) => {
             // Conditionals do not alias their test value (matching TS behavior).
             // Only consequent and alternate are rvalues.
-            collect_operands(&v.consequent, operands, shapes);
-            collect_operands(&v.alternate, operands, shapes);
+            collect_operands(&v.consequent, operands, shapes, force_memoize_primitives);
+            collect_operands(&v.alternate, operands, shapes, force_memoize_primitives);
         }
         ReactiveValue::Sequence(v) => {
             for instr in &v.instructions {
                 if let Some(lvalue) = &instr.lvalue {
                     operands.push(lvalue.identifier.declaration_id);
                 }
-                collect_operands(&instr.value, operands, shapes);
+                collect_operands(&instr.value, operands, shapes, force_memoize_primitives);
             }
-            collect_operands(&v.value, operands, shapes);
+            collect_operands(&v.value, operands, shapes, force_memoize_primitives);
         }
         ReactiveValue::OptionalCall(v) => {
-            collect_operands(&v.value, operands, shapes);
+            collect_operands(&v.value, operands, shapes, force_memoize_primitives);
         }
     }
 }
 
 /// Collect operands (rvalues) from a single InstructionValue.
 ///
-/// For `CallExpression`, `MethodCall`, and `TaggedTemplateExpression`,
-/// checks the `noAlias` flag on the callee's function signature: if true,
-/// the call cannot alias its arguments so we return no rvalues (matching TS).
+/// Port of TS `computeMemoizationInputs` rvalues logic:
+/// - For `CallExpression`, `MethodCall`, `TaggedTemplateExpression`: checks the `noAlias`
+///   flag and returns empty if true.
+/// - For primitive-producing instructions (BinaryExpression, UnaryExpression, Primitive,
+///   LoadGlobal, etc.): returns empty rvalues when `force_memoize_primitives = false`.
+///   This is critical because in TS, these instructions have `rvalues = []` by default,
+///   which prevents their operands from being followed during the memoization DFS.
+///   Without this, intermediate allocating values (e.g., `bar(props)` in
+///   `foo(bar(props).b + 1)`) would be incorrectly kept when they should be pruned.
 fn collect_instruction_operands(
     value: &InstructionValue,
     operands: &mut Vec<DeclarationId>,
     shapes: &ShapeRegistry,
+    force_memoize_primitives: bool,
 ) {
+    // Primitive-producing instructions: when forceMemoizePrimitives is false,
+    // return empty rvalues (matching TS `computeMemoizationInputs` behavior).
+    // This prevents DFS from traversing through primitive values to their operands.
+    if !force_memoize_primitives {
+        match value {
+            InstructionValue::Primitive(_)
+            | InstructionValue::JsxText(_)
+            | InstructionValue::BinaryExpression(_)
+            | InstructionValue::UnaryExpression(_)
+            | InstructionValue::TemplateLiteral(_)
+            | InstructionValue::LoadGlobal(_)
+            | InstructionValue::MetaProperty(_)
+            | InstructionValue::Debugger(_)
+            | InstructionValue::ComputedDelete(_)
+            | InstructionValue::PropertyDelete(_)
+            | InstructionValue::StartMemoize(_)
+            | InstructionValue::FinishMemoize(_)
+            | InstructionValue::NextPropertyOf(_) => {
+                return;
+            }
+            _ => {}
+        }
+    }
+
     // Check noAlias for call-like instructions: if the callee's function
     // signature has noAlias=true, the call cannot alias its arguments and
     // we should return no rvalues.
@@ -494,7 +526,12 @@ fn collect_in_block(
                 }
 
                 if !custom_rvalues {
-                    collect_operands(&instr.value, &mut operand_ids, opts.shapes);
+                    collect_operands(
+                        &instr.value,
+                        &mut operand_ids,
+                        opts.shapes,
+                        opts.force_memoize_primitives,
+                    );
                 }
 
                 // Resolve all operand IDs upfront
@@ -623,6 +660,17 @@ fn collect_in_block(
                         op_node.scopes.insert(scope_id);
                     }
                 }
+
+                // Process embedded sequence instructions within compound reactive values.
+                //
+                // Port of TypeScript `computeMemoizationInputs('SequenceExpression')` which calls
+                // `this.visitValueForMemoization(instr.id, instr.value, instr.lvalue)` for each
+                // instruction in the sequence. This ensures that allocating instructions embedded
+                // inside a ternary's consequent/alternate (e.g. `[-1, 1]` array literal inside
+                // `t0 === undefined ? [-1, 1] : t0`) get their lvalue nodes properly classified
+                // as Memoized. Without this, the array would be classified as Never and the
+                // ternary result would not get a reactive scope.
+                collect_embedded_sequence_instructions(&instr.value, state, active_scopes, opts);
 
                 // Handle LoadLocal definitions
                 if let ReactiveValue::Instruction(iv) = &instr.value {
@@ -766,6 +814,140 @@ fn collect_in_terminal(
     }
 }
 
+/// Process instructions embedded within compound reactive values (Sequence, Ternary, Logical).
+///
+/// Port of the TypeScript `computeMemoizationInputs('SequenceExpression')` behavior, which
+/// calls `this.visitValueForMemoization(instr.id, instr.value, instr.lvalue)` for each
+/// instruction in the sequence. This ensures that allocating instructions embedded inside
+/// a ternary/logical/sequence get their lvalue nodes classified with the proper level
+/// (e.g., an `ArrayExpression` inside a ternary's consequent gets level `Memoized`).
+///
+/// Without this, embedded instructions only appear as operand dependencies (rvalues) but
+/// their lvalue classification is never set, defaulting to `Never`. This causes the ternary
+/// result to fail the "has memoized dependency" check and get pruned from reactive scopes.
+fn collect_embedded_sequence_instructions(
+    value: &ReactiveValue,
+    state: &mut State,
+    active_scopes: &[ScopeId],
+    opts: &PruneOptions<'_>,
+) {
+    match value {
+        ReactiveValue::Sequence(seq) => {
+            // For each embedded instruction in the sequence, process it as if it were
+            // a top-level instruction. This matches the TS behavior for 'SequenceExpression'.
+            for embedded_instr in &seq.instructions {
+                let level = classify_reactive_value(&embedded_instr.value, opts);
+                let mut operand_ids = Vec::new();
+                collect_operands(
+                    &embedded_instr.value,
+                    &mut operand_ids,
+                    opts.shapes,
+                    opts.force_memoize_primitives,
+                );
+                let resolved_operands: Vec<DeclarationId> =
+                    operand_ids.iter().map(|&id| state.resolve(id)).collect();
+                for &resolved in &resolved_operands {
+                    state.ensure_identifier(resolved);
+                }
+                // Collect all lvalue entries for this embedded instruction,
+                // matching the full lvalue logic in `collect_in_block`.
+                let mut lvalue_entries: Vec<(DeclarationId, MemoizationLevel)> = Vec::new();
+                if let Some(lvalue) = &embedded_instr.lvalue {
+                    let lvalue_id = state.resolve(lvalue.identifier.declaration_id);
+                    lvalue_entries.push((lvalue_id, level));
+                }
+                // Also process inner targets for StoreLocal, DeclareLocal, etc.
+                // This mirrors `collect_in_block`'s inner-target handling (TS lines 558-573).
+                // Without this, `StoreLocal Reassign x = $array` inside a ternary sequence
+                // would only register the outer lvalue, leaving x's declaration_id out of
+                // the graph and causing the scope to be incorrectly pruned.
+                if let ReactiveValue::Instruction(iv) = &embedded_instr.value {
+                    match iv.as_ref() {
+                        InstructionValue::StoreLocal(v) => {
+                            let target_id =
+                                state.resolve(v.lvalue.place.identifier.declaration_id);
+                            lvalue_entries.push((target_id, MemoizationLevel::Conditional));
+                        }
+                        InstructionValue::StoreContext(v) => {
+                            let target_id =
+                                state.resolve(v.lvalue_place.identifier.declaration_id);
+                            lvalue_entries.push((target_id, MemoizationLevel::Memoized));
+                        }
+                        InstructionValue::DeclareLocal(v) => {
+                            let target_id =
+                                state.resolve(v.lvalue.place.identifier.declaration_id);
+                            lvalue_entries.push((target_id, MemoizationLevel::Unmemoized));
+                        }
+                        InstructionValue::DeclareContext(v) => {
+                            let target_id =
+                                state.resolve(v.lvalue_place.identifier.declaration_id);
+                            lvalue_entries.push((target_id, MemoizationLevel::Memoized));
+                        }
+                        InstructionValue::PrefixUpdate(v) => {
+                            let inner_id =
+                                state.resolve(v.lvalue.identifier.declaration_id);
+                            lvalue_entries.push((inner_id, MemoizationLevel::Conditional));
+                        }
+                        InstructionValue::PostfixUpdate(v) => {
+                            let inner_id =
+                                state.resolve(v.lvalue.identifier.declaration_id);
+                            lvalue_entries.push((inner_id, MemoizationLevel::Conditional));
+                        }
+                        _ => {}
+                    }
+                }
+                // Apply all lvalue entries
+                for &(lvalue_id, lv_level) in &lvalue_entries {
+                    let node = state.ensure_identifier(lvalue_id);
+                    node.level = join_levels(node.level, lv_level);
+                    for &resolved in &resolved_operands {
+                        if resolved != lvalue_id {
+                            node.dependencies.insert(resolved);
+                        }
+                    }
+                    for &scope_id in active_scopes {
+                        node.scopes.insert(scope_id);
+                    }
+                }
+                // Handle LoadLocal definitions inside sequences
+                if let ReactiveValue::Instruction(iv) = &embedded_instr.value {
+                    if let InstructionValue::LoadLocal(v) = iv.as_ref() {
+                        if let Some(lvalue) = &embedded_instr.lvalue {
+                            state.definitions.insert(
+                                lvalue.identifier.declaration_id,
+                                v.place.identifier.declaration_id,
+                            );
+                        }
+                    }
+                }
+                // Recurse into nested sequences/ternaries/logicals within embedded instructions
+                collect_embedded_sequence_instructions(
+                    &embedded_instr.value,
+                    state,
+                    active_scopes,
+                    opts,
+                );
+            }
+            // Recurse into the sequence's final value
+            collect_embedded_sequence_instructions(&seq.value, state, active_scopes, opts);
+        }
+        ReactiveValue::Ternary(ternary) => {
+            // Recurse into consequent and alternate to process any embedded sequences
+            collect_embedded_sequence_instructions(&ternary.consequent, state, active_scopes, opts);
+            collect_embedded_sequence_instructions(&ternary.alternate, state, active_scopes, opts);
+        }
+        ReactiveValue::Logical(logical) => {
+            collect_embedded_sequence_instructions(&logical.left, state, active_scopes, opts);
+            collect_embedded_sequence_instructions(&logical.right, state, active_scopes, opts);
+        }
+        ReactiveValue::OptionalCall(opt) => {
+            collect_embedded_sequence_instructions(&opt.value, state, active_scopes, opts);
+        }
+        ReactiveValue::Instruction(_) => {
+            // Leaf — no embedded sequences to process
+        }
+    }
+}
 
 // =====================================================================================
 // Phase 2: Compute memoized identifiers via DFS

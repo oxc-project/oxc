@@ -12,7 +12,10 @@ use rustc_hash::FxHashMap;
 
 use crate::hir::{
     BlockId, HIRFunction, Instruction, InstructionValue, Terminal,
-    hir_builder::{mark_instruction_ids, mark_predecessors, remove_unnecessary_try_catch},
+    hir_builder::{
+        mark_instruction_ids, mark_predecessors, remove_dead_do_while_statements,
+        remove_unnecessary_try_catch, remove_unreachable_for_updates, reverse_postorder_blocks,
+    },
     merge_consecutive_blocks::merge_consecutive_blocks,
 };
 
@@ -22,6 +25,11 @@ pub fn prune_maybe_throws(func: &mut HIRFunction) {
     if let Some(mapping) = terminal_mapping {
         // If terminals have changed, blocks may have become newly unreachable.
         // Re-run minification passes (incl reordering instruction ids).
+        // Order matches TypeScript: reversePostorderBlocks first (removes unreachable
+        // handler blocks), then removeUnnecessaryTryCatch (which checks handler existence).
+        reverse_postorder_blocks(&mut func.body);
+        remove_unreachable_for_updates(&mut func.body);
+        remove_dead_do_while_statements(&mut func.body);
         remove_unnecessary_try_catch(&mut func.body);
         mark_instruction_ids(&mut func.body);
         mark_predecessors(&mut func.body);
