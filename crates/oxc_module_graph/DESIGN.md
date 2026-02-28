@@ -13,24 +13,28 @@ This crate provides **trait-based abstractions** and **algorithms** for cross-mo
 
 The key insight: **separate the algorithms from the data structures**. Define traits for what the algorithms need, provide default implementations, let Rolldown plug in its own types.
 
+All traits use **associated types** for `ModuleIdx` and `SymbolRef`, and **callback-based iteration** (`for_each_*`) instead of returning concrete collection references. This allows consumers (like Rolldown) to implement the traits directly on their own types without needing to match oxc_module_graph's exact collection or index types.
+
 ```
-┌─────────────────────────────────────────────────────┐
-│                 oxc_module_graph                     │
-│                                                      │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────────┐  │
-│  │   Traits     │  │  Algorithms  │  │  Defaults   │  │
-│  │             │  │              │  │             │  │
-│  │ ModuleInfo  │◄─┤ bind_imports │  │ Module      │  │
-│  │ SymbolGraph │◄─┤ exec_order   │  │ ModuleGraph │  │
-│  │ ModuleStore │◄─┤ find_cycles  │  │ SymbolRefDb │  │
-│  │ SideEffects │  │ tla          │  │ Builder     │  │
-│  │ Checker     │  │ side_effects │  │             │  │
-│  └─────────────┘  └──────────────┘  └────────────┘  │
-│         ▲                                  ▲         │
-└─────────┼──────────────────────────────────┼─────────┘
-          │                                  │
-    Rolldown implements               Other tools use
-    traits with own types             default impls
+┌──────────────────────────────────────────────────────────────┐
+│                      oxc_module_graph                         │
+│                                                               │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  │
+│  │     Traits      │  │   Algorithms   │  │    Defaults    │  │
+│  │                │  │                │  │                │  │
+│  │ ModuleInfo     │◄─┤ bind_imports   │  │ Module         │  │
+│  │ ModuleStore    │◄─┤ match_imports  │  │ ModuleGraph    │  │
+│  │ SymbolGraph    │◄─┤ exec_order     │  │ SymbolRefDb    │  │
+│  │ ImportMatcher  │◄─┤ find_cycles    │  │ Builder        │  │
+│  │ SideEffects    │◄─┤ tla            │  │                │  │
+│  │ Checker        │  │ side_effects   │  │                │  │
+│  │                │  │ dynamic_exports│  │                │  │
+│  └────────────────┘  └────────────────┘  └────────────────┘  │
+│         ▲                                       ▲            │
+└─────────┼───────────────────────────────────────┼────────────┘
+          │                                       │
+    Rolldown implements                    Other tools use
+    traits with own types                  default impls
 ```
 
 ## Crate Layout
@@ -47,6 +51,8 @@ crates/oxc_module_graph/
       module_info.rs    -- ModuleInfo trait: read parse-time data
       symbol_graph.rs   -- SymbolGraph trait: cross-module symbol linking
       module_store.rs   -- ModuleStore trait: indexed module collection
+      import_matcher.rs -- ImportMatcher trait: consumer-specific import handling
+      side_effects_checker.rs -- SideEffectsChecker trait: consumer-specific side effects
 
     # Shared types (used by both traits and impls)
     types/
@@ -54,13 +60,13 @@ crates/oxc_module_graph/
       module_idx.rs     -- ModuleIdx newtype index
       symbol_ref.rs     -- SymbolRef = (ModuleIdx, SymbolId)
       module_record.rs  -- Owned ModuleRecord (converted from parser)
-      import_export.rs  -- NamedImport, LocalExport, ResolvedExport, ImportEdge
+      import_export.rs  -- NamedImport, LocalExport, ResolvedExport, ImportKind, MatchImportKind
       error.rs          -- Error types
 
     # Algorithms (generic over traits)
     algo/
       mod.rs
-      binding.rs        -- bind_imports_and_exports<M: ModuleStore, S: SymbolGraph>()
+      binding.rs        -- bind_imports_and_exports, build_resolved_exports, match_imports
       cycles.rs         -- find_cycles<M: ModuleStore>()
       exec_order.rs     -- compute_exec_order<M: ModuleStore>()
       tla.rs            -- compute_tla<M: ModuleStore>()
@@ -85,234 +91,188 @@ crates/oxc_module_graph/
 ### `ModuleInfo` — Read parse-time data from a module
 
 ```rust
-/// Read-only access to a module's import/export declarations.
-/// Rolldown implements this on NormalModule/EcmaView.
 pub trait ModuleInfo {
-    fn module_idx(&self) -> ModuleIdx;
+    type ModuleIdx: Copy + Eq + Hash + Debug;
+    type SymbolRef: Copy + Eq + Hash + Debug;
 
-    /// All named exports declared by this module.
-    fn named_exports(&self) -> &FxHashMap<CompactStr, LocalExport>;
-
-    /// All named imports consumed by this module.
-    fn named_imports(&self) -> &FxHashMap<SymbolRef, NamedImport>;
-
-    /// Import records (after resolution, contains target ModuleIdx).
-    fn import_records(&self) -> &[ResolvedImportRecord];
-
-    /// The SymbolRef for this module's default export.
-    fn default_export_ref(&self) -> SymbolRef;
-
-    /// The SymbolRef for this module's namespace object.
-    fn namespace_object_ref(&self) -> SymbolRef;
-
-    /// Star export entries (for `export * from './foo'`).
-    fn star_export_entries(&self) -> &[StarExportEntry];
-
-    /// Indirect export entries (for `export { x } from './foo'`).
-    fn indirect_export_entries(&self) -> &[IndirectExportEntry];
-
-    /// Whether this module has ESM syntax.
+    fn module_idx(&self) -> Self::ModuleIdx;
+    fn default_export_ref(&self) -> Self::SymbolRef;
+    fn namespace_object_ref(&self) -> Self::SymbolRef;
     fn has_module_syntax(&self) -> bool;
+    fn is_commonjs(&self) -> bool;
+    fn has_top_level_await(&self) -> bool;
+    fn side_effects(&self) -> Option<bool>;
+
+    // Callback-based iteration (no concrete collection types exposed)
+    fn for_each_named_export(&self, f: &mut dyn FnMut(&str, Self::SymbolRef, bool));
+    fn for_each_named_import(&self, f: &mut dyn FnMut(Self::SymbolRef, &str, usize, bool));
+    fn for_each_star_export(&self, f: &mut dyn FnMut(Self::ModuleIdx));
+    fn for_each_esm_star_export(&self, f: &mut dyn FnMut(Self::ModuleIdx)); // default: delegates to for_each_star_export
+    fn for_each_indirect_export(&self, f: &mut dyn FnMut(&str, &str, Self::ModuleIdx));
+    fn for_each_import_record(&self, f: &mut dyn FnMut(usize, Option<Self::ModuleIdx>, ImportKind));
+
+    fn import_record_count(&self) -> usize;
+    fn import_record_resolved_module(&self, idx: usize) -> Option<Self::ModuleIdx>;
+    fn symbol_import_info(&self, symbol: Self::SymbolRef) -> Option<(&str, usize, bool)>;
 }
 ```
 
 ### `ModuleStore` — Indexed collection of modules
 
 ```rust
-/// A collection of modules, indexed by ModuleIdx.
-/// Rolldown implements this on ModuleTable.
 pub trait ModuleStore {
-    type Module: ModuleInfo;
+    type ModuleIdx: Copy + Eq + Hash + Debug;
+    type SymbolRef: Copy + Eq + Hash + Debug;
+    type Module: ModuleInfo<ModuleIdx = Self::ModuleIdx, SymbolRef = Self::SymbolRef>;
 
-    fn module(&self, idx: ModuleIdx) -> &Self::Module;
-    fn module_mut(&mut self, idx: ModuleIdx) -> &mut Self::Module;
+    fn module(&self, idx: Self::ModuleIdx) -> Option<&Self::Module>;
     fn modules_len(&self) -> usize;
-    fn iter_modules(&self) -> impl Iterator<Item = (ModuleIdx, &Self::Module)>;
+    fn for_each_module(&self, f: &mut dyn FnMut(Self::ModuleIdx, &Self::Module));
+    fn for_each_dependency(&self, idx: Self::ModuleIdx, f: &mut dyn FnMut(Self::ModuleIdx));
+    fn for_each_static_dependency(&self, idx: Self::ModuleIdx, f: &mut dyn FnMut(Self::ModuleIdx));
 
-    /// Import edges: which modules does `idx` import from?
-    fn dependencies(&self, idx: ModuleIdx) -> &[ImportEdge];
+    /// Query side-effects for any module (including externals not returned by `module()`).
+    fn any_module_side_effects(&self, idx: Self::ModuleIdx) -> Option<Option<bool>> {
+        self.module(idx).map(|m| m.side_effects())
+    }
 }
 ```
 
 ### `SymbolGraph` — Cross-module symbol linking
 
 ```rust
-/// Mutable symbol linking across modules.
-/// Rolldown implements this on SymbolRefDb.
 pub trait SymbolGraph {
-    /// Follow link chains to find the canonical symbol.
-    fn canonical_ref_for(&self, symbol: SymbolRef) -> SymbolRef;
+    type ModuleIdx: Copy + Eq + Hash + Debug;
+    type SymbolRef: Copy + Eq + Hash + Debug;
 
-    /// Link `from` to resolve to `to`.
-    fn link(&mut self, from: SymbolRef, to: SymbolRef);
+    fn canonical_ref_for(&self, symbol: Self::SymbolRef) -> Self::SymbolRef;
+    fn link(&mut self, from: Self::SymbolRef, to: Self::SymbolRef);
+    fn symbol_name(&self, symbol: Self::SymbolRef) -> &str;
+    fn symbol_owner(&self, symbol: Self::SymbolRef) -> Self::ModuleIdx;
+}
+```
 
-    /// Get the name of a symbol.
-    fn symbol_name(&self, symbol: SymbolRef) -> &str;
+### `ImportMatcher` — Consumer-specific import handling
+
+```rust
+pub trait ImportMatcher {
+    type ModuleIdx: Copy + Eq + Hash + Debug;
+    type SymbolRef: Copy + Eq + Hash + Debug;
+
+    fn on_missing_module(...) -> Option<MatchImportKind<Self::SymbolRef>>; // External modules
+    fn on_before_match(...) -> Option<MatchImportKind<Self::SymbolRef>>;   // CJS short-circuit
+    fn on_no_match(...) -> Option<MatchImportKind<Self::SymbolRef>>;       // Dynamic fallback
+    fn on_cjs_match(...) -> Option<MatchImportKind<Self::SymbolRef>>;      // CJS export override
+    fn on_resolved(...);                                                    // Post-resolution callback
+}
+```
+
+### `SideEffectsChecker` — Consumer-specific side-effects logic
+
+```rust
+pub trait SideEffectsChecker {
+    type ModuleIdx: Copy + Eq + Hash + Debug;
+
+    /// Check if a star-export edge introduces side effects (wrapping, dynamic exports).
+    fn star_export_has_side_effects(&self, importer: Self::ModuleIdx, importee: Self::ModuleIdx) -> bool;
 }
 ```
 
 ## Shared Types
 
-### `ModuleIdx`
+### `ImportKind`
 
 ```rust
-oxc_index::define_index_type! {
-    pub struct ModuleIdx = u32;
+pub enum ImportKind {
+    Static,     // import ... from '...'
+    Dynamic,    // import('...')
+    Require,    // require('...')
+    HotAccept,  // import.meta.hot.accept('...') — HMR-only, not a graph edge
 }
 ```
 
-### `SymbolRef`
+### `MatchImportKind`
 
 ```rust
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SymbolRef {
-    pub owner: ModuleIdx,
-    pub symbol: SymbolId,
-}
-```
-
-### Import/Export Types
-
-```rust
-pub struct NamedImport {
-    pub imported_name: CompactStr,     // "foo" in `import { foo }`
-    pub local_symbol: SymbolRef,       // Local binding symbol
-    pub record_idx: ImportRecordIdx,   // Points to import record
-    pub is_type: bool,
-}
-
-pub struct LocalExport {
-    pub exported_name: CompactStr,
-    pub local_symbol: SymbolRef,
-}
-
-pub struct ResolvedExport {
-    pub symbol_ref: SymbolRef,
-    pub potentially_ambiguous: Option<Vec<SymbolRef>>,
-}
-
-pub struct ResolvedImportRecord {
-    pub specifier: CompactStr,
-    pub resolved_module: Option<ModuleIdx>,
-    pub kind: ImportKind,  // Static, Dynamic, Require
-}
-
-pub struct ImportEdge {
-    pub specifier: CompactStr,
-    pub target: ModuleIdx,
-    pub is_type: bool,
-}
-
-pub enum MatchImportKind {
-    Normal { symbol_ref: SymbolRef },
-    Namespace { namespace_ref: SymbolRef },
-    Ambiguous { candidates: Vec<SymbolRef> },
+pub enum MatchImportKind<S> {
+    Normal { symbol_ref: S },
+    Namespace { namespace_ref: S },
+    NormalAndNamespace { namespace_ref: S, alias: CompactString }, // CJS/dynamic fallback
+    Ambiguous { candidates: Vec<S> },
     Cycle,
     NoMatch,
 }
 ```
 
-### `ModuleRecord` (owned)
+### `ResolvedExport`
 
-Copied from `oxc_linter::module_record` pattern — owned version of `oxc_syntax::module_record::ModuleRecord<'a>` with `From` conversions. Used by default implementations. Rolldown doesn't need this; it has its own `EcmaView`.
+```rust
+pub struct ResolvedExport<S> {
+    pub symbol_ref: S,
+    pub potentially_ambiguous: Option<Vec<S>>,
+    pub came_from_cjs: bool,
+}
+```
 
 ## Algorithms (Generic Over Traits)
 
-```rust
-/// Resolve all imports to exports across the module graph.
-/// Populates resolved_exports on each module and links symbols.
-pub fn bind_imports_and_exports<S, M>(store: &M, symbols: &mut S) -> Vec<BindingError>
-where
-    S: SymbolGraph,
-    M: ModuleStore,
-{
-    // Phase 1: Build resolved_exports from local + indirect exports
-    // Phase 2: Propagate star re-exports (merge, detect ambiguity)
-    // Phase 3: Match each import to target's resolved exports
-    //          Link symbols via SymbolGraph::link()
-}
+### `build_resolved_exports` — Phase 1: resolve exports
 
-/// DFS post-order execution sort with cycle detection.
-pub fn compute_exec_order<M: ModuleStore>(store: &M, entries: &[ModuleIdx], runtime: Option<ModuleIdx>, config: &ExecOrderConfig) -> ExecOrderResult<ModuleIdx>;
+Builds resolved exports for all modules. Initializes from local exports, then propagates star re-exports with proper shadowing, CJS semantics, and ambiguity detection.
 
-/// Find all cycles in the module graph (DFS with on-stack tracking).
-pub fn find_cycles<M: ModuleStore>(store: &M) -> Vec<Vec<ModuleIdx>>;
+### `match_imports` — Phase 2: match imports to exports
 
-/// Compute which modules are affected by top-level await.
-pub fn compute_tla<M: ModuleStore>(store: &M) -> FxHashSet<ModuleIdx>;
+Matches each import to the resolved exports, calling `ImportMatcher` callbacks for consumer-specific behavior (CJS, externals, dynamic fallback). Links symbols via `SymbolGraph::link()`.
 
-/// Determine which modules have side effects (transitive propagation).
-pub fn determine_side_effects<M: ModuleStore, C: SideEffectsChecker>(store: &M, checker: &C) -> FxHashMap<ModuleIdx, bool>;
-```
+### `bind_imports_and_exports` — Combined Phase 1 + 2
 
-## How Rolldown Adopts This
+Convenience function that calls `build_resolved_exports` then `match_imports` with a `DefaultImportMatcher`.
+
+### `compute_exec_order` — DFS post-order execution sort
+
+Returns modules in JavaScript evaluation order. Handles runtime module, static/dynamic/require edges, cycle detection with full cycle paths. Skips `HotAccept` edges.
+
+### `compute_tla` — Top-level await propagation
+
+Identifies modules affected by top-level `await`, propagating through static import edges only.
+
+### `determine_side_effects` — Side-effects propagation
+
+Propagates side-effects status through import and ESM star-export edges. Uses `any_module_side_effects()` for external modules and `SideEffectsChecker` for consumer-specific logic (wrapping, dynamic exports).
+
+### `compute_has_dynamic_exports` — Dynamic export detection
+
+Identifies modules whose exports are not statically analyzable (transitively `export *` from CJS or external).
+
+### `find_cycles` — Cycle detection
+
+DFS-based cycle detection returning all cycles as lists of module indices.
+
+## Rolldown Integration
 
 Rolldown implements the traits on its existing types — **no data structure changes needed**:
 
-```rust
-// In Rolldown's codebase:
-impl ModuleInfo for NormalModule {
-    fn module_idx(&self) -> ModuleIdx { self.idx.into() }
-    fn named_exports(&self) -> ... { &self.ecma_view.named_exports }
-    fn named_imports(&self) -> ... { &self.ecma_view.named_imports }
-    // ...
-}
+| Rolldown Type | Implements | Notes |
+|---------------|-----------|-------|
+| `NormalModule` | `ModuleInfo` | Bridges `EcmaView` fields to trait methods |
+| `ModuleTable` | `ModuleStore` | `module()` returns `None` for external modules |
+| `SymbolRefDb` | `SymbolGraph` | Direct delegation |
+| `RolldownImportMatcher` | `ImportMatcher` | CJS interop, external modules, dynamic fallback |
+| `RolldownSideEffectsChecker` | `SideEffectsChecker` | WrapKind + has_dynamic_exports checks |
 
-impl ModuleStore for LinkStageOutput {
-    type Module = Module;
-    fn module(&self, idx: ModuleIdx) -> &Module { &self.module_table[idx] }
-    // ...
-}
+### Algorithms adopted by Rolldown
 
-impl SymbolGraph for SymbolRefDb {
-    fn canonical_ref_for(&self, s: SymbolRef) -> SymbolRef { self.canonical_ref_for(s) }
-    fn link(&mut self, from: SymbolRef, to: SymbolRef) { self.link(from, to) }
-    // ...
-}
-
-// Then call the shared algorithm:
-let errors = oxc_module_graph::bind_imports_and_exports(&module_table, &mut symbol_db);
-```
-
-## Key Files to Reuse/Reference
-
-| File                                                                         | Why                                                    |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `oxc/crates/oxc_syntax/src/module_record.rs`                                 | Arena `ModuleRecord<'a>` — source for owned conversion |
-| `oxc/crates/oxc_linter/src/module_record.rs`                                 | Owned `ModuleRecord` + `From` impls — same pattern     |
-| `oxc/crates/oxc_linter/src/module_graph_visitor.rs`                          | Graph traversal reference                              |
-| `oxc/crates/oxc_linter/src/service/runtime.rs`                               | Resolver setup + parallel graph building               |
-| `oxc/crates/oxc_syntax/src/symbol.rs`                                        | `SymbolId` index type pattern                          |
-| `oxc/crates/oxc_semantic/src/scoping.rs`                                     | `Scoping` type for default impl                        |
-| `rolldown/crates/rolldown_common/src/types/symbol_ref_db.rs`                 | Rolldown's SymbolRefDb design                          |
-| `rolldown/crates/rolldown/src/stages/link_stage/bind_imports_and_exports.rs` | Binding algorithm reference                            |
-
-## Implementation Stages
-
-### Stage 1: Core Types + Traits — Complete
-
-**Goal**: Define `ModuleIdx`, `SymbolRef`, shared import/export types, and the 3 core traits (`ModuleInfo`, `ModuleStore`, `SymbolGraph`).
-
-### Stage 2: Default Implementations — Complete
-
-**Goal**: `Module`, `ModuleGraph`, `SymbolRefDb` — concrete types implementing the traits. Owned `ModuleRecord` with `From` conversions.
-
-### Stage 3: Graph Builder + Resolution — Complete
-
-**Goal**: `ModuleGraphBuilder` using `oxc_parser` + `oxc_semantic` + `oxc_resolver`. BFS from entry points.
-
-### Stage 4: Binding Algorithm — Complete
-
-**Goal**: `bind_imports_and_exports()` generic over traits. Named/default/namespace imports, re-exports, star re-exports, ambiguity detection.
-
-### Stage 5: Graph Algorithms + Polish — Complete
-
-**Goal**: `compute_exec_order()`, `find_cycles()`, `compute_tla()`, `determine_side_effects()`, docs, integration tests.
+| Algorithm | Replaces | Status |
+|-----------|----------|--------|
+| `build_resolved_exports` + `match_imports` | `bind_imports_and_exports.rs` | Adopted |
+| `compute_exec_order` | `sort_modules.rs` | Adopted |
+| `compute_tla` | `compute_tla.rs` | Adopted |
+| `determine_side_effects` | `determine_side_effects.rs` | Adopted |
 
 ## Verification
 
 ```bash
-cargo test -p oxc_module_graph        # 17 tests passing
+cargo test -p oxc_module_graph        # 45 tests passing
 cargo clippy -p oxc_module_graph      # Clean
 just fmt
 ```
