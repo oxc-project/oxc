@@ -17,9 +17,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     hir::{
-        BlockId, Effect, FunctionExpressionValue, HIRFunction, IdentifierId, Instruction,
-        InstructionValue, Phi, Place, ReactFunctionType, ReactiveParam, ValueKind, ValueReason,
+        BlockId, Effect, FunctionExpressionValue, HIRFunction, Identifier, IdentifierId,
+        Instruction, InstructionKind, InstructionValue, Pattern, Phi, Place, ReactFunctionType,
+        ReactiveParam, ValueKind, ValueReason,
         hir_builder::{compute_rpo_order, each_terminal_successor},
+        visitors::{PatternItem, each_instruction_value_operand, each_pattern_item},
     },
     inference::aliasing_effects::{AliasingEffect, AliasingSignature},
 };
@@ -189,6 +191,161 @@ fn merge_value_kinds(a: ValueKind, b: ValueKind) -> ValueKind {
     }
 }
 
+/// Finds objects created via ObjectPattern spread destructuring
+/// (`const {x, ...spread} = ...`) where a) the rvalue is known frozen and
+/// b) the spread value cannot possibly be directly mutated. The idea is that
+/// for this set of values, we can treat the spread object as frozen.
+///
+/// Port of `findNonMutatedDestructureSpreads` from `InferMutationAliasingEffects.ts`.
+fn find_non_mutating_spreads(func: &HIRFunction) -> FxHashSet<IdentifierId> {
+    let mut known_frozen = FxHashSet::default();
+    if func.fn_type == ReactFunctionType::Component {
+        if let Some(param) = func.params.first() {
+            if let ReactiveParam::Place(p) = param {
+                known_frozen.insert(p.identifier.id);
+            }
+        }
+    } else {
+        for param in &func.params {
+            if let ReactiveParam::Place(p) = param {
+                known_frozen.insert(p.identifier.id);
+            }
+        }
+    }
+
+    // Map of temporaries to identifiers for spread objects
+    let mut candidate_non_mutating_spreads: FxHashMap<IdentifierId, IdentifierId> =
+        FxHashMap::default();
+    for block in func.body.blocks.values() {
+        if !candidate_non_mutating_spreads.is_empty() {
+            for phi in &block.phis {
+                for operand in phi.operands.values() {
+                    if let Some(&spread) =
+                        candidate_non_mutating_spreads.get(&operand.identifier.id)
+                    {
+                        candidate_non_mutating_spreads.remove(&spread);
+                    }
+                }
+            }
+        }
+        for instr in &block.instructions {
+            let lvalue = &instr.lvalue;
+            match &instr.value {
+                InstructionValue::Destructure(v) => {
+                    if !known_frozen.contains(&v.value.identifier.id)
+                        || !matches!(v.lvalue.kind, InstructionKind::Let | InstructionKind::Const)
+                    {
+                        continue;
+                    }
+                    if let Pattern::Object(obj) = &v.lvalue.pattern {
+                        for prop in &obj.properties {
+                            if let crate::hir::ObjectPatternProperty::Spread(s) = prop {
+                                candidate_non_mutating_spreads
+                                    .insert(s.place.identifier.id, s.place.identifier.id);
+                            }
+                        }
+                    }
+                }
+                InstructionValue::LoadLocal(v) => {
+                    if let Some(&spread) =
+                        candidate_non_mutating_spreads.get(&v.place.identifier.id)
+                    {
+                        candidate_non_mutating_spreads.insert(lvalue.identifier.id, spread);
+                    }
+                }
+                InstructionValue::StoreLocal(v) => {
+                    if let Some(&spread) =
+                        candidate_non_mutating_spreads.get(&v.value.identifier.id)
+                    {
+                        candidate_non_mutating_spreads.insert(lvalue.identifier.id, spread);
+                        candidate_non_mutating_spreads
+                            .insert(v.lvalue.place.identifier.id, spread);
+                    }
+                }
+                InstructionValue::JsxFragment(_) | InstructionValue::JsxExpression(_) => {
+                    // Passing objects created with spread to jsx can't mutate them
+                }
+                InstructionValue::PropertyLoad(_) => {
+                    // Properties must be frozen since the original value was frozen
+                }
+                InstructionValue::CallExpression(call) => {
+                    if get_hook_kind(&func.env, &call.callee.identifier).is_some() {
+                        // Hook calls have frozen arguments, and non-ref returns are frozen
+                        if !is_ref_or_ref_value(&lvalue.identifier) {
+                            known_frozen.insert(lvalue.identifier.id);
+                        }
+                    } else if !candidate_non_mutating_spreads.is_empty() {
+                        for operand in each_instruction_value_operand(&instr.value) {
+                            if let Some(&spread) =
+                                candidate_non_mutating_spreads.get(&operand.identifier.id)
+                            {
+                                candidate_non_mutating_spreads.remove(&spread);
+                            }
+                        }
+                    }
+                }
+                InstructionValue::MethodCall(call) => {
+                    if get_hook_kind(&func.env, &call.property.identifier).is_some() {
+                        if !is_ref_or_ref_value(&lvalue.identifier) {
+                            known_frozen.insert(lvalue.identifier.id);
+                        }
+                    } else if !candidate_non_mutating_spreads.is_empty() {
+                        for operand in each_instruction_value_operand(&instr.value) {
+                            if let Some(&spread) =
+                                candidate_non_mutating_spreads.get(&operand.identifier.id)
+                            {
+                                candidate_non_mutating_spreads.remove(&spread);
+                            }
+                        }
+                    }
+                }
+                _ => {
+                    if !candidate_non_mutating_spreads.is_empty() {
+                        for operand in each_instruction_value_operand(&instr.value) {
+                            if let Some(&spread) =
+                                candidate_non_mutating_spreads.get(&operand.identifier.id)
+                            {
+                                candidate_non_mutating_spreads.remove(&spread);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let mut non_mutating_spreads = FxHashSet::default();
+    for (&key, &value) in &candidate_non_mutating_spreads {
+        if key == value {
+            non_mutating_spreads.insert(key);
+        }
+    }
+    non_mutating_spreads
+}
+
+/// Get the hook kind for an identifier by looking up its type's shape in the registry.
+fn get_hook_kind(
+    env: &crate::hir::environment::Environment,
+    id: &Identifier,
+) -> Option<crate::hir::object_shape::HookKind> {
+    let shape_id = match &id.type_ {
+        crate::hir::types::Type::Function(f) => f.shape_id.as_deref()?,
+        _ => return None,
+    };
+    let shape = env.shapes.get(shape_id)?;
+    shape.function_type.as_ref()?.hook_kind
+}
+
+/// Check if an identifier is a ref or ref value type.
+fn is_ref_or_ref_value(id: &Identifier) -> bool {
+    matches!(
+        &id.type_,
+        crate::hir::types::Type::Object(crate::hir::types::ObjectType { shape_id: Some(id) })
+            if id == crate::hir::object_shape::BUILT_IN_USE_REF_ID
+                || id == crate::hir::object_shape::BUILT_IN_REF_VALUE_ID
+    )
+}
+
 /// Infer mutation/aliasing effects for the given function.
 pub fn infer_mutation_aliasing_effects(
     func: &mut HIRFunction,
@@ -304,6 +461,10 @@ pub fn infer_mutation_aliasing_effects(
         }
     }
 
+    // Compute non-mutating spreads for the Destructure handling.
+    // Port of `findNonMutatedDestructureSpreads` from `InferMutationAliasingEffects.ts`.
+    let non_mutating_spreads = find_non_mutating_spreads(func);
+
     // Annotate effects on instructions.
     // For blocks reached during fixpoint iteration, compute effects from abstract state.
     // For unreachable blocks, set empty effects (not None) so downstream passes
@@ -315,7 +476,8 @@ pub fn infer_mutation_aliasing_effects(
         };
         if let Some(state) = states_by_block.get(&block_id) {
             for instr in &mut block.instructions {
-                let effects = compute_instruction_effects(state, instr, &func.env);
+                let effects =
+                    compute_instruction_effects(state, instr, &func.env, &non_mutating_spreads);
                 instr.effects = Some(effects);
 
                 // Match TS applyEffect for CreateFunction: demote context operands
@@ -1280,8 +1442,9 @@ fn compute_instruction_effects(
     state: &InferenceState,
     instr: &Instruction,
     env: &crate::hir::environment::Environment,
+    non_mutating_spreads: &FxHashSet<IdentifierId>,
 ) -> Vec<AliasingEffect> {
-    use crate::hir::{CallArg, Effect, InstructionKind, visitors::each_instruction_value_operand};
+    use crate::hir::CallArg;
     use crate::inference::aliasing_effects::CreateFunctionKind;
 
     let lvalue = &instr.lvalue;
@@ -1778,46 +1941,44 @@ fn compute_instruction_effects(
             });
         }
 
-        // Destructure: CreateFrom per pattern item + Assign to lvalue
-        // If the source is frozen (e.g., props param), use Create(Frozen) + ImmutableCapture
-        // instead of CreateFrom (matching TS applyEffect for CreateFrom with frozen source).
-        // This prevents the mutation BFS in InferMutationAliasingRanges from propagating
-        // mutations through props destructuring.
+        // Destructure: per pattern item, differentiate between primitive, identifier, and spread.
+        // Port of `computeSignatureForInstruction` case 'Destructure' from
+        // `InferMutationAliasingEffects.ts` lines 2091-2127.
         InstructionValue::Destructure(v) => {
-            let source_frozen = is_frozen(state, &v.value);
-            let source_reason = state
-                .get(&v.value)
-                .and_then(|av| av.reason.iter().next().copied())
-                .unwrap_or(ValueReason::Other);
-            for place in crate::hir::visitors::each_pattern_operand(&v.lvalue.pattern) {
-                if source_frozen {
-                    // Matching TS: CreateFrom with frozen source → Create(Frozen) + ImmutableCapture
+            for pattern_item in each_pattern_item(&v.lvalue.pattern) {
+                let place = pattern_item.place();
+                if place.identifier.is_primitive_type() {
+                    // Path 1: Primitive type → Create(Primitive)
                     effects.push(AliasingEffect::Create {
                         into: place.clone(),
-                        value: ValueKind::Frozen,
-                        reason: source_reason,
+                        value: ValueKind::Primitive,
+                        reason: ValueReason::Other,
                     });
-                    effects.push(AliasingEffect::ImmutableCapture {
+                } else if matches!(pattern_item, PatternItem::Identifier(_)) {
+                    // Path 2: Non-primitive identifier → CreateFrom
+                    effects.push(AliasingEffect::CreateFrom {
                         from: v.value.clone(),
                         into: place.clone(),
                     });
                 } else {
-                    effects.push(AliasingEffect::CreateFrom {
+                    // Path 3: Spread → Create(Frozen|Mutable) + Capture
+                    let value_kind = if non_mutating_spreads.contains(&place.identifier.id) {
+                        ValueKind::Frozen
+                    } else {
+                        ValueKind::Mutable
+                    };
+                    effects.push(AliasingEffect::Create {
+                        into: place.clone(),
+                        value: value_kind,
+                        reason: ValueReason::Other,
+                    });
+                    effects.push(AliasingEffect::Capture {
                         from: v.value.clone(),
                         into: place.clone(),
                     });
                 }
             }
-            if source_frozen {
-                // Matching TS: Assign with frozen source → ImmutableCapture
-                effects.push(AliasingEffect::ImmutableCapture {
-                    from: v.value.clone(),
-                    into: lvalue.clone(),
-                });
-            } else {
-                effects
-                    .push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
-            }
+            effects.push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
         }
 
         // PostfixUpdate / PrefixUpdate: Create(Primitive) for both lvalue and updated place
