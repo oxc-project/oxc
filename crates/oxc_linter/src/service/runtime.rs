@@ -32,9 +32,7 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
-    utils::{
-        PreferredSpecifierComputer, load_tsconfig_path_aliases, read_to_arena_str,
-    },
+    utils::{PreferredSpecifierComputer, load_tsconfig_path_aliases, read_to_arena_str},
 };
 
 use super::LintServiceOptions;
@@ -257,10 +255,7 @@ impl Runtime {
             .and_then(load_tsconfig_path_aliases)
             .filter(|aliases| !aliases.is_empty());
         let preferred_specifier_computer = resolver.as_ref().map(|r| {
-            Arc::new(PreferredSpecifierComputer::new(
-                Arc::clone(r),
-                tsconfig_path_aliases,
-            ))
+            Arc::new(PreferredSpecifierComputer::new(Arc::clone(r), tsconfig_path_aliases))
         });
 
         Self {
@@ -1086,9 +1081,7 @@ impl Runtime {
                     let resolution = resolver.resolve(dir, specifier).ok()?;
                     Some(ResolvedModuleRequest {
                         specifier: specifier.clone(),
-                        resolved_requested_path: Arc::<OsStr>::from(
-                            resolution.path().as_os_str(),
-                        ),
+                        resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),
                     })
                 })
                 .collect();
