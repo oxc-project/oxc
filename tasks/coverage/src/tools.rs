@@ -854,7 +854,7 @@ pub fn run_estree_test262_tokens(files: &[Test262File]) -> Vec<CoverageResult> {
                 &program,
                 source_text,
                 &span_converter,
-                ESTreeTokenOptions::test262(),
+                ESTreeTokenOptions::new(false),
             );
 
             span_converter.convert_program_with_ascending_order_checks(&mut program);
@@ -904,7 +904,7 @@ pub fn run_estree_acorn_jsx_tokens(files: &[AcornJsxFile]) -> Vec<CoverageResult
                 &program,
                 source_text,
                 &span_converter,
-                ESTreeTokenOptions::test262(),
+                ESTreeTokenOptions::new(false),
             );
 
             span_converter.convert_program_with_ascending_order_checks(&mut program);
@@ -1080,7 +1080,7 @@ pub fn run_estree_typescript_tokens(files: &[TypeScriptFile]) -> Vec<CoverageRes
                     &program,
                     source_text,
                     &span_converter,
-                    ESTreeTokenOptions::typescript(),
+                    ESTreeTokenOptions::new(true),
                 );
 
                 span_converter.convert_program_with_ascending_order_checks(&mut program);

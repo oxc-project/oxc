@@ -20,7 +20,7 @@ use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_json};
+use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json};
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
@@ -576,7 +576,7 @@ impl Linter {
                     program,
                     original_source_text,
                     &span_converter,
-                    ESTreeTokenOptions::test262(),
+                    ESTreeTokenOptionsJS,
                 );
                 let tokens_json = allocator.alloc_str(&tokens_json);
                 let tokens_offset = tokens_json.as_ptr() as u32;

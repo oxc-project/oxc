@@ -16,50 +16,10 @@ use oxc_estree::{
 use oxc_parser::{Kind, Token};
 use oxc_span::{GetSpan, Span};
 
-/// Options for serializing tokens.
-///
-/// Espree (`test262`) and TS-ESLint (`typescript`) differ in several ways:
-///
-/// * `yield`, `let`, `static` used as identifiers (`obj = { yield: 1, let: 2, static: 3 };`)
-///   * Espree emits these as `Keyword` tokens.
-///   * TS-ESLint as `Identifier` tokens.
-/// * Escaped identifiers (e.g. `\u0061`)
-///   * Espree decodes escapes in the token `value`.
-///   * TS-ESLint preserves the raw source text.
-/// * JSX namespaced names (`<ns:tag>`)
-///   * Espree emits `JSXIdentifier` tokens for both parts,
-///   * TS-ESLint leaves them as their default token type (`Identifier`).
-/// * Member expressions in JSX expressions (`<C x={a.b}>`)
-///   * Espree emits them as `Identifier` tokens.
-///   * TS-ESLint emits `JSXIdentifier` tokens for non-computed member expression identifiers
-///     inside JSX expression containers.
-#[derive(Debug, Clone, Copy)]
-pub struct ESTreeTokenOptions {
-    pub exclude_legacy_keyword_identifiers: bool,
-    pub decode_identifier_escapes: bool,
-    pub jsx_namespace_jsx_identifiers: bool,
-    pub member_expr_in_jsx_expression_jsx_identifiers: bool,
-}
-
-impl ESTreeTokenOptions {
-    pub const fn test262() -> Self {
-        Self {
-            exclude_legacy_keyword_identifiers: true,
-            decode_identifier_escapes: true,
-            jsx_namespace_jsx_identifiers: true,
-            member_expr_in_jsx_expression_jsx_identifiers: false,
-        }
-    }
-
-    pub const fn typescript() -> Self {
-        Self {
-            exclude_legacy_keyword_identifiers: false,
-            decode_identifier_escapes: false,
-            jsx_namespace_jsx_identifiers: false,
-            member_expr_in_jsx_expression_jsx_identifiers: true,
-        }
-    }
-}
+mod options;
+pub use options::{
+    ESTreeTokenConfig, ESTreeTokenOptions, ESTreeTokenOptionsJS, ESTreeTokenOptionsTS,
+};
 
 /// Serialize tokens to JSON.
 ///
@@ -68,12 +28,12 @@ impl ESTreeTokenOptions {
 ///
 /// `source_text` must be the original source text, prior to BOM removal.
 /// i.e. if the file has a BOM, it must be present at the start of `source_text`.
-pub fn to_estree_tokens_json(
+pub fn to_estree_tokens_json<O: ESTreeTokenConfig>(
     tokens: &[Token],
     program: &Program<'_>,
     source_text: &str,
     span_converter: &Utf8ToUtf16,
-    options: ESTreeTokenOptions,
+    options: O,
 ) -> String {
     // Estimated size of a single token serialized to JSON, in bytes.
     // TODO: Estimate this better based on real-world usage.
@@ -92,12 +52,12 @@ pub fn to_estree_tokens_json(
 ///
 /// `source_text` must be the original source text, prior to BOM removal.
 /// i.e. if the file has a BOM, it must be present at the start of `source_text`.
-pub fn to_estree_tokens_pretty_json(
+pub fn to_estree_tokens_pretty_json<O: ESTreeTokenConfig>(
     tokens: &[Token],
     program: &Program<'_>,
     source_text: &str,
     span_converter: &Utf8ToUtf16,
-    options: ESTreeTokenOptions,
+    options: O,
 ) -> String {
     // Estimated size of a single token serialized to JSON, in bytes.
     // TODO: Estimate this better based on real-world usage.
@@ -333,13 +293,13 @@ use u32_string::U32String;
 /// When a visitor method encounters an AST node that requires a token type override
 /// (e.g. a keyword used as an identifier), it serializes all preceding tokens with their default types,
 /// then serializes the overridden token with its corrected type.
-fn serialize_tokens(
+fn serialize_tokens<O: ESTreeTokenConfig>(
     serializer: impl Serializer,
     tokens: &[Token],
     program: &Program<'_>,
     source_text: &str,
     span_converter: &Utf8ToUtf16,
-    options: ESTreeTokenOptions,
+    options: O,
 ) {
     let mut context = ESTreeTokenContext {
         seq: serializer.serialize_sequence(),
@@ -347,23 +307,72 @@ fn serialize_tokens(
         source_text,
         span_converter: span_converter.converter(),
         options,
-        jsx_state: JSXState::default(),
+        jsx_state: O::JSXState::default(),
     };
     context.visit_program(program);
     context.finish();
 }
 
-/// JSX state.
+/// Trait for JSX state.
+///
+/// Used in TS style for tracking when to emit JSX identifiers.
+///
+/// Implemented by [`JSXStateJS`] and [`JSXStateTS`].
+/// In JS style, there is no state to track, so [`JSXStateJS`] is a ZST which implements all methods as no-ops.
+/// In TS style, [`JSXStateTS`] implements all methods, because state is required.
+pub trait JSXState: Default {
+    /// Call when entering a JSX expression.
+    fn enter_jsx_expression(&mut self);
+
+    /// Call when exiting a JSX expression.
+    fn exit_jsx_expression(&mut self);
+
+    /// Call when entering a `MemberExpression`.
+    fn enter_member_expression(&mut self, member_expr: &MemberExpression<'_>);
+
+    /// Call when exiting a `MemberExpression`.
+    fn exit_member_expression(&mut self, member_expr: &MemberExpression<'_>);
+
+    /// Returns `true` if current `Identifier` token should be emitted as a `JSXIdentifier` token.
+    fn should_emit_jsx_identifier(&self) -> bool;
+}
+
+/// No-op JSX state for JS-style tokens.
+#[derive(Default)]
+pub struct JSXStateJS;
+
+impl JSXState for JSXStateJS {
+    #[inline(always)]
+    fn enter_jsx_expression(&mut self) {}
+
+    #[inline(always)]
+    fn exit_jsx_expression(&mut self) {}
+
+    #[inline(always)]
+    fn enter_member_expression(&mut self, _member_expr: &MemberExpression<'_>) {}
+
+    #[inline(always)]
+    fn exit_member_expression(&mut self, _member_expr: &MemberExpression<'_>) {}
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn should_emit_jsx_identifier(&self) -> bool {
+        false
+    }
+}
+
+/// JSX state for TS-style tokens.
+///
 /// Used in TS style for tracking when to emit JSX identifiers.
 #[derive(Default)]
 #[expect(clippy::struct_field_names)]
-struct JSXState {
+pub struct JSXStateTS {
     jsx_expression_depth: u32,
     member_expression_depth: u32,
     computed_member_depth: u32,
 }
 
-impl JSXState {
+impl JSXState for JSXStateTS {
     #[inline]
     fn enter_jsx_expression(&mut self) {
         self.jsx_expression_depth += 1;
@@ -409,7 +418,7 @@ impl JSXState {
 /// After the AST walk, any remaining tokens are serialized with default types.
 ///
 /// This works because AST visitation occurs in source order, so same order as tokens in the iterator.
-struct ESTreeTokenContext<'b, S: SequenceSerializer> {
+struct ESTreeTokenContext<'b, O: ESTreeTokenConfig, S: SequenceSerializer> {
     /// JSON sequence serializer.
     /// Tokens are serialized into this serializer.
     seq: S,
@@ -421,23 +430,23 @@ struct ESTreeTokenContext<'b, S: SequenceSerializer> {
     /// `None` if source is ASCII-only.
     span_converter: Option<Utf8ToUtf16Converter<'b>>,
     /// Options
-    options: ESTreeTokenOptions,
-    // JSX state. Used in TS-ESLint emulation mode.
-    jsx_state: JSXState,
+    options: O,
+    // JSX state. Used when outputting tokens in TS style.
+    jsx_state: O::JSXState,
 }
 
-impl<'b, S: SequenceSerializer> ESTreeTokenContext<'b, S> {
-    /// Emit the token at `start` as `Identifier`, unless it's a legacy keyword and
-    /// `exclude_legacy_keyword_identifiers` is set (in which case it gets `Keyword` type).
+impl<'b, O: ESTreeTokenConfig, S: SequenceSerializer> ESTreeTokenContext<'b, O, S> {
+    /// Emit the token at `start` as `Identifier`, unless it's a legacy keyword and serializing in JS style
+    /// (in which case it gets `Keyword` type).
     ///
     /// `name` is the decoded identifier name from the AST node.
     /// When the token has no escapes, `name` points into the source text, same as slicing it.
-    /// When the token has escapes and `decode_identifier_escapes` is enabled, `name` provides
-    /// the decoded value. Only when escapes are present but decoding is disabled do we need to
-    /// fall back to slicing the raw source text (preserving the escape sequences in the output).
+    /// When the token has escapes and using JS style, `name` provides the decoded value.
+    /// Only when escapes are present but decoding is disabled (TS style) do we need to fall back to
+    /// slicing the raw source text (preserving the escape sequences in the output).
     fn emit_identifier_at(&mut self, start: u32, name: &str) {
         let token = self.advance_to(start);
-        let token_type = if self.options.exclude_legacy_keyword_identifiers
+        let token_type = if self.options.is_js()
             && matches!(token.kind(), Kind::Yield | Kind::Let | Kind::Static)
         {
             TokenType::new("Keyword")
@@ -452,13 +461,13 @@ impl<'b, S: SequenceSerializer> ESTreeTokenContext<'b, S> {
         // Only fall back to raw source text when the token contains escapes *and* decoding is disabled,
         // since escape sequences contain `\` which needs JSON escaping.
         // Escaped identifiers are extremely rare, so handle them in `#[cold]` branch.
-        if self.options.decode_identifier_escapes || !token.escaped() {
+        if self.options.is_js() || !token.escaped() {
             self.serialize_safe_token(token, token_type, name);
         } else {
             #[cold]
             #[inline(never)]
-            fn emit<S: SequenceSerializer>(
-                ctx: &mut ESTreeTokenContext<'_, S>,
+            fn emit<O: ESTreeTokenConfig, S: SequenceSerializer>(
+                ctx: &mut ESTreeTokenContext<'_, O, S>,
                 token: &Token,
                 token_type: TokenType,
             ) {
@@ -570,7 +579,7 @@ impl<'b, S: SequenceSerializer> ESTreeTokenContext<'b, S> {
     }
 }
 
-impl<'a, S: SequenceSerializer> Visit<'a> for ESTreeTokenContext<'_, S> {
+impl<'a, O: ESTreeTokenConfig, S: SequenceSerializer> Visit<'a> for ESTreeTokenContext<'_, O, S> {
     fn visit_ts_type_name(&mut self, type_name: &TSTypeName<'a>) {
         // `this` is emitted as `Identifier` token instead of `Keyword`
         match type_name {
@@ -625,9 +634,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for ESTreeTokenContext<'_, S> {
     }
 
     fn visit_identifier_name(&mut self, identifier: &IdentifierName<'a>) {
-        if self.options.member_expr_in_jsx_expression_jsx_identifiers
-            && self.jsx_state.should_emit_jsx_identifier()
-        {
+        if self.options.is_ts() && self.jsx_state.should_emit_jsx_identifier() {
             self.emit_jsx_identifier_at(identifier.span.start, &identifier.name);
         } else {
             self.emit_identifier_at(identifier.span.start, &identifier.name);
@@ -635,9 +642,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for ESTreeTokenContext<'_, S> {
     }
 
     fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
-        if self.options.member_expr_in_jsx_expression_jsx_identifiers
-            && self.jsx_state.should_emit_jsx_identifier()
-        {
+        if self.options.is_ts() && self.jsx_state.should_emit_jsx_identifier() {
             self.emit_jsx_identifier_at(identifier.span.start, &identifier.name);
         } else {
             self.emit_identifier_at(identifier.span.start, &identifier.name);
@@ -657,17 +662,20 @@ impl<'a, S: SequenceSerializer> Visit<'a> for ESTreeTokenContext<'_, S> {
 
         // `identifier.name` has `#` stripped and escapes decoded by the parser, and is JSON-safe.
         // Use it in most cases — if token is not marked as escaped, it's JSON-safe, so can skip JSON encoding.
-        // When `self.options.decode_identifier_escapes` is `true`, token `value` should *always* be
-        // the unescaped version, so can also use `name` from AST node and skip JSON encoding.
+        // When `self.is_js()` is `true`, token `value` should *always* be the unescaped version,
+        // so can also use `name` from AST node and skip JSON encoding.
         // Only fall back to raw source text when the token contains escapes *and* decoding is disabled,
         // since escape sequences contain `\` which needs JSON escaping.
         // Escaped identifiers are extremely rare, so handle them in `#[cold]` branch.
-        if self.options.decode_identifier_escapes || !token.escaped() {
+        if self.options.is_js() || !token.escaped() {
             self.serialize_safe_token(token, TokenType::new("PrivateIdentifier"), &identifier.name);
         } else {
             #[cold]
             #[inline(never)]
-            fn emit<S: SequenceSerializer>(ctx: &mut ESTreeTokenContext<'_, S>, token: &Token) {
+            fn emit<O: ESTreeTokenConfig, S: SequenceSerializer>(
+                ctx: &mut ESTreeTokenContext<'_, O, S>,
+                token: &Token,
+            ) {
                 // Strip leading `#`
                 let value = &ctx.source_text[token.start() as usize + 1..token.end() as usize];
                 ctx.serialize_unsafe_token(token, TokenType::new("PrivateIdentifier"), value);
@@ -763,11 +771,12 @@ impl<'a, S: SequenceSerializer> Visit<'a> for ESTreeTokenContext<'_, S> {
     }
 
     fn visit_jsx_namespaced_name(&mut self, name: &JSXNamespacedName<'a>) {
-        if self.options.jsx_namespace_jsx_identifiers {
+        if self.options.is_js() {
             self.emit_jsx_identifier_at(name.namespace.span.start, &name.namespace.name);
             self.emit_jsx_identifier_at(name.name.span.start, &name.name.name);
+        } else {
+            // In TS mode, these tokens retain their default type (`Identifier`)
         }
-        // When `!jsx_namespace_jsx_identifiers`, these tokens retain their default type
     }
 
     fn visit_jsx_expression_container(&mut self, container: &JSXExpressionContainer<'a>) {
@@ -838,7 +847,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for ESTreeTokenContext<'_, S> {
     }
 }
 
-impl<S: SequenceSerializer> ESTreeTokenContext<'_, S> {
+impl<O: ESTreeTokenConfig, S: SequenceSerializer> ESTreeTokenContext<'_, O, S> {
     /// Emit template quasis interleaved with their interpolated parts (expressions or TS types).
     ///
     /// `TemplateElement.span` excludes delimiters (parser adjusts `start + 1`),
