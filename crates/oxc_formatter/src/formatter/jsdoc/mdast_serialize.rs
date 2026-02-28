@@ -1,14 +1,11 @@
 use cow_utils::CowUtils;
-use markdown::{ParseOptions, mdast::Node, to_mdast};
+use markdown::{Constructs, ParseOptions, mdast::Node, to_mdast};
 
-use super::wrap::{
-    format_nested_list, format_table_block, has_nested_lists, wrap_paragraph, wrap_text,
-};
+use super::wrap::{format_table_block, wrap_paragraph};
 
 /// Placeholder prefix for protecting `{@link ...}` tokens from markdown parsing.
 /// Uses a format that `tokenize_words` won't split (no spaces, looks like a word).
 const PLACEHOLDER_PREFIX: &str = "\x00JDLNK";
-const PIPE_LITERAL_PLACEHOLDER: &str = "\x00PIPE";
 
 /// Format a markdown description using mdast parsing.
 ///
@@ -21,37 +18,32 @@ pub fn format_description_mdast(text: &str, max_width: usize, capitalize: bool) 
         return Vec::new();
     }
 
-    // The old nested-list formatter still matches Prettier better for pure list trees.
-    if has_nested_lists(text) {
-        let mut lines = Vec::new();
-        format_nested_list(text, capitalize, &mut lines);
-        return lines;
-    }
-
-    // Pipe-leading table blocks still need the legacy line-based formatter so we can
-    // preserve non-table pipe blocks instead of collapsing their line breaks.
-    if has_top_level_pipe_lines(text) {
-        return format_description_with_legacy_wrap(text, max_width, capitalize);
-    }
-
-    // Pre-process: convert "N-" list markers to "N." so the markdown parser recognizes them
-    let text = normalize_dash_list_markers(text);
-
-    // CommonMark markdown shouldn't upgrade "foo|bar" style rows into tables.
-    // Replace literal pipes in those blocks before parsing, then restore them later.
-    let text = demote_non_piped_table_blocks(&text);
-
     // Protect JSDoc inline tags from markdown parsing (GFM autolink would mangle URLs)
-    let (protected, placeholders) = protect_jsdoc_links(&text);
+    let (protected, placeholders) = protect_jsdoc_links(text);
 
-    // Parse into mdast
-    let Ok(root) = to_mdast(&protected, &ParseOptions::gfm()) else {
+    // Parse into mdast. Keep GFM constructs that affect inline parsing, but let
+    // pipe-prefixed table-like blocks be handled by the serializer using the raw
+    // paragraph text instead of the markdown crate's table node.
+    let parse_opts = ParseOptions {
+        constructs: Constructs {
+            gfm_autolink_literal: true,
+            gfm_footnote_definition: true,
+            gfm_label_start_footnote: true,
+            gfm_strikethrough: true,
+            gfm_table: false,
+            gfm_task_list_item: true,
+            ..Constructs::default()
+        },
+        ..ParseOptions::default()
+    };
+    let Ok(root) = to_mdast(&protected, &parse_opts) else {
         // If parsing fails, fall back to returning the text as-is
         return text.lines().map(|l| l.trim().to_string()).collect();
     };
 
     let mut lines = Vec::new();
-    let opts = SerializeOptions { max_width, capitalize, placeholders: &placeholders };
+    let opts =
+        SerializeOptions { max_width, capitalize, placeholders: &placeholders, source: &protected };
     serialize_children(&root, 0, &opts, &mut lines);
 
     // Restore any remaining placeholders in output lines
@@ -69,214 +61,12 @@ struct SerializeOptions<'a> {
     max_width: usize,
     capitalize: bool,
     placeholders: &'a [String],
+    source: &'a str,
 }
 
 // ──────────────────────────────────────────────────
 // JSDoc link protection
 // ──────────────────────────────────────────────────
-
-fn format_description_with_legacy_wrap(
-    text: &str,
-    max_width: usize,
-    capitalize: bool,
-) -> Vec<String> {
-    let text = super::normalize::normalize_markdown_emphasis(text);
-    let text = super::normalize::convert_setext_headings(&text);
-    let text = super::normalize::remove_horizontal_rules(&text);
-
-    let mut lines = Vec::new();
-    wrap_text(&text, max_width, &mut lines);
-
-    if capitalize {
-        capitalize_legacy_output_lines(&mut lines);
-    }
-
-    while lines.last().is_some_and(String::is_empty) {
-        lines.pop();
-    }
-
-    lines
-}
-
-fn capitalize_legacy_output_lines(lines: &mut [String]) {
-    let mut in_code_fence = false;
-    let mut prev_was_blank = false;
-
-    for (idx, line) in lines.iter_mut().enumerate() {
-        let trimmed = line.trim();
-
-        if trimmed.starts_with("```") {
-            in_code_fence = !in_code_fence;
-            prev_was_blank = false;
-            continue;
-        }
-
-        if in_code_fence {
-            prev_was_blank = false;
-            continue;
-        }
-
-        if trimmed.is_empty() {
-            prev_was_blank = true;
-            continue;
-        }
-
-        if idx == 0 || prev_was_blank {
-            *line = capitalize_line_start(line);
-        }
-
-        prev_was_blank = false;
-    }
-}
-
-fn capitalize_line_start(line: &str) -> String {
-    if let Some(rest) = line.strip_prefix("- ") {
-        return format!("- {}", super::normalize::capitalize_first(rest));
-    }
-
-    if let Some(first) = line.chars().next()
-        && first.is_ascii_digit()
-        && let Some(dot_space_pos) = line.find(". ")
-        && dot_space_pos < 5
-    {
-        let prefix = &line[..dot_space_pos + 2];
-        let rest = &line[dot_space_pos + 2..];
-        return format!("{prefix}{}", super::normalize::capitalize_first(rest));
-    }
-
-    super::normalize::capitalize_first(line)
-}
-
-/// Detect a top-level pipe-leading block outside code fences.
-/// These still rely on the legacy line-based formatter to preserve non-table blocks.
-fn has_top_level_pipe_lines(text: &str) -> bool {
-    let lines: Vec<&str> = text.lines().collect();
-    let mut in_fenced_code = false;
-
-    for line in lines {
-        let trimmed = line.trim();
-
-        if trimmed.starts_with("```") {
-            in_fenced_code = !in_fenced_code;
-            continue;
-        }
-
-        if in_fenced_code || line.starts_with("    ") {
-            continue;
-        }
-
-        if trimmed.starts_with('|') {
-            return true;
-        }
-    }
-
-    false
-}
-
-/// Prevent mdast from turning `foo|bar` style rows into GFM tables.
-/// Prettier's jsdoc markdown pass treats only pipe-leading tables structurally.
-fn demote_non_piped_table_blocks(text: &str) -> String {
-    let lines: Vec<&str> = text.lines().collect();
-    let mut out = Vec::with_capacity(lines.len());
-    let mut in_fenced_code = false;
-    let mut i = 0;
-
-    while i < lines.len() {
-        let line = lines[i];
-        let trimmed = line.trim();
-
-        if trimmed.starts_with("```") {
-            in_fenced_code = !in_fenced_code;
-            out.push(line.to_string());
-            i += 1;
-            continue;
-        }
-
-        if in_fenced_code || line.starts_with("    ") {
-            out.push(line.to_string());
-            i += 1;
-            continue;
-        }
-
-        let starts_non_piped_table = !trimmed.is_empty()
-            && !trimmed.starts_with('|')
-            && trimmed.contains('|')
-            && i + 1 < lines.len()
-            && is_raw_table_separator(lines[i + 1].trim());
-
-        if starts_non_piped_table {
-            while i < lines.len() {
-                let block_line = lines[i];
-                let block_trimmed = block_line.trim();
-
-                if block_trimmed.is_empty()
-                    || block_trimmed.starts_with("```")
-                    || block_line.starts_with("    ")
-                    || !block_trimmed.contains('|')
-                {
-                    break;
-                }
-
-                out.push(block_line.cow_replace("|", PIPE_LITERAL_PLACEHOLDER).into_owned());
-                i += 1;
-            }
-            continue;
-        }
-
-        out.push(line.to_string());
-        i += 1;
-    }
-
-    out.join("\n")
-}
-
-fn is_raw_table_separator(line: &str) -> bool {
-    let inner = line.trim().trim_start_matches('|').trim_end_matches('|');
-    if inner.is_empty() {
-        return false;
-    }
-
-    inner.split('|').all(|cell| {
-        let cell = cell.trim();
-        !cell.is_empty()
-            && cell.chars().all(|c| c == '-' || c == ':' || c == ' ')
-            && cell.contains('-')
-    })
-}
-
-/// Convert non-standard `N-` list markers to `N.` so the markdown parser recognizes
-/// them as ordered list items. Handles varying amounts of whitespace after the dash.
-fn normalize_dash_list_markers(text: &str) -> String {
-    let mut result = String::with_capacity(text.len());
-    for line in text.lines() {
-        if !result.is_empty() {
-            result.push('\n');
-        }
-        let trimmed = line.trim_start();
-        let leading = line.len() - trimmed.len();
-        // Check if line starts with digits followed by '-'
-        if let Some(first) = trimmed.chars().next()
-            && first.is_ascii_digit()
-            && let Some(dash_pos) = trimmed.find('-')
-            && dash_pos < 5
-        {
-            let number_part = &trimmed[..dash_pos];
-            if number_part.chars().all(|c| c.is_ascii_digit()) {
-                let after_dash = &trimmed[dash_pos + 1..];
-                let rest = after_dash.trim_start();
-                if !rest.is_empty() {
-                    result.push_str(&line[..leading]);
-                    result.push_str(number_part);
-                    result.push_str(". ");
-                    result.push_str(rest);
-                    continue;
-                }
-            }
-        }
-        result.push_str(line);
-    }
-    result
-}
 
 /// Replace `{@link ...}`, `{@linkcode ...}`, `{@linkplain ...}`, `{@tutorial ...}`
 /// with numbered placeholders so the markdown parser (especially GFM autolink) doesn't
@@ -324,18 +114,11 @@ fn protect_jsdoc_links(text: &str) -> (String, Vec<String>) {
 
 /// Restore all placeholder tokens in a string back to their original `{@link ...}` form.
 fn restore_in_string(s: &str, placeholders: &[String]) -> String {
-    if placeholders.is_empty()
-        && !s.contains(PLACEHOLDER_PREFIX)
-        && !s.contains(PIPE_LITERAL_PLACEHOLDER)
-    {
+    if placeholders.is_empty() && !s.contains(PLACEHOLDER_PREFIX) {
         return s.to_string();
     }
 
-    let mut result = if s.contains(PIPE_LITERAL_PLACEHOLDER) {
-        s.cow_replace(PIPE_LITERAL_PLACEHOLDER, "|").into_owned()
-    } else {
-        s.to_string()
-    };
+    let mut result = s.to_string();
 
     for (idx, original) in placeholders.iter().enumerate() {
         let placeholder = format!("{PLACEHOLDER_PREFIX}{idx}");
@@ -348,16 +131,8 @@ fn restore_in_string(s: &str, placeholders: &[String]) -> String {
 
 /// Restore placeholders in all output lines.
 fn restore_placeholders(lines: &mut [String], placeholders: &[String]) {
-    if placeholders.is_empty() {
-        for line in lines.iter_mut() {
-            if line.contains(PIPE_LITERAL_PLACEHOLDER) {
-                *line = line.cow_replace(PIPE_LITERAL_PLACEHOLDER, "|").into_owned();
-            }
-        }
-        return;
-    }
     for line in lines.iter_mut() {
-        if line.contains(PLACEHOLDER_PREFIX) || line.contains(PIPE_LITERAL_PLACEHOLDER) {
+        if line.contains(PLACEHOLDER_PREFIX) {
             *line = restore_in_string(line, placeholders);
         }
     }
@@ -472,6 +247,10 @@ fn serialize_paragraph(
     opts: &SerializeOptions<'_>,
     lines: &mut Vec<String>,
 ) {
+    if serialize_pipe_prefixed_paragraph(para, indent, opts, lines) {
+        return;
+    }
+
     // Check if the paragraph contains Break nodes (hard line breaks from `\` at EOL)
     let has_breaks = para.children.iter().any(|c| matches!(c, Node::Break(_)));
 
@@ -535,6 +314,98 @@ fn serialize_paragraph(
             lines.push(line);
         }
     }
+}
+
+fn serialize_pipe_prefixed_paragraph(
+    para: &markdown::mdast::Paragraph,
+    indent: usize,
+    opts: &SerializeOptions<'_>,
+    lines: &mut Vec<String>,
+) -> bool {
+    let Some(position) = para.position.as_ref() else {
+        return false;
+    };
+
+    let raw = &opts.source[position.start.offset..position.end.offset];
+    let raw_lines: Vec<&str> = raw.lines().collect();
+    if raw_lines.is_empty() || !raw_lines.iter().any(|line| line.trim_start().starts_with('|')) {
+        return false;
+    }
+
+    let indent_str = " ".repeat(indent);
+    let mut index = 0;
+    let mut emitted_segment = false;
+
+    while index < raw_lines.len() {
+        while index < raw_lines.len() && raw_lines[index].trim().is_empty() {
+            index += 1;
+        }
+        if index >= raw_lines.len() {
+            break;
+        }
+
+        if emitted_segment && !lines.last().is_some_and(String::is_empty) {
+            lines.push(String::new());
+        }
+
+        if raw_lines[index].trim_start().starts_with('|') {
+            let start = index;
+            while index < raw_lines.len() && raw_lines[index].trim_start().starts_with('|') {
+                index += 1;
+            }
+
+            let pipe_lines: Vec<String> = raw_lines[start..index]
+                .iter()
+                .map(|line| restore_in_string(line.trim(), opts.placeholders))
+                .collect();
+            let mut block_lines = Vec::new();
+            format_table_block(&pipe_lines, &mut block_lines);
+
+            for line in block_lines {
+                if indent > 0 && !line.is_empty() {
+                    lines.push(format!("{indent_str}{line}"));
+                } else {
+                    lines.push(line);
+                }
+            }
+        } else {
+            let start = index;
+            while index < raw_lines.len() && !raw_lines[index].trim_start().starts_with('|') {
+                index += 1;
+            }
+
+            let text_parts: Vec<&str> = raw_lines[start..index]
+                .iter()
+                .map(|line| line.trim())
+                .filter(|line| !line.is_empty())
+                .collect();
+            if text_parts.is_empty() {
+                continue;
+            }
+
+            let text = restore_in_string(&text_parts.join(" "), opts.placeholders);
+            let effective_width = opts.max_width.saturating_sub(indent);
+            let mut para_lines = Vec::new();
+            wrap_paragraph(&text, effective_width, 0, &mut para_lines);
+
+            for (i, line) in para_lines.iter().enumerate() {
+                if indent > 0 {
+                    lines.push(format!("{indent_str}{line}"));
+                } else {
+                    let line = if opts.capitalize && i == 0 {
+                        super::normalize::capitalize_first(line)
+                    } else {
+                        line.clone()
+                    };
+                    lines.push(line);
+                }
+            }
+        }
+
+        emitted_segment = true;
+    }
+
+    true
 }
 
 // ──────────────────────────────────────────────────
@@ -608,9 +479,16 @@ fn serialize_list(
                 if matches!(item_child, Node::Definition(_)) {
                     serialize_node(item_child, 0, opts, lines);
                 }
-                // For nested lists, serialize directly with increased indent
+                // For nested lists, use the same indent model as the old list formatter:
+                // first nested level aligns to the parent content column, deeper levels
+                // indent to the parent content column plus one marker width.
                 else if matches!(item_child, Node::List(_)) {
-                    serialize_node(item_child, indent + marker_width, opts, lines);
+                    let nested_indent = if indent == 0 {
+                        indent + marker_width
+                    } else {
+                        indent + marker_width + marker_width
+                    };
+                    serialize_node(item_child, nested_indent, opts, lines);
                 } else {
                     let mut child_lines = Vec::new();
                     serialize_node_for_list_item(
@@ -642,8 +520,8 @@ fn serialize_list(
 /// `marker_width` indent from wrap_paragraph.
 ///
 /// If false, a subsequent child. The paragraph still wraps at `max_width`; the caller
-/// prepends `marker_width` spaces afterward, matching the legacy formatter's width
-/// behavior for continuation paragraphs inside list items.
+/// prepends `marker_width` spaces afterward so continuation blocks stay aligned to the
+/// list item's content column.
 fn serialize_node_for_list_item(
     node: &Node,
     marker_width: usize,
@@ -660,10 +538,9 @@ fn serialize_node_for_list_item(
                 // The caller prepends the marker to the first line.
                 wrap_paragraph(&inline_text, opts.max_width, marker_width, lines);
             } else {
-                // Wrap at max_width (full width), then the caller adds marker_width
-                // indent. This matches the upstream plugin where the paragraph is
-                // wrapped first and indentation is prepended afterward, allowing
-                // indented lines to exceed the nominal width.
+                // Wrap at max_width (full width), then let the caller add the
+                // list-item indent so continuation blocks stay aligned under the
+                // marker's content column.
                 wrap_paragraph(&inline_text, opts.max_width, 0, lines);
             }
         }
@@ -859,14 +736,15 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
             out.push(']');
             let label = link_ref.label.as_deref().unwrap_or(&link_ref.identifier);
             match link_ref.reference_kind {
-                markdown::mdast::ReferenceKind::Collapsed => {
-                    out.push_str("[]");
-                }
-                markdown::mdast::ReferenceKind::Full | markdown::mdast::ReferenceKind::Shortcut => {
+                markdown::mdast::ReferenceKind::Full => {
                     out.push('[');
                     out.push_str(label);
                     out.push(']');
                 }
+                markdown::mdast::ReferenceKind::Collapsed => {
+                    out.push_str("[]");
+                }
+                markdown::mdast::ReferenceKind::Shortcut => {}
             }
         }
         Node::Image(image) => {
