@@ -3,7 +3,7 @@ commit: 34725489
 parser_typescript Summary:
 AST Parsed     : 9831/9834 (99.97%)
 Positive Passed: 9820/9834 (99.86%)
-Negative Passed: 1528/2578 (59.27%)
+Negative Passed: 1527/2578 (59.23%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1954,9 +1954,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/e
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.4.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.4.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsArrayErrors.ts
 
@@ -25842,42 +25844,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Wrap this code in a block or use a module
 
-  × Using declarations must have an initializer.
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
- 1 │ declare namespace N {
- 2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
-   ·                 ─
- 3 │     await using y: null;
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Using declarations must have an initializer.
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:3:17]
- 2 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
- 3 │     await using y: null;
-   ·                 ─
- 4 │ }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Using declarations must have an initializer.
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:6:17]
- 5 │ declare module 'M' {
- 6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
-   ·                 ─
- 7 │     await using y: null;
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Using declarations must have an initializer.
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:7:17]
- 6 │     await using x: { [Symbol.asyncDispose](): Promise<void> };
- 7 │     await using y: null;
-   ·                 ─
- 8 │ }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
   × Using declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.17.ts:3:9]
  2 │     case 0:
@@ -25993,15 +25959,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Did you mean to use a for...of statement?
 
-  × Missing initializer in destructuring declaration
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:2:22]
- 1 │ async function main() {
- 2 │     for (await using {} of []) {
-   ·                      ──
- 3 │     }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.3.ts:2:22]
  1 │ async function main() {
@@ -26042,42 +25999,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ declare using y: null;
    ╰────
   help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
-
-  × Using declarations must have an initializer.
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:2:11]
- 1 │ declare namespace N {
- 2 │     using x: { [Symbol.dispose](): void };
-   ·           ─
- 3 │     using y: null;
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Using declarations must have an initializer.
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:3:11]
- 2 │     using x: { [Symbol.dispose](): void };
- 3 │     using y: null;
-   ·           ─
- 4 │ }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Using declarations must have an initializer.
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:6:11]
- 5 │ declare module 'M' {
- 6 │     using x: { [Symbol.dispose](): void };
-   ·           ─
- 7 │     using y: null;
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Using declarations must have an initializer.
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.16.ts:7:11]
- 6 │     using x: { [Symbol.dispose](): void };
- 7 │     using y: null;
-   ·           ─
- 8 │ }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
   × Using declaration cannot appear in the bare case statement.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.17.ts:3:9]
@@ -26179,6 +26100,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ╰── `;` expected
  2 │ }
    ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.4.ts:3:12]
+ 2 │ for (using of: null = null;;) break;
+ 3 │ for (using of;;) break;
+   ·            ──
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Illegal break statement
    ╭─[typescript/tests/cases/conformance/statements/breakStatements/invalidDoWhileBreakStatements.ts:4:1]

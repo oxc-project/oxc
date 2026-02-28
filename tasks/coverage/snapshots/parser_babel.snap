@@ -3,9 +3,7 @@ commit: 308c8d85
 parser_babel Summary:
 AST Parsed     : 2227/2227 (100.00%)
 Positive Passed: 2214/2227 (99.42%)
-Negative Passed: 1675/1692 (99.00%)
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
-
+Negative Passed: 1676/1692 (99.05%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -8949,6 +8947,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·               ──
    ╰────
 
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js:1:12]
+ 1 │ for (using of;of.isValid;);
+   ·            ──
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
   × Lexical declaration cannot appear in a single-statement context
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-in-single-statement-context/input.js:2:13]
  1 │ {
@@ -13175,15 +13180,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Using declarations must have an initializer.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:2:15]
- 1 │ declare namespace invalid_namespace_var {
- 2 │   await using A;
-   ·               ─
- 3 │   await using A1 = 0;
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:3:20]
  2 │   await using A;
@@ -13200,33 +13196,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │   await using B, C;
    ╰────
 
-  × Using declarations must have an initializer.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:5:15]
- 4 │   await using A2: number = 0;
- 5 │   await using B, C;
-   ·               ─
- 6 │ }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Using declarations must have an initializer.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-await-using/input.ts:5:18]
- 4 │   await using A2: number = 0;
- 5 │   await using B, C;
-   ·                  ─
- 6 │ }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Using declarations must have an initializer.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:2:9]
- 1 │ declare namespace invalid_namespace_var {
- 2 │   using A;
-   ·         ─
- 3 │   using A1 = 0;
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:3:14]
  2 │   using A;
@@ -13242,24 +13211,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                      ─
  5 │   using B, C;
    ╰────
-
-  × Using declarations must have an initializer.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:5:9]
- 4 │   using A2: number = 0;
- 5 │   using B, C;
-   ·         ─
- 6 │ }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Using declarations must have an initializer.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-using/input.ts:5:12]
- 4 │   using A2: number = 0;
- 5 │   using B, C;
-   ·            ─
- 6 │ }
-   ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts:2:11]
