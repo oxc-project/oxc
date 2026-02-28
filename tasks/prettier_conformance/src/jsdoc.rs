@@ -229,7 +229,7 @@ impl JsdocTestRunner {
         let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(get_parse_options())
             .parse();
-        if !ret.errors.is_empty() {
+        if ret.panicked {
             return None;
         }
 
