@@ -826,6 +826,17 @@ fn test_extracted_code_section_looks_like_js() {
 // Task 4: Codegen conformance test — compare pipeline output to expected
 // ===========================================================================
 
+/// Information about a `React.memo()` / `React.forwardRef()` wrapper around a function.
+#[derive(Debug, Clone)]
+struct WrapperInfo {
+    /// The callee text, e.g. "React.memo", "memo", "React.forwardRef", "forwardRef".
+    callee: String,
+    /// Whether the inner function was an arrow function expression.
+    is_arrow: bool,
+    /// For `const X = WRAPPER(...)` patterns, the binding name (e.g. "FancyButton").
+    binding_name: Option<String>,
+}
+
 /// Run the full pipeline (parse -> lower -> pipeline -> codegen) on a source
 /// string and return the `CodegenFunction` on success.
 ///
@@ -834,7 +845,7 @@ fn test_extracted_code_section_looks_like_js() {
 fn run_pipeline_for_codegen(
     source: &str,
     source_type: oxc_span::SourceType,
-) -> Result<CodegenFunction, String> {
+) -> Result<(CodegenFunction, Option<WrapperInfo>), String> {
     let allocator = oxc_allocator::Allocator::default();
     let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
     if !parser_result.errors.is_empty() {
@@ -854,7 +865,7 @@ fn run_pipeline_for_codegen(
     // This handles fixtures like `multiple-components-first-is-invalid.js` which
     // have both an invalid and a valid component: we try each in order and return
     // the first one that compiles successfully.
-    let mut candidates: Vec<(LowerableFunction, Option<String>, bool)> = Vec::new();
+    let mut candidates: Vec<(LowerableFunction, Option<String>, Option<WrapperInfo>)> = Vec::new();
 
     /// Get the name hint for a function candidate.
     /// For function declarations/expressions, uses the function's own `id`.
@@ -871,37 +882,58 @@ fn run_pipeline_for_codegen(
     }
 
     /// Check if a callee expression is `memo`, `React.memo`, `forwardRef`, or `React.forwardRef`.
-    fn is_react_memo_or_forwardref_callee(expr: &oxc_ast::ast::Expression) -> bool {
+    /// Returns the callee text if it matches.
+    fn get_memo_or_forwardref_callee(expr: &oxc_ast::ast::Expression) -> Option<String> {
         use oxc_ast::ast::Expression;
         match expr {
-            Expression::Identifier(id) => id.name == "memo" || id.name == "forwardRef",
+            Expression::Identifier(id) if id.name == "memo" || id.name == "forwardRef" => {
+                Some(id.name.to_string())
+            }
             Expression::StaticMemberExpression(member) => {
                 if let Expression::Identifier(obj) = &member.object {
-                    obj.name == "React"
-                        && (member.property.name == "memo" || member.property.name == "forwardRef")
-                } else {
-                    false
+                    if obj.name == "React"
+                        && (member.property.name == "memo"
+                            || member.property.name == "forwardRef")
+                    {
+                        return Some(format!("React.{}", member.property.name));
+                    }
                 }
+                None
             }
-            _ => false,
+            _ => None,
         }
     }
 
     /// Extract the first function/arrow argument from a call expression, if the callee
     /// is `memo`/`React.memo`/`forwardRef`/`React.forwardRef`.
+    /// Returns the inner function and the wrapper info.
     fn extract_fn_from_memo_call<'a>(
         expr: &'a oxc_ast::ast::Expression<'a>,
-    ) -> Option<LowerableFunction<'a>> {
+    ) -> Option<(LowerableFunction<'a>, WrapperInfo)> {
         use oxc_ast::ast::Expression;
         if let Expression::CallExpression(call) = expr {
-            if is_react_memo_or_forwardref_callee(&call.callee) {
+            if let Some(callee_text) = get_memo_or_forwardref_callee(&call.callee) {
                 if let Some(arg) = call.arguments.first() {
                     return match arg.as_expression() {
                         Some(Expression::ArrowFunctionExpression(arrow)) => {
-                            Some(LowerableFunction::ArrowFunction(arrow))
+                            Some((
+                                LowerableFunction::ArrowFunction(arrow),
+                                WrapperInfo {
+                                    callee: callee_text,
+                                    is_arrow: true,
+                                    binding_name: None,
+                                },
+                            ))
                         }
                         Some(Expression::FunctionExpression(f)) => {
-                            Some(LowerableFunction::Function(f))
+                            Some((
+                                LowerableFunction::Function(f),
+                                WrapperInfo {
+                                    callee: callee_text,
+                                    is_arrow: false,
+                                    binding_name: None,
+                                },
+                            ))
                         }
                         _ => None,
                     };
@@ -913,17 +945,17 @@ fn run_pipeline_for_codegen(
 
     /// Extract a candidate from a variable initializer expression — handles plain
     /// functions/arrows and also memo/forwardRef-wrapped ones.
-    /// Returns (candidate, is_memo_or_forwardref).
+    /// Returns (candidate, optional wrapper info).
     fn extract_candidate_from_init<'a>(
         expr: &'a oxc_ast::ast::Expression<'a>,
-    ) -> Option<(LowerableFunction<'a>, bool)> {
+    ) -> Option<(LowerableFunction<'a>, Option<WrapperInfo>)> {
         use oxc_ast::ast::Expression;
         match expr {
             Expression::ArrowFunctionExpression(arrow) => {
-                Some((LowerableFunction::ArrowFunction(arrow), false))
+                Some((LowerableFunction::ArrowFunction(arrow), None))
             }
-            Expression::FunctionExpression(f) => Some((LowerableFunction::Function(f), false)),
-            _ => extract_fn_from_memo_call(expr).map(|f| (f, true)),
+            Expression::FunctionExpression(f) => Some((LowerableFunction::Function(f), None)),
+            _ => extract_fn_from_memo_call(expr).map(|(f, w)| (f, Some(w))),
         }
     }
 
@@ -1094,17 +1126,19 @@ fn run_pipeline_for_codegen(
         match stmt {
             Statement::FunctionDeclaration(f) => {
                 let name = get_func_name(&LowerableFunction::Function(f), None);
-                candidates.push((LowerableFunction::Function(f), name, false));
+                candidates.push((LowerableFunction::Function(f), name, None));
             }
             Statement::ExportDefaultDeclaration(export) => {
                 use oxc_ast::ast::ExportDefaultDeclarationKind;
                 match &export.declaration {
                     ExportDefaultDeclarationKind::FunctionDeclaration(f) => {
                         let name = get_func_name(&LowerableFunction::Function(f), None);
-                        candidates.push((LowerableFunction::Function(f), name, false));
+                        candidates.push((LowerableFunction::Function(f), name, None));
                     }
                     ExportDefaultDeclarationKind::CallExpression(call) => {
-                        if is_react_memo_or_forwardref_callee(&call.callee) {
+                        if let Some(callee_text) =
+                            get_memo_or_forwardref_callee(&call.callee)
+                        {
                             if let Some(arg) = call.arguments.first() {
                                 use oxc_ast::ast::Expression;
                                 match arg.as_expression() {
@@ -1112,7 +1146,11 @@ fn run_pipeline_for_codegen(
                                         candidates.push((
                                             LowerableFunction::ArrowFunction(arrow),
                                             None,
-                                            true,
+                                            Some(WrapperInfo {
+                                                callee: callee_text,
+                                                is_arrow: true,
+                                                binding_name: None,
+                                            }),
                                         ));
                                     }
                                     Some(Expression::FunctionExpression(f)) => {
@@ -1121,7 +1159,11 @@ fn run_pipeline_for_codegen(
                                         candidates.push((
                                             LowerableFunction::Function(f),
                                             name,
-                                            true,
+                                            Some(WrapperInfo {
+                                                callee: callee_text,
+                                                is_arrow: false,
+                                                binding_name: None,
+                                            }),
                                         ));
                                     }
                                     _ => {}
@@ -1135,7 +1177,7 @@ fn run_pipeline_for_codegen(
             Statement::ExportNamedDeclaration(export) => match &export.declaration {
                 Some(Declaration::FunctionDeclaration(f)) => {
                     let name = get_func_name(&LowerableFunction::Function(f), None);
-                    candidates.push((LowerableFunction::Function(f), name, false));
+                    candidates.push((LowerableFunction::Function(f), name, None));
                 }
                 Some(Declaration::VariableDeclaration(decl))
                     if decl.kind == VariableDeclarationKind::Const =>
@@ -1143,9 +1185,14 @@ fn run_pipeline_for_codegen(
                     if let Some(d) = decl.declarations.first() {
                         let binding = get_binding_name(d);
                         if let Some(init) = &d.init {
-                            if let Some((candidate, is_memo)) = extract_candidate_from_init(init) {
+                            if let Some((candidate, mut wrapper)) =
+                                extract_candidate_from_init(init)
+                            {
                                 let name = get_func_name(&candidate, binding.as_deref());
-                                candidates.push((candidate, name, is_memo));
+                                if let Some(ref mut w) = wrapper {
+                                    w.binding_name = binding.clone();
+                                }
+                                candidates.push((candidate, name, wrapper));
                             }
                         }
                     }
@@ -1156,17 +1203,22 @@ fn run_pipeline_for_codegen(
                 if let Some(d) = decl.declarations.first() {
                     let binding = get_binding_name(d);
                     if let Some(init) = &d.init {
-                        if let Some((candidate, is_memo)) = extract_candidate_from_init(init) {
+                        if let Some((candidate, mut wrapper)) = extract_candidate_from_init(init) {
                             let name = get_func_name(&candidate, binding.as_deref());
-                            candidates.push((candidate, name, is_memo));
+                            if let Some(ref mut w) = wrapper {
+                                w.binding_name = binding.clone();
+                            }
+                            candidates.push((candidate, name, wrapper));
                         }
                     }
                 }
             }
             // Handle bare expression statements like `React.memo(props => ...)`
             Statement::ExpressionStatement(expr_stmt) => {
-                if let Some(candidate) = extract_fn_from_memo_call(&expr_stmt.expression) {
-                    candidates.push((candidate, None, true));
+                if let Some((candidate, wrapper)) =
+                    extract_fn_from_memo_call(&expr_stmt.expression)
+                {
+                    candidates.push((candidate, None, Some(wrapper)));
                 }
             }
             _ => {}
@@ -1184,7 +1236,7 @@ fn run_pipeline_for_codegen(
     // means invalid functions are left unchanged and compilation continues to
     // the next function in the file (e.g. `multiple-components-first-is-invalid.js`).
     let mut last_err = String::new();
-    for (func, candidate_name, is_memo_or_forwardref) in candidates {
+    for (func, candidate_name, wrapper) in candidates {
         // Infer function type from the function name, matching the TS compiler behavior.
         // The TS reference's `getComponentOrHookLike()` checks:
         // 1. Name starts with uppercase (component) or "use" (hook)
@@ -1196,6 +1248,7 @@ fn run_pipeline_for_codegen(
         // Additionally, for function/arrow expressions inside React.memo() or
         // React.forwardRef(), the TS reference uses `isForwardRefCallback`/`isMemoCallback`
         // as a fallback, classifying them as 'Component' if they have JSX/hooks.
+        let is_wrapped = wrapper.is_some();
         let fn_type = match candidate_name.as_deref() {
             Some(n) if oxc_react_compiler::utils::hook_declaration::is_hook_name(n) => {
                 if calls_hooks_or_creates_jsx(&func) {
@@ -1214,7 +1267,7 @@ fn run_pipeline_for_codegen(
             _ => {
                 // For memo/forwardRef-wrapped functions without a component/hook name,
                 // classify as Component if they have JSX/hooks (matches TS reference).
-                if is_memo_or_forwardref && calls_hooks_or_creates_jsx(&func) {
+                if is_wrapped && calls_hooks_or_creates_jsx(&func) {
                     ReactFunctionType::Component
                 } else {
                     ReactFunctionType::Other
@@ -1233,7 +1286,7 @@ fn run_pipeline_for_codegen(
         };
 
         match run_pipeline(&mut hir_func, &env) {
-            Ok(result) => return Ok(result),
+            Ok(result) => return Ok((result, wrapper)),
             Err(e) => {
                 last_err = format!("Pipeline: {e:?}");
                 // If there's only one candidate, return the error immediately so
@@ -1252,16 +1305,47 @@ fn run_pipeline_for_codegen(
 
 /// Reconstruct the full function source from a `CodegenFunction`, including
 /// the function declaration wrapper (but not imports).
-fn format_full_function(func: &CodegenFunction) -> String {
+/// When `wrapper` is provided, the output is wrapped in the appropriate
+/// `React.memo(...)` / `forwardRef(...)` call, preserving arrow-vs-function style.
+fn format_full_function(func: &CodegenFunction, wrapper: Option<&WrapperInfo>) -> String {
     let async_prefix = if func.is_async { "async " } else { "" };
     let star = if func.generator { "*" } else { "" };
-    let name = func.id.as_deref().unwrap_or("anonymous");
     let params = func.params.join(", ");
     let body = format!("{func}"); // uses Display impl for the body
-    let mut result = if body.trim().is_empty() {
-        format!("{async_prefix}function {star}{name}({params}) {{}}")
+
+    let mut result = if let Some(w) = wrapper {
+        // Format the inner function according to the original style (arrow vs function expr).
+        let inner = if w.is_arrow {
+            if body.trim().is_empty() {
+                format!("{async_prefix}({params}) => {{}}")
+            } else {
+                format!("{async_prefix}({params}) => {{\n{body}}}")
+            }
+        } else {
+            // Function expression inside the wrapper call.
+            // The original may have been anonymous: `React.forwardRef(function (props, ref) { ... })`
+            // We emit `function (params)` (anonymous) to match the reference output.
+            if body.trim().is_empty() {
+                format!("{async_prefix}function {star}({params}) {{}}")
+            } else {
+                format!("{async_prefix}function {star}({params}) {{\n{body}}}")
+            }
+        };
+
+        // Wrap: `callee(inner)` or `const binding = callee(inner)`
+        let call = format!("{}({inner})", w.callee);
+        if let Some(ref binding) = w.binding_name {
+            format!("const {binding} = {call}")
+        } else {
+            call
+        }
     } else {
-        format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}")
+        let name = func.id.as_deref().unwrap_or("anonymous");
+        if body.trim().is_empty() {
+            format!("{async_prefix}function {star}{name}({params}) {{}}")
+        } else {
+            format!("{async_prefix}function {star}{name}({params}) {{\n{body}}}")
+        }
     };
 
     // Append outlined functions after the main function body.
@@ -7067,6 +7151,15 @@ fn extract_function_from_expected(code: &str) -> Option<String> {
         }
     }
 
+    /// Check if a line is a bare wrapper call like `React.memo(...)`, `React.forwardRef(...)`,
+    /// `memo(...)`, or `forwardRef(...)`.
+    fn is_bare_wrapper_call(trimmed: &str) -> bool {
+        trimmed.starts_with("React.memo(")
+            || trimmed.starts_with("React.forwardRef(")
+            || trimmed.starts_with("memo(")
+            || trimmed.starts_with("forwardRef(")
+    }
+
     // Find the first line that looks like a function declaration or arrow function.
     let func_start = lines.iter().position(|line| {
         let trimmed = line.trim();
@@ -7084,6 +7177,8 @@ fn extract_function_from_expected(code: &str) -> Option<String> {
             || (trimmed.starts_with("export let ") && (trimmed.contains("=>") || trimmed.contains("= function")))
             // Handle `const X = WRAPPER(function ...)` (e.g. React.forwardRef, memo)
             || detect_wrapper_fn_pattern(trimmed).is_some()
+            // Handle bare wrapper calls like `React.memo((props) => { ... })`
+            || is_bare_wrapper_call(trimmed)
     })?;
 
     // Track brace depth to find the function's closing `}`.
@@ -7166,49 +7261,11 @@ fn extract_function_from_expected(code: &str) -> Option<String> {
         joined
     };
 
-    // Handle `const X = WRAPPER(function ...)` patterns (e.g. React.forwardRef, memo).
-    // These appear in expected outputs as:
-    //   const FancyButton = React.forwardRef(function (props, ref) {
-    //     ...
-    //   });
-    // Our compiler outputs the inner function named with the binding:
-    //   function FancyButton(props, ref) { ... }
-    // Transform the expected to match: strip the wrapper and inject the binding name.
-    if let Some(binding_name) = detect_wrapper_fn_pattern(cleaned.lines().next().unwrap_or("")) {
-        let binding_name = binding_name.to_string();
-        // Find the `function ` keyword after the opening paren of the wrapper call.
-        // e.g. "const FancyButton = React.forwardRef(function (props, ref) {"
-        //       -> find "function (" and replace everything before it with "function NAME"
-        if let Some(fn_keyword_pos) = cleaned.find("(function ") {
-            // Extract from `function ` onwards (skip the `(`)
-            let from_function = &cleaned[fn_keyword_pos + 1..]; // "function (props, ref) {\n...\n});"
-            // The inner function ends at the line `});` - we need to strip that trailing `);`
-            // Find the closing `}` that matches the opening `{` of the function body.
-            let mut depth: i32 = 0;
-            let mut inner_end = from_function.len();
-            for (i, ch) in from_function.char_indices() {
-                if ch == '{' {
-                    depth += 1;
-                } else if ch == '}' {
-                    depth -= 1;
-                    if depth == 0 {
-                        inner_end = i + 1; // include the `}`
-                        break;
-                    }
-                }
-            }
-            let inner_fn = &from_function[..inner_end]; // "function (props, ref) {\n...\n}"
-            // Inject the binding name: "function (params)" -> "function NAME(params)"
-            // or "function(params)" -> "function NAME(params)"
-            let named_fn = if inner_fn.starts_with("function (") {
-                format!("function {}({}", binding_name, &inner_fn["function (".len()..])
-            } else if inner_fn.starts_with("function(") {
-                format!("function {}({}", binding_name, &inner_fn["function(".len()..])
-            } else {
-                inner_fn.to_string()
-            };
-            return Some(named_fn);
-        }
+    // For wrapper patterns (memo/forwardRef), preserve the wrapper as-is.
+    // Our actual output now includes the wrapper, so the expected should too.
+    let first_line = cleaned.lines().next().unwrap_or("");
+    if detect_wrapper_fn_pattern(first_line).is_some() || is_bare_wrapper_call(first_line.trim()) {
+        return Some(cleaned);
     }
 
     // Strip variable assignment wrapper for function expressions:
@@ -7312,8 +7369,8 @@ fn test_debug_print_failing() {
             _ => oxc_span::SourceType::jsx(),
         };
         match run_pipeline_for_codegen(&source, source_type) {
-            Ok(func) => {
-                let actual = format_full_function(&func);
+            Ok((func, wrapper)) => {
+                let actual = format_full_function(&func, wrapper.as_ref());
                 let actual_norm = normalize_code(&actual);
                 let expected_norm = normalize_code(&expected_func);
                 if actual_norm != expected_norm {
@@ -7472,8 +7529,8 @@ fn codegen_conformance_inner() {
             run_pipeline_for_codegen(&source, source_type)
         }));
 
-        let codegen_func = match result {
-            Ok(Ok(func)) => func,
+        let (codegen_func, wrapper) = match result {
+            Ok(Ok(pair)) => pair,
             Ok(Err(e)) => {
                 let category = if e.starts_with("Parse") {
                     FailureCategory::ParseError
@@ -7494,7 +7551,7 @@ fn codegen_conformance_inner() {
         };
 
         // Format our output and compare against expected.
-        let actual_full = format_full_function(&codegen_func);
+        let actual_full = format_full_function(&codegen_func, wrapper.as_ref());
         let expected_func = match extract_function_from_expected(expected_code) {
             Some(f) => f,
             None => {
@@ -7665,12 +7722,12 @@ fn test_near_miss_diagnostic() {
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             run_pipeline_for_codegen(&source, source_type)
         }));
-        let codegen_func = match result {
-            Ok(Ok(func)) => func,
+        let (codegen_func, wrapper) = match result {
+            Ok(Ok(pair)) => pair,
             _ => continue,
         };
 
-        let actual_full = format_full_function(&codegen_func);
+        let actual_full = format_full_function(&codegen_func, wrapper.as_ref());
         let expected_func = match extract_function_from_expected(expected_code) {
             Some(f) => f,
             None => expected_code.to_string(),
@@ -7852,12 +7909,12 @@ fn test_token_near_miss() {
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             run_pipeline_for_codegen(&source, source_type)
         }));
-        let codegen_func = match result {
-            Ok(Ok(func)) => func,
+        let (codegen_func, wrapper) = match result {
+            Ok(Ok(pair)) => pair,
             _ => continue,
         };
 
-        let actual_full = format_full_function(&codegen_func);
+        let actual_full = format_full_function(&codegen_func, wrapper.as_ref());
         let expected_func = match extract_function_from_expected(expected_code) {
             Some(f) => f,
             None => expected_code.to_string(),
@@ -8263,8 +8320,8 @@ function useFoo(x) {
     let source_type = oxc_span::SourceType::ts();
     let result = run_pipeline_for_codegen(source, source_type);
     match result {
-        Ok(func) => {
-            let actual = format_full_function(&func);
+        Ok((func, wrapper)) => {
+            let actual = format_full_function(&func, wrapper.as_ref());
             eprintln!("ACTUAL OUTPUT:\n{actual}");
         }
         Err(e) => {
@@ -8299,8 +8356,8 @@ export const FIXTURE_ENTRYPOINT = {
     let source_type = oxc_span::SourceType::ts();
     let result = run_pipeline_for_codegen(source, source_type);
     match result {
-        Ok(func) => {
-            let actual = format_full_function(&func);
+        Ok((func, wrapper)) => {
+            let actual = format_full_function(&func, wrapper.as_ref());
             eprintln!("ACTUAL OUTPUT:\n{actual}");
         }
         Err(e) => {
@@ -8588,8 +8645,8 @@ fn test_debug_five_pipeline_error_fixtures() {
         };
         let result = run_pipeline_for_codegen(&source, *source_type);
         match &result {
-            Ok(code) => {
-                let full = format_full_function(code);
+            Ok((code, wrapper)) => {
+                let full = format_full_function(code, wrapper.as_ref());
                 let truncated = &full[..full.len().min(3000)];
                 eprintln!("[{name}] SUCCESS:\n{truncated}");
             }
@@ -8725,8 +8782,8 @@ fn test_recursive_arrow_not_outlined() {
 
     let result = run_pipeline_for_codegen(source, oxc_span::SourceType::jsx());
     match result {
-        Ok(func) => {
-            let output = format_full_function(&func);
+        Ok((func, wrapper)) => {
+            let output = format_full_function(&func, wrapper.as_ref());
             // The function should be inlined (not outlined to _temp)
             assert!(
                 !output.contains("_temp"),
@@ -8749,8 +8806,8 @@ fn test_ternary_expression_debug() {
 }"#;
     let result = run_pipeline_for_codegen(source, oxc_span::SourceType::jsx());
     match result {
-        Ok(func) => {
-            let output = format_full_function(&func);
+        Ok((func, wrapper)) => {
+            let output = format_full_function(&func, wrapper.as_ref());
             eprintln!("TERNARY OUTPUT:\n{output}");
             // Should have parens: (props.y ?? props.z)
             assert!(
@@ -8770,8 +8827,8 @@ fn test_ternary_expression_debug() {
 }"#;
     let result2 = run_pipeline_for_codegen(source2, oxc_span::SourceType::jsx());
     match result2 {
-        Ok(func) => {
-            let output = format_full_function(&func);
+        Ok((func, wrapper)) => {
+            let output = format_full_function(&func, wrapper.as_ref());
             eprintln!("TERNARY2 OUTPUT:\n{output}");
             // consequent ternary should be wrapped in parens
             assert!(
@@ -8821,8 +8878,10 @@ fn test_debug_near_misses() {
             _ => oxc_span::SourceType::jsx(),
         };
 
-        let Ok(func) = run_pipeline_for_codegen(&source, source_type) else { continue; };
-        let actual_full = format_full_function(&func);
+        let Ok((func, wrapper)) = run_pipeline_for_codegen(&source, source_type) else {
+            continue;
+        };
+        let actual_full = format_full_function(&func, wrapper.as_ref());
         let Some(expected_func) = extract_function_from_expected(expected_code) else { continue; };
 
         let actual_norm = normalize_code(&actual_full);
@@ -8891,8 +8950,8 @@ fn test_debug_specific_fixtures() {
 
         let result = run_pipeline_for_codegen(&source, source_type);
         match result {
-            Ok(func) => {
-                eprintln!("ACTUAL:\n{}", format_full_function(&func));
+            Ok((func, wrapper)) => {
+                eprintln!("ACTUAL:\n{}", format_full_function(&func, wrapper.as_ref()));
             }
             Err(e) => {
                 eprintln!("ERROR: {}", e);
@@ -8912,8 +8971,8 @@ fn test_debug_specific_fixtures() {
         }
         // Also show normalized actual
         let result2 = run_pipeline_for_codegen(&source, source_type);
-        if let Ok(func) = result2 {
-            let actual_full = format_full_function(&func);
+        if let Ok((func, wrapper)) = result2 {
+            let actual_full = format_full_function(&func, wrapper.as_ref());
             eprintln!("ACTUAL NORMALIZED:\n{}", normalize_code(&actual_full));
         }
     }
