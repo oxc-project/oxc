@@ -113,7 +113,7 @@ fn parse_table_cells(line: &str) -> Vec<String> {
 /// Format a block of consecutive table lines.
 /// If the table has a valid separator row, format with column padding.
 /// Otherwise, output as-is.
-fn format_table_block(table_lines: &[String], lines: &mut Vec<String>) {
+pub fn format_table_block(table_lines: &[String], lines: &mut Vec<String>) {
     // Find separator row
     let separator_idx = table_lines.iter().position(|l| is_table_separator(l));
 
@@ -246,7 +246,7 @@ pub fn tokenize_words(text: &str) -> Vec<&str> {
 /// the prettier-plugin-jsdoc `breakDescriptionToLines` behavior: when the last
 /// continuation line has exactly `effective_max` characters, the plugin's `\n`-prefix
 /// causes one more wrap iteration, splitting the last word to the next line.
-fn wrap_paragraph(
+pub fn wrap_paragraph(
     text: &str,
     max_width: usize,
     continuation_indent: usize,
@@ -421,14 +421,11 @@ fn parse_nested_list(text: &str) -> Vec<ListItemNode> {
     indent_levels.dedup();
 
     // Assign depth based on indent level position
-    let depth_of = |indent: usize| -> usize {
-        indent_levels.iter().position(|&i| i == indent).unwrap_or(0)
-    };
+    let depth_of =
+        |indent: usize| -> usize { indent_levels.iter().position(|&i| i == indent).unwrap_or(0) };
 
-    let items: Vec<(usize, &str, ListMarkerType)> = parsed
-        .iter()
-        .map(|p| (depth_of(p.indent), p.text.as_str(), p.marker_type))
-        .collect();
+    let items: Vec<(usize, &str, ListMarkerType)> =
+        parsed.iter().map(|p| (depth_of(p.indent), p.text.as_str(), p.marker_type)).collect();
 
     build_list_tree(&items, 0)
 }

@@ -1,3 +1,4 @@
+mod mdast_serialize;
 mod normalize;
 mod serialize;
 mod wrap;
