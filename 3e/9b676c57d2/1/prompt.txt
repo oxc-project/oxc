@@ -1,0 +1,38 @@
+Implement the following plan:
+
+# Plan: Enable `transform-modules-commonjs` conformance tests
+
+## Context
+
+The `transform-modules-commonjs` plugin is listed in `PLUGINS_NOT_SUPPORTED_YET`, which causes all its Babel test fixtures to be skipped. The user wants to enable these tests so they show up in the conformance snapshot (as failures initially), providing visibility into what needs to be implemented.
+
+## Changes
+
+### File: `tasks/transform_conformance/src/constants.rs`
+
+1. **Add** `"babel-plugin-transform-modules-commonjs"` to the `PLUGINS` array (after the ES2015 section, before TypeScript)
+
+2. **Remove** `"transform-modules-commonjs"` from `PLUGINS_NOT_SUPPORTED_YET`
+
+### No skip entries needed
+
+All tests should be included — they'll show as failures in the snapshot, which is the intended behavior for tracking progress.
+
+## Verification
+
+```bash
+cargo run -p oxc_transform_conformance
+```
+
+This will regenerate the snapshot at `tasks/transform_conformance/snapshots/babel.snap.md` with the new CJS test failures included.
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.claude/projects/-Users-boshen-oxc-oxc/3ff49ef2-2406-42ce-94bf-e0d0a53b51fa.jsonl
+
+---
+
+I see a lot of output mismatch from tasks/transform_conformance/snapshots/babel.snap.md
+
+---
+
+implement cjs to esm transform and pass all tests

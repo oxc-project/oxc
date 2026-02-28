@@ -3,7 +3,7 @@
   "checkpoint_id": "3e9b676c57d2",
   "strategy": "manual-commit",
   "branch": "fix/minifier-substitute-declarators-esbuild-pattern",
-  "checkpoints_count": 0,
+  "checkpoints_count": 1,
   "files_touched": [
     "crates/oxc_transformer/src/common/helper_loader.rs",
     "crates/oxc_transformer/src/lib.rs",
@@ -19,13 +19,20 @@
       "context": "/3e/9b676c57d2/0/context.md",
       "content_hash": "/3e/9b676c57d2/0/content_hash.txt",
       "prompt": "/3e/9b676c57d2/0/prompt.txt"
+    },
+    {
+      "metadata": "/3e/9b676c57d2/1/metadata.json",
+      "transcript": "/3e/9b676c57d2/1/full.jsonl",
+      "context": "/3e/9b676c57d2/1/context.md",
+      "content_hash": "/3e/9b676c57d2/1/content_hash.txt",
+      "prompt": "/3e/9b676c57d2/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 54,
-    "cache_creation_tokens": 123496,
-    "cache_read_tokens": 4415214,
-    "output_tokens": 30985,
-    "api_call_count": 46
+    "input_tokens": 521,
+    "cache_creation_tokens": 272190,
+    "cache_read_tokens": 6509551,
+    "output_tokens": 43643,
+    "api_call_count": 82
   }
 }
