@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1192/1416 passed (84.2%)
+Codegen conformance: 1193/1416 passed (84.3%)
 
 Failure breakdown:
   parse_error:    35
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:177
+  output_mismatch:176
   no_expected:    7
 
 Failed fixtures:
@@ -117,7 +117,6 @@ Failed fixtures:
   [output_mismatch] inner-memo-value-not-promoted-to-outer-scope-dynamic.js
   [output_mismatch] invalid-setState-in-useEffect-namespace.js
   [output_mismatch] invalid-setState-in-useEffect.js
-  [output_mismatch] jsx-outlining-child-stored-in-id.js
   [output_mismatch] jsx-outlining-dup-key-diff-value.js
   [output_mismatch] jsx-outlining-dupe-attr-after-rename.js
   [output_mismatch] jsx-outlining-dupe-key-dupe-component.js
