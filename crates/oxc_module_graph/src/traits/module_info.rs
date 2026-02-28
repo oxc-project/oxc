@@ -66,6 +66,38 @@ pub trait ModuleInfo {
     /// statically analyzable).
     fn is_commonjs(&self) -> bool;
 
+    /// Whether this module contains top-level `await`.
+    ///
+    /// Used by `compute_tla` to propagate TLA status through static import chains.
+    fn has_top_level_await(&self) -> bool;
+
+    /// Iterate import records as `(record_idx, resolved_module, import_kind)`.
+    ///
+    /// Gives algorithms access to edge kind information for each import.
+    /// Used by execution-order sort and TLA propagation.
+    fn for_each_import_record(
+        &self,
+        f: &mut dyn FnMut(usize, Option<Self::ModuleIdx>, crate::types::ImportKind),
+    );
+
+    /// The module's own side-effects state (before propagation).
+    ///
+    /// Returns:
+    /// - `Some(true)` — has side effects (user-defined or analyzed)
+    /// - `Some(false)` — no side effects (analyzed), check dependencies
+    /// - `None` — no-treeshake or similar, always keep
+    fn side_effects(&self) -> Option<bool>;
+
+    /// Iterate star export targets from ESM `export * from '...'` only.
+    ///
+    /// Excludes CJS reexport patterns (e.g., `module.exports = require('x')`).
+    /// Used by side-effects propagation, which should only follow ESM star exports.
+    ///
+    /// Default: delegates to `for_each_star_export`.
+    fn for_each_esm_star_export(&self, f: &mut dyn FnMut(Self::ModuleIdx)) {
+        self.for_each_star_export(f);
+    }
+
     /// If the given symbol is a named import in this module, return its import info.
     ///
     /// Returns `Some((imported_name, record_idx, is_namespace))` if the symbol

@@ -1,7 +1,7 @@
 use oxc_index::IndexVec;
 
 use crate::traits::ModuleStore;
-use crate::types::{ModuleIdx, SymbolRef};
+use crate::types::{ImportKind, ModuleIdx, SymbolRef};
 
 use super::Module;
 
@@ -51,6 +51,18 @@ impl ModuleStore for DefaultModuleGraph {
         if let Some(module) = self.modules.get(idx) {
             for dep in &module.dependencies {
                 f(dep.target);
+            }
+        }
+    }
+
+    fn for_each_static_dependency(&self, idx: ModuleIdx, f: &mut dyn FnMut(ModuleIdx)) {
+        if let Some(module) = self.modules.get(idx) {
+            for rec in &module.import_records {
+                if rec.kind == ImportKind::Static
+                    && let Some(target) = rec.resolved_module
+                {
+                    f(target);
+                }
             }
         }
     }

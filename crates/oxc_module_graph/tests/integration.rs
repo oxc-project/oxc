@@ -49,6 +49,8 @@ fn test_module_graph_basic() {
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports,
         named_imports,
         import_records: vec![ResolvedImportRecord {
@@ -85,6 +87,8 @@ fn test_module_graph_basic() {
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: named_exports_b,
         named_imports: FxHashMap::default(),
         import_records: vec![],
@@ -291,6 +295,8 @@ fn two_module_graph_with_binding(
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: named_exports_b,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -322,6 +328,8 @@ fn two_module_graph_with_binding(
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -437,6 +445,8 @@ fn test_bind_star_reexport() {
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -460,6 +470,8 @@ fn test_bind_star_reexport() {
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: FxHashMap::default(),
         import_records: vec![ResolvedImportRecord {
@@ -487,6 +499,8 @@ fn test_bind_star_reexport() {
         path: PathBuf::from("/c.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_c,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -537,6 +551,8 @@ fn simple_graph(edges: &[(usize, usize)]) -> DefaultModuleGraph {
             path: PathBuf::from(format!("/mod{i}.js")),
             has_module_syntax: true,
             is_commonjs: false,
+            has_top_level_await: false,
+            side_effects: Some(true),
             named_exports: FxHashMap::default(),
             named_imports: FxHashMap::default(),
             import_records: Vec::new(),
@@ -549,50 +565,6 @@ fn simple_graph(edges: &[(usize, usize)]) -> DefaultModuleGraph {
     }
 
     graph
-}
-
-#[test]
-fn test_topo_sort_dag() {
-    use oxc_module_graph::topological_sort;
-
-    // A(0) -> B(1) -> C(2)
-    //    \--> C(2)
-    let graph = simple_graph(&[(0, 1), (0, 2), (1, 2)]);
-    let entry = ModuleIdx::from_usize(0);
-
-    let result = topological_sort(&graph, &[entry]);
-    assert!(result.is_some(), "DAG should produce valid topo sort");
-
-    let order = result.unwrap();
-    assert_eq!(order.len(), 3);
-
-    // C(2) must come after A(0) and B(1) in a valid topo order
-    // because A->C and B->C
-    let pos = |idx: usize| order.iter().position(|&m| m == ModuleIdx::from_usize(idx)).unwrap();
-    assert!(pos(0) < pos(2), "A before C");
-    assert!(pos(1) < pos(2), "B before C");
-    assert!(pos(0) < pos(1), "A before B");
-}
-
-#[test]
-fn test_topo_sort_with_cycle() {
-    use oxc_module_graph::topological_sort;
-
-    // A(0) -> B(1) -> A(0) (cycle)
-    let graph = simple_graph(&[(0, 1), (1, 0)]);
-    let entry = ModuleIdx::from_usize(0);
-
-    let result = topological_sort(&graph, &[entry]);
-    assert!(result.is_none(), "Cyclic graph should return None");
-}
-
-#[test]
-fn test_topo_sort_empty() {
-    use oxc_module_graph::topological_sort;
-
-    let graph = DefaultModuleGraph::new();
-    let result = topological_sort(&graph, &[]);
-    assert_eq!(result, Some(Vec::new()));
 }
 
 #[test]
@@ -713,6 +685,8 @@ fn test_match_imports_reexport_chain() {
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -736,6 +710,8 @@ fn test_match_imports_reexport_chain() {
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_b,
         named_imports: named_imports_b,
         import_records: vec![ResolvedImportRecord {
@@ -759,6 +735,8 @@ fn test_match_imports_reexport_chain() {
         path: PathBuf::from("/c.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_c,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -885,6 +863,8 @@ fn test_match_imports_deep_chain() {
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -908,6 +888,8 @@ fn test_match_imports_deep_chain() {
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_b,
         named_imports: named_imports_b,
         import_records: vec![ResolvedImportRecord {
@@ -931,6 +913,8 @@ fn test_match_imports_deep_chain() {
         path: PathBuf::from("/c.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_c,
         named_imports: named_imports_c,
         import_records: vec![ResolvedImportRecord {
@@ -954,6 +938,8 @@ fn test_match_imports_deep_chain() {
         path: PathBuf::from("/d.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_d,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1052,6 +1038,8 @@ fn test_match_imports_circular_reexport() {
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -1075,6 +1063,8 @@ fn test_match_imports_circular_reexport() {
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_b,
         named_imports: named_imports_b,
         import_records: vec![ResolvedImportRecord {
@@ -1098,6 +1088,8 @@ fn test_match_imports_circular_reexport() {
         path: PathBuf::from("/c.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_c,
         named_imports: named_imports_c,
         import_records: vec![ResolvedImportRecord {
@@ -1259,6 +1251,8 @@ fn test_match_imports_namespace() {
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -1282,6 +1276,8 @@ fn test_match_imports_namespace() {
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_b,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1394,6 +1390,8 @@ fn test_match_imports_on_resolved_chain() {
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: named_imports_a,
         import_records: vec![ResolvedImportRecord {
@@ -1417,6 +1415,8 @@ fn test_match_imports_on_resolved_chain() {
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_b,
         named_imports: named_imports_b,
         import_records: vec![ResolvedImportRecord {
@@ -1440,6 +1440,8 @@ fn test_match_imports_on_resolved_chain() {
         path: PathBuf::from("/c.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_c,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1477,6 +1479,8 @@ fn test_dynamic_exports_cjs_module() {
         path: PathBuf::from("/cjs.js"),
         has_module_syntax: false,
         is_commonjs: true,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1506,6 +1510,8 @@ fn test_dynamic_exports_external_star_target() {
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1542,6 +1548,8 @@ fn test_dynamic_exports_transitive_from_cjs() {
         path: PathBuf::from("/esm.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1565,6 +1573,8 @@ fn test_dynamic_exports_transitive_from_cjs() {
         path: PathBuf::from("/cjs.js"),
         has_module_syntax: false,
         is_commonjs: true,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1604,6 +1614,8 @@ fn test_dynamic_exports_pure_esm_not_dynamic() {
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1627,6 +1639,8 @@ fn test_dynamic_exports_pure_esm_not_dynamic() {
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: exports_b,
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1656,6 +1670,8 @@ fn test_dynamic_exports_cycle_no_infinite_loop() {
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1679,6 +1695,8 @@ fn test_dynamic_exports_cycle_no_infinite_loop() {
         path: PathBuf::from("/b.js"),
         has_module_syntax: true,
         is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
         named_exports: FxHashMap::default(),
         named_imports: FxHashMap::default(),
         import_records: Vec::new(),
@@ -1700,4 +1718,726 @@ fn test_dynamic_exports_cycle_no_infinite_loop() {
     // Should complete without hanging; pure ESM cycle → not dynamic
     let dynamic = compute_has_dynamic_exports(&graph);
     assert!(dynamic.is_empty(), "Pure ESM cycle should not have dynamic exports");
+}
+
+// ── helper for creating simple modules ─────────────────────────────────────
+
+fn simple_module(
+    idx: ModuleIdx,
+    path: &str,
+    import_records: Vec<ResolvedImportRecord>,
+    dependencies: Vec<ImportEdge>,
+) -> Module {
+    Module {
+        idx,
+        path: PathBuf::from(path),
+        has_module_syntax: true,
+        is_commonjs: false,
+        has_top_level_await: false,
+        side_effects: Some(true),
+        named_exports: FxHashMap::default(),
+        named_imports: FxHashMap::default(),
+        import_records,
+        default_export_ref: dummy_symbol_ref(idx, 0),
+        namespace_object_ref: dummy_symbol_ref(idx, 1),
+        star_export_entries: Vec::new(),
+        indirect_export_entries: Vec::new(),
+        dependencies,
+    }
+}
+
+// ── TLA tests ──────────────────────────────────────────────────────────────
+
+#[test]
+fn test_tla_direct() {
+    // Module with top-level await → in result set
+    use oxc_module_graph::compute_tla;
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx = ModuleIdx::from_usize(0);
+
+    let mut module = simple_module(idx, "/tla.js", Vec::new(), Vec::new());
+    module.has_top_level_await = true;
+    graph.add_module(module);
+
+    let tla = compute_tla(&graph);
+    assert!(tla.contains(&idx), "Module with TLA should be in result set");
+}
+
+#[test]
+fn test_tla_transitive_static() {
+    // A statically imports B which has TLA → both in result set
+    use oxc_module_graph::compute_tla;
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    graph.add_module(simple_module(
+        idx_a,
+        "/a.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+    ));
+
+    let mut mod_b = simple_module(idx_b, "/b.js", Vec::new(), Vec::new());
+    mod_b.has_top_level_await = true;
+    graph.add_module(mod_b);
+
+    let tla = compute_tla(&graph);
+    assert!(tla.contains(&idx_b), "TLA module itself should be in set");
+    assert!(tla.contains(&idx_a), "Static importer of TLA module should be in set");
+}
+
+#[test]
+fn test_tla_dynamic_import_not_propagated() {
+    // A dynamically imports B which has TLA → only B in result set
+    use oxc_module_graph::compute_tla;
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    graph.add_module(simple_module(
+        idx_a,
+        "/a.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Dynamic,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+    ));
+
+    let mut mod_b = simple_module(idx_b, "/b.js", Vec::new(), Vec::new());
+    mod_b.has_top_level_await = true;
+    graph.add_module(mod_b);
+
+    let tla = compute_tla(&graph);
+    assert!(tla.contains(&idx_b), "TLA module should be in set");
+    assert!(!tla.contains(&idx_a), "Dynamic importer should NOT be in TLA set");
+}
+
+#[test]
+fn test_tla_pure_esm_not_tla() {
+    // Pure ESM without TLA → empty set
+    use oxc_module_graph::compute_tla;
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx = ModuleIdx::from_usize(0);
+    graph.add_module(simple_module(idx, "/pure.js", Vec::new(), Vec::new()));
+
+    let tla = compute_tla(&graph);
+    assert!(tla.is_empty(), "Pure ESM without TLA should produce empty set");
+}
+
+#[test]
+fn test_tla_cycle_no_infinite_loop() {
+    // A→B→A cycle, B has TLA → both should be TLA, no infinite loop
+    use oxc_module_graph::compute_tla;
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    graph.add_module(simple_module(
+        idx_a,
+        "/a.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+    ));
+
+    let mut mod_b = simple_module(
+        idx_b,
+        "/b.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./a"),
+            resolved_module: Some(idx_a),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./a"), target: idx_a, is_type: false }],
+    );
+    mod_b.has_top_level_await = true;
+    graph.add_module(mod_b);
+
+    let tla = compute_tla(&graph);
+    assert!(tla.contains(&idx_b), "TLA module in cycle should be in set");
+    // A transitively depends on B which has TLA
+    assert!(tla.contains(&idx_a), "Module statically importing TLA in cycle should be in set");
+}
+
+// ── Execution order tests ──────────────────────────────────────────────────
+
+#[test]
+fn test_exec_order_linear_chain() {
+    // A→B→C: order should be [C, B, A]
+    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    graph.add_module(simple_module(
+        idx_a,
+        "/a.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+    ));
+    graph.add_module(simple_module(
+        idx_b,
+        "/b.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./c"), target: idx_c, is_type: false }],
+    ));
+    graph.add_module(simple_module(idx_c, "/c.js", Vec::new(), Vec::new()));
+
+    let result = compute_exec_order(
+        &graph,
+        &[idx_a],
+        None,
+        &ExecOrderConfig { include_dynamic_imports: false },
+    );
+
+    assert_eq!(result.sorted, vec![idx_c, idx_b, idx_a]);
+}
+
+#[test]
+fn test_exec_order_diamond() {
+    // A→{B,C}, B→D, C→D: D before B and C, both before A
+    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+    let idx_d = ModuleIdx::from_usize(3);
+
+    graph.add_module(simple_module(
+        idx_a,
+        "/a.js",
+        vec![
+            ResolvedImportRecord {
+                specifier: CompactString::new("./b"),
+                resolved_module: Some(idx_b),
+                kind: ImportKind::Static,
+            },
+            ResolvedImportRecord {
+                specifier: CompactString::new("./c"),
+                resolved_module: Some(idx_c),
+                kind: ImportKind::Static,
+            },
+        ],
+        vec![
+            ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false },
+            ImportEdge { specifier: CompactString::new("./c"), target: idx_c, is_type: false },
+        ],
+    ));
+    graph.add_module(simple_module(
+        idx_b,
+        "/b.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./d"),
+            resolved_module: Some(idx_d),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./d"), target: idx_d, is_type: false }],
+    ));
+    graph.add_module(simple_module(
+        idx_c,
+        "/c.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./d"),
+            resolved_module: Some(idx_d),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./d"), target: idx_d, is_type: false }],
+    ));
+    graph.add_module(simple_module(idx_d, "/d.js", Vec::new(), Vec::new()));
+
+    let result = compute_exec_order(
+        &graph,
+        &[idx_a],
+        None,
+        &ExecOrderConfig { include_dynamic_imports: false },
+    );
+
+    let pos = |idx: ModuleIdx| result.sorted.iter().position(|&x| x == idx).unwrap();
+    assert!(pos(idx_d) < pos(idx_b), "D should come before B");
+    assert!(pos(idx_d) < pos(idx_c), "D should come before C");
+    assert!(pos(idx_b) < pos(idx_a), "B should come before A");
+    assert!(pos(idx_c) < pos(idx_a), "C should come before A");
+}
+
+#[test]
+fn test_exec_order_circular_dependency() {
+    // A→B→A: should complete without hanging, cycle detected
+    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    graph.add_module(simple_module(
+        idx_a,
+        "/a.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+    ));
+    graph.add_module(simple_module(
+        idx_b,
+        "/b.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./a"),
+            resolved_module: Some(idx_a),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./a"), target: idx_a, is_type: false }],
+    ));
+
+    let result = compute_exec_order(
+        &graph,
+        &[idx_a],
+        None,
+        &ExecOrderConfig { include_dynamic_imports: false },
+    );
+
+    // Both modules should be in the result.
+    assert_eq!(result.sorted.len(), 2);
+    assert!(!result.cycles.is_empty(), "Should detect circular dependency");
+
+    // Verify full cycle path: [A, B, A] — the cycle from A through B back to A.
+    let cycle = &result.cycles[0];
+    assert!(cycle.len() > 1, "Cycle should contain full path, not just a single node");
+    assert_eq!(cycle.first(), cycle.last(), "Cycle should start and end at the same node");
+}
+
+#[test]
+fn test_exec_order_dynamic_import_excluded() {
+    // A ─static→ B, A ─dynamic→ C: only A and B when dynamic=false
+    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    graph.add_module(simple_module(
+        idx_a,
+        "/a.js",
+        vec![
+            ResolvedImportRecord {
+                specifier: CompactString::new("./b"),
+                resolved_module: Some(idx_b),
+                kind: ImportKind::Static,
+            },
+            ResolvedImportRecord {
+                specifier: CompactString::new("./c"),
+                resolved_module: Some(idx_c),
+                kind: ImportKind::Dynamic,
+            },
+        ],
+        vec![
+            ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false },
+            ImportEdge { specifier: CompactString::new("./c"), target: idx_c, is_type: false },
+        ],
+    ));
+    graph.add_module(simple_module(idx_b, "/b.js", Vec::new(), Vec::new()));
+    graph.add_module(simple_module(idx_c, "/c.js", Vec::new(), Vec::new()));
+
+    let result = compute_exec_order(
+        &graph,
+        &[idx_a],
+        None,
+        &ExecOrderConfig { include_dynamic_imports: false },
+    );
+
+    assert!(result.sorted.contains(&idx_a));
+    assert!(result.sorted.contains(&idx_b));
+    assert!(!result.sorted.contains(&idx_c), "Dynamic import should be excluded");
+}
+
+#[test]
+fn test_exec_order_dynamic_import_included() {
+    // Same graph but with include_dynamic_imports: true → C included
+    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    graph.add_module(simple_module(
+        idx_a,
+        "/a.js",
+        vec![
+            ResolvedImportRecord {
+                specifier: CompactString::new("./b"),
+                resolved_module: Some(idx_b),
+                kind: ImportKind::Static,
+            },
+            ResolvedImportRecord {
+                specifier: CompactString::new("./c"),
+                resolved_module: Some(idx_c),
+                kind: ImportKind::Dynamic,
+            },
+        ],
+        vec![
+            ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false },
+            ImportEdge { specifier: CompactString::new("./c"), target: idx_c, is_type: false },
+        ],
+    ));
+    graph.add_module(simple_module(idx_b, "/b.js", Vec::new(), Vec::new()));
+    graph.add_module(simple_module(idx_c, "/c.js", Vec::new(), Vec::new()));
+
+    let result = compute_exec_order(
+        &graph,
+        &[idx_a],
+        None,
+        &ExecOrderConfig { include_dynamic_imports: true },
+    );
+
+    assert!(result.sorted.contains(&idx_a));
+    assert!(result.sorted.contains(&idx_b));
+    assert!(result.sorted.contains(&idx_c), "Dynamic import should be included");
+}
+
+#[test]
+fn test_exec_order_runtime_first() {
+    // Runtime module always first
+    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_rt = ModuleIdx::from_usize(0);
+    let idx_entry = ModuleIdx::from_usize(1);
+    let idx_dep = ModuleIdx::from_usize(2);
+
+    graph.add_module(simple_module(idx_rt, "/runtime.js", Vec::new(), Vec::new()));
+    graph.add_module(simple_module(
+        idx_entry,
+        "/entry.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./dep"),
+            resolved_module: Some(idx_dep),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge {
+            specifier: CompactString::new("./dep"),
+            target: idx_dep,
+            is_type: false,
+        }],
+    ));
+    graph.add_module(simple_module(idx_dep, "/dep.js", Vec::new(), Vec::new()));
+
+    let result = compute_exec_order(
+        &graph,
+        &[idx_entry],
+        Some(idx_rt),
+        &ExecOrderConfig { include_dynamic_imports: false },
+    );
+
+    assert_eq!(result.sorted[0], idx_rt, "Runtime should be first");
+}
+
+// ── Side effects tests ─────────────────────────────────────────────────────
+
+#[test]
+fn test_side_effects_has_side_effects() {
+    // Module with side_effects: Some(true) → true
+    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx = ModuleIdx::from_usize(0);
+
+    let mut module = simple_module(idx, "/side.js", Vec::new(), Vec::new());
+    module.side_effects = Some(true);
+    graph.add_module(module);
+
+    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
+    let result = determine_side_effects(&graph, &checker);
+    assert_eq!(result[&idx], true);
+}
+
+#[test]
+fn test_side_effects_no_treeshake() {
+    // Module with side_effects: None (no-treeshake) → true
+    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx = ModuleIdx::from_usize(0);
+
+    let mut module = simple_module(idx, "/notree.js", Vec::new(), Vec::new());
+    module.side_effects = None;
+    graph.add_module(module);
+
+    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
+    let result = determine_side_effects(&graph, &checker);
+    assert_eq!(result[&idx], true);
+}
+
+#[test]
+fn test_side_effects_pure_no_deps() {
+    // Module with side_effects: Some(false), no deps → false
+    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx = ModuleIdx::from_usize(0);
+
+    let mut module = simple_module(idx, "/pure.js", Vec::new(), Vec::new());
+    module.side_effects = Some(false);
+    graph.add_module(module);
+
+    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
+    let result = determine_side_effects(&graph, &checker);
+    assert_eq!(result[&idx], false);
+}
+
+#[test]
+fn test_side_effects_transitive() {
+    // A (pure) imports B (side-effectful) → A becomes side-effectful
+    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let mut mod_a = simple_module(
+        idx_a,
+        "/a.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+    );
+    mod_a.side_effects = Some(false);
+    graph.add_module(mod_a);
+
+    let mut mod_b = simple_module(idx_b, "/b.js", Vec::new(), Vec::new());
+    mod_b.side_effects = Some(true);
+    graph.add_module(mod_b);
+
+    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
+    let result = determine_side_effects(&graph, &checker);
+    assert_eq!(result[&idx_a], true, "Pure module importing side-effectful should be true");
+    assert_eq!(result[&idx_b], true);
+}
+
+#[test]
+fn test_side_effects_custom_checker() {
+    // Custom checker: star export edge → side-effectful
+    use oxc_module_graph::types::StarExportEntry;
+    use oxc_module_graph::{SideEffectsChecker, determine_side_effects};
+
+    struct AlwaysSideEffectfulChecker;
+    impl SideEffectsChecker for AlwaysSideEffectfulChecker {
+        type ModuleIdx = ModuleIdx;
+        fn star_export_has_side_effects(&self, _importer: ModuleIdx, _importee: ModuleIdx) -> bool {
+            true
+        }
+    }
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let mut mod_a = simple_module(idx_a, "/a.js", Vec::new(), Vec::new());
+    mod_a.side_effects = Some(false);
+    mod_a.star_export_entries = vec![StarExportEntry {
+        module_request: CompactString::new("./b"),
+        resolved_module: Some(idx_b),
+        span: oxc_span::Span::default(),
+    }];
+    graph.add_module(mod_a);
+
+    let mut mod_b = simple_module(idx_b, "/b.js", Vec::new(), Vec::new());
+    mod_b.side_effects = Some(false);
+    graph.add_module(mod_b);
+
+    let checker = AlwaysSideEffectfulChecker;
+    let result = determine_side_effects(&graph, &checker);
+    assert_eq!(result[&idx_a], true, "Star export with custom checker should be side-effectful");
+}
+
+#[test]
+fn test_side_effects_cycle_no_infinite_loop() {
+    // A (pure) → B (pure) → A: cycle should not infinite loop
+    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let mut mod_a = simple_module(
+        idx_a,
+        "/a.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false }],
+    );
+    mod_a.side_effects = Some(false);
+    graph.add_module(mod_a);
+
+    let mut mod_b = simple_module(
+        idx_b,
+        "/b.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./a"),
+            resolved_module: Some(idx_a),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge { specifier: CompactString::new("./a"), target: idx_a, is_type: false }],
+    );
+    mod_b.side_effects = Some(false);
+    graph.add_module(mod_b);
+
+    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
+    let result = determine_side_effects(&graph, &checker);
+    assert_eq!(result[&idx_a], false, "Pure cycle should be side-effect-free");
+    assert_eq!(result[&idx_b], false, "Pure cycle should be side-effect-free");
+}
+
+#[test]
+fn test_side_effects_external_module_propagation() {
+    // A (pure) imports B (external with side effects) → A becomes side-effectful.
+    // Uses a custom ModuleStore that overrides any_module_side_effects for externals.
+    use oxc_module_graph::{DefaultSideEffectsChecker, determine_side_effects};
+
+    // Custom store that wraps DefaultModuleGraph but adds external module handling.
+    struct StoreWithExternals {
+        inner: DefaultModuleGraph,
+        external_side_effects: FxHashMap<ModuleIdx, Option<bool>>,
+    }
+
+    impl ModuleStore for StoreWithExternals {
+        type ModuleIdx = ModuleIdx;
+        type SymbolRef = SymbolRef;
+        type Module = Module;
+
+        fn module(&self, idx: ModuleIdx) -> Option<&Module> {
+            self.inner.module(idx)
+        }
+        fn modules_len(&self) -> usize {
+            self.inner.modules_len()
+        }
+        fn for_each_module(&self, f: &mut dyn FnMut(ModuleIdx, &Module)) {
+            self.inner.for_each_module(f);
+        }
+        fn for_each_dependency(&self, idx: ModuleIdx, f: &mut dyn FnMut(ModuleIdx)) {
+            self.inner.for_each_dependency(idx, f);
+        }
+        fn for_each_static_dependency(&self, idx: ModuleIdx, f: &mut dyn FnMut(ModuleIdx)) {
+            self.inner.for_each_static_dependency(idx, f);
+        }
+        fn any_module_side_effects(&self, idx: ModuleIdx) -> Option<Option<bool>> {
+            // Check external modules first
+            if let Some(&se) = self.external_side_effects.get(&idx) {
+                return Some(se);
+            }
+            // Fall back to normal module lookup
+            self.inner.module(idx).map(|m| m.side_effects())
+        }
+    }
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_ext = ModuleIdx::from_usize(1); // external, not added to graph
+
+    let mut mod_a = simple_module(
+        idx_a,
+        "/a.js",
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("external-pkg"),
+            resolved_module: Some(idx_ext),
+            kind: ImportKind::Static,
+        }],
+        vec![ImportEdge {
+            specifier: CompactString::new("external-pkg"),
+            target: idx_ext,
+            is_type: false,
+        }],
+    );
+    mod_a.side_effects = Some(false);
+    graph.add_module(mod_a);
+    // Do NOT add idx_ext — it's external (module() returns None)
+
+    let mut external_side_effects = FxHashMap::default();
+    external_side_effects.insert(idx_ext, Some(true)); // UserDefined(true)
+    let store = StoreWithExternals { inner: graph, external_side_effects };
+
+    let checker: DefaultSideEffectsChecker<ModuleIdx> = DefaultSideEffectsChecker::default();
+    let result = determine_side_effects(&store, &checker);
+    assert_eq!(
+        result[&idx_a], true,
+        "Pure module importing side-effectful external should be true"
+    );
+}
+
+#[test]
+fn test_exec_order_hot_accept_skipped() {
+    // A ─static→ B, A ─HotAccept→ C: C should NOT be followed
+    use oxc_module_graph::{ExecOrderConfig, compute_exec_order};
+
+    let mut graph = DefaultModuleGraph::new();
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    graph.add_module(simple_module(
+        idx_a,
+        "/a.js",
+        vec![
+            ResolvedImportRecord {
+                specifier: CompactString::new("./b"),
+                resolved_module: Some(idx_b),
+                kind: ImportKind::Static,
+            },
+            ResolvedImportRecord {
+                specifier: CompactString::new("./c"),
+                resolved_module: Some(idx_c),
+                kind: ImportKind::HotAccept,
+            },
+        ],
+        vec![
+            ImportEdge { specifier: CompactString::new("./b"), target: idx_b, is_type: false },
+            ImportEdge { specifier: CompactString::new("./c"), target: idx_c, is_type: false },
+        ],
+    ));
+    graph.add_module(simple_module(idx_b, "/b.js", Vec::new(), Vec::new()));
+    graph.add_module(simple_module(idx_c, "/c.js", Vec::new(), Vec::new()));
+
+    let result = compute_exec_order(
+        &graph,
+        &[idx_a],
+        None,
+        &ExecOrderConfig { include_dynamic_imports: false },
+    );
+
+    assert!(result.sorted.contains(&idx_a));
+    assert!(result.sorted.contains(&idx_b));
+    assert!(!result.sorted.contains(&idx_c), "HotAccept import should be excluded");
 }

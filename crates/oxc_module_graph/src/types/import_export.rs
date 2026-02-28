@@ -20,6 +20,9 @@ pub enum ImportKind {
     Dynamic,
     /// `require('...')`
     Require,
+    /// `import.meta.hot.accept('...')` — HMR-only, not a graph edge for
+    /// execution order or side-effects propagation.
+    HotAccept,
 }
 
 /// A named import consumed by a module.
