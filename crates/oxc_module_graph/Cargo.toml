@@ -30,5 +30,6 @@ oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
+bitflags = { workspace = true }
 rustc-hash = { workspace = true }
 compact_str = { workspace = true }

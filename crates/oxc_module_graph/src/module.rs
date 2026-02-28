@@ -4,8 +4,8 @@ use compact_str::CompactString;
 use rustc_hash::FxHashMap;
 
 use crate::types::{
-    ImportKind, IndirectExportEntry, LocalExport, ModuleIdx, NamedImport, ResolvedExport,
-    ResolvedImportRecord, StarExportEntry, SymbolRef,
+    ExportsKind, ImportKind, IndirectExportEntry, LocalExport, ModuleIdx, NamedImport,
+    ResolvedExport, ResolvedImportRecord, StarExportEntry, SymbolRef, WrapKind,
 };
 
 /// Side-effects status for a module.
@@ -55,12 +55,19 @@ pub struct NormalModule {
     // --- Parse-time data ---
     /// Whether this module has ESM syntax (`import`/`export`).
     pub has_module_syntax: bool,
-    /// Whether this module uses CommonJS (`module.exports` / `exports.x`).
-    pub is_commonjs: bool,
+    /// The module's export format (ESM, CommonJS, or not yet determined).
+    pub exports_kind: ExportsKind,
     /// Whether this module contains top-level `await`.
     pub has_top_level_await: bool,
     /// The module's own side-effects state (before propagation).
     pub side_effects: SideEffects,
+    /// Whether this module has lazily-generated exports (Rolldown-specific).
+    /// When true, static imports of this module do NOT force `exports_kind` to `Esm`.
+    pub has_lazy_export: bool,
+    /// Whether this module has side effects or global variable access
+    /// that makes execution order significant.
+    /// Used by on-demand wrapping: sensitive modules must always be wrapped.
+    pub execution_order_sensitive: bool,
 
     // --- Import/export declarations ---
     /// Named exports: export_name → LocalExport.
@@ -81,6 +88,16 @@ pub struct NormalModule {
     pub namespace_object_ref: SymbolRef,
 
     // --- Link-time results (populated by graph.link() or individual algorithms) ---
+    /// Wrapping strategy (set by determine_module_exports_kind / wrap_modules).
+    pub wrap_kind: WrapKind,
+    /// The initial wrap_kind before propagation (preserved for lazy order analysis).
+    /// Set by `wrap_modules`.
+    pub original_wrap_kind: WrapKind,
+    /// Optional wrapper function symbol (e.g., `require_foo` or `init_foo`).
+    pub wrapper_ref: Option<SymbolRef>,
+    /// Whether this module is imported via `require()` by another module.
+    /// Set by `wrap_modules`.
+    pub required_by_other_module: bool,
     /// Resolved exports: export_name → ResolvedExport.
     pub resolved_exports: FxHashMap<CompactString, ResolvedExport>,
     /// Whether this module has dynamic exports (CJS or transitive `export *` from CJS/external).
@@ -94,6 +111,11 @@ pub struct NormalModule {
 }
 
 impl NormalModule {
+    /// Whether this module uses CommonJS exports.
+    pub fn is_commonjs(&self) -> bool {
+        self.exports_kind.is_commonjs()
+    }
+
     /// Get the resolved target module for an import record by index.
     pub fn import_record_resolved_module(&self, idx: usize) -> Option<ModuleIdx> {
         self.import_records.get(idx)?.resolved_module

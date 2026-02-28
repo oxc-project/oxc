@@ -3,12 +3,15 @@ use std::path::PathBuf;
 use compact_str::CompactString;
 use oxc_module_graph::default::SymbolRefDb;
 use oxc_module_graph::types::{
-    ImportKind, ImportRecordIdx, LocalExport, ModuleIdx, NamedImport, ResolvedImportRecord,
-    StarExportEntry, SymbolRef,
+    ExportsKind, ImportKind, ImportRecordIdx, ImportRecordMeta, LocalExport, MatchImportKind,
+    ModuleIdx, NamedImport, ResolvedImportRecord, StarExportEntry, SymbolRef, WrapKind,
 };
 use oxc_module_graph::{
-    ModuleGraph, NormalModule, SideEffects, bind_imports_and_exports, compute_exec_order,
-    compute_has_dynamic_exports, compute_tla, determine_side_effects, find_cycles,
+    ExportsKindConfig, ExternalModule, ImportHooks, LinkConfig, ModuleGraph, NormalModule,
+    SideEffects, WrapModulesConfig, bind_imports_and_exports, build_resolved_exports,
+    compute_exec_order, compute_has_dynamic_exports, compute_tla, determine_module_exports_kind,
+    determine_safely_merge_cjs_ns, determine_side_effects, find_cycles, match_imports_collect,
+    wrap_modules,
 };
 use rustc_hash::FxHashMap;
 
@@ -31,9 +34,11 @@ fn make_normal_module(
         idx,
         path: PathBuf::from(path),
         has_module_syntax: true,
-        is_commonjs: false,
+        exports_kind: ExportsKind::None,
         has_top_level_await: false,
         side_effects: SideEffects::True,
+        has_lazy_export: false,
+        execution_order_sensitive: false,
         named_exports,
         named_imports,
         import_records,
@@ -41,6 +46,10 @@ fn make_normal_module(
         indirect_export_entries: Vec::new(),
         default_export_ref,
         namespace_object_ref,
+        wrap_kind: WrapKind::None,
+        original_wrap_kind: WrapKind::None,
+        wrapper_ref: None,
+        required_by_other_module: false,
         resolved_exports: FxHashMap::default(),
         has_dynamic_exports: false,
         is_tla_or_contains_tla: false,
@@ -83,20 +92,28 @@ fn test_module_graph_basic() {
         idx: idx_a,
         path: PathBuf::from("/a.js"),
         has_module_syntax: true,
-        is_commonjs: false,
+        exports_kind: ExportsKind::None,
         has_top_level_await: false,
         side_effects: SideEffects::True,
+        has_lazy_export: false,
+        execution_order_sensitive: false,
         named_exports,
         named_imports,
         import_records: vec![ResolvedImportRecord {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(idx_b, 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_export_ref: default_ref,
         namespace_object_ref: ns_ref,
         star_export_entries: vec![],
         indirect_export_entries: vec![],
+        wrap_kind: WrapKind::None,
+        original_wrap_kind: WrapKind::None,
+        wrapper_ref: None,
+        required_by_other_module: false,
         resolved_exports: FxHashMap::default(),
         has_dynamic_exports: false,
         is_tla_or_contains_tla: false,
@@ -457,6 +474,8 @@ fn two_module_graph_with_binding(export_name: &str, import_name: &str) -> Module
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_a_default,
         sym_a_ns,
@@ -552,6 +571,8 @@ fn test_bind_star_reexport() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_a_default,
         sym_a_ns,
@@ -566,6 +587,8 @@ fn test_bind_star_reexport() {
             specifier: CompactString::new("./c"),
             resolved_module: Some(idx_c),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_b_default,
         sym_b_ns,
@@ -615,6 +638,8 @@ fn simple_graph(edges: &[(usize, usize)]) -> ModuleGraph {
                 specifier: CompactString::new(format!("./mod{to}")),
                 resolved_module: Some(ModuleIdx::from_usize(to)),
                 kind: ImportKind::Static,
+                namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+                meta: ImportRecordMeta::empty(),
             })
             .collect();
 
@@ -730,6 +755,8 @@ fn test_match_imports_reexport_chain() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_a_default,
         sym_a_ns,
@@ -744,6 +771,8 @@ fn test_match_imports_reexport_chain() {
             specifier: CompactString::new("./c"),
             resolved_module: Some(idx_c),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_b_default,
         sym_b_ns,
@@ -862,6 +891,8 @@ fn test_match_imports_deep_chain() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_a_default,
         sym_a_ns,
@@ -875,6 +906,8 @@ fn test_match_imports_deep_chain() {
             specifier: CompactString::new("./c"),
             resolved_module: Some(idx_c),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_b_default,
         sym_b_ns,
@@ -888,6 +921,8 @@ fn test_match_imports_deep_chain() {
             specifier: CompactString::new("./d"),
             resolved_module: Some(idx_d),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_c_default,
         sym_c_ns,
@@ -984,6 +1019,8 @@ fn test_match_imports_circular_reexport() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_a_default,
         sym_a_ns,
@@ -997,6 +1034,8 @@ fn test_match_imports_circular_reexport() {
             specifier: CompactString::new("./c"),
             resolved_module: Some(idx_c),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_b_default,
         sym_b_ns,
@@ -1010,6 +1049,8 @@ fn test_match_imports_circular_reexport() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_c_default,
         sym_c_ns,
@@ -1051,7 +1092,7 @@ fn test_dynamic_exports_cjs_module() {
         default_ref,
         ns_ref,
     );
-    module.is_commonjs = true;
+    module.exports_kind = ExportsKind::CommonJs;
     graph.add_normal_module(module);
 
     let dynamic = compute_has_dynamic_exports(&graph);
@@ -1122,7 +1163,7 @@ fn test_dynamic_exports_transitive_from_cjs() {
         default_b,
         ns_b,
     );
-    module_b.is_commonjs = true;
+    module_b.exports_kind = ExportsKind::CommonJs;
     graph.add_normal_module(module_b);
 
     // A: export * from './b'
@@ -1299,6 +1340,8 @@ fn test_tla_transitive_static() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_a,
         ns_a,
@@ -1342,6 +1385,8 @@ fn test_tla_dynamic_import_not_propagated() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Dynamic,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_a,
         ns_a,
@@ -1380,6 +1425,8 @@ fn test_tla_cycle_no_infinite_loop() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_a,
         ns_a,
@@ -1396,6 +1443,8 @@ fn test_tla_cycle_no_infinite_loop() {
             specifier: CompactString::new("./a"),
             resolved_module: Some(idx_a),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_b,
         ns_b,
@@ -1464,6 +1513,8 @@ fn test_exec_order_dynamic_import_excluded() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Dynamic,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_a,
         ns_a,
@@ -1509,6 +1560,8 @@ fn test_exec_order_dynamic_import_included() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Dynamic,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_a,
         ns_a,
@@ -1581,6 +1634,8 @@ fn test_exec_order_hot_accept_skipped() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::HotAccept,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_a,
         ns_a,
@@ -1708,6 +1763,8 @@ fn test_side_effects_transitive() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_a,
         ns_a,
@@ -1802,6 +1859,8 @@ fn test_side_effects_cycle_no_infinite_loop() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_a,
         ns_a,
@@ -1818,6 +1877,8 @@ fn test_side_effects_cycle_no_infinite_loop() {
             specifier: CompactString::new("./a"),
             resolved_module: Some(idx_a),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_b,
         ns_b,
@@ -1864,6 +1925,8 @@ fn test_side_effects_external_module_propagation() {
             specifier: CompactString::new("ext-lib"),
             resolved_module: Some(idx_ext),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         default_a,
         ns_a,
@@ -1916,6 +1979,8 @@ fn test_namespace_import() {
             specifier: CompactString::new("./b"),
             resolved_module: Some(idx_b),
             kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
         }],
         sym_a_default,
         sym_a_ns,
@@ -1935,4 +2000,2077 @@ fn test_namespace_import() {
     // A's ns import should link to B's namespace object ref
     let canonical = graph.canonical_ref(sym_a_ns_import);
     assert_eq!(canonical, sym_b_ns, "Namespace import should link to namespace object ref");
+}
+
+// ---------------------------------------------------------------------------
+// Step-by-step linking workflow (Rolldown integration pattern)
+// ---------------------------------------------------------------------------
+
+/// Simulates Rolldown's step-by-step link pipeline:
+///
+/// 1. Create a `ModuleGraph` manually (no builder)
+/// 2. Populate `NormalModule` + `ExternalModule` with all fields
+/// 3. Call algorithms in Rolldown's order with interleaved consumer steps
+/// 4. Assert results match expected values
+#[test]
+fn test_stepwise_link_workflow() {
+    let mut graph = ModuleGraph::new();
+
+    // Allocate module indices.
+    let entry_idx = graph.alloc_module_idx(); // 0: entry.js
+    let lib_idx = graph.alloc_module_idx(); // 1: lib.js
+    let ext_idx = graph.alloc_module_idx(); // 2: external "react"
+
+    // --- Add symbols ---
+    // entry.js: import { foo } from './lib'; export default foo;
+    let entry_foo = graph.add_symbol(entry_idx, "foo".into());
+    let entry_default = graph.add_symbol(entry_idx, "default".into());
+    let entry_ns = graph.add_symbol(entry_idx, "*ns*".into());
+
+    // lib.js: export const foo = 42;
+    let lib_foo = graph.add_symbol(lib_idx, "foo".into());
+    let lib_default = graph.add_symbol(lib_idx, "default".into());
+    let lib_ns = graph.add_symbol(lib_idx, "*ns*".into());
+
+    // react (external): namespace symbol
+    let ext_ns = graph.add_symbol(ext_idx, "react_ns".into());
+
+    // --- Populate modules ---
+
+    // entry.js: import { foo } from './lib'; export default foo;
+    let mut entry_imports = FxHashMap::default();
+    entry_imports.insert(
+        entry_foo,
+        NamedImport {
+            imported_name: CompactString::new("foo"),
+            local_symbol: entry_foo,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+    let mut entry_exports = FxHashMap::default();
+    entry_exports.insert(
+        CompactString::new("default"),
+        LocalExport { exported_name: CompactString::new("default"), local_symbol: entry_default },
+    );
+
+    graph.add_normal_module(NormalModule {
+        idx: entry_idx,
+        path: PathBuf::from("/entry.js"),
+        has_module_syntax: true,
+        exports_kind: ExportsKind::None,
+        has_top_level_await: false,
+        side_effects: SideEffects::True,
+        has_lazy_export: false,
+        execution_order_sensitive: false,
+        named_exports: entry_exports,
+        named_imports: entry_imports,
+        import_records: vec![ResolvedImportRecord {
+            specifier: CompactString::new("./lib"),
+            resolved_module: Some(lib_idx),
+            kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
+        }],
+        star_export_entries: vec![],
+        indirect_export_entries: vec![],
+        default_export_ref: entry_default,
+        namespace_object_ref: entry_ns,
+        wrap_kind: WrapKind::None,
+        original_wrap_kind: WrapKind::None,
+        wrapper_ref: None,
+        required_by_other_module: false,
+        resolved_exports: FxHashMap::default(),
+        has_dynamic_exports: false,
+        is_tla_or_contains_tla: false,
+        propagated_side_effects: false,
+        exec_order: u32::MAX,
+    });
+
+    // lib.js: export const foo = 42;
+    let mut lib_exports = FxHashMap::default();
+    lib_exports.insert(
+        CompactString::new("foo"),
+        LocalExport { exported_name: CompactString::new("foo"), local_symbol: lib_foo },
+    );
+
+    graph.add_normal_module(NormalModule {
+        idx: lib_idx,
+        path: PathBuf::from("/lib.js"),
+        has_module_syntax: true,
+        exports_kind: ExportsKind::None,
+        has_top_level_await: false,
+        side_effects: SideEffects::False,
+        has_lazy_export: false,
+        execution_order_sensitive: false,
+        named_exports: lib_exports,
+        named_imports: FxHashMap::default(),
+        import_records: vec![],
+        star_export_entries: vec![],
+        indirect_export_entries: vec![],
+        default_export_ref: lib_default,
+        namespace_object_ref: lib_ns,
+        wrap_kind: WrapKind::None,
+        original_wrap_kind: WrapKind::None,
+        wrapper_ref: None,
+        required_by_other_module: false,
+        resolved_exports: FxHashMap::default(),
+        has_dynamic_exports: false,
+        is_tla_or_contains_tla: false,
+        propagated_side_effects: false,
+        exec_order: u32::MAX,
+    });
+
+    // react (external)
+    graph.add_external_module(ExternalModule {
+        idx: ext_idx,
+        specifier: CompactString::new("react"),
+        side_effects: SideEffects::True,
+        namespace_ref: ext_ns,
+        exec_order: u32::MAX,
+    });
+
+    graph.set_entries(vec![entry_idx]);
+
+    // --- Step-by-step link pipeline ---
+
+    // Step 1: Execution order
+    let mut config = LinkConfig::default();
+    let exec = compute_exec_order(&graph, &config);
+    #[expect(clippy::cast_possible_truncation)]
+    for (i, &idx) in exec.sorted.iter().enumerate() {
+        match graph.module_mut(idx) {
+            oxc_module_graph::Module::Normal(m) => m.exec_order = i as u32,
+            oxc_module_graph::Module::External(m) => m.exec_order = i as u32,
+        }
+    }
+
+    // Step 2: TLA propagation
+    let tla = compute_tla(&graph);
+    for &idx in &tla {
+        if let Some(m) = graph.normal_module_mut(idx) {
+            m.is_tla_or_contains_tla = true;
+        }
+    }
+
+    // Step 3 (interleaved consumer step): mark CJS modules, etc.
+    // (Rolldown would call determine_module_exports_kind here)
+    // For this test, no CJS modules to mark.
+
+    // Step 4: Dynamic exports
+    let dynamic = compute_has_dynamic_exports(&graph);
+    for &idx in &dynamic {
+        if let Some(m) = graph.normal_module_mut(idx) {
+            m.has_dynamic_exports = true;
+        }
+    }
+
+    // Step 5: Resolved exports
+    let resolved = build_resolved_exports(&graph);
+    for (idx, exports) in resolved {
+        if let Some(m) = graph.normal_module_mut(idx) {
+            m.resolved_exports = exports;
+        }
+    }
+
+    // Step 6: Match imports
+    let (errors, links) = match_imports_collect(&graph, &mut config);
+
+    // Consumer applies links to its own SymbolRefDb (or graph.symbols).
+    for (from, to) in &links {
+        graph.link_symbols(*from, *to);
+    }
+
+    // Step 7: Side effects
+    let se = determine_side_effects(&graph, &config);
+    for (idx, has) in se {
+        if let Some(m) = graph.normal_module_mut(idx) {
+            m.propagated_side_effects = has;
+        }
+    }
+
+    // --- Assertions ---
+    assert!(errors.is_empty(), "Expected no binding errors, got: {errors:?}");
+    assert!(!links.is_empty(), "Expected at least one link pair");
+
+    // entry's `foo` should resolve to lib's `foo`
+    let canonical = graph.canonical_ref(entry_foo);
+    assert_eq!(canonical, lib_foo, "entry:foo should resolve to lib:foo");
+
+    // lib.js was marked SideEffects::False, so propagated_side_effects should be false
+    let lib_module = graph.normal_module(lib_idx).unwrap();
+    assert!(!lib_module.propagated_side_effects, "lib.js should not have propagated side effects");
+
+    // Execution order should be set (not u32::MAX)
+    let entry_module = graph.normal_module(entry_idx).unwrap();
+    assert_ne!(entry_module.exec_order, u32::MAX, "entry exec_order should be set");
+    assert_ne!(lib_module.exec_order, u32::MAX, "lib exec_order should be set");
+
+    // lib should execute before entry (DFS post-order: leaf first)
+    assert!(
+        lib_module.exec_order < entry_module.exec_order,
+        "lib ({}) should execute before entry ({})",
+        lib_module.exec_order,
+        entry_module.exec_order
+    );
+}
+
+// ---------------------------------------------------------------------------
+// ImportHooks integration
+// ---------------------------------------------------------------------------
+
+struct TestImportHooks {
+    resolved_count: usize,
+    no_match_count: usize,
+}
+
+impl ImportHooks for TestImportHooks {
+    fn on_resolved(
+        &mut self,
+        _importer: ModuleIdx,
+        _local_symbol: SymbolRef,
+        _result: &MatchImportKind,
+        _reexport_chain: &[SymbolRef],
+    ) {
+        self.resolved_count += 1;
+    }
+
+    fn on_final_no_match(
+        &mut self,
+        _target: ModuleIdx,
+        _import_name: &str,
+    ) -> Option<MatchImportKind> {
+        self.no_match_count += 1;
+        None // Let the error propagate
+    }
+}
+
+/// Verifies that `ImportHooks::on_resolved` is called for each import resolution
+/// and `on_final_no_match` is called for unresolved imports.
+#[test]
+fn test_import_hooks_called() {
+    let mut graph = ModuleGraph::new();
+
+    let idx_a = graph.alloc_module_idx();
+    let idx_b = graph.alloc_module_idx();
+
+    // Symbols for A
+    let sym_a_foo = graph.add_symbol(idx_a, "foo".into());
+    let sym_a_missing = graph.add_symbol(idx_a, "missing".into());
+    let sym_a_default = graph.add_symbol(idx_a, "default".into());
+    let sym_a_ns = graph.add_symbol(idx_a, "*ns*".into());
+
+    // Symbols for B
+    let sym_b_foo = graph.add_symbol(idx_b, "foo".into());
+    let sym_b_default = graph.add_symbol(idx_b, "default".into());
+    let sym_b_ns = graph.add_symbol(idx_b, "*ns*".into());
+
+    // A: import { foo, missing } from './b'
+    let mut named_imports_a = FxHashMap::default();
+    named_imports_a.insert(
+        sym_a_foo,
+        NamedImport {
+            imported_name: CompactString::new("foo"),
+            local_symbol: sym_a_foo,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+    named_imports_a.insert(
+        sym_a_missing,
+        NamedImport {
+            imported_name: CompactString::new("missing"),
+            local_symbol: sym_a_missing,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        named_imports_a,
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
+        }],
+        sym_a_default,
+        sym_a_ns,
+    ));
+
+    // B: export const foo = 42; (no "missing" export)
+    let mut named_exports_b = FxHashMap::default();
+    named_exports_b.insert(
+        CompactString::new("foo"),
+        LocalExport { exported_name: CompactString::new("foo"), local_symbol: sym_b_foo },
+    );
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        named_exports_b,
+        FxHashMap::default(),
+        vec![],
+        sym_b_default,
+        sym_b_ns,
+    ));
+
+    // Build resolved exports first.
+    let resolved = build_resolved_exports(&graph);
+    for (idx, exports) in resolved {
+        if let Some(m) = graph.normal_module_mut(idx) {
+            m.resolved_exports = exports;
+        }
+    }
+
+    // Run match_imports_collect with hooks.
+    let mut hooks = TestImportHooks { resolved_count: 0, no_match_count: 0 };
+    let (errors, links) = {
+        let mut config = LinkConfig { import_hooks: Some(&mut hooks), ..Default::default() };
+        match_imports_collect(&graph, &mut config)
+    };
+    // Config is dropped, so we can read hooks directly again.
+
+    // on_resolved should be called for both imports (foo: success, missing: NoMatch).
+    assert_eq!(hooks.resolved_count, 2, "on_resolved should be called for each import");
+    // on_final_no_match should be called for the "missing" import.
+    assert_eq!(hooks.no_match_count, 1, "on_final_no_match should be called for unresolved import");
+
+    // One error (unresolved "missing"), one link (foo).
+    assert_eq!(errors.len(), 1, "Expected 1 unresolved import error");
+    assert!(!links.is_empty(), "Expected at least one link for 'foo'");
+}
+
+/// Verifies that `on_final_no_match` can override the error by returning a result.
+#[test]
+fn test_import_hooks_override_no_match() {
+    let mut graph = ModuleGraph::new();
+
+    let idx_a = graph.alloc_module_idx();
+    let idx_b = graph.alloc_module_idx();
+
+    // Symbols
+    let sym_a_missing = graph.add_symbol(idx_a, "missing".into());
+    let sym_a_default = graph.add_symbol(idx_a, "default".into());
+    let sym_a_ns = graph.add_symbol(idx_a, "*ns*".into());
+
+    let sym_b_default = graph.add_symbol(idx_b, "default".into());
+    let sym_b_ns = graph.add_symbol(idx_b, "*ns*".into());
+    // A fallback symbol the hook will return.
+    let sym_b_fallback = graph.add_symbol(idx_b, "fallback".into());
+
+    // A: import { missing } from './b'
+    let mut named_imports_a = FxHashMap::default();
+    named_imports_a.insert(
+        sym_a_missing,
+        NamedImport {
+            imported_name: CompactString::new("missing"),
+            local_symbol: sym_a_missing,
+            record_idx: ImportRecordIdx::from_usize(0),
+            is_type: false,
+        },
+    );
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        named_imports_a,
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
+            meta: ImportRecordMeta::empty(),
+        }],
+        sym_a_default,
+        sym_a_ns,
+    ));
+
+    // B: no exports (so "missing" won't be found)
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![],
+        sym_b_default,
+        sym_b_ns,
+    ));
+
+    // Build resolved exports.
+    let resolved = build_resolved_exports(&graph);
+    for (idx, exports) in resolved {
+        if let Some(m) = graph.normal_module_mut(idx) {
+            m.resolved_exports = exports;
+        }
+    }
+
+    // Hook that overrides the no-match with a fallback symbol.
+    struct OverrideHooks {
+        fallback: SymbolRef,
+    }
+    impl ImportHooks for OverrideHooks {
+        fn on_final_no_match(
+            &mut self,
+            _target: ModuleIdx,
+            _import_name: &str,
+        ) -> Option<MatchImportKind> {
+            Some(MatchImportKind::Normal { symbol_ref: self.fallback })
+        }
+    }
+
+    let mut hooks = OverrideHooks { fallback: sym_b_fallback };
+    let mut config = LinkConfig { import_hooks: Some(&mut hooks), ..Default::default() };
+
+    let (errors, links) = match_imports_collect(&graph, &mut config);
+
+    // No errors because the hook overrode the no-match.
+    assert!(errors.is_empty(), "Expected no errors when hook overrides no-match, got: {errors:?}");
+    // The link should map sym_a_missing → sym_b_fallback.
+    assert_eq!(links.len(), 1);
+    assert_eq!(links[0], (sym_a_missing, sym_b_fallback));
+}
+
+// --- determine_module_exports_kind tests ---
+
+/// Helper: build a graph where A imports B with a specific ImportKind,
+/// and B has a given initial ExportsKind.
+fn exports_kind_graph(import_kind: ImportKind, importee_exports_kind: ExportsKind) -> ModuleGraph {
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let ns_rec = graph.add_symbol(idx_a, "__import_ns__".to_string());
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: import_kind,
+            namespace_ref: ns_rec,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = importee_exports_kind;
+    graph.add_normal_module(module_b);
+
+    graph
+}
+
+#[test]
+fn test_exports_kind_static_import_none_becomes_esm() {
+    let graph = exports_kind_graph(ImportKind::Static, ExportsKind::None);
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    let idx_b = ModuleIdx::from_usize(1);
+    assert_eq!(
+        result.exports_kind_updates.get(&idx_b).copied(),
+        Some(ExportsKind::Esm),
+        "Static import of None module should set it to Esm"
+    );
+}
+
+#[test]
+fn test_exports_kind_static_import_cjs_unchanged() {
+    let graph = exports_kind_graph(ImportKind::Static, ExportsKind::CommonJs);
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    let idx_b = ModuleIdx::from_usize(1);
+    assert!(
+        !result.exports_kind_updates.contains_key(&idx_b),
+        "Static import of CJS module should not change exports_kind"
+    );
+}
+
+#[test]
+fn test_exports_kind_require_esm_gets_esm_wrap() {
+    let graph = exports_kind_graph(ImportKind::Require, ExportsKind::Esm);
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    let idx_b = ModuleIdx::from_usize(1);
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_b).copied(),
+        Some(WrapKind::Esm),
+        "Require of ESM module should get WrapKind::Esm"
+    );
+}
+
+#[test]
+fn test_exports_kind_require_cjs_gets_cjs_wrap() {
+    let graph = exports_kind_graph(ImportKind::Require, ExportsKind::CommonJs);
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    let idx_b = ModuleIdx::from_usize(1);
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_b).copied(),
+        Some(WrapKind::Cjs),
+        "Require of CJS module should get WrapKind::Cjs"
+    );
+}
+
+#[test]
+fn test_exports_kind_require_none_becomes_cjs() {
+    let graph = exports_kind_graph(ImportKind::Require, ExportsKind::None);
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    let idx_b = ModuleIdx::from_usize(1);
+    assert_eq!(
+        result.exports_kind_updates.get(&idx_b).copied(),
+        Some(ExportsKind::CommonJs),
+        "Require of None module should set exports_kind to CommonJs"
+    );
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_b).copied(),
+        Some(WrapKind::Cjs),
+        "Require of None module should also set WrapKind::Cjs"
+    );
+}
+
+#[test]
+fn test_exports_kind_dynamic_as_require() {
+    let graph = exports_kind_graph(ImportKind::Dynamic, ExportsKind::None);
+    let config = ExportsKindConfig { dynamic_imports_as_require: true, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    let idx_b = ModuleIdx::from_usize(1);
+    assert_eq!(
+        result.exports_kind_updates.get(&idx_b).copied(),
+        Some(ExportsKind::CommonJs),
+        "Dynamic import with dynamic_imports_as_require should act like require"
+    );
+    assert_eq!(result.wrap_kind_updates.get(&idx_b).copied(), Some(WrapKind::Cjs),);
+}
+
+#[test]
+fn test_exports_kind_dynamic_default_no_change() {
+    let graph = exports_kind_graph(ImportKind::Dynamic, ExportsKind::None);
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    let idx_b = ModuleIdx::from_usize(1);
+    assert!(
+        !result.exports_kind_updates.contains_key(&idx_b),
+        "Dynamic import (default) should not change exports_kind"
+    );
+    assert!(
+        !result.wrap_kind_updates.contains_key(&idx_b),
+        "Dynamic import (default) should not set wrap_kind"
+    );
+}
+
+#[test]
+fn test_exports_kind_cjs_non_entry_wrapped() {
+    // B is CJS, not an entry point → should be wrapped.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(1);
+
+    let idx_b = ModuleIdx::from_usize(0);
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::CommonJs;
+    graph.add_normal_module(module_b);
+    // No entries set → B is not an entry.
+
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_b).copied(),
+        Some(WrapKind::Cjs),
+        "CJS non-entry module should be wrapped"
+    );
+}
+
+#[test]
+fn test_exports_kind_cjs_entry_not_wrapped() {
+    // B is CJS and an entry point, wrap_cjs_entries = false → NOT wrapped.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(1);
+
+    let idx_b = ModuleIdx::from_usize(0);
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::CommonJs;
+    graph.add_normal_module(module_b);
+    graph.set_entries(vec![idx_b]);
+
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    assert!(
+        !result.wrap_kind_updates.contains_key(&idx_b),
+        "CJS entry with wrap_cjs_entries=false should NOT be wrapped"
+    );
+}
+
+#[test]
+fn test_exports_kind_cjs_entry_wrapped() {
+    // B is CJS and an entry point, wrap_cjs_entries = true → wrapped.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(1);
+
+    let idx_b = ModuleIdx::from_usize(0);
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::CommonJs;
+    graph.add_normal_module(module_b);
+    graph.set_entries(vec![idx_b]);
+
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: true };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_b).copied(),
+        Some(WrapKind::Cjs),
+        "CJS entry with wrap_cjs_entries=true should be wrapped"
+    );
+}
+
+#[test]
+fn test_exports_kind_mixed_graph() {
+    // A --(static)--> B, B --(require)--> C (all start as None)
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+    let (default_c, ns_c) = make_simple_module(&mut graph, idx_c, "/c.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__import_ns_a__".to_string());
+    let ns_rec_b = graph.add_symbol(idx_b, "__import_ns_b__".to_string());
+
+    // A imports B (static)
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    // B requires C
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Require,
+            namespace_ref: ns_rec_b,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_b,
+        ns_b,
+    ));
+
+    // C has no imports
+    graph.add_normal_module(make_normal_module(
+        idx_c,
+        "/c.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_c,
+        ns_c,
+    ));
+
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: true };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    // B should become ESM (static import from A)
+    assert_eq!(
+        result.exports_kind_updates.get(&idx_b).copied(),
+        Some(ExportsKind::Esm),
+        "B should become ESM from static import"
+    );
+    // C should become CJS (require from B) and be wrapped
+    assert_eq!(
+        result.exports_kind_updates.get(&idx_c).copied(),
+        Some(ExportsKind::CommonJs),
+        "C should become CJS from require"
+    );
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_c).copied(),
+        Some(WrapKind::Cjs),
+        "C should be wrapped"
+    );
+}
+
+// --- wrap_modules tests ---
+
+#[test]
+fn test_wrap_propagation_basic() {
+    // A requires B(ESM) → C(ESM, static import from B)
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+    let (default_c, ns_c) = make_simple_module(&mut graph, idx_c, "/c.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__ns__".to_string());
+    let ns_rec_b = graph.add_symbol(idx_b, "__ns__".to_string());
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Require,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_b,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::Esm;
+    module_b.wrap_kind = WrapKind::Esm; // Set by determine_module_exports_kind
+    graph.add_normal_module(module_b);
+
+    let mut module_c = make_normal_module(
+        idx_c,
+        "/c.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_c,
+        ns_c,
+    );
+    module_c.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_c);
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    // C should be wrapped ESM because B is wrapped and C is B's dependency.
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_c).copied(),
+        Some(WrapKind::Esm),
+        "C should be wrapped ESM via propagation from B"
+    );
+}
+
+#[test]
+fn test_wrap_cjs_dep_always_wrapped() {
+    // A(ESM) imports B(ESM) imports C(CJS) — C should be wrapped even though A is not.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+    let (default_c, ns_c) = make_simple_module(&mut graph, idx_c, "/c.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__ns__".to_string());
+    let ns_rec_b = graph.add_symbol(idx_b, "__ns__".to_string());
+
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    );
+    module_a.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_a);
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_b,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_b);
+
+    let mut module_c = make_normal_module(
+        idx_c,
+        "/c.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_c,
+        ns_c,
+    );
+    module_c.exports_kind = ExportsKind::CommonJs;
+    graph.add_normal_module(module_c);
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_c).copied(),
+        Some(WrapKind::Cjs),
+        "CJS dep should always be wrapped"
+    );
+    assert!(
+        !result.wrap_kind_updates.contains_key(&idx_a),
+        "A (non-wrapped ESM) should not gain wrapping"
+    );
+}
+
+#[test]
+fn test_wrap_deep_chain() {
+    // A requires B(ESM) → C(ESM) → D(ESM) — all should be wrapped.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(4);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+    let idx_d = ModuleIdx::from_usize(3);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+    let (default_c, ns_c) = make_simple_module(&mut graph, idx_c, "/c.js");
+    let (default_d, ns_d) = make_simple_module(&mut graph, idx_d, "/d.js");
+
+    let ns_a_rec = graph.add_symbol(idx_a, "__ns__".to_string());
+    let ns_b_rec = graph.add_symbol(idx_b, "__ns__".to_string());
+    let ns_c_rec = graph.add_symbol(idx_c, "__ns__".to_string());
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Require,
+            namespace_ref: ns_a_rec,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+            namespace_ref: ns_b_rec,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::Esm;
+    module_b.wrap_kind = WrapKind::Esm;
+    graph.add_normal_module(module_b);
+
+    let mut module_c = make_normal_module(
+        idx_c,
+        "/c.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./d"),
+            resolved_module: Some(idx_d),
+            kind: ImportKind::Static,
+            namespace_ref: ns_c_rec,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_c,
+        ns_c,
+    );
+    module_c.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_c);
+
+    let mut module_d = make_normal_module(
+        idx_d,
+        "/d.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_d,
+        ns_d,
+    );
+    module_d.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_d);
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    assert_eq!(result.wrap_kind_updates.get(&idx_c).copied(), Some(WrapKind::Esm));
+    assert_eq!(result.wrap_kind_updates.get(&idx_d).copied(), Some(WrapKind::Esm));
+}
+
+#[test]
+fn test_wrap_creates_wrapper_symbols() {
+    // CJS module and ESM module both wrapped → correct wrapper_ref names.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_cjs = ModuleIdx::from_usize(0);
+    let idx_esm = ModuleIdx::from_usize(1);
+
+    let (default_cjs, ns_cjs) = make_simple_module(&mut graph, idx_cjs, "/cjs_mod.js");
+    let (default_esm, ns_esm) = make_simple_module(&mut graph, idx_esm, "/esm_mod.js");
+
+    let mut module_cjs = make_normal_module(
+        idx_cjs,
+        "/cjs_mod.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_cjs,
+        ns_cjs,
+    );
+    module_cjs.exports_kind = ExportsKind::CommonJs;
+    module_cjs.wrap_kind = WrapKind::Cjs;
+    graph.add_normal_module(module_cjs);
+
+    let mut module_esm = make_normal_module(
+        idx_esm,
+        "/esm_mod.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_esm,
+        ns_esm,
+    );
+    module_esm.exports_kind = ExportsKind::Esm;
+    module_esm.wrap_kind = WrapKind::Esm;
+    graph.add_normal_module(module_esm);
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    let cjs_wrapper = result.wrapper_refs.get(&idx_cjs).expect("CJS module should have wrapper");
+    let esm_wrapper = result.wrapper_refs.get(&idx_esm).expect("ESM module should have wrapper");
+
+    assert_eq!(graph.symbol_name(*cjs_wrapper), "require_cjs_mod");
+    assert_eq!(graph.symbol_name(*esm_wrapper), "init_esm_mod");
+}
+
+#[test]
+fn test_wrap_no_propagation_without_cjs() {
+    // A(ESM) → B(ESM) → C(ESM), no require — nothing should be wrapped.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+    let (default_c, ns_c) = make_simple_module(&mut graph, idx_c, "/c.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__ns__".to_string());
+    let ns_rec_b = graph.add_symbol(idx_b, "__ns__".to_string());
+
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    );
+    module_a.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_a);
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_b,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_b);
+
+    let mut module_c = make_normal_module(
+        idx_c,
+        "/c.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_c,
+        ns_c,
+    );
+    module_c.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_c);
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    assert!(result.wrap_kind_updates.is_empty(), "Pure ESM graph should have no wrapping");
+    assert!(result.wrapper_refs.is_empty(), "No wrapper symbols should be created");
+}
+
+#[test]
+fn test_wrap_skips_external() {
+    // A requires B (external) — B should not appear in wrap results.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_ext = ModuleIdx::from_usize(1);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let ns_ext = graph.add_symbol(idx_ext, "__namespace__".to_string());
+
+    let ns_rec = graph.add_symbol(idx_a, "__ns__".to_string());
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("external"),
+            resolved_module: Some(idx_ext),
+            kind: ImportKind::Require,
+            namespace_ref: ns_rec,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    graph.add_external_module(ExternalModule {
+        idx: idx_ext,
+        specifier: CompactString::new("external"),
+        side_effects: SideEffects::True,
+        namespace_ref: ns_ext,
+        exec_order: u32::MAX,
+    });
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    assert!(
+        !result.wrap_kind_updates.contains_key(&idx_ext),
+        "External module should not appear in wrap results"
+    );
+}
+
+#[test]
+fn test_wrap_cyclic_deps() {
+    // A requires B, B imports A → should terminate, both wrapped.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__ns__".to_string());
+    let ns_rec_b = graph.add_symbol(idx_b, "__ns__".to_string());
+
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Require,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    );
+    module_a.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_a);
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./a"),
+            resolved_module: Some(idx_a),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_b,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::Esm;
+    module_b.wrap_kind = WrapKind::Esm; // B was marked wrapping by determine_module_exports_kind
+    graph.add_normal_module(module_b);
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    // Should terminate (no infinite loop) and A should get wrapped via propagation.
+    assert!(
+        result.wrap_kind_updates.contains_key(&idx_a),
+        "A should be wrapped via propagation from B"
+    );
+}
+
+#[test]
+fn test_wrap_runtime_not_wrapped() {
+    // Runtime module should not be wrapped even if it's a dependency of a wrapped module.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_runtime = ModuleIdx::from_usize(0);
+    let idx_a = ModuleIdx::from_usize(1);
+
+    let (default_rt, ns_rt) = make_simple_module(&mut graph, idx_runtime, "/runtime.js");
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+
+    let ns_rec = graph.add_symbol(idx_a, "__ns__".to_string());
+
+    graph.add_normal_module(make_normal_module(
+        idx_runtime,
+        "/runtime.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_rt,
+        ns_rt,
+    ));
+
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./runtime"),
+            resolved_module: Some(idx_runtime),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    );
+    module_a.exports_kind = ExportsKind::Esm;
+    module_a.wrap_kind = WrapKind::Esm;
+    graph.add_normal_module(module_a);
+
+    graph.set_runtime(idx_runtime);
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    assert!(
+        !result.wrap_kind_updates.contains_key(&idx_runtime),
+        "Runtime module should not be wrapped"
+    );
+}
+
+// --- Full pipeline test ---
+
+#[test]
+fn test_link_with_cjs_interop() {
+    // A(ESM) --static--> B(None) --require--> C(None)
+    // After link: B=ESM, C=CJS+wrapped, dynamic_exports on C, wrapper_ref on C.
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+    let (default_c, ns_c) = make_simple_module(&mut graph, idx_c, "/c.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__ns__".to_string());
+    let ns_rec_b = graph.add_symbol(idx_b, "__ns__".to_string());
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Require,
+            namespace_ref: ns_rec_b,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_b,
+        ns_b,
+    ));
+
+    graph.add_normal_module(make_normal_module(
+        idx_c,
+        "/c.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_c,
+        ns_c,
+    ));
+
+    graph.set_entries(vec![idx_a]);
+    graph.link(&mut LinkConfig::default());
+
+    // B should be ESM (static import from A turns None → ESM).
+    let b = graph.normal_module(idx_b).unwrap();
+    assert_eq!(b.exports_kind, ExportsKind::Esm, "B should be ESM after link");
+
+    // C should be CJS (require from B turns None → CJS).
+    let c = graph.normal_module(idx_c).unwrap();
+    assert_eq!(c.exports_kind, ExportsKind::CommonJs, "C should be CJS after link");
+    assert_eq!(c.wrap_kind, WrapKind::Cjs, "C should be wrapped CJS");
+    assert!(c.wrapper_ref.is_some(), "C should have a wrapper_ref");
+    assert!(c.has_dynamic_exports, "CJS C should have dynamic exports");
+
+    // Wrapper name should be "require_c".
+    let wrapper = c.wrapper_ref.unwrap();
+    assert_eq!(graph.symbol_name(wrapper), "require_c");
+}
+
+// --- Phase C: has_lazy_export tests ---
+
+#[test]
+fn test_exports_kind_lazy_export_stays_none() {
+    // A static-imports B (None, has_lazy_export=true) → B stays None
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let ns_rec = graph.add_symbol(idx_a, "__import_ns__".to_string());
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.has_lazy_export = true;
+    graph.add_normal_module(module_b);
+
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    assert!(
+        !result.exports_kind_updates.contains_key(&idx_b),
+        "Module with has_lazy_export should NOT be classified as ESM by static import"
+    );
+}
+
+#[test]
+fn test_exports_kind_lazy_export_require_still_cjs() {
+    // A requires B (None, has_lazy_export=true) → B → CJS + wrap
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let ns_rec = graph.add_symbol(idx_a, "__import_ns__".to_string());
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Require,
+            namespace_ref: ns_rec,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.has_lazy_export = true;
+    graph.add_normal_module(module_b);
+
+    let config = ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: false };
+    let result = determine_module_exports_kind(&graph, &config);
+
+    assert_eq!(
+        result.exports_kind_updates.get(&idx_b).copied(),
+        Some(ExportsKind::CommonJs),
+        "Require of lazy-export module should still become CJS"
+    );
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_b).copied(),
+        Some(WrapKind::Cjs),
+        "Require of lazy-export module should get CJS wrap"
+    );
+}
+
+// --- Phase C: wrap_modules new feature tests ---
+
+#[test]
+fn test_wrap_required_by_other_module() {
+    // A requires B, B imports C → B in required_by_other_module
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+    let (default_c, ns_c) = make_simple_module(&mut graph, idx_c, "/c.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__ns_rec__".to_string());
+    let ns_rec_b = graph.add_symbol(idx_b, "__ns_rec__".to_string());
+
+    // A requires B
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Require,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    // B imports C (static)
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_b,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_b,
+        ns_b,
+    );
+    // B is ESM and gets required → will be wrap ESM from exports_kind
+    module_b.exports_kind = ExportsKind::Esm;
+    module_b.wrap_kind = WrapKind::Esm;
+    graph.add_normal_module(module_b);
+
+    // C is a leaf
+    graph.add_normal_module(make_normal_module(
+        idx_c,
+        "/c.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_c,
+        ns_c,
+    ));
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    assert!(
+        result.required_by_other_module.contains(&idx_b),
+        "B should be in required_by_other_module since A requires B"
+    );
+}
+
+#[test]
+fn test_wrap_original_wrap_kind_preserved() {
+    // A requires B(ESM), propagates to C → original_wrap_kind for C is set
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+    let (default_c, ns_c) = make_simple_module(&mut graph, idx_c, "/c.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__ns_rec__".to_string());
+    let ns_rec_b = graph.add_symbol(idx_b, "__ns_rec__".to_string());
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Require,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    // B is ESM with wrap from exports_kind
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./c"),
+            resolved_module: Some(idx_c),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_b,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::Esm;
+    module_b.wrap_kind = WrapKind::Esm;
+    graph.add_normal_module(module_b);
+
+    // C has imports (so on-demand won't skip it)
+    graph.add_normal_module(make_normal_module(
+        idx_c,
+        "/c.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_c,
+        ns_c,
+    ));
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    // C should get wrapped via propagation, and its original_wrap_kind should be recorded
+    assert!(
+        result.original_wrap_kinds.contains_key(&idx_c),
+        "C's original_wrap_kind should be recorded during propagation"
+    );
+    assert_eq!(
+        result.original_wrap_kinds.get(&idx_c).copied(),
+        Some(WrapKind::Esm),
+        "C's original_wrap_kind should be Esm"
+    );
+}
+
+#[test]
+fn test_wrap_strict_execution_order() {
+    // strict=true, mixed graph → All CJS wrapped, ESM wrapped
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+    let (default_c, ns_c) = make_simple_module(&mut graph, idx_c, "/c.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__ns_rec__".to_string());
+
+    // A imports B (static)
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    // B is CJS
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::CommonJs;
+    graph.add_normal_module(module_b);
+
+    // C is ESM, no imports
+    let mut module_c = make_normal_module(
+        idx_c,
+        "/c.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_c,
+        ns_c,
+    );
+    module_c.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_c);
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: false,
+        strict_execution_order: true,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    // A should be wrapped ESM (strict forces wrapping)
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_a).copied(),
+        Some(WrapKind::Esm),
+        "A should be wrapped ESM in strict mode"
+    );
+    // B should be wrapped CJS
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_b).copied(),
+        Some(WrapKind::Cjs),
+        "B(CJS) should be wrapped CJS in strict mode"
+    );
+    // C should be wrapped ESM
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_c).copied(),
+        Some(WrapKind::Esm),
+        "C(ESM) should be wrapped ESM in strict mode"
+    );
+}
+
+#[test]
+fn test_wrap_strict_with_on_demand() {
+    // strict+on_demand, pure ESM leaf with no imports → Leaf skips wrapping
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__ns_rec__".to_string());
+
+    // A imports B (static)
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    ));
+
+    // B is ESM leaf with no imports
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_b);
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: true,
+        strict_execution_order: true,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    // B should skip wrapping (on-demand: pure ESM, no imports, not sensitive)
+    assert!(
+        !result.wrap_kind_updates.contains_key(&idx_b),
+        "Pure ESM leaf B should skip wrapping with strict+on_demand"
+    );
+}
+
+#[test]
+fn test_wrap_execution_order_sensitive() {
+    // on_demand, sensitive module with no imports → Still wrapped
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__ns_rec__".to_string());
+
+    // A imports B, A is wrapped
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    );
+    module_a.wrap_kind = WrapKind::Esm;
+    graph.add_normal_module(module_a);
+
+    // B is ESM leaf with no imports but execution_order_sensitive
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::Esm;
+    module_b.execution_order_sensitive = true;
+    graph.add_normal_module(module_b);
+
+    let config = WrapModulesConfig {
+        on_demand_wrapping: true,
+        strict_execution_order: false,
+        skip_symbol_creation: false,
+    };
+    let result = wrap_modules(&mut graph, &config);
+
+    // B should still be wrapped because it's execution_order_sensitive
+    assert_eq!(
+        result.wrap_kind_updates.get(&idx_b).copied(),
+        Some(WrapKind::Esm),
+        "Execution-order-sensitive module should be wrapped even with on-demand wrapping"
+    );
+}
+
+// --- Phase C: determine_safely_merge_cjs_ns tests ---
+
+#[test]
+fn test_safely_merge_basic() {
+    // A(ESM) imports B(CJS) → B in map, namespace_ref from A
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let ns_rec = graph.add_symbol(idx_a, "__import_ns__".to_string());
+
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    );
+    module_a.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_a);
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::CommonJs;
+    graph.add_normal_module(module_b);
+
+    let result = determine_safely_merge_cjs_ns(&graph);
+
+    assert!(result.contains_key(&idx_b), "B(CJS) should be in the merge map");
+    let info = &result[&idx_b];
+    assert_eq!(info.namespace_refs.len(), 1, "Should have 1 namespace ref from A");
+    assert_eq!(info.namespace_refs[0], ns_rec);
+    assert!(info.needs_interop, "CJS target should need interop");
+}
+
+#[test]
+fn test_safely_merge_excludes_star_export() {
+    // A has `export * from B(CJS)` → B NOT in map
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(2);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+
+    let ns_rec = graph.add_symbol(idx_a, "__import_ns__".to_string());
+
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec,
+            meta: ImportRecordMeta::IS_EXPORT_STAR, // star export
+        }],
+        default_a,
+        ns_a,
+    );
+    module_a.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_a);
+
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::CommonJs;
+    graph.add_normal_module(module_b);
+
+    let result = determine_safely_merge_cjs_ns(&graph);
+
+    assert!(
+        !result.contains_key(&idx_b),
+        "Star export to CJS module should NOT be in the merge map"
+    );
+}
+
+#[test]
+fn test_safely_merge_multiple_importers() {
+    // A and C both import B(CJS) → B has 2 namespace_refs
+    let mut graph = ModuleGraph::new();
+    graph.symbols.ensure_modules(3);
+
+    let idx_a = ModuleIdx::from_usize(0);
+    let idx_b = ModuleIdx::from_usize(1);
+    let idx_c = ModuleIdx::from_usize(2);
+
+    let (default_a, ns_a) = make_simple_module(&mut graph, idx_a, "/a.js");
+    let (default_b, ns_b) = make_simple_module(&mut graph, idx_b, "/b.js");
+    let (default_c, ns_c) = make_simple_module(&mut graph, idx_c, "/c.js");
+
+    let ns_rec_a = graph.add_symbol(idx_a, "__import_ns__".to_string());
+    let ns_rec_c = graph.add_symbol(idx_c, "__import_ns__".to_string());
+
+    // A imports B
+    let mut module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_a,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_a,
+        ns_a,
+    );
+    module_a.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_a);
+
+    // B is CJS
+    let mut module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        Vec::new(),
+        default_b,
+        ns_b,
+    );
+    module_b.exports_kind = ExportsKind::CommonJs;
+    graph.add_normal_module(module_b);
+
+    // C imports B
+    let mut module_c = make_normal_module(
+        idx_c,
+        "/c.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: ns_rec_c,
+            meta: ImportRecordMeta::empty(),
+        }],
+        default_c,
+        ns_c,
+    );
+    module_c.exports_kind = ExportsKind::Esm;
+    graph.add_normal_module(module_c);
+
+    let result = determine_safely_merge_cjs_ns(&graph);
+
+    assert!(result.contains_key(&idx_b), "B(CJS) should be in the merge map");
+    let info = &result[&idx_b];
+    assert_eq!(info.namespace_refs.len(), 2, "Should have 2 namespace refs from A and C");
+    assert!(info.namespace_refs.contains(&ns_rec_a), "Should contain A's namespace ref");
+    assert!(info.namespace_refs.contains(&ns_rec_c), "Should contain C's namespace ref");
 }

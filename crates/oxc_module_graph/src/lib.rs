@@ -38,7 +38,7 @@
 //! // ... add modules, set entries ...
 //!
 //! // Link phase: run all algorithms
-//! graph.link(&LinkConfig::default());
+//! graph.link(&mut LinkConfig::default());
 //!
 //! // Query results directly on modules
 //! for module in graph.normal_modules() {
@@ -53,6 +53,8 @@
 //! - [`bind_imports_and_exports`] — Resolve imports to exports + link symbols
 //! - [`compute_exec_order`] — DFS post-order execution sort
 //! - [`compute_tla`] — Top-level await propagation
+//! - [`determine_module_exports_kind`] — Classify module export format + mark wrapping
+//! - [`wrap_modules`] — Propagate wrapping through deps + create wrapper symbols
 //! - [`determine_side_effects`] — Side-effects propagation
 //! - [`find_cycles`] — Cycle detection
 //! - [`compute_has_dynamic_exports`] — Dynamic export detection
@@ -78,7 +80,9 @@ pub use module::{ExternalModule, Module, NormalModule, SideEffects};
 
 // Re-export algorithms at crate root.
 pub use algo::{
-    BindingError, ExecOrderConfig, ExecOrderResult, bind_imports_and_exports,
+    BindingError, ExecOrderConfig, ExecOrderResult, ExportsKindConfig, ExportsKindResult,
+    SafelyMergeCjsNsInfo, WrapModulesConfig, WrapModulesResult, bind_imports_and_exports,
     build_resolved_exports, compute_exec_order, compute_has_dynamic_exports, compute_tla,
-    determine_side_effects, find_cycles, match_imports,
+    determine_module_exports_kind, determine_safely_merge_cjs_ns, determine_side_effects,
+    find_cycles, match_imports, match_imports_collect, wrap_modules,
 };
