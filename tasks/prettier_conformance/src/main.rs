@@ -19,11 +19,7 @@ fn main() {
     if jsdoc {
         JsdocTestRunner::new(filter, debug).run();
     } else {
-        let options = TestRunnerOptions {
-            language: TestLanguage::Js,
-            debug,
-            filter,
-        };
+        let options = TestRunnerOptions { language: TestLanguage::Js, debug, filter };
         TestRunner::new(options.clone()).run();
         TestRunner::new(TestRunnerOptions { language: TestLanguage::Ts, ..options }).run();
     }

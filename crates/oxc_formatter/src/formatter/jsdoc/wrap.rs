@@ -25,33 +25,35 @@ fn parse_list_item(trimmed: &str) -> Option<ListItemPrefix> {
     {
         // Try "N. " format first
         if let Some(dot_space_pos) = trimmed.find(". ")
-            && dot_space_pos < 5 {
-                let number = &trimmed[..dot_space_pos];
+            && dot_space_pos < 5
+        {
+            let number = &trimmed[..dot_space_pos];
+            let prefix = format!("{number}. ");
+            let rest_start = dot_space_pos + 2;
+            return Some(ListItemPrefix {
+                indent_width: prefix.len(),
+                normalized_prefix: prefix,
+                rest_start,
+            });
+        }
+        // Try "N- " format (non-standard, convert to "N. ")
+        if let Some(dash_pos) = trimmed.find('-')
+            && dash_pos < 5
+        {
+            let number = &trimmed[..dash_pos];
+            if number.chars().all(|c| c.is_ascii_digit()) {
                 let prefix = format!("{number}. ");
-                let rest_start = dot_space_pos + 2;
+                // Skip past dash and any extra spaces
+                let after_dash = &trimmed[dash_pos + 1..];
+                let spaces = after_dash.len() - after_dash.trim_start().len();
+                let rest_start = dash_pos + 1 + spaces;
                 return Some(ListItemPrefix {
                     indent_width: prefix.len(),
                     normalized_prefix: prefix,
                     rest_start,
                 });
             }
-        // Try "N- " format (non-standard, convert to "N. ")
-        if let Some(dash_pos) = trimmed.find('-')
-            && dash_pos < 5 {
-                let number = &trimmed[..dash_pos];
-                if number.chars().all(|c| c.is_ascii_digit()) {
-                    let prefix = format!("{number}. ");
-                    // Skip past dash and any extra spaces
-                    let after_dash = &trimmed[dash_pos + 1..];
-                    let spaces = after_dash.len() - after_dash.trim_start().len();
-                    let rest_start = dash_pos + 1 + spaces;
-                    return Some(ListItemPrefix {
-                        indent_width: prefix.len(),
-                        normalized_prefix: prefix,
-                        rest_start,
-                    });
-                }
-            }
+        }
     }
     None
 }
@@ -161,10 +163,7 @@ fn format_table_block(table_lines: &[String], lines: &mut Vec<String>) {
     for (idx, table_line) in table_lines.iter().enumerate() {
         if idx == separator_idx {
             // Format separator row
-            let sep_cells: Vec<String> = col_widths
-                .iter()
-                .map(|&w| "-".repeat(w))
-                .collect();
+            let sep_cells: Vec<String> = col_widths.iter().map(|&w| "-".repeat(w)).collect();
             let formatted = format!("| {} |", sep_cells.join(" | "));
             lines.push(formatted);
         } else {
@@ -291,14 +290,16 @@ fn wrap_paragraph(
         // Post-processing: match plugin's `>=` boundary behavior for continuation lines.
         // The plugin prepends `\n` to continuation text, which causes `str.length >= maxWidth`
         // to trigger an extra wrap when remaining content is exactly `maxWidth` characters.
-        if !is_first_line && current_line.len() == effective_max
-            && let Some(last_space) = current_line.rfind(' ') {
-                let overflow = current_line[last_space + 1..].to_string();
-                current_line.truncate(last_space);
-                lines.push(format!("{indent_str}{current_line}"));
-                lines.push(format!("{indent_str}{overflow}"));
-                return;
-            }
+        if !is_first_line
+            && current_line.len() == effective_max
+            && let Some(last_space) = current_line.rfind(' ')
+        {
+            let overflow = current_line[last_space + 1..].to_string();
+            current_line.truncate(last_space);
+            lines.push(format!("{indent_str}{current_line}"));
+            lines.push(format!("{indent_str}{overflow}"));
+            return;
+        }
 
         if is_first_line {
             lines.push(current_line);
@@ -342,32 +343,31 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
         }
     };
 
-    let flush_list_item =
-        |list_marker: &mut String,
-         list_text: &mut String,
-         current_list_indent: &mut Option<usize>,
-         lines: &mut Vec<String>| {
-            if !list_text.is_empty() {
-                let indent = current_list_indent.unwrap_or(0);
-                // Wrap the content without the marker, then prepend the marker
-                // to the first line. This matches the plugin's behavior where
-                // the paragraph content is wrapped at commentContentPrintWidth,
-                // and the list marker is prepended afterward (allowing the first
-                // line to exceed the nominal width by the marker width).
-                let mut item_lines = Vec::new();
-                wrap_paragraph(list_text.trim(), max_width, indent, &mut item_lines);
-                for (idx, line) in item_lines.into_iter().enumerate() {
-                    if idx == 0 {
-                        lines.push(format!("{list_marker}{line}"));
-                    } else {
-                        lines.push(line);
-                    }
+    let flush_list_item = |list_marker: &mut String,
+                           list_text: &mut String,
+                           current_list_indent: &mut Option<usize>,
+                           lines: &mut Vec<String>| {
+        if !list_text.is_empty() {
+            let indent = current_list_indent.unwrap_or(0);
+            // Wrap the content without the marker, then prepend the marker
+            // to the first line. This matches the plugin's behavior where
+            // the paragraph content is wrapped at commentContentPrintWidth,
+            // and the list marker is prepended afterward (allowing the first
+            // line to exceed the nominal width by the marker width).
+            let mut item_lines = Vec::new();
+            wrap_paragraph(list_text.trim(), max_width, indent, &mut item_lines);
+            for (idx, line) in item_lines.into_iter().enumerate() {
+                if idx == 0 {
+                    lines.push(format!("{list_marker}{line}"));
+                } else {
+                    lines.push(line);
                 }
-                list_text.clear();
-                list_marker.clear();
             }
-            *current_list_indent = None;
-        };
+            list_text.clear();
+            list_marker.clear();
+        }
+        *current_list_indent = None;
+    };
 
     let mut i = 0;
     while i < input_lines.len() {
@@ -453,7 +453,12 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
                     });
 
                 if next_is_list {
-                    flush_list_item(&mut list_marker, &mut list_text, &mut current_list_indent, lines);
+                    flush_list_item(
+                        &mut list_marker,
+                        &mut list_text,
+                        &mut current_list_indent,
+                        lines,
+                    );
                     i += 1;
                     continue;
                 }
@@ -462,7 +467,12 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
                     // Flush current list item, add blank separator.
                     // Save the list indent for the continuation paragraph.
                     let saved_indent = current_list_indent.unwrap_or(0);
-                    flush_list_item(&mut list_marker, &mut list_text, &mut current_list_indent, lines);
+                    flush_list_item(
+                        &mut list_marker,
+                        &mut list_text,
+                        &mut current_list_indent,
+                        lines,
+                    );
                     lines.push(String::new());
                     // Exit list mode; instead accumulate the continuation paragraph
                     // and wrap ALL lines (including first) with the saved indent.
@@ -606,9 +616,8 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
                 lines.push(String::new());
             }
             lines.push(trimmed.to_string());
-            let next_is_content = input_lines.get(i + 1).is_some_and(|next| {
-                !next.trim().is_empty()
-            });
+            let next_is_content =
+                input_lines.get(i + 1).is_some_and(|next| !next.trim().is_empty());
             if next_is_content {
                 lines.push(String::new());
             }
@@ -704,7 +713,11 @@ mod tests {
     #[test]
     fn test_wrap_list_item_with_continuation() {
         let mut lines = Vec::new();
-        wrap_text("- This is a very long list item that should be wrapped to the next line with proper indent", 40, &mut lines);
+        wrap_text(
+            "- This is a very long list item that should be wrapped to the next line with proper indent",
+            40,
+            &mut lines,
+        );
         assert_eq!(
             lines,
             vec![
@@ -756,7 +769,11 @@ mod tests {
     #[test]
     fn test_list_item_wrapping_at_boundary() {
         let mut lines = Vec::new();
-        wrap_text("- Consider caching this for the lifetime of the component, or possibly being able to share this cache between any `ScrollMap` view.", 77, &mut lines);
+        wrap_text(
+            "- Consider caching this for the lifetime of the component, or possibly being able to share this cache between any `ScrollMap` view.",
+            77,
+            &mut lines,
+        );
         assert_eq!(
             lines,
             vec![
@@ -770,7 +787,11 @@ mod tests {
     fn test_list_multiline_input() {
         // Test that multi-line list items from JSDoc are joined correctly
         let mut lines = Vec::new();
-        wrap_text("- Consider caching this for the lifetime of the component, or possibly being able to share this\ncache between any `ScrollMap` view.", 77, &mut lines);
+        wrap_text(
+            "- Consider caching this for the lifetime of the component, or possibly being able to share this\ncache between any `ScrollMap` view.",
+            77,
+            &mut lines,
+        );
         assert_eq!(
             lines,
             vec![

@@ -120,11 +120,7 @@ pub fn unescape_markdown_backslashes(text: &str) -> String {
 /// Capitalize the first ASCII lowercase letter of a string.
 /// Skips if the string starts with a backtick (inline code) or a URL.
 pub fn capitalize_first(s: &str) -> String {
-    if s.is_empty()
-        || s.starts_with('`')
-        || s.starts_with("http://")
-        || s.starts_with("https://")
-    {
+    if s.is_empty() || s.starts_with('`') || s.starts_with("http://") || s.starts_with("https://") {
         return s.to_string();
     }
 
@@ -168,18 +164,10 @@ fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> String {
     // This matches the plugin's convertToModernType() inside withoutStrings().
     let transformed = without_strings(type_str, normalize_type_inner);
     // Phase 2: Convert import() path quotes (simulating Prettier's TS parser).
-    let quoted = if convert_quotes {
-        normalize_type_quotes(&transformed)
-    } else {
-        transformed
-    };
+    let quoted = if convert_quotes { normalize_type_quotes(&transformed) } else { transformed };
     // Phase 3: Unquote object property names that are valid JS identifiers.
     // The plugin's formatType() uses Prettier's TS parser which strips unnecessary quotes.
-    let unquoted = if convert_quotes {
-        unquote_object_property_names(&quoted)
-    } else {
-        quoted
-    };
+    let unquoted = if convert_quotes { unquote_object_property_names(&quoted) } else { quoted };
     // Phase 4: Format inline object type spacing (simulating Prettier's TS parser).
     // { key:value } → { key: value }
     format_inline_object_type(&unquoted)
@@ -475,7 +463,6 @@ pub fn strip_optional_type_suffix(type_str: &str) -> (&str, bool) {
     }
     (trimmed, false)
 }
-
 
 /// Check if a type string needs parenthesization when used as an array element type.
 /// This includes top-level unions (`|`) and function types (`=>`).
@@ -927,10 +914,7 @@ mod tests {
     #[test]
     fn test_normalize_type_quotes() {
         assert_eq!(normalize_type("import('axios')"), "import(\"axios\")");
-        assert_eq!(
-            normalize_type("import('../types').Foo"),
-            "import(\"../types\").Foo"
-        );
+        assert_eq!(normalize_type("import('../types').Foo"), "import(\"../types\").Foo");
         assert_eq!(normalize_type("import(\"axios\")"), "import(\"axios\")");
     }
 
@@ -938,26 +922,19 @@ mod tests {
     fn test_normalize_array_type() {
         assert_eq!(normalize_type("Array.<String>"), "String[]");
         assert_eq!(normalize_type("Array<String>"), "String[]");
-        assert_eq!(
-            normalize_type("Array<(String | Number)>"),
-            "(String | Number)[]"
-        );
-        assert_eq!(
-            normalize_type("Array<String|Number>"),
-            "(String | Number)[]"
-        );
+        assert_eq!(normalize_type("Array<(String | Number)>"), "(String | Number)[]");
+        assert_eq!(normalize_type("Array<String|Number>"), "(String | Number)[]");
         // Arrow function inside Array<> should not confuse the > matching
         assert_eq!(
             normalize_type("Array<(element: HTMLElement) => boolean>"),
             "((element: HTMLElement) => boolean)[]"
         );
         // Array conversion inside union members
+        assert_eq!(normalize_type("Array<number> | Array<string>"), "number[] | string[]");
         assert_eq!(
-            normalize_type("Array<number> | Array<string>"),
-            "number[] | string[]"
-        );
-        assert_eq!(
-            normalize_type("Array<(item: Foo<Bar>) => Bar<number>> | Array<number> | Array<string>"),
+            normalize_type(
+                "Array<(item: Foo<Bar>) => Bar<number>> | Array<number> | Array<string>"
+            ),
             "((item: Foo<Bar>) => Bar<number>)[] | number[] | string[]"
         );
     }
@@ -966,14 +943,8 @@ mod tests {
     fn test_normalize_rest_type() {
         assert_eq!(normalize_type("... *"), "...any");
         assert_eq!(normalize_type("... number"), "...number");
-        assert_eq!(
-            normalize_type("... (string|number)"),
-            "...(string | number)"
-        );
-        assert_eq!(
-            normalize_type("... string|number"),
-            "...(string | number)"
-        );
+        assert_eq!(normalize_type("... (string|number)"), "...(string | number)");
+        assert_eq!(normalize_type("... string|number"), "...(string | number)");
     }
 
     #[test]
