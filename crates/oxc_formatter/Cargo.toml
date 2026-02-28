@@ -31,6 +31,7 @@ oxc_syntax = { workspace = true }
 
 cow-utils = { workspace = true }
 fast-glob = { workspace = true }
+markdown = { workspace = true }
 natord = { workspace = true }
 nodejs-built-in-modules = { workspace = true }
 phf = { workspace = true, features = ["macros"] }

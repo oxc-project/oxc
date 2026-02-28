@@ -108,8 +108,7 @@ impl<'a> JSDocCommentPart<'a> {
                     // markdown emphasis (`*word*`). Emphasis has `*` followed by an
                     // alphanumeric char; continuation prefixes have `*` followed by
                     // space, backtick, punctuation, or nothing.
-                    let is_emphasis =
-                        rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
+                    let is_emphasis = rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
                     if !is_emphasis {
                         // Strip at most one leading space after `*` (the conventional ` * ` prefix)
                         // to preserve any additional indentation (e.g. for indented code blocks)
@@ -136,8 +135,7 @@ impl<'a> JSDocCommentPart<'a> {
             .map(|line| {
                 let trimmed = line.trim();
                 if let Some(rest) = trimmed.strip_prefix('*') {
-                    let is_emphasis =
-                        rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
+                    let is_emphasis = rest.starts_with(|c: char| c.is_alphanumeric() || c == '_');
                     if !is_emphasis {
                         return rest.trim();
                     }

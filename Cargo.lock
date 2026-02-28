@@ -1923,6 +1923,7 @@ dependencies = [
  "cow-utils",
  "fast-glob",
  "insta",
+ "markdown",
  "natord",
  "nodejs-built-in-modules",
  "oxc_allocator",

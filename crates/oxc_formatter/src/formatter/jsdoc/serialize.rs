@@ -7,18 +7,18 @@ use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
 
 use crate::ExternalCallbacks;
-use crate::options::{JsdocOptions, QuoteStyle};
 use crate::options::TrailingCommas;
+use crate::options::{JsdocOptions, QuoteStyle};
 use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
 
 use super::{
+    mdast_serialize::format_description_mdast,
     normalize::{
-        capitalize_first, convert_setext_headings, normalize_markdown_emphasis,
-        normalize_reference_links, normalize_tag_kind, normalize_type,
+        capitalize_first, normalize_markdown_emphasis, normalize_tag_kind, normalize_type,
         normalize_type_preserve_quotes, normalize_type_return, normalize_type_whitespace,
-        remove_horizontal_rules, strip_optional_type_suffix, unescape_markdown_backslashes,
+        strip_optional_type_suffix,
     },
-    wrap::{format_nested_list, has_nested_lists, tokenize_words, wrap_text},
+    wrap::{tokenize_words, wrap_text},
 };
 
 /// The ` * ` prefix used in multiline JSDoc comments (3 chars).
@@ -46,78 +46,6 @@ fn should_skip_capitalize(tag_kind: &str) -> bool {
             | "callback"
             | "function"
     )
-}
-
-/// Capitalize description lines: first line, first line after blank lines (paragraph starts),
-/// and list item text. Skips content inside code fences.
-fn capitalize_description_lines(lines: &mut [String]) {
-    let mut in_code_fence = false;
-    let mut prev_was_blank = false;
-
-    for (i, line) in lines.iter_mut().enumerate() {
-        let trimmed = line.trim().to_string();
-
-        if trimmed.starts_with("```") {
-            in_code_fence = !in_code_fence;
-            prev_was_blank = false;
-            continue;
-        }
-
-        if in_code_fence {
-            prev_was_blank = false;
-            continue;
-        }
-
-        if trimmed.is_empty() {
-            prev_was_blank = true;
-            continue;
-        }
-
-        // Capitalize first line or first line after a blank line (paragraph start)
-        if i == 0 || prev_was_blank {
-            // Handle blockquote lines: capitalize after `> ` prefix
-            if trimmed.starts_with("> ") && !trimmed.starts_with("> ```") {
-                let content = &trimmed[2..];
-                let capitalized = capitalize_first(content);
-                if capitalized != content {
-                    *line = format!("> {capitalized}");
-                }
-            } else {
-                *line = capitalize_first(line);
-            }
-        }
-
-        // Capitalize list items
-        capitalize_single_list_item(line);
-
-        prev_was_blank = false;
-    }
-}
-
-/// Capitalize the first letter of text in a single list item line.
-fn capitalize_single_list_item(line: &mut String) {
-    // Check for unordered list markers: "- ", "* ", "+ "
-    for prefix in &["- ", "* ", "+ "] {
-        if line.starts_with(prefix) {
-            let rest = &line[prefix.len()..];
-            if !rest.is_empty() {
-                *line = format!("{prefix}{}", capitalize_first(rest));
-            }
-            return;
-        }
-    }
-    // Check for ordered list markers: "1. ", "2. ", etc.
-    if let Some(first) = line.chars().next()
-        && first.is_ascii_digit()
-        && let Some(dot_space_pos) = line.find(". ")
-        && dot_space_pos < 5
-    {
-        let prefix = line[..dot_space_pos + 2].to_string();
-        let rest = &line[dot_space_pos + 2..];
-        if !rest.is_empty() {
-            *line = format!("{prefix}{}", capitalize_first(rest));
-        }
-    }
 }
 
 /// Tags that use `type_name_comment()` pattern: `@tag {type} name description`
@@ -315,9 +243,7 @@ fn find_function_params_start(text: &str) -> Option<usize> {
             i += 5;
             continue;
         }
-        if text[i..].starts_with("default")
-            && i + 7 < len
-            && !bytes[i + 7].is_ascii_alphanumeric()
+        if text[i..].starts_with("default") && i + 7 < len && !bytes[i + 7].is_ascii_alphanumeric()
         {
             i += 7;
             continue;
@@ -343,7 +269,8 @@ fn find_function_params_start(text: &str) -> Option<usize> {
         while i < len && bytes[i].is_ascii_whitespace() {
             i += 1;
         }
-        while i < len && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$') {
+        while i < len && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$')
+        {
             i += 1;
         }
         // Skip TypeScript generics `<T>`
@@ -365,7 +292,10 @@ fn find_function_params_start(text: &str) -> Option<usize> {
     // `const name = (` or `name(` (method)
     if i < len && (bytes[i].is_ascii_alphabetic() || bytes[i] == b'_' || bytes[i] == b'$') {
         // Skip `const`/`let`/`var` keyword
-        if text[i..].starts_with("const ") || text[i..].starts_with("let ") || text[i..].starts_with("var ") {
+        if text[i..].starts_with("const ")
+            || text[i..].starts_with("let ")
+            || text[i..].starts_with("var ")
+        {
             while i < len && !bytes[i].is_ascii_whitespace() {
                 i += 1;
             }
@@ -376,7 +306,8 @@ fn find_function_params_start(text: &str) -> Option<usize> {
 
         // Skip identifier
         let id_start = i;
-        while i < len && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$') {
+        while i < len && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$')
+        {
             i += 1;
         }
         if i == id_start {
@@ -531,7 +462,8 @@ fn parse_param_names(params_str: &str) -> Vec<String> {
 
         // Extract parameter name
         let name_start = i;
-        while i < len && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$') {
+        while i < len && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_' || bytes[i] == b'$')
+        {
             i += 1;
         }
         if i > name_start {
@@ -666,24 +598,13 @@ pub fn format_jsdoc_comment<'a>(
 
     let mut content_lines: Vec<String> = Vec::new();
 
-    // Format description (preserving paragraph structure)
+    // Format description using mdast parsing (handles heading normalization,
+    // emphasis conversion, horizontal rule removal, reference links, nested lists, etc.)
     let desc_trimmed = description.trim();
     if !desc_trimmed.is_empty() {
-        let desc_normalized = convert_setext_headings(desc_trimmed);
-        let desc_normalized = remove_horizontal_rules(&desc_normalized);
-        let desc_normalized = normalize_reference_links(&desc_normalized);
-        let desc_normalized = normalize_markdown_emphasis(&desc_normalized);
-        let desc_normalized = unescape_markdown_backslashes(&desc_normalized);
-        // Use specialized nested list formatting when the description contains
-        // indented list items (e.g., sub-lists under parent items).
-        if has_nested_lists(&desc_normalized) {
-            format_nested_list(&desc_normalized, options.capitalize_descriptions, &mut content_lines);
-        } else {
-            wrap_text(&desc_normalized, wrap_width, &mut content_lines);
-            if options.capitalize_descriptions {
-                capitalize_description_lines(&mut content_lines);
-            }
-        }
+        let desc_lines =
+            format_description_mdast(desc_trimmed, wrap_width, options.capitalize_descriptions);
+        content_lines.extend(desc_lines);
     }
 
     // Sort tags by priority within groups.
@@ -709,13 +630,12 @@ pub fn format_jsdoc_comment<'a>(
                 {
                     content_lines.push(String::new());
                 }
-                let mut desc = desc_content.to_string();
-                if options.capitalize_descriptions {
-                    desc = capitalize_first(&desc);
-                }
-                let desc_normalized = normalize_markdown_emphasis(&desc);
-                let desc_normalized = unescape_markdown_backslashes(&desc_normalized);
-                wrap_text(&desc_normalized, wrap_width, &mut content_lines);
+                let desc_lines = format_description_mdast(
+                    desc_content,
+                    wrap_width,
+                    options.capitalize_descriptions,
+                );
+                content_lines.extend(desc_lines);
             }
             continue;
         }
@@ -739,8 +659,7 @@ pub fn format_jsdoc_comment<'a>(
         if normalized_kind == "import" {
             if has_imports && !imports_emitted {
                 // Emit merged imports at the position of the first @import tag
-                if !content_lines.is_empty()
-                    && !content_lines.last().is_some_and(String::is_empty)
+                if !content_lines.is_empty() && !content_lines.last().is_some_and(String::is_empty)
                 {
                     content_lines.push(String::new());
                 }
@@ -1624,10 +1543,7 @@ fn format_indented_code_blocks(
                     && (trimmed.starts_with("- ")
                         || trimmed.starts_with("* ")
                         || trimmed.starts_with("+ ")
-                        || trimmed
-                            .chars()
-                            .next()
-                            .is_some_and(|c| c.is_ascii_digit())
+                        || trimmed.chars().next().is_some_and(|c| c.is_ascii_digit())
                             && (trimmed.contains(". ") || trimmed.contains("- ")))
             });
             if looks_like_list {
@@ -1800,8 +1716,7 @@ fn format_example_fenced_block(
     content_lines: &mut Vec<String>,
 ) {
     let lang_line = code_lines[0];
-    let inner_code: String =
-        code_lines[1..code_lines.len() - 1].to_vec().join("\n");
+    let inner_code: String = code_lines[1..code_lines.len() - 1].to_vec().join("\n");
     let effective_width = wrap_width.saturating_sub(2);
 
     // Add opening fence with indent
@@ -1810,7 +1725,8 @@ fn format_example_fenced_block(
     if !inner_code.is_empty() {
         let lang = lang_line[3..].trim();
         if is_js_ts_lang(lang) {
-            if let Some(formatted) = format_embedded_js(&inner_code, effective_width, format_options)
+            if let Some(formatted) =
+                format_embedded_js(&inner_code, effective_width, format_options)
             {
                 let mut template_depth: u32 = 0;
                 for line in formatted.lines() {
@@ -2367,11 +2283,7 @@ struct ImportInfo {
 /// - `Default from "module"`
 fn parse_import_tag(comment_text: &str) -> Option<ImportInfo> {
     // Normalize: join lines, collapse whitespace
-    let text: String = comment_text
-        .lines()
-        .map(str::trim)
-        .collect::<Vec<_>>()
-        .join(" ");
+    let text: String = comment_text.lines().map(str::trim).collect::<Vec<_>>().join(" ");
     let text = text.trim();
 
     // Find "from" keyword followed by a quoted string
@@ -2380,10 +2292,8 @@ fn parse_import_tag(comment_text: &str) -> Option<ImportInfo> {
     let module_part = text[from_idx + 6..].trim();
 
     // Extract module path (strip quotes)
-    let module_path = module_part
-        .trim_start_matches(['"', '\''])
-        .trim_end_matches(['"', '\''])
-        .to_string();
+    let module_path =
+        module_part.trim_start_matches(['"', '\'']).trim_end_matches(['"', '\'']).to_string();
 
     if module_path.is_empty() {
         return None;
@@ -2455,9 +2365,9 @@ fn merge_and_sort_imports(imports: Vec<ImportInfo>) -> Vec<ImportInfo> {
 
     // Sort named imports within each group by original import name
     for import in &mut groups {
-        import.named_imports.sort_by(|a, b| {
-            import_specifier_sort_key(a).cmp(import_specifier_sort_key(b))
-        });
+        import
+            .named_imports
+            .sort_by(|a, b| import_specifier_sort_key(a).cmp(import_specifier_sort_key(b)));
     }
 
     // Sort groups: third-party (no ./ or ../) before relative, then alphabetically
