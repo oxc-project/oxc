@@ -1305,7 +1305,20 @@ fn codegen_instruction_nullable(
             codegen_instruction_to_statement(cx, instr, &value_str)
         }
         ReactiveValue::Ternary(_) | ReactiveValue::Sequence(_) | ReactiveValue::OptionalCall(_) => {
-            let value_str = codegen_reactive_value_to_expression(cx, &instr.value);
+            // For Sequence values used as ExpressionStatements (lvalue: None),
+            // Prettier formats the comma expression WITHOUT outer parens but WITH
+            // parens around individual assignment sub-expressions:
+            //   `(x = []), null` instead of `(x = [], null)`
+            // In all other contexts (temps, assignment RHS, variable init, while
+            // test, etc.), the outer parens from codegen_reactive_value_to_expression
+            // are correct.
+            let is_sequence_expr_stmt = matches!(&instr.value, ReactiveValue::Sequence(_))
+                && instr.lvalue.is_none();
+            let value_str = if is_sequence_expr_stmt {
+                codegen_sequence_for_expr_stmt(cx, &instr.value)
+            } else {
+                codegen_reactive_value_to_expression(cx, &instr.value)
+            };
             // Track these temps for arrow-body parenthesisation: Babel's printer
             // auto-wraps ConditionalExpression / SequenceExpression in parens when
             // used as a concise arrow body; we must do it explicitly.
@@ -2075,12 +2088,6 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
             let consequent = codegen_reactive_value_to_expression(cx, &ternary.consequent);
             let alternate = codegen_reactive_value_to_expression(cx, &ternary.alternate);
             // Wrap subexpressions in parens to match Babel's code generator.
-            // Test: wrap nested ternary.
-            let test = if matches!(effective_value(&ternary.test), ReactiveValue::Ternary(_)) {
-                format!("({test})")
-            } else {
-                test
-            };
             // Helper to check if a value is/contains a NullishCoalescing (??).
             // We check both structural (effective_value) and via resolve_logical_operator_from_value,
             // since the ?? may be in a Sequence's instructions or a LoadLocal of a logical temp.
@@ -2121,6 +2128,14 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
                     }
                 }
                 false
+            };
+            // Test: wrap nested ternary or NullishCoalescing.
+            let test = if is_ternary(&ternary.test)
+                || (is_coalesce(&ternary.test) && !test.starts_with('('))
+            {
+                format!("({test})")
+            } else {
+                test
             };
             // Consequent: wrap nested ternary or NullishCoalescing.
             let consequent = if is_ternary(&ternary.consequent)
@@ -2365,6 +2380,93 @@ fn identifier_name(identifier: &crate::hir::Identifier) -> String {
         Some(IdentifierName::Named(name) | IdentifierName::Promoted(name)) => name.clone(),
         None => format!("t${}", identifier.id.0),
     }
+}
+
+/// Generate a sequence expression string for ExpressionStatement context.
+///
+/// Unlike `codegen_reactive_value_to_expression` which wraps the entire sequence
+/// in outer parens `(expr1, expr2, ..., value)`, this produces the Prettier-style
+/// format used in ExpressionStatement context: no outer parens, but individual
+/// assignment sub-expressions are wrapped in parens.
+///
+/// e.g., `(x = []), null` instead of `(x = [], null)`
+///
+/// This matches Prettier's formatting: in an ExpressionStatement, SequenceExpression
+/// does not need outer parens (the semicolon terminates the statement), but
+/// individual AssignmentExpressions within the sequence are parenthesized for clarity.
+fn codegen_sequence_for_expr_stmt(cx: &mut CodegenContext, value: &ReactiveValue) -> String {
+    let ReactiveValue::Sequence(seq) = value else {
+        return codegen_reactive_value_to_expression(cx, value);
+    };
+
+    let mut expressions: Vec<String> = Vec::new();
+
+    for instr in &seq.instructions {
+        let stmt = codegen_instruction_nullable(cx, instr);
+
+        if let Some(CodegenStatement::ExpressionStatement(expr)) = stmt {
+            if is_top_level_assignment(&expr) {
+                expressions.push(format!("({expr})"));
+            } else {
+                expressions.push(expr);
+            }
+        }
+    }
+
+    let final_value = codegen_reactive_value_to_expression(cx, &seq.value);
+    if expressions.is_empty() {
+        final_value
+    } else {
+        expressions.push(final_value);
+        expressions.join(", ")
+    }
+}
+
+/// Check if an expression string contains a top-level assignment operator (`=`).
+///
+/// Used by the Sequence expression handler to wrap assignment sub-expressions
+/// in parens, matching Prettier's formatting of `SequenceExpression` members.
+/// e.g., in the sequence `(x = []), null`, the assignment `x = []` is wrapped.
+///
+/// Returns `true` if the string contains `=` at the top level (not inside
+/// parens/brackets/braces/strings) that is not part of `==`, `===`, `!=`,
+/// `!==`, `<=`, `>=`, or `=>`.
+fn is_top_level_assignment(expr: &str) -> bool {
+    let bytes = expr.as_bytes();
+    let len = bytes.len();
+    let mut depth: i32 = 0;
+    let mut i = 0;
+    while i < len {
+        match bytes[i] {
+            b'(' | b'[' | b'{' => depth += 1,
+            b')' | b']' | b'}' => {
+                if depth > 0 {
+                    depth -= 1;
+                }
+            }
+            b'\'' | b'"' | b'`' => {
+                let quote = bytes[i];
+                i += 1;
+                while i < len && bytes[i] != quote {
+                    if bytes[i] == b'\\' {
+                        i += 1;
+                    }
+                    i += 1;
+                }
+            }
+            b'=' if depth == 0 => {
+                let prev = if i > 0 { bytes[i - 1] } else { 0 };
+                let next = if i + 1 < len { bytes[i + 1] } else { 0 };
+                // Skip ==, ===, !=, !==, <=, >=, =>
+                if next != b'=' && next != b'>' && prev != b'!' && prev != b'<' && prev != b'>' && prev != b'=' {
+                    return true;
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    false
 }
 
 /// Check if an expression string is a ternary (conditional) expression at the top level.
