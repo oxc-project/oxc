@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = <Foo>new Generic<int>();
    ·           ───────────────────────
    ╰────
-  help: Replace `<Foo>` with `as Foo`. For example, change `<Foo>value` to `value as Foo`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<Foo>new Generic<int>()` with `new Generic<int>() as Foo`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as A` instead of `<A>`.
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = <A>b;
    ·           ────
    ╰────
-  help: Replace `<A>` with `as A`. For example, change `<A>value` to `value as A`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<A>b` with `b as A`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as readonly number[]` instead of `<readonly number[]>`.
@@ -127,7 +127,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = <readonly number[]>[1];
    ·           ──────────────────────
    ╰────
-  help: Replace `<readonly number[]>` with `as readonly number[]`. For example, change `<readonly number[]>value` to `value as readonly number[]`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<readonly number[]>[1]` with `[1] as readonly number[]`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as a | b` instead of `<a | b>`.
@@ -135,7 +135,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = <a | b>'string';
    ·           ───────────────
    ╰────
-  help: Replace `<a | b>` with `as a | b`. For example, change `<a | b>value` to `value as a | b`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<a | b>'string'` with `'string' as a | b`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as A` instead of `<A>`.
@@ -143,7 +143,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = <A>!'string';
    ·           ────────────
    ╰────
-  help: Replace `<A>` with `as A`. For example, change `<A>value` to `value as A`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<A>!'string'` with `!'string' as A`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as A` instead of `<A>`.
@@ -151,7 +151,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = <A>a + b;
    ·           ────
    ╰────
-  help: Replace `<A>` with `as A`. For example, change `<A>value` to `value as A`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<A>a` with `(a as A)`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
@@ -159,7 +159,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = <Foo>new Generic<string>();
    ·           ──────────────────────────
    ╰────
-  help: Replace `<Foo>` with `as Foo`. For example, change `<Foo>value` to `value as Foo`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<Foo>new Generic<string>()` with `new Generic<string>() as Foo`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
@@ -167,7 +167,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = new (<Foo>Generic<string>)();
    ·                ────────────────────
    ╰────
-  help: Replace `<Foo>` with `as Foo`. For example, change `<Foo>value` to `value as Foo`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<Foo>Generic<string>` with `(Generic<string>) as Foo`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
@@ -175,7 +175,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = new (<Foo>Generic<string>)('string');
    ·                ────────────────────
    ╰────
-  help: Replace `<Foo>` with `as Foo`. For example, change `<Foo>value` to `value as Foo`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<Foo>Generic<string>` with `(Generic<string>) as Foo`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
@@ -183,7 +183,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = () => <Foo>{ bar: 5 };
    ·                 ───────────────
    ╰────
-  help: Replace `<Foo>` with `as Foo`. For example, change `<Foo>value` to `value as Foo`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<Foo>{ bar: 5 }` with `({ bar: 5 } as Foo)`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
@@ -191,7 +191,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = () => <Foo>bar;
    ·                 ────────
    ╰────
-  help: Replace `<Foo>` with `as Foo`. For example, change `<Foo>value` to `value as Foo`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<Foo>bar` with `(bar as Foo)`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
@@ -199,7 +199,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = <Foo>bar<string>`${'baz'}`;
    ·           ──────────────────────────
    ╰────
-  help: Replace `<Foo>` with `as Foo`. For example, change `<Foo>value` to `value as Foo`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<Foo>bar<string>`${'baz'}`` with `bar<string>`${'baz'}` as Foo`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as const` instead of `<const>`.
@@ -207,7 +207,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = <const>{ key: 'value' };
    ·           ───────────────────────
    ╰────
-  help: Replace `<const>` with `as const`. For example, change `<const>value` to `value as const`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<const>{ key: 'value' }` with `{ key: 'value' } as const`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
@@ -619,7 +619,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const a = <any>(b, c);
    ·           ───────────
    ╰────
-  help: Replace `<any>` with `as any`. For example, change `<any>value` to `value as any`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<any>(b, c)` with `(b, c) as any`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
@@ -627,7 +627,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const f = <any>(() => {});
    ·           ───────────────
    ╰────
-  help: Replace `<any>` with `as any`. For example, change `<any>value` to `value as any`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<any>(() => {})` with `(() => {}) as any`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
@@ -635,7 +635,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const f = <any>function () {};
    ·           ───────────────────
    ╰────
-  help: Replace `<any>` with `as any`. For example, change `<any>value` to `value as any`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<any>function () {}` with `function () {} as any`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
@@ -643,7 +643,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const f = <any>(async () => {});
    ·           ─────────────────────
    ╰────
-  help: Replace `<any>` with `as any`. For example, change `<any>value` to `value as any`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<any>(async () => {})` with `(async () => {}) as any`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
@@ -653,7 +653,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────────
  4 │             }
    ╰────
-  help: Replace `<any>` with `as any`. For example, change `<any>value` to `value as any`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<any>(yield a)` with `(yield a) as any`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
@@ -663,7 +663,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────────────
  4 │                   
    ╰────
-  help: Replace `<any>` with `as any`. For example, change `<any>value` to `value as any`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<any>(x <<= y)` with `(x <<= y) as any`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
@@ -671,7 +671,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const ternary = <any>(true ? x : y);
    ·                 ───────────────────
    ╰────
-  help: Replace `<any>` with `as any`. For example, change `<any>value` to `value as any`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<any>(true ? x : y)` with `(true ? x : y) as any`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
@@ -703,7 +703,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = <string[]>[];
    ·           ────────────
    ╰────
-  help: Replace `<string[]>` with `as string[]`. For example, change `<string[]>value` to `value as string[]`. Note: you may need to add parentheses around the expression if it's used in certain contexts.
+  help: Replace `<string[]>[]` with `[] as string[]`.
   note: This rule enforces consistent type assertion syntax across the codebase.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.

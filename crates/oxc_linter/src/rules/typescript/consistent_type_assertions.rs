@@ -27,7 +27,6 @@ fn use_angle_bracket_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
 
 fn use_as_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `as {cast}` instead of `<{cast}>`."))
-        .with_help(format!("Replace `<{cast}>` with `as {cast}`. For example, change `<{cast}>value` to `value as {cast}`. Note: you may need to add parentheses around the expression if it's used in certain contexts."))
         .with_note("This rule enforces consistent type assertion syntax across the codebase.")
         .with_label(span)
 }
