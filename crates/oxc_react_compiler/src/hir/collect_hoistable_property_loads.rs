@@ -196,11 +196,21 @@ pub fn collect_hoistable_property_loads(
     let registry = PropertyPathRegistry::new();
 
     let mut known_immutable_identifiers = FxHashSet::default();
-    if matches!(func.fn_type, ReactFunctionType::Component | ReactFunctionType::Hook) {
-        for p in &func.params {
-            if let ReactiveParam::Place(place) = p {
-                known_immutable_identifiers.insert(place.identifier.id);
-            }
+    // Add all function params as known immutable identifiers.
+    //
+    // The TS reference only does this for Component/Hook types, but in the Rust HIR
+    // params of *any* function type can acquire a wide mutable range due to how
+    // InferMutationAliasingRanges works. Function parameters are semantically
+    // read-only within the function body (they may be reassigned in JS, but they
+    // are not co-mutated with the values they're passed), so it's safe to treat
+    // them as always-immutable for the purpose of hoistable property load analysis.
+    // This is the same fix the TS reference applied for Component/Hook:
+    // "Due to current limitations of mutable range inference, there are edge cases
+    // in which we infer known-immutable values (e.g. props or hook params) to have
+    // a mutable range and scope."
+    for p in &func.params {
+        if let ReactiveParam::Place(place) = p {
+            known_immutable_identifiers.insert(place.identifier.id);
         }
     }
 
@@ -366,7 +376,42 @@ fn collect_non_nulls_in_blocks(
             if let InstructionValue::FunctionExpression(fe) = &instr.value {
                 let inner_fn_key = lowered_fn_key(&fe.lowered_func);
                 if context.assumed_invoked_fns.contains(&inner_fn_key) {
-                    // Build nested context for inner function
+                    // Build nested context for inner function.
+                    //
+                    // When building the initial nestedFnImmutableContext from the outermost
+                    // function, exclude direct function parameters from the immutable context.
+                    // In TypeScript HIR, function parameters appear as LoadLocal in the outer
+                    // function body (not LoadContext), so `isLoadContextMutable` returns false
+                    // for them in inner functions — they never get added to the temporaries
+                    // sidemap. In Rust HIR, all identifiers have scope=None, so
+                    // `isLoadContextMutable` can't distinguish params from locals via scope
+                    // ranges. Excluding params from `nestedFnImmutableContext` ensures that
+                    // when an inner function accesses a param like `maybeRef` via
+                    // `PropertyLoad(maybeRef_ctx_tmp, "current")`, the resolved PropertyPathNode
+                    // `{maybeRef, path=[]}` is not treated as immutable/hoistable. Without this
+                    // exclusion, `{maybeRef, path=[]}` would propagate to the outer scope as a
+                    // hoistable object, causing `add_dependency({maybeRef, path=[current]})` to
+                    // produce `maybeRef.current` instead of `maybeRef`, triggering false-positive
+                    // "Differences in ref.current access" validation errors.
+                    //
+                    // Note: destructured params (e.g. `{x}` from `Component({x})`) are NOT
+                    // excluded because they appear as locally declared variables (not directly as
+                    // ReactiveParam::Place entries in func.params).
+                    let outer_fn_param_ids: FxHashSet<IdentifierId> =
+                        if context.nested_fn_immutable_context.is_none() {
+                            func.params
+                                .iter()
+                                .filter_map(|p| {
+                                    if let ReactiveParam::Place(place) = p {
+                                        Some(place.identifier.id)
+                                    } else {
+                                        None
+                                    }
+                                })
+                                .collect()
+                        } else {
+                            FxHashSet::default()
+                        };
                     let nested_fn_immutable_context =
                         context.nested_fn_immutable_context.clone().unwrap_or_else(|| {
                             fe.lowered_func
@@ -374,7 +419,12 @@ fn collect_non_nulls_in_blocks(
                                 .context
                                 .iter()
                                 .filter(|place| {
-                                    is_immutable_at_instr(&place.identifier, instr.id, context)
+                                    !outer_fn_param_ids.contains(&place.identifier.id)
+                                        && is_immutable_at_instr(
+                                            &place.identifier,
+                                            instr.id,
+                                            context,
+                                        )
                                 })
                                 .map(|place| place.identifier.id)
                                 .collect()
@@ -694,6 +744,20 @@ fn get_assumed_invoked_functions_inner(
                 }
                 InstructionValue::LoadLocal(ll) => {
                     if let Some(existing) = temporaries.get(&ll.place.identifier.id) {
+                        let cloned = FnTemporary {
+                            lowered_fn: existing.lowered_fn,
+                            may_invoke: existing.may_invoke.clone(),
+                        };
+                        temporaries.insert(instr.lvalue.identifier.id, cloned);
+                    }
+                }
+                InstructionValue::LoadContext(lc) => {
+                    // In the Rust HIR, captured variables are loaded via LoadContext rather
+                    // than LoadLocal (as in the TS reference). We need to propagate the
+                    // temporaries mapping through LoadContext so that inner function bodies
+                    // that call outer-declared lambdas (e.g. `log = () => { logA(); }` where
+                    // `logA` is captured via context) can detect those calls as assumed-invoked.
+                    if let Some(existing) = temporaries.get(&lc.place.identifier.id) {
                         let cloned = FnTemporary {
                             lowered_fn: existing.lowered_fn,
                             may_invoke: existing.may_invoke.clone(),

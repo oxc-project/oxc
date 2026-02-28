@@ -28,10 +28,12 @@ pub fn visit_reactive_statement(stmt: &ReactiveStatement, visitor: &mut impl Rea
         ReactiveStatement::Scope(scope_block) => {
             visitor.visit_scope_block(&scope_block.scope);
             visit_reactive_block(&scope_block.instructions, visitor);
+            visitor.exit_scope_block(&scope_block.scope);
         }
         ReactiveStatement::PrunedScope(pruned_block) => {
             visitor.visit_pruned_scope_block(&pruned_block.scope);
             visit_reactive_block(&pruned_block.instructions, visitor);
+            visitor.exit_pruned_scope_block(&pruned_block.scope);
         }
     }
 }
@@ -86,7 +88,11 @@ pub trait ReactiveVisitor {
     fn visit_instruction(&mut self, _instr: &ReactiveInstruction) {}
     fn visit_terminal(&mut self, _stmt: &ReactiveTerminalStatement) {}
     fn visit_scope_block(&mut self, _scope: &crate::hir::ReactiveScope) {}
+    /// Called after the scope block's inner instructions have been visited.
+    fn exit_scope_block(&mut self, _scope: &crate::hir::ReactiveScope) {}
     fn visit_pruned_scope_block(&mut self, _scope: &crate::hir::ReactiveScope) {}
+    /// Called after the pruned scope block's inner instructions have been visited.
+    fn exit_pruned_scope_block(&mut self, _scope: &crate::hir::ReactiveScope) {}
 }
 
 /// Visit a reactive function.

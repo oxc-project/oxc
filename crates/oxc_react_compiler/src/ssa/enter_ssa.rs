@@ -441,6 +441,16 @@ fn enter_ssa_impl(
                 }
             }
 
+            // Preserve any phi nodes that were added to builder.blocks[block_id]
+            // during instruction processing (e.g. by add_phi called from get_id_at).
+            // We cloned the block at the start of this loop iteration, so our local
+            // `block` may not have the phis that were inserted into builder.blocks
+            // by add_phi. Pull them out before writing back.
+            if let Some(existing) = builder.blocks.get_mut(&block_id) {
+                let new_phis = std::mem::take(&mut existing.phis);
+                block.phis = new_phis;
+            }
+
             // Write back the modified block
             builder.blocks.insert(block_id, block);
         }

@@ -188,6 +188,52 @@ pub fn align_method_call_scopes(func: &mut HIRFunction) {
                     }
                 }
             }
+
+            // Also apply scope changes to MethodCall's property Place, since it is a separate
+            // clone of the PropertyLoad's lvalue identifier. The TS compiler has a single shared
+            // Identifier object, so modifying scope in one place is visible everywhere.
+            // In Rust, each Place has its own Identifier clone, so we must update both.
+            if let InstructionValue::MethodCall(method_call) = &mut instr.value {
+                let prop_id = method_call.property.identifier.id;
+                if let Some(mapped) = scope_mapping.get(&prop_id) {
+                    match mapped {
+                        Some(target_scope_id) => {
+                            if let Some(scope) = &mut method_call.property.identifier.scope {
+                                scope.id = *target_scope_id;
+                                if let Some(range) = root_ranges.get(target_scope_id) {
+                                    scope.range = *range;
+                                }
+                            } else if let Some(&range) = root_ranges
+                                .get(target_scope_id)
+                                .or_else(|| scope_ranges.get(target_scope_id))
+                            {
+                                method_call.property.identifier.scope =
+                                    Some(Box::new(ReactiveScope {
+                                        id: *target_scope_id,
+                                        range,
+                                        dependencies: FxHashSet::default(),
+                                        declarations: FxHashMap::default(),
+                                        reassignments: Vec::new(),
+                                        early_return_value: None,
+                                        merged: FxHashSet::default(),
+                                        loc: method_call.property.identifier.loc,
+                                    }));
+                            }
+                        }
+                        None => {
+                            method_call.property.identifier.scope = None;
+                        }
+                    }
+                } else if let Some(scope) = &mut method_call.property.identifier.scope {
+                    let current_id = scope.id;
+                    if let Some(root_id) = merged_scopes.find(&current_id) {
+                        scope.id = root_id;
+                        if let Some(range) = root_ranges.get(&root_id) {
+                            scope.range = *range;
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -374,8 +420,11 @@ pub fn align_reactive_scopes_to_block_scopes_hir(func: &mut HIRFunction) {
     // We track "place scopes" — mapping from place identity to scope ID
     // (not used for anything in the output but kept for TS fidelity)
 
-    // Compute true reverse-postorder traversal from the entry block
-    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
+    // Use IndexMap insertion order to match TypeScript's `for (const [, block] of fn.body.blocks)`.
+    // The TypeScript version iterates blocks in Map insertion order (the natural construction order),
+    // NOT in computed RPO. Using computed RPO causes for-loop fallthrough blocks to be visited before
+    // loop body blocks, incorrectly extending scope ranges.
+    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
     for block_id in &block_ids {
         let Some(block) = func.body.blocks.get(block_id) else {

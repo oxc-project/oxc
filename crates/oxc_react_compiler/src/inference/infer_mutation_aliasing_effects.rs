@@ -18,9 +18,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{
     hir::{
         BlockId, Effect, FunctionExpressionValue, HIRFunction, IdentifierId, Instruction,
-        InstructionValue, Place, ReactFunctionType, ReactiveParam, ValueKind, ValueReason,
+        InstructionValue, Phi, Place, ReactFunctionType, ReactiveParam, ValueKind, ValueReason,
         hir_builder::{compute_rpo_order, each_terminal_successor},
-        visitors::each_terminal_operand,
     },
     inference::aliasing_effects::{AliasingEffect, AliasingSignature},
 };
@@ -89,6 +88,48 @@ impl InferenceState {
     /// Record an alias relationship: `into` may alias `from`.
     fn add_alias(&mut self, from: IdentifierId, into: IdentifierId) {
         self.aliases.entry(into).or_default().insert(from);
+    }
+
+    /// Process a phi node: merge abstract values from all defined operands into the phi's
+    /// place identifier. Operands that are not yet defined (backedges in loops) are skipped
+    /// — they will be handled later by the fixpoint iteration.
+    ///
+    /// Port of `InferenceState.inferPhi()` from `InferMutationAliasingEffects.ts`.
+    /// The TypeScript version merges the `Set<InstructionValue>` entries for each operand
+    /// into the phi's place. In Rust, we instead merge abstract value kinds directly.
+    fn infer_phi(&mut self, phi: &Phi) {
+        let phi_id = phi.place.identifier.id;
+        let mut merged_value: Option<AbstractValue> = None;
+        let mut merged_fn_val: Option<FunctionExpressionValue> = None;
+
+        for operand in phi.operands.values() {
+            let op_id = operand.identifier.id;
+            if let Some(op_val) = self.values.get(&op_id).cloned() {
+                merged_value = Some(match merged_value {
+                    None => op_val,
+                    Some(existing) => {
+                        let kind = merge_value_kinds(existing.kind, op_val.kind);
+                        let mut reasons = existing.reason;
+                        reasons.extend(op_val.reason.iter().copied());
+                        AbstractValue { kind, reason: reasons }
+                    }
+                });
+            }
+            // Propagate function_values through phi nodes
+            if merged_fn_val.is_none() {
+                if let Some(fn_val) = self.function_values.get(&op_id).cloned() {
+                    merged_fn_val = Some(fn_val);
+                }
+            }
+        }
+
+        if let Some(value) = merged_value {
+            self.values.insert(phi_id, value);
+        }
+
+        if let Some(fn_val) = merged_fn_val {
+            self.function_values.entry(phi_id).or_insert(fn_val);
+        }
     }
 
     /// Merge another state into this one. Returns true if anything changed.
@@ -195,25 +236,39 @@ pub fn infer_mutation_aliasing_effects(
     }
 
     // Fixpoint iteration over the CFG
+    // Map of blocks to the last (merged) incoming state that was processed.
     let mut states_by_block: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
+    // Pending incoming states for each block. Merged incrementally as predecessors complete.
     let mut queued_states: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
     queued_states.insert(func.body.entry, initial_state);
 
     let mut iteration_count = 0;
     let max_iterations = 1000; // Safety limit
 
+    // Fixpoint iteration: process blocks in insertion order (deterministic).
+    // The fn.body.blocks IndexMap preserves insertion order (equivalent to TypeScript's Map).
+    // Each pass iterates all blocks, only processing those with a queued incoming state.
     while !queued_states.is_empty() && iteration_count < max_iterations {
         iteration_count += 1;
 
-        // Process queued states
-        let blocks_to_process: Vec<(BlockId, InferenceState)> = queued_states.drain().collect();
+        // Collect block IDs in insertion order for deterministic processing.
+        let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
-        for (block_id, mut state) in blocks_to_process {
-            // Check if state has changed since last visit
-            if let Some(prev_state) = states_by_block.get(&block_id)
-                && !state.merge(prev_state)
-            {
-                continue; // No changes, skip
+        for block_id in block_ids {
+            // Pop the queued incoming state for this block (if any).
+            let mut state = match queued_states.remove(&block_id) {
+                Some(s) => s,
+                None => continue,
+            };
+
+            // Check if the state has changed since last visit.
+            // If the incoming state is already dominated by the last processed state,
+            // no new information → skip this block.
+            if let Some(prev_state) = states_by_block.get(&block_id) {
+                if !state.merge(prev_state) {
+                    // state already contains everything from prev_state — no change.
+                    continue;
+                }
             }
 
             let block = match func.body.blocks.get(&block_id) {
@@ -221,29 +276,29 @@ pub fn infer_mutation_aliasing_effects(
                 None => continue,
             };
 
-            // Process instructions
+            // Process phi nodes before instructions — port of TypeScript inferBlock()
+            // which calls `state.inferPhi(phi)` for each phi before processing instructions.
+            // This merges abstract values from all predecessor operands into the phi's place,
+            // handling control flow merge points correctly.
+            for phi in &block.phis {
+                state.infer_phi(phi);
+            }
+
+            // Process instructions.
             for instr in &block.instructions {
                 infer_instruction_effects(&mut state, instr, options, &func.env);
             }
 
-            // Store the state for this block
+            // Store the outgoing state for this block.
             states_by_block.insert(block_id, state.clone());
 
-            // Queue successor blocks
+            // Queue successor blocks.
             let successors = each_terminal_successor(&block.terminal);
             for succ_id in successors {
-                let mut succ_state = state.clone();
-                // Process terminal operands
-                for operand in each_terminal_operand(&block.terminal) {
-                    // Terminal operands are typically reads
-                    if let Some(val) = state.get(operand) {
-                        succ_state.define(operand, val.clone());
-                    }
-                }
                 if let Some(existing) = queued_states.get_mut(&succ_id) {
-                    existing.merge(&succ_state);
+                    existing.merge(&state);
                 } else {
-                    queued_states.insert(succ_id, succ_state);
+                    queued_states.insert(succ_id, state.clone());
                 }
             }
         }
@@ -355,13 +410,35 @@ fn infer_instruction_effects(
             state.define(&instr.lvalue, AbstractValue::mutable());
         }
 
-        // FunctionExpression / ObjectMethod: mutable + track for Apply resolution
+        // FunctionExpression / ObjectMethod: mutable or frozen depending on captures.
+        //
+        // Port of TS CreateFunction applyEffect (InferMutationAliasingEffects.ts lines 791-858):
+        // A function expression is considered "mutable" if it has any context variables
+        // with Effect::Capture whose outer abstract kind is Mutable or Context, OR if its
+        // inner aliasing effects contain MutateFrozen/MutateGlobal/Impure (tracked side effects).
+        //
+        // If the function is NOT mutable (all captures are frozen/global/primitive), it is
+        // considered "frozen". This is critical because:
+        //   - When calling a frozen function (e.g. cb() where cb captures only frozen setState),
+        //     MutateTransitiveConditionally(cb) is dropped (no range extension for cb).
+        //   - This prevents cb's mutable range from spuriously spanning hook calls, which would
+        //     cause FlattenScopesWithHooksOrUse to prune cb's reactive scope.
         InstructionValue::FunctionExpression(v) => {
-            state.define(&instr.lvalue, AbstractValue::mutable());
+            let is_mutable = is_function_expression_mutable(state, &v.lowered_func.func);
+            if is_mutable {
+                state.define(&instr.lvalue, AbstractValue::mutable());
+            } else {
+                state.define(&instr.lvalue, AbstractValue::frozen(FxHashSet::default()));
+            }
             state.function_values.insert(lvalue_id, v.clone());
         }
-        InstructionValue::ObjectMethod(_) => {
-            state.define(&instr.lvalue, AbstractValue::mutable());
+        InstructionValue::ObjectMethod(v) => {
+            let is_mutable = is_function_expression_mutable(state, &v.lowered_func.func);
+            if is_mutable {
+                state.define(&instr.lvalue, AbstractValue::mutable());
+            } else {
+                state.define(&instr.lvalue, AbstractValue::frozen(FxHashSet::default()));
+            }
         }
 
         // JSX creates a frozen value
@@ -402,15 +479,44 @@ fn infer_instruction_effects(
         }
 
         InstructionValue::StoreContext(v) => {
-            if let Some(val) = state.get(&v.value).cloned() {
-                state.define(&v.lvalue_place, val);
+            // Context variables are mutable boxes — when declaring (Let/Const), the box
+            // itself is always Mutable regardless of the stored value's type. This matches
+            // the TypeScript reference which emits Create(x, ValueKind.Mutable) for the
+            // non-reassign case in `computeSignatureForInstruction`.
+            //
+            // For reassign, don't change the box's abstract kind — the existing Context/Mutable
+            // kind is preserved. We should NOT propagate the rvalue's abstract type (e.g.
+            // Primitive) to the context variable, since that would incorrectly prevent the
+            // context variable from being recognized as a mutable capture in FunctionExpression
+            // context handling (is_function_expression_mutable checks for Mutable/Context).
+            if v.lvalue_kind != crate::hir::InstructionKind::Reassign {
+                state.define(&v.lvalue_place, AbstractValue::mutable());
             }
         }
 
         // Calls may create, mutate, or alias values
         InstructionValue::CallExpression(v) => {
-            // By default, assume the return value is mutable
-            state.define(&instr.lvalue, AbstractValue::mutable());
+            // Use the callee's return_value_kind if a known signature exists.
+            // This is critical for hooks like useState() which return Frozen values:
+            // if we always use mutable() here, downstream destructuring of the result
+            // uses CreateFrom instead of ImmutableCapture, causing spurious range
+            // extensions (e.g. setState's range getting extended transitively when
+            // `state` is used in render, causing the second useEffect lambda to get
+            // merged into the useState scope and then pruned by FlattenScopesWithHooksOrUse).
+            let return_kind = env
+                .get_function_signature(&v.callee.identifier.type_)
+                .map(|sig| sig.return_value_kind)
+                .unwrap_or(ValueKind::Mutable);
+            let av = match return_kind {
+                ValueKind::Frozen => {
+                    let mut reasons = FxHashSet::default();
+                    reasons.insert(ValueReason::Other);
+                    AbstractValue::frozen(reasons)
+                }
+                ValueKind::Primitive => AbstractValue::primitive(),
+                _ => AbstractValue::mutable(),
+            };
+            state.define(&instr.lvalue, av);
             // Arguments may be captured/aliased by the callee
             for arg in &v.args {
                 if let crate::hir::CallArg::Place(p) = arg {
@@ -420,7 +526,21 @@ fn infer_instruction_effects(
         }
 
         InstructionValue::MethodCall(v) => {
-            state.define(&instr.lvalue, AbstractValue::mutable());
+            // Use the method's return_value_kind if a known signature exists.
+            let return_kind = env
+                .get_function_signature(&v.property.identifier.type_)
+                .map(|sig| sig.return_value_kind)
+                .unwrap_or(ValueKind::Mutable);
+            let av = match return_kind {
+                ValueKind::Frozen => {
+                    let mut reasons = FxHashSet::default();
+                    reasons.insert(ValueReason::Other);
+                    AbstractValue::frozen(reasons)
+                }
+                ValueKind::Primitive => AbstractValue::primitive(),
+                _ => AbstractValue::mutable(),
+            };
+            state.define(&instr.lvalue, av);
             state.add_alias(v.receiver.identifier.id, lvalue_id);
             for arg in &v.args {
                 if let crate::hir::CallArg::Place(p) = arg {
@@ -586,6 +706,21 @@ fn effects_from_signature(
 
     let return_value_reason = sig.return_value_reason.unwrap_or(ValueReason::Other);
 
+    // Create the return value FIRST so that the lvalue node exists before
+    // subsequent Alias/Capture effects reference it.
+    //
+    // The TypeScript reference emits `Create` before `Alias`/`Capture` in the
+    // debug output (e.g. `Create $66; Alias $66 <- $64`). If `Create` comes
+    // after the alias effects, then when `InferMutationAliasingRanges` processes
+    // the `Alias { from: $64, into: $66 }`, the `$66` node does not yet exist
+    // and `state.assign()` returns early without creating the edge. This breaks
+    // backward mutation propagation through alias chains.
+    effects.push(AliasingEffect::Create {
+        into: lvalue.clone(),
+        value: sig.return_value_kind,
+        reason: return_value_reason,
+    });
+
     // Helper closure to process a single place with a declared effect
     let mut visit = |place: &Place, effect: Effect| {
         match effect {
@@ -601,7 +736,15 @@ fn effects_from_signature(
                     .push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
             }
             Effect::ConditionallyMutateIterator => {
-                // For iterables: capture into return value
+                // Port of TypeScript `conditionallyMutateIterator`:
+                // For non-builtin-collection types (e.g. Poly iterator), also emit
+                // MutateTransitiveConditionally so that mutations propagate through alias chains.
+                // For builtin Array/Set/Map types, no mutation (the collection is safe to read).
+                if !is_array_or_set_or_map_type(&place.identifier.type_) {
+                    effects.push(AliasingEffect::MutateTransitiveConditionally {
+                        value: place.clone(),
+                    });
+                }
                 effects.push(AliasingEffect::Capture { from: place.clone(), into: lvalue.clone() });
             }
             Effect::Freeze => {
@@ -663,14 +806,20 @@ fn effects_from_signature(
         }
     }
 
-    // Create the return value
-    effects.push(AliasingEffect::Create {
-        into: lvalue.clone(),
-        value: sig.return_value_kind,
-        reason: return_value_reason,
-    });
-
     effects
+}
+
+/// Check if a type is a built-in Array, Set, or Map type.
+///
+/// Port of TS `isArrayType`, `isSetType`, `isMapType` from HIR.ts.
+/// Used in `GetIterator` handling: built-in collections return a fresh iterator
+/// (no aliasing), while other types may return `this` as the iterator.
+fn is_array_or_set_or_map_type(ty: &crate::hir::types::Type) -> bool {
+    use crate::hir::{
+        object_shape::{BUILT_IN_ARRAY_ID, BUILT_IN_MAP_ID, BUILT_IN_SET_ID},
+        types::Type,
+    };
+    matches!(ty, Type::Object(obj) if matches!(obj.shape_id.as_deref(), Some(BUILT_IN_ARRAY_ID) | Some(BUILT_IN_MAP_ID) | Some(BUILT_IN_SET_ID)))
 }
 
 /// Check if a place's abstract value is Frozen or MaybeFrozen in the inference state.
@@ -681,6 +830,157 @@ fn is_frozen(state: &InferenceState, place: &crate::hir::Place) -> bool {
         Some(av) => matches!(av.kind, ValueKind::Frozen | ValueKind::MaybeFrozen),
         None => false,
     }
+}
+
+/// Check if all arguments are immutable and non-mutating.
+///
+/// Port of `areArgumentsImmutableAndNonMutating` from `InferMutationAliasingEffects.ts`.
+///
+/// Returns true if all args are either:
+/// 1. Function types with known signatures that have no mutable param effects, OR
+/// 2. Abstract values that are Primitive, Frozen, MaybeFrozen, or Global (i.e. non-mutable)
+///
+/// Used to implement the `mutable_only_if_operands_are_mutable` check for built-in methods
+/// like `Array.filter`, `Array.map`, etc. When all args are immutable, those methods don't
+/// need to extend the receiver's mutable range.
+fn are_arguments_immutable_and_non_mutating(
+    state: &InferenceState,
+    env: &crate::hir::environment::Environment,
+    args: &[crate::hir::CallArg],
+) -> bool {
+    use crate::hir::{CallArg, types::Type};
+
+    for arg in args {
+        let place = match arg {
+            CallArg::Place(p) => p,
+            CallArg::Spread(s) => &s.place,
+        };
+
+        // If the argument is a Function type with a known signature, check whether any
+        // of the signature's params are mutable effects (matching TS isKnownMutableEffect).
+        if let Type::Function(_) = &place.identifier.type_ {
+            if let Some(fn_sig) = env.get_function_signature(&place.identifier.type_) {
+                // isKnownMutableEffect: Store, ConditionallyMutate, ConditionallyMutateIterator, Mutate → true
+                // Read, Capture, Freeze → false
+                let has_mutable_positional = fn_sig.positional_params.iter().any(|&e| {
+                    matches!(
+                        e,
+                        Effect::Store
+                            | Effect::ConditionallyMutate
+                            | Effect::ConditionallyMutateIterator
+                            | Effect::Mutate
+                    )
+                });
+                if has_mutable_positional {
+                    return false;
+                }
+                if let Some(rest) = fn_sig.rest_param {
+                    if matches!(
+                        rest,
+                        Effect::Store
+                            | Effect::ConditionallyMutate
+                            | Effect::ConditionallyMutateIterator
+                            | Effect::Mutate
+                    ) {
+                        return false;
+                    }
+                }
+                // This function's signature doesn't mutate its inputs — continue checking others
+                continue;
+            }
+        }
+
+        // For non-function types or functions without known signatures, check the abstract value kind.
+        // Primitive, Frozen, MaybeFrozen, Global are all immutable.
+        match state.get(place) {
+            Some(av) => {
+                if !matches!(
+                    av.kind,
+                    ValueKind::Primitive
+                        | ValueKind::Frozen
+                        | ValueKind::MaybeFrozen
+                        | ValueKind::Global
+                ) {
+                    return false;
+                }
+            }
+            None => {
+                // Unknown: conservatively not immutable
+                return false;
+            }
+        }
+
+        // For Frozen/MaybeFrozen function expressions: additionally check that the function's
+        // params don't have mutable ranges (which would indicate the function mutates its inputs).
+        //
+        // Port of TS `areArgumentsImmutableAndNonMutating` lines:
+        //   for (const value of values) {
+        //     if (value.kind === 'FunctionExpression' && value.loweredFunc.func.params.some(
+        //       param => { const range = param.place.identifier.mutableRange; return range.end > range.start + 1; }
+        //     )) { return false; }
+        //   }
+        if let Some(func_expr) = state.function_values.get(&place.identifier.id) {
+            let params_have_mutable_range =
+                func_expr.lowered_func.func.params.iter().any(|param| {
+                    let p = match param {
+                        crate::hir::ReactiveParam::Place(p) => p,
+                        crate::hir::ReactiveParam::Spread(s) => &s.place,
+                    };
+                    p.identifier.mutable_range.end.0 > p.identifier.mutable_range.start.0 + 1
+                });
+            if params_have_mutable_range {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+/// Determine whether a function expression should be considered "mutable" or "frozen".
+///
+/// Port of the `isMutable` computation in TS CreateFunction applyEffect
+/// (InferMutationAliasingEffects.ts lines 804-827):
+///
+/// A function is mutable if:
+/// 1. It has any context variable with `Effect::Capture` whose abstract value in the
+///    outer inference state is `Mutable` or `Context` (hasCaptures).
+/// 2. OR its inner aliasing effects contain `MutateFrozen`, `MutateGlobal`, or `Impure`
+///    (hasTrackedSideEffects).
+///
+/// If a function is NOT mutable (all captures are frozen/global/primitive), it is
+/// considered "frozen" — calling it will not mutate the captured environment.
+fn is_function_expression_mutable(state: &InferenceState, inner_func: &HIRFunction) -> bool {
+    // hasCaptures: any context var with Effect::Capture that is Mutable or Context in outer state
+    let has_captures = inner_func.context.iter().any(|ctx| {
+        if ctx.effect != Effect::Capture {
+            return false;
+        }
+        match state.get(ctx) {
+            Some(av) => matches!(av.kind, ValueKind::Mutable | ValueKind::Context),
+            None => true, // Unknown: conservatively assume mutable
+        }
+    });
+
+    if has_captures {
+        return true;
+    }
+
+    // hasTrackedSideEffects: inner aliasing effects contain MutateFrozen, MutateGlobal, or Impure
+    if let Some(aliasing_effects) = &inner_func.aliasing_effects {
+        let has_side_effects = aliasing_effects.iter().any(|effect| {
+            matches!(
+                effect,
+                AliasingEffect::MutateFrozen { .. }
+                    | AliasingEffect::MutateGlobal { .. }
+                    | AliasingEffect::Impure { .. }
+            )
+        });
+        if has_side_effects {
+            return true;
+        }
+    }
+
+    false
 }
 
 /// Build an `AliasingSignature` from a locally-defined function expression.
@@ -1092,10 +1392,21 @@ fn compute_instruction_effects(
                         &v.args,
                         context_vars,
                     ) {
-                        // TS: MutateTransitiveConditionally(function) + substituted effects
-                        effects.push(AliasingEffect::MutateTransitiveConditionally {
-                            value: v.callee.clone(),
-                        });
+                        // TS: MutateTransitiveConditionally(function) + substituted effects.
+                        // In TS, this goes through applyEffect which filters it out if the
+                        // function's abstract kind is not Mutable or Context (e.g. Frozen).
+                        // We replicate that filtering here: only emit if callee is mutable.
+                        let callee_is_mutable = match state.get(&v.callee) {
+                            Some(av) => {
+                                matches!(av.kind, ValueKind::Mutable | ValueKind::Context)
+                            }
+                            None => true, // Unknown: conservatively assume mutable
+                        };
+                        if callee_is_mutable {
+                            effects.push(AliasingEffect::MutateTransitiveConditionally {
+                                value: v.callee.clone(),
+                            });
+                        }
                         effects.extend(sig_effects);
                         return effects;
                     }
@@ -1147,6 +1458,36 @@ fn compute_instruction_effects(
             let sig = env.get_function_signature(&v.property.identifier.type_);
             if let Some(sig) = sig {
                 let sig = sig.clone();
+                // Port of TS mutableOnlyIfOperandsAreMutable check (InferMutationAliasingEffects.ts).
+                // If the method is only mutable when operands are mutable (e.g. Array.filter, Array.map),
+                // and all arguments are immutable/non-mutating, use Alias + ImmutableCapture instead
+                // of the normal signature effects. This prevents extending the receiver's mutable range
+                // unnecessarily when calling methods like `arr.filter(Boolean)`.
+                if sig.mutable_only_if_operands_are_mutable
+                    && are_arguments_immutable_and_non_mutating(state, env, &v.args)
+                {
+                    let return_value_reason = sig.return_value_reason.unwrap_or(ValueReason::Other);
+                    effects.push(AliasingEffect::Create {
+                        into: lvalue.clone(),
+                        value: sig.return_value_kind,
+                        reason: return_value_reason,
+                    });
+                    effects.push(AliasingEffect::Alias {
+                        from: v.receiver.clone(),
+                        into: lvalue.clone(),
+                    });
+                    for arg in &v.args {
+                        let place = match arg {
+                            CallArg::Place(p) => p,
+                            CallArg::Spread(s) => &s.place,
+                        };
+                        effects.push(AliasingEffect::ImmutableCapture {
+                            from: place.clone(),
+                            into: lvalue.clone(),
+                        });
+                    }
+                    return effects;
+                }
                 // For method calls, the receiver is the callee_or_receiver
                 return effects_from_signature(&sig, &v.receiver, &v.args, lvalue);
             }
@@ -1169,6 +1510,15 @@ fn compute_instruction_effects(
             });
         }
         InstructionValue::NewExpression(v) => {
+            // Port of TS: NewExpression uses callee as the receiver, and mutatesFunction=false.
+            // Try to find a function signature for the callee (e.g. `new Set(...)` uses the
+            // Set constructor signature with ConditionallyMutateIterator for its argument).
+            let sig = env.get_function_signature(&v.callee.identifier.type_);
+            if let Some(sig) = sig {
+                let sig = sig.clone();
+                return effects_from_signature(&sig, &v.callee, &v.args, lvalue);
+            }
+            // Conservative fallback when no signature is found:
             // NewExpression: callee is NOT mutated (mutatesFunction=false)
             for arg in &v.args {
                 let place = match arg {
@@ -1331,12 +1681,45 @@ fn compute_instruction_effects(
             effects.push(AliasingEffect::Assign { from: v.place.clone(), into: lvalue.clone() });
         }
 
-        // LoadContext: always CreateFrom (loading from mutable box).
-        // The TS reference unconditionally emits CreateFrom for LoadContext (line 2128-2135).
-        // Same reasoning as LoadLocal above — no frozen check here.
+        // LoadContext: CreateFrom (loading from mutable box), but if source is frozen,
+        // emit Create(Frozen) + ImmutableCapture instead (matching TS applyEffect behavior).
+        //
+        // The TS reference emits `CreateFrom` for LoadContext (line 2128-2135), but then
+        // TS's `applyEffect(CreateFrom)` converts it when the source is frozen (line 765-783):
+        //   - If fromKind == Frozen: emit Create(Frozen, into) + ImmutableCapture(from, into)
+        //   - This prevents the mutation BFS from creating a `createdFrom` back-edge that
+        //     would propagate mutations from the LoadContext result back to the frozen source.
+        //
+        // Example: for a component prop `items` (frozen), `$39 = LoadContext items`:
+        // - Without this check: CreateFrom(items -> $39) creates a createdFrom back-edge,
+        //   so mutations to $39 (e.g. from GetIterator) propagate back to items, extending
+        //   items.mutableRange. This causes items to get a reactive scope ID.
+        // - With this check: ImmutableCapture(items -> $39) does nothing in the ranges pass,
+        //   so items.mutableRange stays narrow and items remains scopeless.
         InstructionValue::LoadContext(v) => {
-            effects
-                .push(AliasingEffect::CreateFrom { from: v.place.clone(), into: lvalue.clone() });
+            let source_frozen = is_frozen(state, &v.place);
+            if source_frozen {
+                let source_reason = state
+                    .get(&v.place)
+                    .and_then(|av| av.reason.iter().next().copied())
+                    .unwrap_or(ValueReason::Other);
+                // Matching TS applyEffect(CreateFrom) with frozen source:
+                // emit Create(Frozen, lvalue) + ImmutableCapture(source, lvalue)
+                effects.push(AliasingEffect::Create {
+                    into: lvalue.clone(),
+                    value: ValueKind::Frozen,
+                    reason: source_reason,
+                });
+                effects.push(AliasingEffect::ImmutableCapture {
+                    from: v.place.clone(),
+                    into: lvalue.clone(),
+                });
+            } else {
+                effects.push(AliasingEffect::CreateFrom {
+                    from: v.place.clone(),
+                    into: lvalue.clone(),
+                });
+            }
         }
 
         // StoreLocal: Assign to lvalue target + Assign to instruction lvalue
@@ -1482,15 +1865,37 @@ fn compute_instruction_effects(
             effects.push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
         }
 
-        // GetIterator: Create(Mutable) + Capture(collection -> iterator)
+        // GetIterator: Create(Mutable) + Capture/Alias depending on collection type.
+        //
+        // Port of TS InferMutationAliasingEffects.ts `GetIterator` case:
+        // - BuiltIn Array/Map/Set collections return a *fresh* iterator on each call,
+        //   so the iterator does not alias the collection → use Capture.
+        // - For all other types the object may return *itself* as the iterator
+        //   (e.g. custom iterables that `return this` from `[Symbol.iterator]()`),
+        //   so we must assume the result directly aliases the collection and that
+        //   calling the iterator method could mutate the collection → Alias +
+        //   MutateTransitiveConditionally.
         InstructionValue::GetIterator(v) => {
             effects.push(AliasingEffect::Create {
                 into: lvalue.clone(),
                 value: ValueKind::Mutable,
                 reason: ValueReason::Other,
             });
-            effects
-                .push(AliasingEffect::Capture { from: v.collection.clone(), into: lvalue.clone() });
+            let is_builtin_collection = is_array_or_set_or_map_type(&v.collection.identifier.type_);
+            if is_builtin_collection {
+                effects.push(AliasingEffect::Capture {
+                    from: v.collection.clone(),
+                    into: lvalue.clone(),
+                });
+            } else {
+                effects.push(AliasingEffect::Alias {
+                    from: v.collection.clone(),
+                    into: lvalue.clone(),
+                });
+                effects.push(AliasingEffect::MutateTransitiveConditionally {
+                    value: v.collection.clone(),
+                });
+            }
         }
 
         // IteratorNext: MutateConditionally(iterator) + CreateFrom(collection -> lvalue)
