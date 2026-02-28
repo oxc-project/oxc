@@ -291,6 +291,69 @@ fn collect_pattern_operands<'a>(pattern: &'a Pattern, out: &mut Vec<&'a Place>) 
     }
 }
 
+/// A pattern item that distinguishes between identifier and spread patterns.
+///
+/// Port of `eachPatternItem` from the TS reference which yields `Place | SpreadPattern`.
+/// In the TS code, `Place` has `kind === 'Identifier'` and `SpreadPattern` has `kind === 'Spread'`.
+pub enum PatternItem<'a> {
+    /// An identifier pattern element (non-spread). The place is the target.
+    Identifier(&'a Place),
+    /// A spread pattern element (`...rest`). The place is the target.
+    Spread(&'a Place),
+}
+
+impl<'a> PatternItem<'a> {
+    /// Get the place for this pattern item (equivalent to TS:
+    /// `patternItem.kind === 'Identifier' ? patternItem : patternItem.place`).
+    pub fn place(&self) -> &'a Place {
+        match self {
+            PatternItem::Identifier(p) | PatternItem::Spread(p) => p,
+        }
+    }
+}
+
+/// Iterate over all pattern items, distinguishing between Identifier and Spread elements.
+///
+/// Port of `eachPatternItem` from `HIR/visitors.ts` in the React Compiler.
+/// For ArrayPattern:
+///   - `Place` items yield `PatternItem::Identifier`
+///   - `Spread` items yield `PatternItem::Spread`
+///   - `Hole` items are skipped
+/// For ObjectPattern:
+///   - `ObjectProperty` items yield `PatternItem::Identifier` (with the property's place)
+///   - `Spread` items yield `PatternItem::Spread`
+pub fn each_pattern_item(pattern: &Pattern) -> Vec<PatternItem<'_>> {
+    let mut items = Vec::new();
+    match pattern {
+        Pattern::Array(arr) => {
+            for item in &arr.items {
+                match item {
+                    super::hir_types::ArrayPatternElement::Place(p) => {
+                        items.push(PatternItem::Identifier(p));
+                    }
+                    super::hir_types::ArrayPatternElement::Spread(s) => {
+                        items.push(PatternItem::Spread(&s.place));
+                    }
+                    super::hir_types::ArrayPatternElement::Hole => {}
+                }
+            }
+        }
+        Pattern::Object(obj) => {
+            for prop in &obj.properties {
+                match prop {
+                    ObjectPatternProperty::Property(p) => {
+                        items.push(PatternItem::Identifier(&p.place));
+                    }
+                    ObjectPatternProperty::Spread(s) => {
+                        items.push(PatternItem::Spread(&s.place));
+                    }
+                }
+            }
+        }
+    }
+    items
+}
+
 // =====================================================================================
 // Terminal operand/successor iteration
 // =====================================================================================
