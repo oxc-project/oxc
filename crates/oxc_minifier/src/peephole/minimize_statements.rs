@@ -1236,14 +1236,20 @@ impl<'a> PeepholeOptimizations {
         changed
     }
 
-    /// Returns new length
+    /// Returns new length.
+    ///
+    /// Matches esbuild's approach: only try the last declarator, remove it on
+    /// success and loop back, break on first failure.
+    /// <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9177-L9225>
     fn substitute_single_use_symbol_in_expression_from_declarators(
         target_expr: &mut Expression<'a>,
         declarators: &mut [VariableDeclarator<'a>],
         ctx: &TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> usize {
-        let last_non_inlined_index = declarators.iter_mut().rposition(|prev_decl| {
+        // Process declarators from right to left (last first), matching esbuild.
+        // `rposition` short-circuits on the first non-inlined declarator.
+        let last_non_inlined = declarators.iter_mut().rposition(|prev_decl| {
             let Some(prev_decl_init) = &mut prev_decl.init else {
                 return true;
             };
@@ -1269,21 +1275,17 @@ impl<'a> PeepholeOptimizations {
             if non_scoped_literal_only && !prev_decl_init.is_literal_value(false, ctx) {
                 return true;
             }
-            let replaced = Self::substitute_single_use_symbol_in_expression(
+            Self::substitute_single_use_symbol_in_expression(
                 target_expr,
                 &prev_decl_id.name,
                 prev_decl_init,
                 prev_decl_init.may_have_side_effects(ctx),
                 ctx,
-            );
-            if replaced != Some(true) {
-                return true;
-            }
-            false
+            ) != Some(true)
         });
-        match last_non_inlined_index {
+        match last_non_inlined {
+            Some(i) => i + 1,
             None => 0,
-            Some(last_non_inlined_index) => last_non_inlined_index + 1,
         }
     }
 
