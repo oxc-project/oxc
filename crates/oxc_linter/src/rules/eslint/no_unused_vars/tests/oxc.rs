@@ -900,6 +900,39 @@ fn test_imports() {
 }
 
 #[test]
+fn test_fix_options() {
+    let pass = vec![];
+    let fail = vec![
+        ("import foo from './foo';", Some(json!([{ "fix": { "imports": "off" } }]))),
+        ("let a = 1;", Some(json!([{ "fix": { "variables": "off" } }]))),
+    ];
+
+    let fix = vec![
+        (
+            "let a = 1;",
+            "",
+            Some(json!([{ "fix": { "imports": "off" } }])),
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';",
+            "",
+            Some(json!([{ "fix": { "variables": "off" } }])),
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo from './foo';",
+            "",
+            Some(json!([{ "fix": { "imports": "fix" } }])),
+            FixKind::DangerousFix,
+        ),
+        ("let a = 1;", "", Some(json!([{ "fix": { "variables": "fix" } }])), FixKind::DangerousFix),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
+}
+
+#[test]
 fn test_used_declarations() {
     let pass = vec![
         // function declarations passed as arguments, used in assignments, etc. are used, even if they are
