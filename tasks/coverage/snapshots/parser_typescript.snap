@@ -3,7 +3,7 @@ commit: 34725489
 parser_typescript Summary:
 AST Parsed     : 9831/9834 (99.97%)
 Positive Passed: 9820/9834 (99.86%)
-Negative Passed: 1527/2578 (59.23%)
+Negative Passed: 1528/2578 (59.27%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -529,8 +529,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompil
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementation.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementationFileOrderReversed.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationHeritageClauseSyntaxOfClass.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts
 
@@ -7369,6 +7367,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    · ──────────────
    ╰────
   help: Add a function body (`{}`).
+
+  × TS(8005): 'implements' clauses can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationHeritageClauseSyntaxOfClass.ts:1:9]
+ 1 │ class C implements D { }
+   ·         ──────────
+   ╰────
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.
    ╭─[typescript/tests/cases/compiler/jsFileCompilationImportEqualsSyntax.ts:1:1]

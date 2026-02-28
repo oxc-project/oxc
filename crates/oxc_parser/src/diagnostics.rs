@@ -1122,6 +1122,11 @@ pub fn parameter_modifiers_in_ts(
 }
 
 #[cold]
+pub fn implements_clause_in_ts(span: Span) -> OxcDiagnostic {
+    ts_error("8005", "'implements' clauses can only be used in TypeScript files.").with_label(span)
+}
+
+#[cold]
 pub fn implementation_in_ambient(span: Span) -> OxcDiagnostic {
     ts_error("1183", "An implementation cannot be declared in ambient contexts.").with_label(span)
 }
