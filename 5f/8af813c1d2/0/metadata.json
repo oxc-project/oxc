@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "5f8af813c1d2",
+  "session_id": "e0e91538-93c9-45a4-91f3-0315f9c164e9",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-25T11:51:34.55585Z",
+  "branch": "refactor/extract-oxc-jsdoc",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "crates/oxc_semantic/Cargo.toml",
+    "crates/oxc_semantic/src/builder.rs",
+    "crates/oxc_semantic/src/lib.rs"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "c2415fd0-b12c-45c9-9d4b-406d79a3d330",
+  "checkpoint_transcript_start": 732,
+  "transcript_lines_at_start": 732,
+  "token_usage": {
+    "input_tokens": 39,
+    "cache_creation_tokens": 26606,
+    "cache_read_tokens": 5150675,
+    "output_tokens": 1445,
+    "api_call_count": 35
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-25T11:51:34.393784Z",
+    "agent_lines": 0,
+    "human_added": 2440,
+    "human_modified": 15,
+    "human_removed": 0,
+    "total_committed": 2440,
+    "agent_percentage": 0
+  }
+}

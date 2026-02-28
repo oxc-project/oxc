@@ -1,0 +1,203 @@
+Implement the following plan:
+
+# Plan: Cursor-Based Comment Printing — Print ALL Comments Correctly
+
+## Context
+
+Current codegen is **opt-in per Gen impl**: only nodes with explicit `print_comments_at()` calls print comments. Many node types have no call, so comments are silently dropped. The HashMap-based lookup also has allocation/hashing overhead.
+
+The goal: print **every** comment in the correct position, with better performance than today.
+
+## Design: Auto-Flushing Cursor
+
+A cursor into the sorted `Program.comments` array, with automatic flushing in the `Gen`/`GenExpr` trait default methods. Every node gets its comments without any manual calls.
+
+### Performance
+
+| | Current (HashMap) | Cursor |
+|---|---|---|
+| Build step | O(n) hash + alloc per comment | None |
+| Per-node | O(1) hash lookup + remove | O(1) index compare, branch |
+| Memory | HashMap + Vec per entry | 1 `usize` + `&[Comment]` |
+| Cache | Random access (hash buckets) | Sequential (array walk) |
+
+Auto-flush cost: **one u32 comparison per node visit**. No-comment case is a single branch.
+
+### Core Mechanism
+
+```rust
+// In Codegen:
+struct CommentsCursor<'a> {
+    comments: &'a [Comment],  // sorted by position, from Program
+    index: usize,             // only advances forward
+    source_text: &'a str,
+}
+```
+
+### Auto-Flush in Gen Trait
+
+```rust
+pub trait Gen: GetSpan {
+    fn r#gen(&self, p: &mut Codegen, ctx: Context);
+
+    fn print(&self, p: &mut Codegen, ctx: Context) {
+        p.flush_comments_before(self.span().start);  // automatic
+        self.r#gen(p, ctx);
+    }
+}
+
+pub trait GenExpr: GetSpan {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context);
+
+    fn print_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        p.flush_comments_before(self.span().start);  // automatic
+        self.gen_expr(p, precedence, ctx);
+    }
+}
+```
+
+Every node gets leading comments automatically. No Gen impl needs to call `print_comments_at()`.
+
+### How All Comment Types Are Handled
+
+| Comment type | How it's handled |
+|---|---|
+| **Leading** (`/* A */ stmt`) | Auto-flushed when stmt's `print()` runs |
+| **Trailing** (`stmt /* A */`) | Auto-flushed by the NEXT node's `print()` |
+| **Dangling** (`{ /* A */ }`) | Explicit `flush_comments_before(span.end)` in container gen() |
+| **EOF** | `flush_remaining()` at end of Program::gen |
+| **Between siblings** (`a, /* A */ b`) | Auto-flushed when `b`'s `print()` runs |
+
+### Walkthrough: `/* A */ var x = /* B */ 1 + /* C */ 2; /* D */`
+
+1. Program.print() → flush_before(0) → nothing
+2. VariableDeclaration.print() → flush_before(8) → **prints A** ✓
+3. VariableDeclarator.print() → flush_before(12) → nothing
+4. BinaryExpression.print_expr() → flush_before(24) → **prints B** ✓
+5. NumericLiteral(1).print_expr() → flush_before(24) → nothing (cursor past B)
+6. NumericLiteral(2).print_expr() → flush_before(34) → **prints C** ✓
+7. Program.gen() → flush_remaining() → **prints D** ✓
+
+All 4 comments printed, zero dropped.
+
+### Walkthrough: Empty container `function f() { /* dangling */ }`
+
+1. FunctionBody.print() → flush_before(body.span.start) → nothing
+2. FunctionBody.gen() → body is empty → `flush_comments_before(self.span.end)` → **prints dangling** ✓
+
+### Comment Filtering
+
+Move `CommentOptions` filtering (legal/jsdoc/annotation/normal) into the cursor's flush logic. The cursor skips comments that don't match options but still advances past them.
+
+```rust
+fn flush_comments_before(&mut self, pos: u32) {
+    while self.index < self.comments.len() {
+        let comment = &self.comments[self.index];
+        if comment.span.end > pos { break; }
+        if self.should_print(comment) {
+            self.print_comment(comment);
+        }
+        self.index += 1;  // always advance, even if filtered
+    }
+}
+```
+
+## Implementation Steps
+
+### Step 1: Add `CommentsCursor` to codegen
+
+**File: `crates/oxc_codegen/src/comment.rs`**
+
+New struct with methods: `flush_before(pos)`, `has_before(pos)`, `peek_before(pos)`, `take_before(pos)`, `flush_remaining()`. Reuse existing `print_comments()`/`print_comment()` formatting logic.
+
+### Step 2: Wire cursor into Codegen, add auto-flush to traits
+
+**File: `crates/oxc_codegen/src/lib.rs`**
+
+Replace `comments: CommentsMap` with cursor initialized from `&program.comments`.
+
+**File: `crates/oxc_codegen/src/gen.rs`**
+
+Change `Gen::print()` and `GenExpr::print_expr()` defaults to auto-flush.
+
+### Step 3: Remove manual `print_comments_at` calls from Gen impls
+
+**File: `crates/oxc_codegen/src/gen.rs`** (~60 call sites)
+
+Remove all `p.print_comments_at(self.span.start)` / `p.print_leading_comments(self.span.start)` calls — they're now automatic via the trait.
+
+**Keep** special cases:
+- `has_comments_before()` checks that affect wrapping/multiline decisions (ObjectExpression, arguments)
+- `flush_comments_before(span.end)` in containers for dangling comments (FunctionBody, ClassBody, etc.)
+- `take_comments_before()` for special formatting (import specifiers, expr comments)
+
+### Step 4: Add dangling comment handling to containers
+
+**File: `crates/oxc_codegen/src/gen.rs`**
+
+For empty-body containers, add `p.flush_comments_before(self.span.end)` after children:
+- `FunctionBody` (already has this via `get_comments(span_end - 1)` — simplify)
+- `BlockStatement`
+- `ClassBody`
+- `SwitchStatement`
+- `ObjectExpression` / `ArrayExpression` (when empty)
+
+### Step 5: Adjust Statement::gen dispatcher
+
+**File: `crates/oxc_codegen/src/gen.rs`**
+
+Remove comment calls from dispatcher since traits auto-flush:
+
+```rust
+// Before:
+Self::VariableDeclaration(decl) => {
+    p.print_comments_at(decl.span.start);  // REMOVE
+    p.print_indent();
+    decl.print(p, ctx);
+    p.print_semicolon_after_statement();
+}
+
+// After:
+Self::VariableDeclaration(decl) => {
+    p.print_indent();
+    decl.print(p, ctx);  // auto-flushes comments in print()
+    p.print_semicolon_after_statement();
+}
+```
+
+Note: this means comments print AFTER indent for some nodes. The comment newline handling (`CommentNewlines::Leading`) already outputs a newline + indent, so the visual result is:
+```
+    /* comment */
+    var x = 1;
+```
+Which is correct — the comment inherits the statement's indentation.
+
+### Step 6: Remove `attached_to` from Comment
+
+**Files:**
+- `crates/oxc_ast/src/ast/comment.rs` — remove `attached_to: u32` field
+- `crates/oxc_parser/src/lexer/trivia_builder.rs` — remove `comment.attached_to = token.start()` from `handle_token()`
+- Run `just ast` to regenerate
+
+Keep in TriviaBuilder: comment collection, annotation parsing, newline tracking, position classification.
+
+## Key Files
+
+| File | Change |
+|---|---|
+| `crates/oxc_codegen/src/comment.rs` | Replace `CommentsMap` with `CommentsCursor` |
+| `crates/oxc_codegen/src/lib.rs` | Wire cursor, remove `build_comments()` |
+| `crates/oxc_codegen/src/gen.rs` | Auto-flush in traits, remove ~60 manual calls, add dangling handling |
+| `crates/oxc_ast/src/ast/comment.rs` | Remove `attached_to` field |
+| `crates/oxc_parser/src/lexer/trivia_builder.rs` | Remove attachment in `handle_token()` |
+
+## Verification
+
+1. `cargo test -p oxc_codegen` — all codegen tests pass
+2. `just conformance` — no regressions
+3. `just test` — full test suite
+4. `just ready` — all checks pass
+5. Manual: write a file with comments everywhere (leading, trailing, dangling, between args, EOF) and verify codegen output
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/boshen/.REDACTED.jsonl
