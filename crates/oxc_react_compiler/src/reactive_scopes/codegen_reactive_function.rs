@@ -1804,10 +1804,13 @@ fn codegen_function_expression(
                             // the reactive IR doesn't track the ternary temp.
                             // Also wrap object literals in parens: `() => ({x})` not
                             // `() => {x}` which would be parsed as a block statement.
-                            let needs_parens = *is_conditional || expr.starts_with('{') || {
-                                let s = expr.replace("??", "__");
-                                s.contains(" ? ")
-                            };
+                            // JSX expressions are wrapped in parens to match Prettier
+                            // formatting: `() => (<div />)` not `() => <div />`.
+                            let needs_parens =
+                                *is_conditional || expr.starts_with('{') || expr.starts_with('<') || {
+                                    let s = expr.replace("??", "__");
+                                    s.contains(" ? ")
+                                };
                             if needs_parens {
                                 format!("{async_prefix}({params_str}) => ({expr})")
                             } else {
