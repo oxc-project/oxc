@@ -600,8 +600,7 @@ impl ModuleRecord {
         let Some(dep) = self.get_loaded_module(key) else {
             return;
         };
-        let (pref, pref_non_rel) =
-            computer.compute(from_dir, key, &dep.resolved_absolute_path);
+        let (pref, pref_non_rel) = computer.compute(from_dir, key, &dep.resolved_absolute_path);
         if let Some(p) = pref {
             self.preferred_specifiers.write().unwrap().insert(CompactStr::from(key), p);
         }
