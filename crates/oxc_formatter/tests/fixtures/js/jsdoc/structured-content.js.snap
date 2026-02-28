@@ -35,7 +35,7 @@ function features() {}
  *
  * ```js
  * const x = 1;
- *   const y = 2;
+ * const y = 2;
  * ```
  */
 function features() {}
@@ -55,7 +55,7 @@ function features() {}
  *
  * ```js
  * const x = 1;
- *   const y = 2;
+ * const y = 2;
  * ```
  */
 function features() {}

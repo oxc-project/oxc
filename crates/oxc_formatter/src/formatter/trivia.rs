@@ -441,6 +441,7 @@ impl<'a> Format<'a> for Comment {
                 source,
                 f.allocator(),
                 available_width,
+                f.options(),
             ) {
                 if !formatted.is_empty() {
                     // Write line-by-line with hard_line_break() for proper indentation

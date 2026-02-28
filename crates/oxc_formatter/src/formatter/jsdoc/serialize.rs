@@ -3,9 +3,12 @@ use std::fmt::Write as _;
 use oxc_allocator::{Allocator, StringBuilder};
 use oxc_ast::Comment;
 use oxc_jsdoc::JSDoc;
-use oxc_span::Span;
+use oxc_parser::Parser;
+use oxc_span::{SourceType, Span};
 
 use crate::options::JsdocOptions;
+use crate::options::TrailingCommas;
+use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
 
 use super::{
     normalize::{
@@ -252,6 +255,7 @@ pub fn format_jsdoc_comment<'a>(
     source_text: &str,
     allocator: &'a Allocator,
     available_width: usize,
+    format_options: &FormatOptions,
 ) -> Option<&'a str> {
     let content = &source_text[comment.span.start as usize..comment.span.end as usize];
 
@@ -294,12 +298,31 @@ pub fn format_jsdoc_comment<'a>(
     let tags = jsdoc.tags();
     let sorted_tags = sort_tags_by_groups(tags);
 
-    // Collect effective tags (filter out empty examples)
+    // Collect effective tags, merging @description into the description area
     let mut effective_tags: Vec<(&oxc_jsdoc::parser::JSDocTag<'_>, &str)> = Vec::new();
     for tag in &sorted_tags {
         let raw_kind = tag.kind.parsed();
         let normalized_kind = normalize_tag_kind(raw_kind);
         if should_remove_empty_tag(normalized_kind) && !tag_has_content(tag) {
+            continue;
+        }
+        // @description tag: merge its content into the main description
+        if normalized_kind == "description" {
+            let desc_content = tag.comment().parsed();
+            let desc_content = desc_content.trim();
+            if !desc_content.is_empty() {
+                if !content_lines.is_empty() && !content_lines.last().is_some_and(String::is_empty)
+                {
+                    content_lines.push(String::new());
+                }
+                let mut desc = desc_content.to_string();
+                if options.capitalize_descriptions {
+                    desc = capitalize_first(&desc);
+                }
+                let desc_normalized = normalize_markdown_emphasis(&desc);
+                let desc_normalized = unescape_markdown_backslashes(&desc_normalized);
+                wrap_text(&desc_normalized, wrap_width, &mut content_lines);
+            }
             continue;
         }
         effective_tags.push((tag, normalized_kind));
@@ -365,7 +388,7 @@ pub fn format_jsdoc_comment<'a>(
         let bracket_spacing = options.bracket_spacing;
 
         if normalized_kind == "example" || normalized_kind == "remarks" {
-            format_example_tag(normalized_kind, tag, &mut content_lines);
+            format_example_tag(normalized_kind, tag, wrap_width, format_options, &mut content_lines);
         } else if is_type_name_comment_tag(raw_kind) {
             format_type_name_comment_tag(
                 normalized_kind,
@@ -396,12 +419,15 @@ pub fn format_jsdoc_comment<'a>(
             );
         }
 
-        // If this tag produced multi-paragraph content (has blank lines within its content)
-        // and the next tag is of a different kind, add a trailing blank line for separation.
+        // If this tag has multi-paragraph content (blank lines within, or is an @example tag
+        // with multi-line code) and the next tag is of a different kind, add a trailing
+        // blank line for separation.
         let tag_content_has_blank_lines = content_lines[lines_before..]
             .iter()
             .any(String::is_empty);
-        if tag_content_has_blank_lines
+        let tag_content_lines = content_lines.len() - lines_before;
+        let is_example_multiline = normalized_kind == "example" && tag_content_lines > 1;
+        if (tag_content_has_blank_lines || is_example_multiline)
             && let Some(&(_, next_kind)) = effective_tags.get(tag_idx + 1)
                 && next_kind != normalized_kind
                     && !content_lines.last().is_some_and(String::is_empty)
@@ -409,6 +435,10 @@ pub fn format_jsdoc_comment<'a>(
                     content_lines.push(String::new());
                 }
     }
+
+    // Post-process: format code in fenced code blocks and indented code blocks
+    format_fenced_code_blocks(&mut content_lines, wrap_width, format_options);
+    format_indented_code_blocks(&mut content_lines, wrap_width, format_options);
 
     // Remove trailing empty lines
     while content_lines.last().is_some_and(String::is_empty) {
@@ -959,11 +989,202 @@ fn strip_default_is_suffix(desc: &str) -> String {
     }
 }
 
+/// Post-process content lines to format code inside fenced code blocks with language tags.
+/// Finds ```js ... ``` blocks and reformats the code using the embedded JS formatter.
+fn format_fenced_code_blocks(content_lines: &mut Vec<String>, wrap_width: usize, format_options: &FormatOptions) {
+    let mut i = 0;
+    while i < content_lines.len() {
+        let line = &content_lines[i];
+        // Look for opening code fence with a language tag
+        if line.starts_with("```") && line.len() > 3 {
+            let lang = line[3..].trim();
+            // Only format JS/TS/JSX/TSX code
+            if !matches!(lang, "js" | "javascript" | "jsx" | "ts" | "typescript" | "tsx") {
+                i += 1;
+                continue;
+            }
+
+            // Find closing code fence
+            let start = i + 1;
+            let end = content_lines[start..]
+                .iter()
+                .position(|l| l == "```")
+                .map(|pos| start + pos);
+
+            let Some(end_idx) = end else {
+                i += 1;
+                continue;
+            };
+
+            // Extract code content
+            let code: String =
+                content_lines[start..end_idx].iter().map(String::as_str).collect::<Vec<_>>().join("\n");
+
+            // Try to format
+            if let Some(formatted) = format_embedded_js(&code, wrap_width, format_options) {
+                // Replace the code lines with formatted output
+                let new_lines: Vec<String> = formatted.lines().map(String::from).collect();
+                // Remove old code lines and insert new ones
+                let range = start..end_idx;
+                content_lines.splice(range, new_lines.clone());
+                // Adjust index past the new content + closing fence
+                i = start + new_lines.len() + 1;
+            } else {
+                i = end_idx + 1;
+            }
+        } else {
+            i += 1;
+        }
+    }
+}
+
+/// Post-process content lines to format indented code blocks (4-space indented).
+/// These are blocks of consecutive lines starting with 4+ spaces, typically
+/// between blank lines.
+fn format_indented_code_blocks(content_lines: &mut Vec<String>, wrap_width: usize, format_options: &FormatOptions) {
+    let mut i = 0;
+    while i < content_lines.len() {
+        if content_lines[i].starts_with("    ") {
+            // Found start of indented code block
+            let start = i;
+            while i < content_lines.len()
+                && (content_lines[i].starts_with("    ") || content_lines[i].is_empty())
+            {
+                i += 1;
+            }
+            // Don't include trailing empty lines as part of the code block
+            while i > start && content_lines[i - 1].is_empty() {
+                i -= 1;
+            }
+            let end = i;
+
+            if start >= end {
+                continue;
+            }
+
+            // Extract code content (strip 4-space prefix)
+            let code: String = content_lines[start..end]
+                .iter()
+                .map(|l| l.strip_prefix("    ").unwrap_or(l.as_str()))
+                .collect::<Vec<_>>()
+                .join("\n");
+
+            // Try to format (effective width = wrap_width - 4 for the indent)
+            let effective_width = wrap_width.saturating_sub(4);
+            if let Some(formatted) = format_embedded_js(&code, effective_width, format_options) {
+                let new_lines: Vec<String> =
+                    formatted.lines().map(|l| format!("    {l}")).collect();
+                let range = start..end;
+                let new_len = new_lines.len();
+                content_lines.splice(range, new_lines);
+                i = start + new_len;
+            }
+        } else {
+            i += 1;
+        }
+    }
+}
+
+/// Try to format JS/TS/JSX code using the formatter.
+/// Returns `Some(formatted)` on success, `None` if parsing fails.
+/// The `print_width` is the available width for the formatted code.
+/// Uses the parent `format_options` to ensure consistent formatting behavior.
+fn format_embedded_js(code: &str, print_width: usize, format_options: &FormatOptions) -> Option<String> {
+    let line_width = LineWidth::try_from(u16::try_from(print_width).unwrap_or(80)).unwrap();
+
+    // Build options from parent, overriding line_width and disabling JSDoc
+    // to prevent recursive formatting
+    let make_options = || FormatOptions {
+        line_width,
+        jsdoc: None,
+        ..format_options.clone()
+    };
+
+    // Try to parse and format with the given source type
+    let try_format = |code: &str, source_type: SourceType| -> Option<String> {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, code, source_type)
+            .with_options(get_parse_options())
+            .parse();
+        if ret.panicked || !ret.errors.is_empty() {
+            return None;
+        }
+        let formatted = Formatter::new(&allocator, make_options()).build(&ret.program);
+        Some(formatted.trim_end().to_string())
+    };
+
+    // Try JSX first (most @example code in React projects uses JSX),
+    // then TSX (for TypeScript code with JSX).
+    if let Some(result) = try_format(code, SourceType::jsx()) {
+        return Some(result);
+    }
+    if let Some(result) = try_format(code, SourceType::tsx()) {
+        return Some(result);
+    }
+
+    // If direct parsing fails, try wrapping in expression context
+    // to handle object literals like `{ "key": value }` that parse as blocks
+    let trimmed = code.trim();
+    if trimmed.starts_with('{') {
+        let wrapped = format!("({trimmed})");
+
+        let try_format_obj = |code: &str, source_type: SourceType| -> Option<String> {
+            let allocator = Allocator::default();
+            let ret = Parser::new(&allocator, code, source_type)
+                .with_options(get_parse_options())
+                .parse();
+            if ret.panicked || !ret.errors.is_empty() {
+                return None;
+            }
+            // Use TrailingCommas::None for object literals since JSON-like code
+            // shouldn't have trailing commas
+            let options = FormatOptions {
+                trailing_commas: TrailingCommas::None,
+                ..make_options()
+            };
+            let formatted = Formatter::new(&allocator, options).build(&ret.program);
+            let formatted = formatted.trim_end();
+            // Remove the wrapping parens and trailing semicolon
+            if let Some(inner) = formatted.strip_prefix('(')
+                && let Some(inner) = inner.strip_suffix(");")
+            {
+                return Some(inner.to_string());
+            }
+            Some(formatted.to_string())
+        };
+
+        if let Some(result) = try_format_obj(&wrapped, SourceType::jsx()) {
+            return Some(result);
+        }
+        if let Some(result) = try_format_obj(&wrapped, SourceType::tsx()) {
+            return Some(result);
+        }
+    }
+    None
+}
+
 /// Format example code content with 2-space base indent.
-fn format_example_code(code: &str, content_lines: &mut Vec<String>) {
+/// Tries to format the code as JS/JSX first; falls back to pass-through on parse failure.
+fn format_example_code(code: &str, wrap_width: usize, format_options: &FormatOptions, content_lines: &mut Vec<String>) {
     if code.is_empty() {
         return;
     }
+
+    // Try formatting the code. The effective print width for @example code is
+    // wrap_width - 2 (for the 2-space indent within the comment).
+    let effective_width = wrap_width.saturating_sub(2);
+    if let Some(formatted) = format_embedded_js(code, effective_width, format_options) {
+        for line in formatted.lines() {
+            if line.is_empty() {
+                content_lines.push(String::new());
+            } else {
+                content_lines.push(format!("  {line}"));
+            }
+        }
+        return;
+    }
+
+    // Fallback: pass through with 2-space indent
     for line in code.lines() {
         let line_trimmed = line.trim();
         if line_trimmed.is_empty() {
@@ -977,6 +1198,8 @@ fn format_example_code(code: &str, content_lines: &mut Vec<String>) {
 fn format_example_tag(
     normalized_kind: &str,
     tag: &oxc_jsdoc::parser::JSDocTag<'_>,
+    wrap_width: usize,
+    format_options: &FormatOptions,
     content_lines: &mut Vec<String>,
 ) {
     let comment_part = tag.comment();
@@ -985,16 +1208,17 @@ fn format_example_tag(
 
     // Check for <caption>...</caption> at the start — keep inline with @example
     if let Some(rest) = trimmed.strip_prefix("<caption>")
-        && let Some(end_pos) = rest.find("</caption>") {
-            let caption = &rest[..end_pos];
-            let after_caption = rest[end_pos + "</caption>".len()..].trim();
-            content_lines.push(format!("@{normalized_kind} <caption>{caption}</caption>"));
-            format_example_code(after_caption, content_lines);
-            return;
-        }
+        && let Some(end_pos) = rest.find("</caption>")
+    {
+        let caption = &rest[..end_pos];
+        let after_caption = rest[end_pos + "</caption>".len()..].trim();
+        content_lines.push(format!("@{normalized_kind} <caption>{caption}</caption>"));
+        format_example_code(after_caption, wrap_width, format_options, content_lines);
+        return;
+    }
 
     content_lines.push(format!("@{normalized_kind}"));
-    format_example_code(trimmed, content_lines);
+    format_example_code(trimmed, wrap_width, format_options, content_lines);
 }
 
 fn format_type_name_comment_tag(
@@ -1101,6 +1325,27 @@ fn format_type_name_comment_tag(
     // Extract first text line from description (before any structural content)
     let desc_lines_raw: Vec<&str> = desc_raw.lines().collect();
     let first_text_line = desc_lines_raw.first().map_or("", |s| s.trim());
+
+    // If the description starts with a code fence, output the tag line alone
+    // and treat the entire description as structural content with a blank line separator
+    if first_text_line.starts_with("```") {
+        content_lines.push(tag_line);
+        content_lines.push(String::new());
+        let indent = if matches!(normalized_kind, "typedef" | "callback") { "" } else { "  " };
+        let indent_width = wrap_width.saturating_sub(indent.len());
+        let mut desc_lines = Vec::new();
+        wrap_text(desc_raw, indent_width, &mut desc_lines);
+        // Skip leading blank line from wrap_text since we already added one
+        let start = usize::from(desc_lines.first().is_some_and(String::is_empty));
+        for line in &desc_lines[start..] {
+            if line.is_empty() {
+                content_lines.push(String::new());
+            } else {
+                content_lines.push(format!("{indent}{line}"));
+            }
+        }
+        return;
+    }
 
     // Check if first line starts with a dash
     let (has_dash, first_text) = if let Some(rest) = first_text_line.strip_prefix("- ") {
