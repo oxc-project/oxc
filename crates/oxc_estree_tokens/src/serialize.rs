@@ -12,6 +12,50 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{ESTreeTokenConfig, JSXState, token_type::TokenType, u32_string::U32String};
 
+/// Estimate size of tokens serialized to JSON, in bytes.
+/// Aim is to allocate capacity which is a reasonable over-estimate for the size of all tokens serialized to JSON,
+/// in order to ensure the serializer's buffer never has to grow during serialization.
+///
+/// Combine the following:
+///
+/// * Basic JSON structure for a token x number of tokens.
+/// * Max length of token type x number of tokens.
+///   This is an over-estimate because not all tokens have the longest type (`PrivateIdentifier`).
+/// * Length of source text.
+///   Tokens can at most include all of the source text in their `value` fields (tokens cannot overlap).
+///   In a minified file, this is usually a slight under-estimate, as some `value` fields will need escaping in JSON.
+///   In a non-minified file, there'll be whitespace and comments between tokens, so it's likely an over-estimate.
+/// * Max offset length x number of tokens x 2.
+///   Each token includes `start` and `end` fields, which cannot be larger than the length of the source text.
+///   This is a bit of an over-estimate, as earlier tokens will have smaller offsets, but it's in right ballpark.
+/// * 2 bytes for leading/trailing `[` and `]`. This is purely to get the right length for empty source text.
+///
+/// Regex tokens (which are longer) are ignored in this calculation, on assumption they're relatively rare.
+///
+/// There are 2 factors which are under-estimates in this calculation, but overall it's likely to be
+/// a decent over-estimate, due to the over-estimate on length of token type.
+pub fn estimate_json_len(tokens_len: usize, source_text_len: usize, is_compact: bool) -> usize {
+    const TYPE_LEN: usize = "PrivateIdentifier".len();
+
+    const COMPACT_JSON_STRUCTURE_LEN: usize =
+        r#"{"type":"","value":"","start":,"end":},"#.len() + TYPE_LEN;
+    const PRETTY_JSON_STRUCTURE_LEN: usize =
+        "  {\n    \"type\": \"\",\n    \"value\": \"\",\n    \"start\": ,\n    \"end\": \n  },\n"
+            .len()
+            + TYPE_LEN;
+    const COMPACT_JSON_HEADER_FOOTER_LEN: usize = "[]".len();
+    const PRETTY_JSON_HEADER_FOOTER_LEN: usize = "[\n]".len();
+
+    let (structure_len, header_footer_len) = if is_compact {
+        (COMPACT_JSON_STRUCTURE_LEN, COMPACT_JSON_HEADER_FOOTER_LEN)
+    } else {
+        (PRETTY_JSON_STRUCTURE_LEN, PRETTY_JSON_HEADER_FOOTER_LEN)
+    };
+    let offset_len = source_text_len.checked_ilog10().unwrap_or(0) as usize + 1;
+    let token_len = structure_len + offset_len * 2;
+    token_len * tokens_len + source_text_len + header_footer_len
+}
+
 /// Walk AST and serialize each token into the serializer as it's encountered.
 ///
 /// Tokens are consumed from the `tokens` slice in source order.

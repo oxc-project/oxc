@@ -13,7 +13,7 @@ pub use jsx_state::{JSXState, JSXStateJS, JSXStateTS};
 pub use options::{
     ESTreeTokenConfig, ESTreeTokenOptions, ESTreeTokenOptionsJS, ESTreeTokenOptionsTS,
 };
-use serialize::serialize_tokens;
+use serialize::{estimate_json_len, serialize_tokens};
 
 /// Serializer config for tokens.
 /// We never include ranges, so use this custom config which returns `false` for `ranges()`.
@@ -59,12 +59,8 @@ pub fn to_estree_tokens_json<O: ESTreeTokenConfig>(
     span_converter: &Utf8ToUtf16,
     options: O,
 ) -> String {
-    // Estimated size of a single token serialized to JSON, in bytes.
-    // TODO: Estimate this better based on real-world usage.
-    const BYTES_PER_TOKEN: usize = 64;
-
-    let mut serializer =
-        CompactTokenSerializer::with_capacity(tokens.len() * BYTES_PER_TOKEN, false);
+    let capacity = estimate_json_len(tokens.len(), source_text.len(), true);
+    let mut serializer = CompactTokenSerializer::with_capacity(capacity, false);
     serialize_tokens(&mut serializer, tokens, program, source_text, span_converter, options);
     serializer.into_string()
 }
@@ -83,12 +79,8 @@ pub fn to_estree_tokens_pretty_json<O: ESTreeTokenConfig>(
     span_converter: &Utf8ToUtf16,
     options: O,
 ) -> String {
-    // Estimated size of a single token serialized to JSON, in bytes.
-    // TODO: Estimate this better based on real-world usage.
-    const BYTES_PER_TOKEN: usize = 64;
-
-    let mut serializer =
-        PrettyTokenSerializer::with_capacity(tokens.len() * BYTES_PER_TOKEN, false);
+    let capacity = estimate_json_len(tokens.len(), source_text.len(), false);
+    let mut serializer = PrettyTokenSerializer::with_capacity(capacity, false);
     serialize_tokens(&mut serializer, tokens, program, source_text, span_converter, options);
     serializer.into_string()
 }
