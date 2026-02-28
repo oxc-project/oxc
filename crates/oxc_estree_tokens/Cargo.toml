@@ -24,6 +24,6 @@ oxc_ast = { workspace = true }
 oxc_ast_visit = { workspace = true, features = ["serialize"] }
 oxc_data_structures = { workspace = true, features = ["assert_unchecked"] }
 oxc_estree = { workspace = true, features = ["serialize"] }
-oxc_parser = { workspace = true }
+oxc_parser = { workspace = true, features = ["mutate_tokens"] }
 oxc_span = { workspace = true, features = ["serialize"] }
 itoa = { workspace = true }
