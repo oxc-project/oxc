@@ -8,7 +8,7 @@ use napi_derive::napi;
 
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
-use oxc_estree_tokens::{EstreeTokenOptions, to_estree_tokens_json};
+use oxc_estree_tokens::{ESTreeTokenOptions, to_estree_tokens_json};
 use oxc_linter::RawTransferMetadata2 as RawTransferMetadata;
 use oxc_napi::get_source_type;
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
@@ -219,7 +219,7 @@ unsafe fn parse_raw_impl(
                 program,
                 original_source_text,
                 &span_converter,
-                EstreeTokenOptions::linter(),
+                ESTreeTokenOptions::linter(),
             );
 
             span_converter.convert_program(program);
