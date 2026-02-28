@@ -354,7 +354,6 @@ fn emit_outlined_jsx(
             load_lvalue.identifier.declaration_id.0
         )));
     }
-
     let load_jsx = Instruction {
         id: InstructionId::ZERO,
         loc: GENERATED_SOURCE,

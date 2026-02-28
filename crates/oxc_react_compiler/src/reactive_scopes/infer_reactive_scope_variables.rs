@@ -12,7 +12,8 @@
 /// 3. MergeOverlappingReactiveScopes
 /// 4. BuildReactiveBlocks
 use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHashSet};
+use indexmap::IndexMap;
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE, SourceLocation},
@@ -122,7 +123,7 @@ pub fn infer_reactive_scope_variables(func: &mut HIRFunction) -> Result<(), Comp
                     id: scope_id,
                     range: mutable_range,
                     dependencies: FxHashSet::default(),
-                    declarations: FxHashMap::default(),
+                    declarations: IndexMap::with_hasher(FxBuildHasher),
                     reassignments: Vec::new(),
                     early_return_value: None,
                     merged: FxHashSet::default(),

@@ -1337,7 +1337,7 @@ pub struct ReactiveScope {
     pub id: ScopeId,
     pub range: MutableRange,
     pub dependencies: FxHashSet<ReactiveScopeDependency>,
-    pub declarations: FxHashMap<IdentifierId, ReactiveScopeDeclaration>,
+    pub declarations: IndexMap<IdentifierId, ReactiveScopeDeclaration, FxBuildHasher>,
     pub reassignments: Vec<Identifier>,
     pub early_return_value: Option<Box<EarlyReturnValue>>,
     pub merged: FxHashSet<ScopeId>,

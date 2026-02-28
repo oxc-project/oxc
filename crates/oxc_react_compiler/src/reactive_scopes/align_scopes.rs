@@ -7,7 +7,8 @@
 ///
 /// These passes adjust reactive scope boundaries to align with JavaScript's
 /// block scoping rules, ensuring memoized code blocks form valid JS scopes.
-use rustc_hash::{FxHashMap, FxHashSet};
+use indexmap::IndexMap;
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::{
     hir::{
@@ -166,7 +167,7 @@ pub fn align_method_call_scopes(func: &mut HIRFunction) {
                                     id: *target_scope_id,
                                     range,
                                     dependencies: FxHashSet::default(),
-                                    declarations: FxHashMap::default(),
+                                    declarations: IndexMap::with_hasher(FxBuildHasher),
                                     reassignments: Vec::new(),
                                     early_return_value: None,
                                     merged: FxHashSet::default(),
@@ -212,7 +213,7 @@ pub fn align_method_call_scopes(func: &mut HIRFunction) {
                                         id: *target_scope_id,
                                         range,
                                         dependencies: FxHashSet::default(),
-                                        declarations: FxHashMap::default(),
+                                        declarations: IndexMap::with_hasher(FxBuildHasher),
                                         reassignments: Vec::new(),
                                         early_return_value: None,
                                         merged: FxHashSet::default(),
