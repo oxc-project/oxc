@@ -92,6 +92,30 @@ impl Token {
         Span::new(self.start(), self.end())
     }
 
+    // `set_span` is only exposed as public API when `mutate_tokens` feature is enabled.
+    // Otherwise, it is only accessible within `lexer` module.
+    #[cfg(feature = "mutate_tokens")]
+    #[inline]
+    pub fn set_span(&mut self, span: Span) {
+        self.set_span_impl(span);
+    }
+
+    #[cfg(not(feature = "mutate_tokens"))]
+    #[inline]
+    #[allow(dead_code, clippy::allow_attributes)]
+    pub(super) fn set_span(&mut self, span: Span) {
+        self.set_span_impl(span);
+    }
+
+    #[inline]
+    fn set_span_impl(&mut self, span: Span) {
+        // On little-endian systems, `start` and `end` fields in `Span` are in same order as in `Token`,
+        // so compiler boils this down to just a `u64` write of the `Span` into the first 8 bytes of the `Token`
+        // https://godbolt.org/z/bdY5ccad6
+        self.set_start(span.start);
+        self.set_end(span.end);
+    }
+
     #[inline]
     pub fn start(&self) -> u32 {
         ((self.0 >> START_SHIFT) & START_MASK) as u32
@@ -124,8 +148,22 @@ impl Token {
         unsafe { mem::transmute::<u8, Kind>(((self.0 >> KIND_SHIFT) & KIND_MASK) as u8) }
     }
 
+    // `set_kind` is only exposed as public API when `mutate_tokens` feature is enabled.
+    // Otherwise, it is only accessible within `lexer` module.
+    #[cfg(feature = "mutate_tokens")]
+    #[inline]
+    pub fn set_kind(&mut self, kind: Kind) {
+        self.set_kind_impl(kind);
+    }
+
+    #[cfg(not(feature = "mutate_tokens"))]
     #[inline]
     pub(super) fn set_kind(&mut self, kind: Kind) {
+        self.set_kind_impl(kind);
+    }
+
+    #[inline]
+    fn set_kind_impl(&mut self, kind: Kind) {
         self.0 &= !(KIND_MASK << KIND_SHIFT); // Clear current `kind` bits
         self.0 |= u128::from(kind as u8) << KIND_SHIFT;
     }
@@ -242,8 +280,7 @@ impl Token {
 
 #[cfg(test)]
 mod test {
-    use super::Kind;
-    use super::Token;
+    use super::{Kind, Span, Token};
 
     // Test size of `Token`
     const _: () = assert!(size_of::<Token>() == 16);
@@ -308,11 +345,11 @@ mod test {
     fn token_setters() {
         let mut token = Token::default();
         token.set_kind(Kind::Ident);
-        token.set_start(10);
-        token.set_end(15);
+        token.set_span(Span::new(10, 15));
         // is_on_new_line, escaped, lone_surrogates, has_separator are false by default from Token::default()
 
         assert_eq!(token.start(), 10);
+        assert_eq!(token.end(), 15);
         assert!(!token.escaped());
         assert!(!token.is_on_new_line());
         assert!(!token.lone_surrogates());
