@@ -7,7 +7,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ 'a' + 'b'
    · ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:2:9]
@@ -15,63 +15,63 @@ source: crates/oxc_linter/src/tester.rs
  2 │         'b' + 'c'
    ·         ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:7]
  1 │ foo + 'a' + 'b'
    ·       ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:7]
  1 │ 'a' + 'b' + 'c'
    ·       ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:1]
  1 │ 'a' + 'b' + 'c'
    · ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:16]
  1 │ (foo + 'a') + ('b' + 'c')
    ·                ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:1]
  1 │ `a` + 'b'
    · ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:1]
  1 │ `a` + `b`
    · ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:7]
  1 │ foo + `a` + `b`
    ·       ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:7]
  1 │ foo + 'a' + 'b'
    ·       ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:2:9]
@@ -80,32 +80,32 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────
  3 │         + 'd'
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:19]
  1 │ 'a' + 'b' + 'c' + 'd' + 'e' + foo
    ·                   ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:13]
  1 │ 'a' + 'b' + 'c' + 'd' + 'e' + foo
    ·             ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:7]
  1 │ 'a' + 'b' + 'c' + 'd' + 'e' + foo
    ·       ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:1]
  1 │ 'a' + 'b' + 'c' + 'd' + 'e' + foo
    · ─────────
    ╰────
-  help: Rewrite into one string literal
+  help: Rewrite into one string literal.
