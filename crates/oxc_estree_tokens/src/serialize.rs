@@ -636,26 +636,40 @@ impl<O: ESTreeTokenConfig> UpdateContext<'_, O> {
     /// but their spans are converted from UTF-8 to UTF-16.
     fn advance_to(&mut self, start: u32) -> &mut Token {
         let Self { tokens, span_converter, .. } = self;
-        for token in &mut *tokens {
-            debug_assert!(
-                token.start() <= start,
-                "Expected token at position {start}, found token at position {}",
-                token.start(),
-            );
 
-            let is_target = token.start() == start;
+        if let Some(span_converter) = span_converter {
+            for token in tokens {
+                debug_assert!(
+                    token.start() <= start,
+                    "Expected token at position {start}, found token at position {}",
+                    token.start(),
+                );
 
-            // Convert span from UTF-8 byte offsets to UTF-16 offsets
-            if let Some(converter) = span_converter {
+                let is_target = token.start() == start;
+
+                // Convert span from UTF-8 byte offsets to UTF-16 offsets
                 let mut span = token.span();
-                converter.convert_span(&mut span);
+                span_converter.convert_span(&mut span);
                 token.set_span(span);
-            }
 
-            if is_target {
-                return token;
+                if is_target {
+                    return token;
+                }
+            }
+        } else {
+            for token in tokens {
+                debug_assert!(
+                    token.start() <= start,
+                    "Expected token at position {start}, found token at position {}",
+                    token.start(),
+                );
+
+                if token.start() == start {
+                    return token;
+                }
             }
         }
+
         unreachable!("Expected token at position {start}");
     }
 
