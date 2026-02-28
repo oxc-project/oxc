@@ -9,7 +9,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────────────
  3 │               let foo: Foo;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -19,7 +19,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────────────
  3 │               let foo: Foo;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -29,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────────────
  3 │               let foo: Foo;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────
  3 │               let foo: A;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -49,7 +49,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─────────────────────────────────────
  3 │               let foo: a;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -59,7 +59,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────────────
  3 │               type Bar = typeof Foo; // TSTypeQuery
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -69,7 +69,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────────────
  3 │               type Bar = foo.Bar; // TSQualifiedName
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -79,7 +79,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────────────
  3 │               type Baz = (typeof foo.bar)['Baz']; // TSQualifiedName & TSTypeQuery
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -89,7 +89,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─────────────────────────
  3 │               let foo: A.Foo;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -99,7 +99,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────
  3 │               let foo: A;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -109,7 +109,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────
  3 │               let foo: A;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports A are only used as type.
@@ -245,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────────────────────
  3 │               import Type from 'default_type';
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -255,7 +255,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────────
  4 │               import * as Types from 'namespace_type';
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -265,7 +265,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────────────────
  5 │               import Default, { Named } from 'default_and_named_type';
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -275,7 +275,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────────────────────────────────
  6 │               type T = Type1 | Type2 | Type | Types.A | Default | Named;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports Type1 are only used as type.
@@ -321,8 +321,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────────────
  3 │               let bar: import('foo').Bar;
    ╰────
-  help: Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type` or use a regular import if the type is also used as a value.
-  note: Using `import()` in type annotations can make code harder to understand and maintain. Regular type imports are clearer and allow better tooling support.
+  help: Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type`.
 
   ⚠ typescript-eslint(consistent-type-imports): `import()` type annotations are forbidden.
    ╭─[consistent_type_imports.tsx:3:24]
@@ -331,8 +330,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────────────────
  4 │             
    ╰────
-  help: Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type` or use a regular import if the type is also used as a value.
-  note: Using `import()` in type annotations can make code harder to understand and maintain. Regular type imports are clearer and allow better tooling support.
+  help: Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type`.
 
   ⚠ typescript-eslint(consistent-type-imports): `import()` type annotations are forbidden.
    ╭─[consistent_type_imports.tsx:2:24]
@@ -341,8 +339,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────────────
  3 │             
    ╰────
-  help: Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type` or use a regular import if the type is also used as a value.
-  note: Using `import()` in type annotations can make code harder to understand and maintain. Regular type imports are clearer and allow better tooling support.
+  help: Replace `import()` type annotations with a regular type import. For example, change `type T = import('module').Type` to `import type { Type } from 'module'; type T = Type`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -351,9 +348,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────
  3 │               let foo: Foo;
    ╰────
-  help: Replace `import type` with a regular `import`. For example, change `import type { Type } from 'module'` to `import { Type } from 'module'`.
-  note: When configured to prefer value imports, this rule ensures that imports are not unnecessarily marked as type-only. Regular imports allow flexibility if the import is later used as a value (e.g., with decorators that require runtime references), and can help avoid side-effect import issues that can occur when using inline type imports (see the `no-import-type-side-effects` rule). Modern
-           bundlers can still effectively tree-shake unused regular imports.
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -362,9 +357,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────────
  3 │               let foo: Foo;
    ╰────
-  help: Replace `import type` with a regular `import`. For example, change `import type { Type } from 'module'` to `import { Type } from 'module'`.
-  note: When configured to prefer value imports, this rule ensures that imports are not unnecessarily marked as type-only. Regular imports allow flexibility if the import is later used as a value (e.g., with decorators that require runtime references), and can help avoid side-effect import issues that can occur when using inline type imports (see the `no-import-type-side-effects` rule). Modern
-           bundlers can still effectively tree-shake unused regular imports.
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -373,7 +366,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────
  3 │ 
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -383,7 +376,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────
  3 │ 
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -393,7 +386,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────
  3 │ 
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
@@ -403,9 +396,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────
  3 │ 
    ╰────
-  help: Replace `import type` with a regular `import`. For example, change `import type { Type } from 'module'` to `import { Type } from 'module'`.
-  note: When configured to prefer value imports, this rule ensures that imports are not unnecessarily marked as type-only. Regular imports allow flexibility if the import is later used as a value (e.g., with decorators that require runtime references), and can help avoid side-effect import issues that can occur when using inline type imports (see the `no-import-type-side-effects` rule). Modern
-           bundlers can still effectively tree-shake unused regular imports.
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -414,9 +405,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────────
  3 │ 
    ╰────
-  help: Replace `import type` with a regular `import`. For example, change `import type { Type } from 'module'` to `import { Type } from 'module'`.
-  note: When configured to prefer value imports, this rule ensures that imports are not unnecessarily marked as type-only. Regular imports allow flexibility if the import is later used as a value (e.g., with decorators that require runtime references), and can help avoid side-effect import issues that can occur when using inline type imports (see the `no-import-type-side-effects` rule). Modern
-           bundlers can still effectively tree-shake unused regular imports.
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -425,9 +414,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─────────────────────────────────
  3 │ 
    ╰────
-  help: Replace `import type` with a regular `import`. For example, change `import type { Type } from 'module'` to `import { Type } from 'module'`.
-  note: When configured to prefer value imports, this rule ensures that imports are not unnecessarily marked as type-only. Regular imports allow flexibility if the import is later used as a value (e.g., with decorators that require runtime references), and can help avoid side-effect import issues that can occur when using inline type imports (see the `no-import-type-side-effects` rule). Modern
-           bundlers can still effectively tree-shake unused regular imports.
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -436,9 +423,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────────────────────────
  3 │               import type // comment
    ╰────
-  help: Replace `import type` with a regular `import`. For example, change `import type { Type } from 'module'` to `import { Type } from 'module'`.
-  note: When configured to prefer value imports, this rule ensures that imports are not unnecessarily marked as type-only. Regular imports allow flexibility if the import is later used as a value (e.g., with decorators that require runtime references), and can help avoid side-effect import issues that can occur when using inline type imports (see the `no-import-type-side-effects` rule). Modern
-           bundlers can still effectively tree-shake unused regular imports.
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:3:15]
@@ -447,9 +432,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │ ╰─▶               DefType from 'foo';
  5 │                   import type /*comment*/ { Type } from 'foo';
    ╰────
-  help: Replace `import type` with a regular `import`. For example, change `import type { Type } from 'module'` to `import { Type } from 'module'`.
-  note: When configured to prefer value imports, this rule ensures that imports are not unnecessarily marked as type-only. Regular imports allow flexibility if the import is later used as a value (e.g., with decorators that require runtime references), and can help avoid side-effect import issues that can occur when using inline type imports (see the `no-import-type-side-effects` rule). Modern
-           bundlers can still effectively tree-shake unused regular imports.
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:5:15]
@@ -458,9 +441,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────────────────────
  6 │ 
    ╰────
-  help: Replace `import type` with a regular `import`. For example, change `import type { Type } from 'module'` to `import { Type } from 'module'`.
-  note: When configured to prefer value imports, this rule ensures that imports are not unnecessarily marked as type-only. Regular imports allow flexibility if the import is later used as a value (e.g., with decorators that require runtime references), and can help avoid side-effect import issues that can occur when using inline type imports (see the `no-import-type-side-effects` rule). Modern
-           bundlers can still effectively tree-shake unused regular imports.
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports Rest are only used as type.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -487,7 +468,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────────────────
  3 │               const a: Default = '';
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports Default are only used as type.
@@ -515,9 +496,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────
  3 │               type T = A;
    ╰────
-  help: Replace `import type` with a regular `import`. For example, change `import type { Type } from 'module'` to `import { Type } from 'module'`.
-  note: When configured to prefer value imports, this rule ensures that imports are not unnecessarily marked as type-only. Regular imports allow flexibility if the import is later used as a value (e.g., with decorators that require runtime references), and can help avoid side-effect import issues that can occur when using inline type imports (see the `no-import-type-side-effects` rule). Modern
-           bundlers can still effectively tree-shake unused regular imports.
+  help: Replace the `import type` declaration with a regular `import` declaration. For example, `import type { Type } from 'module'` would become `import { Type } from 'module'`.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports A are only used as type.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -535,7 +514,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────
  3 │               let foo: A;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports A are only used as type.
@@ -563,7 +542,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────
  3 │               import { B } from 'foo';
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -573,7 +552,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────
  4 │               type T = A;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -583,7 +562,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────
  3 │               import B from 'foo';
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -593,7 +572,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────
  4 │               type T = A;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports B and C are only used as type.
@@ -612,7 +591,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────────────────────
  3 │               type T = B;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -622,7 +601,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────────────
  3 │               type T = B;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports A are only used as type.
@@ -668,7 +647,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────
  3 │               export = {} as A;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -678,7 +657,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────
  3 │               export = {} as A;
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -688,7 +667,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────
  3 │                 class A {
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -698,7 +677,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────
  3 │                 class A {
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -708,7 +687,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────
  3 │                 class A {
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -718,7 +697,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────
  3 │                 class A {
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -728,7 +707,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────
  3 │                 class A {
    ╰────
-  help: Replace the regular `import` with `import type`. For example, change `import { Type } from 'module'` to `import type { Type } from 'module'`. This makes it clear that these imports are only used for types and can be removed at compile time.
+  help: Replace the `import` declaration with `import type`. For example, change `import { Type } from 'module'` would become `import type { Type } from 'module'`.
   note: Using `import type` for type-only imports helps with tree-shaking, makes it clear that these imports don't affect runtime code, and can improve build performance by allowing bundlers to eliminate unused type imports.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports Foo are only used as type.
