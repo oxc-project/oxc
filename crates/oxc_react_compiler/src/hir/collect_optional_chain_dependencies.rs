@@ -38,6 +38,22 @@ pub struct OptionalChainSidemap {
     /// at the optional terminal.
     /// Equivalent to TS `hoistableObjects`.
     pub hoistable_objects: FxHashMap<BlockId, ReactiveScopeDependency>,
+
+    /// Records identifiers that are intermediate results of a nested optional
+    /// chain and consumed by an outer optional chain.
+    ///
+    /// These arise in Rust HIR when a non-optional property access (e.g. `.value`
+    /// in `a?.b.value`) is represented as its own Optional terminal with
+    /// `optional=false`, whereas in the TS HIR it would be a PropertyLoad
+    /// instruction inside the same optional chain block.
+    ///
+    /// The identifier stored here is the `consequent_id` returned by the inner
+    /// `traverse_optional_block` call (i.e. the result of `a?.b` in `a?.b.value`).
+    /// When phi operands are processed in `collect_dependencies`, phi operands
+    /// whose identifier is in this set should be skipped to avoid adding the
+    /// intermediate dep (e.g. `a?.b`) when the full dep (`a?.b.value`) is already
+    /// tracked via the outer optional chain's phi.
+    pub intermediate_optional_results: FxHashSet<IdentifierId>,
 }
 
 /// Block map type alias.
@@ -51,6 +67,8 @@ struct OptionalTraversalContext {
     processed_instrs_in_optional: FxHashSet<InstructionId>,
     temporaries_read_in_optional: FxHashMap<IdentifierId, ReactiveScopeDependency>,
     hoistable_objects: FxHashMap<BlockId, ReactiveScopeDependency>,
+    /// See `OptionalChainSidemap::intermediate_optional_results`.
+    intermediate_optional_results: FxHashSet<IdentifierId>,
 }
 
 /// Collect optional chain sidemap from the function.
@@ -62,12 +80,14 @@ pub fn collect_optional_chain_sidemap(func: &HIRFunction) -> OptionalChainSidema
         processed_instrs_in_optional: FxHashSet::default(),
         temporaries_read_in_optional: FxHashMap::default(),
         hoistable_objects: FxHashMap::default(),
+        intermediate_optional_results: FxHashSet::default(),
     };
     traverse_function(func, &mut context);
     OptionalChainSidemap {
         temporaries_read_in_optional: context.temporaries_read_in_optional,
         processed_instrs_in_optional: context.processed_instrs_in_optional,
         hoistable_objects: context.hoistable_objects,
+        intermediate_optional_results: context.intermediate_optional_results,
     }
 }
 
@@ -273,6 +293,25 @@ fn traverse_optional_block(
                 loc: base_place.loc,
             };
             test = branch;
+
+            // In the Rust HIR, non-optional accesses in an optional chain (e.g.
+            // loading `props.a` in `props.a?.b`) are lowered as a separate
+            // Optional terminal with `optional=false`, while the test block
+            // (Block7) only contains a LoadLocal (not the PropertyLoad).
+            //
+            // In the TS HIR, such accesses appear as instructions *within* the
+            // test block itself, so the PropertyLoad contributes `props` to the
+            // test block's non-null set, which propagates backward to the scope
+            // body block via CFG analysis.
+            //
+            // To match TS behavior for the Rust HIR, when we are processing a
+            // non-optional optional-block (i.e. `!optional.optional`), we record
+            // `base_object` (e.g. `props`) as hoistable at this block's ID. This
+            // ensures `collect_non_nulls_in_blocks` adds `props` to this block's
+            // non-null set, which then propagates backward to the scope body.
+            if !optional.optional {
+                context.hoistable_objects.insert(optional_block.id, base_object.clone());
+            }
         }
         Terminal::Optional(inner_opt) => {
             // This is either:
@@ -304,9 +343,35 @@ fn traverse_optional_block(
 
             // Check that the inner optional is part of the same optional-chain as
             // the outer one.
-            if inner_branch.test.identifier.id != inner_optional {
+            //
+            // After SSA renaming, `inner_branch.test` may be a phi result that
+            // merges `inner_optional` (the consequent StoreLocal identifier) with
+            // the null/undefined path.  For example, given `prop2?.inner.value`:
+            //
+            //   inner optional (?.inner):
+            //     C_inner: StoreLocal(prop2.inner -> place_v1)   ← inner_optional = place_v1
+            //     A_inner: StoreLocal(undefined  -> place_v2)
+            //     F_inner: phi(place_v3 <- [C: place_v1, A: place_v2])
+            //              Branch { test: place_v3, ... }        ← inner_branch.test
+            //
+            // In this case `inner_branch.test.id != inner_optional` (place_v3 ≠ place_v1)
+            // but the branch IS part of the same chain.  We detect this by checking whether
+            // `test_block` has a phi whose result matches `inner_branch.test` and whose
+            // operands include `inner_optional`.
+            let branch_test_id = inner_branch.test.identifier.id;
+            let phi_mediated_match = branch_test_id != inner_optional
+                && test_block.phis.iter().any(|phi| {
+                    phi.place.identifier.id == branch_test_id
+                        && phi.operands.values().any(|op| op.identifier.id == inner_optional)
+                });
+            if branch_test_id != inner_optional && !phi_mediated_match {
                 return None;
             }
+
+            // The inner optional's result (`inner_optional`) is an intermediate
+            // value consumed by this outer optional chain — it should not appear
+            // as a standalone dep when phis are processed.
+            context.intermediate_optional_results.insert(inner_optional);
 
             if !optional.optional {
                 // If this is a non-optional load participating in an optional chain

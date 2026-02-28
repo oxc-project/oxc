@@ -16,9 +16,9 @@ use crate::hir::object_shape::{
 };
 use crate::hir::types::{FunctionType, ObjectType, Type};
 use crate::hir::{
-    DeclarationId, InstructionId, InstructionKind, InstructionValue, ReactiveBlock,
+    DeclarationId, IdentifierId, InstructionId, InstructionKind, InstructionValue, ReactiveBlock,
     ReactiveFunction, ReactiveInstruction, ReactiveScope, ReactiveScopeBlock,
-    ReactiveScopeDependency, ReactiveStatement,
+    ReactiveScopeDeclaration, ReactiveScopeDependency, ReactiveStatement,
 };
 
 /// Entry point: merge reactive scopes that invalidate together.
@@ -258,11 +258,26 @@ fn merge_in_block(
         }
     }
 
-    // Sub-pass 2: Identify consecutive scopes for merging
+    // Sub-pass 2: Identify consecutive scopes for merging.
+    //
+    // KEY DESIGN: We maintain an `accumulated_declarations` alongside the `MergedScope`
+    // to track the combined declaration set for the current merge candidate.
+    // This mirrors the TS reference which mutates scope.declarations in-place during
+    // identification — so that subsequent merge checks see the full accumulated
+    // declaration set (not just the initial scope's declarations).
+    //
+    // We do NOT mutate the block in sub-pass 2 (to avoid double-applying in sub-pass 3).
+    // Instead, we pass the accumulated declarations to sub-pass 3 to use when building
+    // the final merged scope.
     struct MergedScope {
         from: usize,
         to: usize,
         lvalues: FxHashSet<DeclarationId>,
+        /// Accumulated declarations from the initial scope + all merged scopes so far.
+        /// Used for merge eligibility checks in subsequent scope comparisons.
+        accumulated_declarations: FxHashMap<IdentifierId, ReactiveScopeDeclaration>,
+        /// Accumulated range end from the initial scope + all merged scopes.
+        accumulated_range_end: InstructionId,
     }
 
     let mut current: Option<MergedScope> = None;
@@ -361,39 +376,82 @@ fn merge_in_block(
                 }
             }
             ReactiveStatement::Scope(scope_block) => {
-                if let Some(ref c) = current {
-                    let from_idx = c.from;
-                    let current_block = block[from_idx].as_scope().unwrap();
-                    let can_merge = can_merge_scopes(current_block, scope_block, temporaries);
+                let scope_eligible = scope_is_eligible_for_merging(scope_block);
+
+                if let Some(ref mut c) = current {
+                    // Build a synthetic ReactiveScopeBlock using the accumulated state
+                    // to check if we can merge — this reflects the COMBINED declaration
+                    // set from all previously merged scopes.
+                    let can_merge = {
+                        // Create a synthetic current block that has the accumulated declarations
+                        // for comparison purposes (without mutating the actual block).
+                        let current_block_for_check = {
+                            let base = block[c.from].as_scope().unwrap();
+                            // We need a temporary view that uses accumulated_declarations.
+                            // Build a helper struct that borrows the scope but uses our accumulated decls.
+                            AccumulatedScopeView {
+                                scope: &base.scope,
+                                declarations: &c.accumulated_declarations,
+                            }
+                        };
+                        can_merge_scopes_with_accumulated(
+                            current_block_for_check,
+                            scope_block,
+                            temporaries,
+                        )
+                    };
                     let lvalues_ok =
                         are_lvalues_last_used_by_scope(&scope_block.scope, &c.lvalues, last_usage);
 
                     if can_merge && lvalues_ok {
-                        // Record merge (actual mutation happens in Pass 3)
-                        let c = current.as_mut().unwrap();
+                        // Accumulate declarations from the next scope
+                        if scope_block.scope.range.end > c.accumulated_range_end {
+                            c.accumulated_range_end = scope_block.scope.range.end;
+                        }
+                        for (key, value) in &scope_block.scope.declarations {
+                            c.accumulated_declarations.insert(*key, value.clone());
+                        }
+                        // Prune declarations that won't be needed after the merged range
+                        c.accumulated_declarations.retain(|_, decl| {
+                            if let Some(&last_used_at) =
+                                last_usage.get(&decl.identifier.declaration_id)
+                            {
+                                last_used_at >= c.accumulated_range_end
+                            } else {
+                                true
+                            }
+                        });
+
                         c.to = i + 1;
                         c.lvalues.clear();
 
                         // Check if the just-merged scope is eligible for further merging
-                        if !scope_is_eligible_for_merging(scope_block) {
+                        if !scope_eligible {
                             reset(&mut current, &mut merged);
                         }
                     } else {
                         // Can't merge: reset and maybe start new candidate
                         reset(&mut current, &mut merged);
-                        if scope_is_eligible_for_merging(scope_block) {
+                        if scope_eligible {
                             current = Some(MergedScope {
                                 from: i,
                                 to: i + 1,
                                 lvalues: FxHashSet::default(),
+                                accumulated_declarations: scope_block.scope.declarations.clone(),
+                                accumulated_range_end: scope_block.scope.range.end,
                             });
                         }
                     }
                 } else {
                     // No current merge candidate: start one if eligible
-                    if scope_is_eligible_for_merging(scope_block) {
-                        current =
-                            Some(MergedScope { from: i, to: i + 1, lvalues: FxHashSet::default() });
+                    if scope_eligible {
+                        current = Some(MergedScope {
+                            from: i,
+                            to: i + 1,
+                            lvalues: FxHashSet::default(),
+                            accumulated_declarations: scope_block.scope.declarations.clone(),
+                            accumulated_range_end: scope_block.scope.range.end,
+                        });
                     }
                 }
             }
@@ -520,9 +578,20 @@ fn merge_in_terminal(
 // canMergeScopes
 // =============================================================================
 
-/// Check if two scopes can be merged.
-fn can_merge_scopes(
-    current: &ReactiveScopeBlock,
+/// A view of a scope that uses an externally-provided accumulated declaration set.
+/// This allows checking merge eligibility with a combined set of declarations
+/// from multiple previously-merged scopes, without actually mutating the scope.
+struct AccumulatedScopeView<'a> {
+    scope: &'a ReactiveScope,
+    declarations: &'a FxHashMap<IdentifierId, ReactiveScopeDeclaration>,
+}
+
+/// Check if two scopes can be merged, using an accumulated declaration set for the current scope.
+///
+/// This is used during the identification pass to check merge eligibility when the
+/// current scope has already been virtually merged with previous scopes.
+fn can_merge_scopes_with_accumulated(
+    current: AccumulatedScopeView<'_>,
     next: &ReactiveScopeBlock,
     temporaries: &FxHashMap<DeclarationId, DeclarationId>,
 ) -> bool {
@@ -535,9 +604,8 @@ fn can_merge_scopes(
         return true;
     }
     // Case 2: Outputs of current are inputs to next
-    // 2a: Direct match — declarations of current == dependencies of next
+    // 2a: Direct match — accumulated declarations == dependencies of next
     let current_decl_as_deps: FxHashSet<ReactiveScopeDependency> = current
-        .scope
         .declarations
         .values()
         .map(|decl| ReactiveScopeDependency {
@@ -555,7 +623,7 @@ fn can_merge_scopes(
         && next.scope.dependencies.iter().all(|dep| {
             dep.path.is_empty()
                 && is_always_invalidating_type(&dep.identifier.type_)
-                && current.scope.declarations.values().any(|decl| {
+                && current.declarations.values().any(|decl| {
                     decl.identifier.declaration_id == dep.identifier.declaration_id
                         || temporaries.get(&dep.identifier.declaration_id)
                             == Some(&decl.identifier.declaration_id)

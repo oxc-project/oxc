@@ -148,6 +148,17 @@ pub struct HirBuilder {
     /// even when the capturing function appears before the variable declaration
     /// in the source (e.g., `const foo = () => bar; const bar = 3;`).
     scope_binding_names: FxHashSet<String>,
+
+    /// Stack for tracking block-scoped binding changes.
+    ///
+    /// When entering a block scope (e.g., an if-branch body), bindings added
+    /// inside that scope need to be removed upon exiting to avoid polluting the
+    /// outer scope. Each frame stores (binding_key, previous_value) pairs:
+    /// - If previous_value is `Some(entry)`, restore that entry on scope exit.
+    /// - If previous_value is `None`, remove the key entirely on scope exit.
+    ///
+    /// Only tracks bindings that are block-scoped (const/let), not var declarations.
+    binding_scope_stack: Vec<Vec<(String, Option<BindingEntry>)>>,
 }
 
 impl HirBuilder {
@@ -173,6 +184,7 @@ impl HirBuilder {
             context_identifiers,
             hoisted_identifiers: FxHashSet::default(),
             scope_binding_names: FxHashSet::default(),
+            binding_scope_stack: Vec::new(),
         }
     }
 
@@ -274,6 +286,9 @@ impl HirBuilder {
             loc,
         };
         self.env.add_new_reference(&candidate);
+        // Record this change so it can be undone when exiting a block scope.
+        let previous = self.bindings.remove(&candidate);
+        self.record_binding_change(&candidate, previous);
         self.bindings.insert(
             candidate,
             BindingEntry {
@@ -429,6 +444,9 @@ impl HirBuilder {
             loc,
         };
         self.env.add_new_reference(name);
+        // Record this change so it can be undone when exiting a block scope.
+        let previous = self.bindings.remove(name);
+        self.record_binding_change(name, previous);
         self.bindings.insert(
             name.to_string(),
             BindingEntry {
@@ -439,6 +457,55 @@ impl HirBuilder {
             },
         );
         Place { identifier, effect: Effect::Unknown, reactive: false, loc }
+    }
+
+    /// Push a new block-scoped binding scope onto the scope stack.
+    ///
+    /// Call this before lowering statements that form a new block scope (e.g.,
+    /// the body of an `if` branch, a `for` loop body, or an explicit `{}`
+    /// block statement) for `const` and `let` variables.
+    ///
+    /// The returned frame index is passed to `pop_binding_scope` on exit.
+    ///
+    /// This simulates Babel's scope-aware binding resolution: in JS, block-scoped
+    /// variables (`const`/`let`) are only visible within their declaring block.
+    /// Without this, an inner `const x = 1` inside an `if`-branch would pollute
+    /// the outer scope's binding map, making outer `print(x)` resolve to the inner `x`.
+    pub fn push_binding_scope(&mut self) {
+        self.binding_scope_stack.push(Vec::new());
+    }
+
+    /// Pop the most recent block-scoped binding scope, restoring any bindings
+    /// that were shadowed or newly added by code in that scope.
+    pub fn pop_binding_scope(&mut self) {
+        if let Some(frame) = self.binding_scope_stack.pop() {
+            for (key, prev) in frame {
+                match prev {
+                    Some(entry) => {
+                        self.bindings.insert(key, entry);
+                    }
+                    None => {
+                        self.bindings.remove(&key);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Record a binding change within the current scope frame (if any).
+    ///
+    /// Called internally when a binding is inserted to track what needs to be
+    /// restored when the scope exits.
+    fn record_binding_change(&mut self, key: &str, previous: Option<BindingEntry>) {
+        if let Some(frame) = self.binding_scope_stack.last_mut() {
+            // Only record the FIRST change for a given key per scope frame.
+            // Subsequent changes within the same scope don't need separate tracking
+            // because the restore will use the oldest "previous" value.
+            let already_tracked = frame.iter().any(|(k, _)| k == key);
+            if !already_tracked {
+                frame.push((key.to_string(), previous));
+            }
+        }
     }
 
     /// Push an instruction onto the current block.
@@ -1075,22 +1142,15 @@ pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
         }
         Terminal::DoWhile(t) => {
             // TS eachTerminalSuccessor only yields loop for 'do-while' terminals.
-            // However, we also include test to avoid regressions from changing the
-            // predecessor structure for do-while loops. The test block's predecessor
-            // set affects SSA phi creation and downstream dependency analysis.
-            // TODO: Match TS exactly (only yield loop) once the dependency analysis
-            // is fixed to handle the reduced predecessor set correctly.
+            // The test block is reached transitively through the loop body's goto,
+            // not directly from the do-while terminal's block.
             successors.push(t.r#loop);
-            successors.push(t.test);
         }
         Terminal::While(t) => {
             // TS eachTerminalSuccessor only yields test for 'while' terminals.
-            // However, we also include loop to avoid regressions from changing the
-            // predecessor structure for while loops.
-            // TODO: Match TS exactly (only yield test) once the dependency analysis
-            // is fixed to handle the reduced predecessor set correctly.
+            // The loop body is reached transitively through the Branch terminal
+            // in the test block, not directly from the while-terminal's block.
             successors.push(t.test);
-            successors.push(t.r#loop);
         }
         Terminal::Logical(t) => {
             successors.push(t.test);
@@ -1114,8 +1174,14 @@ pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
             }
         }
         Terminal::Try(t) => {
+            // TS eachTerminalSuccessor only yields block for 'try' terminals.
+            // The handler is only reachable via maybe-throw terminals inside the
+            // try body, not directly from the try terminal. This ensures that
+            // when PruneMaybeThrows nulls out maybe-throw handlers in blocks that
+            // cannot throw, reversePostorderBlocks correctly removes the handler
+            // block as unreachable, allowing removeUnnecessaryTryCatch to elide
+            // the try terminal.
             successors.push(t.block);
-            successors.push(t.handler);
         }
         Terminal::Scope(t) => {
             successors.push(t.block);

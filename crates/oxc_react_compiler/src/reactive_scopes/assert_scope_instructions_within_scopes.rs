@@ -8,24 +8,18 @@
 /// create a structure where instructions belonging to a scope appear outside
 /// that scope's block. This pass guards against such compiler coding mistakes.
 ///
-/// The TS reference checks operands (via `visitPlace`) and terminal places,
-/// NOT lvalues (which use a separate `visitLValue` callback that is not overridden).
-/// It uses `getPlaceScope(id, place)` to filter by instruction ID range, and
-/// properly tracks scope entry/exit via add/delete on `activeScopes`.
-///
-/// This Rust port checks lvalues and uses `getPlaceScope` to filter by instruction
-/// ID range. Scope tracking is add-only (scopes remain permanently active once
-/// encountered) which is more lenient than the TS reference's entry/exit tracking.
-/// Switching to operand-only checks and proper scope exit tracking will be done
-/// once earlier passes (BuildReactiveFunction, etc.) are more fully aligned with
-/// the TS reference.
+/// Matches the TypeScript reference behavior:
+/// - Checks OPERANDS (via `visitPlace` called from `traverseValue`) NOT lvalues.
+///   Lvalues use a separate `visitLValue` callback that the TS checker does not override.
+/// - Uses proper enter/exit scope tracking (add on enter, delete on exit via
+///   `visit_scope_block` + `exit_scope_block`), matching TS `traverseScope` semantics.
 use rustc_hash::FxHashSet;
 
 use crate::{
     compiler_error::{CompilerError, GENERATED_SOURCE},
     hir::{
-        InstructionId, Place, ReactiveFunction, ReactiveInstruction, ReactiveScope,
-        ReactiveTerminalStatement, ScopeId,
+        InstructionId, Place, ReactiveFunction, ReactiveInstruction, ReactiveValue, ScopeId,
+        visitors::each_instruction_value_operand,
     },
     reactive_scopes::visitors::{ReactiveVisitor, visit_reactive_function},
 };
@@ -33,7 +27,7 @@ use crate::{
 /// Returns the identifier's scope if the instruction `id` is within the scope's range.
 ///
 /// Port of `getPlaceScope` from `HIR/HIR.ts`.
-fn get_place_scope(id: InstructionId, place: &Place) -> Option<&ReactiveScope> {
+fn get_place_scope(id: InstructionId, place: &Place) -> Option<&crate::hir::ReactiveScope> {
     let scope = place.identifier.scope.as_ref()?;
     if id >= scope.range.start && id < scope.range.end { Some(scope) } else { None }
 }
@@ -80,12 +74,13 @@ struct ScopeChecker {
 }
 
 impl ScopeChecker {
-    /// Check a place using `getPlaceScope` to filter by instruction ID range.
+    /// Check a single place (operand) using `getPlaceScope` to filter by instruction ID range.
     ///
-    /// This matches the TS behavior where `getPlaceScope(id, place)` returns null
-    /// if the instruction ID is outside the scope's range, preventing false positives
-    /// for instructions that reference scopes they don't actually belong to.
-    fn check_place_scope(&mut self, place: &Place, id: InstructionId) {
+    /// Matches the TS `visitPlace` behavior: checks operands (reads), not lvalues.
+    fn check_place(&mut self, place: &Place, id: InstructionId) {
+        if self.error.is_some() {
+            return;
+        }
         if let Some(scope) = get_place_scope(id, place)
             && self.existing_scopes.contains(&scope.id)
             && !self.active_scopes.contains(&scope.id)
@@ -100,6 +95,54 @@ impl ScopeChecker {
             ));
         }
     }
+
+    /// Collect and check all Place operands from a ReactiveValue, recursively.
+    ///
+    /// Matches TS `traverseValue` which recurses into compound values (Logical,
+    /// Ternary, Sequence, OptionalCall) and calls `visitPlace` on each operand.
+    fn check_reactive_value(&mut self, value: &ReactiveValue, id: InstructionId) {
+        if self.error.is_some() {
+            return;
+        }
+        match value {
+            ReactiveValue::Instruction(iv) => {
+                for operand in each_instruction_value_operand(iv) {
+                    self.check_place(operand, id);
+                    if self.error.is_some() {
+                        return;
+                    }
+                }
+            }
+            ReactiveValue::Logical(logical) => {
+                self.check_reactive_value(&logical.left, id);
+                self.check_reactive_value(&logical.right, id);
+            }
+            ReactiveValue::Ternary(ternary) => {
+                self.check_reactive_value(&ternary.test, id);
+                self.check_reactive_value(&ternary.consequent, id);
+                self.check_reactive_value(&ternary.alternate, id);
+            }
+            ReactiveValue::Sequence(seq) => {
+                // Visit inner instructions first (matching TS `traverseValue` SequenceExpression)
+                for inner_instr in &seq.instructions {
+                    self.check_instruction_operands(inner_instr);
+                    if self.error.is_some() {
+                        return;
+                    }
+                }
+                // Then check the final value
+                self.check_reactive_value(&seq.value, seq.id);
+            }
+            ReactiveValue::OptionalCall(opt) => {
+                self.check_reactive_value(&opt.value, opt.id);
+            }
+        }
+    }
+
+    /// Check all operands of an instruction's value.
+    fn check_instruction_operands(&mut self, instr: &ReactiveInstruction) {
+        self.check_reactive_value(&instr.value, instr.id);
+    }
 }
 
 impl ReactiveVisitor for ScopeChecker {
@@ -107,16 +150,18 @@ impl ReactiveVisitor for ScopeChecker {
         if self.error.is_some() {
             return;
         }
-        if let Some(ref lvalue) = instr.lvalue {
-            self.check_place_scope(lvalue, instr.id);
-        }
-    }
-
-    fn visit_terminal(&mut self, _stmt: &ReactiveTerminalStatement) {
-        // Terminals are checked through their children
+        // Check operands (reads), matching TS `visitPlace` behavior.
+        // The TS reference does NOT check lvalues (no `visitLValue` override).
+        self.check_instruction_operands(instr);
     }
 
     fn visit_scope_block(&mut self, scope: &crate::hir::ReactiveScope) {
+        // Add on entry — matching TS `this.activeScopes.add(block.scope.id)`.
         self.active_scopes.insert(scope.id);
+    }
+
+    fn exit_scope_block(&mut self, scope: &crate::hir::ReactiveScope) {
+        // Delete on exit — matching TS `this.activeScopes.delete(block.scope.id)`.
+        self.active_scopes.remove(&scope.id);
     }
 }

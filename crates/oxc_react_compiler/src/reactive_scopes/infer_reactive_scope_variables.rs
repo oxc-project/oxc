@@ -533,6 +533,82 @@ pub fn find_disjoint_mutable_values(func: &HIRFunction) -> DisjointSet<Identifie
 
     let mut declarations: FxHashMap<crate::hir::DeclarationId, IdentifierId> = FxHashMap::default();
 
+    // Pre-compute the maximum mutable_range.end for each DeclarationId across all
+    // identifiers in the function. This is needed because in Rust SSA, context variables
+    // like `bar$0` (DeclareContext) and `bar_0$13` (StoreContext) are DIFFERENT
+    // IdentifierIds with the same DeclarationId but separate mutable_ranges.
+    //
+    // In the TS reference, SSA keeps the same `Identifier` object for both DeclareContext
+    // and StoreContext — so `bar$0.mutableRange` automatically spans the full range
+    // including the StoreContext. In Rust, we need to manually widen the range.
+    //
+    // This map is used when processing FunctionExpression context variables: a context
+    // variable should be considered "mutable at the FunctionExpression instruction" if
+    // ANY identifier with the same DeclarationId is mutable at that point.
+    let mut decl_max_range_end: FxHashMap<crate::hir::DeclarationId, InstructionId> =
+        FxHashMap::default();
+    {
+        let block_ids_pre = compute_rpo_order(func.body.entry, &func.body.blocks);
+        for block_id in &block_ids_pre {
+            let Some(block) = func.body.blocks.get(block_id) else { continue };
+            for instr in &block.instructions {
+                // Check lvalue
+                let decl_id = instr.lvalue.identifier.declaration_id;
+                let end = instr.lvalue.identifier.mutable_range.end;
+                if end.0 > 0 {
+                    let entry = decl_max_range_end.entry(decl_id).or_insert(InstructionId(0));
+                    if end.0 > entry.0 {
+                        *entry = end;
+                    }
+                }
+                // Check inner lvalues (StoreLocal, DeclareLocal, StoreContext, DeclareContext)
+                match &instr.value {
+                    crate::hir::InstructionValue::StoreLocal(v) => {
+                        let d = v.lvalue.place.identifier.declaration_id;
+                        let e = v.lvalue.place.identifier.mutable_range.end;
+                        if e.0 > 0 {
+                            let entry = decl_max_range_end.entry(d).or_insert(InstructionId(0));
+                            if e.0 > entry.0 {
+                                *entry = e;
+                            }
+                        }
+                    }
+                    crate::hir::InstructionValue::DeclareLocal(v) => {
+                        let d = v.lvalue.place.identifier.declaration_id;
+                        let e = v.lvalue.place.identifier.mutable_range.end;
+                        if e.0 > 0 {
+                            let entry = decl_max_range_end.entry(d).or_insert(InstructionId(0));
+                            if e.0 > entry.0 {
+                                *entry = e;
+                            }
+                        }
+                    }
+                    crate::hir::InstructionValue::StoreContext(v) => {
+                        let d = v.lvalue_place.identifier.declaration_id;
+                        let e = v.lvalue_place.identifier.mutable_range.end;
+                        if e.0 > 0 {
+                            let entry = decl_max_range_end.entry(d).or_insert(InstructionId(0));
+                            if e.0 > entry.0 {
+                                *entry = e;
+                            }
+                        }
+                    }
+                    crate::hir::InstructionValue::DeclareContext(v) => {
+                        let d = v.lvalue_place.identifier.declaration_id;
+                        let e = v.lvalue_place.identifier.mutable_range.end;
+                        if e.0 > 0 {
+                            let entry = decl_max_range_end.entry(d).or_insert(InstructionId(0));
+                            if e.0 > entry.0 {
+                                *entry = e;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
     let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in &block_ids {
         let Some(block) = func.body.blocks.get(block_id) else { continue };
@@ -613,6 +689,24 @@ pub fn find_disjoint_mutable_values(func: &HIRFunction) -> DisjointSet<Identifie
                         operands.push(v.value.identifier.id);
                     }
                 }
+                crate::hir::InstructionValue::LoadContext(_) => {
+                    // LoadContext loads a context-captured variable (from an outer scope).
+                    // We intentionally do NOT include the source place operand in the union,
+                    // because the source is an external input variable that was captured from
+                    // an outer scope — it is not a co-mutating value within this scope.
+                    //
+                    // This matches the TypeScript reference behavior: after IIFE inlining,
+                    // TS converts context variables to LoadLocal, and LoadLocal operands
+                    // naturally have mutableRange.start=0 which prevents them from being
+                    // included in unions. Rust keeps LoadContext instead of converting to
+                    // LoadLocal, so we explicitly skip the operand here.
+                    //
+                    // Without this special case, the context variable source (e.g. `items`)
+                    // would be grouped with the lvalue and downstream values (e.g. GetIterator
+                    // result), causing `items` to get a ScopeId from an inner scope — which
+                    // then causes ValidatePreservedManualMemoization to fail because `items`
+                    // is a dep of StartMemoize but its scope is not in any tracked scope set.
+                }
                 crate::hir::InstructionValue::MethodCall(_) => {
                     for operand in each_instruction_operand(instr) {
                         if is_mutable(&operand.identifier, instr.id)
@@ -629,9 +723,29 @@ pub fn find_disjoint_mutable_values(func: &HIRFunction) -> DisjointSet<Identifie
                 }
                 _ => {
                     for operand in each_instruction_operand(instr) {
-                        if is_mutable(&operand.identifier, instr.id)
-                            && operand.identifier.mutable_range.start.0 > 0
-                        {
+                        // For context variables captured by FunctionExpression/ObjectMethod,
+                        // the Rust SSA creates separate identifiers for DeclareContext and
+                        // StoreContext (unlike the TS reference which reuses the same Identifier).
+                        // This means the DeclareContext identifier (e.g. bar$0) may have a small
+                        // range [1,2) while the StoreContext identifier (bar_0$13) has range [6,7).
+                        // The FunctionExpression captures bar$0, but in the TS, bar$0.mutableRange
+                        // would span [1,7) because the same identifier is used for both.
+                        //
+                        // To match TS behavior, we also check decl_max_range_end: if any
+                        // identifier with the same declaration_id is mutable (or assigned) at
+                        // or after the FunctionExpression instruction, we include this context var.
+                        let decl_id = operand.identifier.declaration_id;
+                        let effective_range_end = decl_max_range_end
+                            .get(&decl_id)
+                            .copied()
+                            .unwrap_or(operand.identifier.mutable_range.end);
+                        let effective_range = MutableRange {
+                            start: operand.identifier.mutable_range.start,
+                            end: effective_range_end,
+                        };
+                        let is_effectively_mutable =
+                            effective_range.start <= instr.id && instr.id < effective_range.end;
+                        if is_effectively_mutable && effective_range.start.0 > 0 {
                             operands.push(operand.identifier.id);
                         }
                     }

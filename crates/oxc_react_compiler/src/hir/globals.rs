@@ -40,6 +40,8 @@ pub type GlobalRegistry = FxHashMap<String, Global>;
 fn untyped_globals() -> FxHashSet<String> {
     // Note: Object, Array, Math, console, Map, Set, WeakMap, WeakSet are now typed globals
     // with proper shape information. They are added in add_global_function_globals().
+    // Note: String, Number, Boolean, parseInt, parseFloat, etc. are also typed globals
+    // that return Primitive values, and are added in add_global_function_globals().
     [
         "Function",
         "RegExp",
@@ -72,9 +74,6 @@ fn untyped_globals() -> FxHashSet<String> {
         "Proxy",
         "Reflect",
         "Intl",
-        "Number",
-        "String",
-        "Boolean",
     ]
     .iter()
     .map(|s| (*s).to_string())
@@ -212,6 +211,7 @@ pub fn default_shapes() -> ShapeRegistry {
         ));
 
         // map, flatMap, filter — ConditionallyMutate, returns Array
+        // noAlias=true: the callback args don't escape into the return value
         for name in &["map", "flatMap", "filter"] {
             let t = method_prop(
                 r,
@@ -220,6 +220,8 @@ pub fn default_shapes() -> ShapeRegistry {
                     return_type: array_type.clone(),
                     return_value_kind: ValueKind::Mutable,
                     callee_effect: Effect::ConditionallyMutate,
+                    no_alias: true,
+                    mutable_only_if_operands_are_mutable: true,
                     ..FunctionSignature::default()
                 },
                 array_type.clone(),
@@ -228,6 +230,7 @@ pub fn default_shapes() -> ShapeRegistry {
         }
 
         // every, some, findIndex — ConditionallyMutate, returns Primitive
+        // noAlias=true: arguments do not escape into the return value
         for name in &["every", "some", "findIndex"] {
             let t = method_prop(
                 r,
@@ -236,6 +239,8 @@ pub fn default_shapes() -> ShapeRegistry {
                     return_type: Type::Primitive,
                     return_value_kind: ValueKind::Primitive,
                     callee_effect: Effect::ConditionallyMutate,
+                    no_alias: true,
+                    mutable_only_if_operands_are_mutable: true,
                     ..FunctionSignature::default()
                 },
                 Type::Primitive,
@@ -244,6 +249,7 @@ pub fn default_shapes() -> ShapeRegistry {
         }
 
         // find — ConditionallyMutate, returns Poly
+        // noAlias=true: arguments do not escape into the return value
         props.push((
             "find".to_string(),
             method_prop(
@@ -253,6 +259,8 @@ pub fn default_shapes() -> ShapeRegistry {
                     return_type: Type::Poly,
                     return_value_kind: ValueKind::Mutable,
                     callee_effect: Effect::ConditionallyMutate,
+                    no_alias: true,
+                    mutable_only_if_operands_are_mutable: true,
                     ..FunctionSignature::default()
                 },
                 Type::Poly,
@@ -1634,8 +1642,23 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
         })),
     );
 
-    // --- Common pure global functions ---
+    // --- Common pure global functions that return Primitive ---
+    // These match the TypeScript compiler's Globals.ts where String, Number, Boolean,
+    // parseInt, parseFloat, isNaN, isFinite, encodeURI*, decodeURI* are all typed as
+    // returning Primitive. This is important because mayAllocate() returns false for
+    // CallExpressions whose lvalue type is Primitive, preventing them from getting
+    // spurious reactive scopes.
+    let primitive_fn_sig = FunctionSignature {
+        rest_param: Some(Effect::Read),
+        return_type: Type::Primitive,
+        return_value_kind: ValueKind::Primitive,
+        callee_effect: Effect::Read,
+        ..FunctionSignature::default()
+    };
     for name in &[
+        "String",
+        "Number",
+        "Boolean",
         "parseInt",
         "parseFloat",
         "isNaN",
@@ -1647,10 +1670,11 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
         "btoa",
         "atob",
     ] {
+        let fn_id = add_function(shapes, None, Vec::new(), primitive_fn_sig.clone());
         globals.insert(
             (*name).to_string(),
             Global::Typed(Type::Function(FunctionType {
-                shape_id: None,
+                shape_id: Some(fn_id),
                 return_type: Box::new(Type::Primitive),
                 is_constructor: false,
             })),

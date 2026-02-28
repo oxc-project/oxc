@@ -9,15 +9,16 @@
 /// - Uses fixpoint iteration to propagate constants through the CFG
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator, UpdateOperator};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
     BlockKind, GotoTerminal, GotoVariant, HIRFunction, IdentifierId, Instruction, InstructionValue,
     NonLocalBinding, Place, PrimitiveValue, PrimitiveValueKind, PropertyLoad, PropertyStore,
     Terminal,
     hir_builder::{
-        mark_instruction_ids, mark_predecessors, remove_dead_do_while_statements,
-        remove_unnecessary_try_catch, remove_unreachable_for_updates, reverse_postorder_blocks,
+        compute_rpo_order, mark_instruction_ids, mark_predecessors,
+        remove_dead_do_while_statements, remove_unnecessary_try_catch,
+        remove_unreachable_for_updates, reverse_postorder_blocks,
     },
     merge_consecutive_blocks::merge_consecutive_blocks,
     types::PropertyLiteral,
@@ -34,15 +35,102 @@ pub enum Constant {
 /// Map from identifier ID to its known constant value.
 type Constants = FxHashMap<IdentifierId, Constant>;
 
+/// Set of context variable IDs that are "mutable" and should NOT be constant-propagated.
+/// A context variable is mutable if it is written (StoreContext) anywhere — in the outer
+/// function or in any nested inner function — more than once total, OR if it is written
+/// by an inner function (since the inner function can reassign it at any call time).
+type MutableContextVars = FxHashSet<IdentifierId>;
+
+/// Collect context variable IDs that are written by inner functions.
+/// These are IDs that appear as StoreContext targets in any nested FunctionExpression
+/// or ObjectMethod. A variable written inside an inner function is effectively mutable
+/// from the outer function's perspective (the inner function could be called at any time).
+fn collect_inner_function_store_context_ids(func: &HIRFunction) -> FxHashSet<IdentifierId> {
+    let mut ids: FxHashSet<IdentifierId> = FxHashSet::default();
+    for block in func.body.blocks.values() {
+        for instr in &block.instructions {
+            match &instr.value {
+                InstructionValue::FunctionExpression(v) => {
+                    // Collect StoreContext IDs from the inner function (and transitively).
+                    collect_all_store_context_ids_recursive(&v.lowered_func.func, &mut ids);
+                }
+                InstructionValue::ObjectMethod(v) => {
+                    collect_all_store_context_ids_recursive(&v.lowered_func.func, &mut ids);
+                }
+                _ => {}
+            }
+        }
+    }
+    ids
+}
+
+/// Recursively collect all StoreContext target IDs in a function and all nested functions.
+fn collect_all_store_context_ids_recursive(func: &HIRFunction, ids: &mut FxHashSet<IdentifierId>) {
+    for block in func.body.blocks.values() {
+        for instr in &block.instructions {
+            match &instr.value {
+                InstructionValue::StoreContext(v) => {
+                    ids.insert(v.lvalue_place.identifier.id);
+                }
+                InstructionValue::FunctionExpression(v) => {
+                    collect_all_store_context_ids_recursive(&v.lowered_func.func, ids);
+                }
+                InstructionValue::ObjectMethod(v) => {
+                    collect_all_store_context_ids_recursive(&v.lowered_func.func, ids);
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+/// Collect context variable IDs that are mutable from the outer function's perspective.
+/// A context variable is mutable if:
+/// 1. It has MORE than one StoreContext in the OUTER function (directly reassigned), OR
+/// 2. It has ANY StoreContext in ANY inner function (reassigned by closure).
+fn collect_mutable_context_vars(func: &HIRFunction) -> MutableContextVars {
+    // Step 1: Count StoreContext writes in the outer function only.
+    let mut store_counts: FxHashMap<IdentifierId, usize> = FxHashMap::default();
+    for block in func.body.blocks.values() {
+        for instr in &block.instructions {
+            if let InstructionValue::StoreContext(v) = &instr.value {
+                *store_counts.entry(v.lvalue_place.identifier.id).or_insert(0) += 1;
+            }
+        }
+    }
+
+    // Step 2: Collect IDs written by inner functions (these are always mutable).
+    let inner_writes = collect_inner_function_store_context_ids(func);
+
+    // Step 3: A variable is mutable if it has multiple outer writes OR any inner writes.
+    let mut result: MutableContextVars = FxHashSet::default();
+    for (id, count) in &store_counts {
+        if *count > 1 || inner_writes.contains(id) {
+            result.insert(*id);
+        }
+    }
+    // Also include inner-write IDs that may not appear in outer store_counts.
+    // (This handles cases where the variable is only written inside lambdas, not the outer function.)
+    for id in &inner_writes {
+        result.insert(*id);
+    }
+    result
+}
+
 /// Run constant propagation on the given function.
 pub fn constant_propagation(func: &mut HIRFunction) {
     let mut constants: Constants = FxHashMap::default();
-    constant_propagation_impl(func, &mut constants);
+    let mutable_ctx = collect_mutable_context_vars(func);
+    constant_propagation_impl(func, &mut constants, &mutable_ctx);
 }
 
-fn constant_propagation_impl(func: &mut HIRFunction, constants: &mut Constants) {
+fn constant_propagation_impl(
+    func: &mut HIRFunction,
+    constants: &mut Constants,
+    mutable_ctx: &MutableContextVars,
+) {
     loop {
-        let have_terminals_changed = apply_constant_propagation(func, constants);
+        let have_terminals_changed = apply_constant_propagation(func, constants, mutable_ctx);
         if !have_terminals_changed {
             break;
         }
@@ -75,10 +163,19 @@ fn constant_propagation_impl(func: &mut HIRFunction, constants: &mut Constants) 
     }
 }
 
-fn apply_constant_propagation(func: &mut HIRFunction, constants: &mut Constants) -> bool {
+fn apply_constant_propagation(
+    func: &mut HIRFunction,
+    constants: &mut Constants,
+    mutable_ctx: &MutableContextVars,
+) -> bool {
     let mut has_changes = false;
 
-    let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
+    // Iterate blocks in reverse-postorder (RPO) so that dominator blocks are
+    // always processed before the blocks they dominate.  In the TypeScript
+    // reference, `fn.body.blocks` is a Map whose insertion order matches RPO
+    // (maintained by `reversePostorderBlocks`).  In Rust, the `FxHashMap` does
+    // not preserve insertion order, so we must compute RPO explicitly.
+    let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
     for block_id in block_ids {
         let Some(block) = func.body.blocks.get_mut(&block_id) else { continue };
 
@@ -99,7 +196,7 @@ fn apply_constant_propagation(func: &mut HIRFunction, constants: &mut Constants)
 
             let instr = &mut block.instructions[i];
             let lvalue_id = instr.lvalue.identifier.id;
-            let value = evaluate_instruction(constants, instr);
+            let value = evaluate_instruction(constants, mutable_ctx, instr);
             if let Some(constant) = value {
                 constants.insert(lvalue_id, constant);
             }
@@ -145,15 +242,24 @@ fn evaluate_phi(phi: &crate::hir::Phi, constants: &Constants) -> Option<Constant
     value
 }
 
-fn evaluate_instruction(constants: &mut Constants, instr: &mut Instruction) -> Option<Constant> {
+fn evaluate_instruction(
+    constants: &mut Constants,
+    mutable_ctx: &MutableContextVars,
+    instr: &mut Instruction,
+) -> Option<Constant> {
     // Handle cases that need exclusive mutable access to the instruction value.
     match &mut instr.value {
         InstructionValue::FunctionExpression(v) => {
-            constant_propagation_impl(&mut v.lowered_func.func, constants);
+            // Collect mutable context vars for the inner function.
+            // The inner function's own mutable ctx is separate from the outer one,
+            // but we reuse the outer constants map for cross-scope propagation.
+            let inner_mutable_ctx = collect_mutable_context_vars(&v.lowered_func.func);
+            constant_propagation_impl(&mut v.lowered_func.func, constants, &inner_mutable_ctx);
             return None;
         }
         InstructionValue::ObjectMethod(v) => {
-            constant_propagation_impl(&mut v.lowered_func.func, constants);
+            let inner_mutable_ctx = collect_mutable_context_vars(&v.lowered_func.func);
+            constant_propagation_impl(&mut v.lowered_func.func, constants, &inner_mutable_ctx);
             return None;
         }
         InstructionValue::StartMemoize(v) => {
@@ -193,18 +299,38 @@ fn evaluate_instruction(constants: &mut Constants, instr: &mut Instruction) -> O
             place_value
         }
         InstructionValue::LoadContext(v) => {
-            let place_value = constants.get(&v.place.identifier.id).cloned();
+            // In our Rust HIR, ALL captured variables use LoadContext (even non-reassigned ones),
+            // unlike the TypeScript reference which only uses LoadContext for reassigned+captured
+            // variables. For mutable context vars (those with multiple StoreContext writes),
+            // we skip propagation to match the TypeScript reference's behavior (which treats all
+            // LoadContext as default → null). For single-write context vars (effectively immutable
+            // captured consts), we DO propagate.
+            let ctx_id = v.place.identifier.id;
+            if mutable_ctx.contains(&ctx_id) {
+                // Mutable context variable — do not propagate.
+                return None;
+            }
+            let place_value = constants.get(&ctx_id).cloned();
             if let Some(ref c) = place_value {
                 instr.value = constant_to_instruction_value(c, instr.value.loc());
             }
             place_value
         }
         InstructionValue::StoreContext(v) => {
+            // For mutable context vars, do nothing (don't record constants).
+            // For single-write context vars, record the constant value.
+            let ctx_id = v.lvalue_place.identifier.id;
+            if mutable_ctx.contains(&ctx_id) {
+                // Mutable context variable — do not record.
+                return None;
+            }
             let place_value = read(constants, &v.value);
             if let Some(ref c) = place_value {
-                constants.insert(v.lvalue_place.identifier.id, c.clone());
+                // Single-write context var — record its constant value.
+                constants.insert(ctx_id, c.clone());
             }
-            place_value
+            // StoreContext itself doesn't produce a usable constant for the outer map.
+            None
         }
         InstructionValue::ComputedLoad(v) => {
             let prop_const = read(constants, &v.property);

@@ -68,8 +68,23 @@ pub fn dead_code_elimination(func: &mut HIRFunction) {
         // Prune unused phi nodes (TS lines 45-49)
         block.phis.retain(|phi| state.is_id_or_name_used(&phi.place.identifier));
 
-        // Retain only instructions whose lvalue is referenced
-        block.instructions.retain(|instr| state.is_id_or_name_used(&instr.lvalue.identifier));
+        // Retain instructions whose lvalue is referenced, or whose value is not pruneable.
+        // In TypeScript's HIR, a DeclareLocal instruction's `instr.lvalue.identifier` IS
+        // the declared variable (e.g., `#t18`). In the Rust port, `instr.lvalue` is a
+        // synthetic unnamed temporary (e.g., `$38`), and the declared variable lives in
+        // `instr.value.DeclareLocal.lvalue.place`. We must also check the declared variable
+        // to match TypeScript's DCE behavior: keep DeclareLocal when the declared variable
+        // is used, even if the instruction's own lvalue is unused.
+        block.instructions.retain(|instr| {
+            if state.is_id_or_name_used(&instr.lvalue.identifier) {
+                return true;
+            }
+            // For DeclareLocal, also check whether the declared variable is used
+            if let InstructionValue::DeclareLocal(v) = &instr.value {
+                return state.is_id_or_name_used(&v.lvalue.place.identifier);
+            }
+            false
+        });
 
         // Rewrite retained instructions (but skip block-value instructions)
         let instr_count = block.instructions.len();
@@ -288,10 +303,8 @@ fn pruneable_value(value: &InstructionValue, state: &DceState) -> bool {
                 }
             }
             if v.lvalue.kind == InstructionKind::Reassign {
-                // Reassignments can be pruned if the specific instance being assigned is never read
                 !is_id_used
             } else {
-                // Otherwise pruneable only if none of the identifiers are read from later
                 !is_id_or_name_used
             }
         }

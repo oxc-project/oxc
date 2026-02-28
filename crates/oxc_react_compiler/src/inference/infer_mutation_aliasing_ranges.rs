@@ -513,9 +513,14 @@ pub fn infer_mutation_aliasing_ranges(
     }
     state.create(&func.returns, NodeValue::Object);
 
-    // Process blocks in RPO order, matching the TS reference which
-    // iterates `fn.body.blocks.values()` (Map preserves insertion order = RPO).
-    let block_ids: Vec<BlockId> = compute_rpo_order(func.body.entry, &func.body.blocks);
+    // Process blocks in insertion order, matching the TS reference which
+    // iterates `fn.body.blocks.values()` (Map preserves insertion order).
+    // Using insertion order (rather than RPO) is critical for correctness:
+    // for ForIn/ForOf loops, the loop body block is inserted before the fallthrough
+    // block, so mutations within the loop body get lower indices than uses of
+    // loop-produced values in the fallthrough block. This prevents spurious
+    // backward range extensions of variables that are only read after the loop.
+    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
     let mut seen_blocks: FxHashSet<BlockId> = FxHashSet::default();
 
@@ -986,24 +991,28 @@ fn set_lvalue_effects(instr: &mut crate::hir::Instruction) {
         }
         InstructionValue::DeclareContext(v) => {
             v.lvalue_place.effect = Effect::ConditionallyMutate;
-            // Do NOT initialize mutable_range.start here.
+            // Initialize mutable_range.start at the DeclareContext instruction.
             //
-            // In TS HIR, context variables are handled via LoadLocal/StoreLocal, so
-            // there's no DeclareContext instruction. After IIFE inlining, the context
-            // variable's mutable range starts at its first StoreLocal/StoreContext.
+            // This matches the TypeScript reference behavior: in `InferMutationAliasingRanges.ts`,
+            // `eachInstructionLValue` is called for ALL instructions including DeclareContext,
+            // and the lvalue's `mutableRange.start` is set to `instr.id` if it's currently 0.
             //
-            // In Rust HIR, DeclareContext appears at the top of the function (before
-            // the actual computation) so that inner closures can reference the variable.
-            // If we initialize mutable_range.start here, it would be set to a very
-            // early instruction ID (e.g. 8), causing the reactive scope range to start
-            // early and encompass other useMemo scopes' declarations (e.g. item1/item2).
+            // Setting the start here is critical for correct scope placement when context
+            // variables are assigned inside branches (if/else). Without this, the reactive
+            // scope for a context variable only appears in the branch where the first
+            // assignment happens, rather than wrapping the entire if/else block as intended.
             //
-            // The correct behavior: let StoreContext (the first actual assignment)
-            // initialize the mutable range. This matches the TS behavior where the
-            // variable's range starts at its first StoreLocal assignment.
-            //
-            // See: type-provider-store-capture.tsx — items scope range should start
-            // at the StoreContext for items, NOT at the DeclareContext.
+            // Example: `let contextVar; if (cond) { contextVar = {val: a}; } else { contextVar = {}; }`
+            // Without start-at-DeclareContext: scope only in else branch (bug).
+            // With start-at-DeclareContext: scope wraps entire if/else (correct).
+            if v.lvalue_place.identifier.mutable_range.start == InstructionId(0) {
+                v.lvalue_place.identifier.mutable_range.start = instr_id;
+            }
+            if v.lvalue_place.identifier.mutable_range.end == InstructionId(0) {
+                let new_end =
+                    std::cmp::max(instr_id.0 + 1, v.lvalue_place.identifier.mutable_range.end.0);
+                v.lvalue_place.identifier.mutable_range.end = InstructionId(new_end);
+            }
         }
         InstructionValue::StoreLocal(v) => {
             v.lvalue.place.effect = Effect::ConditionallyMutate;

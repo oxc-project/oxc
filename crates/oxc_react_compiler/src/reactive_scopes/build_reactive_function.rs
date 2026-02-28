@@ -400,15 +400,22 @@ fn extract_value_block_result(
     let mut place = instr.lvalue.clone();
     let mut value = ReactiveValue::Instruction(Box::new(instr.value.clone()));
 
-    // Special-case: if the last instruction is StoreLocal to a temporary (name is None),
-    // extract the stored value instead.
-    if let InstructionValue::StoreLocal(store) = &instr.value
-        && store.lvalue.place.identifier.name.is_none()
-    {
-        place = store.lvalue.place.clone();
-        value = ReactiveValue::Instruction(Box::new(InstructionValue::LoadLocal(
-            crate::hir::LoadLocal { place: store.value.clone(), loc: store.value.loc },
-        )));
+    // Special-case: if the last instruction is StoreLocal to a temporary (name is None)
+    // or a promoted temporary (name starts with '#'), extract the stored value instead.
+    // Promoted temporaries are created for destructuring defaults and parameter defaults
+    // and should be inlined away in the reactive value representation.
+    if let InstructionValue::StoreLocal(store) = &instr.value {
+        let is_unnamed = store.lvalue.place.identifier.name.is_none();
+        let is_promoted = matches!(
+            &store.lvalue.place.identifier.name,
+            Some(crate::hir::IdentifierName::Promoted(_))
+        );
+        if is_unnamed || is_promoted {
+            place = store.lvalue.place.clone();
+            value = ReactiveValue::Instruction(Box::new(InstructionValue::LoadLocal(
+                crate::hir::LoadLocal { place: store.value.clone(), loc: store.value.loc },
+            )));
+        }
     }
 
     if instructions.len() == 1 {
@@ -583,11 +590,18 @@ fn visit_test_block(
     loc: SourceLocation,
 ) -> Result<TestBlockResult, CompilerError> {
     let test = visit_value_block(cx, test_block_id, loc, None)?;
-    let test_block = cx
-        .block(test.block)
-        .ok_or_else(|| CompilerError::invariant("Expected test block to exist", None, loc))?;
 
-    if let Terminal::Branch(branch) = &test_block.terminal {
+    // Follow any Goto chain to find the Branch terminal. The reactive scopes
+    // pass can insert empty or instruction-carrying Goto blocks between the
+    // value-block result and the Branch that drives the conditional. The value
+    // of the test expression has already been captured in `test`; we just need
+    // to locate the Branch terminal to obtain the consequent/alternate blocks.
+    let branch_block_id = follow_goto_to_branch(cx, test.block, loc)?;
+    let branch_block = cx
+        .block(branch_block_id)
+        .ok_or_else(|| CompilerError::invariant("Expected branch block to exist", None, loc))?;
+
+    if let Terminal::Branch(branch) = &branch_block.terminal {
         Ok(TestBlockResult {
             test,
             consequent: branch.consequent,
@@ -598,8 +612,39 @@ fn visit_test_block(
         Err(CompilerError::todo(
             "Unexpected terminal kind for test block",
             None,
-            test_block.terminal.loc(),
+            branch_block.terminal.loc(),
         ))
+    }
+}
+
+/// Starting from `start`, follow any chain of Goto terminals until we reach a
+/// block whose terminal is NOT a Goto (typically a Branch). Returns the id of
+/// that terminal block.
+fn follow_goto_to_branch(
+    cx: &Context,
+    start: BlockId,
+    loc: SourceLocation,
+) -> Result<BlockId, CompilerError> {
+    let mut current = start;
+    // Guard against infinite loops in malformed CFGs.
+    let mut steps = 0u32;
+    loop {
+        let block = cx
+            .block(current)
+            .ok_or_else(|| CompilerError::invariant("Expected block to exist", None, loc))?;
+        if let Terminal::Goto(g) = &block.terminal {
+            current = g.block;
+            steps += 1;
+            if steps > 1000 {
+                return Err(CompilerError::invariant(
+                    "Unexpected cycle while following Goto chain in test block",
+                    None,
+                    loc,
+                ));
+            }
+        } else {
+            return Ok(current);
+        }
     }
 }
 

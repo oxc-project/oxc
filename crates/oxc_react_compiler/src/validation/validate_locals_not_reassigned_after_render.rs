@@ -11,6 +11,8 @@ use crate::{
     compiler_error::{CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory},
     hir::{
         Effect, HIRFunction, IdentifierId, InstructionValue, Place,
+        object_shape::ShapeRegistry,
+        types::Type,
         visitors::{
             each_instruction_lvalue, each_instruction_value_operand, each_terminal_operand,
         },
@@ -26,7 +28,8 @@ pub fn validate_locals_not_reassigned_after_render(
     func: &HIRFunction,
 ) -> Result<(), CompilerError> {
     let mut context_variables: FxHashSet<IdentifierId> = FxHashSet::default();
-    let reassignment = get_context_reassignment(func, &mut context_variables, false, false);
+    let reassignment =
+        get_context_reassignment(func, &func.env.shapes, &mut context_variables, false, false);
     if let Some(reassignment) = reassignment {
         let mut errors = CompilerError::new();
         let variable = get_variable_name(&reassignment);
@@ -59,8 +62,25 @@ fn get_variable_name(place: &Place) -> String {
     "variable".to_string()
 }
 
+/// Check whether a type has a function signature with `no_alias=true`.
+///
+/// This mirrors `getFunctionCallSignature` + `signature?.noAlias` from the TypeScript port.
+fn has_no_alias(shapes: &ShapeRegistry, ty: &Type) -> bool {
+    let Some(shape_id) = ty.shape_id() else {
+        return false;
+    };
+    let Some(shape) = shapes.get(shape_id) else {
+        return false;
+    };
+    let Some(sig) = &shape.function_type else {
+        return false;
+    };
+    sig.no_alias
+}
+
 fn get_context_reassignment(
     func: &HIRFunction,
+    shapes: &ShapeRegistry,
     context_variables: &mut FxHashSet<IdentifierId>,
     is_function_expression: bool,
     is_async: bool,
@@ -74,6 +94,7 @@ fn get_context_reassignment(
                 InstructionValue::FunctionExpression(v) => {
                     let mut reassignment = get_context_reassignment(
                         &v.lowered_func.func,
+                        shapes,
                         context_variables,
                         true,
                         is_async || v.lowered_func.func.is_async,
@@ -120,6 +141,7 @@ fn get_context_reassignment(
                 InstructionValue::ObjectMethod(v) => {
                     let mut reassignment = get_context_reassignment(
                         &v.lowered_func.func,
+                        shapes,
                         context_variables,
                         true,
                         is_async || v.lowered_func.func.is_async,
@@ -173,7 +195,36 @@ fn get_context_reassignment(
                     }
                 }
                 _ => {
-                    let operands = each_instruction_value_operand(&instr.value);
+                    // If we're calling a function that doesn't let its arguments escape
+                    // (noAlias=true), only examine the callee/receiver/property — not the
+                    // callback arguments. This prevents a callback that mutates a local
+                    // variable during render (e.g. inside `x.map(cb)`) from being treated
+                    // as a post-render reassignment just because it's passed to a call.
+                    let all_operands = each_instruction_value_operand(&instr.value);
+                    let operands: Vec<&Place> = match &instr.value {
+                        InstructionValue::CallExpression(v) => {
+                            if has_no_alias(shapes, &v.callee.identifier.type_) {
+                                vec![&v.callee]
+                            } else {
+                                all_operands
+                            }
+                        }
+                        InstructionValue::MethodCall(v) => {
+                            if has_no_alias(shapes, &v.property.identifier.type_) {
+                                vec![&v.receiver, &v.property]
+                            } else {
+                                all_operands
+                            }
+                        }
+                        InstructionValue::TaggedTemplateExpression(v) => {
+                            if has_no_alias(shapes, &v.tag.identifier.type_) {
+                                vec![&v.tag]
+                            } else {
+                                all_operands
+                            }
+                        }
+                        _ => all_operands,
+                    };
                     for operand in &operands {
                         if let Some(r) = reassigning_functions.get(&operand.identifier.id) {
                             // Functions that reassign local variables are inherently mutable

@@ -239,6 +239,17 @@ pub fn inline_immediately_invoked_function_expressions(func: &mut HIRFunction) {
                         // the borrow checker.
                         let mut result = instr_lvalue;
 
+                        // Promote the temporary with a name as we require this to persist.
+                        // NOTE: This must happen BEFORE `declare_temporary` so that the
+                        // DeclareLocal instruction's lvalue.place carries the promoted name.
+                        // In TypeScript, `declareTemporary` stores the object by reference and
+                        // `promoteTemporary` mutates it in place, so the DeclareLocal is updated.
+                        // In Rust, we clone `result` into the DeclareLocal, so we must promote
+                        // first to ensure the clone has the correct name.
+                        if result.identifier.name.is_none() {
+                            promote_temporary(&mut result);
+                        }
+
                         {
                             let env = &mut func.env;
                             let blocks = &mut func.body.blocks;
@@ -253,11 +264,6 @@ pub fn inline_immediately_invoked_function_expressions(func: &mut HIRFunction) {
                                 // Declare the IIFE temporary on the current block
                                 declare_temporary(env, block, &result);
                             }
-                        }
-
-                        // Promote the temporary with a name as we require this to persist
-                        if result.identifier.name.is_none() {
-                            promote_temporary(&mut result);
                         }
 
                         // Rewrite blocks from the lambda to replace return with store + goto

@@ -2348,7 +2348,22 @@ fn lower_function_to_value(
         None,
     );
 
-    let (body, mut built_env) = inner_builder.build_with_env()?;
+    let (mut body, mut built_env) = inner_builder.build_with_env()?;
+
+    // Remove unreachable blocks from the inner function's HIR.
+    // This matches TS behavior: HIRBuilder.build() calls getReversePostorderedBlocks()
+    // which only returns reachable blocks, effectively removing any unreachable blocks
+    // (e.g. the fallthrough block after an expression-body arrow function's implicit
+    // return is unreachable since Return has no successors).
+    // Without this, `has_single_exit_return_terminal` in inline_iife counts the extra
+    // unreachable Return block and incorrectly takes the multi-return path.
+    crate::hir::hir_builder::reverse_postorder_blocks(&mut body);
+    crate::hir::hir_builder::remove_unreachable_for_updates(&mut body);
+    crate::hir::hir_builder::remove_dead_do_while_statements(&mut body);
+    crate::hir::hir_builder::remove_unnecessary_try_catch(&mut body);
+    crate::hir::hir_builder::mark_instruction_ids(&mut body);
+    crate::hir::hir_builder::mark_predecessors(&mut body);
+
     let returns = create_temporary_place(&mut built_env, func_loc);
 
     // Advance the outer builder's environment counters past the inner function's
@@ -2432,11 +2447,14 @@ pub fn lower_block_statement(
             };
             let kind = binding_info.hoisted_kind();
 
-            // Resolve the binding to get a Place. The binding should already
-            // be known via scope_binding_names (pre-collected) or declared in
-            // the bindings map.
+            // Use pre_declare_binding so that when the actual declaration is
+            // processed later (e.g., `const bar = 3` after `const foo = () => bar`),
+            // `declare_binding` will recognize the pre-declared entry and reuse the
+            // same identifier instead of creating a new `bar_0` due to a name collision.
+            // The binding kind will be updated by `declare_binding` when the real
+            // declaration is processed.
             let loc = GENERATED_SOURCE;
-            let decl_place = builder.declare_binding(name, binding_info.binding_kind(), loc);
+            let decl_place = builder.pre_declare_binding(name, loc);
 
             let lvalue = create_temporary_place(builder.environment_mut(), loc);
             builder.push(Instruction {
@@ -2483,20 +2501,6 @@ impl HoistableBinding {
         }
     }
 
-    /// Get the `BindingKind` for declaring this binding.
-    fn binding_kind(&self) -> BindingKind {
-        if self.is_function_decl {
-            BindingKind::Let // function declarations are hoisted as let
-        } else {
-            match self.decl_kind {
-                ast::VariableDeclarationKind::Const
-                | ast::VariableDeclarationKind::Using
-                | ast::VariableDeclarationKind::AwaitUsing => BindingKind::Const,
-                ast::VariableDeclarationKind::Let => BindingKind::Let,
-                ast::VariableDeclarationKind::Var => BindingKind::Var,
-            }
-        }
-    }
 }
 
 /// Collect all binding names declared in a statement.
@@ -3468,10 +3472,14 @@ fn lower_statement_with_label(
             let continuation_block = builder.reserve(BlockKind::Block);
             let continuation_id = continuation_block.id;
 
-            // Block for the consequent (if the test is truthy)
+            // Block for the consequent (if the test is truthy).
+            // Push a binding scope so that const/let declarations inside the
+            // consequent block don't pollute the outer scope's binding map.
             let consequent_block = builder.enter(BlockKind::Block, |builder, _block_id| {
+                builder.push_binding_scope();
                 let consequent = convert_statement(&if_stmt.consequent);
                 lower_statement_with_label(builder, &consequent, None).ok(); // errors accumulated in builder
+                builder.pop_binding_scope();
                 Terminal::Goto(GotoTerminal {
                     id: InstructionId(0),
                     block: continuation_id,
@@ -3480,11 +3488,13 @@ fn lower_statement_with_label(
                 })
             });
 
-            // Block for the alternate (if the test is not truthy)
+            // Block for the alternate (if the test is not truthy).
             let alternate_block = if let Some(alternate) = &if_stmt.alternate {
                 builder.enter(BlockKind::Block, |builder, _block_id| {
+                    builder.push_binding_scope();
                     let alt = convert_statement(alternate);
                     lower_statement_with_label(builder, &alt, None).ok();
+                    builder.pop_binding_scope();
                     Terminal::Goto(GotoTerminal {
                         id: InstructionId(0),
                         block: continuation_id,
@@ -3518,7 +3528,10 @@ fn lower_statement_with_label(
         // =====================================================================
         LowerableStatement::BlockStatement(block) => {
             let stmts: Vec<_> = block.body.iter().map(convert_statement).collect();
+            // Push a binding scope for the block's const/let declarations.
+            builder.push_binding_scope();
             lower_block_statement(builder, &stmts)?;
+            builder.pop_binding_scope();
         }
 
         // =====================================================================
@@ -3619,8 +3632,10 @@ fn lower_statement_with_label(
                     continue_target,
                     continuation_id,
                     |builder| {
+                        builder.push_binding_scope();
                         let body = convert_statement(&for_stmt.body);
                         lower_statement_with_label(builder, &body, None).ok();
+                        builder.pop_binding_scope();
                     },
                 );
                 Terminal::Goto(GotoTerminal {
@@ -3693,8 +3708,10 @@ fn lower_statement_with_label(
                     conditional_id,
                     continuation_id,
                     |builder| {
+                        builder.push_binding_scope();
                         let body = convert_statement(&while_stmt.body);
                         lower_statement_with_label(builder, &body, None).ok();
+                        builder.pop_binding_scope();
                     },
                 );
                 Terminal::Goto(GotoTerminal {
@@ -3753,8 +3770,10 @@ fn lower_statement_with_label(
                     conditional_id,
                     continuation_id,
                     |builder| {
+                        builder.push_binding_scope();
                         let body = convert_statement(&do_while.body);
                         lower_statement_with_label(builder, &body, None).ok();
+                        builder.pop_binding_scope();
                     },
                 );
                 Terminal::Goto(GotoTerminal {
@@ -3804,6 +3823,15 @@ fn lower_statement_with_label(
             let init_block_id = init_block.id;
             let test_block = builder.reserve(BlockKind::Loop);
             let test_block_id = test_block.id;
+
+            // Pre-declare any destructuring bindings from the for-of left side so
+            // that references to those variables inside the loop body are resolved
+            // as local bindings rather than globals. This is needed because the loop
+            // body is lowered BEFORE the test block where the actual Destructure
+            // instruction is emitted (same ordering as the TS reference compiler,
+            // which relies on Babel's pre-built scope for this).
+            let left_loc = span_to_loc(for_of.left.span());
+            pre_declare_for_loop_left_bindings(builder, &for_of.left, left_loc);
 
             // Loop body
             let loop_block = builder.enter(BlockKind::Block, |builder, _block_id| {
@@ -3863,7 +3891,7 @@ fn lower_statement_with_label(
             );
 
             // Test block: IteratorNext + assignment
-            let left_loc = span_to_loc(for_of.left.span());
+            // (left_loc is already declared above for pre_declare_for_loop_left_bindings)
             let advance_iterator = create_temporary_place(builder.environment_mut(), left_loc);
             builder.push(Instruction {
                 id: InstructionId(0),
@@ -3903,6 +3931,11 @@ fn lower_statement_with_label(
             let continuation_id = continuation_block.id;
             let init_block = builder.reserve(BlockKind::Loop);
             let init_block_id = init_block.id;
+
+            // Pre-declare any destructuring bindings from the for-in left side so
+            // that references inside the loop body resolve as local bindings.
+            let left_loc_pre = span_to_loc(for_in.left.span());
+            pre_declare_for_loop_left_bindings(builder, &for_in.left, left_loc_pre);
 
             // Loop body
             let loop_block = builder.enter(BlockKind::Block, |builder, _block_id| {
@@ -4282,13 +4315,18 @@ fn lower_statement_with_label(
                 return Ok(());
             }
 
-            // Declare handler binding if present
+            // Declare handler binding if present.
+            // This creates a promoted temporary place that will hold the caught exception value.
+            // Also extract the catch param name (for identifier params) so we can
+            // emit a StoreLocal inside the handler block to bind the user-named variable.
+            // Using create_promoted_temporary mirrors TS's promoteTemporary(place.identifier)
+            // which gives the temp a sequential name like `t0`, `t1`, etc. in output.
             let handler_binding = if let Some(handler) = &try_stmt.handler {
                 if let Some(param) = &handler.param {
                     let handler_loc = span_to_loc(param.span());
-                    let place = create_temporary_place(builder.environment_mut(), handler_loc);
+                    let place = create_promoted_temporary(builder, handler_loc);
 
-                    // Emit DeclareLocal for catch binding
+                    // Emit DeclareLocal for catch binding (the promoted temporary that holds the exception)
                     let lvalue = create_temporary_place(builder.environment_mut(), handler_loc);
                     builder.push(Instruction {
                         id: InstructionId(0),
@@ -4308,8 +4346,44 @@ fn lower_statement_with_label(
                 None
             };
 
+            // Extract catch param info before entering the handler block so we can
+            // bind the user-named identifier inside the handler.
+            // This mirrors TS BuildHIR which calls lowerAssignment(InstructionKind.Catch, ...)
+            // inside the handler block to emit StoreLocal { lvalue: { e, Catch }, value: handler_temp }.
+            let catch_param_info: Option<(&str, SourceLocation)> =
+                try_stmt.handler.as_ref().and_then(|handler| {
+                    handler.param.as_ref().and_then(|param| match &param.pattern {
+                        ast::BindingPattern::BindingIdentifier(ident) => {
+                            Some((ident.name.as_str(), span_to_loc(ident.span)))
+                        }
+                        _ => None,
+                    })
+                });
+
             // Handler block (catch block)
             let handler = builder.enter(BlockKind::Catch, |builder, _block_id| {
+                // Bind the catch param identifier to the handler temp (the exception value).
+                // e.g. for `catch (e) { ... }`, emit:
+                //   StoreLocal { lvalue: { place: e, kind: Catch }, value: handler_temp }
+                // This is the equivalent of TS lowerAssignment(InstructionKind.Catch, ...) call.
+                if let (Some(handler_temp), Some((param_name, param_loc))) =
+                    (&handler_binding, catch_param_info)
+                {
+                    let e_place = builder.declare_binding(param_name, BindingKind::Let, param_loc);
+                    let lvalue = create_temporary_place(builder.environment_mut(), param_loc);
+                    builder.push(Instruction {
+                        id: InstructionId(0),
+                        lvalue,
+                        value: InstructionValue::StoreLocal(StoreLocal {
+                            lvalue: LValue { place: e_place, kind: InstructionKind::Catch },
+                            value: handler_temp.clone(),
+                            loc: param_loc,
+                        }),
+                        effects: None,
+                        loc: param_loc,
+                    });
+                }
+
                 if let Some(catch_clause) = &try_stmt.handler {
                     // Lower catch body
                     let stmts: Vec<_> =
@@ -4386,6 +4460,41 @@ pub fn lower_statement(
     lower_statement_with_label(builder, stmt, None)
 }
 
+/// Pre-declare all bindings from a for-of/for-in loop's left-hand side pattern.
+///
+/// This must be called BEFORE entering the loop body closure so that
+/// references to the loop variables (e.g. `v` in `for (const {v} of items)`)
+/// inside the loop body are resolved as local bindings rather than globals.
+///
+/// For destructuring patterns like `{v}` or `[a, b]`, each named binding is
+/// pre-declared. For simple identifiers like `x`, this is a no-op (the
+/// identifier name is already in scope_binding_names from the function-level
+/// scan, or the binding will be created normally).
+fn pre_declare_for_loop_left_bindings(
+    builder: &mut HirBuilder,
+    left: &ast::ForStatementLeft<'_>,
+    loc: SourceLocation,
+) {
+    if let ast::ForStatementLeft::VariableDeclaration(decl) = left {
+        if let Some(declarator) = decl.declarations.first() {
+            match &declarator.id {
+                ast::BindingPattern::ObjectPattern(_) | ast::BindingPattern::ArrayPattern(_) => {
+                    // For destructuring patterns, collect all binding names and pre-declare them
+                    let mut names = rustc_hash::FxHashSet::default();
+                    collect_binding_pattern_names(&declarator.id, &mut names);
+                    for name in &names {
+                        builder.pre_declare_binding(name, loc);
+                    }
+                }
+                _ => {
+                    // Simple identifier: already handled by scope_binding_names or
+                    // will be registered normally in lower_for_loop_left_assignment
+                }
+            }
+        }
+    }
+}
+
 /// Helper to lower the left-hand side of a for-of/for-in loop.
 /// Determines the correct `InstructionKind` from the `ForStatementLeft` and
 /// emits a `StoreLocal` instruction. Returns the place used as the branch test.
@@ -4404,6 +4513,54 @@ fn lower_for_loop_left_assignment(
         // Assignment target (e.g. `for (x of ...)`) uses Reassign
         _ => InstructionKind::Reassign,
     };
+
+    // Check if this is a destructuring pattern (ObjectPattern or ArrayPattern).
+    // If so, we need to:
+    // 1. Assign the iterator value to a temporary via Destructure
+    // 2. Return that temporary as the test place.
+    if let ast::ForStatementLeft::VariableDeclaration(decl) = left {
+        if let Some(declarator) = decl.declarations.first() {
+            match &declarator.id {
+                ast::BindingPattern::ObjectPattern(_) | ast::BindingPattern::ArrayPattern(_) => {
+                    let binding_kind = match decl.kind {
+                        ast::VariableDeclarationKind::Const
+                        | ast::VariableDeclarationKind::Using
+                        | ast::VariableDeclarationKind::AwaitUsing => BindingKind::Const,
+                        ast::VariableDeclarationKind::Let => BindingKind::Let,
+                        ast::VariableDeclarationKind::Var => BindingKind::Let,
+                    };
+                    // Emit a Destructure instruction to extract pattern bindings
+                    // from the iterator value.
+                    let _ = lower_destructuring_declaration(
+                        builder,
+                        &declarator.id,
+                        rhs_value.clone(),
+                        kind,
+                        binding_kind,
+                        loc,
+                    );
+                    // Return a temporary that carries the iterator-value test.
+                    // The branch condition checks whether the iterator had a value,
+                    // so we still need a temp representing the StoreLocal result.
+                    let temp_decl = create_temporary_place(builder.environment_mut(), loc);
+                    let lvalue = create_temporary_place(builder.environment_mut(), loc);
+                    builder.push(Instruction {
+                        id: InstructionId(0),
+                        lvalue: lvalue.clone(),
+                        value: InstructionValue::StoreLocal(StoreLocal {
+                            lvalue: LValue { place: temp_decl, kind },
+                            value: rhs_value.clone(),
+                            loc,
+                        }),
+                        effects: None,
+                        loc,
+                    });
+                    return lvalue;
+                }
+                _ => {}
+            }
+        }
+    }
 
     // Extract the variable name from the left-hand side and create a named place
     // instead of an unnamed temporary. This preserves the original variable name
@@ -5152,6 +5309,30 @@ pub fn lower_expression(
         // =====================================================================
         LowerableExpression::ComputedPropertyAccess { object, property, span } => {
             let loc = span_to_loc(*span);
+            // Match TypeScript BuildHIR behavior: `x[0]` (numeric literal index)
+            // is treated as a PropertyLoad with a numeric property, not a
+            // ComputedLoad.  TypeScript's check is:
+            //   `!expr.node.computed || expr.node.property.type === 'NumericLiteral'`
+            // This ensures numeric-indexed accesses are tracked as simple property
+            // dependencies (e.g. in useMemo dep lists), just like named-property
+            // accesses.  Using PropertyLiteral::Number also ensures the codegen
+            // emits `x[0]` (bracket notation) rather than the invalid `x.0`.
+            if let LowerableExpression::NumericLiteral(n, _) = property.as_ref() {
+                let obj_result = lower_expression(builder, object)?;
+                // Convert float to i64; numeric literal array indices are
+                // always integers in valid JavaScript.
+                #[allow(clippy::cast_possible_truncation)]
+                let n_int = *n as i64;
+                return lower_value_to_temporary(
+                    builder,
+                    InstructionValue::PropertyLoad(crate::hir::PropertyLoad {
+                        object: obj_result.place,
+                        property: crate::hir::types::PropertyLiteral::Number(n_int),
+                        loc,
+                    }),
+                    loc,
+                );
+            }
             let obj_result = lower_expression(builder, object)?;
             let prop_result = lower_expression(builder, property)?;
             lower_value_to_temporary(
@@ -5364,8 +5545,56 @@ pub fn lower_expression(
                             }),
                             loc,
                         )?;
-                        // Assign the result back to the left
-                        lower_assignment(builder, left, binary_result.place, loc)
+                        // For compound assignment on a simple local identifier (e.g. `i += 1`),
+                        // match the TypeScript reference compiler behaviour:
+                        //   1. Emit StoreLocal as a side-effect (not wrapped in a temp)
+                        //   2. Return LoadLocal(identifier) — the identifier itself, not the
+                        //      store-result temp — so the enclosing Sequence's final value
+                        //      is just `i`, producing `i = i + 1, i` in the for-loop update
+                        //      position (matching BuildHIR.ts lines 2060-2071).
+                        //
+                        // For non-identifier left-hand sides (member expressions, globals,
+                        // context variables) we fall back to lower_assignment which handles
+                        // those cases generically.
+                        if let LowerableExpression::Identifier(name, ident_span) = &**left
+                            && !builder.is_context_identifier(name)
+                            && let VariableBinding::Identifier { identifier, .. } =
+                                builder.resolve_identifier(name)
+                        {
+                            let ident_loc = span_to_loc(*ident_span);
+                            let place = crate::hir::Place {
+                                identifier: identifier.clone(),
+                                effect: crate::hir::Effect::Unknown,
+                                reactive: false,
+                                loc: ident_loc,
+                            };
+                            // Emit StoreLocal as a side effect (no wrapping temp).
+                            let store_lvalue =
+                                create_temporary_place(builder.environment_mut(), loc);
+                            builder.push(Instruction {
+                                id: InstructionId(0),
+                                lvalue: store_lvalue,
+                                value: InstructionValue::StoreLocal(StoreLocal {
+                                    lvalue: LValue {
+                                        place: place.clone(),
+                                        kind: InstructionKind::Reassign,
+                                    },
+                                    value: binary_result.place,
+                                    loc,
+                                }),
+                                effects: None,
+                                loc,
+                            });
+                            // Return LoadLocal(identifier) — the new value of the variable.
+                            lower_value_to_temporary(
+                                builder,
+                                InstructionValue::LoadLocal(LoadLocal { place, loc }),
+                                loc,
+                            )
+                        } else {
+                            // Assign the result back to the left (non-identifier LHS)
+                            lower_assignment(builder, left, binary_result.place, loc)
+                        }
                     }
                     None => {
                         // Logical assignments (&&=, ||=, ??=) need special CFG handling

@@ -253,6 +253,11 @@ pub struct CodegenContext {
     /// function body (Babel's printer adds parens automatically; we must do it
     /// explicitly).
     arrow_paren_temps: FxHashSet<DeclarationId>,
+    /// Temporaries that hold ternary (conditional) expressions.
+    /// These need wrapping in parens when used as binary expression operands
+    /// because `?:` has lower precedence than any arithmetic/relational operator.
+    /// e.g., `x + cond ? a : b` must become `x + (cond ? a : b)`.
+    ternary_temps: FxHashSet<DeclarationId>,
     /// Whether we are currently generating code inside an optional-chain Sequence
     /// (the `Sequence` node wrapped by an `OptionalCall`).
     ///
@@ -291,6 +296,7 @@ impl CodegenContext {
             logical_temps: FxHashMap::default(),
             fn_expr_temps: FxHashSet::default(),
             arrow_paren_temps: FxHashSet::default(),
+            ternary_temps: FxHashSet::default(),
             inside_optional_chain: false,
         }
     }
@@ -1153,7 +1159,15 @@ fn codegen_instruction_nullable(
     match &instr.value {
         ReactiveValue::Instruction(boxed) => match boxed.as_ref() {
             InstructionValue::StoreLocal(store) => {
-                let kind = if cx.has_declared(store.lvalue.place.identifier.declaration_id) {
+                let kind = if cx.has_declared(store.lvalue.place.identifier.declaration_id)
+                    && !matches!(
+                        store.lvalue.kind,
+                        InstructionKind::Function | InstructionKind::HoistedFunction
+                    )
+                {
+                    // Function/HoistedFunction declarations always emit their body as a
+                    // function declaration statement, even if the binding was pre-declared
+                    // (e.g., as HoistedLet). Never override to Reassign for these kinds.
                     InstructionKind::Reassign
                 } else {
                     store.lvalue.kind
@@ -1210,28 +1224,19 @@ fn codegen_instruction_nullable(
             // (named lvalue), fall through to the default path that produces
             // `let y = delete x.prop`.
             InstructionValue::PropertyDelete(del) => {
-                let has_named_lvalue =
-                    instr.lvalue.as_ref().is_some_and(|lv| lv.identifier.name.is_some());
                 let object = codegen_place_to_expression(cx, &del.object);
                 let member = codegen_member_access(cx, &object, &del.property);
                 let value_str = format!("delete {member}");
-                if has_named_lvalue {
-                    codegen_instruction_to_statement(cx, instr, &value_str)
-                } else {
-                    Some(CodegenStatement::ExpressionStatement(value_str))
-                }
+                // Always use codegen_instruction_to_statement so that if there is
+                // a lvalue (named or unnamed temp), the result is properly captured.
+                // If there is no lvalue, it is emitted as a side-effectful statement.
+                codegen_instruction_to_statement(cx, instr, &value_str)
             }
             InstructionValue::ComputedDelete(del) => {
-                let has_named_lvalue =
-                    instr.lvalue.as_ref().is_some_and(|lv| lv.identifier.name.is_some());
                 let object = codegen_place_to_expression(cx, &del.object);
                 let property = codegen_place_to_expression(cx, &del.property);
                 let value_str = format!("delete {object}[{property}]");
-                if has_named_lvalue {
-                    codegen_instruction_to_statement(cx, instr, &value_str)
-                } else {
-                    Some(CodegenStatement::ExpressionStatement(value_str))
-                }
+                codegen_instruction_to_statement(cx, instr, &value_str)
             }
             InstructionValue::ObjectMethod(method) => {
                 // Store object method for later use by ObjectExpression codegen.
@@ -1279,9 +1284,10 @@ fn codegen_instruction_nullable(
                             cx.assignment_temps.insert(lval.identifier.declaration_id);
                             return None;
                         }
-                        // Named lval: wrap in parens immediately
-                        let wrapped = format!("({value_str})");
-                        return codegen_instruction_to_statement(cx, instr, &wrapped);
+                        // Named lval: emit as `t = (lhs = rhs)` — no parens needed since
+                        // assignment expressions are right-associative and valid as rvalue
+                        // in a `let t = lhs = rhs` statement without parens (matching TS output).
+                        return codegen_instruction_to_statement(cx, instr, &value_str);
                     }
                 }
                 codegen_instruction_to_statement(cx, instr, &value_str)
@@ -1306,6 +1312,11 @@ fn codegen_instruction_nullable(
             if let Some(lval) = &instr.lvalue {
                 if lval.identifier.name.is_none() {
                     cx.arrow_paren_temps.insert(lval.identifier.declaration_id);
+                    // Track ternary temps specifically: they need parens when used
+                    // as binary expression operands (e.g. `x + (cond ? a : b)`).
+                    if matches!(&instr.value, ReactiveValue::Ternary(_)) {
+                        cx.ternary_temps.insert(lval.identifier.declaration_id);
+                    }
                 }
             }
             // For Sequence values, the inner sequence may contain a Logical expression
@@ -1505,6 +1516,47 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
         InstructionValue::BinaryExpression(bin) => {
             let left = codegen_place_to_expression(cx, &bin.left);
             let right = codegen_place_to_expression(cx, &bin.right);
+            // Ternary expressions have lower precedence than all binary operators.
+            // Wrap ternary-valued operands in parens for correct precedence.
+            // e.g., `x + cond ? a : b` must be `x + (cond ? a : b)`.
+            //
+            // We check two conditions:
+            // 1. Direct ternary temp (stored when a Ternary reactive value is codegen'd)
+            // 2. String heuristic: value contains ` ? ` at top level (not inside parens)
+            //    - this handles phi nodes that hold ternary values
+            let needs_binary_parens = |expr: &str, decl_id: DeclarationId| -> bool {
+                if cx.ternary_temps.contains(&decl_id) {
+                    return true;
+                }
+                // String heuristic: if the substituted value looks like a ternary
+                // (contains ` ? ` at top level without being already parenthesized)
+                if !expr.starts_with('(') && is_ternary_expression(expr) {
+                    return true;
+                }
+                // NullishCoalescing (`??`) has lower precedence than all arithmetic and
+                // comparison operators. Wrap it when used as a binary expression operand.
+                // e.g., `(x ?? 0) + 1` must not become `x ?? 0 + 1`.
+                if !expr.starts_with('(') && is_nullish_coalescing_expression(expr) {
+                    return true;
+                }
+                // Also check if this temp was recorded as a NullishCoalescing expression.
+                if let Some(LogicalOperator::Coalesce) =
+                    cx.logical_temps.get(&decl_id).copied()
+                {
+                    return true;
+                }
+                false
+            };
+            let left = if needs_binary_parens(&left, bin.left.identifier.declaration_id) {
+                format!("({left})")
+            } else {
+                left
+            };
+            let right = if needs_binary_parens(&right, bin.right.identifier.declaration_id) {
+                format!("({right})")
+            } else {
+                right
+            };
             format!("{left} {} {right}", bin.operator.as_str())
         }
         InstructionValue::UnaryExpression(unary) => {
@@ -1737,7 +1789,9 @@ fn codegen_function_expression(
                             // inner function's own codegen pass), and also apply a
                             // string-based heuristic for cross-context cases where
                             // the reactive IR doesn't track the ternary temp.
-                            let needs_parens = *is_conditional || {
+                            // Also wrap object literals in parens: `() => ({x})` not
+                            // `() => {x}` which would be parsed as a block statement.
+                            let needs_parens = *is_conditional || expr.starts_with('{') || {
                                 let s = expr.replace("??", "__");
                                 s.contains(" ? ")
                             };
@@ -1914,7 +1968,23 @@ fn resolve_logical_operator_from_value(
                 None
             }
         }
-        ReactiveValue::Sequence(seq) => resolve_logical_operator_from_value(cx, &seq.value),
+        ReactiveValue::Sequence(seq) => {
+            // First check the sequence instructions for a Logical value - the ??
+            // operator is often represented as an instruction inside the sequence.
+            for instr in &seq.instructions {
+                match &instr.value {
+                    ReactiveValue::Logical(logical) => return Some(logical.operator),
+                    ReactiveValue::Sequence(_) => {
+                        if let Some(op) = resolve_logical_operator_from_value(cx, &instr.value) {
+                            return Some(op);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            // Fall back to checking the final value (e.g. LoadLocal of a logical temp)
+            resolve_logical_operator_from_value(cx, &seq.value)
+        }
         _ => None,
     }
 }
@@ -2005,26 +2075,66 @@ fn codegen_reactive_value_to_expression(cx: &mut CodegenContext, value: &Reactiv
             let consequent = codegen_reactive_value_to_expression(cx, &ternary.consequent);
             let alternate = codegen_reactive_value_to_expression(cx, &ternary.alternate);
             // Wrap subexpressions in parens to match Babel's code generator.
-            // Test: wrap nested ternary (already handled before).
+            // Test: wrap nested ternary.
             let test = if matches!(effective_value(&ternary.test), ReactiveValue::Ternary(_)) {
                 format!("({test})")
             } else {
                 test
             };
-            // Consequent: wrap nested ternary or NullishCoalescing.
-            let consequent = match effective_value(&ternary.consequent) {
-                ReactiveValue::Ternary(_) => format!("({consequent})"),
-                ReactiveValue::Logical(l) if l.operator == LogicalOperator::Coalesce => {
-                    format!("({consequent})")
+            // Helper to check if a value is/contains a NullishCoalescing (??).
+            // We check both structural (effective_value) and via resolve_logical_operator_from_value,
+            // since the ?? may be in a Sequence's instructions or a LoadLocal of a logical temp.
+            let is_coalesce = |val: &ReactiveValue| -> bool {
+                let eff = effective_value(val);
+                match eff {
+                    ReactiveValue::Logical(l) if l.operator == LogicalOperator::Coalesce => true,
+                    _ => {
+                        resolve_logical_operator_from_value(cx, val)
+                            == Some(LogicalOperator::Coalesce)
+                    }
                 }
-                _ => consequent,
             };
-            // Alternate: wrap NullishCoalescing.
-            let alternate = match effective_value(&ternary.alternate) {
-                ReactiveValue::Logical(l) if l.operator == LogicalOperator::Coalesce => {
-                    format!("({alternate})")
+            // Helper to check if a value is/contains a nested ternary.
+            let is_ternary = |val: &ReactiveValue| -> bool {
+                if matches!(effective_value(val), ReactiveValue::Ternary(_)) {
+                    return true;
                 }
-                _ => alternate,
+                // Also check if the value is a Sequence that contains a Ternary instruction
+                // (same pattern as resolve_logical_operator_from_value for ?? detection).
+                // This handles the case where: Sequence { value: Sequence/Instruction,
+                //   instructions: [{ value: Ternary(...) }] }
+                if let ReactiveValue::Sequence(seq) = val {
+                    for instr in &seq.instructions {
+                        match &instr.value {
+                            ReactiveValue::Ternary(_) => return true,
+                            ReactiveValue::Sequence(_) => {
+                                // Recursively check nested sequences
+                                if matches!(
+                                    effective_value(&instr.value),
+                                    ReactiveValue::Ternary(_)
+                                ) {
+                                    return true;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                false
+            };
+            // Consequent: wrap nested ternary or NullishCoalescing.
+            let consequent = if is_ternary(&ternary.consequent)
+                || (is_coalesce(&ternary.consequent) && !consequent.starts_with('('))
+            {
+                format!("({consequent})")
+            } else {
+                consequent
+            };
+            // Alternate: wrap NullishCoalescing or nested ternary.
+            let alternate = if is_coalesce(&ternary.alternate) && !alternate.starts_with('(') {
+                format!("({alternate})")
+            } else {
+                alternate
             };
             format!("{test} ? {consequent} : {alternate}")
         }
@@ -2257,6 +2367,90 @@ fn identifier_name(identifier: &crate::hir::Identifier) -> String {
     }
 }
 
+/// Check if an expression string is a ternary (conditional) expression at the top level.
+///
+/// Returns `true` if the string contains ` ? ` that is not inside any parentheses,
+/// brackets, or braces. This is used to detect when a substituted temp value is a
+/// ternary expression that needs wrapping in parens inside binary expressions.
+///
+/// e.g., `cond ? a : b` → true
+///       `(cond ? a : b)` → false (already parenthesized)
+///       `foo(cond ? a : b)` → false (the `?` is inside function call parens)
+fn is_ternary_expression(expr: &str) -> bool {
+    let bytes = expr.as_bytes();
+    let len = bytes.len();
+    let mut depth: i32 = 0;
+    let mut i = 0;
+    while i < len {
+        match bytes[i] {
+            b'(' | b'[' | b'{' => depth += 1,
+            b')' | b']' | b'}' => depth -= 1,
+            b'\'' | b'"' | b'`' => {
+                // Skip over string literals
+                let quote = bytes[i];
+                i += 1;
+                while i < len && bytes[i] != quote {
+                    if bytes[i] == b'\\' {
+                        i += 1; // skip escaped char
+                    }
+                    i += 1;
+                }
+            }
+            b'?' if depth == 0 => {
+                // Check if this is ` ? ` (with spaces) - ternary, not optional chain
+                if i > 0 && i + 1 < len && bytes[i - 1] == b' ' && bytes[i + 1] == b' ' {
+                    return true;
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    false
+}
+
+/// Check if a string expression contains ` ?? ` (nullish coalescing) at the top level
+/// (not inside parens/brackets/braces/strings).
+///
+/// Used to detect when a `??` expression is used as an operand in a binary expression
+/// and needs to be wrapped in parentheses for correct operator precedence.
+/// `??` has lower precedence than `+`, `-`, `*`, `/`, `%`, etc.
+fn is_nullish_coalescing_expression(expr: &str) -> bool {
+    let bytes = expr.as_bytes();
+    let len = bytes.len();
+    let mut depth: i32 = 0;
+    let mut i = 0;
+    while i < len {
+        match bytes[i] {
+            b'(' | b'[' | b'{' => depth += 1,
+            b')' | b']' | b'}' => depth -= 1,
+            b'\'' | b'"' | b'`' => {
+                // Skip over string literals
+                let quote = bytes[i];
+                i += 1;
+                while i < len && bytes[i] != quote {
+                    if bytes[i] == b'\\' {
+                        i += 1; // skip escaped char
+                    }
+                    i += 1;
+                }
+            }
+            b'?' if depth == 0 => {
+                // Check if this is ` ?? ` (with spaces and double `?`)
+                if i + 1 < len && bytes[i + 1] == b'?' {
+                    // It's `??` - check it's surrounded by spaces to be an operator
+                    if i > 0 && i + 2 < len && bytes[i - 1] == b' ' && bytes[i + 2] == b' ' {
+                        return true;
+                    }
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    false
+}
+
 /// Find the point in a codegen'd expression string where `?` should be inserted
 /// to convert a call/member expression to an optional chain.
 ///
@@ -2267,17 +2461,40 @@ fn find_optional_insertion_point(expr: &str) -> Option<usize> {
     let bytes = expr.as_bytes();
     let mut depth_paren: i32 = 0;
     let mut depth_bracket: i32 = 0;
-    let mut last_access_point = None;
+    let mut last_access_point: Option<usize> = None;
 
-    // Scan from the end to find the outermost access/call point
+    // Scan from the end to find the rightmost top-level call/access operator.
+    //
+    // The goal: given a string like `callee(args)` or `callee?.(args)(more_args)`,
+    // find the position where we should insert `?.` to make the outermost call
+    // optional.  For `callee(args)` that's the `(`.  For `callee?.(args)(more_args)`
+    // that's the second `(` (the last top-level call), NOT the `.` in `?.`.
+    //
+    // Algorithm:
+    // 1. Scanning right-to-left, find the FIRST `(` or `[` encountered at depth 0
+    //    (that is, the rightmost top-level call/computed access).
+    //    Record it in `last_access_point` but do NOT immediately return — keep
+    //    scanning to determine whether a `.` member access comes immediately before it.
+    // 2. If we subsequently encounter a `.` at depth 0:
+    //    - If `last_access_point` is already set, the `(` is the boundary point
+    //      (not the `.`), so return `last_access_point`.
+    //    - Otherwise return the `.` position (the `.` IS the boundary for cases
+    //      like `foo.bar` where there's no preceding call).
+    // 3. If we hit any other character at depth 0 after registering `last_access_point`,
+    //    the call/bracket IS the insertion boundary — return it.
     for i in (0..bytes.len()).rev() {
         match bytes[i] {
             b')' => depth_paren += 1,
             b'(' => {
                 depth_paren -= 1;
                 if depth_paren == 0 && depth_bracket == 0 {
-                    last_access_point = Some(i);
-                    // Keep scanning to find if there's a `.` before this
+                    // Record only the FIRST (rightmost) `(` we encounter at depth 0.
+                    // Do NOT overwrite a previously found call: the rightmost one is
+                    // the correct insertion boundary.
+                    if last_access_point.is_none() {
+                        last_access_point = Some(i);
+                    }
+                    // Keep scanning to see if a `.` precedes this call.
                     continue;
                 }
             }
@@ -2285,11 +2502,20 @@ fn find_optional_insertion_point(expr: &str) -> Option<usize> {
             b'[' => {
                 depth_bracket -= 1;
                 if depth_paren == 0 && depth_bracket == 0 {
-                    last_access_point = Some(i);
+                    if last_access_point.is_none() {
+                        last_access_point = Some(i);
+                    }
                     continue;
                 }
             }
             b'.' if depth_paren == 0 && depth_bracket == 0 => {
+                // If we already found a `(` or `[` to the right of this `.`, that
+                // call/bracket is the rightmost top-level operation and should be the
+                // insertion point (not this `.`).  This prevents inserting into the
+                // middle of an existing `?.` sequence.
+                if last_access_point.is_some() {
+                    return last_access_point;
+                }
                 return Some(i);
             }
             _ => {
@@ -2671,30 +2897,42 @@ fn codegen_for_of_in_init(
     _init: &ReactiveValue,
     test: &ReactiveValue,
 ) -> (VarKind, String) {
-    // The test value for for-of contains the iterator item assignment
-    if let ReactiveValue::Sequence(seq) = test
-        && let Some(item_instr) = seq.instructions.get(1)
-        && let ReactiveValue::Instruction(boxed) = &item_instr.value
-    {
-        match boxed.as_ref() {
-            InstructionValue::StoreLocal(store) => {
-                let kind = match store.lvalue.kind {
-                    InstructionKind::Const | InstructionKind::HoistedConst => VarKind::Const,
-                    _ => VarKind::Let,
-                };
-                let name = identifier_name(&store.lvalue.place.identifier);
-                cx.declare(store.lvalue.place.identifier.declaration_id);
-                return (kind, name);
+    // The test value for for-of contains the iterator item assignment.
+    // Search all instructions in reverse for the StoreLocal/Destructure that
+    // defines the loop variable. This is more robust than checking a fixed index
+    // because the position may vary depending on how many instructions precede the
+    // assignment (e.g. IteratorNext may be followed by Destructure and/or StoreLocal).
+    if let ReactiveValue::Sequence(seq) = test {
+        for item_instr in seq.instructions.iter().rev() {
+            if let ReactiveValue::Instruction(boxed) = &item_instr.value {
+                match boxed.as_ref() {
+                    InstructionValue::StoreLocal(store) => {
+                        // Only use this StoreLocal if it has a named binding (not a temp)
+                        if store.lvalue.place.identifier.name.is_some() {
+                            let kind = match store.lvalue.kind {
+                                InstructionKind::Const | InstructionKind::HoistedConst => {
+                                    VarKind::Const
+                                }
+                                _ => VarKind::Let,
+                            };
+                            let name = identifier_name(&store.lvalue.place.identifier);
+                            cx.declare(store.lvalue.place.identifier.declaration_id);
+                            return (kind, name);
+                        }
+                    }
+                    InstructionValue::Destructure(destr) => {
+                        let kind = match destr.lvalue.kind {
+                            InstructionKind::Const | InstructionKind::HoistedConst => {
+                                VarKind::Const
+                            }
+                            _ => VarKind::Let,
+                        };
+                        let pattern = codegen_pattern(cx, &destr.lvalue.pattern);
+                        return (kind, pattern);
+                    }
+                    _ => {}
+                }
             }
-            InstructionValue::Destructure(destr) => {
-                let kind = match destr.lvalue.kind {
-                    InstructionKind::Const | InstructionKind::HoistedConst => VarKind::Const,
-                    _ => VarKind::Let,
-                };
-                let pattern = codegen_pattern(cx, &destr.lvalue.pattern);
-                return (kind, pattern);
-            }
-            _ => {}
         }
     }
     (VarKind::Const, "item".to_string())
@@ -2816,6 +3054,17 @@ impl std::fmt::Display for CodegenStatement {
     }
 }
 
+/// Format a value string that may contain newlines, wrapping in parentheses with
+/// proper indentation. Matches the TS reference compiler's behavior for multi-line
+/// JSX expressions.
+///
+/// If the value contains newlines, it becomes:
+/// ```text
+/// (
+///   <indented lines of value>
+/// )
+/// ```
+/// Otherwise the value is returned as-is.
 fn write_statement(
     f: &mut std::fmt::Formatter<'_>,
     stmt: &CodegenStatement,
@@ -2824,7 +3073,9 @@ fn write_statement(
     let pad = "  ".repeat(indent);
     match stmt {
         CodegenStatement::VariableDeclaration { kind, name, init } => match init {
-            Some(val) => writeln!(f, "{pad}{} {name} = {val};", kind.as_str()),
+            Some(val) => {
+                writeln!(f, "{pad}{} {name} = {val};", kind.as_str())
+            }
             None => writeln!(f, "{pad}{} {name};", kind.as_str()),
         },
         CodegenStatement::ExpressionStatement(expr) => {
