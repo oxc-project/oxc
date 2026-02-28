@@ -67,11 +67,13 @@ impl JsxState {
 }
 
 fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>) {
+    // Globals map is per-function, matching TS behavior where globals accumulate
+    // across all blocks (TS OutlineJsx.ts line 56).
+    let mut globals: FxHashMap<IdentifierId, Instruction> = FxHashMap::default();
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
 
     for block_id in block_ids {
         let mut rewrite_instr: FxHashMap<InstructionId, Vec<Instruction>> = FxHashMap::default();
-        let mut block_globals: FxHashMap<IdentifierId, Instruction> = FxHashMap::default();
 
         // Collect all the information we need from the block upfront, so we
         // can drop the immutable borrow before calling functions that need
@@ -79,7 +81,7 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
         #[derive(Clone)]
         enum InstrInfo {
             LoadGlobal { id: IdentifierId, instr: Instruction },
-            FunctionExpression,
+            FunctionExpression { idx: usize },
             Jsx { lvalue_id: IdentifierId, children_ids: Vec<IdentifierId>, idx: usize },
             Other,
         }
@@ -97,7 +99,7 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
                         id: instr.lvalue.identifier.id,
                         instr: instr.clone(),
                     },
-                    InstructionValue::FunctionExpression(_) => InstrInfo::FunctionExpression,
+                    InstructionValue::FunctionExpression(_) => InstrInfo::FunctionExpression { idx },
                     InstructionValue::JsxExpression(jsx_expr) => {
                         let children_ids = jsx_expr
                             .children
@@ -111,18 +113,17 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
                 .collect()
         };
 
-        // First pass: collect globals from this block
-        for info in &instr_infos {
-            if let InstrInfo::LoadGlobal { id, instr } = info {
-                block_globals.insert(*id, instr.clone());
-            }
-        }
-
-        // Second pass: reverse iterate to find JSX groups
+        // Reverse iterate to find JSX groups, collect globals, and recurse
+        // into function expressions (matching TS reverse iteration at line 83).
+        let mut func_expr_indices: Vec<usize> = Vec::new();
         let mut state = JsxState::new();
         for info in instr_infos.iter().rev() {
             match info {
-                InstrInfo::LoadGlobal { .. } | InstrInfo::FunctionExpression | InstrInfo::Other => {
+                InstrInfo::LoadGlobal { id, instr } => {
+                    globals.insert(*id, instr.clone());
+                }
+                InstrInfo::FunctionExpression { idx } => {
+                    func_expr_indices.push(*idx);
                 }
                 InstrInfo::Jsx { lvalue_id, children_ids, idx } => {
                     if !state.children.contains(lvalue_id) {
@@ -132,7 +133,7 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
                             func,
                             &state,
                             &mut rewrite_instr,
-                            &block_globals,
+                            &globals,
                             outlined_fns,
                             block_id,
                         );
@@ -143,6 +144,7 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
                         state.children.insert(*child_id);
                     }
                 }
+                InstrInfo::Other => {}
             }
         }
         // Process final group
@@ -150,10 +152,23 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
             func,
             &state,
             &mut rewrite_instr,
-            &block_globals,
+            &globals,
             outlined_fns,
             block_id,
         );
+
+        // Recurse into inner function expressions (TS does this during reverse
+        // iteration at line 91-93; we defer because we need &mut func).
+        for idx in func_expr_indices {
+            let Some(block) = func.body.blocks.get_mut(&block_id) else {
+                break;
+            };
+            if let InstructionValue::FunctionExpression(func_expr) =
+                &mut block.instructions[idx].value
+            {
+                outline_jsx_impl(&mut func_expr.lowered_func.func, outlined_fns);
+            }
+        }
 
         // Rewrite instructions if needed
         if !rewrite_instr.is_empty() {
@@ -171,16 +186,6 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
                 }
             }
             block.instructions = new_instrs;
-        }
-
-        // Recurse into inner function expressions
-        let Some(block) = func.body.blocks.get_mut(&block_id) else {
-            continue;
-        };
-        for instr in &mut block.instructions {
-            if let InstructionValue::FunctionExpression(func_expr) = &mut instr.value {
-                outline_jsx_impl(&mut func_expr.lowered_func.func, outlined_fns);
-            }
         }
 
         dead_code_elimination(func);
@@ -201,12 +206,16 @@ fn process_and_outline_jsx(
 
     // Clone all data we need from the block before calling `process` which
     // needs `&mut func`.
-    let (jsx_instrs, first_id) = {
+    let (jsx_instrs, root_id) = {
         let Some(block) = func.body.blocks.get(&block_id) else {
             return;
         };
 
-        // Sort JSX indices by instruction id (ascending)
+        // Use state.jsx[0] for the rewrite key: first pushed during reverse
+        // iteration = root JSX = highest instruction ID (matches TS behavior).
+        let root_id = state.jsx.first().map(|&idx| block.instructions[idx].id);
+
+        // Sort JSX indices by instruction id (ascending) for processing
         let mut sorted_indices = state.jsx.clone();
         sorted_indices.sort_by_key(|&idx| block.instructions[idx].id);
 
@@ -214,18 +223,15 @@ fn process_and_outline_jsx(
         let jsx_instrs: Vec<Instruction> =
             sorted_indices.iter().map(|&idx| block.instructions[idx].clone()).collect();
 
-        // Capture the first instruction's id for the rewrite key
-        let first_id = sorted_indices.first().map(|&idx| block.instructions[idx].id);
-
-        (jsx_instrs, first_id)
+        (jsx_instrs, root_id)
     };
     // Block borrow is now dropped.
 
     let result = process(func, &jsx_instrs, globals);
     if let Some(result) = result {
         outlined_fns.push(result.func);
-        if let Some(first_id) = first_id {
-            rewrite_instr.insert(first_id, result.instrs);
+        if let Some(root_id) = root_id {
+            rewrite_instr.insert(root_id, result.instrs);
         }
     }
 }
