@@ -719,11 +719,33 @@ pub fn format_jsdoc_comment<'a>(
     // Reorder @param tags to match the function signature order
     reorder_param_tags(&mut effective_tags, comment, source_text);
 
+    // Pre-process @import tags: merge by module, sort, format
+    let import_lines = process_import_tags(&effective_tags);
+    let has_imports = !import_lines.is_empty();
+    let mut imports_emitted = false;
+
     // Format tags
     let mut prev_normalized_kind: Option<&str> = None;
     for (tag_idx, &(tag, normalized_kind)) in effective_tags.iter().enumerate() {
         let raw_kind = tag.kind.parsed();
-        let is_first_tag = tag_idx == 0;
+
+        // Skip @import tags — they are handled via merged import_lines
+        if normalized_kind == "import" {
+            if has_imports && !imports_emitted {
+                // Emit merged imports at the position of the first @import tag
+                if !content_lines.is_empty()
+                    && !content_lines.last().is_some_and(String::is_empty)
+                {
+                    content_lines.push(String::new());
+                }
+                content_lines.extend(import_lines.clone());
+                imports_emitted = true;
+                prev_normalized_kind = Some("import");
+            }
+            continue;
+        }
+
+        let is_first_tag = tag_idx == 0 && !imports_emitted;
 
         let should_capitalize =
             options.capitalize_descriptions && !should_skip_capitalize(normalized_kind);
@@ -753,10 +775,10 @@ pub fn format_jsdoc_comment<'a>(
                         .is_some_and(|prev| !matches!(prev, "returns" | "yields"))
             } else {
                 // Default: blank line before compound tag groups (@typedef, @callback)
-                // when coming from a different tag kind
+                // when coming from a different tag kind (but not from @import)
                 matches!(normalized_kind, "typedef" | "callback")
                     && prev_normalized_kind
-                        .is_some_and(|prev| !matches!(prev, "typedef" | "callback"))
+                        .is_some_and(|prev| !matches!(prev, "typedef" | "callback" | "import"))
             };
 
             if should_separate && !content_lines.last().is_some_and(String::is_empty) {
@@ -1461,11 +1483,13 @@ fn format_fenced_code_blocks(
                 .collect::<Vec<_>>()
                 .join("\n");
 
-            // Try to format: native for JS/TS, external for other languages
+            // Try to format: native for JS/TS, external for other languages.
+            // The upstream plugin reduces print width by 4 for code inside fenced blocks.
+            let code_width = wrap_width.saturating_sub(4);
             let formatted = if is_js {
-                format_embedded_js(&code, wrap_width, format_options)
+                format_embedded_js(&code, code_width, format_options)
             } else if let Some(ext_lang) = external_lang {
-                format_external_language(&code, ext_lang, wrap_width, external_callbacks)
+                format_external_language(&code, ext_lang, code_width, external_callbacks)
             } else {
                 None
             };
@@ -2298,4 +2322,191 @@ fn format_generic_tag(
             }
         }
     }
+}
+
+// ──────────────────────────────────────────────────
+// @import tag processing
+// ──────────────────────────────────────────────────
+
+/// A parsed `@import` tag.
+#[derive(Clone)]
+struct ImportInfo {
+    default_import: Option<String>,
+    named_imports: Vec<String>,
+    module_path: String,
+}
+
+/// Parse an `@import` tag's comment text into its components.
+///
+/// Handles these forms:
+/// - `Default, {Named1, Named2} from "module"`
+/// - `{Named1} from 'module'`
+/// - `Default from "module"`
+fn parse_import_tag(comment_text: &str) -> Option<ImportInfo> {
+    // Normalize: join lines, collapse whitespace
+    let text: String = comment_text
+        .lines()
+        .map(str::trim)
+        .collect::<Vec<_>>()
+        .join(" ");
+    let text = text.trim();
+
+    // Find "from" keyword followed by a quoted string
+    let from_idx = text.rfind(" from ")?;
+    let specifier = text[..from_idx].trim();
+    let module_part = text[from_idx + 6..].trim();
+
+    // Extract module path (strip quotes)
+    let module_path = module_part
+        .trim_start_matches(['"', '\''])
+        .trim_end_matches(['"', '\''])
+        .to_string();
+
+    if module_path.is_empty() {
+        return None;
+    }
+
+    // Parse specifier: "Default, {Named1, Named2}", "{Named1}", or "Default"
+    let (default_import, named_imports) = if let Some(brace_start) = specifier.find('{') {
+        let brace_end = specifier.rfind('}')?;
+        let default_part = specifier[..brace_start].trim().trim_end_matches(',').trim();
+        let named_part = &specifier[brace_start + 1..brace_end];
+
+        let default_import =
+            if default_part.is_empty() { None } else { Some(default_part.to_string()) };
+
+        let named_imports: Vec<String> = named_part
+            .split(',')
+            .map(|s| {
+                // Normalize whitespace: "B  as  B1" → "B as B1"
+                s.split_whitespace().collect::<Vec<_>>().join(" ")
+            })
+            .filter(|s| !s.is_empty())
+            .collect();
+
+        (default_import, named_imports)
+    } else {
+        // No braces — just a default import
+        let name = specifier.split_whitespace().collect::<Vec<_>>().join(" ");
+        (Some(name), Vec::new())
+    };
+
+    Some(ImportInfo { default_import, named_imports, module_path })
+}
+
+/// Get the sort key for a named import specifier.
+/// `"B as B1"` → `"B"`, `"B2"` → `"B2"`.
+fn import_specifier_sort_key(specifier: &str) -> &str {
+    if let Some(idx) = specifier.find(" as ") { specifier[..idx].trim() } else { specifier.trim() }
+}
+
+/// Merge `@import` tags that share the same module path.
+/// Returns merged imports sorted by module path (third-party before relative).
+fn merge_and_sort_imports(imports: Vec<ImportInfo>) -> Vec<ImportInfo> {
+    if imports.is_empty() {
+        return imports;
+    }
+
+    // Group by module path (preserving insertion order)
+    let mut groups: Vec<ImportInfo> = Vec::new();
+
+    for import in imports {
+        if let Some(existing) = groups.iter_mut().find(|g| g.module_path == import.module_path) {
+            // Merge: take last default import, combine named imports
+            if import.default_import.is_some() {
+                existing.default_import = import.default_import;
+            }
+            for named in import.named_imports {
+                // Deduplicate by original import name
+                let key = import_specifier_sort_key(&named);
+                let already_exists =
+                    existing.named_imports.iter().any(|n| import_specifier_sort_key(n) == key);
+                if !already_exists {
+                    existing.named_imports.push(named);
+                }
+            }
+        } else {
+            groups.push(import);
+        }
+    }
+
+    // Sort named imports within each group by original import name
+    for import in &mut groups {
+        import.named_imports.sort_by(|a, b| {
+            import_specifier_sort_key(a).cmp(import_specifier_sort_key(b))
+        });
+    }
+
+    // Sort groups: third-party (no ./ or ../) before relative, then alphabetically
+    groups.sort_by(|a, b| {
+        let a_relative = a.module_path.starts_with('.');
+        let b_relative = b.module_path.starts_with('.');
+        match (a_relative, b_relative) {
+            (false, true) => std::cmp::Ordering::Less,
+            (true, false) => std::cmp::Ordering::Greater,
+            _ => a.module_path.cmp(&b.module_path),
+        }
+    });
+
+    groups
+}
+
+/// Format a single merged `@import` tag into output lines.
+fn format_import_lines(import: &ImportInfo, content_lines: &mut Vec<String>) {
+    let module = &import.module_path;
+
+    match (&import.default_import, import.named_imports.len()) {
+        (Some(default), 0) => {
+            content_lines.push(format!("@import {default} from \"{module}\""));
+        }
+        (None, 1) => {
+            let named = &import.named_imports[0];
+            content_lines.push(format!("@import {{{named}}} from \"{module}\""));
+        }
+        (Some(default), 1) => {
+            let named = &import.named_imports[0];
+            content_lines.push(format!("@import {default}, {{{named}}} from \"{module}\""));
+        }
+        (None, n) if n >= 2 => {
+            content_lines.push("@import {".to_string());
+            for (i, named) in import.named_imports.iter().enumerate() {
+                let comma = if i < import.named_imports.len() - 1 { "," } else { "" };
+                content_lines.push(format!("  {named}{comma}"));
+            }
+            content_lines.push(format!("}} from \"{module}\""));
+        }
+        (Some(default), n) if n >= 2 => {
+            content_lines.push(format!("@import {default}, {{"));
+            for (i, named) in import.named_imports.iter().enumerate() {
+                let comma = if i < import.named_imports.len() - 1 { "," } else { "" };
+                content_lines.push(format!("  {named}{comma}"));
+            }
+            content_lines.push(format!("}} from \"{module}\""));
+        }
+        _ => {}
+    }
+}
+
+/// Process all `@import` tags: parse, merge by module, sort, and format.
+/// Returns formatted lines ready to be inserted into the comment.
+fn process_import_tags(tags: &[(&oxc_jsdoc::parser::JSDocTag<'_>, &str)]) -> Vec<String> {
+    let mut imports = Vec::new();
+
+    for &(tag, kind) in tags {
+        if kind != "import" {
+            continue;
+        }
+        let comment = tag.comment().parsed();
+        if let Some(info) = parse_import_tag(&comment) {
+            imports.push(info);
+        }
+    }
+
+    let merged = merge_and_sort_imports(imports);
+
+    let mut lines = Vec::new();
+    for import in &merged {
+        format_import_lines(import, &mut lines);
+    }
+    lines
 }
