@@ -3,8 +3,9 @@
   "checkpoint_id": "3e9b676c57d2",
   "strategy": "manual-commit",
   "branch": "fix/minifier-substitute-declarators-esbuild-pattern",
-  "checkpoints_count": 1,
+  "checkpoints_count": 4,
   "files_touched": [
+    "crates/oxc_minifier/src/peephole/minimize_statements.rs",
     "crates/oxc_transformer/src/common/helper_loader.rs",
     "crates/oxc_transformer/src/lib.rs",
     "crates/oxc_transformer/src/modules/metadata.rs",
@@ -26,13 +27,20 @@
       "context": "/3e/9b676c57d2/1/context.md",
       "content_hash": "/3e/9b676c57d2/1/content_hash.txt",
       "prompt": "/3e/9b676c57d2/1/prompt.txt"
+    },
+    {
+      "metadata": "/3e/9b676c57d2/2/metadata.json",
+      "transcript": "/3e/9b676c57d2/2/full.jsonl",
+      "context": "/3e/9b676c57d2/2/context.md",
+      "content_hash": "/3e/9b676c57d2/2/content_hash.txt",
+      "prompt": "/3e/9b676c57d2/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 521,
-    "cache_creation_tokens": 272190,
-    "cache_read_tokens": 6509551,
-    "output_tokens": 43643,
-    "api_call_count": 82
+    "input_tokens": 612,
+    "cache_creation_tokens": 430450,
+    "cache_read_tokens": 12401959,
+    "output_tokens": 91827,
+    "api_call_count": 164
   }
 }
