@@ -6,6 +6,7 @@ use oxc_jsdoc::JSDoc;
 use oxc_parser::Parser;
 use oxc_span::{SourceType, Span};
 
+use crate::ExternalCallbacks;
 use crate::options::JsdocOptions;
 use crate::options::TrailingCommas;
 use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
@@ -255,6 +256,7 @@ pub fn format_jsdoc_comment<'a>(
     allocator: &'a Allocator,
     available_width: usize,
     format_options: &FormatOptions,
+    external_callbacks: &ExternalCallbacks,
 ) -> Option<&'a str> {
     let content = &source_text[comment.span.start as usize..comment.span.end as usize];
 
@@ -445,7 +447,7 @@ pub fn format_jsdoc_comment<'a>(
     // @example tags, since those have already been formatted by their respective
     // processors and may contain 4+ space indentation that is NOT a markdown
     // indented code block.
-    format_fenced_code_blocks(&mut content_lines, wrap_width, format_options);
+    format_fenced_code_blocks(&mut content_lines, wrap_width, format_options, external_callbacks);
     format_indented_code_blocks(&mut content_lines, wrap_width, format_options);
 
     // Remove trailing empty lines
@@ -999,11 +1001,32 @@ fn strip_default_is_suffix(desc: &str) -> String {
 }
 
 /// Post-process content lines to format code inside fenced code blocks with language tags.
-/// Finds ```js ... ``` blocks and reformats the code using the embedded JS formatter.
+/// Map fenced code block language tags to external formatter language identifiers.
+/// Returns `None` if the language should be handled by the native JS/TS formatter.
+fn fenced_lang_to_external_language(lang: &str) -> Option<&'static str> {
+    match lang {
+        "css" | "scss" | "less" => Some("tagged-css"),
+        "html" => Some("tagged-html"),
+        "graphql" | "gql" => Some("tagged-graphql"),
+        "markdown" | "md" | "mdx" => Some("tagged-markdown"),
+        _ => None,
+    }
+}
+
+/// Returns `true` if the fenced code block language is JS/TS/JSX/TSX.
+fn is_js_ts_lang(lang: &str) -> bool {
+    matches!(lang, "js" | "javascript" | "jsx" | "ts" | "typescript" | "tsx")
+}
+
+/// Finds fenced code blocks (```lang ... ```) and reformats them.
+/// JS/TS/JSX/TSX code is formatted natively; other supported languages
+/// (CSS, HTML, GraphQL, Markdown) are delegated to the external formatter
+/// (Prettier) via the `external_callbacks`.
 fn format_fenced_code_blocks(
     content_lines: &mut Vec<String>,
     wrap_width: usize,
     format_options: &FormatOptions,
+    external_callbacks: &ExternalCallbacks,
 ) {
     let mut i = 0;
     while i < content_lines.len() {
@@ -1011,8 +1034,10 @@ fn format_fenced_code_blocks(
         // Look for opening code fence with a language tag
         if line.starts_with("```") && line.len() > 3 {
             let lang = line[3..].trim();
-            // Only format JS/TS/JSX/TSX code
-            if !matches!(lang, "js" | "javascript" | "jsx" | "ts" | "typescript" | "tsx") {
+            let is_js = is_js_ts_lang(lang);
+            let external_lang = fenced_lang_to_external_language(lang);
+
+            if !is_js && external_lang.is_none() {
                 i += 1;
                 continue;
             }
@@ -1033,8 +1058,16 @@ fn format_fenced_code_blocks(
                 .collect::<Vec<_>>()
                 .join("\n");
 
-            // Try to format
-            if let Some(formatted) = format_embedded_js(&code, wrap_width, format_options) {
+            // Try to format: native for JS/TS, external for other languages
+            let formatted = if is_js {
+                format_embedded_js(&code, wrap_width, format_options)
+            } else if let Some(ext_lang) = external_lang {
+                format_external_language(&code, ext_lang, wrap_width, external_callbacks)
+            } else {
+                None
+            };
+
+            if let Some(formatted) = formatted {
                 // Replace the code lines with formatted output
                 let new_lines: Vec<String> = formatted.lines().map(String::from).collect();
                 // Remove old code lines and insert new ones
@@ -1048,6 +1081,21 @@ fn format_fenced_code_blocks(
         } else {
             i += 1;
         }
+    }
+}
+
+/// Format code using the external formatter (Prettier) for non-JS/TS languages.
+/// Returns `Some(formatted)` on success, `None` if no callback is available or formatting fails.
+fn format_external_language(
+    code: &str,
+    language: &str,
+    _wrap_width: usize,
+    external_callbacks: &ExternalCallbacks,
+) -> Option<String> {
+    let result = external_callbacks.format_embedded(language, code)?;
+    match result {
+        Ok(formatted) => Some(formatted.trim_end().to_string()),
+        Err(_) => None,
     }
 }
 
