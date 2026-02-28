@@ -16,6 +16,108 @@ use oxc_estree::{
 use oxc_parser::{Kind, Token};
 use oxc_span::{GetSpan, Span};
 
+/// Options for serializing tokens.
+///
+/// Espree (`test262`) and TS-ESLint (`typescript`) differ in several ways:
+///
+/// * `yield`, `let`, `static` used as identifiers (`obj = { yield: 1, let: 2, static: 3 };`)
+///   * Espree emits these as `Keyword` tokens.
+///   * TS-ESLint as `Identifier` tokens.
+/// * Escaped identifiers (e.g. `\u0061`)
+///   * Espree decodes escapes in the token `value`.
+///   * TS-ESLint preserves the raw source text.
+/// * JSX namespaced names (`<ns:tag>`)
+///   * Espree emits `JSXIdentifier` tokens for both parts,
+///   * TS-ESLint leaves them as their default token type (`Identifier`).
+/// * Member expressions in JSX expressions (`<C x={a.b}>`)
+///   * Espree emits them as `Identifier` tokens.
+///   * TS-ESLint emits `JSXIdentifier` tokens for non-computed member expression identifiers
+///     inside JSX expression containers.
+#[derive(Debug, Clone, Copy)]
+pub struct ESTreeTokenOptions {
+    pub exclude_legacy_keyword_identifiers: bool,
+    pub decode_identifier_escapes: bool,
+    pub jsx_namespace_jsx_identifiers: bool,
+    pub member_expr_in_jsx_expression_jsx_identifiers: bool,
+}
+
+impl ESTreeTokenOptions {
+    pub const fn test262() -> Self {
+        Self {
+            exclude_legacy_keyword_identifiers: true,
+            decode_identifier_escapes: true,
+            jsx_namespace_jsx_identifiers: true,
+            member_expr_in_jsx_expression_jsx_identifiers: false,
+        }
+    }
+
+    pub const fn typescript() -> Self {
+        Self {
+            exclude_legacy_keyword_identifiers: false,
+            decode_identifier_escapes: false,
+            jsx_namespace_jsx_identifiers: false,
+            member_expr_in_jsx_expression_jsx_identifiers: true,
+        }
+    }
+
+    pub const fn linter() -> Self {
+        Self {
+            exclude_legacy_keyword_identifiers: true,
+            decode_identifier_escapes: false,
+            jsx_namespace_jsx_identifiers: true,
+            member_expr_in_jsx_expression_jsx_identifiers: false,
+        }
+    }
+}
+
+/// Serialize tokens to JSON.
+///
+/// `program` must have unconverted UTF-8 byte offset spans (as returned by the parser).
+/// Token span conversion to UTF-16 is handled internally.
+///
+/// `source_text` must be the original source text, prior to BOM removal.
+/// i.e. if the file has a BOM, it must be present at the start of `source_text`.
+pub fn to_estree_tokens_json(
+    tokens: &[Token],
+    program: &Program<'_>,
+    source_text: &str,
+    span_converter: &Utf8ToUtf16,
+    options: ESTreeTokenOptions,
+) -> String {
+    // Estimated size of a single token serialized to JSON, in bytes.
+    // TODO: Estimate this better based on real-world usage.
+    const BYTES_PER_TOKEN: usize = 64;
+
+    let mut serializer =
+        CompactTokenSerializer::with_capacity(tokens.len() * BYTES_PER_TOKEN, false);
+    serialize_tokens(&mut serializer, tokens, program, source_text, span_converter, options);
+    serializer.into_string()
+}
+
+/// Serialize tokens to pretty-printed JSON.
+///
+/// `program` must have unconverted UTF-8 byte offset spans (as returned by the parser).
+/// Token span conversion to UTF-16 is handled internally.
+///
+/// `source_text` must be the original source text, prior to BOM removal.
+/// i.e. if the file has a BOM, it must be present at the start of `source_text`.
+pub fn to_estree_tokens_pretty_json(
+    tokens: &[Token],
+    program: &Program<'_>,
+    source_text: &str,
+    span_converter: &Utf8ToUtf16,
+    options: ESTreeTokenOptions,
+) -> String {
+    // Estimated size of a single token serialized to JSON, in bytes.
+    // TODO: Estimate this better based on real-world usage.
+    const BYTES_PER_TOKEN: usize = 64;
+
+    let mut serializer =
+        PrettyTokenSerializer::with_capacity(tokens.len() * BYTES_PER_TOKEN, false);
+    serialize_tokens(&mut serializer, tokens, program, source_text, span_converter, options);
+    serializer.into_string()
+}
+
 /// Serializer config for tokens.
 /// We never include ranges, so use this custom config which returns `false` for `ranges()`.
 /// This allows compiler to remove the branch which checks whether to print ranges in `serialize_span`.
@@ -233,108 +335,6 @@ mod u32_string {
     }
 }
 use u32_string::U32String;
-
-/// Options for serializing tokens.
-///
-/// Espree (`test262`) and TS-ESLint (`typescript`) differ in several ways:
-///
-/// * `yield`, `let`, `static` used as identifiers (`obj = { yield: 1, let: 2, static: 3 };`)
-///   * Espree emits these as `Keyword` tokens.
-///   * TS-ESLint as `Identifier` tokens.
-/// * Escaped identifiers (e.g. `\u0061`)
-///   * Espree decodes escapes in the token `value`.
-///   * TS-ESLint preserves the raw source text.
-/// * JSX namespaced names (`<ns:tag>`)
-///   * Espree emits `JSXIdentifier` tokens for both parts,
-///   * TS-ESLint leaves them as their default token type (`Identifier`).
-/// * Member expressions in JSX expressions (`<C x={a.b}>`)
-///   * Espree emits them as `Identifier` tokens.
-///   * TS-ESLint emits `JSXIdentifier` tokens for non-computed member expression identifiers
-///     inside JSX expression containers.
-#[derive(Debug, Clone, Copy)]
-pub struct ESTreeTokenOptions {
-    pub exclude_legacy_keyword_identifiers: bool,
-    pub decode_identifier_escapes: bool,
-    pub jsx_namespace_jsx_identifiers: bool,
-    pub member_expr_in_jsx_expression_jsx_identifiers: bool,
-}
-
-impl ESTreeTokenOptions {
-    pub const fn test262() -> Self {
-        Self {
-            exclude_legacy_keyword_identifiers: true,
-            decode_identifier_escapes: true,
-            jsx_namespace_jsx_identifiers: true,
-            member_expr_in_jsx_expression_jsx_identifiers: false,
-        }
-    }
-
-    pub const fn typescript() -> Self {
-        Self {
-            exclude_legacy_keyword_identifiers: false,
-            decode_identifier_escapes: false,
-            jsx_namespace_jsx_identifiers: false,
-            member_expr_in_jsx_expression_jsx_identifiers: true,
-        }
-    }
-
-    pub const fn linter() -> Self {
-        Self {
-            exclude_legacy_keyword_identifiers: true,
-            decode_identifier_escapes: false,
-            jsx_namespace_jsx_identifiers: true,
-            member_expr_in_jsx_expression_jsx_identifiers: false,
-        }
-    }
-}
-
-/// Serialize tokens to JSON.
-///
-/// `program` must have unconverted UTF-8 byte offset spans (as returned by the parser).
-/// Token span conversion to UTF-16 is handled internally.
-///
-/// `source_text` must be the original source text, prior to BOM removal.
-/// i.e. if the file has a BOM, it must be present at the start of `source_text`.
-pub fn to_estree_tokens_json(
-    tokens: &[Token],
-    program: &Program<'_>,
-    source_text: &str,
-    span_converter: &Utf8ToUtf16,
-    options: ESTreeTokenOptions,
-) -> String {
-    // Estimated size of a single token serialized to JSON, in bytes.
-    // TODO: Estimate this better based on real-world usage.
-    const BYTES_PER_TOKEN: usize = 64;
-
-    let mut serializer =
-        CompactTokenSerializer::with_capacity(tokens.len() * BYTES_PER_TOKEN, false);
-    serialize_tokens(&mut serializer, tokens, program, source_text, span_converter, options);
-    serializer.into_string()
-}
-
-/// Serialize tokens to pretty-printed JSON.
-///
-/// `program` must have unconverted UTF-8 byte offset spans (as returned by the parser).
-/// Token span conversion to UTF-16 is handled internally.
-///
-/// `source_text` must be the original source text, prior to BOM removal.
-/// i.e. if the file has a BOM, it must be present at the start of `source_text`.
-pub fn to_estree_tokens_pretty_json(
-    tokens: &[Token],
-    program: &Program<'_>,
-    source_text: &str,
-    span_converter: &Utf8ToUtf16,
-    options: ESTreeTokenOptions,
-) -> String {
-    // Estimated size of a single token serialized to JSON, in bytes.
-    // TODO: Estimate this better based on real-world usage.
-    const BYTES_PER_TOKEN: usize = 64;
-
-    let mut serializer =
-        PrettyTokenSerializer::with_capacity(tokens.len() * BYTES_PER_TOKEN, false);
-    serialize_tokens(&mut serializer, tokens, program, source_text, span_converter, options);
-    serializer.into_string()
-}
 
 /// Walk AST and serialize each token into the serializer as it's encountered.
 ///
