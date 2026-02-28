@@ -576,7 +576,7 @@ impl Linter {
                     program,
                     original_source_text,
                     &span_converter,
-                    ESTreeTokenOptions::linter(),
+                    ESTreeTokenOptions::test262(),
                 );
                 let tokens_json = allocator.alloc_str(&tokens_json);
                 let tokens_offset = tokens_json.as_ptr() as u32;

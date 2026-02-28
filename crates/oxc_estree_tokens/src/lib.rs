@@ -59,15 +59,6 @@ impl ESTreeTokenOptions {
             member_expr_in_jsx_expression_jsx_identifiers: true,
         }
     }
-
-    pub const fn linter() -> Self {
-        Self {
-            exclude_legacy_keyword_identifiers: true,
-            decode_identifier_escapes: false,
-            jsx_namespace_jsx_identifiers: true,
-            member_expr_in_jsx_expression_jsx_identifiers: false,
-        }
-    }
 }
 
 /// Serialize tokens to JSON.

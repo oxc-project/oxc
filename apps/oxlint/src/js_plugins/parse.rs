@@ -219,7 +219,7 @@ unsafe fn parse_raw_impl(
                 program,
                 original_source_text,
                 &span_converter,
-                ESTreeTokenOptions::linter(),
+                ESTreeTokenOptions::test262(),
             );
 
             span_converter.convert_program(program);
