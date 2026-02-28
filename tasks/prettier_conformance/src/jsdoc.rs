@@ -26,6 +26,12 @@ fn snap_root() -> PathBuf {
     root().join("jsdoc").join("snapshots")
 }
 
+const IGNORED_FIXTURES: &[&str] = &[
+    // This case depends on embedded CSS/HTML formatter callbacks provided by the oxfmt app path.
+    // The standalone JSDoc conformance runner calls `oxc_formatter` directly and cannot exercise that wiring.
+    "descriptions/032-jsx-tsx-css.ts",
+];
+
 pub struct JsdocTestRunner {
     filter: Option<String>,
     debug: bool,
@@ -112,6 +118,11 @@ impl JsdocTestRunner {
             let output_path = path.with_file_name(&output_name);
 
             if !output_path.exists() {
+                continue;
+            }
+
+            let rel_path = path.strip_prefix(fixtures_root()).unwrap().to_string_lossy();
+            if IGNORED_FIXTURES.iter().any(|ignored| rel_path == *ignored) {
                 continue;
             }
 
