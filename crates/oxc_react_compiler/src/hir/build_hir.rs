@@ -2793,12 +2793,19 @@ fn scan_expr_for_hoistable_refs(
 ) {
     match expr {
         ast::Expression::Identifier(ident) => {
-            // Only hoist if we're inside an inner function (fn_depth > 0)
-            if fn_depth > 0
-                && hoistable.contains_key(ident.name.as_str())
-                && !will_hoist.contains(&ident.name.to_string())
-            {
-                will_hoist.push(ident.name.to_string());
+            // Hoist if we're inside an inner function (fn_depth > 0), or if the
+            // binding is a function declaration (equivalent to Babel's
+            // `binding.kind === 'hoisted'`). Function declarations in JavaScript
+            // are hoisted to the top of their enclosing scope, so references
+            // before the declaration at the same scope level need hoisting too.
+            // See CodegenReactiveFunction.ts BuildHIR line 430:
+            //   `(fnDepth > 0 || binding.kind === 'hoisted')`
+            if let Some(binding) = hoistable.get(ident.name.as_str()) {
+                if (fn_depth > 0 || binding.is_function_decl)
+                    && !will_hoist.contains(&ident.name.to_string())
+                {
+                    will_hoist.push(ident.name.to_string());
+                }
             }
         }
         ast::Expression::AssignmentExpression(assign) => {
@@ -3068,11 +3075,12 @@ fn scan_assignment_target_for_hoistable_refs(
 ) {
     match target {
         ast::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-            if fn_depth > 0
-                && hoistable.contains_key(ident.name.as_str())
-                && !will_hoist.contains(&ident.name.to_string())
-            {
-                will_hoist.push(ident.name.to_string());
+            if let Some(binding) = hoistable.get(ident.name.as_str()) {
+                if (fn_depth > 0 || binding.is_function_decl)
+                    && !will_hoist.contains(&ident.name.to_string())
+                {
+                    will_hoist.push(ident.name.to_string());
+                }
             }
         }
         ast::AssignmentTarget::StaticMemberExpression(member) => {
@@ -3093,11 +3101,12 @@ fn scan_assignment_target_for_hoistable_refs(
             for prop in &obj.properties {
                 match prop {
                     ast::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
-                        if fn_depth > 0
-                            && hoistable.contains_key(ident.binding.name.as_str())
-                            && !will_hoist.contains(&ident.binding.name.to_string())
-                        {
-                            will_hoist.push(ident.binding.name.to_string());
+                        if let Some(binding) = hoistable.get(ident.binding.name.as_str()) {
+                            if (fn_depth > 0 || binding.is_function_decl)
+                                && !will_hoist.contains(&ident.binding.name.to_string())
+                            {
+                                will_hoist.push(ident.binding.name.to_string());
+                            }
                         }
                     }
                     ast::AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) => {
@@ -3152,11 +3161,12 @@ fn scan_simple_assignment_target_for_hoistable_refs(
 ) {
     match target {
         ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-            if fn_depth > 0
-                && hoistable.contains_key(ident.name.as_str())
-                && !will_hoist.contains(&ident.name.to_string())
-            {
-                will_hoist.push(ident.name.to_string());
+            if let Some(binding) = hoistable.get(ident.name.as_str()) {
+                if (fn_depth > 0 || binding.is_function_decl)
+                    && !will_hoist.contains(&ident.name.to_string())
+                {
+                    will_hoist.push(ident.name.to_string());
+                }
             }
         }
         ast::SimpleAssignmentTarget::StaticMemberExpression(member) => {
@@ -4272,24 +4282,46 @@ fn lower_statement_with_label(
                 loc,
             });
 
-            // Register the function name as a binding
+            // Register the function name as a binding.
+            // If the name was hoisted (via DeclareContext), emit StoreContext
+            // instead of StoreLocal to match the TS reference's lowerAssignment
+            // behavior (BuildHIR.ts lines 3693-3727).
             let decl_place = if let Some(id) = &func.id {
                 builder.declare_binding(&id.name, BindingKind::Function, loc)
             } else {
                 create_temporary_place(builder.environment_mut(), loc)
             };
+            let is_context = func
+                .id
+                .as_ref()
+                .is_some_and(|id| builder.is_context_identifier(&id.name));
             let lvalue = create_temporary_place(builder.environment_mut(), loc);
-            builder.push(Instruction {
-                id: InstructionId(0),
-                lvalue,
-                value: InstructionValue::StoreLocal(StoreLocal {
-                    lvalue: LValue { place: decl_place, kind: InstructionKind::Function },
-                    value: fn_place,
+            if is_context {
+                builder.push(Instruction {
+                    id: InstructionId(0),
+                    lvalue,
+                    value: InstructionValue::StoreContext(StoreContext {
+                        lvalue_kind: InstructionKind::Function,
+                        lvalue_place: decl_place,
+                        value: fn_place,
+                        loc,
+                    }),
+                    effects: None,
                     loc,
-                }),
-                effects: None,
-                loc,
-            });
+                });
+            } else {
+                builder.push(Instruction {
+                    id: InstructionId(0),
+                    lvalue,
+                    value: InstructionValue::StoreLocal(StoreLocal {
+                        lvalue: LValue { place: decl_place, kind: InstructionKind::Function },
+                        value: fn_place,
+                        loc,
+                    }),
+                    effects: None,
+                    loc,
+                });
+            }
         }
 
         // =====================================================================

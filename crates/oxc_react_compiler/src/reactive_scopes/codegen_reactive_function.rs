@@ -45,7 +45,7 @@ pub const EARLY_RETURN_SENTINEL: &str = "react.early_return_sentinel";
 // =====================================================================================
 
 /// Result of code generation.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CodegenFunction {
     /// Name of the function (if it had one).
     pub id: Option<String>,
@@ -78,7 +78,7 @@ pub struct CodegenFunction {
 }
 
 /// A function that was outlined (extracted) from the main function.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OutlinedFunction {
     pub fn_: CodegenFunction,
     pub fn_type: Option<crate::hir::ReactFunctionType>,
@@ -267,6 +267,12 @@ pub struct CodegenContext {
     /// in `props?.b.c`) rather than a separate, unconditional access applied to
     /// the chain's result (e.g. the `.b` in `(props?.a).b`).
     inside_optional_chain: bool,
+    /// Structured `CodegenFunction` data for function expression temporaries
+    /// that have `FunctionDeclaration` type. When a `StoreLocal` with
+    /// `InstructionKind::Function` or `HoistedFunction` is emitted, this map
+    /// is consulted to produce a proper `CodegenStatement::FunctionDeclaration`
+    /// instead of an expression statement.
+    fn_decl_data: FxHashMap<DeclarationId, CodegenFunction>,
 }
 
 impl CodegenContext {
@@ -298,6 +304,7 @@ impl CodegenContext {
             arrow_paren_temps: FxHashSet::default(),
             ternary_temps: FxHashSet::default(),
             inside_optional_chain: false,
+            fn_decl_data: FxHashMap::default(),
         }
     }
 
@@ -1181,7 +1188,7 @@ fn codegen_instruction_nullable(
                 } else {
                     codegen_place_to_expression(cx, &store.value)
                 };
-                codegen_store_or_declare(cx, instr, kind, &store.lvalue.place, Some(&value_expr))
+                codegen_store_or_declare(cx, instr, kind, &store.lvalue.place, Some(&value_expr), Some(&store.value))
             }
             InstructionValue::StoreContext(store) => {
                 let kind = store.lvalue_kind;
@@ -1190,19 +1197,19 @@ fn codegen_instruction_nullable(
                 } else {
                     codegen_place_to_expression(cx, &store.value)
                 };
-                codegen_store_or_declare(cx, instr, kind, &store.lvalue_place, Some(&value_expr))
+                codegen_store_or_declare(cx, instr, kind, &store.lvalue_place, Some(&value_expr), Some(&store.value))
             }
             InstructionValue::DeclareLocal(decl) => {
                 if cx.has_declared(decl.lvalue.place.identifier.declaration_id) {
                     return None;
                 }
-                codegen_store_or_declare(cx, instr, decl.lvalue.kind, &decl.lvalue.place, None)
+                codegen_store_or_declare(cx, instr, decl.lvalue.kind, &decl.lvalue.place, None, None)
             }
             InstructionValue::DeclareContext(decl) => {
                 if cx.has_declared(decl.lvalue_place.identifier.declaration_id) {
                     return None;
                 }
-                codegen_store_or_declare(cx, instr, decl.lvalue_kind, &decl.lvalue_place, None)
+                codegen_store_or_declare(cx, instr, decl.lvalue_kind, &decl.lvalue_place, None, None)
             }
             InstructionValue::Destructure(destr) => {
                 let kind = destr.lvalue.kind;
@@ -1246,6 +1253,23 @@ fn codegen_instruction_nullable(
                 }
                 None
             }
+            InstructionValue::FunctionExpression(func_expr) => {
+                // Handle FunctionExpression separately from the `other` branch so
+                // that we can store structured CodegenFunction data for
+                // FunctionDeclaration types. This data is later used by
+                // codegen_store_or_declare to emit proper `function x() {}`
+                // declaration statements instead of expression statements.
+                if let Some(lval) = &instr.lvalue {
+                    cx.fn_expr_temps.insert(lval.identifier.declaration_id);
+                }
+                let (value_str, fn_decl) = codegen_function_expression(cx, func_expr);
+                if let Some(fn_data) = fn_decl {
+                    if let Some(lval) = &instr.lvalue {
+                        cx.fn_decl_data.insert(lval.identifier.declaration_id, fn_data);
+                    }
+                }
+                codegen_instruction_to_statement(cx, instr, &value_str)
+            }
             other => {
                 // Track JSX text/element/function temporaries for proper rendering
                 if let Some(lval) = &instr.lvalue {
@@ -1256,9 +1280,6 @@ fn codegen_instruction_nullable(
                         }
                         InstructionValue::JsxExpression(_) | InstructionValue::JsxFragment(_) => {
                             cx.jsx_element_temps.insert(decl_id);
-                        }
-                        InstructionValue::FunctionExpression(_) => {
-                            cx.fn_expr_temps.insert(decl_id);
                         }
                         _ => {}
                     }
@@ -1350,12 +1371,18 @@ fn codegen_instruction_nullable(
 }
 
 /// Handle StoreLocal/StoreContext/DeclareLocal/DeclareContext
+///
+/// `value_place` is the RHS Place (when available) so that for
+/// `InstructionKind::Function`/`HoistedFunction` we can look up
+/// the structured `CodegenFunction` data and emit a proper function
+/// declaration statement.
 fn codegen_store_or_declare(
     cx: &mut CodegenContext,
     instr: &ReactiveInstruction,
     kind: InstructionKind,
     lvalue_place: &Place,
     value: Option<&str>,
+    value_place: Option<&Place>,
 ) -> Option<CodegenStatement> {
     let name = identifier_name(&lvalue_place.identifier);
 
@@ -1379,9 +1406,23 @@ fn codegen_store_or_declare(
         InstructionKind::Function | InstructionKind::HoistedFunction => {
             cx.declare(lvalue_place.identifier.declaration_id);
             // Emit as a proper function declaration statement, matching the TS
-            // reference which calls `createFunctionDeclaration` for this kind.
-            // The value string is already `function name(...) { ... }` from
-            // codegen_function_expression, so emit it as a raw expression statement.
+            // reference which calls `createFunctionDeclaration` for this kind
+            // (CodegenReactiveFunction.ts lines 1086-1108).
+            //
+            // Look up the structured CodegenFunction data stored when the
+            // FunctionExpression instruction was processed. If available, emit
+            // a FunctionDeclaration; otherwise fall back to ExpressionStatement.
+            if let Some(vp) = value_place {
+                if let Some(fn_data) = cx.fn_decl_data.remove(&vp.identifier.declaration_id) {
+                    return Some(CodegenStatement::FunctionDeclaration {
+                        name,
+                        params: fn_data.params,
+                        body: fn_data.body,
+                        generator: fn_data.generator,
+                        is_async: fn_data.is_async,
+                    });
+                }
+            }
             if let Some(val) = value {
                 Some(CodegenStatement::ExpressionStatement(val.to_string()))
             } else {
@@ -1658,7 +1699,7 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
             format!("{} = {value}", store.name)
         }
         InstructionValue::FunctionExpression(func_expr) => {
-            codegen_function_expression(cx, func_expr)
+            codegen_function_expression(cx, func_expr).0
         }
         InstructionValue::RegExpLiteral(re) => {
             format!("/{}/{}", re.pattern, re.flags)
@@ -1778,13 +1819,26 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
 /// This runs the sub-pipeline (build reactive function, prune, rename) on the lowered
 /// function, then formats the result based on the expression type (arrow, function expr,
 /// function declaration).
+///
+/// Returns the expression string and, for `FunctionDeclaration` types, the structured
+/// `CodegenFunction` data needed to emit a proper function declaration statement.
 fn codegen_function_expression(
     cx: &CodegenContext,
     func_expr: &crate::hir::FunctionExpressionValue,
-) -> String {
+) -> (String, Option<CodegenFunction>) {
     match codegen_inner_function(&func_expr.lowered_func.func, cx, true) {
         Ok(inner_fn) => {
             let params_str = inner_fn.params.join(", ");
+
+            // For FunctionDeclaration types, preserve the structured CodegenFunction
+            // so callers can emit a proper `function name(...) { ... }` declaration
+            // statement (matching the TS reference's `createFunctionDeclaration`).
+            let fn_decl = if func_expr.expression_type == FunctionExpressionType::FunctionDeclaration
+            {
+                Some(inner_fn.clone())
+            } else {
+                None
+            };
 
             let mut value = match func_expr.expression_type {
                 FunctionExpressionType::ArrowFunctionExpression => {
@@ -1845,11 +1899,11 @@ fn codegen_function_expression(
                 value = format!("({{\"{hint}\": {value}}})[\"{hint}\"]");
             }
 
-            value
+            (value, fn_decl)
         }
         Err(_) => {
             // Fallback for inner function compilation errors
-            "/* error compiling inner function */".to_string()
+            ("/* error compiling inner function */".to_string(), None)
         }
     }
 }
