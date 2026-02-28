@@ -10,6 +10,7 @@ Issue [oxc-project/oxc#19702](https://github.com/oxc-project/oxc/issues/19702) â
 ### Key Design Decision: String-based formatting
 
 Uses `StringBuilder` (not FormatElement IR) for the comment body. Rationale:
+
 - The formatter's IR (groups, indents, soft breaks) is designed for code layout, not comment text
 - Comments are already a single text element by the time the printer sees them
 - The existing non-alignable multiline comment path in `trivia.rs` already uses `StringBuilder`
