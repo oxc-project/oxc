@@ -72,40 +72,40 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace "nthReturnedWith" with its canonical name of "toHaveNthReturnedWith"
 
-  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrow"
    ╭─[no_alias_methods.tsx:1:11]
- 1 │ expect(a).toThrowError()
-   ·           ────────────
+ 1 │ expect(a).toThrow()
+   ·           ───────
    ╰────
-  help: Replace "toThrowError" with its canonical name of "toThrow"
+  help: Replace "toThrow" with its canonical name of "toThrowError"
 
-  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrow"
    ╭─[no_alias_methods.tsx:1:20]
- 1 │ expect(a).resolves.toThrowError()
-   ·                    ────────────
+ 1 │ expect(a).resolves.toThrow()
+   ·                    ───────
    ╰────
-  help: Replace "toThrowError" with its canonical name of "toThrow"
+  help: Replace "toThrow" with its canonical name of "toThrowError"
 
-  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrow"
    ╭─[no_alias_methods.tsx:1:19]
- 1 │ expect(a).rejects.toThrowError()
-   ·                   ────────────
+ 1 │ expect(a).rejects.toThrow()
+   ·                   ───────
    ╰────
-  help: Replace "toThrowError" with its canonical name of "toThrow"
+  help: Replace "toThrow" with its canonical name of "toThrowError"
 
-  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrow"
    ╭─[no_alias_methods.tsx:1:15]
- 1 │ expect(a).not.toThrowError()
-   ·               ────────────
+ 1 │ expect(a).not.toThrow()
+   ·               ───────
    ╰────
-  help: Replace "toThrowError" with its canonical name of "toThrow"
+  help: Replace "toThrow" with its canonical name of "toThrowError"
 
-  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrow"
    ╭─[no_alias_methods.tsx:1:15]
- 1 │ expect(a).not['toThrowError']()
-   ·               ──────────────
+ 1 │ expect(a).not['toThrow']()
+   ·               ─────────
    ╰────
-  help: Replace "toThrowError" with its canonical name of "toThrow"
+  help: Replace "toThrow" with its canonical name of "toThrowError"
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toBeCalled"
    ╭─[no_alias_methods.tsx:1:11]
@@ -121,9 +121,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace "toBeCalledTimes" with its canonical name of "toHaveBeenCalledTimes"
 
-  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
+  ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrow"
    ╭─[no_alias_methods.tsx:1:15]
- 1 │ expect(a).not["toThrowError"]()
-   ·               ──────────────
+ 1 │ expect(a).not["toThrow"]()
+   ·               ─────────
    ╰────
-  help: Replace "toThrowError" with its canonical name of "toThrow"
+  help: Replace "toThrow" with its canonical name of "toThrowError"
