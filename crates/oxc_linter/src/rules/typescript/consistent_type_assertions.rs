@@ -21,14 +21,11 @@ use crate::{
 fn use_angle_bracket_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `<{cast}>` instead of `as {cast}`."))
         .with_help(format!("Replace `as {cast}` with `<{cast}>`. For example, change `value as {cast}` to `<{cast}>value`."))
-        .with_note("This rule enforces consistent type assertion syntax across the codebase. Angle-bracket syntax (`<Type>value`) is preferred when this rule is configured to use it.")
         .with_label(span)
 }
 
 fn use_as_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use `as {cast}` instead of `<{cast}>`."))
-        .with_note("This rule enforces consistent type assertion syntax across the codebase.")
-        .with_label(span)
+    OxcDiagnostic::warn(format!("Use `as {cast}` instead of `<{cast}>`.")).with_label(span)
 }
 
 fn never_diagnostic(span: Span) -> OxcDiagnostic {
