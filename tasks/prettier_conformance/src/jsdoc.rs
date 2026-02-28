@@ -8,7 +8,7 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    FormatOptions, Formatter, JsdocOptions, enable_jsx_source_type, get_parse_options,
+    FormatOptions, Formatter, JsdocOptions, LineWidth, enable_jsx_source_type, get_parse_options,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -102,9 +102,14 @@ impl JsdocTestRunner {
                 continue;
             }
 
+            // Skip non-source files (options.json, etc.)
+            let ext = path.extension().map(|e| e.to_string_lossy()).unwrap_or_default();
+            if !matches!(ext.as_ref(), "js" | "ts" | "jsx" | "tsx") {
+                continue;
+            }
+
             // Check for matching output file
             let stem = path.file_stem().unwrap().to_string_lossy();
-            let ext = path.extension().map(|e| e.to_string_lossy()).unwrap_or_default();
             let output_name = format!("{stem}.output.{ext}");
             let output_path = path.with_file_name(&output_name);
 
@@ -137,7 +142,9 @@ impl JsdocTestRunner {
         let source_text = std::fs::read_to_string(input_path).unwrap();
         let expected = std::fs::read_to_string(expected_path).unwrap();
 
-        let Some(actual) = Self::run_oxfmt(&source_text, input_path) else {
+        let jsdoc_options = Self::load_jsdoc_options(input_path);
+
+        let Some(actual) = Self::run_oxfmt(&source_text, input_path, &jsdoc_options) else {
             if self.debug || print_diff {
                 println!(
                     "SKIP (parse error): {}",
@@ -170,7 +177,50 @@ impl JsdocTestRunner {
         (is_pass, ratio)
     }
 
-    fn run_oxfmt(source_text: &str, path: &Path) -> Option<String> {
+    /// Load per-fixture JsdocOptions.
+    /// Checks for a per-file sidecar `{stem}.options.json` first, then
+    /// directory-level `options.json`. Falls back to default options.
+    fn load_jsdoc_options(input_path: &Path) -> JsdocOptions {
+        let dir = input_path.parent().unwrap();
+
+        // Per-file options: e.g. 033-not-capitalizing-false.options.json
+        let stem = input_path.file_stem().unwrap().to_string_lossy();
+        let per_file_path = dir.join(format!("{stem}.options.json"));
+        if per_file_path.exists() {
+            return Self::parse_jsdoc_options(&per_file_path);
+        }
+
+        // Per-directory options: options.json
+        let dir_options_path = dir.join("options.json");
+        if dir_options_path.exists() {
+            return Self::parse_jsdoc_options(&dir_options_path);
+        }
+
+        JsdocOptions::default()
+    }
+
+    fn parse_jsdoc_options(path: &Path) -> JsdocOptions {
+        let content = std::fs::read_to_string(path).unwrap();
+        let mut options = JsdocOptions::default();
+
+        // Simple JSON parsing for known options
+        if content.contains("\"capitalize_descriptions\": false") {
+            options.capitalize_descriptions = false;
+        }
+        if content.contains("\"separate_tag_groups\": true") {
+            options.separate_tag_groups = true;
+        }
+        if content.contains("\"separate_returns_from_param\": true") {
+            options.separate_returns_from_param = true;
+        }
+        if content.contains("\"bracket_spacing\": true") {
+            options.bracket_spacing = true;
+        }
+
+        options
+    }
+
+    fn run_oxfmt(source_text: &str, path: &Path, jsdoc_options: &JsdocOptions) -> Option<String> {
         let allocator = Allocator::default();
 
         let source_type = SourceType::from_path(path).unwrap_or_default();
@@ -183,8 +233,10 @@ impl JsdocTestRunner {
             return None;
         }
 
+        // Use printWidth=80 to match Prettier's default (oxfmt defaults to 100)
         let options = FormatOptions {
-            jsdoc: Some(JsdocOptions::default()),
+            line_width: LineWidth::try_from(80).unwrap(),
+            jsdoc: Some(jsdoc_options.clone()),
             ..FormatOptions::default()
         };
         let formatted = Formatter::new(&allocator, options).build(&ret.program);

@@ -29,15 +29,12 @@ function shortDesc() {}
 function longDescription() {}
 
 /**
- * @param {string} name -
- *   This is a parameter with a very long description that should be wrapped
- *   because it exceeds the maximum line width.
+ * @param {string} name - This is a parameter with a very long description that
+ *   should be wrapped because it exceeds the maximum line width.
  */
 function longParamDesc(name) {}
 
-/**
- * Short.
- */
+/** Short. */
 function shortDesc() {}
 
 --------------------------------
@@ -50,15 +47,12 @@ function shortDesc() {}
 function longDescription() {}
 
 /**
- * @param {string} name -
- *   This is a parameter with a very long description that should be wrapped because it exceeds the
- *   maximum line width.
+ * @param {string} name - This is a parameter with a very long description that should be wrapped
+ *   because it exceeds the maximum line width.
  */
 function longParamDesc(name) {}
 
-/**
- * Short.
- */
+/** Short. */
 function shortDesc() {}
 
 ===================== End =====================

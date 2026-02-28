@@ -423,7 +423,18 @@ impl<'a> Format<'a> for Comment {
             && let Some(jsdoc_options) = &f.options().jsdoc
         {
             let source: &str = &f.source_text();
-            let available_width = f.options().line_width.value() as usize;
+            let line_width = f.options().line_width.value() as usize;
+            // Calculate the indent of the comment by looking at the source text
+            // to account for indentation when computing available width.
+            let indent_chars = {
+                let start = self.span.start as usize;
+                let before = &source[..start];
+                // Find the last newline before the comment
+                let line_start = before.rfind('\n').map_or(0, |pos| pos + 1);
+                // Count leading whitespace on this line
+                source[line_start..start].chars().take_while(|c| c.is_whitespace()).count()
+            };
+            let available_width = line_width.saturating_sub(indent_chars);
             if let Some(formatted) = super::jsdoc::format_jsdoc_comment(
                 self,
                 jsdoc_options,
@@ -432,7 +443,15 @@ impl<'a> Format<'a> for Comment {
                 available_width,
             ) {
                 if !formatted.is_empty() {
-                    write!(f, [text(formatted)]);
+                    // Write line-by-line with hard_line_break() for proper indentation
+                    // (same approach as alignable multi-line comments)
+                    let mut lines = LineTerminatorSplitter::new(formatted);
+                    if let Some(first_line) = lines.next() {
+                        write!(f, [text(first_line.trim_end())]);
+                        for line in lines {
+                            write!(f, [hard_line_break(), " ", text(line.trim())]);
+                        }
+                    }
                 }
                 return;
             }

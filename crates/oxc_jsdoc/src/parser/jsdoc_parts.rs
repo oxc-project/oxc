@@ -89,10 +89,11 @@ impl<'a> JSDocCommentPart<'a> {
     }
 
     /// Returns the content of the comment part without leading `*` prefix in each line,
-    /// but preserves empty lines (paragraph structure).
+    /// but preserves empty lines (paragraph structure) and indentation beyond the `* ` prefix.
     ///
     /// Unlike `parsed()` which filters out empty lines, this method keeps them
-    /// to preserve paragraph breaks and vertical structure in the original text.
+    /// to preserve paragraph breaks, vertical structure, and indentation in the original text.
+    /// This is important for preserving indented code blocks (4+ spaces) and other structured content.
     pub fn parsed_preserving_whitespace(&self) -> String {
         if self.raw.lines().count() == 1 {
             return self.raw.trim().to_string();
@@ -100,7 +101,16 @@ impl<'a> JSDocCommentPart<'a> {
 
         self.raw
             .lines()
-            .map(|line| line.trim().strip_prefix('*').unwrap_or(line).trim())
+            .map(|line| {
+                let trimmed = line.trim();
+                if let Some(rest) = trimmed.strip_prefix('*') {
+                    // Strip at most one leading space after `*` (the conventional ` * ` prefix)
+                    // to preserve any additional indentation (e.g. for indented code blocks)
+                    rest.strip_prefix(' ').unwrap_or(rest)
+                } else {
+                    trimmed
+                }
+            })
             .collect::<Vec<_>>()
             .join("\n")
     }
