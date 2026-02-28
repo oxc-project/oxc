@@ -69,14 +69,21 @@ impl Rule for DoubleComparisons {
         };
 
         // check that (LLHS === RLHS && LRHS === RRHS) || (LLHS === RRHS && LRHS === RLHS)
-        if !((is_same_expression(llhs, rlhs, ctx) && is_same_expression(lrhs, rrhs, ctx))
-            || (is_same_expression(llhs, rrhs, ctx) && is_same_expression(lrhs, rlhs, ctx)))
-        {
-            return;
-        }
+        let rhs_operator =
+            if is_same_expression(llhs, rlhs, ctx) && is_same_expression(lrhs, rrhs, ctx) {
+                rkind
+            } else if is_same_expression(llhs, rrhs, ctx) && is_same_expression(lrhs, rlhs, ctx) {
+                if rkind.is_equality() {
+                    rkind
+                } else {
+                    rkind.compare_inverse_operator().unwrap_or(rkind)
+                }
+            } else {
+                return;
+            };
 
         #[rustfmt::skip]
-        let new_op = match (logical_expr.operator, lkind, rkind) {
+        let new_op = match (logical_expr.operator, lkind, rhs_operator) {
             (LogicalOperator::Or, BinaryOperator::Equality | BinaryOperator::StrictEquality, BinaryOperator::LessThan)
             | (LogicalOperator::Or, BinaryOperator::LessThan, BinaryOperator::Equality | BinaryOperator::StrictEquality) => "<=",
             (LogicalOperator::Or, BinaryOperator::Equality | BinaryOperator::StrictEquality, BinaryOperator::GreaterThan)
@@ -129,6 +136,10 @@ fn test() {
         "x < y || ab == y",
         "x == y || qr > y",
         "(first.range[0] <= second.range[0] && first.range[1] >= second.range[0])",
+        "x <= y && y >= x",
+        "x >= y && y <= x",
+        "x < y || y > x",
+        "x > y || y < x",
     ];
 
     let fail = vec![
@@ -144,6 +155,8 @@ fn test() {
         "x < y || x === y",
         "x === y || x > y",
         "x > y || x === y",
+        "x === y || y < x",
+        "y < x || x === y",
     ];
 
     let fix = vec![
@@ -159,6 +172,8 @@ fn test() {
         ("x < y || x === y", "x <= y"),
         ("x === y || x > y", "x >= y"),
         ("x > y || x === y", "x >= y"),
+        ("x === y || y < x", "x >= y"),
+        ("y < x || x === y", "y <= x"),
     ];
 
     Tester::new(DoubleComparisons::NAME, DoubleComparisons::PLUGIN, pass, fail)

@@ -85,3 +85,17 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: This logical expression can be simplified. Try using the `>=` operator instead.
+
+  ⚠ oxc(double-comparisons): Unexpected double comparisons.
+   ╭─[double_comparisons.tsx:1:1]
+ 1 │ x === y || y < x
+   · ────────────────
+   ╰────
+  help: This logical expression can be simplified. Try using the `>=` operator instead.
+
+  ⚠ oxc(double-comparisons): Unexpected double comparisons.
+   ╭─[double_comparisons.tsx:1:1]
+ 1 │ y < x || x === y
+   · ────────────────
+   ╰────
+  help: This logical expression can be simplified. Try using the `<=` operator instead.
