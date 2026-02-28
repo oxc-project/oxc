@@ -109,3 +109,24 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:1]
+ 1 │ `${'a' + 'b'}` + 'c'
+   · ────────────────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:4]
+ 1 │ `${'a' + 'b'}` + 'c'
+   ·    ─────────
+   ╰────
+  help: Rewrite into one string literal.
+
+  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
+   ╭─[no_useless_concat.tsx:1:5]
+ 1 │ foo['a' + 'b']
+   ·     ─────────
+   ╰────
+  help: Rewrite into one string literal.

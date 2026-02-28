@@ -135,6 +135,16 @@ fn test() {
         "'a' + foo + 'b'",
         "'a' + foo + 'b' + bar + 'b'",
         "'a' - 'b'",
+        "'a + b'",
+        "// 'a' + 'b'",
+        "/* 'a' + 'b' */",
+        "'`a` + b'",
+        "'`a` + `b`'",
+        r#""`a` + `b`""#,
+        "`a + ${b + c}`",
+        "foo['a'] + foo['b']",
+        "`${1 + 1}`",
+        "`${'1' + 1}`",
     ];
 
     let fail = vec![
@@ -153,6 +163,8 @@ fn test() {
         + 'd'
         ",
         "'a' + 'b' + 'c' + 'd' + 'e' + foo",
+        "`${'a' + 'b'}` + 'c'",
+        "foo['a' + 'b']",
     ];
 
     // TODO: Implement a suggestion for this rule.
@@ -172,7 +184,31 @@ fn test() {
         ("'foo bar   ' + ' whatever'", "'foo bar    whatever'"),
         ("'foo' + '' + '' + 'bar'", "'foobar'"),
         ("(foo + 'a') + ('b' + 'c')", "(foo + 'a') + ('bc')"),
-        // TODO: Add more test cases for the fixer.
+        ("`${'a' + 'b'}` + 'c'", "`${'ab'}` + 'c'"), // this one is maybe too complex and we can opt to ignore fixing it?
+        ("'a + b' + 'c'", "'a + bc'"),
+        ("foo['a' + 'b']", "foo['ab']"),
+        ("foo[`a` + 'b']", "foo[`ab`]"),
+        // The below may be too complex and can be ignored for now.
+        (
+            "'a' +
+            'b' + 'c'
+            + 'd'",
+            "'a' +
+            'bc'
+            + 'd'",
+        ),
+        (
+            "'a' +
+            // comment
+            'b' + 'c'
+            // another comment
+            + 'd'",
+            "'a' +
+            // comment
+            'bc'
+            // another comment
+            + 'd'",
+        ),
     ];
 
     Tester::new(NoUselessConcat::NAME, NoUselessConcat::PLUGIN, pass, fail).test_and_snapshot();
