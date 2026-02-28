@@ -108,16 +108,15 @@ fn capitalize_single_list_item(line: &mut String) {
     if let Some(first) = line.chars().next()
         && first.is_ascii_digit()
         && let Some(dot_space_pos) = line.find(". ")
-            && dot_space_pos < 5 {
-                let prefix = line[..dot_space_pos + 2].to_string();
-                let rest = &line[dot_space_pos + 2..];
-                if !rest.is_empty() {
-                    *line = format!("{prefix}{}", capitalize_first(rest));
-                }
-            }
+        && dot_space_pos < 5
+    {
+        let prefix = line[..dot_space_pos + 2].to_string();
+        let rest = &line[dot_space_pos + 2..];
+        if !rest.is_empty() {
+            *line = format!("{prefix}{}", capitalize_first(rest));
+        }
+    }
 }
-
-
 
 /// Tags that use `type_name_comment()` pattern: `@tag {type} name description`
 fn is_type_name_comment_tag(tag_kind: &str) -> bool {
@@ -388,7 +387,13 @@ pub fn format_jsdoc_comment<'a>(
         let bracket_spacing = options.bracket_spacing;
 
         if normalized_kind == "example" || normalized_kind == "remarks" {
-            format_example_tag(normalized_kind, tag, wrap_width, format_options, &mut content_lines);
+            format_example_tag(
+                normalized_kind,
+                tag,
+                wrap_width,
+                format_options,
+                &mut content_lines,
+            );
         } else if is_type_name_comment_tag(raw_kind) {
             format_type_name_comment_tag(
                 normalized_kind,
@@ -422,18 +427,17 @@ pub fn format_jsdoc_comment<'a>(
         // If this tag has multi-paragraph content (blank lines within, or is an @example tag
         // with multi-line code) and the next tag is of a different kind, add a trailing
         // blank line for separation.
-        let tag_content_has_blank_lines = content_lines[lines_before..]
-            .iter()
-            .any(String::is_empty);
+        let tag_content_has_blank_lines =
+            content_lines[lines_before..].iter().any(String::is_empty);
         let tag_content_lines = content_lines.len() - lines_before;
         let is_example_multiline = normalized_kind == "example" && tag_content_lines > 1;
         if (tag_content_has_blank_lines || is_example_multiline)
             && let Some(&(_, next_kind)) = effective_tags.get(tag_idx + 1)
-                && next_kind != normalized_kind
-                    && !content_lines.last().is_some_and(String::is_empty)
-                {
-                    content_lines.push(String::new());
-                }
+            && next_kind != normalized_kind
+            && !content_lines.last().is_some_and(String::is_empty)
+        {
+            content_lines.push(String::new());
+        }
     }
 
     // Post-process: format code in fenced code blocks and indented code blocks
@@ -520,7 +524,13 @@ fn wrap_type_expression(
     if parts.len() <= 1 {
         // Check for object type `{{ ... }}` wrapping
         if type_str.starts_with('{') && type_str.ends_with('}') {
-            return wrap_object_type(tag_prefix, type_str, name_and_rest, wrap_width, content_lines);
+            return wrap_object_type(
+                tag_prefix,
+                type_str,
+                name_and_rest,
+                wrap_width,
+                content_lines,
+            );
         }
         // Check for generic type `Foo<...>` wrapping at top-level angle bracket
         if let Some(wrapped) = wrap_generic_type(tag_prefix, type_str, name_and_rest, content_lines)
@@ -583,10 +593,7 @@ fn wrap_object_type(
             continue;
         }
         // Normalize delimiter: strip trailing `,` or `;` and always use `;`
-        let field = field
-            .strip_suffix(',')
-            .or_else(|| field.strip_suffix(';'))
-            .unwrap_or(field);
+        let field = field.strip_suffix(',').or_else(|| field.strip_suffix(';')).unwrap_or(field);
         // Normalize field value: `*` → `any`
         let field = normalize_object_field(field);
         // Check if the field value is a nested object that should be expanded
@@ -601,10 +608,7 @@ fn wrap_object_type(
                     if nf.is_empty() {
                         continue;
                     }
-                    let nf = nf
-                        .strip_suffix(',')
-                        .or_else(|| nf.strip_suffix(';'))
-                        .unwrap_or(nf);
+                    let nf = nf.strip_suffix(',').or_else(|| nf.strip_suffix(';')).unwrap_or(nf);
                     let nf = normalize_object_field(nf);
                     content_lines.push(format!("{nested_indent}{}", field_with_semicolon(&nf)));
                 }
@@ -653,7 +657,9 @@ fn find_line_comment(field: &str) -> Option<usize> {
                 let q = bytes[i];
                 i += 1;
                 while i < len && bytes[i] != q {
-                    if bytes[i] == b'\\' { i += 1; }
+                    if bytes[i] == b'\\' {
+                        i += 1;
+                    }
                     i += 1;
                 }
             }
@@ -672,11 +678,8 @@ fn normalize_object_field(field: &str) -> String {
     if let Some(colon_pos) = find_field_colon(field) {
         let key = field[..colon_pos].trim();
         let value = field[colon_pos + 1..].trim();
-        let normalized_value = if value == "*" {
-            "any".to_string()
-        } else {
-            normalize_type_whitespace(value)
-        };
+        let normalized_value =
+            if value == "*" { "any".to_string() } else { normalize_type_whitespace(value) };
         // Preserve inline comments
         format!("{key}: {normalized_value}")
     } else {
@@ -838,10 +841,11 @@ fn split_object_fields(inner: &str) -> Vec<String> {
                 if !field.is_empty() {
                     // Attach any pending inline comment to the previous field
                     if let Some(comment) = pending_comment.take()
-                        && let Some(last) = fields.last_mut() {
-                            last.push(' ');
-                            last.push_str(&comment);
-                        }
+                        && let Some(last) = fields.last_mut()
+                    {
+                        last.push(' ');
+                        last.push_str(&comment);
+                    }
                     fields.push(field);
                 } else if let Some(comment) = pending_comment.take() {
                     // Field text was empty (comment was between two delimiters)
@@ -862,10 +866,11 @@ fn split_object_fields(inner: &str) -> Vec<String> {
 
     // Attach any trailing pending comment
     if let Some(comment) = pending_comment.take()
-        && let Some(last) = fields.last_mut() {
-            last.push(' ');
-            last.push_str(&comment);
-        }
+        && let Some(last) = fields.last_mut()
+    {
+        last.push(' ');
+        last.push_str(&comment);
+    }
 
     let last = inner[start..].trim();
     if !last.is_empty() {
@@ -991,7 +996,11 @@ fn strip_default_is_suffix(desc: &str) -> String {
 
 /// Post-process content lines to format code inside fenced code blocks with language tags.
 /// Finds ```js ... ``` blocks and reformats the code using the embedded JS formatter.
-fn format_fenced_code_blocks(content_lines: &mut Vec<String>, wrap_width: usize, format_options: &FormatOptions) {
+fn format_fenced_code_blocks(
+    content_lines: &mut Vec<String>,
+    wrap_width: usize,
+    format_options: &FormatOptions,
+) {
     let mut i = 0;
     while i < content_lines.len() {
         let line = &content_lines[i];
@@ -1006,10 +1015,7 @@ fn format_fenced_code_blocks(content_lines: &mut Vec<String>, wrap_width: usize,
 
             // Find closing code fence
             let start = i + 1;
-            let end = content_lines[start..]
-                .iter()
-                .position(|l| l == "```")
-                .map(|pos| start + pos);
+            let end = content_lines[start..].iter().position(|l| l == "```").map(|pos| start + pos);
 
             let Some(end_idx) = end else {
                 i += 1;
@@ -1017,8 +1023,11 @@ fn format_fenced_code_blocks(content_lines: &mut Vec<String>, wrap_width: usize,
             };
 
             // Extract code content
-            let code: String =
-                content_lines[start..end_idx].iter().map(String::as_str).collect::<Vec<_>>().join("\n");
+            let code: String = content_lines[start..end_idx]
+                .iter()
+                .map(String::as_str)
+                .collect::<Vec<_>>()
+                .join("\n");
 
             // Try to format
             if let Some(formatted) = format_embedded_js(&code, wrap_width, format_options) {
@@ -1041,7 +1050,11 @@ fn format_fenced_code_blocks(content_lines: &mut Vec<String>, wrap_width: usize,
 /// Post-process content lines to format indented code blocks (4-space indented).
 /// These are blocks of consecutive lines starting with 4+ spaces, typically
 /// between blank lines.
-fn format_indented_code_blocks(content_lines: &mut Vec<String>, wrap_width: usize, format_options: &FormatOptions) {
+fn format_indented_code_blocks(
+    content_lines: &mut Vec<String>,
+    wrap_width: usize,
+    format_options: &FormatOptions,
+) {
     let mut i = 0;
     while i < content_lines.len() {
         if content_lines[i].starts_with("    ") {
@@ -1089,23 +1102,22 @@ fn format_indented_code_blocks(content_lines: &mut Vec<String>, wrap_width: usiz
 /// Returns `Some(formatted)` on success, `None` if parsing fails.
 /// The `print_width` is the available width for the formatted code.
 /// Uses the parent `format_options` to ensure consistent formatting behavior.
-fn format_embedded_js(code: &str, print_width: usize, format_options: &FormatOptions) -> Option<String> {
+fn format_embedded_js(
+    code: &str,
+    print_width: usize,
+    format_options: &FormatOptions,
+) -> Option<String> {
     let line_width = LineWidth::try_from(u16::try_from(print_width).unwrap_or(80)).unwrap();
 
     // Build options from parent, overriding line_width and disabling JSDoc
     // to prevent recursive formatting
-    let make_options = || FormatOptions {
-        line_width,
-        jsdoc: None,
-        ..format_options.clone()
-    };
+    let make_options = || FormatOptions { line_width, jsdoc: None, ..format_options.clone() };
 
     // Try to parse and format with the given source type
     let try_format = |code: &str, source_type: SourceType| -> Option<String> {
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, code, source_type)
-            .with_options(get_parse_options())
-            .parse();
+        let ret =
+            Parser::new(&allocator, code, source_type).with_options(get_parse_options()).parse();
         if ret.panicked || !ret.errors.is_empty() {
             return None;
         }
@@ -1138,10 +1150,7 @@ fn format_embedded_js(code: &str, print_width: usize, format_options: &FormatOpt
             }
             // Use TrailingCommas::None for object literals since JSON-like code
             // shouldn't have trailing commas
-            let options = FormatOptions {
-                trailing_commas: TrailingCommas::None,
-                ..make_options()
-            };
+            let options = FormatOptions { trailing_commas: TrailingCommas::None, ..make_options() };
             let formatted = Formatter::new(&allocator, options).build(&ret.program);
             let formatted = formatted.trim_end();
             // Remove the wrapping parens and trailing semicolon
@@ -1165,7 +1174,12 @@ fn format_embedded_js(code: &str, print_width: usize, format_options: &FormatOpt
 
 /// Format example code content with 2-space base indent.
 /// Tries to format the code as JS/JSX first; falls back to pass-through on parse failure.
-fn format_example_code(code: &str, wrap_width: usize, format_options: &FormatOptions, content_lines: &mut Vec<String>) {
+fn format_example_code(
+    code: &str,
+    wrap_width: usize,
+    format_options: &FormatOptions,
+    content_lines: &mut Vec<String>,
+) {
     if code.is_empty() {
         return;
     }
@@ -1281,8 +1295,7 @@ fn format_type_name_comment_tag(
     // Build the full tag line
     let mut tag_line = tag_prefix.clone();
     if !normalized_type_str.is_empty() {
-        let preserve_no_space =
-            has_no_space_before_type && !normalized_type_str.starts_with('{');
+        let preserve_no_space = has_no_space_before_type && !normalized_type_str.starts_with('{');
         let space = if preserve_no_space { "" } else { " " };
         let (ob, cb) = if bracket_spacing { ("{ ", " }") } else { ("{", "}") };
         write!(tag_line, "{space}{ob}{normalized_type_str}{cb}").unwrap();
@@ -1489,11 +1502,11 @@ fn format_type_name_comment_tag(
 
         // Add default value as a separate paragraph with blank line
         if let Some(ref ds) = default_suffix
-            && !first_text.is_empty() {
-                content_lines.push(String::new());
-                content_lines.push(format!("{indent}{ds}"));
-            }
-
+            && !first_text.is_empty()
+        {
+            content_lines.push(String::new());
+            content_lines.push(format!("{indent}{ds}"));
+        }
     }
 }
 
@@ -1564,13 +1577,7 @@ fn format_type_comment_tag(
         content_lines.push(one_liner);
     } else if !normalized_type_str.is_empty()
         && tag_line.len() > wrap_width
-        && wrap_type_expression(
-            &tag_prefix,
-            &normalized_type_str,
-            "",
-            wrap_width,
-            content_lines,
-        )
+        && wrap_type_expression(&tag_prefix, &normalized_type_str, "", wrap_width, content_lines)
     {
         // Type was wrapped. Add description as continuation.
         let indent = "  ";

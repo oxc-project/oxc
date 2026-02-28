@@ -61,10 +61,7 @@ impl JsdocTestRunner {
             if is_pass {
                 passed += 1;
             } else {
-                let rel_path = input_path
-                    .strip_prefix(fixtures_root())
-                    .unwrap()
-                    .to_string_lossy();
+                let rel_path = input_path.strip_prefix(fixtures_root()).unwrap().to_string_lossy();
                 writeln!(failed_reports, "| {rel_path} | {ratio:.2}% |").unwrap();
             }
         }
@@ -159,10 +156,7 @@ impl JsdocTestRunner {
         let ratio = diff.ratio() * 100.0;
 
         if print_diff || self.debug {
-            let rel_path = input_path
-                .strip_prefix(fixtures_root())
-                .unwrap()
-                .to_string_lossy();
+            let rel_path = input_path.strip_prefix(fixtures_root()).unwrap().to_string_lossy();
 
             if is_pass {
                 println!("PASS: {rel_path}");

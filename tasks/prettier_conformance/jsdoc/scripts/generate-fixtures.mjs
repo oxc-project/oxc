@@ -2218,7 +2218,13 @@ async function generateFileTests() {
 
     const fileExt = name.split(".").pop();
     const parser =
-      fileExt === "ts" ? "typescript" : fileExt === "tsx" ? "typescript" : fileExt === "jsx" ? "babel" : "babel";
+      fileExt === "ts"
+        ? "typescript"
+        : fileExt === "tsx"
+          ? "typescript"
+          : fileExt === "jsx"
+            ? "babel"
+            : "babel";
 
     const formatOpts = {
       ...options,
