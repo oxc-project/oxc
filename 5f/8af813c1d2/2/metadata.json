@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "5f8af813c1d2",
+  "session_id": "a40a509f-e347-4b04-b26a-8860da1b9706",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-28T02:49:33.80164Z",
+  "branch": "fix/yarn-pnp-prefer-unplugged",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "npm/oxfmt/package.json",
+    "npm/oxlint/package.json"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "273f415f-d14c-47a9-a0a0-16c374f60139",
+  "token_usage": {
+    "input_tokens": 184,
+    "cache_creation_tokens": 59610,
+    "cache_read_tokens": 286771,
+    "output_tokens": 1962,
+    "api_call_count": 11
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-28T02:49:33.792485Z",
+    "agent_lines": 2,
+    "human_added": 2439,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2441,
+    "agent_percentage": 0.0819336337566571
+  }
+}
