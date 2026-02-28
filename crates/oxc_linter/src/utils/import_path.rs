@@ -4,6 +4,7 @@ use std::{
     sync::Arc,
 };
 
+use cow_utils::CowUtils;
 use oxc_resolver::Resolver;
 use oxc_span::CompactStr;
 use rustc_hash::FxHashSet;
@@ -126,7 +127,7 @@ pub fn relative_import_specifier(from_dir: &Path, target: &Path) -> Option<Strin
 /// `index.<ext>`. Used by the runtime so `@/utils/helper` can match `@/utils/helper.ts`
 /// and vice versa when resolving preferred specifiers.
 pub fn candidate_variants(specifier: &str) -> Vec<String> {
-    let normalized = specifier.replace('\\', "/");
+    let normalized = specifier.cow_replace('\\', "/").into_owned();
     let mut variants = Vec::new();
     variants.push(normalized.clone());
     if let Some(without_extension) = strip_last_extension(&normalized) {
@@ -180,10 +181,11 @@ impl TsconfigPathAliases {
                 })
                 .collect::<Vec<_>>()
                 .join("/");
-            let target_suffix = alias.target_suffix.to_string_lossy().replace('\\', "/");
+            let target_suffix_lossy = alias.target_suffix.to_string_lossy();
+            let target_suffix = target_suffix_lossy.cow_replace('\\', "/");
             let middle = if target_suffix.is_empty() {
                 remainder_string
-            } else if let Some(value) = remainder_string.strip_suffix(&target_suffix) {
+            } else if let Some(value) = remainder_string.strip_suffix(target_suffix.as_ref()) {
                 value.trim_end_matches('/').to_string()
             } else {
                 continue; // target suffix must match (e.g. .ts vs .js)

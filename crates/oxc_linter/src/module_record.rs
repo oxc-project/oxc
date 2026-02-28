@@ -136,6 +136,10 @@ impl fmt::Debug for ModuleRecord {
             .field("exported_bindings", &self.exported_bindings)
             .field("exported_bindings_from_star_export", &self.exported_bindings_from_star_export)
             .field("export_default", &self.export_default)
+            .field(
+                "preferred_specifier_computer",
+                &self.preferred_specifier_computer.get().is_some(),
+            )
             .finish()
     }
 }
@@ -572,6 +576,9 @@ impl ModuleRecord {
 
     /// Returns the shortest preferred specifier for the given import key,
     /// computing and caching on first access.
+    ///
+    /// # Panics
+    /// Panics if internal lock state is poisoned.
     pub fn preferred_specifier(&self, key: &str) -> Option<CompactStr> {
         if let Some(cached) = self.preferred_specifiers.read().unwrap().get(key) {
             return Some(cached.clone());
@@ -582,6 +589,9 @@ impl ModuleRecord {
 
     /// Returns the shortest non-relative specifier for the given import key,
     /// computing and caching on first access.
+    ///
+    /// # Panics
+    /// Panics if internal lock state is poisoned.
     pub fn preferred_non_relative_specifier(&self, key: &str) -> Option<CompactStr> {
         if let Some(cached) = self.preferred_non_relative_specifiers.read().unwrap().get(key) {
             return Some(cached.clone());
