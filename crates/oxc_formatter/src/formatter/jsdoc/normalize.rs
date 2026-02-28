@@ -25,49 +25,170 @@ pub fn normalize_tag_kind(kind: &str) -> &str {
     }
 }
 
-/// Convert markdown double-underscore bold to asterisk bold.
-/// `__text__` → `**text**`
-/// Single underscores `_text_` are preserved (not converted).
+/// Normalize markdown emphasis markers:
+/// - `__text__` → `**text**` (double underscore bold → asterisk bold)
+/// - `*text*` → `_text_` (single asterisk italic → underscore italic)
+///
+/// Matches prettier-plugin-jsdoc which normalizes emphasis through remark.
+/// Bold uses `**`, italic uses `_`.
 pub fn normalize_markdown_emphasis(text: &str) -> String {
-    if !text.contains("__") {
+    if !text.contains("__") && !text.contains('*') {
         return text.to_string();
     }
 
-    let mut result = String::with_capacity(text.len());
-    let chars: Vec<char> = text.chars().collect();
+    // First pass: convert `__` → `**`
+    let mut chars: Vec<char> = text.chars().collect();
     let len = chars.len();
     let mut i = 0;
     let mut in_code = false;
 
     while i < len {
-        let ch = chars[i];
-
-        // Don't modify content inside backticks
-        if ch == '`' {
+        if chars[i] == '`' {
             in_code = !in_code;
-            result.push(ch);
             i += 1;
             continue;
         }
-
         if in_code {
-            result.push(ch);
+            i += 1;
+            continue;
+        }
+        if chars[i] == '_' && i + 1 < len && chars[i + 1] == '_' {
+            chars[i] = '*';
+            chars[i + 1] = '*';
+            i += 2;
+            continue;
+        }
+        i += 1;
+    }
+
+    // Second pass: convert single `*text*` → `_text_`
+    // Skip `**` (bold) and content inside backticks.
+    in_code = false;
+    i = 0;
+    while i < len {
+        if chars[i] == '`' {
+            in_code = !in_code;
+            i += 1;
+            continue;
+        }
+        if in_code {
             i += 1;
             continue;
         }
 
-        // Check for `__` (bold) - convert to `**`
-        if ch == '_' && i + 1 < len && chars[i + 1] == '_' {
-            result.push('*');
-            result.push('*');
+        // Skip `**` (bold markers)
+        if chars[i] == '*' && i + 1 < len && chars[i + 1] == '*' {
             i += 2;
             continue;
         }
 
-        result.push(ch);
+        // Single `*` — check if it's an opening emphasis marker:
+        // Must be followed by a non-whitespace character
+        if chars[i] == '*' && i + 1 < len && !chars[i + 1].is_whitespace() {
+            // Look for matching closing `*`
+            let opener = i;
+            let mut j = opener + 1;
+            while j < len {
+                if chars[j] == '`' {
+                    // Skip inline code spans
+                    j += 1;
+                    while j < len && chars[j] != '`' {
+                        j += 1;
+                    }
+                    if j < len {
+                        j += 1;
+                    }
+                    continue;
+                }
+                // Skip `**` inside emphasis
+                if chars[j] == '*' && j + 1 < len && chars[j + 1] == '*' {
+                    j += 2;
+                    continue;
+                }
+                // Found closing `*`: must be preceded by non-whitespace
+                if chars[j] == '*' && j > opener + 1 && !chars[j - 1].is_whitespace() {
+                    chars[opener] = '_';
+                    chars[j] = '_';
+                    i = j + 1;
+                    break;
+                }
+                j += 1;
+            }
+            if i <= opener {
+                i = opener + 1;
+            }
+            continue;
+        }
+
         i += 1;
     }
-    result
+
+    chars.into_iter().collect()
+}
+
+/// Convert setext-style markdown headings to ATX-style.
+/// `Header\n======` → `# Header`
+/// `Header\n------` → `## Header`
+///
+/// Skips content inside fenced code blocks and indented code blocks
+/// (4+ spaces) to avoid converting separator lines like `----` in code.
+///
+/// Matches prettier-plugin-jsdoc behavior of normalizing headings via remark.
+pub fn convert_setext_headings(text: &str) -> String {
+    if !text.contains('\n') {
+        return text.to_string();
+    }
+
+    let lines: Vec<&str> = text.lines().collect();
+    let mut result: Vec<String> = Vec::with_capacity(lines.len());
+    let mut i = 0;
+    let mut in_fenced = false;
+
+    while i < lines.len() {
+        let line = lines[i];
+
+        // Track fenced code blocks
+        if line.starts_with("```") {
+            in_fenced = !in_fenced;
+            result.push(line.to_string());
+            i += 1;
+            continue;
+        }
+
+        if in_fenced {
+            result.push(line.to_string());
+            i += 1;
+            continue;
+        }
+
+        // Skip indented code blocks (4+ spaces)
+        if line.starts_with("    ") {
+            result.push(line.to_string());
+            i += 1;
+            continue;
+        }
+
+        // Check if the NEXT line is a setext underline (and not indented)
+        if i + 1 < lines.len() {
+            let next = lines[i + 1].trim();
+            let current = line.trim();
+            let next_is_indented = lines[i + 1].starts_with("    ");
+            if !current.is_empty()
+                && !next_is_indented
+                && next.len() >= 3
+                && (next.chars().all(|c| c == '=') || next.chars().all(|c| c == '-'))
+            {
+                let prefix = if next.starts_with('=') { "#" } else { "##" };
+                result.push(format!("{prefix} {current}"));
+                i += 2; // Skip both the heading text and underline
+                continue;
+            }
+        }
+        result.push(line.to_string());
+        i += 1;
+    }
+
+    result.join("\n")
 }
 
 /// Un-escape markdown backslashes in description text.
