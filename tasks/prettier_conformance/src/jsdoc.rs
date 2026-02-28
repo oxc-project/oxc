@@ -8,7 +8,8 @@ use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
 use oxc_formatter::{
-    FormatOptions, Formatter, JsdocOptions, LineWidth, enable_jsx_source_type, get_parse_options,
+    FormatOptions, Formatter, JsdocOptions, LineWidth, QuoteStyle, enable_jsx_source_type,
+    get_parse_options,
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -139,9 +140,10 @@ impl JsdocTestRunner {
         let source_text = std::fs::read_to_string(input_path).unwrap();
         let expected = std::fs::read_to_string(expected_path).unwrap();
 
-        let jsdoc_options = Self::load_jsdoc_options(input_path);
+        let (jsdoc_options, quote_style) = Self::load_jsdoc_options(input_path);
 
-        let Some(actual) = Self::run_oxfmt(&source_text, input_path, &jsdoc_options) else {
+        let Some(actual) = Self::run_oxfmt(&source_text, input_path, &jsdoc_options, quote_style)
+        else {
             if self.debug || print_diff {
                 println!(
                     "SKIP (parse error): {}",
@@ -171,10 +173,10 @@ impl JsdocTestRunner {
         (is_pass, ratio)
     }
 
-    /// Load per-fixture JsdocOptions.
+    /// Load per-fixture JsdocOptions and format overrides.
     /// Checks for a per-file sidecar `{stem}.options.json` first, then
     /// directory-level `options.json`. Falls back to default options.
-    fn load_jsdoc_options(input_path: &Path) -> JsdocOptions {
+    fn load_jsdoc_options(input_path: &Path) -> (JsdocOptions, QuoteStyle) {
         let dir = input_path.parent().unwrap();
 
         // Per-file options: e.g. 033-not-capitalizing-false.options.json
@@ -190,12 +192,13 @@ impl JsdocTestRunner {
             return Self::parse_jsdoc_options(&dir_options_path);
         }
 
-        JsdocOptions::default()
+        (JsdocOptions::default(), QuoteStyle::default())
     }
 
-    fn parse_jsdoc_options(path: &Path) -> JsdocOptions {
+    fn parse_jsdoc_options(path: &Path) -> (JsdocOptions, QuoteStyle) {
         let content = std::fs::read_to_string(path).unwrap();
         let mut options = JsdocOptions::default();
+        let mut quote_style = QuoteStyle::default();
 
         // Simple JSON parsing for known options
         if content.contains("\"capitalize_descriptions\": false") {
@@ -210,11 +213,19 @@ impl JsdocTestRunner {
         if content.contains("\"bracket_spacing\": true") {
             options.bracket_spacing = true;
         }
+        if content.contains("\"single_quote\": true") {
+            quote_style = QuoteStyle::Single;
+        }
 
-        options
+        (options, quote_style)
     }
 
-    fn run_oxfmt(source_text: &str, path: &Path, jsdoc_options: &JsdocOptions) -> Option<String> {
+    fn run_oxfmt(
+        source_text: &str,
+        path: &Path,
+        jsdoc_options: &JsdocOptions,
+        quote_style: QuoteStyle,
+    ) -> Option<String> {
         let allocator = Allocator::default();
 
         let source_type = SourceType::from_path(path).unwrap_or_default();
@@ -230,6 +241,7 @@ impl JsdocTestRunner {
         // Use printWidth=80 to match Prettier's default (oxfmt defaults to 100)
         let options = FormatOptions {
             line_width: LineWidth::try_from(80).unwrap(),
+            quote_style,
             jsdoc: Some(jsdoc_options.clone()),
             ..FormatOptions::default()
         };
