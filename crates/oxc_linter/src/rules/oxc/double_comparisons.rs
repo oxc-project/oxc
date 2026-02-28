@@ -157,6 +157,8 @@ fn test() {
         "x > y || x === y",
         "x === y || y < x",
         "y < x || x === y",
+        "x === y || y > x",
+        "y > x || x === y",
     ];
 
     let fix = vec![
@@ -174,6 +176,8 @@ fn test() {
         ("x > y || x === y", "x >= y"),
         ("x === y || y < x", "x >= y"),
         ("y < x || x === y", "y <= x"),
+        ("x === y || y > x", "x <= y"),
+        ("y > x || x === y", "y >= x"),
     ];
 
     Tester::new(DoubleComparisons::NAME, DoubleComparisons::PLUGIN, pass, fail)
