@@ -965,7 +965,65 @@ pub fn default_globals(shapes: &mut ShapeRegistry) -> GlobalRegistry {
     // Common global functions
     add_global_function_globals(&mut globals, shapes);
 
+    // React namespace object — mirrors the TS `React` global in Globals.ts.
+    // The React object contains all REACT_APIS hooks plus createElement,
+    // cloneElement, and createRef as properties.
+    add_react_namespace_global(&mut globals, shapes);
+
     globals
+}
+
+/// Names that are part of REACT_APIS in the TS version.
+/// These are registered as both top-level globals and as properties of the React namespace object.
+const REACT_API_NAMES: &[&str] = &[
+    "useContext",
+    "useState",
+    "useActionState",
+    "useReducer",
+    "useRef",
+    "useImperativeHandle",
+    "useMemo",
+    "useCallback",
+    "useEffect",
+    "useLayoutEffect",
+    "useInsertionEffect",
+    "useTransition",
+    "useOptimistic",
+    "use",
+    "useEffectEvent",
+];
+
+/// Additional React static methods that are properties of the React namespace object
+/// but NOT part of REACT_APIS (they aren't hooks).
+const REACT_STATIC_METHOD_NAMES: &[&str] = &["createElement", "cloneElement", "createRef"];
+
+/// Build the `React` global namespace object.
+///
+/// Port of the `TYPED_GLOBALS.push(['React', addObject(...)])` block in `Globals.ts`.
+/// The React object's shape includes all REACT_APIS hooks plus createElement,
+/// cloneElement, and createRef, so that `React.useState(...)` etc. resolve correctly.
+fn add_react_namespace_global(globals: &mut GlobalRegistry, shapes: &mut ShapeRegistry) {
+    let mut react_props: Vec<(String, Type)> = Vec::new();
+
+    // Gather all REACT_APIS types from the already-registered globals.
+    for name in REACT_API_NAMES {
+        if let Some(Global::Typed(type_)) = globals.get(*name) {
+            react_props.push(((*name).to_string(), type_.clone()));
+        }
+    }
+
+    // Gather React static methods (createElement, cloneElement, createRef).
+    for name in REACT_STATIC_METHOD_NAMES {
+        if let Some(Global::Typed(type_)) = globals.get(*name) {
+            react_props.push(((*name).to_string(), type_.clone()));
+        }
+    }
+
+    let react_shape_id = add_object(shapes, "Global$React", react_props);
+    globals.insert(
+        "React".to_string(),
+        Global::Typed(Type::Object(ObjectType { shape_id: Some(react_shape_id) })),
+    );
 }
 
 /// Helper to insert a hook global as a Function type.

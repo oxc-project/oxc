@@ -194,16 +194,11 @@ fn traverse_block(block: &mut ReactiveBlock, scopes: &mut Scopes) {
 
 fn visit_scope(scope_block: &mut crate::hir::ReactiveScopeBlock, scopes: &mut Scopes) {
     // Visit scope declarations first (matches TS visitScope).
-    // In TypeScript, `scope.declarations` is a Map that preserves insertion order,
-    // and declarations are inserted in instruction-processing order (ascending IdentifierId).
-    // Our Rust FxHashMap does not preserve order, so we sort by IdentifierId to match TS.
-    let mut decl_ids: Vec<crate::hir::IdentifierId> =
-        scope_block.scope.declarations.keys().copied().collect();
-    decl_ids.sort();
-    for id in &decl_ids {
-        if let Some(declaration) = scope_block.scope.declarations.get_mut(id) {
-            scopes.visit(&mut declaration.identifier);
-        }
+    // In TypeScript, `scope.declarations` is a Map that preserves insertion order.
+    // Our Rust IndexMap also preserves insertion order, so we iterate directly
+    // (matching the TS behavior where Map iterates in insertion order).
+    for declaration in scope_block.scope.declarations.values_mut() {
+        scopes.visit(&mut declaration.identifier);
     }
 
     // In TS, identifiers are reference types, so renaming a declaration's identifier

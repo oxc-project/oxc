@@ -1,16 +1,17 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 7676
 expression: snapshot
 ---
-Codegen conformance: 1193/1416 passed (84.3%)
+Codegen conformance: 1210/1416 passed (85.5%)
 
 Failure breakdown:
-  parse_error:    35
+  parse_error:    22
   no_function:    4
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:176
+  output_mismatch:172
   no_expected:    7
 
 Failed fixtures:
@@ -21,11 +22,10 @@ Failed fixtures:
   [parse_error] allow-ref-initialization-undefined.js
   [parse_error] allow-ref-initialization.js
   [output_mismatch] allow-ref-lazy-initialization-with-logical.js
-  [parse_error] allow-ref-type-cast-in-render.js
+  [output_mismatch] allow-ref-type-cast-in-render.js
   [output_mismatch] array-at-closure.js
   [output_mismatch] array-from-maybemutates-arg0.js
   [output_mismatch] array-spread-mutable-iterator.js
-  [output_mismatch] arrow-expr-directive.js
   [output_mismatch] bug-capturing-func-maybealias-captured-mutate.ts
   [output_mismatch] bug-ref-prefix-postfix-operator.js
   [output_mismatch] bug-type-inference-control-flow.ts
@@ -45,9 +45,6 @@ Failed fixtures:
   [output_mismatch] destructuring-mixed-scope-declarations-and-locals.js
   [output_mismatch] destructuring-property-inference.js
   [parse_error] destructuring-with-typecast-as-default-value.flow.js
-  [output_mismatch] effect-derived-computations/derived-state-from-default-props.js
-  [parse_error] effect-derived-computations/effect-with-cleanup-function-depending-on-derived-computation-value.js
-  [output_mismatch] effect-derived-computations/function-expression-mutation-edge-case.js
   [output_mismatch] fast-refresh-reloading.js
   [output_mismatch] fbt/bug-fbt-plural-multiple-function-calls.ts
   [output_mismatch] fbt/bug-fbt-plural-multiple-mixed-call-tag.tsx
@@ -81,11 +78,10 @@ Failed fixtures:
   [output_mismatch] fbt/repro-macro-property-not-handled.tsx
   [output_mismatch] fbt/repro-separately-memoized-fbt-param.js
   [output_mismatch] flag-enable-emit-hook-guards.ts
-  [parse_error] flow-enum-inline.js
+  [output_mismatch] flow-enum-inline.js
   [output_mismatch] for-of-immutable-collection.js
   [output_mismatch] frozen-after-alias.js
   [output_mismatch] function-declaration-redeclare.js
-  [output_mismatch] function-expr-directive.js
   [parse_error] gating/component-syntax-ref-gating.flow.js
   [output_mismatch] gating/conflicting-gating-fn.js
   [pipeline_error] gating/dynamic-gating-bailout-nopanic.js
@@ -114,9 +110,6 @@ Failed fixtures:
   [output_mismatch] incompatible-destructuring-kinds.js
   [output_mismatch] infer-global-object.js
   [parse_error] infer-types-through-type-cast.flow.js
-  [output_mismatch] inner-memo-value-not-promoted-to-outer-scope-dynamic.js
-  [output_mismatch] invalid-setState-in-useEffect-namespace.js
-  [output_mismatch] invalid-setState-in-useEffect.js
   [output_mismatch] jsx-outlining-dup-key-diff-value.js
   [output_mismatch] jsx-outlining-dupe-attr-after-rename.js
   [output_mismatch] jsx-outlining-dupe-key-dupe-component.js
@@ -143,13 +136,11 @@ Failed fixtures:
   [output_mismatch] new-mutability/aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] new-mutability/array-push.js
   [output_mismatch] new-mutability/iife-return-modified-later-phi.js
-  [parse_error] new-mutability/nullable-objects-assume-invoked-direct-call.js
   [output_mismatch] new-mutability/object-expression-computed-member.js
   [parse_error] new-mutability/repro-compiler-infinite-loop.js
   [output_mismatch] new-mutability/repro-destructure-from-prop-with-default-value.js
   [parse_error] new-mutability/repro-internal-compiler-shared-mutablerange-bug.js
   [parse_error] new-mutability/repro-jsx-captures-value-mutated-later.js
-  [parse_error] new-mutability/repro-mutate-new-set-of-frozen-items-in-callback.js
   [output_mismatch] new-mutability/todo-control-flow-sensitive-mutation.tsx
   [output_mismatch] new-mutability/transitivity-add-captured-array-to-itself.tsx
   [output_mismatch] new-mutability/transitivity-phi-assign-or-capture.tsx
@@ -185,13 +176,12 @@ Failed fixtures:
   [output_mismatch] reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
   [output_mismatch] relay-transitive-mixeddata.js
   [output_mismatch] reordering-across-blocks.js
-  [parse_error] repeated-dependencies-more-precise.js
-  [parse_error] repro-aliased-capture-aliased-mutate.js
-  [parse_error] repro-aliased-capture-mutate.js
+  [output_mismatch] repeated-dependencies-more-precise.js
+  [output_mismatch] repro-aliased-capture-aliased-mutate.js
+  [output_mismatch] repro-aliased-capture-mutate.js
   [output_mismatch] repro-capturing-func-maybealias-captured-mutate.ts
   [output_mismatch] repro-dont-memoize-array-with-mutable-map-after-hook.js
   [output_mismatch] repro-for-of-in-try.js
-  [output_mismatch] repro-instruction-part-of-already-closed-scope.js
   [parse_error] repro-invalid-destructuring-reassignment-undefined-variable.js
   [output_mismatch] repro-memoize-for-of-collection-when-loop-body-returns.js
   [output_mismatch] repro-missing-memoization-lack-of-phi-types.js
@@ -199,9 +189,7 @@ Failed fixtures:
   [output_mismatch] repro-mutate-result-of-function-call-with-frozen-argument-in-function-expression.js
   [output_mismatch] repro-mutate-result-of-method-call-on-frozen-value-in-function-expression.js
   [output_mismatch] repro-no-value-for-temporary-reactive-scope-with-early-return.js
-  [output_mismatch] repro-no-value-for-temporary.js
-  [parse_error] repro-propagate-type-of-ternary-jsx.js
-  [parse_error] repro-propagate-type-of-ternary-nested.js
+  [output_mismatch] repro-propagate-type-of-ternary-nested.js
   [output_mismatch] repro-ref-mutable-range.tsx
   [output_mismatch] repro-returned-inner-fn-mutates-context.js
   [output_mismatch] repro-scope-missing-mutable-range.js
@@ -217,7 +205,6 @@ Failed fixtures:
   [no_expected_code] rules-of-hooks/todo.error.rules-of-hooks-d0935abedc42.js
   [no_expected_code] rules-of-hooks/todo.error.rules-of-hooks-e29c874aa913.js
   [no_function] rules-of-hooks/todo.invalid.invalid-rules-of-hooks-a63fd4f9dcc0.js
-  [output_mismatch] sequential-destructuring-assignment-to-scope-declarations.js
   [output_mismatch] ssa-for-of.js
   [output_mismatch] ssa-property-alias-mutate-inside-if.js
   [output_mismatch] switch-non-final-default.js
@@ -227,9 +214,6 @@ Failed fixtures:
   [output_mismatch] transitive-freeze-function-expressions.js
   [output_mismatch] try-catch-within-function-expression-returns-caught-value.js
   [output_mismatch] ts-enum-inline.tsx
-  [parse_error] type-alias-used-as-annotation_.flow.js
-  [parse_error] type-alias-used-as-variable-annotation_.flow.js
-  [parse_error] type-alias.flow.js
   [parse_error] type-cast-expression.flow.js
   [output_mismatch] type-provider-tagged-template-expression.js
   [output_mismatch] use-effect-cleanup-reassigns.js

@@ -462,3 +462,4 @@ pub fn resolve_output_mode(
     }
     if no_emit { CompilerOutputMode::Lint } else { CompilerOutputMode::Client }
 }
+

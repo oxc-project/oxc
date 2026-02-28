@@ -9,7 +9,8 @@
 /// - `ReactiveScopes/PruneTemporaryLValues.ts`
 /// - `ReactiveScopes/PruneAllReactiveScopes.ts`
 /// - `ReactiveScopes/PruneHoistedContexts.ts`
-use rustc_hash::{FxHashMap, FxHashSet};
+use indexmap::IndexMap;
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::hir::{
     IdentifierId, InstructionKind, InstructionValue, PrunedReactiveScopeBlock, ReactiveBlock,
@@ -792,7 +793,7 @@ fn prune_always_invalidating_block(
                     id: crate::hir::ScopeId(0),
                     range: crate::hir::MutableRange::default(),
                     dependencies: FxHashSet::default(),
-                    declarations: FxHashMap::default(),
+                    declarations: IndexMap::with_hasher(FxBuildHasher),
                     reassignments: Vec::new(),
                     early_return_value: None,
                     merged: FxHashSet::default(),
