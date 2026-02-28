@@ -347,12 +347,58 @@ fn serialize_tokens(
         source_text,
         span_converter: span_converter.converter(),
         options,
-        jsx_expression_depth: 0,
-        jsx_member_expression_depth: 0,
-        jsx_computed_member_depth: 0,
+        jsx_state: JSXState::default(),
     };
     context.visit_program(program);
     context.finish();
+}
+
+/// JSX state.
+/// Used in TS style for tracking when to emit JSX identifiers.
+#[derive(Default)]
+#[expect(clippy::struct_field_names)]
+struct JSXState {
+    jsx_expression_depth: u32,
+    member_expression_depth: u32,
+    computed_member_depth: u32,
+}
+
+impl JSXState {
+    #[inline]
+    fn enter_jsx_expression(&mut self) {
+        self.jsx_expression_depth += 1;
+    }
+
+    #[inline]
+    fn exit_jsx_expression(&mut self) {
+        self.jsx_expression_depth -= 1;
+    }
+
+    #[inline]
+    fn enter_member_expression(&mut self, member_expr: &MemberExpression<'_>) {
+        if self.jsx_expression_depth > 0 {
+            self.member_expression_depth += 1;
+            if matches!(member_expr, MemberExpression::ComputedMemberExpression(_)) {
+                self.computed_member_depth += 1;
+            }
+        }
+    }
+
+    #[inline]
+    fn exit_member_expression(&mut self, member_expr: &MemberExpression<'_>) {
+        if self.jsx_expression_depth > 0 {
+            self.member_expression_depth -= 1;
+            if matches!(member_expr, MemberExpression::ComputedMemberExpression(_)) {
+                self.computed_member_depth -= 1;
+            }
+        }
+    }
+
+    fn should_emit_jsx_identifier(&self) -> bool {
+        self.jsx_expression_depth > 0
+            && self.member_expression_depth > 0
+            && self.computed_member_depth == 0
+    }
 }
 
 /// Visitor that walks the AST and serializes tokens as it encounters them.
@@ -377,9 +423,7 @@ struct ESTreeTokenContext<'b, S: SequenceSerializer> {
     /// Options
     options: ESTreeTokenOptions,
     // JSX state. Used in TS-ESLint emulation mode.
-    jsx_expression_depth: usize,
-    jsx_member_expression_depth: usize,
-    jsx_computed_member_depth: usize,
+    jsx_state: JSXState,
 }
 
 impl<'b, S: SequenceSerializer> ESTreeTokenContext<'b, S> {
@@ -582,9 +626,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for ESTreeTokenContext<'_, S> {
 
     fn visit_identifier_name(&mut self, identifier: &IdentifierName<'a>) {
         if self.options.member_expr_in_jsx_expression_jsx_identifiers
-            && self.jsx_expression_depth > 0
-            && self.jsx_member_expression_depth > 0
-            && self.jsx_computed_member_depth == 0
+            && self.jsx_state.should_emit_jsx_identifier()
         {
             self.emit_jsx_identifier_at(identifier.span.start, &identifier.name);
         } else {
@@ -594,9 +636,7 @@ impl<'a, S: SequenceSerializer> Visit<'a> for ESTreeTokenContext<'_, S> {
 
     fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
         if self.options.member_expr_in_jsx_expression_jsx_identifiers
-            && self.jsx_expression_depth > 0
-            && self.jsx_member_expression_depth > 0
-            && self.jsx_computed_member_depth == 0
+            && self.jsx_state.should_emit_jsx_identifier()
         {
             self.emit_jsx_identifier_at(identifier.span.start, &identifier.name);
         } else {
@@ -731,37 +771,27 @@ impl<'a, S: SequenceSerializer> Visit<'a> for ESTreeTokenContext<'_, S> {
     }
 
     fn visit_jsx_expression_container(&mut self, container: &JSXExpressionContainer<'a>) {
-        self.jsx_expression_depth += 1;
+        self.jsx_state.enter_jsx_expression();
         walk::walk_jsx_expression_container(self, container);
-        self.jsx_expression_depth -= 1;
+        self.jsx_state.exit_jsx_expression();
     }
 
-    fn visit_member_expression(&mut self, expression: &MemberExpression<'a>) {
-        if self.jsx_expression_depth > 0 {
-            self.jsx_member_expression_depth += 1;
-            if matches!(expression, MemberExpression::ComputedMemberExpression(_)) {
-                self.jsx_computed_member_depth += 1;
-            }
-            walk::walk_member_expression(self, expression);
-            if matches!(expression, MemberExpression::ComputedMemberExpression(_)) {
-                self.jsx_computed_member_depth -= 1;
-            }
-            self.jsx_member_expression_depth -= 1;
-        } else {
-            walk::walk_member_expression(self, expression);
-        }
+    fn visit_member_expression(&mut self, member_expr: &MemberExpression<'a>) {
+        self.jsx_state.enter_member_expression(member_expr);
+        walk::walk_member_expression(self, member_expr);
+        self.jsx_state.exit_member_expression(member_expr);
     }
 
     fn visit_jsx_spread_attribute(&mut self, attribute: &JSXSpreadAttribute<'a>) {
-        self.jsx_expression_depth += 1;
+        self.jsx_state.enter_jsx_expression();
         walk::walk_jsx_spread_attribute(self, attribute);
-        self.jsx_expression_depth -= 1;
+        self.jsx_state.exit_jsx_expression();
     }
 
     fn visit_jsx_spread_child(&mut self, spread_child: &JSXSpreadChild<'a>) {
-        self.jsx_expression_depth += 1;
+        self.jsx_state.enter_jsx_expression();
         walk::walk_jsx_spread_child(self, spread_child);
-        self.jsx_expression_depth -= 1;
+        self.jsx_state.exit_jsx_expression();
     }
 
     fn visit_string_literal(&mut self, literal: &StringLiteral<'a>) {
