@@ -78,22 +78,24 @@ pub fn build_resolved_exports(graph: &ModuleGraph) -> FxHashMap<ModuleIdx, Resol
 ///
 /// # Panics
 /// Panics if a module index in the graph is not a normal module when expected.
-pub fn match_imports(graph: &ModuleGraph, config: &LinkConfig) -> Vec<BindingError> {
-    // We need to split the borrow: read from graph.modules/symbols, write to graph.symbols.
-    // Since we can't mutate graph while reading, we collect operations first.
-    //
-    // Actually, match_imports needs to call graph.symbols.link() and graph.symbols.canonical_ref_for().
-    // We need a different approach: collect all link operations and apply them after.
-
+pub fn match_imports(graph: &ModuleGraph, config: &mut LinkConfig) -> Vec<BindingError> {
     let (errors, _links) = match_imports_collect(graph, config);
     errors
 }
 
-/// Internal version of match_imports that collects link operations.
-#[expect(clippy::redundant_pub_crate)]
-pub(crate) fn match_imports_collect(
+/// Collect link operations from matching all imports to resolved exports.
+///
+/// Returns `(errors, link_pairs)` where `link_pairs` contains `(from, to)` tuples
+/// that the consumer should apply to its symbol database.
+///
+/// Rolldown uses this to interleave its own steps (e.g., `determine_module_exports_kind`,
+/// `wrap_modules`) between algorithm calls and apply links to its own `SymbolRefDb`.
+///
+/// # Panics
+/// Panics if a module index in the graph is not a normal module when expected.
+pub fn match_imports_collect(
     graph: &ModuleGraph,
-    config: &LinkConfig,
+    config: &mut LinkConfig,
 ) -> (Vec<BindingError>, Vec<(SymbolRef, SymbolRef)>) {
     let mut errors = Vec::new();
     let mut links: Vec<(SymbolRef, SymbolRef)> = Vec::new();
@@ -124,6 +126,10 @@ pub(crate) fn match_imports_collect(
             // Handle namespace imports.
             if is_ns || imported_name.as_str() == "*" {
                 let ns_ref = graph.module(target_idx).namespace_object_ref();
+                let result = MatchImportKind::Namespace { namespace_ref: ns_ref };
+                if let Some(hooks) = config.import_hooks.as_deref_mut() {
+                    hooks.on_resolved(idx, local_symbol, &result, &[]);
+                }
                 links.push((local_symbol, ns_ref));
                 continue;
             }
@@ -131,9 +137,16 @@ pub(crate) fn match_imports_collect(
             // Built-in CJS interop: if target is CJS, use NormalAndNamespace.
             if config.cjs_interop
                 && let Some(target) = graph.normal_module(target_idx)
-                && target.is_commonjs
+                && target.is_commonjs()
             {
                 let ns_ref = graph.module(target_idx).namespace_object_ref();
+                let result = MatchImportKind::NormalAndNamespace {
+                    namespace_ref: ns_ref,
+                    alias: imported_name.clone(),
+                };
+                if let Some(hooks) = config.import_hooks.as_deref_mut() {
+                    hooks.on_resolved(idx, local_symbol, &result, &[]);
+                }
                 links.push((local_symbol, ns_ref));
                 continue;
             }
@@ -152,6 +165,11 @@ pub(crate) fn match_imports_collect(
                 &mut reexport_chain,
             );
 
+            // Notify hooks of the resolution result.
+            if let Some(hooks) = config.import_hooks.as_deref_mut() {
+                hooks.on_resolved(idx, local_symbol, &result, &reexport_chain);
+            }
+
             match &result {
                 MatchImportKind::Normal { symbol_ref } => {
                     links.push((local_symbol, *symbol_ref));
@@ -168,6 +186,23 @@ pub(crate) fn match_imports_collect(
                 }
                 MatchImportKind::Cycle => {}
                 MatchImportKind::NoMatch => {
+                    // Give hooks a chance to override the no-match result.
+                    if let Some(hooks) = config.import_hooks.as_deref_mut()
+                        && let Some(override_result) =
+                            hooks.on_final_no_match(target_idx, &imported_name)
+                    {
+                        match &override_result {
+                            MatchImportKind::Normal { symbol_ref } => {
+                                links.push((local_symbol, *symbol_ref));
+                            }
+                            MatchImportKind::Namespace { namespace_ref }
+                            | MatchImportKind::NormalAndNamespace { namespace_ref, .. } => {
+                                links.push((local_symbol, *namespace_ref));
+                            }
+                            _ => {}
+                        }
+                        continue;
+                    }
                     errors.push(BindingError::UnresolvedImport {
                         module: idx,
                         import_name: imported_name.clone(),
@@ -191,8 +226,8 @@ pub fn bind_imports_and_exports(graph: &mut ModuleGraph) {
         }
     }
 
-    let config = LinkConfig::default();
-    let (errors, links) = match_imports_collect(graph, &config);
+    let mut config = LinkConfig::default();
+    let (errors, links) = match_imports_collect(graph, &mut config);
 
     // Apply links.
     for (from, to) in links {
@@ -341,7 +376,7 @@ fn resolve_import(
     };
 
     // Built-in CJS interop.
-    if config.cjs_interop && target.is_commonjs {
+    if config.cjs_interop && target.is_commonjs() {
         return MatchImportKind::NormalAndNamespace {
             namespace_ref: target.namespace_object_ref,
             alias: CompactString::from(import_name),

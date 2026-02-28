@@ -47,7 +47,7 @@ fn check_dynamic(
     };
 
     // CJS modules always have dynamic exports.
-    if module.is_commonjs {
+    if module.is_commonjs() {
         result.insert(idx);
         return true;
     }

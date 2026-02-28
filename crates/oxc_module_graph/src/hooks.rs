@@ -4,7 +4,7 @@ use crate::types::{MatchImportKind, ModuleIdx, SymbolRef};
 ///
 /// 3 of 5 old `ImportMatcher` callbacks are now built-in:
 /// - `on_missing_module` → external modules are in graph → use `external.namespace_ref`
-/// - `on_before_match` → `is_commonjs` → `NormalAndNamespace` with `record.namespace_ref`
+/// - `on_before_match` → `exports_kind.is_commonjs()` → `NormalAndNamespace` with `record.namespace_ref`
 /// - `on_no_match` → `has_dynamic_exports` → `NormalAndNamespace` fallback
 ///
 /// Only 2 optional hooks remain for consumer-specific logic.

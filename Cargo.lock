@@ -2156,6 +2156,7 @@ dependencies = [
 name = "oxc_module_graph"
 version = "0.115.0"
 dependencies = [
+ "bitflags",
  "compact_str",
  "oxc_allocator",
  "oxc_ast",

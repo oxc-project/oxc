@@ -194,7 +194,7 @@ impl ModuleGraph {
     /// Consumers that need different ordering (like Rolldown, which runs
     /// `determine_module_exports_kind` between steps) can call individual
     /// algorithm methods instead.
-    pub fn link(&mut self, config: &crate::hooks::LinkConfig) {
+    pub fn link(&mut self, config: &mut crate::hooks::LinkConfig) {
         use crate::algo;
 
         // 1. Execution order
@@ -221,7 +221,50 @@ impl ModuleGraph {
             }
         }
 
-        // 3. Dynamic exports
+        // 2b. Determine module exports kind
+        let ek_config =
+            algo::ExportsKindConfig { dynamic_imports_as_require: false, wrap_cjs_entries: true };
+        let ek_result = algo::determine_module_exports_kind(self, &ek_config);
+        for (idx, kind) in &ek_result.exports_kind_updates {
+            if let Module::Normal(m) = &mut self.modules[*idx] {
+                m.exports_kind = *kind;
+            }
+        }
+        for (idx, wrap) in &ek_result.wrap_kind_updates {
+            if let Module::Normal(m) = &mut self.modules[*idx] {
+                m.wrap_kind = *wrap;
+            }
+        }
+
+        // 2c. Wrap modules
+        let wrap_config = algo::WrapModulesConfig {
+            on_demand_wrapping: false,
+            strict_execution_order: false,
+            skip_symbol_creation: false,
+        };
+        let wrap_result = algo::wrap_modules(self, &wrap_config);
+        for (idx, wrap) in &wrap_result.wrap_kind_updates {
+            if let Module::Normal(m) = &mut self.modules[*idx] {
+                m.wrap_kind = *wrap;
+            }
+        }
+        for (idx, wrapper) in &wrap_result.wrapper_refs {
+            if let Module::Normal(m) = &mut self.modules[*idx] {
+                m.wrapper_ref = Some(*wrapper);
+            }
+        }
+        for (&idx, &orig) in &wrap_result.original_wrap_kinds {
+            if let Module::Normal(m) = &mut self.modules[idx] {
+                m.original_wrap_kind = orig;
+            }
+        }
+        for &idx in &wrap_result.required_by_other_module {
+            if let Module::Normal(m) = &mut self.modules[idx] {
+                m.required_by_other_module = true;
+            }
+        }
+
+        // 3. Dynamic exports (runs after exports_kind is finalized)
         let dynamic = algo::compute_has_dynamic_exports(self);
         for &idx in &dynamic {
             if let Module::Normal(m) = &mut self.modules[idx] {

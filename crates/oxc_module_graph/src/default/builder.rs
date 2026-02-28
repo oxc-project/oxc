@@ -19,8 +19,8 @@ use oxc_syntax::symbol::SymbolId;
 use crate::graph::ModuleGraph;
 use crate::module::{ExternalModule, NormalModule, SideEffects};
 use crate::types::{
-    ImportKind, ImportRecordIdx, IndirectExportEntry, LocalExport, ModuleIdx, NamedImport,
-    ResolvedImportRecord, StarExportEntry, SymbolRef,
+    ExportsKind, ImportKind, ImportRecordIdx, ImportRecordMeta, IndirectExportEntry, LocalExport,
+    ModuleIdx, NamedImport, ResolvedImportRecord, StarExportEntry, SymbolRef, WrapKind,
 };
 
 /// Errors from building the module graph.
@@ -210,7 +210,7 @@ impl ModuleGraphBuilder {
             idx,
             path: path.to_path_buf(),
             has_module_syntax: module_record.has_module_syntax,
-            is_commonjs: false,
+            exports_kind: ExportsKind::None,
             has_top_level_await: tla,
             side_effects: SideEffects::True,
             named_exports,
@@ -220,7 +220,13 @@ impl ModuleGraphBuilder {
             namespace_object_ref,
             star_export_entries,
             indirect_export_entries,
+            has_lazy_export: false,
+            execution_order_sensitive: false,
             // Link-time results — initialized to defaults.
+            wrap_kind: WrapKind::None,
+            original_wrap_kind: WrapKind::None,
+            wrapper_ref: None,
+            required_by_other_module: false,
             resolved_exports: FxHashMap::default(),
             has_dynamic_exports: false,
             is_tla_or_contains_tla: false,
@@ -291,10 +297,19 @@ impl ModuleGraphBuilder {
                 }
             };
 
+            // Dummy namespace_ref — the builder doesn't do linking.
+            // Consumers that need real namespace_refs populate them during link.
+            let namespace_ref = SymbolRef::new(
+                target_idx.unwrap_or(ModuleIdx::from_usize(0)),
+                SymbolId::from_raw_unchecked(0),
+            );
+
             import_records.push(ResolvedImportRecord {
                 specifier: CompactString::from(specifier_str),
                 resolved_module: target_idx,
                 kind: ImportKind::Static,
+                namespace_ref,
+                meta: ImportRecordMeta::empty(),
             });
         }
 
@@ -309,9 +324,11 @@ impl ModuleGraphBuilder {
             idx,
             path: path.to_path_buf(),
             has_module_syntax: false,
-            is_commonjs: false,
+            exports_kind: ExportsKind::None,
             has_top_level_await: false,
             side_effects: SideEffects::True,
+            has_lazy_export: false,
+            execution_order_sensitive: false,
             named_exports: FxHashMap::default(),
             named_imports: FxHashMap::default(),
             import_records: Vec::new(),
@@ -319,6 +336,10 @@ impl ModuleGraphBuilder {
             namespace_object_ref: ns_ref,
             star_export_entries: Vec::new(),
             indirect_export_entries: Vec::new(),
+            wrap_kind: WrapKind::None,
+            original_wrap_kind: WrapKind::None,
+            wrapper_ref: None,
+            required_by_other_module: false,
             resolved_exports: FxHashMap::default(),
             has_dynamic_exports: false,
             is_tla_or_contains_tla: false,
