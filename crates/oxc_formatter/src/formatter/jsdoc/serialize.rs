@@ -13,7 +13,8 @@ use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
 
 use super::{
     normalize::{
-        capitalize_first, normalize_markdown_emphasis, normalize_tag_kind, normalize_type,
+        capitalize_first, convert_setext_headings, normalize_markdown_emphasis,
+        normalize_tag_kind, normalize_type,
         normalize_type_preserve_quotes, normalize_type_return, normalize_type_whitespace,
         strip_optional_type_suffix, unescape_markdown_backslashes,
     },
@@ -285,7 +286,8 @@ pub fn format_jsdoc_comment<'a>(
     // Format description (preserving paragraph structure)
     let desc_trimmed = description.trim();
     if !desc_trimmed.is_empty() {
-        let desc_normalized = normalize_markdown_emphasis(desc_trimmed);
+        let desc_normalized = convert_setext_headings(desc_trimmed);
+        let desc_normalized = normalize_markdown_emphasis(&desc_normalized);
         let desc_normalized = unescape_markdown_backslashes(&desc_normalized);
         wrap_text(&desc_normalized, wrap_width, &mut content_lines);
         if options.capitalize_descriptions {
@@ -1040,9 +1042,15 @@ fn format_fenced_code_blocks(
         let line = &content_lines[i];
         // Look for opening code fence with a language tag
         if line.starts_with("```") && line.len() > 3 {
-            let lang = line[3..].trim();
-            let is_js = is_js_ts_lang(lang);
-            let external_lang = fenced_lang_to_external_language(lang);
+            let lang = line[3..].trim().to_string();
+
+            // Normalize spacing: ``` js → ```js
+            if content_lines[i][3..].starts_with(' ') && !lang.is_empty() {
+                content_lines[i] = format!("```{lang}");
+            }
+
+            let is_js = is_js_ts_lang(&lang);
+            let external_lang = fenced_lang_to_external_language(&lang);
 
             if !is_js && external_lang.is_none() {
                 i += 1;
