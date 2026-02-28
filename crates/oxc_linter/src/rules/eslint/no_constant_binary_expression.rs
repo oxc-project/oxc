@@ -422,6 +422,23 @@ fn test() {
         ("foo ?? null ?? bar", None),
         ("a ?? (doSomething(), undefined) ?? b", None),
         ("a ?? (something = null) ?? b", None),
+        // Issue #19847: should not report non-constant relational comparisons.
+        ("const a = x > 0", None),
+        ("const a = foo() > 0", None),
+        ("const a = (x += 1) > 0", None),
+        ("const a = 0 > (x += 1)", None),
+        ("const shouldShowStreak = (profile.streak ?? 0) > 1", None),
+        ("const a = x >= 0", None),
+        ("const a = x <= 0", None),
+        ("const a = x < y", None),
+        ("const a = 0 < foo()", None),
+        ("const a = x++ > 0", None),
+        ("const a = 0 > ++x", None),
+        ("const a = (value ?? 1) > 0", None),
+        ("const a = (value ?? 1) >= 0", None),
+        ("const a = (value ?? 1) < 0", None),
+        ("const a = (value ?? 1) <= 0", None),
+        ("if (1 > 0) {}", None),
     ];
 
     let fail = vec![
@@ -662,6 +679,29 @@ fn test() {
         ("window.abc && false && anything", None),
         ("window.abc || true || anything", None),
         ("window.abc ?? 'non-nullish' ?? anything", None),
+        // Issue #19847: constant relational binary expressions.
+        ("const a = 1 > 0", None),
+        ("const b = 0 > 1", None),
+        ("const c = 1 >= 0", None),
+        ("const d = 0 >= 1", None),
+        ("const e = 1 < 0", None),
+        ("const f = 0 < 1", None),
+        ("const g = 1 <= 0", None),
+        ("const h = 0 <= 1", None),
+        ("const shouldShowStreak = profile.streak ?? 0 > 1", None),
+        ("const isPositive = value ?? 1 > 0", None),
+        ("const isLargeEnough = value ?? 1 >= 0", None),
+        ("const isNegative = value ?? 1 < 0", None),
+        ("const isNonPositive = value ?? 1 <= 0", None),
+        ("const i = 'b' > 'a'", None),
+        ("const j = 'a' >= 'b'", None),
+        ("const k = 1n > 0n", None),
+        ("const l = 0n <= 1n", None),
+        ("const m = true > false", None),
+        ("const n = false >= true", None),
+        ("const o = '2' > 1", None),
+        ("const p = null >= 0", None),
+        ("const q = undefined < 1", None),
     ];
 
     Tester::new(NoConstantBinaryExpression::NAME, NoConstantBinaryExpression::PLUGIN, pass, fail)
