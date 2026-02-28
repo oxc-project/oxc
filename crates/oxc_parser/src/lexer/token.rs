@@ -98,7 +98,7 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_start(&mut self, start: u32) {
+    pub(super) fn set_start(&mut self, start: u32) {
         self.0 &= !(START_MASK << START_SHIFT); // Clear current `start` bits
         self.0 |= u128::from(start) << START_SHIFT;
     }
@@ -109,7 +109,7 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_end(&mut self, end: u32) {
+    pub(super) fn set_end(&mut self, end: u32) {
         let start = self.start();
         debug_assert!(end >= start, "Token end ({end}) cannot be less than start ({start})");
         self.0 &= !(END_MASK << END_SHIFT); // Clear current `end` bits
@@ -125,7 +125,7 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_kind(&mut self, kind: Kind) {
+    pub(super) fn set_kind(&mut self, kind: Kind) {
         self.0 &= !(KIND_MASK << KIND_SHIFT); // Clear current `kind` bits
         self.0 |= u128::from(kind as u8) << KIND_SHIFT;
     }
@@ -144,7 +144,7 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_is_on_new_line(&mut self, value: bool) {
+    pub(super) fn set_is_on_new_line(&mut self, value: bool) {
         self.0 &= !(BOOL_MASK << IS_ON_NEW_LINE_SHIFT); // Clear current `is_on_new_line` bits
         self.0 |= u128::from(value) << IS_ON_NEW_LINE_SHIFT;
     }
@@ -158,7 +158,7 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_escaped(&mut self, escaped: bool) {
+    pub(super) fn set_escaped(&mut self, escaped: bool) {
         self.0 &= !(BOOL_MASK << ESCAPED_SHIFT); // Clear current `escaped` bits
         self.0 |= u128::from(escaped) << ESCAPED_SHIFT;
     }
@@ -172,7 +172,7 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_lone_surrogates(&mut self, value: bool) {
+    pub(super) fn set_lone_surrogates(&mut self, value: bool) {
         self.0 &= !(BOOL_MASK << LONE_SURROGATES_SHIFT); // Clear current `lone_surrogates` bits
         self.0 |= u128::from(value) << LONE_SURROGATES_SHIFT;
     }
@@ -186,7 +186,7 @@ impl Token {
     }
 
     #[inline]
-    pub(crate) fn set_has_separator(&mut self, value: bool) {
+    pub(super) fn set_has_separator(&mut self, value: bool) {
         self.0 &= !(BOOL_MASK << HAS_SEPARATOR_SHIFT); // Clear current `has_separator` bits
         self.0 |= u128::from(value) << HAS_SEPARATOR_SHIFT;
     }
