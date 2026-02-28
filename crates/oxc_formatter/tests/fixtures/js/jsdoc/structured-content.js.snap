@@ -30,12 +30,12 @@ function features() {}
  * - Incremental compilation
  *
  * | Name | Type |
- * |------|------|
+ * | ---- | ---- |
  * | foo  | bar  |
  *
  * ```js
  * const x = 1;
- * const y = 2;
+ *   const y = 2;
  * ```
  */
 function features() {}
@@ -50,12 +50,12 @@ function features() {}
  * - Incremental compilation
  *
  * | Name | Type |
- * |------|------|
+ * | ---- | ---- |
  * | foo  | bar  |
  *
  * ```js
  * const x = 1;
- * const y = 2;
+ *   const y = 2;
  * ```
  */
 function features() {}
