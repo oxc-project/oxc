@@ -570,10 +570,14 @@ fn codegen_inner_function(
     if include_prune_hoisted {
         crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_fn);
     }
-    let unique_identifiers =
-        crate::reactive_scopes::rename_variables::rename_variables(&mut reactive_fn);
+    // NOTE: We do NOT call rename_variables here, matching the TS reference.
+    // In TS, codegenReactiveFunction for FunctionExpression/ObjectMethod
+    // passes the parent's cx.uniqueIdentifiers and cx.temp — no separate
+    // renameVariables call. The outer rename_variables already visited
+    // the inner HIR function (via visitHirFunction), so all identifiers
+    // are already renamed with the parent's naming state.
     let options = CodegenOptions {
-        unique_identifiers,
+        unique_identifiers: cx.unique_identifiers.clone(),
         fbt_operands: cx.fbt_operands.clone(),
         enable_reset_cache_on_source_file_changes: false,
         code: None,

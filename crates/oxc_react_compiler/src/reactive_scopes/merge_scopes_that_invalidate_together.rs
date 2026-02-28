@@ -8,7 +8,8 @@
 ///
 /// Allows safe intervening instructions between scopes (LoadLocal, PropertyLoad, etc.)
 /// as long as their lvalues are only used within the next scope.
-use rustc_hash::{FxHashMap, FxHashSet};
+use indexmap::IndexMap;
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::compiler_error::SourceLocation;
 use crate::hir::object_shape::{
@@ -275,7 +276,7 @@ fn merge_in_block(
         lvalues: FxHashSet<DeclarationId>,
         /// Accumulated declarations from the initial scope + all merged scopes so far.
         /// Used for merge eligibility checks in subsequent scope comparisons.
-        accumulated_declarations: FxHashMap<IdentifierId, ReactiveScopeDeclaration>,
+        accumulated_declarations: IndexMap<IdentifierId, ReactiveScopeDeclaration, FxBuildHasher>,
         /// Accumulated range end from the initial scope + all merged scopes.
         accumulated_range_end: InstructionId,
     }
@@ -583,7 +584,7 @@ fn merge_in_terminal(
 /// from multiple previously-merged scopes, without actually mutating the scope.
 struct AccumulatedScopeView<'a> {
     scope: &'a ReactiveScope,
-    declarations: &'a FxHashMap<IdentifierId, ReactiveScopeDeclaration>,
+    declarations: &'a IndexMap<IdentifierId, ReactiveScopeDeclaration, FxBuildHasher>,
 }
 
 /// Check if two scopes can be merged, using an accumulated declaration set for the current scope.
