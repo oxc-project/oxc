@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "3e9b676c57d2",
+  "strategy": "manual-commit",
+  "branch": "fix/minifier-substitute-declarators-esbuild-pattern",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "crates/oxc_transformer/src/common/helper_loader.rs",
+    "crates/oxc_transformer/src/lib.rs",
+    "crates/oxc_transformer/src/modules/metadata.rs",
+    "crates/oxc_transformer/src/modules/mod.rs",
+    "crates/oxc_transformer/src/modules/options.rs",
+    "tasks/transform_conformance/src/constants.rs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/3e/9b676c57d2/0/metadata.json",
+      "transcript": "/3e/9b676c57d2/0/full.jsonl",
+      "context": "/3e/9b676c57d2/0/context.md",
+      "content_hash": "/3e/9b676c57d2/0/content_hash.txt",
+      "prompt": "/3e/9b676c57d2/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 54,
+    "cache_creation_tokens": 123496,
+    "cache_read_tokens": 4415214,
+    "output_tokens": 30985,
+    "api_call_count": 46
+  }
+}
