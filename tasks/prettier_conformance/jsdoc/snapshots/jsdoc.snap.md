@@ -1,7 +1,6 @@
-jsdoc compatibility: 115/116 (99.14%)
+jsdoc compatibility: 115/115 (100.00%)
 
 # Failed
 
 | Fixture | Ratio |
 | :------ | :---: |
-| descriptions/032-jsx-tsx-css.ts | 86.49% |
