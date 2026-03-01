@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1248/1409 passed (88.6%)
+Codegen conformance: 1250/1409 passed (88.7%)
 
 Failure breakdown:
   parse_error:    22
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:136
+  output_mismatch:134
   no_expected:    0
 
 Failed fixtures:
@@ -50,7 +50,6 @@ Failed fixtures:
   [output_mismatch] fbt/fbt-preserve-jsxtext.js
   [output_mismatch] fbt/fbt-preserve-whitespace-subtree.tsx
   [output_mismatch] fbt/fbt-preserve-whitespace-two-subtrees.tsx
-  [output_mismatch] fbt/fbt-preserve-whitespace.tsx
   [output_mismatch] fbt/fbt-repro-invalid-mutable-range-destructured-prop.js
   [output_mismatch] fbt/fbt-template-string-same-scope.js
   [output_mismatch] fbt/fbtparam-with-jsx-element-content.js
@@ -156,7 +155,6 @@ Failed fixtures:
   [output_mismatch] repro-mutate-result-of-function-call-with-frozen-argument-in-function-expression.js
   [output_mismatch] repro-mutate-result-of-method-call-on-frozen-value-in-function-expression.js
   [output_mismatch] repro-no-value-for-temporary-reactive-scope-with-early-return.js
-  [output_mismatch] repro-propagate-type-of-ternary-nested.js
   [output_mismatch] repro-ref-mutable-range.tsx
   [output_mismatch] repro-returned-inner-fn-mutates-context.js
   [output_mismatch] repro-scope-missing-mutable-range.js
