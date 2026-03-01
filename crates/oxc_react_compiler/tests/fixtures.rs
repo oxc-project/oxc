@@ -1361,12 +1361,13 @@ fn format_full_function(func: &CodegenFunction, wrapper: Option<&WrapperInfo>) -
             }
         } else {
             // Function expression inside the wrapper call.
-            // The original may have been anonymous: `React.forwardRef(function (props, ref) { ... })`
-            // We emit `function (params)` (anonymous) to match the reference output.
+            // Include the function name if present (e.g. `function notNamedLikeAComponent(params)`),
+            // otherwise emit anonymous `function(params)`.
+            let fn_name = func.id.as_deref().map_or(String::new(), |n| format!("{n} "));
             if body.trim().is_empty() {
-                format!("{async_prefix}function {star}({params}) {{}}")
+                format!("{async_prefix}function {star}{fn_name}({params}) {{}}")
             } else {
-                format!("{async_prefix}function {star}({params}) {{\n{body}}}")
+                format!("{async_prefix}function {star}{fn_name}({params}) {{\n{body}}}")
             }
         };
 
@@ -8422,7 +8423,13 @@ fn codegen_conformance_inner() {
         };
 
         // Format our output and compare against expected.
-        let actual_full = format_full_function(&codegen_func, wrapper.as_ref());
+        // For gating tests, the expected output wraps the ternary inside the
+        // React.forwardRef/memo call, and `extract_compiled_from_gating` peels
+        // away that wrapper to return just the compiled function.  We must
+        // format our actual output without the wrapper to match.
+        let is_gating = is_gating_code(expected_code);
+        let effective_wrapper = if is_gating { None } else { wrapper.as_ref() };
+        let actual_full = format_full_function(&codegen_func, effective_wrapper);
         let expected_func = match extract_function_from_expected(expected_code) {
             Some(f) => f,
             None => {
@@ -8606,7 +8613,9 @@ fn test_near_miss_diagnostic() {
             _ => continue,
         };
 
-        let actual_full = format_full_function(&codegen_func, wrapper.as_ref());
+        let is_gating = is_gating_code(expected_code);
+        let effective_wrapper = if is_gating { None } else { wrapper.as_ref() };
+        let actual_full = format_full_function(&codegen_func, effective_wrapper);
         let expected_func = match extract_function_from_expected(expected_code) {
             Some(f) => f,
             None => expected_code.to_string(),
@@ -8793,7 +8802,9 @@ fn test_token_near_miss() {
             _ => continue,
         };
 
-        let actual_full = format_full_function(&codegen_func, wrapper.as_ref());
+        let is_gating = is_gating_code(expected_code);
+        let effective_wrapper = if is_gating { None } else { wrapper.as_ref() };
+        let actual_full = format_full_function(&codegen_func, effective_wrapper);
         let expected_func = match extract_function_from_expected(expected_code) {
             Some(f) => f,
             None => expected_code.to_string(),
@@ -9765,7 +9776,9 @@ fn test_debug_near_misses() {
         let Ok((func, wrapper)) = run_pipeline_for_codegen(&source, source_type) else {
             continue;
         };
-        let actual_full = format_full_function(&func, wrapper.as_ref());
+        let is_gating = is_gating_code(expected_code);
+        let effective_wrapper = if is_gating { None } else { wrapper.as_ref() };
+        let actual_full = format_full_function(&func, effective_wrapper);
         let Some(expected_func) = extract_function_from_expected(expected_code) else { continue; };
 
         let actual_norm = normalize_code(&actual_full);
