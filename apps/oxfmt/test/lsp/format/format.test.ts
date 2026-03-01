@@ -65,7 +65,7 @@ describe("LSP formatting", () => {
     });
   });
 
-  describe("unsaved document", () => {
+  describe("in-memory document", () => {
     it.each([
       ["format/test.tsx", "typescriptreact"],
       ["format/test.json", "json"],
@@ -73,7 +73,7 @@ describe("LSP formatting", () => {
       ["format/test.toml", "toml"],
       ["format/formatted.ts", "typescript"],
       ["format/test.txt", "plaintext"],
-    ])("should format unsaved file %s", async (path, languageId) => {
+    ])("should format untitled file %s", async (path, languageId) => {
       expect(
         await formatFixtureContent(
           FIXTURES_DIR,
@@ -81,6 +81,37 @@ describe("LSP formatting", () => {
           "untitled://Untitled-" + languageId,
           languageId,
         ),
+      ).toMatchSnapshot();
+    });
+
+    it.each([
+      ["format/test.tsx", "typescriptreact"],
+      ["format/test.json", "json"],
+      ["format/test.vue", "vue"],
+      ["format/test.toml", "toml"],
+      ["format/formatted.ts", "typescript"],
+      ["format/test.txt", "plaintext"],
+    ])("should format vscode-userdata file %s", async (path, languageId) => {
+      expect(
+        await formatFixtureContent(
+          FIXTURES_DIR,
+          path,
+          "vscode-userdata://" + languageId,
+          languageId,
+        ),
+      ).toMatchSnapshot();
+    });
+
+    it.each([
+      ["format/test.tsx", "typescriptreact"],
+      ["format/test.json", "json"],
+      ["format/test.vue", "vue"],
+      ["format/test.toml", "toml"],
+      ["format/formatted.ts", "typescript"],
+      ["format/test.txt", "plaintext"],
+    ])("should format ccsettings file %s", async (path, languageId) => {
+      expect(
+        await formatFixtureContent(FIXTURES_DIR, path, "ccsettings://" + languageId, languageId),
       ).toMatchSnapshot();
     });
   });
