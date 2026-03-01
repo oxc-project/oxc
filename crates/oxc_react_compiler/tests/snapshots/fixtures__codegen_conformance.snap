@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 8506
 expression: snapshot
 ---
-Codegen conformance: 1228/1409 passed (87.2%)
+Codegen conformance: 1247/1409 passed (88.5%)
 
 Failure breakdown:
   parse_error:    22
@@ -10,7 +11,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:156
+  output_mismatch:137
   no_expected:    0
 
 Failed fixtures:
@@ -38,34 +39,22 @@ Failed fixtures:
   [output_mismatch] destructure-object-assignment-to-context-var.js
   [output_mismatch] destructure-object-declaration-to-context-var.js
   [output_mismatch] destructuring-assignment.js
-  [output_mismatch] destructuring-mixed-scope-declarations-and-locals.js
   [output_mismatch] destructuring-property-inference.js
   [parse_error] destructuring-with-typecast-as-default-value.flow.js
-  [output_mismatch] fast-refresh-reloading.js
   [output_mismatch] fbt/bug-fbt-plural-multiple-function-calls.ts
   [output_mismatch] fbt/bug-fbt-plural-multiple-mixed-call-tag.tsx
-  [output_mismatch] fbt/fbs-params.js
   [output_mismatch] fbt/fbt-call-complex-param-value.js
   [output_mismatch] fbt/fbt-call.js
-  [output_mismatch] fbt/fbt-no-whitespace-btw-text-and-param.tsx
   [output_mismatch] fbt/fbt-param-with-leading-whitespace.js
   [output_mismatch] fbt/fbt-param-with-newline.js
-  [output_mismatch] fbt/fbt-param-with-quotes.js
   [output_mismatch] fbt/fbt-param-with-trailing-whitespace.js
-  [output_mismatch] fbt/fbt-param-with-unicode.js
   [output_mismatch] fbt/fbt-params-complex-param-value.js
-  [output_mismatch] fbt/fbt-params.js
   [output_mismatch] fbt/fbt-preserve-jsxtext.js
   [output_mismatch] fbt/fbt-preserve-whitespace-subtree.tsx
   [output_mismatch] fbt/fbt-preserve-whitespace-two-subtrees.tsx
   [output_mismatch] fbt/fbt-preserve-whitespace.tsx
   [output_mismatch] fbt/fbt-repro-invalid-mutable-range-destructured-prop.js
-  [output_mismatch] fbt/fbt-single-space-btw-param-and-text.tsx
   [output_mismatch] fbt/fbt-template-string-same-scope.js
-  [output_mismatch] fbt/fbt-to-string.js
-  [output_mismatch] fbt/fbt-whitespace-around-param-value.tsx
-  [output_mismatch] fbt/fbt-whitespace-within-text.tsx
-  [output_mismatch] fbt/fbtparam-text-must-use-expression-container.js
   [output_mismatch] fbt/fbtparam-with-jsx-element-content.js
   [output_mismatch] fbt/fbtparam-with-jsx-fragment-value.js
   [output_mismatch] fbt/recursively-merge-scopes-jsx.js
@@ -73,12 +62,10 @@ Failed fixtures:
   [output_mismatch] fbt/repro-fbt-param-nested-fbt.js
   [output_mismatch] fbt/repro-macro-property-not-handled.tsx
   [output_mismatch] fbt/repro-separately-memoized-fbt-param.js
-  [output_mismatch] flag-enable-emit-hook-guards.ts
   [output_mismatch] for-of-immutable-collection.js
   [output_mismatch] frozen-after-alias.js
   [output_mismatch] function-declaration-redeclare.js
   [parse_error] gating/component-syntax-ref-gating.flow.js
-  [output_mismatch] gating/conflicting-gating-fn.js
   [pipeline_error] gating/dynamic-gating-bailout-nopanic.js
   [parse_error] gating/gating-with-hoisted-type-reference.flow.js
   [no_function] gating/invalid-fnexpr-reference.js
@@ -96,15 +83,12 @@ Failed fixtures:
   [output_mismatch] hook-noAlias.js
   [output_mismatch] hooks-freeze-arguments.js
   [output_mismatch] hooks-freeze-possibly-mutable-arguments.js
-  [output_mismatch] idx-method-no-outlining-wildcard.js
-  [output_mismatch] idx-method-no-outlining.js
   [output_mismatch] idx-no-outlining.js
   [output_mismatch] iife-return-modified-later-phi.js
   [output_mismatch] immutable-hooks.js
   [output_mismatch] incompatible-destructuring-kinds.js
   [output_mismatch] infer-global-object.js
   [parse_error] infer-types-through-type-cast.flow.js
-  [output_mismatch] jsx-outlining-with-non-jsx-children.js
   [output_mismatch] lambda-mutate-shadowed-object.js
   [output_mismatch] lambda-mutated-non-reactive-to-reactive.js
   [output_mismatch] lambda-mutated-ref-non-reactive.js
@@ -133,7 +117,6 @@ Failed fixtures:
   [output_mismatch] new-mutability/useCallback-reordering-depslist-assignment.tsx
   [output_mismatch] new-mutability/useMemo-reordering-depslist-assignment.ts
   [output_mismatch] object-expression-computed-member.js
-  [output_mismatch] optional-call-logical.js
   [output_mismatch] original-reactive-scopes-fork/capture-ref-for-later-mutation.tsx
   [output_mismatch] phi-type-inference-array-push-consecutive-phis.js
   [output_mismatch] phi-type-inference-array-push.js
@@ -190,7 +173,6 @@ Failed fixtures:
   [output_mismatch] transitive-freeze-function-expressions.js
   [output_mismatch] try-catch-within-function-expression-returns-caught-value.js
   [parse_error] type-cast-expression.flow.js
-  [output_mismatch] type-provider-tagged-template-expression.js
   [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js
   [parse_error] useCallback-ref-in-render.js
