@@ -319,7 +319,12 @@ impl CliRunner {
         };
 
         if self.options.list_rules {
-            return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
+            return crate::mode::run_rules(
+                &lint_config,
+                &output_formatter,
+                stdout,
+                self.options.type_aware,
+            );
         }
 
         let ignore_matcher =
@@ -543,6 +548,8 @@ mod test {
     use std::fs;
 
     use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
+    use cow_utils::CowUtils;
+    use oxc_linter::LintPlugins;
     use oxc_linter::rules::RULES;
 
     // lints the full directory of fixtures,
@@ -1477,5 +1484,57 @@ export { redundant };
     #[test]
     fn test_invalid_config_invalid_config_tuple_rules() {
         Tester::new().with_cwd("fixtures/invalid_config_tuple_rules".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_list_rules_headers() {
+        const EXPECTED_HEADERS: &str = "|Rulename|Source|Default|Enabled?|Fixable?|";
+        let args: &[&str] = &["--rules"];
+        let output: String = Tester::new().test_output(args);
+        let sanitized_output: String = output.chars().filter(|c| !c.is_whitespace()).collect();
+
+        let header_count: usize = sanitized_output.matches(EXPECTED_HEADERS).count();
+        let expected_count: usize = oxc_linter::table::RuleTable::default().sections.len();
+
+        assert!(
+            sanitized_output.contains(EXPECTED_HEADERS),
+            "Output should contain the expected table headers"
+        );
+
+        assert_eq!(
+            header_count, expected_count,
+            "Output should contain the table headers for each section. Expected {expected_count}, found {header_count}",
+        );
+    }
+
+    #[test]
+    fn test_list_rules_sources() {
+        let args: &[&str] = &["--rules"];
+        let output: String = Tester::new().test_output(args);
+
+        for flag in LintPlugins::all().iter_names() {
+            let source_name = flag.0.cow_to_lowercase();
+            assert!(
+                output.contains(source_name.as_ref()),
+                "Output should contain the source: {source_name}",
+            );
+        }
+    }
+
+    #[test]
+    fn test_rules_respects_type_aware_flag() {
+        let type_aware_args: &[&str] = &["--rules", "--type-aware"];
+        let non_type_aware_args: &[&str] = &["--rules"];
+
+        let type_aware_output: String = Tester::new().test_output(type_aware_args);
+        let non_type_aware_output: String = Tester::new().test_output(non_type_aware_args);
+
+        let type_aware_checkmark_count = type_aware_output.matches("✅").count();
+        let non_type_aware_checkmark_count = non_type_aware_output.matches("✅").count();
+
+        assert!(
+            type_aware_checkmark_count > non_type_aware_checkmark_count,
+            "Type-aware output should have more as many enabled rules as non-type-aware output"
+        );
     }
 }
