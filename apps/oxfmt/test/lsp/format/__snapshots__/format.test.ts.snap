@@ -277,21 +277,7 @@ const   x   =   1
 --------------------"
 `;
 
-exports[`LSP formatting > initializationOptions > should use custom config path from fmt.configPath 1`] = `
-"--- FILE -----------
-custom_config_path/semicolons-as-needed.ts
---- BEFORE ---------
-// semicolon is on character 8-9, which will be removed
-debugger;
-
---- AFTER ----------
-// semicolon is on character 8-9, which will be removed
-debugger
-
---------------------"
-`;
-
-exports[`LSP formatting > unsaved document > should format unsaved file format/formatted.ts 1`] = `
+exports[`LSP formatting > in-memory document > should format ccsettings file format/formatted.ts 1`] = `
 "--- FILE -----------
 format/formatted.ts
 --- BEFORE ---------
@@ -303,7 +289,7 @@ const x = 1;
 --------------------"
 `;
 
-exports[`LSP formatting > unsaved document > should format unsaved file format/test.json 1`] = `
+exports[`LSP formatting > in-memory document > should format ccsettings file format/test.json 1`] = `
 "--- FILE -----------
 format/test.json
 --- BEFORE ---------
@@ -315,7 +301,7 @@ format/test.json
 --------------------"
 `;
 
-exports[`LSP formatting > unsaved document > should format unsaved file format/test.toml 1`] = `
+exports[`LSP formatting > in-memory document > should format ccsettings file format/test.toml 1`] = `
 "--- FILE -----------
 format/test.toml
 --- BEFORE ---------
@@ -331,7 +317,7 @@ version = "1.0.0"
 --------------------"
 `;
 
-exports[`LSP formatting > unsaved document > should format unsaved file format/test.tsx 1`] = `
+exports[`LSP formatting > in-memory document > should format ccsettings file format/test.tsx 1`] = `
 "--- FILE -----------
 format/test.tsx
 --- BEFORE ---------
@@ -343,7 +329,7 @@ const App: React.FC = () => <div>Hello</div>;
 --------------------"
 `;
 
-exports[`LSP formatting > unsaved document > should format unsaved file format/test.txt 1`] = `
+exports[`LSP formatting > in-memory document > should format ccsettings file format/test.txt 1`] = `
 "--- FILE -----------
 format/test.txt
 --- BEFORE ---------
@@ -355,7 +341,7 @@ hello   world
 --------------------"
 `;
 
-exports[`LSP formatting > unsaved document > should format unsaved file format/test.vue 1`] = `
+exports[`LSP formatting > in-memory document > should format ccsettings file format/test.vue 1`] = `
 "--- FILE -----------
 format/test.vue
 --- BEFORE ---------
@@ -365,6 +351,176 @@ format/test.vue
 <script>
 const x = 1;
 </script>
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format untitled file format/formatted.ts 1`] = `
+"--- FILE -----------
+format/formatted.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1;
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format untitled file format/test.json 1`] = `
+"--- FILE -----------
+format/test.json
+--- BEFORE ---------
+{"name":"test","version":"1.0.0"}
+
+--- AFTER ----------
+{ "name": "test", "version": "1.0.0" }
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format untitled file format/test.toml 1`] = `
+"--- FILE -----------
+format/test.toml
+--- BEFORE ---------
+[package]
+name="test"
+version="1.0.0"
+
+--- AFTER ----------
+[package]
+name = "test"
+version = "1.0.0"
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format untitled file format/test.tsx 1`] = `
+"--- FILE -----------
+format/test.tsx
+--- BEFORE ---------
+const   App:   React.FC   =   ()   =>   <div>Hello</div>
+
+--- AFTER ----------
+const App: React.FC = () => <div>Hello</div>;
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format untitled file format/test.txt 1`] = `
+"--- FILE -----------
+format/test.txt
+--- BEFORE ---------
+hello   world
+
+--- AFTER ----------
+hello   world
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format untitled file format/test.vue 1`] = `
+"--- FILE -----------
+format/test.vue
+--- BEFORE ---------
+<script>const   x   =   1;</script>
+
+--- AFTER ----------
+<script>
+const x = 1;
+</script>
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format vscode-userdata file format/formatted.ts 1`] = `
+"--- FILE -----------
+format/formatted.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1;
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.json 1`] = `
+"--- FILE -----------
+format/test.json
+--- BEFORE ---------
+{"name":"test","version":"1.0.0"}
+
+--- AFTER ----------
+{ "name": "test", "version": "1.0.0" }
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.toml 1`] = `
+"--- FILE -----------
+format/test.toml
+--- BEFORE ---------
+[package]
+name="test"
+version="1.0.0"
+
+--- AFTER ----------
+[package]
+name = "test"
+version = "1.0.0"
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.tsx 1`] = `
+"--- FILE -----------
+format/test.tsx
+--- BEFORE ---------
+const   App:   React.FC   =   ()   =>   <div>Hello</div>
+
+--- AFTER ----------
+const App: React.FC = () => <div>Hello</div>;
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.txt 1`] = `
+"--- FILE -----------
+format/test.txt
+--- BEFORE ---------
+hello   world
+
+--- AFTER ----------
+hello   world
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.vue 1`] = `
+"--- FILE -----------
+format/test.vue
+--- BEFORE ---------
+<script>const   x   =   1;</script>
+
+--- AFTER ----------
+<script>
+const x = 1;
+</script>
+
+--------------------"
+`;
+
+exports[`LSP formatting > initializationOptions > should use custom config path from fmt.configPath 1`] = `
+"--- FILE -----------
+custom_config_path/semicolons-as-needed.ts
+--- BEFORE ---------
+// semicolon is on character 8-9, which will be removed
+debugger;
+
+--- AFTER ----------
+// semicolon is on character 8-9, which will be removed
+debugger
 
 --------------------"
 `;

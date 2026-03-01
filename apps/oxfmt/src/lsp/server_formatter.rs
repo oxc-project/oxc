@@ -257,15 +257,7 @@ impl Tool for ServerFormatter {
         content: Option<&str>,
     ) -> Result<Vec<TextEdit>, String> {
         let file_content;
-        let (result, source_text) = if uri.as_str().starts_with("untitled:") {
-            let source_text =
-                content.ok_or_else(|| "In-memory formatting requires content".to_string())?;
-
-            let Some(result) = self.format_in_memory(uri, source_text, language_id) else {
-                return Ok(vec![]); // currently not supported
-            };
-            (result, source_text)
-        } else {
+        let (result, source_text) = if uri.scheme().as_str() == "file" {
             let Some(path) = uri.to_file_path() else { return Err("Invalid file URI".to_string()) };
 
             let source_text = if let Some(c) = content {
@@ -280,6 +272,14 @@ impl Tool for ServerFormatter {
                 return Ok(vec![]); // No formatting for this file (unsupported or ignored)
             };
 
+            (result, source_text)
+        } else {
+            let source_text =
+                content.ok_or_else(|| "In-memory formatting requires content".to_string())?;
+
+            let Some(result) = self.format_in_memory(uri, source_text, language_id) else {
+                return Ok(vec![]); // currently not supported
+            };
             (result, source_text)
         };
 
