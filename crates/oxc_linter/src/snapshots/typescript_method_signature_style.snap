@@ -1,0 +1,551 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       f(a: string): number;
+   ·                       ─────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace `f(a: string): number;` with `f: (a: string) => number;`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       ['f'](a: boolean): void;
+   ·                       ────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace `['f'](a: boolean): void;` with `['f']: (a: boolean) => void;`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       f<T>(a: T): T;
+   ·                       ──────────────
+ 4 │                     }
+   ╰────
+  help: Replace `f<T>(a: T): T;` with `f: <T>(a: T) => T;`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       ['f']<T extends {}>(a: T, b: T): T;
+   ·                       ───────────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace `['f']<T extends {}>(a: T, b: T): T;` with `['f']: <T extends {}>(a: T, b: T) => T;`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       'f!'</* a */ T>(/* b */ x: any /* c */): void;
+   ·                       ──────────────────────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace `'f!'</* a */ T>(/* b */ x: any /* c */): void;` with `'f!': </* a */ T>(/* b */ x: any /* c */) => void;`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { f(a: string): number };
+   ·                                   ────────────────────
+ 3 │                   
+   ╰────
+  help: Replace `f(a: string): number` with `f: (a: string) => number`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { ['f']?(a: boolean): void };
+   ·                                   ────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace `['f']?(a: boolean): void` with `['f']?: (a: boolean) => void`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { f?<T>(a?: T): T };
+   ·                                   ───────────────
+ 3 │                   
+   ╰────
+  help: Replace `f?<T>(a?: T): T` with `f?: <T>(a?: T) => T`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { ['f']?<T>(a: T, b: T): T };
+   ·                                   ────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace `['f']?<T>(a: T, b: T): T` with `['f']?: <T>(a: T, b: T) => T`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       f: (a: string) => number;
+   ·                       ─────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace `f: (a: string) => number;` with `f(a: string): number;`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       ['f']: (a: boolean) => void;
+   ·                       ────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace `['f']: (a: boolean) => void;` with `['f'](a: boolean): void;`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       f: <T>(a: T) => T;
+   ·                       ──────────────────
+ 4 │                     }
+   ╰────
+  help: Replace `f: <T>(a: T) => T;` with `f<T>(a: T): T;`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       ['f']: <T extends {}>(a: T, b: T) => T;
+   ·                       ───────────────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace `['f']: <T extends {}>(a: T, b: T) => T;` with `['f']<T extends {}>(a: T, b: T): T;`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:3:23]
+ 2 │                     interface Test {
+ 3 │                       'f!': </* a */ T>(/* b */ x: any /* c */) => void;
+   ·                       ──────────────────────────────────────────────────
+ 4 │                     }
+   ╰────
+  help: Replace `'f!': </* a */ T>(/* b */ x: any /* c */) => void;` with `'f!'</* a */ T>(/* b */ x: any /* c */): void;`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { f: (a: string) => number };
+   ·                                   ────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace `f: (a: string) => number` with `f(a: string): number`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { ['f']?: (a: boolean) => void };
+   ·                                   ────────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace `['f']?: (a: boolean) => void` with `['f']?(a: boolean): void`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { f?: <T>(a?: T) => T };
+   ·                                   ───────────────────
+ 3 │                   
+   ╰────
+  help: Replace `f?: <T>(a?: T) => T` with `f?<T>(a?: T): T`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:2:35]
+ 1 │ 
+ 2 │                     type Test = { ['f']?: <T>(a: T, b: T) => T };
+   ·                                   ────────────────────────────
+ 3 │                   
+   ╰────
+  help: Replace `['f']?: <T>(a: T, b: T) => T` with `['f']?<T>(a: T, b: T): T`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               semi(arg: string): void;
+   ·               ────────────────────────
+ 4 │               comma(arg: string): void,
+   ╰────
+  help: Replace `semi(arg: string): void;` with `semi: (arg: string) => void;`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               semi(arg: string): void;
+ 4 │               comma(arg: string): void,
+   ·               ─────────────────────────
+ 5 │               none(arg: string): void
+   ╰────
+  help: Replace `comma(arg: string): void,` with `comma: (arg: string) => void,`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               comma(arg: string): void,
+ 5 │               none(arg: string): void
+   ·               ───────────────────────
+ 6 │             }
+   ╰────
+  help: Replace `none(arg: string): void` with `none: (arg: string) => void`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               semi: (arg: string) => void;
+   ·               ────────────────────────────
+ 4 │               comma: (arg: string) => void,
+   ╰────
+  help: Replace `semi: (arg: string) => void;` with `semi(arg: string): void;`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               semi: (arg: string) => void;
+ 4 │               comma: (arg: string) => void,
+   ·               ─────────────────────────────
+ 5 │               none: (arg: string) => void
+   ╰────
+  help: Replace `comma: (arg: string) => void,` with `comma(arg: string): void,`.
+
+  ⚠ typescript-eslint(method-signature-style): Function property signature is forbidden. Use a method shorthand instead.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               comma: (arg: string) => void,
+ 5 │               none: (arg: string) => void
+   ·               ───────────────────────────
+ 6 │             }
+   ╰────
+  help: Replace `none: (arg: string) => void` with `none(arg: string): void`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │                 interface Foo {
+ 3 │ ╭─▶               x(
+ 4 │ │                   args: Pick<
+ 5 │ │                     Bar,
+ 6 │ │                     'one' | 'two' | 'three'
+ 7 │ │                   >,
+ 8 │ ╰─▶               ): Baz;
+ 9 │                   y(
+   ╰────
+  help: Replace `x(
+                        args: Pick<
+                          Bar,
+                          'one' | 'two' | 'three'
+                        >,
+                      ): Baz;` with `x: (
+                        args: Pick<
+                          Bar,
+                          'one' | 'two' | 'three'
+                        >,
+                      ) => Baz;`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+    ╭─[method_signature_style.tsx:9:15]
+  8 │                   ): Baz;
+  9 │ ╭─▶               y(
+ 10 │ │                   foo: string,
+ 11 │ │                   bar: number,
+ 12 │ ╰─▶               ): void;
+ 13 │                 }
+    ╰────
+  help: Replace `y(
+                        foo: string,
+                        bar: number,
+                      ): void;` with `y: (
+                        foo: string,
+                        bar: number,
+                      ) => void;`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               foo(): one;
+   ·               ───────────
+ 4 │               foo(): two;
+   ╰────
+  help: Replace `foo(): one;
+                      foo(): two;
+                      foo(): three;` with `foo: (() => one) & (() => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               foo(): one;
+ 4 │               foo(): two;
+   ·               ───────────
+ 5 │               foo(): three;
+   ╰────
+  help: Replace `foo(): one;
+                      foo(): two;
+                      foo(): three;` with `foo: (() => one) & (() => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               foo(): two;
+ 5 │               foo(): three;
+   ·               ─────────────
+ 6 │             }
+   ╰────
+  help: Replace `foo(): one;
+                      foo(): two;
+                      foo(): three;` with `foo: (() => one) & (() => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               foo(bar: string): one;
+   ·               ──────────────────────
+ 4 │               foo(bar: number, baz: string): two;
+   ╰────
+  help: Replace `foo(bar: string): one;
+                      foo(bar: number, baz: string): two;
+                      foo(): three;` with `foo: ((bar: string) => one) & ((bar: number, baz: string) => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               foo(bar: string): one;
+ 4 │               foo(bar: number, baz: string): two;
+   ·               ───────────────────────────────────
+ 5 │               foo(): three;
+   ╰────
+  help: Replace `foo(bar: string): one;
+                      foo(bar: number, baz: string): two;
+                      foo(): three;` with `foo: ((bar: string) => one) & ((bar: number, baz: string) => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               foo(bar: number, baz: string): two;
+ 5 │               foo(): three;
+   ·               ─────────────
+ 6 │             }
+   ╰────
+  help: Replace `foo(bar: string): one;
+                      foo(bar: number, baz: string): two;
+                      foo(): three;` with `foo: ((bar: string) => one) & ((bar: number, baz: string) => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               [foo](bar: string): one;
+   ·               ────────────────────────
+ 4 │               [foo](bar: number, baz: string): two;
+   ╰────
+  help: Replace `[foo](bar: string): one;
+                      [foo](bar: number, baz: string): two;
+                      [foo](): three;` with `[foo]: ((bar: string) => one) & ((bar: number, baz: string) => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               [foo](bar: string): one;
+ 4 │               [foo](bar: number, baz: string): two;
+   ·               ─────────────────────────────────────
+ 5 │               [foo](): three;
+   ╰────
+  help: Replace `[foo](bar: string): one;
+                      [foo](bar: number, baz: string): two;
+                      [foo](): three;` with `[foo]: ((bar: string) => one) & ((bar: number, baz: string) => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               [foo](bar: number, baz: string): two;
+ 5 │               [foo](): three;
+   ·               ───────────────
+ 6 │             }
+   ╰────
+  help: Replace `[foo](bar: string): one;
+                      [foo](bar: number, baz: string): two;
+                      [foo](): three;` with `[foo]: ((bar: string) => one) & ((bar: number, baz: string) => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Foo {
+ 3 │               [foo](bar: string): one;
+   ·               ────────────────────────
+ 4 │               [foo](bar: number, baz: string): two;
+   ╰────
+  help: Replace `[foo](bar: string): one;
+                      [foo](bar: number, baz: string): two;
+                      [foo](): three;` with `[foo]: ((bar: string) => one) & ((bar: number, baz: string) => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               [foo](bar: string): one;
+ 4 │               [foo](bar: number, baz: string): two;
+   ·               ─────────────────────────────────────
+ 5 │               [foo](): three;
+   ╰────
+  help: Replace `[foo](bar: string): one;
+                      [foo](bar: number, baz: string): two;
+                      [foo](): three;` with `[foo]: ((bar: string) => one) & ((bar: number, baz: string) => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               [foo](bar: number, baz: string): two;
+ 5 │               [foo](): three;
+   ·               ───────────────
+ 6 │               bar(arg: string): void;
+   ╰────
+  help: Replace `[foo](bar: string): one;
+                      [foo](bar: number, baz: string): two;
+                      [foo](): three;` with `[foo]: ((bar: string) => one) & ((bar: number, baz: string) => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:6:15]
+ 5 │               [foo](): three;
+ 6 │               bar(arg: string): void;
+   ·               ───────────────────────
+ 7 │               bar(baz: number): Foo;
+   ╰────
+  help: Replace `bar(arg: string): void;
+                      bar(baz: number): Foo;` with `bar: ((arg: string) => void) & ((baz: number) => Foo);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:7:15]
+ 6 │               bar(arg: string): void;
+ 7 │               bar(baz: number): Foo;
+   ·               ──────────────────────
+ 8 │             }
+   ╰────
+  help: Replace `bar(arg: string): void;
+                      bar(baz: number): Foo;` with `bar: ((arg: string) => void) & ((baz: number) => Foo);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:6:27]
+ 5 │                           // Add overloads specific to the DOM
+ 6 │                           toHaveProp<K extends keyof DomPropsOf<T>>(name: K, value?: DomPropsOf<T>[K]): R;
+   ·                           ────────────────────────────────────────────────────────────────────────────────
+ 7 │                           toHaveProps(props: Partial<DomPropsOf<T>>): R;
+   ╰────
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:7:27]
+ 6 │                           toHaveProp<K extends keyof DomPropsOf<T>>(name: K, value?: DomPropsOf<T>[K]): R;
+ 7 │                           toHaveProps(props: Partial<DomPropsOf<T>>): R;
+   ·                           ──────────────────────────────────────────────
+ 8 │                         }
+   ╰────
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             type Foo = {
+ 3 │               foo(): one;
+   ·               ───────────
+ 4 │               foo(): two;
+   ╰────
+  help: Replace `foo(): one;
+                      foo(): two;
+                      foo(): three;` with `foo: (() => one) & (() => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               foo(): one;
+ 4 │               foo(): two;
+   ·               ───────────
+ 5 │               foo(): three;
+   ╰────
+  help: Replace `foo(): one;
+                      foo(): two;
+                      foo(): three;` with `foo: (() => one) & (() => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               foo(): two;
+ 5 │               foo(): three;
+   ·               ─────────────
+ 6 │             }
+   ╰────
+  help: Replace `foo(): one;
+                      foo(): two;
+                      foo(): three;` with `foo: (() => one) & (() => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             declare const Foo: {
+ 3 │               foo(): one;
+   ·               ───────────
+ 4 │               foo(): two;
+   ╰────
+  help: Replace `foo(): one;
+                      foo(): two;
+                      foo(): three;` with `foo: (() => one) & (() => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               foo(): one;
+ 4 │               foo(): two;
+   ·               ───────────
+ 5 │               foo(): three;
+   ╰────
+  help: Replace `foo(): one;
+                      foo(): two;
+                      foo(): three;` with `foo: (() => one) & (() => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:5:15]
+ 4 │               foo(): two;
+ 5 │               foo(): three;
+   ·               ─────────────
+ 6 │             }
+   ╰────
+  help: Replace `foo(): one;
+                      foo(): two;
+                      foo(): three;` with `foo: (() => one) & (() => two) & (() => three);`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface MyInterface {
+ 3 │               methodReturningImplicitAny();
+   ·               ─────────────────────────────
+ 4 │             }
+   ╰────
+  help: Replace `methodReturningImplicitAny();` with `methodReturningImplicitAny: () => any;`.
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Test {
+ 3 │               f(value: number): this;
+   ·               ───────────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Test {
+ 3 │               foo(): this;
+   ·               ────────────
+ 4 │               foo(): Promise<this>;
+   ╰────
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:4:15]
+ 3 │               foo(): this;
+ 4 │               foo(): Promise<this>;
+   ·               ─────────────────────
+ 5 │             }
+   ╰────
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Test {
+ 3 │               f(value: number): this | undefined;
+   ·               ───────────────────────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Test {
+ 3 │               f(value: number): Promise<this>;
+   ·               ────────────────────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ typescript-eslint(method-signature-style): Shorthand method signature is forbidden. Use a function property instead.
+   ╭─[method_signature_style.tsx:3:15]
+ 2 │             interface Test {
+ 3 │               f(value: number): Promise<this | undefined>;
+   ·               ────────────────────────────────────────────
+ 4 │             }
+   ╰────
