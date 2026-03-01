@@ -949,6 +949,17 @@ mod test {
     }
 
     #[test]
+    fn test_quoted_globs() {
+        let args_1 = &["\"*\""];
+        let args_2 = &["\"*.ts\""];
+        let args_3 = &["\"*.{js,ts}\""];
+        let args_4 = &["\"./**/*.{js,ts}\""];
+        Tester::new()
+            .with_cwd("fixtures/globs".into())
+            .test_and_snapshot_multiple(&[args_1, args_2, args_3, args_4]);
+    }
+
+    #[test]
     fn test_ignore_patterns() {
         let args = &["-c", "./test/eslintrc.json", "--ignore-pattern", "*.ts", "."];
 
