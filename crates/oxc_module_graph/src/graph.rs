@@ -190,6 +190,11 @@ impl ModuleGraph {
         self.modules.iter().filter_map(Module::as_normal)
     }
 
+    /// Check if a symbol slot exists in the symbol database.
+    pub fn has_symbol(&self, sym: SymbolRef) -> bool {
+        self.symbols.has_symbol(sym)
+    }
+
     /// Follow link chains to find the canonical (final) symbol.
     pub fn canonical_ref(&self, sym: SymbolRef) -> SymbolRef {
         self.symbols.canonical_ref_for(sym)

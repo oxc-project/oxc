@@ -76,6 +76,12 @@ impl SymbolRefDb {
         self.add_symbol(module, name)
     }
 
+    /// Check if a symbol slot exists for the given symbol ref.
+    pub fn has_symbol(&self, symbol: SymbolRef) -> bool {
+        symbol.owner.index() < self.modules.len()
+            && symbol.symbol.index() < self.modules[symbol.owner].links.len()
+    }
+
     /// Follow link chains to find the canonical (final) symbol.
     pub fn canonical_ref_for(&self, symbol: SymbolRef) -> SymbolRef {
         let mut current = symbol;
@@ -89,13 +95,27 @@ impl SymbolRefDb {
     }
 
     /// Follow link chains to find the canonical symbol, applying path halving.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a cycle is detected (more than 10 000 steps).
     pub fn canonical_ref_for_mut(&mut self, symbol: SymbolRef) -> SymbolRef {
         let mut current = symbol;
+        let mut steps = 0u32;
         loop {
             let next = self.modules[current.owner].links[current.symbol];
             if next == current {
                 return current;
             }
+            steps += 1;
+            assert!(
+                steps <= 10000,
+                "canonical_ref_for_mut: cycle detected starting from ({}, {}), stuck at ({}, {})",
+                symbol.owner.index(),
+                symbol.symbol.index(),
+                current.owner.index(),
+                current.symbol.index(),
+            );
 
             let next_next = self.modules[next.owner].links[next.symbol];
             if next_next != next {
