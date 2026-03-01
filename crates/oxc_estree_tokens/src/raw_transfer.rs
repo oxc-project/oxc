@@ -80,6 +80,12 @@ impl<O: ESTreeTokenConfig> RawContext<'_, O> {
         unreachable!("Expected token at position {start}");
     }
 
+    /// Advance to the token at `start` and set its `Kind`.
+    fn set_kind_at(&mut self, start: u32, kind: Kind) {
+        let token = self.advance_to(start);
+        token.set_kind(kind);
+    }
+
     /// Convert remaining token spans from UTF-8 byte offsets to UTF-16 offsets.
     fn finish(self) {
         if let Some(mut converter) = self.span_converter {
@@ -137,14 +143,12 @@ impl<O: ESTreeTokenConfig> Context for RawContext<'_, O> {
 
     /// Set `Kind` of the token at `start` to `Identifier`.
     fn emit_this_identifier_at(&mut self, start: u32) {
-        let token = self.advance_to(start);
-        token.set_kind(Kind::Ident);
+        self.set_kind_at(start, Kind::Ident);
     }
 
     /// Set `Kind` of the token at `start` to `JSXIdentifier`.
     fn emit_jsx_identifier_at(&mut self, start: u32, _name: &str) {
-        let token = self.advance_to(start);
-        token.set_kind(Kind::JSXIdentifier);
+        self.set_kind_at(start, Kind::JSXIdentifier);
     }
 
     /// Handle `PrivateIdentifier` token (no-op).
@@ -163,8 +167,7 @@ impl<O: ESTreeTokenConfig> Context for RawContext<'_, O> {
 
     /// Set `Kind` of the `StringLiteral` token to `JSXText`.
     fn emit_string_literal_as_jsx_text(&mut self, literal: &StringLiteral<'_>) {
-        let token = self.advance_to(literal.span.start);
-        token.set_kind(Kind::JSXText);
+        self.set_kind_at(literal.span.start, Kind::JSXText);
     }
 
     /// Handle `JSXText` token (no-op).
