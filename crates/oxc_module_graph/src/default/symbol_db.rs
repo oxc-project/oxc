@@ -139,6 +139,26 @@ impl SymbolRefDb {
         &self.modules[symbol.owner].names[symbol.symbol]
     }
 
+    /// Flatten all union-find chains using path halving.
+    ///
+    /// The immutable `canonical_ref_for` cannot do path compression, so chains
+    /// built during linking may be multi-hop. This method walks every symbol
+    /// once via `canonical_ref_for_mut` (which applies path halving), so that
+    /// all subsequent immutable lookups resolve in a single read.
+    ///
+    /// Call this after all `link()` calls are complete and before the generate
+    /// stage's hot loops that call `canonical_ref_for` thousands of times.
+    pub fn flatten_all_chains(&mut self) {
+        for module_idx_raw in 0..self.modules.len() {
+            let module_idx = ModuleIdx::from_usize(module_idx_raw);
+            let num_symbols = self.modules[module_idx].links.len();
+            for symbol_idx in 0..num_symbols {
+                let sym = SymbolRef::new(module_idx, SymbolId::from_usize(symbol_idx));
+                self.canonical_ref_for_mut(sym);
+            }
+        }
+    }
+
     /// Get the owning module of a symbol.
     pub fn symbol_owner(symbol: SymbolRef) -> ModuleIdx {
         symbol.owner
