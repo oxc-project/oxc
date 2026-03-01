@@ -2532,6 +2532,89 @@ fn process_import_tags(tags: &[(&oxc_jsdoc::parser::JSDocTag<'_>, &str)]) -> Vec
 mod tests {
     use super::*;
 
+    #[test]
+    fn test_tag_sort_priority_canonical_names() {
+        // Canonical names should have specific priorities
+        assert_eq!(tag_sort_priority("import"), 0);
+        assert_eq!(tag_sort_priority("param"), 80);
+        assert_eq!(tag_sort_priority("returns"), 84);
+        assert_eq!(tag_sort_priority("this"), 79); // 39.5 × 2
+        assert_eq!(tag_sort_priority("see"), 90);
+        assert_eq!(tag_sort_priority("todo"), 92);
+    }
+
+    #[test]
+    fn test_tag_sort_priority_unknown_tags() {
+        // Unknown/custom tags get the "other" weight
+        assert_eq!(tag_sort_priority("custom"), 88);
+        assert_eq!(tag_sort_priority("override"), 88);
+        assert_eq!(tag_sort_priority("internal"), 88);
+        assert_eq!(tag_sort_priority("link"), 88);
+    }
+
+    #[test]
+    fn test_tag_sort_priority_no_synonyms() {
+        // Synonyms should NOT appear — they must be normalized first
+        assert_eq!(tag_sort_priority("return"), 88); // not "returns"
+        assert_eq!(tag_sort_priority("arg"), 88); // not "param"
+        assert_eq!(tag_sort_priority("yield"), 88); // not "yields"
+        assert_eq!(tag_sort_priority("constructor"), 88); // not "class"
+    }
+
+    #[test]
+    fn test_is_known_tag() {
+        assert!(is_known_tag("param"));
+        assert!(is_known_tag("returns"));
+        assert!(is_known_tag("typedef"));
+        assert!(is_known_tag("this"));
+        assert!(!is_known_tag("custom"));
+        assert!(!is_known_tag("override"));
+        assert!(!is_known_tag("link"));
+    }
+
+    #[test]
+    fn test_should_skip_capitalize() {
+        // Tags in TAGS_PEV_FORMATE_DESCRIPTION
+        assert!(should_skip_capitalize("borrows"));
+        assert!(should_skip_capitalize("default"));
+        assert!(should_skip_capitalize("defaultValue"));
+        assert!(should_skip_capitalize("import"));
+        assert!(should_skip_capitalize("memberof"));
+        assert!(should_skip_capitalize("module"));
+        assert!(should_skip_capitalize("see"));
+
+        // Tags whose content is a name/reference
+        assert!(should_skip_capitalize("function"));
+        assert!(should_skip_capitalize("typedef"));
+        assert!(should_skip_capitalize("class"));
+        assert!(should_skip_capitalize("callback"));
+
+        // Tags that should capitalize
+        assert!(!should_skip_capitalize("param"));
+        assert!(!should_skip_capitalize("returns"));
+        assert!(!should_skip_capitalize("deprecated"));
+    }
+
+    #[test]
+    fn test_should_remove_empty_tag() {
+        // Upstream's TAGS_DESCRIPTION_NEEDED
+        assert!(should_remove_empty_tag("borrows"));
+        assert!(should_remove_empty_tag("category"));
+        assert!(should_remove_empty_tag("description"));
+        assert!(should_remove_empty_tag("example"));
+        assert!(should_remove_empty_tag("import"));
+        assert!(should_remove_empty_tag("privateRemarks"));
+        assert!(should_remove_empty_tag("remarks"));
+        assert!(should_remove_empty_tag("since"));
+        assert!(should_remove_empty_tag("todo"));
+
+        // Tags that should NOT be removed when empty
+        assert!(!should_remove_empty_tag("param"));
+        assert!(!should_remove_empty_tag("returns"));
+        assert!(!should_remove_empty_tag("deprecated"));
+        assert!(!should_remove_empty_tag("abstract"));
+    }
+
     fn fmt_type(type_str: &str) -> Option<String> {
         format_type_via_formatter(type_str, &FormatOptions::default())
     }
