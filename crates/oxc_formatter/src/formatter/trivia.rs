@@ -444,6 +444,9 @@ impl<'a> Format<'a> for Comment {
                 f.options(),
                 f.context().external_callbacks(),
             ) {
+                // `format_jsdoc_comment` returns `Some("")` for empty JSDoc comments
+                // (no description and no tags) to signal removal — matching upstream
+                // prettier-plugin-jsdoc behavior. In that case we skip writing and return.
                 if !formatted.is_empty() {
                     // Write line-by-line with hard_line_break() for proper indentation
                     // (same approach as alignable multi-line comments)
