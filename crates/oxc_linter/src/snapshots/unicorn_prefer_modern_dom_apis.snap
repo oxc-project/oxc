@@ -10,6 +10,28 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `parentNode.replaceChild(newChildNode, oldChildNode)` with `oldChildNode.replaceWith(newChildNode)`.
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
+ 1 │ parentNode.replaceChild(
+   ·            ────────────
+ 2 │                 newChildNode,
+   ╰────
+  help: Replace `parentNode.replaceChild(
+                        newChildNode,
+                        oldChildNode
+                    )` with `oldChildNode.replaceWith(newChildNode)`.
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
+   ╭─[prefer_modern_dom_apis.tsx:1:12]
+ 1 │ parentNode.replaceChild( // inline comments
+   ·            ────────────
+ 2 │                 newChildNode, // inline comments
+   ╰────
+  help: Replace `parentNode.replaceChild( // inline comments
+                        newChildNode, // inline comments
+                        oldChildNode // inline comments
+                    )` with `oldChildNode.replaceWith(newChildNode)`.
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
    ╭─[prefer_modern_dom_apis.tsx:1:24]
  1 │ const foo = parentNode.replaceChild(newChildNode, oldChildNode);
    ·                        ────────────
@@ -127,6 +149,28 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─────────────────────
    ╰────
   help: Replace `referenceNode.insertAdjacentElement("afterend", newNode)` with `referenceNode.after(newNode)`.
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `after` over `insertAdjacentElement`.
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
+ 1 │ referenceNode.insertAdjacentElement(
+   ·               ─────────────────────
+ 2 │                 "afterend",
+   ╰────
+  help: Replace `referenceNode.insertAdjacentElement(
+                        "afterend",
+                        newNode
+                    )` with `referenceNode.after(newNode)`.
+
+  ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `after` over `insertAdjacentElement`.
+   ╭─[prefer_modern_dom_apis.tsx:1:15]
+ 1 │ referenceNode.insertAdjacentElement( // inline comments
+   ·               ─────────────────────
+ 2 │                 "afterend", // inline comments
+   ╰────
+  help: Replace `referenceNode.insertAdjacentElement( // inline comments
+                        "afterend", // inline comments
+                        newNode  // inline comments
+                    )` with `referenceNode.after(newNode)`.
 
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `before` over `insertAdjacentElement`.
    ╭─[prefer_modern_dom_apis.tsx:1:27]

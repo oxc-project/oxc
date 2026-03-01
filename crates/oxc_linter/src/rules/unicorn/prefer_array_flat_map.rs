@@ -128,8 +128,14 @@ fn test() {
         "const bar = [1,2,3].map((i) => i)",
         "const bar = [1,2,3].map((i) => { return i; })",
         "const bar = foo.map(i => i)",
+        // TODO: Fix the rule so these tests pass.
+        // "const bar = foo.map?.(i => [i]).flat()",
+        // "const bar = foo.map(i => [i])?.flat()",
+        // "const bar = foo.map(i => [i]).flat?.()",
         "const bar = [[1],[2],[3]].flat()",
         "const bar = [1,2,3].map(i => [i]).sort().flat()",
+        "let bar = [1,2,3].map(i => [i]);
+            bar = bar.flat();",
         "const bar = [[1],[2],[3]].map(i => [i]).flat(2)",
         "const bar = [[1],[2],[3]].map(i => [i]).flat(2.0)",
         // Parsed as 0.9999999999999999. Rounds down to 0.
@@ -167,10 +173,31 @@ fn test() {
         "const bar = [1,2,3].map((i) => { return [i]; }).flat()",
         "const bar = [1,2,3].map(foo).flat()",
         "const bar = foo.map(i => [i]).flat()",
+        "const bar = foo?.map(i => [i]).flat()",
         "const bar = { map: () => {} }.map(i => [i]).flat()",
         "const bar = [1,2,3].map(i => i).map(i => [i]).flat()",
         "const bar = [1,2,3].sort().map(i => [i]).flat()",
         "const bar = (([1,2,3].map(i => [i]))).flat()",
+        "let bar = [1,2,3].map(i => {
+                return [i];
+            }).flat();",
+        "let bar = [1,2,3].map(i => {
+                return [i];
+            })
+            .flat();",
+        "let bar = [1,2,3].map(i => {
+                return [i];
+            }) // comment
+            .flat();",
+        "let bar = [1,2,3].map(i => {
+                return [i];
+            }) // comment
+            .flat(); // other",
+        "let bar = [1,2,3]
+                .map(i => { return [i]; })
+                .flat();",
+        "let bar = [1,2,3].map(i => { return [i]; })
+                .flat();",
         "let bar = [1,2,3] . map( x => y ) . flat () // 🤪",
         "const bar = [1,2,3].map(i => [i]).flat(1);",
     ];

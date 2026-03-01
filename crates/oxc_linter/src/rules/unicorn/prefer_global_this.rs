@@ -289,6 +289,8 @@ fn test() {
         "self.navigator",
         r#"window.addEventListener("resize", () => {})"#,
         "window.onresize = function () {}",
+        // TODO: Get this passing.
+        // r#"'open' in window; window.open("https://example.com")"#,
         "const {window} = jsdom()
             window.jQuery = jQuery;",
         "({ foo: window.name } =  {})",
@@ -375,6 +377,8 @@ fn test() {
         "[window.foo] = []",
         "foo[window]",
         "foo[window.foo]",
+        "'foo' in window",
+        "'foo' in global",
         r#"typeof window !== "undefined""#,
         r#"typeof self !== "undefined""#,
         r#"typeof global !== "undefined""#,

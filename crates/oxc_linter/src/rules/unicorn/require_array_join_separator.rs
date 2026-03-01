@@ -166,6 +166,32 @@ fn test() {
         "[].join.call(foo , );",
         "Array.prototype.join.call(foo)",
         "Array.prototype.join.call(foo, )",
+        "(
+                /**/
+                [
+                    /**/
+                ]
+                    /**/
+                    .
+                    /**/
+                    join
+                    /**/
+                    .
+                    /**/
+                    call
+                    /**/
+                    (
+                        /**/
+                        (
+                            /**/
+                            foo
+                            /**/
+                        )
+                        /**/
+                        ,
+                        /**/
+                    )/**/
+            )",
         "foo?.join()",
     ];
 

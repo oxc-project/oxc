@@ -57,6 +57,104 @@ source: crates/oxc_linter/src/tester.rs
   help: Convert to an object instead of a class with only static members.
 
   ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
+   ╭─[no_static_only_class.tsx:2:24]
+ 1 │     function a() {
+ 2 │ ╭─▶                 return class
+ 3 │ │                   {
+ 4 │ │                       static a() {}
+ 5 │ ╰─▶                 }
+ 6 │                 }
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
+   ╭─[no_static_only_class.tsx:2:24]
+ 1 │     function a() {
+ 2 │ ╭─▶                 return class /* comment */
+ 3 │ │                   {
+ 4 │ │                       static a() {}
+ 5 │ ╰─▶                 }
+ 6 │                 }
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
+   ╭─[no_static_only_class.tsx:2:24]
+ 1 │     function a() {
+ 2 │ ╭─▶                 return class // comment
+ 3 │ │                   {
+ 4 │ │                       static a() {}
+ 5 │ ╰─▶                 }
+ 6 │                 }
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A {static a(){}}
+   · ──────────────────────
+ 2 │             class B extends A {}
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A {static a(){}}
+   · ──────────────────────
+ 2 │             console.log(typeof A)
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ class A {static a(){}}
+   · ──────────────────────
+ 2 │             const a = new A;
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ ╭─▶ class A {
+ 2 │ │                   static a
+ 3 │ │                   static b = 1
+ 4 │ │                   static [c] = 2
+ 5 │ │                   static [d]
+ 6 │ │                   static e() {}
+ 7 │ │                   static [f]() {}
+ 8 │ ╰─▶             }
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
+   ╭─[no_static_only_class.tsx:1:1]
+ 1 │ ╭─▶ class A {
+ 2 │ │                   static a;
+ 3 │ │                   static b = 1;
+ 4 │ │                   static [((c))] = ((2));
+ 5 │ │                   static [d];
+ 6 │ │                   static e() {};
+ 7 │ │                   static [f]() {};
+ 8 │ ╰─▶             }
+   ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
+    ╭─[no_static_only_class.tsx:2:13]
+  1 │     /* */
+  2 │ ╭─▶             class /* */ A /* */ {
+  3 │ │                   /* */ static /* */ a /* */; /* */
+  4 │ │                   /* */ static /* */ b /* */ = /* */ 1 /* */; /* */
+  5 │ │                   /* */ static /* */ [ /* */ c /* */ ] /* */ = /* */ 2 /* */;  /* */
+  6 │ │                   /* */ static /* */ [/* */ d /* */] /* */;  /* */
+  7 │ │                   /* */ static /* */ /* */ e /* */ ( /* */ ) {/* */}/* */;  /* */
+  8 │ │                   /* */ static /* */ [/* */ f /* */ ] /* */ ( /* */ ) {/* */ }/* */ ;  /* */
+  9 │ ╰─▶             }
+ 10 │                 /* */
+    ╰────
+  help: Convert to an object instead of a class with only static members.
+
+  ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
  1 │ class A {static [this.a] = 1}
    · ─────────────────────────────

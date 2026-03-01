@@ -89,100 +89,100 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("#!/usr/bin/env node\n\nprocess.exit();"),
-        ("Process.exit()"),
-        ("const x = process.exit;"),
-        ("x(process.exit)"),
-        (r#"process.on("SIGINT", function() { process.exit(1); })"#),
-        (r#"process.on("SIGKILL", function() { process.exit(1); })"#),
-        (r#"process.on("SIGINT", () => { process.exit(1); })"#),
-        (r#"process.on("SIGINT", () => process.exit(1))"#),
-        (r#"process.on("SIGINT", () => { if (true) { process.exit(1); } })"#),
-        (r#"process.once("SIGINT", function() { process.exit(1); })"#),
-        (r#"process.once("SIGKILL", function() { process.exit(1); })"#),
-        (r#"process.once("SIGINT", () => { process.exit(1); })"#),
-        (r#"process.once("SIGINT", () => process.exit(1))"#),
-        (r#"process.once("SIGINT", () => { if (true) { process.exit(1); } })"#),
-        // (r"
+        "#!/usr/bin/env node\n\nprocess.exit();",
+        "Process.exit()",
+        "const x = process.exit;",
+        "x(process.exit)",
+        r#"process.on("SIGINT", function() { process.exit(1); })"#,
+        r#"process.on("SIGKILL", function() { process.exit(1); })"#,
+        r#"process.on("SIGINT", () => { process.exit(1); })"#,
+        r#"process.on("SIGINT", () => process.exit(1))"#,
+        r#"process.on("SIGINT", () => { if (true) { process.exit(1); } })"#,
+        r#"process.once("SIGINT", function() { process.exit(1); })"#,
+        r#"process.once("SIGKILL", function() { process.exit(1); })"#,
+        r#"process.once("SIGINT", () => { process.exit(1); })"#,
+        r#"process.once("SIGINT", () => process.exit(1))"#,
+        r#"process.once("SIGINT", () => { if (true) { process.exit(1); } })"#,
+        // r"
         // const {workerData, parentPort} = require('worker_threads');
         // process.exit(1);
-        // "),
-        // (r"
+        // ",
+        // r"
         // const {workerData, parentPort} = require('node:worker_threads');
         // process.exit(1);
-        // "),
-        // (r"
+        // ",
+        // r"
         // import {workerData, parentPort} from 'worker_threads';
         // process.exit(1);
-        // "),
-        // (r"
+        // ",
+        // r"
         // import foo from 'worker_threads';
         // process.exit(1);
-        // "),
-        // (r"
+        // ",
+        // r"
         // import foo from 'node:worker_threads';
         // process.exit(1);
-        // "),
+        // ",
         // Not `CallExpression`
-        ("new process.exit(1);"),
+        "new process.exit(1);",
         // Not `MemberExpression`
-        ("exit(1);"),
+        "exit(1);",
         // `callee.property` is not a `Identifier`
-        // (r#"process["exit"](1);"#),
+        // r#"process["exit"](1);"#,
         // Computed
-        ("process[exit](1);"),
+        "process[exit](1);",
         // Not exit
-        ("process.foo(1);"),
+        "process.foo(1);",
         // Not `process`
-        ("foo.exit(1);"),
+        "foo.exit(1);",
         // `callee.object.type` is not a `Identifier`
-        ("lib.process.exit(1);"),
+        "lib.process.exit(1);",
     ];
 
     let fail = vec![
-        ("process.exit();"),
-        ("process.exit(1);"),
-        ("x(process.exit(1));"),
-        (r#"process.on("SIGINT", function() {});process.exit();"#),
-        (r#"process.once("SIGINT", function() {}); process.exit(0)"#),
-        (r"
+        "process.exit();",
+        "process.exit(1);",
+        "x(process.exit(1));",
+        r#"process.on("SIGINT", function() {});process.exit();"#,
+        r#"process.once("SIGINT", function() {}); process.exit(0)"#,
+        r"
             const mod = require('not_worker_threads');
             process.exit(1);
-        "),
-        (r"
+        ",
+        r"
             import mod from 'not_worker_threads';
             process.exit(1);
-        "),
+        ",
         // Not `CallExpression`
-        (r"
+        r"
             const mod = new require('worker_threads');
             process.exit(1);
-        "),
+        ",
         // Not `Literal` worker_threads
-        (r"
+        r"
             const mod = require(worker_threads);
             process.exit(1);
-        "),
+        ",
         // Not `CallExpression`
-        (r#"new process.on("SIGINT", function() { process.exit(1); })"#),
-        (r#"new process.once("SIGINT", function() { process.exit(1); })"#),
+        r#"new process.on("SIGINT", function() { process.exit(1); })"#,
+        r#"new process.once("SIGINT", function() { process.exit(1); })"#,
         // Not `MemberExpression`
-        (r#"on("SIGINT", function() { process.exit(1); })"#),
-        (r#"once("SIGINT", function() { process.exit(1); })"#),
+        r#"on("SIGINT", function() { process.exit(1); })"#,
+        r#"once("SIGINT", function() { process.exit(1); })"#,
         // `callee.property` is not a `Identifier`
-        // (r#"process["on"]("SIGINT", function() { process.exit(1); })"#),
-        // (r#"process["once"]("SIGINT", function() { process.exit(1); })"#),
+        // r#"process["on"]("SIGINT", function() { process.exit(1); })"#,
+        // r#"process["once"]("SIGINT", function() { process.exit(1); })"#,
         // Computed
-        (r#"process[on]("SIGINT", function() { process.exit(1); })"#),
-        (r#"process[once]("SIGINT", function() { process.exit(1); })"#),
+        r#"process[on]("SIGINT", function() { process.exit(1); })"#,
+        r#"process[once]("SIGINT", function() { process.exit(1); })"#,
         // Not `on` / `once`
-        (r#"process.foo("SIGINT", function() { process.exit(1); })"#),
+        r#"process.foo("SIGINT", function() { process.exit(1); })"#,
         // Not `process`
-        (r#"foo.on("SIGINT", function() { process.exit(1); })"#),
-        (r#"foo.once("SIGINT", function() { process.exit(1); })"#),
+        r#"foo.on("SIGINT", function() { process.exit(1); })"#,
+        r#"foo.once("SIGINT", function() { process.exit(1); })"#,
         // `callee.object.type` is not a `Identifier`
-        (r#"lib.process.on("SIGINT", function() { process.exit(1); })"#),
-        (r#"lib.process.once("SIGINT", function() { process.exit(1); })"#),
+        r#"lib.process.on("SIGINT", function() { process.exit(1); })"#,
+        r#"lib.process.once("SIGINT", function() { process.exit(1); })"#,
     ];
 
     Tester::new(NoProcessExit::NAME, NoProcessExit::PLUGIN, pass, fail).test_and_snapshot();

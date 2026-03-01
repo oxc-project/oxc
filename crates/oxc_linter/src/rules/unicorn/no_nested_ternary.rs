@@ -132,6 +132,7 @@ fn test() {
         "const foo = i > 5 ? true : i < 100 ? true : false;",
         "foo ? bar : baz === qux ? quxx : foobar;",
         "foo ? baz === qux ? quxx : foobar : bar;",
+        "const foo = i > 5 ? i < 100 ? true : false : i < 100 ? true : false;",
         "const foo = i > 5 ? true : (i < 100 ? true : (i < 1000 ? true : false));",
         "const foo = a ?
                 b :

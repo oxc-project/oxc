@@ -45,6 +45,26 @@ source: crates/oxc_linter/src/tester.rs
   help: Missing the separator argument.
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
+    ╭─[require_array_join_separator.tsx:13:25]
+ 12 │                         /**/
+ 13 │ ╭─▶                     call
+ 14 │ │                       /**/
+ 15 │ │                       (
+ 16 │ │                           /**/
+ 17 │ │                           (
+ 18 │ │                               /**/
+ 19 │ │                               foo
+ 20 │ │                               /**/
+ 21 │ │                           )
+ 22 │ │                           /**/
+ 23 │ │                           ,
+ 24 │ │                           /**/
+ 25 │ ╰─▶                     )/**/
+ 26 │                 )
+    ╰────
+  help: Missing the separator argument.
+
+  ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
    ╭─[require_array_join_separator.tsx:1:10]
  1 │ foo?.join()
    ·          ──

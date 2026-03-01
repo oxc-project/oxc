@@ -399,6 +399,20 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace the alias with `globalThis`.
 
   ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:10]
+ 1 │ 'foo' in window
+   ·          ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:10]
+ 1 │ 'foo' in global
+   ·          ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
    ╭─[prefer_global_this.tsx:1:8]
  1 │ typeof window !== "undefined"
    ·        ──────

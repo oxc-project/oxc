@@ -247,6 +247,7 @@ fn test() {
         r#"new Set([] ?? "")"#,
         r#"new Set( (( (( "" )) ?? (( [] )) )) )"#,
         "new Set(foo ?? bar ?? [])",
+        "new Set([/**/])",
     ];
 
     let fix = vec![

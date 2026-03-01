@@ -168,13 +168,13 @@ fn test() {
     let pass = vec![
         "oldChildNode.replaceWith(newChildNode);",
         "referenceNode.before(newNode);",
-        "referenceNode.before(\"text\");",
+        r#"referenceNode.before("text");"#,
         "referenceNode.prepend(newNode);",
-        "referenceNode.prepend(\"text\");",
+        r#"referenceNode.prepend("text");"#,
         "referenceNode.append(newNode);",
-        "referenceNode.append(\"text\");",
+        r#"referenceNode.append("text");"#,
         "referenceNode.after(newNode);",
-        "referenceNode.after(\"text\");",
+        r#"referenceNode.after("text");"#,
         "oldChildNode.replaceWith(undefined, oldNode);",
         "oldChildNode.replaceWith(newNode, undefined);",
         "new parentNode.replaceChild(newNode, oldNode);",
@@ -212,6 +212,14 @@ fn test() {
 
     let fail = vec![
         "parentNode.replaceChild(newChildNode, oldChildNode);",
+        "parentNode.replaceChild(
+                newChildNode,
+                oldChildNode
+            );",
+        "parentNode.replaceChild( // inline comments
+                newChildNode, // inline comments
+                oldChildNode // inline comments
+            );",
         "const foo = parentNode.replaceChild(newChildNode, oldChildNode);",
         "foo = parentNode.replaceChild(newChildNode, oldChildNode);",
         "parentNode.insertBefore(newNode, referenceNode);",
@@ -220,23 +228,31 @@ fn test() {
         "foo = parentNode.insertBefore(alfa, beta);",
         "new Dom(parentNode.insertBefore(alfa, beta))",
         "`${parentNode.insertBefore(alfa, beta)}`",
-        "referenceNode.insertAdjacentText(\"beforebegin\", \"text\");",
-        "referenceNode.insertAdjacentText(\"afterbegin\", \"text\");",
-        "referenceNode.insertAdjacentText(\"beforeend\", \"text\");",
-        "referenceNode.insertAdjacentText(\"afterend\", \"text\");",
-        "const foo = referenceNode.insertAdjacentText(\"beforebegin\", \"text\");",
-        "foo = referenceNode.insertAdjacentText(\"beforebegin\", \"text\");",
-        "referenceNode.insertAdjacentElement(\"beforebegin\", newNode);",
-        "referenceNode.insertAdjacentElement(\"afterbegin\", \"text\");",
-        "referenceNode.insertAdjacentElement(\"beforeend\", \"text\");",
-        "referenceNode.insertAdjacentElement(\"afterend\", newNode);",
-        "const foo = referenceNode.insertAdjacentElement(\"beforebegin\", newNode);",
-        "foo = referenceNode.insertAdjacentElement(\"beforebegin\", newNode);",
-        "const foo = [referenceNode.insertAdjacentElement(\"beforebegin\", newNode)]",
-        "foo(bar = referenceNode.insertAdjacentElement(\"beforebegin\", newNode))",
-        "const foo = () => { return referenceNode.insertAdjacentElement(\"beforebegin\", newNode); }",
-        "if (referenceNode.insertAdjacentElement(\"beforebegin\", newNode)) {}",
-        "const foo = { bar: referenceNode.insertAdjacentElement(\"beforebegin\", newNode) }",
+        r#"referenceNode.insertAdjacentText("beforebegin", "text");"#,
+        r#"referenceNode.insertAdjacentText("afterbegin", "text");"#,
+        r#"referenceNode.insertAdjacentText("beforeend", "text");"#,
+        r#"referenceNode.insertAdjacentText("afterend", "text");"#,
+        r#"const foo = referenceNode.insertAdjacentText("beforebegin", "text");"#,
+        r#"foo = referenceNode.insertAdjacentText("beforebegin", "text");"#,
+        r#"referenceNode.insertAdjacentElement("beforebegin", newNode);"#,
+        r#"referenceNode.insertAdjacentElement("afterbegin", "text");"#,
+        r#"referenceNode.insertAdjacentElement("beforeend", "text");"#,
+        r#"referenceNode.insertAdjacentElement("afterend", newNode);"#,
+        r#"referenceNode.insertAdjacentElement(
+                "afterend",
+                newNode
+            );"#,
+        r#"referenceNode.insertAdjacentElement( // inline comments
+                "afterend", // inline comments
+                newNode  // inline comments
+            ); // inline comments"#,
+        r#"const foo = referenceNode.insertAdjacentElement("beforebegin", newNode);"#,
+        r#"foo = referenceNode.insertAdjacentElement("beforebegin", newNode);"#,
+        r#"const foo = [referenceNode.insertAdjacentElement("beforebegin", newNode)]"#,
+        r#"foo(bar = referenceNode.insertAdjacentElement("beforebegin", newNode))"#,
+        r#"const foo = () => { return referenceNode.insertAdjacentElement("beforebegin", newNode); }"#,
+        r#"if (referenceNode.insertAdjacentElement("beforebegin", newNode)) {}"#,
+        r#"const foo = { bar: referenceNode.insertAdjacentElement("beforebegin", newNode) }"#,
     ];
 
     let fix = vec![

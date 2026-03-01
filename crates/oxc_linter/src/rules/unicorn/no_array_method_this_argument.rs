@@ -229,6 +229,7 @@ fn test() {
         "Array.fromAsync(iterableOrArrayLike, ...() => {}, thisArgument)",
         "Array.fromAsync(...iterableOrArrayLike, () => {}, thisArgument)",
         "Array.fromAsync(iterableOrArrayLike, () => {}, thisArgument, extraArgument)",
+        "Array?.fromAsync(iterableOrArrayLike, () => {}, thisArgument)",
         "lodash.every(array, () => {})",
         "lodash.find(array, () => {})",
         "jQuery.map(array, () => {})",

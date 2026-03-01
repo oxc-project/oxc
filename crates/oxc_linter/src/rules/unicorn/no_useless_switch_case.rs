@@ -97,7 +97,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"
+        "
         switch (foo) {
             case a:
             case b:
@@ -105,7 +105,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 handleCaseA();
@@ -115,7 +115,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 handleCaseA();
@@ -124,7 +124,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 break;
@@ -133,7 +133,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
                 handleCaseA();
@@ -143,7 +143,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             default:
@@ -154,7 +154,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (1) {
                 // This is not useless
                 case 1:
@@ -164,7 +164,7 @@ fn test() {
                         console.log('2')
         }
         ",
-        r"
+        "
         switch (1) {
             default:
                 handleDefaultCase1();
@@ -178,7 +178,7 @@ fn test() {
     ];
 
     let fail = vec![
-        r"
+        "
         switch (foo) {
             case a:
             default:
@@ -186,7 +186,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a: {
             }
@@ -195,7 +195,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a: {
                 ;;
@@ -211,7 +211,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             case (( b ))         :
@@ -220,7 +220,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             case b:
@@ -233,7 +233,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             case b:
@@ -242,7 +242,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             // eslint-disable-next-line
             case a:
@@ -252,7 +252,7 @@ fn test() {
                 break;
         }
         ",
-        r"
+        "
         switch (foo) {
             case a:
             // eslint-disable-next-line

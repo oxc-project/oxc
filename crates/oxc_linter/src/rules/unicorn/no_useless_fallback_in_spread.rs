@@ -153,6 +153,7 @@ fn test() {
         "const object = {...((foo && {}) || {})}",
         "const object = {...(foo && {} || {})}",
         "const object = {...({...(foo || {})})}",
+        "const object = {...({...((0, foo) || {})})}",
         "function foo(a = {...(bar || {})}){}",
         "const object = {...(document.all || {})}",
     ];

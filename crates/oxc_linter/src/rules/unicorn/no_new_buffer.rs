@@ -121,15 +121,57 @@ fn test() {
     let fail = vec![
         "const buffer = new Buffer([0x62, 0x75, 0x66, 0x66, 0x65, 0x72])",
         "const buffer = new Buffer([0x62, bar])",
+        "const array = [0x62];
+            const buffer = new Buffer(array);",
+        "const arrayBuffer = new ArrayBuffer(10);
+            const buffer = new Buffer(arrayBuffer);",
+        "const arrayBuffer = new ArrayBuffer(10);
+            const buffer = new Buffer(arrayBuffer, 0, );",
+        "const arrayBuffer = new ArrayBuffer(10);
+            const buffer = new Buffer(arrayBuffer, 0, 2);",
         "const buffer = new Buffer(10);",
+        "const size = 10;
+            const buffer = new Buffer(size);",
         "new Buffer(foo.length)",
         "new Buffer(Math.min(foo, bar))",
         r#"const buffer = new Buffer("string");"#,
         r#"const buffer = new Buffer("7468697320697320612074c3a97374", "hex")"#,
+        r#"const string = "string";
+            const buffer = new Buffer(string);"#,
         "const buffer = new Buffer(`${unknown}`)",
         "const buffer = new (Buffer)(unknown)",
         "const buffer = new Buffer(unknown, 2)",
         "const buffer = new Buffer(...unknown)",
+        "() => {
+                return new // 1
+                    Buffer();
+            }",
+        "() => {
+                return (
+                    new // 2
+                        Buffer()
+                );
+            }",
+        "() => {
+                return new // 3
+                    (Buffer);
+            }",
+        "() => {
+                return new // 4
+                    Buffer;
+            }",
+        "() => {
+                return (
+                    new // 5
+                        Buffer
+                );
+            }",
+        "() => {
+                return (
+                    new // 6
+                        (Buffer)
+                );
+            }",
         "const buffer = new /* comment */ Buffer()",
         "const buffer = new /* comment */ Buffer",
         "new Buffer(input, encoding);",

@@ -78,42 +78,42 @@ fn test() {
 
     let pass = vec![
         r#""🦄".codePointAt(0)"#,
-        r"foo.charCodeAt",
-        r"new foo.charCodeAt",
-        r"charCodeAt(0)",
-        r"foo.charCodeAt?.(0)",
-        r"foo?.charCodeAt(0)",
-        r"foo[charCodeAt](0)",
+        "foo.charCodeAt",
+        "new foo.charCodeAt",
+        "charCodeAt(0)",
+        "foo.charCodeAt?.(0)",
+        "foo?.charCodeAt(0)",
+        "foo[charCodeAt](0)",
         r#"foo["charCodeAt"](0)"#,
-        r"foo.notCharCodeAt(0)",
-        r"String.fromCodePoint(0x1f984)",
-        r"String.fromCodePoint",
-        r"new String.fromCodePoint",
-        r"fromCodePoint(foo)",
-        r"String.fromCodePoint?.(foo)",
-        r"String?.fromCodePoint(foo)",
-        r"window.String.fromCodePoint(foo)",
-        r"String[fromCodePoint](foo)",
+        "foo.notCharCodeAt(0)",
+        "String.fromCodePoint(0x1f984)",
+        "String.fromCodePoint",
+        "new String.fromCodePoint",
+        "fromCodePoint(foo)",
+        "String.fromCodePoint?.(foo)",
+        "String?.fromCodePoint(foo)",
+        "window.String.fromCodePoint(foo)",
+        "String[fromCodePoint](foo)",
         r#"String["fromCodePoint"](foo)"#,
-        r"String.notFromCodePoint(foo)",
-        r"NotString.fromCodePoint(foo)",
+        "String.notFromCodePoint(foo)",
+        "NotString.fromCodePoint(foo)",
     ];
 
     let fail = vec![
-        r"string.charCodeAt(index)",
-        r"(( (( string )).charCodeAt( ((index)), )))",
-        r"String.fromCharCode( code )",
-        r"(( (( String )).fromCharCode( ((code)), ) ))",
+        "string.charCodeAt(index)",
+        "(( (( string )).charCodeAt( ((index)), )))",
+        "String.fromCharCode( code )",
+        "(( (( String )).fromCharCode( ((code)), ) ))",
     ];
 
     let fix = vec![
-        (r"string.charCodeAt(index)", r"string.codePointAt(index)"),
+        ("string.charCodeAt(index)", "string.codePointAt(index)"),
         (
-            r"(( (( String )).fromCharCode( ((code)), ) ))",
-            r"(( (( String )).fromCodePoint( ((code)), ) ))",
+            "(( (( String )).fromCharCode( ((code)), ) ))",
+            "(( (( String )).fromCodePoint( ((code)), ) ))",
         ),
         (r#""🦄".charCodeAt(0)"#, r#""🦄".codePointAt(0)"#),
-        (r"String.fromCharCode(0x1f984);", r"String.fromCodePoint(0x1f984);"),
+        ("String.fromCharCode(0x1f984);", "String.fromCodePoint(0x1f984);"),
     ];
 
     Tester::new(PreferCodePoint::NAME, PreferCodePoint::PLUGIN, pass, fail)

@@ -266,6 +266,56 @@ fn test() {
         "export default class A { static a() {}; }",
         "export default class { static a() {}; }",
         "export class A { static a() {}; }",
+        "function a() {
+                return class
+                {
+                    static a() {}
+                }
+            }",
+        "function a() {
+                return class /* comment */
+                {
+                    static a() {}
+                }
+            }",
+        "function a() {
+                return class // comment
+                {
+                    static a() {}
+                }
+            }",
+        "class A {static a(){}}
+            class B extends A {}",
+        "class A {static a(){}}
+            console.log(typeof A)",
+        "class A {static a(){}}
+            const a = new A;",
+        "class A {
+                static a
+                static b = 1
+                static [c] = 2
+                static [d]
+                static e() {}
+                static [f]() {}
+            }",
+        "class A {
+                static a;
+                static b = 1;
+                static [((c))] = ((2));
+                static [d];
+                static e() {};
+                static [f]() {};
+            }",
+        "/* */
+            class /* */ A /* */ {
+                /* */ static /* */ a /* */; /* */
+                /* */ static /* */ b /* */ = /* */ 1 /* */; /* */
+                /* */ static /* */ [ /* */ c /* */ ] /* */ = /* */ 2 /* */;  /* */
+                /* */ static /* */ [/* */ d /* */] /* */;  /* */
+                /* */ static /* */ /* */ e /* */ ( /* */ ) {/* */}/* */;  /* */
+                /* */ static /* */ [/* */ f /* */ ] /* */ ( /* */ ) {/* */ }/* */ ;  /* */
+            }
+            /* */",
         "class A {static [this.a] = 1}",
         "class A { static a() {} }",
     ];
