@@ -180,7 +180,6 @@ impl JsdocTestRunner {
             }
         }
 
-        let ratio = ratio as f32;
         (is_pass, ratio)
     }
 
