@@ -83,6 +83,26 @@ export type CustomComponent =
       attributes: string[];
       name: string;
       [k: string]: unknown;
+    }
+  | {
+      linkAttribute: string;
+      name: string;
+      [k: string]: unknown;
+    }
+  | {
+      linkAttribute: string[];
+      name: string;
+      [k: string]: unknown;
+    }
+  | {
+      formAttribute: string;
+      name: string;
+      [k: string]: unknown;
+    }
+  | {
+      formAttribute: string[];
+      name: string;
+      [k: string]: unknown;
     };
 
 /**
