@@ -10,10 +10,15 @@
 /// - It is reassigned by an inner function, OR
 /// - It is both reassigned (anywhere) AND referenced by an inner function.
 use oxc_ast::ast;
+use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-/// A set of identifier names that are captured by inner functions.
-pub type ContextIdentifiers = FxHashSet<String>;
+/// A set of declaration spans that are captured by inner functions.
+///
+/// Each entry is the `Span` of the `BindingIdentifier` where the variable
+/// was declared. Using spans (rather than names) ensures that shadowed
+/// variables with the same name at different scopes get separate entries.
+pub type ContextIdentifiers = FxHashSet<Span>;
 
 /// Tracking info for a single binding.
 #[derive(Debug, Default)]
@@ -23,20 +28,30 @@ struct IdentifierInfo {
     referenced_by_inner_fn: bool,
 }
 
+/// Info stored for a binding in the scope chain.
+#[derive(Debug, Clone, Copy)]
+struct BindingLocation {
+    /// The function nesting depth where this binding was declared.
+    fn_depth: u32,
+    /// The span of the `BindingIdentifier` AST node where this was declared.
+    /// This serves as a unique key (like `binding.identifier` in the TS version).
+    decl_span: Span,
+}
+
 /// State for the find_context_identifiers walk.
 struct FindContextState {
-    /// Stack of scope frames. Each frame maps binding names to a unique ID
-    /// for that binding (to distinguish shadowed names).
-    /// The `fn_depth` at which the binding was declared is stored as the value.
-    scopes: Vec<FxHashMap<String, u32>>,
+    /// Stack of scope frames. Each frame maps binding names to their
+    /// declaration location.
+    scopes: Vec<FxHashMap<String, BindingLocation>>,
 
     /// Current function nesting depth. 0 = the outermost function being analyzed.
     fn_depth: u32,
 
-    /// Per-binding info, keyed by (name, fn_depth_where_declared).
-    /// We use the binding name + declaration depth as a key because we need
-    /// to track info per-declaration (shadowed names are separate).
-    identifiers: FxHashMap<String, IdentifierInfo>,
+    /// Per-binding info, keyed by the declaration span of the `BindingIdentifier`.
+    /// Using the declaration span as the key ensures shadowed variables
+    /// at different scopes get separate entries (matching the TS version
+    /// which uses `binding.identifier` node identity).
+    identifiers: FxHashMap<Span, IdentifierInfo>,
 }
 
 impl FindContextState {
@@ -52,19 +67,22 @@ impl FindContextState {
         self.scopes.pop();
     }
 
-    /// Declare a binding in the current scope at the current fn_depth.
-    fn declare_binding(&mut self, name: &str) {
+    /// Declare a binding in the current scope.
+    fn declare_binding(&mut self, name: &str, decl_span: Span) {
         if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(name.to_string(), self.fn_depth);
+            scope.insert(
+                name.to_string(),
+                BindingLocation { fn_depth: self.fn_depth, decl_span },
+            );
         }
     }
 
     /// Look up a binding by name, walking up the scope chain.
-    /// Returns the fn_depth at which it was declared, or None if not found.
-    fn find_binding(&self, name: &str) -> Option<u32> {
+    /// Returns the binding location, or None if not found.
+    fn find_binding(&self, name: &str) -> Option<BindingLocation> {
         for scope in self.scopes.iter().rev() {
-            if let Some(&depth) = scope.get(name) {
-                return Some(depth);
+            if let Some(loc) = scope.get(name) {
+                return Some(*loc);
             }
         }
         None
@@ -75,7 +93,7 @@ impl FindContextState {
 ///
 /// This walks the function's body statements, tracking nested function
 /// scopes and identifying variables that are captured across scope
-/// boundaries.
+/// boundaries. Returns a set of declaration spans for context identifiers.
 pub fn find_context_identifiers(func: &ast::Function<'_>) -> ContextIdentifiers {
     let mut state = FindContextState::new();
 
@@ -91,9 +109,9 @@ pub fn find_context_identifiers(func: &ast::Function<'_>) -> ContextIdentifiers 
 
     // Collect context identifiers based on the TS criteria
     let mut result = FxHashSet::default();
-    for (name, info) in &state.identifiers {
+    for (decl_span, info) in &state.identifiers {
         if info.reassigned_by_inner_fn || (info.reassigned && info.referenced_by_inner_fn) {
-            result.insert(name.clone());
+            result.insert(*decl_span);
         }
     }
     result
@@ -115,9 +133,9 @@ pub fn find_context_identifiers_arrow(
 
     // Collect context identifiers
     let mut result = FxHashSet::default();
-    for (name, info) in &state.identifiers {
+    for (decl_span, info) in &state.identifiers {
         if info.reassigned_by_inner_fn || (info.reassigned && info.referenced_by_inner_fn) {
-            result.insert(name.clone());
+            result.insert(*decl_span);
         }
     }
     result
@@ -137,7 +155,7 @@ fn declare_params(state: &mut FindContextState, params: &ast::FormalParameters<'
 fn declare_pattern_bindings(state: &mut FindContextState, pattern: &ast::BindingPattern<'_>) {
     match pattern {
         ast::BindingPattern::BindingIdentifier(ident) => {
-            state.declare_binding(&ident.name);
+            state.declare_binding(&ident.name, ident.span);
         }
         ast::BindingPattern::ObjectPattern(obj) => {
             for prop in &obj.properties {
@@ -303,7 +321,7 @@ fn visit_statement<'a>(state: &mut FindContextState, stmt: &ast::Statement<'a>) 
         ast::Statement::FunctionDeclaration(func) => {
             // Function declarations are hoisted bindings
             if let Some(id) = &func.id {
-                state.declare_binding(&id.name);
+                state.declare_binding(&id.name, id.span);
             }
             // The function body creates a new fn scope
             visit_function_body(state, func);
@@ -606,7 +624,7 @@ fn visit_function_body<'a>(state: &mut FindContextState, func: &ast::Function<'a
 
     // Declare function name if present (function expressions can reference their own name)
     if let Some(id) = &func.id {
-        state.declare_binding(&id.name);
+        state.declare_binding(&id.name, id.span);
     }
 
     // Declare parameters
@@ -642,32 +660,32 @@ fn visit_arrow_body<'a>(state: &mut FindContextState, arrow: &ast::ArrowFunction
 
 /// Handle an identifier reference (read).
 fn handle_identifier_reference(state: &mut FindContextState, name: &str) {
-    let Some(decl_depth) = state.find_binding(name) else {
+    let Some(loc) = state.find_binding(name) else {
         // Not a local binding (global) - skip
         return;
     };
 
-    let info = state.identifiers.entry(name.to_string()).or_default();
+    let info = state.identifiers.entry(loc.decl_span).or_default();
 
     // If we're inside an inner function and the binding was declared
     // in an outer scope (above the current inner function boundary),
     // it's referenced by an inner function.
-    if state.fn_depth > 0 && decl_depth < state.fn_depth {
+    if state.fn_depth > 0 && loc.fn_depth < state.fn_depth {
         info.referenced_by_inner_fn = true;
     }
 }
 
 /// Handle an identifier assignment (write).
 fn handle_identifier_assignment(state: &mut FindContextState, name: &str) {
-    let Some(decl_depth) = state.find_binding(name) else {
+    let Some(loc) = state.find_binding(name) else {
         // Not a local binding (global) - skip
         return;
     };
 
-    let info = state.identifiers.entry(name.to_string()).or_default();
+    let info = state.identifiers.entry(loc.decl_span).or_default();
     info.reassigned = true;
 
-    if state.fn_depth > 0 && decl_depth < state.fn_depth {
+    if state.fn_depth > 0 && loc.fn_depth < state.fn_depth {
         info.reassigned_by_inner_fn = true;
     }
 }
@@ -757,7 +775,8 @@ mod tests {
     use oxc_parser::Parser;
     use oxc_span::SourceType;
 
-    fn get_context_ids(source: &str) -> ContextIdentifiers {
+    /// Helper: returns the set of context identifier NAMES (for test assertions).
+    fn get_context_id_names(source: &str) -> FxHashSet<String> {
         let allocator = Allocator::default();
         let parser_result = Parser::new(&allocator, source, SourceType::jsx()).parse();
         assert!(parser_result.errors.is_empty(), "Parse errors: {:?}", parser_result.errors);
@@ -768,38 +787,110 @@ mod tests {
         });
         let func = func.as_ref().map(|f| f.as_ref());
         assert!(func.is_some(), "No function found");
-        find_context_identifiers(func.unwrap())
+        let spans = find_context_identifiers(func.unwrap());
+
+        // Convert spans back to names using the source text
+        let mut names = FxHashSet::default();
+        for span in &spans {
+            let name = &source[span.start as usize..span.end as usize];
+            names.insert(name.to_string());
+        }
+        names
     }
 
     #[test]
     fn no_inner_function_no_context() {
-        let ids = get_context_ids("function foo() { let x = 1; x = 2; }");
+        let ids = get_context_id_names("function foo() { let x = 1; x = 2; }");
         assert!(ids.is_empty(), "No inner function means no context identifiers, got: {ids:?}");
     }
 
     #[test]
     fn referenced_by_inner_and_reassigned() {
-        let ids =
-            get_context_ids("function foo() { let x = 1; x = 2; const fn = () => { return x; }; }");
+        let ids = get_context_id_names(
+            "function foo() { let x = 1; x = 2; const fn = () => { return x; }; }",
+        );
         assert!(ids.contains("x"), "x is reassigned and referenced by inner fn: {ids:?}");
     }
 
     #[test]
     fn reassigned_by_inner_fn() {
-        let ids = get_context_ids("function foo() { let x = 1; const fn = () => { x = 2; }; }");
+        let ids =
+            get_context_id_names("function foo() { let x = 1; const fn = () => { x = 2; }; }");
         assert!(ids.contains("x"), "x is reassigned by inner fn: {ids:?}");
     }
 
     #[test]
     fn only_referenced_not_reassigned() {
-        let ids =
-            get_context_ids("function foo() { const x = 1; const fn = () => { return x; }; }");
+        let ids = get_context_id_names(
+            "function foo() { const x = 1; const fn = () => { return x; }; }",
+        );
         assert!(ids.is_empty(), "x is only referenced (not reassigned) so not context: {ids:?}");
     }
 
     #[test]
     fn global_is_not_context() {
-        let ids = get_context_ids("function foo() { const fn = () => { console.log(x); }; }");
+        let ids =
+            get_context_id_names("function foo() { const fn = () => { console.log(x); }; }");
         assert!(ids.is_empty(), "Global references are not context: {ids:?}");
+    }
+
+    #[test]
+    fn shadowed_variable_reassigned_by_inner_fn() {
+        // The inner `x` is reassigned by the inner function, but the outer `x`
+        // should NOT be a context identifier (it is a separate declaration).
+        let source = "function foo() {
+                const x = {};
+                {
+                    let x = 56;
+                    const fn2 = function() { x = 42; };
+                    fn2();
+                }
+                return x;
+            }";
+        let allocator = Allocator::default();
+        let parser_result = Parser::new(&allocator, source, SourceType::jsx()).parse();
+        assert!(parser_result.errors.is_empty());
+        let func = parser_result.program.body.iter().find_map(|stmt| match stmt {
+            ast::Statement::FunctionDeclaration(f) => Some(f),
+            _ => None,
+        });
+        let func = func.as_ref().map(|f| f.as_ref()).unwrap();
+        let spans = find_context_identifiers(func);
+
+        // Should have exactly one context identifier (the inner x)
+        assert_eq!(spans.len(), 1, "Expected exactly 1 context identifier, got: {spans:?}");
+
+        // Convert the span to the source text to verify it's the inner x
+        let span = spans.iter().next().unwrap();
+        let name = &source[span.start as usize..span.end as usize];
+        assert_eq!(name, "x", "Context identifier should be named x");
+
+        // Verify the span points to the inner declaration (let x = 56), not the outer one
+        // The inner x is at a later position in the source
+        let outer_x_pos = source.find("const x = {}").unwrap();
+        assert!(
+            (span.start as usize) > outer_x_pos + 6,
+            "Context identifier span should point to inner x, not outer x"
+        );
+    }
+
+    #[test]
+    fn shadowed_variable_outer_not_context() {
+        // When only the inner shadowed variable is mutated by an inner fn,
+        // the outer const variable should not become a context identifier.
+        let ids = get_context_id_names(
+            "function foo() {
+                const x = {};
+                {
+                    const x = [];
+                    const fn2 = function() { mutate(x); };
+                    fn2();
+                }
+                return x;
+            }",
+        );
+        // `mutate(x)` only references inner x (not an assignment), inner x is
+        // const so not reassigned. Neither x should be context.
+        assert!(ids.is_empty(), "Neither x should be context (no reassignment): {ids:?}");
     }
 }
