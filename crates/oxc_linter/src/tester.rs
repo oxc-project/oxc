@@ -268,6 +268,7 @@ pub struct Tester {
     snapshot_suffix: Option<&'static str>,
     current_working_directory: Box<Path>,
     plugins: LintPlugins,
+    tsconfig_path: Option<PathBuf>,
 }
 
 impl Tester {
@@ -295,6 +296,7 @@ impl Tester {
             snapshot_suffix: None,
             current_working_directory,
             plugins: LintPlugins::default(),
+            tsconfig_path: None,
         }
     }
 
@@ -340,6 +342,11 @@ impl Tester {
 
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
         self.plugins.set(LintPlugins::IMPORT, yes);
+        self
+    }
+
+    pub fn with_tsconfig(mut self, path: &str) -> Self {
+        self.tsconfig_path = Some(PathBuf::from(path));
         self
     }
 
@@ -599,7 +606,10 @@ impl Tester {
 
         let cwd = self.current_working_directory.clone();
         let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
-        let options = LintServiceOptions::new(cwd).with_cross_module(self.plugins.has_import());
+        let mut options = LintServiceOptions::new(cwd).with_cross_module(self.plugins.has_import());
+        if let Some(tsconfig_path) = &self.tsconfig_path {
+            options = options.with_tsconfig(tsconfig_path.clone());
+        }
         let lint_service = LintService::new(linter, options);
         let file_system = TesterFileSystem::new(path_to_lint.clone(), source_text.to_string());
 
