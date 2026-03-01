@@ -1,6 +1,6 @@
 use std::{fmt::Write, path::PathBuf};
 
-use oxc_language_server::{DiagnosticResult, Tool, ToolRestartChanges};
+use oxc_language_server::{DiagnosticResult, Tool, ToolRestartChanges, ToolStartInput};
 use tower_lsp_server::ls_types::{
     CodeAction, CodeActionKind, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString,
     Position, Range, Uri,
@@ -262,9 +262,11 @@ impl Tester<'_> {
         let builder = ServerLinterBuilder::default();
         self.create_linter().handle_configuration_change(
             &builder,
-            &Self::get_root_uri(self.relative_root_dir),
             &self.options,
-            new_options,
+            ToolStartInput {
+                root_uri: &Self::get_root_uri(self.relative_root_dir),
+                options: new_options,
+            },
         )
     }
 }

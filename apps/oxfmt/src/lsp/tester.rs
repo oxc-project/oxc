@@ -1,7 +1,7 @@
 use tower_lsp_server::ls_types::Uri;
 
 use crate::lsp::server_formatter::{ServerFormatter, ServerFormatterBuilder};
-use oxc_language_server::{Tool, ToolRestartChanges};
+use oxc_language_server::{Tool, ToolRestartChanges, ToolStartInput};
 
 /// Testing struct for the [formatter server][crate::formatter::server_formatter::ServerFormatter].
 pub struct Tester<'t> {
@@ -33,9 +33,11 @@ impl Tester<'_> {
         let builder = ServerFormatterBuilder::dummy();
         self.create_formatter().handle_configuration_change(
             &builder,
-            &Self::get_root_uri(self.relative_root_dir),
             &self.options,
-            new_options,
+            ToolStartInput {
+                root_uri: &Self::get_root_uri(self.relative_root_dir),
+                options: new_options,
+            },
         )
     }
 }
