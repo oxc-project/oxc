@@ -102,10 +102,9 @@ impl InferenceState {
     fn freeze(&mut self, id: IdentifierId, reason: ValueReason) -> bool {
         // Check if the target is freezable
         let freezable = match self.values.get(&id) {
-            Some(av) => matches!(
-                av.kind,
-                ValueKind::Mutable | ValueKind::Context | ValueKind::MaybeFrozen
-            ),
+            Some(av) => {
+                matches!(av.kind, ValueKind::Mutable | ValueKind::Context | ValueKind::MaybeFrozen)
+            }
             None => false,
         };
         if !freezable {
@@ -328,8 +327,7 @@ fn find_non_mutating_spreads(func: &HIRFunction) -> FxHashSet<IdentifierId> {
                         candidate_non_mutating_spreads.get(&v.value.identifier.id)
                     {
                         candidate_non_mutating_spreads.insert(lvalue.identifier.id, spread);
-                        candidate_non_mutating_spreads
-                            .insert(v.lvalue.place.identifier.id, spread);
+                        candidate_non_mutating_spreads.insert(v.lvalue.place.identifier.id, spread);
                     }
                 }
                 InstructionValue::JsxFragment(_) | InstructionValue::JsxExpression(_) => {
@@ -736,7 +734,8 @@ fn infer_instruction_effects(
             // `state` is used in render, causing the second useEffect lambda to get
             // merged into the useState scope and then pruned by FlattenScopesWithHooksOrUse).
             let sig = env.get_function_signature(&v.callee.identifier.type_).cloned();
-            let return_kind = sig.as_ref().map(|s| s.return_value_kind).unwrap_or(ValueKind::Mutable);
+            let return_kind =
+                sig.as_ref().map(|s| s.return_value_kind).unwrap_or(ValueKind::Mutable);
             let av = match return_kind {
                 ValueKind::Frozen => {
                     let mut reasons = FxHashSet::default();
@@ -766,7 +765,8 @@ fn infer_instruction_effects(
         InstructionValue::MethodCall(v) => {
             // Use the method's return_value_kind if a known signature exists.
             let sig = env.get_function_signature(&v.property.identifier.type_).cloned();
-            let return_kind = sig.as_ref().map(|s| s.return_value_kind).unwrap_or(ValueKind::Mutable);
+            let return_kind =
+                sig.as_ref().map(|s| s.return_value_kind).unwrap_or(ValueKind::Mutable);
             let av = match return_kind {
                 ValueKind::Frozen => {
                     let mut reasons = FxHashSet::default();
@@ -2290,23 +2290,40 @@ fn compute_instruction_effects(
         }
     }
 
-    // Post-process: drop conditional mutations on frozen values.
+    // Post-process: drop mutations on ref values and conditional mutations on frozen values.
     //
-    // Port of the `applyEffect` behavior from `InferMutationAliasingEffects.ts`:
-    // When a `MutateTransitiveConditionally` or `MutateConditionally` effect targets
-    // a value that is frozen (or any non-mutable kind), the mutation is silently
-    // dropped because conditional mutations only apply to mutable values.
+    // Port of the `applyEffect` / `mutate()` behavior from `InferMutationAliasingEffects.ts`:
+    // 1. When a mutation targets a ref or ref-value type, the TS reference returns
+    //    'mutate-ref' (a no-op), effectively dropping the mutation. This is critical
+    //    for tests like `capture-ref-for-later-mutation.tsx` where ref.current
+    //    mutations should not extend the mutable range of the ref.
+    // 2. When a `MutateTransitiveConditionally` or `MutateConditionally` effect targets
+    //    a value that is frozen (or any non-mutable kind), the mutation is silently
+    //    dropped because conditional mutations only apply to mutable values.
     effects.retain(|effect| {
         match effect {
-            AliasingEffect::MutateTransitiveConditionally { value }
+            AliasingEffect::Mutate { value, .. }
+            | AliasingEffect::MutateTransitive { value }
+            | AliasingEffect::MutateTransitiveConditionally { value }
             | AliasingEffect::MutateConditionally { value } => {
-                if let Some(abstract_val) = state.get(value) {
-                    // Only keep the mutation if the value is Mutable or Context
-                    matches!(abstract_val.kind, ValueKind::Mutable | ValueKind::Context)
-                } else {
-                    // Unknown state — keep the effect conservatively
-                    true
+                // Drop all mutation effects on ref types
+                if is_ref_or_ref_value(&value.identifier) {
+                    return false;
                 }
+                // Drop conditional mutations on non-mutable values
+                if matches!(
+                    effect,
+                    AliasingEffect::MutateTransitiveConditionally { .. }
+                        | AliasingEffect::MutateConditionally { .. }
+                ) {
+                    if let Some(abstract_val) = state.get(value) {
+                        return matches!(
+                            abstract_val.kind,
+                            ValueKind::Mutable | ValueKind::Context
+                        );
+                    }
+                }
+                true
             }
             _ => true,
         }

@@ -900,8 +900,7 @@ fn run_pipeline_for_codegen(
             Expression::StaticMemberExpression(member) => {
                 if let Expression::Identifier(obj) = &member.object {
                     if obj.name == "React"
-                        && (member.property.name == "memo"
-                            || member.property.name == "forwardRef")
+                        && (member.property.name == "memo" || member.property.name == "forwardRef")
                     {
                         return Some(format!("React.{}", member.property.name));
                     }
@@ -923,26 +922,18 @@ fn run_pipeline_for_codegen(
             if let Some(callee_text) = get_memo_or_forwardref_callee(&call.callee) {
                 if let Some(arg) = call.arguments.first() {
                     return match arg.as_expression() {
-                        Some(Expression::ArrowFunctionExpression(arrow)) => {
-                            Some((
-                                LowerableFunction::ArrowFunction(arrow),
-                                WrapperInfo {
-                                    callee: callee_text,
-                                    is_arrow: true,
-                                    binding_name: None,
-                                },
-                            ))
-                        }
-                        Some(Expression::FunctionExpression(f)) => {
-                            Some((
-                                LowerableFunction::Function(f),
-                                WrapperInfo {
-                                    callee: callee_text,
-                                    is_arrow: false,
-                                    binding_name: None,
-                                },
-                            ))
-                        }
+                        Some(Expression::ArrowFunctionExpression(arrow)) => Some((
+                            LowerableFunction::ArrowFunction(arrow),
+                            WrapperInfo { callee: callee_text, is_arrow: true, binding_name: None },
+                        )),
+                        Some(Expression::FunctionExpression(f)) => Some((
+                            LowerableFunction::Function(f),
+                            WrapperInfo {
+                                callee: callee_text,
+                                is_arrow: false,
+                                binding_name: None,
+                            },
+                        )),
                         _ => None,
                     };
                 }
@@ -1144,9 +1135,7 @@ fn run_pipeline_for_codegen(
                         candidates.push((LowerableFunction::Function(f), name, None));
                     }
                     ExportDefaultDeclarationKind::CallExpression(call) => {
-                        if let Some(callee_text) =
-                            get_memo_or_forwardref_callee(&call.callee)
-                        {
+                        if let Some(callee_text) = get_memo_or_forwardref_callee(&call.callee) {
                             if let Some(arg) = call.arguments.first() {
                                 use oxc_ast::ast::Expression;
                                 match arg.as_expression() {
@@ -1223,8 +1212,7 @@ fn run_pipeline_for_codegen(
             }
             // Handle bare expression statements like `React.memo(props => ...)`
             Statement::ExpressionStatement(expr_stmt) => {
-                if let Some((candidate, wrapper)) =
-                    extract_fn_from_memo_call(&expr_stmt.expression)
+                if let Some((candidate, wrapper)) = extract_fn_from_memo_call(&expr_stmt.expression)
                 {
                     candidates.push((candidate, None, Some(wrapper)));
                 }
@@ -1259,16 +1247,12 @@ fn run_pipeline_for_codegen(
             let has_opt_out = match &func {
                 LowerableFunction::Function(f) => f.body.as_ref().map_or(false, |body| {
                     body.directives.iter().any(|d| {
-                        d.expression.value == "use no forget"
-                            || d.expression.value == "use no memo"
+                        d.expression.value == "use no forget" || d.expression.value == "use no memo"
                     })
                 }),
-                LowerableFunction::ArrowFunction(f) => {
-                    f.body.directives.iter().any(|d| {
-                        d.expression.value == "use no forget"
-                            || d.expression.value == "use no memo"
-                    })
-                }
+                LowerableFunction::ArrowFunction(f) => f.body.directives.iter().any(|d| {
+                    d.expression.value == "use no forget" || d.expression.value == "use no memo"
+                }),
             };
             if has_opt_out {
                 continue;
@@ -1844,10 +1828,8 @@ fn normalize_code(s: &str) -> String {
     // After whitespace collapsing this becomes `<Component val={x} >` (with space before `>`).
     // Our codegen emits `<Component val={x}>` without the space. Strip the space before `>`
     // when followed by JSX content (child elements `<`, expressions `{`, text, or `</`).
-    let no_jsx_closing_space = normalized_jsx_text_ws
-        .replace(" >{", ">{")
-        .replace(" ><", "><")
-        .replace(" ></", "></");
+    let no_jsx_closing_space =
+        normalized_jsx_text_ws.replace(" >{", ">{").replace(" ><", "><").replace(" ></", "></");
 
     // Step 46: normalize assignment expression parens in declarations.
     // The reference compiler (Prettier) wraps assignment expressions used as values
@@ -2412,7 +2394,8 @@ fn normalize_jsx_text_whitespace(s: &str) -> String {
             && i + 2 < len
             && (chars[i + 2].is_ascii_alphabetic() || chars[i + 2] == '>')
             && i > 0
-            && (chars[i - 1].is_ascii_alphanumeric() || matches!(chars[i - 1], '/' | '.' | ')' | '"' | '\''))
+            && (chars[i - 1].is_ascii_alphanumeric()
+                || matches!(chars[i - 1], '/' | '.' | ')' | '"' | '\''))
         {
             // Skip the space
             i += 1;
@@ -3946,11 +3929,39 @@ fn remove_dead_identifier_statements(s: &str) -> String {
             if all_ident {
                 return !matches!(
                     tok,
-                    "if" | "else" | "for" | "while" | "do" | "switch" | "case" | "try"
-                        | "catch" | "finally" | "return" | "break" | "continue" | "throw"
-                        | "let" | "const" | "var" | "function" | "class" | "import"
-                        | "export" | "new" | "delete" | "typeof" | "void" | "yield" | "await"
-                        | "async" | "static" | "get" | "set" | "in" | "of" | "instanceof"
+                    "if" | "else"
+                        | "for"
+                        | "while"
+                        | "do"
+                        | "switch"
+                        | "case"
+                        | "try"
+                        | "catch"
+                        | "finally"
+                        | "return"
+                        | "break"
+                        | "continue"
+                        | "throw"
+                        | "let"
+                        | "const"
+                        | "var"
+                        | "function"
+                        | "class"
+                        | "import"
+                        | "export"
+                        | "new"
+                        | "delete"
+                        | "typeof"
+                        | "void"
+                        | "yield"
+                        | "await"
+                        | "async"
+                        | "static"
+                        | "get"
+                        | "set"
+                        | "in"
+                        | "of"
+                        | "instanceof"
                 );
             }
         }
@@ -4362,7 +4373,8 @@ fn remove_orphan_temp_initializers(s: &str) -> String {
             // patterns like `{ cond: t1, id }` where `t1,` is a single whitespace token.
             {
                 // Extract the temp name from the token (stripping trailing comma if present)
-                let stripped = tok.trim_end_matches(',').trim_end_matches('}').trim_end_matches(']');
+                let stripped =
+                    tok.trim_end_matches(',').trim_end_matches('}').trim_end_matches(']');
                 if is_temp_identifier(tok) || is_temp_identifier(stripped) {
                     let temp_tok = if is_temp_identifier(tok) { tok } else { stripped };
                     // Check if the previous token ends with `:` (object destructuring rename)
@@ -4461,7 +4473,8 @@ fn remove_null_init_before_try(s: &str) -> String {
             // Look ahead for `try {` and find if the first assignment inside is `tN = SOMETHING`
             let _try_start = i + 3;
             // Find the opening `{` of the try
-            let brace_idx = if i + 4 < n && (tokens[i + 4] == "{" || tokens[i + 4].starts_with('{')) {
+            let brace_idx = if i + 4 < n && (tokens[i + 4] == "{" || tokens[i + 4].starts_with('{'))
+            {
                 i + 4
             } else {
                 i += 1;
@@ -4474,10 +4487,15 @@ fn remove_null_init_before_try(s: &str) -> String {
             let mut j = brace_idx;
             while j < n {
                 for ch in tokens[j].chars() {
-                    if ch == '{' { depth += 1; }
-                    else if ch == '}' { depth -= 1; }
+                    if ch == '{' {
+                        depth += 1;
+                    } else if ch == '}' {
+                        depth -= 1;
+                    }
                 }
-                if depth <= 0 { break; }
+                if depth <= 0 {
+                    break;
+                }
                 // Look for `temp_name =` inside the try body (at any depth)
                 if j > brace_idx && tokens[j] == temp_name && j + 1 < n && tokens[j + 1] == "=" {
                     found_reassign = true;
@@ -7089,11 +7107,7 @@ fn normalize_decl_assignment_parens(s: &str) -> String {
 
     while i < len {
         // Look for `= (` pattern where `=` is preceded by an identifier (declaration RHS)
-        if chars[i] == '='
-            && i + 2 < len
-            && chars[i + 1] == ' '
-            && chars[i + 2] == '('
-        {
+        if chars[i] == '=' && i + 2 < len && chars[i + 1] == ' ' && chars[i + 2] == '(' {
             // Check that the `=` is not part of `==`, `===`, `!=`, `<=`, `>=`, `=>`
             let is_comparison = (i + 1 < len && chars[i + 1] == '=')
                 || (i > 0 && matches!(chars[i - 1], '!' | '<' | '>' | '='));
@@ -7159,14 +7173,16 @@ fn hoist_tagged_template_from_sentinel(s: &str) -> String {
             let decl_start_offset = if after_brace.starts_with("let ") { 4 } else { 6 };
             let rest = &after_brace[decl_start_offset..];
             // Get the variable name
-            let name_end = rest.find(|c: char| !c.is_alphanumeric() && c != '_').unwrap_or(rest.len());
+            let name_end =
+                rest.find(|c: char| !c.is_alphanumeric() && c != '_').unwrap_or(rest.len());
             if name_end > 0 {
                 let rest2 = rest[name_end..].trim_start();
                 if rest2.starts_with("= ") || rest2.starts_with("=") {
                     let after_eq = rest2[rest2.find('=').unwrap() + 1..].trim_start();
                     // Check if the value is a tagged template literal
                     // A tagged template starts with an identifier followed by `
-                    let tag_end = after_eq.find(|c: char| !c.is_alphanumeric() && c != '_').unwrap_or(0);
+                    let tag_end =
+                        after_eq.find(|c: char| !c.is_alphanumeric() && c != '_').unwrap_or(0);
                     if tag_end > 0 && after_eq.as_bytes().get(tag_end) == Some(&b'`') {
                         Some(decl_start_offset + name_end)
                     } else {
@@ -7226,9 +7242,7 @@ fn hoist_tagged_template_from_sentinel(s: &str) -> String {
             // Remove the declaration from inside the brace
             // Also remove any trailing whitespace/space after it
             let mut remove_end = decl_end;
-            while remove_end < result.len()
-                && result.as_bytes().get(remove_end) == Some(&b' ')
-            {
+            while remove_end < result.len() && result.as_bytes().get(remove_end) == Some(&b' ') {
                 remove_end += 1;
             }
 
@@ -7249,7 +7263,9 @@ fn hoist_tagged_template_from_sentinel(s: &str) -> String {
                     let insert_pos = if let Some(let_pos) = trimmed_before_if.rfind("let t") {
                         // Verify this is a simple `let tN` (not `let tN = EXPR`)
                         let after_let = &trimmed_before_if[let_pos + 4..]; // skip "let "
-                        let name_end = after_let.find(|c: char| !c.is_alphanumeric() && c != '_').unwrap_or(after_let.len());
+                        let name_end = after_let
+                            .find(|c: char| !c.is_alphanumeric() && c != '_')
+                            .unwrap_or(after_let.len());
                         if name_end == after_let.len() || after_let.as_bytes()[name_end] == b' ' {
                             let_pos
                         } else {
@@ -7258,7 +7274,8 @@ fn hoist_tagged_template_from_sentinel(s: &str) -> String {
                     } else {
                         new_if_start
                     };
-                    let mut final_result = String::with_capacity(new_result.len() + declaration.len() + 1);
+                    let mut final_result =
+                        String::with_capacity(new_result.len() + declaration.len() + 1);
                     final_result.push_str(&new_result[..insert_pos]);
                     final_result.push_str(&declaration);
                     final_result.push(' ');
@@ -7337,7 +7354,9 @@ fn inline_graphql_sentinel_into_hook(s: &str) -> String {
         let mut depth = 0;
         let mut scope_end = 0;
         for (i, ch) in after_scope_start.char_indices() {
-            if ch == '{' { depth += 1; }
+            if ch == '{' {
+                depth += 1;
+            }
             if ch == '}' {
                 depth -= 1;
                 if depth == 0 {
@@ -7346,7 +7365,9 @@ fn inline_graphql_sentinel_into_hook(s: &str) -> String {
                 }
             }
         }
-        if scope_end == 0 { break; }
+        if scope_end == 0 {
+            break;
+        }
 
         // Check for `else { tN = $[M] }`
         let after_scope = result[scope_end + 1..].trim_start();
@@ -7360,7 +7381,9 @@ fn inline_graphql_sentinel_into_hook(s: &str) -> String {
         let mut depth2 = 0;
         let mut else_end = 0;
         for (i, ch) in else_content.char_indices() {
-            if ch == '{' { depth2 += 1; }
+            if ch == '{' {
+                depth2 += 1;
+            }
             if ch == '}' {
                 depth2 -= 1;
                 if depth2 == 0 {
@@ -7369,7 +7392,9 @@ fn inline_graphql_sentinel_into_hook(s: &str) -> String {
                 }
             }
         }
-        if else_end == 0 { break; }
+        if else_end == 0 {
+            break;
+        }
 
         // Now check what comes after the else block
         let after_else = result[else_end + 1..].trim_start();
@@ -7378,7 +7403,9 @@ fn inline_graphql_sentinel_into_hook(s: &str) -> String {
         let _hook_call_prefix = format!("use");
         let has_hook_call = after_else.contains(&format!("({}", temp_name));
 
-        if !has_hook_call { break; }
+        if !has_hook_call {
+            break;
+        }
 
         // Find the hook call and inline the graphql expression
         let _after_else_start = result.len() - after_else.len();
@@ -7408,7 +7435,8 @@ fn inline_graphql_sentinel_into_hook(s: &str) -> String {
         new_result.push_str(&result[..removal_start]);
         let rest = &result[removal_end..];
         // Replace the temp name reference in the rest with the graphql expression
-        let replaced_rest = rest.replacen(&format!("({})", temp_name), &format!("({})", graphql_expr), 1)
+        let replaced_rest = rest
+            .replacen(&format!("({})", temp_name), &format!("({})", graphql_expr), 1)
             .replacen(&format!("({}, ", temp_name), &format!("({}, ", graphql_expr), 1)
             .replacen(&format!("({})", temp_name), &format!("({})", graphql_expr), 1);
         new_result.push_str(&replaced_rest);
@@ -7560,10 +7588,8 @@ fn strip_enum_declarations(s: &str) -> String {
         if tokens[i] == "enum" {
             // Check next token is an identifier (starts with uppercase or lowercase letter)
             let name = tokens[i + 1];
-            let is_ident = name
-                .chars()
-                .next()
-                .map_or(false, |c| c.is_ascii_alphabetic() || c == '_');
+            let is_ident =
+                name.chars().next().map_or(false, |c| c.is_ascii_alphabetic() || c == '_');
             if !is_ident {
                 i += 1;
                 continue;
@@ -7673,7 +7699,8 @@ fn strip_ts_as_assertions(s: &str) -> String {
                         | "bigint"
                         | "symbol"
                         | "object"
-                ) || type_name.starts_with(|c: char| c.is_ascii_uppercase());
+                ) || type_name
+                    .starts_with(|c: char| c.is_ascii_uppercase());
 
                 if is_type_assertion {
                     // Skip ` as TYPE`
@@ -7769,14 +7796,12 @@ fn extract_compiled_from_gating(code: &str) -> Option<String> {
                     || trimmed.contains("_isForgetEnabled_Fixtures()")
                     || trimmed.contains("getTrue()")
                     || trimmed.contains("getFalse()")))
-            || (!const_prefix.is_empty()
-                && i + 1 < lines.len()
-                && {
-                    let next = lines[i + 1].trim();
-                    next.starts_with("? function")
-                        || next.starts_with("? (")
-                        || next.starts_with("? async function")
-                });
+            || (!const_prefix.is_empty() && i + 1 < lines.len() && {
+                let next = lines[i + 1].trim();
+                next.starts_with("? function")
+                    || next.starts_with("? (")
+                    || next.starts_with("? async function")
+            });
 
         if is_gating_decl {
             // Find the `? compiledFn` line — it starts with `?` and contains `function`
@@ -7875,11 +7900,7 @@ fn extract_compiled_from_gating(code: &str) -> Option<String> {
                 let fn_text_renamed = {
                     // Extract the optimized name (e.g. "Foo_optimized")
                     let after_fn = trimmed.strip_prefix("function ").unwrap_or(trimmed);
-                    let opt_name = after_fn
-                        .split('(')
-                        .next()
-                        .unwrap_or("")
-                        .trim();
+                    let opt_name = after_fn.split('(').next().unwrap_or("").trim();
                     let base_name = opt_name.strip_suffix("_optimized").unwrap_or(opt_name);
                     fn_text.replace(opt_name, base_name)
                 };
@@ -8174,10 +8195,7 @@ impl std::fmt::Display for FailureCategory {
 /// Debug test: print actual vs expected for specific failing fixtures.
 #[test]
 fn test_debug_print_failing() {
-    let fixtures: &[&str] = &[
-        // Add test fixture names here for debugging
-        // "some-failing-test.js",
-    ];
+    let fixtures: &[&str] = &["use-effect-cleanup-reassigns.js"];
     let fixtures_dir = std::path::Path::new(FIXTURES_PATH);
     if !fixtures_dir.exists() {
         return;
@@ -8186,10 +8204,15 @@ fn test_debug_print_failing() {
         let path = fixtures_dir.join(fixture_name);
         let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
         let expect_path = path.parent().unwrap().join(format!("{stem}.expect.md"));
-        let Ok(source) = std::fs::read_to_string(&path) else { continue; };
-        let Ok(expect_content) = std::fs::read_to_string(&expect_path) else { continue; };
+        let Ok(source) = std::fs::read_to_string(&path) else {
+            continue;
+        };
+        let Ok(expect_content) = std::fs::read_to_string(&expect_path) else {
+            continue;
+        };
         let expected_code = extract_expect_md_section(&expect_content, "Code").unwrap_or("");
-        let expected_func = extract_function_from_expected(expected_code).unwrap_or_else(|| expected_code.to_string());
+        let expected_func = extract_function_from_expected(expected_code)
+            .unwrap_or_else(|| expected_code.to_string());
 
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("js");
         let source_type = match ext {
@@ -8204,10 +8227,18 @@ fn test_debug_print_failing() {
                 let expected_norm = normalize_code(&expected_func);
                 if actual_norm != expected_norm {
                     // Extract _c() counts for quick comparison
-                    let actual_c = actual.lines().find(|l| l.contains("_c(")).map(|l| l.trim().to_string()).unwrap_or_default();
-                    let expected_c = expected_func.lines().find(|l| l.contains("_c(")).map(|l| l.trim().to_string()).unwrap_or_default();
+                    let actual_c = actual
+                        .lines()
+                        .find(|l| l.contains("_c("))
+                        .map(|l| l.trim().to_string())
+                        .unwrap_or_default();
+                    let expected_c = expected_func
+                        .lines()
+                        .find(|l| l.contains("_c("))
+                        .map(|l| l.trim().to_string())
+                        .unwrap_or_default();
                     let _same_count = actual_c == expected_c;
-                        println!("=== FAIL: {fixture_name} ===");
+                    println!("=== FAIL: {fixture_name} ===");
                     println!("  _c: actual={actual_c} expected={expected_c}");
                     println!("--- ACTUAL (raw) ---\n{actual}");
                     println!("--- EXPECTED (raw) ---\n{expected_func}");
@@ -8355,7 +8386,9 @@ fn codegen_conformance_inner() {
                 let source_text = source_func.as_deref().unwrap_or(&source);
                 let actual_norm2 = normalize_code_quotes(source_text);
                 let expected_norm2 = normalize_code_quotes(expected_text);
-                if actual_norm2 == expected_norm2 || whitespace_compatible(&actual_norm2, &expected_norm2) {
+                if actual_norm2 == expected_norm2
+                    || whitespace_compatible(&actual_norm2, &expected_norm2)
+                {
                     passed += 1;
                 } else {
                     failed.push((file_name, FailureCategory::OutputMismatch));
@@ -8436,7 +8469,9 @@ fn codegen_conformance_inner() {
                 // If we cannot extract the function from expected, compare raw.
                 let actual_norm = normalize_code(&actual_full);
                 let expected_norm = normalize_code(expected_code);
-                if actual_norm == expected_norm || whitespace_compatible(&actual_norm, &expected_norm) {
+                if actual_norm == expected_norm
+                    || whitespace_compatible(&actual_norm, &expected_norm)
+                {
                     passed += 1;
                 } else {
                     failed.push((file_name, FailureCategory::OutputMismatch));
@@ -8969,7 +9004,8 @@ function foo(cond) {
     );
 
     let outer_bindings = collect_import_bindings(&parser_result.program.body);
-    let hir_func = lower(&env, ReactFunctionType::Component, &func, outer_bindings).expect("lower failed");
+    let hir_func =
+        lower(&env, ReactFunctionType::Component, &func, outer_bindings).expect("lower failed");
     eprintln!("Lower succeeded. Block count: {}", hir_func.body.blocks.len());
 
     // Try calling build_reactive_function directly (without pipeline passes)
@@ -9754,17 +9790,29 @@ fn test_debug_near_misses() {
         .filter(|e| e.file_type().is_file())
     {
         let path = entry.path().to_path_buf();
-        if !is_js_ts_tsx(&path) { continue; }
+        if !is_js_ts_tsx(&path) {
+            continue;
+        }
         let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if file_name.starts_with("error.") { continue; }
+        if file_name.starts_with("error.") {
+            continue;
+        }
 
         let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
         let expect_path = entry.path().parent().unwrap().join(format!("{stem}.expect.md"));
-        if !expect_path.exists() { continue; }
+        if !expect_path.exists() {
+            continue;
+        }
 
-        let Ok(source) = std::fs::read_to_string(&path) else { continue; };
-        let Ok(expect_content) = std::fs::read_to_string(&expect_path) else { continue; };
-        let Some(expected_code) = extract_expect_md_section(&expect_content, "Code") else { continue; };
+        let Ok(source) = std::fs::read_to_string(&path) else {
+            continue;
+        };
+        let Ok(expect_content) = std::fs::read_to_string(&expect_path) else {
+            continue;
+        };
+        let Some(expected_code) = extract_expect_md_section(&expect_content, "Code") else {
+            continue;
+        };
 
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("js");
         let source_type = match ext {
@@ -9779,12 +9827,16 @@ fn test_debug_near_misses() {
         let is_gating = is_gating_code(expected_code);
         let effective_wrapper = if is_gating { None } else { wrapper.as_ref() };
         let actual_full = format_full_function(&func, effective_wrapper);
-        let Some(expected_func) = extract_function_from_expected(expected_code) else { continue; };
+        let Some(expected_func) = extract_function_from_expected(expected_code) else {
+            continue;
+        };
 
         let actual_norm = normalize_code(&actual_full);
         let expected_norm = normalize_code(&expected_func);
 
-        if actual_norm == expected_norm || whitespace_compatible(&actual_norm, &expected_norm) { continue; }
+        if actual_norm == expected_norm || whitespace_compatible(&actual_norm, &expected_norm) {
+            continue;
+        }
 
         // Check Fallback 1 (body match)
         let actual_body = extract_function_body(&actual_full);
@@ -9797,7 +9849,9 @@ fn test_debug_near_misses() {
                 ab_norm == eb_norm || whitespace_compatible(&ab_norm, &eb_norm)
             }
         );
-        if body_match { continue; }
+        if body_match {
+            continue;
+        }
 
         // Compare token counts
         let actual_tokens: Vec<&str> = actual_norm.split_whitespace().collect();
@@ -9812,7 +9866,10 @@ fn test_debug_near_misses() {
 
         if actual_c_count == expected_c_count && token_diff <= 5 {
             let rel_path = path.strip_prefix(fixtures_dir).unwrap().display();
-            eprintln!("NEAR MISS ({} cache slots, {} token diff): {}", actual_c_count, token_diff, rel_path);
+            eprintln!(
+                "NEAR MISS ({} cache slots, {} token diff): {}",
+                actual_c_count, token_diff, rel_path
+            );
             eprintln!("  EXPECTED: {}", &expected_norm[..expected_norm.len().min(300)]);
             eprintln!("  ACTUAL:   {}", &actual_norm[..actual_norm.len().min(300)]);
             eprintln!();
@@ -9962,14 +10019,16 @@ fn normalize_jsx_string_attribute(s: &str) -> String {
         if bytes[i] == b'=' && i + 1 < bytes.len() && bytes[i + 1] == b'"' {
             // Check if this is preceded by an identifier (JSX attribute name)
             let mut attr_start = i;
-            while attr_start > 0 && (bytes[attr_start - 1].is_ascii_alphanumeric() || bytes[attr_start - 1] == b'-' || bytes[attr_start - 1] == b'_') {
+            while attr_start > 0
+                && (bytes[attr_start - 1].is_ascii_alphanumeric()
+                    || bytes[attr_start - 1] == b'-'
+                    || bytes[attr_start - 1] == b'_')
+            {
                 attr_start -= 1;
             }
 
             // The char before the attribute name should be a space (separator in JSX tag)
-            let is_jsx_attr = attr_start > 0
-                && attr_start < i
-                && bytes[attr_start - 1] == b' ';
+            let is_jsx_attr = attr_start > 0 && attr_start < i && bytes[attr_start - 1] == b' ';
 
             if is_jsx_attr {
                 // Find the closing quote of the string value
@@ -10040,7 +10099,9 @@ fn strip_dispatcher_guards_raw(s: &str) -> String {
     let mut max_iterations = 50;
     loop {
         max_iterations -= 1;
-        if max_iterations == 0 { break; }
+        if max_iterations == 0 {
+            break;
+        }
 
         // Find the LAST (innermost) guard IIFE
         if let Some(start) = result.rfind("(function ()") {
@@ -10184,16 +10245,19 @@ fn strip_dispatcher_guards_raw(s: &str) -> String {
                         }
                     }
                     if found_close {
-                        let finally_end = finally_pos + "} finally {".len() + (after_finally.len() - trimmed_finally.len()) + finally_close + 1;
+                        let finally_end = finally_pos
+                            + "} finally {".len()
+                            + (after_finally.len() - trimmed_finally.len())
+                            + finally_close
+                            + 1;
                         // Extract the body between try { $dispatcherGuard(0); and } finally {
-                        let guard_end_pos = try_pos + "try {".len() + (after_try.len() - trimmed.len()) + "$dispatcherGuard(0);".len();
+                        let guard_end_pos = try_pos
+                            + "try {".len()
+                            + (after_try.len() - trimmed.len())
+                            + "$dispatcherGuard(0);".len();
                         let body = result[guard_end_pos..finally_pos].trim();
-                        result = format!(
-                            "{}{}{}",
-                            &result[..try_pos],
-                            body,
-                            &result[finally_end..]
-                        );
+                        result =
+                            format!("{}{}{}", &result[..try_pos], body, &result[finally_end..]);
                     }
                 }
             }
@@ -10212,7 +10276,9 @@ fn strip_dispatcher_guards_raw(s: &str) -> String {
                     end += 1;
                 }
                 // Skip trailing whitespace/newline
-                while end < result.len() && (result.as_bytes()[end] == b' ' || result.as_bytes()[end] == b'\n') {
+                while end < result.len()
+                    && (result.as_bytes()[end] == b' ' || result.as_bytes()[end] == b'\n')
+                {
                     end += 1;
                 }
                 result = format!("{}{}", &result[..pos], &result[end..]);
@@ -10344,7 +10410,9 @@ fn convert_fbt_jsx_to_calls(s: &str) -> String {
             // Find the closing `</fbt>` or `</fbs>` tag
             let close_tag = format!("</{}>", tag);
             // Need to handle nested fbt tags - find the MATCHING close tag
-            let Some(close_start) = find_matching_close_tag(&result[content_start..], tag) else { break };
+            let Some(close_start) = find_matching_close_tag(&result[content_start..], tag) else {
+                break;
+            };
             let close_abs = content_start + close_start;
             let tag_end = close_abs + close_tag.len();
 
@@ -10359,7 +10427,8 @@ fn convert_fbt_jsx_to_calls(s: &str) -> String {
             let params_str = if params.is_empty() {
                 ", null".to_string()
             } else {
-                let param_strs: Vec<String> = params.iter()
+                let param_strs: Vec<String> = params
+                    .iter()
                     .map(|(name, expr)| format!("{}._param(\"{}\", {})", tag, name, expr))
                     .collect();
                 format!(", [{}]", param_strs.join(", "))
@@ -10371,7 +10440,8 @@ fn convert_fbt_jsx_to_calls(s: &str) -> String {
             // Ensure there's a space after the call if the next char is alphanumeric
             // (e.g., `</fbt>t0` → `fbt._(...)) t0`, not `fbt._(...))t0`).
             let after = &result[tag_end..];
-            let needs_space = after.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '$' || c == '_');
+            let needs_space =
+                after.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '$' || c == '_');
             let spacer = if needs_space { " " } else { "" };
             result = format!("{}{}{spacer}{}", &result[..tag_start], call, &result[tag_end..]);
         }
@@ -10410,7 +10480,7 @@ fn find_unquoted_char(s: &str, c: char) -> Option<usize> {
 
 /// Find the matching close tag for a given tag name, handling nesting.
 fn find_matching_close_tag(s: &str, tag: &str) -> Option<usize> {
-    let open_pattern = format!("<{} ", tag);  // `<fbt ` with attributes
+    let open_pattern = format!("<{} ", tag); // `<fbt ` with attributes
     let open_pattern2 = format!("<{}>", tag); // `<fbt>` self-closing style
     let close_pattern = format!("</{}>", tag);
 
@@ -10582,11 +10652,7 @@ fn extract_fbt_param_name(attr_str: &str) -> Option<String> {
     //   name={'"value" name'} - single quotes containing double quotes
 
     // Skip optional `{` and whitespace to get to the quote char
-    let inner = if after_name.starts_with('{') {
-        after_name[1..].trim_start()
-    } else {
-        after_name
-    };
+    let inner = if after_name.starts_with('{') { after_name[1..].trim_start() } else { after_name };
 
     if inner.starts_with('"') {
         // Double-quoted value: find matching closing `"`
@@ -10638,7 +10704,9 @@ fn inline_simple_outlined_temp_functions(s: &str) -> String {
         if let Some(func_pos) = remaining.rfind("function _temp") {
             let after_func = &remaining[func_pos + "function ".len()..];
             // Extract the function name (_temp or _tempN)
-            let name_end = after_func.find(|c: char| !c.is_ascii_alphanumeric() && c != '_').unwrap_or(after_func.len());
+            let name_end = after_func
+                .find(|c: char| !c.is_ascii_alphanumeric() && c != '_')
+                .unwrap_or(after_func.len());
             let name = &after_func[..name_end];
             if !name.starts_with("_temp") {
                 break;
@@ -10653,7 +10721,11 @@ fn inline_simple_outlined_temp_functions(s: &str) -> String {
             }
 
             // Find matching `)` for the params
-            let params_start = func_pos + "function ".len() + name_end + (after_func[name_end..].len() - rest.len()) + 1;
+            let params_start = func_pos
+                + "function ".len()
+                + name_end
+                + (after_func[name_end..].len() - rest.len())
+                + 1;
             let mut depth = 1;
             let bytes = remaining.as_bytes();
             let mut params_end = params_start;
@@ -10678,7 +10750,8 @@ fn inline_simple_outlined_temp_functions(s: &str) -> String {
             if !after_params.starts_with('{') {
                 break;
             }
-            let body_open = params_end + 1 + (remaining[params_end + 1..].len() - after_params.len());
+            let body_open =
+                params_end + 1 + (remaining[params_end + 1..].len() - after_params.len());
 
             // Find matching `}` for the body
             let mut body_depth = 1;
@@ -10709,7 +10782,9 @@ fn inline_simple_outlined_temp_functions(s: &str) -> String {
                 let after_return = body["return".len()..].trim_start();
                 // Make sure this is the only statement (no other statements after)
                 // A simple heuristic: no other top-level statements
-                if !after_return.contains('\n') || after_return.chars().filter(|&c| c == ';').count() <= 1 {
+                if !after_return.contains('\n')
+                    || after_return.chars().filter(|&c| c == ';').count() <= 1
+                {
                     after_return.trim_end_matches(';').trim().to_string()
                 } else {
                     break;
@@ -10759,11 +10834,7 @@ fn inline_simple_outlined_temp_functions(s: &str) -> String {
     for (name, (params, body_expr)) in &outlined_fns {
         // Build the inline arrow form
         let inline = if body_expr.is_empty() {
-            if params.is_empty() {
-                "() =>{}".to_string()
-            } else {
-                format!("({params}) =>{{}}")
-            }
+            if params.is_empty() { "() =>{}".to_string() } else { format!("({params}) =>{{}}") }
         } else if params.is_empty() {
             format!("() => {body_expr}")
         } else {
@@ -10778,9 +10849,13 @@ fn inline_simple_outlined_temp_functions(s: &str) -> String {
         while let Some(pos) = result[search_from..].find(name.as_str()) {
             let abs_pos = search_from + pos;
             // Check that this is a standalone identifier (not part of a larger word)
-            let before_ok = abs_pos == 0 || !result.as_bytes()[abs_pos - 1].is_ascii_alphanumeric() && result.as_bytes()[abs_pos - 1] != b'_';
+            let before_ok = abs_pos == 0
+                || !result.as_bytes()[abs_pos - 1].is_ascii_alphanumeric()
+                    && result.as_bytes()[abs_pos - 1] != b'_';
             let after_pos = abs_pos + name.len();
-            let after_ok = after_pos >= result.len() || !result.as_bytes()[after_pos].is_ascii_alphanumeric() && result.as_bytes()[after_pos] != b'_';
+            let after_ok = after_pos >= result.len()
+                || !result.as_bytes()[after_pos].is_ascii_alphanumeric()
+                    && result.as_bytes()[after_pos] != b'_';
 
             if before_ok && after_ok {
                 new_result.push_str(&result[search_from..abs_pos]);

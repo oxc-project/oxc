@@ -1174,8 +1174,7 @@ fn codegen_instruction_nullable(
                     && !matches!(
                         store.lvalue.kind,
                         InstructionKind::Function | InstructionKind::HoistedFunction
-                    )
-                {
+                    ) {
                     // Function/HoistedFunction declarations always emit their body as a
                     // function declaration statement, even if the binding was pre-declared
                     // (e.g., as HoistedLet). Never override to Reassign for these kinds.
@@ -1192,7 +1191,14 @@ fn codegen_instruction_nullable(
                 } else {
                     codegen_place_to_expression(cx, &store.value)
                 };
-                codegen_store_or_declare(cx, instr, kind, &store.lvalue.place, Some(&value_expr), Some(&store.value))
+                codegen_store_or_declare(
+                    cx,
+                    instr,
+                    kind,
+                    &store.lvalue.place,
+                    Some(&value_expr),
+                    Some(&store.value),
+                )
             }
             InstructionValue::StoreContext(store) => {
                 let kind = store.lvalue_kind;
@@ -1201,19 +1207,40 @@ fn codegen_instruction_nullable(
                 } else {
                     codegen_place_to_expression(cx, &store.value)
                 };
-                codegen_store_or_declare(cx, instr, kind, &store.lvalue_place, Some(&value_expr), Some(&store.value))
+                codegen_store_or_declare(
+                    cx,
+                    instr,
+                    kind,
+                    &store.lvalue_place,
+                    Some(&value_expr),
+                    Some(&store.value),
+                )
             }
             InstructionValue::DeclareLocal(decl) => {
                 if cx.has_declared(decl.lvalue.place.identifier.declaration_id) {
                     return None;
                 }
-                codegen_store_or_declare(cx, instr, decl.lvalue.kind, &decl.lvalue.place, None, None)
+                codegen_store_or_declare(
+                    cx,
+                    instr,
+                    decl.lvalue.kind,
+                    &decl.lvalue.place,
+                    None,
+                    None,
+                )
             }
             InstructionValue::DeclareContext(decl) => {
                 if cx.has_declared(decl.lvalue_place.identifier.declaration_id) {
                     return None;
                 }
-                codegen_store_or_declare(cx, instr, decl.lvalue_kind, &decl.lvalue_place, None, None)
+                codegen_store_or_declare(
+                    cx,
+                    instr,
+                    decl.lvalue_kind,
+                    &decl.lvalue_place,
+                    None,
+                    None,
+                )
             }
             InstructionValue::Destructure(destr) => {
                 let kind = destr.lvalue.kind;
@@ -1337,8 +1364,8 @@ fn codegen_instruction_nullable(
             // In all other contexts (temps, assignment RHS, variable init, while
             // test, etc.), the outer parens from codegen_reactive_value_to_expression
             // are correct.
-            let is_sequence_expr_stmt = matches!(&instr.value, ReactiveValue::Sequence(_))
-                && instr.lvalue.is_none();
+            let is_sequence_expr_stmt =
+                matches!(&instr.value, ReactiveValue::Sequence(_)) && instr.lvalue.is_none();
             let value_str = if is_sequence_expr_stmt {
                 codegen_sequence_for_expr_stmt(cx, &instr.value)
             } else {
@@ -1598,9 +1625,7 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
                     return true;
                 }
                 // Also check if this temp was recorded as a NullishCoalescing expression.
-                if let Some(LogicalOperator::Coalesce) =
-                    cx.logical_temps.get(&decl_id).copied()
-                {
+                if let Some(LogicalOperator::Coalesce) = cx.logical_temps.get(&decl_id).copied() {
                     return true;
                 }
                 false
@@ -1837,12 +1862,12 @@ fn codegen_function_expression(
             // For FunctionDeclaration types, preserve the structured CodegenFunction
             // so callers can emit a proper `function name(...) { ... }` declaration
             // statement (matching the TS reference's `createFunctionDeclaration`).
-            let fn_decl = if func_expr.expression_type == FunctionExpressionType::FunctionDeclaration
-            {
-                Some(inner_fn.clone())
-            } else {
-                None
-            };
+            let fn_decl =
+                if func_expr.expression_type == FunctionExpressionType::FunctionDeclaration {
+                    Some(inner_fn.clone())
+                } else {
+                    None
+                };
 
             let mut value = match func_expr.expression_type {
                 FunctionExpressionType::ArrowFunctionExpression => {
@@ -1864,8 +1889,10 @@ fn codegen_function_expression(
                             // `() => {x}` which would be parsed as a block statement.
                             // JSX expressions are wrapped in parens to match Prettier
                             // formatting: `() => (<div />)` not `() => <div />`.
-                            let needs_parens =
-                                *is_conditional || expr.starts_with('{') || expr.starts_with('<') || {
+                            let needs_parens = *is_conditional
+                                || expr.starts_with('{')
+                                || expr.starts_with('<')
+                                || {
                                     let s = expr.replace("??", "__");
                                     s.contains(" ? ")
                                 };
@@ -2535,7 +2562,13 @@ fn is_top_level_assignment(expr: &str) -> bool {
                 let prev = if i > 0 { bytes[i - 1] } else { 0 };
                 let next = if i + 1 < len { bytes[i + 1] } else { 0 };
                 // Skip ==, ===, !=, !==, <=, >=, =>
-                if next != b'=' && next != b'>' && prev != b'!' && prev != b'<' && prev != b'>' && prev != b'=' {
+                if next != b'='
+                    && next != b'>'
+                    && prev != b'!'
+                    && prev != b'<'
+                    && prev != b'>'
+                    && prev != b'='
+                {
                     return true;
                 }
             }

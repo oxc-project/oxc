@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1262/1409 passed (89.6%)
+Codegen conformance: 1269/1409 passed (90.1%)
 
 Failure breakdown:
   parse_error:    22
@@ -10,26 +10,22 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:122
+  output_mismatch:115
   no_expected:    0
 
 Failed fixtures:
   [output_mismatch] aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] align-scopes-reactive-scope-overlaps-if.ts
   [output_mismatch] allow-merge-refs-pattern.js
-  [output_mismatch] allow-passing-ref-to-render-helper.js
   [parse_error] allow-ref-initialization-undefined.js
   [parse_error] allow-ref-initialization.js
-  [output_mismatch] allow-ref-lazy-initialization-with-logical.js
   [output_mismatch] array-at-closure.js
   [output_mismatch] array-from-maybemutates-arg0.js
   [output_mismatch] array-spread-mutable-iterator.js
   [output_mismatch] bug-capturing-func-maybealias-captured-mutate.ts
-  [output_mismatch] bug-ref-prefix-postfix-operator.js
   [output_mismatch] bug-type-inference-control-flow.ts
   [output_mismatch] capture-ref-for-later-mutation.tsx
   [output_mismatch] capturing-function-capture-ref-before-rename.js
-  [output_mismatch] capturing-function-renamed-ref.js
   [output_mismatch] chained-assignment-context-variable.js
   [parse_error] component-declaration-basic.flow.js
   [output_mismatch] destructuring-property-inference.js
@@ -73,10 +69,8 @@ Failed fixtures:
   [output_mismatch] iife-return-modified-later-phi.js
   [output_mismatch] infer-global-object.js
   [parse_error] infer-types-through-type-cast.flow.js
-  [output_mismatch] lambda-mutate-shadowed-object.js
   [output_mismatch] lambda-mutated-non-reactive-to-reactive.js
   [output_mismatch] lambda-mutated-ref-non-reactive.js
-  [output_mismatch] lambda-reassign-shadowed-primitive.js
   [parse_error] logical-reorder.flow.js
   [parse_error] member-inc.js
   [output_mismatch] meta-isms/repro-cx-assigned-to-temporary.js
@@ -155,7 +149,6 @@ Failed fixtures:
   [output_mismatch] switch.js
   [output_mismatch] todo.memoize-loops-that-produce-memoizeable-values.js
   [output_mismatch] transitive-freeze-function-expressions.js
-  [output_mismatch] try-catch-within-function-expression-returns-caught-value.js
   [parse_error] type-cast-expression.flow.js
   [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js

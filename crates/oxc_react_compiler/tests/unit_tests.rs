@@ -419,7 +419,9 @@ fn test_console_readonly_output() {
         EnvironmentConfig::default(),
     );
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default()).expect("Lower failed");
+    let mut hir_func =
+        lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
+            .expect("Lower failed");
     let result = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
     let output = format!("{result}");
 
@@ -503,7 +505,9 @@ fn test_context_variable_reactive_scopes() {
         EnvironmentConfig::default(),
     );
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default()).expect("Lower failed");
+    let mut hir_func =
+        lower(&env, ReactFunctionType::Component, &func, rustc_hash::FxHashMap::default())
+            .expect("Lower failed");
     let result = run_pipeline(&mut hir_func, &env).expect("Pipeline failed");
 
     // The expected output should have _c(2) and a reactive scope
@@ -633,9 +637,13 @@ fn test_context_variable_debug() {
         })
         .expect("Expected function declaration");
 
-    let mut hir_func =
-        lower(&env, ReactFunctionType::Component, &LowerableFunction::Function(func_decl), rustc_hash::FxHashMap::default())
-            .expect("Lower failed");
+    let mut hir_func = lower(
+        &env,
+        ReactFunctionType::Component,
+        &LowerableFunction::Function(func_decl),
+        rustc_hash::FxHashMap::default(),
+    )
+    .expect("Lower failed");
 
     // Print HIR before pipeline
     println!("=== HIR after lowering (before pipeline) ===");

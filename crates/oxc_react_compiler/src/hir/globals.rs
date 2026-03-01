@@ -1760,14 +1760,23 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
         .collect();
 
     let global_this_shape_id = add_object(shapes, "Global$globalThis", typed_global_props.clone());
-    globals.insert(
-        "globalThis".to_string(),
-        Global::Typed(Type::Object(ObjectType { shape_id: Some(global_this_shape_id) })),
-    );
+    let global_this_type =
+        Type::Object(ObjectType { shape_id: Some(global_this_shape_id.clone()) });
+    globals.insert("globalThis".to_string(), Global::Typed(global_this_type.clone()));
+
+    // Add self-referencing property: globalThis.globalThis → globalThis
+    // This matches the TS reference where TYPED_GLOBALS includes globalThis itself.
+    if let Some(shape) = shapes.get_mut(&global_this_shape_id) {
+        shape.properties.insert("globalThis".to_string(), global_this_type.clone());
+    }
 
     let global_shape_id = add_object(shapes, "Global$global", typed_global_props);
-    globals.insert(
-        "global".to_string(),
-        Global::Typed(Type::Object(ObjectType { shape_id: Some(global_shape_id) })),
-    );
+    let global_type = Type::Object(ObjectType { shape_id: Some(global_shape_id.clone()) });
+    globals.insert("global".to_string(), Global::Typed(global_type.clone()));
+
+    // Add self-referencing property: global.global → global
+    if let Some(shape) = shapes.get_mut(&global_shape_id) {
+        shape.properties.insert("global".to_string(), global_type);
+        shape.properties.insert("globalThis".to_string(), global_this_type);
+    }
 }

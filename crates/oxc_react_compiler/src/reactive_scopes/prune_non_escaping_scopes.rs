@@ -864,33 +864,27 @@ fn collect_embedded_sequence_instructions(
                 if let ReactiveValue::Instruction(iv) = &embedded_instr.value {
                     match iv.as_ref() {
                         InstructionValue::StoreLocal(v) => {
-                            let target_id =
-                                state.resolve(v.lvalue.place.identifier.declaration_id);
+                            let target_id = state.resolve(v.lvalue.place.identifier.declaration_id);
                             lvalue_entries.push((target_id, MemoizationLevel::Conditional));
                         }
                         InstructionValue::StoreContext(v) => {
-                            let target_id =
-                                state.resolve(v.lvalue_place.identifier.declaration_id);
+                            let target_id = state.resolve(v.lvalue_place.identifier.declaration_id);
                             lvalue_entries.push((target_id, MemoizationLevel::Memoized));
                         }
                         InstructionValue::DeclareLocal(v) => {
-                            let target_id =
-                                state.resolve(v.lvalue.place.identifier.declaration_id);
+                            let target_id = state.resolve(v.lvalue.place.identifier.declaration_id);
                             lvalue_entries.push((target_id, MemoizationLevel::Unmemoized));
                         }
                         InstructionValue::DeclareContext(v) => {
-                            let target_id =
-                                state.resolve(v.lvalue_place.identifier.declaration_id);
+                            let target_id = state.resolve(v.lvalue_place.identifier.declaration_id);
                             lvalue_entries.push((target_id, MemoizationLevel::Memoized));
                         }
                         InstructionValue::PrefixUpdate(v) => {
-                            let inner_id =
-                                state.resolve(v.lvalue.identifier.declaration_id);
+                            let inner_id = state.resolve(v.lvalue.identifier.declaration_id);
                             lvalue_entries.push((inner_id, MemoizationLevel::Conditional));
                         }
                         InstructionValue::PostfixUpdate(v) => {
-                            let inner_id =
-                                state.resolve(v.lvalue.identifier.declaration_id);
+                            let inner_id = state.resolve(v.lvalue.identifier.declaration_id);
                             lvalue_entries.push((inner_id, MemoizationLevel::Conditional));
                         }
                         _ => {}

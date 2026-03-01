@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 /// Infer reactive scope variables.
 ///
 /// Port of `ReactiveScopes/InferReactiveScopeVariables.ts` from the React Compiler.
@@ -12,7 +13,6 @@
 /// 3. MergeOverlappingReactiveScopes
 /// 4. BuildReactiveBlocks
 use oxc_span::Span;
-use indexmap::IndexMap;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::{
