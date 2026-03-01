@@ -1,6 +1,8 @@
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use oxc_formatter::{FormatOptions, Formatter, JsdocOptions, SortImportsOptions, get_parse_options};
+use oxc_formatter::{
+    FormatOptions, Formatter, JsdocOptions, SortImportsOptions, get_parse_options,
+};
 use oxc_parser::Parser;
 use oxc_tasks_common::TestFiles;
 
