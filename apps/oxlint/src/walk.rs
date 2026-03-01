@@ -100,10 +100,9 @@ impl Walk {
         let inner = inner
             .ignore(false)
             .git_global(false)
-            .git_ignore(true)
+            .git_ignore(!options.no_ignore)
             .follow_links(true)
             .hidden(false)
-            .require_git(false)
             .build_parallel();
         Self { inner, extensions: Extensions::default() }
     }
@@ -154,7 +153,7 @@ mod test {
         let fixtures = vec![fixture.clone()];
         let ignore_options = IgnoreOptions {
             no_ignore: false,
-            ignore_path: OsString::from(".gitignore"),
+            ignore_path: OsString::from(".eslintignore"),
             ignore_pattern: vec![],
         };
 
@@ -174,6 +173,60 @@ mod test {
     }
 
     #[test]
+    fn test_parent_gitignore_doesnt_break_subdirectory_walk() {
+        // This test verifies the fix for a v1.36.0 regression where oxlint found 0 files
+        // when walking subdirectories.
+        // The bug: .require_git(false) caused the walker to traverse upward and find parent
+        // .gitignore files, then incorrectly apply their patterns to subdirectories.
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let parent = temp_dir.path();
+
+        // Create parent directory with .git and .gitignore containing root-level patterns
+        fs::create_dir(parent.join(".git")).unwrap();
+        fs::write(parent.join(".gitignore"), "/*.js\n/*.ts\n").unwrap();
+
+        // Create subdirectory with test files
+        let subdir = parent.join("subdir");
+        fs::create_dir(&subdir).unwrap();
+        fs::write(subdir.join("test.js"), "console.log('test');").unwrap();
+        fs::write(subdir.join("index.ts"), "const x = 1;").unwrap();
+
+        let ignore_options = IgnoreOptions {
+            no_ignore: false,
+            ignore_path: OsString::from(".eslintignore"),
+            ignore_pattern: vec![],
+        };
+
+        let override_builder = OverrideBuilder::new(&subdir).build().unwrap();
+        let mut paths =
+            Walk::new(std::slice::from_ref(&subdir), &ignore_options, Some(override_builder))
+                .with_extensions(Extensions(["js", "ts"].to_vec()))
+                .paths()
+                .into_iter()
+                .map(|path| {
+                    Path::new(&path)
+                        .strip_prefix(&subdir)
+                        .unwrap()
+                        .file_name()
+                        .unwrap()
+                        .to_string_lossy()
+                        .to_string()
+                })
+                .collect::<Vec<_>>();
+
+        paths.sort();
+
+        // Both files should be found.
+        assert_eq!(paths, vec!["index.ts", "test.js"]);
+    }
+
+    // NOTE: This test is ignored because the functionality it tests (.require_git(false))
+    // caused a regression where oxlint would find 0 files in many projects.
+    // The issue is that .require_git(false) makes the walker traverse upward looking for
+    // .gitignore files in parent directories, which can incorrectly filter out files.
+    #[test]
+    #[ignore = "Feature disabled due to regression - see comment above"]
     fn test_gitignore_without_git_repo() {
         // Validate that `.gitignore` files are respected even when no `.git` directory is present.
 
@@ -198,7 +251,6 @@ mod test {
         };
 
         let override_builder = OverrideBuilder::new(temp_path).build().unwrap();
-
         let mut paths =
             Walk::new(&[temp_path.to_path_buf()], &ignore_options, Some(override_builder))
                 .with_extensions(Extensions(["js"].to_vec()))
