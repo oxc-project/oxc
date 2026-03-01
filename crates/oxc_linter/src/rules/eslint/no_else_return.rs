@@ -389,23 +389,23 @@ fn test() {
         ("if (0) { if (0) {} else {} } else {}", None),
         (
             "
-			            function foo() {
-			                if (foo)
-			                    if (bar) return;
-			                    else baz;
-			                else qux;
-			            }
-			        ",
+                        function foo() {
+                            if (foo)
+                                if (bar) return;
+                                else baz;
+                            else qux;
+                        }
+                    ",
             None,
         ),
         (
             "
-			            function foo() {
-			                while (foo)
-			                    if (bar) return;
-			                    else baz;
-			            }
-			        ",
+                        function foo() {
+                            while (foo)
+                                if (bar) return;
+                                else baz;
+                        }
+                    ",
             None,
         ),
         (
@@ -465,41 +465,41 @@ fn test() {
         ("function foo10() { if (foo) return bar; else (foo).bar(); }", None),
         (
             "function foo11() { if (foo) return bar
-			else { [1, 2, 3].map(foo) } }",
+            else { [1, 2, 3].map(foo) } }",
             None,
         ),
         (
             "function foo12() { if (foo) return bar
-			else { baz() }
-			[1, 2, 3].map(foo) }",
+            else { baz() }
+            [1, 2, 3].map(foo) }",
             None,
         ),
         (
             "function foo13() { if (foo) return bar;
-			else { [1, 2, 3].map(foo) } }",
+            else { [1, 2, 3].map(foo) } }",
             None,
         ),
         (
             "function foo14() { if (foo) return bar
-			else { baz(); }
-			[1, 2, 3].map(foo) }",
+            else { baz(); }
+            [1, 2, 3].map(foo) }",
             None,
         ),
         ("function foo15() { if (foo) return bar; else { baz() } qaz() }", None),
         (
             "function foo16() { if (foo) return bar
-			else { baz() } qaz() }",
+            else { baz() } qaz() }",
             None,
         ),
         (
             "function foo17() { if (foo) return bar
-			else { baz() }
-			qaz() }",
+            else { baz() }
+            qaz() }",
             None,
         ),
         (
             "function foo18() { if (foo) return function() {}
-			else [1, 2, 3].map(bar) }",
+            else [1, 2, 3].map(bar) }",
             None,
         ),
         (
@@ -700,24 +700,24 @@ fn test() {
         ),
         (
             "function foo13() { if (foo) return bar;
-			else { [1, 2, 3].map(foo) } }",
+            else { [1, 2, 3].map(foo) } }",
             "function foo13() { if (foo) return bar; [1, 2, 3].map(foo)  }",
             None,
         ),
         (
             "function foo14() { if (foo) return bar
-			else { baz(); }
-			[1, 2, 3].map(foo) }",
+            else { baz(); }
+            [1, 2, 3].map(foo) }",
             "function foo14() { if (foo) return bar\n baz(); 
-			[1, 2, 3].map(foo) }",
+            [1, 2, 3].map(foo) }",
             None,
         ),
         (
             "function foo17() { if (foo) return bar
-			else { baz() }
-			qaz() }",
+            else { baz() }
+            qaz() }",
             "function foo17() { if (foo) return bar\n baz() 
-			qaz() }",
+            qaz() }",
             None,
         ),
         (

@@ -66,7 +66,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Did you mean to use `==` instead of `=`?
 
   ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
-   ╭─[no_return_assign.tsx:2:27]
+   ╭─[no_return_assign.tsx:2:36]
  1 │ function foo(){
  2 │                             return a = b
    ·                                    ─────
@@ -75,7 +75,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Did you mean to use `==` instead of `=`?
 
   ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
-   ╭─[no_return_assign.tsx:2:27]
+   ╭─[no_return_assign.tsx:2:36]
  1 │ function doSomething() {
  2 │                             return foo = bar && foo > 0;
    ·                                    ────────────────────
@@ -84,7 +84,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Did you mean to use `==` instead of `=`?
 
   ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
-   ╭─[no_return_assign.tsx:2:27]
+   ╭─[no_return_assign.tsx:2:36]
  1 │     function doSomething() {
  2 │ ╭─▶                             return foo = function(){
  3 │ │                                   return (bar = bar1)
@@ -94,7 +94,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Did you mean to use `==` instead of `=`?
 
   ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
-   ╭─[no_return_assign.tsx:2:27]
+   ╭─[no_return_assign.tsx:2:36]
  1 │ function doSomething() {
  2 │                             return foo = () => a
    ·                                    ─────────────
@@ -103,7 +103,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Did you mean to use `==` instead of `=`?
 
   ⚠ eslint(no-return-assign): Arrow functions should not return an assignment.
-   ╭─[no_return_assign.tsx:2:33]
+   ╭─[no_return_assign.tsx:2:42]
  1 │ function doSomething() {
  2 │                             return () => a = () => b
    ·                                          ───────────
@@ -112,7 +112,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Did you mean to use `==` instead of `=`?
 
   ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
-   ╭─[no_return_assign.tsx:3:31]
+   ╭─[no_return_assign.tsx:3:40]
  2 │                             return function bar(b){
  3 │                                 return a = b
    ·                                        ─────

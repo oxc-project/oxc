@@ -206,6 +206,8 @@ fn test() {
         ("for (var foo of []) {}", None), // { "ecmaVersion": 6 },
         ("let a = true;", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 6 },
         ("const a = {};", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 6 },
+        ("using a = foo();", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2026 },
+        ("await using a = foo();", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2026 },
         (
             "function foo() { let a = 1, b = false; if (a) { let c = 3, d = null; } }",
             Some(serde_json::json!(["always"])),
@@ -393,6 +395,15 @@ fn test() {
                     }
                 }
             }",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "
+                  declare namespace myLib {
+                    let valueInside: number;
+                  }
+                    let valueOutside: number;
+                        ",
             Some(serde_json::json!(["always"])),
         ),
     ];
