@@ -17,3 +17,37 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'T' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:3:39]
+ 2 │         export namespace NonAmbientModuleDeclaration {
+ 3 │             export interface Matchers<T> extends MatcherOverride {
+   ·                                       ┬
+   ·                                       ╰── 'T' is declared here
+ 4 │                 toBeFoo(value: unknown): unknown;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'T' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:44]
+ 1 │ declare module 'bun:test' { type Matchers2<T> = {} }
+   ·                                            ┬
+   ·                                            ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Class 'MyClass' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:35]
+ 1 │ declare module 'bun:test' { class MyClass<T> {} }
+   ·                                   ───┬───
+   ·                                      ╰── 'MyClass' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'T' is declared but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:1:43]
+ 1 │ declare module 'bun:test' { class MyClass<T> {} }
+   ·                                           ┬
+   ·                                           ╰── 'T' is declared here
+   ╰────
+  help: Consider removing this declaration.
