@@ -10274,7 +10274,7 @@ fn strip_fbt_hash_keys(s: &str) -> String {
 ///
 /// Handles normalized (whitespace-collapsed) text like:
 /// `<fbt desc={ "D" }>text<fbt:param name={ "N" }>{ expr }</fbt:param>more</fbt>`
-/// → `fbt._("text{ N }more", [fbt._param("N", expr)])`
+/// -> `fbt._("text{N}more", [fbt._param("N", expr)])`
 fn convert_fbt_jsx_to_calls(s: &str) -> String {
     let mut result = s.to_string();
 
@@ -10405,9 +10405,15 @@ fn parse_fbt_content(content: &str, param_tag: &str) -> (String, Vec<(String, St
             // Find the name attribute: name={ "value" } or name="value"
             let after_open = &content[pos + open_pattern.len()..];
 
-            // Extract the name value
+            // Extract the name value and normalize whitespace (collapse JS escape
+            // sequences like `\n` and multiple spaces to single spaces), matching
+            // the Babel FBT transform behavior.
             let name = if let Some(name_str) = extract_fbt_param_name(after_open) {
-                name_str
+                // Replace JS string escape sequences for whitespace, then collapse.
+                // Our codegen may emit `\n` (literal backslash-n) in string literals
+                // for names that span multiple lines in the source JSX.
+                let unescaped = name_str.replace("\\n", " ").replace("\\t", " ");
+                unescaped.split_whitespace().collect::<Vec<_>>().join(" ")
             } else {
                 // Can't parse, skip this char
                 if let Some(c) = content[pos..].chars().next() {
@@ -10440,15 +10446,24 @@ fn parse_fbt_content(content: &str, param_tag: &str) -> (String, Vec<(String, St
                 expr_content.to_string()
             };
 
-            // Add param placeholder to template text as `{name}` (without spaces).
-            // Step 9 (destructuring spacing) will add spaces to make `{ name }`,
-            // and step 11b will remove single-word `{ name }` as dead blocks.
-            // Both actual and expected go through the same pipeline, so they match.
+            // Add param placeholder to template text as `{name}` (no spaces inside braces).
+            // The Babel FBT transform uses `{paramName}` format without inner spaces,
+            // and preserves original whitespace from the source text as-is.
             template_text.push_str(&format!("{{{name}}}"));
             params.push((name, expr));
 
             // Advance past the closing tag
             pos = expr_start + close_pos + close_pattern.len();
+        } else if content[pos..].starts_with("{\" \"}") || content[pos..].starts_with("{' '}") {
+            // JSX expression container for explicit whitespace: {" "} or {' '}.
+            // The Babel FBT transform interprets these as contributing a space
+            // character to the template text.
+            template_text.push(' ');
+            pos += 5; // skip {" "} or {' '}
+        } else if content[pos..].starts_with(r#"{"  "}"#) || content[pos..].starts_with("{'  '}") {
+            // Double-space variant
+            template_text.push(' ');
+            pos += 6;
         } else {
             // Regular text content
             if let Some(c) = content[pos..].chars().next() {

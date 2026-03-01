@@ -1,9 +1,8 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 8506
 expression: snapshot
 ---
-Codegen conformance: 1247/1409 passed (88.5%)
+Codegen conformance: 1248/1409 passed (88.6%)
 
 Failure breakdown:
   parse_error:    22
@@ -11,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:137
+  output_mismatch:136
   no_expected:    0
 
 Failed fixtures:
@@ -46,7 +45,6 @@ Failed fixtures:
   [output_mismatch] fbt/fbt-call-complex-param-value.js
   [output_mismatch] fbt/fbt-call.js
   [output_mismatch] fbt/fbt-param-with-leading-whitespace.js
-  [output_mismatch] fbt/fbt-param-with-newline.js
   [output_mismatch] fbt/fbt-param-with-trailing-whitespace.js
   [output_mismatch] fbt/fbt-params-complex-param-value.js
   [output_mismatch] fbt/fbt-preserve-jsxtext.js
