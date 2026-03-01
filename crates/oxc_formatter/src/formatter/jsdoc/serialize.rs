@@ -25,7 +25,7 @@ use super::{
 const LINE_PREFIX_LEN: usize = 3;
 
 /// Tags whose descriptions should NOT be capitalized.
-/// Includes upstream's `TAGS_PEV_FORMATE_DESCRIPTION` (borrows, default, defaultValue,
+/// Includes upstream's `TAGS_PEV_FORMAT_DESCRIPTION` (borrows, default, defaultValue,
 /// import, memberof, module, see) plus tags whose content is a name/reference rather
 /// than descriptive text (e.g. @function name, @typedef type, @class name).
 fn should_skip_capitalize(tag_kind: &str) -> bool {
@@ -1805,7 +1805,7 @@ fn format_example_fenced_block(
                     template_depth = update_template_depth(line, template_depth);
                 }
             } else {
-                // Fallback for unparseable inner code
+                // Fallback for unparsable inner code
                 for line in inner_code.lines() {
                     let trimmed = line.trim();
                     if trimmed.is_empty() {
@@ -2571,7 +2571,7 @@ mod tests {
 
     #[test]
     fn test_should_skip_capitalize() {
-        // Tags in TAGS_PEV_FORMATE_DESCRIPTION
+        // Tags in TAGS_PEV_FORMAT_DESCRIPTION
         assert!(should_skip_capitalize("borrows"));
         assert!(should_skip_capitalize("default"));
         assert!(should_skip_capitalize("defaultValue"));
