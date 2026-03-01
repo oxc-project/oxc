@@ -513,11 +513,14 @@ impl DisableDirectivesBuilder {
                 rule_name_start += 13; // eslint-enable is 13 bytes
                 // `eslint-enable`
                 if text.trim().is_empty() {
-                    if let Some((start, _)) = self.disable_all_start.take() {
+                    if let Some((start, disable_comment_span)) = self.disable_all_start.take() {
                         self.add_interval(
                             start,
                             comment_span.start,
-                            DisabledRule::All { comment_span, is_next_line: false },
+                            DisabledRule::All {
+                                comment_span: disable_comment_span,
+                                is_next_line: false,
+                            },
                         );
                     } else {
                         // collect as unused enable (see more at note comments in beginning of this method)
@@ -526,14 +529,16 @@ impl DisableDirectivesBuilder {
                 } else {
                     // `eslint-enable rule-name1, rule-name2`
                     Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
-                        if let Some((start, _, _)) = self.disable_start_map.remove(rule_name) {
+                        if let Some((start, disable_name_span, disable_comment_span)) =
+                            self.disable_start_map.remove(rule_name)
+                        {
                             self.add_interval(
                                 start,
                                 comment_span.start,
                                 DisabledRule::Single {
                                     rule_name: rule_name.to_string(),
-                                    name_span,
-                                    comment_span,
+                                    name_span: disable_name_span,
+                                    comment_span: disable_comment_span,
                                     is_next_line: false,
                                 },
                             );

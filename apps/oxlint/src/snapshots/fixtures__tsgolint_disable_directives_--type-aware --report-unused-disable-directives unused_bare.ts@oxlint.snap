@@ -1,0 +1,31 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-aware --report-unused-disable-directives unused_bare.ts
+working directory: fixtures/tsgolint_disable_directives
+----------
+
+  ! eslint(no-unused-vars): Variable 'myPromise' is declared but never used. Unused variables should start with a '_'.
+   ,-[unused_bare.ts:2:7]
+ 1 | // Test bare eslint-disable with type-aware rules
+ 2 | const myPromise = new Promise(() => {})
+   :       ^^^^|^^^^
+   :           `-- 'myPromise' is declared here
+ 3 | 
+   `----
+  help: Consider removing this declaration.
+
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[unused_bare.ts:10:3]
+  9 | // Case 2: UNUSED bare disable block (no violation inside)
+ 10 | /* eslint-disable */
+    :   ^^^^^^^^^^^^^^^^
+ 11 | const _x = 1 + 2
+    `----
+
+Found 2 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 107 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
