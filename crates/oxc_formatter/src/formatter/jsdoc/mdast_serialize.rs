@@ -170,7 +170,6 @@ fn is_block_node(node: &Node) -> bool {
             | Node::Heading(_)
             | Node::List(_)
             | Node::Code(_)
-            | Node::Table(_)
             | Node::Blockquote(_)
             | Node::ThematicBreak(_)
             | Node::Definition(_)
@@ -208,9 +207,6 @@ fn serialize_node(
         Node::ListItem(_) | Node::ThematicBreak(_) => {}
         Node::Code(code) => {
             serialize_code(code, lines);
-        }
-        Node::Table(table) => {
-            serialize_table(table, opts, lines);
         }
         Node::Blockquote(bq) => {
             serialize_blockquote(bq, opts, lines);
@@ -479,16 +475,9 @@ fn serialize_list(
                 if matches!(item_child, Node::Definition(_)) {
                     serialize_node(item_child, 0, opts, lines);
                 }
-                // For nested lists, use the same indent model as the old list formatter:
-                // first nested level aligns to the parent content column, deeper levels
-                // indent to the parent content column plus one marker width.
+                // Nested lists align to the parent item's content column.
                 else if matches!(item_child, Node::List(_)) {
-                    let nested_indent = if indent == 0 {
-                        indent + marker_width
-                    } else {
-                        indent + marker_width + marker_width
-                    };
-                    serialize_node(item_child, nested_indent, opts, lines);
+                    serialize_node(item_child, indent + marker_width, opts, lines);
                 } else {
                     let mut child_lines = Vec::new();
                     serialize_node_for_list_item(
@@ -581,58 +570,6 @@ fn serialize_code(code: &markdown::mdast::Code, lines: &mut Vec<String>) {
             lines.push(format!("    {line}"));
         }
     }
-}
-
-// ──────────────────────────────────────────────────
-// Table serialization
-// ──────────────────────────────────────────────────
-
-fn serialize_table(
-    table: &markdown::mdast::Table,
-    opts: &SerializeOptions<'_>,
-    lines: &mut Vec<String>,
-) {
-    if table.children.is_empty() {
-        return;
-    }
-
-    // Build raw table lines, then delegate to the existing format_table_block
-    let mut table_lines = Vec::new();
-    let mut is_header = true;
-
-    for row_node in &table.children {
-        let Node::TableRow(row) = row_node else {
-            continue;
-        };
-
-        let cells: Vec<String> = row
-            .children
-            .iter()
-            .map(|cell_node| {
-                if let Node::TableCell(cell) = cell_node {
-                    let text = collect_inline_text(&Node::TableCell(cell.clone()));
-                    restore_in_string(&text, opts.placeholders)
-                } else {
-                    String::new()
-                }
-            })
-            .collect();
-
-        let formatted_row = format!("| {} |", cells.join(" | "));
-        table_lines.push(formatted_row);
-
-        // After header row, add separator
-        if is_header {
-            let sep_cells: Vec<String> = cells.iter().map(|_| "---".to_string()).collect();
-            table_lines.push(format!("| {} |", sep_cells.join(" | ")));
-            is_header = false;
-        }
-    }
-
-    if !lines.is_empty() && !lines.last().is_some_and(String::is_empty) {
-        lines.push(String::new());
-    }
-    format_table_block(&table_lines, lines);
 }
 
 // ──────────────────────────────────────────────────
