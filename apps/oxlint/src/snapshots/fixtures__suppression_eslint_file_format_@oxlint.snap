@@ -1,0 +1,41 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/suppression_eslint_file_format
+----------
+
+  x The number of 'eslint/no-console' errors in test.js increased from 1 to 3.
+  help: Update `oxlint-suppressions.json` file running `oxlint --suppress--all`
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[test.js:1:1]
+ 1 | console.log();
+   : ^^^^^^^^^^^
+ 2 | console.log();
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[test.js:2:1]
+ 1 | console.log();
+ 2 | console.log();
+   : ^^^^^^^^^^^
+ 3 | console.log();
+   `----
+  help: Delete this console statement.
+
+  x eslint(no-console): Unexpected console statement.
+   ,-[test.js:3:1]
+ 2 | console.log();
+ 3 | console.log();
+   : ^^^^^^^^^^^
+   `----
+  help: Delete this console statement.
+
+Found 0 warnings and 4 errors.
+Finished in <variable>ms on 1 file with 56 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

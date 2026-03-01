@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "suppressions": {
+    "files/test.js": {
+      "eslint/prefer-const": {
+        "count": 1
+      }
+    }
+  }
+}
