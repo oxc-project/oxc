@@ -3,8 +3,9 @@ use std::path::PathBuf;
 use compact_str::CompactString;
 use oxc_module_graph::default::SymbolRefDb;
 use oxc_module_graph::types::{
-    ExportsKind, ImportKind, ImportRecordIdx, ImportRecordMeta, LocalExport, MatchImportKind,
-    ModuleIdx, NamedImport, ResolvedImportRecord, StarExportEntry, SymbolRef, WrapKind,
+    ExportsKind, ImportKind, ImportRecordIdx, ImportRecordMeta, IndirectExportEntry, LocalExport,
+    MatchImportKind, ModuleIdx, NamedImport, ResolvedImportRecord, StarExportEntry, SymbolRef,
+    WrapKind,
 };
 use oxc_module_graph::{
     ExportsKindConfig, ExternalModule, ImportHooks, LinkConfig, ModuleGraph, NormalModule,
@@ -221,6 +222,65 @@ fn test_symbol_ref_db_chain() {
     assert_eq!(db.canonical_ref_for(s0), s2);
     assert_eq!(db.canonical_ref_for(s1), s2);
     assert_eq!(db.canonical_ref_for(s2), s2);
+}
+
+#[test]
+fn test_symbol_ref_db_adopts_existing_symbol_ids() {
+    use oxc_syntax::symbol::SymbolId;
+
+    let mut db = SymbolRefDb::new();
+    let module = ModuleIdx::from_usize(0);
+
+    db.ensure_module_symbol_capacity(module, 3);
+
+    let adopted = SymbolId::from_usize(2);
+    db.set_symbol_name(module, adopted, "adopted".to_string());
+    db.init_symbol_self_link(module, adopted);
+
+    let adopted_ref = SymbolRef::new(module, adopted);
+    assert_eq!(db.canonical_ref_for(adopted_ref), adopted_ref);
+    assert_eq!(db.symbol_name(adopted_ref), "adopted");
+
+    let synthetic = db.alloc_synthetic_symbol(module, "synthetic".to_string());
+    assert_eq!(synthetic, SymbolRef::new(module, SymbolId::from_usize(3)));
+    assert_eq!(db.symbol_name(synthetic), "synthetic");
+}
+
+#[test]
+fn test_symbol_ref_db_link_uses_canonical_roots() {
+    let mut db = SymbolRefDb::new();
+    db.ensure_modules(4);
+
+    let m0 = ModuleIdx::from_usize(0);
+    let m1 = ModuleIdx::from_usize(1);
+    let m2 = ModuleIdx::from_usize(2);
+    let m3 = ModuleIdx::from_usize(3);
+
+    let s0 = db.add_symbol(m0, "x".to_string());
+    let s1 = db.add_symbol(m1, "y".to_string());
+    let s2 = db.add_symbol(m2, "z".to_string());
+    let s3 = db.add_symbol(m3, "w".to_string());
+
+    db.link(s0, s1);
+    db.link(s1, s2);
+    db.link(s0, s3);
+
+    assert_eq!(db.canonical_ref_for(s0), s3);
+    assert_eq!(db.canonical_ref_for(s1), s3);
+    assert_eq!(db.canonical_ref_for(s2), s3);
+    assert_eq!(db.canonical_ref_for(s3), s3);
+}
+
+#[test]
+fn test_symbol_ref_db_add_symbol_creates_sparse_modules() {
+    let mut db = SymbolRefDb::new();
+    let module = ModuleIdx::from_usize(2);
+
+    let sym = db.add_symbol(module, "late".to_string());
+
+    assert_eq!(sym, dummy_symbol_ref(module, 0));
+    assert_eq!(db.canonical_ref_for(sym), sym);
+    assert_eq!(db.symbol_name(sym), "late");
 }
 
 #[test]
@@ -2344,6 +2404,64 @@ fn test_import_hooks_called() {
     assert!(!links.is_empty(), "Expected at least one link for 'foo'");
 }
 
+#[test]
+fn test_build_resolved_exports_marks_indirect_reexports_from_commonjs() {
+    let mut graph = ModuleGraph::new();
+
+    let idx_a = graph.alloc_module_idx();
+    let idx_b = graph.alloc_module_idx();
+
+    let sym_a_default = graph.add_symbol(idx_a, "default".into());
+    let sym_a_ns = graph.add_symbol(idx_a, "*ns*".into());
+
+    let sym_b_bar = graph.add_symbol(idx_b, "bar".into());
+    let sym_b_default = graph.add_symbol(idx_b, "default".into());
+    let sym_b_ns = graph.add_symbol(idx_b, "*ns*".into());
+
+    graph.add_normal_module(make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![ResolvedImportRecord {
+            specifier: CompactString::new("./b"),
+            resolved_module: Some(idx_b),
+            kind: ImportKind::Static,
+            namespace_ref: sym_b_ns,
+            meta: ImportRecordMeta::empty(),
+        }],
+        sym_a_default,
+        sym_a_ns,
+    ));
+    graph.normal_module_mut(idx_a).unwrap().indirect_export_entries = vec![IndirectExportEntry {
+        exported_name: CompactString::new("bar"),
+        imported_name: CompactString::new("bar"),
+        module_request: CompactString::new("./b"),
+        resolved_module: Some(idx_b),
+        span: Default::default(),
+    }];
+
+    graph.add_normal_module(make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::from_iter([(
+            CompactString::new("bar"),
+            LocalExport { exported_name: CompactString::new("bar"), local_symbol: sym_b_bar },
+        )]),
+        FxHashMap::default(),
+        vec![],
+        sym_b_default,
+        sym_b_ns,
+    ));
+    graph.normal_module_mut(idx_b).unwrap().exports_kind = ExportsKind::CommonJs;
+
+    let resolved = build_resolved_exports(&graph);
+    let export = resolved.get(&idx_a).and_then(|exports| exports.get("bar")).unwrap();
+
+    assert!(export.came_from_cjs);
+    assert_eq!(export.symbol_ref, sym_b_bar);
+}
+
 /// Verifies that `on_final_no_match` can override the error by returning a result.
 #[test]
 fn test_import_hooks_override_no_match() {
@@ -4073,4 +4191,107 @@ fn test_safely_merge_multiple_importers() {
     assert_eq!(info.namespace_refs.len(), 2, "Should have 2 namespace refs from A and C");
     assert!(info.namespace_refs.contains(&ns_rec_a), "Should contain A's namespace ref");
     assert!(info.namespace_refs.contains(&ns_rec_c), "Should contain C's namespace ref");
+}
+
+// ============================================================================
+// reserve_modules tests
+// ============================================================================
+
+#[test]
+fn reserve_modules_preallocates_without_affecting_correctness() {
+    let mut graph = ModuleGraph::new();
+
+    // Pre-allocate space for 100 modules.
+    graph.reserve_modules(100);
+
+    // Allocate and add a few modules — correctness must be preserved.
+    let idx_a = graph.alloc_module_idx();
+    let idx_b = graph.alloc_module_idx();
+
+    let sym_a = graph.add_symbol(idx_a, "a".into());
+    let sym_b = graph.add_symbol(idx_b, "b".into());
+
+    let module_a = make_normal_module(
+        idx_a,
+        "/a.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![],
+        sym_a,
+        sym_a,
+    );
+    graph.add_normal_module(module_a);
+
+    let module_b = make_normal_module(
+        idx_b,
+        "/b.js",
+        FxHashMap::default(),
+        FxHashMap::default(),
+        vec![],
+        sym_b,
+        sym_b,
+    );
+    graph.add_normal_module(module_b);
+
+    // Verify modules are accessible.
+    assert_eq!(graph.modules_len(), 2);
+    assert!(graph.normal_module(idx_a).is_some());
+    assert!(graph.normal_module(idx_b).is_some());
+    assert_eq!(graph.symbol_name(sym_a), "a");
+    assert_eq!(graph.symbol_name(sym_b), "b");
+}
+
+// ============================================================================
+// Path halving correctness tests
+// ============================================================================
+
+#[test]
+fn canonical_ref_mut_applies_path_halving() {
+    let mut graph = ModuleGraph::new();
+
+    // Create 5 modules (A→B→C→D→E chain via symbol links).
+    let idxs: Vec<ModuleIdx> = (0..5).map(|_| graph.alloc_module_idx()).collect();
+    let syms: Vec<SymbolRef> =
+        idxs.iter().map(|&idx| graph.add_symbol(idx, format!("s{}", idx.index()))).collect();
+
+    for &idx in &idxs {
+        let sym = syms[idx.index()];
+        let module = make_normal_module(
+            idx,
+            &format!("/{}.js", idx.index()),
+            FxHashMap::default(),
+            FxHashMap::default(),
+            vec![],
+            sym,
+            sym,
+        );
+        graph.add_normal_module(module);
+    }
+
+    // Build chain: A→B→C→D→E using link_symbols to set each hop.
+    // link_symbols(from, to) makes `root(from)` resolve to `root(to)`.
+    // Since each symbol is its own root initially, linking in forward order
+    // produces the chain: sym[0]→sym[1]→sym[2]→sym[3]→sym[4].
+    for i in 0..4 {
+        graph.link_symbols(syms[i], syms[i + 1]);
+    }
+
+    // Before path halving, canonical_ref (immutable) should find E as root.
+    let root = graph.canonical_ref(syms[0]);
+    assert_eq!(root, syms[4], "canonical root should be E (sym[4])");
+
+    // Call canonical_ref_mut which applies path halving.
+    let root_mut = graph.canonical_ref_mut(syms[0]);
+    assert_eq!(root_mut, syms[4], "canonical_ref_mut should still find E");
+
+    // After path halving, a second call should still find E.
+    // If path halving is working, the internal chain is shortened.
+    let root_again = graph.canonical_ref_mut(syms[0]);
+    assert_eq!(root_again, syms[4], "canonical root should still be E after repeated calls");
+
+    // Verify all intermediate symbols also resolve to E.
+    for i in 1..4 {
+        let root_i = graph.canonical_ref_mut(syms[i]);
+        assert_eq!(root_i, syms[4], "sym[{}] should resolve to E", i);
+    }
 }

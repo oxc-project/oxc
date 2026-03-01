@@ -161,13 +161,16 @@ impl ModuleGraphBuilder {
         let sem_ret = SemanticBuilder::new().build(&ret.program);
         let scoping = sem_ret.semantic.into_scoping();
 
-        // Copy all symbols from scoping into our SymbolRefDb
+        // Copy all symbols from scoping into our SymbolRefDb without remapping
+        // their semantic SymbolIds.
         let symbol_count = scoping.symbols_len();
+        self.graph.ensure_module_symbol_capacity(idx, symbol_count);
         #[expect(clippy::cast_possible_truncation)]
         for sym_id_raw in 0..symbol_count {
             let sym_id = SymbolId::from_raw_unchecked(sym_id_raw as u32);
             let name = scoping.symbol_name(sym_id).to_string();
-            self.graph.add_symbol(idx, name);
+            self.graph.set_symbol_name(idx, sym_id, name);
+            self.graph.init_symbol_self_link(idx, sym_id);
         }
 
         let module_record = &ret.module_record;
@@ -350,7 +353,7 @@ impl ModuleGraphBuilder {
     }
 
     fn get_or_create_symbol(&mut self, module: ModuleIdx, name: &str) -> SymbolRef {
-        self.graph.add_symbol(module, name.to_string())
+        self.graph.alloc_synthetic_symbol(module, name.to_string())
     }
 }
 

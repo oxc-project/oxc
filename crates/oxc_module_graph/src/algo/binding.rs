@@ -3,14 +3,14 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::graph::ModuleGraph;
 use crate::hooks::LinkConfig;
-use crate::module::Module;
+use crate::module::{Module, NormalModule};
 use crate::types::{MatchImportKind, ModuleIdx, ResolvedExport, SymbolRef};
 
 /// A resolved export: the final symbol that an export name maps to.
 pub type ResolvedExportsMap = FxHashMap<CompactString, ResolvedExport>;
 
 /// An error from the binding phase.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BindingError {
     /// An import could not be matched to any export.
     UnresolvedImport { module: ModuleIdx, import_name: CompactString },
@@ -279,7 +279,12 @@ fn add_exports_for_star(
         if let Some(target_exports) = resolved_exports.get(&target_idx)
             && let Some(resolved) = target_exports.get(&imported_name)
         {
-            let resolved_clone = resolved.clone();
+            let mut resolved_clone = resolved.clone();
+            if graph.normal_module(target_idx).is_some_and(NormalModule::is_commonjs)
+                || resolved_clone.came_from_cjs
+            {
+                resolved_clone.came_from_cjs = true;
+            }
             if let Some(my_exports) = resolved_exports.get_mut(&module_idx) {
                 my_exports.entry(exported_name).or_insert(resolved_clone);
             }
@@ -292,6 +297,8 @@ fn add_exports_for_star(
     // Process star re-exports: `export * from './foo'`
     for target_idx in star_targets {
         add_exports_for_star(graph, target_idx, resolved_exports, visited, local_export_names);
+        let target_is_commonjs =
+            graph.normal_module(target_idx).is_some_and(NormalModule::is_commonjs);
 
         // Merge target's exports into this module.
         let target_entries: Vec<(CompactString, ResolvedExport)> = resolved_exports
@@ -300,7 +307,13 @@ fn add_exports_for_star(
                 exports
                     .iter()
                     .filter(|(name, export)| name.as_str() != "default" || export.came_from_cjs)
-                    .map(|(name, export)| (name.clone(), export.clone()))
+                    .map(|(name, export)| {
+                        let mut export = export.clone();
+                        if target_is_commonjs {
+                            export.came_from_cjs = true;
+                        }
+                        (name.clone(), export)
+                    })
                     .collect()
             })
             .unwrap_or_default();
