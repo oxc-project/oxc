@@ -17,11 +17,17 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::hir::{
-    HIRFunction, IdentifierId, InstructionId, InstructionValue, JsxTag, MutableRange, ReactiveScope,
+    BlockId, HIRFunction, IdentifierId, InstructionId, InstructionValue, JsxTag, MutableRange,
+    ReactiveScope,
 };
 
 use super::types::PropertyLiteral;
 use super::visitors::each_instruction_value_operand;
+
+/// Map from `IdentifierId` to the (block, instruction index) where that identifier is defined
+/// as the lvalue. Used to simulate TS reference-sharing semantics: when we set scope on an
+/// operand, we also propagate the scope to the lvalue of the instruction that produced that value.
+type LvalueDefs = FxHashMap<IdentifierId, (BlockId, usize)>;
 
 /// Whether a macro requires its arguments to be transitively inlined (eg fbt)
 /// or just avoid having the top-level values be converted to variables (eg fbt.param).
@@ -167,6 +173,16 @@ fn merge_macro_arguments(
         macro_values.insert(id);
     }
 
+    // Build a map from IdentifierId -> (BlockId, instruction_index) for all lvalues.
+    // This is needed to simulate TS reference-sharing: when we set scope on an operand,
+    // we also need to set it on the lvalue of the instruction that produced that value.
+    let mut lvalue_defs: LvalueDefs = FxHashMap::default();
+    for (bid, block) in &func.body.blocks {
+        for (idx, instr) in block.instructions.iter().enumerate() {
+            lvalue_defs.insert(instr.lvalue.identifier.id, (*bid, idx));
+        }
+    }
+
     let mut block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
     block_ids.sort();
     block_ids.reverse();
@@ -217,6 +233,7 @@ fn merge_macro_arguments(
                             &operand_ids,
                             &mut macro_values,
                             &mut macro_tags,
+                            &lvalue_defs,
                         );
                     }
                 }
@@ -241,6 +258,7 @@ fn merge_macro_arguments(
                             &operand_ids,
                             &mut macro_values,
                             &mut macro_tags,
+                            &lvalue_defs,
                         );
                     }
                 }
@@ -265,6 +283,7 @@ fn merge_macro_arguments(
                             &operand_ids,
                             &mut macro_values,
                             &mut macro_tags,
+                            &lvalue_defs,
                         );
                     }
                 }
@@ -286,6 +305,7 @@ fn merge_macro_arguments(
                             &operand_ids,
                             &mut macro_values,
                             &mut macro_tags,
+                            &lvalue_defs,
                         );
                     }
                 }
@@ -373,18 +393,26 @@ fn collect_operand_info(operands: &[&crate::hir::Place]) -> Vec<OperandInfo> {
 /// Apply operand merges: mark lvalue as macro value, and for each operand,
 /// set its scope and extend the scope range.
 ///
-/// In the TS version, all operands share a single scope reference, so expanding
-/// the scope range in one place affects all. In Rust, we first expand the scope
-/// range with all operand mutable ranges, then assign the expanded scope to each.
+/// In the TS version, all `Place` objects that refer to the same HIR identifier share the
+/// same `Identifier` object by reference. When `operand.identifier.scope = scope` is set
+/// on an operand, the scope propagates to ALL places with that identifier -- including the
+/// lvalue of the instruction that originally defined that value.
+///
+/// In Rust, each `Place` has its own cloned `Identifier`. To simulate the TS reference-sharing,
+/// after setting scope on each operand, we also propagate the scope to the lvalue of the
+/// instruction that produced that operand (looked up via `lvalue_defs`). This ensures that
+/// when the reverse pass later reaches the producing instruction, the lvalue has a scope,
+/// so its own operands get merged transitively.
 fn apply_operand_merges(
     func: &mut HIRFunction,
-    block_id: crate::hir::BlockId,
+    block_id: BlockId,
     instr_idx: usize,
     macro_def: &MacroDefinition,
     scope: &ReactiveScope,
     operand_infos: &[OperandInfo],
     macro_values: &mut FxHashSet<IdentifierId>,
     macro_tags: &mut FxHashMap<IdentifierId, MacroDefinition>,
+    lvalue_defs: &LvalueDefs,
 ) {
     let Some(block) = func.body.blocks.get_mut(&block_id) else {
         return;
@@ -417,6 +445,24 @@ fn apply_operand_merges(
                 place
             },
         );
+
+        // Simulate TS reference-sharing: propagate the scope to the lvalue of each
+        // operand's defining instruction. This ensures that when the reverse pass
+        // reaches the producing instruction, it sees lvalue.scope is Some and
+        // processes its own operands transitively.
+        let scope_to_propagate = Box::new(expanded_scope);
+        for operand_info in operand_infos {
+            if let Some(&(def_block_id, def_instr_idx)) = lvalue_defs.get(&operand_info.id) {
+                if let Some(def_block) = func.body.blocks.get_mut(&def_block_id) {
+                    if let Some(def_instr) = def_block.instructions.get_mut(def_instr_idx) {
+                        if def_instr.lvalue.identifier.id == operand_info.id {
+                            def_instr.lvalue.identifier.scope =
+                                Some(scope_to_propagate.clone());
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
