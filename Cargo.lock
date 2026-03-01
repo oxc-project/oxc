@@ -2012,6 +2012,7 @@ dependencies = [
  "lazy-regex",
  "markdown",
  "memchr",
+ "natord",
  "nodejs-built-in-modules",
  "oxc-schemars",
  "oxc_allocator",
