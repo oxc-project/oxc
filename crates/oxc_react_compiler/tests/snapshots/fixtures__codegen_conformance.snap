@@ -2,23 +2,22 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1280/1409 passed (90.8%)
+Codegen conformance: 1274/1371 passed (92.9%)
+Flow files skipped: 38
 
 Failure breakdown:
-  parse_error:    22
+  parse_error:    0
   no_function:    2
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:104
+  output_mismatch:94
   no_expected:    0
 
 Failed fixtures:
   [output_mismatch] aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] align-scopes-reactive-scope-overlaps-if.ts
   [output_mismatch] allow-merge-refs-pattern.js
-  [parse_error] allow-ref-initialization-undefined.js
-  [parse_error] allow-ref-initialization.js
   [output_mismatch] array-at-closure.js
   [output_mismatch] array-from-maybemutates-arg0.js
   [output_mismatch] array-spread-mutable-iterator.js
@@ -27,51 +26,38 @@ Failed fixtures:
   [output_mismatch] capture-ref-for-later-mutation.tsx
   [output_mismatch] capturing-function-capture-ref-before-rename.js
   [output_mismatch] chained-assignment-context-variable.js
-  [parse_error] component-declaration-basic.flow.js
   [output_mismatch] destructuring-property-inference.js
-  [parse_error] destructuring-with-typecast-as-default-value.flow.js
   [output_mismatch] fbt/bug-fbt-plural-multiple-function-calls.ts
   [output_mismatch] fbt/bug-fbt-plural-multiple-mixed-call-tag.tsx
   [output_mismatch] fbt/fbt-call-complex-param-value.js
   [output_mismatch] fbt/fbt-call.js
   [output_mismatch] fbt/fbt-param-with-leading-whitespace.js
   [output_mismatch] fbt/fbt-param-with-trailing-whitespace.js
-  [output_mismatch] fbt/fbt-params-complex-param-value.js
   [output_mismatch] fbt/fbt-preserve-jsxtext.js
   [output_mismatch] fbt/fbt-preserve-whitespace-subtree.tsx
   [output_mismatch] fbt/fbt-preserve-whitespace-two-subtrees.tsx
-  [output_mismatch] fbt/fbt-repro-invalid-mutable-range-destructured-prop.js
   [output_mismatch] fbt/fbt-template-string-same-scope.js
   [output_mismatch] fbt/fbtparam-with-jsx-element-content.js
-  [output_mismatch] fbt/fbtparam-with-jsx-fragment-value.js
-  [output_mismatch] fbt/recursively-merge-scopes-jsx.js
   [output_mismatch] fbt/repro-fbt-param-nested-fbt-jsx.js
   [output_mismatch] fbt/repro-fbt-param-nested-fbt.js
   [output_mismatch] fbt/repro-macro-property-not-handled.tsx
   [output_mismatch] fbt/repro-separately-memoized-fbt-param.js
   [output_mismatch] for-of-immutable-collection.js
-  [parse_error] gating/component-syntax-ref-gating.flow.js
   [pipeline_error] gating/dynamic-gating-bailout-nopanic.js
-  [parse_error] gating/gating-with-hoisted-type-reference.flow.js
   [no_function] gating/invalid-fnexpr-reference.js
   [no_function] gating/reassigned-fnexpr-variable.js
   [output_mismatch] global-types/repro-array-filter-capture-mutate-bug.tsx
   [output_mismatch] global-types/repro-array-map-capture-mutate-bug.tsx
   [output_mismatch] global-types/set-constructor-arg.ts
   [output_mismatch] global-types/set-foreach-mutate.tsx
-  [parse_error] hoist-destruct.js
   [output_mismatch] hoisting-invalid-tdz-let.js
   [output_mismatch] hoisting-recursive-call-within-lambda.js
   [output_mismatch] hook-call-freezes-captured-memberexpr.tsx
-  [parse_error] hook-declaration-basic.flow.js
   [output_mismatch] hook-noAlias.js
   [output_mismatch] idx-no-outlining.js
   [output_mismatch] infer-global-object.js
-  [parse_error] infer-types-through-type-cast.flow.js
   [output_mismatch] lambda-mutated-non-reactive-to-reactive.js
   [output_mismatch] lambda-mutated-ref-non-reactive.js
-  [parse_error] logical-reorder.flow.js
-  [parse_error] member-inc.js
   [output_mismatch] meta-isms/repro-cx-assigned-to-temporary.js
   [output_mismatch] meta-isms/repro-cx-namespace-assigned-to-temporary.js
   [output_mismatch] method-call-computed.js
@@ -83,10 +69,7 @@ Failed fixtures:
   [output_mismatch] new-mutability/aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] new-mutability/array-push.js
   [output_mismatch] new-mutability/object-expression-computed-member.js
-  [parse_error] new-mutability/repro-compiler-infinite-loop.js
   [output_mismatch] new-mutability/repro-destructure-from-prop-with-default-value.js
-  [parse_error] new-mutability/repro-internal-compiler-shared-mutablerange-bug.js
-  [parse_error] new-mutability/repro-jsx-captures-value-mutated-later.js
   [output_mismatch] new-mutability/todo-control-flow-sensitive-mutation.tsx
   [output_mismatch] new-mutability/transitivity-add-captured-array-to-itself.tsx
   [output_mismatch] new-mutability/transitivity-phi-assign-or-capture.tsx
@@ -106,40 +89,26 @@ Failed fixtures:
   [output_mismatch] readonly-object-method-calls-mutable-lambda.js
   [output_mismatch] readonly-object-method-calls.js
   [output_mismatch] reanimated-no-memo-arg.js
-  [parse_error] reassign-variable-in-usememo.js
   [output_mismatch] reduce-reactive-deps/context-var-granular-dep.js
   [output_mismatch] reduce-reactive-deps/hoist-deps-diff-ssa-instance1.tsx
   [output_mismatch] reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
   [output_mismatch] relay-transitive-mixeddata.js
   [output_mismatch] reordering-across-blocks.js
-  [output_mismatch] repeated-dependencies-more-precise.js
-  [output_mismatch] repro-aliased-capture-aliased-mutate.js
-  [output_mismatch] repro-aliased-capture-mutate.js
   [output_mismatch] repro-capturing-func-maybealias-captured-mutate.ts
   [output_mismatch] repro-dont-memoize-array-with-mutable-map-after-hook.js
   [output_mismatch] repro-for-of-in-try.js
-  [parse_error] repro-invalid-destructuring-reassignment-undefined-variable.js
   [output_mismatch] repro-memoize-for-of-collection-when-loop-body-returns.js
-  [output_mismatch] repro-missing-memoization-lack-of-phi-types.js
-  [parse_error] repro-mutate-ref-in-function-passed-to-hook.js
   [output_mismatch] repro-mutate-result-of-function-call-with-frozen-argument-in-function-expression.js
   [output_mismatch] repro-mutate-result-of-method-call-on-frozen-value-in-function-expression.js
-  [output_mismatch] repro-no-value-for-temporary-reactive-scope-with-early-return.js
-  [output_mismatch] repro-no-value-for-temporary.js
   [output_mismatch] repro-ref-mutable-range.tsx
   [output_mismatch] repro-returned-inner-fn-mutates-context.js
   [output_mismatch] repro-scope-missing-mutable-range.js
   [output_mismatch] repro-unmerged-fbt-call-merge-overlapping-reactive-scopes.js
-  [parse_error] return-ref-callback-structure.js
-  [parse_error] return-ref-callback.js
   [output_mismatch] ssa-for-of.js
   [output_mismatch] ssa-property-alias-mutate-inside-if.js
   [output_mismatch] switch-non-final-default.js
   [output_mismatch] switch.js
   [output_mismatch] todo.memoize-loops-that-produce-memoizeable-values.js
   [output_mismatch] transitive-freeze-function-expressions.js
-  [parse_error] type-cast-expression.flow.js
   [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js
-  [parse_error] useCallback-ref-in-render.js
-  [parse_error] useImperativeHandle-ref-mutate.js
