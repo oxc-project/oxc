@@ -36,18 +36,7 @@ pub fn analyse_functions(func: &mut HIRFunction) -> Result<(), CompilerError> {
         for instr in &mut block.instructions {
             match &mut instr.value {
                 InstructionValue::FunctionExpression(v) => {
-                    let ctx_before: Vec<_> = v.lowered_func.func.context.iter()
-                        .map(|p| format!("{:?}", p.identifier.name))
-                        .collect();
-                    let blocks_before = v.lowered_func.func.body.blocks.len();
                     lower_with_mutation_aliasing(&mut v.lowered_func.func)?;
-                    let ctx_after: Vec<_> = v.lowered_func.func.context.iter()
-                        .map(|p| format!("{:?}", p.identifier.name))
-                        .collect();
-                    let blocks_after = v.lowered_func.func.body.blocks.len();
-                    if ctx_before != ctx_after || blocks_before != blocks_after {
-                        eprintln!("[analyse_functions] FuncExpr changed: ctx {ctx_before:?} -> {ctx_after:?}, blocks {blocks_before} -> {blocks_after}");
-                    }
 
                     // Reset mutable range for outer inference
                     for operand in &mut v.lowered_func.func.context {
