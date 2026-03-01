@@ -23,6 +23,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json};
 use oxc_semantic::AstNode;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
 mod ast_util;
 mod config;
@@ -38,6 +39,7 @@ mod module_record;
 mod options;
 mod rule;
 mod service;
+mod suppression;
 mod tsgolint;
 mod utils;
 
@@ -83,6 +85,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
+    suppression::{OxlintSuppressionFileAction, SuppressionManager},
     tsgolint::TsGoLintState,
     utils::{read_to_arena_str, read_to_string},
 };
@@ -93,6 +96,7 @@ use crate::{
     fixer::CompositeFix,
     loader::LINT_PARTIAL_LOADER_EXTENSIONS,
     rules::RuleEnum,
+    suppression::{DiagnosticCounts, RuleName, SuppressionFile},
     utils::iter_possible_jest_call_node,
 };
 
@@ -142,6 +146,18 @@ impl Linter {
     #[must_use]
     pub fn with_report_unused_directives(mut self, report_config: Option<AllowWarnDeny>) -> Self {
         self.options.report_unused_directive = report_config;
+        self
+    }
+
+    #[must_use]
+    pub fn with_suppress_all(mut self, suppress_all: bool) -> Self {
+        self.options.suppress_all = suppress_all;
+        self
+    }
+
+    #[must_use]
+    pub fn with_prune_suppressions(mut self, prune_suppressions: bool) -> Self {
+        self.options.prune_suppressions = prune_suppressions;
         self
     }
 
@@ -609,12 +625,12 @@ impl Linter {
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
         unsafe { metadata_ptr.write(metadata) };
 
-        let path = path.to_string_lossy();
-        let path = path.as_ref();
+        let path_string = path.to_string_lossy();
+        let path_string = path_string.as_ref();
 
         let settings_json = match &ctx_host.settings().json {
             Some(json) => serde_json::to_string(&json).unwrap_or_else(|e| {
-                let message = format!("Error serializing settings.\nFile path: {path}\n{e}");
+                let message = format!("Error serializing settings.\nFile path: {path_string}\n{e}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,
@@ -626,7 +642,7 @@ impl Linter {
 
         let globals_and_envs = GlobalsAndEnvs::new(ctx_host);
         let globals_json = serde_json::to_string(&globals_and_envs).unwrap_or_else(|e| {
-            let message = format!("Error serializing globals.\nFile path: {path}\n{e}");
+            let message = format!("Error serializing globals.\nFile path: {path_string}\n{e}");
             ctx_host
                 .push_diagnostic(Message::new(OxcDiagnostic::error(message), PossibleFixes::None));
             "{}".to_string()
@@ -637,7 +653,7 @@ impl Linter {
 
         // Pass AST and rule IDs + options IDs to JS
         let result = (external_linter.lint_file)(
-            path.to_owned(),
+            path_string.to_owned(),
             external_rules.iter().map(|(rule_id, _, _)| rule_id.raw()).collect(),
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
@@ -682,7 +698,7 @@ impl Linter {
                                 "fixes"
                             };
                             let message = format!(
-                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path}\n{err}"
+                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path_string}\n{err}"
                             );
                             ctx_host.push_diagnostic(Message::new(
                                 OxcDiagnostic::error(message),
@@ -725,7 +741,7 @@ impl Linter {
                 }
             }
             Err(err) => {
-                let message = format!("Error running JS plugin.\nFile path: {path}\n{err}");
+                let message = format!("Error running JS plugin.\nFile path: {path_string}\n{err}");
                 ctx_host.push_diagnostic(Message::new(
                     OxcDiagnostic::error(message),
                     PossibleFixes::None,

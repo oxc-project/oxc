@@ -157,6 +157,10 @@ Arguments:
   Enable rules that require type information
 - **`    --type-check`** &mdash; 
   Enable experimental type checking (includes TypeScript compiler diagnostics)
+- **`    --suppress-all`** &mdash; 
+  Generate suppressions for all current violations
+- **`    --prune-suppressions`** &mdash; 
+  Remove entries for violations that no longer exist
 - **`-h`**, **`--help`** &mdash; 
   Prints help information
 - **`-V`**, **`--version`** &mdash; 

@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "suppressions": {
+    "files/test.js": {
+      "best-plugin-ever/no-debug": {
+        "count": 1
+      }
+    }
+  }
+}

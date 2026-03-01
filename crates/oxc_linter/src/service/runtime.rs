@@ -32,6 +32,7 @@ use crate::{
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
+    suppression::{Filename, SuppressionDiff, SuppressionFile, SuppressionManager},
     utils::read_to_arena_str,
 };
 
@@ -585,9 +586,18 @@ impl Runtime {
         file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: Vec<Arc<OsStr>>,
         tx_error: &DiagnosticSender,
+        suppression_manager: &mut SuppressionManager,
     ) {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
+
+        let is_updating_suppression_file = suppression_manager.is_updating_file();
+        let file_exists = suppression_manager.exists_suppression_file();
+        let concurrent_tracking_map = suppression_manager.concurrent_map();
+        let ignore_suppression = suppression_manager.ignore();
+
+        let (suppression_diff_channel, tx_suppression_diff_channel) =
+            std::sync::mpsc::channel::<SuppressionDiff>();
 
         rayon::scope(|scope| {
             self.resolve_modules(
@@ -643,6 +653,28 @@ impl Runtime {
                             return;
                         }
 
+                        let tmp_pin = concurrent_tracking_map.pin();
+
+                        let suppression_file_check = {
+                            if ignore_suppression {
+                                None
+                            } else if let Ok(file_path) = path.strip_prefix(&self.cwd) {
+                                let filename = Filename::new(file_path);
+
+                                let key_arc = Arc::from(filename);
+
+                                let suppression_data = tmp_pin.get(&key_arc);
+
+                                Some(&SuppressionFile::new(
+                                    file_exists,
+                                    self.linter.options.suppress_all,
+                                    suppression_data,
+                                ))
+                            } else {
+                                Some(&SuppressionFile::default())
+                            }
+                        };
+
                         let (mut messages, disable_directives) =
                             me.linter.run_with_disable_directives(
                                 path,
@@ -660,6 +692,7 @@ impl Runtime {
                         }
 
                         if me.linter.options().fix.is_some() {
+                            let a = messages.len();
                             let fix_result = Fixer::new(
                                 dep.source_text,
                                 messages,
@@ -676,7 +709,42 @@ impl Runtime {
                                     .to_mut()
                                     .replace_range(start..end, &fix_result.fixed_code);
                             }
+                            println!("FIXING before {}, after {}", a, fix_result.messages.len());
                             messages = fix_result.messages;
+                        }
+
+                        if let Some(suppression_file) = suppression_file_check {
+                            let (filtered_diagnostics, runtime_suppression_tracking) =
+                                SuppressionManager::suppress_lint_diagnostics(
+                                    suppression_file,
+                                    messages,
+                                );
+
+                            if let Some(suppression_detected) = runtime_suppression_tracking {
+                                let filename = Filename::new(path.strip_prefix(&self.cwd).unwrap());
+
+                                let diffs = SuppressionManager::diff_filename(
+                                    suppression_file,
+                                    &suppression_detected,
+                                    &filename,
+                                );
+
+                                if !diffs.is_empty() && !is_updating_suppression_file {
+                                    let errors = diffs.into_iter().map(Into::into).collect();
+                                    let diagnostics = DiagnosticService::wrap_diagnostics(
+                                        &me.cwd, path, "", errors,
+                                    );
+                                    tx_error.send(diagnostics).unwrap();
+                                } else if !diffs.is_empty() && is_updating_suppression_file {
+                                    let diff_suppression_sender = suppression_diff_channel.clone();
+
+                                    for diff in diffs {
+                                        diff_suppression_sender.send(diff.clone()).unwrap();
+                                    }
+                                }
+                            }
+
+                            messages = filtered_diagnostics;
                         }
 
                         if !messages.is_empty() {
@@ -699,6 +767,20 @@ impl Runtime {
                 },
             );
         });
+
+        let mut have_at_least_one_diff = false;
+        while let Ok(diff) = tx_suppression_diff_channel.recv() {
+            if !have_at_least_one_diff {
+                have_at_least_one_diff = true;
+            }
+
+            suppression_manager.update(diff);
+        }
+
+        if have_at_least_one_diff && suppression_manager.is_updating_file() {
+            suppression_manager.has_been_updated();
+            suppression_manager.write(self.cwd.join("oxlint-suppressions.json").as_path()).unwrap();
+        }
     }
 
     // language_server: the language server needs line and character position
