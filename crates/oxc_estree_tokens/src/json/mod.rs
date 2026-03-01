@@ -304,7 +304,7 @@ impl<O: ESTreeTokenConfig, S: SequenceSerializer> Context for JsonContext<'_, O,
     /// Inherited from config.
     type JSXState = O::JSXState;
 
-    /// Returns `true` if serializing in JS style.
+    /// Returns `true` if serializing in TS style.
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn is_ts(&self) -> bool {
@@ -343,8 +343,8 @@ impl<O: ESTreeTokenConfig, S: SequenceSerializer> Context for JsonContext<'_, O,
 
         // `name` is from AST, has escapes decoded by the parser, and is JSON-safe.
         // Use it in most cases — if token is not marked as escaped, it's JSON-safe, so can skip JSON encoding.
-        // When `self.options.decode_identifier_escapes` is `true`, token `value` should *always* be
-        // the unescaped version, so can also use `name` from AST node and skip JSON encoding.
+        // When `self.is_js()` is `true`, token `value` should *always* be the unescaped version,
+        // so can also use `name` from AST node and skip JSON encoding.
         // Only fall back to raw source text when the token contains escapes *and* decoding is disabled,
         // since escape sequences contain `\` which needs JSON escaping.
         // Escaped identifiers are extremely rare, so handle them in `#[cold]` branch.
