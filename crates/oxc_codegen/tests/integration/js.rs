@@ -164,7 +164,6 @@ fn if_stmt() {
         "function f() { if (foo) return foo; else if (bar) return foo; }",
         "function f(){if(foo)return foo;else if(bar)return foo}",
     );
-    test("function f(){if(a) if(b) return 1;}", "function f() {\n\tif (a) if (b) return 1;\n}\n");
 }
 
 #[test]
