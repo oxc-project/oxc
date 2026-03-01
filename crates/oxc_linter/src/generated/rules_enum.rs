@@ -427,6 +427,7 @@ pub use crate::rules::react::no_unsafe::NoUnsafe as ReactNoUnsafe;
 pub use crate::rules::react::no_will_update_set_state::NoWillUpdateSetState as ReactNoWillUpdateSetState;
 pub use crate::rules::react::only_export_components::OnlyExportComponents as ReactOnlyExportComponents;
 pub use crate::rules::react::prefer_es6_class::PreferEs6Class as ReactPreferEs6Class;
+pub use crate::rules::react::prefer_function_component::PreferFunctionComponent as ReactPreferFunctionComponent;
 pub use crate::rules::react::react_in_jsx_scope::ReactInJsxScope as ReactReactInJsxScope;
 pub use crate::rules::react::require_render_return::RequireRenderReturn as ReactRequireRenderReturn;
 pub use crate::rules::react::rules_of_hooks::RulesOfHooks as ReactRulesOfHooks;
@@ -1123,6 +1124,7 @@ pub enum RuleEnum {
     ReactNoWillUpdateSetState(ReactNoWillUpdateSetState),
     ReactOnlyExportComponents(ReactOnlyExportComponents),
     ReactPreferEs6Class(ReactPreferEs6Class),
+    ReactPreferFunctionComponent(ReactPreferFunctionComponent),
     ReactReactInJsxScope(ReactReactInJsxScope),
     ReactRequireRenderReturn(ReactRequireRenderReturn),
     ReactRulesOfHooks(ReactRulesOfHooks),
@@ -1867,7 +1869,8 @@ const REACT_NO_UNSAFE_ID: usize = REACT_NO_UNKNOWN_PROPERTY_ID + 1usize;
 const REACT_NO_WILL_UPDATE_SET_STATE_ID: usize = REACT_NO_UNSAFE_ID + 1usize;
 const REACT_ONLY_EXPORT_COMPONENTS_ID: usize = REACT_NO_WILL_UPDATE_SET_STATE_ID + 1usize;
 const REACT_PREFER_ES_6_CLASS_ID: usize = REACT_ONLY_EXPORT_COMPONENTS_ID + 1usize;
-const REACT_REACT_IN_JSX_SCOPE_ID: usize = REACT_PREFER_ES_6_CLASS_ID + 1usize;
+const REACT_PREFER_FUNCTION_COMPONENT_ID: usize = REACT_PREFER_ES_6_CLASS_ID + 1usize;
+const REACT_REACT_IN_JSX_SCOPE_ID: usize = REACT_PREFER_FUNCTION_COMPONENT_ID + 1usize;
 const REACT_REQUIRE_RENDER_RETURN_ID: usize = REACT_REACT_IN_JSX_SCOPE_ID + 1usize;
 const REACT_RULES_OF_HOOKS_ID: usize = REACT_REQUIRE_RENDER_RETURN_ID + 1usize;
 const REACT_SELF_CLOSING_COMP_ID: usize = REACT_RULES_OF_HOOKS_ID + 1usize;
@@ -2673,6 +2676,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(_) => REACT_NO_WILL_UPDATE_SET_STATE_ID,
             Self::ReactOnlyExportComponents(_) => REACT_ONLY_EXPORT_COMPONENTS_ID,
             Self::ReactPreferEs6Class(_) => REACT_PREFER_ES_6_CLASS_ID,
+            Self::ReactPreferFunctionComponent(_) => REACT_PREFER_FUNCTION_COMPONENT_ID,
             Self::ReactReactInJsxScope(_) => REACT_REACT_IN_JSX_SCOPE_ID,
             Self::ReactRequireRenderReturn(_) => REACT_REQUIRE_RENDER_RETURN_ID,
             Self::ReactRulesOfHooks(_) => REACT_RULES_OF_HOOKS_ID,
@@ -3472,6 +3476,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::NAME,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::NAME,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::NAME,
+            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::NAME,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::NAME,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::NAME,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::NAME,
@@ -4291,6 +4296,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::CATEGORY,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::CATEGORY,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::CATEGORY,
+            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::CATEGORY,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::CATEGORY,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::CATEGORY,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::CATEGORY,
@@ -5105,6 +5111,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::FIX,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::FIX,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::FIX,
+            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::FIX,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::FIX,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::FIX,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::FIX,
@@ -5997,6 +6004,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::documentation(),
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::documentation(),
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::documentation(),
+            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::documentation(),
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::documentation(),
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::documentation(),
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::documentation(),
@@ -7564,6 +7572,10 @@ impl RuleEnum {
             }
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::config_schema(generator)
                 .or_else(|| ReactPreferEs6Class::schema(generator)),
+            Self::ReactPreferFunctionComponent(_) => {
+                ReactPreferFunctionComponent::config_schema(generator)
+                    .or_else(|| ReactPreferFunctionComponent::schema(generator))
+            }
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::config_schema(generator)
                 .or_else(|| ReactReactInJsxScope::schema(generator)),
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::config_schema(generator)
@@ -8801,6 +8813,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(_) => "react",
             Self::ReactOnlyExportComponents(_) => "react",
             Self::ReactPreferEs6Class(_) => "react",
+            Self::ReactPreferFunctionComponent(_) => "react",
             Self::ReactReactInJsxScope(_) => "react",
             Self::ReactRequireRenderReturn(_) => "react",
             Self::ReactRulesOfHooks(_) => "react",
@@ -10407,6 +10420,9 @@ impl RuleEnum {
             Self::ReactPreferEs6Class(_) => {
                 Ok(Self::ReactPreferEs6Class(ReactPreferEs6Class::from_configuration(value)?))
             }
+            Self::ReactPreferFunctionComponent(_) => Ok(Self::ReactPreferFunctionComponent(
+                ReactPreferFunctionComponent::from_configuration(value)?,
+            )),
             Self::ReactReactInJsxScope(_) => {
                 Ok(Self::ReactReactInJsxScope(ReactReactInJsxScope::from_configuration(value)?))
             }
@@ -11736,6 +11752,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(rule) => rule.to_configuration(),
             Self::ReactOnlyExportComponents(rule) => rule.to_configuration(),
             Self::ReactPreferEs6Class(rule) => rule.to_configuration(),
+            Self::ReactPreferFunctionComponent(rule) => rule.to_configuration(),
             Self::ReactReactInJsxScope(rule) => rule.to_configuration(),
             Self::ReactRequireRenderReturn(rule) => rule.to_configuration(),
             Self::ReactRulesOfHooks(rule) => rule.to_configuration(),
@@ -12437,6 +12454,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(rule) => rule.run(node, ctx),
             Self::ReactOnlyExportComponents(rule) => rule.run(node, ctx),
             Self::ReactPreferEs6Class(rule) => rule.run(node, ctx),
+            Self::ReactPreferFunctionComponent(rule) => rule.run(node, ctx),
             Self::ReactReactInJsxScope(rule) => rule.run(node, ctx),
             Self::ReactRequireRenderReturn(rule) => rule.run(node, ctx),
             Self::ReactRulesOfHooks(rule) => rule.run(node, ctx),
@@ -13136,6 +13154,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(rule) => rule.run_once(ctx),
             Self::ReactOnlyExportComponents(rule) => rule.run_once(ctx),
             Self::ReactPreferEs6Class(rule) => rule.run_once(ctx),
+            Self::ReactPreferFunctionComponent(rule) => rule.run_once(ctx),
             Self::ReactReactInJsxScope(rule) => rule.run_once(ctx),
             Self::ReactRequireRenderReturn(rule) => rule.run_once(ctx),
             Self::ReactRulesOfHooks(rule) => rule.run_once(ctx),
@@ -13905,6 +13924,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactOnlyExportComponents(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactPreferEs6Class(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactPreferFunctionComponent(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactReactInJsxScope(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactRequireRenderReturn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactRulesOfHooks(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14632,6 +14652,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(rule) => rule.should_run(ctx),
             Self::ReactOnlyExportComponents(rule) => rule.should_run(ctx),
             Self::ReactPreferEs6Class(rule) => rule.should_run(ctx),
+            Self::ReactPreferFunctionComponent(rule) => rule.should_run(ctx),
             Self::ReactReactInJsxScope(rule) => rule.should_run(ctx),
             Self::ReactRequireRenderReturn(rule) => rule.should_run(ctx),
             Self::ReactRulesOfHooks(rule) => rule.should_run(ctx),
@@ -15495,6 +15516,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::IS_TSGOLINT_RULE,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::IS_TSGOLINT_RULE,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::IS_TSGOLINT_RULE,
+            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::IS_TSGOLINT_RULE,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::IS_TSGOLINT_RULE,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::IS_TSGOLINT_RULE,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::IS_TSGOLINT_RULE,
@@ -16429,6 +16451,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::HAS_CONFIG,
             Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::HAS_CONFIG,
             Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::HAS_CONFIG,
+            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::HAS_CONFIG,
             Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::HAS_CONFIG,
             Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::HAS_CONFIG,
             Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::HAS_CONFIG,
@@ -17188,6 +17211,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(rule) => rule.types_info(),
             Self::ReactOnlyExportComponents(rule) => rule.types_info(),
             Self::ReactPreferEs6Class(rule) => rule.types_info(),
+            Self::ReactPreferFunctionComponent(rule) => rule.types_info(),
             Self::ReactReactInJsxScope(rule) => rule.types_info(),
             Self::ReactRequireRenderReturn(rule) => rule.types_info(),
             Self::ReactRulesOfHooks(rule) => rule.types_info(),
@@ -17887,6 +17911,7 @@ impl RuleEnum {
             Self::ReactNoWillUpdateSetState(rule) => rule.run_info(),
             Self::ReactOnlyExportComponents(rule) => rule.run_info(),
             Self::ReactPreferEs6Class(rule) => rule.run_info(),
+            Self::ReactPreferFunctionComponent(rule) => rule.run_info(),
             Self::ReactReactInJsxScope(rule) => rule.run_info(),
             Self::ReactRequireRenderReturn(rule) => rule.run_info(),
             Self::ReactRulesOfHooks(rule) => rule.run_info(),
@@ -18674,6 +18699,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoWillUpdateSetState(ReactNoWillUpdateSetState::default()),
         RuleEnum::ReactOnlyExportComponents(ReactOnlyExportComponents::default()),
         RuleEnum::ReactPreferEs6Class(ReactPreferEs6Class::default()),
+        RuleEnum::ReactPreferFunctionComponent(ReactPreferFunctionComponent::default()),
         RuleEnum::ReactReactInJsxScope(ReactReactInJsxScope::default()),
         RuleEnum::ReactRequireRenderReturn(ReactRequireRenderReturn::default()),
         RuleEnum::ReactRulesOfHooks(ReactRulesOfHooks::default()),
