@@ -1680,17 +1680,17 @@ fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> 
         return None;
     }
 
-    // Handle rest/spread prefix: format the inner type and re-apply `...`
-    // Rest types need parens around unions: `...(string | number)`, not `...string | number`
+    // Handle rest/spread prefix: convert `...Type` to `(Type)[]`, format, then strip
+    // the trailing `[]` and prepend `...`. Same approach as upstream's `formatType()`.
     if let Some(rest) = type_str.strip_prefix("...") {
         let rest = rest.trim_start();
         if rest.is_empty() {
             return None;
         }
-        // Don't format rest param inner types via the formatter, since the TS formatter
-        // strips parens that are semantically needed in JSDoc rest types.
-        // normalize_type() already handles these correctly.
-        return None;
+        let wrapped = format!("({rest})[]");
+        let formatted = format_type_via_formatter(&wrapped, format_options)?;
+        let inner = formatted.strip_suffix("[]")?;
+        return Some(format!("...{inner}"));
     }
 
     let input = format!("type __t = {type_str};");
@@ -2526,4 +2526,28 @@ fn process_import_tags(tags: &[(&oxc_jsdoc::parser::JSDocTag<'_>, &str)]) -> Vec
         format_import_lines(import, &mut lines);
     }
     lines
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn fmt_type(type_str: &str) -> Option<String> {
+        format_type_via_formatter(type_str, &FormatOptions::default())
+    }
+
+    #[test]
+    fn test_format_type_via_formatter() {
+        assert_eq!(fmt_type("string"), Some("string".to_string()));
+        assert_eq!(fmt_type("number"), Some("number".to_string()));
+        assert_eq!(fmt_type("string | number"), Some("string | number".to_string()));
+        assert_eq!(fmt_type(""), None);
+    }
+
+    #[test]
+    fn test_format_type_via_formatter_rest() {
+        assert_eq!(fmt_type("...any"), Some("...any".to_string()));
+        assert_eq!(fmt_type("...number"), Some("...number".to_string()));
+        assert_eq!(fmt_type("...(string | number)"), Some("...(string | number)".to_string()));
+    }
 }
