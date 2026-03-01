@@ -24,27 +24,29 @@ use super::{
 /// The ` * ` prefix used in multiline JSDoc comments (3 chars).
 const LINE_PREFIX_LEN: usize = 3;
 
-/// Tags whose descriptions should NOT be capitalized (contain code/reference literals).
+/// Tags whose descriptions should NOT be capitalized.
+/// Includes upstream's `TAGS_PEV_FORMATE_DESCRIPTION` (borrows, default, defaultValue,
+/// import, memberof, module, see) plus tags whose content is a name/reference rather
+/// than descriptive text (e.g. @function name, @typedef type, @class name).
 fn should_skip_capitalize(tag_kind: &str) -> bool {
     matches!(
         tag_kind,
-        "default"
-            | "defaultValue"
-            | "example"
-            | "see"
-            | "link"
-            | "memberof"
-            | "memberOf"
-            | "type"
-            | "typedef"
-            | "augments"
-            | "extends"
-            | "enum"
-            | "implements"
-            | "class"
+        "augments"
             | "borrows"
             | "callback"
+            | "class"
+            | "default"
+            | "defaultValue"
+            | "example"
+            | "extends"
             | "function"
+            | "import"
+            | "link"
+            | "memberof"
+            | "module"
+            | "see"
+            | "type"
+            | "typedef"
     )
 }
 
@@ -62,60 +64,67 @@ fn is_type_comment_tag(tag_kind: &str) -> bool {
 }
 
 /// Get the sort priority for a tag kind (lower number = higher priority).
-/// This matches the default tag ordering of prettier-plugin-jsdoc.
-/// Tag sort weights matching prettier-plugin-jsdoc's `TAGS_ORDER` from `roles.ts`.
-/// Lower number = appears earlier in the comment.
+/// Uses only canonical tag names (synonyms resolved by `normalize_tag_kind()`).
+/// Weights are upstream values ×2 to handle 39.5 (@this) as integer 79.
 fn tag_sort_priority(kind: &str) -> u32 {
     match kind {
         "import" => 0,
-        "remarks" => 1,
-        "privateRemarks" => 2,
-        "providesModule" => 3,
-        "module" => 4,
-        "license" => 5,
-        "flow" => 6,
-        "async" => 7,
-        "private" | "protected" | "public" | "access" => 8,
-        "ignore" | "internal" => 9,
-        "memberof" | "memberOf" => 10,
-        "version" => 11,
-        "file" | "fileoverview" | "overview" => 12,
-        "author" => 13,
-        "deprecated" => 14,
-        "since" => 15,
-        "category" => 16,
-        "description" | "desc" => 17,
-        "example" | "examples" => 18,
-        "abstract" | "virtual" => 19,
-        "augments" => 20,
-        "extends" => 33,
-        "constant" | "const" => 21,
-        "default" | "defaultvalue" | "defaultValue" => 22,
-        "external" | "host" => 24,
-        "overload" | "override" => 25,
-        "fires" | "emits" => 26,
-        "template" | "typeparam" | "typeParam" => 27,
-        "function" | "func" | "method" => 29,
-        "namespace" => 30,
-        "borrows" => 31,
-        "class" | "constructor" => 32,
-        "member" | "var" => 34,
-        "typedef" => 35,
-        "type" => 36,
-        "satisfies" => 37,
-        "property" | "prop" => 38,
-        "callback" => 39,
-        "this" => 40,
-        "param" | "arg" | "argument" => 41,
-        "yields" | "yield" => 42,
-        "returns" | "return" => 43,
-        "throws" | "exception" => 44,
-        "see" => 46,
-        "todo" => 47,
-        "link" | "linkcode" | "linkplain" => 48,
-        // Unknown tags
-        _ => 45,
+        "remarks" => 2,
+        "privateRemarks" => 4,
+        "providesModule" => 6,
+        "module" => 8,
+        "license" => 10,
+        "flow" => 12,
+        "async" => 14,
+        "private" => 16,
+        "ignore" => 18,
+        "memberof" => 20,
+        "version" => 22,
+        "file" => 24,
+        "author" => 26,
+        "deprecated" => 28,
+        "since" => 30,
+        "category" => 32,
+        "description" => 34,
+        "example" => 36,
+        "abstract" => 38,
+        "augments" => 40,
+        "constant" => 42,
+        "default" | "defaultValue" => 44,
+        "external" => 48,
+        "overload" => 50,
+        "fires" => 52,
+        "template" | "typeParam" => 54,
+        "function" => 58,
+        "namespace" => 60,
+        "borrows" => 62,
+        "class" => 64,
+        "extends" => 66,
+        "member" => 68,
+        "typedef" => 70,
+        "type" => 72,
+        "satisfies" => 74,
+        "property" => 76,
+        "callback" => 78,
+        "this" => 79,
+        "param" => 80,
+        "yields" => 82,
+        "returns" => 84,
+        "throws" => 86,
+        "see" => 90,
+        "todo" => 92,
+        // Unknown tags (upstream "other" = 44, ×2 = 88)
+        _ => 88,
     }
+}
+
+/// Check if a tag kind is known (has a specific sort priority).
+/// Unknown tags skip capitalization, matching upstream's
+/// `TAGS_ORDER[tag] === undefined` check in `stringify.js:77`.
+fn is_known_tag(kind: &str) -> bool {
+    // link/linkcode/linkplain are not in TAGS_ORDER but are special inline tags;
+    // for the purposes of capitalization they behave like unknown tags.
+    !matches!(tag_sort_priority(kind), 88)
 }
 
 /// Check if a tag kind is a group head (starts a new sorting group).
@@ -198,8 +207,7 @@ fn reorder_param_tags(
 /// Uses balanced parenthesis matching to handle nested type annotations.
 fn extract_function_params(comment: &Comment, source_text: &str) -> Vec<String> {
     let after_start = comment.span.end as usize;
-    let after_end = (after_start + 500).min(source_text.len());
-    let after = &source_text[after_start..after_end];
+    let after = &source_text[after_start..];
 
     // Find a function-like construct: look for identifier followed by `(`
     // Skip whitespace, look for `function`, `async`, method names, arrow patterns
@@ -556,8 +564,20 @@ fn tag_has_content(tag: &oxc_jsdoc::parser::JSDocTag<'_>) -> bool {
 }
 
 /// Tags that should be removed when they have no content.
+/// Matches upstream's `TAGS_DESCRIPTION_NEEDED`.
 fn should_remove_empty_tag(kind: &str) -> bool {
-    matches!(kind, "example" | "examples")
+    matches!(
+        kind,
+        "borrows"
+            | "category"
+            | "description"
+            | "example"
+            | "import"
+            | "privateRemarks"
+            | "remarks"
+            | "since"
+            | "todo"
+    )
 }
 
 /// Format a JSDoc comment. Returns `Some(formatted)` if the comment was modified,
@@ -672,8 +692,9 @@ pub fn format_jsdoc_comment<'a>(
 
         let is_first_tag = tag_idx == 0 && !imports_emitted;
 
-        let should_capitalize =
-            options.capitalize_descriptions && !should_skip_capitalize(normalized_kind);
+        let should_capitalize = options.capitalize_descriptions
+            && !should_skip_capitalize(normalized_kind)
+            && is_known_tag(normalized_kind);
 
         // Add blank line between description and first tag
         if is_first_tag
@@ -741,6 +762,7 @@ pub fn format_jsdoc_comment<'a>(
                 wrap_width,
                 has_no_space_before_type,
                 bracket_spacing,
+                format_options,
                 &mut content_lines,
             );
         } else if is_type_comment_tag(raw_kind) {
@@ -751,6 +773,7 @@ pub fn format_jsdoc_comment<'a>(
                 wrap_width,
                 has_no_space_before_type,
                 bracket_spacing,
+                format_options,
                 &mut content_lines,
             );
         } else {
@@ -1647,6 +1670,51 @@ fn format_embedded_js(
     None
 }
 
+/// Format a JSDoc type expression using the formatter (simulating upstream's `formatType()`).
+///
+/// Wraps the type as `type __t = {type_str};`, parses as TSX, formats, then extracts
+/// the formatted type. Handles `...Type` rest params by formatting the inner type
+/// separately. Returns `None` on parse/format failure.
+fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> Option<String> {
+    if type_str.is_empty() {
+        return None;
+    }
+
+    // Handle rest/spread prefix: format the inner type and re-apply `...`
+    // Rest types need parens around unions: `...(string | number)`, not `...string | number`
+    if let Some(rest) = type_str.strip_prefix("...") {
+        let rest = rest.trim_start();
+        if rest.is_empty() {
+            return None;
+        }
+        // Don't format rest param inner types via the formatter, since the TS formatter
+        // strips parens that are semantically needed in JSDoc rest types.
+        // normalize_type() already handles these correctly.
+        return None;
+    }
+
+    let input = format!("type __t = {type_str};");
+
+    let allocator = Allocator::default();
+    let line_width = LineWidth::try_from(u16::try_from(80).unwrap_or(80)).unwrap();
+    let options = FormatOptions { line_width, jsdoc: None, ..format_options.clone() };
+
+    let ret = Parser::new(&allocator, &input, SourceType::tsx())
+        .with_options(get_parse_options())
+        .parse();
+    if ret.panicked || !ret.errors.is_empty() {
+        return None;
+    }
+
+    let formatted = Formatter::new(&allocator, options).build(&ret.program);
+    let formatted = formatted.trim_end();
+
+    // Strip the `type __t = ` prefix and trailing `;`
+    let result = formatted.strip_prefix("type __t = ")?.strip_suffix(';')?.trim();
+
+    Some(result.to_string())
+}
+
 /// Format example code content with 2-space base indent.
 /// Tries to format the code as JS/JSX first; falls back to pass-through on parse failure.
 fn format_example_code(
@@ -1800,6 +1868,7 @@ fn format_type_name_comment_tag(
     wrap_width: usize,
     has_no_space_before_type: bool,
     bracket_spacing: bool,
+    format_options: &FormatOptions,
     content_lines: &mut Vec<String>,
 ) {
     let (type_part, name_part, comment_part) = tag.type_name_comment();
@@ -1822,6 +1891,13 @@ fn format_type_name_comment_tag(
             } else {
                 normalize_type(type_to_normalize)
             };
+            // Try formatting via the formatter (simulates upstream's formatType())
+            if !preserve_quotes
+                && let Some(formatted) =
+                    format_type_via_formatter(&normalized_type_str, format_options)
+            {
+                normalized_type_str = formatted;
+            }
         }
     }
 
@@ -2075,6 +2151,7 @@ fn format_type_comment_tag(
     wrap_width: usize,
     has_no_space_before_type: bool,
     bracket_spacing: bool,
+    format_options: &FormatOptions,
     content_lines: &mut Vec<String>,
 ) {
     let (type_part, comment_part) = tag.type_comment();
@@ -2095,6 +2172,13 @@ fn format_type_comment_tag(
             } else {
                 normalize_type_return(raw_type)
             };
+            // Try formatting via the formatter (simulates upstream's formatType())
+            if !preserve_quotes
+                && let Some(formatted) =
+                    format_type_via_formatter(&normalized_type_str, format_options)
+            {
+                normalized_type_str = formatted;
+            }
             // Preserve no-space only when the type isn't an object literal
             // (object types start with `{`, making `@type{{` → should be `@type {{`)
             let preserve_no_space =
