@@ -80,7 +80,7 @@ fn lower_params(
                         loc,
                     )?;
                 } else {
-                    let place = builder.declare_binding(&ident.name, BindingKind::Param, loc);
+                    let place = builder.declare_binding(&ident.name, BindingKind::Param, loc, ident.span);
                     result.push(crate::hir::ReactiveParam::Place(place));
                 }
             }
@@ -107,7 +107,7 @@ fn lower_params(
         let loc = span_to_loc(rest.span);
         match &rest.rest.argument {
             ast::BindingPattern::BindingIdentifier(ident) => {
-                let place = builder.declare_binding(&ident.name, BindingKind::Param, loc);
+                let place = builder.declare_binding(&ident.name, BindingKind::Param, loc, ident.span);
                 result.push(crate::hir::ReactiveParam::Spread(SpreadPattern { place }));
             }
             // Destructured rest parameter
@@ -142,7 +142,7 @@ fn declare_all_bindings_in_pattern(
 ) {
     match pattern {
         ast::BindingPattern::BindingIdentifier(ident) => {
-            let decl_place = builder.declare_binding(&ident.name, binding_kind, decl_loc);
+            let decl_place = builder.declare_binding(&ident.name, binding_kind, decl_loc, ident.span);
             if builder.is_context_identifier(&ident.name) {
                 let lvalue = create_temporary_place(builder.environment_mut(), loc);
                 builder.push(Instruction {
@@ -377,7 +377,7 @@ fn lower_identifier_param_with_default(
     );
 
     // Now declare the identifier and store the resolved temporary into it.
-    let decl_place = builder.declare_binding(&ident.name, BindingKind::Let, ident_loc);
+    let decl_place = builder.declare_binding(&ident.name, BindingKind::Let, ident_loc, ident.span);
     if builder.is_context_identifier(&ident.name) {
         let lvalue = create_temporary_place(builder.environment_mut(), loc);
         builder.push(Instruction {
@@ -451,7 +451,7 @@ fn lower_destructuring_declaration(
         ast::BindingPattern::BindingIdentifier(ident) => {
             // Base case: simple identifier — declare and emit store
             let ident_loc = span_to_loc(ident.span);
-            let decl_place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
+            let decl_place = builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
 
             if builder.is_context_identifier(&ident.name) {
                 let lvalue = create_temporary_place(builder.environment_mut(), loc);
@@ -508,7 +508,7 @@ fn lower_object_destructuring(
         // Get the value pattern
         match &prop.value {
             ast::BindingPattern::BindingIdentifier(ident) => {
-                if builder.will_be_context_identifier(&ident.name) {
+                if builder.will_be_context_identifier(&ident.name, ident.span) {
                     // Context variable: use a promoted temporary in the pattern,
                     // then emit a StoreContext followup to assign it to the real binding.
                     // This matches the TS reference where getStoreKind returns 'StoreContext'
@@ -523,7 +523,7 @@ fn lower_object_destructuring(
                 } else {
                     // Simple identifier: declare it directly and use its place in the pattern
                     let ident_loc = span_to_loc(ident.span);
-                    let place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                    let place = builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
                     properties.push(ObjectPatternProperty::Property(ObjectProperty {
                         key,
                         property_type: ObjectPropertyType::Property,
@@ -562,7 +562,7 @@ fn lower_object_destructuring(
         match &rest.argument {
             ast::BindingPattern::BindingIdentifier(ident) => {
                 let ident_loc = span_to_loc(ident.span);
-                let place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                let place = builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
                 properties.push(ObjectPatternProperty::Spread(SpreadPattern { place }));
             }
             nested => {
@@ -642,7 +642,7 @@ fn lower_array_destructuring(
                 let elem_loc = span_to_loc(binding.span());
                 match binding {
                     ast::BindingPattern::BindingIdentifier(ident) => {
-                        if builder.will_be_context_identifier(&ident.name) {
+                        if builder.will_be_context_identifier(&ident.name, ident.span) {
                             // Context variable: use a promoted temporary in the pattern,
                             // then emit a StoreContext followup to assign it to the real binding.
                             let temp = create_promoted_temporary(builder, elem_loc);
@@ -652,7 +652,7 @@ fn lower_array_destructuring(
                             // Simple identifier element
                             let ident_loc = span_to_loc(ident.span);
                             let place =
-                                builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                                builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
                             items.push(ArrayPatternElement::Place(place));
                         }
                     }
@@ -680,7 +680,7 @@ fn lower_array_destructuring(
         match &rest.argument {
             ast::BindingPattern::BindingIdentifier(ident) => {
                 let ident_loc = span_to_loc(ident.span);
-                let place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                let place = builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
                 items.push(ArrayPatternElement::Spread(SpreadPattern { place }));
             }
             nested => {
@@ -1144,7 +1144,7 @@ fn lower_array_assignment_target(
     let force_temporaries = target.elements.iter().any(|el| {
         match el {
             Some(ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident)) => {
-                builder.will_be_context_identifier(&ident.name)
+                builder.is_context_identifier(&ident.name)
                     || !matches!(
                         builder.resolve_identifier(&ident.name),
                         VariableBinding::Identifier { .. }
@@ -2499,10 +2499,14 @@ fn lower_function_to_value(
         LowerableFunction::ArrowFunction(a) => find_context_identifiers_arrow(a),
     };
 
-    // Create a new builder with the captured context merged into context_identifiers
+    // Create a new builder with the captured context merged into context_identifiers.
+    // For captured variables, look up their declaration span from the outer builder
+    // so the inner function's context_identifiers set uses spans (not names).
     let mut merged_context = context_identifiers;
     for name in captured_context.keys() {
-        merged_context.insert(name.clone());
+        if let Some(decl_span) = outer_builder.get_binding_decl_span(name) {
+            merged_context.insert(decl_span);
+        }
     }
 
     // Phase 1: Resolve captured context variables on the OUTER builder FIRST.
@@ -2511,12 +2515,14 @@ fn lower_function_to_value(
     // the environment first, the inner builder would have a stale ID counter and
     // could allocate the same IDs, causing collisions (e.g., both parameter `x` and
     // captured `factorial` would get the same IdentifierId).
-    let mut context_entries: Vec<(String, SourceLocation, crate::hir::Place, BindingKind)> =
+    let mut context_entries: Vec<(String, SourceLocation, crate::hir::Place, BindingKind, Span)> =
         Vec::new();
     for (name, ctx_loc) in &captured_context {
         match outer_builder.resolve_identifier(name) {
             VariableBinding::Identifier { identifier, binding_kind } => {
                 // Variable is already declared in the outer builder — use its identifier
+                let decl_span =
+                    outer_builder.get_binding_decl_span(name).unwrap_or_default();
                 context_entries.push((
                     name.clone(),
                     *ctx_loc,
@@ -2527,6 +2533,7 @@ fn lower_function_to_value(
                         loc: *ctx_loc,
                     },
                     binding_kind,
+                    decl_span,
                 ));
             }
             VariableBinding::NonLocal(_) => {
@@ -2535,7 +2542,9 @@ fn lower_function_to_value(
                 // Eagerly pre-declare it so it gets a real HIR identifier that will be
                 // reused when the actual declaration is processed later.
                 let place = outer_builder.pre_declare_binding(name, *ctx_loc);
-                context_entries.push((name.clone(), *ctx_loc, place, BindingKind::Let));
+                let decl_span =
+                    outer_builder.get_binding_decl_span(name).unwrap_or_default();
+                context_entries.push((name.clone(), *ctx_loc, place, BindingKind::Let, decl_span));
             }
         }
     }
@@ -2554,8 +2563,8 @@ fn lower_function_to_value(
     // Phase 3: Register the resolved context variables on the inner builder
     // and build the context places vector.
     let mut context_places = Vec::new();
-    for (name, _ctx_loc, place, binding_kind) in context_entries {
-        inner_builder.register_outer_binding(&name, place.identifier.clone(), binding_kind);
+    for (name, _ctx_loc, place, binding_kind, decl_span) in context_entries {
+        inner_builder.register_outer_binding(&name, place.identifier.clone(), binding_kind, decl_span);
         context_places.push(place);
     }
 
@@ -2708,7 +2717,9 @@ pub fn lower_block_statement(
                 effects: None,
                 loc,
             });
-            builder.add_hoisted_identifier(name);
+            let hoisted_decl_span =
+                builder.get_binding_decl_span(name).unwrap_or_default();
+            builder.add_hoisted_identifier(name, hoisted_decl_span);
         }
 
         lower_statement(builder, stmt)?;
@@ -2786,11 +2797,11 @@ fn collect_hoistable_bindings_from_statement(
                 }
             }
         }
-        LowerableStatement::BlockStatement(block) => {
-            for child_stmt in &block.body {
-                let child = convert_statement(child_stmt);
-                collect_hoistable_bindings_from_statement(&child, hoistable);
-            }
+        LowerableStatement::BlockStatement(_block) => {
+            // Do NOT recurse into nested blocks. The TS reference uses
+            // `stmt.scope.bindings` which only returns bindings declared at
+            // the current block scope level. Inner block bindings are handled
+            // when that inner block is lowered separately.
         }
         _ => {}
     }
@@ -4428,7 +4439,7 @@ fn lower_statement_with_label(
                         ast::BindingPattern::BindingIdentifier(ident) => {
                             let decl_loc = span_to_loc(declaration.span);
                             let decl_place =
-                                builder.declare_binding(&ident.name, binding_kind, decl_loc);
+                                builder.declare_binding(&ident.name, binding_kind, decl_loc, ident.span);
 
                             if builder.is_context_identifier(&ident.name) {
                                 let lvalue = create_temporary_place(builder.environment_mut(), loc);
@@ -4546,7 +4557,7 @@ fn lower_statement_with_label(
                     }
                     _ => {
                         // No existing binding — declare a new one.
-                        builder.declare_binding(&id.name, BindingKind::Function, loc)
+                        builder.declare_binding(&id.name, BindingKind::Function, loc, id.span)
                     }
                 }
             } else {
@@ -4643,11 +4654,11 @@ fn lower_statement_with_label(
             // bind the user-named identifier inside the handler.
             // This mirrors TS BuildHIR which calls lowerAssignment(InstructionKind.Catch, ...)
             // inside the handler block to emit StoreLocal { lvalue: { e, Catch }, value: handler_temp }.
-            let catch_param_info: Option<(&str, SourceLocation)> =
+            let catch_param_info: Option<(&str, SourceLocation, Span)> =
                 try_stmt.handler.as_ref().and_then(|handler| {
                     handler.param.as_ref().and_then(|param| match &param.pattern {
                         ast::BindingPattern::BindingIdentifier(ident) => {
-                            Some((ident.name.as_str(), span_to_loc(ident.span)))
+                            Some((ident.name.as_str(), span_to_loc(ident.span), ident.span))
                         }
                         _ => None,
                     })
@@ -4659,10 +4670,10 @@ fn lower_statement_with_label(
                 // e.g. for `catch (e) { ... }`, emit:
                 //   StoreLocal { lvalue: { place: e, kind: Catch }, value: handler_temp }
                 // This is the equivalent of TS lowerAssignment(InstructionKind.Catch, ...) call.
-                if let (Some(handler_temp), Some((param_name, param_loc))) =
+                if let (Some(handler_temp), Some((param_name, param_loc, param_span))) =
                     (&handler_binding, catch_param_info)
                 {
-                    let e_place = builder.declare_binding(param_name, BindingKind::Let, param_loc);
+                    let e_place = builder.declare_binding(param_name, BindingKind::Let, param_loc, param_span);
                     let lvalue = create_temporary_place(builder.environment_mut(), param_loc);
                     builder.push(Instruction {
                         id: InstructionId(0),
@@ -4869,7 +4880,7 @@ fn lower_for_loop_left_assignment(
                         ast::VariableDeclarationKind::Let => BindingKind::Let,
                         ast::VariableDeclarationKind::Var => BindingKind::Let,
                     };
-                    builder.declare_binding(&ident.name, binding_kind, loc)
+                    builder.declare_binding(&ident.name, binding_kind, loc, ident.span)
                 } else {
                     create_temporary_place(builder.environment_mut(), loc)
                 }

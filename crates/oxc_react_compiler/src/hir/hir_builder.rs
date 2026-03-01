@@ -5,6 +5,7 @@
 /// The `HirBuilder` is a helper class for constructing a control-flow graph
 /// during the lowering from AST to HIR. It manages basic blocks, scopes
 /// (loops, switches, labels), and exception handling.
+use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::compiler_error::{CompilerError, GENERATED_SOURCE, SourceLocation};
@@ -55,6 +56,9 @@ struct BindingEntry {
     /// (e.g., hoisted references). When the real declaration is processed later,
     /// the pre-declared entry is upgraded to a normal entry.
     pre_declared: bool,
+    /// The span of the original `BindingIdentifier` AST node in the source.
+    /// Used to check against `ContextIdentifiers` which stores declaration spans.
+    decl_span: Span,
 }
 
 /// A work-in-progress block that does not yet have a terminal.
@@ -244,6 +248,7 @@ impl HirBuilder {
         name: &str,
         declaration_key: u32,
         loc: SourceLocation,
+        decl_span: Span,
     ) -> Identifier {
         // Check if we already have a binding for this name
         if let Some(entry) = self.bindings.get(name) {
@@ -259,6 +264,7 @@ impl HirBuilder {
                 if let Some(entry) = self.bindings.get_mut(name) {
                     entry.declaration_key = declaration_key;
                     entry.pre_declared = false;
+                    entry.decl_span = decl_span;
                 }
                 return identifier;
             }
@@ -279,6 +285,7 @@ impl HirBuilder {
                     if let Some(existing) = self.bindings.get_mut(&candidate) {
                         existing.declaration_key = declaration_key;
                         existing.pre_declared = false;
+                        existing.decl_span = decl_span;
                     }
                     return identifier;
                 }
@@ -312,6 +319,7 @@ impl HirBuilder {
                 identifier: identifier.clone(),
                 kind: BindingKind::Let,
                 pre_declared: false,
+                decl_span,
             },
         );
         identifier
@@ -319,12 +327,21 @@ impl HirBuilder {
 
     /// Declare a local binding (parameter or variable) with the given name and kind.
     ///
+    /// `decl_span` is the span of the original `BindingIdentifier` AST node
+    /// in the source. It is used to check against `ContextIdentifiers`.
+    ///
     /// Returns the HIR `Identifier` for this binding and a `Place` referencing it.
-    pub fn declare_binding(&mut self, name: &str, kind: BindingKind, loc: SourceLocation) -> Place {
+    pub fn declare_binding(
+        &mut self,
+        name: &str,
+        kind: BindingKind,
+        loc: SourceLocation,
+        decl_span: Span,
+    ) -> Place {
         let key = self.next_binding_key;
         self.next_binding_key += 1;
 
-        let identifier = self.resolve_binding(name, key, loc);
+        let identifier = self.resolve_binding(name, key, loc, decl_span);
 
         // Update the binding kind
         let candidate =
@@ -345,6 +362,7 @@ impl HirBuilder {
         name: &str,
         identifier: Identifier,
         kind: BindingKind,
+        decl_span: Span,
     ) {
         let candidate =
             identifier.name.as_ref().map_or_else(|| name.to_string(), |n| n.value().to_string());
@@ -355,6 +373,7 @@ impl HirBuilder {
                 identifier,
                 kind,
                 pre_declared: false,
+                decl_span,
             },
         );
         self.next_binding_key += 1;
@@ -392,29 +411,58 @@ impl HirBuilder {
     /// Check if a named identifier is a context identifier (captured by inner closures).
     ///
     /// This corresponds to `isContextIdentifier()` in the TS `HIRBuilder.ts`.
+    /// Uses the current binding's declaration span to check against the context set,
+    /// so that shadowed variables with the same name are distinguished correctly.
+    ///
+    /// Also checks `hoisted_identifiers` because hoisted identifiers are always
+    /// context identifiers. In the TS reference, `addHoistedIdentifier` adds the
+    /// AST node to both `#contextIdentifiers` and `#hoistedIdentifiers`, and
+    /// `isContextIdentifier` checks `#contextIdentifiers` using object identity.
+    /// In our Rust port, hoisted identifiers start with `Span::default()` before
+    /// their real declaration is processed, so we also check the `hoisted_identifiers`
+    /// name-based set as a fallback for these bindings.
     pub fn is_context_identifier(&self, name: &str) -> bool {
-        // Must be a local binding AND in the context identifiers set
-        if self.bindings.contains_key(name) {
-            return self.context_identifiers.contains(name);
+        // Check hoisted_identifiers (name-based) for bindings added via
+        // add_hoisted_identifier before the real declaration is processed.
+        if self.hoisted_identifiers.contains(name) {
+            return true;
+        }
+        // Check context_identifiers (span-based) for bindings identified by
+        // find_context_identifiers or merged from captured outer context.
+        if let Some(entry) = self.bindings.get(name) {
+            return self.context_identifiers.contains(&entry.decl_span);
         }
         false
     }
 
-    /// Check if a name is in the context identifiers set, regardless of whether
-    /// the binding has been declared yet. This is needed for destructuring patterns
-    /// where we need to check if an identifier will be a context variable before
-    /// declaring it (since the TS reference checks `getStoreKind` before the
-    /// destructure's `lowerIdentifierForAssignment` declares the binding).
-    pub fn will_be_context_identifier(&self, name: &str) -> bool {
-        self.context_identifiers.contains(name)
+    /// Get the declaration span for a named binding, or `None` if not found.
+    pub fn get_binding_decl_span(&self, name: &str) -> Option<Span> {
+        self.bindings.get(name).map(|entry| entry.decl_span)
     }
 
-    /// Add a name to the context identifiers set and the hoisted identifiers set.
+    /// Check if a declaration span is in the context identifiers set, regardless
+    /// of whether the binding has been declared yet. This is needed for
+    /// destructuring patterns where we need to check if an identifier will be a
+    /// context variable before declaring it (since the TS reference checks
+    /// `getStoreKind` before the destructure's `lowerIdentifierForAssignment`
+    /// declares the binding).
+    pub fn will_be_context_identifier(&self, name: &str, decl_span: Span) -> bool {
+        // Check hoisted_identifiers by name first (hoisted bindings use
+        // Span::default() in context_identifiers, but the actual binding span
+        // differs from the pre-declared span).
+        if self.hoisted_identifiers.contains(name) {
+            return true;
+        }
+        self.context_identifiers.contains(&decl_span)
+    }
+
+    /// Add a declaration span to the context identifiers set and the name to the
+    /// hoisted identifiers set.
     ///
     /// This corresponds to `Environment.addHoistedIdentifier()` in the TS version,
     /// which adds the identifier to both `#contextIdentifiers` and `#hoistedIdentifiers`.
-    pub fn add_hoisted_identifier(&mut self, name: &str) {
-        self.context_identifiers.insert(name.to_string());
+    pub fn add_hoisted_identifier(&mut self, name: &str, decl_span: Span) {
+        self.context_identifiers.insert(decl_span);
         self.hoisted_identifiers.insert(name.to_string());
     }
 
@@ -487,6 +535,7 @@ impl HirBuilder {
                 identifier: identifier.clone(),
                 kind: BindingKind::Let,
                 pre_declared: true,
+                decl_span: Span::default(),
             },
         );
         Place { identifier, effect: Effect::Unknown, reactive: false, loc }
