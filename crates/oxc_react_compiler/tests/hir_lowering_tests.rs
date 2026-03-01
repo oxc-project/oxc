@@ -10,6 +10,8 @@
 /// child blocks (consequent, alternate, loop body, etc.) created via `enter()`
 /// receive unique IDs and ARE preserved. Tests are written to verify the
 /// behavior that IS correct and stable.
+use rustc_hash::FxHashMap;
+
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, lower};
 use oxc_react_compiler::hir::environment::{CompilerOutputMode, Environment, EnvironmentConfig};
 use oxc_react_compiler::hir::{
@@ -58,7 +60,7 @@ fn debug_aliased_mutation_lambda_deps() {
         oxc_react_compiler::hir::environment::EnvironmentConfig::default(),
     );
 
-    let mut hir_func = lower(&env, ReactFunctionType::Other, &func).unwrap();
+    let mut hir_func = lower(&env, ReactFunctionType::Other, &func, FxHashMap::default()).unwrap();
 
     // Print PRE-PIPELINE HIR to understand block structure and property loads
     println!("=== Pre-pipeline HIR blocks ===");
@@ -204,7 +206,7 @@ function Component(props) {
         EnvironmentConfig::default(),
     );
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &func).unwrap();
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
 
     // Run only up to BuildReactiveScopeTerminals (steps 1-33) then inspect
     // We need to run the full pipeline to see scope terminals
@@ -349,7 +351,7 @@ export const FIXTURE_ENTRYPOINT = {
             EnvironmentConfig::default(),
         );
 
-        let mut hir_func = lower(&env, ReactFunctionType::Component, &func).unwrap();
+        let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
         let result = run_pipeline(&mut hir_func, &env);
 
         match result {
@@ -442,7 +444,7 @@ fn debug_normalized_comparison() {
         EnvironmentConfig::default(),
     );
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &func).unwrap();
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
     let result = run_pipeline(&mut hir_func, &env);
 
     match result {
@@ -512,7 +514,7 @@ function Component(props) {
     let env =
         Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config);
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &func).unwrap();
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
     let result = run_pipeline(&mut hir_func, &env);
 
     match result {
@@ -588,7 +590,7 @@ fn lower_function_source(source: &str) -> HIRFunction {
         EnvironmentConfig::default(),
     );
 
-    let result = lower(&env, ReactFunctionType::Component, &func);
+    let result = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default());
     assert!(result.is_ok(), "Lowering failed: {:?}", result.err());
     result.unwrap()
 }
@@ -1771,7 +1773,7 @@ function Component({a, b}) {
         EnvironmentConfig::default(),
     );
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &func).expect("lowering failed");
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).expect("lowering failed");
 
     // Run the full pipeline
     let codegen = oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env)
