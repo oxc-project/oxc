@@ -3121,17 +3121,21 @@ impl Gen for TSTupleType<'_> {
 }
 
 fn parenthesize_check_type_of_union_type(ty: &TSType<'_>) -> bool {
-    matches!(
-        ty,
+    match ty {
+        TSType::TSUnionType(ty) => ty.types.len() > 1,
         TSType::TSFunctionType(_)
-            | TSType::TSConstructorType(_)
-            | TSType::TSConditionalType(_)
-            | TSType::TSInferType(_)
-    )
+        | TSType::TSConstructorType(_)
+        | TSType::TSConditionalType(_)
+        | TSType::TSInferType(_) => true,
+        _ => false,
+    }
 }
 
 fn parenthesize_check_type_of_intersection_type(ty: &TSType<'_>) -> bool {
-    matches!(ty, TSType::TSUnionType(_)) || parenthesize_check_type_of_union_type(ty)
+    match ty {
+        TSType::TSIntersectionType(ty) => ty.types.len() > 1,
+        _ => parenthesize_check_type_of_union_type(ty),
+    }
 }
 
 fn parenthesize_check_type_of_postfix_type(ty: &TSType<'_>) -> bool {
@@ -3283,7 +3287,19 @@ impl Gen for TSTypeOperator<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str(self.operator.to_str());
         p.print_hard_space();
-        self.type_annotation.print(p, ctx);
+        p.wrap(
+            matches!(
+                &self.type_annotation,
+                TSType::TSUnionType(_)
+                    | TSType::TSIntersectionType(_)
+                    | TSType::TSFunctionType(_)
+                    | TSType::TSConstructorType(_)
+                    | TSType::TSConditionalType(_)
+            ),
+            |p| {
+                self.type_annotation.print(p, ctx);
+            },
+        );
     }
 }
 
@@ -3681,7 +3697,9 @@ impl Gen for TSTupleElement<'_> {
         match self {
             match_ts_type!(TSTupleElement) => self.to_ts_type().print(p, ctx),
             TSTupleElement::TSOptionalType(ts_type) => {
-                ts_type.type_annotation.print(p, ctx);
+                p.wrap(parenthesize_check_type_of_postfix_type(&ts_type.type_annotation), |p| {
+                    ts_type.type_annotation.print(p, ctx);
+                });
                 p.print_ascii_byte(b'?');
             }
             TSTupleElement::TSRestType(ts_type) => {
