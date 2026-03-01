@@ -41,7 +41,7 @@ type ItFn = ((text: string, fn: () => void) => void) & { only?: ItFn };
  * @param method - Test case logic
  * @returns Returned value of `method`
  */
-function defaultDescribe<R>(text: string, method: () => R): R {
+function defaultDescribe<T, R>(this: T, text: string, method: (this: T) => R): R {
   return method.call(this);
 }
 
@@ -58,7 +58,7 @@ let describe: DescribeFn =
  * @throws {Error} Any error upon execution of `method`
  * @returns Returned value of `method`
  */
-function defaultIt<R>(text: string, method: () => R): R {
+function defaultIt<T, R>(this: T, text: string, method: (this: T) => R): R {
   try {
     return method.call(this);
   } catch (err) {
@@ -320,8 +320,8 @@ interface TestCase extends Config {
   filename?: string;
   options?: Options;
   settings?: Settings;
-  before?: (this: this) => void;
-  after?: (this: this) => void;
+  before?(this: this): void;
+  after?(this: this): void;
 }
 
 /**
@@ -1566,6 +1566,7 @@ function getTestName(test: TestCase): string {
  * @throws {*} - Value thrown by the hook function
  */
 function runBeforeHook(test: TestCase): void {
+  // oxlint-disable-next-line typescript/unbound-method --- bound in `runHook`
   if (Object.hasOwn(test, "before")) runHook(test, test.before, "before");
 }
 
@@ -1576,6 +1577,7 @@ function runBeforeHook(test: TestCase): void {
  * @throws {*} - Value thrown by the hook function
  */
 function runAfterHook(test: TestCase): void {
+  // oxlint-disable-next-line typescript/unbound-method --- bound in `runHook`
   if (Object.hasOwn(test, "after")) runHook(test, test.after, "after");
 }
 

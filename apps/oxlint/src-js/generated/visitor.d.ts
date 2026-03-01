@@ -3,7 +3,11 @@
 
 import type * as ESTree from "./types.d.ts";
 
-export interface VisitorObject {
+type BivarianceHackHandler<Handler extends (...args: any) => any> = {
+  bivarianceHack(...args: Parameters<Handler>): ReturnType<Handler>;
+}["bivarianceHack"];
+
+interface StrictVisitorObject {
   DebuggerStatement?: (node: ESTree.DebuggerStatement) => void;
   "DebuggerStatement:exit"?: (node: ESTree.DebuggerStatement) => void;
   EmptyStatement?: (node: ESTree.EmptyStatement) => void;
@@ -384,5 +388,10 @@ export interface VisitorObject {
   "TSTypeReference:exit"?: (node: ESTree.TSTypeReference) => void;
   TSUnionType?: (node: ESTree.TSUnionType) => void;
   "TSUnionType:exit"?: (node: ESTree.TSUnionType) => void;
-  [key: string]: (node: ESTree.Node) => void;
 }
+
+export type VisitorObject = {
+  [K in keyof StrictVisitorObject]:
+    | BivarianceHackHandler<Exclude<StrictVisitorObject[K], undefined>>
+    | undefined;
+} & Record<string, BivarianceHackHandler<(node: ESTree.Node) => void> | undefined>;

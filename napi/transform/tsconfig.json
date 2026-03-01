@@ -4,6 +4,7 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "target": "ESNext",
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "types": ["node"]
   }
 }
