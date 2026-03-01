@@ -80,6 +80,7 @@
     "napi/*/src-js/*.wasi-browser.js",
     "napi/*/src-js/wasi-worker.mjs",
     "napi/*/src-js/wasi-worker-browser.mjs",
-    "npm/oxlint-plugins/**"
+    "npm/oxlint-plugins/**",
+    "tasks/prettier_conformance/jsdoc/**"
   ]
 }
