@@ -85,6 +85,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
     pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
+    syntax_checker_node_stack: Vec<AstKind<'a>>,
 
     // builders
     pub(crate) nodes: AstNodes<'a>,
@@ -145,6 +146,7 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
+            syntax_checker_node_stack: Vec::new(),
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
             scoping,
@@ -262,6 +264,9 @@ impl<'a> SemanticBuilder<'a> {
             stats.references as usize,
             stats.scopes as usize,
         );
+        if self.check_syntax_error {
+            self.syntax_checker_node_stack.reserve(stats.nodes as usize);
+        }
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
@@ -396,6 +401,16 @@ impl<'a> SemanticBuilder<'a> {
     #[inline]
     pub(crate) fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
+    }
+
+    /// Iterate over ancestor kinds for the current node.
+    ///
+    /// The first node produced by this iterator is the parent of current node.
+    /// The last node will always be [`AstKind::Program`].
+    #[inline]
+    pub(crate) fn ancestor_kinds(&self) -> impl Iterator<Item = AstKind<'a>> + Clone + '_ {
+        let len = self.syntax_checker_node_stack.len();
+        self.syntax_checker_node_stack[..len.saturating_sub(1)].iter().rev().copied()
     }
 
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
@@ -657,6 +672,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     // NB: Not called for `Program`.
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.create_ast_node(kind);
+        if self.check_syntax_error {
+            self.syntax_checker_node_stack.push(kind);
+        }
     }
 
     /// Both this function and `checker::check` must be inlined. Each `visit_*` method calls
@@ -670,6 +688,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if self.check_syntax_error {
             checker::check(kind, self);
+            self.syntax_checker_node_stack.pop();
         }
         self.pop_ast_node();
     }
@@ -697,6 +716,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             control_flow!(self, |cfg| cfg.current_node_ix),
             self.current_node_flags,
         );
+        if self.check_syntax_error {
+            self.syntax_checker_node_stack.push(kind);
+        }
 
         // Don't call `enter_scope` here as `Program` is a special case - scope has no `parent_id`.
         // Inline the specific logic for `Program` here instead.
@@ -734,6 +756,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         // Check `current_function_node_id` has been reset to as it was at start
         debug_assert!(self.current_function_node_id == NodeId::ROOT);
+        debug_assert!(!self.check_syntax_error || self.syntax_checker_node_stack.is_empty());
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {

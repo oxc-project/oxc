@@ -14,7 +14,7 @@ pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBu
     if param.r#in || param.out {
         let is_allowed_node = matches!(
             // skip parent TSTypeParameterDeclaration
-            ctx.nodes.ancestor_kinds(ctx.current_node_id).nth(1),
+            ctx.ancestor_kinds().nth(1),
             Some(
                 AstKind::TSInterfaceDeclaration(_)
                     | AstKind::Class(_)
@@ -116,8 +116,8 @@ pub fn check_ts_global_declaration<'a>(decl: &TSGlobalDeclaration<'a>, ctx: &Sem
 
 fn check_ts_module_or_global_declaration(span: Span, ctx: &SemanticBuilder<'_>) {
     // skip current node
-    for node in ctx.nodes.ancestors(ctx.current_node_id) {
-        match node.kind() {
+    for node_kind in ctx.ancestor_kinds() {
+        match node_kind {
             AstKind::Program(_)
             | AstKind::TSModuleBlock(_)
             | AstKind::TSModuleDeclaration(_)
