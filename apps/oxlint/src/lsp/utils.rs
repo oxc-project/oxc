@@ -1,5 +1,7 @@
 use std::path::{Component, Path, PathBuf};
 
+use tower_lsp_server::ls_types::Range;
+
 /// Normalize a path by removing `.` and resolving `..` components,
 /// without touching the filesystem.
 pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
@@ -23,6 +25,17 @@ pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
     }
 
     result
+}
+
+/// Returns `true` if LSP ranges `a` and `b` overlap or touch (share a boundary point).
+///
+/// This uses non-strict comparisons (`<=`/`>=`), so adjacent ranges where the end of one
+/// equals the start of the other are also considered overlapping. This is intentional for
+/// code-action filtering in the LSP server (a cursor at a boundary position should match
+/// actions on either side), and is used conservatively in `fix_all_text_edit` to avoid
+/// applying edits that share a boundary (which is rare in practice and safe to defer).
+pub(super) fn range_overlaps(a: Range, b: Range) -> bool {
+    a.start <= b.end && a.end >= b.start
 }
 
 #[cfg(test)]
