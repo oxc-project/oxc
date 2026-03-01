@@ -425,11 +425,12 @@ pub fn accessor_without_body(span: Span) -> OxcDiagnostic {
 }
 
 /// The left-hand side of a 'for...of' statement cannot use a type annotation. (2483)
+/// The left-hand side of a 'for...in' statement cannot use a type annotation. (2404)
 #[cold]
 pub fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic {
-    let for_of_or_in = if is_for_in { "for...in" } else { "for...of" };
+    let (for_of_or_in, code) = if is_for_in { ("for...in", "2404") } else { ("for...of", "2483") };
     ts_error(
-        "2483",
+        code,
         format!(
             "The left-hand side of a '{for_of_or_in}' statement cannot use a type annotation.",
         ),

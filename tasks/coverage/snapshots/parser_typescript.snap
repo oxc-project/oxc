@@ -6600,7 +6600,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  30 │ }
     ╰────
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/compiler/forIn.ts:2:10]
  1 │ var arr = null;
  2 │ for (var i:number in arr) { // error
@@ -6609,7 +6609,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/compiler/forInStatement4.ts:2:10]
  1 │ var expr: any;
  2 │ for (var a: number in expr) {
@@ -24886,7 +24886,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement5.ts:1:10]
  1 │ for (var a: number in X) {
    ·          ─
@@ -24908,7 +24908,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  2 │ }
    ╰────
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement7.ts:1:10]
  1 │ for (var a: number = 1, b: string = "" in X) {
    ·          ─
@@ -24916,7 +24916,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: This iterator's type will be inferred from the iterable. You can safely remove the type annotation.
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/parserForInStatement7.ts:1:25]
  1 │ for (var a: number = 1, b: string = "" in X) {
    ·                         ─
@@ -26462,7 +26462,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  38 │ }
     ╰────
 
-  × TS(2483): The left-hand side of a 'for...in' statement cannot use a type annotation.
+  × TS(2404): The left-hand side of a 'for...in' statement cannot use a type annotation.
     ╭─[typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsInvalid.ts:10:10]
   9 │ 
  10 │ for (var idx : number in {}) { }
