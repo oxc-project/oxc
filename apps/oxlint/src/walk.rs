@@ -102,6 +102,7 @@ impl Walk {
             .git_global(false)
             .git_ignore(true)
             .follow_links(true)
+            .parents(false)
             .hidden(false)
             .require_git(false)
             .build_parallel();
