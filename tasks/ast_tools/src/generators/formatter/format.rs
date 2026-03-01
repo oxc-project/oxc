@@ -86,7 +86,7 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{Format, Formatter},
+                formatter::{Format, Formatter, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
@@ -318,11 +318,30 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
     };
     let node_type = get_node_type(&enum_ty);
 
+    let inline_trailing_suppression = if enum_def.name() == "Statement" {
+        // Expression statements need specialized ASI-safe suppression handling in
+        // `AstNode<ExpressionStatement>::write`.
+        quote! {
+            if !matches!(self.inner, Statement::ExpressionStatement(_))
+                && f.comments().has_line_suppression_comment_at_end_of_line(self.span().end)
+            {
+                format_leading_comments(self.span()).fmt(f);
+                FormatSuppressedNode(self.span()).fmt(f);
+                format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+                    .fmt(f);
+                return;
+            }
+        }
+    } else {
+        quote! {}
+    };
+
     quote! {
         ///@@line_break
         impl<'a> Format<'a> for #node_type {
             #[inline]
             fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+                #inline_trailing_suppression
                 let allocator = self.allocator;
                 #parent;
                 match self.inner {

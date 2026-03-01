@@ -389,6 +389,16 @@ impl<'a> Comments<'a> {
         self.comments_before(start).iter().any(|comment| self.is_suppression_comment(comment))
     }
 
+    /// Checks if there is a trailing line suppression comment on the same line.
+    ///
+    /// This supports patterns like:
+    /// `statement(); // prettier-ignore`
+    pub fn has_line_suppression_comment_at_end_of_line(&self, pos: u32) -> bool {
+        self.end_of_line_comments_after(pos)
+            .iter()
+            .any(|comment| comment.is_line() && self.is_suppression_comment(comment))
+    }
+
     /// Checks if a comment is a suppression comment (`oxfmt-ignore`).
     ///
     /// `prettier-ignore` is also supported for compatibility.

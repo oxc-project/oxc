@@ -74,6 +74,7 @@ use crate::{
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
+        suppressed::FormatSuppressedNode,
         tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
     },
     write,
@@ -556,11 +557,19 @@ fn expression_statement_needs_semicolon<'a>(
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        let span = self.span();
         // Check if we need a leading semicolon to prevent ASI issues
         if f.options().semicolons == Semicolons::AsNeeded
             && expression_statement_needs_semicolon(self, f)
         {
             write!(f, ";");
+        }
+
+        if f.comments().has_line_suppression_comment_at_end_of_line(span.end) {
+            // Preserve original text when the statement has an inline suppression comment:
+            // `stmt(); // prettier-ignore`
+            write!(f, [FormatSuppressedNode(span)]);
+            return;
         }
 
         write!(f, [self.expression(), OptionalSemicolon]);
