@@ -621,6 +621,27 @@ fn visit_terminal(terminal: &mut ReactiveTerminal, scopes: &mut Scopes) {
 /// instructions (including recursing into nested functions), then visits
 /// terminal operands.
 fn visit_hir_function(func: &mut HIRFunction, scopes: &mut Scopes) {
+    // Save the outer function's `seen` map and replace it with one seeded from
+    // the context (captured) variables only.
+    //
+    // In TypeScript, identifiers are reference types — renaming one reference
+    // renames all references to the same object. In Rust, identifiers are cloned
+    // values with DeclarationIds that may coincide between outer and inner
+    // functions (due to shared environment counters during build_hir). Using the
+    // outer function's full `seen` map would cause the inner function's own
+    // identifiers to be incorrectly renamed to whatever the outer function's
+    // same-DeclarationId identifier was renamed to.
+    //
+    // However, context (captured) variables DO need to inherit their rename from
+    // the outer function — they share the same DeclarationId intentionally, and
+    // references to them inside the inner function body must use the same name.
+    // So we seed the fresh `seen` map with just the context variable entries.
+    let saved_seen = std::mem::take(&mut scopes.seen);
+    for ctx in &func.context {
+        if let Some(mapped_name) = saved_seen.get(&ctx.identifier.declaration_id) {
+            scopes.seen.insert(ctx.identifier.declaration_id, mapped_name.clone());
+        }
+    }
     for param in &mut func.params {
         match param {
             ReactiveParam::Place(place) => {
@@ -650,6 +671,8 @@ fn visit_hir_function(func: &mut HIRFunction, scopes: &mut Scopes) {
         }
         visit_hir_terminal_operands(&mut block.terminal, scopes);
     }
+    // Restore the outer function's `seen` map.
+    scopes.seen = saved_seen;
 }
 
 /// Visit a HIR instruction — visits lvalue then operands.
