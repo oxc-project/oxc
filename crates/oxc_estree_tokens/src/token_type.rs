@@ -1,3 +1,6 @@
+//! [`TokenType`] type.
+//! Used in JSON serialization.
+
 use oxc_data_structures::assert_unchecked;
 
 /// Maximum length of a `TokenType` string representation.

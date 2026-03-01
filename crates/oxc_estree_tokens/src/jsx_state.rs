@@ -1,3 +1,8 @@
+//! JSX state.
+//! Used by visitor.
+//!
+//! See [`JSXState`] trait.
+
 use oxc_ast::ast::MemberExpression;
 
 /// Trait for JSX state.

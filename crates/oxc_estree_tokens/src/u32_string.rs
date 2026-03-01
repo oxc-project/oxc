@@ -1,3 +1,6 @@
+//! [`U32String`] type.
+//! Used in JSON serialization.
+
 use itoa::Buffer as ItoaBuffer;
 
 use oxc_data_structures::assert_unchecked;

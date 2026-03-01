@@ -1,8 +1,10 @@
+//! Options for serializing / updating tokens.
+
 // `#[inline(always)]` used on all methods as they're tiny, and to ensure compiler removes dead code
 // resulting from static values
 #![expect(clippy::inline_always)]
 
-use crate::{JSXState, JSXStateJS, JSXStateTS};
+use crate::jsx_state::{JSXState, JSXStateJS, JSXStateTS};
 
 /// Trait for options for serializing tokens.
 ///
