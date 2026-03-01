@@ -2200,6 +2200,7 @@ dependencies = [
  "oxc",
  "oxc_ast_macros",
  "oxc_estree",
+ "oxc_estree_tokens",
  "oxc_napi",
  "rustc-hash",
 ]

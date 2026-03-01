@@ -49,8 +49,8 @@ pub struct RawTransferMetadata {
 }
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32, is_ts: bool) -> Self {
-        Self { data_offset, is_ts, is_jsx: false, has_bom: false, tokens_offset: 0, tokens_len: 0 }
+    pub fn new(data_offset: u32, is_ts: bool, tokens_offset: u32, tokens_len: u32) -> Self {
+        Self { data_offset, is_ts, is_jsx: false, has_bom: false, tokens_offset, tokens_len }
     }
 }
 

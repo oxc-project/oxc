@@ -15,6 +15,7 @@ use oxc::{
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     semantic::SemanticBuilder,
 };
+use oxc_estree_tokens::{ESTreeTokenOptions, update_tokens};
 use oxc_napi::get_source_type;
 
 use crate::{
@@ -214,9 +215,9 @@ unsafe fn parse_raw_impl(
     let options = options.unwrap_or_default();
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
-    let ast_type = get_ast_type(source_type, &options);
+    let is_ts = get_ast_type(source_type, &options) == AstType::TypeScript;
 
-    let data_ptr = {
+    let (data_offset, tokens_offset, tokens_len) = {
         // SAFETY: We checked above that `source_len` does not exceed length of buffer
         let source_text = unsafe { buffer.get_unchecked(..source_len) };
         // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
@@ -251,8 +252,22 @@ unsafe fn parse_raw_impl(
             ArenaVec::new_in(&allocator)
         };
 
-        // Convert spans to UTF-16
+        // Convert tokens
         let span_converter = Utf8ToUtf16::new(source_text);
+
+        let (tokens_offset, tokens_len) = if options.tokens == Some(true) {
+            let mut tokens = ret.tokens;
+            update_tokens(&mut tokens, &program, &span_converter, ESTreeTokenOptions::new(is_ts));
+
+            let tokens_offset = tokens.as_ptr() as u32;
+            #[expect(clippy::cast_possible_truncation)]
+            let tokens_len = tokens.len() as u32;
+            (tokens_offset, tokens_len)
+        } else {
+            (0, 0)
+        };
+
+        // Convert spans to UTF-16
         span_converter.convert_program(&mut program);
         span_converter.convert_comments(&mut comments);
         span_converter.convert_module_record(&mut module_record);
@@ -270,12 +285,13 @@ unsafe fn parse_raw_impl(
         // Write `RawTransferData` to arena, and return pointer to it
         let data = RawTransferData { program, comments, module, errors };
         let data = allocator.alloc(data);
-        ptr::from_ref(data).cast::<u8>()
+        let data_offset = ptr::from_ref(data).cast::<u8>() as u32;
+
+        (data_offset, tokens_offset, tokens_len)
     };
 
     // Write metadata into end of buffer
-    #[allow(clippy::cast_possible_truncation)]
-    let metadata = RawTransferMetadata::new(data_ptr as u32, ast_type == AstType::TypeScript);
+    let metadata = RawTransferMetadata::new(data_offset, is_ts, tokens_offset, tokens_len);
     const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
     const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(BUMP_ALIGN));
     // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.

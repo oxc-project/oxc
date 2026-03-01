@@ -6,6 +6,7 @@ import { basename, join as pathJoin } from "node:path";
 import { parseSync } from "./parser.ts";
 import {
   ACORN_TEST262_DIR_PATH,
+  ACORN_TEST262_TOKENS_DIR_PATH,
   JSX_DIR_PATH,
   ROOT_DIR_PATH,
   TEST262_DIR_PATH,
@@ -16,6 +17,7 @@ import {
   TEST_TYPE_MAIN_MASK,
   TEST_TYPE_PRETTY,
   TEST_TYPE_RANGE_PARENT,
+  TEST_TYPE_TOKENS,
   TEST_TYPE_TEST262,
   TEST_TYPE_TS,
   TS_DIR_PATH,
@@ -46,19 +48,20 @@ export async function runCase(
   expect: ExpectFunction,
 ): Promise<void> {
   const rangeParent = (type & TEST_TYPE_RANGE_PARENT) !== 0,
+    tokens = (type & TEST_TYPE_TOKENS) !== 0,
     lazy = (type & TEST_TYPE_LAZY) !== 0,
     pretty = (type & TEST_TYPE_PRETTY) !== 0;
   type &= TEST_TYPE_MAIN_MASK;
 
   switch (type) {
     case TEST_TYPE_TEST262:
-      await runTest262Case(props as string, rangeParent, lazy, expect);
+      await runTest262Case(props as string, rangeParent, tokens, lazy, expect);
       break;
     case TEST_TYPE_JSX:
-      await runJsxCase(props as string, rangeParent, lazy, expect);
+      await runJsxCase(props as string, rangeParent, tokens, lazy, expect);
       break;
     case TEST_TYPE_TS:
-      await runTsCase(props as string, rangeParent, lazy, expect);
+      await runTsCase(props as string, rangeParent, tokens, lazy, expect);
       break;
     case TEST_TYPE_FIXTURE:
       await runFixture(props as string, rangeParent, lazy, pretty, expect);
@@ -81,6 +84,7 @@ export async function runCase(
 async function runTest262Case(
   path: string,
   rangeParent: boolean,
+  tokens: boolean,
   lazy: boolean,
   expect: ExpectFunction,
 ): Promise<void> {
@@ -96,6 +100,21 @@ async function runTest262Case(
     testRangeParent(filename, sourceText, { sourceType }, expect);
     return;
   }
+
+  if (tokens) {
+    // Some fixtures have no tokens JSON file because Espree can't parse them. Skip them.
+    let expectedJson: string;
+    try {
+      expectedJson = await readFile(pathJoin(ACORN_TEST262_TOKENS_DIR_PATH, `${path}on`), "utf8");
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException)?.code !== "ENOENT") throw err;
+      return;
+    }
+
+    testTokens(filename, sourceText, expectedJson, { sourceType }, expect);
+    return;
+  }
+
   if (lazy) {
     testLazy(filename, sourceText, { sourceType });
     return;
@@ -113,6 +132,7 @@ async function runTest262Case(
 async function runJsxCase(
   filename: string,
   rangeParent: boolean,
+  tokens: boolean,
   lazy: boolean,
   expect: ExpectFunction,
 ): Promise<void> {
@@ -129,6 +149,14 @@ async function runJsxCase(
     testRangeParent(filename, sourceText, { sourceType }, expect);
     return;
   }
+
+  if (tokens) {
+    const tokensJsonPath = sourcePath.slice(0, -3) + "tokens.json"; // `.jsx` -> `.tokens.json`
+    const expectedJson = await readFile(tokensJsonPath, "utf8");
+    testTokens(filename, sourceText, expectedJson, { sourceType }, expect);
+    return;
+  }
+
   if (lazy) {
     testLazy(filename, sourceText, { sourceType });
     return;
@@ -146,12 +174,15 @@ async function runJsxCase(
 const TS_CASE_HEADER = "__ESTREE_TEST__:";
 const TS_CASE_HEADER_AST = "AST:\n```json\n";
 const TS_CASE_HEADER_AST_LEN = TS_CASE_HEADER_AST.length;
+const TS_CASE_HEADER_TOKENS = "TOKENS:\n```json\n";
+const TS_CASE_HEADER_TOKENS_LEN = TS_CASE_HEADER_TOKENS.length;
 const TS_CASE_FOOTER = "\n```\n";
 const TS_CASE_FOOTER_LEN = TS_CASE_FOOTER.length;
 
 async function runTsCase(
   path: string,
   rangeParent: boolean,
+  tokens: boolean,
   lazy: boolean,
   expect: ExpectFunction,
 ): Promise<void> {
@@ -166,10 +197,15 @@ async function runTsCase(
 
   const { tests } = makeUnitsFromTest(tsPath, sourceText);
 
-  const estreeJsons = [];
+  const estreeJsons = [],
+    tokensJsons = [];
   for (const part of casesJson.split(TS_CASE_HEADER).slice(1)) {
     if (part.startsWith(TS_CASE_HEADER_AST)) {
       estreeJsons.push(part.slice(TS_CASE_HEADER_AST_LEN, -TS_CASE_FOOTER_LEN));
+    } else if (part.startsWith(TS_CASE_HEADER_TOKENS)) {
+      tokensJsons.push(part.slice(TS_CASE_HEADER_TOKENS_LEN, -TS_CASE_FOOTER_LEN));
+    } else {
+      throw new Error("Unexpected test type");
     }
   }
 
@@ -189,6 +225,35 @@ async function runTsCase(
       testRangeParent(filename, code, options, expect);
       continue;
     }
+
+    if (tokens) {
+      // We can fail to match the TS-ESLint snapshots where there are syntax errors,
+      // because our parser is not recoverable.
+      // When fatal error, parser will return an empty program.
+      // If a test fails, check that a fatal parsing error is the cause, and ignore it if so.
+      try {
+        testTokens(filename, code, tokensJsons[i], options, expect);
+      } catch (err) {
+        const { program, errors } = parseSync(filename, code, {
+          ...options,
+          experimentalRawTransfer: false,
+        });
+
+        if (
+          errors.length > 0 &&
+          program.start === 0 &&
+          program.end === 0 &&
+          program.body.length === 0
+        ) {
+          // Fatal error
+          continue;
+        }
+
+        throw err;
+      }
+      continue;
+    }
+
     if (lazy) {
       testLazy(filename, code, options);
       continue;
@@ -319,6 +384,25 @@ function testRangeParent(
   }
 
   walk(ret.program);
+}
+
+// Test deserialized tokens match expected JSON.
+function testTokens(
+  filename: string,
+  sourceText: string,
+  expectedJson: string,
+  options: ParserOptions | null,
+  expect: ExpectFunction,
+): void {
+  const ret = parseSync(filename, sourceText, {
+    ...options,
+    experimentalRawTransfer: true,
+    experimentalTokens: true,
+  });
+
+  const { tokens } = ret as any;
+  const tokensJson = JSON.stringify(tokens, null, 2);
+  expect(tokensJson).toEqual(expectedJson);
 }
 
 // Test lazy deserialization does not throw an error.
