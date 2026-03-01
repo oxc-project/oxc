@@ -4,6 +4,7 @@
 # stdout
 ```
   x tokens-plugin(tokens): Identifier ("a")
+  |   regex: undefined
    ,-[files/bom.js:1:4]
  1 | ﻿a = b;
    : ^
@@ -30,18 +31,21 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
    ,-[files/bom.js:1:6]
  1 | ﻿a = b;
    :   ^
    `----
 
   x tokens-plugin(tokens): Identifier ("b")
+  |   regex: undefined
    ,-[files/bom.js:1:8]
  1 | ﻿a = b;
    :     ^
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/bom.js:1:9]
  1 | ﻿a = b;
    :      ^
@@ -305,6 +309,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("var")
+  |   regex: undefined
    ,-[files/escaped_idents.js:2:1]
  1 | // abc
  2 | var \u{61}b\u0063;
@@ -313,6 +318,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("abc")
+  |   regex: undefined
    ,-[files/escaped_idents.js:2:5]
  1 | // abc
  2 | var \u{61}b\u0063;
@@ -321,6 +327,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/escaped_idents.js:2:18]
  1 | // abc
  2 | var \u{61}b\u0063;
@@ -337,6 +344,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("var")
+  |   regex: undefined
    ,-[files/escaped_idents.js:5:1]
  4 | // let
  5 | var \u{6C}e\u0074;
@@ -345,6 +353,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("let")
+  |   regex: undefined
    ,-[files/escaped_idents.js:5:5]
  4 | // let
  5 | var \u{6C}e\u0074;
@@ -353,6 +362,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/escaped_idents.js:5:18]
  4 | // let
  5 | var \u{6C}e\u0074;
@@ -369,6 +379,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("var")
+  |   regex: undefined
    ,-[files/escaped_idents.js:8:1]
  7 | // static
  8 | var st\u{61}\u{074}\u{0069}\u0063;
@@ -377,6 +388,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("static")
+  |   regex: undefined
    ,-[files/escaped_idents.js:8:5]
  7 | // static
  8 | var st\u{61}\u{074}\u{0069}\u0063;
@@ -385,6 +397,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/escaped_idents.js:8:34]
  7 | // static
  8 | var st\u{61}\u{074}\u{0069}\u0063;
@@ -401,6 +414,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("var")
+  |   regex: undefined
     ,-[files/escaped_idents.js:11:1]
  10 | // yield
  11 | var y\u{69}e\u{006C}d;
@@ -409,6 +423,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("yield")
+  |   regex: undefined
     ,-[files/escaped_idents.js:11:5]
  10 | // yield
  11 | var y\u{69}e\u{006C}d;
@@ -417,6 +432,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
     ,-[files/escaped_idents.js:11:22]
  10 | // yield
  11 | var y\u{69}e\u{006C}d;
@@ -425,6 +441,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("const")
+  |   regex: undefined
     ,-[files/escaped_idents.js:13:1]
  12 | 
  13 | const obj = {
@@ -433,6 +450,7 @@
     `----
 
   x tokens-plugin(tokens): Identifier ("obj")
+  |   regex: undefined
     ,-[files/escaped_idents.js:13:7]
  12 | 
  13 | const obj = {
@@ -441,6 +459,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
     ,-[files/escaped_idents.js:13:11]
  12 | 
  13 | const obj = {
@@ -449,6 +468,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator ("{")
+  |   regex: undefined
     ,-[files/escaped_idents.js:13:13]
  12 | 
  13 | const obj = {
@@ -465,6 +485,7 @@
     `----
 
   x tokens-plugin(tokens): Identifier ("abc")
+  |   regex: undefined
     ,-[files/escaped_idents.js:15:3]
  14 |   // abc
  15 |   \u{61}b\u0063,
@@ -473,6 +494,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
     ,-[files/escaped_idents.js:15:16]
  14 |   // abc
  15 |   \u{61}b\u0063,
@@ -489,6 +511,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("let")
+  |   regex: undefined
     ,-[files/escaped_idents.js:17:3]
  16 |   // let
  17 |   \u{6C}e\u0074,
@@ -497,6 +520,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
     ,-[files/escaped_idents.js:17:16]
  16 |   // let
  17 |   \u{6C}e\u0074,
@@ -513,6 +537,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("static")
+  |   regex: undefined
     ,-[files/escaped_idents.js:19:3]
  18 |   // static
  19 |   st\u{61}\u{074}\u{0069}\u0063,
@@ -521,6 +546,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
     ,-[files/escaped_idents.js:19:32]
  18 |   // static
  19 |   st\u{61}\u{074}\u{0069}\u0063,
@@ -537,6 +563,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("yield")
+  |   regex: undefined
     ,-[files/escaped_idents.js:21:3]
  20 |   // yield
  21 |   y\u{69}e\u{006C}d,
@@ -545,6 +572,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
     ,-[files/escaped_idents.js:21:20]
  20 |   // yield
  21 |   y\u{69}e\u{006C}d,
@@ -553,6 +581,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator ("}")
+  |   regex: undefined
     ,-[files/escaped_idents.js:22:1]
  21 |   y\u{69}e\u{006C}d,
  22 | };
@@ -561,6 +590,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
     ,-[files/escaped_idents.js:22:2]
  21 |   y\u{69}e\u{006C}d,
  22 | };
@@ -569,6 +599,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("const")
+  |   regex: undefined
     ,-[files/escaped_idents.js:24:1]
  23 | 
  24 | const obj2 = {
@@ -577,6 +608,7 @@
     `----
 
   x tokens-plugin(tokens): Identifier ("obj2")
+  |   regex: undefined
     ,-[files/escaped_idents.js:24:7]
  23 | 
  24 | const obj2 = {
@@ -585,6 +617,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
     ,-[files/escaped_idents.js:24:12]
  23 | 
  24 | const obj2 = {
@@ -593,6 +626,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator ("{")
+  |   regex: undefined
     ,-[files/escaped_idents.js:24:14]
  23 | 
  24 | const obj2 = {
@@ -609,6 +643,7 @@
     `----
 
   x tokens-plugin(tokens): Identifier ("abc")
+  |   regex: undefined
     ,-[files/escaped_idents.js:26:3]
  25 |   // abc: abc
  26 |   \u{61}b\u0063: \u{61}b\u0063,
@@ -617,6 +652,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
     ,-[files/escaped_idents.js:26:16]
  25 |   // abc: abc
  26 |   \u{61}b\u0063: \u{61}b\u0063,
@@ -625,6 +661,7 @@
     `----
 
   x tokens-plugin(tokens): Identifier ("abc")
+  |   regex: undefined
     ,-[files/escaped_idents.js:26:18]
  25 |   // abc: abc
  26 |   \u{61}b\u0063: \u{61}b\u0063,
@@ -633,6 +670,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
     ,-[files/escaped_idents.js:26:31]
  25 |   // abc: abc
  26 |   \u{61}b\u0063: \u{61}b\u0063,
@@ -649,6 +687,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("let")
+  |   regex: undefined
     ,-[files/escaped_idents.js:28:3]
  27 |   // let: let
  28 |   \u{6C}e\u0074: \u{6C}e\u0074,
@@ -657,6 +696,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
     ,-[files/escaped_idents.js:28:16]
  27 |   // let: let
  28 |   \u{6C}e\u0074: \u{6C}e\u0074,
@@ -665,6 +705,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("let")
+  |   regex: undefined
     ,-[files/escaped_idents.js:28:18]
  27 |   // let: let
  28 |   \u{6C}e\u0074: \u{6C}e\u0074,
@@ -673,6 +714,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
     ,-[files/escaped_idents.js:28:31]
  27 |   // let: let
  28 |   \u{6C}e\u0074: \u{6C}e\u0074,
@@ -689,6 +731,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("static")
+  |   regex: undefined
     ,-[files/escaped_idents.js:30:3]
  29 |   // static: static
  30 |   st\u{61}\u{074}\u{0069}\u0063: st\u{61}\u{074}\u{0069}\u0063,
@@ -697,6 +740,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
     ,-[files/escaped_idents.js:30:32]
  29 |   // static: static
  30 |   st\u{61}\u{074}\u{0069}\u0063: st\u{61}\u{074}\u{0069}\u0063,
@@ -705,6 +749,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("static")
+  |   regex: undefined
     ,-[files/escaped_idents.js:30:34]
  29 |   // static: static
  30 |   st\u{61}\u{074}\u{0069}\u0063: st\u{61}\u{074}\u{0069}\u0063,
@@ -713,6 +758,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
     ,-[files/escaped_idents.js:30:63]
  29 |   // static: static
  30 |   st\u{61}\u{074}\u{0069}\u0063: st\u{61}\u{074}\u{0069}\u0063,
@@ -729,6 +775,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("yield")
+  |   regex: undefined
     ,-[files/escaped_idents.js:32:3]
  31 |   // yield: yield
  32 |   y\u{69}e\u{006C}d: y\u{69}e\u{006C}d,
@@ -737,6 +784,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
     ,-[files/escaped_idents.js:32:20]
  31 |   // yield: yield
  32 |   y\u{69}e\u{006C}d: y\u{69}e\u{006C}d,
@@ -745,6 +793,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("yield")
+  |   regex: undefined
     ,-[files/escaped_idents.js:32:22]
  31 |   // yield: yield
  32 |   y\u{69}e\u{006C}d: y\u{69}e\u{006C}d,
@@ -753,6 +802,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
     ,-[files/escaped_idents.js:32:39]
  31 |   // yield: yield
  32 |   y\u{69}e\u{006C}d: y\u{69}e\u{006C}d,
@@ -761,6 +811,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator ("}")
+  |   regex: undefined
     ,-[files/escaped_idents.js:33:1]
  32 |   y\u{69}e\u{006C}d: y\u{69}e\u{006C}d,
  33 | };
@@ -769,6 +820,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
     ,-[files/escaped_idents.js:33:2]
  32 |   y\u{69}e\u{006C}d: y\u{69}e\u{006C}d,
  33 | };
@@ -785,6 +837,7 @@
     `----
 
   x tokens-plugin(tokens): Identifier ("abc")
+  |   regex: undefined
     ,-[files/escaped_idents.js:36:1]
  35 | // abc
  36 | \u{61}b\u0063: break \u{61}b\u0063;
@@ -793,6 +846,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
     ,-[files/escaped_idents.js:36:14]
  35 | // abc
  36 | \u{61}b\u0063: break \u{61}b\u0063;
@@ -801,6 +855,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("break")
+  |   regex: undefined
     ,-[files/escaped_idents.js:36:16]
  35 | // abc
  36 | \u{61}b\u0063: break \u{61}b\u0063;
@@ -809,6 +864,7 @@
     `----
 
   x tokens-plugin(tokens): Identifier ("abc")
+  |   regex: undefined
     ,-[files/escaped_idents.js:36:22]
  35 | // abc
  36 | \u{61}b\u0063: break \u{61}b\u0063;
@@ -817,6 +873,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
     ,-[files/escaped_idents.js:36:35]
  35 | // abc
  36 | \u{61}b\u0063: break \u{61}b\u0063;
@@ -833,6 +890,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("let")
+  |   regex: undefined
     ,-[files/escaped_idents.js:39:1]
  38 | // let
  39 | \u{6C}e\u0074: break \u{6C}e\u0074;
@@ -841,6 +899,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
     ,-[files/escaped_idents.js:39:14]
  38 | // let
  39 | \u{6C}e\u0074: break \u{6C}e\u0074;
@@ -849,6 +908,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("break")
+  |   regex: undefined
     ,-[files/escaped_idents.js:39:16]
  38 | // let
  39 | \u{6C}e\u0074: break \u{6C}e\u0074;
@@ -857,6 +917,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("let")
+  |   regex: undefined
     ,-[files/escaped_idents.js:39:22]
  38 | // let
  39 | \u{6C}e\u0074: break \u{6C}e\u0074;
@@ -865,6 +926,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
     ,-[files/escaped_idents.js:39:35]
  38 | // let
  39 | \u{6C}e\u0074: break \u{6C}e\u0074;
@@ -881,6 +943,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("static")
+  |   regex: undefined
     ,-[files/escaped_idents.js:42:1]
  41 | // static
  42 | st\u{61}\u{074}\u{0069}\u0063: break st\u{61}\u{074}\u{0069}\u0063;
@@ -889,6 +952,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
     ,-[files/escaped_idents.js:42:30]
  41 | // static
  42 | st\u{61}\u{074}\u{0069}\u0063: break st\u{61}\u{074}\u{0069}\u0063;
@@ -897,6 +961,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("break")
+  |   regex: undefined
     ,-[files/escaped_idents.js:42:32]
  41 | // static
  42 | st\u{61}\u{074}\u{0069}\u0063: break st\u{61}\u{074}\u{0069}\u0063;
@@ -905,6 +970,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("static")
+  |   regex: undefined
     ,-[files/escaped_idents.js:42:38]
  41 | // static
  42 | st\u{61}\u{074}\u{0069}\u0063: break st\u{61}\u{074}\u{0069}\u0063;
@@ -913,6 +979,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
     ,-[files/escaped_idents.js:42:67]
  41 | // static
  42 | st\u{61}\u{074}\u{0069}\u0063: break st\u{61}\u{074}\u{0069}\u0063;
@@ -929,6 +996,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("yield")
+  |   regex: undefined
     ,-[files/escaped_idents.js:45:1]
  44 | // yield
  45 | y\u{69}e\u{006C}d: break y\u{69}e\u{006C}d;
@@ -936,6 +1004,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
     ,-[files/escaped_idents.js:45:18]
  44 | // yield
  45 | y\u{69}e\u{006C}d: break y\u{69}e\u{006C}d;
@@ -943,6 +1012,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("break")
+  |   regex: undefined
     ,-[files/escaped_idents.js:45:20]
  44 | // yield
  45 | y\u{69}e\u{006C}d: break y\u{69}e\u{006C}d;
@@ -950,6 +1020,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("yield")
+  |   regex: undefined
     ,-[files/escaped_idents.js:45:26]
  44 | // yield
  45 | y\u{69}e\u{006C}d: break y\u{69}e\u{006C}d;
@@ -957,6 +1028,7 @@
     `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
     ,-[files/escaped_idents.js:45:43]
  44 | // yield
  45 | y\u{69}e\u{006C}d: break y\u{69}e\u{006C}d;
@@ -964,6 +1036,7 @@
     `----
 
   x tokens-plugin(tokens): Keyword ("const")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:1:1]
  1 | const obj = {
    : ^^^^^
@@ -1056,6 +1129,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("obj")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:1:7]
  1 | const obj = {
    :       ^^^
@@ -1063,6 +1137,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:1:11]
  1 | const obj = {
    :           ^
@@ -1070,6 +1145,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("{")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:1:13]
  1 | const obj = {
    :             ^
@@ -1077,6 +1153,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("fn")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:3]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1085,6 +1162,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:5]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1093,6 +1171,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("<")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:7]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1101,6 +1180,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("T")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:8]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1109,6 +1189,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (">")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:9]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1117,6 +1198,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("(")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:10]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1125,6 +1207,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("arg")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:11]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1133,6 +1216,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:14]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1141,6 +1225,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("T")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:16]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1149,6 +1234,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (")")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:17]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1157,6 +1243,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:18]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1165,6 +1252,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("T")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:20]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1173,6 +1261,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=>")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:22]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1181,6 +1270,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("{")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:2:25]
  1 | const obj = {
  2 |   fn: <T>(arg: T): T => {
@@ -1189,6 +1279,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("return")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:3:5]
  2 |   fn: <T>(arg: T): T => {
  3 |     return arg;
@@ -1197,6 +1288,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("arg")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:3:12]
  2 |   fn: <T>(arg: T): T => {
  3 |     return arg;
@@ -1205,6 +1297,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:3:15]
  2 |   fn: <T>(arg: T): T => {
  3 |     return arg;
@@ -1213,6 +1306,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("}")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:4:3]
  3 |     return arg;
  4 |   },
@@ -1221,6 +1315,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:4:4]
  3 |     return arg;
  4 |   },
@@ -1229,6 +1324,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("}")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:5:1]
  4 |   },
  5 | };
@@ -1237,6 +1333,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:5:2]
  4 |   },
  5 | };
@@ -1253,6 +1350,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("export")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:8:1]
  7 | // A comment after the object
  8 | export { obj };
@@ -1260,6 +1358,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("{")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:8:8]
  7 | // A comment after the object
  8 | export { obj };
@@ -1267,6 +1366,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("obj")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:8:10]
  7 | // A comment after the object
  8 | export { obj };
@@ -1274,6 +1374,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("}")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:8:14]
  7 | // A comment after the object
  8 | export { obj };
@@ -1281,6 +1382,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/generic_arrow.ts:8:15]
  7 | // A comment after the object
  8 | export { obj };
@@ -1343,6 +1445,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("let")
+  |   regex: undefined
    ,-[files/index.js:3:1]
  2 | 
  3 | let x = /* inline comment */ 1;
@@ -1351,6 +1454,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("x")
+  |   regex: undefined
    ,-[files/index.js:3:5]
  2 | 
  3 | let x = /* inline comment */ 1;
@@ -1359,6 +1463,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
    ,-[files/index.js:3:7]
  2 | 
  3 | let x = /* inline comment */ 1;
@@ -1375,6 +1480,7 @@
    `----
 
   x tokens-plugin(tokens): Numeric ("1")
+  |   regex: undefined
    ,-[files/index.js:3:30]
  2 | 
  3 | let x = /* inline comment */ 1;
@@ -1383,6 +1489,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/index.js:3:31]
  2 | 
  3 | let x = /* inline comment */ 1;
@@ -1399,6 +1506,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("let")
+  |   regex: undefined
    ,-[files/index.js:6:1]
  5 | // Another comment
  6 | let y = /abc/gu;
@@ -1407,6 +1515,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("y")
+  |   regex: undefined
    ,-[files/index.js:6:5]
  5 | // Another comment
  6 | let y = /abc/gu;
@@ -1415,6 +1524,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
    ,-[files/index.js:6:7]
  5 | // Another comment
  6 | let y = /abc/gu;
@@ -1432,6 +1542,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/index.js:6:16]
  5 | // Another comment
  6 | let y = /abc/gu;
@@ -1447,6 +1558,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("const")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:1:1]
  1 | const Component = () => {
    : ^^^^^
@@ -1529,6 +1641,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("Component")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:1:7]
  1 | const Component = () => {
    :       ^^^^^^^^^
@@ -1536,6 +1649,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:1:17]
  1 | const Component = () => {
    :                 ^
@@ -1543,6 +1657,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("(")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:1:19]
  1 | const Component = () => {
    :                   ^
@@ -1550,6 +1665,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (")")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:1:20]
  1 | const Component = () => {
    :                    ^
@@ -1557,6 +1673,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=>")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:1:22]
  1 | const Component = () => {
    :                      ^^
@@ -1564,6 +1681,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("{")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:1:25]
  1 | const Component = () => {
    :                         ^
@@ -1571,6 +1689,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("return")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:3]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1579,6 +1698,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("<")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:10]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1587,6 +1707,7 @@
    `----
 
   x tokens-plugin(tokens): JSXIdentifier ("div")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:11]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1595,6 +1716,7 @@
    `----
 
   x tokens-plugin(tokens): JSXIdentifier ("className")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:15]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1603,6 +1725,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:24]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1611,6 +1734,7 @@
    `----
 
   x tokens-plugin(tokens): JSXText ("\"test\"")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:25]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1619,6 +1743,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (">")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:31]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1627,6 +1752,7 @@
    `----
 
   x tokens-plugin(tokens): JSXText ("Hello")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:32]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1635,6 +1761,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("<")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:37]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1643,6 +1770,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("/")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:38]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1651,6 +1779,7 @@
    `----
 
   x tokens-plugin(tokens): JSXIdentifier ("div")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:39]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1659,6 +1788,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (">")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:42]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1667,6 +1797,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:2:43]
  1 | const Component = () => {
  2 |   return <div className="test">Hello</div>;
@@ -1675,6 +1806,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("}")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:3:1]
  2 |   return <div className="test">Hello</div>;
  3 | };
@@ -1683,6 +1815,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:3:2]
  2 |   return <div className="test">Hello</div>;
  3 | };
@@ -1699,6 +1832,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("export")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:6:1]
  5 | // A comment after the component
  6 | export { Component };
@@ -1706,6 +1840,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("{")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:6:8]
  5 | // A comment after the component
  6 | export { Component };
@@ -1713,6 +1848,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("Component")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:6:10]
  5 | // A comment after the component
  6 | export { Component };
@@ -1720,6 +1856,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("}")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:6:20]
  5 | // A comment after the component
  6 | export { Component };
@@ -1727,6 +1864,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/jsx_element.tsx:6:21]
  5 | // A comment after the component
  6 | export { Component };
@@ -1734,6 +1872,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("const")
+  |   regex: undefined
    ,-[files/keywords.js:1:1]
  1 | const obj = {
    : ^^^^^
@@ -1821,6 +1960,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("obj")
+  |   regex: undefined
    ,-[files/keywords.js:1:7]
  1 | const obj = {
    :       ^^^
@@ -1828,6 +1968,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
    ,-[files/keywords.js:1:11]
  1 | const obj = {
    :           ^
@@ -1835,6 +1976,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("{")
+  |   regex: undefined
    ,-[files/keywords.js:1:13]
  1 | const obj = {
    :             ^
@@ -1850,6 +1992,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("foo")
+  |   regex: undefined
    ,-[files/keywords.js:3:3]
  2 |   // Identifier tokens
  3 |   foo: foo,
@@ -1858,6 +2001,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
    ,-[files/keywords.js:3:6]
  2 |   // Identifier tokens
  3 |   foo: foo,
@@ -1866,6 +2010,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("foo")
+  |   regex: undefined
    ,-[files/keywords.js:3:8]
  2 |   // Identifier tokens
  3 |   foo: foo,
@@ -1874,6 +2019,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
    ,-[files/keywords.js:3:11]
  2 |   // Identifier tokens
  3 |   foo: foo,
@@ -1882,6 +2028,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("async")
+  |   regex: undefined
    ,-[files/keywords.js:4:3]
  3 |   foo: foo,
  4 |   async: async,
@@ -1890,6 +2037,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
    ,-[files/keywords.js:4:8]
  3 |   foo: foo,
  4 |   async: async,
@@ -1898,6 +2046,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("async")
+  |   regex: undefined
    ,-[files/keywords.js:4:10]
  3 |   foo: foo,
  4 |   async: async,
@@ -1906,6 +2055,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
    ,-[files/keywords.js:4:15]
  3 |   foo: foo,
  4 |   async: async,
@@ -1922,6 +2072,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("let")
+  |   regex: undefined
    ,-[files/keywords.js:6:3]
  5 |   // Keyword tokens
  6 |   let: let,
@@ -1930,6 +2081,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
    ,-[files/keywords.js:6:6]
  5 |   // Keyword tokens
  6 |   let: let,
@@ -1938,6 +2090,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("let")
+  |   regex: undefined
    ,-[files/keywords.js:6:8]
  5 |   // Keyword tokens
  6 |   let: let,
@@ -1946,6 +2099,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
    ,-[files/keywords.js:6:11]
  5 |   // Keyword tokens
  6 |   let: let,
@@ -1954,6 +2108,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("static")
+  |   regex: undefined
    ,-[files/keywords.js:7:3]
  6 |   let: let,
  7 |   static: static,
@@ -1962,6 +2117,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
    ,-[files/keywords.js:7:9]
  6 |   let: let,
  7 |   static: static,
@@ -1970,6 +2126,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("static")
+  |   regex: undefined
    ,-[files/keywords.js:7:11]
  6 |   let: let,
  7 |   static: static,
@@ -1978,6 +2135,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
    ,-[files/keywords.js:7:17]
  6 |   let: let,
  7 |   static: static,
@@ -1986,6 +2144,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("yield")
+  |   regex: undefined
    ,-[files/keywords.js:8:3]
  7 |   static: static,
  8 |   yield: yield,
@@ -1994,6 +2153,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (":")
+  |   regex: undefined
    ,-[files/keywords.js:8:8]
  7 |   static: static,
  8 |   yield: yield,
@@ -2002,6 +2162,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("yield")
+  |   regex: undefined
    ,-[files/keywords.js:8:10]
  7 |   static: static,
  8 |   yield: yield,
@@ -2010,6 +2171,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (",")
+  |   regex: undefined
    ,-[files/keywords.js:8:15]
  7 |   static: static,
  8 |   yield: yield,
@@ -2018,6 +2180,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("}")
+  |   regex: undefined
    ,-[files/keywords.js:9:1]
  8 |   yield: yield,
  9 | };
@@ -2025,6 +2188,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/keywords.js:9:2]
  8 |   yield: yield,
  9 | };
@@ -2127,6 +2291,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("const")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:2:1]
  1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
  2 | const a = n << 2;
@@ -2135,6 +2300,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("a")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:2:7]
  1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
  2 | const a = n << 2;
@@ -2143,6 +2309,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:2:9]
  1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
  2 | const a = n << 2;
@@ -2151,6 +2318,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("n")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:2:11]
  1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
  2 | const a = n << 2;
@@ -2159,6 +2327,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("<<")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:2:13]
  1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
  2 | const a = n << 2;
@@ -2167,6 +2336,7 @@
    `----
 
   x tokens-plugin(tokens): Numeric ("2")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:2:16]
  1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
  2 | const a = n << 2;
@@ -2175,6 +2345,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:2:17]
  1 | // `<<` is disambiguated: speculatively tried as `<` for type args, fails, rewinds to `<<`
  2 | const a = n << 2;
@@ -2191,6 +2362,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("const")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:1]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2199,6 +2371,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("b")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:7]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2207,6 +2380,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:9]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2215,6 +2389,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("id")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:11]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2223,6 +2398,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("<")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:13]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2231,6 +2407,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("number")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:14]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2239,6 +2416,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (">")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:20]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2247,6 +2425,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("(")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:21]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2255,6 +2434,7 @@
    `----
 
   x tokens-plugin(tokens): Numeric ("42")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:22]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2263,6 +2443,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (")")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:24]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2271,6 +2452,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:5:25]
  4 | // Successful type argument parsing with `<` and `>`
  5 | const b = id<number>(42);
@@ -2295,6 +2477,7 @@
    `----
 
   x tokens-plugin(tokens): Keyword ("const")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:1]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2302,6 +2485,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("c")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:7]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2309,6 +2493,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("=")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:9]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2316,6 +2501,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("n")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:11]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2323,6 +2509,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("<")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:12]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2330,6 +2517,7 @@
    `----
 
   x tokens-plugin(tokens): Numeric ("1")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:13]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2337,6 +2525,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (">>")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:14]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2344,6 +2533,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator ("(")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:16]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2351,6 +2541,7 @@
    `----
 
   x tokens-plugin(tokens): Numeric ("0")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:17]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2358,6 +2549,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (")")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:18]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2365,6 +2557,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/ts_angle_relex.ts:9:19]
  8 | // rewinds to binary expression `n < (1 >> (0))`
  9 | const c = n<1>>(0);
@@ -2372,6 +2565,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("a")
+  |   regex: undefined
    ,-[files/unicode.js:1:1]
  1 | a;
    : ^
@@ -2402,6 +2596,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/unicode.js:1:2]
  1 | a;
    :  ^
@@ -2417,6 +2612,7 @@
    `----
 
   x tokens-plugin(tokens): Identifier ("b")
+  |   regex: undefined
    ,-[files/unicode.js:3:1]
  2 | // 😀🤪😆😎🤮
  3 | b;
@@ -2424,6 +2620,7 @@
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
+  |   regex: undefined
    ,-[files/unicode.js:3:2]
  2 | // 😀🤪😆😎🤮
  3 | b;

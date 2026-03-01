@@ -66,6 +66,7 @@ export type Token =
 
 interface BaseToken extends Span {
   value: string;
+  regex: undefined;
 }
 
 export interface BooleanToken extends BaseToken {
@@ -104,8 +105,9 @@ export interface PunctuatorToken extends BaseToken {
   type: "Punctuator";
 }
 
-export interface RegularExpressionToken extends BaseToken {
+export interface RegularExpressionToken extends Span {
   type: "RegularExpression";
+  value: string;
   regex: {
     pattern: string;
     flags: string;
@@ -213,29 +215,21 @@ function deserializeToken(pos: number): Token {
 
   const kind = buffer![pos + KIND_FIELD_OFFSET];
 
-  if (kind === REGEXP_KIND) {
+  let regex: RegularExpressionToken["regex"] | undefined;
+  if (kind <= PRIVATE_IDENTIFIER_KIND) {
+    // Strip leading `#` from private identifiers
+    if (kind === PRIVATE_IDENTIFIER_KIND) value = value.slice(1);
+
+    // Unescape if `escaped` flag is set
+    if (buffer![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+      value = unescapeIdentifier(value);
+    }
+  } else if (kind === REGEXP_KIND) {
     const patternEnd = value.lastIndexOf("/");
-    return {
-      // @ts-expect-error - TS doesn't understand `__proto__`
-      __proto__: TokenProto,
-      type: "RegularExpression",
-      value,
-      regex: {
-        pattern: value.slice(1, patternEnd),
-        flags: value.slice(patternEnd + 1),
-      },
-      start,
-      end,
-      range: [start, end],
+    regex = {
+      pattern: value.slice(1, patternEnd),
+      flags: value.slice(patternEnd + 1),
     };
-  }
-
-  // Strip leading `#` from private identifiers
-  if (kind === PRIVATE_IDENTIFIER_KIND) value = value.slice(1);
-
-  // Unescape identifiers, keywords, and private identifiers
-  if (kind <= PRIVATE_IDENTIFIER_KIND && buffer![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
-    value = unescapeIdentifier(value);
   }
 
   return {
@@ -243,6 +237,7 @@ function deserializeToken(pos: number): Token {
     __proto__: TokenProto,
     type: TOKEN_TYPES[kind],
     value,
+    regex,
     start,
     end,
     range: [start, end],
