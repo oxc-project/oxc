@@ -12,7 +12,7 @@ use crate::hir::{
     globals::Global,
     object_shape::{
         BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID,
-        BUILT_IN_PROPS_ID, BUILT_IN_USE_REF_ID,
+        BUILT_IN_PROPS_ID, BUILT_IN_REF_VALUE_ID, BUILT_IN_USE_REF_ID,
     },
     types::{
         FunctionType, ObjectType, PropType, PropertyLiteral, PropertyName, Type, TypeId, make_type,
@@ -57,6 +57,15 @@ impl<'a> Unifier<'a> {
                     self.unify(left, prop_type);
                     return;
                 }
+                if is_ref_like_name(prop) {
+                    self.unify(
+                        left,
+                        Type::Object(ObjectType {
+                            shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()),
+                        }),
+                    );
+                    return;
+                }
             }
             // If we can't resolve the property, unify left with a fresh type var
             return;
@@ -67,6 +76,15 @@ impl<'a> Unifier<'a> {
                 let property_str = value.to_string();
                 if let Some(prop_type) = self.env.get_property_type(&object_type, &property_str) {
                     self.unify(prop_type, right);
+                    return;
+                }
+                if is_ref_like_name(prop) {
+                    self.unify(
+                        Type::Object(ObjectType {
+                            shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()),
+                        }),
+                        right,
+                    );
                     return;
                 }
             }
@@ -649,7 +667,25 @@ fn generate_instruction_equations(
                 right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) }),
             });
         }
-        InstructionValue::JsxExpression(_) | InstructionValue::JsxFragment(_) => {
+        InstructionValue::JsxExpression(v) => {
+            equations.push(TypeEquation {
+                left: lvalue_type,
+                right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_JSX_ID.to_string()) }),
+            });
+            for attr in &v.props {
+                if let crate::hir::JsxAttribute::Attribute { name, place } = attr {
+                    if name == "ref" {
+                        equations.push(TypeEquation {
+                            left: place.identifier.type_.clone(),
+                            right: Type::Object(ObjectType {
+                                shape_id: Some(BUILT_IN_USE_REF_ID.to_string()),
+                            }),
+                        });
+                    }
+                }
+            }
+        }
+        InstructionValue::JsxFragment(_) => {
             equations.push(TypeEquation {
                 left: lvalue_type,
                 right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_JSX_ID.to_string()) }),
@@ -708,7 +744,12 @@ fn generate_instruction_equations(
                 left: lvalue_type,
                 right: Type::Property(Box::new(PropType {
                     object_type: load.object.identifier.type_.clone(),
-                    object_name: String::new(),
+                    object_name: load
+                        .object
+                        .identifier
+                        .name
+                        .as_ref()
+                        .map_or_else(String::new, |n| n.value().to_string()),
                     property_name: PropertyName::Literal {
                         value: PropertyLiteral::String(load.property.to_string()),
                     },
@@ -858,4 +899,40 @@ fn is_primitive_binary_op(op: BinaryOperator) -> bool {
             | BinaryOperator::GreaterEqualThan
             | BinaryOperator::LessEqualThan
     )
+}
+
+/// Check if a property type refers to a ref-like name.
+///
+/// Port of TS InferTypes.ts `isRefLikeName()`:
+/// Returns true if the property is `.current` on an identifier whose name
+/// ends with `Ref` (e.g. `myRef.current`) or is exactly `ref`.
+///
+/// This is used by the `enableTreatRefLikeIdentifiersAsRefs` behavior to
+/// infer that `someRef.current` accesses produce a BuiltInRefValue type,
+/// which prevents mutations to `.current` from extending mutable ranges.
+fn is_ref_like_name(prop: &PropType) -> bool {
+    let is_current = match &prop.property_name {
+        PropertyName::Literal { value } => match value {
+            PropertyLiteral::String(s) => s == "current",
+            _ => false,
+        },
+        _ => false,
+    };
+    if !is_current {
+        return false;
+    }
+    let name = &prop.object_name;
+    if name == "ref" {
+        return true;
+    }
+    if name.ends_with("Ref") && name.len() > 3 {
+        let prefix = &name[..name.len() - 3];
+        let mut chars = prefix.chars();
+        if let Some(first) = chars.next() {
+            if first.is_ascii_alphabetic() || first == '$' || first == '_' {
+                return chars.all(|c| c.is_ascii_alphanumeric() || c == '$' || c == '_');
+            }
+        }
+    }
+    false
 }

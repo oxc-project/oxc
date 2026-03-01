@@ -2217,9 +2217,21 @@ fn sync_mutable_ranges(func: &mut HIRFunction) {
             for lvalue in each_instruction_lvalue(instr) {
                 merge_range(&mut canonical, lvalue);
             }
-            // All operands
-            for operand in each_instruction_value_operand(&instr.value) {
-                merge_range(&mut canonical, operand);
+            // All operands — but skip FunctionExpression/ObjectMethod context
+            // operands, whose mutable ranges belong to the INNER function's
+            // instruction-id space and would corrupt the outer function's ranges.
+            // In the TS reference this is not an issue because Identifier is a
+            // reference type: all copies share the same mutableRange. In Rust each
+            // Place owns its own Identifier clone, so the inner function's context
+            // clones carry stale ranges from the inner function's analysis.
+            let is_nested_fn = matches!(
+                &instr.value,
+                InstructionValue::FunctionExpression(_) | InstructionValue::ObjectMethod(_)
+            );
+            if !is_nested_fn {
+                for operand in each_instruction_value_operand(&instr.value) {
+                    merge_range(&mut canonical, operand);
+                }
             }
         }
         for operand in each_terminal_operand(&block.terminal) {
