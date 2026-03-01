@@ -135,6 +135,7 @@ ignored = [
   "oxc_ast",
   "oxc_ast_visit",
   "oxc_codegen",
+  "oxc_estree_tokens",
   "oxc_formatter",
   "oxc_isolated_declarations",
   "oxc_linter",
