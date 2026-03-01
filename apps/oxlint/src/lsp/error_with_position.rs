@@ -10,6 +10,7 @@ use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::{OxcCode, Severity};
 use oxc_linter::{
     AllowWarnDeny, DisableDirectives, Fix, FixKind, Message, PossibleFixes, RuleCommentType,
+    full_comment_delete_span,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -276,7 +277,10 @@ pub fn create_unused_directives_report(
                     severity,
                     source_text,
                     rope,
-                    Some(&Fix::delete(span).with_message(fix_message)),
+                    Some(
+                        &Fix::delete(full_comment_delete_span(span, source_text))
+                            .with_message(fix_message),
+                    ),
                 ));
             }
             RuleCommentType::Single(rules) => {

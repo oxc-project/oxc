@@ -60,7 +60,7 @@ mod lint_runner;
 pub use crate::config::plugins::normalize_plugin_name;
 pub use crate::disable_directives::{
     DisableDirectives, DisableRuleComment, RuleCommentRule, RuleCommentType,
-    create_unused_directives_diagnostics,
+    create_unused_directives_diagnostics, full_comment_delete_span,
 };
 pub use crate::{
     config::{
