@@ -1,0 +1,465 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (foo === 1) {}
+ 2 │ │               else if (foo === 2) {}
+ 3 │ ╰─▶             else if (foo === 3) {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (foo === 1) {}
+ 2 │ │               else if (foo === 2) {}
+ 3 │ │               else if (foo === 3) {}
+ 4 │ │               else {
+ 5 │ │                   // default
+ 6 │ ╰─▶             }
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (foo === 1) (notBlock())
+ 2 │ │               else if (foo === 2) (notBlock())
+ 3 │ │               else if (foo === 3) (notBlock())
+ 4 │ ╰─▶             else (notBlock())
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:2:18]
+ 1 │     if (bar = 1) {}
+ 2 │ ╭─▶             else if (foo === 1) {}
+ 3 │ │               else if (foo === 2) {}
+ 4 │ ╰─▶             else if (foo === 3) {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (foo === 1) {}
+ 2 │ │               else if (foo === 2) {}
+ 3 │ │               else if (foo === 3) {}
+ 4 │ ╰─▶             else if (bar === 3) {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:2:17]
+ 1 │     if (foo === 0) {
+ 2 │ ╭─▶                 if (foo === 1) {}
+ 3 │ │                   else if (foo === 2) {}
+ 4 │ ╰─▶                 else if (foo === 3) {}
+ 5 │                 }
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (1 === foo) {}
+ 2 │ │               else if (foo === 2) {}
+ 3 │ ╰─▶             else if (3 === foo) {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (true === foo) {}
+ 2 │ │               else if (bar.bar === true) {}
+ 3 │ ╰─▶             else if (true === baz()) {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (foo === ((0, 1))) {}
+ 2 │ │               else if (foo === (bar + 2)) {}
+ 3 │ ╰─▶             else if (foo === (baz = 2)) {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:2:13]
+ 1 │     // Should use "foo" as discriminant
+ 2 │ ╭─▶             if (foo === bar) {}
+ 3 │ │               else if (foo === bar) {}
+ 4 │ ╰─▶             else if (foo === bar) {}
+ 5 │                 // Should use "bar" as discriminant
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:6:13]
+ 5 │                 // Should use "bar" as discriminant
+ 6 │ ╭─▶             if (bar === foo) {}
+ 7 │ │               else if (bar === foo) {}
+ 8 │ ╰─▶             else if (foo === bar) {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+    ╭─[prefer_switch.tsx:1:1]
+  1 │ ╭─▶ if (foo === 1) {}
+  2 │ │               else if (foo === 2) {}
+  3 │ │               else if (foo === 3) {}
+  4 │ │               else if (foo === 4) {}
+  5 │ │               else if (foo === 5) {}
+  6 │ │               else if (foo === 6) {}
+  7 │ │               else if (foo === 7) {}
+  8 │ │               else if (foo === 8) {}
+  9 │ │               else if (foo === 9) {}
+ 10 │ │               else if (foo === 10) {}
+ 11 │ ╰─▶             else {}
+    ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (foo === 1) {}
+ 2 │ │               else if ((foo === 2 || foo === 3) || (foo === 4)) {}
+ 3 │ ╰─▶             else if (foo === 5) {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+    ╭─[prefer_switch.tsx:3:21]
+  2 │                     for (const a of b) {
+  3 │ ╭─▶                     if (foo === 1) {
+  4 │ │                           return 1;
+  5 │ │                       } else if (foo === 2) {
+  6 │ │                           throw new Error();
+  7 │ │                       } else if (foo === 3) {
+  8 │ │                           alert(foo);
+  9 │ │                       } else {
+ 10 │ │                           console.log('wow');
+ 11 │ ╰─▶                     }
+ 12 │                     }
+    ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:3:21]
+ 2 │                     return bar.map(foo => {
+ 3 │ ╭─▶                     if (foo === 1) return foo;
+ 4 │ │                       else if (foo === 2) throw new Error();
+ 5 │ │                       else if (foo === 3) foo++
+ 6 │ ╰─▶                     else console.log('wow');
+ 7 │                     })
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+    ╭─[prefer_switch.tsx:2:18]
+  1 │     if (one) {}
+  2 │ ╭─▶             else if (foo === 1) {}
+  3 │ │               else if (foo === 2) {}
+  4 │ │               else if (foo === 3) {}
+  5 │ │               else if (two) {}
+  6 │ │               else if (bar === 1) {}
+  7 │ │               else if (bar === 2) {}
+  8 │ │               else if (bar === 3) {}
+  9 │ │               else if (foo === 1) {}
+ 10 │ │               else if (foo === 2) {}
+ 11 │ ╰─▶             else if (foo === 3) {}
+    ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+    ╭─[prefer_switch.tsx:6:18]
+  5 │                 else if (two) {}
+  6 │ ╭─▶             else if (bar === 1) {}
+  7 │ │               else if (bar === 2) {}
+  8 │ │               else if (bar === 3) {}
+  9 │ │               else if (foo === 1) {}
+ 10 │ │               else if (foo === 2) {}
+ 11 │ ╰─▶             else if (foo === 3) {}
+    ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+    ╭─[prefer_switch.tsx:9:18]
+  8 │                 else if (bar === 3) {}
+  9 │ ╭─▶             else if (foo === 1) {}
+ 10 │ │               else if (foo === 2) {}
+ 11 │ ╰─▶             else if (foo === 3) {}
+    ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (foo.baz === 1) {}
+ 2 │ │               else if (foo['baz'] === 2) {}
+ 3 │ ╰─▶             else if (foo["ba" + 'z'] === 3) {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:2:17]
+ 1 │     while (bar) {
+ 2 │ ╭─▶                 if (foo === 1) {
+ 3 │ │                       for (const foo of bar) {
+ 4 │ │                           break;
+ 5 │ │                       }
+ 6 │ │                   } else if (foo === 2) {
+ 7 │ │                   } else if (foo === 3) {
+ 8 │ ╰─▶                 }
+ 9 │                 }
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:2:17]
+ 1 │     while (bar) {
+ 2 │ ╭─▶                 if (foo === 1) {
+ 3 │ │                       break;
+ 4 │ │                   } else if (foo === 2) {
+ 5 │ │                   } else if (foo === 3) {
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:2:17]
+ 1 │     while (bar) {
+ 2 │ ╭─▶                 if (foo === 1) {
+ 3 │ │                   } else if (foo === 2) {
+ 4 │ │                       break;
+ 5 │ │                   } else if (foo === 3) {
+ 6 │ ╰─▶                 }
+ 7 │                 }
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+    ╭─[prefer_switch.tsx:2:17]
+  1 │     while (bar) {
+  2 │ ╭─▶                 if (foo === 1) {
+  3 │ │                   } else if (foo === 2) {
+  4 │ │                   } else if (foo === 3) {
+  5 │ │                       if (a) {
+  6 │ │                           if (b) {
+  7 │ │                               if (c) {
+  8 │ │                                   break;
+  9 │ │                               }
+ 10 │ │                           }
+ 11 │ │                       }
+ 12 │ ╰─▶                 }
+ 13 │                 }
+    ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:3:21]
+ 2 │                     case 'bar':
+ 3 │ ╭─▶                     if (foo === 1) {
+ 4 │ │                       } else if (foo === 2) {
+ 5 │ │                       } else if (foo === 3) {
+ 6 │ │                           break;
+ 7 │ ╰─▶                     }
+ 8 │                 }
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+    ╭─[prefer_switch.tsx:2:17]
+  1 │     function unicorn() {
+  2 │ ╭─▶                 if (foo === 1) return 1;
+  3 │ │                   else if (foo === 2) throw new Error("");
+  4 │ │                   else if (foo === 3) process.exit(1);
+  5 │ │                   else if (foo === 4) {}
+  6 │ │                   else if (foo === 5) ;
+  7 │ │                   else if (foo === 6) {
+  8 │ │                       return 6;
+  9 │ │                       // Already unreachable
+ 10 │ │                       call();
+ 11 │ │                   }
+ 12 │ │                   else if (foo === 7) {
+ 13 │ │                       return 7;
+ 14 │ │                       // EmptyStatement after return
+ 15 │ │                       ;;;;;;
+ 16 │ │                   }
+ 17 │ │                   else if (foo === 8) {
+ 18 │ │                       return 8;
+ 19 │ │                       // FunctionDeclaration after return
+ 20 │ │                       function afterReturn() {}
+ 21 │ │                   }
+ 22 │ │                   else if (foo === 9) {
+ 23 │ │                       return 9;
+ 24 │ │                       // FunctionExpression after return
+ 25 │ │                       const afterReturn = function afterReturn() {return 9}
+ 26 │ │                   }
+ 27 │ │                   else if (foo === 10) {
+ 28 │ │                       {{{
+ 29 │ │                           return 10;
+ 30 │ │                       };};};
+ 31 │ │                   }
+ 32 │ │                   else if (foo === 11) {
+ 33 │ │                       return 11;
+ 34 │ │                       {{{
+ 35 │ │                           ;;;
+ 36 │ │                           function afterReturn() {}
+ 37 │ │                           ;;;
+ 38 │ │                           function afterReturn2() {}
+ 39 │ │                           ;;;
+ 40 │ │                       }}}
+ 41 │ │                   }
+ 42 │ │                   else if (foo === 12) {
+ 43 │ │                       return twelve;
+ 44 │ │                       var twelve = 12;
+ 45 │ │                   }
+ 46 │ ╰─▶                 else return 'default';
+ 47 │                 }
+    ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+    ╭─[prefer_switch.tsx:2:17]
+  1 │     function unicorn() {
+  2 │ ╭─▶                 if (foo === 1) {
+  3 │ │                       if (true) {
+  4 │ │                           throw error;
+  5 │ │                       } else {
+  6 │ │                           return false;
+  7 │ │                       }
+  8 │ │                   }
+  9 │ │                   else if (foo === 2) {
+ 10 │ │                       if (true) {
+ 11 │ │                           throw error;
+ 12 │ │                       }
+ 13 │ │                   // no else, need break
+ 14 │ │                   }
+ 15 │ │                   else if (foo === 3) {
+ 16 │ │                       if (a) {
+ 17 │ │                           return a;
+ 18 │ │                       } else if (b) {
+ 19 │ │                           return b;
+ 20 │ │                       } else if (c) {
+ 21 │ │                           return c;
+ 22 │ │                       } else if (d) {
+ 23 │ │                           if (dd) {
+ 24 │ │                               return dd;
+ 25 │ │                           } else {
+ 26 │ │                               return dd;
+ 27 │ │                           }
+ 28 │ │                       } else {
+ 29 │ │                           return f;
+ 30 │ │                       }
+ 31 │ │                   }
+ 32 │ │                   else if (foo === 4) {
+ 33 │ │                       if (a) {
+ 34 │ │                           return a;
+ 35 │ │                       } else if (b) {
+ 36 │ │                           return b;
+ 37 │ │                       } else if (c) {
+ 38 │ │                           return c;
+ 39 │ │                       } else if (d) {
+ 40 │ │                           return e;
+ 41 │ │                       } // here
+ 42 │ │                   // missing else deep inside, need break
+ 43 │ │                   }
+ 44 │ │                   else if (foo === 5) {
+ 45 │ │                       if (a) {
+ 46 │ │                           return a;
+ 47 │ │                       } else if (b) {
+ 48 │ │                           return b;
+ 49 │ │                       } else if (c) {
+ 50 │ │                           return c;
+ 51 │ │                       } else if (d) {
+ 52 │ │                           if (dd) {
+ 53 │ │                               return dd;
+ 54 │ │                           } else if (de) {
+ 55 │ │                               return de;
+ 56 │ │                           } // here
+ 57 │ │                       } else {
+ 58 │ │                           return f;
+ 59 │ │                       }
+ 60 │ │                   // missing else deep inside, need break
+ 61 │ │                   }
+ 62 │ │                   else if (foo === 6) {
+ 63 │ │                       if (a) {
+ 64 │ │                           return a;
+ 65 │ │                       } else if (b) {
+ 66 │ │                           return b;
+ 67 │ │                       } else if (c) {
+ 68 │ │                           // here
+ 69 │ │                       } else if (d) {
+ 70 │ │                           return e;
+ 71 │ │                       } else {
+ 72 │ │                           return f;
+ 73 │ │                       }
+ 74 │ │                   // missing one return, need break
+ 75 │ │                   }
+ 76 │ │                   else if (foo === 7) {
+ 77 │ │                       if (a) return a;
+ 78 │ │                       else if (b) {
+ 79 │ │                           return b;;;;;
+ 80 │ │                       } else if (c) {
+ 81 │ │                           return c;
+ 82 │ │                           function x() {}
+ 83 │ │                       } else if (d) {
+ 84 │ │                           return e;
+ 85 │ │                       } else {
+ 86 │ │                           return f;
+ 87 │ │                       }
+ 88 │ ╰─▶                 }
+ 89 │                 }
+    ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (foo === 1) {}
+ 2 │ ╰─▶             else if (foo === 2) {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (foo === 1) {}
+ 2 │ │               else if (foo === 2) {}
+ 3 │ ╰─▶             else {}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:2:17]
+ 1 │     function foo() {
+ 2 │ ╭─▶                 if (foo === 1) {}
+ 3 │ │                   else if (foo === 2) {}
+ 4 │ ╰─▶                 else if (foo === 3) {}
+ 5 │                 }
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:2:17]
+ 1 │     function foo() {
+ 2 │ ╭─▶                 if (foo === 1) {}
+ 3 │ │                   else if (foo === 2) {}
+ 4 │ ╰─▶                 else if (foo === 3) {}
+ 5 │                 }
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:2:17]
+ 1 │     function foo() {
+ 2 │ ╭─▶                 if (foo === 1) {}
+ 3 │ │                   else if (foo === 2) {}
+ 4 │ ╰─▶                 else if (foo === 3) {}
+ 5 │                 }
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
+
+  ⚠ eslint-plugin-unicorn(prefer-switch): Use `switch` instead of multiple `else-if`.
+   ╭─[prefer_switch.tsx:1:1]
+ 1 │ ╭─▶ if (foo === 1) {}
+ 2 │ │               else if (foo === 2) {}
+ 3 │ ╰─▶             else if (foo === 3) {break;}
+   ╰────
+  help: Prefer switch when branching on repeated equality comparisons.
