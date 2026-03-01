@@ -11,9 +11,10 @@ use oxc_ast_visit::{
 };
 use oxc_parser::{Kind, Token};
 
-use crate::{
-    context::Context, estree_kind::ESTreeKind, options::ESTreeTokenConfig, visitor::Visitor,
-};
+use crate::{context::Context, options::ESTreeTokenConfig, visitor::Visitor};
+
+mod estree_kind;
+use estree_kind::ESTreeKind;
 
 /// Walk AST and convert all token kinds to `ESTreeKind` discriminants.
 /// Also convert token spans from UTF-8 byte offsets to UTF-16 offsets.
