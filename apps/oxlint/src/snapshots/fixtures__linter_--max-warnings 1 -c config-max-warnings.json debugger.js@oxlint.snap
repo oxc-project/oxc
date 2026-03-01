@@ -1,0 +1,21 @@
+---
+source: apps/oxlint/src/tester.rs
+assertion_line: 134
+---
+########## 
+arguments: --max-warnings 1 -c config-max-warnings.json debugger.js
+working directory: fixtures/linter
+----------
+
+  ! eslint(no-debugger): `debugger` statement is not allowed
+   ,-[debugger.js:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+   `----
+  help: Remove the debugger statement
+
+Found 1 warning and 0 errors.
+Finished in <variable>ms on 1 file with 93 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

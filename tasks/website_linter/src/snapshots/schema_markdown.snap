@@ -304,6 +304,16 @@ type: `object`
 Options for the linter.
 
 
+### options.maxWarnings
+
+type: `integer`
+
+
+Specify a warning threshold. Exits with an error status if warnings exceed this value.
+
+Equivalent to passing `--max-warnings` on the CLI.
+
+
 ### options.typeAware
 
 type: `boolean`
