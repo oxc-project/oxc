@@ -169,7 +169,7 @@ jobs:
           cargo zigbuild --release -p oxlint --features allocator --target=${{ matrix.target }}
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: oxlint-bindings-${{ matrix.target }}
@@ -189,7 +189,7 @@ jobs:
       # For github release
       - name: Upload Rust binary
         if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: rust-oxlint-${{ matrix.target }}
@@ -243,7 +243,7 @@ jobs:
             rm -rf target/x86_64-unknown-freebsd/release/incremental
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: oxlint-bindings-x86_64-unknown-freebsd
@@ -257,7 +257,7 @@ jobs:
           archive_name: rust-oxlint-x86_64-unknown-freebsd
 
       - name: Upload Rust binary
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: rust-oxlint-x86_64-unknown-freebsd
@@ -279,7 +279,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           path: artifacts
           pattern: oxlint-bindings-*
@@ -451,7 +451,7 @@ jobs:
           cargo zigbuild --release -p oxfmt --no-default-features --features allocator --target=${{ matrix.target }}
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: oxfmt-bindings-${{ matrix.target }}
@@ -471,7 +471,7 @@ jobs:
       # For github release
       - name: Upload Rust binary
         if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: rust-oxfmt-${{ matrix.target }}
@@ -525,7 +525,7 @@ jobs:
             rm -rf target/x86_64-unknown-freebsd/release/incremental
 
       - name: Upload NAPI artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: oxfmt-bindings-x86_64-unknown-freebsd
@@ -539,7 +539,7 @@ jobs:
           archive_name: rust-oxfmt-x86_64-unknown-freebsd
 
       - name: Upload Rust binary
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           if-no-files-found: error
           name: rust-oxfmt-x86_64-unknown-freebsd
@@ -560,7 +560,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           path: artifacts
           pattern: oxfmt-bindings-*
@@ -650,7 +650,7 @@ jobs:
           git tag oxlint_v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION} ${{ github.sha }}
           git push origin oxlint_v${NEEDS_CHECK_OUTPUTS_OXLINT_VERSION} oxfmt_v${NEEDS_CHECK_OUTPUTS_OXFMT_VERSION}
 
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           path: ./release-artifacts
           pattern: rust-*
