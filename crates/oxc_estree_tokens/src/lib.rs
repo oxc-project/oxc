@@ -6,7 +6,7 @@
 //! 2. Update `Kind` of tokens in place so they can be deserialized on JS side (`raw_transfer.rs`).
 //!
 //! Both implementations share the same logic by utilizing the `Context` trait and AST visitor `Visitor`.
-//! `Context` trait is implemented by `JsonContext` and `UpdateContext`.
+//! `Context` trait is implemented by `JsonContext` and `RawContext`.
 //! The implementations only differ in how they process tokens sent to them by the visitor.
 //!
 //! Both implementations also convert UTF-8 spans to UTF-16.

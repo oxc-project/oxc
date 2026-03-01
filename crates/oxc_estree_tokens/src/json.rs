@@ -300,7 +300,7 @@ impl<O: ESTreeTokenConfig, S: SequenceSerializer> Context for JsonContext<'_, O,
         self.options.is_ts()
     }
 
-    /// Get reference to [`JSXState`] for the serializer/updater.
+    /// Get reference to [`JSXState`] for the context.
     ///
     /// [`JSXState`]: crate::jsx_state::JSXState
     #[expect(clippy::inline_always)]
@@ -309,7 +309,7 @@ impl<O: ESTreeTokenConfig, S: SequenceSerializer> Context for JsonContext<'_, O,
         &self.jsx_state
     }
 
-    /// Get mutable reference to [`JSXState`] for the serializer/updater.
+    /// Get mutable reference to [`JSXState`] for the context.
     ///
     /// [`JSXState`]: crate::jsx_state::JSXState
     #[expect(clippy::inline_always)]

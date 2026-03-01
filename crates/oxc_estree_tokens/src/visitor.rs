@@ -61,7 +61,7 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
     fn visit_ts_import_type(&mut self, import_type: &TSImportType<'a>) {
         // Manual walk.
         // * `source` is a `StringLiteral` — visit to ensure it's emitted with JSON encoding
-        //   (string values are not JSON-safe). No-op in update mode.
+        //   (string values are not JSON-safe). No-op in raw transfer mode.
         // * `options` is an `ObjectExpression`. Manually walk each property, but don't visit the key if it's `with`,
         //   as it needs to remain a `Keyword` token, not get converted to `Identifier`.
         // * `qualifier` and `type_arguments` are visited as usual.
@@ -229,13 +229,13 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
     }
 
     fn visit_string_literal(&mut self, literal: &StringLiteral<'a>) {
-        // No-op in update mode - token's `Kind` is already `String`
+        // No-op in raw transfer mode - token's `Kind` is already `String`
         self.ctx.emit_unsafe_token_at(literal.span.start, TokenType::new("String"));
     }
 
     fn visit_jsx_text(&mut self, text: &JSXText<'a>) {
         // Use `emit_unsafe_token_at` not `emit_jsx_text_at`, as the token's `Kind` is already `JSXText`,
-        // so no-op in update mode
+        // so no-op in raw transfer mode
         self.ctx.emit_unsafe_token_at(text.span.start, TokenType::new("JSXText"));
     }
 
@@ -247,7 +247,7 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
         match &attribute.value {
             Some(JSXAttributeValue::StringLiteral(string_literal)) => {
                 // Use `emit_jsx_text_at` not `emit_unsafe_token_at`, as the token `Kind`
-                // needs to be updated to `JSXText` in update mode
+                // needs to be set to `JSXText` in raw transfer mode
                 self.ctx.emit_jsx_text_at(string_literal.span.start);
             }
             Some(value) => self.visit_jsx_attribute_value(value),

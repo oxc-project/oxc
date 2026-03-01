@@ -13,7 +13,7 @@ use crate::{
     context::Context, options::ESTreeTokenConfig, token_type::TokenType, visitor::Visitor,
 };
 
-/// Walk AST and update token kinds to match ESTree token types.
+/// Walk AST and set token kinds to match ESTree token types.
 /// Convert token spans from UTF-8 byte offsets to UTF-16 offsets.
 ///
 /// After this pass, `get_token_type(token.kind())` returns the correct ESTree token type
@@ -24,7 +24,7 @@ pub fn update_tokens<O: ESTreeTokenConfig>(
     span_converter: &Utf8ToUtf16,
     options: O,
 ) {
-    let mut visitor = Visitor::new(UpdateContext {
+    let mut visitor = Visitor::new(RawContext {
         tokens: tokens.iter_mut(),
         span_converter: span_converter.converter(),
         options,
@@ -34,12 +34,12 @@ pub fn update_tokens<O: ESTreeTokenConfig>(
     visitor.into_ctx().finish();
 }
 
-/// In-place kind update context.
+/// Raw transfer context.
 ///
-/// Updates token kinds so that `get_token_type(token.kind())` returns
+/// Sets token kinds so that `get_token_type(token.kind())` returns
 /// the correct ESTree token type without needing AST context.
 /// Also converts token spans from UTF-8 byte offsets to UTF-16 offsets.
-pub struct UpdateContext<'b, O: ESTreeTokenConfig> {
+pub struct RawContext<'b, O: ESTreeTokenConfig> {
     /// Mutable tokens iterator
     tokens: IterMut<'b, Token>,
     /// Span converter for UTF-8 to UTF-16 conversion.
@@ -51,7 +51,7 @@ pub struct UpdateContext<'b, O: ESTreeTokenConfig> {
     jsx_state: O::JSXState,
 }
 
-impl<O: ESTreeTokenConfig> UpdateContext<'_, O> {
+impl<O: ESTreeTokenConfig> RawContext<'_, O> {
     /// Advance iterator to the token at `start`, converting spans along the way.
     /// Skipped tokens are not modified (they already have the correct kind),
     /// but their spans are converted from UTF-8 to UTF-16.
@@ -92,7 +92,7 @@ impl<O: ESTreeTokenConfig> UpdateContext<'_, O> {
     }
 }
 
-impl<O: ESTreeTokenConfig> Context for UpdateContext<'_, O> {
+impl<O: ESTreeTokenConfig> Context for RawContext<'_, O> {
     /// JSX state type for tracking when to emit JSX identifiers.
     /// Inherited from config.
     type JSXState = O::JSXState;
@@ -104,7 +104,7 @@ impl<O: ESTreeTokenConfig> Context for UpdateContext<'_, O> {
         self.options.is_ts()
     }
 
-    /// Get reference to [`JSXState`] for the serializer/updater.
+    /// Get reference to [`JSXState`].
     ///
     /// [`JSXState`]: crate::jsx_state::JSXState
     #[expect(clippy::inline_always)]
@@ -113,7 +113,7 @@ impl<O: ESTreeTokenConfig> Context for UpdateContext<'_, O> {
         &self.jsx_state
     }
 
-    /// Get mutable reference to [`JSXState`] for the serializer/updater.
+    /// Get mutable reference to [`JSXState`].
     ///
     /// [`JSXState`]: crate::jsx_state::JSXState
     #[expect(clippy::inline_always)]
