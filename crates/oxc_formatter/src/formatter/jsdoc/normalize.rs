@@ -18,6 +18,7 @@ pub fn normalize_tag_kind(kind: &str) -> &str {
         "exception" => "throws",
         "examples" => "example",
         "hidden" => "ignore",
+        "memberOf" => "memberof",
         // Note: @augments and @extends are NOT synonyms in the plugin.
         // They have different sort weights (20 vs 33).
         // @linkcode, @linkplain are also NOT normalized to @link.
@@ -128,9 +129,15 @@ pub fn normalize_markdown_emphasis(text: &str) -> String {
 
 /// Capitalize the first ASCII lowercase letter of a string.
 /// Skips if the string starts with a backtick (inline code) or a URL.
+/// Recurses for `"- "` prefix: `"- hello"` → `"- Hello"` (matches upstream's `capitalizer()`).
 pub fn capitalize_first(s: &str) -> String {
     if s.is_empty() || s.starts_with('`') || s.starts_with("http://") || s.starts_with("https://") {
         return s.to_string();
+    }
+
+    // Handle dash-prefix: "- text" → "- Text"
+    if let Some(rest) = s.strip_prefix("- ") {
+        return format!("- {}", capitalize_first(rest));
     }
 
     let mut chars = s.chars();
@@ -908,6 +915,15 @@ mod tests {
         assert_eq!(capitalize_first(""), "");
         assert_eq!(capitalize_first("123"), "123");
         assert_eq!(capitalize_first("a"), "A");
+        // Dash prefix handling (matches upstream's capitalizer)
+        assert_eq!(capitalize_first("- hello"), "- Hello");
+        assert_eq!(capitalize_first("- Hello"), "- Hello");
+        assert_eq!(capitalize_first("- `code`"), "- `code`");
+    }
+
+    #[test]
+    fn test_normalize_tag_kind_memberof() {
+        assert_eq!(normalize_tag_kind("memberOf"), "memberof");
     }
 
     #[test]
