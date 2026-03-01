@@ -176,10 +176,8 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
                 continue;
             };
             let mut new_instrs = Vec::new();
-            for (i, instr) in block.instructions.iter().enumerate() {
-                // InstructionId's are one-indexed, so add one to account for them.
-                let id = InstructionId(u32::try_from(i).unwrap_or(0) + 1);
-                if let Some(replacement) = rewrite_instr.get(&id) {
+            for instr in block.instructions.iter() {
+                if let Some(replacement) = rewrite_instr.get(&instr.id) {
                     new_instrs.extend(replacement.iter().cloned());
                 } else {
                     new_instrs.push(instr.clone());

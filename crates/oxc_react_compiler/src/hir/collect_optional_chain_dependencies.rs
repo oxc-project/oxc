@@ -371,7 +371,16 @@ fn traverse_optional_block(
             // The inner optional's result (`inner_optional`) is an intermediate
             // value consumed by this outer optional chain — it should not appear
             // as a standalone dep when phis are processed.
-            context.intermediate_optional_results.insert(inner_optional);
+            //
+            // However, only mark it as intermediate when the outer terminal IS
+            // optional (e.g. `?.c` in `a?.b?.c`).  When the outer terminal is
+            // non-optional (e.g. `.value` in `prop4?.inner.value`), the inner
+            // dep (`prop4?.inner`) should still be tracked as a standalone dep
+            // so that the dependency tree can correctly subsume the deeper
+            // non-optional access (`prop4?.inner.value` → `prop4?.inner`).
+            if optional.optional {
+                context.intermediate_optional_results.insert(inner_optional);
+            }
 
             if !optional.optional {
                 // If this is a non-optional load participating in an optional chain
