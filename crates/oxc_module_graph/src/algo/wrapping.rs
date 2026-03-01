@@ -59,6 +59,10 @@ pub fn wrap_modules(graph: &mut ModuleGraph, config: &WrapModulesConfig) -> Wrap
     // When strict_execution_order is enabled, force wrapping for all modules.
     if config.strict_execution_order {
         for &idx in &normal_indices {
+            // Runtime module should never be wrapped.
+            if graph.runtime() == Some(idx) {
+                continue;
+            }
             let module = graph.normal_module(idx).unwrap();
             let current_wrap = module.wrap_kind;
             if current_wrap.is_none() {
