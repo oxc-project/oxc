@@ -236,6 +236,27 @@ Basic usage with a local plugin path.
 }
 ```
 
+Basic usage with a TypeScript plugin and a local plugin path.
+
+TypeScript plugin files are supported in the following environments:
+- Deno and Bun: TypeScript files are supported natively.
+- Node.js >=22.18.0: TypeScript files are supported natively with built-in
+type-stripping enabled by default.
+- Node.js >=22.6.0: TypeScript files are supported by setting
+`NODE_OPTIONS=--experimental-strip-types`.
+- Node.js <22.6.0: TypeScript files are supported by setting
+`NODE_OPTIONS=--import @oxc-node/core/register` and installing
+`@oxc-node/core` as a dev dependency.
+
+```json
+{
+"jsPlugins": ["./custom-plugin.ts"],
+"rules": {
+"custom/rule-name": "warn"
+}
+}
+```
+
 Using a built-in Rust plugin alongside a JS plugin with the same name
 by giving the JS plugin an alias.
 
