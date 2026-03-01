@@ -12,6 +12,7 @@
 //! Both implementations also convert UTF-8 spans to UTF-16.
 
 mod context;
+mod estree_kind;
 mod json;
 mod jsx_state;
 mod options;

@@ -203,9 +203,6 @@ fieldless_enum! {
         PrivateIdentifier,
         // JSX
         JSXText,
-        // `JSXIdentifier` tokens are never produced by lexer.
-        // Only used in ESTree conversion.
-        JSXIdentifier,
         // Decorator
         At,
     }
@@ -687,7 +684,6 @@ impl Kind {
             TemplateTail => "}",
             PrivateIdentifier => "#identifier",
             JSXText => "jsx",
-            JSXIdentifier => "jsx_identifier",
             At => "@",
             Assert => "assert",
             Any => "any",

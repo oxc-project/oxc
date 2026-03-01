@@ -11,13 +11,17 @@ use oxc_ast_visit::{
 };
 use oxc_parser::{Kind, Token};
 
-use crate::{context::Context, options::ESTreeTokenConfig, visitor::Visitor};
+use crate::{
+    context::Context, estree_kind::ESTreeKind, options::ESTreeTokenConfig, visitor::Visitor,
+};
 
-/// Walk AST and set token kinds to match ESTree token types.
-/// Convert token spans from UTF-8 byte offsets to UTF-16 offsets.
+/// Walk AST and convert all token kinds to `ESTreeKind` discriminants.
+/// Also convert token spans from UTF-8 byte offsets to UTF-16 offsets.
 ///
-/// After this pass, `get_token_type(token.kind())` returns the correct ESTree token type
-/// for every token, without needing AST context.
+/// After this pass, each token's kind byte contains an `ESTreeKind` discriminant
+/// that JS can use directly to look up the ESTree token type string.
+///
+/// After this call, `Token::kind` on the passed-in `tokens` will NOT be accurate.
 pub fn update_tokens<O: ESTreeTokenConfig>(
     tokens: &mut [Token],
     program: &Program<'_>,
@@ -36,9 +40,8 @@ pub fn update_tokens<O: ESTreeTokenConfig>(
 
 /// Raw transfer context.
 ///
-/// Sets token kinds so that `get_token_type(token.kind())` returns
-/// the correct ESTree token type without needing AST context.
-/// Also converts token spans from UTF-8 byte offsets to UTF-16 offsets.
+/// Converts all token kinds to [`ESTreeKind`] discriminants and
+/// token spans from UTF-8 byte offsets to UTF-16 offsets.
 pub struct RawContext<'b, O: ESTreeTokenConfig> {
     /// Mutable tokens iterator
     tokens: IterMut<'b, Token>,
@@ -52,9 +55,11 @@ pub struct RawContext<'b, O: ESTreeTokenConfig> {
 }
 
 impl<O: ESTreeTokenConfig> RawContext<'_, O> {
-    /// Advance iterator to the token at `start`, converting spans along the way.
-    /// Skipped tokens are not modified (they already have the correct kind),
-    /// but their spans are converted from UTF-8 to UTF-16.
+    /// Advance iterator to the token at `start`, converting spans and kinds along the way.
+    ///
+    /// Skipped tokens have their kinds converted to [`ESTreeKind`] via the conversion table.
+    /// The target token is returned without kind conversion — the caller sets its kind explicitly.
+    /// The target token *does* have its span converted from UTF-8 to UTF-16.
     fn advance_to(&mut self, start: u32) -> &mut Token {
         let Self { tokens, span_converter, .. } = self;
         for token in &mut *tokens {
@@ -73,26 +78,39 @@ impl<O: ESTreeTokenConfig> RawContext<'_, O> {
                 token.set_span(span);
             }
 
+            // Return target token without kind conversion
             if is_target {
                 return token;
             }
+
+            // Convert kind
+            let estree_kind = ESTreeKind::from_kind(token.kind());
+            token.set_kind(estree_kind.to_kind());
         }
         unreachable!("Expected token at position {start}");
     }
 
-    /// Advance to the token at `start` and set its `Kind`.
-    fn set_kind_at(&mut self, start: u32, kind: Kind) {
+    /// Advance to the token at `start` and set its [`ESTreeKind`].
+    fn set_kind_at(&mut self, start: u32, estree_kind: ESTreeKind) {
         let token = self.advance_to(start);
-        token.set_kind(kind);
+        token.set_kind(estree_kind.to_kind());
     }
 
-    /// Convert remaining token spans from UTF-8 byte offsets to UTF-16 offsets.
+    /// Convert remaining token spans and kinds.
     fn finish(self) {
         if let Some(mut converter) = self.span_converter {
             for token in self.tokens {
                 let mut span = token.span();
                 converter.convert_span(&mut span);
                 token.set_span(span);
+
+                let estree_kind = ESTreeKind::from_kind(token.kind());
+                token.set_kind(estree_kind.to_kind());
+            }
+        } else {
+            for token in self.tokens {
+                let estree_kind = ESTreeKind::from_kind(token.kind());
+                token.set_kind(estree_kind.to_kind());
             }
         }
     }
@@ -128,61 +146,56 @@ impl<O: ESTreeTokenConfig> Context for RawContext<'_, O> {
         &mut self.jsx_state
     }
 
-    /// Set `Kind` of the token at `start` to `Identifier`.
-    /// In JS mode, if it's a `yield`, `let`, or `static` keyword, leave it as a `Keyword` token.
+    /// Set token at `start` to `Identifier`.
+    /// In JS mode, if it's a `yield`, `let`, or `static` keyword, set it to `Keyword` instead.
     fn emit_identifier_at(&mut self, start: u32, _name: &str) {
         let is_ts = self.is_ts();
 
         let token = self.advance_to(start);
 
-        // In JS style, `yield` / `let` / `static` used as identifiers should remain as keywords
-        if is_ts || !matches!(token.kind(), Kind::Yield | Kind::Let | Kind::Static) {
-            token.set_kind(Kind::Ident);
-        }
+        let estree_kind =
+            if is_ts || !matches!(token.kind(), Kind::Yield | Kind::Let | Kind::Static) {
+                ESTreeKind::Identifier
+            } else {
+                ESTreeKind::Keyword
+            };
+        token.set_kind(estree_kind.to_kind());
     }
 
-    /// Set `Kind` of the token at `start` to `Identifier`.
+    /// Set token at `start` to `Identifier`.
     fn emit_this_identifier_at(&mut self, start: u32) {
-        self.set_kind_at(start, Kind::Ident);
+        self.set_kind_at(start, ESTreeKind::Identifier);
     }
 
-    /// Set `Kind` of the token at `start` to `JSXIdentifier`.
+    /// Set token at `start` to `JSXIdentifier`.
     fn emit_jsx_identifier_at(&mut self, start: u32, _name: &str) {
-        self.set_kind_at(start, Kind::JSXIdentifier);
+        self.set_kind_at(start, ESTreeKind::JSXIdentifier);
     }
 
     /// Handle `PrivateIdentifier` token (no-op).
+    /// Kind is converted to `ESTreeKind::PrivateIdentifier` when skipped by `advance_to`.
     #[inline(always)]
-    fn emit_private_identifier(&mut self, _ident: &PrivateIdentifier<'_>) {
-        // No-op: token already has `Kind::PrivateIdentifier`.
-        // The iterator will skip past this token on the next `advance_to` call.
-    }
+    fn emit_private_identifier(&mut self, _ident: &PrivateIdentifier<'_>) {}
 
     /// Handle `StringLiteral` token (no-op).
+    /// Kind is converted to `ESTreeKind::String` when skipped by `advance_to`.
     #[inline(always)]
-    fn emit_string_literal(&mut self, _literal: &StringLiteral<'_>) {
-        // No-op: token already has `Kind::Str`.
-        // The iterator will skip past this token on the next `advance_to` call.
-    }
+    fn emit_string_literal(&mut self, _literal: &StringLiteral<'_>) {}
 
-    /// Set `Kind` of the `StringLiteral` token to `JSXText`.
+    /// Set `StringLiteral` token to `JSXText`.
     fn emit_string_literal_as_jsx_text(&mut self, literal: &StringLiteral<'_>) {
-        self.set_kind_at(literal.span.start, Kind::JSXText);
+        self.set_kind_at(literal.span.start, ESTreeKind::JSXText);
     }
 
     /// Handle `JSXText` token (no-op).
+    /// Kind is converted to `ESTreeKind::JSXText` when skipped by `advance_to`.
     #[inline(always)]
-    fn emit_jsx_text(&mut self, _jsx_text: &JSXText<'_>) {
-        // No-op: token already has `Kind::JSXText`.
-        // The iterator will skip past this token on the next `advance_to` call.
-    }
+    fn emit_jsx_text(&mut self, _jsx_text: &JSXText<'_>) {}
 
     /// Handle `RegExpLiteral` (no-op).
+    /// Kind is converted to `ESTreeKind::RegularExpression` when skipped by `advance_to`.
     #[inline(always)]
-    fn emit_regexp(&mut self, _regexp: &RegExpLiteral<'_>) {
-        // No-op: token already has `Kind::RegExp`.
-        // The iterator will skip past this token on the next `advance_to` call.
-    }
+    fn emit_regexp(&mut self, _regexp: &RegExpLiteral<'_>) {}
 
     /// Walk template interpolations (expressions or TS types).
     fn walk_template_quasis_interleaved<I>(
