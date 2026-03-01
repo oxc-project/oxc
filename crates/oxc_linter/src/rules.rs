@@ -719,6 +719,7 @@ pub(crate) mod vitest {
 
 pub(crate) mod node {
     pub mod global_require;
+    pub mod handle_callback_err;
     pub mod no_exports_assign;
     pub mod no_new_require;
     pub mod no_path_concat;
