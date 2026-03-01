@@ -18,8 +18,10 @@ pub fn format_description_mdast(text: &str, max_width: usize, capitalize: bool) 
         return Vec::new();
     }
 
+    let text = normalize_legacy_ordered_list_markers(text);
+
     // Protect JSDoc inline tags from markdown parsing (GFM autolink would mangle URLs)
-    let (protected, placeholders) = protect_jsdoc_links(text);
+    let (protected, placeholders) = protect_jsdoc_links(&text);
 
     // Parse into mdast. Keep GFM constructs that affect inline parsing, but let
     // pipe-prefixed table-like blocks be handled by the serializer using the raw
@@ -67,6 +69,44 @@ struct SerializeOptions<'a> {
 // ──────────────────────────────────────────────────
 // JSDoc link protection
 // ──────────────────────────────────────────────────
+
+/// Normalize the legacy `1- foo` list-marker style used by some existing JSDoc
+/// fixtures into standard ordered-list syntax so markdown parsing can treat them
+/// as list items.
+fn normalize_legacy_ordered_list_markers(text: &str) -> String {
+    let mut result = String::with_capacity(text.len());
+
+    for line in text.lines() {
+        if !result.is_empty() {
+            result.push('\n');
+        }
+
+        let trimmed = line.trim_start();
+        let leading = line.len() - trimmed.len();
+
+        if let Some(first) = trimmed.chars().next()
+            && first.is_ascii_digit()
+            && let Some(dash_pos) = trimmed.find('-')
+            && dash_pos < 5
+        {
+            let number = &trimmed[..dash_pos];
+            if number.chars().all(|c| c.is_ascii_digit()) {
+                let rest = trimmed[dash_pos + 1..].trim_start();
+                if !rest.is_empty() {
+                    result.push_str(&line[..leading]);
+                    result.push_str(number);
+                    result.push_str(". ");
+                    result.push_str(rest);
+                    continue;
+                }
+            }
+        }
+
+        result.push_str(line);
+    }
+
+    result
+}
 
 /// Replace `{@link ...}`, `{@linkcode ...}`, `{@linkplain ...}`, `{@tutorial ...}`
 /// with numbered placeholders so the markdown parser (especially GFM autolink) doesn't
@@ -681,7 +721,7 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
             out.push(']');
             let label = link_ref.label.as_deref().unwrap_or(&link_ref.identifier);
             match link_ref.reference_kind {
-                markdown::mdast::ReferenceKind::Full => {
+                markdown::mdast::ReferenceKind::Full | markdown::mdast::ReferenceKind::Shortcut => {
                     out.push('[');
                     out.push_str(label);
                     out.push(']');
@@ -689,7 +729,6 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
                 markdown::mdast::ReferenceKind::Collapsed => {
                     out.push_str("[]");
                 }
-                markdown::mdast::ReferenceKind::Shortcut => {}
             }
         }
         Node::Image(image) => {
@@ -710,7 +749,7 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
             out.push(']');
             let label = img_ref.label.as_deref().unwrap_or(&img_ref.identifier);
             match img_ref.reference_kind {
-                markdown::mdast::ReferenceKind::Full => {
+                markdown::mdast::ReferenceKind::Full | markdown::mdast::ReferenceKind::Shortcut => {
                     out.push('[');
                     out.push_str(label);
                     out.push(']');
@@ -718,7 +757,6 @@ fn collect_inline_recursive(node: &Node, out: &mut String) {
                 markdown::mdast::ReferenceKind::Collapsed => {
                     out.push_str("[]");
                 }
-                markdown::mdast::ReferenceKind::Shortcut => {}
             }
         }
         Node::Break(_) => {
