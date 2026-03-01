@@ -147,9 +147,7 @@ export async function formatFixtureContent(
     await innerClient[Symbol.asyncDispose]();
   }
 
-  return `
---- FILE -----------
-${fixturePath}
+  return `${uriSnapshotHeader(fileUri, fixturesDir)}
 --- BEFORE ---------
 ${content}
 --- AFTER ----------
@@ -191,9 +189,7 @@ export async function formatFixtureAfterConfigChange(
   const edits2 = await client.format(fileUri);
   const formatted2 = applyEdits(formatted1, edits2, languageId);
 
-  return `
---- FILE -----------
-${fixturePath}
+  return `${uriSnapshotHeader(fileUri, fixturesDir)}
 --- BEFORE ---------
 ${content}
 --- AFTER FIRST FORMAT ----------
@@ -215,4 +211,15 @@ function applyEdits(content: string, edits: TextEdit[] | null, languageId: strin
   if (edits === null || edits.length === 0) return content;
   const doc = TextDocument.create("file:///test", languageId, 1, content);
   return TextDocument.applyEdits(doc, edits);
+}
+
+function uriSnapshotHeader(fileUri: string, fixtureDir: string): string {
+  const fixtureUri = pathToFileURL(fixtureDir).href;
+  const safeUri = fileUri.startsWith(fixtureUri)
+    ? fileUri.replace(fixtureUri, "file://<fixture>")
+    : fileUri;
+
+  return `
+  --- URI -----------
+${safeUri}`;
 }
