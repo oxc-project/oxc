@@ -1,8 +1,9 @@
 use oxc_codegen::CodegenOptions;
+use oxc_parser::ParseOptions;
 
 use crate::{
     snapshot, snapshot_options,
-    tester::{test_idempotency, test_same, test_tsx},
+    tester::{test_idempotency, test_same, test_tsx, test_with_parse_options},
 };
 
 #[test]
@@ -190,4 +191,30 @@ fn ts_satisfies_expression() {
     test_idempotency("x satisfies Y || z");
     test_idempotency("x satisfies Y && z");
     test_idempotency("x satisfies Y === z");
+}
+
+#[test]
+fn type_codegen_with_preserve_parens_off() {
+    let parse_options = ParseOptions { preserve_parens: false, ..Default::default() };
+
+    test_with_parse_options(
+        "type T = keyof (EventMap & Extra);",
+        "type T = keyof (EventMap & Extra);\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type T = [(Anno | undefined)?];",
+        "type T = [(Anno | undefined)?];\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type T = (Out & (Step extends A ? B : C)) & (Step extends D ? E : F);",
+        "type T = (Out & (Step extends A ? B : C)) & (Step extends D ? E : F);\n",
+        parse_options,
+    );
+    test_with_parse_options(
+        "type T = ({ [K in keyof Obj]: Obj[K] } & { a: 1 }) & { b: 2 };",
+        "type T = ({ [K in keyof Obj] : Obj[K] } & {\n\ta: 1;\n}) & {\n\tb: 2;\n};\n",
+        parse_options,
+    );
 }
