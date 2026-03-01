@@ -418,6 +418,50 @@ impl<'a> Format<'a> for FormatDanglingComments<'a> {
 
 impl<'a> Format<'a> for Comment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        // JSDoc formatting: if enabled, try to format JSDoc comments
+        if self.is_jsdoc()
+            && let Some(jsdoc_options) = &f.options().jsdoc
+        {
+            let source: &str = &f.source_text();
+            let line_width = f.options().line_width.value() as usize;
+            // Calculate the indent of the comment by looking at the source text
+            // to account for indentation when computing available width.
+            let indent_chars = {
+                let start = self.span.start as usize;
+                let before = &source[..start];
+                // Find the last newline before the comment
+                let line_start = before.rfind('\n').map_or(0, |pos| pos + 1);
+                // Count leading whitespace on this line
+                source[line_start..start].chars().take_while(|c| c.is_whitespace()).count()
+            };
+            let available_width = line_width.saturating_sub(indent_chars);
+            if let Some(formatted) = super::jsdoc::format_jsdoc_comment(
+                self,
+                jsdoc_options,
+                source,
+                f.allocator(),
+                available_width,
+                f.options(),
+                f.context().external_callbacks(),
+            ) {
+                // `format_jsdoc_comment` returns `Some("")` for empty JSDoc comments
+                // (no description and no tags) to signal removal — matching upstream
+                // prettier-plugin-jsdoc behavior. In that case we skip writing and return.
+                if !formatted.is_empty() {
+                    // Write line-by-line with hard_line_break() for proper indentation
+                    // (same approach as alignable multi-line comments)
+                    let mut lines = LineTerminatorSplitter::new(formatted);
+                    if let Some(first_line) = lines.next() {
+                        write!(f, [text(first_line.trim_end())]);
+                        for line in lines {
+                            write!(f, [hard_line_break(), " ", text(line.trim())]);
+                        }
+                    }
+                }
+                return;
+            }
+        }
+
         let content = f.source_text().text_for(&self.span);
         if self.is_multiline_block() {
             let mut lines = LineTerminatorSplitter::new(content);

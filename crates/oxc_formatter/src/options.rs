@@ -79,6 +79,38 @@ pub struct FormatOptions {
     /// When enabled, class strings will be collected and passed to a callback for sorting.
     /// Defaults to None (disabled).
     pub sort_tailwindcss: Option<SortTailwindcssOptions>,
+
+    /// Enable JSDoc comment formatting.
+    /// When enabled, JSDoc comments will be normalized and reformatted.
+    /// Defaults to None (disabled).
+    pub jsdoc: Option<JsdocOptions>,
+}
+
+/// Options for JSDoc comment formatting.
+#[derive(Debug, Clone)]
+pub struct JsdocOptions {
+    /// Capitalize the first letter of tag descriptions. Default: true.
+    pub capitalize_descriptions: bool,
+    /// Convert short JSDoc to single-line when possible. Default: true.
+    pub single_line_when_possible: bool,
+    /// Add blank lines between different tag groups (e.g. between @param and @returns). Default: false.
+    pub separate_tag_groups: bool,
+    /// Add a blank line between the last @param and @returns. Default: false.
+    pub separate_returns_from_param: bool,
+    /// Add spaces inside JSDoc type braces: `{string}` → `{ string }`. Default: false.
+    pub bracket_spacing: bool,
+}
+
+impl Default for JsdocOptions {
+    fn default() -> Self {
+        Self {
+            capitalize_descriptions: true,
+            single_line_when_possible: true,
+            separate_tag_groups: false,
+            separate_returns_from_param: false,
+            bracket_spacing: false,
+        }
+    }
 }
 
 /// Options for Tailwind CSS class sorting.
@@ -148,6 +180,7 @@ impl FormatOptions {
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
             sort_imports: None,
             sort_tailwindcss: None,
+            jsdoc: None,
         }
     }
 
@@ -175,7 +208,8 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
         writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
         writeln!(f, "Sort imports: {:?}", self.sort_imports)?;
-        writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)
+        writeln!(f, "Sort tailwindcss: {:?}", self.sort_tailwindcss)?;
+        writeln!(f, "JSDoc: {:?}", self.jsdoc)
     }
 }
 

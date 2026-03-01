@@ -1,0 +1,67 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/**
+ * @param {string} name - the user name
+ */
+function greet(name) {}
+
+/**
+ * @returns {string} the greeting
+ */
+function hello() {}
+
+/**
+ * already Capitalized
+ */
+const x = 1;
+
+/**
+ * `backtick` should not capitalize
+ */
+const y = 2;
+
+/**
+ * @param {number} x - 123 starts with number
+ */
+function z(x) {}
+
+==================== Output ====================
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
+/** @param {string} name - The user name */
+function greet(name) {}
+
+/** @returns {string} The greeting */
+function hello() {}
+
+/** Already Capitalized */
+const x = 1;
+
+/** `backtick` should not capitalize */
+const y = 2;
+
+/** @param {number} x - 123 starts with number */
+function z(x) {}
+
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
+/** @param {string} name - The user name */
+function greet(name) {}
+
+/** @returns {string} The greeting */
+function hello() {}
+
+/** Already Capitalized */
+const x = 1;
+
+/** `backtick` should not capitalize */
+const y = 2;
+
+/** @param {number} x - 123 starts with number */
+function z(x) {}
+
+===================== End =====================

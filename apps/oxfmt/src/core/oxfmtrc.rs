@@ -232,6 +232,16 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "experimentalTailwindcss")]
     pub sort_tailwindcss: Option<SortTailwindcssConfig>,
+
+    /// Enable JSDoc comment formatting.
+    ///
+    /// When enabled, JSDoc comments are normalized and reformatted:
+    /// tag aliases are canonicalized, descriptions are capitalized,
+    /// long lines are wrapped, and short comments are collapsed to single-line.
+    ///
+    /// - Default: Disabled
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub jsdoc: Option<bool>,
 }
 
 impl FormatConfig {
@@ -523,6 +533,10 @@ impl FormatConfig {
                 preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
                 preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
             });
+        }
+
+        if self.jsdoc == Some(true) {
+            format_options.jsdoc = Some(oxc_formatter::JsdocOptions::default());
         }
 
         // Currently, there is a no options for TOML formatter

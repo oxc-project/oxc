@@ -1,6 +1,7 @@
 #![expect(clippy::print_stdout)]
 
 mod ignore_list;
+pub mod jsdoc;
 pub mod options;
 mod spec;
 

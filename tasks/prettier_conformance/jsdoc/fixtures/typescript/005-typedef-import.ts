@@ -1,0 +1,4 @@
+
+/**
+ * @typedef {import("Foo")} Foo
+ */
