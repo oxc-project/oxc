@@ -59,9 +59,15 @@ importers:
       prettier:
         specifier: 3.8.1
         version: 3.8.1
+      prettier-plugin-svelte:
+        specifier: 3.5.0
+        version: 3.5.0(prettier@3.8.1)(svelte@5.53.5)
       prettier-plugin-tailwindcss:
         specifier: 0.0.0-insiders.3997fbd
-        version: 0.0.0-insiders.3997fbd(prettier@3.8.1)
+        version: 0.0.0-insiders.3997fbd(prettier-plugin-svelte@3.5.0(prettier@3.8.1)(svelte@5.53.5))(prettier@3.8.1)
+      svelte:
+        specifier: 5.53.5
+        version: 5.53.5
       tinypool:
         specifier: 2.1.0
         version: 2.1.0
@@ -2649,6 +2655,11 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
+  '@sveltejs/acorn-typescript@1.0.9':
+    resolution: {integrity: sha512-lVJX6qEgs/4DOcRTpo56tmKzVPtoWAaVbL4hfO7t7NVwl9AAXzQR6cihesW1BmNMPl+bK6dreu2sOKBP2Q9CIA==}
+    peerDependencies:
+      acorn: ^8.9.0
+
   '@tokenizer/inflate@0.3.1':
     resolution: {integrity: sha512-4oeoZEBQdLdt5WmP/hx1KZ6D3/Oid/0cUb2nk4F0pTDAWy+KCH3/EnAkZF/bvckWo8I33EqBm01lIPgmgc8rCA==}
     engines: {node: '>=18'}
@@ -2706,6 +2717,9 @@ packages:
 
   '@types/supertest@6.0.3':
     resolution: {integrity: sha512-8WzXq62EXFhJ7QsH3Ocb/iKQ/Ty9ZVWnVzoTKc9tyyFRRF3a74Tk2+TLFgaFFw364Ere+npzHKEJ6ga2LzIL7w==}
+
+  '@types/trusted-types@2.0.7':
+    resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
 
   '@types/whatwg-mimetype@3.0.2':
     resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
@@ -2907,6 +2921,10 @@ packages:
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
+  aria-query@5.3.1:
+    resolution: {integrity: sha512-Z/ZeOgVl7bcSYZ/u/rh0fOpvEpq//LZmdbkXyc7syVzjPAhfOa9ebsdTSjEBDU4vs5nC98Kfduj1uFo0qyET3g==}
+    engines: {node: '>= 0.4'}
+
   asap@2.0.6:
     resolution: {integrity: sha512-BSHWgDSAiKs50o2Re8ppvp3seVHXSRM44cdSsT9FfNEUUZLOGWVCsiWaRPWM1Znn+mqZ1OfVZ3z3DWEzSp7hRA==}
 
@@ -2923,6 +2941,10 @@ packages:
 
   axios@1.13.5:
     resolution: {integrity: sha512-cz4ur7Vb0xS4/KUN0tPWe44eqxrIu31me+fbang3ijiNscE129POzipJJA6zniq2C/Z6sJCjMimjS8Lc/GAs8Q==}
+
+  axobject-query@4.1.0:
+    resolution: {integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ==}
+    engines: {node: '>= 0.4'}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -3260,6 +3282,9 @@ packages:
     resolution: {integrity: sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==}
     engines: {node: '>= 0.8'}
 
+  devalue@5.6.3:
+    resolution: {integrity: sha512-nc7XjUU/2Lb+SvEFVGcWLiKkzfw8+qHI7zn8WYXKkLMgfGSHbgCEaR6bJpev8Cm6Rmrb19Gfd/tZvGqx9is3wg==}
+
   dezalgo@1.0.4:
     resolution: {integrity: sha512-rXSP0bf+5n0Qonsb+SVVfNfIsimO4HEtmnIpPHY8Q1UCzKlQrDMfdobr8nJOOsRgWCyMRqeSBQzmWUMq7zvVig==}
 
@@ -3378,6 +3403,9 @@ packages:
       jiti:
         optional: true
 
+  esm-env@1.2.2:
+    resolution: {integrity: sha512-Epxrv+Nr/CaL4ZcFGPJIYLWFom+YeV1DqMLHJoEd9SYRxNbaFruBwfEX/kkHUJf55j2+TUbmDcmuilbP1TmXHA==}
+
   espree@10.4.0:
     resolution: {integrity: sha512-j6PAQ2uUr79PZhBjP5C5fhl8e39FmRnOjsD5lGnWrFU8i2G776tBK7+nP8KuQUTTyAZUwfQqXAgrVH5MbH9CYQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -3385,6 +3413,9 @@ packages:
   esquery@1.7.0:
     resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
     engines: {node: '>=0.10'}
+
+  esrap@2.2.3:
+    resolution: {integrity: sha512-8fOS+GIGCQZl/ZIlhl59htOlms6U8NvX6ZYgYHpRU/b6tVSh3uHkOHZikl3D4cMbYM0JlpBe+p/BkZEi8J9XIQ==}
 
   esrecurse@4.3.0:
     resolution: {integrity: sha512-KmfKL3b6G+RXvP8N1vr3Tq1kL/oCFgn2NYXEtqP8/L3pKapUA4G8cFVaoF3SU323CD4XypR/ffioHmkti6/Tag==}
@@ -3668,6 +3699,9 @@ packages:
   is-promise@4.0.0:
     resolution: {integrity: sha512-hvpoI6korhJMnej285dSg6nu1+e6uxs7zG3BYAm5byqDsgJNWwxzM6z6iZiAgQR4TJ30JmBTOwqZUw3WlyH3AQ==}
 
+  is-reference@3.0.3:
+    resolution: {integrity: sha512-ixkJoqQvAP88E6wLydLGGqCJsrFUnqoH6HnaczB8XmDH1oaWU+xxdptvikTgaEhtZ53Ky6YXiBuUI2WXLMCwjw==}
+
   is-stream@4.0.1:
     resolution: {integrity: sha512-Dnz92NInDqYckGEUJv689RbRiTSEHCQ7wOVeALbkOz999YpqT46yMRIGtSNl2iCL1waAZSx40+h59NV/EwzV/A==}
     engines: {node: '>=18'}
@@ -3738,6 +3772,9 @@ packages:
   load-esm@1.0.3:
     resolution: {integrity: sha512-v5xlu8eHD1+6r8EHTg6hfmO97LN8ugKtiXcy5e6oN72iD2r6u0RPfLl6fxM+7Wnh2ZRq15o0russMst44WauPA==}
     engines: {node: '>=13.2.0'}
+
+  locate-character@3.0.0:
+    resolution: {integrity: sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA==}
 
   locate-path@6.0.0:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
@@ -4027,6 +4064,12 @@ packages:
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
+
+  prettier-plugin-svelte@3.5.0:
+    resolution: {integrity: sha512-2lLO/7EupnjO/95t+XZesXs8Bf3nYLIDfCo270h5QWbj/vjLqmrQ1LiRk9LPggxSDsnVYfehamZNf+rgQYApZg==}
+    peerDependencies:
+      prettier: ^3.0.0
+      svelte: ^3.2.0 || ^4.0.0-next.0 || ^5.0.0-next.0
 
   prettier-plugin-tailwindcss@0.0.0-insiders.3997fbd:
     resolution: {integrity: sha512-H45ADK++Dyd7tMKCT7D6s+6uMxcVMZI841kyvSBXWaU8UOHJp273arY/5/5NqEBNxsquPGId7CatqUGbFbd0aQ==}
@@ -4351,6 +4394,10 @@ packages:
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
+
+  svelte@5.53.5:
+    resolution: {integrity: sha512-YkqERnF05g8KLdDZwZrF8/i1eSbj6Eoat8Jjr2IfruZz9StLuBqo8sfCSzjosNKd+ZrQ8DkKZDjpO5y3ht1Pow==}
+    engines: {node: '>=18'}
 
   tagged-tag@1.0.0:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
@@ -4707,6 +4754,9 @@ packages:
 
   yup@1.7.1:
     resolution: {integrity: sha512-GKHFX2nXul2/4Dtfxhozv701jLQHdf6J34YDh2cEkpqoo8le5Mg6/LrdseVLrFarmFygZTlfIhHx/QKfb/QWXw==}
+
+  zimmerframe@1.1.4:
+    resolution: {integrity: sha512-B58NGBEoc8Y9MWWCQGl/gq9xBCe4IiKM0a2x7GZdQKOW5Exr8S1W24J6OgM1njK8xCRGvAJIL/MxXHf6SkmQKQ==}
 
 snapshots:
 
@@ -6662,6 +6712,10 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
+  '@sveltejs/acorn-typescript@1.0.9(acorn@8.15.0)':
+    dependencies:
+      acorn: 8.15.0
+
   '@tokenizer/inflate@0.3.1':
     dependencies:
       debug: 4.4.3
@@ -6726,6 +6780,8 @@ snapshots:
     dependencies:
       '@types/methods': 1.1.4
       '@types/superagent': 8.1.9
+
+  '@types/trusted-types@2.0.7': {}
 
   '@types/whatwg-mimetype@3.0.2': {}
 
@@ -7094,6 +7150,8 @@ snapshots:
 
   argparse@2.0.1: {}
 
+  aria-query@5.3.1: {}
+
   asap@2.0.6: {}
 
   assertion-error@2.0.1: {}
@@ -7113,6 +7171,8 @@ snapshots:
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
+
+  axobject-query@4.1.0: {}
 
   balanced-match@1.0.2: {}
 
@@ -7439,6 +7499,8 @@ snapshots:
 
   depd@2.0.0: {}
 
+  devalue@5.6.3: {}
+
   dezalgo@1.0.4:
     dependencies:
       asap: 2.0.6
@@ -7583,6 +7645,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  esm-env@1.2.2: {}
+
   espree@10.4.0:
     dependencies:
       acorn: 8.15.0
@@ -7592,6 +7656,10 @@ snapshots:
   esquery@1.7.0:
     dependencies:
       estraverse: 5.3.0
+
+  esrap@2.2.3:
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.5.5
 
   esrecurse@4.3.0:
     dependencies:
@@ -7874,6 +7942,10 @@ snapshots:
 
   is-promise@4.0.0: {}
 
+  is-reference@3.0.3:
+    dependencies:
+      '@types/estree': 1.0.8
+
   is-stream@4.0.1: {}
 
   is-unicode-supported@2.1.0: {}
@@ -7931,6 +8003,8 @@ snapshots:
   lit@https://codeload.github.com/lit/dist/tar.gz/2d8c023d796e1884e53ad527d3c68214c866a9e1: {}
 
   load-esm@1.0.3: {}
+
+  locate-character@3.0.0: {}
 
   locate-path@6.0.0:
     dependencies:
@@ -8226,9 +8300,16 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-tailwindcss@0.0.0-insiders.3997fbd(prettier@3.8.1):
+  prettier-plugin-svelte@3.5.0(prettier@3.8.1)(svelte@5.53.5):
     dependencies:
       prettier: 3.8.1
+      svelte: 5.53.5
+
+  prettier-plugin-tailwindcss@0.0.0-insiders.3997fbd(prettier-plugin-svelte@3.5.0(prettier@3.8.1)(svelte@5.53.5))(prettier@3.8.1):
+    dependencies:
+      prettier: 3.8.1
+    optionalDependencies:
+      prettier-plugin-svelte: 3.5.0(prettier@3.8.1)(svelte@5.53.5)
 
   prettier@3.8.1: {}
 
@@ -8562,6 +8643,25 @@ snapshots:
     dependencies:
       has-flag: 4.0.0
 
+  svelte@5.53.5:
+    dependencies:
+      '@jridgewell/remapping': 2.3.5
+      '@jridgewell/sourcemap-codec': 1.5.5
+      '@sveltejs/acorn-typescript': 1.0.9(acorn@8.15.0)
+      '@types/estree': 1.0.8
+      '@types/trusted-types': 2.0.7
+      acorn: 8.15.0
+      aria-query: 5.3.1
+      axobject-query: 4.1.0
+      clsx: 2.1.1
+      devalue: 5.6.3
+      esm-env: 1.2.2
+      esrap: 2.2.3
+      is-reference: 3.0.3
+      locate-character: 3.0.0
+      magic-string: 0.30.21
+      zimmerframe: 1.1.4
+
   tagged-tag@1.0.0: {}
 
   terser@5.44.1:
@@ -8892,3 +8992,5 @@ snapshots:
       tiny-case: 1.0.3
       toposort: 2.0.2
       type-fest: 2.19.0
+
+  zimmerframe@1.1.4: {}

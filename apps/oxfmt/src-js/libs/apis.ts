@@ -142,13 +142,42 @@ export type FormatFileParam = {
 export async function formatFile({ code, options }: FormatFileParam): Promise<string> {
   const prettier = await loadPrettier();
 
-  // Enable Tailwind CSS plugin for non-JS files if needed
+  // 1. Svelte plugin first (parser plugin, required for .svelte)
+  await setupSveltePlugin(options);
+  // 2. Tailwind plugin (transformation, wraps Svelte's parsers)
   await setupTailwindPlugin(options);
-  // Add oxfmt plugin for (j|t)-in-xxx files to use `oxc_formatter` instead of built-in formatter.
-  // NOTE: This must be last since Prettier plugins are applied in order
+  // 3. Oxfmt plugin last (overrides babel/typescript parsers)
   await setupOxfmtPlugin(options);
 
   return prettier.format(code, options);
+}
+
+// ---
+// Svelte support
+// ---
+
+let sveltePluginCache: typeof import("prettier-plugin-svelte");
+
+async function loadSveltePlugin(): Promise<typeof import("prettier-plugin-svelte")> {
+  if (sveltePluginCache) return sveltePluginCache;
+
+  sveltePluginCache = await import("prettier-plugin-svelte");
+  return sveltePluginCache;
+}
+
+/**
+ * Load Svelte plugin lazily when `options._useSveltePlugin` flag is set.
+ * The flag is added by Rust side only for `.svelte` files.
+ *
+ * Option mapping (svelte.xxx → svelteXxx) is also done in Rust side.
+ */
+async function setupSveltePlugin(options: Options): Promise<void> {
+  if ("_useSveltePlugin" in options === false) return;
+
+  const sveltePlugin = await loadSveltePlugin();
+
+  options.plugins ??= [];
+  options.plugins.push(sveltePlugin as Plugin);
 }
 
 // ---
