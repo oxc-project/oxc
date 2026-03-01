@@ -91,6 +91,14 @@ expression: json
       ],
       "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
     },
+    "jsdoc": {
+      "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\n- Default: Disabled",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\n- Default: Disabled"
+    },
     "jsxSingleQuote": {
       "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
       "type": [
@@ -393,6 +401,14 @@ expression: json
             "null"
           ],
           "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
+        },
+        "jsdoc": {
+          "description": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\n- Default: Disabled",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Enable JSDoc comment formatting.\n\nWhen enabled, JSDoc comments are normalized and reformatted:\ntag aliases are canonicalized, descriptions are capitalized,\nlong lines are wrapped, and short comments are collapsed to single-line.\n\n- Default: Disabled"
         },
         "jsxSingleQuote": {
           "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
