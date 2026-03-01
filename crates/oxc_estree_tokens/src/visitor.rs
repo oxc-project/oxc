@@ -6,7 +6,7 @@ use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_span::GetSpan;
 
-use crate::{context::Context, jsx_state::JSXState, token_type::TokenType};
+use crate::{context::Context, jsx_state::JSXState};
 
 /// Visitor that walks the AST and delegates token processing to a [`Context`].
 ///
@@ -121,7 +121,7 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
     }
 
     fn visit_private_identifier(&mut self, identifier: &PrivateIdentifier<'a>) {
-        self.ctx.emit_private_identifier_at(identifier.span.start, &identifier.name);
+        self.ctx.emit_private_identifier(identifier);
     }
 
     fn visit_reg_exp_literal(&mut self, regexp: &RegExpLiteral<'a>) {
@@ -229,14 +229,13 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
     }
 
     fn visit_string_literal(&mut self, literal: &StringLiteral<'a>) {
-        // No-op in raw transfer mode - token's `Kind` is already `String`
-        self.ctx.emit_unsafe_token_at(literal.span.start, TokenType::new("String"));
+        // No-op in raw transfer mode - token already has `Kind::Str`
+        self.ctx.emit_string_literal(literal);
     }
 
-    fn visit_jsx_text(&mut self, text: &JSXText<'a>) {
-        // Use `emit_unsafe_token_at` not `emit_jsx_text_at`, as the token's `Kind` is already `JSXText`,
-        // so no-op in raw transfer mode
-        self.ctx.emit_unsafe_token_at(text.span.start, TokenType::new("JSXText"));
+    fn visit_jsx_text(&mut self, jsx_text: &JSXText<'a>) {
+        // No-op in raw transfer mode - token's `Kind` is already `JSXText`
+        self.ctx.emit_jsx_text(jsx_text);
     }
 
     fn visit_jsx_attribute(&mut self, attribute: &JSXAttribute<'a>) {
@@ -246,9 +245,8 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
         self.visit_jsx_attribute_name(&attribute.name);
         match &attribute.value {
             Some(JSXAttributeValue::StringLiteral(string_literal)) => {
-                // Use `emit_jsx_text_at` not `emit_unsafe_token_at`, as the token `Kind`
-                // needs to be set to `JSXText` in raw transfer mode
-                self.ctx.emit_jsx_text_at(string_literal.span.start);
+                // Token `Kind` needs to be set to `JSXText` in raw transfer mode
+                self.ctx.emit_string_literal_as_jsx_text(string_literal);
             }
             Some(value) => self.visit_jsx_attribute_value(value),
             None => {}

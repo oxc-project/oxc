@@ -1,8 +1,8 @@
 //! [`Context`] trait.
 
-use oxc_ast::ast::{RegExpLiteral, TemplateElement};
+use oxc_ast::ast::{JSXText, PrivateIdentifier, RegExpLiteral, StringLiteral, TemplateElement};
 
-use crate::{jsx_state::JSXState, token_type::TokenType, visitor::Visitor};
+use crate::{jsx_state::JSXState, visitor::Visitor};
 
 /// Trait abstracting over the two token processing modes:
 /// JSON serialization ([`JsonContext`]) and raw transfer ([`RawContext`]).
@@ -51,29 +51,31 @@ pub trait Context: Sized {
     /// * Raw transfer mode: Set kind to `Kind::JSXIdentifier`.
     fn emit_jsx_identifier_at(&mut self, start: u32, name: &str);
 
-    /// Emit the token at `start` as `PrivateIdentifier`.
+    /// Emit a `PrivateIdentifier` token.
     ///
     /// * JSON mode: Serialize with appropriate encoding.
     /// * Raw transfer mode: No-op (token already has `Kind::PrivateIdentifier`).
-    fn emit_private_identifier_at(&mut self, start: u32, name: &str);
+    fn emit_private_identifier(&mut self, ident: &PrivateIdentifier<'_>);
+
+    /// Emit a `StringLiteral` token.
+    ///
+    /// * JSON mode: Serialize with JSON encoding (`value` may not be JSON-safe).
+    /// * Raw transfer mode: No-op (token already has the correct kind).
+    fn emit_string_literal(&mut self, literal: &StringLiteral<'_>);
 
     /// Emit a `StringLiteral` in a JSX attribute as `JSXText`.
     ///
-    /// Unlike [`emit_unsafe_token_at`], this changes the token's kind in raw transfer mode,
-    /// because the token has `Kind::Str` but needs to become `Kind::JSXText`.
-    /// Use [`emit_unsafe_token_at`] for actual `JSXText` tokens which already have the correct kind.
+    /// The token has `Kind::Str` but needs to become `JSXText`.
     ///
     /// * JSON mode: Serialize as `JSXText` with JSON encoding.
     /// * Raw transfer mode: Set kind to `Kind::JSXText`.
-    ///
-    /// [`emit_unsafe_token_at`]: Context::emit_unsafe_token_at
-    fn emit_jsx_text_at(&mut self, start: u32);
+    fn emit_string_literal_as_jsx_text(&mut self, literal: &StringLiteral<'_>);
 
-    /// Emit a token whose value may not be JSON-safe (strings, templates, JSXText).
+    /// Emit a `JSXText` token whose value may not be JSON-safe.
     ///
     /// * JSON mode: Serialize with JSON encoding.
-    /// * Raw transfer mode: No-op (token already has the correct kind).
-    fn emit_unsafe_token_at(&mut self, start: u32, token_type: TokenType);
+    /// * Raw transfer mode: No-op (token already has `Kind::JSXText`).
+    fn emit_jsx_text(&mut self, jsx_text: &JSXText<'_>);
 
     /// Emit a `RegularExpression` token.
     ///

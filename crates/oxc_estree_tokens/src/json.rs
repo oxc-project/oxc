@@ -2,7 +2,9 @@
 
 use std::slice::Iter;
 
-use oxc_ast::ast::{Program, RegExpLiteral, TemplateElement};
+use oxc_ast::ast::{
+    JSXText, PrivateIdentifier, Program, RegExpLiteral, StringLiteral, TemplateElement,
+};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_ast_visit::{Visit, utf8_to_utf16::Utf8ToUtf16Converter};
 use oxc_estree::{
@@ -241,9 +243,16 @@ impl<'b, O: ESTreeTokenConfig, S: SequenceSerializer> JsonContext<'b, O, S> {
         self.serialize_safe_token(token, token_type, value);
     }
 
+    /// Advance to the token at `start` and serialize it using provided `value` without JSON encoding.
     fn emit_safe_token_at(&mut self, start: u32, token_type: TokenType, value: &str) {
         let token = self.advance_to(start);
         self.serialize_safe_token(token, token_type, value);
+    }
+
+    /// Advance to the token at `start` and serialize it using raw source text with JSON encoding.
+    fn emit_unsafe_token_at(&mut self, start: u32, token_type: TokenType) {
+        let token = self.advance_to(start);
+        self.emit_unsafe_token(token, token_type);
     }
 
     /// Serialize a token using its raw source text, with JSON encoding.
@@ -365,11 +374,11 @@ impl<O: ESTreeTokenConfig, S: SequenceSerializer> Context for JsonContext<'_, O,
         self.emit_safe_token_at(start, TokenType::new("JSXIdentifier"), name);
     }
 
-    /// Emit the token at `start` as `PrivateIdentifier`.
-    fn emit_private_identifier_at(&mut self, start: u32, name: &str) {
-        let token = self.advance_to(start);
+    /// Emit a `PrivateIdentifier` token.
+    fn emit_private_identifier(&mut self, ident: &PrivateIdentifier<'_>) {
+        let token = self.advance_to(ident.span.start);
 
-        // `identifier.name` has `#` stripped and escapes decoded by the parser, and is JSON-safe.
+        // `ident.name` has `#` stripped and escapes decoded by the parser, and is JSON-safe.
         // Use it in most cases — if token is not marked as escaped, it's JSON-safe, so can skip JSON encoding.
         // When `self.is_js()` is `true`, token `value` should *always* be the unescaped version,
         // so can also use `name` from AST node and skip JSON encoding.
@@ -377,7 +386,7 @@ impl<O: ESTreeTokenConfig, S: SequenceSerializer> Context for JsonContext<'_, O,
         // since escape sequences contain `\` which needs JSON escaping.
         // Escaped identifiers are extremely rare, so handle them in `#[cold]` branch.
         if self.is_js() || !token.escaped() {
-            self.serialize_safe_token(token, TokenType::new("PrivateIdentifier"), name);
+            self.serialize_safe_token(token, TokenType::new("PrivateIdentifier"), &ident.name);
         } else {
             #[cold]
             #[inline(never)]
@@ -393,17 +402,19 @@ impl<O: ESTreeTokenConfig, S: SequenceSerializer> Context for JsonContext<'_, O,
         }
     }
 
-    /// Emit the token at `start` as `JSXText`.
-    fn emit_jsx_text_at(&mut self, start: u32) {
-        let token = self.advance_to(start);
-        self.emit_unsafe_token(token, TokenType::new("JSXText"));
+    /// Emit a `StringLiteral` token.
+    fn emit_string_literal(&mut self, literal: &StringLiteral<'_>) {
+        self.emit_unsafe_token_at(literal.span.start, TokenType::new("String"));
     }
 
-    /// Emit the token at `start` as the specified token type,
-    /// where the token's `value` may not be JSON-safe.
-    fn emit_unsafe_token_at(&mut self, start: u32, token_type: TokenType) {
-        let token = self.advance_to(start);
-        self.emit_unsafe_token(token, token_type);
+    /// Emit a `StringLiteral` in a JSX attribute as `JSXText`.
+    fn emit_string_literal_as_jsx_text(&mut self, literal: &StringLiteral<'_>) {
+        self.emit_unsafe_token_at(literal.span.start, TokenType::new("JSXText"));
+    }
+
+    /// Emit a `JSXText` token.
+    fn emit_jsx_text(&mut self, jsx_text: &JSXText<'_>) {
+        self.emit_unsafe_token_at(jsx_text.span.start, TokenType::new("JSXText"));
     }
 
     /// Emit token for `RegExpLiteral`.

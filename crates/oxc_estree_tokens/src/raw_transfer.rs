@@ -2,16 +2,16 @@
 
 use std::slice::IterMut;
 
-use oxc_ast::ast::{Program, RegExpLiteral, TemplateElement};
+use oxc_ast::ast::{
+    JSXText, PrivateIdentifier, Program, RegExpLiteral, StringLiteral, TemplateElement,
+};
 use oxc_ast_visit::{
     Visit,
     utf8_to_utf16::{Utf8ToUtf16, Utf8ToUtf16Converter},
 };
 use oxc_parser::{Kind, Token};
 
-use crate::{
-    context::Context, options::ESTreeTokenConfig, token_type::TokenType, visitor::Visitor,
-};
+use crate::{context::Context, options::ESTreeTokenConfig, visitor::Visitor};
 
 /// Walk AST and set token kinds to match ESTree token types.
 /// Convert token spans from UTF-8 byte offsets to UTF-16 offsets.
@@ -147,26 +147,39 @@ impl<O: ESTreeTokenConfig> Context for RawContext<'_, O> {
         token.set_kind(Kind::JSXIdentifier);
     }
 
-    /// Handle `PrivateIdentifier` token at `start` (no-op).
+    /// Handle `PrivateIdentifier` token (no-op).
     #[inline(always)]
-    fn emit_private_identifier_at(&mut self, _start: u32, _name: &str) {
+    fn emit_private_identifier(&mut self, _ident: &PrivateIdentifier<'_>) {
         // No-op: token already has `Kind::PrivateIdentifier`.
         // The iterator will skip past this token on the next `advance_to` call.
     }
 
-    /// Set `Kind` of the token at `start` to `JSXText`.
-    fn emit_jsx_text_at(&mut self, start: u32) {
-        let token = self.advance_to(start);
+    /// Handle `StringLiteral` token (no-op).
+    #[inline(always)]
+    fn emit_string_literal(&mut self, _literal: &StringLiteral<'_>) {
+        // No-op: token already has `Kind::Str`.
+        // The iterator will skip past this token on the next `advance_to` call.
+    }
+
+    /// Set `Kind` of the `StringLiteral` token to `JSXText`.
+    fn emit_string_literal_as_jsx_text(&mut self, literal: &StringLiteral<'_>) {
+        let token = self.advance_to(literal.span.start);
         token.set_kind(Kind::JSXText);
     }
 
-    /// Handle token at `start` (no-op).
+    /// Handle `JSXText` token (no-op).
     #[inline(always)]
-    fn emit_unsafe_token_at(&mut self, _start: u32, _token_type: TokenType) {}
+    fn emit_jsx_text(&mut self, _jsx_text: &JSXText<'_>) {
+        // No-op: token already has `Kind::JSXText`.
+        // The iterator will skip past this token on the next `advance_to` call.
+    }
 
     /// Handle `RegExpLiteral` (no-op).
     #[inline(always)]
-    fn emit_regexp(&mut self, _regexp: &RegExpLiteral<'_>) {}
+    fn emit_regexp(&mut self, _regexp: &RegExpLiteral<'_>) {
+        // No-op: token already has `Kind::RegExp`.
+        // The iterator will skip past this token on the next `advance_to` call.
+    }
 
     /// Walk template interpolations (expressions or TS types).
     fn walk_template_quasis_interleaved<I>(
