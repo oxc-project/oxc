@@ -13,6 +13,7 @@ pub use jsx_state::{JSXState, JSXStateJS, JSXStateTS};
 pub use options::{
     ESTreeTokenConfig, ESTreeTokenOptions, ESTreeTokenOptionsJS, ESTreeTokenOptionsTS,
 };
+pub use serialize::update_tokens;
 use serialize::{estimate_json_len, serialize_tokens};
 
 /// Serializer config for tokens.

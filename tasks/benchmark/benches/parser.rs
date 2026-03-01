@@ -1,7 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
-use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json};
+use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json, update_tokens};
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
 use oxc_tasks_common::TestFiles;
 
@@ -186,23 +186,16 @@ fn bench_estree_tokens_raw(criterion: &mut Criterion) {
                     })
                     .with_config(config)
                     .parse();
-                let ParserReturn { program, tokens, .. } = ret;
+                let ParserReturn { program, mut tokens, .. } = ret;
 
                 // Creating span converter is not performed in measured section, as we only want to measure tokens.
                 // Span converter needs to be created anyway for converting spans in AST.
                 let span_converter = Utf8ToUtf16::new(program.source_text);
 
                 runner.run(|| {
-                    let tokens_json = to_estree_tokens_json(
-                        &tokens,
-                        &program,
-                        program.source_text,
-                        &span_converter,
-                        ESTreeTokenOptionsJS,
-                    );
-                    let tokens_json = black_box(tokens_json);
-                    // Allocate tokens JSON into arena, same as linter and NAPI parser package do
-                    let _tokens_json = allocator.alloc_str(&tokens_json);
+                    update_tokens(&mut tokens, &program, &span_converter, ESTreeTokenOptionsJS);
+
+                    black_box(tokens);
 
                     program
                 });
