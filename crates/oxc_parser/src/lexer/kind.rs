@@ -211,13 +211,13 @@ use Kind::*;
 
 impl Kind {
     #[inline]
-    pub fn is_eof(self) -> bool {
-        self == Eof
+    pub const fn is_eof(self) -> bool {
+        matches!(self, Eof)
     }
 
     /// All numeric literals are contiguous from Decimal..=HexBigInt in the enum.
     #[inline]
-    pub fn is_number(self) -> bool {
+    pub const fn is_number(self) -> bool {
         matches!(self as u8, x if x >= Decimal as u8 && x <= HexBigInt as u8)
     }
 
@@ -235,30 +235,34 @@ impl Kind {
     /// [Identifiers](https://tc39.es/ecma262/#sec-identifiers)
     /// `IdentifierReference`
     #[inline]
-    pub fn is_identifier_reference(self, is_yield_context: bool, is_await_context: bool) -> bool {
+    pub const fn is_identifier_reference(
+        self,
+        is_yield_context: bool,
+        is_await_context: bool,
+    ) -> bool {
         self.is_identifier()
-            || (!is_yield_context && self == Yield)
-            || (!is_await_context && self == Await)
+            || (!is_yield_context && matches!(self, Yield))
+            || (!is_await_context && matches!(self, Await))
     }
 
     /// `BindingIdentifier`
     #[inline]
-    pub fn is_binding_identifier(self) -> bool {
+    pub const fn is_binding_identifier(self) -> bool {
         self.is_identifier() || matches!(self, Yield | Await)
     }
 
     /// `LabelIdentifier`
     #[inline]
-    pub fn is_label_identifier(self, is_yield_context: bool, is_await_context: bool) -> bool {
+    pub const fn is_label_identifier(self, is_yield_context: bool, is_await_context: bool) -> bool {
         self.is_identifier()
-            || (!is_yield_context && self == Yield)
-            || (!is_await_context && self == Await)
+            || (!is_yield_context && matches!(self, Yield))
+            || (!is_await_context && matches!(self, Await))
     }
 
     /// Identifier
     /// `IdentifierName` but not `ReservedWord`
     #[inline]
-    pub fn is_identifier(self) -> bool {
+    pub const fn is_identifier(self) -> bool {
         self.is_identifier_name() && !self.is_reserved_keyword()
     }
 
@@ -266,7 +270,7 @@ impl Kind {
     ///
     /// <https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/parser.ts#L2316-L2335>
     #[inline]
-    pub fn is_ts_identifier(self, is_yield_context: bool, is_await_context: bool) -> bool {
+    pub const fn is_ts_identifier(self, is_yield_context: bool, is_await_context: bool) -> bool {
         self.is_identifier_reference(is_yield_context, is_await_context)
             && !self.is_strict_mode_contextual_keyword()
             && !self.is_contextual_keyword()
@@ -275,8 +279,8 @@ impl Kind {
     /// `IdentifierName`
     /// All identifier names are either `Ident` or keywords (Await..=Null in the enum).
     #[inline]
-    pub fn is_identifier_name(self) -> bool {
-        self == Ident || matches!(self as u8, x if x >= Await as u8 && x <= Null as u8)
+    pub const fn is_identifier_name(self) -> bool {
+        matches!(self, Ident) || matches!(self as u8, x if x >= Await as u8 && x <= Null as u8)
     }
 
     /// Check the succeeding token of a `let` keyword.
@@ -285,7 +289,7 @@ impl Kind {
     /// let { a, b } = c, let [a, b] = c, let ident
     /// ```
     #[inline]
-    pub fn is_after_let(self) -> bool {
+    pub const fn is_after_let(self) -> bool {
         !matches!(self, In | Instanceof)
             && (matches!(self, LCurly | LBrack | Ident) || self.is_any_keyword())
     }
@@ -297,12 +301,12 @@ impl Kind {
     ///     `NumericLiteral`
     ///     `StringLiteral`
     #[inline]
-    pub fn is_literal(self) -> bool {
+    pub const fn is_literal(self) -> bool {
         matches!(self, Null | True | False | Str | RegExp) || self.is_number()
     }
 
     #[inline]
-    pub fn is_after_await_or_yield(self) -> bool {
+    pub const fn is_after_await_or_yield(self) -> bool {
         !self.is_binary_operator() && (self.is_literal() || self.is_identifier_name())
     }
 
@@ -312,18 +316,18 @@ impl Kind {
     ///     `StringLiteral`
     ///     `NumericLiteral`
     #[inline]
-    pub fn is_literal_property_name(self) -> bool {
-        self.is_identifier_name() || self == Str || self.is_number()
+    pub const fn is_literal_property_name(self) -> bool {
+        self.is_identifier_name() || matches!(self, Str) || self.is_number()
     }
 
     #[inline]
-    pub fn is_identifier_or_keyword(self) -> bool {
-        self.is_literal_property_name() || self == Self::PrivateIdentifier
+    pub const fn is_identifier_or_keyword(self) -> bool {
+        self.is_literal_property_name() || matches!(self, PrivateIdentifier)
     }
 
     #[rustfmt::skip]
     #[inline]
-    pub fn is_assignment_operator(self) -> bool {
+    pub const fn is_assignment_operator(self) -> bool {
         matches!(
             self,
             Eq | PlusEq | MinusEq | StarEq | SlashEq | PercentEq | ShiftLeftEq | ShiftRightEq
@@ -333,7 +337,7 @@ impl Kind {
 
     #[rustfmt::skip]
     #[inline]
-    pub fn is_binary_operator(self) -> bool {
+    pub const fn is_binary_operator(self) -> bool {
         matches!(
             self,
             Eq2 | Neq | Eq3 | Neq2 | LAngle | LtEq | RAngle | GtEq | ShiftLeft | ShiftRight | ShiftRight3
@@ -342,30 +346,30 @@ impl Kind {
     }
 
     #[inline]
-    pub fn is_logical_operator(self) -> bool {
+    pub const fn is_logical_operator(self) -> bool {
         matches!(self, Pipe2 | Amp2 | Question2)
     }
 
     #[inline]
-    pub fn is_unary_operator(self) -> bool {
+    pub const fn is_unary_operator(self) -> bool {
         matches!(self, Minus | Plus | Bang | Tilde | Typeof | Void | Delete)
     }
 
     #[inline]
-    pub fn is_update_operator(self) -> bool {
+    pub const fn is_update_operator(self) -> bool {
         matches!(self, Plus2 | Minus2)
     }
 
     /// [Keywords and Reserved Words](https://tc39.es/ecma262/#sec-keywords-and-reserved-words)
     /// All keywords are contiguous from Await..=Null in the enum for optimal range check.
     #[inline]
-    pub fn is_any_keyword(self) -> bool {
+    pub const fn is_any_keyword(self) -> bool {
         matches!(self as u8, x if x >= Await as u8 && x <= Null as u8)
     }
 
     #[rustfmt::skip]
     #[inline]
-    pub fn is_reserved_keyword(self) -> bool {
+    pub const fn is_reserved_keyword(self) -> bool {
         matches!(
             self,
             Await | Break | Case | Catch | Class | Const | Continue | Debugger | Default
@@ -377,13 +381,13 @@ impl Kind {
 
     #[rustfmt::skip]
     #[inline]
-    pub fn is_strict_mode_contextual_keyword(self) -> bool {
+    pub const fn is_strict_mode_contextual_keyword(self) -> bool {
         matches!(self, Let | Static | Implements | Interface | Package | Private | Protected | Public)
     }
 
     #[rustfmt::skip]
     #[inline]
-    pub fn is_contextual_keyword(self) -> bool {
+    pub const fn is_contextual_keyword(self) -> bool {
         matches!(
             self,
             Async | From | Get | Meta | Of | Set | Target | Accessor | Abstract | As | Asserts | Assert
@@ -395,18 +399,18 @@ impl Kind {
 
     #[rustfmt::skip]
     #[inline]
-    pub fn is_future_reserved_keyword(self) -> bool {
+    pub const fn is_future_reserved_keyword(self) -> bool {
         matches!(self, Implements | Interface | Package | Private | Protected | Public | Static)
     }
 
     #[inline]
-    pub fn is_template_start_of_tagged_template(self) -> bool {
+    pub const fn is_template_start_of_tagged_template(self) -> bool {
         matches!(self, NoSubstitutionTemplate | TemplateHead)
     }
 
     #[rustfmt::skip]
     #[inline]
-    pub fn is_modifier_kind(self) -> bool {
+    pub const fn is_modifier_kind(self) -> bool {
         matches!(
             self,
             Abstract | Accessor | Async | Const | Declare
@@ -416,7 +420,7 @@ impl Kind {
     }
 
     #[inline]
-    pub fn is_binding_identifier_or_private_identifier_or_pattern(self) -> bool {
+    pub const fn is_binding_identifier_or_private_identifier_or_pattern(self) -> bool {
         matches!(self, LCurly | LBrack | PrivateIdentifier) || self.is_binding_identifier()
     }
 
