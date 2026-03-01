@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json
+working directory: fixtures/issue_19409/overrides_correctness_off_constant_binary
+----------
+
+  x typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
+   ,-[subdir/bar.tsx:2:8]
+ 1 | // `typescript/no-inferrable-types` _should_ be triggered by this line:
+ 2 | const a: number = 5;
+   :        ^^^^^^^^
+ 3 | // no-constant-binary-expression is a correctness rule and should NOT trigger since correctness is off.
+   `----
+  help: Remove the type annotation
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 1 file with 0 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

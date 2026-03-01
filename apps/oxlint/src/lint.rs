@@ -1165,6 +1165,24 @@ mod test {
         Tester::new().with_cwd("fixtures/issue_10394".into()).test_and_snapshot(args);
     }
 
+    // https://github.com/oxc-project/oxc/issues/19409
+    #[test]
+    fn test_overrides_correctness_off_not_reenabled_by_plugin() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new()
+            .with_cwd("fixtures/issue_19409/overrides_correctness_off".into())
+            .test_and_snapshot(args);
+    }
+
+    // https://github.com/oxc-project/oxc/issues/19409
+    #[test]
+    fn test_overrides_correctness_off_no_constant_binary_expression() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new()
+            .with_cwd("fixtures/issue_19409/overrides_correctness_off_constant_binary".into())
+            .test_and_snapshot(args);
+    }
+
     #[test]
     fn test_jsx_a11y_label_has_associated_control() {
         let args = &["-c", ".oxlintrc.json"];
