@@ -287,6 +287,8 @@ impl<'b, O: ESTreeTokenConfig, S: SequenceSerializer> ESTreeTokenContext<'b, O, 
     /// Consume all tokens before `start` (emitting them with default types),
     /// and return the token at `start`.
     ///
+    /// The returned token does not have its `Span` converted to UTF-16 before returning it.
+    ///
     /// Tokens emitted here are guaranteed JSON-safe because all non-JSON-safe token types
     /// (strings, templates, regexes, JSXText) are dealt with by their own visitors.
     fn advance_to(&mut self, start: u32) -> &'b Token {
@@ -328,24 +330,23 @@ impl<'b, O: ESTreeTokenConfig, S: SequenceSerializer> ESTreeTokenContext<'b, O, 
 
     /// Serialize a token whose value is guaranteed JSON-safe, skipping JSON-encoding.
     fn serialize_safe_token(&mut self, token: &Token, token_type: TokenType, value: &str) {
-        // Convert span to UTF-16
-        let mut span = Span::new(token.start(), token.end());
-        if let Some(converter) = self.span_converter.as_mut() {
-            converter.convert_span(&mut span);
-        }
-
+        let span = self.get_utf16_span(token);
         self.seq.serialize_element(&ESTreeSafeToken { token_type, value, span });
     }
 
     /// Serialize a token whose value may not be JSON-safe.
     fn serialize_unsafe_token(&mut self, token: &Token, token_type: TokenType, value: &str) {
-        // Convert span to UTF-16
+        let span = self.get_utf16_span(token);
+        self.seq.serialize_element(&ESTreeUnsafeToken { token_type, value, span });
+    }
+
+    /// Get UTF-16 span for a token.
+    fn get_utf16_span(&mut self, token: &Token) -> Span {
         let mut span = Span::new(token.start(), token.end());
         if let Some(converter) = self.span_converter.as_mut() {
             converter.convert_span(&mut span);
         }
-
-        self.seq.serialize_element(&ESTreeUnsafeToken { token_type, value, span });
+        span
     }
 
     /// Serialize all remaining tokens and close the sequence.
@@ -475,12 +476,7 @@ impl<'a, O: ESTreeTokenConfig, S: SequenceSerializer> Visit<'a> for ESTreeTokenC
         let flags = &value[pattern.len() + 2..];
         let regex = RegExpData { pattern, flags };
 
-        // Convert span to UTF-16
-        let mut span = Span::new(token.start(), token.end());
-        if let Some(converter) = self.span_converter.as_mut() {
-            converter.convert_span(&mut span);
-        }
-
+        let span = self.get_utf16_span(token);
         self.seq.serialize_element(&ESTreeRegExpToken { value, regex, span });
     }
 
