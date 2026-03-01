@@ -3,7 +3,7 @@ source: apps/oxlint/src/tester.rs
 ---
 ########## 
 arguments: -c .oxlintrc.json
-working directory: fixtures/overrides_correctness_off
+working directory: fixtures/issue_19409/overrides_correctness_off
 ----------
 
   x typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
