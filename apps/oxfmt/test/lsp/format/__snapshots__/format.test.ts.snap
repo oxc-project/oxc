@@ -1,8 +1,8 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`LSP formatting > basic formatting > should handle format/formatted.ts 1`] = `
-"--- FILE -----------
-format/formatted.ts
+"--- URI -----------
+file://<fixture>/format/formatted.ts
 --- BEFORE ---------
 const x = 1;
 
@@ -13,8 +13,8 @@ const x = 1;
 `;
 
 exports[`LSP formatting > basic formatting > should handle format/test.json 1`] = `
-"--- FILE -----------
-format/test.json
+"--- URI -----------
+file://<fixture>/format/test.json
 --- BEFORE ---------
 {"name":"test","version":"1.0.0"}
 
@@ -25,8 +25,8 @@ format/test.json
 `;
 
 exports[`LSP formatting > basic formatting > should handle format/test.toml 1`] = `
-"--- FILE -----------
-format/test.toml
+"--- URI -----------
+file://<fixture>/format/test.toml
 --- BEFORE ---------
 [package]
 name="test"
@@ -41,8 +41,8 @@ version = "1.0.0"
 `;
 
 exports[`LSP formatting > basic formatting > should handle format/test.tsx 1`] = `
-"--- FILE -----------
-format/test.tsx
+"--- URI -----------
+file://<fixture>/format/test.tsx
 --- BEFORE ---------
 const   App:   React.FC   =   ()   =>   <div>Hello</div>
 
@@ -53,8 +53,8 @@ const App: React.FC = () => <div>Hello</div>;
 `;
 
 exports[`LSP formatting > basic formatting > should handle format/test.txt 1`] = `
-"--- FILE -----------
-format/test.txt
+"--- URI -----------
+file://<fixture>/format/test.txt
 --- BEFORE ---------
 hello   world
 
@@ -65,8 +65,8 @@ hello   world
 `;
 
 exports[`LSP formatting > basic formatting > should handle format/test.vue 1`] = `
-"--- FILE -----------
-format/test.vue
+"--- URI -----------
+file://<fixture>/format/test.vue
 --- BEFORE ---------
 <script>const   x   =   1;</script>
 
@@ -79,8 +79,8 @@ const x = 1;
 `;
 
 exports[`LSP formatting > config options > should apply config from config-no-sort-package-json/package.json 1`] = `
-"--- FILE -----------
-config-no-sort-package-json/package.json
+"--- URI -----------
+file://<fixture>/config-no-sort-package-json/package.json
 --- BEFORE ---------
 {"version":"1.0.0","name":"test"}
 
@@ -94,8 +94,8 @@ config-no-sort-package-json/package.json
 `;
 
 exports[`LSP formatting > config options > should apply config from config-semi/test.ts 1`] = `
-"--- FILE -----------
-config-semi/test.ts
+"--- URI -----------
+file://<fixture>/config-semi/test.ts
 --- BEFORE ---------
 const x = 1;
 
@@ -106,8 +106,8 @@ const x = 1
 `;
 
 exports[`LSP formatting > config options > should apply config from config-sort-both/test.jsx 1`] = `
-"--- FILE -----------
-config-sort-both/test.jsx
+"--- URI -----------
+file://<fixture>/config-sort-both/test.jsx
 --- BEFORE ---------
 import { z } from "z";
 import { a } from "a";
@@ -124,8 +124,8 @@ const App = () => <div className="m-2 flex p-4">Hello</div>;
 `;
 
 exports[`LSP formatting > config options > should apply config from config-sort-imports/test.js 1`] = `
-"--- FILE -----------
-config-sort-imports/test.js
+"--- URI -----------
+file://<fixture>/config-sort-imports/test.js
 --- BEFORE ---------
 import { z } from "z";
 import { a } from "a";
@@ -138,8 +138,8 @@ import { z } from "z";
 `;
 
 exports[`LSP formatting > config options > should apply config from config-sort-tailwindcss/test.tsx 1`] = `
-"--- FILE -----------
-config-sort-tailwindcss/test.tsx
+"--- URI -----------
+file://<fixture>/config-sort-tailwindcss/test.tsx
 --- BEFORE ---------
 const App = () => <div className="p-4 flex m-2">Hello</div>;
 
@@ -150,8 +150,8 @@ const App = () => <div className="m-2 flex p-4">Hello</div>;
 `;
 
 exports[`LSP formatting > config options > should apply config from config-sort-tailwindcss/test.vue 1`] = `
-"--- FILE -----------
-config-sort-tailwindcss/test.vue
+"--- URI -----------
+file://<fixture>/config-sort-tailwindcss/test.vue
 --- BEFORE ---------
 <template>
   <div class="p-4 flex m-2">Hello</div>
@@ -166,8 +166,8 @@ config-sort-tailwindcss/test.vue
 `;
 
 exports[`LSP formatting > config options > should apply config from config-vue-indent/test.vue 1`] = `
-"--- FILE -----------
-config-vue-indent/test.vue
+"--- URI -----------
+file://<fixture>/config-vue-indent/test.vue
 --- BEFORE ---------
 <script>
 const x = 1;
@@ -182,8 +182,8 @@ const x = 1;
 `;
 
 exports[`LSP formatting > config options > should apply config from editorconfig/test.ts 1`] = `
-"--- FILE -----------
-editorconfig/test.ts
+"--- URI -----------
+file://<fixture>/editorconfig/test.ts
 --- BEFORE ---------
 if (true) {
 x = 1;
@@ -198,8 +198,8 @@ if (true) {
 `;
 
 exports[`LSP formatting > config options in nested workspace folders > should respect nested oxfmt config with nested workspace folders nested-workspaces/test.ts 1`] = `
-"--- FILE -----------
-nested-workspaces/test.ts
+"--- URI -----------
+file://<fixture>/nested-workspaces/test.ts
 --- BEFORE ---------
 // { "semi": true, "singleQuote": true }
 const x = "1";
@@ -212,8 +212,8 @@ const x = '1';
 `;
 
 exports[`LSP formatting > config options in nested workspace folders > should respect nested oxfmt config with nested workspace folders nested-workspaces/test.ts 2`] = `
-"--- FILE -----------
-nested-workspaces/second/test.ts
+"--- URI -----------
+file://<fixture>/nested-workspaces/second/test.ts
 --- BEFORE ---------
 // { "semi": true, "singleQuote": true }
 const x = "1";
@@ -226,8 +226,8 @@ const x = '1';
 `;
 
 exports[`LSP formatting > config options in nested workspace folders > should respect nested oxfmt config with nested workspace folders nested-workspaces-with-config/test.ts 1`] = `
-"--- FILE -----------
-nested-workspaces-with-config/test.ts
+"--- URI -----------
+file://<fixture>/nested-workspaces-with-config/test.ts
 --- BEFORE ---------
 // { "semi": true, "singleQuote": true }
 const x = "1";
@@ -240,8 +240,8 @@ const x = '1';
 `;
 
 exports[`LSP formatting > config options in nested workspace folders > should respect nested oxfmt config with nested workspace folders nested-workspaces-with-config/test.ts 2`] = `
-"--- FILE -----------
-nested-workspaces-with-config/second/test.ts
+"--- URI -----------
+file://<fixture>/nested-workspaces-with-config/second/test.ts
 --- BEFORE ---------
 // { "semi": false, "singleQuote": false }
 const x = "1";
@@ -254,8 +254,8 @@ const x = "1"
 `;
 
 exports[`LSP formatting > ignore patterns > should handle ignore-config/file.generated.ts 1`] = `
-"--- FILE -----------
-ignore-config/file.generated.ts
+"--- URI -----------
+file://<fixture>/ignore-config/file.generated.ts
 --- BEFORE ---------
 const   x   =   1
 
@@ -266,8 +266,8 @@ const   x   =   1
 `;
 
 exports[`LSP formatting > ignore patterns > should handle ignore-prettierignore/ignored.ts 1`] = `
-"--- FILE -----------
-ignore-prettierignore/ignored.ts
+"--- URI -----------
+file://<fixture>/ignore-prettierignore/ignored.ts
 --- BEFORE ---------
 const   x   =   1
 
@@ -278,8 +278,8 @@ const   x   =   1
 `;
 
 exports[`LSP formatting > in-memory document > should format ccsettings file format/formatted.ts 1`] = `
-"--- FILE -----------
-format/formatted.ts
+"--- URI -----------
+ccsettings://typescript
 --- BEFORE ---------
 const x = 1;
 
@@ -290,8 +290,8 @@ const x = 1;
 `;
 
 exports[`LSP formatting > in-memory document > should format ccsettings file format/test.json 1`] = `
-"--- FILE -----------
-format/test.json
+"--- URI -----------
+ccsettings://json
 --- BEFORE ---------
 {"name":"test","version":"1.0.0"}
 
@@ -302,8 +302,8 @@ format/test.json
 `;
 
 exports[`LSP formatting > in-memory document > should format ccsettings file format/test.toml 1`] = `
-"--- FILE -----------
-format/test.toml
+"--- URI -----------
+ccsettings://toml
 --- BEFORE ---------
 [package]
 name="test"
@@ -318,8 +318,8 @@ version = "1.0.0"
 `;
 
 exports[`LSP formatting > in-memory document > should format ccsettings file format/test.tsx 1`] = `
-"--- FILE -----------
-format/test.tsx
+"--- URI -----------
+ccsettings://typescriptreact
 --- BEFORE ---------
 const   App:   React.FC   =   ()   =>   <div>Hello</div>
 
@@ -330,8 +330,8 @@ const App: React.FC = () => <div>Hello</div>;
 `;
 
 exports[`LSP formatting > in-memory document > should format ccsettings file format/test.txt 1`] = `
-"--- FILE -----------
-format/test.txt
+"--- URI -----------
+ccsettings://plaintext
 --- BEFORE ---------
 hello   world
 
@@ -342,8 +342,8 @@ hello   world
 `;
 
 exports[`LSP formatting > in-memory document > should format ccsettings file format/test.vue 1`] = `
-"--- FILE -----------
-format/test.vue
+"--- URI -----------
+ccsettings://vue
 --- BEFORE ---------
 <script>const   x   =   1;</script>
 
@@ -356,8 +356,8 @@ const x = 1;
 `;
 
 exports[`LSP formatting > in-memory document > should format untitled file format/formatted.ts 1`] = `
-"--- FILE -----------
-format/formatted.ts
+"--- URI -----------
+untitled://Untitled-typescript
 --- BEFORE ---------
 const x = 1;
 
@@ -368,8 +368,8 @@ const x = 1;
 `;
 
 exports[`LSP formatting > in-memory document > should format untitled file format/test.json 1`] = `
-"--- FILE -----------
-format/test.json
+"--- URI -----------
+untitled://Untitled-json
 --- BEFORE ---------
 {"name":"test","version":"1.0.0"}
 
@@ -380,8 +380,8 @@ format/test.json
 `;
 
 exports[`LSP formatting > in-memory document > should format untitled file format/test.toml 1`] = `
-"--- FILE -----------
-format/test.toml
+"--- URI -----------
+untitled://Untitled-toml
 --- BEFORE ---------
 [package]
 name="test"
@@ -396,8 +396,8 @@ version = "1.0.0"
 `;
 
 exports[`LSP formatting > in-memory document > should format untitled file format/test.tsx 1`] = `
-"--- FILE -----------
-format/test.tsx
+"--- URI -----------
+untitled://Untitled-typescriptreact
 --- BEFORE ---------
 const   App:   React.FC   =   ()   =>   <div>Hello</div>
 
@@ -408,8 +408,8 @@ const App: React.FC = () => <div>Hello</div>;
 `;
 
 exports[`LSP formatting > in-memory document > should format untitled file format/test.txt 1`] = `
-"--- FILE -----------
-format/test.txt
+"--- URI -----------
+untitled://Untitled-plaintext
 --- BEFORE ---------
 hello   world
 
@@ -420,8 +420,8 @@ hello   world
 `;
 
 exports[`LSP formatting > in-memory document > should format untitled file format/test.vue 1`] = `
-"--- FILE -----------
-format/test.vue
+"--- URI -----------
+untitled://Untitled-vue
 --- BEFORE ---------
 <script>const   x   =   1;</script>
 
@@ -434,8 +434,8 @@ const x = 1;
 `;
 
 exports[`LSP formatting > in-memory document > should format vscode-userdata file format/formatted.ts 1`] = `
-"--- FILE -----------
-format/formatted.ts
+"--- URI -----------
+vscode-userdata://typescript
 --- BEFORE ---------
 const x = 1;
 
@@ -446,8 +446,8 @@ const x = 1;
 `;
 
 exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.json 1`] = `
-"--- FILE -----------
-format/test.json
+"--- URI -----------
+vscode-userdata://json
 --- BEFORE ---------
 {"name":"test","version":"1.0.0"}
 
@@ -458,8 +458,8 @@ format/test.json
 `;
 
 exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.toml 1`] = `
-"--- FILE -----------
-format/test.toml
+"--- URI -----------
+vscode-userdata://toml
 --- BEFORE ---------
 [package]
 name="test"
@@ -474,8 +474,8 @@ version = "1.0.0"
 `;
 
 exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.tsx 1`] = `
-"--- FILE -----------
-format/test.tsx
+"--- URI -----------
+vscode-userdata://typescriptreact
 --- BEFORE ---------
 const   App:   React.FC   =   ()   =>   <div>Hello</div>
 
@@ -486,8 +486,8 @@ const App: React.FC = () => <div>Hello</div>;
 `;
 
 exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.txt 1`] = `
-"--- FILE -----------
-format/test.txt
+"--- URI -----------
+vscode-userdata://plaintext
 --- BEFORE ---------
 hello   world
 
@@ -498,8 +498,8 @@ hello   world
 `;
 
 exports[`LSP formatting > in-memory document > should format vscode-userdata file format/test.vue 1`] = `
-"--- FILE -----------
-format/test.vue
+"--- URI -----------
+vscode-userdata://vue
 --- BEFORE ---------
 <script>const   x   =   1;</script>
 
@@ -512,8 +512,8 @@ const x = 1;
 `;
 
 exports[`LSP formatting > initializationOptions > should use custom config path from fmt.configPath 1`] = `
-"--- FILE -----------
-custom_config_path/semicolons-as-needed.ts
+"--- URI -----------
+file://<fixture>/custom_config_path/semicolons-as-needed.ts
 --- BEFORE ---------
 // semicolon is on character 8-9, which will be removed
 debugger;
