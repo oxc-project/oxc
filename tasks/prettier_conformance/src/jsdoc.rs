@@ -208,23 +208,25 @@ impl JsdocTestRunner {
 
     fn parse_jsdoc_options(path: &Path) -> (JsdocOptions, QuoteStyle) {
         let content = std::fs::read_to_string(path).unwrap();
+        let json: serde_json::Value = serde_json::from_str(&content)
+            .unwrap_or_else(|e| panic!("Failed to parse {}: {e}", path.display()));
+
         let mut options = JsdocOptions::default();
         let mut quote_style = QuoteStyle::default();
 
-        // Simple JSON parsing for known options
-        if content.contains("\"capitalize_descriptions\": false") {
+        if json.get("capitalize_descriptions").and_then(serde_json::Value::as_bool) == Some(false) {
             options.capitalize_descriptions = false;
         }
-        if content.contains("\"separate_tag_groups\": true") {
+        if json.get("separate_tag_groups").and_then(serde_json::Value::as_bool) == Some(true) {
             options.separate_tag_groups = true;
         }
-        if content.contains("\"separate_returns_from_param\": true") {
+        if json.get("separate_returns_from_param").and_then(serde_json::Value::as_bool) == Some(true) {
             options.separate_returns_from_param = true;
         }
-        if content.contains("\"bracket_spacing\": true") {
+        if json.get("bracket_spacing").and_then(serde_json::Value::as_bool) == Some(true) {
             options.bracket_spacing = true;
         }
-        if content.contains("\"single_quote\": true") {
+        if json.get("single_quote").and_then(serde_json::Value::as_bool) == Some(true) {
             quote_style = QuoteStyle::Single;
         }
 
