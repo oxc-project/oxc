@@ -400,6 +400,15 @@ impl HirBuilder {
         false
     }
 
+    /// Check if a name is in the context identifiers set, regardless of whether
+    /// the binding has been declared yet. This is needed for destructuring patterns
+    /// where we need to check if an identifier will be a context variable before
+    /// declaring it (since the TS reference checks `getStoreKind` before the
+    /// destructure's `lowerIdentifierForAssignment` declares the binding).
+    pub fn will_be_context_identifier(&self, name: &str) -> bool {
+        self.context_identifiers.contains(name)
+    }
+
     /// Add a name to the context identifiers set and the hoisted identifiers set.
     ///
     /// This corresponds to `Environment.addHoistedIdentifier()` in the TS version,

@@ -508,14 +508,28 @@ fn lower_object_destructuring(
         // Get the value pattern
         match &prop.value {
             ast::BindingPattern::BindingIdentifier(ident) => {
-                // Simple identifier: declare it directly and use its place in the pattern
-                let ident_loc = span_to_loc(ident.span);
-                let place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
-                properties.push(ObjectPatternProperty::Property(ObjectProperty {
-                    key,
-                    property_type: ObjectPropertyType::Property,
-                    place,
-                }));
+                if builder.will_be_context_identifier(&ident.name) {
+                    // Context variable: use a promoted temporary in the pattern,
+                    // then emit a StoreContext followup to assign it to the real binding.
+                    // This matches the TS reference where getStoreKind returns 'StoreContext'
+                    // causing the else branch to create a temporary + followup.
+                    let temp = create_promoted_temporary(builder, prop_loc);
+                    properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                        key,
+                        property_type: ObjectPropertyType::Property,
+                        place: temp.clone(),
+                    }));
+                    followups.push((temp, FollowupPattern::Binding(&prop.value)));
+                } else {
+                    // Simple identifier: declare it directly and use its place in the pattern
+                    let ident_loc = span_to_loc(ident.span);
+                    let place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                    properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                        key,
+                        property_type: ObjectPropertyType::Property,
+                        place,
+                    }));
+                }
             }
             ast::BindingPattern::AssignmentPattern(assign) => {
                 // Property with default: `{ a = defaultVal }` or `{ key: val = defaultVal }`
@@ -628,10 +642,19 @@ fn lower_array_destructuring(
                 let elem_loc = span_to_loc(binding.span());
                 match binding {
                     ast::BindingPattern::BindingIdentifier(ident) => {
-                        // Simple identifier element
-                        let ident_loc = span_to_loc(ident.span);
-                        let place = builder.declare_binding(&ident.name, binding_kind, ident_loc);
-                        items.push(ArrayPatternElement::Place(place));
+                        if builder.will_be_context_identifier(&ident.name) {
+                            // Context variable: use a promoted temporary in the pattern,
+                            // then emit a StoreContext followup to assign it to the real binding.
+                            let temp = create_promoted_temporary(builder, elem_loc);
+                            items.push(ArrayPatternElement::Place(temp.clone()));
+                            followups.push((temp, FollowupPattern::Binding(binding)));
+                        } else {
+                            // Simple identifier element
+                            let ident_loc = span_to_loc(ident.span);
+                            let place =
+                                builder.declare_binding(&ident.name, binding_kind, ident_loc);
+                            items.push(ArrayPatternElement::Place(place));
+                        }
                     }
                     ast::BindingPattern::AssignmentPattern(assign) => {
                         // Element with default: `const [a = 1] = arr`
@@ -904,8 +927,13 @@ fn lower_object_assignment_target(
                 let ident_loc = span_to_loc(ident_prop.binding.span);
                 let key = ObjectPropertyKey::Identifier(name.to_string());
 
-                if ident_prop.init.is_some() {
-                    // Has default value: create a promoted temporary and defer
+                if ident_prop.init.is_some()
+                    || builder.is_context_identifier(name)
+                {
+                    // Has default value or is a context variable: create a promoted
+                    // temporary and defer the assignment via a followup.
+                    // For context variables, the followup's `lower_assignment` will
+                    // emit a StoreContext instruction.
                     let temp = create_promoted_temporary(builder, ident_loc);
                     properties.push(ObjectPatternProperty::Property(ObjectProperty {
                         key,
@@ -936,16 +964,34 @@ fn lower_object_assignment_target(
 
                 match &prop_prop.binding {
                     ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) => {
-                        let place = resolve_identifier_for_reassignment(
-                            builder,
-                            &ident.name,
-                            span_to_loc(ident.span),
-                        );
-                        properties.push(ObjectPatternProperty::Property(ObjectProperty {
-                            key,
-                            property_type: ObjectPropertyType::Property,
-                            place,
-                        }));
+                        if builder.is_context_identifier(&ident.name) {
+                            // Context variable: create temporary + followup
+                            let temp = create_promoted_temporary(builder, prop_loc);
+                            properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                                key,
+                                property_type: ObjectPropertyType::Property,
+                                place: temp.clone(),
+                            }));
+                            followups.push((
+                                temp,
+                                AssignmentFollowup::IdentifierWithDefault {
+                                    name: ident.name.to_string(),
+                                    default_expr: None,
+                                    loc: prop_loc,
+                                },
+                            ));
+                        } else {
+                            let place = resolve_identifier_for_reassignment(
+                                builder,
+                                &ident.name,
+                                span_to_loc(ident.span),
+                            );
+                            properties.push(ObjectPatternProperty::Property(ObjectProperty {
+                                key,
+                                property_type: ObjectPropertyType::Property,
+                                place,
+                            }));
+                        }
                     }
                     ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(
                         with_default,
@@ -1044,6 +1090,23 @@ fn lower_array_assignment_target(
     target_loc: SourceLocation,
     loc: SourceLocation,
 ) -> Result<ExpressionResult, CompilerError> {
+    // Match the TS reference's `forceTemporaries` logic (BuildHIR.ts lines 3822-3830):
+    // For reassignments, force temporaries if any element is not a simple local identifier,
+    // i.e. has nested destructuring, is a context variable, or is non-local.
+    let force_temporaries = target.elements.iter().any(|el| {
+        match el {
+            Some(ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident)) => {
+                builder.will_be_context_identifier(&ident.name)
+                    || !matches!(
+                        builder.resolve_identifier(&ident.name),
+                        VariableBinding::Identifier { .. }
+                    )
+            }
+            Some(_) => true, // nested patterns or defaults
+            None => false,   // holes are fine
+        }
+    });
+
     let mut items = Vec::new();
     let mut followups: Vec<(crate::hir::Place, AssignmentFollowup)> = Vec::new();
 
@@ -1056,12 +1119,26 @@ fn lower_array_assignment_target(
                 let elem_loc = span_to_loc(target_maybe_default.span());
                 match target_maybe_default {
                     ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) => {
-                        let place = resolve_identifier_for_reassignment(
-                            builder,
-                            &ident.name,
-                            span_to_loc(ident.span),
-                        );
-                        items.push(ArrayPatternElement::Place(place));
+                        if force_temporaries {
+                            // Context variable or forced: use temporary + followup
+                            let temp = create_promoted_temporary(builder, elem_loc);
+                            items.push(ArrayPatternElement::Place(temp.clone()));
+                            followups.push((
+                                temp,
+                                AssignmentFollowup::IdentifierWithDefault {
+                                    name: ident.name.to_string(),
+                                    default_expr: None,
+                                    loc: elem_loc,
+                                },
+                            ));
+                        } else {
+                            let place = resolve_identifier_for_reassignment(
+                                builder,
+                                &ident.name,
+                                span_to_loc(ident.span),
+                            );
+                            items.push(ArrayPatternElement::Place(place));
+                        }
                     }
                     ast::AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(
                         with_default,
@@ -1102,9 +1179,25 @@ fn lower_array_assignment_target(
     if let Some(rest) = &target.rest {
         let rest_loc = span_to_loc(rest.span);
         if let ast::AssignmentTarget::AssignmentTargetIdentifier(ident) = &rest.target {
-            let place =
-                resolve_identifier_for_reassignment(builder, &ident.name, span_to_loc(ident.span));
-            items.push(ArrayPatternElement::Spread(SpreadPattern { place }));
+            if force_temporaries || builder.is_context_identifier(&ident.name) {
+                let temp = create_promoted_temporary(builder, rest_loc);
+                items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp.clone() }));
+                followups.push((
+                    temp,
+                    AssignmentFollowup::IdentifierWithDefault {
+                        name: ident.name.to_string(),
+                        default_expr: None,
+                        loc: rest_loc,
+                    },
+                ));
+            } else {
+                let place = resolve_identifier_for_reassignment(
+                    builder,
+                    &ident.name,
+                    span_to_loc(ident.span),
+                );
+                items.push(ArrayPatternElement::Spread(SpreadPattern { place }));
+            }
         } else {
             let temp = create_promoted_temporary(builder, rest_loc);
             items.push(ArrayPatternElement::Spread(SpreadPattern { place: temp.clone() }));
