@@ -3872,6 +3872,8 @@ dependencies = [
  "oxlint",
  "pico-args",
  "project-root",
+ "rustc-hash",
+ "serde_json",
  "website_common",
 ]
 
