@@ -25,6 +25,7 @@ function features() {}
 -------------------------------
 /**
  * Features:
+ *
  * - Fast parsing
  * - Low memory usage
  * - Incremental compilation
@@ -45,6 +46,7 @@ function features() {}
 --------------------------------
 /**
  * Features:
+ *
  * - Fast parsing
  * - Low memory usage
  * - Incremental compilation
