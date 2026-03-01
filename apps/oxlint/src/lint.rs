@@ -255,7 +255,7 @@ impl CliRunner {
                                 ConfigLoadError::JsConfigFileFoundButJsRuntimeNotAvailable => {
                                     "Error: JavaScript/TypeScript config files found but JS runtime not available.\n\
                                      This is an experimental feature that requires running oxlint via Node.js.\n\
-                                     Please use JSON config files (.oxlintrc.json) instead, or run oxlint via the npm package.\n".to_string()
+                                     Please use JSON config files (.oxlintrc.json or .oxlintrc.jsonc) instead, or run oxlint via the npm package.\n".to_string()
                                 }
                                 ConfigLoadError::Diagnostic(error) => {
                                     let report = render_report(&handler, error);

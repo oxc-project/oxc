@@ -119,7 +119,7 @@ pub struct BasicOptions {
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
     ///
-    /// If not provided, Oxlint will look for a `.oxlintrc.json` or `oxlint.config.ts` file in the current working directory.
+    /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` file in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
