@@ -475,9 +475,17 @@ fn serialize_list(
                 if matches!(item_child, Node::Definition(_)) {
                     serialize_node(item_child, 0, opts, lines);
                 }
-                // Nested lists align to the parent item's content column.
+                // Nested lists align to the parent item's content block. At the
+                // first nesting level that is the parent marker width; at deeper
+                // levels we keep the child list under the already-indented content
+                // column, which requires one additional marker-width step.
                 else if matches!(item_child, Node::List(_)) {
-                    serialize_node(item_child, indent + marker_width, opts, lines);
+                    let nested_indent = if indent == 0 {
+                        indent + marker_width
+                    } else {
+                        indent + marker_width + marker_width
+                    };
+                    serialize_node(item_child, nested_indent, opts, lines);
                 } else {
                     let mut child_lines = Vec::new();
                     serialize_node_for_list_item(
