@@ -1,3 +1,7 @@
+use std::fmt::Write as _;
+
+use cow_utils::CowUtils;
+
 /// Normalize JSDoc tag aliases to their canonical form.
 /// Matches prettier-plugin-jsdoc's `TAGS_SYNONYMS` from `roles.ts`.
 pub fn normalize_tag_kind(kind: &str) -> &str {
@@ -245,10 +249,6 @@ fn without_strings(type_str: &str, transform: impl FnOnce(&str) -> String) -> St
     result
 }
 
-use std::fmt::Write as _;
-
-use cow_utils::CowUtils;
-
 /// Core type normalization (without quote conversion).
 fn normalize_type_inner(type_str: &str) -> String {
     let trimmed = type_str.trim();
@@ -333,14 +333,9 @@ fn normalize_type_core(type_str: &str) -> String {
 /// Runs iteratively (like the plugin's `while(changed)` loop) to handle nested arrays.
 fn convert_array_types_globally(type_str: &str) -> String {
     let mut result = type_str.to_string();
-    let mut changed = true;
 
-    while changed {
-        changed = false;
-        if let Some(new_result) = replace_one_array_pattern(&result) {
-            result = new_result;
-            changed = true;
-        }
+    while let Some(new_result) = replace_one_array_pattern(&result) {
+        result = new_result;
     }
 
     result

@@ -51,16 +51,15 @@ fn should_skip_capitalize(tag_kind: &str) -> bool {
 }
 
 /// Tags that use `type_name_comment()` pattern: `@tag {type} name description`
+/// Expects canonical (normalized) tag names.
 fn is_type_name_comment_tag(tag_kind: &str) -> bool {
-    matches!(tag_kind, "param" | "property" | "typedef" | "template" | "arg" | "argument" | "prop")
+    matches!(tag_kind, "param" | "property" | "typedef" | "template")
 }
 
 /// Tags that use `type_comment()` pattern: `@tag {type} description`
+/// Expects canonical (normalized) tag names.
 fn is_type_comment_tag(tag_kind: &str) -> bool {
-    matches!(
-        tag_kind,
-        "returns" | "yields" | "throws" | "type" | "satisfies" | "return" | "yield" | "exception"
-    )
+    matches!(tag_kind, "returns" | "yields" | "throws" | "type" | "satisfies")
 }
 
 /// Get the sort priority for a tag kind (lower number = higher priority).
@@ -673,8 +672,6 @@ pub fn format_jsdoc_comment<'a>(
     // Format tags
     let mut prev_normalized_kind: Option<&str> = None;
     for (tag_idx, &(tag, normalized_kind)) in effective_tags.iter().enumerate() {
-        let raw_kind = tag.kind.parsed();
-
         // Skip @import tags — they are handled via merged import_lines
         if normalized_kind == "import" {
             if has_imports && !imports_emitted {
@@ -754,7 +751,7 @@ pub fn format_jsdoc_comment<'a>(
                 format_options,
                 &mut content_lines,
             );
-        } else if is_type_name_comment_tag(raw_kind) {
+        } else if is_type_name_comment_tag(normalized_kind) {
             format_type_name_comment_tag(
                 normalized_kind,
                 tag,
@@ -765,7 +762,7 @@ pub fn format_jsdoc_comment<'a>(
                 format_options,
                 &mut content_lines,
             );
-        } else if is_type_comment_tag(raw_kind) {
+        } else if is_type_comment_tag(normalized_kind) {
             format_type_comment_tag(
                 normalized_kind,
                 tag,
@@ -1696,7 +1693,7 @@ fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> 
     let input = format!("type __t = {type_str};");
 
     let allocator = Allocator::default();
-    let line_width = LineWidth::try_from(u16::try_from(80).unwrap_or(80)).unwrap();
+    let line_width = LineWidth::try_from(80u16).unwrap();
     let options = FormatOptions { line_width, jsdoc: None, ..format_options.clone() };
 
     let ret = Parser::new(&allocator, &input, SourceType::tsx())
