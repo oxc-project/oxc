@@ -2237,6 +2237,7 @@ dependencies = [
  "oxc_tasks_common",
  "pico-args",
  "rustc-hash",
+ "serde_json",
  "similar",
  "walkdir",
 ]
