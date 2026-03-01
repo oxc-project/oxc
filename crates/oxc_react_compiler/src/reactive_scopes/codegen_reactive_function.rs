@@ -2335,7 +2335,23 @@ fn join_jsx_children_multiline(children: &[String]) -> String {
 fn codegen_jsx_attribute(cx: &CodegenContext, attr: &JsxAttribute) -> String {
     match attr {
         JsxAttribute::Attribute { name, place } => {
-            let value = codegen_place_to_expression(cx, place);
+            let decl_id = place.identifier.declaration_id;
+            // If this is an inlined JSX text temp, emit as a string literal.
+            // JsxText values are raw decoded text that need to be quoted when used
+            // as attribute values (vs JSX children where they render as raw text).
+            let value = if cx.jsx_text_temps.contains(&decl_id)
+                && cx.temp.get(&decl_id).is_some_and(|v| v.is_some())
+            {
+                let raw = codegen_place_to_expression(cx, place);
+                // Wrap as a proper string literal, escaping any embedded quotes
+                if raw.contains('"') {
+                    format!("'{}'", escape_string_single_quote(&raw))
+                } else {
+                    format!("\"{}\"", escape_string(&raw))
+                }
+            } else {
+                codegen_place_to_expression(cx, place)
+            };
             // Check if value is a simple string literal that can be used directly
             let is_double_quoted = value.starts_with('"') && value.ends_with('"');
             let is_single_quoted = value.starts_with('\'') && value.ends_with('\'');
