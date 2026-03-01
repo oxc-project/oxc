@@ -12,7 +12,7 @@ use oxc_linter::{
 };
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
-use crate::{DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME};
+use crate::{DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME};
 
 #[cfg(feature = "napi")]
 use crate::js_config;
@@ -82,9 +82,13 @@ pub fn discover_configs_in_tree(root: &Path) -> impl IntoIterator<Item = Discove
 fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfig> {
     let mut configs = Vec::new();
 
+    // Prefer .json over .jsonc (check .json first)
     let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
+    let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
     if json_path.is_file() {
         configs.push(DiscoveredConfig::Json(json_path));
+    } else if jsonc_path.is_file() {
+        configs.push(DiscoveredConfig::Json(jsonc_path));
     }
 
     let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
@@ -138,7 +142,7 @@ fn to_discovered_config(entry: &DirEntry) -> Option<DiscoveredConfig> {
         return None;
     }
     let file_name = entry.path().file_name()?;
-    if file_name == DEFAULT_OXLINTRC_NAME {
+    if file_name == DEFAULT_OXLINTRC_NAME || file_name == DEFAULT_JSONC_OXLINTRC_NAME {
         Some(DiscoveredConfig::Json(entry.path().to_path_buf()))
     } else if file_name == DEFAULT_TS_OXLINTRC_NAME {
         Some(DiscoveredConfig::Js(entry.path().to_path_buf()))
@@ -311,7 +315,16 @@ impl<'a> ConfigLoader<'a> {
                     let Some(dir) = path.parent().map(Path::to_path_buf) else {
                         continue;
                     };
-                    by_dir.entry(dir).or_default().0 = Some(path);
+                    let entry = by_dir.entry(dir).or_default();
+                    // Prefer .json over .jsonc: don't overwrite a .json path with a .jsonc path
+                    if entry
+                        .0
+                        .as_ref()
+                        .is_some_and(|p| p.extension().is_some_and(|ext| ext == "json"))
+                    {
+                        continue;
+                    }
+                    entry.0 = Some(path);
                 }
                 DiscoveredConfig::Js(path) => {
                     let Some(dir) = path.parent().map(Path::to_path_buf) else {
@@ -423,12 +436,15 @@ impl<'a> ConfigLoader<'a> {
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
     fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
         let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
+        let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
         let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
 
         let json_exists = json_path.is_file();
+        let jsonc_exists = jsonc_path.is_file();
         let ts_exists = ts_path.is_file();
 
-        if json_exists && ts_exists {
+        // Error if any JSON config conflicts with TS config
+        if (json_exists || jsonc_exists) && ts_exists {
             return Err(config_conflict_diagnostic(dir));
         }
 
@@ -436,8 +452,12 @@ impl<'a> ConfigLoader<'a> {
             return self.load_root_js_config(&ts_path).map(Some);
         }
 
+        // Prefer .json over .jsonc
         if json_exists {
             return Oxlintrc::from_file(&json_path).map(Some);
+        }
+        if jsonc_exists {
+            return Oxlintrc::from_file(&jsonc_path).map(Some);
         }
 
         Ok(None)
@@ -614,7 +634,7 @@ fn config_conflict_diagnostic(dir: &Path) -> OxcDiagnostic {
         DEFAULT_TS_OXLINTRC_NAME,
         dir.display()
     ))
-    .with_note("Only `.oxlintrc.json` or `oxlint.config.ts` are allowed, not both.")
+    .with_note("Only one of `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` is allowed per directory.")
     .with_help("Delete one of the configuration files.")
 }
 
@@ -623,7 +643,7 @@ fn js_config_not_supported_diagnostic(path: &Path) -> OxcDiagnostic {
         "JavaScript/TypeScript config file ({}) found but JS runtime not available.",
         path.display()
     ))
-    .with_help("Run oxlint via the npm package, or use JSON config files (.oxlintrc.json).")
+    .with_help("Run oxlint via the npm package, or use JSON config files (.oxlintrc.json or .oxlintrc.jsonc).")
 }
 
 fn is_js_config_path(path: &Path) -> bool {
@@ -949,5 +969,53 @@ mod test {
             .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
         assert_eq!(errors.len(), 1);
         assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+    }
+
+    #[test]
+    fn test_jsonc_config_discovery() {
+        let root_dir = tempfile::tempdir().unwrap();
+        // Create only a .oxlintrc.jsonc file
+        std::fs::write(
+            root_dir.path().join(".oxlintrc.jsonc"),
+            r#"{ /* comment */ "rules": {} }"#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let result = loader.load_root_config(root_dir.path(), None);
+        assert!(result.is_ok(), "Expected .oxlintrc.jsonc to be discovered and loaded");
+        let config = result.unwrap();
+        assert!(
+            config.path.to_string_lossy().ends_with(".oxlintrc.jsonc"),
+            "Expected config path to end with .oxlintrc.jsonc, got: {}",
+            config.path.display()
+        );
+    }
+
+    #[test]
+    fn test_json_preferred_over_jsonc() {
+        let root_dir = tempfile::tempdir().unwrap();
+        // Create both .oxlintrc.json and .oxlintrc.jsonc
+        std::fs::write(root_dir.path().join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+        std::fs::write(
+            root_dir.path().join(".oxlintrc.jsonc"),
+            r#"{ /* comment */ "rules": {} }"#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let result = loader.load_root_config(root_dir.path(), None);
+        assert!(result.is_ok(), "Expected .oxlintrc.json to be preferred over .oxlintrc.jsonc");
+        let config = result.unwrap();
+        assert!(
+            config.path.to_string_lossy().ends_with(".oxlintrc.json")
+                && !config.path.to_string_lossy().ends_with(".oxlintrc.jsonc"),
+            "Expected config path to end with .oxlintrc.json (not .jsonc), got: {}",
+            config.path.display()
+        );
     }
 }
