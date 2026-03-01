@@ -2,208 +2,213 @@
 
 use std::fmt::{self, Display};
 
-/// Lexer token kind
-///
-/// Exported for other oxc crates to use. You generally don't need to use this directly.
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-#[repr(u8)]
-#[non_exhaustive]
-pub enum Kind {
-    #[default]
-    Eof = 0,
-    Undetermined,
-    Skip, // Whitespace, line breaks, comments
-    // 12.5 Hashbang Comments
-    HashbangComment,
-    // 12.7.1 identifier
-    Ident,
-    // 12.7.2 keyword
-    Await,
-    Break,
-    Case,
-    Catch,
-    Class,
-    Const,
-    Continue,
-    Debugger,
-    Default,
-    Delete,
-    Do,
-    Else,
-    Enum,
-    Export,
-    Extends,
-    Finally,
-    For,
-    Function,
-    If,
-    Import,
-    In,
-    Instanceof,
-    New,
-    Return,
-    Super,
-    Switch,
-    This,
-    Throw,
-    Try,
-    Typeof,
-    Var,
-    Void,
-    While,
-    With,
-    // Contextual Keywords
-    Async,
-    From,
-    Get,
-    Meta, // import.meta
-    Of,
-    Set,
-    Target,   // new.target
-    Accessor, // keyword from https://github.com/tc39/proposal-decorators
-    Source,   // import.source https://github.com/tc39/proposal-source-phase-imports
-    Defer,    // import.defer https://github.com/tc39/proposal-defer-import-eval
-    // TypeScript Contextual Keywords
-    Abstract,
-    As,
-    Asserts,
-    Assert,
-    Any,
-    Boolean,
-    Constructor,
-    Declare,
-    Infer,
-    Intrinsic,
-    Is,
-    KeyOf,
-    Module,
-    Namespace,
-    Never,
-    Out,
-    Readonly,
-    Require,
-    Number, // the "number" keyword for TypeScript
-    Object,
-    Satisfies,
-    String, // the "string" keyword for TypeScript
-    Symbol,
-    Type,
-    Undefined,
-    Unique,
-    Using,
-    Unknown,
-    Global,
-    BigInt, // the "bigint" keyword for TypeScript
-    Override,
-    // Future keywords (strict mode reserved words)
-    Implements,
-    Interface,
-    Let,
-    Package,
-    Private,
-    Protected,
-    Public,
-    Static,
-    Yield,
-    // 12.9.1 Null Literals
-    // 12.9.2 Boolean Literals
-    // Moved here to make all keywords contiguous for range check optimization
-    True,
-    False,
-    Null,
-    // 12.8 punctuators
-    Amp, // &
-    Amp2,
-    Amp2Eq,
-    AmpEq,
-    Bang, // !
-    Caret,
-    CaretEq,
-    Colon,
-    Comma,
-    Dot,
-    Dot3, // ...
-    Eq,
-    Eq2,
-    Eq3,
-    GtEq, // >=
-    LAngle,
-    LBrack,
-    LCurly,
-    LParen,
-    LtEq, // <=
-    Minus,
-    Minus2,
-    MinusEq,
-    Neq,
-    Neq2,
-    Percent,
-    PercentEq,
-    Pipe,
-    Pipe2,
-    Pipe2Eq,
-    PipeEq,
-    Plus,
-    Plus2,
-    PlusEq,
-    Question,
-    Question2,
-    Question2Eq,
-    QuestionDot,
-    RAngle,
-    RBrack,
-    RCurly,
-    RParen,
-    Semicolon,
-    ShiftLeft,     // <<
-    ShiftLeftEq,   // <<=
-    ShiftRight,    // >>
-    ShiftRight3,   // >>>
-    ShiftRight3Eq, // >>>=
-    ShiftRightEq,  // >>=
-    Slash,
-    SlashEq,
-    Star,
-    Star2,
-    Star2Eq,
-    StarEq,
-    Tilde,
-    // arrow function
-    Arrow,
-    // 12.9.3 Numeric Literals
-    Decimal,
-    Float,
-    Binary,
-    Octal,
-    Hex,
-    // for `1e10`, `1e+10`
-    PositiveExponential,
-    // for `1e-10`
-    NegativeExponential,
-    // BigInt Literals (numeric literals with 'n' suffix)
-    DecimalBigInt,
-    BinaryBigInt,
-    OctalBigInt,
-    HexBigInt,
-    // 12.9.4 String Literals
-    /// String Type
-    Str,
-    // 12.9.5 Regular Expression Literals
-    RegExp,
-    // 12.9.6 Template Literal
-    NoSubstitutionTemplate,
-    TemplateHead,
-    TemplateMiddle,
-    TemplateTail,
-    // es2022 Private Identifier
-    PrivateIdentifier,
-    // JSX
-    JSXText,
-    // `JSXIdentifier` tokens are never produced by lexer.
-    // Only used in ESTree conversion.
-    JSXIdentifier,
-    // Decorator
-    At,
+use oxc_data_structures::fieldless_enum;
+
+// `fieldless_enum!` macro provides `Kind::VARIANTS` constant listing all variants
+fieldless_enum! {
+    /// Lexer token kind
+    ///
+    /// Exported for other oxc crates to use. You generally don't need to use this directly.
+    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+    #[repr(u8)]
+    #[non_exhaustive]
+    pub enum Kind {
+        #[default]
+        Eof = 0,
+        Undetermined,
+        Skip, // Whitespace, line breaks, comments
+        // 12.5 Hashbang Comments
+        HashbangComment,
+        // 12.7.1 identifier
+        Ident,
+        // 12.7.2 keyword
+        Await,
+        Break,
+        Case,
+        Catch,
+        Class,
+        Const,
+        Continue,
+        Debugger,
+        Default,
+        Delete,
+        Do,
+        Else,
+        Enum,
+        Export,
+        Extends,
+        Finally,
+        For,
+        Function,
+        If,
+        Import,
+        In,
+        Instanceof,
+        New,
+        Return,
+        Super,
+        Switch,
+        This,
+        Throw,
+        Try,
+        Typeof,
+        Var,
+        Void,
+        While,
+        With,
+        // Contextual Keywords
+        Async,
+        From,
+        Get,
+        Meta, // import.meta
+        Of,
+        Set,
+        Target,   // new.target
+        Accessor, // keyword from https://github.com/tc39/proposal-decorators
+        Source,   // import.source https://github.com/tc39/proposal-source-phase-imports
+        Defer,    // import.defer https://github.com/tc39/proposal-defer-import-eval
+        // TypeScript Contextual Keywords
+        Abstract,
+        As,
+        Asserts,
+        Assert,
+        Any,
+        Boolean,
+        Constructor,
+        Declare,
+        Infer,
+        Intrinsic,
+        Is,
+        KeyOf,
+        Module,
+        Namespace,
+        Never,
+        Out,
+        Readonly,
+        Require,
+        Number, // the "number" keyword for TypeScript
+        Object,
+        Satisfies,
+        String, // the "string" keyword for TypeScript
+        Symbol,
+        Type,
+        Undefined,
+        Unique,
+        Using,
+        Unknown,
+        Global,
+        BigInt, // the "bigint" keyword for TypeScript
+        Override,
+        // Future keywords (strict mode reserved words)
+        Implements,
+        Interface,
+        Let,
+        Package,
+        Private,
+        Protected,
+        Public,
+        Static,
+        Yield,
+        // 12.9.1 Null Literals
+        // 12.9.2 Boolean Literals
+        // Moved here to make all keywords contiguous for range check optimization
+        True,
+        False,
+        Null,
+        // 12.8 punctuators
+        Amp, // &
+        Amp2,
+        Amp2Eq,
+        AmpEq,
+        Bang, // !
+        Caret,
+        CaretEq,
+        Colon,
+        Comma,
+        Dot,
+        Dot3, // ...
+        Eq,
+        Eq2,
+        Eq3,
+        GtEq, // >=
+        LAngle,
+        LBrack,
+        LCurly,
+        LParen,
+        LtEq, // <=
+        Minus,
+        Minus2,
+        MinusEq,
+        Neq,
+        Neq2,
+        Percent,
+        PercentEq,
+        Pipe,
+        Pipe2,
+        Pipe2Eq,
+        PipeEq,
+        Plus,
+        Plus2,
+        PlusEq,
+        Question,
+        Question2,
+        Question2Eq,
+        QuestionDot,
+        RAngle,
+        RBrack,
+        RCurly,
+        RParen,
+        Semicolon,
+        ShiftLeft,     // <<
+        ShiftLeftEq,   // <<=
+        ShiftRight,    // >>
+        ShiftRight3,   // >>>
+        ShiftRight3Eq, // >>>=
+        ShiftRightEq,  // >>=
+        Slash,
+        SlashEq,
+        Star,
+        Star2,
+        Star2Eq,
+        StarEq,
+        Tilde,
+        // arrow function
+        Arrow,
+        // 12.9.3 Numeric Literals
+        Decimal,
+        Float,
+        Binary,
+        Octal,
+        Hex,
+        // for `1e10`, `1e+10`
+        PositiveExponential,
+        // for `1e-10`
+        NegativeExponential,
+        // BigInt Literals (numeric literals with 'n' suffix)
+        DecimalBigInt,
+        BinaryBigInt,
+        OctalBigInt,
+        HexBigInt,
+        // 12.9.4 String Literals
+        /// String Type
+        Str,
+        // 12.9.5 Regular Expression Literals
+        RegExp,
+        // 12.9.6 Template Literal
+        NoSubstitutionTemplate,
+        TemplateHead,
+        TemplateMiddle,
+        TemplateTail,
+        // es2022 Private Identifier
+        PrivateIdentifier,
+        // JSX
+        JSXText,
+        // `JSXIdentifier` tokens are never produced by lexer.
+        // Only used in ESTree conversion.
+        JSXIdentifier,
+        // Decorator
+        At,
+    }
 }
 
 #[allow(clippy::enum_glob_use, clippy::allow_attributes)]
