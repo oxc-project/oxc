@@ -1,6 +1,6 @@
 import { getErrorMessage } from "./utils/utils.ts";
 import { isDefineConfig } from "./package/config.ts";
-import { JSONStringify } from "./utils/globals.ts";
+import { DateNow, JSONStringify } from "./utils/globals.ts";
 
 interface JsConfigResult {
   path: string;
@@ -89,9 +89,11 @@ function validateConfigExtends(root: object): void {
  */
 export async function loadJsConfigs(paths: string[]): Promise<string> {
   try {
+    const cacheKey = DateNow();
     const results = await Promise.allSettled(
       paths.map(async (path): Promise<JsConfigResult> => {
-        const fileUrl = new URL(`file://${path}`);
+        // Bypass Node.js module cache to allow reloading changed config files (used for LSP, where we reload configs after important changes)
+        const fileUrl = new URL(`file://${path}?cache=${cacheKey}`);
         const module = await import(fileUrl.href);
         const config = module.default;
 
