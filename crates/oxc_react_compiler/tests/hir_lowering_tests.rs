@@ -206,7 +206,8 @@ function Component(props) {
         EnvironmentConfig::default(),
     );
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
+    let mut hir_func =
+        lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
 
     // Run only up to BuildReactiveScopeTerminals (steps 1-33) then inspect
     // We need to run the full pipeline to see scope terminals
@@ -351,7 +352,8 @@ export const FIXTURE_ENTRYPOINT = {
             EnvironmentConfig::default(),
         );
 
-        let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
+        let mut hir_func =
+            lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
         let result = run_pipeline(&mut hir_func, &env);
 
         match result {
@@ -444,7 +446,8 @@ fn debug_normalized_comparison() {
         EnvironmentConfig::default(),
     );
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
+    let mut hir_func =
+        lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
     let result = run_pipeline(&mut hir_func, &env);
 
     match result {
@@ -514,7 +517,8 @@ function Component(props) {
     let env =
         Environment::new(ReactFunctionType::Component, CompilerOutputMode::Client, env_config);
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
+    let mut hir_func =
+        lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).unwrap();
     let result = run_pipeline(&mut hir_func, &env);
 
     match result {
@@ -1773,7 +1777,8 @@ function Component({a, b}) {
         EnvironmentConfig::default(),
     );
 
-    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default()).expect("lowering failed");
+    let mut hir_func = lower(&env, ReactFunctionType::Component, &func, FxHashMap::default())
+        .expect("lowering failed");
 
     // Run the full pipeline
     let codegen = oxc_react_compiler::entrypoint::pipeline::run_pipeline(&mut hir_func, &env)

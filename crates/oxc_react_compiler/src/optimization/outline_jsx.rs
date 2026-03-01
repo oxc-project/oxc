@@ -99,7 +99,9 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
                         id: instr.lvalue.identifier.id,
                         instr: instr.clone(),
                     },
-                    InstructionValue::FunctionExpression(_) => InstrInfo::FunctionExpression { idx },
+                    InstructionValue::FunctionExpression(_) => {
+                        InstrInfo::FunctionExpression { idx }
+                    }
                     InstructionValue::JsxExpression(jsx_expr) => {
                         let children_ids = jsx_expr
                             .children
@@ -148,14 +150,7 @@ fn outline_jsx_impl(func: &mut HIRFunction, outlined_fns: &mut Vec<HIRFunction>)
             }
         }
         // Process final group
-        process_and_outline_jsx(
-            func,
-            &state,
-            &mut rewrite_instr,
-            &globals,
-            outlined_fns,
-            block_id,
-        );
+        process_and_outline_jsx(func, &state, &mut rewrite_instr, &globals, outlined_fns, block_id);
 
         // Recurse into inner function expressions (TS does this during reverse
         // iteration at line 91-93; we defer because we need &mut func).

@@ -80,7 +80,8 @@ fn lower_params(
                         loc,
                     )?;
                 } else {
-                    let place = builder.declare_binding(&ident.name, BindingKind::Param, loc, ident.span);
+                    let place =
+                        builder.declare_binding(&ident.name, BindingKind::Param, loc, ident.span);
                     result.push(crate::hir::ReactiveParam::Place(place));
                 }
             }
@@ -107,7 +108,8 @@ fn lower_params(
         let loc = span_to_loc(rest.span);
         match &rest.rest.argument {
             ast::BindingPattern::BindingIdentifier(ident) => {
-                let place = builder.declare_binding(&ident.name, BindingKind::Param, loc, ident.span);
+                let place =
+                    builder.declare_binding(&ident.name, BindingKind::Param, loc, ident.span);
                 result.push(crate::hir::ReactiveParam::Spread(SpreadPattern { place }));
             }
             // Destructured rest parameter
@@ -142,7 +144,8 @@ fn declare_all_bindings_in_pattern(
 ) {
     match pattern {
         ast::BindingPattern::BindingIdentifier(ident) => {
-            let decl_place = builder.declare_binding(&ident.name, binding_kind, decl_loc, ident.span);
+            let decl_place =
+                builder.declare_binding(&ident.name, binding_kind, decl_loc, ident.span);
             if builder.is_context_identifier(&ident.name) {
                 let lvalue = create_temporary_place(builder.environment_mut(), loc);
                 builder.push(Instruction {
@@ -451,7 +454,8 @@ fn lower_destructuring_declaration(
         ast::BindingPattern::BindingIdentifier(ident) => {
             // Base case: simple identifier — declare and emit store
             let ident_loc = span_to_loc(ident.span);
-            let decl_place = builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
+            let decl_place =
+                builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
 
             if builder.is_context_identifier(&ident.name) {
                 let lvalue = create_temporary_place(builder.environment_mut(), loc);
@@ -523,7 +527,8 @@ fn lower_object_destructuring(
                 } else {
                     // Simple identifier: declare it directly and use its place in the pattern
                     let ident_loc = span_to_loc(ident.span);
-                    let place = builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
+                    let place =
+                        builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
                     properties.push(ObjectPatternProperty::Property(ObjectProperty {
                         key,
                         property_type: ObjectPropertyType::Property,
@@ -562,7 +567,8 @@ fn lower_object_destructuring(
         match &rest.argument {
             ast::BindingPattern::BindingIdentifier(ident) => {
                 let ident_loc = span_to_loc(ident.span);
-                let place = builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
+                let place =
+                    builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
                 properties.push(ObjectPatternProperty::Spread(SpreadPattern { place }));
             }
             nested => {
@@ -651,8 +657,12 @@ fn lower_array_destructuring(
                         } else {
                             // Simple identifier element
                             let ident_loc = span_to_loc(ident.span);
-                            let place =
-                                builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
+                            let place = builder.declare_binding(
+                                &ident.name,
+                                binding_kind,
+                                ident_loc,
+                                ident.span,
+                            );
                             items.push(ArrayPatternElement::Place(place));
                         }
                     }
@@ -680,7 +690,8 @@ fn lower_array_destructuring(
         match &rest.argument {
             ast::BindingPattern::BindingIdentifier(ident) => {
                 let ident_loc = span_to_loc(ident.span);
-                let place = builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
+                let place =
+                    builder.declare_binding(&ident.name, binding_kind, ident_loc, ident.span);
                 items.push(ArrayPatternElement::Spread(SpreadPattern { place }));
             }
             nested => {
@@ -1729,7 +1740,9 @@ fn collect_stmt_binding_names(
 ///
 /// Also includes module-local declarations (top-level `const`/`let`/`var`/
 /// `function` that are not the function being compiled) as `ModuleLocal`.
-pub fn collect_import_bindings(program_body: &[ast::Statement<'_>]) -> FxHashMap<String, NonLocalBinding> {
+pub fn collect_import_bindings(
+    program_body: &[ast::Statement<'_>],
+) -> FxHashMap<String, NonLocalBinding> {
     let mut bindings = FxHashMap::default();
 
     for stmt in program_body {
@@ -2202,9 +2215,18 @@ fn collect_expression_refs(expr: &ast::Expression<'_>, refs: &mut Vec<(String, S
             collect_assignment_target_refs(&assign.left, refs);
         }
         ast::Expression::UpdateExpression(update) => {
-            if let ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = &update.argument
-            {
-                refs.push((ident.name.to_string(), span_to_loc(ident.span)));
+            match &update.argument {
+                ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                    refs.push((ident.name.to_string(), span_to_loc(ident.span)));
+                }
+                ast::SimpleAssignmentTarget::StaticMemberExpression(member) => {
+                    collect_expression_refs(&member.object, refs);
+                }
+                ast::SimpleAssignmentTarget::ComputedMemberExpression(member) => {
+                    collect_expression_refs(&member.object, refs);
+                    collect_expression_refs(&member.expression, refs);
+                }
+                _ => {}
             }
         }
         ast::Expression::ArrayExpression(arr) => {
@@ -2493,6 +2515,7 @@ fn lower_function_to_value(
     // 1. Gather captured context from the inner function
     let captured_context = gather_captured_context(func, outer_builder);
 
+
     // Find context identifiers for the inner function
     let context_identifiers = match func {
         LowerableFunction::Function(f) => find_context_identifiers(f),
@@ -2521,8 +2544,7 @@ fn lower_function_to_value(
         match outer_builder.resolve_identifier(name) {
             VariableBinding::Identifier { identifier, binding_kind } => {
                 // Variable is already declared in the outer builder — use its identifier
-                let decl_span =
-                    outer_builder.get_binding_decl_span(name).unwrap_or_default();
+                let decl_span = outer_builder.get_binding_decl_span(name).unwrap_or_default();
                 context_entries.push((
                     name.clone(),
                     *ctx_loc,
@@ -2542,8 +2564,7 @@ fn lower_function_to_value(
                 // Eagerly pre-declare it so it gets a real HIR identifier that will be
                 // reused when the actual declaration is processed later.
                 let place = outer_builder.pre_declare_binding(name, *ctx_loc);
-                let decl_span =
-                    outer_builder.get_binding_decl_span(name).unwrap_or_default();
+                let decl_span = outer_builder.get_binding_decl_span(name).unwrap_or_default();
                 context_entries.push((name.clone(), *ctx_loc, place, BindingKind::Let, decl_span));
             }
         }
@@ -2564,10 +2585,14 @@ fn lower_function_to_value(
     // and build the context places vector.
     let mut context_places = Vec::new();
     for (name, _ctx_loc, place, binding_kind, decl_span) in context_entries {
-        inner_builder.register_outer_binding(&name, place.identifier.clone(), binding_kind, decl_span);
+        inner_builder.register_outer_binding(
+            &name,
+            place.identifier.clone(),
+            binding_kind,
+            decl_span,
+        );
         context_places.push(place);
     }
-
     // Extract function metadata
     let (id, generator, is_async) = extract_function_metadata(func);
     let func_loc = extract_function_loc(func);
@@ -2717,8 +2742,7 @@ pub fn lower_block_statement(
                 effects: None,
                 loc,
             });
-            let hoisted_decl_span =
-                builder.get_binding_decl_span(name).unwrap_or_default();
+            let hoisted_decl_span = builder.get_binding_decl_span(name).unwrap_or_default();
             builder.add_hoisted_identifier(name, hoisted_decl_span);
         }
 
@@ -2751,7 +2775,6 @@ impl HoistableBinding {
             }
         }
     }
-
 }
 
 /// Collect all binding names declared in a statement.
@@ -4438,8 +4461,12 @@ fn lower_statement_with_label(
                         // Simple identifier binding
                         ast::BindingPattern::BindingIdentifier(ident) => {
                             let decl_loc = span_to_loc(declaration.span);
-                            let decl_place =
-                                builder.declare_binding(&ident.name, binding_kind, decl_loc, ident.span);
+                            let decl_place = builder.declare_binding(
+                                &ident.name,
+                                binding_kind,
+                                decl_loc,
+                                ident.span,
+                            );
 
                             if builder.is_context_identifier(&ident.name) {
                                 let lvalue = create_temporary_place(builder.environment_mut(), loc);
@@ -4563,10 +4590,8 @@ fn lower_statement_with_label(
             } else {
                 create_temporary_place(builder.environment_mut(), loc)
             };
-            let is_context = func
-                .id
-                .as_ref()
-                .is_some_and(|id| builder.is_context_identifier(&id.name));
+            let is_context =
+                func.id.as_ref().is_some_and(|id| builder.is_context_identifier(&id.name));
             let lvalue = create_temporary_place(builder.environment_mut(), loc);
             if is_context {
                 builder.push(Instruction {
@@ -4673,7 +4698,12 @@ fn lower_statement_with_label(
                 if let (Some(handler_temp), Some((param_name, param_loc, param_span))) =
                     (&handler_binding, catch_param_info)
                 {
-                    let e_place = builder.declare_binding(param_name, BindingKind::Let, param_loc, param_span);
+                    let e_place = builder.declare_binding(
+                        param_name,
+                        BindingKind::Let,
+                        param_loc,
+                        param_span,
+                    );
                     let lvalue = create_temporary_place(builder.environment_mut(), param_loc);
                     builder.push(Instruction {
                         id: InstructionId(0),

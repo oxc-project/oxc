@@ -270,7 +270,11 @@ impl HirBuilder {
             }
         }
 
-        // Try to find a unique name (handle shadowing)
+        // Try to find a unique HIR name (handle shadowing).
+        // The HIR identifier gets a suffixed name (e.g. `z_0`) when there's a
+        // collision, ensuring unique names in the flat IR. But the BINDING MAP
+        // key is always the ORIGINAL name so that `resolve_identifier(name)`
+        // finds the most-recently-declared binding (matching JS block scoping).
         let original_name = name.to_string();
         let mut candidate = original_name.clone();
         let mut index = 0u32;
@@ -309,11 +313,33 @@ impl HirBuilder {
             loc,
         };
         self.env.add_new_reference(&candidate);
-        // Record this change so it can be undone when exiting a block scope.
-        let previous = self.bindings.remove(&candidate);
-        self.record_binding_change(&candidate, previous);
+
+        // When a binding shadows an existing one inside a block scope, store the
+        // new binding under the ORIGINAL name (not the suffixed candidate) so that
+        // `resolve_identifier(name)` finds the shadowing binding. The previous
+        // binding is saved for restoration when the block scope exits.
+        //
+        // In the TS reference, Babel's `path.scope.getBinding()` handles this
+        // automatically. In our Rust port, we replicate the behavior by keeping
+        // the map key as the original name while the HIR identifier carries the
+        // unique suffixed name for disambiguation.
+        let map_key = if candidate != original_name && !self.binding_scope_stack.is_empty() {
+            // Shadowing case: store under original name, save old binding
+            let previous = self.bindings.remove(&original_name);
+            self.record_binding_change(&original_name, previous);
+            // Also record the candidate key change in case it existed
+            let prev_candidate = self.bindings.remove(&candidate);
+            self.record_binding_change(&candidate, prev_candidate);
+            original_name
+        } else {
+            // No shadowing or not in a block scope: use candidate as key
+            let previous = self.bindings.remove(&candidate);
+            self.record_binding_change(&candidate, previous);
+            candidate
+        };
+
         self.bindings.insert(
-            candidate,
+            map_key,
             BindingEntry {
                 declaration_key,
                 identifier: identifier.clone(),
@@ -357,6 +383,11 @@ impl HirBuilder {
     ///
     /// This is used for FunctionExpression context variables: the inner function
     /// shares the same IdentifierId as the outer scope, so reactivity can propagate.
+    ///
+    /// The binding is registered under the **source name** (`name`), not the HIR-
+    /// renamed name (e.g. `z_0`). Code inside the inner function references the
+    /// variable by its original source name, so the binding map key must match
+    /// that name for `resolve_identifier` to find it.
     pub fn register_outer_binding(
         &mut self,
         name: &str,
@@ -364,10 +395,8 @@ impl HirBuilder {
         kind: BindingKind,
         decl_span: Span,
     ) {
-        let candidate =
-            identifier.name.as_ref().map_or_else(|| name.to_string(), |n| n.value().to_string());
         self.bindings.insert(
-            candidate,
+            name.to_string(),
             BindingEntry {
                 declaration_key: self.next_binding_key,
                 identifier,

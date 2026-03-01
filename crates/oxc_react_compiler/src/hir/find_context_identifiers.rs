@@ -70,10 +70,7 @@ impl FindContextState {
     /// Declare a binding in the current scope.
     fn declare_binding(&mut self, name: &str, decl_span: Span) {
         if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(
-                name.to_string(),
-                BindingLocation { fn_depth: self.fn_depth, decl_span },
-            );
+            scope.insert(name.to_string(), BindingLocation { fn_depth: self.fn_depth, decl_span });
         }
     }
 
@@ -821,16 +818,14 @@ mod tests {
 
     #[test]
     fn only_referenced_not_reassigned() {
-        let ids = get_context_id_names(
-            "function foo() { const x = 1; const fn = () => { return x; }; }",
-        );
+        let ids =
+            get_context_id_names("function foo() { const x = 1; const fn = () => { return x; }; }");
         assert!(ids.is_empty(), "x is only referenced (not reassigned) so not context: {ids:?}");
     }
 
     #[test]
     fn global_is_not_context() {
-        let ids =
-            get_context_id_names("function foo() { const fn = () => { console.log(x); }; }");
+        let ids = get_context_id_names("function foo() { const fn = () => { console.log(x); }; }");
         assert!(ids.is_empty(), "Global references are not context: {ids:?}");
     }
 
