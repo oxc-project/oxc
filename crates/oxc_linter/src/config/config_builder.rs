@@ -342,6 +342,11 @@ impl ConfigStoreBuilder {
         self.config.options.type_check
     }
 
+    #[inline]
+    pub fn report_unused_disable_directives(&self) -> Option<AllowWarnDeny> {
+        self.config.options.report_unused_disable_directives
+    }
+
     #[cfg(test)]
     pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
         self.rules.insert(rule, severity);
@@ -1415,6 +1420,35 @@ mod test {
             r#"{ "extends": ["fixtures/extends_config/options/type_check_false.json"] }"#,
         );
         assert_eq!(config.base.config.options.type_check, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/report_unused_disable_directives_warn.json"] }"#,
+        );
+        assert_eq!(
+            config.base.config.options.report_unused_disable_directives,
+            Some(AllowWarnDeny::Warn)
+        );
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/report_unused_disable_directives_warn.json"],
+                "options": {"reportUnusedDisableDirectives": "error" }
+            }
+            "#,
+        );
+        assert_eq!(
+            config.base.config.options.report_unused_disable_directives,
+            Some(AllowWarnDeny::Deny)
+        );
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/report_unused_disable_directives_allow.json"] }"#,
+        );
+        assert_eq!(
+            config.base.config.options.report_unused_disable_directives,
+            Some(AllowWarnDeny::Allow)
+        );
     }
 
     #[test]

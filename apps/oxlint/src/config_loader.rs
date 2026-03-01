@@ -387,6 +387,12 @@ impl<'a> ConfigLoader<'a> {
                         .push(ConfigLoadError::Diagnostic(nested_type_check_not_supported(&path)));
                     continue;
                 }
+                if builder.report_unused_disable_directives().is_some() {
+                    errors.push(ConfigLoadError::Diagnostic(
+                        nested_report_unused_disable_directives_not_supported(&path),
+                    ));
+                    continue;
+                }
             }
 
             let extended_paths = builder.extended_paths.clone();
@@ -649,6 +655,14 @@ fn nested_type_check_not_supported(path: &Path) -> OxcDiagnostic {
     .with_help("Move `options.typeCheck` to the root configuration file.")
 }
 
+fn nested_report_unused_disable_directives_not_supported(path: &Path) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "The `options.reportUnusedDisableDirectives` option is only supported in the root config, but it was found in {}.",
+        path.display()
+    ))
+    .with_help("Move `options.reportUnusedDisableDirectives` to the root configuration file.")
+}
+
 #[cfg(test)]
 mod test {
     use std::path::{Path, PathBuf};
@@ -772,6 +786,25 @@ mod test {
         let nested_path = root_dir.path().join("nested/.oxlintrc.json");
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
         std::fs::write(&nested_path, r#"{ "options": { "typeAware": true } }"#).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let (_configs, errors) = loader
+            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Json(nested_path)]);
+        assert_eq!(errors.len(), 1);
+        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+    }
+
+    #[test]
+    fn test_nested_json_config_rejects_report_unused_disable_directives() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_path = root_dir.path().join("nested/.oxlintrc.json");
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &nested_path,
+            r#"{ "options": { "reportUnusedDisableDirectives": "warn" } }"#,
+        )
+        .unwrap();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
