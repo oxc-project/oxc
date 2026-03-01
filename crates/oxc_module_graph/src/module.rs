@@ -44,7 +44,7 @@ impl SideEffects {
 }
 
 /// A normal (parseable) module in the module graph.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NormalModule {
     // --- Identity ---
     /// This module's index in the graph.
@@ -144,7 +144,7 @@ impl NormalModule {
 }
 
 /// An external (unresolvable) module — first-class node in the graph.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExternalModule {
     /// This module's index in the graph.
     pub idx: ModuleIdx,
@@ -161,7 +161,7 @@ pub struct ExternalModule {
 }
 
 /// A module in the graph — either normal (parseable) or external.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Module {
     Normal(NormalModule),
     External(ExternalModule),

@@ -4,13 +4,14 @@ use crate::algo::BindingError;
 use crate::default::SymbolRefDb;
 use crate::module::{ExternalModule, Module, NormalModule};
 use crate::types::{ModuleIdx, SymbolRef};
+use oxc_syntax::symbol::SymbolId;
 
 /// A concrete, batteries-included module graph.
 ///
 /// Owns both the module storage and the symbol database.
 /// Algorithms operate directly on `&ModuleGraph` / `&mut ModuleGraph`
 /// instead of through trait bounds.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ModuleGraph {
     /// All modules (normal and external), indexed by `ModuleIdx`.
     pub modules: IndexVec<ModuleIdx, Module>,
@@ -114,6 +115,34 @@ impl ModuleGraph {
         self.symbols.add_symbol(module, name)
     }
 
+    /// Ensure the given module has symbol slots for at least `len` symbols.
+    pub fn ensure_module_symbol_capacity(&mut self, module: ModuleIdx, len: usize) {
+        self.symbols.ensure_module_symbol_capacity(module, len);
+    }
+
+    /// Set the name for an existing symbol slot.
+    pub fn set_symbol_name(&mut self, module: ModuleIdx, symbol: SymbolId, name: String) {
+        self.symbols.set_symbol_name(module, symbol, name);
+    }
+
+    /// Initialize or reset a symbol slot to point to itself.
+    pub fn init_symbol_self_link(&mut self, module: ModuleIdx, symbol: SymbolId) {
+        self.symbols.init_symbol_self_link(module, symbol);
+    }
+
+    /// Allocate a new synthetic symbol in a module.
+    pub fn alloc_synthetic_symbol(&mut self, module: ModuleIdx, name: String) -> SymbolRef {
+        self.symbols.alloc_synthetic_symbol(module, name)
+    }
+
+    /// Pre-allocate capacity for `additional` more modules.
+    ///
+    /// Useful when the total module count is known upfront (e.g. during a scan stage)
+    /// to avoid repeated resizing.
+    pub fn reserve_modules(&mut self, additional: usize) {
+        self.modules.reserve(additional);
+    }
+
     /// Set the entry points for the graph.
     pub fn set_entries(&mut self, entries: Vec<ModuleIdx>) {
         self.entries = entries;
@@ -164,6 +193,11 @@ impl ModuleGraph {
     /// Follow link chains to find the canonical (final) symbol.
     pub fn canonical_ref(&self, sym: SymbolRef) -> SymbolRef {
         self.symbols.canonical_ref_for(sym)
+    }
+
+    /// Follow link chains to find the canonical symbol, applying path halving.
+    pub fn canonical_ref_mut(&mut self, sym: SymbolRef) -> SymbolRef {
+        self.symbols.canonical_ref_for_mut(sym)
     }
 
     /// Link `from` to resolve to `to`.

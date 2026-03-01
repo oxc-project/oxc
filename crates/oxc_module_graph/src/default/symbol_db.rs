@@ -4,7 +4,7 @@ use oxc_syntax::symbol::SymbolId;
 use crate::types::{ModuleIdx, SymbolRef};
 
 /// Per-module symbol table: stores name + link for each symbol.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct ModuleSymbols {
     /// Symbol name (indexed by SymbolId).
     names: IndexVec<SymbolId, String>,
@@ -13,7 +13,7 @@ struct ModuleSymbols {
 }
 
 /// Symbol database — implements union-find across modules.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct SymbolRefDb {
     modules: IndexVec<ModuleIdx, ModuleSymbols>,
 }
@@ -30,13 +30,50 @@ impl SymbolRefDb {
         }
     }
 
+    /// Ensure the per-module symbol storage can address at least `len` symbols.
+    ///
+    /// New slots are initialized with empty names and self-links so callers can
+    /// populate parser-produced `SymbolId`s directly without remapping.
+    pub fn ensure_module_symbol_capacity(&mut self, module: ModuleIdx, len: usize) {
+        self.ensure_modules(module.index() + 1);
+
+        let symbols = &mut self.modules[module];
+        while symbols.names.len() < len {
+            let symbol_id = SymbolId::from_usize(symbols.names.len());
+            symbols.names.push(String::default());
+            symbols.links.push(SymbolRef::new(module, symbol_id));
+        }
+    }
+
+    /// Set the declared name of an existing symbol slot.
+    ///
+    /// The slot is created if needed.
+    pub fn set_symbol_name(&mut self, module: ModuleIdx, symbol: SymbolId, name: String) {
+        self.ensure_module_symbol_capacity(module, symbol.index() + 1);
+        self.modules[module].names[symbol] = name;
+    }
+
+    /// Initialize or reset a symbol slot to link to itself.
+    ///
+    /// The slot is created if needed.
+    pub fn init_symbol_self_link(&mut self, module: ModuleIdx, symbol: SymbolId) {
+        self.ensure_module_symbol_capacity(module, symbol.index() + 1);
+        self.modules[module].links[symbol] = SymbolRef::new(module, symbol);
+    }
+
     /// Add a symbol to a module and return its SymbolRef.
     pub fn add_symbol(&mut self, module: ModuleIdx, name: String) -> SymbolRef {
+        self.ensure_modules(module.index() + 1);
         let symbols = &mut self.modules[module];
         let symbol_id = symbols.names.push(name);
         let sym_ref = SymbolRef::new(module, symbol_id);
         symbols.links.push(sym_ref);
         sym_ref
+    }
+
+    /// Allocate a new synthetic symbol at the end of a module's symbol table.
+    pub fn alloc_synthetic_symbol(&mut self, module: ModuleIdx, name: String) -> SymbolRef {
+        self.add_symbol(module, name)
     }
 
     /// Follow link chains to find the canonical (final) symbol.
@@ -51,9 +88,30 @@ impl SymbolRefDb {
         }
     }
 
+    /// Follow link chains to find the canonical symbol, applying path halving.
+    pub fn canonical_ref_for_mut(&mut self, symbol: SymbolRef) -> SymbolRef {
+        let mut current = symbol;
+        loop {
+            let next = self.modules[current.owner].links[current.symbol];
+            if next == current {
+                return current;
+            }
+
+            let next_next = self.modules[next.owner].links[next.symbol];
+            if next_next != next {
+                self.modules[current.owner].links[current.symbol] = next_next;
+            }
+            current = next;
+        }
+    }
+
     /// Link `from` to resolve to `to`.
     pub fn link(&mut self, from: SymbolRef, to: SymbolRef) {
-        self.modules[from.owner].links[from.symbol] = to;
+        let from_root = self.canonical_ref_for_mut(from);
+        let to_root = self.canonical_ref_for_mut(to);
+        if from_root != to_root {
+            self.modules[from_root.owner].links[from_root.symbol] = to_root;
+        }
     }
 
     /// Get the declared name of a symbol.
