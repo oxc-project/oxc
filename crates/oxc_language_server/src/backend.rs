@@ -595,8 +595,14 @@ impl LanguageServer for Backend {
             return;
         };
 
+        let content = if let Some(text) = params.text {
+            Some(text)
+        } else {
+            self.file_system.read().await.get(&uri).map(|(_, content)| content)
+        };
+
         if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
-            match worker.run_diagnostic_on_save(&uri, params.text.as_deref()).await {
+            match worker.run_diagnostic_on_save(&uri, content.as_deref()).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
                     if self.capabilities.get().is_some_and(|cap| cap.show_message) {
@@ -933,15 +939,15 @@ impl Backend {
     /// For example, if we have workspaces `[workspace, workspace/deeper]` and the URI is
     /// `workspace/deeper/file.js`, both workers match, but `workspace/deeper` is more specific.
     ///
-    /// For `untitled://` URIs (unsaved files), returns the first workspace worker.
+    /// For non file:// URIs, returns the first workspace worker.
     /// This matches the behavior of other LSP servers like rust-analyzer and typescript-language-server.
     fn find_worker_for_uri<'a>(
         workers: &'a [WorkspaceWorker],
         uri: &Uri,
     ) -> Option<&'a WorkspaceWorker> {
-        // Handle untitled:// URIs - use first workspace
+        // Handle non file:// URIs - use first workspace
         // These are in-memory files that don't have a file path
-        if uri.as_str().starts_with("untitled:") {
+        if uri.scheme().as_str() != "file" {
             return workers.first();
         }
 
@@ -1062,7 +1068,7 @@ mod tests {
     }
 
     #[test]
-    fn test_find_worker_for_uri_invalid_uri() {
+    fn test_find_worker_for_uri_vscode_user_data_single_workspace() {
         let workspace = WorkspaceWorker::new(
             "file:///path/to/workspace".parse().unwrap(),
             Arc::new([]),
@@ -1070,10 +1076,11 @@ mod tests {
         );
         let workers = vec![workspace];
 
-        // Non-file URI should not match
-        let non_file_uri: Uri = "https://example.com/file.js".parse().unwrap();
-        let worker = Backend::find_worker_for_uri(&workers, &non_file_uri);
-        assert!(worker.is_none());
+        // non file URI should use first workspace
+        let vscode_userdata_file: Uri = "vscode-userdata:///Untitled-1".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &vscode_userdata_file);
+        assert!(worker.is_some());
+        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
     }
 
     #[test]
@@ -1085,7 +1092,7 @@ mod tests {
         );
         let workers = vec![workspace];
 
-        // Untitled file should use first workspace
+        // non file URI should use first workspace
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
         assert!(worker.is_some());
@@ -1106,7 +1113,7 @@ mod tests {
         );
         let workers = vec![workspace1, workspace2];
 
-        // Untitled file should use first workspace (not second)
+        // non file URI should use first workspace (not second)
         let untitled_file: Uri = "untitled:///Untitled-1".parse().unwrap();
         let worker = Backend::find_worker_for_uri(&workers, &untitled_file);
         assert!(worker.is_some());
