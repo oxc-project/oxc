@@ -4,6 +4,7 @@ import { defineConfig } from "tsdown";
 import { parseSync, Visitor } from "oxc-parser";
 
 import type { Plugin } from "rolldown";
+import ruleNames from "./src-js/generated/plugin-eslint/rule_names.ts";
 
 const { env } = process;
 const isEnabled = (env: string | undefined) => env === "true" || env === "1";
@@ -63,6 +64,26 @@ const pluginsPkgConfig = defineConfig({
   define: definedGlobals,
 });
 
+// Build entries for `oxlint-plugin-eslint` rule files.
+// Each rule is a separate CJS file, lazy-loaded on demand.
+const pluginEslintRulesEntry: Record<string, string> = {};
+for (const ruleName of ruleNames) {
+  pluginEslintRulesEntry[`rules/${ruleName}`] =
+    `src-js/generated/plugin-eslint/rules/${ruleName}.cjs`;
+}
+
+// Base config for `oxlint-plugin-eslint` package.
+// "node12" target to match `engines` field of last ESLint 8 release (8.57.1).
+const pluginEslintPkgConfig = defineConfig({
+  ...commonConfig,
+  outDir: "dist-pkg-plugin-eslint",
+  // `build.ts` deletes the directory before TSDown runs.
+  // This allows generating the ESM and CommonJS builds in the same directory.
+  clean: false,
+  target: "node12",
+  external: ["eslint", /^eslint\//],
+});
+
 // Plugins.
 // Only remove debug assertions in release build.
 const plugins = [createReplaceGlobalsPlugin()];
@@ -100,6 +121,28 @@ export default defineConfig([
   },
   {
     ...pluginsPkgConfig,
+    format: "commonjs",
+    dts: false,
+  },
+
+  // `oxlint-plugin-eslint` package - main entry ESM.
+  {
+    ...pluginEslintPkgConfig,
+    entry: { index: "src-js/plugin-eslint/index.ts" },
+    format: "esm",
+    dts: true,
+  },
+  // `oxlint-plugin-eslint` package - main entry CJS.
+  {
+    ...pluginEslintPkgConfig,
+    entry: { index: "src-js/plugin-eslint/index.ts" },
+    format: "commonjs",
+    dts: false,
+  },
+  // `oxlint-plugin-eslint` package - individual rule files CJS.
+  {
+    ...pluginEslintPkgConfig,
+    entry: pluginEslintRulesEntry,
     format: "commonjs",
     dts: false,
   },
