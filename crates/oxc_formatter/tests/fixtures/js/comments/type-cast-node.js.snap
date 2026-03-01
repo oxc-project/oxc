@@ -19,16 +19,16 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ------------------
 { printWidth: 80 }
 ------------------
-!left &&
-  /** @type {boolean} */
+!left
+  && /** @type {boolean} */
   (
     /** @type {Identifier} */
-    (a) === "call" ||
-      /** @type {Identifier} */
+    (a) === "call"
+      || /** @type {Identifier} */
       (b) === "bind"
     //  ^^^^^^^^^^^^^^ No need to wrap with parentheses here because the type cast node is already wrapped with parentheses.
-  ) &&
-  right;
+  )
+  && right;
 
 /** @type {Number} */ (a + b)();
 //                    ^^^^^^^ No need to wrap with parentheses here because the type cast node is already wrapped with parentheses.
@@ -36,16 +36,16 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 -------------------
 { printWidth: 100 }
 -------------------
-!left &&
-  /** @type {boolean} */
+!left
+  && /** @type {boolean} */
   (
     /** @type {Identifier} */
-    (a) === "call" ||
-      /** @type {Identifier} */
+    (a) === "call"
+      || /** @type {Identifier} */
       (b) === "bind"
     //  ^^^^^^^^^^^^^^ No need to wrap with parentheses here because the type cast node is already wrapped with parentheses.
-  ) &&
-  right;
+  )
+  && right;
 
 /** @type {Number} */ (a + b)();
 //                    ^^^^^^^ No need to wrap with parentheses here because the type cast node is already wrapped with parentheses.
