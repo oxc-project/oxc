@@ -16,8 +16,6 @@ mod json;
 mod jsx_state;
 mod options;
 mod raw_transfer;
-mod token_type;
-mod u32_string;
 mod visitor;
 
 pub use json::{to_estree_tokens_json, to_estree_tokens_pretty_json};

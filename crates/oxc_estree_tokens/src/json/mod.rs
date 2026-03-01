@@ -14,10 +14,12 @@ use oxc_estree::{
 use oxc_parser::{Kind, Token};
 use oxc_span::Span;
 
-use crate::{
-    context::Context, options::ESTreeTokenConfig, token_type::TokenType, u32_string::U32String,
-    visitor::Visitor,
-};
+use crate::{context::Context, options::ESTreeTokenConfig, visitor::Visitor};
+
+mod token_type;
+mod u32_string;
+use token_type::TokenType;
+use u32_string::U32String;
 
 /// Serializer config for tokens.
 /// We never include ranges, so use this custom config which returns `false` for `ranges()`.
