@@ -45,6 +45,7 @@ pub fn build_resolved_exports(graph: &ModuleGraph) -> FxHashMap<ModuleIdx, Resol
         let module = graph.normal_module(idx).unwrap();
         let mut exports: ResolvedExportsMap = FxHashMap::default();
         let mut local_names: FxHashSet<CompactString> = FxHashSet::default();
+        let is_cjs = module.is_commonjs();
 
         for (name, local_export) in &module.named_exports {
             local_names.insert(name.clone());
@@ -53,7 +54,7 @@ pub fn build_resolved_exports(graph: &ModuleGraph) -> FxHashMap<ModuleIdx, Resol
                 ResolvedExport {
                     symbol_ref: local_export.local_symbol,
                     potentially_ambiguous: None,
-                    came_from_cjs: false,
+                    came_from_cjs: is_cjs,
                 },
             );
         }
@@ -424,6 +425,15 @@ fn resolve_import(
             if re_is_ns {
                 // Resolves to a namespace import — stop here.
                 if let Some(re_target) = owner_module.import_record_resolved_module(re_record_idx) {
+                    // If the target is external or CJS, return the current
+                    // symbol so the caller links to the re-export binding
+                    // (whose own import processing sets up the correct
+                    // namespace alias / external import).
+                    if graph.external_module(re_target).is_some()
+                        || graph.normal_module(re_target).is_some_and(NormalModule::is_commonjs)
+                    {
+                        return MatchImportKind::Normal { symbol_ref: symbol };
+                    }
                     return MatchImportKind::Namespace {
                         namespace_ref: graph.module(re_target).namespace_object_ref(),
                     };
@@ -435,6 +445,12 @@ fn resolve_import(
             if let Some(re_target) = owner_module.import_record_resolved_module(re_record_idx) {
                 // If the next target is external, stop here and return current symbol.
                 if graph.external_module(re_target).is_some() {
+                    return MatchImportKind::Normal { symbol_ref: symbol };
+                }
+                // If the next target is CJS, stop here too — the symbol's own
+                // import processing (in the outer loop) handles CJS interop with
+                // the correct import-record namespace ref.
+                if graph.normal_module(re_target).is_some_and(NormalModule::is_commonjs) {
                     return MatchImportKind::Normal { symbol_ref: symbol };
                 }
                 return resolve_import(
