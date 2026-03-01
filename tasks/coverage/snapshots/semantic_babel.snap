@@ -2,7 +2,7 @@ commit: 308c8d85
 
 semantic_babel Summary:
 AST Parsed     : 2227/2227 (100.00%)
-Positive Passed: 2027/2227 (91.02%)
+Positive Passed: 2026/2227 (90.97%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -1391,6 +1391,9 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["bar"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-4/input.ts
+'infer' declarations are only permitted in the 'extends' clause of a conditional type.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/mapped-as/input.ts
 Unresolved references mismatch:
