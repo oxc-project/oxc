@@ -2405,6 +2405,16 @@ where
         write!(self.fmt, content);
     }
 
+    /// Adds a new node with a forced empty line before it, regardless of the source.
+    /// Used to enforce blank lines between certain node types (e.g., consecutive function declarations).
+    pub fn entry_with_forced_empty_line(&mut self, content: &dyn Format<'ast>) {
+        if self.has_elements {
+            write!(self.fmt, empty_line());
+        }
+        self.has_elements = true;
+        write!(self.fmt, content);
+    }
+
     /// Writes an entry without adding a separating line break or empty line.
     pub fn entry_no_separator(&mut self, content: &dyn Format<'ast>) {
         self.has_elements = true;
