@@ -58,6 +58,24 @@ tags: None
 
 ########### Code Actions/Commands
 CodeAction: 
+Title: Delete this code.
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 9,
+            character: 0,
+        },
+        end: Position {
+            line: 9,
+            character: 29,
+        },
+    },
+    new_text: "",
+}
+
+
+CodeAction: 
 Title: Disable no-console for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
@@ -205,6 +223,19 @@ TextEdit: TextEdit {
 CodeAction: 
 Title: quick fix
 Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 9,
+            character: 0,
+        },
+        end: Position {
+            line: 9,
+            character: 29,
+        },
+    },
+    new_text: "",
+}
 TextEdit: TextEdit {
     range: Range {
         start: Position {
