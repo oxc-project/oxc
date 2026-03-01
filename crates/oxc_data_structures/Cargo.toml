@@ -30,6 +30,7 @@ all = [
   "assert_unchecked",
   "box_macros",
   "code_buffer",
+  "fieldless_enum",
   "inline_string",
   "rope",
   "slice_iter",
@@ -38,6 +39,7 @@ all = [
 assert_unchecked = []
 box_macros = []
 code_buffer = ["assert_unchecked"]
+fieldless_enum = []
 inline_string = ["assert_unchecked"]
 rope = ["dep:ropey"]
 slice_iter = ["assert_unchecked"]
