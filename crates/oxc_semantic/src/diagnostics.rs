@@ -354,6 +354,16 @@ pub fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
     ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
 }
 
+/// 'infer' declarations are only permitted in the 'extends' clause of a conditional type. (1338)
+#[cold]
+pub fn infer_declaration_only_permitted_in_extends_clause(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1338",
+        "'infer' declarations are only permitted in the 'extends' clause of a conditional type.",
+    )
+    .with_label(span)
+}
+
 /// - Abstract properties can only appear within an abstract class. (1253)
 /// - Abstract methods can only appear within an abstract class. (1244)
 #[cold]

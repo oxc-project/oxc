@@ -3,7 +3,7 @@ commit: 34725489
 parser_typescript Summary:
 AST Parsed     : 9831/9834 (99.97%)
 Positive Passed: 9820/9834 (99.86%)
-Negative Passed: 1528/2578 (59.27%)
+Negative Passed: 1530/2578 (59.35%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1980,8 +1980,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/any
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/conditional/conditionalTypes1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/conditional/inferTypes1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionReduction.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionReductionStrict.ts
@@ -1991,8 +1989,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/int
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofAndIndexedAccess2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/keyof/keyofAndIndexedAccessErrors.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/literal/templateLiteralTypes1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypeErrors.ts
 
@@ -26680,6 +26676,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │     name = 'twelve'
    ╰────
 
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+    ╭─[typescript/tests/cases/conformance/types/conditional/inferTypes1.ts:82:12]
+ 81 │ 
+ 82 │ type T60 = infer U;  // Error
+    ·            ───────
+ 83 │ type T61<T> = (infer A) extends infer B ? infer C : infer D;  // Error
+    ╰────
+
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+    ╭─[typescript/tests/cases/conformance/types/conditional/inferTypes1.ts:83:16]
+ 82 │ type T60 = infer U;  // Error
+ 83 │ type T61<T> = (infer A) extends infer B ? infer C : infer D;  // Error
+    ·                ───────
+ 84 │ type T62<T> = U extends (infer U)[] ? U : U;  // Error
+    ╰────
+
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+    ╭─[typescript/tests/cases/conformance/types/conditional/inferTypes1.ts:83:43]
+ 82 │ type T60 = infer U;  // Error
+ 83 │ type T61<T> = (infer A) extends infer B ? infer C : infer D;  // Error
+    ·                                           ───────
+ 84 │ type T62<T> = U extends (infer U)[] ? U : U;  // Error
+    ╰────
+
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+    ╭─[typescript/tests/cases/conformance/types/conditional/inferTypes1.ts:83:53]
+ 82 │ type T60 = infer U;  // Error
+ 83 │ type T61<T> = (infer A) extends infer B ? infer C : infer D;  // Error
+    ·                                                     ───────
+ 84 │ type T62<T> = U extends (infer U)[] ? U : U;  // Error
+    ╰────
+
   × TS(1141): String literal expected.
    ╭─[typescript/tests/cases/conformance/types/import/importTypeGeneric.ts:1:67]
  1 │ export function getFooFrom<T extends "./a" | "./b">(v: T): import(T).Foo {
@@ -26720,6 +26748,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·       ╰── `from` expected
  2 │ const a = import<string, number>
    ╰────
+
+  × TS(1338): 'infer' declarations are only permitted in the 'extends' clause of a conditional type.
+     ╭─[typescript/tests/cases/conformance/types/literal/templateLiteralTypes1.ts:165:15]
+ 164 │ 
+ 165 │ type TV1 = `${infer X}`;
+     ·               ───────
+ 166 │ 
+     ╰────
 
   × Identifier `T` has already been declared
     ╭─[typescript/tests/cases/conformance/types/localTypes/localTypes4.ts:18:16]
