@@ -8,7 +8,7 @@ use napi_derive::napi;
 
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
-use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json};
+use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
 use oxc_linter::RawTransferMetadata2 as RawTransferMetadata;
 use oxc_napi::get_source_type;
 use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
@@ -177,7 +177,7 @@ unsafe fn parse_raw_impl(
             })
             .with_config(RuntimeParserConfig::new(true))
             .parse();
-        let ParserReturn { program: parsed_program, errors, tokens, panicked, .. } = parser_ret;
+        let ParserReturn { program: parsed_program, errors, mut tokens, panicked, .. } = parser_ret;
         let program = allocator.alloc(parsed_program);
 
         let mut parsing_failed = panicked || (!errors.is_empty() && !ignore_non_fatal_errors);
@@ -214,21 +214,14 @@ unsafe fn parse_raw_impl(
                 Utf8ToUtf16::new(source_text)
             };
 
-            let tokens_json = to_estree_tokens_json(
-                &tokens,
-                program,
-                original_source_text,
-                &span_converter,
-                ESTreeTokenOptionsJS,
-            );
+            update_tokens(&mut tokens, program, &span_converter, ESTreeTokenOptionsJS);
 
             span_converter.convert_program(program);
             span_converter.convert_comments(&mut program.comments);
 
-            let tokens_json = allocator.alloc_str(&tokens_json);
-            let tokens_offset = tokens_json.as_ptr() as u32;
+            let tokens_offset = tokens.as_ptr() as u32;
             #[expect(clippy::cast_possible_truncation)]
-            let tokens_len = tokens_json.len() as u32;
+            let tokens_len = tokens.len() as u32;
 
             // Return offset of `Program` within buffer (bottom 32 bits of pointer)
             let program_offset = ptr::from_ref(program) as u32;

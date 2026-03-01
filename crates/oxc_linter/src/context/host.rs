@@ -109,11 +109,6 @@ impl<'a> ContextSubHost<'a> {
     pub fn framework_options(&self) -> FrameworkOptions {
         self.framework_options
     }
-
-    /// Parser tokens collected for this script block.
-    pub fn parser_tokens(&self) -> Option<&[Token]> {
-        self.parser_tokens.as_ref().map(|tokens| &tokens[..])
-    }
 }
 
 /// Stores shared information about a file being linted.
@@ -237,6 +232,16 @@ impl<'a> ContextHost<'a> {
     /// Shared reference to the [`DisableDirectives`] of the current script block.
     pub fn disable_directives(&self) -> &DisableDirectives {
         &self.current_sub_host().disable_directives
+    }
+
+    /// Shared reference to the parser tokens collected for this script block.
+    pub fn parser_tokens(&self) -> Option<&[Token]> {
+        self.current_sub_host().parser_tokens.as_ref().map(|tokens| &tokens[..])
+    }
+
+    /// Mutable reference to the parser tokens collected for this script block.
+    pub fn parser_tokens_mut(&mut self) -> Option<&mut ArenaVec<'a, Token>> {
+        self.current_sub_host_mut().parser_tokens.as_mut()
     }
 
     /// Path to the file being linted.

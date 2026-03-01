@@ -2,8 +2,7 @@
  * `SourceCode` methods related to tokens.
  */
 
-import { ast, initAst } from "./source_code.ts";
-import { buffer, textDecoder } from "./source_code.ts";
+import { ast, buffer, initAst, initSourceText, sourceText } from "./source_code.ts";
 import { getNodeLoc } from "./location.ts";
 import { TOKENS_OFFSET_POS_32, TOKENS_LEN_POS_32 } from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
@@ -108,8 +107,8 @@ export interface PunctuatorToken extends BaseToken {
 export interface RegularExpressionToken extends BaseToken {
   type: "RegularExpression";
   regex: {
-    flags: string;
     pattern: string;
+    flags: string;
   };
 }
 
@@ -138,49 +137,131 @@ const TokenProto = Object.create(Object.prototype, {
   },
 });
 
-// Tokens for the current file parsed by TS-ESLint.
+// Tokens for the current file.
 // Created lazily only when needed.
 export let tokens: Token[] | null = null;
 let comments: Comment[] | null = null;
 export let tokensAndComments: TokenOrComment[] | null = null;
 
+let uint32: Uint32Array | null = null;
+
+// `ESTreeKind` discriminants (set by Rust side)
+const PRIVATE_IDENTIFIER_KIND = 2;
+const REGEXP_KIND = 8;
+
+// Indexed by `ESTreeKind` discriminant (matches `ESTreeKind` enum in `estree_kind.rs`)
+const TOKEN_TYPES: Token["type"][] = [
+  "Identifier",
+  "Keyword",
+  "PrivateIdentifier",
+  "Punctuator",
+  "Numeric",
+  "String",
+  "Boolean",
+  "Null",
+  "RegularExpression",
+  "Template",
+  "JSXText",
+  "JSXIdentifier",
+];
+
+// Details of Rust `Token` type
+const TOKEN_SIZE = 16;
+const KIND_FIELD_OFFSET = 8;
+const IS_ESCAPED_FIELD_OFFSET = 10;
+
 /**
- * Initialize TS-ESLint tokens for current file.
+ * Initialize tokens for current file.
  */
 export function initTokens() {
   debugAssert(tokens === null, "Tokens already initialized");
 
-  // Get tokens JSON from buffer, and deserialize it
+  // Deserialize tokens from buffer
+  if (sourceText === null) initSourceText();
+  debugAssertIsNonNull(sourceText);
+
   debugAssertIsNonNull(buffer);
+  uint32 = buffer.uint32;
 
-  const { uint32 } = buffer;
-  const tokensJsonLen = uint32[TOKENS_LEN_POS_32];
-  if (tokensJsonLen === 0) {
-    tokens = [];
-    return;
+  let pos = uint32[TOKENS_OFFSET_POS_32];
+  const len = uint32[TOKENS_LEN_POS_32];
+  const endPos = pos + len * TOKEN_SIZE;
+
+  tokens = [];
+  while (pos < endPos) {
+    tokens.push(deserializeToken(pos));
+    pos += TOKEN_SIZE;
   }
 
-  const tokensJsonOffset = uint32[TOKENS_OFFSET_POS_32];
-  const tokensJson = textDecoder.decode(
-    buffer.subarray(tokensJsonOffset, tokensJsonOffset + tokensJsonLen),
-  );
-  tokens = JSON.parse(tokensJson) as Token[];
-
-  // Add `range` property to each token, and set prototype of each to `TokenProto` which provides getter for `loc`
-  for (const token of tokens) {
-    const { start, end } = token;
-    debugAssert(
-      typeof start === "number" && typeof end === "number",
-      "Precomputed tokens should include `start` and `end`",
-    );
-
-    token.range = [start, end];
-    // `TokenProto` provides getter for `loc`
-    Object.setPrototypeOf(token, TokenProto);
-  }
+  uint32 = null;
 
   // Check `tokens` have valid ranges and are in ascending order
   debugCheckValidRanges(tokens, "token");
+}
+
+/**
+ * Deserialize a token from buffer at position `pos`.
+ * @param pos - Position in buffer containing Rust `Token` type
+ * @returns `Token` object
+ */
+function deserializeToken(pos: number): Token {
+  const pos32 = pos >> 2;
+  const start = uint32![pos32],
+    end = uint32![pos32 + 1];
+
+  let value = sourceText!.slice(start, end);
+
+  const kind = buffer![pos + KIND_FIELD_OFFSET];
+
+  if (kind === REGEXP_KIND) {
+    const patternEnd = value.lastIndexOf("/");
+    return {
+      // @ts-expect-error - TS doesn't understand `__proto__`
+      __proto__: TokenProto,
+      type: "RegularExpression",
+      value,
+      regex: {
+        pattern: value.slice(1, patternEnd),
+        flags: value.slice(patternEnd + 1),
+      },
+      start,
+      end,
+      range: [start, end],
+    };
+  }
+
+  // Strip leading `#` from private identifiers
+  if (kind === PRIVATE_IDENTIFIER_KIND) value = value.slice(1);
+
+  // Unescape identifiers, keywords, and private identifiers
+  if (kind <= PRIVATE_IDENTIFIER_KIND && buffer![pos + IS_ESCAPED_FIELD_OFFSET] === 1) {
+    value = unescapeIdentifier(value);
+  }
+
+  return {
+    // @ts-expect-error - TS doesn't understand `__proto__`
+    __proto__: TokenProto,
+    type: TOKEN_TYPES[kind],
+    value,
+    start,
+    end,
+    range: [start, end],
+  };
+}
+
+/**
+ * Unescape an identifier.
+ *
+ * We do this on JS side, because escaped identifiers are so extremely rare that this function
+ * is never called in practice anyway.
+ *
+ * @param {string} name - Identifier name to unescape
+ * @returns {string} - Unescaped identifier name
+ */
+function unescapeIdentifier(name: string): string {
+  return name.replace(/\\u(?:\{([0-9a-fA-F]+)\}|([0-9a-fA-F]{4}))/g, (_, hex1, hex2) =>
+    String.fromCodePoint(parseInt(hex1 ?? hex2, 16)),
+  );
 }
 
 /**
@@ -332,7 +413,7 @@ function debugCheckTokensAndComments() {
 }
 
 /**
- * Discard TS-ESLint tokens to free memory.
+ * Discard tokens to free memory.
  */
 export function resetTokens() {
   tokens = null;

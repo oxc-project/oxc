@@ -40,11 +40,9 @@ pub struct RawTransferMetadata {
     pub is_jsx: bool,
     /// This field always contains `false` in parser. It's only used in linter.
     pub has_bom: bool,
-    /// Offset of serialized ESTree tokens JSON within buffer.
-    /// This field always contains 0 in parser. It's only used in linter.
+    /// Offset of lexer `Token`s within buffer.
     pub tokens_offset: u32,
-    /// UTF-8 byte length of serialized ESTree tokens JSON.
-    /// This field always contains 0 in parser. It's only used in linter.
+    /// Number of lexer `Token`s.
     pub tokens_len: u32,
 }
 

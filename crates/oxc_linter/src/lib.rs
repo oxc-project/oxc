@@ -14,13 +14,14 @@ use std::{
     string::ToString,
 };
 
-use oxc_allocator::{Allocator, AllocatorPool, CloneIn};
+use oxc_allocator::{Allocator, AllocatorPool, CloneIn, TakeIn};
 use oxc_ast::{ast::Program, ast_kind::AST_TYPE_MAX};
 use oxc_ast_macros::ast;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_data_structures::box_macros::boxed_array;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json};
+use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
+use oxc_parser::Token;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
@@ -474,7 +475,18 @@ impl Linter {
         }
 
         // `allocator` is a fixed-size allocator, so no need to clone AST into a new one
-        self.convert_and_call_external_linter(external_rules, path, ctx_host, program, allocator);
+        let tokens = ctx_host
+            .parser_tokens_mut()
+            .map(|tokens| tokens.take_in(allocator).into_bump_slice_mut());
+
+        self.convert_and_call_external_linter(
+            external_rules,
+            path,
+            ctx_host,
+            program,
+            tokens,
+            allocator,
+        );
     }
 
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
@@ -524,11 +536,15 @@ impl Linter {
             js_allocator.alloc(program)
         };
 
+        // Clone tokens into fixed-size allocator
+        let tokens = ctx_host.parser_tokens().map(|tokens| js_allocator.alloc_slice_copy(tokens));
+
         self.convert_and_call_external_linter(
             external_rules,
             path,
             ctx_host,
             program,
+            tokens,
             &js_allocator,
         );
 
@@ -546,6 +562,7 @@ impl Linter {
         path: &Path,
         ctx_host: &ContextHost<'_>,
         program: &mut Program<'_>,
+        tokens: Option<&mut [Token]>,
         allocator: &Allocator,
     ) {
         // If has BOM, remove it
@@ -569,23 +586,15 @@ impl Linter {
             Utf8ToUtf16::new(source_text)
         };
 
-        let (tokens_offset, tokens_len) =
-            if let Some(tokens) = ctx_host.current_sub_host().parser_tokens() {
-                let tokens_json = to_estree_tokens_json(
-                    tokens,
-                    program,
-                    original_source_text,
-                    &span_converter,
-                    ESTreeTokenOptionsJS,
-                );
-                let tokens_json = allocator.alloc_str(&tokens_json);
-                let tokens_offset = tokens_json.as_ptr() as u32;
-                #[expect(clippy::cast_possible_truncation)]
-                let tokens_len = tokens_json.len() as u32;
-                (tokens_offset, tokens_len)
-            } else {
-                (0, 0)
-            };
+        let (tokens_offset, tokens_len) = if let Some(tokens) = tokens {
+            update_tokens(tokens, program, &span_converter, ESTreeTokenOptionsJS);
+            let tokens_offset = tokens.as_ptr() as u32;
+            #[expect(clippy::cast_possible_truncation)]
+            let tokens_len = tokens.len() as u32;
+            (tokens_offset, tokens_len)
+        } else {
+            (0, 0)
+        };
 
         span_converter.convert_program(program);
         span_converter.convert_comments(&mut program.comments);
@@ -752,9 +761,9 @@ pub struct RawTransferMetadata2 {
     pub is_jsx: bool,
     /// `true` if source text has a BOM.
     pub has_bom: bool,
-    /// Offset of serialized ESTree tokens JSON within buffer.
+    /// Offset of lexer `Token`s within buffer.
     pub tokens_offset: u32,
-    /// UTF-8 byte length of serialized ESTree tokens JSON.
+    /// Number of lexer `Token`s.
     pub tokens_len: u32,
 }
 

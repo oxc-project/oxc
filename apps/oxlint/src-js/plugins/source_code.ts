@@ -29,7 +29,7 @@ import type { BufferWithArrays, Comment, Node } from "./types.ts";
 import type { ScopeManager } from "./scope.ts";
 
 // Text decoder, for decoding source text from buffer
-export const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
+const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
 export let buffer: BufferWithArrays | null = null;
@@ -245,10 +245,7 @@ export const SOURCE_CODE = Object.freeze({
   // This property is present in ESLint's `SourceCode`, but is undocumented
   get tokensAndComments(): (Token | Comment)[] {
     if (tokensAndComments === null) {
-      if (tokens === null) {
-        if (sourceText === null) initSourceText();
-        initTokens();
-      }
+      if (tokens === null) initTokens();
       initTokensAndComments();
     }
     debugAssertIsNonNull(tokensAndComments);
