@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1269/1409 passed (90.1%)
+Codegen conformance: 1280/1409 passed (90.8%)
 
 Failure breakdown:
   parse_error:    22
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:115
+  output_mismatch:104
   no_expected:    0
 
 Failed fixtures:
@@ -66,7 +66,6 @@ Failed fixtures:
   [parse_error] hook-declaration-basic.flow.js
   [output_mismatch] hook-noAlias.js
   [output_mismatch] idx-no-outlining.js
-  [output_mismatch] iife-return-modified-later-phi.js
   [output_mismatch] infer-global-object.js
   [parse_error] infer-types-through-type-cast.flow.js
   [output_mismatch] lambda-mutated-non-reactive-to-reactive.js
@@ -83,7 +82,6 @@ Failed fixtures:
   [output_mismatch] nested-optional-chains.ts
   [output_mismatch] new-mutability/aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] new-mutability/array-push.js
-  [output_mismatch] new-mutability/iife-return-modified-later-phi.js
   [output_mismatch] new-mutability/object-expression-computed-member.js
   [parse_error] new-mutability/repro-compiler-infinite-loop.js
   [output_mismatch] new-mutability/repro-destructure-from-prop-with-default-value.js
@@ -92,22 +90,13 @@ Failed fixtures:
   [output_mismatch] new-mutability/todo-control-flow-sensitive-mutation.tsx
   [output_mismatch] new-mutability/transitivity-add-captured-array-to-itself.tsx
   [output_mismatch] new-mutability/transitivity-phi-assign-or-capture.tsx
-  [output_mismatch] new-mutability/useCallback-reordering-depslist-assignment.tsx
   [output_mismatch] new-mutability/useMemo-reordering-depslist-assignment.ts
   [output_mismatch] object-expression-computed-member.js
   [output_mismatch] original-reactive-scopes-fork/capture-ref-for-later-mutation.tsx
-  [output_mismatch] phi-type-inference-array-push-consecutive-phis.js
-  [output_mismatch] phi-type-inference-array-push.js
-  [output_mismatch] phi-type-inference-property-store.js
   [output_mismatch] preserve-memo-validation/useCallback-infer-more-specific.ts
-  [output_mismatch] preserve-memo-validation/useCallback-reordering-depslist-assignment.tsx
   [output_mismatch] preserve-memo-validation/useMemo-reordering-depslist-assignment.ts
   [output_mismatch] preserve-memo-validation/useMemo-reordering-depslist-controlflow.tsx
-  [output_mismatch] propagate-scope-deps-hir-fork/iife-return-modified-later-phi.js
   [output_mismatch] propagate-scope-deps-hir-fork/nested-optional-chains.ts
-  [output_mismatch] propagate-scope-deps-hir-fork/phi-type-inference-array-push-consecutive-phis.js
-  [output_mismatch] propagate-scope-deps-hir-fork/phi-type-inference-array-push.js
-  [output_mismatch] propagate-scope-deps-hir-fork/phi-type-inference-property-store.js
   [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/infer-function-uncond-optional-hoists-other-dep.tsx
   [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
   [output_mismatch] propagate-scope-deps-hir-fork/repro-scope-missing-mutable-range.js

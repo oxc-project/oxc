@@ -86,6 +86,19 @@ pub fn infer_reactive_scope_variables(func: &mut HIRFunction) -> Result<(), Comp
                     .entry(oid)
                     .or_insert((place.identifier.mutable_range, place.identifier.loc));
             }
+            // Also collect named places from DeclareLocal, DeclareContext, StoreLocal,
+            // StoreContext, and Destructure lvalues. These places are registered by
+            // `declare_identifier` in Phase 1 and may be grouped with phi nodes, but
+            // they are NOT instruction lvalues or operands, so they wouldn't otherwise
+            // appear in `identifier_info`. Without this, the scope range computation
+            // in Phase 2 would skip them (no mutable_range info), causing the scope
+            // to start too late and exclude the DeclareLocal instruction.
+            for place in crate::hir::visitors::each_instruction_value_lvalue(&instr.value) {
+                let pid = place.identifier.id;
+                identifier_info
+                    .entry(pid)
+                    .or_insert((place.identifier.mutable_range, place.identifier.loc));
+            }
         }
     }
 
