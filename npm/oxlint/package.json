@@ -42,6 +42,9 @@
     "./plugins-dev": {
       "types": "./dist/plugins-dev.d.ts",
       "default": "./dist/plugins-dev.js"
+    },
+    "./configuration_schema.json": {
+      "default": "./configuration_schema.json"
     }
   },
   "peerDependencies": {
