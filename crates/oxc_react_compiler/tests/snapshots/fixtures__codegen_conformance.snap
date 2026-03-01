@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1256/1409 passed (89.1%)
+Codegen conformance: 1258/1409 passed (89.3%)
 
 Failure breakdown:
   parse_error:    22
@@ -10,7 +10,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:128
+  output_mismatch:126
   no_expected:    0
 
 Failed fixtures:
@@ -33,7 +33,6 @@ Failed fixtures:
   [output_mismatch] chained-assignment-context-variable.js
   [parse_error] component-declaration-basic.flow.js
   [output_mismatch] createElement-freeze.js
-  [output_mismatch] destructuring-assignment.js
   [output_mismatch] destructuring-property-inference.js
   [parse_error] destructuring-with-typecast-as-default-value.flow.js
   [output_mismatch] fbt/bug-fbt-plural-multiple-function-calls.ts
@@ -57,7 +56,6 @@ Failed fixtures:
   [output_mismatch] fbt/repro-separately-memoized-fbt-param.js
   [output_mismatch] for-of-immutable-collection.js
   [output_mismatch] frozen-after-alias.js
-  [output_mismatch] function-declaration-redeclare.js
   [parse_error] gating/component-syntax-ref-gating.flow.js
   [pipeline_error] gating/dynamic-gating-bailout-nopanic.js
   [parse_error] gating/gating-with-hoisted-type-reference.flow.js

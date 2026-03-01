@@ -919,6 +919,36 @@ fn lower_object_assignment_target(
     let mut properties = Vec::new();
     let mut followups: Vec<(crate::hir::Place, AssignmentFollowup)> = Vec::new();
 
+    // Match the TS reference's `forceTemporaries` logic (BuildHIR.ts lines 3952-3962):
+    // For reassignments, force temporaries if any property has a rest element,
+    // or any property value is not a simple local identifier (nested destructuring,
+    // default value, context variable, or non-local binding).
+    // When forceTemporaries is true, ALL property values are replaced with unnamed
+    // promoted temporaries + followup assignments, which causes
+    // RewriteInstructionKindsBasedOnReassignment to convert kind=Reassign to kind=Const.
+    let force_temporaries = target.rest.is_some()
+        || target.properties.iter().any(|prop| match prop {
+            ast::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident_prop) => {
+                // Shorthand `{ a }`: check if identifier resolves to non-local
+                !matches!(
+                    builder.resolve_identifier(&ident_prop.binding.name),
+                    VariableBinding::Identifier { .. }
+                )
+            }
+            ast::AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop_prop) => {
+                // `{ key: value }`: check if value is not a simple local identifier
+                match &prop_prop.binding {
+                    ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) => {
+                        !matches!(
+                            builder.resolve_identifier(&ident.name),
+                            VariableBinding::Identifier { .. }
+                        )
+                    }
+                    _ => true, // nested patterns, defaults, member expressions
+                }
+            }
+        });
+
     for prop in &target.properties {
         match prop {
             ast::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident_prop) => {
@@ -927,11 +957,12 @@ fn lower_object_assignment_target(
                 let ident_loc = span_to_loc(ident_prop.binding.span);
                 let key = ObjectPropertyKey::Identifier(name.to_string());
 
-                if ident_prop.init.is_some()
+                if force_temporaries
+                    || ident_prop.init.is_some()
                     || builder.is_context_identifier(name)
                 {
-                    // Has default value or is a context variable: create a promoted
-                    // temporary and defer the assignment via a followup.
+                    // forceTemporaries, has default value, or is a context variable:
+                    // create a promoted temporary and defer the assignment via a followup.
                     // For context variables, the followup's `lower_assignment` will
                     // emit a StoreContext instruction.
                     let temp = create_promoted_temporary(builder, ident_loc);
@@ -964,8 +995,8 @@ fn lower_object_assignment_target(
 
                 match &prop_prop.binding {
                     ast::AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(ident) => {
-                        if builder.is_context_identifier(&ident.name) {
-                            // Context variable: create temporary + followup
+                        if force_temporaries || builder.is_context_identifier(&ident.name) {
+                            // forceTemporaries or context variable: create temporary + followup
                             let temp = create_promoted_temporary(builder, prop_loc);
                             properties.push(ObjectPatternProperty::Property(ObjectProperty {
                                 key,
@@ -1050,9 +1081,26 @@ fn lower_object_assignment_target(
     if let Some(rest) = &target.rest {
         let rest_loc = span_to_loc(rest.span);
         if let ast::AssignmentTarget::AssignmentTargetIdentifier(ident) = &rest.target {
-            let place =
-                resolve_identifier_for_reassignment(builder, &ident.name, span_to_loc(ident.span));
-            properties.push(ObjectPatternProperty::Spread(SpreadPattern { place }));
+            if force_temporaries || builder.is_context_identifier(&ident.name) {
+                let temp = create_promoted_temporary(builder, rest_loc);
+                properties
+                    .push(ObjectPatternProperty::Spread(SpreadPattern { place: temp.clone() }));
+                followups.push((
+                    temp,
+                    AssignmentFollowup::IdentifierWithDefault {
+                        name: ident.name.to_string(),
+                        default_expr: None,
+                        loc: rest_loc,
+                    },
+                ));
+            } else {
+                let place = resolve_identifier_for_reassignment(
+                    builder,
+                    &ident.name,
+                    span_to_loc(ident.span),
+                );
+                properties.push(ObjectPatternProperty::Spread(SpreadPattern { place }));
+            }
         } else {
             let temp = create_promoted_temporary(builder, rest_loc);
             properties.push(ObjectPatternProperty::Spread(SpreadPattern { place: temp.clone() }));
@@ -4478,8 +4526,29 @@ fn lower_statement_with_label(
             // If the name was hoisted (via DeclareContext), emit StoreContext
             // instead of StoreLocal to match the TS reference's lowerAssignment
             // behavior (BuildHIR.ts lines 3693-3727).
+            //
+            // For redeclared function declarations (e.g. `function x(a){...}; function x(){}`),
+            // JavaScript semantics dictate that the last declaration wins. In the TS reference,
+            // Babel's scope system makes both declarations share the same binding node, so
+            // `resolveBinding` returns the same `Identifier` and the second `StoreLocal`
+            // naturally overwrites the first. We replicate this by resolving the existing
+            // binding when one already exists, rather than creating a new suffixed binding.
             let decl_place = if let Some(id) = &func.id {
-                builder.declare_binding(&id.name, BindingKind::Function, loc)
+                match builder.resolve_identifier(&id.name) {
+                    VariableBinding::Identifier { identifier, .. } => {
+                        // Binding already exists — reuse it (handles redeclaration).
+                        crate::hir::Place {
+                            identifier,
+                            effect: crate::hir::Effect::Unknown,
+                            reactive: false,
+                            loc,
+                        }
+                    }
+                    _ => {
+                        // No existing binding — declare a new one.
+                        builder.declare_binding(&id.name, BindingKind::Function, loc)
+                    }
+                }
             } else {
                 create_temporary_place(builder.environment_mut(), loc)
             };
