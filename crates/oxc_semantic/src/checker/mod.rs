@@ -61,6 +61,7 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::ForOfStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
+            js::check_for_of_statement(stmt, ctx);
             js::check_for_statement_left(&stmt.left, false, ctx);
             ts::check_for_statement_left(&stmt.left, false, ctx);
         }

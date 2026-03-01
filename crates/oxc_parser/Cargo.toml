@@ -47,5 +47,8 @@ pico-args = { workspace = true }
 default = ["regular_expression"]
 # Parse regex
 regular_expression = ["dep:oxc_regular_expression"]
+# Feature to enable mutation of tokens.
+# Should not ordinarily be enabled. Only used by ESTree tokens conversion.
+mutate_tokens = []
 # Expose Lexer for benchmarks
 benchmarking = []

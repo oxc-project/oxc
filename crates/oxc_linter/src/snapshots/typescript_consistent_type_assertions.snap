@@ -7,78 +7,91 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = new Generic<int>() as Foo;
    ·           ─────────────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>`. For example, change `value as Foo` to `<Foo>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<A>` instead of `as A`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = b as A;
    ·           ──────
    ╰────
+  help: Replace `as A` with `<A>`. For example, change `value as A` to `<A>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<readonly number[]>` instead of `as readonly number[]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = [1] as readonly number[];
    ·           ────────────────────────
    ╰────
+  help: Replace `as readonly number[]` with `<readonly number[]>`. For example, change `value as readonly number[]` to `<readonly number[]>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<a | b>` instead of `as a | b`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = 'string' as a | b;
    ·           ─────────────────
    ╰────
+  help: Replace `as a | b` with `<a | b>`. For example, change `value as a | b` to `<a | b>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<A>` instead of `as A`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = !'string' as A;
    ·           ──────────────
    ╰────
+  help: Replace `as A` with `<A>`. For example, change `value as A` to `<A>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<A>` instead of `as A`.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = (a as A) + b;
    ·            ──────
    ╰────
+  help: Replace `as A` with `<A>`. For example, change `value as A` to `<A>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = new Generic<string>() as Foo;
    ·           ────────────────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>`. For example, change `value as Foo` to `<Foo>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (Generic<string> as Foo)();
    ·                ──────────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>`. For example, change `value as Foo` to `<Foo>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (Generic<string> as Foo)('string');
    ·                ──────────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>`. For example, change `value as Foo` to `<Foo>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => ({ bar: 5 }) as Foo;
    ·                 ───────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>`. For example, change `value as Foo` to `<Foo>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => bar as Foo;
    ·                 ──────────
    ╰────
+  help: Replace `as Foo` with `<Foo>`. For example, change `value as Foo` to `<Foo>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<Foo>` instead of `as Foo`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = bar<string>`${'baz'}` as Foo;
    ·           ────────────────────────────
    ╰────
+  help: Replace `as Foo` with `<Foo>`. For example, change `value as Foo` to `<Foo>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<const>` instead of `as const`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = { key: 'value' } as const;
    ·           ─────────────────────────
    ╰────
+  help: Replace `as const` with `<const>`. For example, change `value as const` to `<const>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as Foo` instead of `<Foo>`.
    ╭─[consistent_type_assertions.ts:1:11]
@@ -176,210 +189,280 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = new Generic<int>() as Foo;
    ·           ─────────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = b as A;
    ·           ──────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = [1] as readonly number[];
    ·           ────────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = 'string' as a | b;
    ·           ─────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = !'string' as A;
    ·           ──────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = (a as A) + b;
    ·            ──────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = new Generic<string>() as Foo;
    ·           ────────────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (Generic<string> as Foo)();
    ·                ──────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (Generic<string> as Foo)('string');
    ·                ──────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => ({ bar: 5 }) as Foo;
    ·                 ───────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => bar as Foo;
    ·                 ──────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = bar<string>`${'baz'}` as Foo;
    ·           ────────────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>new Generic<int>();
    ·           ───────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>b;
    ·           ────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <readonly number[]>[1];
    ·           ──────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <a | b>'string';
    ·           ───────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>!'string';
    ·           ────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>a + b;
    ·           ────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>new Generic<string>();
    ·           ──────────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (<Foo>Generic<string>)();
    ·                ────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ const x = new (<Foo>Generic<string>)('string');
    ·                ────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => <Foo>{ bar: 5 };
    ·                 ───────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:17]
  1 │ const x = () => <Foo>bar;
    ·                 ────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo>bar<string>`${'baz'}`;
    ·           ──────────────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as Foo<int>;
    ·           ──────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as a | b;
    ·           ───────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = ({} as A) + b;
    ·            ───────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo<int>>{};
    ·           ────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <a | b>{};
    ·           ─────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>{} + b;
    ·           ─────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as Foo<int>;
    ·           ──────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = {} as a | b;
    ·           ───────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:12]
  1 │ const x = ({} as A) + b;
    ·            ───────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:7]
  1 │ print({ bar: 5 } as Foo);
    ·       ─────────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print({ bar: 5 } as Foo);
    ·           ─────────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -388,66 +471,88 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────────
  4 │             }
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function b(x = {} as Foo.Bar) {}
    ·                ─────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function c(x = {} as Foo) {}
    ·                ─────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print?.({ bar: 5 } as Foo);
    ·         ─────────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:13]
  1 │ print?.call({ bar: 5 } as Foo);
    ·             ─────────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${{ bar: 5 } as Foo}`;
    ·         ─────────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <Foo<int>>{};
    ·           ────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <a | b>{};
    ·           ─────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <A>{} + b;
    ·           ─────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:7]
  1 │ print(<Foo>{ bar: 5 });
    ·       ───────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print(<Foo>{ bar: 5 });
    ·           ───────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -456,24 +561,32 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────────────
  4 │             }
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print?.(<Foo>{ bar: 5 });
    ·         ───────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:13]
  1 │ print?.call(<Foo>{ bar: 5 });
    ·             ───────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T = { ... }`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${<Foo>{ bar: 5 }}`;
    ·         ───────────────
    ╰────
+  help: Replace the object literal type assertion with a type annotation. For example, change `const x = { a: 1 } as Type` to `const x: Type = { a: 1 }`. Alternatively, use `const x = { a: 1 } satisfies Type` if you want TypeScript to infer the exact shape.
+  note: Type assertions on object literals can hide errors where the object doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the object matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as any` instead of `<any>`.
    ╭─[consistent_type_assertions.ts:1:11]
@@ -533,18 +646,23 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = [] as string[];
    ·           ──────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <string[]>[];
    ·           ────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `<string[]>` instead of `as string[]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = [] as string[];
    ·           ──────────────
    ╰────
+  help: Replace `as string[]` with `<string[]>`. For example, change `value as string[]` to `<string[]>value`.
 
   ⚠ typescript-eslint(consistent-type-assertions): Use `as string[]` instead of `<string[]>`.
    ╭─[consistent_type_assertions.ts:1:11]
@@ -558,30 +676,40 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const x = [] as string[];
    ·           ──────────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ const x = <string[]>[];
    ·           ────────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:7]
  1 │ print([5] as Foo);
    ·       ──────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print([5] as Foo);
    ·           ──────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function b(x = [5] as Foo.Bar) {}
    ·                ──────────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -590,30 +718,40 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────
  4 │             }
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${[5] as Foo}`;
    ·         ──────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:19]
  1 │ const foo = () => [5] as Foo;
    ·                   ──────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:11]
  1 │ new print(<Foo>[5]);
    ·           ────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:16]
  1 │ function b(x = <Foo.Bar>[5]) {}
    ·                ────────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:3:21]
@@ -622,21 +760,29 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────
  4 │             }
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:9]
  1 │ print`${<Foo>[5]}`;
    ·         ────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Always prefer `const x: T[] = [ ... ]`.
    ╭─[consistent_type_assertions.ts:1:13]
  1 │ const foo = <Foo>[5];
    ·             ────────
    ╰────
+  help: Replace the array literal type assertion with a type annotation. For example, change `const x = [1, 2] as Type[]` to `const x: Type[] = [1, 2]`. Alternatively, use `const x = [1, 2] satisfies Type[]` if you want TypeScript to infer the exact array type.
+  note: Type assertions on array literals can hide errors where the array doesn't actually match the asserted type. Using type annotations or `satisfies` ensures TypeScript verifies that the array matches the expected type.
 
   ⚠ typescript-eslint(consistent-type-assertions): Do not use any type assertions.
    ╭─[consistent_type_assertions.ts:1:25]
  1 │ const foo = <Foo style={{ bar: 5 } as Bar} />;
    ·                         ─────────────────
    ╰────
+  help: Remove the type assertion and use a type annotation instead. For example, change `const x = value as Type` to `const x: Type = value`. Alternatively, use the `satisfies` operator: `const x = value satisfies Type`.
+  note: Type assertions bypass TypeScript's type checking and can hide type errors. Using type annotations or the `satisfies` operator provides better type safety while still allowing TypeScript to infer types where appropriate.

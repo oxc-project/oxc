@@ -146,6 +146,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         ));
                     }
                     let implements_kw_span = self.cur_token().span();
+                    if !self.is_ts {
+                        self.error(diagnostics::implements_clause_in_ts(implements_kw_span));
+                    }
                     if let Some((_, implements)) = implements.as_mut() {
                         implements.extend(self.parse_ts_implements_clause());
                     } else {
