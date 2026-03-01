@@ -41,8 +41,8 @@ struct TsconfigCompilerOptions {
 /// Loads path aliases from a tsconfig.json for the prefer-shortest-imports rule.
 ///
 /// Parses `compilerOptions.paths` and `baseUrl` into [`TsconfigPathAliases`], which
-/// [`candidates_for_target`] uses to generate alias specifiers (e.g. `@/utils/helper`)
-/// from resolved paths.
+/// [`TsconfigPathAliases::candidates_for_target`] uses to generate alias
+/// specifiers (e.g. `@/utils/helper`) from resolved paths.
 ///
 /// Returns `None` if the file can't be read, parsed, or has no parent directory.
 /// Skips non-array path values and non-string target entries.
