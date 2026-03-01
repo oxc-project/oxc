@@ -14,7 +14,7 @@ catalog:
   "@napi-rs/wasm-runtime": 1.1.1
   "@types/node": 24.1.0
   cross-env: ^10.1.0
-  eslint: 9.39.2
+  eslint: 9.39.3
   publint: 0.3.17
   rolldown: 1.0.0-rc.6
   tsdown: 0.20.3
