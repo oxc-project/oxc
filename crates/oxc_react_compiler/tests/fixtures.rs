@@ -17,6 +17,23 @@ fn is_js_ts_tsx(path: &Path) -> bool {
     path.extension().and_then(|e| e.to_str()).is_some_and(|ext| matches!(ext, "js" | "ts" | "tsx"))
 }
 
+/// Returns `true` if the file is a Flow file that cannot be parsed by oxc_parser.
+/// Detects both `.flow.js` extensions and `@flow` pragmas in the first line.
+fn is_flow_file(path: &Path, source: &str) -> bool {
+    // Check file extension for `.flow.` (e.g., `foo.flow.js`)
+    if path.to_str().is_some_and(|s| s.contains(".flow.")) {
+        return true;
+    }
+    // Check first line for @flow pragma
+    if let Some(first_line) = source.lines().next() {
+        let trimmed = first_line.trim();
+        if trimmed.contains("@flow") {
+            return true;
+        }
+    }
+    false
+}
+
 fn count_fixtures_recursive(dir: &Path) -> usize {
     let mut count = 0;
     if let Ok(entries) = std::fs::read_dir(dir) {
@@ -8309,6 +8326,7 @@ fn codegen_conformance_inner() {
     fixture_pairs.sort_by(|a, b| a.0.cmp(&b.0));
 
     let mut passed = 0u32;
+    let mut flow_skipped = 0u32;
     let mut failed: Vec<(String, FailureCategory)> = Vec::new();
 
     for (input_path, expect_path) in &fixture_pairs {
@@ -8319,6 +8337,13 @@ fn codegen_conformance_inner() {
             failed.push((file_name, FailureCategory::ParseError));
             continue;
         };
+
+        // Skip Flow files — oxc_parser does not support Flow syntax.
+        // These are detected by `.flow.` in the filename or `@flow` pragma.
+        if is_flow_file(input_path, &source) {
+            flow_skipped += 1;
+            continue;
+        }
 
         let Ok(expect_content) = std::fs::read_to_string(expect_path) else {
             failed.push((file_name, FailureCategory::NoExpectedCode));
@@ -8526,7 +8551,8 @@ fn codegen_conformance_inner() {
         }
     }
 
-    let total = fixture_pairs.len() as u32;
+    let total_with_flow = fixture_pairs.len() as u32;
+    let total = total_with_flow - flow_skipped;
     let pct = if total > 0 { (passed as f64 / total as f64) * 100.0 } else { 0.0 };
 
     // Build category breakdown.
@@ -8553,6 +8579,7 @@ fn codegen_conformance_inner() {
     // Build the snapshot content.
     let mut snapshot = String::new();
     snapshot.push_str(&format!("Codegen conformance: {passed}/{total} passed ({pct:.1}%)\n"));
+    snapshot.push_str(&format!("Flow files skipped: {flow_skipped}\n"));
     snapshot.push('\n');
     snapshot.push_str("Failure breakdown:\n");
     snapshot.push_str(&format!("  parse_error:    {parse_errors}\n"));
