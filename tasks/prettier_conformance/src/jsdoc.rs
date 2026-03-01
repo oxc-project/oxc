@@ -220,7 +220,9 @@ impl JsdocTestRunner {
         if json.get("separate_tag_groups").and_then(serde_json::Value::as_bool) == Some(true) {
             options.separate_tag_groups = true;
         }
-        if json.get("separate_returns_from_param").and_then(serde_json::Value::as_bool) == Some(true) {
+        if json.get("separate_returns_from_param").and_then(serde_json::Value::as_bool)
+            == Some(true)
+        {
             options.separate_returns_from_param = true;
         }
         if json.get("bracket_spacing").and_then(serde_json::Value::as_bool) == Some(true) {
