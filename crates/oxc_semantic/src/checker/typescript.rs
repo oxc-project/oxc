@@ -12,14 +12,13 @@ use crate::{builder::SemanticBuilder, diagnostics};
 pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
     check_type_name_is_reserved(&param.name, ctx, "Type parameter");
     if param.r#in || param.out {
+        let parent_id = ctx.nodes.parent_id(ctx.current_node_id);
         let is_allowed_node = matches!(
-            // skip parent TSTypeParameterDeclaration
-            ctx.nodes.ancestor_kinds(ctx.current_node_id).nth(1),
-            Some(
-                AstKind::TSInterfaceDeclaration(_)
-                    | AstKind::Class(_)
-                    | AstKind::TSTypeAliasDeclaration(_)
-            )
+            // Skip parent `TSTypeParameterDeclaration`.
+            ctx.nodes.parent_kind(parent_id),
+            AstKind::TSInterfaceDeclaration(_)
+                | AstKind::Class(_)
+                | AstKind::TSTypeAliasDeclaration(_)
         );
         if !is_allowed_node {
             if param.r#in {

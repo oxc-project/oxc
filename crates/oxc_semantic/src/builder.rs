@@ -85,6 +85,8 @@ pub struct SemanticBuilder<'a> {
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
     pub(crate) hoisting_variables: FxHashMap<ScopeId, IdentHashMap<'a, SymbolId>>,
+    formal_parameters_depth: u32,
+    control_flow_context_stack: Vec<ControlFlowContext<'a>>,
 
     // builders
     pub(crate) nodes: AstNodes<'a>,
@@ -113,6 +115,16 @@ pub struct SemanticBuilder<'a> {
 
     #[cfg(feature = "cfg")]
     ast_node_records: Vec<NodeId>,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum ControlFlowContext<'a> {
+    Iteration,
+    Switch,
+    Label { name: Ident<'a>, span: Span, continue_target: bool },
+    Function,
+    ArrowFunction,
+    StaticBlock,
 }
 
 /// Data returned by [`SemanticBuilder::build`].
@@ -145,6 +157,8 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             current_function_node_id: NodeId::ROOT,
             module_instance_state_cache: FxHashMap::default(),
+            formal_parameters_depth: 0,
+            control_flow_context_stack: Vec::new(),
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
             scoping,
@@ -262,6 +276,9 @@ impl<'a> SemanticBuilder<'a> {
             stats.references as usize,
             stats.scopes as usize,
         );
+        if self.check_syntax_error {
+            self.control_flow_context_stack.reserve(stats.scopes as usize);
+        }
 
         // Visit AST to generate scopes tree etc
         self.visit_program(program);
@@ -396,6 +413,32 @@ impl<'a> SemanticBuilder<'a> {
     #[inline]
     pub(crate) fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
+    }
+
+    #[inline]
+    pub(crate) fn in_formal_parameters(&self) -> bool {
+        self.formal_parameters_depth > 0
+    }
+
+    #[inline]
+    pub(crate) fn control_flow_contexts(
+        &self,
+    ) -> impl Iterator<Item = ControlFlowContext<'a>> + Clone + '_ {
+        self.control_flow_context_stack.iter().rev().copied()
+    }
+
+    #[inline]
+    fn push_control_flow_context(&mut self, context: ControlFlowContext<'a>) {
+        if self.check_syntax_error {
+            self.control_flow_context_stack.push(context);
+        }
+    }
+
+    #[inline]
+    fn pop_control_flow_context(&mut self) {
+        if self.check_syntax_error {
+            self.control_flow_context_stack.pop();
+        }
     }
 
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
@@ -734,6 +777,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         // Check `current_function_node_id` has been reset to as it was at start
         debug_assert!(self.current_function_node_id == NodeId::ROOT);
+        debug_assert!(!self.check_syntax_error || self.control_flow_context_stack.is_empty());
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
@@ -859,6 +903,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_do_while_statement(&mut self, stmt: &DoWhileStatement<'a>) {
         let kind = AstKind::DoWhileStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.push_control_flow_context(ControlFlowContext::Iteration);
         control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
 
         /* cfg */
@@ -911,6 +956,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
+        self.pop_control_flow_context();
         self.leave_node(kind);
     }
 
@@ -1119,6 +1165,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.push_control_flow_context(ControlFlowContext::Iteration);
         control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         if let Some(init) = &stmt.init {
@@ -1184,12 +1231,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_scope();
+        self.pop_control_flow_context();
         self.leave_node(kind);
     }
 
     fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
         let kind = AstKind::ForInStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.push_control_flow_context(ControlFlowContext::Iteration);
         control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
@@ -1248,12 +1297,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_scope();
+        self.pop_control_flow_context();
         self.leave_node(kind);
     }
 
     fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
         let kind = AstKind::ForOfStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.push_control_flow_context(ControlFlowContext::Iteration);
         control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
@@ -1311,6 +1362,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_scope();
+        self.pop_control_flow_context();
         self.leave_node(kind);
     }
 
@@ -1391,6 +1443,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_labeled_statement(&mut self, stmt: &LabeledStatement<'a>) {
         let kind = AstKind::LabeledStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.push_control_flow_context(ControlFlowContext::Label {
+            name: stmt.label.name,
+            span: stmt.label.span,
+            continue_target: matches!(
+                stmt.body,
+                Statement::LabeledStatement(_)
+                    | Statement::DoWhileStatement(_)
+                    | Statement::WhileStatement(_)
+                    | Statement::ForStatement(_)
+                    | Statement::ForInStatement(_)
+                    | Statement::ForOfStatement(_)
+            ),
+        });
         control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
         self.unused_labels.add(stmt.label.name, self.current_node_id);
 
@@ -1420,6 +1485,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.unused_labels.mark_unused();
+        self.pop_control_flow_context();
         self.leave_node(kind);
     }
 
@@ -1458,6 +1524,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
         let kind = AstKind::SwitchStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.push_control_flow_context(ControlFlowContext::Switch);
         control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
         self.visit_expression(&stmt.discriminant);
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
@@ -1532,6 +1599,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_scope();
+        self.pop_control_flow_context();
         self.leave_node(kind);
     }
 
@@ -1719,6 +1787,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_while_statement(&mut self, stmt: &WhileStatement<'a>) {
         let kind = AstKind::WhileStatement(self.alloc(stmt));
         self.enter_node(kind);
+        self.push_control_flow_context(ControlFlowContext::Iteration);
         control_flow!(self, |cfg| cfg.enter_statement(self.current_node_id));
 
         /* cfg - condition basic block */
@@ -1762,6 +1831,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 .resolve_with_upper_label();
         });
         /* cfg */
+        self.pop_control_flow_context();
         self.leave_node(kind);
     }
 
@@ -1819,6 +1889,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
+        self.push_control_flow_context(ControlFlowContext::Function);
 
         let parent_function_node_id = self.current_function_node_id;
         self.current_function_node_id = self.current_node_id;
@@ -1902,6 +1973,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_scope();
+        self.pop_control_flow_context();
         self.leave_node(kind);
 
         self.current_function_node_id = parent_function_node_id;
@@ -1924,6 +1996,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_node(kind);
+        self.push_control_flow_context(ControlFlowContext::ArrowFunction);
         self.enter_scope(
             {
                 let mut flags = ScopeFlags::Function | ScopeFlags::Arrow;
@@ -1986,6 +2059,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         self.leave_scope();
+        self.pop_control_flow_context();
         self.leave_node(kind);
     }
 
@@ -2257,6 +2331,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
+        let kind = AstKind::StaticBlock(self.alloc(block));
+        self.enter_node(kind);
+        self.push_control_flow_context(ControlFlowContext::StaticBlock);
+        self.enter_scope(ScopeFlags::ClassStaticBlock, &block.scope_id);
+        self.visit_span(&block.span);
+        self.visit_statements(&block.body);
+        self.leave_scope();
+        self.pop_control_flow_context();
+        self.leave_node(kind);
+    }
+
     fn visit_binding_rest_element(&mut self, element: &BindingRestElement<'a>) {
         let kind = AstKind::BindingRestElement(self.alloc(element));
         self.enter_node(kind);
@@ -2279,6 +2365,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(initializer) = &param.initializer {
             self.visit_expression(initializer);
         }
+        self.leave_node(kind);
+    }
+
+    fn visit_formal_parameters(&mut self, params: &FormalParameters<'a>) {
+        let kind = AstKind::FormalParameters(self.alloc(params));
+        self.enter_node(kind);
+        self.formal_parameters_depth += 1;
+        self.visit_span(&params.span);
+        self.visit_formal_parameter_list(&params.items);
+        if let Some(rest) = &params.rest {
+            self.visit_formal_parameter_rest(rest);
+        }
+        self.formal_parameters_depth -= 1;
         self.leave_node(kind);
     }
 

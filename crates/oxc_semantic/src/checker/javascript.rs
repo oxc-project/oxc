@@ -13,7 +13,12 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::{IsGlobalReference, builder::SemanticBuilder, class::Element, diagnostics};
+use crate::{
+    IsGlobalReference,
+    builder::{ControlFlowContext, SemanticBuilder},
+    class::Element,
+    diagnostics,
+};
 
 /// Threshold for edit distance when suggesting similar names
 const SUGGESTION_THRESHOLD: usize = 2;
@@ -275,36 +280,16 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
         return;
     }
 
-    //  Static Semantics: AssignmentTargetType
-    //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
+    // Static Semantics: AssignmentTargetType
+    // If this IdentifierReference is in strict mode code and Identifier is "eval" or
+    // "arguments", it is invalid when written to.
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
-        for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-            match node_kind {
-                // Only check for actual assignment contexts, not member expression access
-                AstKind::ObjectAssignmentTarget(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::UpdateExpression(_)
-                | AstKind::ArrayAssignmentTarget(_) => {
-                    return ctx
-                        .error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
-                }
-                AstKind::AssignmentExpression(assign_expr) => {
-                    // only throw error if arguments or eval are being assigned to
-                    if let AssignmentTarget::AssignmentTargetIdentifier(target_ident) =
-                        &assign_expr.left
-                        && target_ident.name == ident.name
-                    {
-                        return ctx.error(diagnostics::unexpected_identifier_assign(
-                            &ident.name,
-                            ident.span,
-                        ));
-                    }
-                }
-                m if m.is_member_expression_kind() => {
-                    break;
-                }
-                _ => {}
-            }
+        if ident
+            .reference_id
+            .get()
+            .is_some_and(|reference_id| ctx.scoping.get_reference(reference_id).flags().is_write())
+        {
+            return ctx.error(diagnostics::unexpected_identifier_assign(&ident.name, ident.span));
         }
     }
 
@@ -821,121 +806,102 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
 
     let mut available_labels: Option<Vec<&str>> = None;
-    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-        match node_kind {
-            AstKind::Program(_) => {
-                return stmt.label.as_ref().map_or_else(
-                    || ctx.error(diagnostics::invalid_break(stmt.span)),
-                    |label| {
-                        let labels =
-                            available_labels.get_or_insert_with(|| collect_label_names(ctx));
-                        let suggestion =
-                            best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
-                        ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
-                    },
-                );
-            }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+    for context in ctx.control_flow_contexts() {
+        match context {
+            ControlFlowContext::Function | ControlFlowContext::StaticBlock => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
                 );
             }
-            AstKind::LabeledStatement(labeled_statement) => {
-                if stmt
-                    .label
-                    .as_ref()
-                    .is_some_and(|label| label.name == labeled_statement.label.name)
-                {
-                    break;
+            ControlFlowContext::Label { name, .. } => {
+                if stmt.label.as_ref().is_some_and(|label| label.name == name) {
+                    return;
                 }
             }
-            kind if (kind.is_iteration_statement()
-                || matches!(kind, AstKind::SwitchStatement(_)))
-                && stmt.label.is_none() =>
-            {
-                break;
+            ControlFlowContext::Iteration | ControlFlowContext::Switch if stmt.label.is_none() => {
+                return;
             }
+            ControlFlowContext::ArrowFunction => {}
             _ => {}
         }
     }
+
+    stmt.label.as_ref().map_or_else(
+        || ctx.error(diagnostics::invalid_break(stmt.span)),
+        |label| {
+            let labels = available_labels.get_or_insert_with(|| collect_label_names(ctx));
+            let suggestion = best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
+            ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
+        },
+    );
 }
 
 pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<'_>) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
 
     let mut available_labels: Option<Vec<&str>> = None;
-    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-        match node_kind {
-            AstKind::Program(_) => {
-                return stmt.label.as_ref().map_or_else(
-                    || ctx.error(diagnostics::invalid_continue(stmt.span)),
-                    |label| {
-                        let labels =
-                            available_labels.get_or_insert_with(|| collect_label_names(ctx));
-                        let suggestion =
-                            best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
-                        ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
-                    },
-                );
-            }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+    for context in ctx.control_flow_contexts() {
+        match context {
+            ControlFlowContext::Function | ControlFlowContext::StaticBlock => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
                 );
             }
-            AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
-                Some(label) if label.name == labeled_statement.label.name => {
-                    if matches!(
-                        labeled_statement.body,
-                        Statement::LabeledStatement(_)
-                            | Statement::DoWhileStatement(_)
-                            | Statement::WhileStatement(_)
-                            | Statement::ForStatement(_)
-                            | Statement::ForInStatement(_)
-                            | Statement::ForOfStatement(_)
-                    ) {
-                        break;
+            ControlFlowContext::Label { name, span, continue_target } => match &stmt.label {
+                Some(label) if label.name == name => {
+                    if continue_target {
+                        return;
                     }
                     return ctx.error(diagnostics::invalid_label_non_iteration(
-                        "continue",
-                        labeled_statement.label.span,
-                        label.span,
+                        "continue", span, label.span,
                     ));
                 }
                 _ => {}
             },
-            kind if kind.is_iteration_statement() && stmt.label.is_none() => break,
+            ControlFlowContext::Iteration if stmt.label.is_none() => return,
+            ControlFlowContext::ArrowFunction => {}
             _ => {}
         }
     }
+
+    stmt.label.as_ref().map_or_else(
+        || ctx.error(diagnostics::invalid_continue(stmt.span)),
+        |label| {
+            let labels = available_labels.get_or_insert_with(|| collect_label_names(ctx));
+            let suggestion = best_match(&label.name, labels.iter().copied(), SUGGESTION_THRESHOLD);
+            ctx.error(diagnostics::invalid_label_target(suggestion, label.span));
+        },
+    );
 }
 
 fn collect_label_names<'a>(ctx: &'_ SemanticBuilder<'a>) -> Vec<&'a str> {
     let mut labels = Vec::new();
-    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-        if let AstKind::LabeledStatement(labeled_statement) = node_kind {
-            labels.push(labeled_statement.label.name.as_str());
-        } else if matches!(node_kind, AstKind::Function(_) | AstKind::StaticBlock(_)) {
-            break;
+    for context in ctx.control_flow_contexts() {
+        match context {
+            ControlFlowContext::Label { name, .. } => labels.push(name.as_str()),
+            ControlFlowContext::Function | ControlFlowContext::StaticBlock => break,
+            ControlFlowContext::ArrowFunction
+            | ControlFlowContext::Iteration
+            | ControlFlowContext::Switch => {}
         }
     }
     labels
 }
 
 pub fn check_labeled_statement(stmt: &LabeledStatement, ctx: &SemanticBuilder<'_>) {
-    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-        match node_kind {
+    for context in ctx.control_flow_contexts() {
+        match context {
             // label cannot cross boundary on function or static block
-            AstKind::Function(_)
-            | AstKind::ArrowFunctionExpression(_)
-            | AstKind::StaticBlock(_) => break,
+            ControlFlowContext::Function
+            | ControlFlowContext::ArrowFunction
+            | ControlFlowContext::StaticBlock => break,
             // check label name redeclaration
-            AstKind::LabeledStatement(label_stmt) if stmt.label.name == label_stmt.label.name => {
+            ControlFlowContext::Label { name, span, .. } if stmt.label.name == name => {
                 return ctx.error(diagnostics::label_redeclaration(
                     stmt.label.name.as_str(),
-                    label_stmt.label.span,
+                    span,
                     stmt.label.span,
                 ));
             }
@@ -1352,16 +1318,7 @@ pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilde
 }
 
 fn is_in_formal_parameters(ctx: &SemanticBuilder<'_>) -> bool {
-    for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
-        match node_kind {
-            AstKind::FormalParameter(_) => return true,
-            AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                break;
-            }
-            _ => {}
-        }
-    }
-    false
+    ctx.in_formal_parameters()
 }
 
 pub fn check_await_expression(expr: &AwaitExpression, ctx: &SemanticBuilder<'_>) {
