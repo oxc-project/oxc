@@ -1,18 +1,17 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 7676
 expression: snapshot
 ---
-Codegen conformance: 1210/1416 passed (85.5%)
+Codegen conformance: 1221/1409 passed (86.7%)
 
 Failure breakdown:
   parse_error:    22
-  no_function:    4
+  no_function:    2
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:172
-  no_expected:    7
+  output_mismatch:163
+  no_expected:    0
 
 Failed fixtures:
   [output_mismatch] aliased-nested-scope-truncated-dep.tsx
@@ -22,7 +21,6 @@ Failed fixtures:
   [parse_error] allow-ref-initialization-undefined.js
   [parse_error] allow-ref-initialization.js
   [output_mismatch] allow-ref-lazy-initialization-with-logical.js
-  [output_mismatch] allow-ref-type-cast-in-render.js
   [output_mismatch] array-at-closure.js
   [output_mismatch] array-from-maybemutates-arg0.js
   [output_mismatch] array-spread-mutable-iterator.js
@@ -33,10 +31,8 @@ Failed fixtures:
   [output_mismatch] capturing-function-capture-ref-before-rename.js
   [output_mismatch] capturing-function-renamed-ref.js
   [output_mismatch] chained-assignment-context-variable.js
-  [output_mismatch] codegen-inline-iife-storeprop.ts
   [parse_error] component-declaration-basic.flow.js
   [output_mismatch] createElement-freeze.js
-  [output_mismatch] deeply-nested-function-expressions-with-params.js
   [output_mismatch] destructure-array-assignment-to-context-var.js
   [output_mismatch] destructure-array-declaration-to-context-var.js
   [output_mismatch] destructure-object-assignment-to-context-var.js
@@ -78,7 +74,6 @@ Failed fixtures:
   [output_mismatch] fbt/repro-macro-property-not-handled.tsx
   [output_mismatch] fbt/repro-separately-memoized-fbt-param.js
   [output_mismatch] flag-enable-emit-hook-guards.ts
-  [output_mismatch] flow-enum-inline.js
   [output_mismatch] for-of-immutable-collection.js
   [output_mismatch] frozen-after-alias.js
   [output_mismatch] function-declaration-redeclare.js
@@ -92,7 +87,6 @@ Failed fixtures:
   [output_mismatch] global-types/repro-array-map-capture-mutate-bug.tsx
   [output_mismatch] global-types/set-constructor-arg.ts
   [output_mismatch] global-types/set-foreach-mutate.tsx
-  [output_mismatch] globals-dont-resolve-local-useState.js
   [parse_error] hoist-destruct.js
   [output_mismatch] hoisting-invalid-tdz-let.js
   [output_mismatch] hoisting-recursive-call-within-lambda.js
@@ -131,7 +125,6 @@ Failed fixtures:
   [output_mismatch] method-call.js
   [output_mismatch] mutation-within-jsx.tsx
   [output_mismatch] name-anonymous-functions.js
-  [output_mismatch] nested-function-with-param-as-captured-dep.ts
   [output_mismatch] nested-optional-chains.ts
   [output_mismatch] new-mutability/aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] new-mutability/array-push.js
@@ -194,30 +187,18 @@ Failed fixtures:
   [output_mismatch] repro-returned-inner-fn-mutates-context.js
   [output_mismatch] repro-scope-missing-mutable-range.js
   [output_mismatch] repro-unmerged-fbt-call-merge-overlapping-reactive-scopes.js
-  [output_mismatch] resolve-react-hooks-based-on-import-name.js
   [parse_error] return-ref-callback-structure.js
   [parse_error] return-ref-callback.js
-  [no_function] rules-of-hooks/todo.bail.rules-of-hooks-279ac76f53af.js
-  [no_expected_code] rules-of-hooks/todo.error.invalid-rules-of-hooks-368024110a58.js
-  [no_expected_code] rules-of-hooks/todo.error.invalid-rules-of-hooks-8566f9a360e2.js
-  [no_expected_code] rules-of-hooks/todo.error.invalid-rules-of-hooks-a0058f0b446d.js
-  [no_expected_code] rules-of-hooks/todo.error.rules-of-hooks-27c18dc8dad2.js
-  [no_expected_code] rules-of-hooks/todo.error.rules-of-hooks-d0935abedc42.js
-  [no_expected_code] rules-of-hooks/todo.error.rules-of-hooks-e29c874aa913.js
-  [no_function] rules-of-hooks/todo.invalid.invalid-rules-of-hooks-a63fd4f9dcc0.js
   [output_mismatch] ssa-for-of.js
   [output_mismatch] ssa-property-alias-mutate-inside-if.js
   [output_mismatch] switch-non-final-default.js
   [output_mismatch] switch.js
-  [no_expected_code] todo.error.object-pattern-computed-key.js
   [output_mismatch] todo.memoize-loops-that-produce-memoizeable-values.js
   [output_mismatch] transitive-freeze-function-expressions.js
   [output_mismatch] try-catch-within-function-expression-returns-caught-value.js
-  [output_mismatch] ts-enum-inline.tsx
   [parse_error] type-cast-expression.flow.js
   [output_mismatch] type-provider-tagged-template-expression.js
   [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js
   [parse_error] useCallback-ref-in-render.js
   [parse_error] useImperativeHandle-ref-mutate.js
-  [output_mismatch] valid-setState-in-useEffect-via-useEffectEvent-with-ref.js

@@ -159,6 +159,15 @@ pub struct HirBuilder {
     ///
     /// Only tracks bindings that are block-scoped (const/let), not var declarations.
     binding_scope_stack: Vec<Vec<(String, Option<BindingEntry>)>>,
+
+    /// Module-scope bindings (imports and other module-level declarations).
+    ///
+    /// This corresponds to checking `parentFunction.scope.parent.getBinding()`
+    /// in the TS `HIRBuilder.ts`. When the HIR builder cannot find a name in
+    /// local `bindings`, it checks this map before falling back to
+    /// `NonLocalBinding::Global`. This enables correct resolution of renamed
+    /// imports (e.g., `import {useState as useReactState} from 'react'`).
+    outer_bindings: FxHashMap<String, NonLocalBinding>,
 }
 
 impl HirBuilder {
@@ -167,6 +176,7 @@ impl HirBuilder {
         mut env: Environment,
         entry_block_kind: Option<BlockKind>,
         context_identifiers: ContextIdentifiers,
+        outer_bindings: FxHashMap<String, NonLocalBinding>,
     ) -> Self {
         let entry = env.next_block_id();
         let current = new_block(entry, entry_block_kind.unwrap_or(BlockKind::Block));
@@ -185,6 +195,7 @@ impl HirBuilder {
             hoisted_identifiers: FxHashSet::default(),
             scope_binding_names: FxHashSet::default(),
             binding_scope_stack: Vec::new(),
+            outer_bindings,
         }
     }
 
@@ -196,6 +207,11 @@ impl HirBuilder {
     /// Get a mutable reference to the environment.
     pub fn environment_mut(&mut self) -> &mut Environment {
         &mut self.env
+    }
+
+    /// Get the module-scope outer bindings map.
+    pub fn outer_bindings(&self) -> &FxHashMap<String, NonLocalBinding> {
+        &self.outer_bindings
     }
 
     /// Get the kind of the current block.
@@ -361,7 +377,15 @@ impl HirBuilder {
             };
         }
 
-        // Not found in local bindings -> it's a global
+        // Check module-scope bindings (imports and other module-level declarations).
+        // This corresponds to checking `parentFunction.scope.parent.getBinding()`
+        // in the TS HIRBuilder.ts, which correctly resolves renamed imports like
+        // `import {useState as useReactState} from 'react'` to ImportSpecifier.
+        if let Some(binding) = self.outer_bindings.get(name) {
+            return VariableBinding::NonLocal(binding.clone());
+        }
+
+        // Not found in local bindings or outer bindings -> it's a global
         VariableBinding::NonLocal(NonLocalBinding::Global { name: name.to_string() })
     }
 

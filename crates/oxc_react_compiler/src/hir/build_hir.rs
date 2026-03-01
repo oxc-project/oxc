@@ -1,6 +1,7 @@
 use oxc_ast::ast;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::AssignmentOperator;
+use rustc_hash::FxHashMap;
 
 use crate::{
     compiler_error::{
@@ -262,7 +263,10 @@ fn lower_identifier_param_with_default(
     let ident_loc = span_to_loc(ident.span);
 
     // Create a temporary to hold the resolved value (either provided or default).
-    let temp = create_promoted_temporary(builder, ident_loc);
+    // Use an unnamed temporary (matching TS `buildTemporaryPlace`) so that the
+    // ternary result is inlined into the declaration during codegen, producing
+    // `const x = t1 === undefined ? default : t1` instead of a separate assignment.
+    let temp = create_temporary_place(builder.environment_mut(), ident_loc);
 
     let test_block = builder.reserve(BlockKind::Value);
     let continuation_block = builder.reserve(builder.current_block_kind());
@@ -734,8 +738,10 @@ fn lower_assignment_pattern_declaration(
 ) -> Result<(), CompilerError> {
     let pat_loc = span_to_loc(assign_pat.span);
 
-    // Create a temporary to hold the resolved value (either the provided value or the default)
-    let temp = create_promoted_temporary(builder, pat_loc);
+    // Create a temporary to hold the resolved value (either the provided value or the default).
+    // Use an unnamed temporary (matching TS `buildTemporaryPlace`) so the ternary
+    // result gets inlined into the declaration during codegen.
+    let temp = create_temporary_place(builder.environment_mut(), pat_loc);
 
     let test_block = builder.reserve(BlockKind::Value);
     let continuation_block = builder.reserve(builder.current_block_kind());
@@ -1217,7 +1223,9 @@ fn lower_conditional_default_assignment(
     default_expr: &ast::Expression<'_>,
     loc: SourceLocation,
 ) -> Result<crate::hir::Place, CompilerError> {
-    let temp = create_promoted_temporary(builder, loc);
+    // Use an unnamed temporary (matching TS `buildTemporaryPlace`) so the ternary
+    // result gets inlined into the declaration during codegen.
+    let temp = create_temporary_place(builder.environment_mut(), loc);
 
     let test_block = builder.reserve(BlockKind::Value);
     let continuation_block = builder.reserve(builder.current_block_kind());
@@ -1571,6 +1579,95 @@ fn collect_stmt_binding_names(
     }
 }
 
+/// Collect import bindings from a program's body.
+///
+/// This corresponds to what Babel's scope analysis provides via
+/// `parentFunction.scope.parent.getBinding()` in the TS `HIRBuilder.ts`.
+/// It scans the top-level program statements for import declarations and
+/// builds a map from local binding names to their `NonLocalBinding` info.
+///
+/// Also includes module-local declarations (top-level `const`/`let`/`var`/
+/// `function` that are not the function being compiled) as `ModuleLocal`.
+pub fn collect_import_bindings(program_body: &[ast::Statement<'_>]) -> FxHashMap<String, NonLocalBinding> {
+    let mut bindings = FxHashMap::default();
+
+    for stmt in program_body {
+        match stmt {
+            ast::Statement::ImportDeclaration(import_decl) => {
+                let module = import_decl.source.value.to_string();
+                if let Some(specifiers) = &import_decl.specifiers {
+                    for spec in specifiers {
+                        match spec {
+                            ast::ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
+                                bindings.insert(
+                                    s.local.name.to_string(),
+                                    NonLocalBinding::ImportDefault {
+                                        name: s.local.name.to_string(),
+                                        module: module.clone(),
+                                    },
+                                );
+                            }
+                            ast::ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
+                                bindings.insert(
+                                    s.local.name.to_string(),
+                                    NonLocalBinding::ImportNamespace {
+                                        name: s.local.name.to_string(),
+                                        module: module.clone(),
+                                    },
+                                );
+                            }
+                            ast::ImportDeclarationSpecifier::ImportSpecifier(s) => {
+                                let imported = match &s.imported {
+                                    ast::ModuleExportName::IdentifierName(id) => {
+                                        id.name.to_string()
+                                    }
+                                    ast::ModuleExportName::IdentifierReference(id) => {
+                                        id.name.to_string()
+                                    }
+                                    ast::ModuleExportName::StringLiteral(lit) => {
+                                        lit.value.to_string()
+                                    }
+                                };
+                                bindings.insert(
+                                    s.local.name.to_string(),
+                                    NonLocalBinding::ImportSpecifier {
+                                        name: s.local.name.to_string(),
+                                        module: module.clone(),
+                                        imported,
+                                    },
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+            // Top-level variable declarations are ModuleLocal bindings.
+            ast::Statement::VariableDeclaration(decl) => {
+                for d in &decl.declarations {
+                    if let ast::BindingPattern::BindingIdentifier(id) = &d.id {
+                        bindings.insert(
+                            id.name.to_string(),
+                            NonLocalBinding::ModuleLocal { name: id.name.to_string() },
+                        );
+                    }
+                }
+            }
+            // Top-level function declarations are ModuleLocal bindings.
+            ast::Statement::FunctionDeclaration(f) => {
+                if let Some(id) = &f.id {
+                    bindings.insert(
+                        id.name.to_string(),
+                        NonLocalBinding::ModuleLocal { name: id.name.to_string() },
+                    );
+                }
+            }
+            _ => {}
+        }
+    }
+
+    bindings
+}
+
 /// Lower an oxc AST function into HIR.
 ///
 /// Port of `lower()` from `HIR/BuildHIR.ts` (lines 72-264).
@@ -1581,6 +1678,7 @@ pub fn lower(
     env: &Environment,
     fn_type: ReactFunctionType,
     func: &LowerableFunction<'_>,
+    outer_bindings: FxHashMap<String, NonLocalBinding>,
 ) -> Result<HIRFunction, CompilerError> {
     // Find context identifiers (variables captured by inner closures)
     let context_identifiers = match func {
@@ -1588,7 +1686,7 @@ pub fn lower(
         LowerableFunction::ArrowFunction(a) => find_context_identifiers_arrow(a),
     };
 
-    let mut builder = HirBuilder::new(env.clone(), None, context_identifiers);
+    let mut builder = HirBuilder::new(env.clone(), None, context_identifiers, outer_bindings);
 
     // Pre-collect all binding names in this function's scope before lowering.
     // This mimics Babel's scope analysis which knows about all bindings before
@@ -2304,7 +2402,8 @@ fn lower_function_to_value(
     // Phase 2: NOW clone the environment — it has up-to-date ID counters that
     // include any identifiers allocated by pre_declare_binding above.
     let env = outer_builder.environment();
-    let mut inner_builder = HirBuilder::new(env.clone(), None, merged_context);
+    let mut inner_builder =
+        HirBuilder::new(env.clone(), None, merged_context, outer_builder.outer_bindings().clone());
 
     // Pre-collect scope binding names for the inner function too, so nested
     // functions can also correctly identify captured hoisted variables.
