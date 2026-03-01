@@ -92,6 +92,76 @@ impl InferenceState {
         self.aliases.entry(into).or_default().insert(from);
     }
 
+    /// Freeze a place: transition its abstract value from Mutable/Context/MaybeFrozen to Frozen.
+    /// Returns true if the value was actually frozen (was not already frozen/global/primitive).
+    ///
+    /// Port of `InferenceState.freeze()` from `InferMutationAliasingEffects.ts` (lines 1435-1458).
+    /// In the TS code, values are stored per-InstructionValue (shared identity), so freezing one
+    /// place automatically freezes all aliases. In Rust, values are per-IdentifierId, so we
+    /// must explicitly propagate the freeze to all connected aliases.
+    fn freeze(&mut self, id: IdentifierId, reason: ValueReason) -> bool {
+        // Check if the target is freezable
+        let freezable = match self.values.get(&id) {
+            Some(av) => matches!(
+                av.kind,
+                ValueKind::Mutable | ValueKind::Context | ValueKind::MaybeFrozen
+            ),
+            None => false,
+        };
+        if !freezable {
+            return false;
+        }
+
+        // Collect all connected identifiers (transitively aliased) so we can freeze them all.
+        // This simulates the TS behavior where all aliases share the same InstructionValue.
+        let mut to_freeze = Vec::new();
+        to_freeze.push(id);
+        self.collect_alias_group(id, &mut to_freeze);
+
+        // Freeze all collected identifiers
+        let mut reasons = FxHashSet::default();
+        reasons.insert(reason);
+        let frozen_value = AbstractValue::frozen(reasons);
+        for &freeze_id in &to_freeze {
+            if let Some(av) = self.values.get(&freeze_id) {
+                if matches!(
+                    av.kind,
+                    ValueKind::Mutable | ValueKind::Context | ValueKind::MaybeFrozen
+                ) {
+                    self.values.insert(freeze_id, frozen_value.clone());
+                }
+            }
+        }
+        true
+    }
+
+    /// Collect all identifiers transitively connected to `id` via the alias graph.
+    /// Traverses both directions: aliases[x] contains y means x aliases y.
+    fn collect_alias_group(&self, id: IdentifierId, group: &mut Vec<IdentifierId>) {
+        let mut visited = FxHashSet::default();
+        visited.insert(id);
+        let mut stack = vec![id];
+
+        while let Some(current) = stack.pop() {
+            // Forward: current's alias set (aliases[current] = {a, b, ...})
+            if let Some(alias_set) = self.aliases.get(&current) {
+                for &aliased in alias_set {
+                    if visited.insert(aliased) {
+                        group.push(aliased);
+                        stack.push(aliased);
+                    }
+                }
+            }
+            // Reverse: find any identifier whose alias set contains current
+            for (&other_id, other_set) in &self.aliases {
+                if other_set.contains(&current) && visited.insert(other_id) {
+                    group.push(other_id);
+                    stack.push(other_id);
+                }
+            }
+        }
+    }
+
     /// Process a phi node: merge abstract values from all defined operands into the phi's
     /// place identifier. Operands that are not yet defined (backedges in loops) are skipped
     /// — they will be handled later by the fixpoint iteration.
@@ -665,10 +735,8 @@ fn infer_instruction_effects(
             // extensions (e.g. setState's range getting extended transitively when
             // `state` is used in render, causing the second useEffect lambda to get
             // merged into the useState scope and then pruned by FlattenScopesWithHooksOrUse).
-            let return_kind = env
-                .get_function_signature(&v.callee.identifier.type_)
-                .map(|sig| sig.return_value_kind)
-                .unwrap_or(ValueKind::Mutable);
+            let sig = env.get_function_signature(&v.callee.identifier.type_).cloned();
+            let return_kind = sig.as_ref().map(|s| s.return_value_kind).unwrap_or(ValueKind::Mutable);
             let av = match return_kind {
                 ValueKind::Frozen => {
                     let mut reasons = FxHashSet::default();
@@ -685,14 +753,20 @@ fn infer_instruction_effects(
                     state.add_alias(p.identifier.id, lvalue_id);
                 }
             }
+            // Apply freeze effects from the function signature to the abstract state.
+            // Port of TS applyEffect for Freeze (InferMutationAliasingEffects.ts lines 685-690):
+            // When a parameter has Effect::Freeze, call state.freeze() on the corresponding
+            // argument so that downstream MutateTransitiveConditionally effects on frozen
+            // values are dropped (they return 'none' for Frozen values).
+            if let Some(sig) = &sig {
+                apply_signature_freeze_effects(state, sig, &v.args);
+            }
         }
 
         InstructionValue::MethodCall(v) => {
             // Use the method's return_value_kind if a known signature exists.
-            let return_kind = env
-                .get_function_signature(&v.property.identifier.type_)
-                .map(|sig| sig.return_value_kind)
-                .unwrap_or(ValueKind::Mutable);
+            let sig = env.get_function_signature(&v.property.identifier.type_).cloned();
+            let return_kind = sig.as_ref().map(|s| s.return_value_kind).unwrap_or(ValueKind::Mutable);
             let av = match return_kind {
                 ValueKind::Frozen => {
                     let mut reasons = FxHashSet::default();
@@ -708,6 +782,10 @@ fn infer_instruction_effects(
                 if let crate::hir::CallArg::Place(p) = arg {
                     state.add_alias(p.identifier.id, lvalue_id);
                 }
+            }
+            // Apply freeze effects from the method signature to the abstract state.
+            if let Some(sig) = &sig {
+                apply_signature_freeze_effects(state, sig, &v.args);
             }
         }
 
@@ -839,6 +917,38 @@ fn infer_instruction_effects(
         | InstructionValue::UnsupportedNode(_) => {
             // Default: assume lvalue is a new mutable value
             state.define(&instr.lvalue, AbstractValue::mutable());
+        }
+    }
+}
+
+/// Apply freeze effects from a function signature to the abstract state.
+///
+/// Port of TS `applyEffect` for `Freeze` (InferMutationAliasingEffects.ts lines 685-690).
+/// When a parameter has `Effect::Freeze`, we call `state.freeze()` on the corresponding
+/// argument. This transitions the argument (and all its aliases) from Mutable to Frozen
+/// in the abstract state, so that subsequent `MutateTransitiveConditionally` effects
+/// on frozen values return 'none' and don't extend mutable ranges.
+fn apply_signature_freeze_effects(
+    state: &mut InferenceState,
+    sig: &crate::hir::object_shape::FunctionSignature,
+    args: &[crate::hir::CallArg],
+) {
+    use crate::hir::{CallArg, Effect};
+
+    for (i, arg) in args.iter().enumerate() {
+        let effect = if i < sig.positional_params.len() {
+            sig.positional_params[i]
+        } else if let Some(rest) = sig.rest_param {
+            rest
+        } else {
+            continue;
+        };
+        if effect == Effect::Freeze {
+            let place = match arg {
+                CallArg::Place(p) => p,
+                CallArg::Spread(s) => &s.place,
+            };
+            state.freeze(place.identifier.id, ValueReason::HookCaptured);
         }
     }
 }
