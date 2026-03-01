@@ -186,11 +186,11 @@ async function runTsCase(
     };
 
     if (rangeParent) {
-      testRangeParent(filename, sourceText, options, expect);
+      testRangeParent(filename, code, options, expect);
       continue;
     }
     if (lazy) {
-      testLazy(filename, sourceText, options);
+      testLazy(filename, code, options);
       continue;
     }
 
