@@ -159,9 +159,7 @@ impl ConfigStoreBuilder {
                 } else {
                     config.path.display().to_string()
                 };
-                return Err(ConfigBuilderError::ReportUnusedDisableDirectivesInExtends {
-                    source,
-                });
+                return Err(ConfigBuilderError::ReportUnusedDisableDirectivesInExtends { source });
             }
 
             let path = config.path.clone();
@@ -203,7 +201,8 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
-                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, false, true)?;
+                let (extends, extends_paths) =
+                    resolve_oxlintrc_config(extends_oxlintrc, false, true)?;
 
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
@@ -1459,10 +1458,8 @@ mod test {
             "fixtures/extends_config/options/report_unused_disable_directives_allow.json",
         ] {
             let mut external_plugin_store = ExternalPluginStore::default();
-            let config: Oxlintrc = serde_json::from_str(&format!(
-                r#"{{ "extends": ["{extends_path}"] }}"#
-            ))
-            .unwrap();
+            let config: Oxlintrc =
+                serde_json::from_str(&format!(r#"{{ "extends": ["{extends_path}"] }}"#)).unwrap();
             let err = ConfigStoreBuilder::from_oxlintrc(
                 true,
                 config,
