@@ -9,8 +9,9 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use super::{
     hir_types::{Effect, ValueKind, ValueReason},
     object_shape::{
-        BUILT_IN_ARRAY_ID, BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID, BUILT_IN_EFFECT_EVENT_ID,
-        BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID, BUILT_IN_SET_ID,
+        parse_aliasing_signature_config, BUILT_IN_ARRAY_ID,
+        BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID, BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID,
+        BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID, BUILT_IN_SET_ID,
         BUILT_IN_USE_ACTION_STATE_HOOK_ID, BUILT_IN_USE_ACTION_STATE_ID,
         BUILT_IN_USE_CONTEXT_HOOK_ID, BUILT_IN_USE_EFFECT_EVENT_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
         BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID, BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID,
@@ -21,6 +22,7 @@ use super::{
         BUILT_IN_WEAK_SET_ID, FunctionSignature, HookKind, ShapeRegistry, add_function, add_hook,
         add_object,
     },
+    type_schema::{AliasingEffectConfig, AliasingSignatureConfig},
     types::{FunctionType, ObjectType, Type},
 };
 
@@ -1259,14 +1261,229 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
         }),
     ));
 
-    // NOTE: The following typed functions from the TS shared-runtime type provider
-    // are intentionally NOT registered because they require aliasing signature support
-    // which is not yet ported. Without aliasing, registering their effect annotations
-    // alone causes regressions since the data flow information is incomplete:
-    //   typedIdentity, typedAssign, typedAlias, typedCapture, typedCreateFrom, typedMutate
-    // These functions will fall through to generic call handling, which produces
-    // correct output for most cases. When aliasing signatures are ported to Rust,
-    // these should be added here with their full aliasing configs.
+    // --- typedIdentity: function(Read) -> Any, aliasing: Assign ---
+    let typed_identity_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![Effect::Read],
+            callee_effect: Effect::Read,
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Mutable,
+            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec!["@value".to_string()],
+                rest: None,
+                returns: "@return".to_string(),
+                temporaries: vec![],
+                effects: vec![AliasingEffectConfig::Assign {
+                    from: "@value".to_string(),
+                    into: "@return".to_string(),
+                }],
+            })),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "typedIdentity".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(typed_identity_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- typedAssign: function(Read) -> Any, aliasing: Assign (same as typedIdentity) ---
+    let typed_assign_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![Effect::Read],
+            callee_effect: Effect::Read,
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Mutable,
+            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec!["@value".to_string()],
+                rest: None,
+                returns: "@return".to_string(),
+                temporaries: vec![],
+                effects: vec![AliasingEffectConfig::Assign {
+                    from: "@value".to_string(),
+                    into: "@return".to_string(),
+                }],
+            })),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "typedAssign".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(typed_assign_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- typedAlias: function(Read) -> Any, aliasing: Create + Alias ---
+    let typed_alias_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![Effect::Read],
+            callee_effect: Effect::Read,
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Mutable,
+            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec!["@value".to_string()],
+                rest: None,
+                returns: "@return".to_string(),
+                temporaries: vec![],
+                effects: vec![
+                    AliasingEffectConfig::Create {
+                        into: "@return".to_string(),
+                        value: ValueKind::Mutable,
+                        reason: ValueReason::KnownReturnSignature,
+                    },
+                    AliasingEffectConfig::Alias {
+                        from: "@value".to_string(),
+                        into: "@return".to_string(),
+                    },
+                ],
+            })),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "typedAlias".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(typed_alias_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- typedCapture: function(Read) -> Array, aliasing: Create + Capture ---
+    let typed_capture_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![Effect::Read],
+            callee_effect: Effect::Read,
+            return_type: Type::Object(ObjectType {
+                shape_id: Some(BUILT_IN_ARRAY_ID.to_string()),
+            }),
+            return_value_kind: ValueKind::Mutable,
+            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec!["@value".to_string()],
+                rest: None,
+                returns: "@return".to_string(),
+                temporaries: vec![],
+                effects: vec![
+                    AliasingEffectConfig::Create {
+                        into: "@return".to_string(),
+                        value: ValueKind::Mutable,
+                        reason: ValueReason::KnownReturnSignature,
+                    },
+                    AliasingEffectConfig::Capture {
+                        from: "@value".to_string(),
+                        into: "@return".to_string(),
+                    },
+                ],
+            })),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "typedCapture".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(typed_capture_id),
+            return_type: Box::new(Type::Object(ObjectType {
+                shape_id: Some(BUILT_IN_ARRAY_ID.to_string()),
+            })),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- typedCreateFrom: function(Read) -> Any, aliasing: CreateFrom ---
+    let typed_create_from_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![Effect::Read],
+            callee_effect: Effect::Read,
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Mutable,
+            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec!["@value".to_string()],
+                rest: None,
+                returns: "@return".to_string(),
+                temporaries: vec![],
+                effects: vec![AliasingEffectConfig::CreateFrom {
+                    from: "@value".to_string(),
+                    into: "@return".to_string(),
+                }],
+            })),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "typedCreateFrom".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(typed_create_from_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- typedMutate: function(Read, Capture) -> Primitive, aliasing: Create + Mutate + Capture ---
+    let typed_mutate_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![Effect::Read, Effect::Capture],
+            callee_effect: Effect::Store,
+            return_type: Type::Primitive,
+            return_value_kind: ValueKind::Primitive,
+            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec!["@object".to_string(), "@value".to_string()],
+                rest: None,
+                returns: "@return".to_string(),
+                temporaries: vec![],
+                effects: vec![
+                    AliasingEffectConfig::Create {
+                        into: "@return".to_string(),
+                        value: ValueKind::Primitive,
+                        reason: ValueReason::KnownReturnSignature,
+                    },
+                    AliasingEffectConfig::Mutate { value: "@object".to_string() },
+                    AliasingEffectConfig::Capture {
+                        from: "@value".to_string(),
+                        into: "@object".to_string(),
+                    },
+                ],
+            })),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "typedMutate".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(typed_mutate_id),
+            return_type: Box::new(Type::Primitive),
+            is_constructor: false,
+        }),
+    ));
 
     let module_shape_id = add_object(shapes, "SharedRuntimeModule", props);
     Type::Object(ObjectType { shape_id: Some(module_shape_id) })
@@ -1484,6 +1701,37 @@ fn add_react_hook_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeRegist
             return_value_kind: ValueKind::Frozen,
             callee_effect: Effect::Read,
             hook_kind: Some(HookKind::UseEffect),
+            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec![],
+                rest: Some("@rest".to_string()),
+                returns: "@returns".to_string(),
+                temporaries: vec!["@effect".to_string()],
+                effects: vec![
+                    // Freezes the function and deps
+                    AliasingEffectConfig::Freeze {
+                        value: "@rest".to_string(),
+                        reason: ValueReason::Effect,
+                    },
+                    // Internally creates an effect object that captures the function and deps
+                    AliasingEffectConfig::Create {
+                        into: "@effect".to_string(),
+                        value: ValueKind::Frozen,
+                        reason: ValueReason::KnownReturnSignature,
+                    },
+                    // The effect stores the function and dependencies
+                    AliasingEffectConfig::Capture {
+                        from: "@rest".to_string(),
+                        into: "@effect".to_string(),
+                    },
+                    // Returns undefined
+                    AliasingEffectConfig::Create {
+                        into: "@returns".to_string(),
+                        value: ValueKind::Primitive,
+                        reason: ValueReason::KnownReturnSignature,
+                    },
+                ],
+            })),
             ..FunctionSignature::default()
         },
     );
@@ -1656,6 +1904,25 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
             return_type: Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) }),
             return_value_kind: ValueKind::Mutable,
             callee_effect: Effect::Read,
+            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec!["@object".to_string()],
+                rest: None,
+                returns: "@returns".to_string(),
+                temporaries: vec![],
+                effects: vec![
+                    AliasingEffectConfig::Create {
+                        into: "@returns".to_string(),
+                        reason: ValueReason::KnownReturnSignature,
+                        value: ValueKind::Mutable,
+                    },
+                    // Only keys are captured, and keys are immutable
+                    AliasingEffectConfig::ImmutableCapture {
+                        from: "@object".to_string(),
+                        into: "@returns".to_string(),
+                    },
+                ],
+            })),
             ..FunctionSignature::default()
         },
     );
@@ -1668,6 +1935,25 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
             return_type: Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) }),
             return_value_kind: ValueKind::Mutable,
             callee_effect: Effect::Read,
+            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec!["@object".to_string()],
+                rest: None,
+                returns: "@returns".to_string(),
+                temporaries: vec![],
+                effects: vec![
+                    AliasingEffectConfig::Create {
+                        into: "@returns".to_string(),
+                        reason: ValueReason::KnownReturnSignature,
+                        value: ValueKind::Mutable,
+                    },
+                    // Object values are captured into the return
+                    AliasingEffectConfig::Capture {
+                        from: "@object".to_string(),
+                        into: "@returns".to_string(),
+                    },
+                ],
+            })),
             ..FunctionSignature::default()
         },
     );
@@ -1680,6 +1966,25 @@ fn add_global_function_globals(globals: &mut GlobalRegistry, shapes: &mut ShapeR
             return_type: Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) }),
             return_value_kind: ValueKind::Mutable,
             callee_effect: Effect::Read,
+            aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
+                receiver: "@receiver".to_string(),
+                params: vec!["@object".to_string()],
+                rest: None,
+                returns: "@returns".to_string(),
+                temporaries: vec![],
+                effects: vec![
+                    AliasingEffectConfig::Create {
+                        into: "@returns".to_string(),
+                        reason: ValueReason::KnownReturnSignature,
+                        value: ValueKind::Mutable,
+                    },
+                    // Object values are captured into the return
+                    AliasingEffectConfig::Capture {
+                        from: "@object".to_string(),
+                        into: "@returns".to_string(),
+                    },
+                ],
+            })),
             ..FunctionSignature::default()
         },
     );
