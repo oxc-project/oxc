@@ -205,15 +205,6 @@ impl ModuleGraph {
         self.symbols.canonical_ref_for_mut(sym)
     }
 
-    /// Flatten all union-find chains in the symbol database.
-    ///
-    /// Call this once after linking is complete. The immutable
-    /// `canonical_ref` cannot compress paths, so chains may be multi-hop.
-    /// Flattening ensures every subsequent lookup is O(1).
-    pub fn flatten_symbol_chains(&mut self) {
-        self.symbols.flatten_all_chains();
-    }
-
     /// Link `from` to resolve to `to`.
     pub fn link_symbols(&mut self, from: SymbolRef, to: SymbolRef) {
         self.symbols.link(from, to);
