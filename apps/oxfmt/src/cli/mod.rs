@@ -6,6 +6,9 @@ mod result;
 mod service;
 mod walk;
 
+pub(crate) const DEFAULT_CONFIG_NOTE_MESSAGE: &str =
+    "Using Oxfmt's default configuration. Run `oxfmt --init` to set up Oxfmt in this project.\n";
+
 pub use crate::core::utils::init_tracing;
 #[cfg(feature = "napi")]
 pub use command::MigrateSource;

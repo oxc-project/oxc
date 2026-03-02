@@ -45,6 +45,15 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
     cwd.ancestors().map(|dir| dir.join(".editorconfig")).find(|p| p.exists())
 }
 
+/// Returns `true` when neither explicit nor auto-discovered config is found.
+pub fn uses_default_config(
+    explicit_config_path: Option<&Path>,
+    oxfmtrc_path: Option<&Path>,
+    editorconfig_path: Option<&Path>,
+) -> bool {
+    explicit_config_path.is_none() && oxfmtrc_path.is_none() && editorconfig_path.is_none()
+}
+
 /// Resolve format options directly from a raw JSON config value.
 ///
 /// This is the simplified path for the NAPI `format()` API,
@@ -522,5 +531,32 @@ fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties)
         && let EditorConfigProperty::Value(v) = props.insert_final_newline
     {
         config.insert_final_newline = Some(v);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::path::Path;
+
+    use super::uses_default_config;
+
+    #[test]
+    fn uses_default_config_when_no_configs_are_found() {
+        assert!(uses_default_config(None, None, None));
+    }
+
+    #[test]
+    fn does_not_use_default_config_when_explicit_config_is_set() {
+        assert!(!uses_default_config(Some(Path::new("fmt.json")), None, None));
+    }
+
+    #[test]
+    fn does_not_use_default_config_when_oxfmtrc_is_auto_discovered() {
+        assert!(!uses_default_config(None, Some(Path::new(".oxfmtrc.json")), None));
+    }
+
+    #[test]
+    fn does_not_use_default_config_when_editorconfig_is_auto_discovered() {
+        assert!(!uses_default_config(None, None, Some(Path::new(".editorconfig"))));
     }
 }

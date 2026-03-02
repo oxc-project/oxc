@@ -11,6 +11,7 @@ mod external_formatter;
 pub use config::resolve_options_from_value;
 pub use config::{
     ConfigResolver, ResolvedOptions, resolve_editorconfig_path, resolve_oxfmtrc_path,
+    uses_default_config,
 };
 pub use format::{FormatResult, SourceFormatter};
 pub use support::FormatFileStrategy;

@@ -4,10 +4,10 @@ use std::{
     path::PathBuf,
 };
 
-use crate::cli::{CliRunResult, FormatCommand, Mode};
+use crate::cli::{CliRunResult, DEFAULT_CONFIG_NOTE_MESSAGE, FormatCommand, Mode};
 use crate::core::{
     ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
-    resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    resolve_editorconfig_path, resolve_oxfmtrc_path, uses_default_config, utils,
 };
 
 #[derive(Debug)]
@@ -73,6 +73,13 @@ impl StdinRunner {
                 utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
             }
+        }
+        if uses_default_config(
+            config_options.config.as_deref(),
+            oxfmtrc_path.as_deref(),
+            editorconfig_path.as_deref(),
+        ) {
+            utils::print_and_flush(stderr, DEFAULT_CONFIG_NOTE_MESSAGE);
         }
 
         // Use `block_in_place()` to avoid nested async runtime access

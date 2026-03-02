@@ -3,6 +3,7 @@ use std::{env, io::BufWriter, path::PathBuf, sync::mpsc, time::Instant};
 use oxc_diagnostics::DiagnosticService;
 
 use super::{
+    DEFAULT_CONFIG_NOTE_MESSAGE,
     command::{FormatCommand, Mode, OutputMode},
     reporter::DefaultReporter,
     result::CliRunResult,
@@ -10,7 +11,8 @@ use super::{
     walk::Walk,
 };
 use crate::core::{
-    ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path,
+    uses_default_config, utils,
 };
 
 #[derive(Debug)]
@@ -92,6 +94,13 @@ impl FormatRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
+        if uses_default_config(
+            config_options.config.as_deref(),
+            oxfmtrc_path.as_deref(),
+            editorconfig_path.as_deref(),
+        ) {
+            utils::print_and_flush(stderr, DEFAULT_CONFIG_NOTE_MESSAGE);
+        }
 
         // Use `block_in_place()` to avoid nested async runtime access
         #[cfg(feature = "napi")]
