@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 8611
 expression: snapshot
 ---
-Codegen conformance: 1262/1339 passed (94.2%)
+Codegen conformance: 1265/1339 passed (94.5%)
 Flow files skipped: 38
 FBT lowering skipped: 32
 
@@ -12,7 +13,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:74
+  output_mismatch:71
   no_expected:    0
 
 Failed fixtures:
@@ -45,9 +46,6 @@ Failed fixtures:
   [output_mismatch] lambda-mutated-ref-non-reactive.js
   [output_mismatch] meta-isms/repro-cx-assigned-to-temporary.js
   [output_mismatch] meta-isms/repro-cx-namespace-assigned-to-temporary.js
-  [output_mismatch] method-call-computed.js
-  [output_mismatch] method-call-fn-call.js
-  [output_mismatch] method-call.js
   [output_mismatch] mutation-within-jsx.tsx
   [output_mismatch] name-anonymous-functions.js
   [output_mismatch] nested-optional-chains.ts

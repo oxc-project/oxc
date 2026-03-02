@@ -62,6 +62,10 @@ struct InferenceState {
     values: FxHashMap<IdentifierId, AbstractValue>,
     /// Map from identifier ID to the set of identifiers it may alias
     aliases: FxHashMap<IdentifierId, FxHashSet<IdentifierId>>,
+    /// Identity aliases: tracks LoadLocal/StoreLocal chains where identifiers
+    /// share the same underlying InstructionValue (in the TS model).
+    /// Freeze propagation only follows these identity links, not capture aliases.
+    identity_aliases: FxHashMap<IdentifierId, FxHashSet<IdentifierId>>,
     /// Map from identifier ID to the FunctionExpressionValue it was defined as.
     /// Used to resolve Apply effects for locally-defined functions with known
     /// aliasing effects (port of TS `state.values(place)` returning FunctionExpression).
@@ -73,6 +77,7 @@ impl InferenceState {
         Self {
             values: FxHashMap::default(),
             aliases: FxHashMap::default(),
+            identity_aliases: FxHashMap::default(),
             function_values: FxHashMap::default(),
         }
     }
@@ -90,6 +95,14 @@ impl InferenceState {
     /// Record an alias relationship: `into` may alias `from`.
     fn add_alias(&mut self, from: IdentifierId, into: IdentifierId) {
         self.aliases.entry(into).or_default().insert(from);
+    }
+
+    /// Record an identity alias: `into` shares the same underlying value as `from`.
+    /// This corresponds to the TS `assign()` operation where identifiers share
+    /// InstructionValue references. Freeze propagation follows identity aliases.
+    fn add_identity_alias(&mut self, from: IdentifierId, into: IdentifierId) {
+        self.aliases.entry(into).or_default().insert(from);
+        self.identity_aliases.entry(into).or_default().insert(from);
     }
 
     /// Freeze a place: transition its abstract value from Mutable/Context/MaybeFrozen to Frozen.
@@ -134,6 +147,41 @@ impl InferenceState {
         true
     }
 
+    /// Freeze a place through identity aliases only (LoadLocal/StoreLocal chains).
+    /// Used for JSX operand freezing where we need to propagate freeze through
+    /// value-sharing links (TS `assign()` semantics) but NOT through capture
+    /// aliases (Call arguments, PropertyLoad etc.) which would over-freeze.
+    fn freeze_through_identity(&mut self, id: IdentifierId, reason: ValueReason) -> bool {
+        let freezable = match self.values.get(&id) {
+            Some(av) => {
+                matches!(av.kind, ValueKind::Mutable | ValueKind::Context | ValueKind::MaybeFrozen)
+            }
+            None => false,
+        };
+        if !freezable {
+            return false;
+        }
+
+        let mut to_freeze = Vec::new();
+        to_freeze.push(id);
+        self.collect_identity_group(id, &mut to_freeze);
+
+        let mut reasons = FxHashSet::default();
+        reasons.insert(reason);
+        let frozen_value = AbstractValue::frozen(reasons);
+        for &freeze_id in &to_freeze {
+            if let Some(av) = self.values.get(&freeze_id) {
+                if matches!(
+                    av.kind,
+                    ValueKind::Mutable | ValueKind::Context | ValueKind::MaybeFrozen
+                ) {
+                    self.values.insert(freeze_id, frozen_value.clone());
+                }
+            }
+        }
+        true
+    }
+
     /// Collect all identifiers transitively connected to `id` via the alias graph.
     /// Traverses both directions: aliases[x] contains y means x aliases y.
     fn collect_alias_group(&self, id: IdentifierId, group: &mut Vec<IdentifierId>) {
@@ -153,6 +201,36 @@ impl InferenceState {
             }
             // Reverse: find any identifier whose alias set contains current
             for (&other_id, other_set) in &self.aliases {
+                if other_set.contains(&current) && visited.insert(other_id) {
+                    group.push(other_id);
+                    stack.push(other_id);
+                }
+            }
+        }
+    }
+
+    /// Collect all identifiers transitively connected to `id` via identity aliases only.
+    /// Identity aliases represent LoadLocal/StoreLocal chains where the TS code would
+    /// share InstructionValue references (via `assign()`/`appendAlias()`). This is used
+    /// by freeze to propagate freeze only through value-sharing links, not through
+    /// capture/mutation links (Call arguments, PropertyLoad, etc.).
+    fn collect_identity_group(&self, id: IdentifierId, group: &mut Vec<IdentifierId>) {
+        let mut visited = FxHashSet::default();
+        visited.insert(id);
+        let mut stack = vec![id];
+
+        while let Some(current) = stack.pop() {
+            // Forward: identity_aliases[current] = {a, b, ...}
+            if let Some(alias_set) = self.identity_aliases.get(&current) {
+                for &aliased in alias_set {
+                    if visited.insert(aliased) {
+                        group.push(aliased);
+                        stack.push(aliased);
+                    }
+                }
+            }
+            // Reverse: find any identifier whose identity alias set contains current
+            for (&other_id, other_set) in &self.identity_aliases {
                 if other_set.contains(&current) && visited.insert(other_id) {
                     group.push(other_id);
                     stack.push(other_id);
@@ -226,6 +304,15 @@ impl InferenceState {
 
         for (&id, other_aliases) in &other.aliases {
             let aliases = self.aliases.entry(id).or_default();
+            for &alias in other_aliases {
+                if aliases.insert(alias) {
+                    changed = true;
+                }
+            }
+        }
+
+        for (&id, other_aliases) in &other.identity_aliases {
+            let aliases = self.identity_aliases.entry(id).or_default();
             for &alias in other_aliases {
                 if aliases.insert(alias) {
                     changed = true;
@@ -461,8 +548,11 @@ pub fn infer_mutation_aliasing_effects(
     }
 
     // Fixpoint iteration over the CFG
-    // Map of blocks to the last (merged) incoming state that was processed.
+    // Map of blocks to the last (merged) outgoing state that was processed.
     let mut states_by_block: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
+    // Map of blocks to the incoming state (after merge/phis, before instructions).
+    // Used for effect annotation replay to compute per-instruction state.
+    let mut incoming_states: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
     // Pending incoming states for each block. Merged incrementally as predecessors complete.
     let mut queued_states: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
     queued_states.insert(func.body.entry, initial_state);
@@ -509,6 +599,9 @@ pub fn infer_mutation_aliasing_effects(
                 state.infer_phi(phi);
             }
 
+            // Store the incoming state (after phis, before instructions) for effect annotation.
+            incoming_states.insert(block_id, state.clone());
+
             // Process instructions.
             for instr in &block.instructions {
                 infer_instruction_effects(&mut state, instr, options, &func.env);
@@ -535,6 +628,10 @@ pub fn infer_mutation_aliasing_effects(
 
     // Annotate effects on instructions.
     // For blocks reached during fixpoint iteration, compute effects from abstract state.
+    // We replay `infer_instruction_effects` to build per-instruction state, matching the
+    // TS behavior where effects are computed inline during the fixpoint loop. This ensures
+    // state-dependent effect computations (like FunctionExpression capture demotion) use
+    // the state at each instruction's position, not the final block state.
     // For unreachable blocks, set empty effects (not None) so downstream passes
     // (infer_mutation_aliasing_ranges) still process them correctly.
     let block_ids = compute_rpo_order(func.body.entry, &func.body.blocks);
@@ -542,10 +639,18 @@ pub fn infer_mutation_aliasing_effects(
         let Some(block) = func.body.blocks.get_mut(&block_id) else {
             continue;
         };
-        if let Some(state) = states_by_block.get(&block_id) {
+        if let Some(incoming_state) = incoming_states.get(&block_id) {
+            // Replay instructions to build per-instruction state.
+            // incoming_state already has phis processed.
+            let mut replay_state = incoming_state.clone();
             for instr in &mut block.instructions {
-                let effects =
-                    compute_instruction_effects(state, instr, &func.env, &non_mutating_spreads);
+                // Compute effects using the state BEFORE this instruction
+                let effects = compute_instruction_effects(
+                    &replay_state,
+                    instr,
+                    &func.env,
+                    &non_mutating_spreads,
+                );
                 instr.effects = Some(effects);
 
                 // Match TS applyEffect for CreateFunction: demote context operands
@@ -556,7 +661,7 @@ pub fn infer_mutation_aliasing_effects(
                     InstructionValue::FunctionExpression(v) => {
                         for ctx in &mut v.lowered_func.func.context {
                             if ctx.effect == Effect::Capture {
-                                if let Some(av) = state.get(ctx) {
+                                if let Some(av) = replay_state.get(ctx) {
                                     if matches!(
                                         av.kind,
                                         ValueKind::Primitive
@@ -573,7 +678,7 @@ pub fn infer_mutation_aliasing_effects(
                     InstructionValue::ObjectMethod(v) => {
                         for ctx in &mut v.lowered_func.func.context {
                             if ctx.effect == Effect::Capture {
-                                if let Some(av) = state.get(ctx) {
+                                if let Some(av) = replay_state.get(ctx) {
                                     if matches!(
                                         av.kind,
                                         ValueKind::Primitive
@@ -589,6 +694,9 @@ pub fn infer_mutation_aliasing_effects(
                     }
                     _ => {}
                 }
+
+                // Advance the state past this instruction (replay)
+                infer_instruction_effects(&mut replay_state, &*instr, options, &func.env);
             }
         } else {
             // Unreachable block: set empty effects so downstream passes don't skip
@@ -676,13 +784,20 @@ fn infer_instruction_effects(
             let mut reasons = FxHashSet::default();
             reasons.insert(ValueReason::JsxCaptured);
             state.define(&instr.lvalue, AbstractValue::frozen(reasons));
+            // Freeze all operands (children, props, tag) to match TS applyEffect(Freeze) behavior.
+            // Use freeze_through_identity (not freeze) to propagate freeze through
+            // LoadLocal/StoreLocal chains (TS InstructionValue sharing) but NOT through
+            // Call argument aliases which would over-freeze.
+            for operand in each_instruction_value_operand(&instr.value) {
+                state.freeze_through_identity(operand.identifier.id, ValueReason::JsxCaptured);
+            }
         }
 
         // LoadLocal propagates the type of the loaded value
         InstructionValue::LoadLocal(v) => {
             if let Some(val) = state.get(&v.place).cloned() {
                 state.define(&instr.lvalue, val);
-                state.add_alias(v.place.identifier.id, lvalue_id);
+                state.add_identity_alias(v.place.identifier.id, lvalue_id);
             }
             // Propagate function value tracking through LoadLocal
             if let Some(fn_val) = state.function_values.get(&v.place.identifier.id).cloned() {
@@ -700,7 +815,7 @@ fn infer_instruction_effects(
         InstructionValue::StoreLocal(v) => {
             if let Some(val) = state.get(&v.value).cloned() {
                 state.define(&v.lvalue.place, val);
-                state.add_alias(v.value.identifier.id, v.lvalue.place.identifier.id);
+                state.add_identity_alias(v.value.identifier.id, v.lvalue.place.identifier.id);
             }
             // Propagate function value tracking through StoreLocal
             if let Some(fn_val) = state.function_values.get(&v.value.identifier.id).cloned() {
@@ -1260,6 +1375,17 @@ fn is_function_expression_mutable(state: &InferenceState, inner_func: &HIRFuncti
         if has_side_effects {
             return true;
         }
+    }
+
+    // capturesRef: for legacy compatibility (matches TS InferMutationAliasingEffects.ts line 824).
+    // If the function captures a ref or ref-value type, treat it as mutable.
+    // This ensures that function expressions capturing refs get a longer mutable
+    // range, which causes InferReactiveScopeVariables to group them with dependent
+    // identifiers (call results, objects, arrays) into a single reactive scope.
+    let captures_ref =
+        inner_func.context.iter().any(|ctx| is_ref_or_ref_value(&ctx.identifier));
+    if captures_ref {
+        return true;
     }
 
     false
