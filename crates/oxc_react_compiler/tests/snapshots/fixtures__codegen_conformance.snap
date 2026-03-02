@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1326/1339 passed (99.0%)
+Codegen conformance: 1327/1339 passed (99.1%)
 Flow files skipped: 38
 FBT lowering skipped: 32
 
@@ -12,12 +12,11 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 0
   panic:          0
-  output_mismatch:13
+  output_mismatch:12
   no_expected:    0
 
 Failed fixtures:
   [output_mismatch] align-scopes-reactive-scope-overlaps-if.ts
-  [output_mismatch] array-spread-mutable-iterator.js
   [output_mismatch] bug-type-inference-control-flow.ts
   [output_mismatch] destructuring-property-inference.js
   [output_mismatch] idx-no-outlining.js
