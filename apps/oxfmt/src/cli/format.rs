@@ -1,5 +1,6 @@
 use std::{env, io::BufWriter, path::PathBuf, sync::mpsc, time::Instant};
 
+use cow_utils::CowUtils;
 use oxc_diagnostics::DiagnosticService;
 
 use super::{
@@ -132,7 +133,7 @@ impl FormatRunner {
                         .unwrap_or(entry.path())
                         .to_string_lossy()
                         // Normalize path separators for consistent output across platforms
-                        .replace('\\', "/")
+                        .cow_replace('\\', "/")
                 })
                 .collect::<Vec<_>>();
 
