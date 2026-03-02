@@ -1962,14 +1962,38 @@ fn compute_instruction_effects(
             });
         }
 
-        // PropertyLoad / ComputedLoad: CreateFrom (result inherits kind from object)
+        // PropertyLoad / ComputedLoad: if the lvalue type is Primitive, emit Create(Primitive)
+        // instead of CreateFrom, to avoid creating an alias edge that would incorrectly
+        // extend the primitive value's mutable range when the object is later mutated.
+        // Port of TS `isPrimitiveType(lvalue.identifier)` check in
+        // `InferMutationAliasingEffects.ts` lines 1856-1871.
         InstructionValue::PropertyLoad(v) => {
-            effects
-                .push(AliasingEffect::CreateFrom { from: v.object.clone(), into: lvalue.clone() });
+            if lvalue.identifier.is_primitive_type() {
+                effects.push(AliasingEffect::Create {
+                    into: lvalue.clone(),
+                    value: ValueKind::Primitive,
+                    reason: ValueReason::Other,
+                });
+            } else {
+                effects.push(AliasingEffect::CreateFrom {
+                    from: v.object.clone(),
+                    into: lvalue.clone(),
+                });
+            }
         }
         InstructionValue::ComputedLoad(v) => {
-            effects
-                .push(AliasingEffect::CreateFrom { from: v.object.clone(), into: lvalue.clone() });
+            if lvalue.identifier.is_primitive_type() {
+                effects.push(AliasingEffect::Create {
+                    into: lvalue.clone(),
+                    value: ValueKind::Primitive,
+                    reason: ValueReason::Other,
+                });
+            } else {
+                effects.push(AliasingEffect::CreateFrom {
+                    from: v.object.clone(),
+                    into: lvalue.clone(),
+                });
+            }
         }
 
         // PropertyStore / ComputedStore: Mutate(object) + Capture(value->object) + Create(Primitive, lvalue)
