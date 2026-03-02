@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::{LintPlugins, utils::read_to_string};
+use crate::{AllowWarnDeny, LintPlugins, utils::read_to_string};
 
 use super::{
     categories::OxlintCategories,

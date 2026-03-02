@@ -148,9 +148,20 @@ impl ConfigStoreBuilder {
         fn resolve_oxlintrc_config(
             config: Oxlintrc,
             in_object_extends: bool,
+            in_extends: bool,
         ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
             if in_object_extends {
                 check_no_relative_js_plugins_in_extends(&config)?;
+            }
+            if in_extends && config.options.report_unused_disable_directives.is_some() {
+                let source = if config.path.as_os_str().is_empty() {
+                    "an object provided via `extends` in `oxlint.config.ts`".to_string()
+                } else {
+                    config.path.display().to_string()
+                };
+                return Err(ConfigBuilderError::ReportUnusedDisableDirectivesInExtends {
+                    source,
+                });
             }
 
             let path = config.path.clone();
@@ -162,7 +173,7 @@ impl ConfigStoreBuilder {
             let mut oxlintrc = config;
 
             for config in extends_configs.into_iter().rev() {
-                let (extends, extends_paths) = resolve_oxlintrc_config(config, true)?;
+                let (extends, extends_paths) = resolve_oxlintrc_config(config, true, true)?;
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
             }
@@ -192,7 +203,7 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
-                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, false)?;
+                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, false, true)?;
 
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
@@ -201,7 +212,7 @@ impl ConfigStoreBuilder {
             Ok((oxlintrc, extended_paths))
         }
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false)?;
+        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false, false)?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
@@ -737,6 +748,10 @@ pub enum ConfigBuilderError {
     RelativeExternalPluginSpecifierInExtends {
         plugin_specifier: String,
     },
+    /// `options.reportUnusedDisableDirectives` was set in an extended config.
+    ReportUnusedDisableDirectivesInExtends {
+        source: String,
+    },
     /// Multiple errors parsing rule configuration options
     RuleConfigurationErrors {
         /// The errors that occurred
@@ -800,6 +815,14 @@ impl Display for ConfigBuilderError {
                      Found: {plugin_specifier:?}\n\
                      \n\
                      Use a package name (e.g. \"eslint-plugin-foo\") or an absolute path instead."
+                )
+            }
+            ConfigBuilderError::ReportUnusedDisableDirectivesInExtends { source } => {
+                write!(
+                    f,
+                    "The `options.reportUnusedDisableDirectives` option is only supported in the root config, but it was found in {source}.\n\
+                     \n\
+                     Move `options.reportUnusedDisableDirectives` to the root configuration file."
                 )
             }
             ConfigBuilderError::RuleConfigurationErrors { errors } => {
@@ -1431,33 +1454,35 @@ mod test {
         );
         assert_eq!(config.base.config.options.type_check, Some(false));
 
-        let config = config_store_from_str(
-            r#"{ "extends": ["fixtures/extends_config/options/report_unused_disable_directives_warn.json"] }"#,
-        );
-        assert_eq!(
-            config.base.config.options.report_unused_disable_directives,
-            Some(AllowWarnDeny::Warn)
-        );
+        for extends_path in [
+            "fixtures/extends_config/options/report_unused_disable_directives_warn.json",
+            "fixtures/extends_config/options/report_unused_disable_directives_allow.json",
+        ] {
+            let mut external_plugin_store = ExternalPluginStore::default();
+            let config: Oxlintrc = serde_json::from_str(&format!(
+                r#"{{ "extends": ["{extends_path}"] }}"#
+            ))
+            .unwrap();
+            let err = ConfigStoreBuilder::from_oxlintrc(
+                true,
+                config,
+                None,
+                &mut external_plugin_store,
+                None,
+            )
+            .unwrap_err();
 
-        let config = config_store_from_str(
-            r#"
-            {
-                "extends": ["fixtures/extends_config/options/report_unused_disable_directives_warn.json"],
-                "options": {"reportUnusedDisableDirectives": "error" }
-            }
-            "#,
-        );
+            assert!(matches!(
+                err,
+                ConfigBuilderError::ReportUnusedDisableDirectivesInExtends { .. }
+            ));
+        }
+
+        let config =
+            config_store_from_str(r#"{ "options": {"reportUnusedDisableDirectives": "error" } }"#);
         assert_eq!(
             config.base.config.options.report_unused_disable_directives,
             Some(AllowWarnDeny::Deny)
-        );
-
-        let config = config_store_from_str(
-            r#"{ "extends": ["fixtures/extends_config/options/report_unused_disable_directives_allow.json"] }"#,
-        );
-        assert_eq!(
-            config.base.config.options.report_unused_disable_directives,
-            Some(AllowWarnDeny::Allow)
         );
 
         let config = config_store_from_str(
