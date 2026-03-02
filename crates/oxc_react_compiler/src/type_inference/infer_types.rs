@@ -655,7 +655,19 @@ fn generate_instruction_equations(
                 // DeclareLocal introduces a new variable, its type is unconstrained
             }
         }
-        InstructionValue::ObjectExpression(_) => {
+        InstructionValue::ObjectExpression(obj) => {
+            // TS InferTypes.ts: for each property with a computed key, emit
+            // a type equation constraining the key to Primitive.
+            for prop in &obj.properties {
+                if let crate::hir::ObjectPatternProperty::Property(p) = prop {
+                    if let crate::hir::ObjectPropertyKey::Computed(key_place) = &p.key {
+                        equations.push(TypeEquation {
+                            left: key_place.identifier.type_.clone(),
+                            right: Type::Primitive,
+                        });
+                    }
+                }
+            }
             equations.push(TypeEquation {
                 left: lvalue_type,
                 right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_OBJECT_ID.to_string()) }),
@@ -869,10 +881,13 @@ fn generate_instruction_equations(
             }
         }
         InstructionValue::StoreContext(v) => {
-            equations.push(TypeEquation {
-                left: v.lvalue_place.identifier.type_.clone(),
-                right: v.value.identifier.type_.clone(),
-            });
+            // TS InferTypes.ts: only emit type equation when lvalue.kind === InstructionKind.Const
+            if v.lvalue_kind == InstructionKind::Const {
+                equations.push(TypeEquation {
+                    left: v.lvalue_place.identifier.type_.clone(),
+                    right: v.value.identifier.type_.clone(),
+                });
+            }
         }
         _ => {
             // Many instruction values don't produce enough info for type equations
