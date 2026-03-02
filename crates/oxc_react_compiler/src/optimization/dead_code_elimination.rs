@@ -258,7 +258,6 @@ fn pruneable_value(value: &InstructionValue, state: &DceState) -> bool {
         // Side-effect-free values can always be pruned (read-only)
         InstructionValue::Primitive(_)
         | InstructionValue::LoadLocal(_)
-        | InstructionValue::LoadContext(_)
         | InstructionValue::LoadGlobal(_)
         | InstructionValue::PropertyLoad(_)
         | InstructionValue::ComputedLoad(_)
@@ -312,6 +311,14 @@ fn pruneable_value(value: &InstructionValue, state: &DceState) -> bool {
         // Updates are pruneable if the specific instance being assigned is never read
         InstructionValue::PostfixUpdate(v) => !state.is_id_used(&v.lvalue.identifier),
         InstructionValue::PrefixUpdate(v) => !state.is_id_used(&v.lvalue.identifier),
+
+        // Context operations (LoadContext, StoreContext, DeclareContext) are NOT
+        // pruneable, matching the TS reference (DeadCodeElimination.ts lines 366-370).
+        // Context variables track captured variables from outer scopes and their
+        // load/store instructions must be preserved for correct codegen.
+        InstructionValue::LoadContext(_)
+        | InstructionValue::StoreContext(_)
+        | InstructionValue::DeclareContext(_) => false,
 
         // Most other values have side effects and cannot be pruned
         _ => false,
