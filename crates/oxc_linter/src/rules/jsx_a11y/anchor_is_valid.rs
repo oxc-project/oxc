@@ -1,4 +1,5 @@
 use std::ops::Deref;
+use std::sync::LazyLock;
 
 use oxc_ast::{
     AstKind,
@@ -149,13 +150,15 @@ impl Rule for AnchorIsValid {
             // Don't eagerly get `span` here, to avoid that work unless rule fails
             let get_span = || jsx_el.opening_element.name.span();
             // Check href or any configured alternative attribute names (e.g. `to` for router Link components)
-            let href_names: Vec<CompactStr> = ctx
+            static DEFAULT_HREF_NAMES: LazyLock<Vec<CompactStr>> =
+                LazyLock::new(|| vec![CompactStr::from("href")]);
+            let href_names: &[CompactStr] = ctx
                 .settings()
                 .jsx_a11y
                 .attributes
                 .get("href")
-                .cloned()
-                .unwrap_or_else(|| vec![CompactStr::from("href")]);
+                .map(Vec::as_slice)
+                .unwrap_or(&DEFAULT_HREF_NAMES);
             let href_attr = href_names
                 .iter()
                 .find_map(|n| has_jsx_prop_ignore_case(&jsx_el.opening_element, n.as_str()));
