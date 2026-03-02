@@ -215,7 +215,10 @@ fn without_strings(type_str: &str, transform: impl FnOnce(&str) -> String) -> St
             // Scan to closing quote, handling backslash escapes
             while i < len {
                 if bytes[i] == b'\\' {
-                    i += 2; // skip escaped char
+                    i += 1; // skip backslash
+                    if i < len {
+                        i += 1; // skip escaped char only if present
+                    }
                     continue;
                 }
                 if bytes[i] == quote {
@@ -224,12 +227,13 @@ fn without_strings(type_str: &str, transform: impl FnOnce(&str) -> String) -> St
                 }
                 i += 1;
             }
-            let matched = &type_str[start..i];
+            let matched = &type_str[start..i.min(len)];
             strings.push(matched);
             write!(modified, "String${}$", strings.len() - 1).unwrap();
         } else {
-            modified.push(type_str[i..].chars().next().unwrap());
-            i += type_str[i..].chars().next().unwrap().len_utf8();
+            let ch = type_str[i..].chars().next().unwrap();
+            modified.push(ch);
+            i += ch.len_utf8();
         }
     }
 
@@ -512,13 +516,16 @@ fn needs_parens_for_union(type_str: &str) -> bool {
     }
 
     let mut depth = 0i32;
+    let mut prev = '\0';
     for ch in type_str.chars() {
         match ch {
             '(' | '<' | '[' | '{' => depth += 1,
-            ')' | '>' | ']' | '}' => depth -= 1,
+            ')' | ']' | '}' => depth -= 1,
+            '>' if prev != '=' => depth -= 1,
             '|' if depth == 0 => return true,
             _ => {}
         }
+        prev = ch;
     }
     false
 }
@@ -587,13 +594,16 @@ fn normalize_type_quotes(type_str: &str) -> String {
             i += 1;
             while i < len && bytes[i] != b'\'' {
                 if bytes[i] == b'\\' && i + 1 < len {
-                    result.push(bytes[i] as char);
-                    i += 1;
-                    result.push(bytes[i] as char);
-                    i += 1;
+                    let ch = type_str[i..].chars().next().unwrap();
+                    result.push(ch);
+                    i += ch.len_utf8();
+                    let ch = type_str[i..].chars().next().unwrap();
+                    result.push(ch);
+                    i += ch.len_utf8();
                 } else {
-                    result.push(bytes[i] as char);
-                    i += 1;
+                    let ch = type_str[i..].chars().next().unwrap();
+                    result.push(ch);
+                    i += ch.len_utf8();
                 }
             }
             if i < len && bytes[i] == b'\'' {
@@ -606,13 +616,16 @@ fn normalize_type_quotes(type_str: &str) -> String {
             i += 1;
             while i < len && bytes[i] != b'"' {
                 if bytes[i] == b'\\' && i + 1 < len {
-                    result.push(bytes[i] as char);
-                    i += 1;
-                    result.push(bytes[i] as char);
-                    i += 1;
+                    let ch = type_str[i..].chars().next().unwrap();
+                    result.push(ch);
+                    i += ch.len_utf8();
+                    let ch = type_str[i..].chars().next().unwrap();
+                    result.push(ch);
+                    i += ch.len_utf8();
                 } else {
-                    result.push(bytes[i] as char);
-                    i += 1;
+                    let ch = type_str[i..].chars().next().unwrap();
+                    result.push(ch);
+                    i += ch.len_utf8();
                 }
             }
             if i < len && bytes[i] == b'"' {

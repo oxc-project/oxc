@@ -28,13 +28,15 @@ fn parse_list_item(trimmed: &str) -> Option<ListItemPrefix> {
             && dot_space_pos < 5
         {
             let number = &trimmed[..dot_space_pos];
-            let prefix = format!("{number}. ");
-            let rest_start = dot_space_pos + 2;
-            return Some(ListItemPrefix {
-                indent_width: prefix.len(),
-                normalized_prefix: prefix,
-                rest_start,
-            });
+            if number.chars().all(|c| c.is_ascii_digit()) {
+                let prefix = format!("{number}. ");
+                let rest_start = dot_space_pos + 2;
+                return Some(ListItemPrefix {
+                    indent_width: prefix.len(),
+                    normalized_prefix: prefix,
+                    rest_start,
+                });
+            }
         }
         // Try "N- " format (non-standard, convert to "N. ")
         if let Some(dash_pos) = trimmed.find('-')

@@ -242,16 +242,16 @@ fn find_function_params_start(text: &str) -> Option<usize> {
         while i < len && bytes[i].is_ascii_whitespace() {
             i += 1;
         }
-        if text[i..].starts_with("export") && i + 6 < len && !bytes[i + 6].is_ascii_alphanumeric() {
+        let is_id_continue = |b: u8| b.is_ascii_alphanumeric() || b == b'_' || b == b'$';
+        if text[i..].starts_with("export") && i + 6 < len && !is_id_continue(bytes[i + 6]) {
             i += 6;
             continue;
         }
-        if text[i..].starts_with("async") && i + 5 < len && !bytes[i + 5].is_ascii_alphanumeric() {
+        if text[i..].starts_with("async") && i + 5 < len && !is_id_continue(bytes[i + 5]) {
             i += 5;
             continue;
         }
-        if text[i..].starts_with("default") && i + 7 < len && !bytes[i + 7].is_ascii_alphanumeric()
-        {
+        if text[i..].starts_with("default") && i + 7 < len && !is_id_continue(bytes[i + 7]) {
             i += 7;
             continue;
         }
@@ -348,10 +348,8 @@ fn find_function_params_start(text: &str) -> Option<usize> {
                 i += 1;
             }
             // Skip `async`
-            if text[i..].starts_with("async")
-                && i + 5 < len
-                && !bytes[i + 5].is_ascii_alphanumeric()
-            {
+            let is_id_continue = |b: u8| b.is_ascii_alphanumeric() || b == b'_' || b == b'$';
+            if text[i..].starts_with("async") && i + 5 < len && !is_id_continue(bytes[i + 5]) {
                 i += 5;
                 while i < len && bytes[i].is_ascii_whitespace() {
                     i += 1;
@@ -452,9 +450,38 @@ fn parse_param_names(params_str: &str) -> Vec<String> {
                 }
                 i += 1;
             }
-            // Skip type annotation, default value, and comma
+            // Skip type annotation, default value, and comma (bracket-aware)
             while i < len && bytes[i] != b',' {
-                i += 1;
+                match bytes[i] {
+                    b'(' => {
+                        if let Some(end) = find_matching_paren(params_str, i) {
+                            i = end + 1;
+                        } else {
+                            i += 1;
+                        }
+                    }
+                    b'<' => {
+                        if let Some(end) = find_matching_angle(params_str, i) {
+                            i = end + 1;
+                        } else {
+                            i += 1;
+                        }
+                    }
+                    b'\'' | b'"' => {
+                        let quote = bytes[i];
+                        i += 1;
+                        while i < len && bytes[i] != quote {
+                            if bytes[i] == b'\\' {
+                                i += 1;
+                            }
+                            i += 1;
+                        }
+                        if i < len {
+                            i += 1;
+                        }
+                    }
+                    _ => i += 1,
+                }
             }
             if i < len {
                 i += 1; // skip comma
@@ -1056,13 +1083,27 @@ fn normalize_object_field(field: &str) -> String {
 fn find_field_colon(field: &str) -> Option<usize> {
     let mut depth = 0i32;
     let bytes = field.as_bytes();
-    for (i, &b) in bytes.iter().enumerate() {
-        match b {
+    let len = bytes.len();
+    let mut i = 0;
+    while i < len {
+        match bytes[i] {
             b'(' | b'<' | b'[' | b'{' => depth += 1,
             b')' | b'>' | b']' | b'}' => depth -= 1,
+            b'\'' | b'"' | b'`' => {
+                // Skip quoted strings
+                let quote = bytes[i];
+                i += 1;
+                while i < len && bytes[i] != quote {
+                    if bytes[i] == b'\\' {
+                        i += 1;
+                    }
+                    i += 1;
+                }
+            }
             b':' if depth == 0 => return Some(i),
             _ => {}
         }
+        i += 1;
     }
     None
 }
