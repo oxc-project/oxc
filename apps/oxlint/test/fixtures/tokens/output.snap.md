@@ -2628,6 +2628,17 @@
    `----
 
 Found 0 warnings and 243 errors.
+
+Errors  Files
+    86  files/escaped_idents.js:1
+    35  files/ts_angle_relex.ts:1
+    33  files/generic_arrow.ts:1
+    30  files/jsx_element.tsx:1
+    30  files/keywords.js:1
+    16  files/index.js:1
+     7  files/unicode.js:1
+     6  files/bom.js:1
+
 Finished in Xms on 8 files with 1 rules using X threads.
 ```
 

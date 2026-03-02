@@ -422,6 +422,11 @@
     `----
 
 Found 0 warnings and 23 errors.
+
+Errors  Files
+    20  files/index.tsx:5
+     3  files/eslint_test_case.js:1
+
 Finished in Xms on 2 files with 1 rules using X threads.
 ```
 

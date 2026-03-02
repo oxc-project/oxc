@@ -35,6 +35,11 @@ working directory: fixtures/cli/cross_module_nested_config
            ╰─────────╯ imports the current file
 
 Found 0 warnings and 2 errors.
+
+Errors  Files
+     1  folder/folder-dep-a.ts:2
+     1  folder/folder-dep-b.ts:2
+
 Finished in <variable>ms on 4 files with 93 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

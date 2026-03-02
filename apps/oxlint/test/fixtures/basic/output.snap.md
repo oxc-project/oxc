@@ -17,6 +17,10 @@
   help: Remove the debugger statement
 
 Found 1 warning and 1 error.
+
+Errors  Files
+     1  files/index.js:1
+
 Finished in Xms on 1 file with 94 rules using X threads.
 ```
 

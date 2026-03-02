@@ -42,6 +42,10 @@ working directory: fixtures/cli/overrides_with_plugin
   help: Consider removing this declaration.
 
 Found 2 warnings and 2 errors.
+
+Errors  Files
+     2  index.test.ts:1
+
 Finished in <variable>ms on 2 files with 93 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

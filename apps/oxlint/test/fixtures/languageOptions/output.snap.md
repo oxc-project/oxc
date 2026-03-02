@@ -825,6 +825,13 @@
    `----
 
 Found 0 warnings and 5 errors.
+
+Errors  Files
+     2  files/index.js:1
+     1  files/index.cjs:1
+     1  files/index.mjs:1
+     1  files/index.ts:1
+
 Finished in Xms on 4 files with 1 rules using X threads.
 ```
 
