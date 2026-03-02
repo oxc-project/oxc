@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1310/1339 passed (97.8%)
+Codegen conformance: 1311/1339 passed (97.9%)
 Flow files skipped: 38
 FBT lowering skipped: 32
 
@@ -12,7 +12,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 0
   panic:          0
-  output_mismatch:29
+  output_mismatch:28
   no_expected:    0
 
 Failed fixtures:
@@ -24,7 +24,6 @@ Failed fixtures:
   [output_mismatch] capturing-function-capture-ref-before-rename.js
   [output_mismatch] chained-assignment-context-variable.js
   [output_mismatch] destructuring-property-inference.js
-  [output_mismatch] for-of-mutate-item-of-local-collection.js
   [output_mismatch] hoisting-invalid-tdz-let.js
   [output_mismatch] hoisting-recursive-call-within-lambda.js
   [output_mismatch] idx-no-outlining.js
