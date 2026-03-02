@@ -147,7 +147,7 @@ impl FormatRunner {
 
             target_files.sort_unstable();
             utils::print_and_flush(stdout, &target_files.join("\n"));
-            return CliRunResult::FormatSucceeded;
+            return CliRunResult::None;
         }
 
         // Use `block_in_place()` to avoid nested async runtime access
