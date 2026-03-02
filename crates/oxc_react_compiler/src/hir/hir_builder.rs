@@ -218,6 +218,16 @@ impl HirBuilder {
         &self.outer_bindings
     }
 
+    /// Get the context identifiers set.
+    ///
+    /// Used by `lower_function_to_value` to pass the outer function's
+    /// context identifiers to the inner function's builder, matching the
+    /// TS reference where inner functions share the same `Environment`
+    /// (and thus the same `#contextIdentifiers` set) as the outer function.
+    pub fn context_identifiers(&self) -> &ContextIdentifiers {
+        &self.context_identifiers
+    }
+
     /// Get the kind of the current block.
     pub fn current_block_kind(&self) -> BlockKind {
         self.current.kind
