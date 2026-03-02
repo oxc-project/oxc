@@ -141,24 +141,14 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
                         .get(&v.callee.identifier.id)
                         .cloned()
                         .unwrap_or_else(|| "(anonymous)".to_string());
-                    name_function_args(
-                        &callee_name,
-                        &v.args,
-                        &mut functions,
-                        &mut nodes,
-                    );
+                    name_function_args(&callee_name, &v.args, &mut functions, &mut nodes);
                 }
                 InstructionValue::MethodCall(v) => {
                     let callee_name = names
                         .get(&v.property.identifier.id)
                         .cloned()
                         .unwrap_or_else(|| "(anonymous)".to_string());
-                    name_function_args(
-                        &callee_name,
-                        &v.args,
-                        &mut functions,
-                        &mut nodes,
-                    );
+                    name_function_args(&callee_name, &v.args, &mut functions, &mut nodes);
                 }
                 InstructionValue::JsxExpression(v) => {
                     let element_name = match &v.tag {
