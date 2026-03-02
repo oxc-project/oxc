@@ -323,7 +323,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         // `AstNode<ExpressionStatement>::write`.
         quote! {
             if !matches!(self.inner, Statement::ExpressionStatement(_))
-                && f.comments().has_line_suppression_comment_at_end_of_line(self.span().end)
+                && f.comments().has_trailing_suppression_comment(self.span().end)
             {
                 format_leading_comments(self.span()).fmt(f);
                 FormatSuppressedNode(self.span()).fmt(f);

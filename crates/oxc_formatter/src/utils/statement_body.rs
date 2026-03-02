@@ -73,10 +73,7 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
                         if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
                     );
                     if is_consequent_of_if_statement_parent {
-                        if f.context()
-                            .comments()
-                            .has_line_suppression_comment_at_end_of_line(body_span.end)
-                        {
+                        if f.context().comments().has_trailing_suppression_comment(body_span.end) {
                             write!(f, format_leading_comments(body_span));
                             write!(f, FormatSuppressedNode(body_span));
                         } else {

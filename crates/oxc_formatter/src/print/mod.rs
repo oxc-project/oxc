@@ -565,9 +565,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
             write!(f, ";");
         }
 
-        if f.comments().has_line_suppression_comment_at_end_of_line(span.end) {
+        if f.comments().has_trailing_suppression_comment(span.end) {
             // Preserve original text when the statement has an inline suppression comment:
-            // `stmt(); // prettier-ignore`
+            // `stmt(); // prettier-ignore` or `stmt(); /* prettier-ignore */`
             write!(f, [FormatSuppressedNode(span)]);
             return;
         }

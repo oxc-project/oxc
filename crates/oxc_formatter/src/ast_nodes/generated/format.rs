@@ -1586,7 +1586,7 @@ impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if !matches!(self.inner, Statement::ExpressionStatement(_))
-            && f.comments().has_line_suppression_comment_at_end_of_line(self.span().end)
+            && f.comments().has_trailing_suppression_comment(self.span().end)
         {
             format_leading_comments(self.span()).fmt(f);
             FormatSuppressedNode(self.span()).fmt(f);
