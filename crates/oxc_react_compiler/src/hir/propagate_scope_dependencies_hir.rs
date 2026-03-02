@@ -716,7 +716,12 @@ struct DependencyCollectionContext<'a> {
     /// Temporaries sidemap.
     temporaries: &'a FxHashMap<IdentifierId, TempReactiveScopeDependency>,
     /// Instructions processed as part of optional chains (skip them).
-    processed_instrs_in_optional: &'a FxHashSet<InstructionId>,
+    ///
+    /// Owned rather than borrowed so it can be swapped when entering inner
+    /// functions. InstructionIds overlap between inner and outer functions in the
+    /// Rust HIR (unlike the TS reference which uses object references as Set
+    /// keys), so each function level needs its own set to avoid false positives.
+    processed_instrs_in_optional: FxHashSet<InstructionId>,
 
     /// Tracks whether we are inside an inner function.
     inner_fn_context: Option<InstructionId>,
@@ -739,7 +744,7 @@ struct DependencyCollectionContext<'a> {
 impl<'a> DependencyCollectionContext<'a> {
     fn new(
         temporaries: &'a FxHashMap<IdentifierId, TempReactiveScopeDependency>,
-        processed_instrs_in_optional: &'a FxHashSet<InstructionId>,
+        processed_instrs_in_optional: FxHashSet<InstructionId>,
     ) -> Self {
         Self {
             declarations: FxHashMap::default(),
@@ -1134,7 +1139,7 @@ struct CollectDependenciesResult {
 fn collect_dependencies(
     func: &HIRFunction,
     temporaries: &FxHashMap<IdentifierId, TempReactiveScopeDependency>,
-    processed_instrs_in_optional: &FxHashSet<InstructionId>,
+    processed_instrs_in_optional: FxHashSet<InstructionId>,
     intermediate_optional_results: &FxHashSet<IdentifierId>,
 ) -> CollectDependenciesResult {
     fn handle_function(
@@ -1203,6 +1208,19 @@ fn collect_dependencies(
                             _ => continue,
                         };
 
+                        // Swap processed_instrs_in_optional with the inner function's
+                        // own set. InstructionIds overlap between inner and outer
+                        // functions in the Rust HIR (the TS reference uses object
+                        // references as Set keys which are naturally unique per
+                        // function), so each function level needs its own set to
+                        // avoid false-positive deferrals.
+                        let inner_opt_chain =
+                            super::collect_optional_chain_dependencies::collect_optional_chain_sidemap(inner_func);
+                        let saved_processed = std::mem::replace(
+                            &mut context.processed_instrs_in_optional,
+                            inner_opt_chain.processed_instrs_in_optional,
+                        );
+
                         let was_none = context.inner_fn_context.is_none();
                         context.enter_inner_fn(instr.id);
                         handle_function(
@@ -1213,6 +1231,9 @@ fn collect_dependencies(
                             intermediate_optional_results,
                         );
                         context.exit_inner_fn(was_none);
+
+                        // Restore the outer function's processed instructions.
+                        context.processed_instrs_in_optional = saved_processed;
                     }
                     _ => {
                         handle_instruction(instr, context);
@@ -1421,12 +1442,11 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
                 let fallthrough = opt.fallthrough;
 
                 // Find the continuation consequent from the fallthrough block.
-                let continuation_consequent = func.body.blocks.get(&fallthrough).and_then(|fb| {
-                    match &fb.terminal {
+                let continuation_consequent =
+                    func.body.blocks.get(&fallthrough).and_then(|fb| match &fb.terminal {
                         Terminal::Branch(branch) => Some(branch.consequent),
                         _ => None,
-                    }
-                });
+                    });
 
                 // Collect the parent Optional's fallthrough (the enclosing non-optional
                 // chain's fallthrough) as a stop boundary. Walk up from the current
@@ -1550,7 +1570,7 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
     let collect_result = collect_dependencies(
         func,
         &merged_temporaries,
-        &processed_instrs,
+        processed_instrs,
         &intermediate_optional_results,
     );
 

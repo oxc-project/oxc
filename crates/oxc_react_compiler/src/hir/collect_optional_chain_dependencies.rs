@@ -101,19 +101,23 @@ fn traverse_function(func: &HIRFunction, context: &mut OptionalTraversalContext)
         for instr in &block.instructions {
             match &instr.value {
                 InstructionValue::FunctionExpression(v) => {
-                    // Save and restore seen_optionals around inner function traversal.
-                    // BlockIds can overlap between inner and outer functions in the Rust
-                    // implementation (unlike the TS reference which uses a shared
-                    // Environment counter), so inner function processing must not pollute
-                    // the outer function's seen set.
-                    let saved = std::mem::take(&mut context.seen_optionals);
+                    // Save and restore seen_optionals and processed_instrs_in_optional
+                    // around inner function traversal. InstructionIds can overlap between
+                    // inner and outer functions in the Rust implementation (unlike the TS
+                    // reference which uses object references as Set keys), so inner
+                    // function processing must not pollute the outer function's sets.
+                    let saved_seen = std::mem::take(&mut context.seen_optionals);
+                    let saved_processed = std::mem::take(&mut context.processed_instrs_in_optional);
                     traverse_function(&v.lowered_func.func, context);
-                    context.seen_optionals = saved;
+                    context.seen_optionals = saved_seen;
+                    context.processed_instrs_in_optional = saved_processed;
                 }
                 InstructionValue::ObjectMethod(v) => {
-                    let saved = std::mem::take(&mut context.seen_optionals);
+                    let saved_seen = std::mem::take(&mut context.seen_optionals);
+                    let saved_processed = std::mem::take(&mut context.processed_instrs_in_optional);
                     traverse_function(&v.lowered_func.func, context);
-                    context.seen_optionals = saved;
+                    context.seen_optionals = saved_seen;
+                    context.processed_instrs_in_optional = saved_processed;
                 }
                 _ => {}
             }
