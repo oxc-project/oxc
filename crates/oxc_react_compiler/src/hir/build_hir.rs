@@ -4801,6 +4801,15 @@ pub fn lower_statement(
 /// pre-declared. For simple identifiers like `x`, this is a no-op (the
 /// identifier name is already in scope_binding_names from the function-level
 /// scan, or the binding will be created normally).
+/// Pre-declare all binding names from the left-hand side of a for-of/for-in
+/// loop so that references in the loop body (which is lowered before the test
+/// block where the actual StoreLocal is emitted) resolve as local bindings
+/// rather than globals. Without this, `for (const x of items)` would cause
+/// `x` in the body to emit LoadGlobal instead of LoadLocal, breaking mutation
+/// propagation through the aliasing graph.
+///
+/// The TS reference compiler does not need this because Babel's scope analysis
+/// pre-resolves all bindings before HIR lowering begins.
 fn pre_declare_for_loop_left_bindings(
     builder: &mut HirBuilder,
     left: &ast::ForStatementLeft<'_>,
@@ -4808,19 +4817,10 @@ fn pre_declare_for_loop_left_bindings(
 ) {
     if let ast::ForStatementLeft::VariableDeclaration(decl) = left {
         if let Some(declarator) = decl.declarations.first() {
-            match &declarator.id {
-                ast::BindingPattern::ObjectPattern(_) | ast::BindingPattern::ArrayPattern(_) => {
-                    // For destructuring patterns, collect all binding names and pre-declare them
-                    let mut names = rustc_hash::FxHashSet::default();
-                    collect_binding_pattern_names(&declarator.id, &mut names);
-                    for name in &names {
-                        builder.pre_declare_binding(name, loc);
-                    }
-                }
-                _ => {
-                    // Simple identifier: already handled by scope_binding_names or
-                    // will be registered normally in lower_for_loop_left_assignment
-                }
+            let mut names = rustc_hash::FxHashSet::default();
+            collect_binding_pattern_names(&declarator.id, &mut names);
+            for name in &names {
+                builder.pre_declare_binding(name, loc);
             }
         }
     }
