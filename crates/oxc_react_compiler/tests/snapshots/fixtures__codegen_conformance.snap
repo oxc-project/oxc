@@ -1,9 +1,8 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 8600
 expression: snapshot
 ---
-Codegen conformance: 1291/1339 passed (96.4%)
+Codegen conformance: 1293/1339 passed (96.6%)
 Flow files skipped: 38
 FBT lowering skipped: 32
 
@@ -13,7 +12,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:45
+  output_mismatch:43
   no_expected:    0
 
 Failed fixtures:
@@ -43,8 +42,6 @@ Failed fixtures:
   [output_mismatch] new-mutability/aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] new-mutability/repro-destructure-from-prop-with-default-value.js
   [output_mismatch] new-mutability/todo-control-flow-sensitive-mutation.tsx
-  [output_mismatch] new-mutability/transitivity-add-captured-array-to-itself.tsx
-  [output_mismatch] new-mutability/transitivity-phi-assign-or-capture.tsx
   [output_mismatch] object-expression-computed-key-modified-during-after-construction.js
   [output_mismatch] object-expression-member-expr-call.js
   [output_mismatch] preserve-memo-validation/useCallback-infer-more-specific.ts

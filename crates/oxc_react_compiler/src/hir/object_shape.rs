@@ -8,10 +8,17 @@
 use rustc_hash::FxHashMap;
 
 use super::{
-    hir_types::{Effect, ValueKind, ValueReason},
-    types::Type,
+    hir_types::{
+        DeclarationId, Effect, Identifier, IdentifierId, MutableRange, Place, SpreadPattern,
+        ValueKind, ValueReason,
+    },
+    type_schema::{AliasingEffectArgConfig, AliasingEffectConfig, AliasingSignatureConfig},
+    types::{make_type, Type},
 };
-use crate::inference::aliasing_effects::AliasingSignature;
+use crate::{
+    compiler_error::SourceLocation,
+    inference::aliasing_effects::{AliasingEffect, AliasingSignature, ApplyArg},
+};
 
 /// The kind of a React hook.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -176,4 +183,132 @@ pub fn add_object(
     let shape = ObjectShape { properties: properties.into_iter().collect(), function_type: None };
     registry.insert(id.to_string(), shape);
     id.to_string()
+}
+
+// =====================================================================================
+// Aliasing signature parsing
+// =====================================================================================
+
+/// Create a placeholder Place for aliasing signature parameters.
+///
+/// Port of `signatureArgument` from `ObjectShape.ts`.
+pub fn signature_argument(id: u32) -> Place {
+    Place {
+        identifier: Identifier {
+            id: IdentifierId(id),
+            declaration_id: DeclarationId(id),
+            name: None,
+            mutable_range: MutableRange::default(),
+            scope: None,
+            type_: make_type(),
+            loc: SourceLocation::Generated,
+        },
+        effect: Effect::Unknown,
+        reactive: false,
+        loc: SourceLocation::Generated,
+    }
+}
+
+/// Parse an `AliasingSignatureConfig` into an `AliasingSignature`.
+///
+/// Port of `parseAliasingSignatureConfig` from `ObjectShape.ts`.
+///
+/// Converts string-based parameter names to `IdentifierId`-based `Place`s,
+/// then resolves all effect references using the same string-to-Place mapping.
+pub fn parse_aliasing_signature_config(config: &AliasingSignatureConfig) -> AliasingSignature {
+    let mut lifetimes: FxHashMap<String, Place> = FxHashMap::default();
+    let mut next_id: u32 = 0;
+
+    let mut define = |name: &str| -> Place {
+        debug_assert!(
+            !lifetimes.contains_key(name),
+            "Duplicate name '{name}' in aliasing signature config"
+        );
+        let place = signature_argument(next_id);
+        next_id += 1;
+        lifetimes.insert(name.to_string(), place.clone());
+        place
+    };
+
+    let receiver = define(&config.receiver);
+    let params: Vec<Place> = config.params.iter().map(|p| define(p)).collect();
+    let rest = config.rest.as_ref().map(|r| define(r));
+    let returns = define(&config.returns);
+    let temporaries: Vec<Place> = config.temporaries.iter().map(|t| define(t)).collect();
+
+    let lookup = |name: &str| -> Place {
+        lifetimes.get(name).cloned().unwrap_or_else(|| {
+            debug_assert!(false, "Unknown name '{name}' in aliasing signature effects");
+            signature_argument(u32::MAX)
+        })
+    };
+
+    let effects = config
+        .effects
+        .iter()
+        .map(|effect| match effect {
+            AliasingEffectConfig::ImmutableCapture { from, into } => {
+                AliasingEffect::ImmutableCapture { from: lookup(from), into: lookup(into) }
+            }
+            AliasingEffectConfig::CreateFrom { from, into } => {
+                AliasingEffect::CreateFrom { from: lookup(from), into: lookup(into) }
+            }
+            AliasingEffectConfig::Capture { from, into } => {
+                AliasingEffect::Capture { from: lookup(from), into: lookup(into) }
+            }
+            AliasingEffectConfig::Alias { from, into } => {
+                AliasingEffect::Alias { from: lookup(from), into: lookup(into) }
+            }
+            AliasingEffectConfig::Assign { from, into } => {
+                AliasingEffect::Assign { from: lookup(from), into: lookup(into) }
+            }
+            AliasingEffectConfig::Mutate { value } => {
+                AliasingEffect::Mutate { value: lookup(value), reason: None }
+            }
+            AliasingEffectConfig::MutateTransitiveConditionally { value } => {
+                AliasingEffect::MutateTransitiveConditionally { value: lookup(value) }
+            }
+            AliasingEffectConfig::Create { into, reason, value } => {
+                AliasingEffect::Create { into: lookup(into), value: *value, reason: *reason }
+            }
+            AliasingEffectConfig::Freeze { value, reason } => {
+                AliasingEffect::Freeze { value: lookup(value), reason: *reason }
+            }
+            AliasingEffectConfig::Impure { .. } => {
+                // TS throws a TODO error for Impure effect declarations.
+                // For now this is unreachable since no built-in configs use Impure.
+                unreachable!("Impure aliasing effect config is not yet supported")
+            }
+            AliasingEffectConfig::Apply { receiver, function, mutates_function, args, into } => {
+                let args_converted: Vec<ApplyArg> = args
+                    .iter()
+                    .map(|arg| match arg {
+                        AliasingEffectArgConfig::Place(name) => ApplyArg::Place(lookup(name)),
+                        AliasingEffectArgConfig::Spread { place } => {
+                            ApplyArg::Spread(SpreadPattern { place: lookup(place) })
+                        }
+                        AliasingEffectArgConfig::Hole => ApplyArg::Hole,
+                    })
+                    .collect();
+                AliasingEffect::Apply {
+                    receiver: lookup(receiver),
+                    function: lookup(function),
+                    mutates_function: *mutates_function,
+                    args: args_converted,
+                    into: Box::new(lookup(into)),
+                    signature: None,
+                    loc: SourceLocation::Generated,
+                }
+            }
+        })
+        .collect();
+
+    AliasingSignature {
+        receiver: receiver.identifier.id,
+        params: params.iter().map(|p| p.identifier.id).collect(),
+        rest: rest.map(|r| r.identifier.id),
+        returns: returns.identifier.id,
+        temporaries,
+        effects,
+    }
 }
