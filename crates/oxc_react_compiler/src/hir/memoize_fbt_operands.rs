@@ -456,8 +456,7 @@ fn apply_operand_merges(
                 if let Some(def_block) = func.body.blocks.get_mut(&def_block_id) {
                     if let Some(def_instr) = def_block.instructions.get_mut(def_instr_idx) {
                         if def_instr.lvalue.identifier.id == operand_info.id {
-                            def_instr.lvalue.identifier.scope =
-                                Some(scope_to_propagate.clone());
+                            def_instr.lvalue.identifier.scope = Some(scope_to_propagate.clone());
                         }
                     }
                 }
