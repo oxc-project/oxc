@@ -36,12 +36,17 @@ pub struct OxlintOptions {
     /// Equivalent to passing `--type-check` on the CLI.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_check: Option<bool>,
+    /// Specify a warning threshold. Exits with an error status if warnings exceed this value.
+    ///
+    /// Equivalent to passing `--max-warnings` on the CLI.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_warnings: Option<usize>,
 }
 
 impl OxlintOptions {
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.type_aware.is_none() && self.type_check.is_none()
+        self.type_aware.is_none() && self.type_check.is_none() && self.max_warnings.is_none()
     }
 
     #[must_use]
@@ -49,6 +54,7 @@ impl OxlintOptions {
         Self {
             type_aware: self.type_aware.or(other.type_aware),
             type_check: self.type_check.or(other.type_check),
+            max_warnings: self.max_warnings.or(other.max_warnings),
         }
     }
 }
@@ -399,6 +405,7 @@ mod test {
         assert_eq!(config.extends, Vec::<PathBuf>::default());
         assert_eq!(config.options.type_aware, None);
         assert_eq!(config.options.type_check, None);
+        assert_eq!(config.options.max_warnings, None);
     }
 
     #[test]
@@ -418,6 +425,14 @@ mod test {
         let config: Oxlintrc =
             serde_json::from_value(json!({ "options": { "typeCheck": false } })).unwrap();
         assert_eq!(config.options.type_check, Some(false));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "maxWarnings": 10 } })).unwrap();
+        assert_eq!(config.options.max_warnings, Some(10));
+
+        let config: Result<Oxlintrc, _> =
+            serde_json::from_value(json!({ "options": { "maxWarnings": -1 } }));
+        assert!(config.is_err());
     }
 
     #[test]
@@ -427,23 +442,29 @@ mod test {
 
         let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "typeCheck": true }));
         assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "maxWarnings": 1 }));
+        assert!(config.is_err());
     }
 
     #[test]
     fn test_oxlintrc_merge_options() {
-        let mut root: Oxlintrc =
-            serde_json::from_value(json!({ "options": { "typeAware": true, "typeCheck": false } }))
-                .unwrap();
+        let mut root: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "typeAware": true, "typeCheck": false, "maxWarnings": 1 } }),
+        )
+        .unwrap();
         root.path = PathBuf::from("/root/.oxlintrc.json");
 
-        let mut base: Oxlintrc =
-            serde_json::from_value(json!({ "options": { "typeAware": false, "typeCheck": true } }))
-                .unwrap();
+        let mut base: Oxlintrc = serde_json::from_value(
+            json!({ "options": { "typeAware": false, "typeCheck": true, "maxWarnings": 10 } }),
+        )
+        .unwrap();
         base.path = PathBuf::from("/root/base.json");
 
         let merged = root.merge(base);
         assert_eq!(merged.options.type_aware, Some(true));
         assert_eq!(merged.options.type_check, Some(false));
+        assert_eq!(merged.options.max_warnings, Some(1));
     }
 
     #[test]
