@@ -144,6 +144,31 @@ impl InferenceState {
                 }
             }
         }
+
+        // Transitively freeze FunctionExpression context captures.
+        // Port of TS `freezeValue()` (lines 1461-1474): when a FunctionExpression is frozen,
+        // all of its context captures are also recursively frozen.
+        // Both enablePreserveExistingMemoizationGuarantees and
+        // enableTransitivelyFreezeFunctionExpressions default to true.
+        let context_ids: Vec<IdentifierId> = to_freeze
+            .iter()
+            .filter_map(|&freeze_id| {
+                self.function_values.get(&freeze_id).map(|fn_val| {
+                    fn_val
+                        .lowered_func
+                        .func
+                        .context
+                        .iter()
+                        .map(|p| p.identifier.id)
+                        .collect::<Vec<_>>()
+                })
+            })
+            .flatten()
+            .collect();
+        for ctx_id in context_ids {
+            self.freeze(ctx_id, reason);
+        }
+
         true
     }
 
@@ -179,6 +204,27 @@ impl InferenceState {
                 }
             }
         }
+
+        // Transitively freeze FunctionExpression context captures (same as in freeze()).
+        let context_ids: Vec<IdentifierId> = to_freeze
+            .iter()
+            .filter_map(|&freeze_id| {
+                self.function_values.get(&freeze_id).map(|fn_val| {
+                    fn_val
+                        .lowered_func
+                        .func
+                        .context
+                        .iter()
+                        .map(|p| p.identifier.id)
+                        .collect::<Vec<_>>()
+                })
+            })
+            .flatten()
+            .collect();
+        for ctx_id in context_ids {
+            self.freeze(ctx_id, reason);
+        }
+
         true
     }
 
@@ -2509,10 +2555,8 @@ fn compute_instruction_effects(
         if let AliasingEffect::Capture { from, into } = effect {
             if let Some(abstract_val) = state.get(from) {
                 if matches!(abstract_val.kind, ValueKind::Frozen | ValueKind::MaybeFrozen) {
-                    *effect = AliasingEffect::ImmutableCapture {
-                        from: from.clone(),
-                        into: into.clone(),
-                    };
+                    *effect =
+                        AliasingEffect::ImmutableCapture { from: from.clone(), into: into.clone() };
                 }
             }
         }
