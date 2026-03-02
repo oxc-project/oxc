@@ -1895,6 +1895,136 @@ fn compute_effects_for_signature(
     Some(effects)
 }
 
+/// Filter substituted effects from `compute_effects_for_signature` through the
+/// abstract state, matching the TS `applyEffect` filtering behavior.
+///
+/// In the TS compiler, each substituted effect is recursively passed through
+/// `applyEffect`, which checks the abstract value kind of places referenced by
+/// the effect and may drop, downgrade, or transform effects:
+///
+/// - `MutateConditionally`/`MutateTransitiveConditionally`: dropped if the value
+///   is not Mutable or Context (e.g. frozen values are not conditionally mutated).
+/// - `Alias`/`Capture`: downgraded to `ImmutableCapture` if the source is frozen,
+///   or dropped entirely if the source is global/primitive.
+/// - `Assign`: downgraded to `ImmutableCapture` if the source is frozen.
+/// - `ImmutableCapture`: dropped if the source is global/primitive.
+/// - Other effects (`Create`, `Freeze`, `Render`, etc.) pass through unchanged.
+fn filter_substituted_effects(
+    state: &InferenceState,
+    raw_effects: Vec<AliasingEffect>,
+) -> Vec<AliasingEffect> {
+    let mut filtered = Vec::with_capacity(raw_effects.len());
+
+    for effect in raw_effects {
+        match &effect {
+            // MutateConditionally / MutateTransitiveConditionally:
+            // TS applyEffect (lines 1490-1501): only kept if value is Mutable or Context.
+            AliasingEffect::MutateConditionally { value }
+            | AliasingEffect::MutateTransitiveConditionally { value } => {
+                let keep = match state.get(value) {
+                    Some(av) => matches!(av.kind, ValueKind::Mutable | ValueKind::Context),
+                    None => true, // Unknown: conservatively keep
+                };
+                if keep {
+                    filtered.push(effect);
+                }
+            }
+
+            // Alias / Capture:
+            // TS applyEffect (lines 862-944): check source and destination kinds.
+            // - source frozen -> ImmutableCapture
+            // - source global/primitive -> drop
+            // - source mutable & dest mutable -> keep
+            // - source context or cross context/mutable -> MaybeAlias
+            AliasingEffect::Alias { from, into } | AliasingEffect::Capture { from, into } => {
+                let from_kind = state.get(from).map(|av| av.kind);
+                match from_kind {
+                    Some(ValueKind::Global) | Some(ValueKind::Primitive) => {
+                        // Drop: global/primitive sources don't need data flow tracking
+                    }
+                    Some(ValueKind::Frozen) | Some(ValueKind::MaybeFrozen) => {
+                        // Downgrade to ImmutableCapture
+                        filtered.push(AliasingEffect::ImmutableCapture {
+                            from: from.clone(),
+                            into: into.clone(),
+                        });
+                    }
+                    Some(ValueKind::Context) => {
+                        let into_kind = state.get(into).map(|av| av.kind);
+                        if into_kind.is_some() {
+                            // Context source with any known destination -> MaybeAlias
+                            filtered.push(AliasingEffect::MaybeAlias {
+                                from: from.clone(),
+                                into: into.clone(),
+                            });
+                        }
+                    }
+                    Some(ValueKind::Mutable) => {
+                        let into_kind = state.get(into).map(|av| av.kind);
+                        match into_kind {
+                            Some(ValueKind::Mutable) | Some(ValueKind::MaybeFrozen) => {
+                                filtered.push(effect);
+                            }
+                            Some(ValueKind::Context) => {
+                                filtered.push(AliasingEffect::MaybeAlias {
+                                    from: from.clone(),
+                                    into: into.clone(),
+                                });
+                            }
+                            _ => {
+                                // destination is frozen/global/primitive/unknown -> drop
+                            }
+                        }
+                    }
+                    None => {
+                        // Unknown source: conservatively keep
+                        filtered.push(effect);
+                    }
+                }
+            }
+
+            // Assign:
+            // TS applyEffect (lines 947-1015): frozen source -> ImmutableCapture.
+            AliasingEffect::Assign { from, into } => {
+                let from_kind = state.get(from).map(|av| av.kind);
+                match from_kind {
+                    Some(ValueKind::Frozen) | Some(ValueKind::MaybeFrozen) => {
+                        filtered.push(AliasingEffect::ImmutableCapture {
+                            from: from.clone(),
+                            into: into.clone(),
+                        });
+                    }
+                    _ => {
+                        // Global, Primitive, Mutable, Context, Unknown -> keep as-is
+                        filtered.push(effect);
+                    }
+                }
+            }
+
+            // ImmutableCapture:
+            // TS applyEffect (lines 717-729): drop if source is global/primitive.
+            AliasingEffect::ImmutableCapture { from, .. } => {
+                let from_kind = state.get(from).map(|av| av.kind);
+                match from_kind {
+                    Some(ValueKind::Global) | Some(ValueKind::Primitive) => {
+                        // Drop: no data flow tracking needed for copy types
+                    }
+                    _ => {
+                        filtered.push(effect);
+                    }
+                }
+            }
+
+            // All other effects pass through unchanged.
+            _ => {
+                filtered.push(effect);
+            }
+        }
+    }
+
+    filtered
+}
+
 /// Compute the aliasing effects for an instruction.
 ///
 /// Port of `computeSignatureForInstruction` from `InferMutationAliasingEffects.ts`.
@@ -2030,7 +2160,11 @@ fn compute_instruction_effects(
                                 value: v.callee.clone(),
                             });
                         }
-                        effects.extend(sig_effects);
+                        // Filter substituted effects through abstract state to match
+                        // TS applyEffect behavior: drop mutations on frozen values,
+                        // downgrade Alias to ImmutableCapture when source is frozen, etc.
+                        let filtered = filter_substituted_effects(state, sig_effects);
+                        effects.extend(filtered);
                         return effects;
                     }
                 }
@@ -2080,7 +2214,10 @@ fn compute_instruction_effects(
                         context_vars,
                     ) {
                         // TS: for MethodCall, mutatesCallee=false so no MutateTransitiveConditionally on function
-                        effects.extend(sig_effects);
+                        // Filter substituted effects through abstract state to match
+                        // TS applyEffect behavior.
+                        let filtered = filter_substituted_effects(state, sig_effects);
+                        effects.extend(filtered);
                         return effects;
                     }
                 }
