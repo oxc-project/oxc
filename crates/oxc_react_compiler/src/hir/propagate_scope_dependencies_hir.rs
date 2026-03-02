@@ -31,7 +31,7 @@ use super::hir_types::{
 };
 use super::visitors::{
     each_instruction_operand, each_instruction_value_operand, each_pattern_operand,
-    each_terminal_operand,
+    each_terminal_operand, each_terminal_successor,
 };
 
 // =====================================================================================
@@ -1331,15 +1331,154 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
     //
     // In the Rust HIR, `prop2?.inner` is a SEPARATE inner Optional terminal (optional=true)
     // and `prop2?.inner.value` uses an OUTER Optional terminal (optional=false). The
-    // hoistable dep `{prop2, path: [?.inner]}` is recorded on the OUTER Optional block
-    // (B_outer), which is INSIDE the scope body — not at its boundary. The backward
-    // propagation in collect_hoistable_property_loads fails to carry this info to the
-    // scope body start block because intermediate blocks have multiple successors.
+    // hoistable dep `{prop2, path: [?.inner]}` is recorded on the OUTER Optional block,
+    // which is inside the scope body. The backward propagation in
+    // collect_hoistable_property_loads may fail to carry this info to the scope body
+    // start block because intermediate blocks have multiple successors.
     //
-    // To match TS behavior, we directly find the scope containing each hoistable_objects
-    // block (by matching instruction IDs against scope ranges) and add the dep to that
-    // scope's hoistable set.
+    // To match TS behavior, we find the scope containing each hoistable_objects block
+    // and add the dep to that scope's hoistable set.
+    //
+    // However, we must NOT augment hoistable objects that are inside ANOTHER optional
+    // chain's conditional branch. For example, in `prop3?.fn(prop4?.inner.value)`, the
+    // blocks for `prop4?.inner.value` are inside `prop3?`'s conditional consequent.
+    // The hoistable dep `prop4?.inner` should NOT be added to the scope.
+    //
+    // To distinguish, we collect the set of blocks guarded by each Optional(optional=true)
+    // chain's conditional branch, along with the root variable's declaration_id. A
+    // hoistable dep is skipped if its block is guarded by a chain whose root differs
+    // from the dep's root.
     if !opt_chain.hoistable_objects.is_empty() {
+        // For each Optional(optional=true) block, find:
+        //   1. The root variable's declaration_id (from the LoadLocal in the deepest test block)
+        //   2. The Branch consequent block (start of the guarded region)
+        //   3. The Optional fallthrough block (end of the guarded region)
+        //
+        // Then collect all blocks reachable from the consequent until the fallthrough
+        // and map them to the root variable's declaration_id.
+        //
+        // A block can be guarded by multiple optional chains (nested optionals).
+        let mut guarded_blocks: FxHashMap<BlockId, Vec<DeclarationId>> = FxHashMap::default();
+
+        for block in func.body.blocks.values() {
+            if let Terminal::Optional(opt) = &block.terminal {
+                if !opt.optional {
+                    continue;
+                }
+
+                // Trace the test chain to find the Branch terminal and the LoadLocal source.
+                let mut current_test = opt.test;
+                let branch_info: Option<(DeclarationId, BlockId)> = loop {
+                    let Some(test_block) = func.body.blocks.get(&current_test) else {
+                        break None;
+                    };
+                    match &test_block.terminal {
+                        Terminal::Branch(branch) => {
+                            // Find the root variable's declaration_id from the test block's
+                            // LoadLocal/LoadContext instruction. The Branch tests a temporary
+                            // created by LoadLocal, but we need the ORIGINAL variable.
+                            let root_decl = if !test_block.instructions.is_empty() {
+                                match &test_block.instructions[0].value {
+                                    InstructionValue::LoadLocal(v) => {
+                                        Some(v.place.identifier.declaration_id)
+                                    }
+                                    InstructionValue::LoadContext(v) => {
+                                        Some(v.place.identifier.declaration_id)
+                                    }
+                                    _ => None,
+                                }
+                            } else {
+                                None
+                            };
+                            break root_decl.map(|decl| (decl, branch.consequent));
+                        }
+                        Terminal::Optional(inner_opt) => {
+                            current_test = inner_opt.test;
+                        }
+                        _ => break None,
+                    }
+                };
+
+                let Some((root_decl_id, consequent_block_id)) = branch_info else {
+                    continue;
+                };
+
+                // Collect all blocks guarded by this Optional(optional=true) chain.
+                //
+                // There are two regions to consider:
+                //
+                // 1. Blocks reachable from the Branch consequent (inside the initial
+                //    null check). This covers the property load for the base access.
+                //
+                // 2. Blocks reachable from the Optional's fallthrough block's Branch
+                //    consequent. The fallthrough block is typically a phi + Branch that
+                //    continues the chain: if the variable was non-null, it takes the
+                //    consequent (which includes the rest of the chain like `.fn(...)` and
+                //    any nested chains like `prop4?.inner.value`). If the variable was
+                //    null, it takes the alternate (bail out).
+                //
+                // Both regions are guarded by the same variable's nullability.
+                let fallthrough = opt.fallthrough;
+
+                // Find the continuation consequent from the fallthrough block.
+                let continuation_consequent = func.body.blocks.get(&fallthrough).and_then(|fb| {
+                    match &fb.terminal {
+                        Terminal::Branch(branch) => Some(branch.consequent),
+                        _ => None,
+                    }
+                });
+
+                // Collect the parent Optional's fallthrough (the enclosing non-optional
+                // chain's fallthrough) as a stop boundary. Walk up from the current
+                // Optional(optional=true) block through its predecessors to find the
+                // nearest Optional(optional=false) parent and use ITS fallthrough.
+                let parent_fallthrough = {
+                    let mut pf: Option<BlockId> = None;
+                    // Walk up predecessors: the Optional(optional=true) block's pred is
+                    // an Optional(optional=false) block.
+                    for &pred_id in &block.preds {
+                        if let Some(pred_block) = func.body.blocks.get(&pred_id) {
+                            if let Terminal::Optional(parent_opt) = &pred_block.terminal {
+                                if !parent_opt.optional {
+                                    pf = Some(parent_opt.fallthrough);
+                                }
+                            }
+                        }
+                    }
+                    pf
+                };
+
+                // BFS from both the initial consequent AND the continuation consequent,
+                // stopping at the parent Optional's fallthrough.
+                let mut start_blocks = vec![consequent_block_id];
+                if let Some(cont) = continuation_consequent {
+                    start_blocks.push(cont);
+                }
+
+                let mut visit_queue: Vec<BlockId> = start_blocks;
+                let mut visited: FxHashSet<BlockId> = FxHashSet::default();
+                // Don't enter the fallthrough itself or the parent's fallthrough
+                visited.insert(fallthrough);
+                if let Some(pf) = parent_fallthrough {
+                    visited.insert(pf);
+                }
+
+                while let Some(bid) = visit_queue.pop() {
+                    if !visited.insert(bid) {
+                        continue;
+                    }
+                    guarded_blocks.entry(bid).or_default().push(root_decl_id);
+
+                    // Follow successors of this block.
+                    if let Some(b) = func.body.blocks.get(&bid) {
+                        for succ in each_terminal_successor(&b.terminal) {
+                            visit_queue.push(succ);
+                        }
+                    }
+                }
+            }
+        }
+
         // Build a list of (scope_id, scope_range) from scope terminals.
         let scope_ranges: Vec<(
             ScopeId,
@@ -1359,10 +1498,21 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
             .collect();
 
         for (opt_block_id, opt_dep) in &opt_chain.hoistable_objects {
+            let dep_decl_id = opt_dep.identifier.declaration_id;
+
+            // Check if this block is guarded by an optional chain for a DIFFERENT variable.
+            // If so, the dep is nested inside another chain's conditional branch and should
+            // NOT be augmented into the scope's hoistable set.
+            let has_foreign_guard = guarded_blocks
+                .get(opt_block_id)
+                .is_some_and(|guards| guards.iter().any(|&guard_decl| guard_decl != dep_decl_id));
+
+            if has_foreign_guard {
+                continue;
+            }
+
             let Some(opt_block) = func.body.blocks.get(opt_block_id) else { continue };
 
-            // Determine the "representative instruction ID" for this block:
-            // use the first instruction if any, otherwise use the terminal ID.
             let block_instr_id = if let Some(first_instr) = opt_block.instructions.first() {
                 first_instr.id
             } else {
@@ -1370,8 +1520,7 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
             };
 
             // Find the innermost scope that contains this block.
-            // "Innermost" = smallest range that contains block_instr_id.
-            let mut best: Option<(ScopeId, u32)> = None; // (scope_id, range_len)
+            let mut best: Option<(ScopeId, u32)> = None;
             for &(scope_id, range_start, range_end) in &scope_ranges {
                 if block_instr_id >= range_start && block_instr_id < range_end {
                     let range_len = range_end.0.saturating_sub(range_start.0);
@@ -1383,7 +1532,6 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
 
             if let Some((scope_id, _)) = best {
                 let entry = hoistable_by_scope.entry(scope_id).or_default();
-                // Only add if not already present (avoid duplicates).
                 let already_present = entry.iter().any(|existing| {
                     existing.identifier.declaration_id == opt_dep.identifier.declaration_id
                         && super::hir_types::are_equal_paths(&existing.path, &opt_dep.path)

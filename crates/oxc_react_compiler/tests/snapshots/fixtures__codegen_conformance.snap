@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1293/1339 passed (96.6%)
+Codegen conformance: 1295/1339 passed (96.7%)
 Flow files skipped: 38
 FBT lowering skipped: 32
 
@@ -12,7 +12,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:43
+  output_mismatch:41
   no_expected:    0
 
 Failed fixtures:
@@ -38,14 +38,12 @@ Failed fixtures:
   [output_mismatch] meta-isms/repro-cx-namespace-assigned-to-temporary.js
   [output_mismatch] mixedreadonly-mutating-map.js
   [output_mismatch] name-anonymous-functions.js
-  [output_mismatch] nested-optional-chains.ts
   [output_mismatch] new-mutability/aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] new-mutability/repro-destructure-from-prop-with-default-value.js
   [output_mismatch] new-mutability/todo-control-flow-sensitive-mutation.tsx
   [output_mismatch] object-expression-computed-key-modified-during-after-construction.js
   [output_mismatch] object-expression-member-expr-call.js
   [output_mismatch] preserve-memo-validation/useCallback-infer-more-specific.ts
-  [output_mismatch] propagate-scope-deps-hir-fork/nested-optional-chains.ts
   [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/infer-function-uncond-optional-hoists-other-dep.tsx
   [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
   [output_mismatch] reduce-reactive-deps/hoist-deps-diff-ssa-instance1.tsx
