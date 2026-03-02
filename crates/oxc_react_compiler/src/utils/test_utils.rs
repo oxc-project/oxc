@@ -31,6 +31,13 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
     // memoization is preserved.
     env_config.validate_preserve_existing_memoization_guarantees = false;
 
+    // Match the TS snap test harness behavior: always register the shared-runtime
+    // module type provider. The TS snap tool (packages/snap/src/compiler.ts) sets:
+    //   moduleTypeProvider: makeSharedRuntimeTypeProvider(...)
+    // which provides type information for hooks like useFragment (MixedReadonly,
+    // noAlias) and useNoAlias from the shared-runtime test module.
+    env_config.enable_shared_runtime_type_provider = true;
+
     for entry in split_pragma(pragma) {
         match entry.key.as_str() {
             "enableForest" => {
@@ -102,7 +109,9 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
             }
             "compilationMode" => {
                 if let Some(val) = &entry.value {
-                    options.compilation_mode = match val.as_str() {
+                    // Strip surrounding quotes to match TS tryParseTestPragmaValue
+                    let stripped = val.trim_matches('"');
+                    options.compilation_mode = match stripped {
                         "infer" => CompilationMode::Infer,
                         "syntax" => CompilationMode::Syntax,
                         "annotation" => CompilationMode::Annotation,
@@ -113,11 +122,24 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
             }
             "panicThreshold" => {
                 if let Some(val) = &entry.value {
-                    options.panic_threshold = match val.as_str() {
+                    // Strip surrounding quotes to match TS tryParseTestPragmaValue
+                    let stripped = val.trim_matches('"');
+                    options.panic_threshold = match stripped {
                         "critical_errors" => PanicThreshold::CriticalErrors,
                         "none" => PanicThreshold::None,
                         _ => PanicThreshold::AllErrors,
                     };
+                }
+            }
+            "customMacros" => {
+                if let Some(val) = &entry.value {
+                    // Strip surrounding quotes, then take the part before the first dot.
+                    // Matches TS: `parsedVal.split('.')[0]`
+                    let stripped = val.trim_matches('"');
+                    let name = stripped.split('.').next().unwrap_or(stripped);
+                    if !name.is_empty() {
+                        env_config.custom_macros = Some(vec![name.to_string()]);
+                    }
                 }
             }
             _ => {
