@@ -460,9 +460,7 @@ fn build_named_imports(
             syntax::ImportImportName::NamespaceObject => {
                 (CompactString::new("*"), Span::default(), false)
             }
-            syntax::ImportImportName::Default(span) => {
-                (CompactString::new("default"), *span, true)
-            }
+            syntax::ImportImportName::Default(span) => (CompactString::new("default"), *span, true),
         };
 
         let local_name = entry.local_name.name.as_str();

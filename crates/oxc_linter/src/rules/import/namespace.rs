@@ -198,13 +198,7 @@ impl Rule for Namespace {
                         AstKind::JSXMemberExpression(expr) => {
                             check_binding_exported_mg(
                                 &expr.property.name,
-                                || {
-                                    no_export(
-                                        expr.property.span,
-                                        &expr.property.name,
-                                        &source_str,
-                                    )
-                                },
+                                || no_export(expr.property.span, &expr.property.name, &source_str),
                                 ns_module,
                                 ctx,
                             );
@@ -264,9 +258,7 @@ impl Rule for Namespace {
                             }
                             _ => false,
                         };
-                        if is_assignment
-                            || matches!(parent_kind, AstKind::IdentifierReference(_))
-                        {
+                        if is_assignment || matches!(parent_kind, AstKind::IdentifierReference(_)) {
                             ctx.diagnostic(assignment(member.span(), name));
                         }
 

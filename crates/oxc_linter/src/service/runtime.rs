@@ -796,12 +796,8 @@ impl Runtime {
             }
 
             // Build specifier → record_idx mapping.
-            let specifier_to_record_idx: FxHashMap<&str, usize> = record
-                .requested_modules
-                .keys()
-                .enumerate()
-                .map(|(i, k)| (k.as_str(), i))
-                .collect();
+            let specifier_to_record_idx: FxHashMap<&str, usize> =
+                record.requested_modules.keys().enumerate().map(|(i, k)| (k.as_str(), i)).collect();
 
             // Build named_imports from import_entries.
             let mut named_imports: FxHashMap<SymbolRef, mg::types::NamedImport> =
@@ -819,10 +815,8 @@ impl Runtime {
                     }
                 };
                 let local_symbol = graph.add_symbol(idx, entry.local_name.name().to_string());
-                let record_idx = specifier_to_record_idx
-                    .get(entry.module_request.name())
-                    .copied()
-                    .unwrap_or(0);
+                let record_idx =
+                    specifier_to_record_idx.get(entry.module_request.name()).copied().unwrap_or(0);
                 named_imports.insert(
                     local_symbol,
                     mg::types::NamedImport {
@@ -840,11 +834,10 @@ impl Runtime {
             let mut import_records = Vec::new();
             for (specifier, requested_modules) in &record.requested_modules {
                 let specifier_str = specifier.as_str();
-                let resolved_module =
-                    record.get_loaded_module(specifier_str).and_then(|loaded| {
-                        let loaded_path = &loaded.resolved_absolute_path;
-                        path_to_idx.get(loaded_path).copied()
-                    });
+                let resolved_module = record.get_loaded_module(specifier_str).and_then(|loaded| {
+                    let loaded_path = &loaded.resolved_absolute_path;
+                    path_to_idx.get(loaded_path).copied()
+                });
 
                 // If not resolved and it's a bare specifier, create external module.
                 let resolved_module = resolved_module.or_else(|| {
@@ -857,8 +850,7 @@ impl Runtime {
                             Some(existing)
                         } else {
                             let ext_idx = graph.alloc_module_idx();
-                            let ext_ns =
-                                graph.add_symbol(ext_idx, format!("{specifier_str}_ns"));
+                            let ext_ns = graph.add_symbol(ext_idx, format!("{specifier_str}_ns"));
                             graph.add_external_module(ExternalModule {
                                 idx: ext_idx,
                                 specifier: CompactString::from(specifier_str),
@@ -894,10 +886,9 @@ impl Runtime {
                 .filter_map(|entry| {
                     let module_request = entry.module_request.as_ref()?;
                     let specifier = module_request.name();
-                    let resolved_module =
-                        record.get_loaded_module(specifier).and_then(|loaded| {
-                            path_to_idx.get(&loaded.resolved_absolute_path).copied()
-                        });
+                    let resolved_module = record.get_loaded_module(specifier).and_then(|loaded| {
+                        path_to_idx.get(&loaded.resolved_absolute_path).copied()
+                    });
                     Some(StarExportEntry {
                         module_request: CompactString::from(specifier),
                         resolved_module,
@@ -932,10 +923,9 @@ impl Runtime {
                         }
                         crate::module_record::ExportImportName::Null => return None,
                     };
-                    let resolved_module =
-                        record.get_loaded_module(specifier).and_then(|loaded| {
-                            path_to_idx.get(&loaded.resolved_absolute_path).copied()
-                        });
+                    let resolved_module = record.get_loaded_module(specifier).and_then(|loaded| {
+                        path_to_idx.get(&loaded.resolved_absolute_path).copied()
+                    });
                     Some(IndirectExportEntry {
                         exported_name,
                         imported_name,
@@ -985,10 +975,7 @@ impl Runtime {
         graph.set_entries(entries);
 
         // Run the link pipeline.
-        let mut link_config = mg::LinkConfig {
-            cjs_interop: true,
-            ..mg::LinkConfig::default()
-        };
+        let mut link_config = mg::LinkConfig { cjs_interop: true, ..mg::LinkConfig::default() };
         graph.link(&mut link_config);
 
         Some(Arc::new(graph))
@@ -1057,9 +1044,10 @@ impl Runtime {
                             return;
                         }
 
-                        let mg_info = module_to_lint.module_graph.as_ref().and_then(|g| {
-                            Some((Arc::clone(g), module_to_lint.module_idx?))
-                        });
+                        let mg_info = module_to_lint
+                            .module_graph
+                            .as_ref()
+                            .and_then(|g| Some((Arc::clone(g), module_to_lint.module_idx?)));
                         let (mut messages, disable_directives) =
                             me.linter.run_with_disable_directives(
                                 path,

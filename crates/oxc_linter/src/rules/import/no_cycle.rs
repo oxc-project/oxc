@@ -161,10 +161,7 @@ impl Rule for NoCycle {
 
             // Filter: ignore type-only imports if configured.
             if ignore_types {
-                let all_type_only = self.all_type_only_for_specifier(
-                    &record.specifier,
-                    module,
-                );
+                let all_type_only = self.all_type_only_for_specifier(&record.specifier, module);
                 if all_type_only {
                     continue;
                 }
@@ -180,15 +177,11 @@ impl Rule for NoCycle {
             // Allow self referencing named export.
             if target_idx == needle {
                 if let Some(target) = graph.normal_module(target_idx) {
-                    if target
-                        .indirect_export_entries
-                        .iter()
-                        .any(|e| {
-                            e.module_request.as_str() == record.specifier.as_str()
-                                && !e.exported_name.is_empty()
-                                && e.exported_name.as_str() != "*"
-                        })
-                    {
+                    if target.indirect_export_entries.iter().any(|e| {
+                        e.module_request.as_str() == record.specifier.as_str()
+                            && !e.exported_name.is_empty()
+                            && e.exported_name.as_str() != "*"
+                    }) {
                         continue;
                     }
                 }
@@ -230,11 +223,7 @@ impl Rule for NoCycle {
 impl NoCycle {
     /// Check if ALL import entries and indirect export entries for a given
     /// specifier are type-only.
-    fn all_type_only_for_specifier(
-        &self,
-        specifier: &str,
-        module: &NormalModule,
-    ) -> bool {
+    fn all_type_only_for_specifier(&self, specifier: &str, module: &NormalModule) -> bool {
         // If any non-type indirect export entry references this specifier,
         // the import is not fully type-only.
         let has_value_indirect_export = module
@@ -321,9 +310,10 @@ fn dfs_find_cycle(
                     false
                 }
             });
-            let has_value_indirect = current_module.indirect_export_entries.iter().any(|e| {
-                e.module_request.as_str() == rec.specifier.as_str() && !e.is_type
-            });
+            let has_value_indirect = current_module
+                .indirect_export_entries
+                .iter()
+                .any(|e| e.module_request.as_str() == rec.specifier.as_str() && !e.is_type);
             // If there are no value imports and no value indirect exports,
             // it's entirely type-only — skip it. But only if there IS at least
             // one type-only link (to avoid skipping side-effect-only imports).
@@ -334,9 +324,10 @@ fn dfs_find_cycle(
                     } else {
                         false
                     }
-                }) || current_module.indirect_export_entries.iter().any(|e| {
-                    e.module_request.as_str() == rec.specifier.as_str() && e.is_type
-                });
+                }) || current_module
+                    .indirect_export_entries
+                    .iter()
+                    .any(|e| e.module_request.as_str() == rec.specifier.as_str() && e.is_type);
                 if has_any_type_link {
                     continue;
                 }
@@ -353,14 +344,11 @@ fn dfs_find_cycle(
         // Allow self referencing named export.
         if dep_idx == current
             && let Some(dep) = graph.normal_module(dep_idx)
-            && dep
-                .indirect_export_entries
-                .iter()
-                .any(|e| {
-                    e.module_request.as_str() == rec.specifier.as_str()
-                        && !e.exported_name.is_empty()
-                        && e.exported_name.as_str() != "*"
-                })
+            && dep.indirect_export_entries.iter().any(|e| {
+                e.module_request.as_str() == rec.specifier.as_str()
+                    && !e.exported_name.is_empty()
+                    && e.exported_name.as_str() != "*"
+            })
         {
             continue;
         }
