@@ -611,6 +611,13 @@ pub fn infer_mutation_aliasing_effects(
         }
     }
 
+    // Compute non-mutating spreads for the Destructure handling.
+    // Port of `findNonMutatedDestructureSpreads` from `InferMutationAliasingEffects.ts`.
+    // Computed before the fixpoint loop because it only depends on the HIR structure,
+    // not on the inference state. Used in both the fixpoint iteration and the effect
+    // annotation replay pass.
+    let non_mutating_spreads = find_non_mutating_spreads(func);
+
     // Fixpoint iteration over the CFG
     // Map of blocks to the last (merged) outgoing state that was processed.
     let mut states_by_block: FxHashMap<BlockId, InferenceState> = FxHashMap::default();
@@ -668,7 +675,13 @@ pub fn infer_mutation_aliasing_effects(
 
             // Process instructions.
             for instr in &block.instructions {
-                infer_instruction_effects(&mut state, instr, options, &func.env);
+                infer_instruction_effects(
+                    &mut state,
+                    instr,
+                    options,
+                    &func.env,
+                    &non_mutating_spreads,
+                );
             }
 
             // Store the outgoing state for this block.
@@ -685,10 +698,6 @@ pub fn infer_mutation_aliasing_effects(
             }
         }
     }
-
-    // Compute non-mutating spreads for the Destructure handling.
-    // Port of `findNonMutatedDestructureSpreads` from `InferMutationAliasingEffects.ts`.
-    let non_mutating_spreads = find_non_mutating_spreads(func);
 
     // Annotate effects on instructions.
     // For blocks reached during fixpoint iteration, compute effects from abstract state.
@@ -760,7 +769,13 @@ pub fn infer_mutation_aliasing_effects(
                 }
 
                 // Advance the state past this instruction (replay)
-                infer_instruction_effects(&mut replay_state, &*instr, options, &func.env);
+                infer_instruction_effects(
+                    &mut replay_state,
+                    &*instr,
+                    options,
+                    &func.env,
+                    &non_mutating_spreads,
+                );
             }
         } else {
             // Unreachable block: set empty effects so downstream passes don't skip
@@ -787,6 +802,7 @@ fn infer_instruction_effects(
     instr: &Instruction,
     _options: &InferOptions,
     env: &crate::hir::environment::Environment,
+    non_mutating_spreads: &FxHashSet<IdentifierId>,
 ) {
     let lvalue_id = instr.lvalue.identifier.id;
 
@@ -1041,14 +1057,39 @@ fn infer_instruction_effects(
             }
         }
 
-        // Destructure: the destructured value may be mutable
-        // When the source is frozen, propagate frozen to the pattern lvalues.
+        // Destructure: propagate the source's abstract type to pattern lvalues.
+        //
+        // Port of TS `applyEffect` for Destructure effects:
+        // - Identifier items use CreateFrom, which inherits the source's kind
+        // - Spread items use Create(Mutable|Frozen), which creates a NEW object:
+        //   Mutable unless the spread is in nonMutatingSpreads (frozen)
+        //
+        // In the Rust code, the compute_instruction_effects Destructure handler
+        // already distinguishes these cases in the effect list. Here in state
+        // propagation, we must mirror that: spread items get Mutable or Frozen
+        // depending on the nonMutatingSpreads set, while identifier items inherit
+        // the source type.
         InstructionValue::Destructure(v) => {
             if let Some(val) = state.get(&v.value).cloned() {
                 state.define(&instr.lvalue, val.clone());
-                // Propagate source type to pattern lvalues
-                for place in crate::hir::visitors::each_pattern_operand(&v.lvalue.pattern) {
-                    state.define(place, val.clone());
+                // Use each_pattern_item to distinguish spread vs identifier items
+                for item in crate::hir::visitors::each_pattern_item(&v.lvalue.pattern) {
+                    match item {
+                        crate::hir::visitors::PatternItem::Spread(place) => {
+                            // Spread creates a new object. If it's in non_mutating_spreads,
+                            // define it as Frozen (matching Create(Frozen) in effects).
+                            // Otherwise define as Mutable (matching Create(Mutable)).
+                            if non_mutating_spreads.contains(&place.identifier.id) {
+                                state.define(place, AbstractValue::frozen(FxHashSet::default()));
+                            } else {
+                                state.define(place, AbstractValue::mutable());
+                            }
+                        }
+                        crate::hir::visitors::PatternItem::Identifier(place) => {
+                            // Identifier items inherit the source's abstract type
+                            state.define(place, val.clone());
+                        }
+                    }
                 }
             } else {
                 state.define(&instr.lvalue, AbstractValue::mutable());
@@ -2547,20 +2588,76 @@ fn compute_instruction_effects(
         }
     });
 
-    // Port of TS applyEffect for Capture (InferMutationAliasingEffects.ts lines 894-927):
-    // When a Capture effect's source (from) is Frozen or MaybeFrozen, convert it to
-    // ImmutableCapture. This prevents frozen values from creating mutable capture edges
-    // in the alias graph, which would incorrectly extend mutable ranges.
+    // Port of TS applyEffect frozen-source conversions (InferMutationAliasingEffects.ts):
+    //
+    // When a data-flow effect's source (from) is Frozen or MaybeFrozen, the TS reference
+    // converts the effect to prevent frozen values from creating mutable edges in the alias
+    // graph, which would incorrectly extend mutable ranges.
+    //
+    // 1. Capture/Alias/MaybeAlias (lines 861-944): When source is Frozen/MaybeFrozen,
+    //    convert to ImmutableCapture.
+    // 2. Assign (lines 947-1014): When source is Frozen (only), convert to ImmutableCapture.
+    // 3. CreateFrom (lines 731-789): When source is Frozen (only), replace with
+    //    Create(Frozen) + ImmutableCapture.
+
+    // Collect extra effects that arise from splitting CreateFrom into two effects.
+    let mut extra_effects: Vec<AliasingEffect> = Vec::new();
+
     for effect in &mut effects {
-        if let AliasingEffect::Capture { from, into } = effect {
-            if let Some(abstract_val) = state.get(from) {
-                if matches!(abstract_val.kind, ValueKind::Frozen | ValueKind::MaybeFrozen) {
-                    *effect =
-                        AliasingEffect::ImmutableCapture { from: from.clone(), into: into.clone() };
+        match effect {
+            // Capture, Alias, MaybeAlias: Frozen/MaybeFrozen source → ImmutableCapture
+            AliasingEffect::Capture { from, into }
+            | AliasingEffect::Alias { from, into }
+            | AliasingEffect::MaybeAlias { from, into } => {
+                if let Some(abstract_val) = state.get(from) {
+                    if matches!(abstract_val.kind, ValueKind::Frozen | ValueKind::MaybeFrozen) {
+                        *effect = AliasingEffect::ImmutableCapture {
+                            from: from.clone(),
+                            into: into.clone(),
+                        };
+                    }
                 }
             }
+            // Assign: Frozen source only → ImmutableCapture
+            AliasingEffect::Assign { from, into } => {
+                if let Some(abstract_val) = state.get(from) {
+                    if matches!(abstract_val.kind, ValueKind::Frozen) {
+                        *effect = AliasingEffect::ImmutableCapture {
+                            from: from.clone(),
+                            into: into.clone(),
+                        };
+                    }
+                }
+            }
+            // CreateFrom: Frozen source only → Create(Frozen) + ImmutableCapture
+            AliasingEffect::CreateFrom { from, into } => {
+                if let Some(abstract_val) = state.get(from) {
+                    if matches!(abstract_val.kind, ValueKind::Frozen) {
+                        let from_clone = from.clone();
+                        let into_clone = into.clone();
+                        let reason = abstract_val
+                            .reason
+                            .iter()
+                            .next()
+                            .copied()
+                            .unwrap_or(ValueReason::Other);
+                        extra_effects.push(AliasingEffect::ImmutableCapture {
+                            from: from_clone,
+                            into: into_clone.clone(),
+                        });
+                        *effect = AliasingEffect::Create {
+                            into: into_clone,
+                            value: ValueKind::Frozen,
+                            reason,
+                        };
+                    }
+                }
+            }
+            _ => {}
         }
     }
+
+    effects.extend(extra_effects);
 
     effects
 }
