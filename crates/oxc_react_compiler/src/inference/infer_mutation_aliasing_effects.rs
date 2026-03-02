@@ -246,6 +246,19 @@ impl InferenceState {
     /// Port of `InferenceState.inferPhi()` from `InferMutationAliasingEffects.ts`.
     /// The TypeScript version merges the `Set<InstructionValue>` entries for each operand
     /// into the phi's place. In Rust, we instead merge abstract value kinds directly.
+    ///
+    /// Crucially, we also add identity alias edges from each defined operand to the phi
+    /// result. In TypeScript, `inferPhi` copies the same shared `InstructionValue` objects
+    /// into the phi's variable set, so when any of those objects gets frozen (e.g., because
+    /// `x` is passed as a JSX prop), the phi result is automatically frozen too. In Rust,
+    /// we replicate this by making each operand an identity alias of the phi: when
+    /// `freeze_through_identity` propagates a freeze to an operand, it follows the
+    /// (bidirectional) identity alias graph to reach the phi result as well.
+    ///
+    /// Without this, a phi like `y$73 = phi(y$44, y$65)` would NOT be frozen when
+    /// `y$65` is frozen, causing `y.push` after the phi to be treated as a mutation
+    /// of a Mutable value instead of a MaybeFrozen one. That incorrectly extends `y`'s
+    /// mutable range through the push call, merging all variables into one reactive scope.
     fn infer_phi(&mut self, phi: &Phi) {
         let phi_id = phi.place.identifier.id;
         let mut merged_value: Option<AbstractValue> = None;
@@ -263,6 +276,11 @@ impl InferenceState {
                         AbstractValue { kind, reason: reasons }
                     }
                 });
+                // Add an identity alias so that freeze propagation (freeze_through_identity)
+                // reaches the phi result when any operand is frozen. This mirrors the TS
+                // behavior where the phi's variable set contains the same InstructionValue
+                // objects as its operands — freezing one object freezes all sharers.
+                self.add_identity_alias(op_id, phi_id);
             }
             // Propagate function_values through phi nodes
             if merged_fn_val.is_none() {
@@ -1382,8 +1400,7 @@ fn is_function_expression_mutable(state: &InferenceState, inner_func: &HIRFuncti
     // This ensures that function expressions capturing refs get a longer mutable
     // range, which causes InferReactiveScopeVariables to group them with dependent
     // identifiers (call results, objects, arrays) into a single reactive scope.
-    let captures_ref =
-        inner_func.context.iter().any(|ctx| is_ref_or_ref_value(&ctx.identifier));
+    let captures_ref = inner_func.context.iter().any(|ctx| is_ref_or_ref_value(&ctx.identifier));
     if captures_ref {
         return true;
     }
