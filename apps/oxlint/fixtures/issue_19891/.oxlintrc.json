@@ -1,0 +1,22 @@
+{
+  "plugins": ["typescript"],
+  "categories": {
+    "correctness": "off",
+    "suspicious": "off",
+    "pedantic": "off",
+    "perf": "off",
+    "restriction": "off",
+    "style": "off",
+    "nursery": "off"
+  },
+  "rules": {},
+  "overrides": [
+    {
+      "files": ["**/*.ts"],
+      "rules": {
+        "typescript/no-non-null-assertion": "error",
+        "no-debugger": "error"
+      }
+    }
+  ]
+}

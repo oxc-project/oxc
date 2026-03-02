@@ -937,6 +937,12 @@ mod test {
     }
 
     #[test]
+    fn test_rule_count_includes_override_only_rules() {
+        let args = &["demo.ts"];
+        Tester::new().with_cwd("fixtures/issue_19891".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_overrides_directories() {
         let args = &["-c", "fixtures/overrides/directories-config.json", "fixtures/overrides"];
         Tester::new().test_and_snapshot(args);
