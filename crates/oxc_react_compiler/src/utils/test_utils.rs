@@ -103,6 +103,10 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 env_config.enable_custom_type_definition_for_reanimated =
                     parse_bool_value(entry.value.as_ref(), true);
             }
+            "enableAssumeHooksFollowRulesOfReact" => {
+                env_config.enable_assume_hooks_follow_rules_of_react =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "enableResetCacheOnSourceFileChanges" => {
                 env_config.enable_reset_cache_on_source_file_changes =
                     Some(parse_bool_value(entry.value.as_ref(), true));

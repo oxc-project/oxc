@@ -10,7 +10,8 @@ use super::{
     hir_types::{Effect, ValueKind, ValueReason},
     object_shape::{
         parse_aliasing_signature_config, BUILT_IN_ARRAY_ID,
-        BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID, BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID,
+        BUILT_IN_DEFAULT_MUTATING_HOOK_ID, BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID,
+        BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID,
         BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID, BUILT_IN_SET_ID,
         BUILT_IN_USE_ACTION_STATE_HOOK_ID, BUILT_IN_USE_ACTION_STATE_ID,
         BUILT_IN_USE_CONTEXT_HOOK_ID, BUILT_IN_USE_EFFECT_EVENT_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
@@ -273,9 +274,30 @@ pub fn default_shapes() -> ShapeRegistry {
     }
 
     // =========================================================================
-    // Built-in Object shape (empty — instances are generic objects)
+    // Built-in Object shape — prototype methods
     // =========================================================================
-    add_object(&mut registry, BUILT_IN_OBJECT_ID, Vec::new());
+    {
+        let r = &mut registry;
+        let mut props = Vec::new();
+
+        // toString(): returns Primitive (string)
+        props.push((
+            "toString".to_string(),
+            method_prop(
+                r,
+                FunctionSignature {
+                    positional_params: vec![],
+                    return_type: Type::Primitive,
+                    return_value_kind: ValueKind::Primitive,
+                    callee_effect: Effect::Read,
+                    ..FunctionSignature::default()
+                },
+                Type::Primitive,
+            ),
+        ));
+
+        add_object(r, BUILT_IN_OBJECT_ID, props);
+    }
 
     // =========================================================================
     // Built-in Set shape — instance methods
@@ -935,6 +957,7 @@ pub fn default_shapes() -> ShapeRegistry {
     // Port of `DefaultNonmutatingHook` from ObjectShape.ts.
     // This shape has `hookKind: Custom` so that `get_hook_kind_for_type` can identify
     // hook calls via the type system (critical for FlattenScopesWithHooksOrUse).
+    // Used when enableAssumeHooksFollowRulesOfReact is true (the default).
     add_hook(
         &mut registry,
         Some(BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID),
@@ -943,6 +966,23 @@ pub fn default_shapes() -> ShapeRegistry {
             return_type: Type::Poly,
             return_value_kind: ValueKind::Frozen,
             return_value_reason: Some(ValueReason::HookReturn),
+            callee_effect: Effect::Read,
+            hook_kind: Some(HookKind::Custom),
+            ..FunctionSignature::default()
+        },
+    );
+
+    // DefaultMutatingHook: the default shape for custom hooks when
+    // enableAssumeHooksFollowRulesOfReact is false.
+    // Port of `DefaultMutatingHook` from ObjectShape.ts.
+    // Arguments are conditionally mutated and the return value is mutable.
+    add_hook(
+        &mut registry,
+        Some(BUILT_IN_DEFAULT_MUTATING_HOOK_ID),
+        FunctionSignature {
+            rest_param: Some(Effect::ConditionallyMutate),
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Mutable,
             callee_effect: Effect::Read,
             hook_kind: Some(HookKind::Custom),
             ..FunctionSignature::default()

@@ -13,7 +13,8 @@ use super::{
         Effect, HIRFunction, IdentifierName, NonLocalBinding, ReactFunctionType, ValueKind,
     },
     object_shape::{
-        BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID, FunctionSignature, HookKind, ShapeRegistry,
+        BUILT_IN_DEFAULT_MUTATING_HOOK_ID, BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID,
+        FunctionSignature, HookKind, ShapeRegistry,
     },
     types::{FunctionType, ObjectType, Type},
 };
@@ -137,6 +138,16 @@ pub struct EnvironmentConfig {
     /// (returns `MixedReadonly`, `noAlias: true`), `useNoAlias`, and typed functions.
     /// This matches the `sharedRuntimeTypeProvider` from the TS test harness.
     pub enable_shared_runtime_type_provider: bool,
+
+    /// Whether to assume hooks follow the rules of React.
+    ///
+    /// When true (default), custom hooks are treated with `DefaultNonmutatingHook`:
+    /// arguments are frozen and return values are frozen.
+    /// When false, custom hooks are treated with `DefaultMutatingHook`:
+    /// arguments may be conditionally mutated and return values are mutable.
+    ///
+    /// Corresponds to `enableAssumeHooksFollowRulesOfReact` in the TS version.
+    pub enable_assume_hooks_follow_rules_of_react: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -170,6 +181,7 @@ impl Default for EnvironmentConfig {
             enable_reset_cache_on_source_file_changes: None,
             enable_custom_type_definition_for_reanimated: false,
             enable_shared_runtime_type_provider: false,
+            enable_assume_hooks_follow_rules_of_react: true,
         }
     }
 }
@@ -579,6 +591,26 @@ impl Environment {
         None
     }
 
+    /// Get the fallthrough (wildcard) property type for a computed property access.
+    ///
+    /// Port of `Environment.getFallthroughPropertyType()` from `HIR/Environment.ts`.
+    /// For computed property accesses like `obj[idx]`, only looks up the `*` wildcard
+    /// property on the receiver's shape (ignoring the specific property value).
+    pub fn get_fallthrough_property_type(&self, receiver: &Type) -> Option<Type> {
+        let shape_id = match receiver {
+            Type::Object(ObjectType { shape_id: Some(id) }) => Some(id.as_str()),
+            Type::Function(FunctionType { shape_id: Some(id), .. }) => Some(id.as_str()),
+            _ => None,
+        };
+
+        if let Some(shape_id) = shape_id {
+            if let Some(shape) = self.shapes.get(shape_id) {
+                return shape.properties.get("*").cloned();
+            }
+        }
+        None
+    }
+
     /// Get the function signature from a function type's shape.
     ///
     /// Port of `Environment.getFunctionSignature()` from `HIR/Environment.ts`.
@@ -599,12 +631,18 @@ impl Environment {
     /// Get the default hook type for unrecognized hooks.
     ///
     /// Corresponds to `#getCustomHookType()` in the TS version.
-    /// Returns a `Function` type with the `DefaultNonmutatingHook` shape_id,
-    /// which has `hookKind: Custom`. This is critical for the flatten pass
-    /// (`FlattenScopesWithHooksOrUse`) to detect hook calls via the type system.
+    /// When `enableAssumeHooksFollowRulesOfReact` is true (default), returns
+    /// `DefaultNonmutatingHook` (arguments frozen, return frozen).
+    /// When false, returns `DefaultMutatingHook` (arguments conditionally mutated,
+    /// return mutable).
     fn get_custom_hook_type(&self) -> Global {
+        let shape_id = if self.config.enable_assume_hooks_follow_rules_of_react {
+            BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID
+        } else {
+            BUILT_IN_DEFAULT_MUTATING_HOOK_ID
+        };
         Global::Typed(Type::Function(FunctionType {
-            shape_id: Some(BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID.to_string()),
+            shape_id: Some(shape_id.to_string()),
             return_type: Box::new(Type::Poly),
             is_constructor: false,
         }))
