@@ -65,6 +65,10 @@ export const item={  a:1,b:2}; // prettier-ignore
 const config={  retries:10,timeout:5000}; // prettier-ignore
 let data=[ 1,2,3 ]; // prettier-ignore
 
+const items = [
+  {a:aa(),b:bb(),c:cc(),d:dd(),e:ee(),f:ff(),g:gg()}, // prettier-ignore
+];
+
 function demo() {
   return   {a:1,b:2}; // prettier-ignore
 }
