@@ -395,20 +395,56 @@ impl InferenceState {
     }
 }
 
-/// Merge two value kinds, returning the more conservative one.
+/// Merge two value kinds using the TS join lattice from `mergeValueKinds`.
+///
+/// Join lattice:
+///   - immutable | mutable   => mutable (callers can distinguish primitive vs object)
+///   - frozen    | mutable   => maybe-frozen (callers cannot distinguish frozen vs mutable)
+///   - immutable | frozen    => frozen
+///   - <any>     | maybe-frozen => maybe-frozen
+///   - immutable | context   => context
+///   - mutable   | context   => context
+///   - frozen    | context   => maybe-frozen
 fn merge_value_kinds(a: ValueKind, b: ValueKind) -> ValueKind {
     if a == b {
         return a;
     }
-    // Ordering: Mutable > Context > MaybeFrozen > Frozen > Primitive > Global
-    match (a, b) {
-        (ValueKind::Mutable, _) | (_, ValueKind::Mutable) => ValueKind::Mutable,
-        (ValueKind::Context, _) | (_, ValueKind::Context) => ValueKind::Context,
-        (ValueKind::MaybeFrozen, _) | (_, ValueKind::MaybeFrozen) => ValueKind::MaybeFrozen,
-        (ValueKind::Frozen, _) | (_, ValueKind::Frozen) => ValueKind::Frozen,
-        (ValueKind::Primitive, _) | (_, ValueKind::Primitive) => ValueKind::Primitive,
-        (ValueKind::Global, ValueKind::Global) => ValueKind::Global,
+    // 1. Either is MaybeFrozen -> MaybeFrozen
+    if a == ValueKind::MaybeFrozen || b == ValueKind::MaybeFrozen {
+        return ValueKind::MaybeFrozen;
     }
+    // 2. Either is Mutable
+    if a == ValueKind::Mutable || b == ValueKind::Mutable {
+        if a == ValueKind::Frozen || b == ValueKind::Frozen {
+            // frozen | mutable -> MaybeFrozen
+            return ValueKind::MaybeFrozen;
+        } else if a == ValueKind::Context || b == ValueKind::Context {
+            // context | mutable -> Context
+            return ValueKind::Context;
+        }
+        // mutable | immutable (Global/Primitive) -> Mutable
+        return ValueKind::Mutable;
+    }
+    // 3. Either is Context (neither is Mutable/MaybeFrozen at this point)
+    if a == ValueKind::Context || b == ValueKind::Context {
+        if a == ValueKind::Frozen || b == ValueKind::Frozen {
+            // frozen | context -> MaybeFrozen
+            return ValueKind::MaybeFrozen;
+        }
+        // context | immutable -> Context
+        return ValueKind::Context;
+    }
+    // 4. Either is Frozen (neither is Mutable/Context/MaybeFrozen)
+    if a == ValueKind::Frozen || b == ValueKind::Frozen {
+        // frozen | immutable -> Frozen
+        return ValueKind::Frozen;
+    }
+    // 5. Either is Global
+    if a == ValueKind::Global || b == ValueKind::Global {
+        return ValueKind::Global;
+    }
+    // 6. Both Primitive
+    ValueKind::Primitive
 }
 
 /// Finds objects created via ObjectPattern spread destructuring
