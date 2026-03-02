@@ -1618,14 +1618,19 @@ fn codegen_instruction_value(cx: &mut CodegenContext, value: &InstructionValue) 
                 if !expr.starts_with('(') && is_ternary_expression(expr) {
                     return true;
                 }
-                // NullishCoalescing (`??`) has lower precedence than all arithmetic and
-                // comparison operators. Wrap it when used as a binary expression operand.
+                // Logical operators (`||`, `&&`, `??`) have lower precedence than all
+                // arithmetic and comparison operators. Wrap them when used as a binary
+                // expression operand.
                 // e.g., `(x ?? 0) + 1` must not become `x ?? 0 + 1`.
+                // e.g., `x + (a || b)` must not become `x + a || b`.
                 if !expr.starts_with('(') && is_nullish_coalescing_expression(expr) {
                     return true;
                 }
-                // Also check if this temp was recorded as a NullishCoalescing expression.
-                if let Some(LogicalOperator::Coalesce) = cx.logical_temps.get(&decl_id).copied() {
+                if !expr.starts_with('(') && is_logical_or_and_expression(expr) {
+                    return true;
+                }
+                // Also check if this temp was recorded as a logical expression.
+                if cx.logical_temps.contains_key(&decl_id) {
                     return true;
                 }
                 false
@@ -2657,6 +2662,64 @@ fn is_nullish_coalescing_expression(expr: &str) -> bool {
                     if i > 0 && i + 2 < len && bytes[i - 1] == b' ' && bytes[i + 2] == b' ' {
                         return true;
                     }
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    false
+}
+
+/// Check if a string expression contains ` || ` or ` && ` (logical OR/AND) at the top level
+/// (not inside parens/brackets/braces/strings).
+///
+/// Used to detect when a logical OR/AND expression is used as an operand in a binary
+/// expression and needs to be wrapped in parentheses for correct operator precedence.
+/// `||` (precedence 5) and `&&` (precedence 6) have lower precedence than `+`, `-`,
+/// `*`, `/`, `%`, comparison operators, etc.
+fn is_logical_or_and_expression(expr: &str) -> bool {
+    let bytes = expr.as_bytes();
+    let len = bytes.len();
+    let mut depth: i32 = 0;
+    let mut i = 0;
+    while i < len {
+        match bytes[i] {
+            b'(' | b'[' | b'{' => depth += 1,
+            b')' | b']' | b'}' => depth -= 1,
+            b'\'' | b'"' | b'`' => {
+                // Skip over string literals
+                let quote = bytes[i];
+                i += 1;
+                while i < len && bytes[i] != quote {
+                    if bytes[i] == b'\\' {
+                        i += 1; // skip escaped char
+                    }
+                    i += 1;
+                }
+            }
+            b'|' if depth == 0 => {
+                // Check if this is ` || ` (logical OR, not bitwise OR)
+                if i + 1 < len
+                    && bytes[i + 1] == b'|'
+                    && i > 0
+                    && i + 2 < len
+                    && bytes[i - 1] == b' '
+                    && bytes[i + 2] == b' '
+                {
+                    return true;
+                }
+            }
+            b'&' if depth == 0 => {
+                // Check if this is ` && ` (logical AND, not bitwise AND)
+                if i + 1 < len
+                    && bytes[i + 1] == b'&'
+                    && i > 0
+                    && i + 2 < len
+                    && bytes[i - 1] == b' '
+                    && bytes[i + 2] == b' '
+                {
+                    return true;
                 }
             }
             _ => {}
