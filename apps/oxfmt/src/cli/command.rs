@@ -109,6 +109,8 @@ pub enum OutputMode {
     Check,
     /// List mode - list files that would be changed
     ListDifferent,
+    /// List mode - list all target files selected by matching rules
+    ListFiles,
 }
 
 fn output_mode() -> impl bpaf::Parser<OutputMode> {
@@ -124,8 +126,12 @@ fn output_mode() -> impl bpaf::Parser<OutputMode> {
         .help("List files that would be changed")
         .req_flag(OutputMode::ListDifferent)
         .hide_usage();
+    let list_files = bpaf::long("list-files")
+        .help("List all files that are selected by matching rules to be formatted")
+        .req_flag(OutputMode::ListFiles)
+        .hide_usage();
 
-    bpaf::construct!([write, check, list_different]).group_help("Output Options:")
+    bpaf::construct!([write, check, list_different, list_files]).group_help("Output Options:")
 }
 
 /// Migration Source
@@ -169,7 +175,4 @@ pub struct RuntimeOptions {
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
-    // List all files that would be formatted, then exit without formatting
-    #[bpaf(long("list-files"), switch, hide_usage)]
-    pub list_files: bool,
 }

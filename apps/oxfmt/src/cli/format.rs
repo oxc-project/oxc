@@ -121,7 +121,7 @@ impl FormatRunner {
             }
         };
 
-        if runtime_options.list_files {
+        if matches!(format_mode, OutputMode::ListFiles) {
             let mut target_files = walker
                 .stream_entries()
                 .into_iter()
@@ -260,6 +260,9 @@ impl FormatRunner {
             // `--list-different` outputs nothing here, mismatched paths are already printed to stdout
             (OutputMode::ListDifferent, 0) => CliRunResult::FormatSucceeded,
             (OutputMode::ListDifferent, _) => CliRunResult::FormatMismatch,
+            (OutputMode::ListFiles, _) => {
+                unreachable!("`--list-files` should return before formatting")
+            }
             // `--check` outputs friendly summary
             (OutputMode::Check, 0) => {
                 utils::print_and_flush(stdout, "All matched files use the correct format.\n");

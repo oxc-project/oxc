@@ -15,6 +15,7 @@ Output Options:
         --write              Format and write files in place (default)
         --check              Check if files are formatted, also show statistics
         --list-different     List files that would be changed
+        --list-files         List all files that are selected by matching rules to be formatted
 
 Config Options
     -c, --config=PATH        Path to the configuration file
