@@ -47,21 +47,31 @@ declare_oxc_lint!(
 
 impl Rule for PreferCodePoint {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
+        let AstKind::StaticMemberExpression(member_expr) = node.kind() else {
             return;
         };
 
-        let Some(memb_expr) = call_expr.callee.as_member_expression() else {
-            return;
-        };
-
-        if memb_expr.is_computed() || memb_expr.optional() || call_expr.optional {
-            return;
-        }
-
-        let (current, replacement, span) = match memb_expr.static_property_info() {
-            Some((span, "charCodeAt")) => ("charCodeAt", "codePointAt", span),
-            Some((span, "fromCharCode")) => ("fromCharCode", "fromCodePoint", span),
+        let (span, property_name) = member_expr.static_property_info();
+        let (current, replacement) = match property_name {
+            "fromCharCode" => {
+                if !member_expr.object.is_specific_id("String") {
+                    return;
+                }
+                ("fromCharCode", "fromCodePoint")
+            }
+            "charCodeAt" => {
+                let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(node.id()) else {
+                    return;
+                };
+                if call_expr.optional
+                    || call_expr.callee.as_member_expression().and_then(|callee| {
+                        callee.static_property_info().map(|(_, property_name)| property_name)
+                    }) != Some("charCodeAt")
+                {
+                    return;
+                }
+                ("charCodeAt", "codePointAt")
+            }
             _ => return,
         };
 
@@ -82,12 +92,12 @@ fn test() {
         "new foo.charCodeAt",
         "charCodeAt(0)",
         "foo.charCodeAt?.(0)",
-        "foo?.charCodeAt(0)",
         "foo[charCodeAt](0)",
         r#"foo["charCodeAt"](0)"#,
         "foo.notCharCodeAt(0)",
         "String.fromCodePoint(0x1f984)",
         "String.fromCodePoint",
+        "NotString.fromCharCode(foo)",
         "new String.fromCodePoint",
         "fromCodePoint(foo)",
         "String.fromCodePoint?.(foo)",
@@ -101,9 +111,12 @@ fn test() {
 
     let fail = vec![
         "string.charCodeAt(index)",
+        "string?.charCodeAt(index)",
         "(( (( string )).charCodeAt( ((index)), )))",
         "String.fromCharCode( code )",
         "(( (( String )).fromCharCode( ((code)), ) ))",
+        "String.fromCharCode.bind(String)",
+        "const x = String.fromCharCode",
     ];
 
     let fix = vec![
@@ -112,6 +125,8 @@ fn test() {
             "(( (( String )).fromCharCode( ((code)), ) ))",
             "(( (( String )).fromCodePoint( ((code)), ) ))",
         ),
+        ("String.fromCharCode.bind(String)", "String.fromCodePoint.bind(String)"),
+        ("const x = String.fromCharCode", "const x = String.fromCodePoint"),
         (r#""🦄".charCodeAt(0)"#, r#""🦄".codePointAt(0)"#),
         ("String.fromCharCode(0x1f984);", "String.fromCodePoint(0x1f984);"),
     ];
