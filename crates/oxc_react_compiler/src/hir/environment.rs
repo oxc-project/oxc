@@ -248,6 +248,13 @@ pub struct Environment {
     /// Counter for generating globally unique identifier names.
     next_uid: u32,
 
+    /// Module type registry — maps module names to their type definitions.
+    ///
+    /// Port of `#moduleTypes` from the TS `Environment` class.
+    /// Used for resolving imports from modules with known type definitions
+    /// (e.g., react-native-reanimated).
+    module_types: FxHashMap<String, super::types::Type>,
+
     // ID counters
     next_block_id: u32,
     next_scope_id: u32,
@@ -277,6 +284,13 @@ impl Environment {
         let mut shapes = super::globals::default_shapes();
         let globals = super::globals::default_globals(&mut shapes);
 
+        // Register module types for configured type providers.
+        let mut module_types = FxHashMap::default();
+        if config.enable_custom_type_definition_for_reanimated {
+            let reanimated_type = super::globals::get_reanimated_module_type(&mut shapes);
+            module_types.insert("react-native-reanimated".to_string(), reanimated_type);
+        }
+
         Self {
             fn_type,
             output_mode,
@@ -291,6 +305,7 @@ impl Environment {
             diagnostics: Vec::new(),
             outlined_functions: Vec::new(),
             known_referenced_names: FxHashSet::default(),
+            module_types,
             next_uid: 0,
             next_block_id: 0,
             next_scope_id: 0,
@@ -448,7 +463,15 @@ impl Environment {
                         None
                     }
                 } else {
-                    // Non-react modules: fall back to hook name pattern
+                    // Check module type registry (e.g., react-native-reanimated)
+                    if let Some(module_type) = self.resolve_module_type(module) {
+                        if let Some(imported_type) = self.get_property_type(&module_type, imported)
+                        {
+                            return Some(Global::Typed(imported_type));
+                        }
+                    }
+
+                    // Fall back to hook name pattern
                     if is_hook_name(imported) || is_hook_name(name) {
                         Some(self.get_custom_hook_type())
                     } else {
@@ -456,8 +479,7 @@ impl Environment {
                     }
                 }
             }
-            NonLocalBinding::ImportDefault { name, module }
-            | NonLocalBinding::ImportNamespace { name, module } => {
+            NonLocalBinding::ImportDefault { name, module } => {
                 if is_known_react_module(module) {
                     if let Some(g) = self.globals.get(name) {
                         Some(g.clone())
@@ -466,13 +488,47 @@ impl Environment {
                     } else {
                         None
                     }
-                } else if is_hook_name(name) {
-                    Some(self.get_custom_hook_type())
                 } else {
-                    None
+                    // Check module type registry for default export
+                    if let Some(module_type) = self.resolve_module_type(module) {
+                        if let Some(default_type) = self.get_property_type(&module_type, "default")
+                        {
+                            return Some(Global::Typed(default_type));
+                        }
+                    }
+                    if is_hook_name(name) { Some(self.get_custom_hook_type()) } else { None }
+                }
+            }
+            NonLocalBinding::ImportNamespace { name, module } => {
+                if is_known_react_module(module) {
+                    if let Some(g) = self.globals.get(name) {
+                        Some(g.clone())
+                    } else if is_hook_name(name) {
+                        Some(self.get_custom_hook_type())
+                    } else {
+                        None
+                    }
+                } else {
+                    // Check module type registry for namespace import
+                    if let Some(module_type) = self.resolve_module_type(module) {
+                        return Some(Global::Typed(module_type));
+                    }
+                    if is_hook_name(name) { Some(self.get_custom_hook_type()) } else { None }
                 }
             }
         }
+    }
+
+    /// Resolve a module name to its type definition, if one is registered.
+    ///
+    /// Port of `#resolveModuleType()` from `HIR/Environment.ts`.
+    ///
+    /// In the Rust port we only support pre-registered module types (e.g.,
+    /// the reanimated module registered via `enable_custom_type_definition_for_reanimated`).
+    /// The TS version also supports a dynamic `moduleTypeProvider` callback
+    /// which is not yet ported.
+    fn resolve_module_type(&self, module_name: &str) -> Option<Type> {
+        self.module_types.get(module_name).cloned()
     }
 
     /// Look up a property type from the shape registry.

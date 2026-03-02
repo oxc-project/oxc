@@ -794,10 +794,20 @@ fn infer_instruction_effects(
         }
 
         // Property operations
+        //
+        // Port of TS `applyEffect(CreateFrom)` (InferMutationAliasingEffects.ts lines 731-789):
+        // The result of a PropertyLoad inherits the abstract kind from the source object:
+        // - Primitive/Global sources → result keeps the same kind
+        // - Frozen/MaybeFrozen sources → result is MaybeFrozen
+        // - Mutable/Context sources → result is Mutable
+        // This is critical for globals like `globalThis.globalThis.NaN`: each PropertyLoad
+        // in the chain must preserve the Global kind so that downstream
+        // MutateTransitiveConditionally effects are correctly dropped (they only apply to
+        // Mutable/Context values), preventing spurious mutable range extensions.
         InstructionValue::PropertyLoad(v) => {
-            // Loading a property may return a mutable value from a mutable object
             if let Some(val) = state.get(&v.object) {
                 let result_kind = match val.kind {
+                    ValueKind::Primitive | ValueKind::Global => val.kind,
                     ValueKind::Frozen | ValueKind::MaybeFrozen => ValueKind::MaybeFrozen,
                     _ => ValueKind::Mutable,
                 };
