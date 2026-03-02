@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1276/1371 passed (93.1%)
+Codegen conformance: 1278/1371 passed (93.2%)
 Flow files skipped: 38
 
 Failure breakdown:
@@ -11,7 +11,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:92
+  output_mismatch:90
   no_expected:    0
 
 Failed fixtures:
@@ -84,7 +84,6 @@ Failed fixtures:
   [output_mismatch] propagate-scope-deps-hir-fork/repro-scope-missing-mutable-range.js
   [output_mismatch] propagate-scope-deps-hir-fork/switch-non-final-default.js
   [output_mismatch] propagate-scope-deps-hir-fork/switch.js
-  [output_mismatch] react-namespace.js
   [output_mismatch] readonly-object-method-calls-mutable-lambda.js
   [output_mismatch] readonly-object-method-calls.js
   [output_mismatch] reduce-reactive-deps/context-var-granular-dep.js
@@ -108,5 +107,4 @@ Failed fixtures:
   [output_mismatch] switch.js
   [output_mismatch] todo.memoize-loops-that-produce-memoizeable-values.js
   [output_mismatch] transitive-freeze-function-expressions.js
-  [output_mismatch] use-effect-cleanup-reassigns.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js

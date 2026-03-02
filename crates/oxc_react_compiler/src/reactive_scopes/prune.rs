@@ -236,8 +236,12 @@ fn collect_reactive_ids_block(block: &ReactiveBlock, reactive: &mut FxHashSet<Id
                 // from pruned scopes to the reactive set. This ensures that
                 // values from pruned scopes are recognized as potentially reactive
                 // when used as dependencies of other scopes.
+                // Also skip stable ref types (useRef results) that aren't already
+                // reactive, matching TS `isStableRefType` check.
                 for decl in s.scope.declarations.values() {
-                    if !is_primitive_type(&decl.identifier) {
+                    if !is_primitive_type(&decl.identifier)
+                        && !is_stable_ref_type(&decl.identifier, reactive)
+                    {
                         reactive.insert(decl.identifier.id);
                     }
                 }
@@ -526,6 +530,24 @@ fn is_stable_type(id: &crate::hir::Identifier) -> bool {
 /// Check if an identifier has a primitive type.
 fn is_primitive_type(id: &crate::hir::Identifier) -> bool {
     id.type_ == crate::hir::types::Type::Primitive
+}
+
+/// Check if an identifier is a stable ref type (useRef result) that is not
+/// already in the reactive set. Matches TS `isStableRefType` from
+/// `CollectReactiveIdentifiers.ts`.
+fn is_stable_ref_type(
+    id: &crate::hir::Identifier,
+    reactive: &FxHashSet<IdentifierId>,
+) -> bool {
+    is_use_ref_type(id) && !reactive.contains(&id.id)
+}
+
+/// Check if an identifier has useRef return type (`Object(BuiltInUseRefId)`).
+fn is_use_ref_type(id: &crate::hir::Identifier) -> bool {
+    matches!(
+        &id.type_,
+        crate::hir::types::Type::Object(o) if o.shape_id.as_deref() == Some("BuiltInUseRefId")
+    )
 }
 
 fn prune_non_reactive_deps_terminal(
