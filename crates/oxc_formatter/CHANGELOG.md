@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.36.0] - 2026-03-02
+
+### 🚀 Features
+
+- 5141bc2 formatter: Support trailing ignore comments (#19304) (Andreas Lubbe)
+- 14a0181 oxfmt: Support `graphql()` variant for gql-in-js (#19703) (leaysgur)
+- ca68ea6 oxfmt: Support gql-in-js substitution (#19670) (leaysgur)
+- 035933c formatter,oxfmt: Support js-in-vue (partially) (#19514) (leaysgur)
+- 9e11dc6 parser,estree,coverage: Collect tokens in parser and convert to ESTree format (#19497) (camc314)
+
+### 🐛 Bug Fixes
+
+- 93bb861 formatter: Trim trailing whitespace before breaking line (#19740) (leaysgur)
+- b85f97b formatter: Drop blank line between terminal call and first chain member (#19659) (Dunqing)
+
+### ⚡ Performance
+
+- b3b2d30 parser: Introduce `ParserConfig` (#19637) (overlookmotel)
+
 ## [0.33.0] - 2026-02-16
 
 ### 💥 BREAKING CHANGES

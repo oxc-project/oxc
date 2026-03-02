@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.51.0] - 2026-03-02
+
+### 🚀 Features
+
+- f34f6fa linter: Introduce typeCheck config option (#19764) (camc314)
+- 694be7d linter: Introduce typeAware as config options (#19614) (camc314)
+
+### 🐛 Bug Fixes
+
+- 7682e5a linter/plugins: Decode escapes in identifier tokens (#19838) (overlookmotel)
+- 0440e9a linter: Add help text to no_control_regex, no_fallthrough, no_param_reassign (#19655) (Anthony Amaro)
+- f5694ce estree/tokens: Reverse field order of `regex` object in tokens (#19679) (overlookmotel)
+- b2b7a55 estree/tokens: Generate tokens for files with BOM (#19535) (overlookmotel)
+- e384e94 linter: Enhance help diagnostic messages for more eslint rules (#19658) (Anthony Amaro)
+
+### ⚡ Performance
+
+- 05ccf9f linter/plugins: Transfer tokens via raw transfer (#19893) (overlookmotel)
+- 4b0611a estree/tokens: Introduce `ESTreeTokenConfig` trait (#19842) (overlookmotel)
+- ec88f6a estree/tokens: Serialize tokens while visiting AST (#19726) (overlookmotel)
+- d4dcf26 linter/plugins: Remove `typescript` from bundle (#19531) (overlookmotel)
+- 6a6513c linter/plugins: Use Oxc tokens in plugins (#19498) (camc314)
+
+### 📚 Documentation
+
+- caa091d linter/plugins: Correct doc comments for `initTokens` (#19530) (overlookmotel)
+
 ## [1.50.0] - 2026-02-23
 
 ### 🐛 Bug Fixes

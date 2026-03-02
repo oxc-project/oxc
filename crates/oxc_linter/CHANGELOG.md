@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.51.0] - 2026-03-02
+
+### 🚀 Features
+
+- 2e0e1d0 linter/no-unused-vars: Add experimental fix mode controls (off|suggestion|fix) (#19774) (camc314)
+- f34f6fa linter: Introduce typeCheck config option (#19764) (camc314)
+- 694be7d linter: Introduce typeAware as config options (#19614) (camc314)
+- 655c38f semantic: Add "did you mean?" suggestions to undefined name errors (#19102) (copilot-swe-agent)
+- e97a57e linter/id-length: Use serde to deserialize rule options (#19636) (camc314)
+- c4a3677 parser: Report error for initializer in ambient context (#19187) (camc314)
+- 346045a linter/id-length: Add `checkGeneric` option (#19634) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1b7a937 linter: Correct double-comparisons fix with swapped operands (#19846) (camc314)
+- c308857 linter/consistent_type_imports: Add missing help and notes to diagnostics (#19827) (Daniel Osmond)
+- 7682e5a linter/plugins: Decode escapes in identifier tokens (#19838) (overlookmotel)
+- f368fcd linter/consistent_type_assertions: Add missing with_help and with_note to diagnostics (#19826) (Daniel Osmond)
+- 86d5037 linter: Add help text to no-extend-native, no-useless-backreference (#19733) (Anthony Amaro)
+- 50e8eff linter: Add .with_help() to operator-assignment, no-nonoctal-decimal-escape (#19732) (Anthony Amaro)
+- 1417bdc linter/no-wrapper-object-types: Add help messages to missing diagnostics (#19771) (Daniel Osmond)
+- 0838477 linter/ban_ts_comment: Add help and notes to missing diagnostics (#19781) (Daniel Osmond)
+- e8c77cf linter/adjacent_overload_signatures: Add missing diagnostics (#19780) (Daniel Osmond)
+- 28834ac linter/ban_types: Add missing help and note to diagnostics (#19782) (Daniel Osmond)
+- fd938d3 linter/prefer-enum-initializers: Add help messages to missing diagnostics (#19772) (Daniel Osmond)
+- eb928ee linter/no-dynamic-delete: Add help messages to missing diagnostics (#19768) (Daniel Osmond)
+- a985666 linter/no-empty-interface: Add help messages to missing diagnostics (#19769) (Daniel Osmond)
+- 2dc0ceb linter/no-extra-non-null-assertion: Add help messages to missing diagnostics (#19770) (Daniel Osmond)
+- 95d5d66 linter/no-dupe-keys: Handle `__proto__` proto setters in  (#19762) (camc314)
+- 24ff0db linter/exhaustive-deps: False positive for member expressions in IIFEs (#19751) (Dennis Chen)
+- 7243a58 linter/no-use-before-define: Honor `ignoreTypeReferences` when value and type name collisions (#19747) (Dimava)
+- eefd818 linter/explicit-module-boundary-types: Add help messages to missing diagnostics (#19736) (Daniel Osmond)
+- 0440e9a linter: Add help text to no_control_regex, no_fallthrough, no_param_reassign (#19655) (Anthony Amaro)
+- e84cb2f react/display-name: Handle merged type+value context symbols (#19608) (camc314)
+- ce7e253 linter/prefer-object-from-entries: Require exact path match in unicorn helper (#19687) (camc314)
+- b2b7a55 estree/tokens: Generate tokens for files with BOM (#19535) (overlookmotel)
+- 0722721 linter/jsx-curly-brace-presence: False positive with prop & mixed quotes (#19674) (camc314)
+- 3496acd linter: Enhance diagnostic help messages for eslint rules (#19653) (Anthony Amaro)
+- e384e94 linter: Enhance help diagnostic messages for more eslint rules (#19658) (Anthony Amaro)
+- a4d5b34 linter: Avoid non-promise catch false positives (#19574) (camc314)
+- 5706f38 linter: `unicorn/no-array-callback-reference` skip `Effect.*` array-like methods name. (#19633) (Said Atrahouch)
+
+### ⚡ Performance
+
+- 05ccf9f linter/plugins: Transfer tokens via raw transfer (#19893) (overlookmotel)
+- 4b0611a estree/tokens: Introduce `ESTreeTokenConfig` trait (#19842) (overlookmotel)
+- ec88f6a estree/tokens: Serialize tokens while visiting AST (#19726) (overlookmotel)
+- 6a6513c linter/plugins: Use Oxc tokens in plugins (#19498) (camc314)
+
+### 📚 Documentation
+
+- d86f59e linter: Improve docs for no-useless-concat, mark as pending fixer. (#19859) (connorshea)
+- dc0ff73 linter/no-useless-constructor: Warn for parameter properties as well (#19638) (Ole Asteo)
+
 ## [1.50.0] - 2026-02-23
 
 ### 🚀 Features

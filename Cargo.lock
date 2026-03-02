@@ -1917,7 +1917,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.35.0"
+version = "0.36.0"
 dependencies = [
  "cow-utils",
  "fast-glob",
@@ -1993,7 +1993,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "1.50.0"
+version = "1.51.0"
 dependencies = [
  "bitflags",
  "constcat",
@@ -2522,7 +2522,7 @@ dependencies = [
 
 [[package]]
 name = "oxfmt"
-version = "0.35.0"
+version = "0.36.0"
 dependencies = [
  "bpaf",
  "cow-utils",
@@ -2561,7 +2561,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "1.50.0"
+version = "1.51.0"
 dependencies = [
  "bpaf",
  "cow-utils",

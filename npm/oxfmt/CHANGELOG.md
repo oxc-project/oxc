@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.36.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- 04e6223 npm: Add `preferUnplugged` for Yarn PnP compatibility (#19829) (Boshen)
+
+### 📚 Documentation
+
+- 2fa936f README.md: Map npm package links to npmx.dev (#19666) (Boshen)
+
 ## [0.35.0] - 2026-02-23
 
 ### 🚀 Features
