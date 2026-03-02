@@ -32,6 +32,32 @@ pub struct WrapModulesResult {
     pub required_by_other_module: Vec<ModuleIdx>,
 }
 
+impl WrapModulesResult {
+    /// Apply the result to the module graph in-place.
+    pub fn apply(self, graph: &mut crate::graph::ModuleGraph) {
+        for (idx, wrap) in self.wrap_kind_updates {
+            if let Some(m) = graph.normal_module_mut(idx) {
+                m.wrap_kind = wrap;
+            }
+        }
+        for (idx, wrapper) in self.wrapper_refs {
+            if let Some(m) = graph.normal_module_mut(idx) {
+                m.wrapper_ref = Some(wrapper);
+            }
+        }
+        for (idx, orig) in self.original_wrap_kinds {
+            if let Some(m) = graph.normal_module_mut(idx) {
+                m.original_wrap_kind = orig;
+            }
+        }
+        for idx in self.required_by_other_module {
+            if let Some(m) = graph.normal_module_mut(idx) {
+                m.required_by_other_module = true;
+            }
+        }
+    }
+}
+
 /// Propagate wrapping through the dependency graph and create wrapper symbols.
 ///
 /// **Phase 1**: Propagate wrapping. For each module that already has a wrap_kind,

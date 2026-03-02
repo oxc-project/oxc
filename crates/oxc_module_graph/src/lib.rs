@@ -75,7 +75,7 @@ pub mod types;
 
 // Re-export core types at crate root.
 pub use graph::ModuleGraph;
-pub use hooks::{ImportHooks, LinkConfig, SideEffectsHooks};
+pub use hooks::{ImportHooks, ImportResolutionContext, LinkConfig, SideEffectsHooks};
 pub use module::{ExternalModule, Module, NormalModule, SideEffects};
 
 // Re-export algorithms at crate root.

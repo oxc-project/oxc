@@ -33,3 +33,14 @@ oxc_syntax = { workspace = true }
 bitflags = { workspace = true }
 rustc-hash = { workspace = true }
 compact_str = { workspace = true }
+
+[dev-dependencies]
+criterion2 = { workspace = true }
+
+[[bench]]
+name = "symbol_db"
+harness = false
+
+[[bench]]
+name = "binding"
+harness = false

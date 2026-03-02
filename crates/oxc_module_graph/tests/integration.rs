@@ -106,6 +106,7 @@ fn test_module_graph_basic() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(idx_b, 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_export_ref: default_ref,
         namespace_object_ref: ns_ref,
@@ -536,6 +537,7 @@ fn two_module_graph_with_binding(export_name: &str, import_name: &str) -> Module
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_a_default,
         sym_a_ns,
@@ -633,6 +635,7 @@ fn test_bind_star_reexport() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_a_default,
         sym_a_ns,
@@ -649,6 +652,7 @@ fn test_bind_star_reexport() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_b_default,
         sym_b_ns,
@@ -700,6 +704,7 @@ fn simple_graph(edges: &[(usize, usize)]) -> ModuleGraph {
                 kind: ImportKind::Static,
                 namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
                 meta: ImportRecordMeta::empty(),
+                is_type_only: false,
             })
             .collect();
 
@@ -817,6 +822,7 @@ fn test_match_imports_reexport_chain() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_a_default,
         sym_a_ns,
@@ -833,6 +839,7 @@ fn test_match_imports_reexport_chain() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_b_default,
         sym_b_ns,
@@ -953,6 +960,7 @@ fn test_match_imports_deep_chain() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_a_default,
         sym_a_ns,
@@ -968,6 +976,7 @@ fn test_match_imports_deep_chain() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_b_default,
         sym_b_ns,
@@ -983,6 +992,7 @@ fn test_match_imports_deep_chain() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_c_default,
         sym_c_ns,
@@ -1081,6 +1091,7 @@ fn test_match_imports_circular_reexport() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_a_default,
         sym_a_ns,
@@ -1096,6 +1107,7 @@ fn test_match_imports_circular_reexport() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_b_default,
         sym_b_ns,
@@ -1111,6 +1123,7 @@ fn test_match_imports_circular_reexport() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_c_default,
         sym_c_ns,
@@ -1402,6 +1415,7 @@ fn test_tla_transitive_static() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -1447,6 +1461,7 @@ fn test_tla_dynamic_import_not_propagated() {
             kind: ImportKind::Dynamic,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -1487,6 +1502,7 @@ fn test_tla_cycle_no_infinite_loop() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -1505,6 +1521,7 @@ fn test_tla_cycle_no_infinite_loop() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -1575,6 +1592,7 @@ fn test_exec_order_dynamic_import_excluded() {
             kind: ImportKind::Dynamic,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -1622,6 +1640,7 @@ fn test_exec_order_dynamic_import_included() {
             kind: ImportKind::Dynamic,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -1696,6 +1715,7 @@ fn test_exec_order_hot_accept_skipped() {
             kind: ImportKind::HotAccept,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -1825,6 +1845,7 @@ fn test_side_effects_transitive() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -1921,6 +1942,7 @@ fn test_side_effects_cycle_no_infinite_loop() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -1939,6 +1961,7 @@ fn test_side_effects_cycle_no_infinite_loop() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -1987,6 +2010,7 @@ fn test_side_effects_external_module_propagation() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -2041,6 +2065,7 @@ fn test_namespace_import() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_a_default,
         sym_a_ns,
@@ -2083,17 +2108,17 @@ fn test_stepwise_link_workflow() {
 
     // --- Add symbols ---
     // entry.js: import { foo } from './lib'; export default foo;
-    let entry_foo = graph.add_symbol(entry_idx, "foo".into());
-    let entry_default = graph.add_symbol(entry_idx, "default".into());
-    let entry_ns = graph.add_symbol(entry_idx, "*ns*".into());
+    let entry_foo = graph.add_symbol(entry_idx, "foo");
+    let entry_default = graph.add_symbol(entry_idx, "default");
+    let entry_ns = graph.add_symbol(entry_idx, "*ns*");
 
     // lib.js: export const foo = 42;
-    let lib_foo = graph.add_symbol(lib_idx, "foo".into());
-    let lib_default = graph.add_symbol(lib_idx, "default".into());
-    let lib_ns = graph.add_symbol(lib_idx, "*ns*".into());
+    let lib_foo = graph.add_symbol(lib_idx, "foo");
+    let lib_default = graph.add_symbol(lib_idx, "default");
+    let lib_ns = graph.add_symbol(lib_idx, "*ns*");
 
     // react (external): namespace symbol
-    let ext_ns = graph.add_symbol(ext_idx, "react_ns".into());
+    let ext_ns = graph.add_symbol(ext_idx, "react_ns");
 
     // --- Populate modules ---
 
@@ -2131,6 +2156,7 @@ fn test_stepwise_link_workflow() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         star_export_entries: vec![],
         indirect_export_entries: vec![],
@@ -2285,13 +2311,7 @@ struct TestImportHooks {
 }
 
 impl ImportHooks for TestImportHooks {
-    fn on_resolved(
-        &mut self,
-        _importer: ModuleIdx,
-        _local_symbol: SymbolRef,
-        _result: &MatchImportKind,
-        _reexport_chain: &[SymbolRef],
-    ) {
+    fn on_resolved(&mut self, _ctx: &oxc_module_graph::ImportResolutionContext) {
         self.resolved_count += 1;
     }
 
@@ -2315,15 +2335,15 @@ fn test_import_hooks_called() {
     let idx_b = graph.alloc_module_idx();
 
     // Symbols for A
-    let sym_a_foo = graph.add_symbol(idx_a, "foo".into());
-    let sym_a_missing = graph.add_symbol(idx_a, "missing".into());
-    let sym_a_default = graph.add_symbol(idx_a, "default".into());
-    let sym_a_ns = graph.add_symbol(idx_a, "*ns*".into());
+    let sym_a_foo = graph.add_symbol(idx_a, "foo");
+    let sym_a_missing = graph.add_symbol(idx_a, "missing");
+    let sym_a_default = graph.add_symbol(idx_a, "default");
+    let sym_a_ns = graph.add_symbol(idx_a, "*ns*");
 
     // Symbols for B
-    let sym_b_foo = graph.add_symbol(idx_b, "foo".into());
-    let sym_b_default = graph.add_symbol(idx_b, "default".into());
-    let sym_b_ns = graph.add_symbol(idx_b, "*ns*".into());
+    let sym_b_foo = graph.add_symbol(idx_b, "foo");
+    let sym_b_default = graph.add_symbol(idx_b, "default");
+    let sym_b_ns = graph.add_symbol(idx_b, "*ns*");
 
     // A: import { foo, missing } from './b'
     let mut named_imports_a = FxHashMap::default();
@@ -2357,6 +2377,7 @@ fn test_import_hooks_called() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_a_default,
         sym_a_ns,
@@ -2411,12 +2432,12 @@ fn test_build_resolved_exports_marks_indirect_reexports_from_commonjs() {
     let idx_a = graph.alloc_module_idx();
     let idx_b = graph.alloc_module_idx();
 
-    let sym_a_default = graph.add_symbol(idx_a, "default".into());
-    let sym_a_ns = graph.add_symbol(idx_a, "*ns*".into());
+    let sym_a_default = graph.add_symbol(idx_a, "default");
+    let sym_a_ns = graph.add_symbol(idx_a, "*ns*");
 
-    let sym_b_bar = graph.add_symbol(idx_b, "bar".into());
-    let sym_b_default = graph.add_symbol(idx_b, "default".into());
-    let sym_b_ns = graph.add_symbol(idx_b, "*ns*".into());
+    let sym_b_bar = graph.add_symbol(idx_b, "bar");
+    let sym_b_default = graph.add_symbol(idx_b, "default");
+    let sym_b_ns = graph.add_symbol(idx_b, "*ns*");
 
     graph.add_normal_module(make_normal_module(
         idx_a,
@@ -2429,6 +2450,7 @@ fn test_build_resolved_exports_marks_indirect_reexports_from_commonjs() {
             kind: ImportKind::Static,
             namespace_ref: sym_b_ns,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_a_default,
         sym_a_ns,
@@ -2439,6 +2461,7 @@ fn test_build_resolved_exports_marks_indirect_reexports_from_commonjs() {
         module_request: CompactString::new("./b"),
         resolved_module: Some(idx_b),
         span: Default::default(),
+        is_type: false,
     }];
 
     graph.add_normal_module(make_normal_module(
@@ -2471,14 +2494,14 @@ fn test_import_hooks_override_no_match() {
     let idx_b = graph.alloc_module_idx();
 
     // Symbols
-    let sym_a_missing = graph.add_symbol(idx_a, "missing".into());
-    let sym_a_default = graph.add_symbol(idx_a, "default".into());
-    let sym_a_ns = graph.add_symbol(idx_a, "*ns*".into());
+    let sym_a_missing = graph.add_symbol(idx_a, "missing");
+    let sym_a_default = graph.add_symbol(idx_a, "default");
+    let sym_a_ns = graph.add_symbol(idx_a, "*ns*");
 
-    let sym_b_default = graph.add_symbol(idx_b, "default".into());
-    let sym_b_ns = graph.add_symbol(idx_b, "*ns*".into());
+    let sym_b_default = graph.add_symbol(idx_b, "default");
+    let sym_b_ns = graph.add_symbol(idx_b, "*ns*");
     // A fallback symbol the hook will return.
-    let sym_b_fallback = graph.add_symbol(idx_b, "fallback".into());
+    let sym_b_fallback = graph.add_symbol(idx_b, "fallback");
 
     // A: import { missing } from './b'
     let mut named_imports_a = FxHashMap::default();
@@ -2503,6 +2526,7 @@ fn test_import_hooks_override_no_match() {
             kind: ImportKind::Static,
             namespace_ref: dummy_symbol_ref(ModuleIdx::from_usize(0), 0),
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         sym_a_default,
         sym_a_ns,
@@ -2580,6 +2604,7 @@ fn exports_kind_graph(import_kind: ImportKind, importee_exports_kind: ExportsKin
             kind: import_kind,
             namespace_ref: ns_rec,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -2830,6 +2855,7 @@ fn test_exports_kind_mixed_graph() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -2847,6 +2873,7 @@ fn test_exports_kind_mixed_graph() {
             kind: ImportKind::Require,
             namespace_ref: ns_rec_b,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -2915,6 +2942,7 @@ fn test_wrap_propagation_basic() {
             kind: ImportKind::Require,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -2931,6 +2959,7 @@ fn test_wrap_propagation_basic() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_b,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -2994,6 +3023,7 @@ fn test_wrap_cjs_dep_always_wrapped() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3012,6 +3042,7 @@ fn test_wrap_cjs_dep_always_wrapped() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_b,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -3080,6 +3111,7 @@ fn test_wrap_deep_chain() {
             kind: ImportKind::Require,
             namespace_ref: ns_a_rec,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3096,6 +3128,7 @@ fn test_wrap_deep_chain() {
             kind: ImportKind::Static,
             namespace_ref: ns_b_rec,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -3115,6 +3148,7 @@ fn test_wrap_deep_chain() {
             kind: ImportKind::Static,
             namespace_ref: ns_c_rec,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_c,
         ns_c,
@@ -3225,6 +3259,7 @@ fn test_wrap_no_propagation_without_cjs() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3243,6 +3278,7 @@ fn test_wrap_no_propagation_without_cjs() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_b,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -3298,6 +3334,7 @@ fn test_wrap_skips_external() {
             kind: ImportKind::Require,
             namespace_ref: ns_rec,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3350,6 +3387,7 @@ fn test_wrap_cyclic_deps() {
             kind: ImportKind::Require,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3368,6 +3406,7 @@ fn test_wrap_cyclic_deps() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_b,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -3425,6 +3464,7 @@ fn test_wrap_runtime_not_wrapped() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3479,6 +3519,7 @@ fn test_link_with_cjs_interop() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3495,6 +3536,7 @@ fn test_link_with_cjs_interop() {
             kind: ImportKind::Require,
             namespace_ref: ns_rec_b,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -3556,6 +3598,7 @@ fn test_exports_kind_lazy_export_stays_none() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3607,6 +3650,7 @@ fn test_exports_kind_lazy_export_require_still_cjs() {
             kind: ImportKind::Require,
             namespace_ref: ns_rec,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3670,6 +3714,7 @@ fn test_wrap_required_by_other_module() {
             kind: ImportKind::Require,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3687,6 +3732,7 @@ fn test_wrap_required_by_other_module() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_b,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -3748,6 +3794,7 @@ fn test_wrap_original_wrap_kind_preserved() {
             kind: ImportKind::Require,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3765,6 +3812,7 @@ fn test_wrap_original_wrap_kind_preserved() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_b,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_b,
         ns_b,
@@ -3831,6 +3879,7 @@ fn test_wrap_strict_execution_order() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3915,6 +3964,7 @@ fn test_wrap_strict_with_on_demand() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -3973,6 +4023,7 @@ fn test_wrap_execution_order_sensitive() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -4036,6 +4087,7 @@ fn test_safely_merge_basic() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -4089,6 +4141,7 @@ fn test_safely_merge_excludes_star_export() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec,
             meta: ImportRecordMeta::IS_EXPORT_STAR, // star export
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -4145,6 +4198,7 @@ fn test_safely_merge_multiple_importers() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_a,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_a,
         ns_a,
@@ -4177,6 +4231,7 @@ fn test_safely_merge_multiple_importers() {
             kind: ImportKind::Static,
             namespace_ref: ns_rec_c,
             meta: ImportRecordMeta::empty(),
+            is_type_only: false,
         }],
         default_c,
         ns_c,
@@ -4208,8 +4263,8 @@ fn reserve_modules_preallocates_without_affecting_correctness() {
     let idx_a = graph.alloc_module_idx();
     let idx_b = graph.alloc_module_idx();
 
-    let sym_a = graph.add_symbol(idx_a, "a".into());
-    let sym_b = graph.add_symbol(idx_b, "b".into());
+    let sym_a = graph.add_symbol(idx_a, "a");
+    let sym_b = graph.add_symbol(idx_b, "b");
 
     let module_a = make_normal_module(
         idx_a,

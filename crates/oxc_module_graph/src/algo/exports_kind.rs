@@ -22,6 +22,22 @@ pub struct ExportsKindResult {
     pub wrap_kind_updates: FxHashMap<ModuleIdx, WrapKind>,
 }
 
+impl ExportsKindResult {
+    /// Apply the result to the module graph in-place.
+    pub fn apply(self, graph: &mut crate::graph::ModuleGraph) {
+        for (idx, kind) in self.exports_kind_updates {
+            if let Some(m) = graph.normal_module_mut(idx) {
+                m.exports_kind = kind;
+            }
+        }
+        for (idx, wrap) in self.wrap_kind_updates {
+            if let Some(m) = graph.normal_module_mut(idx) {
+                m.wrap_kind = wrap;
+            }
+        }
+    }
+}
+
 /// Get the effective exports_kind for a module, checking in-flight updates first.
 fn effective_exports_kind(
     graph: &ModuleGraph,

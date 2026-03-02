@@ -111,6 +111,48 @@ pub struct NormalModule {
 }
 
 impl NormalModule {
+    /// Create a new `NormalModule` with required fields; all others default.
+    ///
+    /// Consumers set optional fields via direct mutation:
+    /// ```ignore
+    /// let mut m = NormalModule::new(idx, path, default_ref, ns_ref);
+    /// m.has_module_syntax = true;
+    /// m.exports_kind = ExportsKind::Esm;
+    /// ```
+    pub fn new(
+        idx: ModuleIdx,
+        path: PathBuf,
+        default_export_ref: SymbolRef,
+        namespace_object_ref: SymbolRef,
+    ) -> Self {
+        Self {
+            idx,
+            path,
+            default_export_ref,
+            namespace_object_ref,
+            has_module_syntax: false,
+            exports_kind: ExportsKind::default(),
+            has_top_level_await: false,
+            side_effects: SideEffects::True,
+            has_lazy_export: false,
+            execution_order_sensitive: false,
+            named_exports: FxHashMap::default(),
+            named_imports: FxHashMap::default(),
+            import_records: Vec::new(),
+            star_export_entries: Vec::new(),
+            indirect_export_entries: Vec::new(),
+            wrap_kind: WrapKind::default(),
+            original_wrap_kind: WrapKind::default(),
+            wrapper_ref: None,
+            required_by_other_module: false,
+            resolved_exports: FxHashMap::default(),
+            has_dynamic_exports: false,
+            is_tla_or_contains_tla: false,
+            propagated_side_effects: false,
+            exec_order: u32::MAX,
+        }
+    }
+
     /// Whether this module uses CommonJS exports.
     pub fn is_commonjs(&self) -> bool {
         self.exports_kind.is_commonjs()
@@ -141,6 +183,22 @@ impl NormalModule {
     pub fn star_export_modules(&self) -> impl Iterator<Item = ModuleIdx> + '_ {
         self.star_export_entries.iter().filter_map(|e| e.resolved_module)
     }
+
+    /// Check whether this module provides a given export name.
+    ///
+    /// Consolidates the five sources of exports:
+    /// 1. `has_dynamic_exports` (CJS / transitive `export *` from CJS) — suppresses warnings
+    /// 2. `named_exports` (local `export { x }` / `export const x`)
+    /// 3. `resolved_exports` (populated after `build_resolved_exports` / link)
+    /// 4. `indirect_export_entries` (`export { x } from './foo'`)
+    ///
+    /// Returns `true` if any of these sources can provide `name`.
+    pub fn has_export(&self, name: &str) -> bool {
+        self.has_dynamic_exports
+            || self.named_exports.contains_key(name)
+            || self.resolved_exports.contains_key(name)
+            || self.indirect_export_entries.iter().any(|e| e.exported_name.as_str() == name)
+    }
 }
 
 /// An external (unresolvable) module — first-class node in the graph.
@@ -161,9 +219,12 @@ pub struct ExternalModule {
 }
 
 /// A module in the graph — either normal (parseable) or external.
+///
+/// `NormalModule` is boxed to keep the enum small (~80 bytes instead of ~400+).
+/// External module slots are common and benefit from reduced memory waste.
 #[derive(Debug, Clone)]
 pub enum Module {
-    Normal(NormalModule),
+    Normal(Box<NormalModule>),
     External(ExternalModule),
 }
 

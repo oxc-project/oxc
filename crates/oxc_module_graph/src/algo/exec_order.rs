@@ -19,6 +19,21 @@ pub struct ExecOrderResult {
     pub cycles: Vec<Vec<ModuleIdx>>,
 }
 
+impl ExecOrderResult {
+    /// Apply the result to the module graph in-place.
+    #[expect(clippy::cast_possible_truncation)]
+    pub fn apply(self, graph: &mut crate::graph::ModuleGraph) {
+        for (i, &idx) in self.sorted.iter().enumerate() {
+            match graph.module_mut(idx) {
+                crate::module::Module::Normal(m) => m.exec_order = i as u32,
+                crate::module::Module::External(m) => m.exec_order = i as u32,
+            }
+        }
+        graph.set_exec_order(self.sorted);
+        graph.set_cycles(self.cycles);
+    }
+}
+
 /// Compute execution order for the module graph using DFS post-order.
 ///
 /// This matches the JavaScript module evaluation order defined by the spec:

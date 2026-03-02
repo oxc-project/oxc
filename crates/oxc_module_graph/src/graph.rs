@@ -1,3 +1,4 @@
+use compact_str::CompactString;
 use oxc_index::IndexVec;
 
 use crate::algo::BindingError;
@@ -61,7 +62,7 @@ impl ModuleGraph {
     pub fn add_normal_module(&mut self, module: NormalModule) {
         let idx = module.idx;
         if idx.index() < self.modules.len() {
-            self.modules[idx] = Module::Normal(module);
+            self.modules[idx] = Module::Normal(Box::new(module));
         } else {
             // Extend to fit
             while self.modules.len() < idx.index() {
@@ -78,7 +79,7 @@ impl ModuleGraph {
                 }));
             }
             debug_assert_eq!(idx, self.modules.next_idx());
-            self.modules.push(Module::Normal(module));
+            self.modules.push(Module::Normal(Box::new(module)));
         }
         self.symbols.ensure_modules(idx.index() + 1);
     }
@@ -111,7 +112,7 @@ impl ModuleGraph {
     }
 
     /// Add a symbol to the symbol database.
-    pub fn add_symbol(&mut self, module: ModuleIdx, name: String) -> SymbolRef {
+    pub fn add_symbol(&mut self, module: ModuleIdx, name: impl Into<CompactString>) -> SymbolRef {
         self.symbols.add_symbol(module, name)
     }
 
@@ -121,7 +122,12 @@ impl ModuleGraph {
     }
 
     /// Set the name for an existing symbol slot.
-    pub fn set_symbol_name(&mut self, module: ModuleIdx, symbol: SymbolId, name: String) {
+    pub fn set_symbol_name(
+        &mut self,
+        module: ModuleIdx,
+        symbol: SymbolId,
+        name: impl Into<CompactString>,
+    ) {
         self.symbols.set_symbol_name(module, symbol, name);
     }
 
@@ -131,8 +137,17 @@ impl ModuleGraph {
     }
 
     /// Allocate a new synthetic symbol in a module.
-    pub fn alloc_synthetic_symbol(&mut self, module: ModuleIdx, name: String) -> SymbolRef {
+    pub fn alloc_synthetic_symbol(
+        &mut self,
+        module: ModuleIdx,
+        name: impl Into<CompactString>,
+    ) -> SymbolRef {
         self.symbols.alloc_synthetic_symbol(module, name)
+    }
+
+    /// Initialize all symbols for a module in one call.
+    pub fn init_module_symbols(&mut self, module: ModuleIdx, names: &[CompactString]) {
+        self.symbols.init_module_symbols(module, names);
     }
 
     /// Pre-allocate capacity for `additional` more modules.
@@ -335,6 +350,12 @@ impl ModuleGraph {
         }
     }
 
+    /// Flatten all symbol union-find chains so every symbol points directly
+    /// to its root. After calling this, all `canonical_ref()` calls are O(1).
+    pub fn flatten_symbol_chains(&mut self) {
+        self.symbols.flatten_all_chains();
+    }
+
     // --- Post-link queries ---
 
     /// Get module indices in execution order.
@@ -355,5 +376,15 @@ impl ModuleGraph {
     /// Set binding errors (used by algorithms).
     pub(crate) fn set_binding_errors(&mut self, errors: Vec<BindingError>) {
         self.binding_errors = errors;
+    }
+
+    /// Set execution order (used by `ExecOrderResult::apply`).
+    pub(crate) fn set_exec_order(&mut self, order: Vec<ModuleIdx>) {
+        self.exec_order = order;
+    }
+
+    /// Set detected cycles (used by `ExecOrderResult::apply`).
+    pub(crate) fn set_cycles(&mut self, cycles: Vec<Vec<ModuleIdx>>) {
+        self.cycles = cycles;
     }
 }

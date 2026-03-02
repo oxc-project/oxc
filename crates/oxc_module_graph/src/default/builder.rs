@@ -192,7 +192,7 @@ impl ModuleGraphBuilder {
 
         // Resolve imports and build import records (Fix 4: creates ExternalModules for bare specifiers)
         let dir = path.parent().unwrap_or(Path::new("."));
-        let import_records = self.resolve_imports(resolver, dir, module_record, queue);
+        let mut import_records = self.resolve_imports(resolver, dir, module_record, queue);
 
         // Star export entries (Fix 2: resolve targets via resolver)
         let star_export_entries =
@@ -201,6 +201,9 @@ impl ModuleGraphBuilder {
         // Indirect export entries (Fix 2: resolve targets via resolver)
         let indirect_export_entries =
             build_indirect_exports(module_record, resolver, dir, &self.path_to_idx);
+
+        // Pre-compute is_type_only per import record.
+        compute_is_type_only(&mut import_records, &named_imports, &indirect_export_entries);
 
         // Default export ref and namespace object ref
         let default_export_ref = self.get_or_create_symbol(idx, "__default__");
@@ -313,6 +316,7 @@ impl ModuleGraphBuilder {
                 kind: ImportKind::Static,
                 namespace_ref,
                 meta: ImportRecordMeta::empty(),
+                is_type_only: false, // Computed after building named_imports + indirect_export_entries
             });
         }
 
@@ -553,7 +557,52 @@ fn build_indirect_exports(
                 module_request: CompactString::from(specifier),
                 resolved_module,
                 span: entry.span,
+                is_type: entry.is_type,
             })
         })
         .collect()
+}
+
+/// Pre-compute `is_type_only` for each import record.
+///
+/// An import record is type-only when ALL of the following hold:
+/// 1. There is at least one named import or indirect re-export for this specifier
+/// 2. Every named import referencing this record is type-only
+/// 3. Every indirect re-export targeting this specifier is type-only
+///
+/// Side-effect-only imports (no named imports or re-exports) are conservatively
+/// treated as non-type-only (`false`).
+fn compute_is_type_only(
+    import_records: &mut [ResolvedImportRecord],
+    named_imports: &FxHashMap<SymbolRef, NamedImport>,
+    indirect_export_entries: &[IndirectExportEntry],
+) {
+    for (i, record) in import_records.iter_mut().enumerate() {
+        let spec = record.specifier.as_str();
+
+        // Check if any indirect re-export targets this specifier with a value (non-type) export.
+        let has_value_indirect =
+            indirect_export_entries.iter().any(|e| e.module_request.as_str() == spec && !e.is_type);
+
+        if has_value_indirect {
+            // At least one value re-export → not type-only.
+            continue;
+        }
+
+        // Collect named imports that reference this import record index.
+        let matching: Vec<_> =
+            named_imports.values().filter(|imp| imp.record_idx.index() == i).collect();
+
+        // Must have at least one named import or indirect re-export to be considered type-only.
+        let has_any_indirect =
+            indirect_export_entries.iter().any(|e| e.module_request.as_str() == spec);
+
+        if matching.is_empty() && !has_any_indirect {
+            // Side-effect-only import — conservatively not type-only.
+            continue;
+        }
+
+        // All named imports must be type-only.
+        record.is_type_only = matching.iter().all(|imp| imp.is_type);
+    }
 }

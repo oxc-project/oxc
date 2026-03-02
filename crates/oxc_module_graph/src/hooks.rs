@@ -1,5 +1,23 @@
 use crate::types::{MatchImportKind, ModuleIdx, SymbolRef};
 
+/// Context passed to [`ImportHooks::on_resolved`] with full resolution details.
+pub struct ImportResolutionContext<'a> {
+    /// Module that contains the import declaration.
+    pub importer: ModuleIdx,
+    /// Local symbol bound by the import (e.g., the `foo` in `import { foo }`).
+    pub local_symbol: SymbolRef,
+    /// The name being imported (e.g., "foo", "default", "*").
+    pub imported_name: &'a str,
+    /// Index into the importer's `import_records` for this import.
+    pub record_idx: usize,
+    /// The target module that the import resolves to.
+    pub target_module: ModuleIdx,
+    /// The resolution result.
+    pub result: &'a MatchImportKind,
+    /// Re-export chain followed during resolution (empty for direct imports).
+    pub reexport_chain: &'a [SymbolRef],
+}
+
 /// Optional hooks for consumer-specific import matching behavior.
 ///
 /// 3 of 5 old `ImportMatcher` callbacks are now built-in:
@@ -12,14 +30,8 @@ pub trait ImportHooks {
     /// Called after every import resolution (successful or not).
     ///
     /// Use for: re-export chain tracking, namespace alias setup, CJS symbol tracking.
-    fn on_resolved(
-        &mut self,
-        importer: ModuleIdx,
-        local_symbol: SymbolRef,
-        result: &MatchImportKind,
-        reexport_chain: &[SymbolRef],
-    ) {
-        let _ = (importer, local_symbol, result, reexport_chain);
+    fn on_resolved(&mut self, ctx: &ImportResolutionContext) {
+        let _ = ctx;
     }
 
     /// Called when no match found and no built-in fallback applies.

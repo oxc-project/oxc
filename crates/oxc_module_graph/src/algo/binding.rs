@@ -2,7 +2,7 @@ use compact_str::CompactString;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::graph::ModuleGraph;
-use crate::hooks::LinkConfig;
+use crate::hooks::{ImportResolutionContext, LinkConfig};
 use crate::module::{Module, NormalModule};
 use crate::types::{MatchImportKind, ModuleIdx, ResolvedExport, SymbolRef};
 
@@ -64,8 +64,10 @@ pub fn build_resolved_exports(graph: &ModuleGraph) -> FxHashMap<ModuleIdx, Resol
     }
 
     // Phase 1b: Propagate star re-exports.
+    // Hoist visited set out of the per-module loop to reuse its allocation.
+    let mut visited = FxHashSet::with_capacity_and_hasher(16, rustc_hash::FxBuildHasher);
     for &idx in &module_indices {
-        let mut visited = FxHashSet::default();
+        visited.clear();
         add_exports_for_star(graph, idx, &mut resolved_exports, &mut visited, &local_export_names);
     }
 
@@ -104,6 +106,10 @@ pub fn match_imports_collect(
     let module_indices: Vec<ModuleIdx> =
         graph.modules.iter_enumerated().filter_map(|(idx, m)| m.as_normal().map(|_| idx)).collect();
 
+    // Hoist per-import allocations out of the loop to reuse their memory.
+    let mut visited = FxHashSet::with_capacity_and_hasher(16, rustc_hash::FxBuildHasher);
+    let mut reexport_chain = Vec::with_capacity(8);
+
     for &idx in &module_indices {
         let module = graph.normal_module(idx).unwrap();
 
@@ -129,7 +135,15 @@ pub fn match_imports_collect(
                 let ns_ref = graph.module(target_idx).namespace_object_ref();
                 let result = MatchImportKind::Namespace { namespace_ref: ns_ref };
                 if let Some(hooks) = config.import_hooks.as_deref_mut() {
-                    hooks.on_resolved(idx, local_symbol, &result, &[]);
+                    hooks.on_resolved(&ImportResolutionContext {
+                        importer: idx,
+                        local_symbol,
+                        imported_name: &imported_name,
+                        record_idx,
+                        target_module: target_idx,
+                        result: &result,
+                        reexport_chain: &[],
+                    });
                 }
                 links.push((local_symbol, ns_ref));
                 continue;
@@ -146,15 +160,23 @@ pub fn match_imports_collect(
                     alias: imported_name.clone(),
                 };
                 if let Some(hooks) = config.import_hooks.as_deref_mut() {
-                    hooks.on_resolved(idx, local_symbol, &result, &[]);
+                    hooks.on_resolved(&ImportResolutionContext {
+                        importer: idx,
+                        local_symbol,
+                        imported_name: &imported_name,
+                        record_idx,
+                        target_module: target_idx,
+                        result: &result,
+                        reexport_chain: &[],
+                    });
                 }
                 links.push((local_symbol, ns_ref));
                 continue;
             }
 
-            // Resolve with re-export chain following.
-            let mut visited = FxHashSet::default();
-            let mut reexport_chain = Vec::new();
+            // Resolve with re-export chain following — reuse allocated buffers.
+            visited.clear();
+            reexport_chain.clear();
             let result = resolve_import(
                 graph,
                 idx,
@@ -168,7 +190,15 @@ pub fn match_imports_collect(
 
             // Notify hooks of the resolution result.
             if let Some(hooks) = config.import_hooks.as_deref_mut() {
-                hooks.on_resolved(idx, local_symbol, &result, &reexport_chain);
+                hooks.on_resolved(&ImportResolutionContext {
+                    importer: idx,
+                    local_symbol,
+                    imported_name: &imported_name,
+                    record_idx,
+                    target_module: target_idx,
+                    result: &result,
+                    reexport_chain: &reexport_chain,
+                });
             }
 
             match &result {
@@ -335,14 +365,16 @@ fn add_exports_for_star(
                     }
                     Some(existing) => {
                         // Different symbol — mark as potentially ambiguous.
-                        let mut candidates =
-                            existing.potentially_ambiguous.clone().unwrap_or_default();
+                        let mut candidates: Vec<SymbolRef> = existing
+                            .potentially_ambiguous
+                            .as_deref()
+                            .map_or_else(Vec::new, <[SymbolRef]>::to_vec);
                         candidates.push(export.symbol_ref);
                         my_exports.insert(
                             name,
                             ResolvedExport {
                                 symbol_ref: existing.symbol_ref,
-                                potentially_ambiguous: Some(candidates),
+                                potentially_ambiguous: Some(candidates.into_boxed_slice()),
                                 came_from_cjs: existing.came_from_cjs,
                             },
                         );

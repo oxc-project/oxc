@@ -2157,6 +2157,7 @@ version = "0.115.0"
 dependencies = [
  "bitflags",
  "compact_str",
+ "criterion2",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_visit",
