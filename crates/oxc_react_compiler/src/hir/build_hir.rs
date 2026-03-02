@@ -2705,10 +2705,13 @@ pub fn lower_block_statement(
             if matches!(stmt, LowerableStatement::FunctionDeclaration(_)) { 1 } else { 0 };
         scan_for_hoistable_refs(stmt, fn_depth_start, &hoistable, &mut will_hoist);
 
-        // Remove bindings that are declared by this statement from hoistable set.
-        remove_declared_bindings_from_statement(stmt, &mut hoistable);
-
         // Emit DeclareContext for each hoisted identifier.
+        // NOTE: We must emit DeclareContext BEFORE removing the declared bindings from
+        // the hoistable set, because the DeclareContext emission needs to look up the
+        // binding info from `hoistable`. In the TS reference, the binding info comes
+        // from `stmt.scope.getBinding()` which is never modified by the deletion loop.
+        // Our `hoistable` map serves both roles (scan filter + binding info lookup),
+        // so we must ensure the binding info is still available during emission.
         for name in &will_hoist {
             if builder.is_hoisted_identifier(name) {
                 continue; // Already hoisted
@@ -2742,6 +2745,12 @@ pub fn lower_block_statement(
             let hoisted_decl_span = builder.get_binding_decl_span(name).unwrap_or_default();
             builder.add_hoisted_identifier(name, hoisted_decl_span);
         }
+
+        // Remove bindings that are declared by this statement from hoistable set.
+        // This must happen AFTER DeclareContext emission (which reads from hoistable)
+        // but BEFORE the next iteration, so subsequent statements don't try to hoist
+        // already-declared bindings.
+        remove_declared_bindings_from_statement(stmt, &mut hoistable);
 
         lower_statement(builder, stmt)?;
     }
