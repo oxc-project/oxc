@@ -10,6 +10,7 @@ use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+#[derive(Debug, Copy, Clone)]
 enum SpreadKind {
     ObjectSpreadProperty,
     ObjectRestProperty,
