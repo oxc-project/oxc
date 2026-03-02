@@ -490,8 +490,62 @@ fn apply_to_instruction_value(value: &mut InstructionValue, unifier: &ResolvedTy
         InstructionValue::PropertyDelete(v) => {
             resolve_place(&mut v.object, unifier);
         }
-        // Other instruction values don't have nested places that need resolution.
-        _ => {}
+        InstructionValue::ComputedDelete(v) => {
+            resolve_place(&mut v.object, unifier);
+            resolve_place(&mut v.property, unifier);
+        }
+        InstructionValue::GetIterator(v) => {
+            resolve_place(&mut v.collection, unifier);
+        }
+        InstructionValue::IteratorNext(v) => {
+            resolve_place(&mut v.iterator, unifier);
+            resolve_place(&mut v.collection, unifier);
+        }
+        InstructionValue::NextPropertyOf(v) => {
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::PrefixUpdate(v) => {
+            resolve_place(&mut v.lvalue, unifier);
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::PostfixUpdate(v) => {
+            resolve_place(&mut v.lvalue, unifier);
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::Await(v) => {
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::StoreGlobal(v) => {
+            resolve_place(&mut v.value, unifier);
+        }
+        InstructionValue::DeclareLocal(v) => {
+            resolve_place(&mut v.lvalue.place, unifier);
+        }
+        InstructionValue::DeclareContext(v) => {
+            resolve_place(&mut v.lvalue_place, unifier);
+        }
+        InstructionValue::FinishMemoize(v) => {
+            resolve_place(&mut v.decl, unifier);
+        }
+        InstructionValue::StartMemoize(v) => {
+            if let Some(deps) = &mut v.deps {
+                for dep in deps.iter_mut() {
+                    if let crate::hir::ManualMemoDependencyRoot::NamedLocal { value, .. } =
+                        &mut dep.root
+                    {
+                        resolve_place(value, unifier);
+                    }
+                }
+            }
+        }
+        // These variants have no Place fields that need type resolution.
+        InstructionValue::Primitive(_)
+        | InstructionValue::JsxText(_)
+        | InstructionValue::RegExpLiteral(_)
+        | InstructionValue::LoadGlobal(_)
+        | InstructionValue::Debugger(_)
+        | InstructionValue::MetaProperty(_)
+        | InstructionValue::UnsupportedNode(_) => {}
     }
 }
 
