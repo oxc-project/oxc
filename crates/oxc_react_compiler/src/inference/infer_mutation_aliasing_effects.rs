@@ -2690,17 +2690,23 @@ fn compute_instruction_effects(
         }
     });
 
-    // Port of TS applyEffect frozen-source conversions (InferMutationAliasingEffects.ts):
+    // Port of TS applyEffect data-flow conversions (InferMutationAliasingEffects.ts lines 861-944):
     //
-    // When a data-flow effect's source (from) is Frozen or MaybeFrozen, the TS reference
-    // converts the effect to prevent frozen values from creating mutable edges in the alias
-    // graph, which would incorrectly extend mutable ranges.
+    // For Capture/Alias/MaybeAlias, the TS reference classifies source and destination
+    // value kinds and then decides whether to keep, convert, or drop the effect:
     //
-    // 1. Capture/Alias/MaybeAlias (lines 861-944): When source is Frozen/MaybeFrozen,
-    //    convert to ImmutableCapture.
-    // 2. Assign (lines 947-1014): When source is Frozen (only), convert to ImmutableCapture.
-    // 3. CreateFrom (lines 731-789): When source is Frozen (only), replace with
-    //    Create(Frozen) + ImmutableCapture.
+    //  sourceType:      Frozen/MaybeFrozen → "frozen", Context → "context",
+    //                   Global/Primitive → null (drop), default → "mutable"
+    //  destinationType: Context → "context", Mutable/MaybeFrozen → "mutable", default → null
+    //
+    //  Decision:
+    //    frozen source              → ImmutableCapture
+    //    (mutable src & mutable dst) OR MaybeAlias → keep
+    //    context+non-null dst OR mutable src+context dst → convert to MaybeAlias
+    //    otherwise (incl. Global/Primitive source)       → drop (no-op)
+    //
+    // For Assign (lines 947-1014): Frozen source → ImmutableCapture.
+    // For CreateFrom (lines 731-789): Frozen source → Create(Frozen) + ImmutableCapture.
 
     // Collect extra effects that arise from splitting CreateFrom into two effects.
     let mut extra_effects: Vec<AliasingEffect> = Vec::new();
@@ -2708,6 +2714,12 @@ fn compute_instruction_effects(
     for effect in &mut effects {
         match effect {
             // Capture, Alias, MaybeAlias: Frozen/MaybeFrozen source → ImmutableCapture
+            //
+            // Port of TS applyEffect lines 861-944 (partial):
+            // The TS reference applies effects incrementally with state updates between them,
+            // so it can also prune based on source Global/Primitive and destination kinds.
+            // Our batch approach uses pre-instruction state, so we only apply the frozen-source
+            // and frozen-destination conversions which are safe regardless of application order.
             AliasingEffect::Capture { from, into }
             | AliasingEffect::Alias { from, into }
             | AliasingEffect::MaybeAlias { from, into } => {
@@ -2717,6 +2729,26 @@ fn compute_instruction_effects(
                             from: from.clone(),
                             into: into.clone(),
                         };
+                    }
+                }
+                // For Capture/Alias (NOT MaybeAlias): if the destination is Frozen, the
+                // effect cannot create meaningful data flow since frozen values are immutable.
+                // TS drops these in applyEffect because destinationType=null for Frozen.
+                // MaybeAlias always survives per TS line 930: `|| effect.kind === 'MaybeAlias'`.
+                if matches!(effect, AliasingEffect::Capture { .. } | AliasingEffect::Alias { .. })
+                {
+                    let (from, into) = match effect {
+                        AliasingEffect::Capture { from, into }
+                        | AliasingEffect::Alias { from, into } => (from, into),
+                        _ => unreachable!(),
+                    };
+                    if let Some(abstract_val) = state.get(into) {
+                        if matches!(abstract_val.kind, ValueKind::Frozen) {
+                            *effect = AliasingEffect::ImmutableCapture {
+                                from: from.clone(),
+                                into: into.clone(),
+                            };
+                        }
                     }
                 }
             }
