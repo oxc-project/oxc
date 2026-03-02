@@ -400,6 +400,10 @@ fn test_vars_destructure() {
             Some(json![[{ "ignoreRestSiblings": true }]]),
         ),
         (
+            "const someMap = new Map([['foo', 'bar']]); for (const [key, val] of someMap) { console.log(val); }",
+            Some(json![[{ "ignoreRestSiblings": true }]]),
+        ),
+        (
             "const { a, ...rest } = obj; console.log(rest)",
             Some(json!( [{ "ignoreRestSiblings": true, "vars": "all" }] )),
         ),

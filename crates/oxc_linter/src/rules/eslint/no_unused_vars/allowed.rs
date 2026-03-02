@@ -143,6 +143,10 @@ impl NoUnusedVars {
             return true;
         }
 
+        if self.ignore_rest_siblings && symbol.is_allowed_for_of_array_destructure_sibling(decl) {
+            return true;
+        }
+
         false
     }
 
@@ -305,5 +309,21 @@ impl NoUnusedVars {
         }
 
         false
+    }
+}
+
+impl Symbol<'_, '_> {
+    fn is_allowed_for_of_array_destructure_sibling(&self, decl: &VariableDeclarator<'_>) -> bool {
+        if !matches!(decl.id, BindingPattern::ArrayPattern(_)) {
+            return false;
+        }
+
+        if !self.iter_parents().any(|node| matches!(node.kind(), AstKind::ForOfStatement(_))) {
+            return false;
+        }
+
+        decl.id.get_binding_identifiers().iter().any(|ident| {
+            ident.symbol_id() != self.id() && !self.scoping().symbol_is_unused(ident.symbol_id())
+        })
     }
 }
