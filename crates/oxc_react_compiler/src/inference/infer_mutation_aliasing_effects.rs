@@ -2101,6 +2101,11 @@ fn compute_instruction_effects(
                         }
                     }
                     crate::hir::ArrayExpressionElement::Spread(s) => {
+                        if !is_array_or_set_or_map_type(&s.place.identifier.type_) {
+                            effects.push(AliasingEffect::MutateTransitiveConditionally {
+                                value: s.place.clone(),
+                            });
+                        }
                         if is_frozen(state, &s.place) {
                             effects.push(AliasingEffect::ImmutableCapture {
                                 from: s.place.clone(),
