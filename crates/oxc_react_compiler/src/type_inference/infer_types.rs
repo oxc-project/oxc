@@ -695,9 +695,16 @@ fn generate_instruction_equations(
             equations
                 .push(TypeEquation { left: lvalue_type, right: v.place.identifier.type_.clone() });
         }
-        InstructionValue::LoadContext(v) => {
-            equations
-                .push(TypeEquation { left: lvalue_type, right: v.place.identifier.type_.clone() });
+        InstructionValue::LoadContext(_) => {
+            // We intentionally do not infer types for context variable loads.
+            // Port of TS InferTypes.ts lines 199-202:
+            //   case 'DeclareContext':
+            //   case 'LoadContext': { break; }
+            // This leaves the lvalue as an unresolved TypeVar, preventing
+            // over-propagation of return types through context variables
+            // (e.g. a recursive function whose return type resolves to Primitive
+            // would incorrectly cause `may_allocate` to return false for calls
+            // through context, preventing scope creation).
         }
         InstructionValue::StoreLocal(v) => {
             equations.push(TypeEquation {
