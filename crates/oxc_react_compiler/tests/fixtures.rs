@@ -5,7 +5,7 @@
 /// the `.expect.md` files.
 use std::path::Path;
 
-use oxc_react_compiler::entrypoint::options::CompilationMode;
+use oxc_react_compiler::entrypoint::options::{CompilationMode, PanicThreshold};
 use oxc_react_compiler::entrypoint::pipeline::run_pipeline;
 use oxc_react_compiler::hir::ReactFunctionType;
 use oxc_react_compiler::hir::build_hir::{LowerableFunction, collect_import_bindings, lower};
@@ -8487,6 +8487,26 @@ fn codegen_conformance_inner() {
                     && !expected_code.contains("useMemoCache")
                 {
                     passed += 1;
+                    continue;
+                }
+                // When panicThreshold:"none" is set, pipeline errors cause a graceful
+                // bailout: the original source is emitted unchanged (identity transform).
+                // Parse the pragma to check panic_threshold before categorising the error.
+                let first_line = source.lines().next().unwrap_or("");
+                let plugin_options = parse_config_pragma_for_tests(
+                    first_line,
+                    &PragmaDefaults { compilation_mode: CompilationMode::All },
+                );
+                if plugin_options.panic_threshold == PanicThreshold::None {
+                    let actual_norm = normalize_code_quotes(&source);
+                    let expected_norm = normalize_code_quotes(expected_code);
+                    if actual_norm == expected_norm
+                        || whitespace_compatible(&actual_norm, &expected_norm)
+                    {
+                        passed += 1;
+                    } else {
+                        failed.push((file_name, FailureCategory::OutputMismatch));
+                    }
                     continue;
                 }
                 let category = if e.starts_with("Parse") {
