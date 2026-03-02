@@ -1138,7 +1138,7 @@ fn run_pipeline_for_codegen(
     }
 
     for stmt in &parser_result.program.body {
-        use oxc_ast::ast::{Declaration, Statement, VariableDeclarationKind};
+        use oxc_ast::ast::{Declaration, Expression, Statement, VariableDeclarationKind};
         match stmt {
             Statement::FunctionDeclaration(f) => {
                 let name = get_func_name(&LowerableFunction::Function(f), None);
@@ -1194,7 +1194,7 @@ fn run_pipeline_for_codegen(
                     candidates.push((LowerableFunction::Function(f), name, None));
                 }
                 Some(Declaration::VariableDeclaration(decl))
-                    if decl.kind == VariableDeclarationKind::Const =>
+                    if matches!(decl.kind, VariableDeclarationKind::Const | VariableDeclarationKind::Let | VariableDeclarationKind::Var) =>
                 {
                     if let Some(d) = decl.declarations.first() {
                         let binding = get_binding_name(d);
@@ -1213,7 +1213,7 @@ fn run_pipeline_for_codegen(
                 }
                 _ => {}
             },
-            Statement::VariableDeclaration(decl) if decl.kind == VariableDeclarationKind::Const => {
+            Statement::VariableDeclaration(decl) if matches!(decl.kind, VariableDeclarationKind::Const | VariableDeclarationKind::Let | VariableDeclarationKind::Var) => {
                 if let Some(d) = decl.declarations.first() {
                     let binding = get_binding_name(d);
                     if let Some(init) = &d.init {
@@ -1228,10 +1228,22 @@ fn run_pipeline_for_codegen(
                 }
             }
             // Handle bare expression statements like `React.memo(props => ...)`
+            // and assignment expressions like `Foo = () => ...`
             Statement::ExpressionStatement(expr_stmt) => {
                 if let Some((candidate, wrapper)) = extract_fn_from_memo_call(&expr_stmt.expression)
                 {
                     candidates.push((candidate, None, Some(wrapper)));
+                } else if let Expression::AssignmentExpression(assign) = &expr_stmt.expression {
+                    if let Some((candidate, wrapper)) = extract_candidate_from_init(&assign.right) {
+                        let binding = match &assign.left {
+                            oxc_ast::ast::AssignmentTarget::AssignmentTargetIdentifier(id) => {
+                                Some(id.name.to_string())
+                            }
+                            _ => None,
+                        };
+                        let name = get_func_name(&candidate, binding.as_deref());
+                        candidates.push((candidate, name, wrapper));
+                    }
                 }
             }
             _ => {}
@@ -7783,17 +7795,22 @@ fn extract_compiled_from_gating(code: &str) -> Option<String> {
     while i < lines.len() {
         let trimmed = lines[i].trim();
 
-        // Look for `const NAME = GATING_CALL()` or `export const NAME = GATING_CALL()` pattern
+        // Look for declaration or assignment gating patterns:
+        //   `const NAME = GATING_CALL()`, `let NAME = GATING_CALL()`,
+        //   `export const NAME = GATING_CALL()`, or `NAME = GATING_CALL()`
         // Followed by `  ? function...` or `  ? (args) => {` on next line(s)
-        let const_prefix = if trimmed.starts_with("export const ") {
-            "export const "
-        } else if trimmed.starts_with("const ") {
-            "const "
-        } else {
-            ""
-        };
+        let has_decl_prefix = trimmed.starts_with("export const ")
+            || trimmed.starts_with("const ")
+            || trimmed.starts_with("let ")
+            || trimmed.starts_with("var ");
+        // Also match bare assignment expressions like `Foo = isForgetEnabled_Fixtures()`
+        let has_assign_prefix = !has_decl_prefix && trimmed.contains(" = ") && trimmed.contains("isForgetEnabled_Fixtures()")
+            || !has_decl_prefix && trimmed.contains(" = ") && trimmed.contains("_isForgetEnabled_Fixtures()")
+            || !has_decl_prefix && trimmed.contains(" = ") && trimmed.contains("getTrue()")
+            || !has_decl_prefix && trimmed.contains(" = ") && trimmed.contains("getFalse()");
+        let has_prefix = has_decl_prefix || has_assign_prefix;
         // A line is a gating declaration if:
-        // 1. It's `const/export const NAME = GATING_CALL()` followed by ternary
+        // 1. It's a declaration/assignment with GATING_CALL() followed by ternary
         // 2. It's just the gating function call line (inside a call expression),
         //    e.g. `  isForgetEnabled_Fixtures()` followed by `    ? function ...`
         let is_inline_gating = (trimmed == "isForgetEnabled_Fixtures()"
@@ -7808,12 +7825,12 @@ fn extract_compiled_from_gating(code: &str) -> Option<String> {
                     || next.starts_with("? async function")
             };
         let is_gating_decl = is_inline_gating
-            || (!const_prefix.is_empty()
+            || (has_prefix
                 && (trimmed.contains("isForgetEnabled_Fixtures()")
                     || trimmed.contains("_isForgetEnabled_Fixtures()")
                     || trimmed.contains("getTrue()")
                     || trimmed.contains("getFalse()")))
-            || (!const_prefix.is_empty() && i + 1 < lines.len() && {
+            || (has_prefix && i + 1 < lines.len() && {
                 let next = lines[i + 1].trim();
                 next.starts_with("? function")
                     || next.starts_with("? (")

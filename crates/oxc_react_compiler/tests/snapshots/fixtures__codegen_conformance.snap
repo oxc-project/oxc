@@ -2,13 +2,13 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1298/1339 passed (96.9%)
+Codegen conformance: 1300/1339 passed (97.1%)
 Flow files skipped: 38
 FBT lowering skipped: 32
 
 Failure breakdown:
   parse_error:    0
-  no_function:    2
+  no_function:    0
   lower_error:    0
   pipeline_error: 1
   panic:          0
@@ -28,8 +28,6 @@ Failed fixtures:
   [output_mismatch] destructuring-property-inference.js
   [output_mismatch] for-of-mutate-item-of-local-collection.js
   [pipeline_error] gating/dynamic-gating-bailout-nopanic.js
-  [no_function] gating/invalid-fnexpr-reference.js
-  [no_function] gating/reassigned-fnexpr-variable.js
   [output_mismatch] hoisting-invalid-tdz-let.js
   [output_mismatch] hoisting-recursive-call-within-lambda.js
   [output_mismatch] idx-no-outlining.js
