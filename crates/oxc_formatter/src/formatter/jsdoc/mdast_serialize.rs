@@ -292,7 +292,7 @@ fn serialize_paragraph(
 
     if has_breaks {
         // Split into segments at Break nodes, each segment on its own line
-        let indent_str = " ".repeat(indent);
+        let indent_str = super::wrap::indent_str(indent);
         let mut current_segment = String::new();
 
         for child in &para.children {
@@ -301,14 +301,21 @@ fn serialize_paragraph(
                 let text = current_segment.trim().to_string();
                 let text = restore_in_string(&text, opts.placeholders);
                 if indent > 0 {
-                    lines.push(format!("{indent_str}{text}\\"));
+                    let mut s = String::with_capacity(indent_str.len() + text.len() + 1);
+                    s.push_str(&indent_str);
+                    s.push_str(&text);
+                    s.push('\\');
+                    lines.push(s);
                 } else {
                     let text = if opts.capitalize && lines.is_empty() {
-                        super::normalize::capitalize_first(&text)
+                        super::normalize::capitalize_first(&text).into_owned()
                     } else {
                         text
                     };
-                    lines.push(format!("{text}\\"));
+                    let mut s = String::with_capacity(text.len() + 1);
+                    s.push_str(&text);
+                    s.push('\\');
+                    lines.push(s);
                 }
                 current_segment.clear();
             } else {
@@ -321,7 +328,10 @@ fn serialize_paragraph(
             let text = current_segment.trim().to_string();
             let text = restore_in_string(&text, opts.placeholders);
             if indent > 0 {
-                lines.push(format!("{indent_str}{text}"));
+                let mut s = String::with_capacity(indent_str.len() + text.len());
+                s.push_str(&indent_str);
+                s.push_str(&text);
+                lines.push(s);
             } else {
                 lines.push(text);
             }
@@ -333,21 +343,21 @@ fn serialize_paragraph(
     let inline_text = collect_inline_text(&Node::Paragraph(para.clone()));
     let inline_text = restore_in_string(&inline_text, opts.placeholders);
     let effective_width = opts.max_width.saturating_sub(indent);
-    let indent_str = " ".repeat(indent);
+    let ind = super::wrap::indent_str(indent);
 
     let mut para_lines = Vec::new();
     wrap_paragraph(&inline_text, effective_width, 0, &mut para_lines);
 
     for (i, line) in para_lines.iter().enumerate() {
         if indent > 0 {
-            lines.push(format!("{indent_str}{line}"));
+            let mut s = String::with_capacity(ind.len() + line.len());
+            s.push_str(&ind);
+            s.push_str(line);
+            lines.push(s);
+        } else if opts.capitalize && i == 0 {
+            lines.push(super::normalize::capitalize_first(line).into_owned());
         } else {
-            let line = if opts.capitalize && i == 0 {
-                super::normalize::capitalize_first(line)
-            } else {
-                line.clone()
-            };
-            lines.push(line);
+            lines.push(line.clone());
         }
     }
 }
@@ -368,7 +378,7 @@ fn serialize_pipe_prefixed_paragraph(
         return false;
     }
 
-    let indent_str = " ".repeat(indent);
+    let ind = super::wrap::indent_str(indent);
     let mut index = 0;
     let mut emitted_segment = false;
 
@@ -399,7 +409,10 @@ fn serialize_pipe_prefixed_paragraph(
 
             for line in block_lines {
                 if indent > 0 && !line.is_empty() {
-                    lines.push(format!("{indent_str}{line}"));
+                    let mut s = String::with_capacity(ind.len() + line.len());
+                    s.push_str(&ind);
+                    s.push_str(&line);
+                    lines.push(s);
                 } else {
                     lines.push(line);
                 }
@@ -426,14 +439,14 @@ fn serialize_pipe_prefixed_paragraph(
 
             for (i, line) in para_lines.iter().enumerate() {
                 if indent > 0 {
-                    lines.push(format!("{indent_str}{line}"));
+                    let mut s = String::with_capacity(ind.len() + line.len());
+                    s.push_str(&ind);
+                    s.push_str(line);
+                    lines.push(s);
+                } else if opts.capitalize && i == 0 {
+                    lines.push(super::normalize::capitalize_first(line).into_owned());
                 } else {
-                    let line = if opts.capitalize && i == 0 {
-                        super::normalize::capitalize_first(line)
-                    } else {
-                        line.clone()
-                    };
-                    lines.push(line);
+                    lines.push(line.clone());
                 }
             }
         }
@@ -454,7 +467,7 @@ fn serialize_list(
     opts: &SerializeOptions<'_>,
     lines: &mut Vec<String>,
 ) {
-    let indent_str = " ".repeat(indent);
+    let ind = super::wrap::indent_str(indent);
     let mut counter = list.start.unwrap_or(1);
 
     for child in &list.children {
@@ -494,15 +507,22 @@ fn serialize_list(
                         let text = if opts.capitalize {
                             super::normalize::capitalize_first(line)
                         } else {
-                            line.clone()
+                            std::borrow::Cow::Borrowed(line.as_str())
                         };
-                        lines.push(format!("{indent_str}{marker}{text}"));
+                        let mut s = String::with_capacity(ind.len() + marker.len() + text.len());
+                        s.push_str(&ind);
+                        s.push_str(&marker);
+                        s.push_str(&text);
+                        lines.push(s);
                     } else if line.is_empty() {
                         lines.push(String::new());
                     } else {
                         // wrap_paragraph already adds marker_width indent to
                         // continuation lines, so only prepend outer indent.
-                        lines.push(format!("{indent_str}{line}"));
+                        let mut s = String::with_capacity(ind.len() + line.len());
+                        s.push_str(&ind);
+                        s.push_str(line);
+                        lines.push(s);
                     }
                 }
                 first_child = false;
@@ -535,12 +555,15 @@ fn serialize_list(
                         opts,
                         &mut child_lines,
                     );
-                    let child_indent = " ".repeat(indent + marker_width);
+                    let child_ind = super::wrap::indent_str(indent + marker_width);
                     for line in &child_lines {
                         if line.is_empty() {
                             lines.push(String::new());
                         } else {
-                            lines.push(format!("{child_indent}{line}"));
+                            let mut s = String::with_capacity(child_ind.len() + line.len());
+                            s.push_str(&child_ind);
+                            s.push_str(line);
+                            lines.push(s);
                         }
                     }
                 }
