@@ -1,0 +1,75 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`list_files > should list selected target files in sorted order 1`] = `
+"--------------------
+arguments: --list-files
+working directory: fixtures
+exit code: 0
+--- STDOUT ---------
+a-first.ts
+ignored-by-ignore-path/skip.js
+z-last.js
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --list-files z-last.js a-first.ts
+working directory: fixtures
+exit code: 0
+--- STDOUT ---------
+a-first.ts
+z-last.js
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --list-files --ignore-path custom.ignore
+working directory: fixtures
+exit code: 0
+--- STDOUT ---------
+a-first.ts
+ignored-by-prettierignore/skip.js
+z-last.js
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`list_files > should preserve no-file semantics 1`] = `
+"--------------------
+arguments: --list-files __nonexistent__/**/*.js
+working directory: fixtures
+exit code: 2
+--- STDOUT ---------
+
+--- STDERR ---------
+Expected at least one target file
+--------------------
+--------------------
+arguments: --list-files --no-error-on-unmatched-pattern __nonexistent__/**/*.js
+working directory: fixtures
+exit code: 0
+--- STDOUT ---------
+
+--- STDERR ---------
+No files found matching the given patterns.
+--------------------
+--------------------
+arguments: --list-files --ignore-path custom.ignore ignored-by-ignore-path/skip.js
+working directory: fixtures
+exit code: 2
+--- STDOUT ---------
+
+--- STDERR ---------
+Expected at least one target file
+--------------------
+--------------------
+arguments: --list-files --no-error-on-unmatched-pattern --ignore-path custom.ignore ignored-by-ignore-path/skip.js
+working directory: fixtures
+exit code: 0
+--- STDOUT ---------
+
+--- STDERR ---------
+No files found matching the given patterns.
+--------------------"
+`;

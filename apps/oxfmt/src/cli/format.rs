@@ -93,28 +93,6 @@ impl FormatRunner {
             }
         };
 
-        // Use `block_in_place()` to avoid nested async runtime access
-        #[cfg(feature = "napi")]
-        match tokio::task::block_in_place(|| {
-            self.external_formatter
-                .as_ref()
-                .expect("External formatter must be set when `napi` feature is enabled")
-                .init(num_of_threads)
-        }) {
-            // TODO: Plugins support
-            // - Parse returned `languages`
-            // - Allow its `extensions` and `filenames` in `walk.rs`
-            // - Pass `parser` to `SourceFormatter`
-            Ok(_) => {}
-            Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to setup external formatter.\n{err}\n"),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        }
-
         let walker = match Walk::build(
             &cwd,
             &paths,
@@ -141,6 +119,58 @@ impl FormatRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
+
+        if runtime_options.list_files {
+            let mut target_files = walker
+                .stream_entries()
+                .into_iter()
+                .map(|entry| {
+                    entry
+                        .path()
+                        // Show path relative to `cwd` for cleaner output
+                        .strip_prefix(&cwd)
+                        .unwrap_or(entry.path())
+                        .to_string_lossy()
+                        // Normalize path separators for consistent output across platforms
+                        .replace('\\', "/")
+                })
+                .collect::<Vec<_>>();
+
+            if target_files.is_empty() {
+                if runtime_options.no_error_on_unmatched_pattern {
+                    utils::print_and_flush(stderr, "No files found matching the given patterns.\n");
+                    return CliRunResult::None;
+                }
+                utils::print_and_flush(stderr, "Expected at least one target file\n");
+                return CliRunResult::NoFilesFound;
+            }
+
+            target_files.sort_unstable();
+            utils::print_and_flush(stdout, &target_files.join("\n"));
+            return CliRunResult::FormatSucceeded;
+        }
+
+        // Use `block_in_place()` to avoid nested async runtime access
+        #[cfg(feature = "napi")]
+        match tokio::task::block_in_place(|| {
+            self.external_formatter
+                .as_ref()
+                .expect("External formatter must be set when `napi` feature is enabled")
+                .init(num_of_threads)
+        }) {
+            // TODO: Plugins support
+            // - Parse returned `languages`
+            // - Allow its `extensions` and `filenames` in `walk.rs`
+            // - Pass `parser` to `SourceFormatter`
+            Ok(_) => {}
+            Err(err) => {
+                utils::print_and_flush(
+                    stderr,
+                    &format!("Failed to setup external formatter.\n{err}\n"),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        }
 
         // Get the receiver for streaming entries
         let rx_entry = walker.stream_entries();

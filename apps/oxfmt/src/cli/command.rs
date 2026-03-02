@@ -169,4 +169,7 @@ pub struct RuntimeOptions {
     /// Number of threads to use. Set to 1 for using only 1 CPU core.
     #[bpaf(argument("INT"), hide_usage)]
     pub threads: Option<usize>,
+    // List all files that would be formatted, then exit without formatting
+    #[bpaf(long("list-files"), switch, hide_usage)]
+    pub list_files: bool,
 }
