@@ -2501,5 +2501,22 @@ fn compute_instruction_effects(
         }
     });
 
+    // Port of TS applyEffect for Capture (InferMutationAliasingEffects.ts lines 894-927):
+    // When a Capture effect's source (from) is Frozen or MaybeFrozen, convert it to
+    // ImmutableCapture. This prevents frozen values from creating mutable capture edges
+    // in the alias graph, which would incorrectly extend mutable ranges.
+    for effect in &mut effects {
+        if let AliasingEffect::Capture { from, into } = effect {
+            if let Some(abstract_val) = state.get(from) {
+                if matches!(abstract_val.kind, ValueKind::Frozen | ValueKind::MaybeFrozen) {
+                    *effect = AliasingEffect::ImmutableCapture {
+                        from: from.clone(),
+                        into: into.clone(),
+                    };
+                }
+            }
+        }
+    }
+
     effects
 }
