@@ -535,10 +535,7 @@ fn is_primitive_type(id: &crate::hir::Identifier) -> bool {
 /// Check if an identifier is a stable ref type (useRef result) that is not
 /// already in the reactive set. Matches TS `isStableRefType` from
 /// `CollectReactiveIdentifiers.ts`.
-fn is_stable_ref_type(
-    id: &crate::hir::Identifier,
-    reactive: &FxHashSet<IdentifierId>,
-) -> bool {
+fn is_stable_ref_type(id: &crate::hir::Identifier, reactive: &FxHashSet<IdentifierId>) -> bool {
     is_use_ref_type(id) && !reactive.contains(&id.id)
 }
 
