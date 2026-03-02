@@ -25,6 +25,17 @@ impl<'a> Format<'a> for AstNode<'a, Program<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
+        if f.comments().has_trailing_suppression_comment(self.span().end) {
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
+            format_trailing_comments(
+                self.parent.span(),
+                self.inner.span(),
+                self.following_span_start,
+            )
+            .fmt(f);
+            return;
+        }
         let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
