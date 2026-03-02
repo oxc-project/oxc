@@ -134,6 +134,7 @@ impl FormatRunner {
                         .to_string_lossy()
                         // Normalize path separators for consistent output across platforms
                         .cow_replace('\\', "/")
+                        .into_owned()
                 })
                 .collect::<Vec<_>>();
 
