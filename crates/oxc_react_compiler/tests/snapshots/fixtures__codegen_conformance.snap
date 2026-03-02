@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1306/1339 passed (97.5%)
+Codegen conformance: 1310/1339 passed (97.8%)
 Flow files skipped: 38
 FBT lowering skipped: 32
 
@@ -12,7 +12,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 0
   panic:          0
-  output_mismatch:33
+  output_mismatch:29
   no_expected:    0
 
 Failed fixtures:
@@ -34,11 +34,7 @@ Failed fixtures:
   [output_mismatch] new-mutability/repro-destructure-from-prop-with-default-value.js
   [output_mismatch] new-mutability/todo-control-flow-sensitive-mutation.tsx
   [output_mismatch] preserve-memo-validation/useCallback-infer-more-specific.ts
-  [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/infer-function-uncond-optional-hoists-other-dep.tsx
-  [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
   [output_mismatch] reduce-reactive-deps/hoist-deps-diff-ssa-instance1.tsx
-  [output_mismatch] reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
-  [output_mismatch] reordering-across-blocks.js
   [output_mismatch] repro-dont-memoize-array-with-mutable-map-after-hook.js
   [output_mismatch] repro-memoize-for-of-collection-when-loop-body-returns.js
   [output_mismatch] repro-mutate-result-of-function-call-with-frozen-argument-in-function-expression.js
