@@ -137,18 +137,28 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
                     }
                 }
                 InstructionValue::CallExpression(v) => {
-                    let callee_name = names.get(&v.callee.identifier.id).cloned();
-                    if let Some(callee_name) = callee_name {
-                        for arg in &v.args {
-                            if let crate::hir::CallArg::Place(place) = arg
-                                && let Some(&idx) = functions.get(&place.identifier.id)
-                                && nodes[idx].generated_name.is_none()
-                            {
-                                nodes[idx].generated_name = Some(format!("{callee_name}()"));
-                                functions.remove(&place.identifier.id);
-                            }
-                        }
-                    }
+                    let callee_name = names
+                        .get(&v.callee.identifier.id)
+                        .cloned()
+                        .unwrap_or_else(|| "(anonymous)".to_string());
+                    name_function_args(
+                        &callee_name,
+                        &v.args,
+                        &mut functions,
+                        &mut nodes,
+                    );
+                }
+                InstructionValue::MethodCall(v) => {
+                    let callee_name = names
+                        .get(&v.property.identifier.id)
+                        .cloned()
+                        .unwrap_or_else(|| "(anonymous)".to_string());
+                    name_function_args(
+                        &callee_name,
+                        &v.args,
+                        &mut functions,
+                        &mut nodes,
+                    );
                 }
                 InstructionValue::JsxExpression(v) => {
                     let element_name = match &v.tag {
@@ -175,4 +185,46 @@ fn collect_anonymous_functions(func: &HIRFunction) -> Vec<FunctionNode> {
     }
 
     nodes
+}
+
+/// Shared logic for naming anonymous function arguments in CallExpression and MethodCall.
+///
+/// Port of the combined `CallExpression`/`MethodCall` case in `NameAnonymousFunctions.ts`.
+/// When multiple function arguments are passed, they get suffixed with `(argN)` instead of `()`.
+fn name_function_args(
+    callee_name: &str,
+    args: &[crate::hir::CallArg],
+    functions: &mut FxHashMap<IdentifierId, usize>,
+    nodes: &mut [FunctionNode],
+) {
+    // Count how many args are anonymous functions
+    let fn_arg_count = args
+        .iter()
+        .filter(|arg| {
+            if let crate::hir::CallArg::Place(place) = arg {
+                functions.contains_key(&place.identifier.id)
+            } else {
+                false
+            }
+        })
+        .count();
+
+    for (i, arg) in args.iter().enumerate() {
+        if let crate::hir::CallArg::Spread(_) = arg {
+            continue;
+        }
+        if let crate::hir::CallArg::Place(place) = arg {
+            if let Some(&idx) = functions.get(&place.identifier.id) {
+                if nodes[idx].generated_name.is_none() {
+                    let generated_name = if fn_arg_count > 1 {
+                        format!("{callee_name}(arg{i})")
+                    } else {
+                        format!("{callee_name}()")
+                    };
+                    nodes[idx].generated_name = Some(generated_name);
+                    functions.remove(&place.identifier.id);
+                }
+            }
+        }
+    }
 }
