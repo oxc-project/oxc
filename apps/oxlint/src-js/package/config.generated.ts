@@ -313,6 +313,18 @@ export interface OxlintGlobals {
  */
 export interface OxlintOptions {
   /**
+   * Ensure warnings produce a non-zero exit code.
+   *
+   * Equivalent to passing `--deny-warnings` on the CLI.
+   */
+  denyWarnings?: boolean | null;
+  /**
+   * Specify a warning threshold. Exits with an error status if warnings exceed this value.
+   *
+   * Equivalent to passing `--max-warnings` on the CLI.
+   */
+  maxWarnings?: number | null;
+  /**
    * Enable rules that require type information.
    *
    * Equivalent to passing `--type-aware` on the CLI.
@@ -324,12 +336,6 @@ export interface OxlintOptions {
    * Equivalent to passing `--type-check` on the CLI.
    */
   typeCheck?: boolean | null;
-  /**
-   * Specify a warning threshold. Exits with an error status if warnings exceed this value.
-   *
-   * Equivalent to passing `--max-warnings` on the CLI.
-   */
-  maxWarnings?: number | null;
 }
 export interface OxlintOverride {
   /**

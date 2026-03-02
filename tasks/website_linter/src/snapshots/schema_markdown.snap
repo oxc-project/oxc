@@ -304,6 +304,16 @@ type: `object`
 Options for the linter.
 
 
+### options.denyWarnings
+
+type: `boolean`
+
+
+Ensure warnings produce a non-zero exit code.
+
+Equivalent to passing `--deny-warnings` on the CLI.
+
+
 ### options.maxWarnings
 
 type: `integer`

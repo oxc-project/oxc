@@ -498,6 +498,14 @@ expression: json
       "description": "Options for the linter.",
       "type": "object",
       "properties": {
+        "denyWarnings": {
+          "description": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI.",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Ensure warnings produce a non-zero exit code.\n\nEquivalent to passing `--deny-warnings` on the CLI."
+        },
         "maxWarnings": {
           "description": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI.",
           "type": [

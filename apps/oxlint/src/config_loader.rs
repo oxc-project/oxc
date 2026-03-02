@@ -387,6 +387,12 @@ impl<'a> ConfigLoader<'a> {
                         .push(ConfigLoadError::Diagnostic(nested_type_check_not_supported(&path)));
                     continue;
                 }
+                if builder.deny_warnings().is_some() {
+                    errors.push(ConfigLoadError::Diagnostic(nested_deny_warnings_not_supported(
+                        &path,
+                    )));
+                    continue;
+                }
                 if builder.max_warnings().is_some() {
                     errors.push(ConfigLoadError::Diagnostic(nested_max_warnings_not_supported(
                         &path,
@@ -655,6 +661,14 @@ fn nested_type_check_not_supported(path: &Path) -> OxcDiagnostic {
     .with_help("Move `options.typeCheck` to the root configuration file.")
 }
 
+fn nested_deny_warnings_not_supported(path: &Path) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "The `options.denyWarnings` option is only supported in the root config, but it was found in {}.",
+        path.display()
+    ))
+    .with_help("Move `options.denyWarnings` to the root configuration file.")
+}
+
 fn nested_max_warnings_not_supported(path: &Path) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "The `options.maxWarnings` option is only supported in the root config, but it was found in {}.",
@@ -795,6 +809,21 @@ mod test {
         assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
     }
 
+    #[test]
+    fn test_nested_json_config_rejects_deny_warnings() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_path = root_dir.path().join("nested/.oxlintrc.json");
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(&nested_path, r#"{ "options": { "denyWarnings": true } }"#).unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let (_configs, errors) = loader
+            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Json(nested_path)]);
+        assert_eq!(errors.len(), 1);
+        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+    }
+
     #[cfg(feature = "napi")]
     #[test]
     fn test_root_oxlint_config_ts_allows_type_aware() {
@@ -885,6 +914,36 @@ mod test {
             Ok(paths
                 .into_iter()
                 .map(|path| make_js_config(PathBuf::from(path), None, Some(false)))
+                .collect())
+        });
+        loader = loader.with_js_config_loader(Some(&js_loader));
+
+        let (_configs, errors) = loader
+            .load_discovered_with_root_dir(root_dir.path(), [DiscoveredConfig::Js(nested_path)]);
+        assert_eq!(errors.len(), 1);
+        assert!(matches!(errors[0], ConfigLoadError::Diagnostic(_)));
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_nested_oxlint_config_ts_rejects_deny_warnings() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let nested_path = root_dir.path().join("nested/oxlint.config.ts");
+        std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
+        std::fs::write(&nested_path, "export default {};").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let js_loader = make_js_loader(move |paths| {
+            Ok(paths
+                .into_iter()
+                .map(|path| {
+                    let path = PathBuf::from(path);
+                    let mut config = make_js_config(path.clone(), None, None).config;
+                    config.options.deny_warnings = Some(true);
+                    JsConfigResult { path, config }
+                })
                 .collect())
         });
         loader = loader.with_js_config_loader(Some(&js_loader));

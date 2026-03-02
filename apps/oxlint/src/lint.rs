@@ -341,6 +341,7 @@ impl CliRunner {
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
         let type_aware = self.options.type_aware || config_store.type_aware_enabled();
         let type_check = self.options.type_check || config_store.type_check_enabled();
+        let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
         let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
@@ -443,7 +444,7 @@ impl CliRunner {
 
         if diagnostic_result.errors_count() > 0 {
             CliRunResult::LintFoundErrors
-        } else if warning_options.deny_warnings && diagnostic_result.warnings_count() > 0 {
+        } else if deny_warnings && diagnostic_result.warnings_count() > 0 {
             CliRunResult::LintNoWarningsAllowed
         } else if diagnostic_result.max_warnings_exceeded() {
             CliRunResult::LintMaxWarningsExceeded
@@ -1326,6 +1327,18 @@ mod test {
     #[test]
     fn test_max_warnings_overridden_by_cli_flag() {
         let args = &["--max-warnings", "1", "-c", "config-max-warnings.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_deny_warnings_via_config_file() {
+        let args = &["-c", "config-deny-warnings.json", "debugger.js"];
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_deny_warnings_overridden_by_cli_flag() {
+        let args = &["--deny-warnings", "-c", "config-deny-warnings-false.json", "debugger.js"];
         Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
     }
 

@@ -343,6 +343,11 @@ impl ConfigStoreBuilder {
     }
 
     #[inline]
+    pub fn deny_warnings(&self) -> Option<bool> {
+        self.config.options.deny_warnings
+    }
+
+    #[inline]
     pub fn max_warnings(&self) -> Option<usize> {
         self.config.options.max_warnings
     }
@@ -1420,6 +1425,26 @@ mod test {
             r#"{ "extends": ["fixtures/extends_config/options/type_check_false.json"] }"#,
         );
         assert_eq!(config.base.config.options.type_check, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_true.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(true));
+
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/options/deny_warnings_true.json"],
+                "options": {"denyWarnings": false }
+            }
+            "#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(false));
+
+        let config = config_store_from_str(
+            r#"{ "extends": ["fixtures/extends_config/options/deny_warnings_false.json"] }"#,
+        );
+        assert_eq!(config.base.config.options.deny_warnings, Some(false));
 
         let config = config_store_from_str(
             r#"{ "extends": ["fixtures/extends_config/options/max_warnings_10.json"] }"#,

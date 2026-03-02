@@ -330,6 +330,11 @@ impl ConfigStore {
         self.base.base.config.options.type_check.unwrap_or(false)
     }
 
+    /// Whether warnings should produce a non-zero exit code.
+    pub fn deny_warnings(&self) -> bool {
+        self.base.base.config.options.deny_warnings.unwrap_or(false)
+    }
+
     /// Max warnings configured in the root config.
     pub fn max_warnings(&self) -> Option<usize> {
         self.base.base.config.options.max_warnings
@@ -1213,6 +1218,35 @@ mod test {
         );
         let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
         assert!(!store.type_check_enabled());
+    }
+
+    #[test]
+    fn test_deny_warnings_enabled_from_root_config() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig {
+                options: OxlintOptions { deny_warnings: Some(true), ..OxlintOptions::default() },
+                ..LintConfig::default()
+            },
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(store.deny_warnings());
+    }
+
+    #[test]
+    fn test_deny_warnings_disabled_by_default() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(!store.deny_warnings());
     }
 
     #[test]
