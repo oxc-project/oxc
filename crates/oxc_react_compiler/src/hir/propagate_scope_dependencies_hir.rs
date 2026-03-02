@@ -1518,6 +1518,17 @@ pub fn propagate_scope_dependencies_hir(func: &mut HIRFunction) {
             .collect();
 
         for (opt_block_id, opt_dep) in &opt_chain.hoistable_objects {
+            // Skip entries with empty paths. These come from the base case of
+            // non-optional Optional terminals (e.g. the `node` in `node.fields?.[field]`)
+            // and are already handled by the `hoistable_from_optionals` mechanism in
+            // `collect_hoistable_property_loads`. Augmenting them directly into the
+            // scope's hoistable set would bypass the CFG intersection logic, incorrectly
+            // marking potentially-null identifiers (like `node = cond ? val : null`) as
+            // unconditionally non-null at the scope level.
+            if opt_dep.path.is_empty() {
+                continue;
+            }
+
             let dep_decl_id = opt_dep.identifier.declaration_id;
 
             // Check if this block is guarded by an optional chain for a DIFFERENT variable.
