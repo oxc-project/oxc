@@ -1311,6 +1311,79 @@ fn effects_from_signature(
     effects
 }
 
+/// Emit conservative (no-signature) call effects for Apply.
+///
+/// Port of the `else` branch in TS `applyEffect` for `Apply` (lines 1103-1183):
+///   1. Create(into=lvalue, Mutable) -- FIRST
+///   2. For each operand in [receiver, function, ...args]:
+///      a. MutateTransitiveConditionally(operand) -- unless operand===function && !mutatesFunction
+///      b. conditionallyMutateIterator(operand) -- if arg is Spread
+///      c. MaybeAlias(from=operand, into=lvalue)
+///      d. For each other operand: Capture(from=operand, into=other) -- skip self by ref identity
+fn emit_conservative_call_effects(
+    effects: &mut Vec<AliasingEffect>,
+    lvalue: &Place,
+    receiver: &Place,
+    function: &Place,
+    mutates_function: bool,
+    args: &[crate::hir::CallArg],
+) {
+    use crate::hir::CallArg;
+    // Step 1: Create lvalue FIRST so subsequent edges can reference it.
+    effects.push(AliasingEffect::Create {
+        into: lvalue.clone(),
+        value: ValueKind::Mutable,
+        reason: ValueReason::Other,
+    });
+
+    // Step 2: Build operand list = [receiver, function, ...args].
+    // Use raw pointers to track TS reference identity (receiver===function when they
+    // point to the same Place, e.g. callee for CallExpression/NewExpression).
+    let mut operands: Vec<(*const Place, &Place, bool)> = Vec::new();
+    operands.push((receiver as *const Place, receiver, false));
+    operands.push((function as *const Place, function, true));
+    for arg in args {
+        let place = match arg {
+            CallArg::Place(p) => p,
+            CallArg::Spread(s) => &s.place,
+        };
+        operands.push((place as *const Place, place, false));
+    }
+
+    let function_ptr = function as *const Place;
+    for (idx, &(self_ptr, operand, _is_fn_entry)) in operands.iter().enumerate() {
+        // TS: if (operand !== effect.function || effect.mutatesFunction)
+        // In TS, `operand !== effect.function` compares by reference identity.
+        let is_same_as_function = std::ptr::eq(self_ptr, function_ptr);
+        if !is_same_as_function || mutates_function {
+            effects.push(AliasingEffect::MutateTransitiveConditionally { value: operand.clone() });
+        }
+        // TS: conditionallyMutateIterator for Spread args (idx >= 2 = actual call args)
+        if idx >= 2 {
+            if let CallArg::Spread(_) = &args[idx - 2] {
+                if !is_array_or_set_or_map_type(&operand.identifier.type_) {
+                    effects.push(AliasingEffect::MutateTransitiveConditionally {
+                        value: operand.clone(),
+                    });
+                }
+            }
+        }
+        // TS: MaybeAlias(from=operand, into=lvalue)
+        effects.push(AliasingEffect::MaybeAlias { from: operand.clone(), into: lvalue.clone() });
+        // TS: cross-argument Capture(from=operand, into=other) for all other operands
+        for (other_idx, &(other_ptr, other, _)) in operands.iter().enumerate() {
+            if other_idx == idx {
+                continue;
+            }
+            // TS: `other === arg` skip by reference identity
+            if std::ptr::eq(self_ptr, other_ptr) {
+                continue;
+            }
+            effects.push(AliasingEffect::Capture { from: operand.clone(), into: other.clone() });
+        }
+    }
+}
+
 /// Check if a type is a built-in Array, Set, or Map type.
 ///
 /// Port of TS `isArrayType`, `isSetType`, `isMapType` from HIR.ts.
@@ -1947,22 +2020,16 @@ fn compute_instruction_effects(
                 // 2b. Legacy fallback
                 return effects_from_signature(&sig, &v.callee, &v.args, lvalue);
             }
-            // 3. Conservative fallback: callee may also be mutated (mutatesFunction=true)
-            effects.push(AliasingEffect::MutateTransitiveConditionally { value: v.callee.clone() });
-            for arg in &v.args {
-                let place = match arg {
-                    CallArg::Place(p) => p,
-                    CallArg::Spread(s) => &s.place,
-                };
-                effects
-                    .push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
-                effects.push(AliasingEffect::Capture { from: place.clone(), into: lvalue.clone() });
-            }
-            effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
-                value: ValueKind::Mutable,
-                reason: ValueReason::Other,
-            });
+            // 3. Conservative fallback: no signature found.
+            // TS: receiver=callee, function=callee, mutatesFunction=true
+            emit_conservative_call_effects(
+                &mut effects,
+                lvalue,
+                &v.callee, // receiver = callee
+                &v.callee, // function = callee
+                true,      // mutatesFunction = true for CallExpression
+                &v.args,
+            );
         }
         InstructionValue::MethodCall(v) => {
             // 1. Check if the method (property) is a locally-defined FunctionExpression
@@ -2033,23 +2100,16 @@ fn compute_instruction_effects(
                 // 2c. Legacy fallback for method calls
                 return effects_from_signature(&sig, &v.receiver, &v.args, lvalue);
             }
-            // 3. Conservative fallback: receiver is conditionally mutated
-            effects
-                .push(AliasingEffect::MutateTransitiveConditionally { value: v.receiver.clone() });
-            for arg in &v.args {
-                let place = match arg {
-                    CallArg::Place(p) => p,
-                    CallArg::Spread(s) => &s.place,
-                };
-                effects
-                    .push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
-                effects.push(AliasingEffect::Capture { from: place.clone(), into: lvalue.clone() });
-            }
-            effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
-                value: ValueKind::Mutable,
-                reason: ValueReason::Other,
-            });
+            // 3. Conservative fallback: no signature found.
+            // TS: receiver=receiver, function=property, mutatesFunction=false
+            emit_conservative_call_effects(
+                &mut effects,
+                lvalue,
+                &v.receiver, // receiver
+                &v.property, // function = property
+                false,       // mutatesFunction = false for MethodCall
+                &v.args,
+            );
         }
         InstructionValue::NewExpression(v) => {
             // Port of TS: NewExpression uses callee as the receiver, and mutatesFunction=false.
@@ -2074,22 +2134,16 @@ fn compute_instruction_effects(
                 // Legacy fallback
                 return effects_from_signature(&sig, &v.callee, &v.args, lvalue);
             }
-            // Conservative fallback when no signature is found:
-            // NewExpression: callee is NOT mutated (mutatesFunction=false)
-            for arg in &v.args {
-                let place = match arg {
-                    CallArg::Place(p) => p,
-                    CallArg::Spread(s) => &s.place,
-                };
-                effects
-                    .push(AliasingEffect::MutateTransitiveConditionally { value: place.clone() });
-                effects.push(AliasingEffect::Capture { from: place.clone(), into: lvalue.clone() });
-            }
-            effects.push(AliasingEffect::Create {
-                into: lvalue.clone(),
-                value: ValueKind::Mutable,
-                reason: ValueReason::Other,
-            });
+            // Conservative fallback when no signature is found.
+            // TS: receiver=callee, function=callee, mutatesFunction=false
+            emit_conservative_call_effects(
+                &mut effects,
+                lvalue,
+                &v.callee, // receiver = callee
+                &v.callee, // function = callee
+                false,     // mutatesFunction = false for NewExpression
+                &v.args,
+            );
         }
 
         // PropertyLoad / ComputedLoad: if the lvalue type is Primitive, emit Create(Primitive)
