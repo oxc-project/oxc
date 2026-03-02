@@ -17,7 +17,8 @@ use crate::{
     compiler_error::{CompilerError, SourceLocation},
     hir::{
         BlockId, Effect, HIRFunction, Identifier, IdentifierId, InstructionId, InstructionValue,
-        Place, ReactiveParam, Terminal, ValueKind, ValueReason, hir_builder::compute_rpo_order,
+        Place, ReactiveParam, Terminal, ValueKind, ValueReason,
+        hir_builder::{compute_rpo_order, compute_rpo_order_source_order},
     },
     inference::aliasing_effects::{AliasingEffect, CreateFunctionKind, MutationReason},
 };
@@ -513,14 +514,16 @@ pub fn infer_mutation_aliasing_ranges(
     }
     state.create(&func.returns, NodeValue::Object);
 
-    // Process blocks in insertion order, matching the TS reference which
-    // iterates `fn.body.blocks.values()` (Map preserves insertion order).
-    // Using insertion order (rather than RPO) is critical for correctness:
-    // for ForIn/ForOf loops, the loop body block is inserted before the fallthrough
-    // block, so mutations within the loop body get lower indices than uses of
-    // loop-produced values in the fallthrough block. This prevents spurious
-    // backward range extensions of variables that are only read after the loop.
-    let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
+    // Iterate blocks in RPO order with source-order siblings (consequent before
+    // alternate), matching the TS reference's `fn.body.blocks.values()` iteration
+    // after `reversePostorderBlocks`. The sibling ordering is critical: graph
+    // indices assigned during this loop determine which alias edges the mutation
+    // BFS traverses. With the wrong order (alternate-before-consequent), a mutation
+    // in the if-branch can incorrectly reach nodes in the else-branch, extending
+    // mutable ranges and preventing independent memoization of values created in
+    // each branch.
+    let block_ids: Vec<BlockId> =
+        compute_rpo_order_source_order(func.body.entry, &func.body.blocks);
 
     let mut seen_blocks: FxHashSet<BlockId> = FxHashSet::default();
 

@@ -1222,6 +1222,70 @@ pub fn compute_rpo_order(entry: BlockId, blocks: &super::hir_types::BlockMap) ->
     postorder
 }
 
+/// Compute RPO with source-order sibling ordering, matching the TS reference's
+/// `getReversePostorderedBlocks` which reverses successors then iterates
+/// recursively. In the recursive DFS, reversing successors means alternate is
+/// visited before consequent; consequent finishes last and gets pushed to
+/// postorder first, so after the final reverse it appears before alternate.
+///
+/// In our iterative stack-based DFS, we achieve the same effect by pushing
+/// successors in their *original* (non-reversed) order: the last-pushed
+/// (alternate) is popped first, matching the recursive visit order.
+///
+/// This ordering matters for `InferMutationAliasingRanges` where graph index
+/// assignment depends on the block iteration order. With the wrong sibling
+/// order (alternate-before-consequent), the alias graph BFS can incorrectly
+/// traverse from one branch into the other's nodes, extending mutable ranges
+/// and preventing independent memoization.
+pub fn compute_rpo_order_source_order(
+    entry: BlockId,
+    blocks: &super::hir_types::BlockMap,
+) -> Vec<BlockId> {
+    enum Phase {
+        PreVisit,
+        PostVisit,
+    }
+
+    let mut visited: rustc_hash::FxHashSet<BlockId> = rustc_hash::FxHashSet::default();
+    let mut postorder: Vec<BlockId> = Vec::new();
+    let mut stack: Vec<(BlockId, Phase)> = vec![(entry, Phase::PreVisit)];
+
+    while let Some((block_id, phase)) = stack.pop() {
+        match phase {
+            Phase::PreVisit => {
+                if !visited.insert(block_id) {
+                    continue;
+                }
+                stack.push((block_id, Phase::PostVisit));
+
+                let Some(block) = blocks.get(&block_id) else {
+                    continue;
+                };
+
+                // Push successors in their original order (NOT reversed).
+                // In the iterative stack, the last-pushed item is popped first.
+                // For If terminals, successors = [consequent, alternate]:
+                //   push consequent first, then alternate →
+                //   alternate popped first → visited first →
+                //   consequent finishes last → pushed to postorder first →
+                //   after final reverse: consequent before alternate.
+                // This matches the TS recursive DFS which reverses to
+                // [alternate, consequent] and visits alternate first.
+                let successors = each_terminal_successor(&block.terminal);
+                for successor in successors {
+                    stack.push((successor, Phase::PreVisit));
+                }
+            }
+            Phase::PostVisit => {
+                postorder.push(block_id);
+            }
+        }
+    }
+
+    postorder.reverse();
+    postorder
+}
+
 /// Iterate over all successor block IDs of a terminal.
 pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
     let mut successors = Vec::new();
