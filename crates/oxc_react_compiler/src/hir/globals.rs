@@ -973,6 +973,117 @@ pub fn default_globals(shapes: &mut ShapeRegistry) -> GlobalRegistry {
     globals
 }
 
+/// Build the reanimated module type.
+///
+/// Port of `getReanimatedModuleType()` from `HIR/Globals.ts`.
+///
+/// Creates an object type with properties for each reanimated hook and function,
+/// each with custom type signatures that the compiler uses for correct
+/// memoization behavior.
+pub fn get_reanimated_module_type(shapes: &mut ShapeRegistry) -> Type {
+    let mut reanimated_props: Vec<(String, Type)> = Vec::new();
+
+    // Hooks that freeze args and return frozen value
+    let frozen_hooks = [
+        "useFrameCallback",
+        "useAnimatedStyle",
+        "useAnimatedProps",
+        "useAnimatedScrollHandler",
+        "useAnimatedReaction",
+        "useWorkletCallback",
+    ];
+    for hook in frozen_hooks {
+        let shape_id = add_hook(
+            shapes,
+            None,
+            FunctionSignature {
+                rest_param: Some(Effect::Freeze),
+                return_type: Type::Poly,
+                return_value_kind: ValueKind::Frozen,
+                callee_effect: Effect::Read,
+                hook_kind: Some(HookKind::Custom),
+                no_alias: true,
+                ..FunctionSignature::default()
+            },
+        );
+        reanimated_props.push((
+            hook.to_string(),
+            Type::Function(FunctionType {
+                shape_id: Some(shape_id),
+                return_type: Box::new(Type::Poly),
+                is_constructor: false,
+            }),
+        ));
+    }
+
+    // Hooks that return a mutable value (ideally modelled as refs, but this works for now)
+    let mutable_hooks = ["useSharedValue", "useDerivedValue"];
+    for hook in mutable_hooks {
+        let shape_id = add_hook(
+            shapes,
+            None,
+            FunctionSignature {
+                rest_param: Some(Effect::Freeze),
+                return_type: Type::Object(ObjectType {
+                    shape_id: Some(super::object_shape::REANIMATED_SHARED_VALUE_ID.to_string()),
+                }),
+                return_value_kind: ValueKind::Mutable,
+                callee_effect: Effect::Read,
+                hook_kind: Some(HookKind::Custom),
+                no_alias: true,
+                ..FunctionSignature::default()
+            },
+        );
+        reanimated_props.push((
+            hook.to_string(),
+            Type::Function(FunctionType {
+                shape_id: Some(shape_id),
+                return_type: Box::new(Type::Object(ObjectType {
+                    shape_id: Some(super::object_shape::REANIMATED_SHARED_VALUE_ID.to_string()),
+                })),
+                is_constructor: false,
+            }),
+        ));
+    }
+
+    // Functions that return mutable value
+    let funcs = [
+        "withTiming",
+        "withSpring",
+        "createAnimatedPropAdapter",
+        "withDecay",
+        "withRepeat",
+        "runOnUI",
+        "executeOnUIRuntimeSync",
+    ];
+    for func_name in funcs {
+        let shape_id = add_function(
+            shapes,
+            None,
+            Vec::new(),
+            FunctionSignature {
+                rest_param: Some(Effect::Read),
+                return_type: Type::Poly,
+                return_value_kind: ValueKind::Mutable,
+                callee_effect: Effect::Read,
+                no_alias: true,
+                ..FunctionSignature::default()
+            },
+        );
+        reanimated_props.push((
+            func_name.to_string(),
+            Type::Function(FunctionType {
+                shape_id: Some(shape_id),
+                return_type: Box::new(Type::Poly),
+                is_constructor: false,
+            }),
+        ));
+    }
+
+    let module_shape_id = add_object(shapes, "ReanimatedModule", reanimated_props);
+    Type::Object(ObjectType { shape_id: Some(module_shape_id) })
+}
+
 /// Names that are part of REACT_APIS in the TS version.
 /// These are registered as both top-level globals and as properties of the React namespace object.
 const REACT_API_NAMES: &[&str] = &[
