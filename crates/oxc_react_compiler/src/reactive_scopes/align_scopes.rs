@@ -669,6 +669,19 @@ fn record_place(
 }
 
 /// Apply final scope range updates to all identifiers in the HIR.
+///
+/// IMPORTANT: This must update BOTH `scope.range` AND `identifier.mutable_range`.
+///
+/// In the TS reference, `InferReactiveScopeVariables` sets:
+///   `identifier.mutableRange = scope.range`  (a reference to the same object)
+/// So when `AlignReactiveScopesToBlockScopesHIR` later mutates `scope.range`,
+/// `identifier.mutableRange` is updated automatically.
+///
+/// In Rust, `identifier.mutable_range` is a COPY of `scope.range` at the time
+/// of assignment. We must manually keep them in sync here so that later passes
+/// (notably `MergeOverlappingReactiveScopesHIR`) see the same value from
+/// `is_mutable(id, place)` as the TS does (which checks `mutableRange`, not
+/// `scope.range`).
 fn apply_scope_range_updates(
     func: &mut HIRFunction,
     scope_range_updates: &FxHashMap<ScopeId, MutableRange>,
@@ -678,6 +691,10 @@ fn apply_scope_range_updates(
             && let Some(&new_range) = updates.get(&scope.id)
         {
             scope.range = new_range;
+            // Also update mutable_range to match: in the TS reference
+            // identifier.mutableRange === scope.range (same object), so
+            // updating scope.range automatically updates mutableRange too.
+            place.identifier.mutable_range = new_range;
         }
     }
 
@@ -716,6 +733,8 @@ fn apply_to_instruction_value(
             && let Some(&new_range) = updates.get(&scope.id)
         {
             scope.range = new_range;
+            // Keep mutable_range in sync with scope.range (see apply_scope_range_updates).
+            place.identifier.mutable_range = new_range;
         }
     }
 
@@ -968,6 +987,8 @@ fn apply_to_terminal(
             && let Some(&new_range) = updates.get(&scope.id)
         {
             scope.range = new_range;
+            // Keep mutable_range in sync with scope.range (see apply_scope_range_updates).
+            place.identifier.mutable_range = new_range;
         }
     }
 
