@@ -244,30 +244,35 @@ fn visit_instruction(instr: &mut ReactiveInstruction, scopes: &mut Scopes) {
 /// Visit lvalues embedded in instruction values (DeclareLocal, StoreLocal, etc.)
 fn visit_instruction_value_lvalues(value: &mut ReactiveValue, scopes: &mut Scopes) {
     if let ReactiveValue::Instruction(inner) = value {
-        match inner.as_mut() {
-            InstructionValue::DeclareLocal(v) => {
-                scopes.visit(&mut v.lvalue.place.identifier);
-            }
-            InstructionValue::DeclareContext(v) => {
-                scopes.visit(&mut v.lvalue_place.identifier);
-            }
-            InstructionValue::StoreLocal(v) => {
-                scopes.visit(&mut v.lvalue.place.identifier);
-            }
-            InstructionValue::StoreContext(v) => {
-                scopes.visit(&mut v.lvalue_place.identifier);
-            }
-            InstructionValue::Destructure(v) => {
-                visit_pattern_lvalues(&mut v.lvalue.pattern, scopes);
-            }
-            InstructionValue::PrefixUpdate(v) => {
-                scopes.visit(&mut v.lvalue.identifier);
-            }
-            InstructionValue::PostfixUpdate(v) => {
-                scopes.visit(&mut v.lvalue.identifier);
-            }
-            _ => {}
+        visit_instruction_value_lvalues_inner(inner.as_mut(), scopes);
+    }
+}
+
+/// Inner implementation: visit lvalues in an InstructionValue directly.
+fn visit_instruction_value_lvalues_inner(value: &mut InstructionValue, scopes: &mut Scopes) {
+    match value {
+        InstructionValue::DeclareLocal(v) => {
+            scopes.visit(&mut v.lvalue.place.identifier);
         }
+        InstructionValue::DeclareContext(v) => {
+            scopes.visit(&mut v.lvalue_place.identifier);
+        }
+        InstructionValue::StoreLocal(v) => {
+            scopes.visit(&mut v.lvalue.place.identifier);
+        }
+        InstructionValue::StoreContext(v) => {
+            scopes.visit(&mut v.lvalue_place.identifier);
+        }
+        InstructionValue::Destructure(v) => {
+            visit_pattern_lvalues(&mut v.lvalue.pattern, scopes);
+        }
+        InstructionValue::PrefixUpdate(v) => {
+            scopes.visit(&mut v.lvalue.identifier);
+        }
+        InstructionValue::PostfixUpdate(v) => {
+            scopes.visit(&mut v.lvalue.identifier);
+        }
+        _ => {}
     }
 }
 
@@ -346,7 +351,8 @@ fn traverse_value(value: &mut ReactiveValue, scopes: &mut Scopes) {
             visit_value(&mut v.value, scopes);
         }
         ReactiveValue::Instruction(inner) => {
-            // Leaf instruction value — visit all operand places
+            // Leaf instruction value — visit lvalues (writes) and operand places (reads)
+            visit_instruction_value_lvalues_inner(inner.as_mut(), scopes);
             visit_instruction_value_operands(inner.as_mut(), scopes);
         }
     }
