@@ -2513,21 +2513,21 @@ fn lower_function_to_value(
     // 1. Gather captured context from the inner function
     let captured_context = gather_captured_context(func, outer_builder);
 
-    // Find context identifiers for the inner function
-    let context_identifiers = match func {
-        LowerableFunction::Function(f) => find_context_identifiers(f),
-        LowerableFunction::ArrowFunction(a) => find_context_identifiers_arrow(a),
-    };
-
-    // Create a new builder with the captured context merged into context_identifiers.
-    // For captured variables, look up their declaration span from the outer builder
-    // so the inner function's context_identifiers set uses spans (not names).
-    let mut merged_context = context_identifiers;
-    for name in captured_context.keys() {
-        if let Some(decl_span) = outer_builder.get_binding_decl_span(name) {
-            merged_context.insert(decl_span);
-        }
-    }
+    // Use the OUTER builder's context_identifiers for the inner function.
+    //
+    // In the TS reference, inner functions share the same `Environment` (and
+    // thus the same `#contextIdentifiers` set) as the outer function. The set
+    // is populated once by `findContextIdentifiers` for the top-level compiled
+    // function and never modified. This means a variable that is merely captured
+    // (referenced but not reassigned) will NOT be a context identifier — only
+    // variables that are reassigned by/in inner functions are context identifiers.
+    //
+    // Previously, we computed `find_context_identifiers(inner_func)` and merged
+    // ALL captured variable spans into it, which incorrectly marked non-reassigned
+    // captured variables as context identifiers. This caused `LoadContext` to be
+    // emitted where the TS reference would emit `LoadLocal`, breaking DCE behavior
+    // (since `LoadContext` is non-pruneable but `LoadLocal` is pruneable).
+    let merged_context = outer_builder.context_identifiers().clone();
 
     // Phase 1: Resolve captured context variables on the OUTER builder FIRST.
     // This must happen before cloning the environment, because pre_declare_binding
@@ -5876,19 +5876,19 @@ pub fn lower_expression(
                             }),
                             loc,
                         )?;
-                        // For compound assignment on a simple local identifier (e.g. `i += 1`),
-                        // match the TypeScript reference compiler behaviour:
-                        //   1. Emit StoreLocal as a side-effect (not wrapped in a temp)
-                        //   2. Return LoadLocal(identifier) — the identifier itself, not the
-                        //      store-result temp — so the enclosing Sequence's final value
-                        //      is just `i`, producing `i = i + 1, i` in the for-loop update
-                        //      position (matching BuildHIR.ts lines 2060-2071).
+                        // For compound assignment on a simple identifier (e.g. `i += 1`
+                        // or `count += n` where count is a context variable), match the
+                        // TypeScript reference compiler behaviour (BuildHIR.ts lines 2056-2083):
+                        //   1. Emit StoreLocal/StoreContext via lowerValueToTemporary
+                        //   2. Return LoadLocal/LoadContext with the identifier place
                         //
-                        // For non-identifier left-hand sides (member expressions, globals,
-                        // context variables) we fall back to lower_assignment which handles
-                        // those cases generically.
+                        // This ensures the assignment expression value (the identifier)
+                        // appears as a separate expression statement when used in statement
+                        // position (e.g., `count = count + x; count;`).
+                        //
+                        // For non-identifier left-hand sides (member expressions, globals)
+                        // we fall back to lower_assignment which handles those cases generically.
                         if let LowerableExpression::Identifier(name, ident_span) = &**left
-                            && !builder.is_context_identifier(name)
                             && let VariableBinding::Identifier { identifier, .. } =
                                 builder.resolve_identifier(name)
                         {
@@ -5899,29 +5899,50 @@ pub fn lower_expression(
                                 reactive: false,
                                 loc: ident_loc,
                             };
-                            // Emit StoreLocal as a side effect (no wrapping temp).
-                            let store_lvalue =
-                                create_temporary_place(builder.environment_mut(), loc);
-                            builder.push(Instruction {
-                                id: InstructionId(0),
-                                lvalue: store_lvalue,
-                                value: InstructionValue::StoreLocal(StoreLocal {
-                                    lvalue: LValue {
-                                        place: place.clone(),
-                                        kind: InstructionKind::Reassign,
-                                    },
-                                    value: binary_result.place,
+                            if builder.is_context_identifier(name) {
+                                // Context variable: emit StoreContext + return LoadContext
+                                // (BuildHIR.ts lines 2073-2083)
+                                lower_value_to_temporary(
+                                    builder,
+                                    InstructionValue::StoreContext(StoreContext {
+                                        lvalue_kind: InstructionKind::Reassign,
+                                        lvalue_place: place.clone(),
+                                        value: binary_result.place,
+                                        loc,
+                                    }),
                                     loc,
-                                }),
-                                effects: None,
-                                loc,
-                            });
-                            // Return LoadLocal(identifier) — the new value of the variable.
-                            lower_value_to_temporary(
-                                builder,
-                                InstructionValue::LoadLocal(LoadLocal { place, loc }),
-                                loc,
-                            )
+                                )?;
+                                lower_value_to_temporary(
+                                    builder,
+                                    InstructionValue::LoadContext(LoadContext { place, loc }),
+                                    loc,
+                                )
+                            } else {
+                                // Local variable: emit StoreLocal + return LoadLocal
+                                // (BuildHIR.ts lines 2060-2071)
+                                let store_lvalue =
+                                    create_temporary_place(builder.environment_mut(), loc);
+                                builder.push(Instruction {
+                                    id: InstructionId(0),
+                                    lvalue: store_lvalue,
+                                    value: InstructionValue::StoreLocal(StoreLocal {
+                                        lvalue: LValue {
+                                            place: place.clone(),
+                                            kind: InstructionKind::Reassign,
+                                        },
+                                        value: binary_result.place,
+                                        loc,
+                                    }),
+                                    effects: None,
+                                    loc,
+                                });
+                                // Return LoadLocal(identifier) — the new value of the variable.
+                                lower_value_to_temporary(
+                                    builder,
+                                    InstructionValue::LoadLocal(LoadLocal { place, loc }),
+                                    loc,
+                                )
+                            }
                         } else {
                             // Assign the result back to the left (non-identifier LHS)
                             lower_assignment(builder, left, binary_result.place, loc)
@@ -6295,7 +6316,12 @@ fn lower_assignment(
                     };
 
                     if builder.is_context_identifier(name) {
-                        // Context variable: emit StoreContext
+                        // Context variable: emit StoreContext, then return LoadLocal
+                        // with the temporary (matching TS reference BuildHIR.ts line 3748:
+                        // `return {kind: 'LoadLocal', place: temporary, loc: temporary.loc}`).
+                        // The TS reference returns LoadLocal (not LoadContext) because the
+                        // `temporary` is the StoreContext instruction's lvalue — a regular
+                        // temporary that can be read with LoadLocal.
                         let temporary = lower_value_to_temporary(
                             builder,
                             InstructionValue::StoreContext(StoreContext {
@@ -6308,10 +6334,7 @@ fn lower_assignment(
                         )?;
                         lower_value_to_temporary(
                             builder,
-                            InstructionValue::LoadContext(LoadContext {
-                                place: temporary.place,
-                                loc,
-                            }),
+                            InstructionValue::LoadLocal(LoadLocal { place: temporary.place, loc }),
                             loc,
                         )
                     } else {
