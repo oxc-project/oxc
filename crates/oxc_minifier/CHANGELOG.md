@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.116.0] - 2026-03-02
+
+### 🐛 Bug Fixes
+
+- a35063e minifier: Preserve side effects for meta property url reads (#19668) (Boshen)
+
+### 📚 Documentation
+
+- 1b392de minifier: Add `Function.prototype.toString` assumption (#19758) (sapphi-red)
+
 ## [0.114.0] - 2026-02-16
 
 ### 🚀 Features
