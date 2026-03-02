@@ -121,6 +121,9 @@ impl ReactPluginSettings {
 #[serde(untagged)]
 enum CustomComponent {
     NameOnly(CompactStr),
+    // Canonical form: `attribute` / `attributes` (also accepts `linkAttribute` /
+    // `formAttribute` as serde aliases at runtime, but those aliases are invisible
+    // to JsonSchema, so the variants below exist solely to expose them in the schema).
     ObjectWithOneAttr {
         name: CompactStr,
         #[serde(alias = "formAttribute", alias = "linkAttribute")]
@@ -130,6 +133,30 @@ enum CustomComponent {
         name: CompactStr,
         #[serde(alias = "formAttribute", alias = "linkAttribute")]
         attributes: Vec<CompactStr>,
+    },
+    // Schema-visible variants for `linkAttribute`.
+    // At runtime these are unreachable because the aliases above match first;
+    // they exist so the generated TypeScript types accept the documented forms.
+    ObjectWithLinkAttr {
+        name: CompactStr,
+        #[serde(rename = "linkAttribute", alias = "attribute")]
+        link_attribute: CompactStr,
+    },
+    ObjectWithLinkAttrs {
+        name: CompactStr,
+        #[serde(rename = "linkAttribute", alias = "attributes")]
+        link_attributes: Vec<CompactStr>,
+    },
+    // Schema-visible variants for `formAttribute`.
+    ObjectWithFormAttr {
+        name: CompactStr,
+        #[serde(rename = "formAttribute", alias = "attribute")]
+        form_attribute: CompactStr,
+    },
+    ObjectWithFormAttrs {
+        name: CompactStr,
+        #[serde(rename = "formAttribute", alias = "attributes")]
+        form_attributes: Vec<CompactStr>,
     },
 }
 
@@ -151,6 +178,26 @@ fn get_component_attrs_by_name<'c>(
                 if comp_name == name =>
             {
                 return Some(Cow::Borrowed(attributes));
+            }
+            CustomComponent::ObjectWithLinkAttr { name: comp_name, link_attribute }
+                if comp_name == name =>
+            {
+                return Some(Cow::Owned(vec![link_attribute.clone()]));
+            }
+            CustomComponent::ObjectWithLinkAttrs { name: comp_name, link_attributes }
+                if comp_name == name =>
+            {
+                return Some(Cow::Borrowed(link_attributes));
+            }
+            CustomComponent::ObjectWithFormAttr { name: comp_name, form_attribute }
+                if comp_name == name =>
+            {
+                return Some(Cow::Owned(vec![form_attribute.clone()]));
+            }
+            CustomComponent::ObjectWithFormAttrs { name: comp_name, form_attributes }
+                if comp_name == name =>
+            {
+                return Some(Cow::Borrowed(form_attributes));
             }
             _ => {}
         }
