@@ -11,6 +11,7 @@ use super::{
     hir_types::{Effect, ValueKind, ValueReason},
     types::Type,
 };
+use crate::inference::aliasing_effects::AliasingSignature;
 
 /// The kind of a React hook.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -52,6 +53,7 @@ pub struct FunctionSignature {
     pub impure: bool,
     pub known_incompatible: Option<String>,
     pub canonical_name: Option<String>,
+    pub aliasing: Option<AliasingSignature>,
 }
 
 impl Default for FunctionSignature {
@@ -69,6 +71,7 @@ impl Default for FunctionSignature {
             impure: false,
             known_incompatible: None,
             canonical_name: None,
+            aliasing: None,
         }
     }
 }
