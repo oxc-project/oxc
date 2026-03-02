@@ -1084,6 +1084,194 @@ pub fn get_reanimated_module_type(shapes: &mut ShapeRegistry) -> Type {
     Type::Object(ObjectType { shape_id: Some(module_shape_id) })
 }
 
+/// Build the shared-runtime module type for test fixtures.
+///
+/// Port of the `sharedRuntimeTypeProvider` from
+/// `packages/snap/src/sprout/shared-runtime-type-provider.ts`.
+///
+/// The TS test harness registers a module type provider that tells the compiler
+/// about hooks and typed functions exported from the `shared-runtime` test module.
+/// This function creates the equivalent object type with known properties.
+pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
+    let mut props: Vec<(String, Type)> = Vec::new();
+
+    // --- default: function, returns Primitive ---
+    let default_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![],
+            rest_param: Some(Effect::Read),
+            callee_effect: Effect::Read,
+            return_type: Type::Primitive,
+            return_value_kind: ValueKind::Primitive,
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "default".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(default_id),
+            return_type: Box::new(Type::Primitive),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- graphql: function, returns Primitive ---
+    let graphql_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![],
+            rest_param: Some(Effect::Read),
+            callee_effect: Effect::Read,
+            return_type: Type::Primitive,
+            return_value_kind: ValueKind::Primitive,
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "graphql".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(graphql_id),
+            return_type: Box::new(Type::Primitive),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- typedArrayPush: function(Store, Capture), returns Primitive ---
+    let typed_array_push_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![Effect::Store, Effect::Capture],
+            rest_param: Some(Effect::Capture),
+            callee_effect: Effect::Read,
+            return_type: Type::Primitive,
+            return_value_kind: ValueKind::Primitive,
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "typedArrayPush".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(typed_array_push_id),
+            return_type: Box::new(Type::Primitive),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- typedLog: function, returns Primitive ---
+    let typed_log_id = add_function(
+        shapes,
+        None,
+        Vec::new(),
+        FunctionSignature {
+            positional_params: vec![],
+            rest_param: Some(Effect::Read),
+            callee_effect: Effect::Read,
+            return_type: Type::Primitive,
+            return_value_kind: ValueKind::Primitive,
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "typedLog".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(typed_log_id),
+            return_type: Box::new(Type::Primitive),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- useFreeze: hook, returns Any ---
+    let use_freeze_id = add_hook(
+        shapes,
+        None,
+        FunctionSignature {
+            rest_param: Some(Effect::Freeze),
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Frozen,
+            callee_effect: Effect::Read,
+            hook_kind: Some(HookKind::Custom),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "useFreeze".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(use_freeze_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- useFragment: hook, returns MixedReadonly, noAlias=true ---
+    let use_fragment_id = add_hook(
+        shapes,
+        None,
+        FunctionSignature {
+            rest_param: Some(Effect::Freeze),
+            return_type: Type::Object(ObjectType {
+                shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()),
+            }),
+            return_value_kind: ValueKind::Frozen,
+            callee_effect: Effect::Read,
+            hook_kind: Some(HookKind::Custom),
+            no_alias: true,
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "useFragment".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(use_fragment_id),
+            return_type: Box::new(Type::Object(ObjectType {
+                shape_id: Some(BUILT_IN_MIXED_READONLY_ID.to_string()),
+            })),
+            is_constructor: false,
+        }),
+    ));
+
+    // --- useNoAlias: hook, returns Any, returnValueKind=Mutable, noAlias=true ---
+    let use_no_alias_id = add_hook(
+        shapes,
+        None,
+        FunctionSignature {
+            rest_param: Some(Effect::Freeze),
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Mutable,
+            callee_effect: Effect::Read,
+            hook_kind: Some(HookKind::Custom),
+            no_alias: true,
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "useNoAlias".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(use_no_alias_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    ));
+
+    // NOTE: The following typed functions from the TS shared-runtime type provider
+    // are intentionally NOT registered because they require aliasing signature support
+    // which is not yet ported. Without aliasing, registering their effect annotations
+    // alone causes regressions since the data flow information is incomplete:
+    //   typedIdentity, typedAssign, typedAlias, typedCapture, typedCreateFrom, typedMutate
+    // These functions will fall through to generic call handling, which produces
+    // correct output for most cases. When aliasing signatures are ported to Rust,
+    // these should be added here with their full aliasing configs.
+
+    let module_shape_id = add_object(shapes, "SharedRuntimeModule", props);
+    Type::Object(ObjectType { shape_id: Some(module_shape_id) })
+}
+
 /// Names that are part of REACT_APIS in the TS version.
 /// These are registered as both top-level globals and as properties of the React namespace object.
 const REACT_API_NAMES: &[&str] = &[
