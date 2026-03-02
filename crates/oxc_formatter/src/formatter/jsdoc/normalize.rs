@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt::Write as _;
 
 use cow_utils::CowUtils;
@@ -36,19 +37,22 @@ pub fn normalize_tag_kind(kind: &str) -> &str {
 ///
 /// Matches prettier-plugin-jsdoc which normalizes emphasis through remark.
 /// Bold uses `**`, italic uses `_`.
-pub fn normalize_markdown_emphasis(text: &str) -> String {
+pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
     if !text.contains("__") && !text.contains('*') {
-        return text.to_string();
+        return Cow::Borrowed(text);
     }
 
-    // First pass: convert `__` → `**`
-    let mut chars: Vec<char> = text.chars().collect();
-    let len = chars.len();
+    // Work with bytes directly — all significant chars (_, *, `, whitespace)
+    // are ASCII single-byte, so byte-level mutation is safe and uses ~3x less
+    // memory than Vec<char>.
+    let mut bytes: Vec<u8> = text.as_bytes().to_vec();
+    let len = bytes.len();
     let mut i = 0;
     let mut in_code = false;
 
+    // First pass: convert `__` → `**`
     while i < len {
-        if chars[i] == '`' {
+        if bytes[i] == b'`' {
             in_code = !in_code;
             i += 1;
             continue;
@@ -57,9 +61,9 @@ pub fn normalize_markdown_emphasis(text: &str) -> String {
             i += 1;
             continue;
         }
-        if chars[i] == '_' && i + 1 < len && chars[i + 1] == '_' {
-            chars[i] = '*';
-            chars[i + 1] = '*';
+        if bytes[i] == b'_' && i + 1 < len && bytes[i + 1] == b'_' {
+            bytes[i] = b'*';
+            bytes[i + 1] = b'*';
             i += 2;
             continue;
         }
@@ -71,7 +75,7 @@ pub fn normalize_markdown_emphasis(text: &str) -> String {
     in_code = false;
     i = 0;
     while i < len {
-        if chars[i] == '`' {
+        if bytes[i] == b'`' {
             in_code = !in_code;
             i += 1;
             continue;
@@ -82,22 +86,22 @@ pub fn normalize_markdown_emphasis(text: &str) -> String {
         }
 
         // Skip `**` (bold markers)
-        if chars[i] == '*' && i + 1 < len && chars[i + 1] == '*' {
+        if bytes[i] == b'*' && i + 1 < len && bytes[i + 1] == b'*' {
             i += 2;
             continue;
         }
 
         // Single `*` — check if it's an opening emphasis marker:
         // Must be followed by a non-whitespace character
-        if chars[i] == '*' && i + 1 < len && !chars[i + 1].is_whitespace() {
+        if bytes[i] == b'*' && i + 1 < len && !bytes[i + 1].is_ascii_whitespace() {
             // Look for matching closing `*`
             let opener = i;
             let mut j = opener + 1;
             while j < len {
-                if chars[j] == '`' {
+                if bytes[j] == b'`' {
                     // Skip inline code spans
                     j += 1;
-                    while j < len && chars[j] != '`' {
+                    while j < len && bytes[j] != b'`' {
                         j += 1;
                     }
                     if j < len {
@@ -106,14 +110,14 @@ pub fn normalize_markdown_emphasis(text: &str) -> String {
                     continue;
                 }
                 // Skip `**` inside emphasis
-                if chars[j] == '*' && j + 1 < len && chars[j + 1] == '*' {
+                if bytes[j] == b'*' && j + 1 < len && bytes[j + 1] == b'*' {
                     j += 2;
                     continue;
                 }
                 // Found closing `*`: must be preceded by non-whitespace
-                if chars[j] == '*' && j > opener + 1 && !chars[j - 1].is_whitespace() {
-                    chars[opener] = '_';
-                    chars[j] = '_';
+                if bytes[j] == b'*' && j > opener + 1 && !bytes[j - 1].is_ascii_whitespace() {
+                    bytes[opener] = b'_';
+                    bytes[j] = b'_';
                     i = j + 1;
                     break;
                 }
@@ -128,20 +132,26 @@ pub fn normalize_markdown_emphasis(text: &str) -> String {
         i += 1;
     }
 
-    chars.into_iter().collect()
+    // We only replaced ASCII bytes (_, *) with other ASCII bytes (*, _),
+    // so UTF-8 validity is preserved.
+    Cow::Owned(String::from_utf8(bytes).unwrap())
 }
 
 /// Capitalize the first ASCII lowercase letter of a string.
 /// Skips if the string starts with a backtick (inline code) or a URL.
 /// Recurses for `"- "` prefix: `"- hello"` → `"- Hello"` (matches upstream's `capitalizer()`).
-pub fn capitalize_first(s: &str) -> String {
+pub fn capitalize_first(s: &str) -> Cow<'_, str> {
     if s.is_empty() || s.starts_with('`') || s.starts_with("http://") || s.starts_with("https://") {
-        return s.to_string();
+        return Cow::Borrowed(s);
     }
 
     // Handle dash-prefix: "- text" → "- Text"
     if let Some(rest) = s.strip_prefix("- ") {
-        return format!("- {}", capitalize_first(rest));
+        let capitalized = capitalize_first(rest);
+        let mut result = String::with_capacity(2 + capitalized.len());
+        result.push_str("- ");
+        result.push_str(&capitalized);
+        return Cow::Owned(result);
     }
 
     let mut chars = s.chars();
@@ -150,9 +160,9 @@ pub fn capitalize_first(s: &str) -> String {
             let mut result = String::with_capacity(s.len());
             result.push(c.to_ascii_uppercase());
             result.push_str(chars.as_str());
-            result
+            Cow::Owned(result)
         }
-        _ => s.to_string(),
+        _ => Cow::Borrowed(s),
     }
 }
 
@@ -184,13 +194,15 @@ fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> String {
     // This matches the plugin's convertToModernType() inside withoutStrings().
     let transformed = without_strings(type_str, normalize_type_inner);
     // Phase 2: Convert import() path quotes (simulating Prettier's TS parser).
-    let quoted = if convert_quotes { normalize_type_quotes(&transformed) } else { transformed };
+    let quoted =
+        if convert_quotes { normalize_type_quotes(&transformed) } else { Cow::Owned(transformed) };
     // Phase 3: Unquote object property names that are valid JS identifiers.
     // The plugin's formatType() uses Prettier's TS parser which strips unnecessary quotes.
-    let unquoted = if convert_quotes { unquote_object_property_names(&quoted) } else { quoted };
+    let unquoted =
+        if convert_quotes { unquote_object_property_names(&quoted) } else { quoted };
     // Phase 4: Format inline object type spacing (simulating Prettier's TS parser).
     // { key:value } → { key: value }
-    format_inline_object_type(&unquoted)
+    format_inline_object_type(&unquoted).into_owned()
 }
 
 /// Protect quoted strings during type transformation.
@@ -493,13 +505,13 @@ fn contains_top_level_arrow(type_str: &str) -> bool {
     if !type_str.contains("=>") {
         return false;
     }
-    let chars: Vec<char> = type_str.chars().collect();
+    let bytes = type_str.as_bytes();
     let mut depth = 0i32;
-    for i in 0..chars.len() {
-        match chars[i] {
-            '(' | '<' | '[' | '{' => depth += 1,
-            ')' | '>' | ']' | '}' => depth -= 1,
-            '=' if depth == 0 && i + 1 < chars.len() && chars[i + 1] == '>' => return true,
+    for (i, &b) in bytes.iter().enumerate() {
+        match b {
+            b'(' | b'<' | b'[' | b'{' => depth += 1,
+            b')' | b'>' | b']' | b'}' => depth -= 1,
+            b'=' if depth == 0 && i + 1 < bytes.len() && bytes[i + 1] == b'>' => return true,
             _ => {}
         }
     }
@@ -532,37 +544,44 @@ fn needs_parens_for_union(type_str: &str) -> bool {
 
 /// Remove Closure Compiler `.` before `<` in generic type syntax.
 /// e.g., `Object.<String, Number>` → `Object<String, Number>`
-fn remove_closure_dot_generics(type_str: &str) -> String {
+fn remove_closure_dot_generics(type_str: &str) -> Cow<'_, str> {
     if !type_str.contains(".<") {
-        return type_str.to_string();
+        return Cow::Borrowed(type_str);
     }
     // Don't modify content inside quotes
     let mut result = String::with_capacity(type_str.len());
     let mut in_quote = false;
-    let mut quote_char = '"';
-    let chars: Vec<char> = type_str.chars().collect();
-    let len = chars.len();
+    let mut quote_byte = b'"';
+    let bytes = type_str.as_bytes();
+    let len = bytes.len();
     let mut i = 0;
     while i < len {
-        let ch = chars[i];
+        let b = bytes[i];
         if in_quote {
-            result.push(ch);
-            if ch == quote_char {
+            if b == quote_byte {
                 in_quote = false;
             }
-        } else if ch == '"' || ch == '\'' {
+            let ch = type_str[i..].chars().next().unwrap();
+            result.push(ch);
+            i += ch.len_utf8();
+        } else if b == b'"' || b == b'\'' {
             in_quote = true;
-            quote_char = ch;
-            result.push(ch);
-        } else if ch == '.' && i + 1 < len && chars[i + 1] == '<' {
+            quote_byte = b;
+            result.push(b as char);
+            i += 1;
+        } else if b == b'.' && i + 1 < len && bytes[i + 1] == b'<' {
             // Skip the `.` before `<`
-            // (don't push anything, let the next iteration push `<`)
+            i += 1;
+        } else if b.is_ascii() {
+            result.push(b as char);
+            i += 1;
         } else {
+            let ch = type_str[i..].chars().next().unwrap();
             result.push(ch);
+            i += ch.len_utf8();
         }
-        i += 1;
     }
-    result
+    Cow::Owned(result)
 }
 
 fn contains_quotes(s: &str) -> bool {
@@ -577,9 +596,9 @@ fn contains_quotes(s: &str) -> bool {
 ///
 /// Does NOT convert single quotes inside double-quoted strings (already protected by
 /// `without_strings()` in the transformation phase).
-fn normalize_type_quotes(type_str: &str) -> String {
+fn normalize_type_quotes(type_str: &str) -> Cow<'_, str> {
     if !type_str.contains('\'') {
-        return type_str.to_string();
+        return Cow::Borrowed(type_str);
     }
 
     let mut result = String::with_capacity(type_str.len());
@@ -638,7 +657,7 @@ fn normalize_type_quotes(type_str: &str) -> String {
             i += ch.len_utf8();
         }
     }
-    result
+    Cow::Owned(result)
 }
 
 /// Check if a string is a valid JavaScript identifier.
@@ -657,9 +676,9 @@ fn is_valid_js_identifier(s: &str) -> bool {
 /// Remove unnecessary quotes from object property names in type expressions.
 /// `"userId": string` → `userId: string` when the property name is a valid identifier.
 /// This simulates Prettier's TS parser behavior.
-fn unquote_object_property_names(type_str: &str) -> String {
+fn unquote_object_property_names(type_str: &str) -> Cow<'_, str> {
     if !type_str.contains('"') {
-        return type_str.to_string();
+        return Cow::Borrowed(type_str);
     }
 
     let bytes = type_str.as_bytes();
@@ -714,17 +733,17 @@ fn unquote_object_property_names(type_str: &str) -> String {
         }
     }
 
-    result
+    Cow::Owned(result)
 }
 
 /// Format inline object types with proper spacing.
 /// `{foo:string}` → `{ foo: string }`
 /// Only handles single-level object types that don't contain newlines.
-fn format_inline_object_type(type_str: &str) -> String {
+fn format_inline_object_type(type_str: &str) -> Cow<'_, str> {
     let trimmed = type_str.trim();
     // Only apply to `{...}` patterns (not nested `{{...}}` which is handled by wrap_object_type)
     if !trimmed.starts_with('{') || !trimmed.ends_with('}') || trimmed.contains('\n') {
-        return type_str.to_string();
+        return Cow::Borrowed(type_str);
     }
 
     // Skip `{{ }}` double-brace types — these are handled by serialize.rs wrap_object_type
@@ -732,11 +751,11 @@ fn format_inline_object_type(type_str: &str) -> String {
         // Format the inner content of {{ }}
         let inner = &trimmed[1..trimmed.len() - 1]; // Strip one level of braces
         let formatted_inner = format_object_body(inner);
-        return format!("{{{formatted_inner}}}");
+        return Cow::Owned(format!("{{{formatted_inner}}}"));
     }
 
     // Single brace: format { key: value; ... }
-    format_object_body(trimmed)
+    Cow::Owned(format_object_body(trimmed))
 }
 
 /// Format an object type body `{ key: value; key2: value2 }` with proper spacing.
@@ -813,88 +832,106 @@ fn format_object_body(obj_str: &str) -> String {
 /// - Trim leading/trailing whitespace
 pub fn normalize_type_whitespace(type_str: &str) -> String {
     // First pass: collapse whitespace, but preserve `// comments` with their newlines
-    let mut collapsed = String::with_capacity(type_str.len());
-    let mut prev_was_space = false;
     let trimmed = type_str.trim();
-    let chars: Vec<char> = trimmed.chars().collect();
-    let tlen = chars.len();
+    let bytes = trimmed.as_bytes();
+    let blen = bytes.len();
+    let mut collapsed = String::with_capacity(blen);
+    let mut prev_was_space = false;
     let mut ti = 0;
-    while ti < tlen {
-        let ch = chars[ti];
+    while ti < blen {
+        let b = bytes[ti];
         // Detect `// comment` — preserve verbatim through newline
-        if ch == '/' && ti + 1 < tlen && chars[ti + 1] == '/' {
-            // Copy everything from `//` to end of line (including newline)
-            while ti < tlen && chars[ti] != '\n' {
-                collapsed.push(chars[ti]);
-                ti += 1;
+        if b == b'/' && ti + 1 < blen && bytes[ti + 1] == b'/' {
+            while ti < blen && bytes[ti] != b'\n' {
+                let ch = trimmed[ti..].chars().next().unwrap();
+                collapsed.push(ch);
+                ti += ch.len_utf8();
             }
-            if ti < tlen && chars[ti] == '\n' {
+            if ti < blen && bytes[ti] == b'\n' {
                 collapsed.push('\n');
                 ti += 1;
             }
             prev_was_space = false;
-        } else if ch.is_whitespace() {
+        } else if b.is_ascii_whitespace() {
             if !prev_was_space {
                 collapsed.push(' ');
                 prev_was_space = true;
             }
             ti += 1;
-        } else {
-            collapsed.push(ch);
+        } else if b.is_ascii() {
+            collapsed.push(b as char);
             prev_was_space = false;
             ti += 1;
+        } else {
+            let ch = trimmed[ti..].chars().next().unwrap();
+            if ch.is_whitespace() {
+                if !prev_was_space {
+                    collapsed.push(' ');
+                    prev_was_space = true;
+                }
+            } else {
+                collapsed.push(ch);
+                prev_was_space = false;
+            }
+            ti += ch.len_utf8();
         }
     }
 
     // Second pass: ensure spaces around `|`, `&`, and `=>`
     // Skip content inside `// comments`
-    let mut result = String::with_capacity(collapsed.len() + 8);
-    let chars2: Vec<char> = collapsed.chars().collect();
-    let len = chars2.len();
+    let cbytes = collapsed.as_bytes();
+    let clen = cbytes.len();
+    let mut result = String::with_capacity(clen + 8);
     let mut i = 0;
-    while i < len {
-        let ch = chars2[i];
+    while i < clen {
+        let b = cbytes[i];
         // Skip `// comment` sections verbatim
-        if ch == '/' && i + 1 < len && chars2[i + 1] == '/' {
-            while i < len && chars2[i] != '\n' {
-                result.push(chars2[i]);
-                i += 1;
+        if b == b'/' && i + 1 < clen && cbytes[i + 1] == b'/' {
+            while i < clen && cbytes[i] != b'\n' {
+                let ch = collapsed[i..].chars().next().unwrap();
+                result.push(ch);
+                i += ch.len_utf8();
             }
-            if i < len && chars2[i] == '\n' {
+            if i < clen && cbytes[i] == b'\n' {
                 result.push('\n');
                 i += 1;
             }
             continue;
         }
         // Handle `=>` arrow
-        if ch == '=' && i + 1 < len && chars2[i + 1] == '>' {
+        if b == b'=' && i + 1 < clen && cbytes[i + 1] == b'>' {
             // Add space before if needed
-            if i > 0 && chars2[i - 1] != ' ' {
+            if i > 0 && cbytes[i - 1] != b' ' {
                 result.push(' ');
             }
             result.push('=');
             result.push('>');
             // Add space after if needed
-            if i + 2 < len && chars2[i + 2] != ' ' {
+            if i + 2 < clen && cbytes[i + 2] != b' ' {
                 result.push(' ');
             }
             i += 2;
             continue;
         }
-        if ch == '|' || ch == '&' {
+        if b == b'|' || b == b'&' {
             // Add space before if needed
-            if i > 0 && chars2[i - 1] != ' ' {
+            if i > 0 && cbytes[i - 1] != b' ' {
                 result.push(' ');
             }
-            result.push(ch);
+            result.push(b as char);
             // Add space after if needed
-            if i + 1 < len && chars2[i + 1] != ' ' {
+            if i + 1 < clen && cbytes[i + 1] != b' ' {
                 result.push(' ');
             }
+            i += 1;
+        } else if b.is_ascii() {
+            result.push(b as char);
+            i += 1;
         } else {
+            let ch = collapsed[i..].chars().next().unwrap();
             result.push(ch);
+            i += ch.len_utf8();
         }
-        i += 1;
     }
     result
 }

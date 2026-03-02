@@ -1,3 +1,31 @@
+/// Lookup table of pre-allocated indent strings (0–12 spaces).
+/// Avoids `" ".repeat(n)` heap allocations for common indent widths.
+const INDENTS: [&str; 13] = [
+    "",
+    " ",
+    "  ",
+    "   ",
+    "    ",
+    "     ",
+    "      ",
+    "       ",
+    "        ",
+    "         ",
+    "          ",
+    "           ",
+    "            ",
+];
+
+/// Get an indent string of `n` spaces. Uses a static lookup for n <= 12,
+/// falls back to heap allocation for larger values.
+pub fn indent_str(n: usize) -> std::borrow::Cow<'static, str> {
+    if let Some(&s) = INDENTS.get(n) {
+        std::borrow::Cow::Borrowed(s)
+    } else {
+        std::borrow::Cow::Owned(" ".repeat(n))
+    }
+}
+
 /// Result of parsing a list item prefix.
 struct ListItemPrefix {
     /// Width for continuation indentation
@@ -263,7 +291,7 @@ pub fn wrap_paragraph(
         return;
     }
 
-    let indent_str = " ".repeat(continuation_indent);
+    let indent_s = indent_str(continuation_indent);
     let effective_max = max_width.saturating_sub(continuation_indent);
     let mut current_line = String::with_capacity(max_width);
     let mut is_first_line = true;
@@ -282,7 +310,11 @@ pub fn wrap_paragraph(
                 lines.push(std::mem::take(&mut current_line));
                 is_first_line = false;
             } else {
-                lines.push(format!("{indent_str}{}", std::mem::take(&mut current_line)));
+                let mut s = String::with_capacity(indent_s.len() + current_line.len());
+                s.push_str(&indent_s);
+                s.push_str(&current_line);
+                current_line.clear();
+                lines.push(s);
             }
             current_line.push_str(word);
         }
@@ -298,15 +330,24 @@ pub fn wrap_paragraph(
         {
             let overflow = current_line[last_space + 1..].to_string();
             current_line.truncate(last_space);
-            lines.push(format!("{indent_str}{current_line}"));
-            lines.push(format!("{indent_str}{overflow}"));
+            let mut s = String::with_capacity(indent_s.len() + current_line.len());
+            s.push_str(&indent_s);
+            s.push_str(&current_line);
+            lines.push(s);
+            let mut s = String::with_capacity(indent_s.len() + overflow.len());
+            s.push_str(&indent_s);
+            s.push_str(&overflow);
+            lines.push(s);
             return;
         }
 
         if is_first_line {
             lines.push(current_line);
         } else {
-            lines.push(format!("{indent_str}{current_line}"));
+            let mut s = String::with_capacity(indent_s.len() + current_line.len());
+            s.push_str(&indent_s);
+            s.push_str(&current_line);
+            lines.push(s);
         }
     }
 }
@@ -497,7 +538,7 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
                         i += 1;
                     }
                     if !cont_paragraph.is_empty() {
-                        let indent_str = " ".repeat(saved_indent);
+                        let ind = indent_str(saved_indent);
                         // Wrap at max_width (not max_width - indent) to match plugin
                         // behavior: the paragraph is wrapped first, then indentation
                         // is prepended. This allows indented lines to exceed the
@@ -505,7 +546,10 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
                         let mut para_lines = Vec::new();
                         wrap_paragraph(&cont_paragraph, max_width, 0, &mut para_lines);
                         for pl in para_lines {
-                            lines.push(format!("{indent_str}{pl}"));
+                            let mut s = String::with_capacity(ind.len() + pl.len());
+                            s.push_str(&ind);
+                            s.push_str(&pl);
+                            lines.push(s);
                         }
                     }
                     continue;
