@@ -1,8 +1,9 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 8600
 expression: snapshot
 ---
-Codegen conformance: 1289/1339 passed (96.3%)
+Codegen conformance: 1291/1339 passed (96.4%)
 Flow files skipped: 38
 FBT lowering skipped: 32
 
@@ -12,7 +13,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:47
+  output_mismatch:45
   no_expected:    0
 
 Failed fixtures:
@@ -50,7 +51,6 @@ Failed fixtures:
   [output_mismatch] propagate-scope-deps-hir-fork/nested-optional-chains.ts
   [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/infer-function-uncond-optional-hoists-other-dep.tsx
   [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
-  [output_mismatch] propagate-scope-deps-hir-fork/repro-scope-missing-mutable-range.js
   [output_mismatch] reduce-reactive-deps/hoist-deps-diff-ssa-instance1.tsx
   [output_mismatch] reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
   [output_mismatch] relay-transitive-mixeddata.js
@@ -62,7 +62,6 @@ Failed fixtures:
   [output_mismatch] repro-mutate-result-of-method-call-on-frozen-value-in-function-expression.js
   [output_mismatch] repro-ref-mutable-range.tsx
   [output_mismatch] repro-returned-inner-fn-mutates-context.js
-  [output_mismatch] repro-scope-missing-mutable-range.js
   [output_mismatch] ssa-property-alias-mutate-inside-if.js
   [output_mismatch] todo.memoize-loops-that-produce-memoizeable-values.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js
