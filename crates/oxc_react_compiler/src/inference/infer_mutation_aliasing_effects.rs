@@ -1306,16 +1306,11 @@ fn are_arguments_immutable_and_non_mutating(
         }
 
         // For non-function types or functions without known signatures, check the abstract value kind.
-        // Primitive, Frozen, MaybeFrozen, Global are all immutable.
+        // Only Primitive and Frozen are allowed. Globals, module locals, and other locally
+        // defined functions may mutate their arguments.
         match state.get(place) {
             Some(av) => {
-                if !matches!(
-                    av.kind,
-                    ValueKind::Primitive
-                        | ValueKind::Frozen
-                        | ValueKind::MaybeFrozen
-                        | ValueKind::Global
-                ) {
+                if !matches!(av.kind, ValueKind::Primitive | ValueKind::Frozen) {
                     return false;
                 }
             }
