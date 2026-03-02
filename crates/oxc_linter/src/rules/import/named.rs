@@ -2,11 +2,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    context::LintContext,
-    module_record::{ExportImportName, ImportImportName},
-    rule::Rule,
-};
+use crate::{context::LintContext, rule::Rule};
 
 fn named_diagnostic(imported_name: &str, module_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("named import {imported_name:?} not found"))
@@ -89,68 +85,83 @@ impl Rule for Named {
             return;
         }
 
-        let module_record = ctx.module_record();
+        let Some(module) = ctx.current_module() else {
+            return;
+        };
 
-        for import_entry in &module_record.import_entries {
-            // Get named import
-            let ImportImportName::Name(import_name) = &import_entry.import_name else {
-                continue;
-            };
-            let specifier = import_entry.module_request.name();
-            // Get remote module record
-            let Some(remote_module_record) = module_record.get_loaded_module(specifier) else {
-                continue;
-            };
-            if !remote_module_record.has_module_syntax {
+        // Check named imports.
+        for import in module.named_imports.values() {
+            // Skip namespace and default imports.
+            if import.imported_name.as_str() == "*" || import.is_default_import {
                 continue;
             }
-            let import_span = import_name.span;
-            let name = import_name.name();
+
+            let Some(record) = module.import_records.get(import.record_idx.index()) else {
+                continue;
+            };
+            let Some(target_idx) = record.resolved_module else {
+                continue;
+            };
+            let Some(remote) = ctx.resolve_module(target_idx) else {
+                continue;
+            };
+            if !remote.has_module_syntax {
+                continue;
+            }
+
+            let name = import.imported_name.as_str();
+
             // Check `import { default as foo } from 'bar'`
-            if name == "default" && remote_module_record.export_default.is_some() {
-                continue;
-            }
-            // Check remote bindings
-            if remote_module_record.exported_bindings.contains_key(name) {
-                continue;
-            }
-            // check re-export
-            if remote_module_record
-                .exported_bindings_from_star_export()
-                .iter()
-                .any(|(_, value)| value.contains(&import_name.name))
-            {
+            if name == "default" && remote.named_exports.contains_key("default") {
                 continue;
             }
 
-            ctx.diagnostic(named_diagnostic(name, specifier, import_span));
+            // Check remote resolved exports (includes re-exports).
+            if remote.resolved_exports.contains_key(name) {
+                continue;
+            }
+
+            // Check remote local exports.
+            if remote.named_exports.contains_key(name) {
+                continue;
+            }
+
+            ctx.diagnostic(named_diagnostic(name, &record.specifier, import.span));
         }
 
-        for export_entry in &module_record.indirect_export_entries {
-            let Some(module_request) = &export_entry.module_request else {
-                continue;
-            };
-            let ExportImportName::Name(import_name) = &export_entry.import_name else {
-                continue;
-            };
-            let specifier = module_request.name();
-            // Get remote module record
-            let Some(remote_module_record) = module_record.get_loaded_module(specifier) else {
-                continue;
-            };
-            if !remote_module_record.has_module_syntax {
+        // Check indirect export entries (re-exports like `export { x } from './foo'`).
+        for entry in &module.indirect_export_entries {
+            let imported_name = entry.imported_name.as_str();
+            if imported_name == "*" {
                 continue;
             }
-            // Check remote bindings
-            let name = import_name.name();
+
+            let Some(target_idx) = entry.resolved_module else {
+                continue;
+            };
+            let Some(remote) = ctx.resolve_module(target_idx) else {
+                continue;
+            };
+            if !remote.has_module_syntax {
+                continue;
+            }
+
             // `export { default as foo } from './source'` <> `export default xxx`
-            if name == "default" && remote_module_record.export_default.is_some() {
+            if imported_name == "default" && remote.named_exports.contains_key("default") {
                 continue;
             }
-            if remote_module_record.exported_bindings.contains_key(name) {
+            if remote.resolved_exports.contains_key(imported_name) {
                 continue;
             }
-            ctx.diagnostic(named_diagnostic(name, specifier, import_name.span));
+            if remote.named_exports.contains_key(imported_name) {
+                continue;
+            }
+
+            ctx.diagnostic(named_diagnostic(
+                imported_name,
+                &entry.module_request,
+                entry.imported_name_span,
+            ));
         }
     }
 }

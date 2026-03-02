@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                              ─
    ╰────
 
-  ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./b".
+  ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./deep/a".
    ╭─[index.js:1:52]
  1 │ import { "b" as b } from "./deep/a"; console.log(b.e)
    ·                                                    ─
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                ─
    ╰────
 
-  ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./b".
+  ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./deep/a".
    ╭─[index.js:1:45]
  1 │ import { b } from "./deep/a"; console.log(b.e)
    ·                                             ─
@@ -122,7 +122,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                    ─
    ╰────
 
-  ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./b".
+  ⚠ eslint-plugin-import(namespace): "e" not found in imported namespace "./deep-es7/a".
    ╭─[index.js:1:49]
  1 │ import { b } from "./deep-es7/a"; console.log(b.e)
    ·                                                 ─

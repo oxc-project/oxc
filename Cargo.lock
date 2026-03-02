@@ -2026,6 +2026,7 @@ dependencies = [
  "oxc_estree_tokens",
  "oxc_index",
  "oxc_macros",
+ "oxc_module_graph",
  "oxc_parser",
  "oxc_regular_expression",
  "oxc_resolver",

@@ -7,6 +7,7 @@ use javascript_globals::GLOBALS;
 use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
+use oxc_module_graph as mg;
 use oxc_semantic::Semantic;
 use oxc_span::Span;
 
@@ -559,6 +560,30 @@ impl<'a> LintContext<'a> {
 
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
         self.parent.other_file_hosts()
+    }
+
+    /* Module graph helpers (for import rules) */
+
+    /// Returns a reference to the module graph, if available.
+    pub fn module_graph(&self) -> Option<&mg::graph::ModuleGraph> {
+        self.parent.module_graph()
+    }
+
+    /// Returns this file's index in the module graph, if available.
+    pub fn current_module_idx(&self) -> Option<mg::types::ModuleIdx> {
+        self.parent.module_idx()
+    }
+
+    /// Look up a normal module by its graph index.
+    pub fn resolve_module(&self, idx: mg::types::ModuleIdx) -> Option<&mg::NormalModule> {
+        let graph = self.parent.module_graph()?;
+        graph.normal_module(idx)
+    }
+
+    /// Returns the current file as a `NormalModule` from the module graph.
+    pub fn current_module(&self) -> Option<&mg::NormalModule> {
+        let graph = self.parent.module_graph()?;
+        graph.normal_module(self.parent.module_idx()?)
     }
 }
 

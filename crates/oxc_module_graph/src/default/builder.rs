@@ -11,7 +11,7 @@ use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_resolver::{ResolveOptions, Resolver};
 use oxc_semantic::{Scoping, SemanticBuilder};
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record as syntax;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_syntax::symbol::SymbolId;
@@ -254,7 +254,7 @@ impl ModuleGraphBuilder {
     ) -> Vec<ResolvedImportRecord> {
         let mut import_records = Vec::new();
 
-        for (specifier, _) in &module_record.requested_modules {
+        for (specifier, requested_modules) in &module_record.requested_modules {
             let specifier_str = specifier.as_str();
 
             let target_idx = match resolver.resolve(dir, specifier_str) {
@@ -307,12 +307,15 @@ impl ModuleGraphBuilder {
                 SymbolId::from_raw_unchecked(0),
             );
 
+            let first_req = requested_modules.first();
             import_records.push(ResolvedImportRecord {
                 specifier: CompactString::from(specifier_str),
                 resolved_module: target_idx,
                 kind: ImportKind::Static,
                 namespace_ref,
                 meta: ImportRecordMeta::empty(),
+                specifier_span: first_req.map_or(Span::default(), |r| r.span),
+                is_import: first_req.is_some_and(|r| r.is_import),
             });
         }
 
@@ -450,10 +453,16 @@ fn build_named_imports(
     let root_scope = scoping.root_scope_id();
 
     for entry in &record.import_entries {
-        let imported_name = match &entry.import_name {
-            syntax::ImportImportName::Name(ns) => CompactString::from(ns.name.as_str()),
-            syntax::ImportImportName::NamespaceObject => CompactString::new("*"),
-            syntax::ImportImportName::Default(_) => CompactString::new("default"),
+        let (imported_name, span, is_default_import) = match &entry.import_name {
+            syntax::ImportImportName::Name(ns) => {
+                (CompactString::from(ns.name.as_str()), ns.span, false)
+            }
+            syntax::ImportImportName::NamespaceObject => {
+                (CompactString::new("*"), Span::default(), false)
+            }
+            syntax::ImportImportName::Default(span) => {
+                (CompactString::new("default"), *span, true)
+            }
         };
 
         let local_name = entry.local_name.name.as_str();
@@ -478,6 +487,8 @@ fn build_named_imports(
                 local_symbol,
                 record_idx: ImportRecordIdx::from_usize(record_idx),
                 is_type: entry.is_type,
+                is_default_import,
+                span,
             },
         );
     }
@@ -533,10 +544,12 @@ fn build_indirect_exports(
                 syntax::ExportExportName::Default(_) => CompactString::new("default"),
                 syntax::ExportExportName::Null => return None,
             };
-            let imported_name = match &entry.import_name {
-                syntax::ExportImportName::Name(ns) => CompactString::from(ns.name.as_str()),
+            let (imported_name, imported_name_span) = match &entry.import_name {
+                syntax::ExportImportName::Name(ns) => {
+                    (CompactString::from(ns.name.as_str()), ns.span)
+                }
                 syntax::ExportImportName::All | syntax::ExportImportName::AllButDefault => {
-                    CompactString::new("*")
+                    (CompactString::new("*"), Span::default())
                 }
                 syntax::ExportImportName::Null => return None,
             };
@@ -553,6 +566,8 @@ fn build_indirect_exports(
                 module_request: CompactString::from(specifier),
                 resolved_module,
                 span: entry.span,
+                imported_name_span,
+                is_type: entry.is_type,
             })
         })
         .collect()

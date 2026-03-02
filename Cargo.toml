@@ -142,6 +142,7 @@ oxc_traverse = { version = "0.115.0", path = "crates/oxc_traverse" } # AST trave
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_language_server = { path = "crates/oxc_language_server", default-features = false } # Language server
 oxc_linter = { path = "crates/oxc_linter" } # Linting engine
+oxc_module_graph = { path = "crates/oxc_module_graph" } # Module graph for cross-module analysis
 oxc_macros = { path = "crates/oxc_macros" } # Proc macros
 oxc_tasks_common = { path = "tasks/common" } # Task utilities
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" } # Transform validation

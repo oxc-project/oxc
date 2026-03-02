@@ -37,6 +37,7 @@ oxc_estree_tokens = { workspace = true }
 oxc_ecmascript = { workspace = true }
 oxc_index = { workspace = true }
 oxc_macros = { workspace = true, features = ["ruledocs"] }
+oxc_module_graph = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_regular_expression = { workspace = true }
 oxc_resolver = { workspace = true }

@@ -116,6 +116,14 @@ pub struct NamedImport {
     pub record_idx: ImportRecordIdx,
     /// Whether this is a `type` import.
     pub is_type: bool,
+    /// Whether this is `import x from '...'` (true) vs `import { default as x } from '...'` (false).
+    pub is_default_import: bool,
+    /// Span of the imported name in source.
+    ///
+    /// For `import { foo } from './bar'`, this is the span of `foo`.
+    /// For `import foo from './bar'` (default), this is the span of `foo`.
+    /// For `import * as ns from './bar'` (namespace), this is `Span::default()`.
+    pub span: Span,
 }
 
 /// A locally declared export.
@@ -161,6 +169,10 @@ pub struct ResolvedImportRecord {
     pub namespace_ref: SymbolRef,
     /// Metadata flags for this import record.
     pub meta: ImportRecordMeta,
+    /// Span of the specifier string in source.
+    pub specifier_span: Span,
+    /// Whether this came from an `import` statement (true) or an `export` statement (false).
+    pub is_import: bool,
 }
 
 /// An edge in the module dependency graph.
@@ -198,6 +210,10 @@ pub struct IndirectExportEntry {
     pub resolved_module: Option<ModuleIdx>,
     /// Span of the export statement.
     pub span: Span,
+    /// Span of the imported name within the export statement.
+    pub imported_name_span: Span,
+    /// Whether this is a type-only re-export (`export type { x } from './foo'`).
+    pub is_type: bool,
 }
 
 /// Result of matching an import to an export.
