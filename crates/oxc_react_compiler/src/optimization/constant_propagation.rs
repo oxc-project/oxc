@@ -251,15 +251,19 @@ fn evaluate_instruction(
     match &mut instr.value {
         InstructionValue::FunctionExpression(v) => {
             // Collect mutable context vars for the inner function.
-            // The inner function's own mutable ctx is separate from the outer one,
-            // but we reuse the outer constants map for cross-scope propagation.
+            // Snapshot and restore the constants map so sibling closures
+            // don't contaminate each other's constant state.
             let inner_mutable_ctx = collect_mutable_context_vars(&v.lowered_func.func);
+            let saved = constants.clone();
             constant_propagation_impl(&mut v.lowered_func.func, constants, &inner_mutable_ctx);
+            *constants = saved;
             return None;
         }
         InstructionValue::ObjectMethod(v) => {
             let inner_mutable_ctx = collect_mutable_context_vars(&v.lowered_func.func);
+            let saved = constants.clone();
             constant_propagation_impl(&mut v.lowered_func.func, constants, &inner_mutable_ctx);
+            *constants = saved;
             return None;
         }
         InstructionValue::StartMemoize(v) => {
