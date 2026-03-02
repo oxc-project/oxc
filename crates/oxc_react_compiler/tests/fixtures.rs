@@ -1194,7 +1194,12 @@ fn run_pipeline_for_codegen(
                     candidates.push((LowerableFunction::Function(f), name, None));
                 }
                 Some(Declaration::VariableDeclaration(decl))
-                    if matches!(decl.kind, VariableDeclarationKind::Const | VariableDeclarationKind::Let | VariableDeclarationKind::Var) =>
+                    if matches!(
+                        decl.kind,
+                        VariableDeclarationKind::Const
+                            | VariableDeclarationKind::Let
+                            | VariableDeclarationKind::Var
+                    ) =>
                 {
                     if let Some(d) = decl.declarations.first() {
                         let binding = get_binding_name(d);
@@ -1213,7 +1218,14 @@ fn run_pipeline_for_codegen(
                 }
                 _ => {}
             },
-            Statement::VariableDeclaration(decl) if matches!(decl.kind, VariableDeclarationKind::Const | VariableDeclarationKind::Let | VariableDeclarationKind::Var) => {
+            Statement::VariableDeclaration(decl)
+                if matches!(
+                    decl.kind,
+                    VariableDeclarationKind::Const
+                        | VariableDeclarationKind::Let
+                        | VariableDeclarationKind::Var
+                ) =>
+            {
                 if let Some(d) = decl.declarations.first() {
                     let binding = get_binding_name(d);
                     if let Some(init) = &d.init {
@@ -7804,8 +7816,12 @@ fn extract_compiled_from_gating(code: &str) -> Option<String> {
             || trimmed.starts_with("let ")
             || trimmed.starts_with("var ");
         // Also match bare assignment expressions like `Foo = isForgetEnabled_Fixtures()`
-        let has_assign_prefix = !has_decl_prefix && trimmed.contains(" = ") && trimmed.contains("isForgetEnabled_Fixtures()")
-            || !has_decl_prefix && trimmed.contains(" = ") && trimmed.contains("_isForgetEnabled_Fixtures()")
+        let has_assign_prefix = !has_decl_prefix
+            && trimmed.contains(" = ")
+            && trimmed.contains("isForgetEnabled_Fixtures()")
+            || !has_decl_prefix
+                && trimmed.contains(" = ")
+                && trimmed.contains("_isForgetEnabled_Fixtures()")
             || !has_decl_prefix && trimmed.contains(" = ") && trimmed.contains("getTrue()")
             || !has_decl_prefix && trimmed.contains(" = ") && trimmed.contains("getFalse()");
         let has_prefix = has_decl_prefix || has_assign_prefix;

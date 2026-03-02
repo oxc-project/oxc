@@ -2,7 +2,7 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Codegen conformance: 1301/1339 passed (97.2%)
+Codegen conformance: 1305/1339 passed (97.5%)
 Flow files skipped: 38
 FBT lowering skipped: 32
 
@@ -12,17 +12,16 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 0
   panic:          0
-  output_mismatch:38
+  output_mismatch:34
   no_expected:    0
 
 Failed fixtures:
-  [output_mismatch] aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] align-scopes-reactive-scope-overlaps-if.ts
   [output_mismatch] allow-merge-refs-pattern.js
   [output_mismatch] array-at-closure.js
   [output_mismatch] array-spread-mutable-iterator.js
-  [output_mismatch] bug-capturing-func-maybealias-captured-mutate.ts
   [output_mismatch] bug-type-inference-control-flow.ts
+  [output_mismatch] call-with-independently-memoizable-arg.js
   [output_mismatch] capturing-function-capture-ref-before-rename.js
   [output_mismatch] chained-assignment-context-variable.js
   [output_mismatch] destructuring-property-inference.js
@@ -33,24 +32,21 @@ Failed fixtures:
   [output_mismatch] lambda-mutated-ref-non-reactive.js
   [output_mismatch] mixedreadonly-mutating-map.js
   [output_mismatch] name-anonymous-functions.js
-  [output_mismatch] new-mutability/aliased-nested-scope-truncated-dep.tsx
   [output_mismatch] new-mutability/repro-destructure-from-prop-with-default-value.js
   [output_mismatch] new-mutability/todo-control-flow-sensitive-mutation.tsx
-  [output_mismatch] object-expression-computed-key-modified-during-after-construction.js
-  [output_mismatch] object-expression-member-expr-call.js
   [output_mismatch] preserve-memo-validation/useCallback-infer-more-specific.ts
   [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/infer-function-uncond-optional-hoists-other-dep.tsx
   [output_mismatch] propagate-scope-deps-hir-fork/reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
   [output_mismatch] reduce-reactive-deps/hoist-deps-diff-ssa-instance1.tsx
   [output_mismatch] reduce-reactive-deps/todo-infer-function-uncond-optionals-hoisted.tsx
   [output_mismatch] reordering-across-blocks.js
-  [output_mismatch] repro-capturing-func-maybealias-captured-mutate.ts
   [output_mismatch] repro-dont-memoize-array-with-mutable-map-after-hook.js
   [output_mismatch] repro-memoize-for-of-collection-when-loop-body-returns.js
   [output_mismatch] repro-mutate-result-of-function-call-with-frozen-argument-in-function-expression.js
   [output_mismatch] repro-mutate-result-of-method-call-on-frozen-value-in-function-expression.js
   [output_mismatch] repro-ref-mutable-range.tsx
   [output_mismatch] repro-returned-inner-fn-mutates-context.js
+  [output_mismatch] repro.js
   [output_mismatch] ssa-property-alias-mutate-inside-if.js
   [output_mismatch] todo.memoize-loops-that-produce-memoizeable-values.js
   [output_mismatch] useCallback-call-second-function-which-captures-maybe-mutable-value-preserve-memoization.js
