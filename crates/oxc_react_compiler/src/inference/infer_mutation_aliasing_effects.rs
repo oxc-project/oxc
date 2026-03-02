@@ -1582,10 +1582,17 @@ fn compute_effects_for_signature(
         substitutions.insert(operand.identifier.id, vec![operand.clone()]);
     }
 
-    // Create temporaries
-    // Note: TS creates actual temporary places with new IDs. For simplicity,
-    // we skip temporaries since the signatures from function expressions have
-    // none (temporaries is always []).
+    // Handle temporaries: built-in aliasing signatures can have temporaries
+    // (e.g. useEffect has an @effect temporary). The signature's effects include
+    // Create effects that establish values at temporary places, and other effects
+    // reference them. We map each temporary's placeholder ID to itself so that
+    // substitution lookups succeed.
+    // Note: TS creates actual temporary places with new IDs via createTemporaryPlace,
+    // but since the signature temporaries already have unique placeholder IDs,
+    // mapping to themselves achieves the same substitution behavior.
+    for temp in &signature.temporaries {
+        substitutions.insert(temp.identifier.id, vec![temp.clone()]);
+    }
 
     let mut effects = Vec::new();
 
@@ -1920,10 +1927,24 @@ fn compute_instruction_effects(
                     }
                 }
             }
-            // 2. Try to get function signature from callee's type (legacy signature)
+            // 2. Try to get function signature from callee's type
             let sig = env.get_function_signature(&v.callee.identifier.type_);
             if let Some(sig) = sig {
                 let sig = sig.clone();
+                // 2a. Check for new-style aliasing signature first
+                if let Some(ref aliasing) = sig.aliasing {
+                    if let Some(sig_effects) = compute_effects_for_signature(
+                        aliasing,
+                        lvalue,
+                        &v.callee,
+                        &v.args,
+                        &[], // empty context for built-in signatures
+                    ) {
+                        effects.extend(sig_effects);
+                        return effects;
+                    }
+                }
+                // 2b. Legacy fallback
                 return effects_from_signature(&sig, &v.callee, &v.args, lvalue);
             }
             // 3. Conservative fallback: callee may also be mutated (mutatesFunction=true)
@@ -1966,7 +1987,20 @@ fn compute_instruction_effects(
             let sig = env.get_function_signature(&v.property.identifier.type_);
             if let Some(sig) = sig {
                 let sig = sig.clone();
-                // Port of TS mutableOnlyIfOperandsAreMutable check (InferMutationAliasingEffects.ts).
+                // 2a. Check for new-style aliasing signature first
+                if let Some(ref aliasing) = sig.aliasing {
+                    if let Some(sig_effects) = compute_effects_for_signature(
+                        aliasing,
+                        lvalue,
+                        &v.receiver, // receiver for MethodCall
+                        &v.args,
+                        &[], // empty context for built-in signatures
+                    ) {
+                        effects.extend(sig_effects);
+                        return effects;
+                    }
+                }
+                // 2b. Port of TS mutableOnlyIfOperandsAreMutable check (InferMutationAliasingEffects.ts).
                 // If the method is only mutable when operands are mutable (e.g. Array.filter, Array.map),
                 // and all arguments are immutable/non-mutating, use Alias + ImmutableCapture instead
                 // of the normal signature effects. This prevents extending the receiver's mutable range
@@ -1996,7 +2030,7 @@ fn compute_instruction_effects(
                     }
                     return effects;
                 }
-                // For method calls, the receiver is the callee_or_receiver
+                // 2c. Legacy fallback for method calls
                 return effects_from_signature(&sig, &v.receiver, &v.args, lvalue);
             }
             // 3. Conservative fallback: receiver is conditionally mutated
@@ -2024,6 +2058,20 @@ fn compute_instruction_effects(
             let sig = env.get_function_signature(&v.callee.identifier.type_);
             if let Some(sig) = sig {
                 let sig = sig.clone();
+                // Check for new-style aliasing signature first
+                if let Some(ref aliasing) = sig.aliasing {
+                    if let Some(sig_effects) = compute_effects_for_signature(
+                        aliasing,
+                        lvalue,
+                        &v.callee,
+                        &v.args,
+                        &[], // empty context for built-in signatures
+                    ) {
+                        effects.extend(sig_effects);
+                        return effects;
+                    }
+                }
+                // Legacy fallback
                 return effects_from_signature(&sig, &v.callee, &v.args, lvalue);
             }
             // Conservative fallback when no signature is found:
