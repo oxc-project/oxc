@@ -1199,6 +1199,7 @@ fn effects_from_signature(
     callee_or_receiver: &Place,
     args: &[crate::hir::CallArg],
     lvalue: &Place,
+    state: &InferenceState,
 ) -> Vec<AliasingEffect> {
     use crate::hir::{CallArg, Effect};
 
@@ -1292,17 +1293,51 @@ fn effects_from_signature(
         visit(place, effect);
     }
 
-    // Process captures: if stores exist, capture into stores; otherwise alias to return
+    // Process captures: if stores exist, capture into stores; otherwise alias to return.
+    //
+    // Port of TS applyEffect lines 896-903, 928-944:
+    // When the source has an abstract kind of Global or Primitive, the TS reference
+    // drops Alias/Capture effects entirely (sourceType=null → no-op). We convert to
+    // ImmutableCapture which is a no-op in InferMutationAliasingRanges. Similarly,
+    // Frozen/MaybeFrozen sources become ImmutableCapture.
     if !captures.is_empty() {
         if stores.is_empty() {
             for cap in &captures {
-                effects.push(AliasingEffect::Alias { from: cap.clone(), into: lvalue.clone() });
+                let source_kind = state.get(cap).map(|av| av.kind);
+                if matches!(
+                    source_kind,
+                    Some(ValueKind::Global | ValueKind::Primitive)
+                        | Some(ValueKind::Frozen | ValueKind::MaybeFrozen)
+                ) {
+                    effects.push(AliasingEffect::ImmutableCapture {
+                        from: cap.clone(),
+                        into: lvalue.clone(),
+                    });
+                } else {
+                    effects.push(AliasingEffect::Alias { from: cap.clone(), into: lvalue.clone() });
+                }
             }
         } else {
             for cap in &captures {
-                for store in &stores {
-                    effects
-                        .push(AliasingEffect::Capture { from: cap.clone(), into: store.clone() });
+                let source_kind = state.get(cap).map(|av| av.kind);
+                if matches!(
+                    source_kind,
+                    Some(ValueKind::Global | ValueKind::Primitive)
+                        | Some(ValueKind::Frozen | ValueKind::MaybeFrozen)
+                ) {
+                    for store in &stores {
+                        effects.push(AliasingEffect::ImmutableCapture {
+                            from: cap.clone(),
+                            into: store.clone(),
+                        });
+                    }
+                } else {
+                    for store in &stores {
+                        effects.push(AliasingEffect::Capture {
+                            from: cap.clone(),
+                            into: store.clone(),
+                        });
+                    }
                 }
             }
         }
@@ -2018,7 +2053,7 @@ fn compute_instruction_effects(
                     }
                 }
                 // 2b. Legacy fallback
-                return effects_from_signature(&sig, &v.callee, &v.args, lvalue);
+                return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state);
             }
             // 3. Conservative fallback: no signature found.
             // TS: receiver=callee, function=callee, mutatesFunction=true
@@ -2098,7 +2133,7 @@ fn compute_instruction_effects(
                     return effects;
                 }
                 // 2c. Legacy fallback for method calls
-                return effects_from_signature(&sig, &v.receiver, &v.args, lvalue);
+                return effects_from_signature(&sig, &v.receiver, &v.args, lvalue, state);
             }
             // 3. Conservative fallback: no signature found.
             // TS: receiver=receiver, function=property, mutatesFunction=false
@@ -2132,7 +2167,7 @@ fn compute_instruction_effects(
                     }
                 }
                 // Legacy fallback
-                return effects_from_signature(&sig, &v.callee, &v.args, lvalue);
+                return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state);
             }
             // Conservative fallback when no signature is found.
             // TS: receiver=callee, function=callee, mutatesFunction=false
@@ -2713,30 +2748,45 @@ fn compute_instruction_effects(
 
     for effect in &mut effects {
         match effect {
-            // Capture, Alias, MaybeAlias: Frozen/MaybeFrozen source → ImmutableCapture
+            // Capture, Alias: prune based on source and destination value kinds
             //
-            // Port of TS applyEffect lines 861-944 (partial):
-            // The TS reference applies effects incrementally with state updates between them,
-            // so it can also prune based on source Global/Primitive and destination kinds.
-            // Our batch approach uses pre-instruction state, so we only apply the frozen-source
-            // and frozen-destination conversions which are safe regardless of application order.
-            AliasingEffect::Capture { from, into }
-            | AliasingEffect::Alias { from, into }
-            | AliasingEffect::MaybeAlias { from, into } => {
+            // Port of TS applyEffect lines 861-944:
+            //  sourceType:      Frozen/MaybeFrozen → "frozen", Context → "context",
+            //                   Global/Primitive → null (drop), default → "mutable"
+            //  destinationType: Context → "context", Mutable/MaybeFrozen → "mutable",
+            //                   default → null (including Frozen)
+            //
+            //  Decision:
+            //    frozen source              → ImmutableCapture
+            //    global/primitive source    → drop (Capture/Alias only, not MaybeAlias)
+            //    frozen destination         → drop (Capture/Alias only, not MaybeAlias)
+            //    (mutable src & mutable dst) OR MaybeAlias → keep
+            //    context+non-null dst OR mutable src+context dst → convert to MaybeAlias
+            //    otherwise                  → drop (no-op)
+            AliasingEffect::Capture { from, into } | AliasingEffect::Alias { from, into } => {
                 if let Some(abstract_val) = state.get(from) {
                     if matches!(abstract_val.kind, ValueKind::Frozen | ValueKind::MaybeFrozen) {
                         *effect = AliasingEffect::ImmutableCapture {
                             from: from.clone(),
                             into: into.clone(),
                         };
+                    } else if matches!(abstract_val.kind, ValueKind::Global | ValueKind::Primitive)
+                    {
+                        // Port of TS applyEffect lines 896-903, 928-944:
+                        // When the source is Global or Primitive, sourceType is null.
+                        // For Capture/Alias, none of the keep/convert conditions match,
+                        // so the effect is dropped entirely. We convert to ImmutableCapture
+                        // which is a no-op in InferMutationAliasingRanges.
+                        *effect = AliasingEffect::ImmutableCapture {
+                            from: from.clone(),
+                            into: into.clone(),
+                        };
                     }
                 }
-                // For Capture/Alias (NOT MaybeAlias): if the destination is Frozen, the
-                // effect cannot create meaningful data flow since frozen values are immutable.
+                // If the destination is Frozen, the effect cannot create meaningful
+                // data flow since frozen values are immutable.
                 // TS drops these in applyEffect because destinationType=null for Frozen.
-                // MaybeAlias always survives per TS line 930: `|| effect.kind === 'MaybeAlias'`.
-                if matches!(effect, AliasingEffect::Capture { .. } | AliasingEffect::Alias { .. })
-                {
+                if matches!(effect, AliasingEffect::Capture { .. } | AliasingEffect::Alias { .. }) {
                     let (from, into) = match effect {
                         AliasingEffect::Capture { from, into }
                         | AliasingEffect::Alias { from, into } => (from, into),
@@ -2749,6 +2799,18 @@ fn compute_instruction_effects(
                                 into: into.clone(),
                             };
                         }
+                    }
+                }
+            }
+            AliasingEffect::MaybeAlias { from, into } => {
+                // MaybeAlias: Frozen/MaybeFrozen source → ImmutableCapture
+                // MaybeAlias always survives for Global/Primitive sources per TS line 930.
+                if let Some(abstract_val) = state.get(from) {
+                    if matches!(abstract_val.kind, ValueKind::Frozen | ValueKind::MaybeFrozen) {
+                        *effect = AliasingEffect::ImmutableCapture {
+                            from: from.clone(),
+                            into: into.clone(),
+                        };
                     }
                 }
             }
