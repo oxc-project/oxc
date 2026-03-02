@@ -129,6 +129,14 @@ pub struct EnvironmentConfig {
     /// When true, the compiler treats reanimated shared values as having
     /// specific type signatures to allow correct memoization behavior.
     pub enable_custom_type_definition_for_reanimated: bool,
+
+    /// Enable the shared-runtime module type provider (test only).
+    ///
+    /// When true, the compiler registers type definitions for the `shared-runtime`
+    /// test module, providing correct type information for hooks like `useFragment`
+    /// (returns `MixedReadonly`, `noAlias: true`), `useNoAlias`, and typed functions.
+    /// This matches the `sharedRuntimeTypeProvider` from the TS test harness.
+    pub enable_shared_runtime_type_provider: bool,
 }
 
 impl Default for EnvironmentConfig {
@@ -161,6 +169,7 @@ impl Default for EnvironmentConfig {
             throw_unknown_exception_testonly: false,
             enable_reset_cache_on_source_file_changes: None,
             enable_custom_type_definition_for_reanimated: false,
+            enable_shared_runtime_type_provider: false,
         }
     }
 }
@@ -289,6 +298,10 @@ impl Environment {
         if config.enable_custom_type_definition_for_reanimated {
             let reanimated_type = super::globals::get_reanimated_module_type(&mut shapes);
             module_types.insert("react-native-reanimated".to_string(), reanimated_type);
+        }
+        if config.enable_shared_runtime_type_provider {
+            let shared_runtime_type = super::globals::get_shared_runtime_module_type(&mut shapes);
+            module_types.insert("shared-runtime".to_string(), shared_runtime_type);
         }
 
         Self {
