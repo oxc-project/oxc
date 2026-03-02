@@ -1892,10 +1892,7 @@ fn codegen_function_expression(
                             let needs_parens = *is_conditional
                                 || expr.starts_with('{')
                                 || expr.starts_with('<')
-                                || {
-                                    let s = expr.replace("??", "__");
-                                    s.contains(" ? ")
-                                };
+                                || is_ternary_expression(expr);
                             if needs_parens {
                                 format!("{async_prefix}({params_str}) => ({expr})")
                             } else {

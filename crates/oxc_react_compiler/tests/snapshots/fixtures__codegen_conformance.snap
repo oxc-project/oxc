@@ -1,9 +1,8 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 8611
 expression: snapshot
 ---
-Codegen conformance: 1265/1339 passed (94.5%)
+Codegen conformance: 1268/1339 passed (94.7%)
 Flow files skipped: 38
 FBT lowering skipped: 32
 
@@ -13,7 +12,7 @@ Failure breakdown:
   lower_error:    0
   pipeline_error: 1
   panic:          0
-  output_mismatch:71
+  output_mismatch:68
   no_expected:    0
 
 Failed fixtures:
@@ -25,7 +24,6 @@ Failed fixtures:
   [output_mismatch] array-spread-mutable-iterator.js
   [output_mismatch] bug-capturing-func-maybealias-captured-mutate.ts
   [output_mismatch] bug-type-inference-control-flow.ts
-  [output_mismatch] capture-ref-for-later-mutation.tsx
   [output_mismatch] capturing-function-capture-ref-before-rename.js
   [output_mismatch] chained-assignment-context-variable.js
   [output_mismatch] destructuring-property-inference.js
@@ -46,7 +44,6 @@ Failed fixtures:
   [output_mismatch] lambda-mutated-ref-non-reactive.js
   [output_mismatch] meta-isms/repro-cx-assigned-to-temporary.js
   [output_mismatch] meta-isms/repro-cx-namespace-assigned-to-temporary.js
-  [output_mismatch] mutation-within-jsx.tsx
   [output_mismatch] name-anonymous-functions.js
   [output_mismatch] nested-optional-chains.ts
   [output_mismatch] new-mutability/aliased-nested-scope-truncated-dep.tsx
@@ -58,7 +55,6 @@ Failed fixtures:
   [output_mismatch] new-mutability/transitivity-phi-assign-or-capture.tsx
   [output_mismatch] new-mutability/useMemo-reordering-depslist-assignment.ts
   [output_mismatch] object-expression-computed-member.js
-  [output_mismatch] original-reactive-scopes-fork/capture-ref-for-later-mutation.tsx
   [output_mismatch] preserve-memo-validation/useCallback-infer-more-specific.ts
   [output_mismatch] preserve-memo-validation/useMemo-reordering-depslist-assignment.ts
   [output_mismatch] preserve-memo-validation/useMemo-reordering-depslist-controlflow.tsx
