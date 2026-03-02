@@ -73,15 +73,8 @@ pub struct AliasingSignatureConfig {
     pub params: Vec<String>,
     pub rest: Option<String>,
     pub returns: String,
-    pub temporaries: Vec<TypeConfig>,
+    pub temporaries: Vec<String>,
     pub effects: Vec<AliasingEffectConfig>,
-}
-
-/// A type configuration used in aliasing signatures (for temporaries).
-#[derive(Debug, Clone)]
-pub struct TypeConfig {
-    pub kind: ValueKind,
-    pub reason: ValueReason,
 }
 
 // =====================================================================================
