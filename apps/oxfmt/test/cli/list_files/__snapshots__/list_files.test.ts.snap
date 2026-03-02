@@ -1,20 +1,100 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`list_files > should handle nested fixtures with config and ignore settings 1`] = `
+"--------------------
+arguments: --list-files list_files_nested
+working directory: list_files/fixtures
+exit code: 0
+--- STDOUT ---------
+list_files_nested/.hidden/hidden.js
+list_files_nested/.oxfmtrc.json
+list_files_nested/a/b/one.js
+list_files_nested/a/b/two.ts
+list_files_nested/d/e/f.js
+list_files_nested/top.js
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --list-files --config list_files_nested/.oxfmtrc.json list_files_nested
+working directory: list_files/fixtures
+exit code: 0
+--- STDOUT ---------
+list_files_nested/.oxfmtrc.json
+list_files_nested/a/b/one.js
+list_files_nested/a/b/two.ts
+list_files_nested/d/e/f.js
+list_files_nested/top.js
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --list-files --config list_files_nested/.oxfmtrc.json --ignore-path list_files_nested/.customignore list_files_nested
+working directory: list_files/fixtures
+exit code: 0
+--- STDOUT ---------
+list_files_nested/.oxfmtrc.json
+list_files_nested/a/b/one.js
+list_files_nested/a/b/two.ts
+list_files_nested/top.js
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --list-files --config list_files_nested/.oxfmtrc.json --with-node-modules list_files_nested
+working directory: list_files/fixtures
+exit code: 0
+--- STDOUT ---------
+list_files_nested/.oxfmtrc.json
+list_files_nested/a/b/one.js
+list_files_nested/a/b/two.ts
+list_files_nested/d/e/f.js
+list_files_nested/node_modules/pkg/index.js
+list_files_nested/top.js
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --list-files --config list_files_nested/.oxfmtrc.json list_files_nested/.hidden/hidden.js
+working directory: list_files/fixtures
+exit code: 2
+--- STDOUT ---------
+
+--- STDERR ---------
+Expected at least one target file
+--------------------
+--------------------
+arguments: --list-files --no-error-on-unmatched-pattern --config list_files_nested/.oxfmtrc.json list_files_nested/.hidden/hidden.js
+working directory: list_files/fixtures
+exit code: 0
+--- STDOUT ---------
+
+--- STDERR ---------
+No files found matching the given patterns.
+--------------------"
+`;
+
 exports[`list_files > should list selected target files in sorted order 1`] = `
 "--------------------
 arguments: --list-files
-working directory: fixtures
+working directory: list_files/fixtures
 exit code: 0
 --- STDOUT ---------
 a-first.ts
 ignored-by-ignore-path/skip.js
+list_files_nested/.hidden/hidden.js
+list_files_nested/.oxfmtrc.json
+list_files_nested/a/b/one.js
+list_files_nested/a/b/two.ts
+list_files_nested/d/e/f.js
+list_files_nested/top.js
 z-last.js
 --- STDERR ---------
 
 --------------------
 --------------------
 arguments: --list-files z-last.js a-first.ts
-working directory: fixtures
+working directory: list_files/fixtures
 exit code: 0
 --- STDOUT ---------
 a-first.ts
@@ -24,11 +104,17 @@ z-last.js
 --------------------
 --------------------
 arguments: --list-files --ignore-path custom.ignore
-working directory: fixtures
+working directory: list_files/fixtures
 exit code: 0
 --- STDOUT ---------
 a-first.ts
 ignored-by-prettierignore/skip.js
+list_files_nested/.hidden/hidden.js
+list_files_nested/.oxfmtrc.json
+list_files_nested/a/b/one.js
+list_files_nested/a/b/two.ts
+list_files_nested/d/e/f.js
+list_files_nested/top.js
 z-last.js
 --- STDERR ---------
 
@@ -38,7 +124,7 @@ z-last.js
 exports[`list_files > should preserve no-file semantics 1`] = `
 "--------------------
 arguments: --list-files __nonexistent__/**/*.js
-working directory: fixtures
+working directory: list_files/fixtures
 exit code: 2
 --- STDOUT ---------
 
@@ -47,7 +133,7 @@ Expected at least one target file
 --------------------
 --------------------
 arguments: --list-files --no-error-on-unmatched-pattern __nonexistent__/**/*.js
-working directory: fixtures
+working directory: list_files/fixtures
 exit code: 0
 --- STDOUT ---------
 
@@ -56,7 +142,7 @@ No files found matching the given patterns.
 --------------------
 --------------------
 arguments: --list-files --ignore-path custom.ignore ignored-by-ignore-path/skip.js
-working directory: fixtures
+working directory: list_files/fixtures
 exit code: 2
 --- STDOUT ---------
 
@@ -65,7 +151,7 @@ Expected at least one target file
 --------------------
 --------------------
 arguments: --list-files --no-error-on-unmatched-pattern --ignore-path custom.ignore ignored-by-ignore-path/skip.js
-working directory: fixtures
+working directory: list_files/fixtures
 exit code: 0
 --- STDOUT ---------
 
