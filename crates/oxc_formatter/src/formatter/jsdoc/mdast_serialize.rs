@@ -160,7 +160,7 @@ fn restore_in_string(s: &str, placeholders: &[String]) -> String {
 
     let mut result = s.to_string();
 
-    for (idx, original) in placeholders.iter().enumerate() {
+    for (idx, original) in placeholders.iter().enumerate().rev() {
         let placeholder = format!("{PLACEHOLDER_PREFIX}{idx}");
         if result.contains(&placeholder) {
             result = result.cow_replace(&*placeholder, original.as_str()).into_owned();

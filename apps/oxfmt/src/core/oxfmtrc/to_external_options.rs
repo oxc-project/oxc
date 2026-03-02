@@ -170,6 +170,7 @@ pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrate
         "insertFinalNewline",
         "overrides",
         "ignorePatterns",
+        "jsdoc",
     ] {
         obj.remove(key);
     }
