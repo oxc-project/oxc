@@ -312,7 +312,6 @@ fn merge_in_block(
                             | InstructionValue::JsxText(_)
                             | InstructionValue::LoadGlobal(_)
                             | InstructionValue::LoadLocal(_)
-                            | InstructionValue::LoadContext(_)
                             | InstructionValue::Primitive(_)
                             | InstructionValue::PropertyLoad(_)
                             | InstructionValue::TemplateLiteral(_)
@@ -339,17 +338,6 @@ fn merge_in_block(
                                         temporaries.insert(
                                             lvalue.identifier.declaration_id,
                                             ll.place.identifier.declaration_id,
-                                        );
-                                    }
-                                }
-                                InstructionValue::LoadContext(lc) => {
-                                    // LoadContext is the Rust equivalent of LoadLocal
-                                    // for context variables (captured by closures).
-                                    // The TS reference uses LoadLocal for these.
-                                    if let Some(lvalue) = &instr.lvalue {
-                                        temporaries.insert(
-                                            lvalue.identifier.declaration_id,
-                                            lc.place.identifier.declaration_id,
                                         );
                                     }
                                 }

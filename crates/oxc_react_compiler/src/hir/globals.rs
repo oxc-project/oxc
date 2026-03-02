@@ -9,11 +9,9 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use super::{
     hir_types::{Effect, ValueKind, ValueReason},
     object_shape::{
-        parse_aliasing_signature_config, BUILT_IN_ARRAY_ID,
-        BUILT_IN_DEFAULT_MUTATING_HOOK_ID, BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID,
-        BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID,
-        BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID, BUILT_IN_SET_ID,
-        BUILT_IN_USE_ACTION_STATE_HOOK_ID, BUILT_IN_USE_ACTION_STATE_ID,
+        BUILT_IN_ARRAY_ID, BUILT_IN_DEFAULT_MUTATING_HOOK_ID, BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID,
+        BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID,
+        BUILT_IN_SET_ID, BUILT_IN_USE_ACTION_STATE_HOOK_ID, BUILT_IN_USE_ACTION_STATE_ID,
         BUILT_IN_USE_CONTEXT_HOOK_ID, BUILT_IN_USE_EFFECT_EVENT_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
         BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID, BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID,
         BUILT_IN_USE_OPERATOR_ID, BUILT_IN_USE_OPTIMISTIC_HOOK_ID, BUILT_IN_USE_OPTIMISTIC_ID,
@@ -21,7 +19,7 @@ use super::{
         BUILT_IN_USE_REF_ID, BUILT_IN_USE_STATE_HOOK_ID, BUILT_IN_USE_STATE_ID,
         BUILT_IN_USE_TRANSITION_HOOK_ID, BUILT_IN_USE_TRANSITION_ID, BUILT_IN_WEAK_MAP_ID,
         BUILT_IN_WEAK_SET_ID, FunctionSignature, HookKind, ShapeRegistry, add_function, add_hook,
-        add_object,
+        add_object, parse_aliasing_signature_config,
     },
     type_schema::{AliasingEffectConfig, AliasingSignatureConfig},
     types::{FunctionType, ObjectType, Type},
@@ -1415,9 +1413,7 @@ pub fn get_shared_runtime_module_type(shapes: &mut ShapeRegistry) -> Type {
         FunctionSignature {
             positional_params: vec![Effect::Read],
             callee_effect: Effect::Read,
-            return_type: Type::Object(ObjectType {
-                shape_id: Some(BUILT_IN_ARRAY_ID.to_string()),
-            }),
+            return_type: Type::Object(ObjectType { shape_id: Some(BUILT_IN_ARRAY_ID.to_string()) }),
             return_value_kind: ValueKind::Mutable,
             aliasing: Some(parse_aliasing_signature_config(&AliasingSignatureConfig {
                 receiver: "@receiver".to_string(),
