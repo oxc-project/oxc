@@ -2214,21 +2214,19 @@ fn collect_expression_refs(expr: &ast::Expression<'_>, refs: &mut Vec<(String, S
             collect_expression_refs(&assign.right, refs);
             collect_assignment_target_refs(&assign.left, refs);
         }
-        ast::Expression::UpdateExpression(update) => {
-            match &update.argument {
-                ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                    refs.push((ident.name.to_string(), span_to_loc(ident.span)));
-                }
-                ast::SimpleAssignmentTarget::StaticMemberExpression(member) => {
-                    collect_expression_refs(&member.object, refs);
-                }
-                ast::SimpleAssignmentTarget::ComputedMemberExpression(member) => {
-                    collect_expression_refs(&member.object, refs);
-                    collect_expression_refs(&member.expression, refs);
-                }
-                _ => {}
+        ast::Expression::UpdateExpression(update) => match &update.argument {
+            ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                refs.push((ident.name.to_string(), span_to_loc(ident.span)));
             }
-        }
+            ast::SimpleAssignmentTarget::StaticMemberExpression(member) => {
+                collect_expression_refs(&member.object, refs);
+            }
+            ast::SimpleAssignmentTarget::ComputedMemberExpression(member) => {
+                collect_expression_refs(&member.object, refs);
+                collect_expression_refs(&member.expression, refs);
+            }
+            _ => {}
+        },
         ast::Expression::ArrayExpression(arr) => {
             for elem in &arr.elements {
                 match elem {
@@ -2514,7 +2512,6 @@ fn lower_function_to_value(
 ) -> Result<InstructionValue, CompilerError> {
     // 1. Gather captured context from the inner function
     let captured_context = gather_captured_context(func, outer_builder);
-
 
     // Find context identifiers for the inner function
     let context_identifiers = match func {
