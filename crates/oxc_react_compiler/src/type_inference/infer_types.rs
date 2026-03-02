@@ -49,44 +49,50 @@ impl<'a> Unifier<'a> {
 
         // Handle Property types: resolve the object type and look up the property
         if let Type::Property(prop) = &right {
-            let object_type = self.get(prop.object_type.clone());
-            if let PropertyName::Literal { value } = &prop.property_name {
-                let property_str = value.to_string();
-                let prop_type = self.env.get_property_type(&object_type, &property_str);
-                if let Some(prop_type) = prop_type {
-                    self.unify(left, prop_type);
-                    return;
-                }
-                if is_ref_like_name(prop) {
-                    self.unify(
-                        left,
-                        Type::Object(ObjectType {
-                            shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()),
-                        }),
-                    );
-                    return;
-                }
+            if is_ref_like_name(prop) {
+                self.unify(
+                    left,
+                    Type::Object(ObjectType {
+                        shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()),
+                    }),
+                );
+                return;
             }
-            // If we can't resolve the property, unify left with a fresh type var
+            let object_type = self.get(prop.object_type.clone());
+            let prop_type = match &prop.property_name {
+                PropertyName::Literal { value } => {
+                    self.env.get_property_type(&object_type, &value.to_string())
+                }
+                PropertyName::Computed { .. } => {
+                    self.env.get_fallthrough_property_type(&object_type)
+                }
+            };
+            if let Some(prop_type) = prop_type {
+                self.unify(left, prop_type);
+            }
             return;
         }
         if let Type::Property(prop) = &left {
+            if is_ref_like_name(prop) {
+                self.unify(
+                    Type::Object(ObjectType {
+                        shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()),
+                    }),
+                    right,
+                );
+                return;
+            }
             let object_type = self.get(prop.object_type.clone());
-            if let PropertyName::Literal { value } = &prop.property_name {
-                let property_str = value.to_string();
-                if let Some(prop_type) = self.env.get_property_type(&object_type, &property_str) {
-                    self.unify(prop_type, right);
-                    return;
+            let prop_type = match &prop.property_name {
+                PropertyName::Literal { value } => {
+                    self.env.get_property_type(&object_type, &value.to_string())
                 }
-                if is_ref_like_name(prop) {
-                    self.unify(
-                        Type::Object(ObjectType {
-                            shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()),
-                        }),
-                        right,
-                    );
-                    return;
+                PropertyName::Computed { .. } => {
+                    self.env.get_fallthrough_property_type(&object_type)
                 }
+            };
+            if let Some(prop_type) = prop_type {
+                self.unify(prop_type, right);
             }
             return;
         }
@@ -818,6 +824,29 @@ fn generate_instruction_equations(
                         .map_or_else(String::new, |n| n.value().to_string()),
                     property_name: PropertyName::Literal {
                         value: PropertyLiteral::String(load.property.to_string()),
+                    },
+                })),
+            });
+        }
+        InstructionValue::ComputedLoad(v) => {
+            // Port of TS InferTypes.ts `ComputedLoad` case:
+            // Generates a Property equation with a computed property name so that the
+            // unifier can look up the wildcard `*` property on the receiver's shape.
+            // This is critical for type propagation through computed property accesses
+            // like `data.a[idx]` on MixedReadonly objects, where the result type should
+            // still be MixedReadonly (via the `*` wildcard property).
+            equations.push(TypeEquation {
+                left: lvalue_type,
+                right: Type::Property(Box::new(PropType {
+                    object_type: v.object.identifier.type_.clone(),
+                    object_name: v
+                        .object
+                        .identifier
+                        .name
+                        .as_ref()
+                        .map_or_else(String::new, |n| n.value().to_string()),
+                    property_name: PropertyName::Computed {
+                        value: Box::new(v.property.identifier.type_.clone()),
                     },
                 })),
             });

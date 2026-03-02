@@ -105,9 +105,24 @@ fn get_place_scope(id: InstructionId, place: &Place) -> Option<&ReactiveScope> {
     None
 }
 
+/// Insert or union a scope range into the map. If the scope ID already exists,
+/// expand the existing range to cover both the old and new range.
+fn union_scope_range(
+    scope_ranges: &mut FxHashMap<ScopeId, MutableRange>,
+    sid: ScopeId,
+    range: MutableRange,
+) {
+    if range.start == range.end {
+        // Empty range, just record it if not already present
+        scope_ranges.entry(sid).or_insert(range);
+        return;
+    }
+    let entry = scope_ranges.entry(sid).or_insert(range);
+    entry.start = InstructionId(entry.start.0.min(range.start.0));
+    entry.end = InstructionId(entry.end.0.max(range.end.0));
+}
+
 fn collect_scope_info(func: &HIRFunction) -> ScopeInfo {
-    let mut scope_starts_map: FxHashMap<InstructionId, FxHashSet<ScopeId>> = FxHashMap::default();
-    let mut scope_ends_map: FxHashMap<InstructionId, FxHashSet<ScopeId>> = FxHashMap::default();
     let mut scope_ranges: FxHashMap<ScopeId, MutableRange> = FxHashMap::default();
     let mut place_scopes: Vec<PlaceScopeEntry> = Vec::new();
 
@@ -115,6 +130,12 @@ fn collect_scope_info(func: &HIRFunction) -> ScopeInfo {
     // (block-ID ascending), rather than compute_rpo_order which may differ.
     let block_ids: Vec<_> = func.body.blocks.keys().copied().collect();
 
+    // Phase 1: Collect place_scopes and build scope_ranges using union semantics.
+    // In the TS reference, scopes are shared references so all identifiers with the
+    // same scope see the same range. In Rust, scopes are cloned, so different
+    // identifiers sharing the same ScopeId may have divergent ranges (e.g. after
+    // MemoizeFbtAndMacroOperandsInSameScope expands some of them). We take the union
+    // of all ranges seen for each scope ID to ensure consistency.
     for (block_idx, block_id) in block_ids.iter().enumerate() {
         let block = &func.body.blocks[block_id];
 
@@ -129,11 +150,7 @@ fn collect_scope_info(func: &HIRFunction) -> ScopeInfo {
                         original_scope_id: sid,
                         place_location: PlaceLocation::InstructionLValue { block_idx, instr_idx },
                     });
-                    if range.start != range.end {
-                        scope_starts_map.entry(range.start).or_default().insert(sid);
-                        scope_ends_map.entry(range.end).or_default().insert(sid);
-                    }
-                    scope_ranges.entry(sid).or_insert(range);
+                    union_scope_range(&mut scope_ranges, sid, range);
                 }
 
                 // Inner lvalues from the instruction value
@@ -147,11 +164,7 @@ fn collect_scope_info(func: &HIRFunction) -> ScopeInfo {
                             inner_idx,
                         },
                     });
-                    if range.start != range.end {
-                        scope_starts_map.entry(range.start).or_default().insert(*sid);
-                        scope_ends_map.entry(range.end).or_default().insert(*sid);
-                    }
-                    scope_ranges.entry(*sid).or_insert(*range);
+                    union_scope_range(&mut scope_ranges, *sid, *range);
                 }
             }
 
@@ -169,11 +182,7 @@ fn collect_scope_info(func: &HIRFunction) -> ScopeInfo {
                             operand_idx,
                         },
                     });
-                    if range.start != range.end {
-                        scope_starts_map.entry(range.start).or_default().insert(sid);
-                        scope_ends_map.entry(range.end).or_default().insert(sid);
-                    }
-                    scope_ranges.entry(sid).or_insert(range);
+                    union_scope_range(&mut scope_ranges, sid, range);
                 }
             }
         }
@@ -188,12 +197,20 @@ fn collect_scope_info(func: &HIRFunction) -> ScopeInfo {
                     original_scope_id: sid,
                     place_location: PlaceLocation::TerminalOperand { block_idx, operand_idx },
                 });
-                if range.start != range.end {
-                    scope_starts_map.entry(range.start).or_default().insert(sid);
-                    scope_ends_map.entry(range.end).or_default().insert(sid);
-                }
-                scope_ranges.entry(sid).or_insert(range);
+                union_scope_range(&mut scope_ranges, sid, range);
             }
+        }
+    }
+
+    // Phase 2: Build scope_starts_map and scope_ends_map from the unified scope_ranges.
+    // This ensures each scope ID appears at exactly one start and one end instruction,
+    // matching the behavior of the TS reference where scopes are shared references.
+    let mut scope_starts_map: FxHashMap<InstructionId, FxHashSet<ScopeId>> = FxHashMap::default();
+    let mut scope_ends_map: FxHashMap<InstructionId, FxHashSet<ScopeId>> = FxHashMap::default();
+    for (&sid, &range) in &scope_ranges {
+        if range.start != range.end {
+            scope_starts_map.entry(range.start).or_default().insert(sid);
+            scope_ends_map.entry(range.end).or_default().insert(sid);
         }
     }
 

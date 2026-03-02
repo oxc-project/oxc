@@ -437,6 +437,14 @@ fn apply_operand_merges(
         for operand_info in operand_infos {
             expand_fbt_scope_range(&mut expanded_scope.range, operand_info.mutable_range);
         }
+
+        // In TS, scope is a shared reference: modifying scope.range via
+        // expandFbtScopeRange automatically updates the lvalue's scope too.
+        // In Rust, scopes are cloned, so we must explicitly update the lvalue
+        // of the current instruction to match the expanded scope.
+        block.instructions[instr_idx].lvalue.identifier.scope =
+            Some(Box::new(expanded_scope.clone()));
+
         // Apply the expanded scope to all instruction operands
         crate::hir::visitors::map_instruction_value_operands(
             &mut block.instructions[instr_idx].value,
