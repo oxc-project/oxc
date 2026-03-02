@@ -6,6 +6,8 @@ use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
+    utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+    utils::typecast::is_type_cast_node,
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -346,7 +348,47 @@ fn format_flattened_logical_expression<'a>(
 impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         match self {
-            Self::Left { parent } => write!(f, group(parent.left())),
+            Self::Left { parent } => {
+                let right = parent.right();
+                let left_span_end = parent.left().span().end;
+                let comments_between =
+                    f.comments().comments_in_range(left_span_end, right.span().start);
+                let has_inline_line_comment_between = comments_between
+                    .iter()
+                    .any(|comment| comment.is_line() && !comment.preceded_by_newline());
+                let has_own_line_comment_between = comments_between
+                    .iter()
+                    .any(|comment| comment.is_line() && comment.preceded_by_newline());
+                let is_bitwise_and_expression = matches!(
+                    parent.operator(),
+                    BinaryLikeOperator::BinaryOperator(BinaryOperator::BitwiseAnd)
+                );
+                // Case covered by Prettier conformance fixture:
+                // `js/binary-expressions/mutiple-comments/17192.js` with
+                // `{ experimentalOperatorPosition: "start" }`.
+                //
+                // In this mixed inline+own-line comment layout around bitwise `&`, we must suppress
+                // auto-printing trailing comments from the left side so we can re-emit comments with
+                // exact spacing (`SerializedProps  // ...`) before printing the operator at line start.
+                let suppress_left_trailing_comments =
+                    f.options().experimental_operator_position.is_start()
+                        && is_bitwise_and_expression
+                        && has_inline_line_comment_between
+                        && has_own_line_comment_between;
+
+                if suppress_left_trailing_comments {
+                    write!(
+                        f,
+                        [
+                            group(&FormatNodeWithoutTrailingComments(parent.left())),
+                            "  ",
+                            format_leading_comments(right.span())
+                        ]
+                    );
+                } else {
+                    write!(f, group(parent.left()));
+                }
+            }
             Self::Right {
                 parent: binary_like_expression,
                 inside_condition: inside_parenthesis,
@@ -396,35 +438,44 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                         && let Some(operator) = logical_operator
                         && operator == right_logical.operator()
                     {
+                        let is_operator_start =
+                            f.options().experimental_operator_position.is_start();
+
                         write!(
                             f,
-                            [
-                                space(),
-                                operator.as_str(),
-                                soft_line_break_or_space(),
-                                format_with(|f| {
-                                    // If the left side of the right logical expression is still a logical expression with
-                                    // the same operator, we need to recursively format it inline.
-                                    // This way, we can ensure that all parts are in the same group.
-                                    // We format directly instead of allocating a Vec via split_into_left_and_right_sides.
-                                    let left_child = right_logical.left();
-                                    if let AstNodes::LogicalExpression(left_logical_child) =
-                                        left_child.as_ast_nodes()
-                                        && operator == left_logical_child.operator()
-                                    {
-                                        // Format the nested logical expression inline without Vec allocation
-                                        format_flattened_logical_expression(
-                                            BinaryLikeExpression::LogicalExpression(
-                                                left_logical_child,
-                                            ),
-                                            *inside_parenthesis,
-                                            f,
-                                        );
-                                    } else {
-                                        left_child.fmt(f);
-                                    }
-                                })
-                            ]
+                            [format_with(|f| {
+                                // Order line break, operator, and spacing based on `experimentalOperatorPosition` option.
+                                if is_operator_start {
+                                    write!(
+                                        f,
+                                        [soft_line_break_or_space(), operator.as_str(), space()]
+                                    );
+                                } else {
+                                    write!(
+                                        f,
+                                        [space(), operator.as_str(), soft_line_break_or_space()]
+                                    );
+                                }
+
+                                // If the left side of the right logical expression is still a logical expression with
+                                // the same operator, we need to recursively format it inline.
+                                // This way, we can ensure that all parts are in the same group.
+                                // We format directly instead of allocating a Vec via split_into_left_and_right_sides.
+                                let left_child = right_logical.left();
+                                if let AstNodes::LogicalExpression(left_logical_child) =
+                                    left_child.as_ast_nodes()
+                                    && operator == left_logical_child.operator()
+                                {
+                                    // Format the nested logical expression inline without Vec allocation
+                                    format_flattened_logical_expression(
+                                        BinaryLikeExpression::LogicalExpression(left_logical_child),
+                                        *inside_parenthesis,
+                                        f,
+                                    );
+                                } else {
+                                    left_child.fmt(f);
+                                }
+                            })]
                         );
 
                         binary_like_expression =
@@ -435,11 +486,70 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                 }
 
                 let right = binary_like_expression.right();
+                let left_span_end = binary_like_expression.left().span().end;
+                let comments_between =
+                    f.comments().comments_in_range(left_span_end, right.span().start);
+                let has_inline_line_comment_between = comments_between
+                    .iter()
+                    .any(|comment| comment.is_line() && !comment.preceded_by_newline());
+                let has_own_line_comment_between = comments_between
+                    .iter()
+                    .any(|comment| comment.is_line() && comment.preceded_by_newline());
+                let right_has_type_cast_comment = is_type_cast_node(right, f).is_some()
+                    || f.comments().get_type_cast_comment_index(right.span()).is_some();
+                // Case covered by formatter fixture:
+                // `fixtures::js::comments::type_cast_node`.
+                //
+                // Type-cast JSDoc must stay attached to the casted expression (and thus right after
+                // the moved operator in operator-start mode), e.g. `|| /** @type {...} */ (expr)`.
+                // If we treat this as a generic own-line leading comment, the comment moves before
+                // the operator and breaks type-cast layout.
+                let is_bitwise_and_expression = matches!(
+                    binary_like_expression.operator(),
+                    BinaryLikeOperator::BinaryOperator(BinaryOperator::BitwiseAnd)
+                );
 
                 let operator_and_right_expression = format_with(|f| {
-                    write!(f, [space(), binary_like_expression.operator()]);
-
+                    let is_operator_start = f.options().experimental_operator_position.is_start();
                     let should_inline = binary_like_expression.should_inline_logical_expression();
+                    let use_operator_start = is_operator_start && !should_inline;
+
+                    if use_operator_start
+                        && !right.is_jsx()
+                        && ((f.comments().has_leading_own_line_comment(right.span().start)
+                            && !right_has_type_cast_comment)
+                            || (is_bitwise_and_expression
+                                && has_inline_line_comment_between
+                                && has_own_line_comment_between))
+                    {
+                        // Cases covered by conformance fixtures:
+                        // - `js/logical-expressions/multiple-comments/17192.js` (generic operator-start)
+                        // - `js/binary-expressions/mutiple-comments/17192.js` (bitwise mixed-comment edge)
+                        //
+                        // Generic own-line-leading comments are emitted before the operator in start mode,
+                        // except type-cast comments (guarded above). The bitwise mixed-comment path applies
+                        // an extra spacing rule to match Prettier output exactly.
+                        write!(f, [soft_line_break()]);
+                        if has_inline_line_comment_between {
+                            write!(f, ["  "]);
+                        }
+                        write!(
+                            f,
+                            [
+                                format_leading_comments(right.span()),
+                                binary_like_expression.operator(),
+                                space(),
+                                right
+                            ]
+                        );
+                        return;
+                    }
+
+                    if use_operator_start {
+                        write!(f, [soft_line_break_or_space(), binary_like_expression.operator()]);
+                    } else {
+                        write!(f, [space(), binary_like_expression.operator()]);
+                    }
 
                     if should_inline {
                         write!(f, [space()]);
@@ -450,7 +560,11 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                             return write!(f, soft_line_indent_or_space(right));
                         }
                     } else {
-                        write!(f, [soft_line_break_or_space()]);
+                        if use_operator_start {
+                            write!(f, [space()]);
+                        } else {
+                            write!(f, [soft_line_break_or_space()]);
+                        }
                     }
 
                     write!(f, right);
@@ -459,6 +573,18 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                 // Cache as_ast_nodes() calls to avoid repeated conversions
                 let left_ast_nodes = binary_like_expression.left().as_ast_nodes();
                 let right_ast_nodes = right.as_ast_nodes();
+                // Case covered by conformance fixtures:
+                // - `js/binary-expressions/mutiple-comments/17192.js`
+                // - `js/logical-expressions/multiple-comments/17192.js`
+                // with `{ experimentalOperatorPosition: "start" }`.
+                //
+                // When a left-side trailing inline comment is followed by own-line comments before
+                // the right operand, we need one extra space before printing trailing comments from the
+                // left side to preserve Prettier's exact spacing in the operator-start layout.
+                let add_extra_space_before_inline_comment =
+                    f.options().experimental_operator_position.is_start()
+                        && has_inline_line_comment_between
+                        && f.comments().has_leading_own_line_comment(right.span().start);
 
                 // Doesn't match prettier that only distinguishes between logical and binary
                 let should_group =
@@ -469,12 +595,27 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                         || is_same_binary_expression_kind(binary_like_expression, right_ast_nodes)
                         || (*inside_parenthesis && logical_operator.is_some()));
 
+                // Emit extra spacing for operator-start layout when comments exist between operands.
+                if f.options().experimental_operator_position.is_start()
+                    && f.comments().has_comment_in_range(
+                        binary_like_expression.left().span().end,
+                        right.span().start,
+                    )
+                {
+                    write!(f, [space(), add_extra_space_before_inline_comment.then_some(space())]);
+                }
+
+                // Emit trailing comments for known left-side node types.
                 match left_ast_nodes {
-                    AstNodes::LogicalExpression(logical) => {
-                        logical.format_trailing_comments(f);
-                    }
-                    AstNodes::BinaryExpression(binary) => {
-                        binary.format_trailing_comments(f);
+                    AstNodes::LogicalExpression(logical) => logical.format_trailing_comments(f),
+                    AstNodes::BinaryExpression(binary) => binary.format_trailing_comments(f),
+                    // Keep `IdentifierReference` trailing-comment emission scoped to operator-start mode.
+                    // Emitting it in the default/end mode changes comment attachment and regresses
+                    // Prettier conformance (for example `js/comments/empty-statements.js`).
+                    AstNodes::IdentifierReference(ident)
+                        if f.options().experimental_operator_position.is_start() =>
+                    {
+                        ident.format_trailing_comments(f);
                     }
                     _ => {}
                 }

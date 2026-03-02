@@ -99,6 +99,7 @@ The following format options are supported in `options.json`:
 - `bracketSpacing`: `true` | `false` - Object literal spacing
 - `bracketSameLine`: `true` | `false` - JSX bracket on same line
 - `jsxBracketSameLine`: `true` | `false` - (alias for bracketSameLine)
+- `experimentalOperatorPosition`: `"start"` | `"end"` - Binary/intersection operator line position
 
 ## Running Tests
 

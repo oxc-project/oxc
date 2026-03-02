@@ -8,8 +8,8 @@ use serde_json::Value;
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
     EmbeddedLanguageFormatting, Expand, FormatOptions, GroupEntry, ImportModifier, ImportSelector,
-    IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
+    IndentStyle, IndentWidth, LineEnding, LineWidth, OperatorPosition, QuoteProperties, QuoteStyle,
+    Semicolons, SortImportsOptions, SortOrder, SortTailwindcssOptions, TrailingCommas,
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -151,11 +151,12 @@ pub struct FormatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
 
-    // NOTE: These experimental options are not yet supported.
-    // Just be here to report error if they are used.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(skip)]
     pub experimental_operator_position: Option<String>,
+
+    // NOTE: This experimental option is not yet supported.
+    // Just be here to report error if used.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
@@ -275,11 +276,7 @@ impl FormatConfig {
     /// Returns error if any option value is invalid
     pub fn into_oxfmt_options(self) -> Result<OxfmtOptions, String> {
         // Not yet supported options:
-        // [Prettier] experimentalOperatorPosition: "start" | "end"
         // [Prettier] experimentalTernaries: boolean
-        if self.experimental_operator_position.is_some() {
-            return Err("Unsupported option: `experimentalOperatorPosition`".to_string());
-        }
         if self.experimental_ternaries.is_some() {
             return Err("Unsupported option: `experimentalTernaries`".to_string());
         }
@@ -384,6 +381,13 @@ impl FormatConfig {
                 ObjectWrapConfig::Preserve => Expand::Auto,
                 ObjectWrapConfig::Collapse => Expand::Never,
             };
+        }
+
+        // [Prettier] experimentalOperatorPosition: "start" | "end"
+        if let Some(position) = self.experimental_operator_position {
+            format_options.experimental_operator_position = position
+                .parse::<OperatorPosition>()
+                .map_err(|e| format!("Invalid experimentalOperatorPosition: {e}"))?;
         }
 
         // [Prettier] embeddedLanguageFormatting: "auto" | "off"

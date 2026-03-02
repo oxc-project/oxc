@@ -38,9 +38,8 @@ const jestPackageJson =
 
 {
   sourcemap =
-    /** @type {'inline' | 'hidden' | 'sourcemap'} */ (
-      process.env.WORKER_MODE
-    ) || sourcemap;
+    /** @type {'inline' | 'hidden' | 'sourcemap'} */ (process.env.WORKER_MODE)
+    || sourcemap;
 }
 
 class A {
