@@ -52,9 +52,7 @@ impl<'a> Unifier<'a> {
             if is_ref_like_name(prop) {
                 self.unify(
                     left,
-                    Type::Object(ObjectType {
-                        shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()),
-                    }),
+                    Type::Object(ObjectType { shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()) }),
                 );
                 return;
             }
@@ -75,9 +73,7 @@ impl<'a> Unifier<'a> {
         if let Type::Property(prop) = &left {
             if is_ref_like_name(prop) {
                 self.unify(
-                    Type::Object(ObjectType {
-                        shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()),
-                    }),
+                    Type::Object(ObjectType { shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()) }),
                     right,
                 );
                 return;

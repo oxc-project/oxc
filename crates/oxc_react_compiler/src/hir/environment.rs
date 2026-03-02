@@ -13,8 +13,8 @@ use super::{
         Effect, HIRFunction, IdentifierName, NonLocalBinding, ReactFunctionType, ValueKind,
     },
     object_shape::{
-        BUILT_IN_DEFAULT_MUTATING_HOOK_ID, BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID,
-        FunctionSignature, HookKind, ShapeRegistry,
+        BUILT_IN_DEFAULT_MUTATING_HOOK_ID, BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID, FunctionSignature,
+        HookKind, ShapeRegistry,
     },
     types::{FunctionType, ObjectType, Type},
 };

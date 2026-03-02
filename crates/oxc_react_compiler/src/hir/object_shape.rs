@@ -13,7 +13,7 @@ use super::{
         ValueKind, ValueReason,
     },
     type_schema::{AliasingEffectArgConfig, AliasingEffectConfig, AliasingSignatureConfig},
-    types::{make_type, Type},
+    types::{Type, make_type},
 };
 use crate::{
     compiler_error::SourceLocation,
