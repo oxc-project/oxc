@@ -82,11 +82,11 @@ When adding new tests:
 - If the test needs fixtures, create a `fixtures/` subdirectory
 - If multiple test cases share a fixture structure, use subdirectories within `fixtures/` (e.g., `fixtures/basic/`, `fixtures/nested/`)
 
-## After updating `Oxfmtrc` (`src/core/oxfmtrc.rs`)
+## After updating `Oxfmtrc` (Under `src/core/oxfmtrc`)
 
-When modifying the `Oxfmtrc` struct (configuration options):
+When modifying the `Oxfmtrc` struct (and configuration options):
 
-- Also update `src-js/index.ts` types to match the Rust struct if needed
 - Run `just formatter-schema-json` to update `npm/oxfmt/configuration_schema.json`
+- Run `just formatter-config-ts` to regenerate `src-js/config.generated.ts` from the schema
 - Run `cargo test -p website_formatter` to update schema markdown snapshots
   - Then, `cargo insta accept`

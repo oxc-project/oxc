@@ -24,6 +24,9 @@ catalogs:
     eslint:
       specifier: 9.39.3
       version: 9.39.3
+    json-schema-to-typescript:
+      specifier: ^15.0.4
+      version: 15.0.4
     publint:
       specifier: 0.3.17
       version: 0.3.17
@@ -81,6 +84,9 @@ importers:
       execa:
         specifier: ^9.6.0
         version: 9.6.1
+      json-schema-to-typescript:
+        specifier: 'catalog:'
+        version: 15.0.4
       tsdown:
         specifier: 'catalog:'
         version: 0.20.3(@arethetypeswrong/core@0.18.2)(publint@0.3.17)(typescript@5.9.3)
@@ -148,7 +154,7 @@ importers:
         specifier: ^9.6.0
         version: 9.6.1
       json-schema-to-typescript:
-        specifier: ^15.0.4
+        specifier: 'catalog:'
         version: 15.0.4
       json-stable-stringify-without-jsonify:
         specifier: ^1.0.1
