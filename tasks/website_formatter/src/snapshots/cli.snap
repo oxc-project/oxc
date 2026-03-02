@@ -28,9 +28,9 @@ search: false
 - **`    --check`** &mdash; 
   Check if files are formatted, also show statistics
 - **`    --list-different`** &mdash; 
-  List files that would be changed
+  List only selected files that would be changed
 - **`    --list-files`** &mdash; 
-  List all files that are selected by matching rules to be formatted
+  List all files selected for processing
 
 
 
