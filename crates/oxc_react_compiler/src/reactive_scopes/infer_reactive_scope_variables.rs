@@ -736,30 +736,48 @@ pub fn find_disjoint_mutable_values(func: &HIRFunction) -> DisjointSet<Identifie
                     }
                 }
                 _ => {
+                    // For FunctionExpression/ObjectMethod, context variables
+                    // captured from outer scopes need special handling: the Rust
+                    // SSA creates separate identifiers for DeclareContext and
+                    // StoreContext (unlike the TS reference which reuses the same
+                    // Identifier).  This means the DeclareContext identifier (e.g.
+                    // bar$0) may have a small range [1,2) while the StoreContext
+                    // identifier (bar_0$13) has range [6,7).  The
+                    // FunctionExpression captures bar$0, but in the TS,
+                    // bar$0.mutableRange would span [1,7) because the same
+                    // identifier is used for both.
+                    //
+                    // To match TS behavior, we also check decl_max_range_end for
+                    // FunctionExpression/ObjectMethod: if any identifier with the
+                    // same declaration_id is mutable at or after the instruction,
+                    // we include this context var.
+                    //
+                    // For all other instruction kinds, we use the standard
+                    // isMutable check matching the TS reference exactly.
+                    let use_effective_range = matches!(
+                        &instr.value,
+                        crate::hir::InstructionValue::FunctionExpression(_)
+                            | crate::hir::InstructionValue::ObjectMethod(_)
+                    );
                     for operand in each_instruction_operand(instr) {
-                        // For context variables captured by FunctionExpression/ObjectMethod,
-                        // the Rust SSA creates separate identifiers for DeclareContext and
-                        // StoreContext (unlike the TS reference which reuses the same Identifier).
-                        // This means the DeclareContext identifier (e.g. bar$0) may have a small
-                        // range [1,2) while the StoreContext identifier (bar_0$13) has range [6,7).
-                        // The FunctionExpression captures bar$0, but in the TS, bar$0.mutableRange
-                        // would span [1,7) because the same identifier is used for both.
-                        //
-                        // To match TS behavior, we also check decl_max_range_end: if any
-                        // identifier with the same declaration_id is mutable (or assigned) at
-                        // or after the FunctionExpression instruction, we include this context var.
-                        let decl_id = operand.identifier.declaration_id;
-                        let effective_range_end = decl_max_range_end
-                            .get(&decl_id)
-                            .copied()
-                            .unwrap_or(operand.identifier.mutable_range.end);
-                        let effective_range = MutableRange {
-                            start: operand.identifier.mutable_range.start,
-                            end: effective_range_end,
-                        };
-                        let is_effectively_mutable =
-                            effective_range.start <= instr.id && instr.id < effective_range.end;
-                        if is_effectively_mutable && effective_range.start.0 > 0 {
+                        if use_effective_range {
+                            let decl_id = operand.identifier.declaration_id;
+                            let effective_range_end = decl_max_range_end
+                                .get(&decl_id)
+                                .copied()
+                                .unwrap_or(operand.identifier.mutable_range.end);
+                            let effective_range = MutableRange {
+                                start: operand.identifier.mutable_range.start,
+                                end: effective_range_end,
+                            };
+                            let is_effectively_mutable =
+                                effective_range.start <= instr.id && instr.id < effective_range.end;
+                            if is_effectively_mutable && effective_range.start.0 > 0 {
+                                operands.push(operand.identifier.id);
+                            }
+                        } else if is_mutable(&operand.identifier, instr.id)
+                            && operand.identifier.mutable_range.start.0 > 0
+                        {
                             operands.push(operand.identifier.id);
                         }
                     }
