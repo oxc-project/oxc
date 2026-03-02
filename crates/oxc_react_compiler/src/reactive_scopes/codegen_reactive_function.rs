@@ -1918,13 +1918,13 @@ fn codegen_function_expression(
             };
 
             // enableNameAnonymousFunctions: wrap anonymous functions in a naming expression
-            // Produces: ({"nameHint": <funcExpr>})["nameHint"]
+            // Produces: {"nameHint": <funcExpr>}["nameHint"]
             if cx.enable_name_anonymous_functions
                 && func_expr.name.is_none()
                 && func_expr.name_hint.is_some()
             {
                 let hint = func_expr.name_hint.as_ref().map_or("", String::as_str);
-                value = format!("({{\"{hint}\": {value}}})[\"{hint}\"]");
+                value = format!("{{\"{hint}\": {value}}}[\"{hint}\"]");
             }
 
             (value, fn_decl)
@@ -2387,6 +2387,12 @@ fn codegen_jsx_attribute(cx: &CodegenContext, attr: &JsxAttribute) -> String {
                 } else {
                     format!("{name}={value}")
                 }
+            } else if value.starts_with('{') {
+                // When the value starts with `{`, insert a space to avoid `={{`
+                // which would look like a destructuring. The reference compiler
+                // (Babel) naturally inserts a space between the JSX expression
+                // container `{` and the object literal `{`.
+                format!("{name}={{ {value} }}")
             } else {
                 format!("{name}={{{value}}}")
             }
