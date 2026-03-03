@@ -31,14 +31,27 @@ fn truncate_trim_end(s: &mut String) {
     s.truncate(trimmed_len);
 }
 
+/// Build an indented line without `format!()` overhead.
+#[inline]
+fn indented_line(indent: &str, content: &str) -> String {
+    let mut s = String::with_capacity(indent.len() + content.len());
+    s.push_str(indent);
+    s.push_str(content);
+    s
+}
+
 /// Join an iterator of string slices with a separator, avoiding an intermediate `Vec`.
+/// Uses `size_hint()` for a rough capacity estimate to reduce reallocations.
 fn join_iter<'a>(iter: impl Iterator<Item = &'a str>, sep: &str) -> String {
-    let mut result = String::new();
-    for (i, item) in iter.enumerate() {
-        if i > 0 {
+    let mut iter = iter;
+    let (lower, _) = iter.size_hint();
+    let mut result = String::with_capacity(lower.saturating_mul(20));
+    if let Some(first) = iter.next() {
+        result.push_str(first);
+        for item in iter {
             result.push_str(sep);
+            result.push_str(item);
         }
-        result.push_str(item);
     }
     result
 }
@@ -1144,8 +1157,8 @@ fn normalize_object_field(field: &str) -> Cow<'_, str> {
     if let Some(colon_pos) = find_field_colon(field) {
         let key = field[..colon_pos].trim();
         let value = field[colon_pos + 1..].trim();
-        let normalized_value =
-            if value == "*" { "any".to_string() } else { normalize_type_whitespace(value) };
+        let normalized_value: Cow<'_, str> =
+            if value == "*" { Cow::Borrowed("any") } else { normalize_type_whitespace(value) };
         // Preserve inline comments
         Cow::Owned(format!("{key}: {normalized_value}"))
     } else {
@@ -1712,7 +1725,9 @@ fn format_indented_code_blocks(
 
             // Extract code content (strip 4-space prefix)
             let code: String = join_iter(
-                content_lines[start..end].iter().map(|l| l.strip_prefix("    ").unwrap_or(l.as_str())),
+                content_lines[start..end]
+                    .iter()
+                    .map(|l| l.strip_prefix("    ").unwrap_or(l.as_str())),
                 "\n",
             );
 
@@ -1938,7 +1953,7 @@ fn format_example_code(
             if line.is_empty() {
                 content_lines.push(String::new());
             } else if template_depth == 0 {
-                content_lines.push(format!("  {line}"));
+                content_lines.push(indented_line("  ", line));
             } else {
                 content_lines.push(line.to_string());
             }
@@ -1954,7 +1969,7 @@ fn format_example_code(
         if line_trimmed.is_empty() {
             content_lines.push(String::new());
         } else {
-            content_lines.push(format!("  {line_trimmed}"));
+            content_lines.push(indented_line("  ", line_trimmed));
         }
     }
 }
@@ -1973,20 +1988,19 @@ fn format_example_fenced_block(
     let effective_width = wrap_width.saturating_sub(2);
 
     // Add opening fence with indent
-    content_lines.push(format!("  {lang_line}"));
+    content_lines.push(indented_line("  ", lang_line));
 
     if !inner_code.is_empty() {
         let lang = lang_line[3..].trim();
         if is_js_ts_lang(lang) {
-            if let Some(formatted) =
-                format_embedded_js(inner_code, effective_width, format_options)
+            if let Some(formatted) = format_embedded_js(inner_code, effective_width, format_options)
             {
                 let mut template_depth: u32 = 0;
                 for line in formatted.lines() {
                     if line.is_empty() {
                         content_lines.push(String::new());
                     } else if template_depth == 0 {
-                        content_lines.push(format!("  {line}"));
+                        content_lines.push(indented_line("  ", line));
                     } else {
                         content_lines.push(line.to_string());
                     }
@@ -1999,7 +2013,7 @@ fn format_example_fenced_block(
                     if trimmed.is_empty() {
                         content_lines.push(String::new());
                     } else {
-                        content_lines.push(format!("  {trimmed}"));
+                        content_lines.push(indented_line("  ", trimmed));
                     }
                 }
             }
@@ -2010,14 +2024,14 @@ fn format_example_fenced_block(
                 if trimmed.is_empty() {
                     content_lines.push(String::new());
                 } else {
-                    content_lines.push(format!("  {trimmed}"));
+                    content_lines.push(indented_line("  ", trimmed));
                 }
             }
         }
     }
 
     // Add closing fence with indent
-    content_lines.push(format!("  {closing_fence}"));
+    content_lines.push(indented_line("  ", closing_fence));
 }
 
 fn format_example_tag(
@@ -2074,7 +2088,10 @@ fn format_type_name_comment_tag(
 ) {
     let (type_part, name_part, comment_part) = tag.type_name_comment();
 
-    let tag_prefix = format!("@{normalized_kind}");
+    let tag_prefix_len = 1 + normalized_kind.len();
+    let mut tag_line = String::with_capacity(tag_prefix_len + 32);
+    tag_line.push('@');
+    tag_line.push_str(normalized_kind);
     let mut is_type_optional = false;
     let mut normalized_type_str: Cow<'_, str> = Cow::Borrowed("");
 
@@ -2127,8 +2144,7 @@ fn format_type_name_comment_tag(
         }
     }
 
-    // Build the full tag line
-    let mut tag_line = tag_prefix.clone();
+    // Build the full tag line (tag_line already contains "@{normalized_kind}")
     if !normalized_type_str.is_empty() {
         let preserve_no_space = has_no_space_before_type && !normalized_type_str.starts_with('{');
         let space = if preserve_no_space { "" } else { " " };
@@ -2157,7 +2173,7 @@ fn format_type_name_comment_tag(
         if tag_line.len() > wrap_width
             && !normalized_type_str.is_empty()
             && wrap_type_expression(
-                &tag_prefix,
+                &tag_line[..tag_prefix_len],
                 &normalized_type_str,
                 &name_str,
                 wrap_width,
@@ -2370,9 +2386,11 @@ fn format_type_comment_tag(
 ) {
     let (type_part, comment_part) = tag.type_comment();
 
-    let tag_prefix = format!("@{normalized_kind}");
+    let tag_prefix_len = 1 + normalized_kind.len();
     let mut normalized_type_str: Cow<'_, str> = Cow::Borrowed("");
-    let mut tag_line = tag_prefix.clone();
+    let mut tag_line = String::with_capacity(tag_prefix_len + 32);
+    tag_line.push('@');
+    tag_line.push_str(normalized_kind);
 
     // For @type/@satisfies, the plugin keeps types mostly as-is (no quote conversion).
     // For @returns/@yields/etc., it runs Prettier's TS parser on the type.
@@ -2412,7 +2430,7 @@ fn format_type_comment_tag(
         if tag_line.len() > wrap_width
             && !normalized_type_str.is_empty()
             && wrap_type_expression(
-                &tag_prefix,
+                &tag_line[..tag_prefix_len],
                 &normalized_type_str,
                 "",
                 wrap_width,
@@ -2439,7 +2457,13 @@ fn format_type_comment_tag(
         content_lines.push(one_liner);
     } else if !normalized_type_str.is_empty()
         && tag_line.len() > wrap_width
-        && wrap_type_expression(&tag_prefix, &normalized_type_str, "", wrap_width, content_lines)
+        && wrap_type_expression(
+            &tag_line[..tag_prefix_len],
+            &normalized_type_str,
+            "",
+            wrap_width,
+            content_lines,
+        )
     {
         // Type was wrapped. Add description as continuation.
         let indent = "  ";
