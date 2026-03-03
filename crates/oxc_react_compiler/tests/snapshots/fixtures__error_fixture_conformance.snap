@@ -2,11 +2,11 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 212/275 (77.1%)
+Error fixture conformance: 220/275 (80.0%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 63
+  unexpected_success: 55
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -14,8 +14,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.assign-ref-in-effect-hint.js
   [unexpected_success] error.bug-invariant-local-or-context-references.js
   [unexpected_success] error.bug-invariant-unnamed-temporary.js
-  [unexpected_success] error.call-args-destructuring-asignment-complex.js
-  [unexpected_success] error.default-param-accesses-local.js
   [unexpected_success] error.dont-hoist-inline-reference.js
   [unexpected_success] error.hook-property-load-local-hook.js
   [unexpected_success] error.invalid-array-push-frozen.js
@@ -44,9 +42,7 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-type-provider-hook-name-not-typed-as-hook.js
   [unexpected_success] error.invalid-type-provider-hooklike-module-default-not-hook.js
   [unexpected_success] error.invalid-type-provider-nonhook-name-typed-as-hook.js
-  [unexpected_success] error.invalid-unconditional-set-state-hook-return-in-render.js
   [unexpected_success] error.modify-state-2.js
-  [unexpected_success] error.reassign-global-fn-arg.js
   [unexpected_success] error.ref-like-name-not-Ref.js
   [unexpected_success] error.ref-like-name-not-a-ref.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-later-mutation.js
@@ -55,7 +51,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.todo-functiondecl-hoisting.tsx
   [unexpected_success] error.todo-hook-call-spreads-mutable-iterator.js
   [unexpected_success] error.todo-missing-source-locations.js
-  [unexpected_success] error.todo-optional-call-chain-in-optional.ts
   [unexpected_success] error.todo-repro-named-function-with-shadowed-local-same-name.js
   [unexpected_success] error.todo-repro-unmemoized-callback-captured-in-context-variable.tsx
   [unexpected_success] error.todo-valid-functiondecl-hoisting.tsx
@@ -65,11 +60,8 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps-extra-only.js
   [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps-missing-only.js
   [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps.js
-  [unexpected_success] fbt/error.todo-fbt-unknown-enum-value.js
-  [unexpected_success] fbt/error.todo-multiple-fbt-plural.tsx
   [unexpected_success] new-mutability/error.invalid-useCallback-captures-reassigned-context.js
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js
   [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-infer-mutate-deps.ts
   [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-overlap-scopes.ts
   [unexpected_success] preserve-memo-validation/error.invalid-useCallback-captures-reassigned-context.ts
-  [unexpected_success] propagate-scope-deps-hir-fork/error.todo-optional-call-chain-in-optional.ts

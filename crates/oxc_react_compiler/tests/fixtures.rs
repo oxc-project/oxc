@@ -911,12 +911,7 @@ fn run_pre_pipeline_checks(source: &str, source_type: oxc_span::SourceType) -> b
             } else if let Some(ref custom_rules) = plugin_options.eslint_suppression_rules {
                 Some(custom_rules.clone())
             } else {
-                Some(
-                    DEFAULT_ESLINT_SUPPRESSION_RULES
-                        .iter()
-                        .map(|s| (*s).to_string())
-                        .collect(),
-                )
+                Some(DEFAULT_ESLINT_SUPPRESSION_RULES.iter().map(|s| (*s).to_string()).collect())
             };
 
         let suppressions = find_program_suppressions(
@@ -1062,6 +1057,25 @@ fn is_valid_js_identifier(s: &str) -> bool {
 fn run_pipeline_for_codegen(
     source: &str,
     source_type: oxc_span::SourceType,
+) -> Result<(CodegenFunction, Option<WrapperInfo>), String> {
+    run_pipeline_for_codegen_impl(source, source_type, false)
+}
+
+/// Like `run_pipeline_for_codegen`, but returns `Err` on the FIRST pipeline
+/// error encountered, even if there are multiple candidates. Used by the error
+/// fixture conformance test so that a failed hook/component is not "covered" by
+/// a later candidate that compiles successfully.
+fn run_pipeline_for_codegen_error_mode(
+    source: &str,
+    source_type: oxc_span::SourceType,
+) -> Result<(CodegenFunction, Option<WrapperInfo>), String> {
+    run_pipeline_for_codegen_impl(source, source_type, true)
+}
+
+fn run_pipeline_for_codegen_impl(
+    source: &str,
+    source_type: oxc_span::SourceType,
+    return_first_error: bool,
 ) -> Result<(CodegenFunction, Option<WrapperInfo>), String> {
     let allocator = oxc_allocator::Allocator::default();
     let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
@@ -1549,10 +1563,12 @@ fn run_pipeline_for_codegen(
             Ok(result) => return Ok((result, wrapper)),
             Err(e) => {
                 last_err = format!("Pipeline: {e:?}");
-                // If there's only one candidate, return the error immediately so
-                // callers get a useful error message. If there are multiple
-                // candidates, keep trying.
-                if num_candidates == 1 {
+                // Return the error immediately if:
+                // - there is only one candidate (most common case), OR
+                // - `return_first_error` is set (error-fixture conformance mode, where
+                //   we want any pipeline error to be surfaced rather than masked by a
+                //   later candidate that compiles successfully).
+                if num_candidates == 1 || return_first_error {
                     return Err(last_err);
                 }
                 // Otherwise continue to try the next candidate.
@@ -8918,14 +8934,14 @@ fn error_fixture_conformance_inner() {
         }
 
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            run_pipeline_for_codegen(&source, source_type)
+            run_pipeline_for_codegen_error_mode(&source, source_type)
         }));
 
         // Retry as TSX if parse failed
         let result = match &result {
             Ok(Err(e)) if e.starts_with("Parse") && ext != "ts" && ext != "tsx" => {
                 std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    run_pipeline_for_codegen(&source, oxc_span::SourceType::tsx())
+                    run_pipeline_for_codegen_error_mode(&source, oxc_span::SourceType::tsx())
                 }))
             }
             _ => result,
