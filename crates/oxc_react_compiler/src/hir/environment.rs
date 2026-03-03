@@ -336,6 +336,17 @@ impl Environment {
                 super::globals::get_known_incompatible_test_module_type(&mut shapes);
             module_types
                 .insert("ReactCompilerKnownIncompatibleTest".to_string(), known_incompatible_type);
+
+            let react_compiler_test_type =
+                super::globals::get_react_compiler_test_module_type(&mut shapes);
+            module_types.insert("ReactCompilerTest".to_string(), react_compiler_test_type);
+
+            let use_default_not_hook_type =
+                super::globals::get_use_default_export_not_typed_as_hook_module_type(&mut shapes);
+            module_types.insert(
+                "useDefaultExportNotTypedAsHook".to_string(),
+                use_default_not_hook_type,
+            );
         }
 
         Self {
@@ -481,87 +492,203 @@ impl Environment {
     /// Resolve a non-local binding to its global type.
     ///
     /// Port of `Environment.getGlobalDeclaration()` from `HIR/Environment.ts`.
-    pub fn get_global_declaration(&self, binding: &NonLocalBinding) -> Option<Global> {
+    ///
+    /// # Errors
+    /// Returns a `CompilerError` if a type provider gives a type that is inconsistent
+    /// with the hook naming convention (e.g., a hook name mapped to a non-hook type).
+    pub fn get_global_declaration(
+        &self,
+        binding: &NonLocalBinding,
+        loc: crate::compiler_error::SourceLocation,
+    ) -> Result<Option<Global>, crate::compiler_error::CompilerError> {
         match binding {
             NonLocalBinding::ModuleLocal { name } => {
                 if is_hook_name(name) {
-                    Some(self.get_custom_hook_type())
+                    Ok(Some(self.get_custom_hook_type()))
                 } else {
-                    None
+                    Ok(None)
                 }
             }
             NonLocalBinding::Global { name } => {
                 if let Some(g) = self.globals.get(name) {
-                    Some(g.clone())
+                    Ok(Some(g.clone()))
                 } else if is_hook_name(name) {
-                    Some(self.get_custom_hook_type())
+                    Ok(Some(self.get_custom_hook_type()))
                 } else {
-                    None
+                    Ok(None)
                 }
             }
             NonLocalBinding::ImportSpecifier { name, module, imported } => {
                 if is_known_react_module(module) {
                     // For React modules, look up by imported name
                     if let Some(g) = self.globals.get(imported) {
-                        Some(g.clone())
+                        Ok(Some(g.clone()))
                     } else if is_hook_name(imported) || is_hook_name(name) {
-                        Some(self.get_custom_hook_type())
+                        Ok(Some(self.get_custom_hook_type()))
                     } else {
-                        None
+                        Ok(None)
                     }
                 } else {
                     // Check module type registry (e.g., react-native-reanimated)
-                    if let Some(module_type) = self.resolve_module_type(module)
-                        && let Some(imported_type) = self.get_property_type(&module_type, imported)
-                    {
-                        return Some(Global::Typed(imported_type));
+                    if let Some(module_type) = self.resolve_module_type(module) {
+                        // Validate all properties of the module for hook name/type consistency.
+                        // Port of the validation in TS `installTypeConfig` for "object" kind.
+                        self.validate_module_type_properties(&module_type, module, loc)?;
+
+                        if let Some(imported_type) =
+                            self.get_property_type(&module_type, imported)
+                        {
+                            return Ok(Some(Global::Typed(imported_type)));
+                        }
                     }
 
                     // Fall back to hook name pattern
                     if is_hook_name(imported) || is_hook_name(name) {
-                        Some(self.get_custom_hook_type())
+                        Ok(Some(self.get_custom_hook_type()))
                     } else {
-                        None
+                        Ok(None)
                     }
                 }
             }
             NonLocalBinding::ImportDefault { name, module } => {
                 if is_known_react_module(module) {
                     if let Some(g) = self.globals.get(name) {
-                        Some(g.clone())
+                        Ok(Some(g.clone()))
                     } else if is_hook_name(name) {
-                        Some(self.get_custom_hook_type())
+                        Ok(Some(self.get_custom_hook_type()))
                     } else {
-                        None
+                        Ok(None)
                     }
                 } else {
                     // Check module type registry for default export
-                    if let Some(module_type) = self.resolve_module_type(module)
-                        && let Some(default_type) = self.get_property_type(&module_type, "default")
-                    {
-                        return Some(Global::Typed(default_type));
+                    if let Some(module_type) = self.resolve_module_type(module) {
+                        // Validate all properties of the module for hook name/type consistency.
+                        self.validate_module_type_properties(&module_type, module, loc)?;
+
+                        if let Some(default_type) =
+                            self.get_property_type(&module_type, "default")
+                        {
+                            // Check that hook-like module names have hook types, and vice versa.
+                            let expect_hook = is_hook_name(module);
+                            let is_hook = get_hook_kind_for_type(self, &default_type).is_some();
+                            if expect_hook != is_hook {
+                                return Err(
+                                    crate::compiler_error::CompilerError::invalid_config(
+                                        "Invalid type configuration for module",
+                                        Some(&format!(
+                                            "Expected type for `import ... from '{module}'` {} based on the module name",
+                                            if expect_hook {
+                                                "to be a hook"
+                                            } else {
+                                                "not to be a hook"
+                                            }
+                                        )),
+                                        Some(loc),
+                                    ),
+                                );
+                            }
+                            return Ok(Some(Global::Typed(default_type)));
+                        }
                     }
-                    if is_hook_name(name) { Some(self.get_custom_hook_type()) } else { None }
+                    if is_hook_name(name) {
+                        Ok(Some(self.get_custom_hook_type()))
+                    } else {
+                        Ok(None)
+                    }
                 }
             }
             NonLocalBinding::ImportNamespace { name, module } => {
                 if is_known_react_module(module) {
                     if let Some(g) = self.globals.get(name) {
-                        Some(g.clone())
+                        Ok(Some(g.clone()))
                     } else if is_hook_name(name) {
-                        Some(self.get_custom_hook_type())
+                        Ok(Some(self.get_custom_hook_type()))
                     } else {
-                        None
+                        Ok(None)
                     }
                 } else {
                     // Check module type registry for namespace import
                     if let Some(module_type) = self.resolve_module_type(module) {
-                        return Some(Global::Typed(module_type));
+                        // Validate all properties of the module for hook name/type consistency.
+                        self.validate_module_type_properties(&module_type, module, loc)?;
+
+                        // Check that hook-like module names have hook types, and vice versa.
+                        let expect_hook = is_hook_name(module);
+                        let is_hook = get_hook_kind_for_type(self, &module_type).is_some();
+                        if expect_hook != is_hook {
+                            return Err(
+                                crate::compiler_error::CompilerError::invalid_config(
+                                    "Invalid type configuration for module",
+                                    Some(&format!(
+                                        "Expected type for `import ... from '{module}'` {} based on the module name",
+                                        if expect_hook {
+                                            "to be a hook"
+                                        } else {
+                                            "not to be a hook"
+                                        }
+                                    )),
+                                    Some(loc),
+                                ),
+                            );
+                        }
+                        return Ok(Some(Global::Typed(module_type)));
                     }
-                    if is_hook_name(name) { Some(self.get_custom_hook_type()) } else { None }
+                    if is_hook_name(name) {
+                        Ok(Some(self.get_custom_hook_type()))
+                    } else {
+                        Ok(None)
+                    }
                 }
             }
         }
+    }
+
+    /// Validate that all properties of a module object type have consistent
+    /// hook name / hook type pairings.
+    ///
+    /// Port of the validation in TS `installTypeConfig` for "object" kind:
+    /// iterates over all properties and checks that hook-named properties
+    /// have hook types and non-hook-named properties don't.
+    fn validate_module_type_properties(
+        &self,
+        module_type: &Type,
+        module_name: &str,
+        loc: crate::compiler_error::SourceLocation,
+    ) -> Result<(), crate::compiler_error::CompilerError> {
+        let shape_id = match module_type {
+            Type::Object(ObjectType { shape_id: Some(id) }) => id.as_str(),
+            _ => return Ok(()),
+        };
+
+        let Some(shape) = self.shapes.get(shape_id) else {
+            return Ok(());
+        };
+
+        // Collect keys and sort to get deterministic iteration order.
+        // The TS code uses Object.entries which preserves insertion order;
+        // we sort to ensure consistent behavior.
+        let mut keys: Vec<&String> = shape.properties.keys().collect();
+        keys.sort();
+
+        for key in keys {
+            let Some(prop_type) = shape.properties.get(key) else {
+                continue;
+            };
+            let expect_hook = is_hook_name(key);
+            let is_hook = get_hook_kind_for_type(self, prop_type).is_some();
+            if expect_hook != is_hook {
+                return Err(crate::compiler_error::CompilerError::invalid_config(
+                    "Invalid type configuration for module",
+                    Some(&format!(
+                        "Expected type for object property '{key}' from module '{module_name}' {} based on the property name",
+                        if expect_hook { "to be a hook" } else { "not to be a hook" }
+                    )),
+                    Some(loc),
+                ));
+            }
+        }
+
+        Ok(())
     }
 
     /// Resolve a module name to its type definition, if one is registered.

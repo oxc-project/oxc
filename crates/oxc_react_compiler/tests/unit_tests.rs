@@ -568,20 +568,30 @@ fn test_console_method_type_resolution() {
             _ => panic!("{label} should be an Object type, got: {console_type:?}"),
         };
 
+    let generated_loc = oxc_react_compiler::compiler_error::SourceLocation::Generated;
+
     // 1. Verify direct `console` global
     let console_global = env
-        .get_global_declaration(&oxc_react_compiler::hir::NonLocalBinding::Global {
-            name: "console".to_string(),
-        })
+        .get_global_declaration(
+            &oxc_react_compiler::hir::NonLocalBinding::Global {
+                name: "console".to_string(),
+            },
+            generated_loc,
+        )
+        .expect("should not error")
         .expect("console should be a registered global");
     let console_type = oxc_react_compiler::hir::globals::Global::to_type(&console_global);
     verify_console_log(&console_type, "console");
 
     // 2. Verify `global.console` resolves correctly
     let global_global = env
-        .get_global_declaration(&oxc_react_compiler::hir::NonLocalBinding::Global {
-            name: "global".to_string(),
-        })
+        .get_global_declaration(
+            &oxc_react_compiler::hir::NonLocalBinding::Global {
+                name: "global".to_string(),
+            },
+            generated_loc,
+        )
+        .expect("should not error")
         .expect("global should be a registered global");
     let global_type = oxc_react_compiler::hir::globals::Global::to_type(&global_global);
     let global_console_type = env.get_property_type(&global_type, "console");
@@ -590,9 +600,13 @@ fn test_console_method_type_resolution() {
 
     // 3. Verify `globalThis.console` resolves correctly
     let global_this = env
-        .get_global_declaration(&oxc_react_compiler::hir::NonLocalBinding::Global {
-            name: "globalThis".to_string(),
-        })
+        .get_global_declaration(
+            &oxc_react_compiler::hir::NonLocalBinding::Global {
+                name: "globalThis".to_string(),
+            },
+            generated_loc,
+        )
+        .expect("should not error")
         .expect("globalThis should be a registered global");
     let global_this_type = oxc_react_compiler::hir::globals::Global::to_type(&global_this);
     let global_this_console_type = env.get_property_type(&global_this_type, "console");

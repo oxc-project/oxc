@@ -117,7 +117,7 @@ pub fn run_pipeline(
     crate::optimization::constant_propagation::constant_propagation(func);
 
     // 12. InferTypes
-    crate::type_inference::infer_types::infer_types(func);
+    crate::type_inference::infer_types::infer_types(func)?;
 
     // =========================================================================
     // Phase 2: Validation + Analysis

@@ -1640,6 +1640,64 @@ pub fn get_known_incompatible_test_module_type(shapes: &mut ShapeRegistry) -> Ty
     Type::Object(ObjectType { shape_id: Some(module_shape_id) })
 }
 
+/// Build the `ReactCompilerTest` module type for testing type-provider validation.
+///
+/// This module contains deliberately mismatched types:
+/// - `useHookNotTypedAsHook`: hook-like name but typed as a plain type (not a hook)
+/// - `notAhookTypedAsHook`: non-hook name but typed as a hook
+///
+/// These are used to test that the compiler validates hook name / hook type consistency.
+pub fn get_react_compiler_test_module_type(shapes: &mut ShapeRegistry) -> Type {
+    let mut props: Vec<(String, Type)> = Vec::new();
+
+    // useHookNotTypedAsHook: { kind: "type", name: "Any" } → Poly (not a hook)
+    props.push(("useHookNotTypedAsHook".to_string(), Type::Poly));
+
+    // notAhookTypedAsHook: { kind: "hook", returnType: { kind: "type", name: "Any" } }
+    let not_a_hook_typed_as_hook_id = add_hook(
+        shapes,
+        None,
+        FunctionSignature {
+            positional_params: vec![],
+            rest_param: Some(Effect::Freeze),
+            return_type: Type::Poly,
+            return_value_kind: ValueKind::Frozen,
+            callee_effect: Effect::Read,
+            hook_kind: Some(HookKind::Custom),
+            ..FunctionSignature::default()
+        },
+    );
+    props.push((
+        "notAhookTypedAsHook".to_string(),
+        Type::Function(FunctionType {
+            shape_id: Some(not_a_hook_typed_as_hook_id),
+            return_type: Box::new(Type::Poly),
+            is_constructor: false,
+        }),
+    ));
+
+    let module_shape_id = add_object(shapes, "ReactCompilerTestModule", props);
+    Type::Object(ObjectType { shape_id: Some(module_shape_id) })
+}
+
+/// Build the `useDefaultExportNotTypedAsHook` module type for testing type-provider validation.
+///
+/// This module has a default export typed as a plain type (not a hook), but the module name
+/// starts with `use` which suggests it should be a hook. This tests the module-level
+/// hook name / hook type consistency validation.
+pub fn get_use_default_export_not_typed_as_hook_module_type(
+    shapes: &mut ShapeRegistry,
+) -> Type {
+    let mut props: Vec<(String, Type)> = Vec::new();
+
+    // default: { kind: "type", name: "Any" } → Poly (not a hook)
+    props.push(("default".to_string(), Type::Poly));
+
+    let module_shape_id =
+        add_object(shapes, "UseDefaultExportNotTypedAsHookModule", props);
+    Type::Object(ObjectType { shape_id: Some(module_shape_id) })
+}
+
 /// Names that are part of REACT_APIS in the TS version.
 /// These are registered as both top-level globals and as properties of the React namespace object.
 const REACT_API_NAMES: &[&str] = &[
