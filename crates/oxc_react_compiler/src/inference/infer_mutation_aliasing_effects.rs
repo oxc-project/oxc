@@ -16,6 +16,7 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
+    compiler_error::{CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory},
     hir::{
         BlockId, Effect, FunctionExpressionValue, HIRFunction, Identifier, IdentifierId,
         Instruction, InstructionKind, InstructionValue, Pattern, Phi, Place, ReactFunctionType,
@@ -759,7 +760,7 @@ pub fn infer_mutation_aliasing_effects(
                     instr,
                     &func.env,
                     &non_mutating_spreads,
-                );
+                )?;
                 instr.effects = Some(effects);
 
                 // Match TS applyEffect for CreateFunction: demote context operands
@@ -1248,7 +1249,7 @@ fn effects_from_signature(
     args: &[crate::hir::CallArg],
     lvalue: &Place,
     state: &InferenceState,
-) -> Vec<AliasingEffect> {
+) -> Result<Vec<AliasingEffect>, CompilerError> {
     use crate::hir::{CallArg, Effect};
 
     let mut effects = Vec::new();
@@ -1271,6 +1272,31 @@ fn effects_from_signature(
         value: sig.return_value_kind,
         reason: return_value_reason,
     });
+
+    // Port of TS InferMutationAliasingEffects.ts lines 2224-2243:
+    // If the signature is marked as knownIncompatible, throw an error immediately.
+    if let Some(ref incompatible_msg) = sig.known_incompatible {
+        let mut errors = CompilerError::new();
+        errors.push_diagnostic(
+            CompilerDiagnostic::create(
+                ErrorCategory::IncompatibleLibrary,
+                "Use of incompatible library".to_string(),
+                Some(
+                    "This API returns functions which cannot be memoized without leading to stale UI. \
+                     To prevent this, by default React Compiler will skip memoizing this component/hook. \
+                     However, you may see issues if values from this API are passed to other components/hooks that are \
+                     memoized"
+                        .to_string(),
+                ),
+                None,
+            )
+            .with_detail(CompilerDiagnosticDetail::Error {
+                loc: Some(callee_or_receiver.loc),
+                message: Some(incompatible_msg.clone()),
+            }),
+        );
+        return Err(errors);
+    }
 
     // Helper closure to process a single place with a declared effect
     let mut visit = |place: &Place, effect: Effect| {
@@ -1399,7 +1425,7 @@ fn effects_from_signature(
         }
     }
 
-    effects
+    Ok(effects)
 }
 
 /// Emit conservative (no-signature) call effects for Apply.
@@ -2095,7 +2121,7 @@ fn compute_instruction_effects(
     instr: &Instruction,
     env: &crate::hir::environment::Environment,
     non_mutating_spreads: &FxHashSet<IdentifierId>,
-) -> Vec<AliasingEffect> {
+) -> Result<Vec<AliasingEffect>, CompilerError> {
     use crate::hir::CallArg;
     use crate::inference::aliasing_effects::CreateFunctionKind;
 
@@ -2233,7 +2259,7 @@ fn compute_instruction_effects(
                     // downgrade Alias to ImmutableCapture when source is frozen, etc.
                     let filtered = filter_substituted_effects(state, sig_effects);
                     effects.extend(filtered);
-                    return effects;
+                    return Ok(effects);
                 }
             }
             // 2. Try to get function signature from callee's type
@@ -2251,7 +2277,7 @@ fn compute_instruction_effects(
                     )
                 {
                     effects.extend(sig_effects);
-                    return effects;
+                    return Ok(effects);
                 }
                 // 2b. Legacy fallback
                 return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state);
@@ -2287,7 +2313,7 @@ fn compute_instruction_effects(
                     // TS applyEffect behavior.
                     let filtered = filter_substituted_effects(state, sig_effects);
                     effects.extend(filtered);
-                    return effects;
+                    return Ok(effects);
                 }
             }
             // 2. Try to get function signature from the property's type (the method)
@@ -2305,7 +2331,7 @@ fn compute_instruction_effects(
                     )
                 {
                     effects.extend(sig_effects);
-                    return effects;
+                    return Ok(effects);
                 }
                 // 2b. Port of TS mutableOnlyIfOperandsAreMutable check (InferMutationAliasingEffects.ts).
                 // If the method is only mutable when operands are mutable (e.g. Array.filter, Array.map),
@@ -2335,7 +2361,7 @@ fn compute_instruction_effects(
                             into: lvalue.clone(),
                         });
                     }
-                    return effects;
+                    return Ok(effects);
                 }
                 // 2c. Legacy fallback for method calls
                 return effects_from_signature(&sig, &v.receiver, &v.args, lvalue, state);
@@ -2370,7 +2396,7 @@ fn compute_instruction_effects(
                     )
                 {
                     effects.extend(sig_effects);
-                    return effects;
+                    return Ok(effects);
                 }
                 // Legacy fallback
                 return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state);
@@ -2734,8 +2760,32 @@ fn compute_instruction_effects(
             });
         }
 
-        // StoreGlobal: Assign to lvalue (mutation is an error, but still track flow)
+        // StoreGlobal: MutateGlobal error + Assign to lvalue
+        // Port of TS InferMutationAliasingEffects.ts lines 2106-2122:
+        // Reassigning a variable declared outside the component/hook is a side effect.
         InstructionValue::StoreGlobal(v) => {
+            let variable = format!("`{}`", v.name);
+            effects.push(AliasingEffect::MutateGlobal {
+                place: v.value.clone(),
+                error: CompilerDiagnostic::create(
+                    ErrorCategory::Globals,
+                    "Cannot reassign variables declared outside of the component/hook".to_string(),
+                    Some(format!(
+                        "Variable {variable} is declared outside of the component/hook. \
+                         Reassigning this value during render is a form of side effect, \
+                         which can cause unpredictable behavior depending on when the component \
+                         happens to re-render. If this variable is used in rendering, use useState \
+                         instead. Otherwise, consider updating it in an effect. \
+                         (https://react.dev/reference/rules/components-and-hooks-must-be-pure\
+                         #side-effects-must-run-outside-of-render)"
+                    )),
+                    None,
+                )
+                .with_detail(CompilerDiagnosticDetail::Error {
+                    loc: Some(instr.loc),
+                    message: Some(format!("{variable} cannot be reassigned")),
+                }),
+            });
             effects.push(AliasingEffect::Assign { from: v.value.clone(), into: lvalue.clone() });
         }
 
@@ -3050,5 +3100,5 @@ fn compute_instruction_effects(
 
     effects.extend(extra_effects);
 
-    effects
+    Ok(effects)
 }

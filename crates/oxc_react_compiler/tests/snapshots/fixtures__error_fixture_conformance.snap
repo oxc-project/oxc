@@ -1,18 +1,16 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 8975
 expression: snapshot
 ---
-Error fixture conformance: 156/275 (56.7%)
+Error fixture conformance: 169/275 (61.5%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 119
+  unexpected_success: 106
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
   [unexpected_success] error._todo.computed-lval-in-destructure.js
-  [unexpected_success] error.assign-global-in-component-tag-function.js
   [unexpected_success] error.assign-global-in-jsx-children.js
   [unexpected_success] error.assign-ref-in-effect-hint.js
   [unexpected_success] error.bug-invariant-codegen-methodcall.js
@@ -33,17 +31,11 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-computed-store-to-frozen-value.js
   [unexpected_success] error.invalid-delete-computed-property-of-frozen-value.js
   [unexpected_success] error.invalid-delete-property-of-frozen-value.js
-  [unexpected_success] error.invalid-destructure-assignment-to-global.js
-  [unexpected_success] error.invalid-destructure-to-local-global-variables.js
   [unexpected_success] error.invalid-eval-unsupported.js
   [unexpected_success] error.invalid-function-expression-mutates-immutable-value.js
-  [unexpected_success] error.invalid-global-reassignment-indirect.js
   [unexpected_success] error.invalid-hoisting-setstate.js
   [unexpected_success] error.invalid-hook-function-argument-mutates-local-variable.js
   [unexpected_success] error.invalid-jsx-captures-context-variable.js
-  [unexpected_success] error.invalid-known-incompatible-function.js
-  [unexpected_success] error.invalid-known-incompatible-hook-return-property.js
-  [unexpected_success] error.invalid-known-incompatible-hook.js
   [unexpected_success] error.invalid-mutate-after-aliased-freeze.js
   [unexpected_success] error.invalid-mutate-after-freeze.js
   [unexpected_success] error.invalid-mutate-context-in-callback.js
@@ -70,7 +62,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-type-provider-hooklike-module-default-not-hook.js
   [unexpected_success] error.invalid-type-provider-nonhook-name-typed-as-hook.js
   [unexpected_success] error.invalid-unconditional-set-state-hook-return-in-render.js
-  [unexpected_success] error.invalid-unconditional-set-state-prop-in-render.js
   [unexpected_success] error.modify-state-2.js
   [unexpected_success] error.modify-state.js
   [unexpected_success] error.modify-useReducer-state.js
@@ -80,8 +71,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.mutate-props.js
   [unexpected_success] error.not-useEffect-external-mutate.js
   [unexpected_success] error.reassign-global-fn-arg.js
-  [unexpected_success] error.reassignment-to-global-indirect.js
-  [unexpected_success] error.reassignment-to-global.js
   [unexpected_success] error.ref-like-name-not-Ref.js
   [unexpected_success] error.ref-like-name-not-a-ref.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-later-mutation.js
@@ -106,7 +95,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.todo-repro-unmemoized-callback-captured-in-context-variable.tsx
   [unexpected_success] error.todo-valid-functiondecl-hoisting.tsx
   [unexpected_success] error.todo.try-catch-with-throw.js
-  [unexpected_success] error.update-global-should-bailout.tsx
   [unexpected_success] error.useMemo-callback-generator.js
   [unexpected_success] error.validate-object-entries-mutation.js
   [unexpected_success] error.validate-object-values-mutation.js
@@ -122,8 +110,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] new-mutability/error.mutate-frozen-value.js
   [unexpected_success] new-mutability/error.mutate-hook-argument.js
   [unexpected_success] new-mutability/error.not-useEffect-external-mutate.js
-  [unexpected_success] new-mutability/error.reassignment-to-global-indirect.js
-  [unexpected_success] new-mutability/error.reassignment-to-global.js
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js
   [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-infer-mutate-deps.ts
   [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-overlap-scopes.ts
