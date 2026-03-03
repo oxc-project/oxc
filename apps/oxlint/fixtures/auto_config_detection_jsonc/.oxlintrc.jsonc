@@ -1,5 +1,4 @@
 {
-  // Intentionally JSONC to verify auto config detection supports .jsonc.
   "categories": {
     "correctness": "off"
   },
