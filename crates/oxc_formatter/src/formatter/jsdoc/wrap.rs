@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 /// Lookup table of pre-allocated indent strings (0–12 spaces).
 /// Avoids `" ".repeat(n)` heap allocations for common indent widths.
 const INDENTS: [&str; 13] = [
@@ -137,14 +139,16 @@ fn parse_table_cells(line: &str) -> Vec<&str> {
 /// Format a block of consecutive table lines.
 /// If the table has a valid separator row, format with column padding.
 /// Otherwise, output as-is.
-pub fn format_table_block(table_lines: &[String], lines: &mut Vec<String>) {
+///
+/// Accepts `&[&str]` or `&[String]` via `AsRef<str>`.
+pub fn format_table_block<S: AsRef<str>>(table_lines: &[S], lines: &mut Vec<String>) {
     // Find separator row
-    let separator_idx = table_lines.iter().position(|l| is_table_separator(l));
+    let separator_idx = table_lines.iter().position(|l| is_table_separator(l.as_ref()));
 
     if separator_idx.is_none() {
         // No separator row: output as-is
         for line in table_lines {
-            lines.push(line.clone());
+            lines.push(line.as_ref().to_string());
         }
         return;
     }
@@ -152,13 +156,13 @@ pub fn format_table_block(table_lines: &[String], lines: &mut Vec<String>) {
     // Parse all rows into cells
     let all_cells: Vec<Vec<&str>> = table_lines
         .iter()
-        .filter(|l| !is_table_separator(l))
-        .map(|l| parse_table_cells(l))
+        .filter(|l| !is_table_separator(l.as_ref()))
+        .map(|l| parse_table_cells(l.as_ref()))
         .collect();
 
     if all_cells.is_empty() {
         for line in table_lines {
-            lines.push(line.clone());
+            lines.push(line.as_ref().to_string());
         }
         return;
     }
@@ -167,7 +171,7 @@ pub fn format_table_block(table_lines: &[String], lines: &mut Vec<String>) {
     let num_cols = all_cells.iter().map(std::vec::Vec::len).max().unwrap_or(0);
     if num_cols == 0 {
         for line in table_lines {
-            lines.push(line.clone());
+            lines.push(line.as_ref().to_string());
         }
         return;
     }
@@ -367,7 +371,7 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
     let mut paragraph = String::new();
     // Track current list item state
     let mut current_list_indent: Option<usize> = None;
-    let mut list_marker = String::new();
+    let mut list_marker: Cow<'static, str> = Cow::Borrowed("");
     let mut list_text = String::new();
     let mut in_list = false;
     let mut numbered_list_counter: u32 = 0;
@@ -382,7 +386,7 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
         }
     };
 
-    let flush_list_item = |list_marker: &mut String,
+    let flush_list_item = |list_marker: &mut Cow<'static, str>,
                            list_text: &mut String,
                            current_list_indent: &mut Option<usize>,
                            lines: &mut Vec<String>| {
@@ -397,13 +401,16 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
             wrap_paragraph(list_text.trim(), max_width, indent, &mut item_lines);
             for (idx, line) in item_lines.into_iter().enumerate() {
                 if idx == 0 {
-                    lines.push(format!("{list_marker}{line}"));
+                    let mut s = String::with_capacity(list_marker.len() + line.len());
+                    s.push_str(list_marker);
+                    s.push_str(&line);
+                    lines.push(s);
                 } else {
                     lines.push(line);
                 }
             }
             list_text.clear();
-            list_marker.clear();
+            *list_marker = Cow::Borrowed("");
         }
         *current_list_indent = None;
     };
@@ -454,7 +461,10 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
                 if content.is_empty() {
                     lines.push(String::new());
                 } else {
-                    lines.push(format!("    {content}"));
+                    let mut s = String::with_capacity(4 + content.len());
+                    s.push_str("    ");
+                    s.push_str(content);
+                    lines.push(s);
                 }
             }
             i += 1;
@@ -592,12 +602,12 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
 
             if parsed.is_numbered {
                 numbered_list_counter += 1;
-                list_marker = format!("{numbered_list_counter}. ");
+                list_marker = Cow::Owned(format!("{numbered_list_counter}. "));
                 current_list_indent = Some(list_marker.len());
             } else {
                 numbered_list_counter = 0;
                 current_list_indent = Some(parsed.indent_width);
-                list_marker = "- ".to_string();
+                list_marker = Cow::Borrowed("- ");
             }
             list_text = rest.to_string();
             i += 1;
@@ -628,12 +638,12 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
         if is_table_line(trimmed) {
             flush_paragraph(&mut paragraph, lines);
             numbered_list_counter = 0;
-            let mut table_lines = vec![trimmed.to_string()];
+            let mut table_lines: Vec<&str> = vec![trimmed];
             let mut j = i + 1;
             while j < input_lines.len() {
                 let next = input_lines[j].trim();
                 if is_table_line(next) {
-                    table_lines.push(next.to_string());
+                    table_lines.push(next);
                     j += 1;
                 } else {
                     break;

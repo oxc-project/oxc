@@ -47,6 +47,7 @@ pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
     let len = bytes.len();
     let mut i = 0;
     let mut in_code = false;
+    let mut changed = false;
 
     // First pass: convert `__` → `**`
     while i < len {
@@ -62,6 +63,7 @@ pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
         if bytes[i] == b'_' && i + 1 < len && bytes[i + 1] == b'_' {
             bytes[i] = b'*';
             bytes[i + 1] = b'*';
+            changed = true;
             i += 2;
             continue;
         }
@@ -116,6 +118,7 @@ pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
                 if bytes[j] == b'*' && j > opener + 1 && !bytes[j - 1].is_ascii_whitespace() {
                     bytes[opener] = b'_';
                     bytes[j] = b'_';
+                    changed = true;
                     i = j + 1;
                     break;
                 }
@@ -130,6 +133,10 @@ pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
         i += 1;
     }
 
+    // If no bytes were actually modified, return the original text without allocation.
+    if !changed {
+        return Cow::Borrowed(text);
+    }
     // We only replaced ASCII bytes (_, *) with other ASCII bytes (*, _),
     // so UTF-8 validity is preserved.
     Cow::Owned(String::from_utf8(bytes).unwrap())
@@ -137,17 +144,30 @@ pub fn normalize_markdown_emphasis(text: &str) -> Cow<'_, str> {
 
 /// Capitalize the first ASCII lowercase letter of a string.
 /// Skips if the string starts with a backtick (inline code) or a URL.
-/// Recurses for `"- "` prefix: `"- hello"` → `"- Hello"` (matches upstream's `capitalizer()`).
+/// Handles `"- "` prefix iteratively: `"- - hello"` → `"- - Hello"` with a single allocation.
 pub fn capitalize_first(s: &str) -> Cow<'_, str> {
     if s.is_empty() || s.starts_with('`') || s.starts_with("http://") || s.starts_with("https://") {
         return Cow::Borrowed(s);
     }
 
-    // Handle dash-prefix: "- text" → "- Text"
-    if let Some(rest) = s.strip_prefix("- ") {
-        let capitalized = capitalize_first(rest);
-        let mut result = String::with_capacity(2 + capitalized.len());
-        result.push_str("- ");
+    // Handle dash-prefix iteratively: count leading "- " prefixes,
+    // capitalize the inner text once, build result with single allocation.
+    let mut prefix_len = 0;
+    let mut remaining = s;
+    while let Some(rest) = remaining.strip_prefix("- ") {
+        prefix_len += 2;
+        remaining = rest;
+    }
+
+    if prefix_len > 0 {
+        // `remaining` no longer starts with "- ", so this won't recurse into dash handling.
+        let capitalized = capitalize_first(remaining);
+        if matches!(capitalized, Cow::Borrowed(_)) {
+            // Inner text was unchanged — return original string as-is
+            return Cow::Borrowed(s);
+        }
+        let mut result = String::with_capacity(prefix_len + capitalized.len());
+        result.push_str(&s[..prefix_len]);
         result.push_str(&capitalized);
         return Cow::Owned(result);
     }
@@ -238,6 +258,15 @@ fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> Cow<'_, str> {
 /// 3. Run transformation on the placeholder-filled string
 /// 4. Restore original quoted strings
 fn without_strings(type_str: &str, transform: impl FnOnce(&str) -> String) -> String {
+    // Fast path: no quotes at all — skip the entire placeholder machinery.
+    if !type_str.contains('\'') && !type_str.contains('"') {
+        // Bail on backticks (template literal types)
+        if type_str.contains('`') {
+            return type_str.to_string();
+        }
+        return transform(type_str);
+    }
+
     let mut strings: Vec<&str> = Vec::new();
     let mut modified = String::with_capacity(type_str.len());
     let bytes = type_str.as_bytes();
@@ -408,7 +437,7 @@ fn normalize_type_core(type_str: &str) -> String {
     // `while(changed)` loop to iteratively convert innermost Array<...> patterns.
     let converted = convert_array_types_globally(&cleaned);
 
-    normalize_type_whitespace(&converted)
+    normalize_type_whitespace(&converted).into_owned()
 }
 
 /// Convert `Array<T>` patterns anywhere in a type string to `T[]`.
@@ -899,14 +928,71 @@ fn format_object_body(obj_str: &str) -> Cow<'_, str> {
     Cow::Owned(format!("{{ {body} }}"))
 }
 
+/// Fast check: is the type expression already whitespace-normalized?
+/// Returns `true` when the string has no leading/trailing whitespace, no consecutive spaces,
+/// no non-space ASCII whitespace (tabs, newlines), no non-ASCII whitespace, and `|`, `&`, `=>`
+/// already have spaces around them.
+fn is_whitespace_normalized(s: &str) -> bool {
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    if len == 0 {
+        return true;
+    }
+    // Leading/trailing whitespace
+    if bytes[0].is_ascii_whitespace() || bytes[len - 1].is_ascii_whitespace() {
+        return false;
+    }
+    let mut i = 0;
+    while i < len {
+        let b = bytes[i];
+        if b.is_ascii_whitespace() {
+            if b != b' ' {
+                return false; // tabs, newlines
+            }
+            if i + 1 < len && bytes[i + 1] == b' ' {
+                return false; // consecutive spaces
+            }
+        } else if b == b'|' || b == b'&' {
+            if i == 0 || bytes[i - 1] != b' ' {
+                return false;
+            }
+            if i + 1 >= len || bytes[i + 1] != b' ' {
+                return false;
+            }
+        } else if b == b'=' && i + 1 < len && bytes[i + 1] == b'>' {
+            if i == 0 || bytes[i - 1] != b' ' {
+                return false;
+            }
+            if i + 2 >= len || bytes[i + 2] != b' ' {
+                return false;
+            }
+            i += 2; // skip `>`
+            continue;
+        } else if !b.is_ascii() {
+            let ch = s[i..].chars().next().unwrap();
+            if ch.is_whitespace() {
+                return false; // non-ASCII whitespace
+            }
+            i += ch.len_utf8();
+            continue;
+        }
+        i += 1;
+    }
+    true
+}
+
 /// Normalize whitespace within a type expression:
 /// - Collapse runs of whitespace to a single space
 /// - Add spaces around `|` and `&` operators if missing
 /// - Trim leading/trailing whitespace
-pub fn normalize_type_whitespace(type_str: &str) -> String {
+pub fn normalize_type_whitespace(type_str: &str) -> Cow<'_, str> {
+    let trimmed = type_str.trim();
+    if is_whitespace_normalized(trimmed) {
+        return Cow::Borrowed(trimmed);
+    }
+
     // Single pass: collapse whitespace AND ensure spaces around `|`, `&`, `=>`
     // while preserving `// comments` verbatim through newline.
-    let trimmed = type_str.trim();
     let bytes = trimmed.as_bytes();
     let len = bytes.len();
     let mut result = String::with_capacity(len + 8);
@@ -997,7 +1083,7 @@ pub fn normalize_type_whitespace(type_str: &str) -> String {
         i += ch.len_utf8();
     }
 
-    result
+    Cow::Owned(result)
 }
 
 /// Check if a type string is already normalized and needs no transformation.
