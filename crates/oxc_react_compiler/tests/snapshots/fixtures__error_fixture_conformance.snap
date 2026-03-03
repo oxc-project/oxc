@@ -2,11 +2,11 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 247/275 (89.8%)
+Error fixture conformance: 256/275 (93.1%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 28
+  unexpected_success: 19
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -23,18 +23,9 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-mutation-of-possible-props-phi-indirect.js
   [unexpected_success] error.invalid-pass-mutable-function-as-prop.js
   [unexpected_success] error.invalid-return-mutable-function-from-hook.js
-  [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-later-mutation.js
-  [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-mutated-dep.js
   [unexpected_success] error.todo-functiondecl-hoisting.tsx
   [unexpected_success] error.todo-hook-call-spreads-mutable-iterator.js
   [unexpected_success] error.todo-missing-source-locations.js
   [unexpected_success] error.todo-repro-named-function-with-shadowed-local-same-name.js
-  [unexpected_success] error.todo-repro-unmemoized-callback-captured-in-context-variable.tsx
   [unexpected_success] error.todo-valid-functiondecl-hoisting.tsx
-  [unexpected_success] error.validate-object-entries-mutation.js
-  [unexpected_success] error.validate-object-values-mutation.js
-  [unexpected_success] new-mutability/error.invalid-useCallback-captures-reassigned-context.js
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js
-  [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-infer-mutate-deps.ts
-  [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-overlap-scopes.ts
-  [unexpected_success] preserve-memo-validation/error.invalid-useCallback-captures-reassigned-context.ts
