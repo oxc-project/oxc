@@ -1,4 +1,5 @@
-use cow_utils::CowUtils;
+use std::borrow::Cow;
+
 use markdown::{Constructs, ParseOptions, mdast::Node, to_mdast};
 
 use super::wrap::{format_table_block, wrap_paragraph, wrap_text};
@@ -17,9 +18,36 @@ fn needs_mdast_parsing(text: &str) -> bool {
     let mut i = 0;
     while i < len {
         match bytes[i] {
-            // Emphasis, strikethrough, strong, list marker (*), links, images,
-            // footnotes, backslash escapes, HTML tags
-            b'_' | b'~' | b'*' | b'[' | b'\\' | b'<' => return true,
+            // Emphasis, strikethrough, strong, list marker (*), images,
+            // backslash escapes, HTML tags
+            b'_' | b'~' | b'*' | b'\\' | b'<' => return true,
+            // `[` — only trigger for markdown link/reference patterns, not bare
+            // brackets from JavaScript code (e.g. `const [`, `][]`).
+            b'[' => {
+                // Footnote reference: `[^note]`
+                if i + 1 < len && bytes[i + 1] == b'^' {
+                    return true;
+                }
+                // Scan for closing `]` followed by `(` or `[` on the same line
+                // to detect `[text](url)` or `[text][ref]` patterns.
+                let mut j = i + 1;
+                let mut has_content = false;
+                while j < len && bytes[j] != b'\n' {
+                    if bytes[j] == b']' {
+                        if has_content
+                            && j + 1 < len
+                            && (bytes[j + 1] == b'(' || bytes[j + 1] == b'[')
+                        {
+                            return true;
+                        }
+                        break;
+                    }
+                    if !bytes[j].is_ascii_whitespace() {
+                        has_content = true;
+                    }
+                    j += 1;
+                }
+            }
             // At line start: heading (#), blockquote (>), list/thematic break (-),
             // ordered list (digit), table (|)
             b'#' | b'>' | b'-' | b'0'..=b'9' | b'|' if i == 0 || bytes[i - 1] == b'\n' => {
@@ -133,10 +161,10 @@ struct SerializeOptions<'a> {
 /// Normalize the legacy `1- foo` list-marker style used by some existing JSDoc
 /// fixtures into standard ordered-list syntax so markdown parsing can treat them
 /// as list items.
-fn normalize_legacy_ordered_list_markers(text: &str) -> String {
+fn normalize_legacy_ordered_list_markers(text: &str) -> Cow<'_, str> {
     // Fast path: if no ASCII digit in the text, no legacy markers possible
     if !text.bytes().any(|b| b.is_ascii_digit()) {
-        return text.to_string();
+        return Cow::Borrowed(text);
     }
 
     let mut result = String::with_capacity(text.len());
@@ -170,16 +198,16 @@ fn normalize_legacy_ordered_list_markers(text: &str) -> String {
         result.push_str(line);
     }
 
-    result
+    Cow::Owned(result)
 }
 
 /// Replace `{@link ...}`, `{@linkcode ...}`, `{@linkplain ...}`, `{@tutorial ...}`
 /// with numbered placeholders so the markdown parser (especially GFM autolink) doesn't
 /// mangle URLs inside them.
-fn protect_jsdoc_links(text: &str) -> (String, Vec<String>) {
+fn protect_jsdoc_links(text: &str) -> (Cow<'_, str>, Vec<String>) {
     // Fast path: if no `{@` in the text, nothing to protect
     if !text.contains("{@") {
-        return (text.to_string(), Vec::new());
+        return (Cow::Borrowed(text), Vec::new());
     }
 
     let mut result = String::with_capacity(text.len());
@@ -219,23 +247,54 @@ fn protect_jsdoc_links(text: &str) -> (String, Vec<String>) {
         }
     }
 
-    (result, placeholders)
+    (Cow::Owned(result), placeholders)
 }
 
 /// Restore all placeholder tokens in a string back to their original `{@link ...}` form.
-fn restore_in_string(s: &str, placeholders: &[String]) -> String {
-    if placeholders.is_empty() && !s.contains(PLACEHOLDER_PREFIX) {
-        return s.to_string();
+fn restore_in_string<'a>(s: &'a str, placeholders: &[String]) -> Cow<'a, str> {
+    if placeholders.is_empty() || !s.contains(PLACEHOLDER_PREFIX) {
+        return Cow::Borrowed(s);
     }
 
-    let mut result = s.to_string();
+    Cow::Owned(replace_placeholders(s, placeholders))
+}
 
-    for (idx, original) in placeholders.iter().enumerate().rev() {
-        let placeholder = format!("{PLACEHOLDER_PREFIX}{idx}");
-        if result.contains(&placeholder) {
-            result = result.cow_replace(&*placeholder, original.as_str()).into_owned();
+/// Single-pass scan that replaces all `PLACEHOLDER_PREFIX<digits>` occurrences
+/// with their original strings from `placeholders`.
+fn replace_placeholders(s: &str, placeholders: &[String]) -> String {
+    let prefix = PLACEHOLDER_PREFIX;
+    let prefix_len = prefix.len();
+    let mut result = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+
+    while i < len {
+        if i + prefix_len <= len && &s[i..i + prefix_len] == prefix {
+            // Found prefix, parse the index digits that follow
+            let digit_start = i + prefix_len;
+            let mut digit_end = digit_start;
+            while digit_end < len && bytes[digit_end].is_ascii_digit() {
+                digit_end += 1;
+            }
+            if digit_end > digit_start
+                && let Ok(idx) = s[digit_start..digit_end].parse::<usize>()
+                && let Some(original) = placeholders.get(idx)
+            {
+                result.push_str(original);
+                i = digit_end;
+                continue;
+            }
+            // Not a valid placeholder, copy the prefix character and advance
+            result.push(s[i..].chars().next().unwrap());
+            i += 1;
+        } else {
+            let ch = s[i..].chars().next().unwrap();
+            result.push(ch);
+            i += ch.len_utf8();
         }
     }
+
     result
 }
 
@@ -243,7 +302,7 @@ fn restore_in_string(s: &str, placeholders: &[String]) -> String {
 fn restore_placeholders(lines: &mut [String], placeholders: &[String]) {
     for line in lines.iter_mut() {
         if line.contains(PLACEHOLDER_PREFIX) {
-            *line = restore_in_string(line, placeholders);
+            *line = restore_in_string(line, placeholders).into_owned();
         }
     }
 }
@@ -377,13 +436,15 @@ fn serialize_paragraph(
                     s.push('\\');
                     lines.push(s);
                 } else {
-                    let text = if opts.capitalize && lines.is_empty() {
-                        super::normalize::capitalize_first(&text).into_owned()
+                    let capitalized;
+                    let text_ref = if opts.capitalize && lines.is_empty() {
+                        capitalized = super::normalize::capitalize_first(&text);
+                        capitalized.as_ref()
                     } else {
-                        text
+                        &*text
                     };
-                    let mut s = String::with_capacity(text.len() + 1);
-                    s.push_str(&text);
+                    let mut s = String::with_capacity(text_ref.len() + 1);
+                    s.push_str(text_ref);
                     s.push('\\');
                     lines.push(s);
                 }
@@ -403,14 +464,14 @@ fn serialize_paragraph(
                 s.push_str(&text);
                 lines.push(s);
             } else {
-                lines.push(text);
+                lines.push(text.into_owned());
             }
         }
         return;
     }
 
     // Normal paragraph: collect all inline text, restore placeholders, then wrap
-    let inline_text = collect_inline_text(&Node::Paragraph(para.clone()));
+    let inline_text = collect_inline_text_from_children(&para.children);
     let inline_text = restore_in_string(&inline_text, opts.placeholders);
     let effective_width = opts.max_width.saturating_sub(indent);
     let ind = super::wrap::indent_str(indent);
@@ -472,7 +533,7 @@ fn serialize_pipe_prefixed_paragraph(
 
             let pipe_lines: Vec<String> = raw_lines[start..index]
                 .iter()
-                .map(|line| restore_in_string(line.trim(), opts.placeholders))
+                .map(|line| restore_in_string(line.trim(), opts.placeholders).into_owned())
                 .collect();
             let mut block_lines = Vec::new();
             format_table_block(&pipe_lines, &mut block_lines);
@@ -502,7 +563,8 @@ fn serialize_pipe_prefixed_paragraph(
                 continue;
             }
 
-            let text = restore_in_string(&text_parts.join(" "), opts.placeholders);
+            let joined = text_parts.join(" ");
+            let text = restore_in_string(&joined, opts.placeholders);
             let effective_width = opts.max_width.saturating_sub(indent);
             let mut para_lines = Vec::new();
             wrap_paragraph(&text, effective_width, 0, &mut para_lines);
@@ -661,7 +723,7 @@ fn serialize_node_for_list_item(
 ) {
     match node {
         Node::Paragraph(para) => {
-            let inline_text = collect_inline_text(&Node::Paragraph(para.clone()));
+            let inline_text = collect_inline_text_from_children(&para.children);
             let inline_text = restore_in_string(&inline_text, opts.placeholders);
             if is_first_child {
                 // First line wraps at max_width; continuation at max_width - marker_width.
@@ -754,6 +816,16 @@ fn serialize_blockquote(
 fn collect_inline_text(node: &Node) -> String {
     let mut result = String::new();
     collect_inline_recursive(node, &mut result);
+    result
+}
+
+/// Collect inline text from a slice of child nodes directly, avoiding
+/// the need to clone a parent node just to iterate its children.
+fn collect_inline_text_from_children(children: &[Node]) -> String {
+    let mut result = String::new();
+    for child in children {
+        collect_inline_recursive(child, &mut result);
+    }
     result
 }
 

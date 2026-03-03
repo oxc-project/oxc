@@ -1,8 +1,6 @@
 use std::borrow::Cow;
 use std::fmt::Write as _;
 
-use cow_utils::CowUtils;
-
 /// Normalize JSDoc tag aliases to their canonical form.
 /// Matches prettier-plugin-jsdoc's `TAGS_SYNONYMS` from `roles.ts`.
 pub fn normalize_tag_kind(kind: &str) -> &str {
@@ -178,18 +176,47 @@ pub fn capitalize_first(s: &str) -> Cow<'_, str> {
 ///
 /// Matches prettier-plugin-jsdoc's `convertToModernType()` which uses
 /// `withoutStrings()` to protect quoted strings during transformation.
-pub fn normalize_type(type_str: &str) -> String {
+pub fn normalize_type(type_str: &str) -> Cow<'_, str> {
     normalize_type_impl(type_str, true)
 }
 
 /// Normalize type but preserve original quotes.
 /// Used for `@type`, `@typedef`, `@satisfies` where the plugin keeps the type
 /// mostly as-is (via `getUpdatedType()` in stringify.ts).
-pub fn normalize_type_preserve_quotes(type_str: &str) -> String {
+pub fn normalize_type_preserve_quotes(type_str: &str) -> Cow<'_, str> {
     normalize_type_impl(type_str, false)
 }
 
-fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> String {
+fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> Cow<'_, str> {
+    // Fast path: common simple types need no transformation at all.
+    let trimmed = type_str.trim();
+    if matches!(
+        trimmed,
+        "string"
+            | "number"
+            | "boolean"
+            | "void"
+            | "undefined"
+            | "null"
+            | "object"
+            | "never"
+            | "unknown"
+            | "any"
+            | "bigint"
+            | "symbol"
+            | "this"
+    ) {
+        return Cow::Borrowed(trimmed);
+    }
+
+    // Extended fast path: simple identifier types need no transformation.
+    // Covers dotted names (`Estree.Node`), plain identifiers (`Object`, `Node`),
+    // and simple generic types (`Map<string, number>`) — none of which contain
+    // characters that trigger any normalization phase.
+    if is_already_normalized(trimmed) {
+        return Cow::Borrowed(trimmed);
+    }
+
     // Phase 1: Protect quoted strings, run core transforms, restore strings.
     // This matches the plugin's convertToModernType() inside withoutStrings().
     let transformed = without_strings(type_str, normalize_type_inner);
@@ -201,7 +228,7 @@ fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> String {
     let unquoted = if convert_quotes { unquote_object_property_names(&quoted) } else { quoted };
     // Phase 4: Format inline object type spacing (simulating Prettier's TS parser).
     // { key:value } → { key: value }
-    format_inline_object_type(&unquoted).into_owned()
+    Cow::Owned(format_inline_object_type(&unquoted).into_owned())
 }
 
 /// Protect quoted strings during type transformation.
@@ -253,12 +280,52 @@ fn without_strings(type_str: &str, transform: impl FnOnce(&str) -> String) -> St
         return type_str.to_string();
     }
 
-    let mut result = transform(&modified);
+    let result = transform(&modified);
 
-    // Restore original quoted strings
-    for (idx, original) in strings.iter().enumerate() {
-        let placeholder = format!("String${idx}$");
-        result = result.cow_replace(&placeholder, original).into_owned();
+    // Restore original quoted strings in a single pass
+    replace_placeholders(&result, "String$", &strings)
+}
+
+/// Single-pass placeholder replacement.
+/// Scans `input` for occurrences of `{prefix}{N}{suffix_char}` (e.g. `String$0$`, `String$12$`)
+/// and replaces each with `originals[N]`. Characters outside placeholders are copied verbatim.
+fn replace_placeholders(input: &str, prefix: &str, originals: &[&str]) -> String {
+    if originals.is_empty() {
+        return input.to_string();
+    }
+
+    let prefix_bytes = prefix.as_bytes();
+    let prefix_len = prefix_bytes.len();
+    let bytes = input.as_bytes();
+    let len = bytes.len();
+    let mut result = String::with_capacity(len);
+    let mut i = 0;
+
+    while i < len {
+        // Check if we're at a placeholder start
+        if i + prefix_len < len && &bytes[i..i + prefix_len] == prefix_bytes {
+            // Try to parse digits after the prefix
+            let digit_start = i + prefix_len;
+            let mut digit_end = digit_start;
+            while digit_end < len && bytes[digit_end].is_ascii_digit() {
+                digit_end += 1;
+            }
+            // Must have at least one digit and a trailing '$'
+            if digit_end > digit_start
+                && digit_end < len
+                && bytes[digit_end] == b'$'
+                && let Ok(idx) = input[digit_start..digit_end].parse::<usize>()
+                && idx < originals.len()
+            {
+                result.push_str(originals[idx]);
+                i = digit_end + 1; // skip past trailing '$'
+                continue;
+            }
+        }
+        // Not a placeholder — copy the character
+        let ch = input[i..].chars().next().unwrap();
+        result.push(ch);
+        i += ch.len_utf8();
     }
 
     result
@@ -346,14 +413,15 @@ fn normalize_type_core(type_str: &str) -> String {
 
 /// Convert `Array<T>` patterns anywhere in a type string to `T[]`.
 /// Runs iteratively (like the plugin's `while(changed)` loop) to handle nested arrays.
-fn convert_array_types_globally(type_str: &str) -> String {
-    let mut result = type_str.to_string();
-
+fn convert_array_types_globally(type_str: &str) -> Cow<'_, str> {
+    let Some(first) = replace_one_array_pattern(type_str) else {
+        return Cow::Borrowed(type_str);
+    };
+    let mut result = first;
     while let Some(new_result) = replace_one_array_pattern(&result) {
         result = new_result;
     }
-
-    result
+    Cow::Owned(result)
 }
 
 /// Find and replace one `Array<...>` pattern in the string.
@@ -465,13 +533,13 @@ fn split_at_top_level_pipe(type_str: &str) -> Vec<&str> {
 
 /// Normalize a type for return-like tags (returns, yields, throws).
 /// Handles `type=` → `type | undefined` (Closure optional return syntax).
-pub fn normalize_type_return(type_str: &str) -> String {
+pub fn normalize_type_return(type_str: &str) -> Cow<'_, str> {
     let trimmed = type_str.trim();
     if trimmed.ends_with('=') && !trimmed.ends_with("=>") && !contains_quotes(trimmed) {
         let inner = &trimmed[..trimmed.len() - 1];
         if !inner.is_empty() {
             let normalized = normalize_type(inner);
-            return format!("{normalized} | undefined");
+            return Cow::Owned(format!("{normalized} | undefined"));
         }
     }
     normalize_type(trimmed)
@@ -754,19 +822,19 @@ fn format_inline_object_type(type_str: &str) -> Cow<'_, str> {
     }
 
     // Single brace: format { key: value; ... }
-    Cow::Owned(format_object_body(trimmed))
+    format_object_body(trimmed)
 }
 
 /// Format an object type body `{ key: value; key2: value2 }` with proper spacing.
-fn format_object_body(obj_str: &str) -> String {
+fn format_object_body(obj_str: &str) -> Cow<'_, str> {
     let trimmed = obj_str.trim();
     if !trimmed.starts_with('{') || !trimmed.ends_with('}') {
-        return obj_str.to_string();
+        return Cow::Borrowed(obj_str);
     }
 
     let inner = trimmed[1..trimmed.len() - 1].trim();
     if inner.is_empty() {
-        return "{}".to_string();
+        return Cow::Borrowed("{}");
     }
 
     // Split at top-level `;` or `,`
@@ -794,11 +862,11 @@ fn format_object_body(obj_str: &str) -> String {
     }
 
     if fields.is_empty() {
-        return format!("{{ {inner} }}");
+        return Cow::Owned(format!("{{ {inner} }}"));
     }
 
     // Format each field: ensure space after `:` in key-value pairs
-    let formatted_fields: Vec<String> = fields
+    let formatted_fields: Vec<Cow<'_, str>> = fields
         .iter()
         .map(|field| {
             // Find the `:` separating key from value (skip `:` inside nested types)
@@ -811,18 +879,24 @@ fn format_object_body(obj_str: &str) -> String {
                     b':' if fd == 0 => {
                         let key = field[..i].trim();
                         let value = field[i + 1..].trim();
-                        return format!("{key}: {value}");
+                        return Cow::Owned(format!("{key}: {value}"));
                     }
                     _ => {}
                 }
             }
-            field.to_string()
+            Cow::Borrowed(*field)
         })
         .collect();
 
     // Use `;` delimiter for consistency
-    let body = formatted_fields.join("; ");
-    format!("{{ {body} }}")
+    let mut body = String::new();
+    for (i, f) in formatted_fields.iter().enumerate() {
+        if i > 0 {
+            body.push_str("; ");
+        }
+        body.push_str(f);
+    }
+    Cow::Owned(format!("{{ {body} }}"))
 }
 
 /// Normalize whitespace within a type expression:
@@ -830,109 +904,145 @@ fn format_object_body(obj_str: &str) -> String {
 /// - Add spaces around `|` and `&` operators if missing
 /// - Trim leading/trailing whitespace
 pub fn normalize_type_whitespace(type_str: &str) -> String {
-    // First pass: collapse whitespace, but preserve `// comments` with their newlines
+    // Single pass: collapse whitespace AND ensure spaces around `|`, `&`, `=>`
+    // while preserving `// comments` verbatim through newline.
     let trimmed = type_str.trim();
     let bytes = trimmed.as_bytes();
-    let blen = bytes.len();
-    let mut collapsed = String::with_capacity(blen);
+    let len = bytes.len();
+    let mut result = String::with_capacity(len + 8);
     let mut prev_was_space = false;
-    let mut ti = 0;
-    while ti < blen {
-        let b = bytes[ti];
-        // Detect `// comment` — preserve verbatim through newline
-        if b == b'/' && ti + 1 < blen && bytes[ti + 1] == b'/' {
-            while ti < blen && bytes[ti] != b'\n' {
-                let ch = trimmed[ti..].chars().next().unwrap();
-                collapsed.push(ch);
-                ti += ch.len_utf8();
-            }
-            if ti < blen && bytes[ti] == b'\n' {
-                collapsed.push('\n');
-                ti += 1;
-            }
-            prev_was_space = false;
-        } else if b.is_ascii_whitespace() {
-            if !prev_was_space {
-                collapsed.push(' ');
-                prev_was_space = true;
-            }
-            ti += 1;
-        } else if b.is_ascii() {
-            collapsed.push(b as char);
-            prev_was_space = false;
-            ti += 1;
-        } else {
-            let ch = trimmed[ti..].chars().next().unwrap();
-            if ch.is_whitespace() {
-                if !prev_was_space {
-                    collapsed.push(' ');
-                    prev_was_space = true;
-                }
-            } else {
-                collapsed.push(ch);
-                prev_was_space = false;
-            }
-            ti += ch.len_utf8();
-        }
-    }
-
-    // Second pass: ensure spaces around `|`, `&`, and `=>`
-    // Skip content inside `// comments`
-    let cbytes = collapsed.as_bytes();
-    let clen = cbytes.len();
-    let mut result = String::with_capacity(clen + 8);
     let mut i = 0;
-    while i < clen {
-        let b = cbytes[i];
-        // Skip `// comment` sections verbatim
-        if b == b'/' && i + 1 < clen && cbytes[i + 1] == b'/' {
-            while i < clen && cbytes[i] != b'\n' {
-                let ch = collapsed[i..].chars().next().unwrap();
+
+    while i < len {
+        let b = bytes[i];
+
+        // Detect `// comment` — preserve verbatim through newline
+        if b == b'/' && i + 1 < len && bytes[i + 1] == b'/' {
+            while i < len && bytes[i] != b'\n' {
+                let ch = trimmed[i..].chars().next().unwrap();
                 result.push(ch);
                 i += ch.len_utf8();
             }
-            if i < clen && cbytes[i] == b'\n' {
+            if i < len && bytes[i] == b'\n' {
                 result.push('\n');
                 i += 1;
             }
+            prev_was_space = false;
             continue;
         }
-        // Handle `=>` arrow
-        if b == b'=' && i + 1 < clen && cbytes[i + 1] == b'>' {
-            // Add space before if needed
-            if i > 0 && cbytes[i - 1] != b' ' {
+
+        // Handle `=>` arrow — ensure spaces around it
+        if b == b'=' && i + 1 < len && bytes[i + 1] == b'>' {
+            // Ensure space before: if last char emitted wasn't a space, add one
+            if !prev_was_space && !result.is_empty() {
                 result.push(' ');
             }
-            result.push('=');
-            result.push('>');
-            // Add space after if needed
-            if i + 2 < clen && cbytes[i + 2] != b' ' {
-                result.push(' ');
-            }
+            result.push_str("=>");
+            prev_was_space = false;
             i += 2;
+            // Ensure space after: peek at next non-whitespace-producing position
+            // We'll emit a space now; if the next char is whitespace, the
+            // collapsing logic will suppress the duplicate.
+            if i < len && !bytes[i].is_ascii_whitespace() {
+                result.push(' ');
+                prev_was_space = true;
+            }
             continue;
         }
+
+        // Handle `|` and `&` — ensure spaces around them
         if b == b'|' || b == b'&' {
-            // Add space before if needed
-            if i > 0 && cbytes[i - 1] != b' ' {
+            if !prev_was_space && !result.is_empty() {
                 result.push(' ');
             }
             result.push(b as char);
-            // Add space after if needed
-            if i + 1 < clen && cbytes[i + 1] != b' ' {
+            prev_was_space = false;
+            i += 1;
+            if i < len && !bytes[i].is_ascii_whitespace() {
                 result.push(' ');
+                prev_was_space = true;
+            }
+            continue;
+        }
+
+        // ASCII whitespace — collapse runs to a single space
+        if b.is_ascii_whitespace() {
+            if !prev_was_space {
+                result.push(' ');
+                prev_was_space = true;
             }
             i += 1;
-        } else if b.is_ascii() {
+            continue;
+        }
+
+        // Plain ASCII character
+        if b.is_ascii() {
             result.push(b as char);
+            prev_was_space = false;
             i += 1;
+            continue;
+        }
+
+        // Non-ASCII: could be whitespace (e.g. NBSP) or regular char
+        let ch = trimmed[i..].chars().next().unwrap();
+        if ch.is_whitespace() {
+            if !prev_was_space {
+                result.push(' ');
+                prev_was_space = true;
+            }
         } else {
-            let ch = collapsed[i..].chars().next().unwrap();
             result.push(ch);
-            i += ch.len_utf8();
+            prev_was_space = false;
+        }
+        i += ch.len_utf8();
+    }
+
+    result
+}
+
+/// Check if a type string is already normalized and needs no transformation.
+///
+/// Returns `true` for types composed entirely of identifier characters (alphanumeric,
+/// `_`, `$`, `.`), angle brackets (`<`, `>`), square brackets (`[`, `]`), commas, and
+/// single spaces — as long as none of the transformation triggers are present.
+///
+/// This covers common JSDoc types like `Object`, `Node`, `Estree.Node`, `CommentContext`,
+/// `Map<string, number>`, `string[]`, `Promise<void>`, etc.
+fn is_already_normalized(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+
+    // Quick rejection: any character that triggers a transformation phase.
+    // `?` → nullable, `'`/`"` → quotes, `{`/`}` → object types,
+    // `*` → any, `=` → optional/arrow, `&` → intersection spacing,
+    // `|` → union spacing, `!` → non-null assertion
+    let bytes = s.as_bytes();
+    for &b in bytes {
+        match b {
+            b'?' | b'\'' | b'"' | b'{' | b'}' | b'*' | b'=' | b'&' | b'|' | b'!' | b'\n' => {
+                return false;
+            }
+            _ => {}
         }
     }
-    result
+
+    // Reject `Array<` and `Array.<` which trigger array conversion
+    if s.contains("Array<") || s.contains("Array.<") {
+        return false;
+    }
+
+    // Reject `...` prefix (rest/spread)
+    if s.starts_with("...") {
+        return false;
+    }
+
+    // Reject consecutive spaces (would be collapsed by whitespace normalizer)
+    if s.contains("  ") {
+        return false;
+    }
+
+    true
 }
 
 #[cfg(test)]
