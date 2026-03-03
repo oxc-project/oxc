@@ -441,9 +441,14 @@ impl PreferConst {
             return false;
         }
 
-        // For variables without initializers, check if there's exactly one write-only reference
-        // (not read+write like `a = a + 1`)
-        // The write must be in the same scope and not inside any control flow or loops
+        // For variables without initializers, there must be exactly one write in total.
+        // Then, that single write must be write-only (not read+write like `a += 1`).
+        // The write must be in the same scope and, in general, not inside control flow or loops
+        // (with explicit exceptions handled below, such as variables declared in for-in/of bodies).
+        if write_count != 1 {
+            return false;
+        }
+
         let mut write_only_refs = references.iter().filter(|r| r.is_write() && !r.is_read());
 
         let Some(write_ref) = write_only_refs.next() else {
@@ -684,6 +689,8 @@ fn test() {
         ("var x = 0;", None),
         ("let x;", None),
         ("let x; { x = 0; } foo(x);", None),
+        ("let x; x = 0; x += 1;", None),
+        ("let x; x = 0; x = x + 1;", None),
         ("let x = 0; x = 1;", None),
         ("using resource = fn();", None), // { "sourceType": "module", "ecmaVersion": 2026, },
         ("await using resource = fn();", None), // { "sourceType": "module", "ecmaVersion": 2026, },
