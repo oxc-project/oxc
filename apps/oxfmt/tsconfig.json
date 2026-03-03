@@ -8,6 +8,6 @@
     "skipLibCheck": true,
     "noUnusedLocals": true
   },
-  "include": ["scripts", "src-js", "test/**/*.ts"],
+  "include": ["scripts", "conformance/*.ts", "src-js", "test/**/*.ts"],
   "exclude": ["test/**/fixtures"]
 }
