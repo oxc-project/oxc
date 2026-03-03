@@ -13,7 +13,7 @@ use crate::hir::{
     globals::Global,
     object_shape::{
         BUILT_IN_ARRAY_ID, BUILT_IN_FUNCTION_ID, BUILT_IN_JSX_ID, BUILT_IN_OBJECT_ID,
-        BUILT_IN_PROPS_ID, BUILT_IN_REF_VALUE_ID, BUILT_IN_USE_REF_ID,
+        BUILT_IN_PROPS_ID, BUILT_IN_REF_VALUE_ID, BUILT_IN_SET_STATE_ID, BUILT_IN_USE_REF_ID,
     },
     types::{
         FunctionType, ObjectType, PropType, PropertyLiteral, PropertyName, Type, TypeId, make_type,
@@ -570,26 +570,22 @@ fn generate(func: &HIRFunction) -> Vec<TypeEquation> {
     if func.fn_type == ReactFunctionType::Component {
         let mut params_iter = func.params.iter();
         // First param → BuiltInPropsId
-        if let Some(first_param) = params_iter.next() {
-            if let ReactiveParam::Place(p) = first_param {
-                equations.push(TypeEquation {
-                    left: p.identifier.type_.clone(),
-                    right: Type::Object(ObjectType {
-                        shape_id: Some(BUILT_IN_PROPS_ID.to_string()),
-                    }),
-                });
-            }
+        if let Some(first_param) = params_iter.next()
+            && let ReactiveParam::Place(p) = first_param
+        {
+            equations.push(TypeEquation {
+                left: p.identifier.type_.clone(),
+                right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_PROPS_ID.to_string()) }),
+            });
         }
         // Second param → BuiltInUseRefId (for forwardRef)
-        if let Some(second_param) = params_iter.next() {
-            if let ReactiveParam::Place(p) = second_param {
-                equations.push(TypeEquation {
-                    left: p.identifier.type_.clone(),
-                    right: Type::Object(ObjectType {
-                        shape_id: Some(BUILT_IN_USE_REF_ID.to_string()),
-                    }),
-                });
-            }
+        if let Some(second_param) = params_iter.next()
+            && let ReactiveParam::Place(p) = second_param
+        {
+            equations.push(TypeEquation {
+                left: p.identifier.type_.clone(),
+                right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) }),
+            });
         }
     }
 
@@ -723,13 +719,13 @@ fn generate_instruction_equations(
             // TS InferTypes.ts: for each property with a computed key, emit
             // a type equation constraining the key to Primitive.
             for prop in &obj.properties {
-                if let crate::hir::ObjectPatternProperty::Property(p) = prop {
-                    if let crate::hir::ObjectPropertyKey::Computed(key_place) = &p.key {
-                        equations.push(TypeEquation {
-                            left: key_place.identifier.type_.clone(),
-                            right: Type::Primitive,
-                        });
-                    }
+                if let crate::hir::ObjectPatternProperty::Property(p) = prop
+                    && let crate::hir::ObjectPropertyKey::Computed(key_place) = &p.key
+                {
+                    equations.push(TypeEquation {
+                        left: key_place.identifier.type_.clone(),
+                        right: Type::Primitive,
+                    });
                 }
             }
             equations.push(TypeEquation {
@@ -749,15 +745,15 @@ fn generate_instruction_equations(
                 right: Type::Object(ObjectType { shape_id: Some(BUILT_IN_JSX_ID.to_string()) }),
             });
             for attr in &v.props {
-                if let crate::hir::JsxAttribute::Attribute { name, place } = attr {
-                    if name == "ref" {
-                        equations.push(TypeEquation {
-                            left: place.identifier.type_.clone(),
-                            right: Type::Object(ObjectType {
-                                shape_id: Some(BUILT_IN_USE_REF_ID.to_string()),
-                            }),
-                        });
-                    }
+                if let crate::hir::JsxAttribute::Attribute { name, place } = attr
+                    && name == "ref"
+                {
+                    equations.push(TypeEquation {
+                        left: place.identifier.type_.clone(),
+                        right: Type::Object(ObjectType {
+                            shape_id: Some(BUILT_IN_USE_REF_ID.to_string()),
+                        }),
+                    });
                 }
             }
         }
@@ -870,10 +866,19 @@ fn generate_instruction_equations(
         InstructionValue::CallExpression(v) => {
             // The callee must be a function; its return type equals the lvalue type.
             let return_type = make_type();
+            // Port of TS InferTypes.ts enableTreatSetIdentifiersAsStateSetters:
+            // If enabled and the callee name starts with "set", treat it as a setState function.
+            let mut shape_id = None;
+            if env.config.enable_treat_set_identifiers_as_state_setters {
+                let name = get_name(names, v.callee.identifier.id);
+                if name.starts_with("set") {
+                    shape_id = Some(BUILT_IN_SET_STATE_ID.to_string());
+                }
+            }
             equations.push(TypeEquation {
                 left: v.callee.identifier.type_.clone(),
                 right: Type::Function(FunctionType {
-                    shape_id: None,
+                    shape_id,
                     return_type: Box::new(return_type.clone()),
                     is_constructor: false,
                 }),
@@ -1039,10 +1044,10 @@ fn is_ref_like_name(prop: &PropType) -> bool {
     if name.ends_with("Ref") && name.len() > 3 {
         let prefix = &name[..name.len() - 3];
         let mut chars = prefix.chars();
-        if let Some(first) = chars.next() {
-            if first.is_ascii_alphabetic() || first == '$' || first == '_' {
-                return chars.all(|c| c.is_ascii_alphanumeric() || c == '$' || c == '_');
-            }
+        if let Some(first) = chars.next()
+            && (first.is_ascii_alphabetic() || first == '$' || first == '_')
+        {
+            return chars.all(|c| c.is_ascii_alphanumeric() || c == '$' || c == '_');
         }
     }
     false
