@@ -640,13 +640,26 @@ fn are_equal_dependencies(
     for a_dep in a {
         let found = b.iter().any(|b_dep| {
             a_dep.identifier.declaration_id == b_dep.identifier.declaration_id
-                && a_dep.path == b_dep.path
+                && are_equal_paths(&a_dep.path, &b_dep.path)
         });
         if !found {
             return false;
         }
     }
     true
+}
+
+/// Compare two dependency paths for semantic equality.
+/// Matches TS `areEqualPaths` which only compares `property` and `optional`,
+/// ignoring source locations (`loc`).
+fn are_equal_paths(
+    a: &[crate::hir::DependencyPathEntry],
+    b: &[crate::hir::DependencyPathEntry],
+) -> bool {
+    a.len() == b.len()
+        && a.iter()
+            .zip(b.iter())
+            .all(|(a, b)| a.property == b.property && a.optional == b.optional)
 }
 
 // =============================================================================
