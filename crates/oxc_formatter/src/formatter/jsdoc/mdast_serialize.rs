@@ -1,11 +1,46 @@
 use cow_utils::CowUtils;
 use markdown::{Constructs, ParseOptions, mdast::Node, to_mdast};
 
-use super::wrap::{format_table_block, wrap_paragraph};
+use super::wrap::{format_table_block, wrap_paragraph, wrap_text};
 
 /// Placeholder prefix for protecting `{@link ...}` tokens from markdown parsing.
 /// Uses a format that `tokenize_words` won't split (no spaces, looks like a word).
 const PLACEHOLDER_PREFIX: &str = "\x00JDLNK";
+
+/// Check if the text contains markdown constructs that require full AST parsing.
+/// Returns `false` only for pure plain-text paragraphs that `wrap_text()` can
+/// handle directly (no lists, tables, code fences, headings, blockquotes, or
+/// inline markdown like emphasis/links).
+fn needs_mdast_parsing(text: &str) -> bool {
+    let bytes = text.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+    while i < len {
+        match bytes[i] {
+            // Emphasis, strikethrough, strong, list marker (*), links, images,
+            // footnotes, backslash escapes, HTML tags
+            b'_' | b'~' | b'*' | b'[' | b'\\' | b'<' => return true,
+            // At line start: heading (#), blockquote (>), list/thematic break (-),
+            // ordered list (digit), table (|)
+            b'#' | b'>' | b'-' | b'0'..=b'9' | b'|' if i == 0 || bytes[i - 1] == b'\n' => {
+                return true;
+            }
+            // Unordered list marker `+ ` at line start
+            b'+' if i == 0 || bytes[i - 1] == b'\n' => {
+                if i + 1 < len && bytes[i + 1] == b' ' {
+                    return true;
+                }
+            }
+            // Code fences
+            b'`' if i + 2 < len && bytes[i + 1] == b'`' && bytes[i + 2] == b'`' => {
+                return true;
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    false
+}
 
 /// Format a markdown description using mdast parsing.
 ///
@@ -16,6 +51,31 @@ const PLACEHOLDER_PREFIX: &str = "\x00JDLNK";
 pub fn format_description_mdast(text: &str, max_width: usize, capitalize: bool) -> Vec<String> {
     if text.trim().is_empty() {
         return Vec::new();
+    }
+
+    // Fast path: if text has no markdown constructs requiring AST parsing,
+    // use lightweight wrap_text() directly.
+    if !needs_mdast_parsing(text) {
+        let mut lines = Vec::new();
+        wrap_text(text, max_width, &mut lines);
+        if capitalize {
+            // Capitalize the first word of each paragraph (after blank lines),
+            // matching the mdast path's per-paragraph capitalization.
+            let mut at_paragraph_start = true;
+            for line in &mut lines {
+                if line.is_empty() {
+                    at_paragraph_start = true;
+                } else if at_paragraph_start {
+                    *line = super::normalize::capitalize_first(line).into_owned();
+                    at_paragraph_start = false;
+                }
+            }
+        }
+        // Remove trailing blank lines
+        while lines.last().is_some_and(String::is_empty) {
+            lines.pop();
+        }
+        return lines;
     }
 
     let text = normalize_legacy_ordered_list_markers(text);
@@ -74,6 +134,11 @@ struct SerializeOptions<'a> {
 /// fixtures into standard ordered-list syntax so markdown parsing can treat them
 /// as list items.
 fn normalize_legacy_ordered_list_markers(text: &str) -> String {
+    // Fast path: if no ASCII digit in the text, no legacy markers possible
+    if !text.bytes().any(|b| b.is_ascii_digit()) {
+        return text.to_string();
+    }
+
     let mut result = String::with_capacity(text.len());
 
     for line in text.lines() {
@@ -112,6 +177,11 @@ fn normalize_legacy_ordered_list_markers(text: &str) -> String {
 /// with numbered placeholders so the markdown parser (especially GFM autolink) doesn't
 /// mangle URLs inside them.
 fn protect_jsdoc_links(text: &str) -> (String, Vec<String>) {
+    // Fast path: if no `{@` in the text, nothing to protect
+    if !text.contains("{@") {
+        return (text.to_string(), Vec::new());
+    }
+
     let mut result = String::with_capacity(text.len());
     let mut placeholders = Vec::new();
     let bytes = text.as_bytes();
