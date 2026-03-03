@@ -18,7 +18,7 @@ import {
   getTokensBetween,
   getTokenOrCommentBefore,
   getTokenOrCommentAfter,
-} from "../src-js/plugins/tokens.ts";
+} from "../src-js/plugins/tokens_methods.ts";
 import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";
 import { buffers } from "../src-js/plugins/lint.ts";
 import {
