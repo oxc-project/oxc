@@ -2223,7 +2223,11 @@ fn filter_mutation_effects(
 ///   or dropped entirely if the source is global/primitive.
 /// - `Assign`: downgraded to `ImmutableCapture` if the source is frozen.
 /// - `ImmutableCapture`: dropped if the source is global/primitive.
-/// - Other effects (`Create`, `Freeze`, `Render`, etc.) pass through unchanged.
+/// - `Freeze`: only kept if the value is Mutable, Context, or MaybeFrozen.
+/// - Other effects (`Create`, `Render`, etc.) pass through unchanged.
+///
+/// NOTE: For built-in hook signatures, use `filter_freeze_effects` instead,
+/// which only filters `Freeze` effects without altering data flow effects.
 fn filter_substituted_effects(
     state: &InferenceState,
     raw_effects: Vec<AliasingEffect>,
@@ -2385,6 +2389,45 @@ fn filter_substituted_effects(
             }
 
             // All other effects pass through unchanged.
+            _ => {
+                filtered.push(effect);
+            }
+        }
+    }
+
+    filtered
+}
+
+/// Filter only `Freeze` effects from built-in hook aliasing signatures.
+///
+/// Port of TS `applyEffect` for `Freeze` (InferMutationAliasingEffects.ts lines 624-629):
+/// `state.freeze()` returns true only if the value was Mutable, Context, or MaybeFrozen.
+/// If the value is already Frozen, Global, or Primitive, the Freeze effect is dropped.
+///
+/// This is used for built-in hook signatures (e.g. `useEffect`, `useMemo`) where
+/// we want to filter Freeze effects without altering the data flow effects (Capture,
+/// Alias, etc.) that the signature generates. For local function expressions, use
+/// `filter_substituted_effects` which also filters data flow effects.
+fn filter_freeze_effects(
+    state: &InferenceState,
+    raw_effects: Vec<AliasingEffect>,
+) -> Vec<AliasingEffect> {
+    let mut filtered = Vec::with_capacity(raw_effects.len());
+
+    for effect in raw_effects {
+        match &effect {
+            AliasingEffect::Freeze { value, .. } => {
+                let keep = match state.get(value) {
+                    Some(av) => matches!(
+                        av.kind,
+                        ValueKind::Mutable | ValueKind::Context | ValueKind::MaybeFrozen
+                    ),
+                    None => true, // Unknown: conservatively keep
+                };
+                if keep {
+                    filtered.push(effect);
+                }
+            }
             _ => {
                 filtered.push(effect);
             }

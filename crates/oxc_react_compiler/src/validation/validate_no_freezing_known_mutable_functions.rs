@@ -83,10 +83,14 @@ pub fn validate_no_freezing_known_mutable_functions(
                 }
                 InstructionValue::FunctionExpression(v) => {
                     if let Some(ref aliasing_effects) = v.lowered_func.func.aliasing_effects {
-                        // Only include context variables that are actively captured (Effect::Capture).
-                        // Variables demoted to Effect::Read by inferMutationAliasingEffects
-                        // (because they are global/frozen in the outer scope) should not
-                        // be considered mutable context captures.
+                        // Only include context variables that are actively captured
+                        // (Effect::Capture). Variables demoted to Effect::Read by
+                        // inferMutationAliasingEffects (because they are global/frozen
+                        // in the outer scope) should not be considered mutable captures.
+                        // NOTE: The TS does NOT filter by effect here (line 98), but
+                        // in the TS the inner function's context effects are computed
+                        // differently. We filter to avoid false positives where
+                        // global/frozen variables are marked as mutable captures.
                         let context: rustc_hash::FxHashSet<IdentifierId> = v
                             .lowered_func
                             .func
