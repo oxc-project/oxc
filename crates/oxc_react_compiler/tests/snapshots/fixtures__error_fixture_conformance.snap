@@ -2,11 +2,11 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 224/275 (81.5%)
+Error fixture conformance: 228/275 (82.9%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 51
+  unexpected_success: 47
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -52,10 +52,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.todo-valid-functiondecl-hoisting.tsx
   [unexpected_success] error.validate-object-entries-mutation.js
   [unexpected_success] error.validate-object-values-mutation.js
-  [unexpected_success] exhaustive-deps/error.exhaustive-deps-effect-events.js
-  [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps-extra-only.js
-  [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps-missing-only.js
-  [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps.js
   [unexpected_success] new-mutability/error.invalid-useCallback-captures-reassigned-context.js
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js
   [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-infer-mutate-deps.ts
