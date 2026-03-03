@@ -1397,6 +1397,7 @@ fn effects_from_signature(
 ///      d. For each other operand: Capture(from=operand, into=other) -- skip self by ref identity
 fn emit_conservative_call_effects(
     effects: &mut Vec<AliasingEffect>,
+    state: &InferenceState,
     lvalue: &Place,
     receiver: &Place,
     function: &Place,
@@ -1427,14 +1428,21 @@ fn emit_conservative_call_effects(
 
     let function_ptr = function as *const Place;
     for (idx, &(self_ptr, operand, _is_fn_entry)) in operands.iter().enumerate() {
+        // TS applyEffect filters MutateTransitiveConditionally through state.mutate(),
+        // which returns 'none' for non-Mutable/Context values (Primitive, Frozen, Global).
+        // We replicate that check here to avoid spurious mutable range extensions.
+        let is_conditionally_mutable = match state.get(operand) {
+            Some(av) => matches!(av.kind, ValueKind::Mutable | ValueKind::Context),
+            None => true, // Unknown: conservatively assume mutable
+        };
         // TS: if (operand !== effect.function || effect.mutatesFunction)
         // In TS, `operand !== effect.function` compares by reference identity.
         let is_same_as_function = std::ptr::eq(self_ptr, function_ptr);
-        if !is_same_as_function || mutates_function {
+        if (!is_same_as_function || mutates_function) && is_conditionally_mutable {
             effects.push(AliasingEffect::MutateTransitiveConditionally { value: operand.clone() });
         }
         // TS: conditionallyMutateIterator for Spread args (idx >= 2 = actual call args)
-        if idx >= 2 {
+        if idx >= 2 && is_conditionally_mutable {
             if let CallArg::Spread(_) = &args[idx - 2] {
                 if !is_array_or_set_or_map_type(&operand.identifier.type_) {
                     effects.push(AliasingEffect::MutateTransitiveConditionally {
@@ -2238,6 +2246,7 @@ fn compute_instruction_effects(
             // TS: receiver=callee, function=callee, mutatesFunction=true
             emit_conservative_call_effects(
                 &mut effects,
+                state,
                 lvalue,
                 &v.callee, // receiver = callee
                 &v.callee, // function = callee
@@ -2321,6 +2330,7 @@ fn compute_instruction_effects(
             // TS: receiver=receiver, function=property, mutatesFunction=false
             emit_conservative_call_effects(
                 &mut effects,
+                state,
                 lvalue,
                 &v.receiver, // receiver
                 &v.property, // function = property
@@ -2355,6 +2365,7 @@ fn compute_instruction_effects(
             // TS: receiver=callee, function=callee, mutatesFunction=false
             emit_conservative_call_effects(
                 &mut effects,
+                state,
                 lvalue,
                 &v.callee, // receiver = callee
                 &v.callee, // function = callee
