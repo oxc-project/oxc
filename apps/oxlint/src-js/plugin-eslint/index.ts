@@ -1,4 +1,4 @@
-import rules from "../generated/plugin-eslint/index.js";
+import rules from "../generated/plugin-eslint/index.ts";
 
 export default {
   meta: {

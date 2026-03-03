@@ -2,9 +2,9 @@ import fs from "node:fs";
 import { join as pathJoin, relative as pathRelative, dirname } from "node:path";
 import { defineConfig } from "tsdown";
 import { parseSync, Visitor } from "oxc-parser";
+import ruleNames from "./src-js/generated/plugin-eslint/rule_names.ts";
 
 import type { Plugin } from "rolldown";
-import ruleNames from "./src-js/generated/plugin-eslint/rule_names.ts";
 
 const { env } = process;
 const isEnabled = (env: string | undefined) => env === "true" || env === "1";
@@ -66,9 +66,9 @@ const pluginsPkgConfig = defineConfig({
 
 // Build entries for `oxlint-plugin-eslint` rule files.
 // Each rule is a separate CJS file, lazy-loaded on demand.
-const pluginEslintRulesEntry: Record<string, string> = {};
+const pluginEslintRulesEntries: Record<string, string> = {};
 for (const ruleName of ruleNames) {
-  pluginEslintRulesEntry[`rules/${ruleName}`] =
+  pluginEslintRulesEntries[`rules/${ruleName}`] =
     `src-js/generated/plugin-eslint/rules/${ruleName}.cjs`;
 }
 
@@ -80,8 +80,7 @@ const pluginEslintPkgConfig = defineConfig({
   // `build.ts` deletes the directory before TSDown runs.
   // This allows generating the ESM and CommonJS builds in the same directory.
   clean: false,
-  target: "node12",
-  external: ["eslint", /^eslint\//],
+  dts: false,
 });
 
 // Plugins.
@@ -125,26 +124,16 @@ export default defineConfig([
     dts: false,
   },
 
-  // `oxlint-plugin-eslint` package - main entry ESM.
+  // `oxlint-plugin-eslint` package
   {
     ...pluginEslintPkgConfig,
     entry: { index: "src-js/plugin-eslint/index.ts" },
     format: "esm",
-    dts: true,
   },
-  // `oxlint-plugin-eslint` package - main entry CJS.
   {
     ...pluginEslintPkgConfig,
-    entry: { index: "src-js/plugin-eslint/index.ts" },
+    entry: pluginEslintRulesEntries,
     format: "commonjs",
-    dts: false,
-  },
-  // `oxlint-plugin-eslint` package - individual rule files CJS.
-  {
-    ...pluginEslintPkgConfig,
-    entry: pluginEslintRulesEntry,
-    format: "commonjs",
-    dts: false,
   },
 ]);
 

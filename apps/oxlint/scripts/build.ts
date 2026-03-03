@@ -8,8 +8,7 @@ const oxlintDirPath = join(import.meta.dirname, ".."),
   srcDirPath = join(oxlintDirPath, "src-js"),
   distDirPath = join(oxlintDirPath, "dist"),
   distPkgPluginsDirPath = join(oxlintDirPath, "dist-pkg-plugins"),
-  distPkgPluginEslintDirPath = join(oxlintDirPath, "dist-pkg-plugin-eslint"),
-  generatedPluginEslintDirPath = join(oxlintDirPath, "src-js", "generated", "plugin-eslint");
+  distPkgPluginEslintDirPath = join(oxlintDirPath, "dist-pkg-plugin-eslint");
 
 // Delete `dist-pkg-plugins` directory
 console.log("Deleting `dist-pkg-plugins` directory...");
@@ -33,10 +32,6 @@ execSync("pnpm tsdown", { stdio: "inherit", cwd: oxlintDirPath });
 // Delete `cli.d.ts`
 console.log("Deleting cli.d.ts...");
 rmSync(join(distDirPath, "cli.d.ts"));
-
-// Delete generated `plugin-eslint` directory (no longer needed after build)
-console.log("Deleting generated `plugin-eslint` directory...");
-rmSync(generatedPluginEslintDirPath, { recursive: true, force: true });
 
 // Copy native `.node` files from `src-js`
 console.log("Copying `.node` files...");
