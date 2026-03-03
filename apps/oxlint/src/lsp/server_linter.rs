@@ -482,15 +482,21 @@ impl Tool for ServerLinter {
         };
         let mut watchers = match options.config_path.as_deref() {
             Some("") | None => {
-                // Watch both JSON and TS config files
-                vec!["**/.oxlintrc.json".to_string(), "**/oxlint.config.ts".to_string()]
+                // Watch both JSON/JSONC and TS config files
+                vec![
+                    "**/.oxlintrc.json".to_string(),
+                    "**/.oxlintrc.jsonc".to_string(),
+                    "**/oxlint.config.ts".to_string(),
+                ]
             }
             Some(v) => vec![v.to_string()],
         };
 
         for path in &self.extended_paths {
             // ignore .oxlintrc.json and oxlint.config.ts files when using nested configs
-            if (path.ends_with(".oxlintrc.json") || path.ends_with("oxlint.config.ts"))
+            if (path.ends_with(".oxlintrc.json")
+                || path.ends_with(".oxlintrc.jsonc")
+                || path.ends_with("oxlint.config.ts"))
                 && options.use_nested_configs()
             {
                 continue;
@@ -1034,9 +1040,10 @@ mod test_watchers {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
+            assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
         }
 
         #[test]
@@ -1049,9 +1056,10 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
+            assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
         }
 
         #[test]
@@ -1073,11 +1081,12 @@ mod test_watchers {
             let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
-            // The `.oxlintrc.json` extends `./lint.json` -> 3 watchers (json, ts, lint.json)
-            assert_eq!(patterns.len(), 3);
+            // The `.oxlintrc.json` extends `./lint.json` -> 4 watchers (json, jsonc, ts, lint.json)
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[2], "lint.json".to_string());
+            assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
+            assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], "lint.json".to_string());
         }
 
         #[test]
@@ -1105,10 +1114,11 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 3);
+            assert_eq!(patterns.len(), 4);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
-            assert_eq!(patterns[2], "**/tsconfig*.json".to_string());
+            assert_eq!(patterns[1], "**/.oxlintrc.jsonc".to_string());
+            assert_eq!(patterns[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[3], "**/tsconfig*.json".to_string());
         }
     }
 
@@ -1159,10 +1169,11 @@ mod test_watchers {
                         "typeAware": true
                     }));
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 3);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 4);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/oxlint.config.ts".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/tsconfig*.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/.oxlintrc.jsonc".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/oxlint.config.ts".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[3], "**/tsconfig*.json".to_string());
         }
     }
 }

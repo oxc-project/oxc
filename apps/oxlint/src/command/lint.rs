@@ -114,12 +114,12 @@ impl LintCommand {
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
     /// Oxlint configuration file
-    ///  * `.json` config files are supported in all runtimes
+    ///  * `.json` and `.jsonc` config files are supported in all runtimes
     ///  * JavaScript/TypeScript config files are experimental and require running via Node.js
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
     ///
-    /// If not provided, Oxlint will look for a `.oxlintrc.json` or `oxlint.config.ts` file in the current working directory.
+    /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` file in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 

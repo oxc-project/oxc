@@ -6,7 +6,7 @@ Usage: [-c=<./.oxlintrc.json>] [PATH]...
 
 Basic Configuration
     -c, --config=<./.oxlintrc.json>  Oxlint configuration file
-                              * `.json` config files are supported in all runtimes
+                              * `.json` and `.jsonc` config files are supported in all runtimes
                               * JavaScript/TypeScript config files are experimental and require
                               running via Node.js
                               * you can use comments in configuration files.
