@@ -662,9 +662,7 @@ fn are_equal_paths(
     b: &[crate::hir::DependencyPathEntry],
 ) -> bool {
     a.len() == b.len()
-        && a.iter()
-            .zip(b.iter())
-            .all(|(a, b)| a.property == b.property && a.optional == b.optional)
+        && a.iter().zip(b.iter()).all(|(a, b)| a.property == b.property && a.optional == b.optional)
 }
 
 // =============================================================================
