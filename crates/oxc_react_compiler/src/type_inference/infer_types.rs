@@ -270,11 +270,19 @@ impl ResolvedTypes {
 }
 
 /// Run type inference on the given function.
-pub fn infer_types(func: &mut HIRFunction) {
+pub fn infer_types(
+    func: &mut HIRFunction,
+) -> Result<(), crate::compiler_error::CompilerError> {
     let mut unifier = Unifier::new(&func.env);
 
     // Generate type equations
-    let equations = generate(func);
+    let (equations, errors) = generate(func);
+
+    // If there are type-provider validation errors, return the first one.
+    if let Some(error) = errors.into_iter().next() {
+        return Err(error);
+    }
+
     for eq in equations {
         unifier.unify(eq.left, eq.right);
     }
@@ -284,6 +292,7 @@ pub fn infer_types(func: &mut HIRFunction) {
 
     // Apply resolved types back to the function
     apply(func, &resolved);
+    Ok(())
 }
 
 fn apply(func: &mut HIRFunction, unifier: &ResolvedTypes) {
@@ -560,8 +569,11 @@ fn apply_to_instruction_value(value: &mut InstructionValue, unifier: &ResolvedTy
     }
 }
 
-fn generate(func: &HIRFunction) -> Vec<TypeEquation> {
+fn generate(
+    func: &HIRFunction,
+) -> (Vec<TypeEquation>, Vec<crate::compiler_error::CompilerError>) {
     let mut equations = Vec::new();
+    let mut errors = Vec::new();
 
     // Match TS InferTypes.ts: for Component functions, type the first param as
     // Props and the second param as BuiltInUseRefId (for forwardRef components).
@@ -632,11 +644,17 @@ fn generate(func: &HIRFunction) -> Vec<TypeEquation> {
         }
 
         for instr in &block.instructions {
-            generate_instruction_equations(instr, &func.env, &mut names, &mut equations);
+            generate_instruction_equations(
+                instr,
+                &func.env,
+                &mut names,
+                &mut equations,
+                &mut errors,
+            );
         }
     }
 
-    equations
+    (equations, errors)
 }
 
 /// Port of TS `setName()`: store the original name of an identifier in the names map.
@@ -662,6 +680,7 @@ fn generate_instruction_equations(
     env: &Environment,
     names: &mut FxHashMap<IdentifierId, String>,
     equations: &mut Vec<TypeEquation>,
+    errors: &mut Vec<crate::compiler_error::CompilerError>,
 ) {
     let lvalue_type = instr.lvalue.identifier.type_.clone();
 
@@ -770,8 +789,9 @@ fn generate_instruction_equations(
             // inside inner functions (e.g. LoadContext setState → lvalue gets the
             // TFunction<BuiltInSetState> type, enabling the correct aliasing signature
             // to be used in InferMutationAliasingEffects instead of the conservative fallback).
-            let inner_eqs = generate(&v.lowered_func.func);
+            let (inner_eqs, inner_errors) = generate(&v.lowered_func.func);
             equations.extend(inner_eqs);
+            errors.extend(inner_errors);
             equations.push(TypeEquation {
                 left: lvalue_type,
                 right: Type::Function(FunctionType {
@@ -782,8 +802,9 @@ fn generate_instruction_equations(
             });
         }
         InstructionValue::ObjectMethod(v) => {
-            let inner_eqs = generate(&v.lowered_func.func);
+            let (inner_eqs, inner_errors) = generate(&v.lowered_func.func);
             equations.extend(inner_eqs);
+            errors.extend(inner_errors);
             equations.push(TypeEquation {
                 left: lvalue_type,
                 right: Type::Function(FunctionType {
@@ -804,9 +825,17 @@ fn generate_instruction_equations(
         }
         InstructionValue::LoadGlobal(load) => {
             // Use the environment to resolve the type of this global
-            if let Some(global) = env.get_global_declaration(&load.binding) {
-                let global_type = Global::to_type(&global);
-                equations.push(TypeEquation { left: lvalue_type, right: global_type });
+            match env.get_global_declaration(&load.binding, load.loc) {
+                Ok(Some(global)) => {
+                    let global_type = Global::to_type(&global);
+                    equations.push(TypeEquation { left: lvalue_type, right: global_type });
+                }
+                Err(e) => {
+                    // Propagate type-provider validation errors.
+                    // Store the error for later reporting by the caller.
+                    errors.push(e);
+                }
+                Ok(None) => {}
             }
         }
         InstructionValue::PropertyLoad(load) => {
