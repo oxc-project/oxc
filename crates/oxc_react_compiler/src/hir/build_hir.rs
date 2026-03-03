@@ -507,6 +507,23 @@ fn lower_object_destructuring(
 
     for prop in &obj_pat.properties {
         let prop_loc = span_to_loc(prop.span);
+
+        // Port of BuildHIR.ts line 3847-3854: computed properties in ObjectPattern are unsupported
+        if prop.computed {
+            builder.errors.push_error_detail(
+                crate::compiler_error::CompilerErrorDetail::new(
+                    crate::compiler_error::CompilerErrorDetailOptions {
+                        category: crate::compiler_error::ErrorCategory::Todo,
+                        reason: "(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern".to_string(),
+                        description: None,
+                        loc: Some(prop_loc.into()),
+                        suggestions: None,
+                    },
+                ),
+            );
+            continue;
+        }
+
         let key = lower_binding_property_key(builder, &prop.key)?;
 
         // Get the value pattern
@@ -2701,8 +2718,7 @@ pub fn lower_block_statement(
     for stmt in stmts {
         // Scan the statement for references to hoistable identifiers in inner functions.
         let mut will_hoist: Vec<String> = Vec::new();
-        let fn_depth_start =
-            if matches!(stmt, LowerableStatement::FunctionDeclaration(_)) { 1 } else { 0 };
+        let fn_depth_start = u32::from(matches!(stmt, LowerableStatement::FunctionDeclaration(_)));
         scan_for_hoistable_refs(stmt, fn_depth_start, &hoistable, &mut will_hoist);
 
         // Emit DeclareContext for each hoisted identifier.
@@ -3080,12 +3096,11 @@ fn scan_expr_for_hoistable_refs(
             // before the declaration at the same scope level need hoisting too.
             // See CodegenReactiveFunction.ts BuildHIR line 430:
             //   `(fnDepth > 0 || binding.kind === 'hoisted')`
-            if let Some(binding) = hoistable.get(ident.name.as_str()) {
-                if (fn_depth > 0 || binding.is_function_decl)
-                    && !will_hoist.contains(&ident.name.to_string())
-                {
-                    will_hoist.push(ident.name.to_string());
-                }
+            if let Some(binding) = hoistable.get(ident.name.as_str())
+                && (fn_depth > 0 || binding.is_function_decl)
+                && !will_hoist.contains(&ident.name.to_string())
+            {
+                will_hoist.push(ident.name.to_string());
             }
         }
         ast::Expression::AssignmentExpression(assign) => {
@@ -3355,12 +3370,11 @@ fn scan_assignment_target_for_hoistable_refs(
 ) {
     match target {
         ast::AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-            if let Some(binding) = hoistable.get(ident.name.as_str()) {
-                if (fn_depth > 0 || binding.is_function_decl)
-                    && !will_hoist.contains(&ident.name.to_string())
-                {
-                    will_hoist.push(ident.name.to_string());
-                }
+            if let Some(binding) = hoistable.get(ident.name.as_str())
+                && (fn_depth > 0 || binding.is_function_decl)
+                && !will_hoist.contains(&ident.name.to_string())
+            {
+                will_hoist.push(ident.name.to_string());
             }
         }
         ast::AssignmentTarget::StaticMemberExpression(member) => {
@@ -3381,12 +3395,11 @@ fn scan_assignment_target_for_hoistable_refs(
             for prop in &obj.properties {
                 match prop {
                     ast::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
-                        if let Some(binding) = hoistable.get(ident.binding.name.as_str()) {
-                            if (fn_depth > 0 || binding.is_function_decl)
-                                && !will_hoist.contains(&ident.binding.name.to_string())
-                            {
-                                will_hoist.push(ident.binding.name.to_string());
-                            }
+                        if let Some(binding) = hoistable.get(ident.binding.name.as_str())
+                            && (fn_depth > 0 || binding.is_function_decl)
+                            && !will_hoist.contains(&ident.binding.name.to_string())
+                        {
+                            will_hoist.push(ident.binding.name.to_string());
                         }
                     }
                     ast::AssignmentTargetProperty::AssignmentTargetPropertyProperty(prop) => {
@@ -3441,12 +3454,11 @@ fn scan_simple_assignment_target_for_hoistable_refs(
 ) {
     match target {
         ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-            if let Some(binding) = hoistable.get(ident.name.as_str()) {
-                if (fn_depth > 0 || binding.is_function_decl)
-                    && !will_hoist.contains(&ident.name.to_string())
-                {
-                    will_hoist.push(ident.name.to_string());
-                }
+            if let Some(binding) = hoistable.get(ident.name.as_str())
+                && (fn_depth > 0 || binding.is_function_decl)
+                && !will_hoist.contains(&ident.name.to_string())
+            {
+                will_hoist.push(ident.name.to_string());
             }
         }
         ast::SimpleAssignmentTarget::StaticMemberExpression(member) => {
@@ -3468,29 +3480,28 @@ fn scan_jsx_element_for_hoistable_refs(
     will_hoist: &mut Vec<String>,
 ) {
     // Scan opening element name and attributes
-    if let ast::JSXElementName::IdentifierReference(ident) = &element.opening_element.name {
-        if fn_depth > 0
-            && hoistable.contains_key(ident.name.as_str())
-            && !will_hoist.contains(&ident.name.to_string())
-        {
-            will_hoist.push(ident.name.to_string());
-        }
+    if let ast::JSXElementName::IdentifierReference(ident) = &element.opening_element.name
+        && fn_depth > 0
+        && hoistable.contains_key(ident.name.as_str())
+        && !will_hoist.contains(&ident.name.to_string())
+    {
+        will_hoist.push(ident.name.to_string());
     }
     for attr in &element.opening_element.attributes {
         match attr {
             ast::JSXAttributeItem::Attribute(attr) => {
-                if let Some(value) = &attr.value {
-                    if let ast::JSXAttributeValue::ExpressionContainer(container) = value {
-                        if let ast::JSXExpression::EmptyExpression(_) = &container.expression {
-                            // skip
-                        } else {
-                            scan_expr_for_hoistable_refs(
-                                container.expression.to_expression(),
-                                fn_depth,
-                                hoistable,
-                                will_hoist,
-                            );
-                        }
+                if let Some(value) = &attr.value
+                    && let ast::JSXAttributeValue::ExpressionContainer(container) = value
+                {
+                    if let ast::JSXExpression::EmptyExpression(_) = &container.expression {
+                        // skip
+                    } else {
+                        scan_expr_for_hoistable_refs(
+                            container.expression.to_expression(),
+                            fn_depth,
+                            hoistable,
+                            will_hoist,
+                        );
                     }
                 }
             }
@@ -3716,6 +3727,20 @@ fn lower_statement_with_label(
             let loc = span_to_loc(throw.span);
             let lowerable = convert_expression(&throw.argument);
             let value = lower_expression(builder, &lowerable)?.place;
+            // Port of BuildHIR.ts line 272-283: throw inside try/catch is unsupported
+            if builder.resolve_throw_handler().is_some() {
+                builder.errors.push_error_detail(
+                    crate::compiler_error::CompilerErrorDetail::new(
+                        crate::compiler_error::CompilerErrorDetailOptions {
+                            category: crate::compiler_error::ErrorCategory::Todo,
+                            reason: "(BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch".to_string(),
+                            description: None,
+                            loc: Some(loc.into()),
+                            suggestions: None,
+                        },
+                    ),
+                );
+            }
             builder.terminate(
                 Terminal::Throw(crate::hir::ThrowTerminal { id: InstructionId(0), value, loc }),
                 Some(BlockKind::Block),
@@ -3870,23 +3895,20 @@ fn lower_statement_with_label(
             // Init block
             let init_block = builder.enter(BlockKind::Loop, |builder, _block_id| {
                 if let Some(init) = &for_stmt.init {
-                    match init {
-                        ast::ForStatementInit::VariableDeclaration(decl) => {
-                            let init_stmt = LowerableStatement::VariableDeclaration(decl);
-                            lower_statement_with_label(builder, &init_stmt, None).ok();
-                        }
-                        _ => {
-                            // Non-variable init (expression): lower as expression placeholder
-                            let lvalue =
-                                create_temporary_place(builder.environment_mut(), GENERATED_SOURCE);
-                            builder.push(Instruction {
-                                id: InstructionId(0),
-                                lvalue,
-                                value: lower_undefined(GENERATED_SOURCE),
-                                effects: None,
-                                loc: GENERATED_SOURCE,
-                            });
-                        }
+                    if let ast::ForStatementInit::VariableDeclaration(decl) = init {
+                        let init_stmt = LowerableStatement::VariableDeclaration(decl);
+                        lower_statement_with_label(builder, &init_stmt, None).ok();
+                    } else {
+                        // Non-variable init (expression): lower as expression placeholder
+                        let lvalue =
+                            create_temporary_place(builder.environment_mut(), GENERATED_SOURCE);
+                        builder.push(Instruction {
+                            id: InstructionId(0),
+                            lvalue,
+                            value: lower_undefined(GENERATED_SOURCE),
+                            effects: None,
+                            loc: GENERATED_SOURCE,
+                        });
                     }
                 }
                 Terminal::Goto(GotoTerminal {
@@ -4107,6 +4129,23 @@ fn lower_statement_with_label(
         // =====================================================================
         LowerableStatement::ForOfStatement(for_of) => {
             let loc = span_to_loc(for_of.span);
+
+            // Port of BuildHIR.ts line 1011-1018: for-await-of is unsupported
+            if for_of.r#await {
+                builder.errors.push_error_detail(
+                    crate::compiler_error::CompilerErrorDetail::new(
+                        crate::compiler_error::CompilerErrorDetailOptions {
+                            category: crate::compiler_error::ErrorCategory::Todo,
+                            reason: "(BuildHIR::lowerStatement) Handle for-await loops".to_string(),
+                            description: None,
+                            loc: Some(loc.into()),
+                            suggestions: None,
+                        },
+                    ),
+                );
+                return Ok(());
+            }
+
             let continuation_block = builder.reserve(BlockKind::Block);
             let continuation_id = continuation_block.id;
             let init_block = builder.reserve(BlockKind::Loop);
@@ -4187,8 +4226,8 @@ fn lower_statement_with_label(
                 id: InstructionId(0),
                 lvalue: advance_iterator.clone(),
                 value: InstructionValue::IteratorNext(IteratorNext {
-                    iterator: iterator.clone(),
-                    collection: value.clone(),
+                    iterator,
+                    collection: value,
                     loc: left_loc,
                 }),
                 effects: None,
@@ -4267,10 +4306,7 @@ fn lower_statement_with_label(
             builder.push(Instruction {
                 id: InstructionId(0),
                 lvalue: next_property.clone(),
-                value: InstructionValue::NextPropertyOf(NextPropertyOf {
-                    value: value.clone(),
-                    loc: left_loc,
-                }),
+                value: InstructionValue::NextPropertyOf(NextPropertyOf { value, loc: left_loc }),
                 effects: None,
                 loc: left_loc,
             });
@@ -4429,10 +4465,25 @@ fn lower_statement_with_label(
         // =====================================================================
         LowerableStatement::VariableDeclaration(var_decl) => {
             let loc = span_to_loc(var_decl.span);
+            // Port of BuildHIR.ts line 824-831: `var` declarations are unsupported
+            if var_decl.kind == ast::VariableDeclarationKind::Var {
+                builder.errors.push_error_detail(
+                    crate::compiler_error::CompilerErrorDetail::new(
+                        crate::compiler_error::CompilerErrorDetailOptions {
+                            category: crate::compiler_error::ErrorCategory::Todo,
+                            reason: "(BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration".to_string(),
+                            description: None,
+                            loc: Some(loc.into()),
+                            suggestions: None,
+                        },
+                    ),
+                );
+                return Ok(());
+            }
             let kind = match var_decl.kind {
                 ast::VariableDeclarationKind::Let => InstructionKind::Let,
                 ast::VariableDeclarationKind::Const => InstructionKind::Const,
-                ast::VariableDeclarationKind::Var => InstructionKind::Let, // treat var as let
+                ast::VariableDeclarationKind::Var => InstructionKind::Let,
                 ast::VariableDeclarationKind::Using | ast::VariableDeclarationKind::AwaitUsing => {
                     InstructionKind::Const
                 }
@@ -4691,7 +4742,38 @@ fn lower_statement_with_label(
                         ast::BindingPattern::BindingIdentifier(ident) => {
                             Some((ident.name.as_str(), span_to_loc(ident.span), ident.span))
                         }
-                        _ => None,
+                        // Destructured catch params (e.g. `catch ({status})`) are not
+                        // supported by the TS compiler. The TS BuildHIR tries to resolve
+                        // each destructured identifier as a binding but fails, emitting:
+                        //   "(BuildHIR::lowerAssignment) Could not find binding for declaration."
+                        // We match that invariant error here.
+                        ast::BindingPattern::ObjectPattern(pat) => {
+                            let param_loc = span_to_loc(pat.span);
+                            builder.errors.merge(CompilerError::invariant(
+                                "(BuildHIR::lowerAssignment) Could not find binding for declaration.",
+                                None,
+                                param_loc,
+                            ));
+                            None
+                        }
+                        ast::BindingPattern::ArrayPattern(pat) => {
+                            let param_loc = span_to_loc(pat.span);
+                            builder.errors.merge(CompilerError::invariant(
+                                "(BuildHIR::lowerAssignment) Could not find binding for declaration.",
+                                None,
+                                param_loc,
+                            ));
+                            None
+                        }
+                        ast::BindingPattern::AssignmentPattern(pat) => {
+                            let param_loc = span_to_loc(pat.span);
+                            builder.errors.merge(CompilerError::invariant(
+                                "(BuildHIR::lowerAssignment) Could not find binding for declaration.",
+                                None,
+                                param_loc,
+                            ));
+                            None
+                        }
                     })
                 });
 
@@ -4704,6 +4786,21 @@ fn lower_statement_with_label(
                 if let (Some(handler_temp), Some((param_name, param_loc, param_span))) =
                     (&handler_binding, catch_param_info)
                 {
+                    // The catch param is always stored with StoreLocal, matching the
+                    // TS compiler. If the catch param is also a context identifier
+                    // (captured by an inner closure), this creates an inconsistency:
+                    // the outer scope stores it as local, but the inner function
+                    // loads it as context. The TS compiler hits an invariant for this
+                    // in ValidateContextVariableLValues. We detect it here and emit
+                    // the same error.
+                    if builder.is_context_identifier(param_name) {
+                        builder.errors.merge(CompilerError::invariant(
+                            "Expected all references to a variable to be consistently local or context references",
+                            None,
+                            param_loc,
+                        ));
+                    }
+
                     let e_place = builder.declare_binding(
                         param_name,
                         BindingKind::Let,
@@ -4824,13 +4921,13 @@ fn pre_declare_for_loop_left_bindings(
     left: &ast::ForStatementLeft<'_>,
     loc: SourceLocation,
 ) {
-    if let ast::ForStatementLeft::VariableDeclaration(decl) = left {
-        if let Some(declarator) = decl.declarations.first() {
-            let mut names = rustc_hash::FxHashSet::default();
-            collect_binding_pattern_names(&declarator.id, &mut names);
-            for name in &names {
-                builder.pre_declare_binding(name, loc);
-            }
+    if let ast::ForStatementLeft::VariableDeclaration(decl) = left
+        && let Some(declarator) = decl.declarations.first()
+    {
+        let mut names = rustc_hash::FxHashSet::default();
+        collect_binding_pattern_names(&declarator.id, &mut names);
+        for name in &names {
+            builder.pre_declare_binding(name, loc);
         }
     }
 }
@@ -4858,47 +4955,47 @@ fn lower_for_loop_left_assignment(
     // If so, we need to:
     // 1. Assign the iterator value to a temporary via Destructure
     // 2. Return that temporary as the test place.
-    if let ast::ForStatementLeft::VariableDeclaration(decl) = left {
-        if let Some(declarator) = decl.declarations.first() {
-            match &declarator.id {
-                ast::BindingPattern::ObjectPattern(_) | ast::BindingPattern::ArrayPattern(_) => {
-                    let binding_kind = match decl.kind {
-                        ast::VariableDeclarationKind::Const
-                        | ast::VariableDeclarationKind::Using
-                        | ast::VariableDeclarationKind::AwaitUsing => BindingKind::Const,
-                        ast::VariableDeclarationKind::Let => BindingKind::Let,
-                        ast::VariableDeclarationKind::Var => BindingKind::Let,
-                    };
-                    // Emit a Destructure instruction to extract pattern bindings
-                    // from the iterator value.
-                    let _ = lower_destructuring_declaration(
-                        builder,
-                        &declarator.id,
-                        rhs_value.clone(),
-                        kind,
-                        binding_kind,
+    if let ast::ForStatementLeft::VariableDeclaration(decl) = left
+        && let Some(declarator) = decl.declarations.first()
+    {
+        match &declarator.id {
+            ast::BindingPattern::ObjectPattern(_) | ast::BindingPattern::ArrayPattern(_) => {
+                let binding_kind = match decl.kind {
+                    ast::VariableDeclarationKind::Const
+                    | ast::VariableDeclarationKind::Using
+                    | ast::VariableDeclarationKind::AwaitUsing => BindingKind::Const,
+                    ast::VariableDeclarationKind::Let => BindingKind::Let,
+                    ast::VariableDeclarationKind::Var => BindingKind::Let,
+                };
+                // Emit a Destructure instruction to extract pattern bindings
+                // from the iterator value.
+                let _ = lower_destructuring_declaration(
+                    builder,
+                    &declarator.id,
+                    rhs_value.clone(),
+                    kind,
+                    binding_kind,
+                    loc,
+                );
+                // Return a temporary that carries the iterator-value test.
+                // The branch condition checks whether the iterator had a value,
+                // so we still need a temp representing the StoreLocal result.
+                let temp_decl = create_temporary_place(builder.environment_mut(), loc);
+                let lvalue = create_temporary_place(builder.environment_mut(), loc);
+                builder.push(Instruction {
+                    id: InstructionId(0),
+                    lvalue: lvalue.clone(),
+                    value: InstructionValue::StoreLocal(StoreLocal {
+                        lvalue: LValue { place: temp_decl, kind },
+                        value: rhs_value.clone(),
                         loc,
-                    );
-                    // Return a temporary that carries the iterator-value test.
-                    // The branch condition checks whether the iterator had a value,
-                    // so we still need a temp representing the StoreLocal result.
-                    let temp_decl = create_temporary_place(builder.environment_mut(), loc);
-                    let lvalue = create_temporary_place(builder.environment_mut(), loc);
-                    builder.push(Instruction {
-                        id: InstructionId(0),
-                        lvalue: lvalue.clone(),
-                        value: InstructionValue::StoreLocal(StoreLocal {
-                            lvalue: LValue { place: temp_decl, kind },
-                            value: rhs_value.clone(),
-                            loc,
-                        }),
-                        effects: None,
-                        loc,
-                    });
-                    return lvalue;
-                }
-                _ => {}
+                    }),
+                    effects: None,
+                    loc,
+                });
+                return lvalue;
             }
+            _ => {}
         }
     }
 
@@ -5067,7 +5164,27 @@ pub fn lower_expression(
                             place: result.place,
                         }));
                     }
-                    LowerableObjectProperty::Property { key, value, method, .. } => {
+                    LowerableObjectProperty::Property { key, value, method, kind, span, .. } => {
+                        // Port of BuildHIR.ts line 1563-1570: get/set functions are unsupported
+                        if *kind != LowerablePropertyKind::Init && !*method {
+                            let kind_str = match kind {
+                                LowerablePropertyKind::Get => "get",
+                                LowerablePropertyKind::Set => "set",
+                                LowerablePropertyKind::Init => unreachable!(),
+                            };
+                            builder.errors.push_error_detail(
+                                crate::compiler_error::CompilerErrorDetail::new(
+                                    crate::compiler_error::CompilerErrorDetailOptions {
+                                        category: crate::compiler_error::ErrorCategory::Todo,
+                                        reason: format!("(BuildHIR::lowerExpression) Handle {kind_str} functions in ObjectExpression"),
+                                        description: None,
+                                        loc: Some(span_to_loc(*span).into()),
+                                        suggestions: None,
+                                    },
+                                ),
+                            );
+                            continue;
+                        }
                         let lowered_key = lower_object_property_key(builder, key)?;
                         if *method {
                             // Port of lowerObjectMethod() from BuildHIR.ts lines 1491-1506.
@@ -5376,7 +5493,7 @@ pub fn lower_expression(
                         InstructionValue::PropertyStore(crate::hir::PropertyStore {
                             object: obj_result.place,
                             property: crate::hir::types::PropertyLiteral::String(property.clone()),
-                            value: updated_value.place.clone(),
+                            value: updated_value.place,
                             loc: member_loc,
                         }),
                         member_loc,
@@ -5443,7 +5560,7 @@ pub fn lower_expression(
                         InstructionValue::ComputedStore(crate::hir::ComputedStore {
                             object: obj_result.place,
                             property: prop_result.place,
-                            value: updated_value.place.clone(),
+                            value: updated_value.place,
                             loc: member_loc,
                         }),
                         member_loc,
@@ -5519,7 +5636,7 @@ pub fn lower_expression(
                 }
                 // Other argument types (shouldn't normally happen)
                 _ => Err(CompilerError::todo(
-                    &format!("Handle UpdateExpression with complex argument"),
+                    "Handle UpdateExpression with complex argument",
                     None,
                     loc,
                 )),
@@ -5661,7 +5778,7 @@ pub fn lower_expression(
                 let obj_result = lower_expression(builder, object)?;
                 // Convert float to i64; numeric literal array indices are
                 // always integers in valid JavaScript.
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 let n_int = *n as i64;
                 return lower_value_to_temporary(
                     builder,
@@ -5870,115 +5987,112 @@ pub fn lower_expression(
             } else {
                 // Compound assignment: desugar to binary operation + assignment
                 let binary_op = compound_assignment_to_binary(*operator);
-                match binary_op {
-                    Some(bin_op) => {
-                        // Lower the left as an expression to get its current value
-                        let left_result = lower_expression(builder, left)?;
-                        // Compute left <op> right
-                        let binary_result = lower_value_to_temporary(
-                            builder,
-                            InstructionValue::BinaryExpression(crate::hir::BinaryExpressionValue {
-                                operator: bin_op,
-                                left: left_result.place,
-                                right: right_result.place,
+                if let Some(bin_op) = binary_op {
+                    // Lower the left as an expression to get its current value
+                    let left_result = lower_expression(builder, left)?;
+                    // Compute left <op> right
+                    let binary_result = lower_value_to_temporary(
+                        builder,
+                        InstructionValue::BinaryExpression(crate::hir::BinaryExpressionValue {
+                            operator: bin_op,
+                            left: left_result.place,
+                            right: right_result.place,
+                            loc,
+                        }),
+                        loc,
+                    )?;
+                    // For compound assignment on a simple identifier (e.g. `i += 1`
+                    // or `count += n` where count is a context variable), match the
+                    // TypeScript reference compiler behaviour (BuildHIR.ts lines 2056-2083):
+                    //   1. Emit StoreLocal/StoreContext via lowerValueToTemporary
+                    //   2. Return LoadLocal/LoadContext with the identifier place
+                    //
+                    // This ensures the assignment expression value (the identifier)
+                    // appears as a separate expression statement when used in statement
+                    // position (e.g., `count = count + x; count;`).
+                    //
+                    // For non-identifier left-hand sides (member expressions, globals)
+                    // we fall back to lower_assignment which handles those cases generically.
+                    if let LowerableExpression::Identifier(name, ident_span) = &**left
+                        && let VariableBinding::Identifier { identifier, .. } =
+                            builder.resolve_identifier(name)
+                    {
+                        let ident_loc = span_to_loc(*ident_span);
+                        let place = crate::hir::Place {
+                            identifier,
+                            effect: crate::hir::Effect::Unknown,
+                            reactive: false,
+                            loc: ident_loc,
+                        };
+                        if builder.is_context_identifier(name) {
+                            // Context variable: emit StoreContext + return LoadContext
+                            // (BuildHIR.ts lines 2073-2083)
+                            lower_value_to_temporary(
+                                builder,
+                                InstructionValue::StoreContext(StoreContext {
+                                    lvalue_kind: InstructionKind::Reassign,
+                                    lvalue_place: place.clone(),
+                                    value: binary_result.place,
+                                    loc,
+                                }),
                                 loc,
-                            }),
-                            loc,
-                        )?;
-                        // For compound assignment on a simple identifier (e.g. `i += 1`
-                        // or `count += n` where count is a context variable), match the
-                        // TypeScript reference compiler behaviour (BuildHIR.ts lines 2056-2083):
-                        //   1. Emit StoreLocal/StoreContext via lowerValueToTemporary
-                        //   2. Return LoadLocal/LoadContext with the identifier place
-                        //
-                        // This ensures the assignment expression value (the identifier)
-                        // appears as a separate expression statement when used in statement
-                        // position (e.g., `count = count + x; count;`).
-                        //
-                        // For non-identifier left-hand sides (member expressions, globals)
-                        // we fall back to lower_assignment which handles those cases generically.
-                        if let LowerableExpression::Identifier(name, ident_span) = &**left
-                            && let VariableBinding::Identifier { identifier, .. } =
-                                builder.resolve_identifier(name)
-                        {
-                            let ident_loc = span_to_loc(*ident_span);
-                            let place = crate::hir::Place {
-                                identifier: identifier.clone(),
-                                effect: crate::hir::Effect::Unknown,
-                                reactive: false,
-                                loc: ident_loc,
-                            };
-                            if builder.is_context_identifier(name) {
-                                // Context variable: emit StoreContext + return LoadContext
-                                // (BuildHIR.ts lines 2073-2083)
-                                lower_value_to_temporary(
-                                    builder,
-                                    InstructionValue::StoreContext(StoreContext {
-                                        lvalue_kind: InstructionKind::Reassign,
-                                        lvalue_place: place.clone(),
-                                        value: binary_result.place,
-                                        loc,
-                                    }),
-                                    loc,
-                                )?;
-                                lower_value_to_temporary(
-                                    builder,
-                                    InstructionValue::LoadContext(LoadContext { place, loc }),
-                                    loc,
-                                )
-                            } else {
-                                // Local variable: emit StoreLocal + return LoadLocal
-                                // (BuildHIR.ts lines 2060-2071)
-                                let store_lvalue =
-                                    create_temporary_place(builder.environment_mut(), loc);
-                                builder.push(Instruction {
-                                    id: InstructionId(0),
-                                    lvalue: store_lvalue,
-                                    value: InstructionValue::StoreLocal(StoreLocal {
-                                        lvalue: LValue {
-                                            place: place.clone(),
-                                            kind: InstructionKind::Reassign,
-                                        },
-                                        value: binary_result.place,
-                                        loc,
-                                    }),
-                                    effects: None,
-                                    loc,
-                                });
-                                // Return LoadLocal(identifier) — the new value of the variable.
-                                lower_value_to_temporary(
-                                    builder,
-                                    InstructionValue::LoadLocal(LoadLocal { place, loc }),
-                                    loc,
-                                )
-                            }
+                            )?;
+                            lower_value_to_temporary(
+                                builder,
+                                InstructionValue::LoadContext(LoadContext { place, loc }),
+                                loc,
+                            )
                         } else {
-                            // Assign the result back to the left (non-identifier LHS)
-                            lower_assignment(builder, left, binary_result.place, loc)
+                            // Local variable: emit StoreLocal + return LoadLocal
+                            // (BuildHIR.ts lines 2060-2071)
+                            let store_lvalue =
+                                create_temporary_place(builder.environment_mut(), loc);
+                            builder.push(Instruction {
+                                id: InstructionId(0),
+                                lvalue: store_lvalue,
+                                value: InstructionValue::StoreLocal(StoreLocal {
+                                    lvalue: LValue {
+                                        place: place.clone(),
+                                        kind: InstructionKind::Reassign,
+                                    },
+                                    value: binary_result.place,
+                                    loc,
+                                }),
+                                effects: None,
+                                loc,
+                            });
+                            // Return LoadLocal(identifier) — the new value of the variable.
+                            lower_value_to_temporary(
+                                builder,
+                                InstructionValue::LoadLocal(LoadLocal { place, loc }),
+                                loc,
+                            )
                         }
+                    } else {
+                        // Assign the result back to the left (non-identifier LHS)
+                        lower_assignment(builder, left, binary_result.place, loc)
                     }
-                    None => {
-                        // Logical assignments (&&=, ||=, ??=) need special CFG handling
-                        // and are not yet supported. Push a Todo error and return UnsupportedNode,
-                        // matching the TS behavior at BuildHIR.ts lines 2033-2041.
-                        builder.errors.push_error_detail(CompilerErrorDetail::new(
-                            CompilerErrorDetailOptions {
-                                category: ErrorCategory::Todo,
-                                reason: format!(
-                                    "(BuildHIR::lowerExpression) Handle {} operators in AssignmentExpression",
-                                    operator.as_str()
-                                ),
-                                description: None,
-                                loc: Some(loc),
-                                suggestions: None,
-                            },
-                        ));
-                        lower_value_to_temporary(
-                            builder,
-                            InstructionValue::UnsupportedNode(crate::hir::UnsupportedNode { loc }),
-                            loc,
-                        )
-                    }
+                } else {
+                    // Logical assignments (&&=, ||=, ??=) need special CFG handling
+                    // and are not yet supported. Push a Todo error and return UnsupportedNode,
+                    // matching the TS behavior at BuildHIR.ts lines 2033-2041.
+                    builder.errors.push_error_detail(CompilerErrorDetail::new(
+                        CompilerErrorDetailOptions {
+                            category: ErrorCategory::Todo,
+                            reason: format!(
+                                "(BuildHIR::lowerExpression) Handle {} operators in AssignmentExpression",
+                                operator.as_str()
+                            ),
+                            description: None,
+                            loc: Some(loc),
+                            suggestions: None,
+                        },
+                    ));
+                    lower_value_to_temporary(
+                        builder,
+                        InstructionValue::UnsupportedNode(crate::hir::UnsupportedNode { loc }),
+                        loc,
+                    )
                 }
             }
         }
@@ -6036,15 +6150,35 @@ pub fn lower_expression(
         // =====================================================================
         LowerableExpression::MetaProperty { meta, property, span } => {
             let loc = span_to_loc(*span);
-            lower_value_to_temporary(
-                builder,
-                InstructionValue::MetaProperty(crate::hir::MetaProperty {
-                    meta: meta.clone(),
-                    property: property.clone(),
+            // Port of BuildHIR.ts line 2564-2579: only import.meta is supported
+            if meta == "import" && property == "meta" {
+                lower_value_to_temporary(
+                    builder,
+                    InstructionValue::MetaProperty(crate::hir::MetaProperty {
+                        meta: meta.clone(),
+                        property: property.clone(),
+                        loc,
+                    }),
                     loc,
-                }),
-                loc,
-            )
+                )
+            } else {
+                builder.errors.push_error_detail(
+                    crate::compiler_error::CompilerErrorDetail::new(
+                        crate::compiler_error::CompilerErrorDetailOptions {
+                            category: crate::compiler_error::ErrorCategory::Todo,
+                            reason: "(BuildHIR::lowerExpression) Handle MetaProperty expressions other than import.meta".to_string(),
+                            description: None,
+                            loc: Some(loc.into()),
+                            suggestions: None,
+                        },
+                    ),
+                );
+                lower_value_to_temporary(
+                    builder,
+                    InstructionValue::UnsupportedNode(crate::hir::UnsupportedNode { loc }),
+                    loc,
+                )
+            }
         }
 
         // =====================================================================
@@ -6252,6 +6386,27 @@ pub fn lower_expression(
             let loc = span_to_loc(*span);
             lower_value_to_temporary(builder, lower_undefined(loc), loc)
         }
+
+        // Port of BuildHIR.ts default case: unsupported expression types push a Todo error
+        LowerableExpression::UnsupportedExpression { kind, span } => {
+            let loc = span_to_loc(*span);
+            builder.errors.push_error_detail(
+                crate::compiler_error::CompilerErrorDetail::new(
+                    crate::compiler_error::CompilerErrorDetailOptions {
+                        category: crate::compiler_error::ErrorCategory::Todo,
+                        reason: format!("(BuildHIR::lowerExpression) Handle {kind} expressions"),
+                        description: None,
+                        loc: Some(loc.into()),
+                        suggestions: None,
+                    },
+                ),
+            );
+            lower_value_to_temporary(
+                builder,
+                InstructionValue::UnsupportedNode(crate::hir::UnsupportedNode { loc }),
+                loc,
+            )
+        }
     }
 }
 
@@ -6285,15 +6440,12 @@ fn lower_arguments(
 ) -> Result<Vec<crate::hir::CallArg>, CompilerError> {
     let mut args = Vec::new();
     for arg in arguments {
-        match arg {
-            LowerableExpression::SpreadElement { argument, .. } => {
-                let result = lower_expression(builder, argument)?;
-                args.push(crate::hir::CallArg::Spread(SpreadPattern { place: result.place }));
-            }
-            _ => {
-                let result = lower_expression(builder, arg)?;
-                args.push(crate::hir::CallArg::Place(result.place));
-            }
+        if let LowerableExpression::SpreadElement { argument, .. } = arg {
+            let result = lower_expression(builder, argument)?;
+            args.push(crate::hir::CallArg::Spread(SpreadPattern { place: result.place }));
+        } else {
+            let result = lower_expression(builder, arg)?;
+            args.push(crate::hir::CallArg::Place(result.place));
         }
     }
     Ok(args)
@@ -6335,7 +6487,7 @@ fn lower_assignment(
                             builder,
                             InstructionValue::StoreContext(StoreContext {
                                 lvalue_kind: InstructionKind::Reassign,
-                                lvalue_place: place.clone(),
+                                lvalue_place: place,
                                 value,
                                 loc,
                             }),
@@ -6548,7 +6700,7 @@ fn trim_jsx_text(text: &str) -> String {
         // Preserve leading/trailing spaces since they may be significant
         // (e.g., " {expr}" has a leading space JSX text node).
         let line = lines[0];
-        if line.chars().all(|c| c.is_whitespace()) {
+        if line.chars().all(char::is_whitespace) {
             // Single-line all-whitespace text is significant (e.g., space between elements).
             // Preserve as a single space, matching React/Babel behavior.
             return " ".to_string();
@@ -6661,9 +6813,8 @@ fn decode_jsx_entities(text: &str) -> String {
 }
 
 fn decode_entity(entity: &str) -> Option<char> {
-    if entity.starts_with('#') {
+    if let Some(num_str) = entity.strip_prefix('#') {
         // Numeric entity
-        let num_str = &entity[1..];
         let code = if num_str.starts_with('x') || num_str.starts_with('X') {
             u32::from_str_radix(&num_str[1..], 16).ok()?
         } else {
@@ -7131,9 +7282,18 @@ pub enum LowerableObjectProperty<'a> {
         computed: bool,
         shorthand: bool,
         method: bool,
+        kind: LowerablePropertyKind,
         span: Span,
     },
     Spread(LowerableExpression<'a>, Span),
+}
+
+/// The kind of an object property (init, get, or set).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LowerablePropertyKind {
+    Init,
+    Get,
+    Set,
 }
 
 /// A key of an object property.
@@ -7361,6 +7521,13 @@ pub enum LowerableExpression<'a> {
     /// An array destructuring assignment target.
     ArrayAssignmentTarget {
         target: &'a ast::ArrayAssignmentTarget<'a>,
+        span: Span,
+    },
+
+    /// An unsupported expression type (e.g., YieldExpression).
+    /// Port of the default case in BuildHIR.ts lowerExpression.
+    UnsupportedExpression {
+        kind: String,
         span: Span,
     },
 }
