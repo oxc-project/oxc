@@ -1361,19 +1361,49 @@ fn effects_from_signature(
     // Apply callee effect to the receiver/callee
     visit(callee_or_receiver, sig.callee_effect);
 
-    // Process each argument with its declared effect
+    // Process each argument with its declared effect.
+    // Port of TS `getArgumentEffect` (InferMutationAliasingEffects.ts line 2681-2697):
+    // When an argument is a Spread and the signature effect is Freeze, throw a
+    // Todo error because spreading a mutable iterator into a hook that freezes
+    // its arguments is not yet supported.
     for (i, arg) in args.iter().enumerate() {
         let place = match arg {
             CallArg::Place(p) => p,
             CallArg::Spread(s) => &s.place,
         };
-        let effect = if i < sig.positional_params.len() {
+        let sig_effect = if i < sig.positional_params.len() {
             sig.positional_params[i]
         } else if let Some(rest) = sig.rest_param {
             rest
         } else {
             // No more declared params — conservative
             Effect::ConditionallyMutate
+        };
+        // Port of getArgumentEffect: adjust effect for spread arguments
+        let effect = if matches!(arg, CallArg::Spread(_)) {
+            match sig_effect {
+                Effect::Mutate | Effect::ConditionallyMutate => sig_effect,
+                Effect::Freeze => {
+                    let mut errors = CompilerError::new();
+                    errors.push_error_detail(
+                        crate::compiler_error::CompilerErrorDetail::new(
+                            crate::compiler_error::CompilerErrorDetailOptions {
+                                category: crate::compiler_error::ErrorCategory::Todo,
+                                reason: "Support spread syntax for hook arguments".to_string(),
+                                description: Some(
+                                    "Support spread syntax for hook arguments".to_string(),
+                                ),
+                                loc: Some(place.loc.into()),
+                                suggestions: None,
+                            },
+                        ),
+                    );
+                    return Err(errors);
+                }
+                _ => Effect::Read,
+            }
+        } else {
+            sig_effect
         };
         visit(place, effect);
     }
@@ -2024,11 +2054,6 @@ fn get_write_error_reason(abstract_value: &AbstractValue) -> &'static str {
     }
 }
 
-/// Create a MutateFrozen or MutateGlobal error effect for an invalid mutation.
-///
-/// Port of the error creation logic from TS `applyEffect` (lines 1163-1197).
-/// When a non-conditional mutation (Mutate/MutateTransitive) targets a frozen or global value,
-/// the TS compiler creates a diagnostic and wraps it in a MutateFrozen or MutateGlobal effect.
 fn make_mutation_error_effect(
     value: &Place,
     abstract_value: &AbstractValue,
@@ -2400,43 +2425,6 @@ fn filter_substituted_effects(
 
 /// Filter only `Freeze` effects from built-in hook aliasing signatures.
 ///
-/// Port of TS `applyEffect` for `Freeze` (InferMutationAliasingEffects.ts lines 624-629):
-/// `state.freeze()` returns true only if the value was Mutable, Context, or MaybeFrozen.
-/// If the value is already Frozen, Global, or Primitive, the Freeze effect is dropped.
-///
-/// This is used for built-in hook signatures (e.g. `useEffect`, `useMemo`) where
-/// we want to filter Freeze effects without altering the data flow effects (Capture,
-/// Alias, etc.) that the signature generates. For local function expressions, use
-/// `filter_substituted_effects` which also filters data flow effects.
-fn filter_freeze_effects(
-    state: &InferenceState,
-    raw_effects: Vec<AliasingEffect>,
-) -> Vec<AliasingEffect> {
-    let mut filtered = Vec::with_capacity(raw_effects.len());
-
-    for effect in raw_effects {
-        match &effect {
-            AliasingEffect::Freeze { value, .. } => {
-                let keep = match state.get(value) {
-                    Some(av) => matches!(
-                        av.kind,
-                        ValueKind::Mutable | ValueKind::Context | ValueKind::MaybeFrozen
-                    ),
-                    None => true, // Unknown: conservatively keep
-                };
-                if keep {
-                    filtered.push(effect);
-                }
-            }
-            _ => {
-                filtered.push(effect);
-            }
-        }
-    }
-
-    filtered
-}
-
 /// Compute the aliasing effects for an instruction.
 ///
 /// Port of `computeSignatureForInstruction` from `InferMutationAliasingEffects.ts`.

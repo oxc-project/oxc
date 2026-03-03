@@ -73,11 +73,10 @@ fn terminal_has_return(terminal: &crate::hir::ReactiveTerminal) -> bool {
     match terminal {
         ReactiveTerminal::Return(_) => true,
         ReactiveTerminal::If(t) => {
-            block_has_return(&t.consequent)
-                || t.alternate.as_ref().is_some_and(|alt| block_has_return(alt))
+            block_has_return(&t.consequent) || t.alternate.as_ref().is_some_and(block_has_return)
         }
         ReactiveTerminal::Switch(t) => {
-            t.cases.iter().any(|case| case.block.as_ref().is_some_and(|b| block_has_return(b)))
+            t.cases.iter().any(|case| case.block.as_ref().is_some_and(block_has_return))
         }
         ReactiveTerminal::While(t) => block_has_return(&t.r#loop),
         ReactiveTerminal::DoWhile(t) => block_has_return(&t.r#loop),
@@ -218,10 +217,10 @@ fn collect_reactive_ids_block(block: &ReactiveBlock, reactive: &mut FxHashSet<Id
         match stmt {
             ReactiveStatement::Instruction(s) => {
                 collect_reactive_ids_from_value(&s.instruction.value, reactive);
-                if let Some(lvalue) = &s.instruction.lvalue {
-                    if lvalue.reactive {
-                        reactive.insert(lvalue.identifier.id);
-                    }
+                if let Some(lvalue) = &s.instruction.lvalue
+                    && lvalue.reactive
+                {
+                    reactive.insert(lvalue.identifier.id);
                 }
             }
             ReactiveStatement::Terminal(s) => {
@@ -272,10 +271,10 @@ fn collect_reactive_ids_from_value(value: &ReactiveValue, reactive: &mut FxHashS
         ReactiveValue::Sequence(v) => {
             for instr in &v.instructions {
                 collect_reactive_ids_from_value(&instr.value, reactive);
-                if let Some(lvalue) = &instr.lvalue {
-                    if lvalue.reactive {
-                        reactive.insert(lvalue.identifier.id);
-                    }
+                if let Some(lvalue) = &instr.lvalue
+                    && lvalue.reactive
+                {
+                    reactive.insert(lvalue.identifier.id);
                 }
             }
             collect_reactive_ids_from_value(&v.value, reactive);
@@ -412,10 +411,10 @@ fn propagate_reactivity_from_value(
     match value {
         ReactiveValue::Instruction(inner) => match inner.as_ref() {
             InstructionValue::LoadLocal(v) => {
-                if reactive.contains(&v.place.identifier.id) {
-                    if let Some(lv) = lvalue {
-                        reactive.insert(lv.identifier.id);
-                    }
+                if reactive.contains(&v.place.identifier.id)
+                    && let Some(lv) = lvalue
+                {
+                    reactive.insert(lv.identifier.id);
                 }
             }
             InstructionValue::StoreLocal(v) => {
@@ -440,20 +439,19 @@ fn propagate_reactivity_from_value(
                 }
             }
             InstructionValue::PropertyLoad(v) => {
-                if let Some(lv) = lvalue {
-                    if reactive.contains(&v.object.identifier.id) && !is_stable_type(&lv.identifier)
-                    {
-                        reactive.insert(lv.identifier.id);
-                    }
+                if let Some(lv) = lvalue
+                    && reactive.contains(&v.object.identifier.id)
+                    && !is_stable_type(&lv.identifier)
+                {
+                    reactive.insert(lv.identifier.id);
                 }
             }
             InstructionValue::ComputedLoad(v) => {
-                if let Some(lv) = lvalue {
-                    if reactive.contains(&v.object.identifier.id)
-                        || reactive.contains(&v.property.identifier.id)
-                    {
-                        reactive.insert(lv.identifier.id);
-                    }
+                if let Some(lv) = lvalue
+                    && (reactive.contains(&v.object.identifier.id)
+                        || reactive.contains(&v.property.identifier.id))
+                {
+                    reactive.insert(lv.identifier.id);
                 }
             }
             _ => {}
@@ -970,10 +968,19 @@ fn prune_all_scopes_block(block: &mut ReactiveBlock) {
 /// 2. a `foo = function foo() {}` assignment within the block
 ///
 /// This means references before the assignment are invalid.
-pub fn prune_hoisted_contexts(func: &mut ReactiveFunction) {
+pub fn prune_hoisted_contexts(
+    func: &mut ReactiveFunction,
+) -> Result<(), crate::compiler_error::CompilerError> {
     let mut active_scopes: Vec<FxHashSet<IdentifierId>> = Vec::new();
     let mut uninitialized: FxHashMap<IdentifierId, UninitializedEntry> = FxHashMap::default();
-    prune_hoisted_contexts_block(&mut func.body, &mut active_scopes, &mut uninitialized);
+    let mut errors = crate::compiler_error::CompilerError::new();
+    prune_hoisted_contexts_block(
+        &mut func.body,
+        &mut active_scopes,
+        &mut uninitialized,
+        &mut errors,
+    );
+    if errors.has_any_errors() { Err(errors) } else { Ok(()) }
 }
 
 /// Tracks the state of an uninitialized declaration within a scope.
@@ -993,6 +1000,7 @@ fn prune_hoisted_contexts_block(
     block: &mut ReactiveBlock,
     active_scopes: &mut Vec<FxHashSet<IdentifierId>>,
     uninitialized: &mut FxHashMap<IdentifierId, UninitializedEntry>,
+    errors: &mut crate::compiler_error::CompilerError,
 ) {
     let mut i = 0;
     while i < block.len() {
@@ -1001,12 +1009,14 @@ fn prune_hoisted_contexts_block(
                 &mut instr_stmt.instruction,
                 active_scopes,
                 uninitialized,
+                errors,
             ),
             ReactiveStatement::Terminal(term_stmt) => {
                 prune_hoisted_contexts_terminal(
                     &mut term_stmt.terminal,
                     active_scopes,
                     uninitialized,
+                    errors,
                 );
                 false
             }
@@ -1023,7 +1033,12 @@ fn prune_hoisted_contexts_block(
                 active_scopes.push(scope_decl_ids);
 
                 // Traverse the scope's instructions
-                prune_hoisted_contexts_block(&mut scope.instructions, active_scopes, uninitialized);
+                prune_hoisted_contexts_block(
+                    &mut scope.instructions,
+                    active_scopes,
+                    uninitialized,
+                    errors,
+                );
 
                 // Pop the active scope
                 active_scopes.pop();
@@ -1036,7 +1051,12 @@ fn prune_hoisted_contexts_block(
                 false
             }
             ReactiveStatement::PrunedScope(scope) => {
-                prune_hoisted_contexts_block(&mut scope.instructions, active_scopes, uninitialized);
+                prune_hoisted_contexts_block(
+                    &mut scope.instructions,
+                    active_scopes,
+                    uninitialized,
+                    errors,
+                );
                 false
             }
         };
@@ -1055,14 +1075,22 @@ fn process_hoisted_context_instruction(
     instruction: &mut ReactiveInstruction,
     active_scopes: &[FxHashSet<IdentifierId>],
     uninitialized: &mut FxHashMap<IdentifierId, UninitializedEntry>,
+    errors: &mut crate::compiler_error::CompilerError,
 ) -> bool {
     // Check for DeclareContext with hoisted kind — remove if hoisted
     if let ReactiveValue::Instruction(value) = &instruction.value
         && let InstructionValue::DeclareContext(declare_ctx) = value.as_ref()
         && let Some(non_hoisted) = declare_ctx.lvalue_kind.convert_hoisted()
     {
-        // If this is a hoisted function and the identifier is in uninitialized,
-        // mark it as a function
+        // If this is a hoisted function AND it's already tracked in `uninitialized`
+        // (meaning a reactive scope declared it), upgrade to Func tracking.
+        // Port of TS PruneHoistedContexts.ts line 95-103:
+        //   if (maybeNonHoisted === InstructionKind.Function
+        //       && state.uninitialized.has(instruction.value.lvalue.place.identifier.id))
+        // The `has()` check is critical: if the identifier is NOT declared by any
+        // scope, it should not be tracked as an uninitialized function. This prevents
+        // false positives for hoisted function declarations that don't appear in any
+        // reactive scope (e.g., non-reactive helper functions).
         if non_hoisted == InstructionKind::Function
             && uninitialized.contains_key(&declare_ctx.lvalue_place.identifier.id)
         {
@@ -1096,14 +1124,23 @@ fn process_hoisted_context_instruction(
                     // assignments have finished
                     uninitialized.remove(&lvalue_id);
                 }
+            } else {
+                // Port of TS PruneHoistedContexts.ts line 138-142: unexpected kind
+                errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+                    crate::compiler_error::CompilerErrorDetailOptions {
+                        category: crate::compiler_error::ErrorCategory::Todo,
+                        reason: "[PruneHoistedContexts] Unexpected kind".to_string(),
+                        description: Some(format!("({:?})", store_ctx.lvalue_kind)),
+                        loc: Some(instruction.loc.into()),
+                        suggestions: None,
+                    },
+                ));
             }
-            // Note: the TS code has an else branch that throws a Todo for unexpected
-            // kinds. We skip that for now as it's a diagnostic concern.
         }
     }
 
     // Visit places within the instruction to check for hoisted function references
-    visit_hoisted_context_places(&instruction.value, uninitialized);
+    visit_hoisted_context_places(&instruction.value, uninitialized, errors);
 
     false
 }
@@ -1112,62 +1149,69 @@ fn process_hoisted_context_instruction(
 fn visit_hoisted_context_places(
     value: &ReactiveValue,
     uninitialized: &FxHashMap<IdentifierId, UninitializedEntry>,
+    errors: &mut crate::compiler_error::CompilerError,
 ) {
     match value {
         ReactiveValue::Instruction(iv) => {
-            visit_instruction_value_places(iv, uninitialized);
+            visit_instruction_value_places(iv, uninitialized, errors);
         }
         ReactiveValue::Sequence(seq) => {
             for instr in &seq.instructions {
-                visit_hoisted_context_places(&instr.value, uninitialized);
+                visit_hoisted_context_places(&instr.value, uninitialized, errors);
             }
-            visit_hoisted_context_places(&seq.value, uninitialized);
+            visit_hoisted_context_places(&seq.value, uninitialized, errors);
         }
         ReactiveValue::Logical(logical) => {
-            visit_hoisted_context_places(&logical.left, uninitialized);
-            visit_hoisted_context_places(&logical.right, uninitialized);
+            visit_hoisted_context_places(&logical.left, uninitialized, errors);
+            visit_hoisted_context_places(&logical.right, uninitialized, errors);
         }
         ReactiveValue::Ternary(ternary) => {
-            visit_hoisted_context_places(&ternary.test, uninitialized);
-            visit_hoisted_context_places(&ternary.consequent, uninitialized);
-            visit_hoisted_context_places(&ternary.alternate, uninitialized);
+            visit_hoisted_context_places(&ternary.test, uninitialized, errors);
+            visit_hoisted_context_places(&ternary.consequent, uninitialized, errors);
+            visit_hoisted_context_places(&ternary.alternate, uninitialized, errors);
         }
         ReactiveValue::OptionalCall(opt) => {
-            visit_hoisted_context_places(&opt.value, uninitialized);
+            visit_hoisted_context_places(&opt.value, uninitialized, errors);
         }
     }
 }
 
 /// Visit places within an InstructionValue for hoisted function reference checking.
-/// The TS visitPlace checks if a place references an uninitialized hoisted function
-/// and throws a Todo error. We check for this condition but do not throw since we
-/// cannot bail out in the same way.
+/// Port of TS PruneHoistedContexts.ts visitPlace — checks if a place references
+/// an uninitialized hoisted function and throws a Todo error.
 fn visit_instruction_value_places(
     value: &InstructionValue,
     uninitialized: &FxHashMap<IdentifierId, UninitializedEntry>,
+    errors: &mut crate::compiler_error::CompilerError,
 ) {
-    // Check each operand place for uninitialized hoisted function references
-    for_each_instruction_value_operand(value, &|place| {
-        check_hoisted_function_reference(place, uninitialized);
+    for_each_instruction_value_operand(value, &mut |place| {
+        check_hoisted_function_reference(place, uninitialized, errors);
     });
 }
 
 /// Check if a place references an uninitialized hoisted function.
+/// Port of TS PruneHoistedContexts.ts line 78-83.
 fn check_hoisted_function_reference(
     place: &crate::hir::Place,
     uninitialized: &FxHashMap<IdentifierId, UninitializedEntry>,
+    errors: &mut crate::compiler_error::CompilerError,
 ) {
     if let Some(UninitializedEntry::Func { definition }) = uninitialized.get(&place.identifier.id) {
-        // In the TS code, this checks `maybeHoistedFn.definition !== place` using reference
-        // identity. Since the definition is None when the function hasn't been assigned yet,
-        // and if definition is Some but doesn't match this place's id, we should flag it.
-        // However, once definition is set, it's removed from uninitialized via the
-        // StoreContext handler. So if we reach here, definition is either None or the
-        // function is still "uninitialized".
         if definition.is_none() || *definition != Some(place.identifier.id) {
-            // The TS code throws a CompilerError.throwTodo here.
-            // In Rust, this condition indicates a hoisted function reference before
-            // initialization, which is unsupported.
+            // Port of TS: CompilerError.throwTodo({
+            //   reason: "[PruneHoistedContexts] Rewrite hoisted function references",
+            //   loc: place.loc,
+            // });
+            errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+                crate::compiler_error::CompilerErrorDetailOptions {
+                    category: crate::compiler_error::ErrorCategory::Todo,
+                    reason: "[PruneHoistedContexts] Rewrite hoisted function references"
+                        .to_string(),
+                    description: None,
+                    loc: Some(place.loc.into()),
+                    suggestions: None,
+                },
+            ));
         }
     }
 }
@@ -1175,7 +1219,7 @@ fn check_hoisted_function_reference(
 /// Iterate over operand places of an InstructionValue, calling the callback for each.
 fn for_each_instruction_value_operand(
     value: &InstructionValue,
-    callback: &impl Fn(&crate::hir::Place),
+    callback: &mut impl FnMut(&crate::hir::Place),
 ) {
     use crate::hir::{
         ArrayExpressionElement, CallArg, JsxAttribute, JsxTag, ManualMemoDependencyRoot,
@@ -1299,9 +1343,19 @@ fn for_each_instruction_value_operand(
         | InstructionValue::LoadGlobal(_)
         | InstructionValue::Debugger(_)
         | InstructionValue::MetaProperty(_)
-        | InstructionValue::UnsupportedNode(_)
-        | InstructionValue::FunctionExpression(_)
-        | InstructionValue::ObjectMethod(_) => {}
+        | InstructionValue::UnsupportedNode(_) => {}
+        InstructionValue::FunctionExpression(v) => {
+            // Visit context captures — the TS reference's eachInstructionValueOperand
+            // yields `loweredFunc.func.context` for FunctionExpression/ObjectMethod.
+            for ctx_place in &v.lowered_func.func.context {
+                callback(ctx_place);
+            }
+        }
+        InstructionValue::ObjectMethod(v) => {
+            for ctx_place in &v.lowered_func.func.context {
+                callback(ctx_place);
+            }
+        }
         InstructionValue::StoreGlobal(v) => callback(&v.value),
         InstructionValue::GetIterator(v) => callback(&v.collection),
         InstructionValue::IteratorNext(v) => {
@@ -1329,43 +1383,44 @@ fn prune_hoisted_contexts_terminal(
     terminal: &mut crate::hir::ReactiveTerminal,
     active_scopes: &mut Vec<FxHashSet<IdentifierId>>,
     uninitialized: &mut FxHashMap<IdentifierId, UninitializedEntry>,
+    errors: &mut crate::compiler_error::CompilerError,
 ) {
     use crate::hir::ReactiveTerminal;
     match terminal {
         ReactiveTerminal::If(t) => {
-            prune_hoisted_contexts_block(&mut t.consequent, active_scopes, uninitialized);
+            prune_hoisted_contexts_block(&mut t.consequent, active_scopes, uninitialized, errors);
             if let Some(alt) = &mut t.alternate {
-                prune_hoisted_contexts_block(alt, active_scopes, uninitialized);
+                prune_hoisted_contexts_block(alt, active_scopes, uninitialized, errors);
             }
         }
         ReactiveTerminal::Switch(t) => {
             for case in &mut t.cases {
                 if let Some(block) = &mut case.block {
-                    prune_hoisted_contexts_block(block, active_scopes, uninitialized);
+                    prune_hoisted_contexts_block(block, active_scopes, uninitialized, errors);
                 }
             }
         }
         ReactiveTerminal::While(t) => {
-            prune_hoisted_contexts_block(&mut t.r#loop, active_scopes, uninitialized);
+            prune_hoisted_contexts_block(&mut t.r#loop, active_scopes, uninitialized, errors);
         }
         ReactiveTerminal::DoWhile(t) => {
-            prune_hoisted_contexts_block(&mut t.r#loop, active_scopes, uninitialized);
+            prune_hoisted_contexts_block(&mut t.r#loop, active_scopes, uninitialized, errors);
         }
         ReactiveTerminal::For(t) => {
-            prune_hoisted_contexts_block(&mut t.r#loop, active_scopes, uninitialized);
+            prune_hoisted_contexts_block(&mut t.r#loop, active_scopes, uninitialized, errors);
         }
         ReactiveTerminal::ForOf(t) => {
-            prune_hoisted_contexts_block(&mut t.r#loop, active_scopes, uninitialized);
+            prune_hoisted_contexts_block(&mut t.r#loop, active_scopes, uninitialized, errors);
         }
         ReactiveTerminal::ForIn(t) => {
-            prune_hoisted_contexts_block(&mut t.r#loop, active_scopes, uninitialized);
+            prune_hoisted_contexts_block(&mut t.r#loop, active_scopes, uninitialized, errors);
         }
         ReactiveTerminal::Label(t) => {
-            prune_hoisted_contexts_block(&mut t.block, active_scopes, uninitialized);
+            prune_hoisted_contexts_block(&mut t.block, active_scopes, uninitialized, errors);
         }
         ReactiveTerminal::Try(t) => {
-            prune_hoisted_contexts_block(&mut t.block, active_scopes, uninitialized);
-            prune_hoisted_contexts_block(&mut t.handler, active_scopes, uninitialized);
+            prune_hoisted_contexts_block(&mut t.block, active_scopes, uninitialized, errors);
+            prune_hoisted_contexts_block(&mut t.handler, active_scopes, uninitialized, errors);
         }
         ReactiveTerminal::Break(_)
         | ReactiveTerminal::Continue(_)

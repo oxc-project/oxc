@@ -2,18 +2,16 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 256/275 (93.1%)
+Error fixture conformance: 262/275 (95.3%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 19
+  unexpected_success: 13
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
   [unexpected_success] error.assign-global-in-jsx-children.js
-  [unexpected_success] error.bug-invariant-local-or-context-references.js
   [unexpected_success] error.bug-invariant-unnamed-temporary.js
-  [unexpected_success] error.dont-hoist-inline-reference.js
   [unexpected_success] error.invalid-hoisting-setstate.js
   [unexpected_success] error.invalid-hook-function-argument-mutates-local-variable.js
   [unexpected_success] error.invalid-mutate-global-in-render-helper-phi-return-prop.js
@@ -23,9 +21,5 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-mutation-of-possible-props-phi-indirect.js
   [unexpected_success] error.invalid-pass-mutable-function-as-prop.js
   [unexpected_success] error.invalid-return-mutable-function-from-hook.js
-  [unexpected_success] error.todo-functiondecl-hoisting.tsx
-  [unexpected_success] error.todo-hook-call-spreads-mutable-iterator.js
-  [unexpected_success] error.todo-missing-source-locations.js
   [unexpected_success] error.todo-repro-named-function-with-shadowed-local-same-name.js
-  [unexpected_success] error.todo-valid-functiondecl-hoisting.tsx
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js
