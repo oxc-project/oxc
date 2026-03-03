@@ -135,13 +135,13 @@ impl InferenceState {
         reasons.insert(reason);
         let frozen_value = AbstractValue::frozen(reasons);
         for &freeze_id in &to_freeze {
-            if let Some(av) = self.values.get(&freeze_id) {
-                if matches!(
+            if let Some(av) = self.values.get(&freeze_id)
+                && matches!(
                     av.kind,
                     ValueKind::Mutable | ValueKind::Context | ValueKind::MaybeFrozen
-                ) {
-                    self.values.insert(freeze_id, frozen_value.clone());
-                }
+                )
+            {
+                self.values.insert(freeze_id, frozen_value.clone());
             }
         }
 
@@ -195,13 +195,13 @@ impl InferenceState {
         reasons.insert(reason);
         let frozen_value = AbstractValue::frozen(reasons);
         for &freeze_id in &to_freeze {
-            if let Some(av) = self.values.get(&freeze_id) {
-                if matches!(
+            if let Some(av) = self.values.get(&freeze_id)
+                && matches!(
                     av.kind,
                     ValueKind::Mutable | ValueKind::Context | ValueKind::MaybeFrozen
-                ) {
-                    self.values.insert(freeze_id, frozen_value.clone());
-                }
+                )
+            {
+                self.values.insert(freeze_id, frozen_value.clone());
             }
         }
 
@@ -329,10 +329,10 @@ impl InferenceState {
                 self.add_identity_alias(op_id, phi_id);
             }
             // Propagate function_values through phi nodes
-            if merged_fn_val.is_none() {
-                if let Some(fn_val) = self.function_values.get(&op_id).cloned() {
-                    merged_fn_val = Some(fn_val);
-                }
+            if merged_fn_val.is_none()
+                && let Some(fn_val) = self.function_values.get(&op_id).cloned()
+            {
+                merged_fn_val = Some(fn_val);
             }
         }
 
@@ -385,8 +385,8 @@ impl InferenceState {
         }
 
         for (&id, other_fn) in &other.function_values {
-            if !self.function_values.contains_key(&id) {
-                self.function_values.insert(id, other_fn.clone());
+            if let std::collections::hash_map::Entry::Vacant(e) = self.function_values.entry(id) {
+                e.insert(other_fn.clone());
                 changed = true;
             }
         }
@@ -456,10 +456,10 @@ fn merge_value_kinds(a: ValueKind, b: ValueKind) -> ValueKind {
 fn find_non_mutating_spreads(func: &HIRFunction) -> FxHashSet<IdentifierId> {
     let mut known_frozen = FxHashSet::default();
     if func.fn_type == ReactFunctionType::Component {
-        if let Some(param) = func.params.first() {
-            if let ReactiveParam::Place(p) = param {
-                known_frozen.insert(p.identifier.id);
-            }
+        if let Some(param) = func.params.first()
+            && let ReactiveParam::Place(p) = param
+        {
+            known_frozen.insert(p.identifier.id);
         }
     } else {
         for param in &func.params {
@@ -686,11 +686,11 @@ pub fn infer_mutation_aliasing_effects(
             // Check if the state has changed since last visit.
             // If the incoming state is already dominated by the last processed state,
             // no new information → skip this block.
-            if let Some(prev_state) = states_by_block.get(&block_id) {
-                if !state.merge(prev_state) {
-                    // state already contains everything from prev_state — no change.
-                    continue;
-                }
+            if let Some(prev_state) = states_by_block.get(&block_id)
+                && !state.merge(prev_state)
+            {
+                // state already contains everything from prev_state — no change.
+                continue;
             }
 
             let block = match func.body.blocks.get(&block_id) {
@@ -769,35 +769,33 @@ pub fn infer_mutation_aliasing_effects(
                 match &mut instr.value {
                     InstructionValue::FunctionExpression(v) => {
                         for ctx in &mut v.lowered_func.func.context {
-                            if ctx.effect == Effect::Capture {
-                                if let Some(av) = replay_state.get(ctx) {
-                                    if matches!(
-                                        av.kind,
-                                        ValueKind::Primitive
-                                            | ValueKind::Frozen
-                                            | ValueKind::MaybeFrozen
-                                            | ValueKind::Global
-                                    ) {
-                                        ctx.effect = Effect::Read;
-                                    }
-                                }
+                            if ctx.effect == Effect::Capture
+                                && let Some(av) = replay_state.get(ctx)
+                                && matches!(
+                                    av.kind,
+                                    ValueKind::Primitive
+                                        | ValueKind::Frozen
+                                        | ValueKind::MaybeFrozen
+                                        | ValueKind::Global
+                                )
+                            {
+                                ctx.effect = Effect::Read;
                             }
                         }
                     }
                     InstructionValue::ObjectMethod(v) => {
                         for ctx in &mut v.lowered_func.func.context {
-                            if ctx.effect == Effect::Capture {
-                                if let Some(av) = replay_state.get(ctx) {
-                                    if matches!(
-                                        av.kind,
-                                        ValueKind::Primitive
-                                            | ValueKind::Frozen
-                                            | ValueKind::MaybeFrozen
-                                            | ValueKind::Global
-                                    ) {
-                                        ctx.effect = Effect::Read;
-                                    }
-                                }
+                            if ctx.effect == Effect::Capture
+                                && let Some(av) = replay_state.get(ctx)
+                                && matches!(
+                                    av.kind,
+                                    ValueKind::Primitive
+                                        | ValueKind::Frozen
+                                        | ValueKind::MaybeFrozen
+                                        | ValueKind::Global
+                                )
+                            {
+                                ctx.effect = Effect::Read;
                             }
                         }
                     }
@@ -965,8 +963,7 @@ fn infer_instruction_effects(
             // `state` is used in render, causing the second useEffect lambda to get
             // merged into the useState scope and then pruned by FlattenScopesWithHooksOrUse).
             let sig = env.get_function_signature(&v.callee.identifier.type_).cloned();
-            let return_kind =
-                sig.as_ref().map(|s| s.return_value_kind).unwrap_or(ValueKind::Mutable);
+            let return_kind = sig.as_ref().map_or(ValueKind::Mutable, |s| s.return_value_kind);
             let av = match return_kind {
                 ValueKind::Frozen => {
                     let mut reasons = FxHashSet::default();
@@ -996,8 +993,7 @@ fn infer_instruction_effects(
         InstructionValue::MethodCall(v) => {
             // Use the method's return_value_kind if a known signature exists.
             let sig = env.get_function_signature(&v.property.identifier.type_).cloned();
-            let return_kind =
-                sig.as_ref().map(|s| s.return_value_kind).unwrap_or(ValueKind::Mutable);
+            let return_kind = sig.as_ref().map_or(ValueKind::Mutable, |s| s.return_value_kind);
             let av = match return_kind {
                 ValueKind::Frozen => {
                     let mut reasons = FxHashSet::default();
@@ -1148,14 +1144,14 @@ fn infer_instruction_effects(
         // Freeze effects. applyEffect then calls state.freeze(dep) which
         // transitively freezes through alias chains and function captures.
         InstructionValue::StartMemoize(v) => {
-            if env.config.enable_preserve_existing_memoization_guarantees {
-                if let Some(deps) = &v.deps {
-                    for dep in deps {
-                        if let crate::hir::ManualMemoDependencyRoot::NamedLocal { value, .. } =
-                            &dep.root
-                        {
-                            state.freeze(value.identifier.id, ValueReason::HookCaptured);
-                        }
+            if env.config.enable_preserve_existing_memoization_guarantees
+                && let Some(deps) = &v.deps
+            {
+                for dep in deps {
+                    if let crate::hir::ManualMemoDependencyRoot::NamedLocal { value, .. } =
+                        &dep.root
+                    {
+                        state.freeze(value.identifier.id, ValueReason::HookCaptured);
                     }
                 }
             }
@@ -1173,9 +1169,23 @@ fn infer_instruction_effects(
             state.define(&instr.lvalue, AbstractValue::mutable());
         }
 
+        // DeclareLocal: the declared variable is primitive (undefined),
+        // matching the TS applyEffect for Create(Primitive).
+        // Without this, y's abstract state is None, causing incorrect
+        // MutateTransitiveConditionally effects in conservative calls.
+        // Exception: Catch bindings hold the thrown exception object, which
+        // is an unknown mutable value, not a primitive.
+        InstructionValue::DeclareLocal(v) => {
+            if v.lvalue.kind == InstructionKind::Catch {
+                state.define(&v.lvalue.place, AbstractValue::mutable());
+            } else {
+                state.define(&v.lvalue.place, AbstractValue::primitive());
+            }
+            state.define(&instr.lvalue, AbstractValue::mutable());
+        }
+
         // Other values
-        InstructionValue::DeclareLocal(_)
-        | InstructionValue::DeclareContext(_)
+        InstructionValue::DeclareContext(_)
         | InstructionValue::Debugger(_)
         | InstructionValue::MetaProperty(_)
         | InstructionValue::TaggedTemplateExpression(_)
@@ -1344,8 +1354,12 @@ fn effects_from_signature(
                 let source_kind = state.get(cap).map(|av| av.kind);
                 if matches!(
                     source_kind,
-                    Some(ValueKind::Global | ValueKind::Primitive)
-                        | Some(ValueKind::Frozen | ValueKind::MaybeFrozen)
+                    Some(
+                        ValueKind::Global
+                            | ValueKind::Primitive
+                            | ValueKind::Frozen
+                            | ValueKind::MaybeFrozen
+                    )
                 ) {
                     effects.push(AliasingEffect::ImmutableCapture {
                         from: cap.clone(),
@@ -1360,8 +1374,12 @@ fn effects_from_signature(
                 let source_kind = state.get(cap).map(|av| av.kind);
                 if matches!(
                     source_kind,
-                    Some(ValueKind::Global | ValueKind::Primitive)
-                        | Some(ValueKind::Frozen | ValueKind::MaybeFrozen)
+                    Some(
+                        ValueKind::Global
+                            | ValueKind::Primitive
+                            | ValueKind::Frozen
+                            | ValueKind::MaybeFrozen
+                    )
                 ) {
                     for store in &stores {
                         effects.push(AliasingEffect::ImmutableCapture {
@@ -1414,14 +1432,14 @@ fn emit_conservative_call_effects(
     // Use raw pointers to track TS reference identity (receiver===function when they
     // point to the same Place, e.g. callee for CallExpression/NewExpression).
     let mut operands: Vec<(*const Place, &Place, bool)> = Vec::new();
-    operands.push((receiver as *const Place, receiver, false));
-    operands.push((function as *const Place, function, true));
+    operands.push((std::ptr::from_ref::<Place>(receiver), receiver, false));
+    operands.push((std::ptr::from_ref::<Place>(function), function, true));
     for arg in args {
         let place = match arg {
             CallArg::Place(p) => p,
             CallArg::Spread(s) => &s.place,
         };
-        operands.push((place as *const Place, place, false));
+        operands.push((std::ptr::from_ref::<Place>(place), place, false));
     }
 
     let function_ptr = function as *const Place;
@@ -1440,14 +1458,12 @@ fn emit_conservative_call_effects(
             effects.push(AliasingEffect::MutateTransitiveConditionally { value: operand.clone() });
         }
         // TS: conditionallyMutateIterator for Spread args (idx >= 2 = actual call args)
-        if idx >= 2 && is_conditionally_mutable {
-            if let CallArg::Spread(_) = &args[idx - 2] {
-                if !is_array_or_set_or_map_type(&operand.identifier.type_) {
-                    effects.push(AliasingEffect::MutateTransitiveConditionally {
-                        value: operand.clone(),
-                    });
-                }
-            }
+        if idx >= 2
+            && is_conditionally_mutable
+            && let CallArg::Spread(_) = &args[idx - 2]
+            && !is_array_or_set_or_map_type(&operand.identifier.type_)
+        {
+            effects.push(AliasingEffect::MutateTransitiveConditionally { value: operand.clone() });
         }
         // TS: MaybeAlias(from=operand, into=lvalue)
         effects.push(AliasingEffect::MaybeAlias { from: operand.clone(), into: lvalue.clone() });
@@ -1475,7 +1491,7 @@ fn is_array_or_set_or_map_type(ty: &crate::hir::types::Type) -> bool {
         object_shape::{BUILT_IN_ARRAY_ID, BUILT_IN_MAP_ID, BUILT_IN_SET_ID},
         types::Type,
     };
-    matches!(ty, Type::Object(obj) if matches!(obj.shape_id.as_deref(), Some(BUILT_IN_ARRAY_ID) | Some(BUILT_IN_MAP_ID) | Some(BUILT_IN_SET_ID)))
+    matches!(ty, Type::Object(obj) if matches!(obj.shape_id.as_deref(), Some(BUILT_IN_ARRAY_ID | BUILT_IN_MAP_ID | BUILT_IN_SET_ID)))
 }
 
 /// Check if a place's abstract value is Frozen or MaybeFrozen in the inference state.
@@ -1514,36 +1530,36 @@ fn are_arguments_immutable_and_non_mutating(
 
         // If the argument is a Function type with a known signature, check whether any
         // of the signature's params are mutable effects (matching TS isKnownMutableEffect).
-        if let Type::Function(_) = &place.identifier.type_ {
-            if let Some(fn_sig) = env.get_function_signature(&place.identifier.type_) {
-                // isKnownMutableEffect: Store, ConditionallyMutate, ConditionallyMutateIterator, Mutate → true
-                // Read, Capture, Freeze → false
-                let has_mutable_positional = fn_sig.positional_params.iter().any(|&e| {
-                    matches!(
-                        e,
-                        Effect::Store
-                            | Effect::ConditionallyMutate
-                            | Effect::ConditionallyMutateIterator
-                            | Effect::Mutate
-                    )
-                });
-                if has_mutable_positional {
-                    return false;
-                }
-                if let Some(rest) = fn_sig.rest_param {
-                    if matches!(
-                        rest,
-                        Effect::Store
-                            | Effect::ConditionallyMutate
-                            | Effect::ConditionallyMutateIterator
-                            | Effect::Mutate
-                    ) {
-                        return false;
-                    }
-                }
-                // This function's signature doesn't mutate its inputs — continue checking others
-                continue;
+        if let Type::Function(_) = &place.identifier.type_
+            && let Some(fn_sig) = env.get_function_signature(&place.identifier.type_)
+        {
+            // isKnownMutableEffect: Store, ConditionallyMutate, ConditionallyMutateIterator, Mutate → true
+            // Read, Capture, Freeze → false
+            let has_mutable_positional = fn_sig.positional_params.iter().any(|&e| {
+                matches!(
+                    e,
+                    Effect::Store
+                        | Effect::ConditionallyMutate
+                        | Effect::ConditionallyMutateIterator
+                        | Effect::Mutate
+                )
+            });
+            if has_mutable_positional {
+                return false;
             }
+            if let Some(rest) = fn_sig.rest_param
+                && matches!(
+                    rest,
+                    Effect::Store
+                        | Effect::ConditionallyMutate
+                        | Effect::ConditionallyMutateIterator
+                        | Effect::Mutate
+                )
+            {
+                return false;
+            }
+            // This function's signature doesn't mutate its inputs — continue checking others
+            continue;
         }
 
         // For non-function types or functions without known signatures, check the abstract value kind.
@@ -1883,15 +1899,15 @@ fn compute_effects_for_signature(
                 loc,
             } => {
                 let recv_sub = substitutions.get(&apply_recv.identifier.id);
-                if recv_sub.map_or(true, |v| v.len() != 1) {
+                if recv_sub.is_none_or(|v| v.len() != 1) {
                     return None;
                 }
                 let fn_sub = substitutions.get(&function.identifier.id);
-                if fn_sub.map_or(true, |v| v.len() != 1) {
+                if fn_sub.is_none_or(|v| v.len() != 1) {
                     return None;
                 }
                 let into_sub = substitutions.get(&apply_into.identifier.id);
-                if into_sub.map_or(true, |v| v.len() != 1) {
+                if into_sub.is_none_or(|v| v.len() != 1) {
                     return None;
                 }
                 let mut new_args = Vec::new();
@@ -1902,7 +1918,7 @@ fn compute_effects_for_signature(
                         }
                         crate::inference::aliasing_effects::ApplyArg::Place(p) => {
                             let arg_sub = substitutions.get(&p.identifier.id);
-                            if arg_sub.map_or(true, |v| v.len() != 1) {
+                            if arg_sub.is_none_or(|v| v.len() != 1) {
                                 return None;
                             }
                             new_args.push(crate::inference::aliasing_effects::ApplyArg::Place(
@@ -1911,7 +1927,7 @@ fn compute_effects_for_signature(
                         }
                         crate::inference::aliasing_effects::ApplyArg::Spread(s) => {
                             let arg_sub = substitutions.get(&s.place.identifier.id);
-                            if arg_sub.map_or(true, |v| v.len() != 1) {
+                            if arg_sub.is_none_or(|v| v.len() != 1) {
                                 return None;
                             }
                             new_args.push(crate::inference::aliasing_effects::ApplyArg::Spread(
@@ -1985,10 +2001,10 @@ fn filter_substituted_effects(
             AliasingEffect::Alias { from, into } | AliasingEffect::Capture { from, into } => {
                 let from_kind = state.get(from).map(|av| av.kind);
                 match from_kind {
-                    Some(ValueKind::Global) | Some(ValueKind::Primitive) => {
+                    Some(ValueKind::Global | ValueKind::Primitive) => {
                         // Drop: global/primitive sources don't need data flow tracking
                     }
-                    Some(ValueKind::Frozen) | Some(ValueKind::MaybeFrozen) => {
+                    Some(ValueKind::Frozen | ValueKind::MaybeFrozen) => {
                         // Downgrade to ImmutableCapture
                         filtered.push(AliasingEffect::ImmutableCapture {
                             from: from.clone(),
@@ -2008,7 +2024,7 @@ fn filter_substituted_effects(
                     Some(ValueKind::Mutable) => {
                         let into_kind = state.get(into).map(|av| av.kind);
                         match into_kind {
-                            Some(ValueKind::Mutable) | Some(ValueKind::MaybeFrozen) => {
+                            Some(ValueKind::Mutable | ValueKind::MaybeFrozen) => {
                                 filtered.push(effect);
                             }
                             Some(ValueKind::Context) => {
@@ -2034,7 +2050,7 @@ fn filter_substituted_effects(
             AliasingEffect::Assign { from, into } => {
                 let from_kind = state.get(from).map(|av| av.kind);
                 match from_kind {
-                    Some(ValueKind::Frozen) | Some(ValueKind::MaybeFrozen) => {
+                    Some(ValueKind::Frozen | ValueKind::MaybeFrozen) => {
                         filtered.push(AliasingEffect::ImmutableCapture {
                             from: from.clone(),
                             into: into.clone(),
@@ -2052,7 +2068,7 @@ fn filter_substituted_effects(
             AliasingEffect::ImmutableCapture { from, .. } => {
                 let from_kind = state.get(from).map(|av| av.kind);
                 match from_kind {
-                    Some(ValueKind::Global) | Some(ValueKind::Primitive) => {
+                    Some(ValueKind::Global | ValueKind::Primitive) => {
                         // Drop: no data flow tracking needed for copy types
                     }
                     _ => {
@@ -2185,39 +2201,39 @@ fn compute_instruction_effects(
             //    we build a signature from the function expression, substitute params/context
             //    with actual call-site values, and emit the substituted effects instead of
             //    conservative fallback.
-            if let Some(func_expr) = state.function_values.get(&v.callee.identifier.id) {
-                if func_expr.lowered_func.func.aliasing_effects.is_some() {
-                    let signature = build_signature_from_function_expression(func_expr);
-                    let context_vars = &func_expr.lowered_func.func.context;
-                    if let Some(sig_effects) = compute_effects_for_signature(
-                        &signature,
-                        lvalue,
-                        &v.callee, // receiver = callee for CallExpression
-                        &v.args,
-                        context_vars,
-                    ) {
-                        // TS: MutateTransitiveConditionally(function) + substituted effects.
-                        // In TS, this goes through applyEffect which filters it out if the
-                        // function's abstract kind is not Mutable or Context (e.g. Frozen).
-                        // We replicate that filtering here: only emit if callee is mutable.
-                        let callee_is_mutable = match state.get(&v.callee) {
-                            Some(av) => {
-                                matches!(av.kind, ValueKind::Mutable | ValueKind::Context)
-                            }
-                            None => true, // Unknown: conservatively assume mutable
-                        };
-                        if callee_is_mutable {
-                            effects.push(AliasingEffect::MutateTransitiveConditionally {
-                                value: v.callee.clone(),
-                            });
+            if let Some(func_expr) = state.function_values.get(&v.callee.identifier.id)
+                && func_expr.lowered_func.func.aliasing_effects.is_some()
+            {
+                let signature = build_signature_from_function_expression(func_expr);
+                let context_vars = &func_expr.lowered_func.func.context;
+                if let Some(sig_effects) = compute_effects_for_signature(
+                    &signature,
+                    lvalue,
+                    &v.callee, // receiver = callee for CallExpression
+                    &v.args,
+                    context_vars,
+                ) {
+                    // TS: MutateTransitiveConditionally(function) + substituted effects.
+                    // In TS, this goes through applyEffect which filters it out if the
+                    // function's abstract kind is not Mutable or Context (e.g. Frozen).
+                    // We replicate that filtering here: only emit if callee is mutable.
+                    let callee_is_mutable = match state.get(&v.callee) {
+                        Some(av) => {
+                            matches!(av.kind, ValueKind::Mutable | ValueKind::Context)
                         }
-                        // Filter substituted effects through abstract state to match
-                        // TS applyEffect behavior: drop mutations on frozen values,
-                        // downgrade Alias to ImmutableCapture when source is frozen, etc.
-                        let filtered = filter_substituted_effects(state, sig_effects);
-                        effects.extend(filtered);
-                        return effects;
+                        None => true, // Unknown: conservatively assume mutable
+                    };
+                    if callee_is_mutable {
+                        effects.push(AliasingEffect::MutateTransitiveConditionally {
+                            value: v.callee.clone(),
+                        });
                     }
+                    // Filter substituted effects through abstract state to match
+                    // TS applyEffect behavior: drop mutations on frozen values,
+                    // downgrade Alias to ImmutableCapture when source is frozen, etc.
+                    let filtered = filter_substituted_effects(state, sig_effects);
+                    effects.extend(filtered);
+                    return effects;
                 }
             }
             // 2. Try to get function signature from callee's type
@@ -2225,17 +2241,17 @@ fn compute_instruction_effects(
             if let Some(sig) = sig {
                 let sig = sig.clone();
                 // 2a. Check for new-style aliasing signature first
-                if let Some(ref aliasing) = sig.aliasing {
-                    if let Some(sig_effects) = compute_effects_for_signature(
+                if let Some(ref aliasing) = sig.aliasing
+                    && let Some(sig_effects) = compute_effects_for_signature(
                         aliasing,
                         lvalue,
                         &v.callee,
                         &v.args,
                         &[], // empty context for built-in signatures
-                    ) {
-                        effects.extend(sig_effects);
-                        return effects;
-                    }
+                    )
+                {
+                    effects.extend(sig_effects);
+                    return effects;
                 }
                 // 2b. Legacy fallback
                 return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state);
@@ -2254,24 +2270,24 @@ fn compute_instruction_effects(
         }
         InstructionValue::MethodCall(v) => {
             // 1. Check if the method (property) is a locally-defined FunctionExpression
-            if let Some(func_expr) = state.function_values.get(&v.property.identifier.id) {
-                if func_expr.lowered_func.func.aliasing_effects.is_some() {
-                    let signature = build_signature_from_function_expression(func_expr);
-                    let context_vars = &func_expr.lowered_func.func.context;
-                    if let Some(sig_effects) = compute_effects_for_signature(
-                        &signature,
-                        lvalue,
-                        &v.receiver, // receiver for MethodCall
-                        &v.args,
-                        context_vars,
-                    ) {
-                        // TS: for MethodCall, mutatesCallee=false so no MutateTransitiveConditionally on function
-                        // Filter substituted effects through abstract state to match
-                        // TS applyEffect behavior.
-                        let filtered = filter_substituted_effects(state, sig_effects);
-                        effects.extend(filtered);
-                        return effects;
-                    }
+            if let Some(func_expr) = state.function_values.get(&v.property.identifier.id)
+                && func_expr.lowered_func.func.aliasing_effects.is_some()
+            {
+                let signature = build_signature_from_function_expression(func_expr);
+                let context_vars = &func_expr.lowered_func.func.context;
+                if let Some(sig_effects) = compute_effects_for_signature(
+                    &signature,
+                    lvalue,
+                    &v.receiver, // receiver for MethodCall
+                    &v.args,
+                    context_vars,
+                ) {
+                    // TS: for MethodCall, mutatesCallee=false so no MutateTransitiveConditionally on function
+                    // Filter substituted effects through abstract state to match
+                    // TS applyEffect behavior.
+                    let filtered = filter_substituted_effects(state, sig_effects);
+                    effects.extend(filtered);
+                    return effects;
                 }
             }
             // 2. Try to get function signature from the property's type (the method)
@@ -2279,17 +2295,17 @@ fn compute_instruction_effects(
             if let Some(sig) = sig {
                 let sig = sig.clone();
                 // 2a. Check for new-style aliasing signature first
-                if let Some(ref aliasing) = sig.aliasing {
-                    if let Some(sig_effects) = compute_effects_for_signature(
+                if let Some(ref aliasing) = sig.aliasing
+                    && let Some(sig_effects) = compute_effects_for_signature(
                         aliasing,
                         lvalue,
                         &v.receiver, // receiver for MethodCall
                         &v.args,
                         &[], // empty context for built-in signatures
-                    ) {
-                        effects.extend(sig_effects);
-                        return effects;
-                    }
+                    )
+                {
+                    effects.extend(sig_effects);
+                    return effects;
                 }
                 // 2b. Port of TS mutableOnlyIfOperandsAreMutable check (InferMutationAliasingEffects.ts).
                 // If the method is only mutable when operands are mutable (e.g. Array.filter, Array.map),
@@ -2344,17 +2360,17 @@ fn compute_instruction_effects(
             if let Some(sig) = sig {
                 let sig = sig.clone();
                 // Check for new-style aliasing signature first
-                if let Some(ref aliasing) = sig.aliasing {
-                    if let Some(sig_effects) = compute_effects_for_signature(
+                if let Some(ref aliasing) = sig.aliasing
+                    && let Some(sig_effects) = compute_effects_for_signature(
                         aliasing,
                         lvalue,
                         &v.callee,
                         &v.args,
                         &[], // empty context for built-in signatures
-                    ) {
-                        effects.extend(sig_effects);
-                        return effects;
-                    }
+                    )
+                {
+                    effects.extend(sig_effects);
+                    return effects;
                 }
                 // Legacy fallback
                 return effects_from_signature(&sig, &v.callee, &v.args, lvalue, state);
@@ -2824,17 +2840,17 @@ fn compute_instruction_effects(
 
         // StartMemoize / FinishMemoize: Create(Primitive), with optional Freeze
         InstructionValue::StartMemoize(memo) => {
-            if env.config.enable_preserve_existing_memoization_guarantees {
-                if let Some(deps) = &memo.deps {
-                    for dep in deps {
-                        if let crate::hir::ManualMemoDependencyRoot::NamedLocal { value, .. } =
-                            &dep.root
-                        {
-                            effects.push(AliasingEffect::Freeze {
-                                value: value.clone(),
-                                reason: ValueReason::HookCaptured,
-                            });
-                        }
+            if env.config.enable_preserve_existing_memoization_guarantees
+                && let Some(deps) = &memo.deps
+            {
+                for dep in deps {
+                    if let crate::hir::ManualMemoDependencyRoot::NamedLocal { value, .. } =
+                        &dep.root
+                    {
+                        effects.push(AliasingEffect::Freeze {
+                            value: value.clone(),
+                            reason: ValueReason::HookCaptured,
+                        });
                     }
                 }
             }
@@ -2902,13 +2918,9 @@ fn compute_instruction_effects(
                     effect,
                     AliasingEffect::MutateTransitiveConditionally { .. }
                         | AliasingEffect::MutateConditionally { .. }
-                ) {
-                    if let Some(abstract_val) = state.get(value) {
-                        return matches!(
-                            abstract_val.kind,
-                            ValueKind::Mutable | ValueKind::Context
-                        );
-                    }
+                ) && let Some(abstract_val) = state.get(value)
+                {
+                    return matches!(abstract_val.kind, ValueKind::Mutable | ValueKind::Context);
                 }
                 true
             }
@@ -2983,61 +2995,53 @@ fn compute_instruction_effects(
                         | AliasingEffect::Alias { from, into } => (from, into),
                         _ => unreachable!(),
                     };
-                    if let Some(abstract_val) = state.get(into) {
-                        if matches!(abstract_val.kind, ValueKind::Frozen) {
-                            *effect = AliasingEffect::ImmutableCapture {
-                                from: from.clone(),
-                                into: into.clone(),
-                            };
-                        }
+                    if let Some(abstract_val) = state.get(into)
+                        && matches!(abstract_val.kind, ValueKind::Frozen)
+                    {
+                        *effect = AliasingEffect::ImmutableCapture {
+                            from: from.clone(),
+                            into: into.clone(),
+                        };
                     }
                 }
             }
             AliasingEffect::MaybeAlias { from, into } => {
                 // MaybeAlias: Frozen/MaybeFrozen source → ImmutableCapture
                 // MaybeAlias always survives for Global/Primitive sources per TS line 930.
-                if let Some(abstract_val) = state.get(from) {
-                    if matches!(abstract_val.kind, ValueKind::Frozen | ValueKind::MaybeFrozen) {
-                        *effect = AliasingEffect::ImmutableCapture {
-                            from: from.clone(),
-                            into: into.clone(),
-                        };
-                    }
+                if let Some(abstract_val) = state.get(from)
+                    && matches!(abstract_val.kind, ValueKind::Frozen | ValueKind::MaybeFrozen)
+                {
+                    *effect =
+                        AliasingEffect::ImmutableCapture { from: from.clone(), into: into.clone() };
                 }
             }
             // Assign: Frozen source only → ImmutableCapture
             AliasingEffect::Assign { from, into } => {
-                if let Some(abstract_val) = state.get(from) {
-                    if matches!(abstract_val.kind, ValueKind::Frozen) {
-                        *effect = AliasingEffect::ImmutableCapture {
-                            from: from.clone(),
-                            into: into.clone(),
-                        };
-                    }
+                if let Some(abstract_val) = state.get(from)
+                    && matches!(abstract_val.kind, ValueKind::Frozen)
+                {
+                    *effect =
+                        AliasingEffect::ImmutableCapture { from: from.clone(), into: into.clone() };
                 }
             }
             // CreateFrom: Frozen source only → Create(Frozen) + ImmutableCapture
             AliasingEffect::CreateFrom { from, into } => {
-                if let Some(abstract_val) = state.get(from) {
-                    if matches!(abstract_val.kind, ValueKind::Frozen) {
-                        let from_clone = from.clone();
-                        let into_clone = into.clone();
-                        let reason = abstract_val
-                            .reason
-                            .iter()
-                            .next()
-                            .copied()
-                            .unwrap_or(ValueReason::Other);
-                        extra_effects.push(AliasingEffect::ImmutableCapture {
-                            from: from_clone,
-                            into: into_clone.clone(),
-                        });
-                        *effect = AliasingEffect::Create {
-                            into: into_clone,
-                            value: ValueKind::Frozen,
-                            reason,
-                        };
-                    }
+                if let Some(abstract_val) = state.get(from)
+                    && matches!(abstract_val.kind, ValueKind::Frozen)
+                {
+                    let from_clone = from.clone();
+                    let into_clone = into.clone();
+                    let reason =
+                        abstract_val.reason.iter().next().copied().unwrap_or(ValueReason::Other);
+                    extra_effects.push(AliasingEffect::ImmutableCapture {
+                        from: from_clone,
+                        into: into_clone.clone(),
+                    });
+                    *effect = AliasingEffect::Create {
+                        into: into_clone,
+                        value: ValueKind::Frozen,
+                        reason,
+                    };
                 }
             }
             _ => {}
