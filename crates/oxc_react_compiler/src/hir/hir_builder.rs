@@ -8,7 +8,10 @@
 use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::compiler_error::{CompilerError, GENERATED_SOURCE, SourceLocation};
+use crate::compiler_error::{
+    CompilerError, CompilerErrorDetail, CompilerErrorDetailOptions, ErrorCategory,
+    GENERATED_SOURCE, SourceLocation,
+};
 
 use super::{
     environment::Environment,
@@ -260,6 +263,21 @@ impl HirBuilder {
         loc: SourceLocation,
         decl_span: Span,
     ) -> Identifier {
+        // Port of HIRBuilder.ts resolveBinding lines 292-307:
+        // Local variables named `fbt` conflict with the fbt plugin (which looks for
+        // callsites with a `fbt`-named callee) and are not yet supported.
+        if name == "fbt" {
+            self.errors.push_error_detail(CompilerErrorDetail::new(CompilerErrorDetailOptions {
+                category: ErrorCategory::Todo,
+                reason: "Support local variables named `fbt`".to_string(),
+                description: Some(
+                    "Local variables named `fbt` may conflict with the fbt plugin and are not yet supported".to_string(),
+                ),
+                loc: Some(loc),
+                suggestions: None,
+            }));
+        }
+
         // Check if we already have a binding for this name
         if let Some(entry) = self.bindings.get(name) {
             if entry.declaration_key == declaration_key {
@@ -1106,12 +1124,11 @@ pub fn remove_unreachable_for_updates(body: &mut Hir) {
                 false
             }
         };
-        if should_clear {
-            if let Some(block) = body.blocks.get_mut(&block_id)
-                && let Terminal::For(t) = &mut block.terminal
-            {
-                t.update = None;
-            }
+        if should_clear
+            && let Some(block) = body.blocks.get_mut(&block_id)
+            && let Terminal::For(t) = &mut block.terminal
+        {
+            t.update = None;
         }
     }
 }
@@ -1126,24 +1143,24 @@ pub fn remove_dead_do_while_statements(body: &mut Hir) {
         let replacement = {
             let Some(block) = body.blocks.get(&block_id) else { continue };
             if let Terminal::DoWhile(t) = &block.terminal {
-                if !body.blocks.contains_key(&t.test) {
+                if body.blocks.contains_key(&t.test) {
+                    None
+                } else {
                     Some(Terminal::Goto(super::hir_types::GotoTerminal {
                         id: t.id,
                         block: t.r#loop,
                         variant: GotoVariant::Break,
                         loc: t.loc,
                     }))
-                } else {
-                    None
                 }
             } else {
                 None
             }
         };
-        if let Some(new_terminal) = replacement {
-            if let Some(block) = body.blocks.get_mut(&block_id) {
-                block.terminal = new_terminal;
-            }
+        if let Some(new_terminal) = replacement
+            && let Some(block) = body.blocks.get_mut(&block_id)
+        {
+            block.terminal = new_terminal;
         }
     }
 }

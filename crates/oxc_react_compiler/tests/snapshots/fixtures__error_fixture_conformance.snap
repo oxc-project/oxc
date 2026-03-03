@@ -2,11 +2,11 @@
 source: crates/oxc_react_compiler/tests/fixtures.rs
 expression: snapshot
 ---
-Error fixture conformance: 209/275 (76.0%)
+Error fixture conformance: 212/275 (77.1%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 66
+  unexpected_success: 63
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -17,7 +17,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.call-args-destructuring-asignment-complex.js
   [unexpected_success] error.default-param-accesses-local.js
   [unexpected_success] error.dont-hoist-inline-reference.js
-  [unexpected_success] error.handle-unexpected-exception-pipeline.ts
   [unexpected_success] error.hook-property-load-local-hook.js
   [unexpected_success] error.invalid-array-push-frozen.js
   [unexpected_success] error.invalid-function-expression-mutates-immutable-value.js
@@ -66,9 +65,7 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps-extra-only.js
   [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps-missing-only.js
   [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps.js
-  [unexpected_success] fbt/error.todo-fbt-as-local.js
   [unexpected_success] fbt/error.todo-fbt-unknown-enum-value.js
-  [unexpected_success] fbt/error.todo-locally-require-fbt.js
   [unexpected_success] fbt/error.todo-multiple-fbt-plural.tsx
   [unexpected_success] new-mutability/error.invalid-useCallback-captures-reassigned-context.js
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js

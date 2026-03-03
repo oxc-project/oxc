@@ -37,7 +37,34 @@ pub fn run_pipeline(
     // Phase 1: HIR-level passes
     // =========================================================================
 
-    // 0. HIR cleanup — the TS compiler runs these at the end of HIR building
+    // 0a. Check for unreachable blocks containing hoisted function declarations.
+    // Port of HIRBuilder.ts lines 358-371: before RPO cleanup, check if any block
+    // not in the RPO set contains a FunctionExpression instruction. This catches
+    // patterns like `return foo(); function foo() {}` where the function declaration
+    // is in unreachable code but gets hoisted by JavaScript semantics.
+    {
+        let rpo_set: rustc_hash::FxHashSet<crate::hir::BlockId> =
+            crate::hir::hir_builder::compute_rpo_order(func.body.entry, &func.body.blocks)
+                .into_iter()
+                .collect();
+        for (block_id, block) in &func.body.blocks {
+            if !rpo_set.contains(block_id)
+                && block.instructions.iter().any(|instr| {
+                    matches!(instr.value, crate::hir::InstructionValue::FunctionExpression(_))
+                })
+            {
+                let loc =
+                    block.instructions.first().map_or(block.terminal.loc(), |instr| instr.loc);
+                return Err(CompilerError::todo(
+                    "Support functions with unreachable code that may contain hoisted declarations",
+                    None,
+                    loc,
+                ));
+            }
+        }
+    }
+
+    // 0b. HIR cleanup — the TS compiler runs these at the end of HIR building
     // (HIRBuilder.ts:392-398). We run them here at the start of the pipeline to
     // remove unreachable blocks left over from HIR construction (e.g. dead
     // do-while loops whose body unconditionally breaks, unreachable for-update
@@ -297,7 +324,7 @@ pub fn run_pipeline(
     crate::hir::assertions::assert_terminal_preds_exist(func)?;
 
     // 36. PropagateScopeDependencies
-    crate::hir::propagate_scope_dependencies_hir::propagate_scope_dependencies_hir(func);
+    crate::hir::propagate_scope_dependencies_hir::propagate_scope_dependencies_hir(func)?;
 
     // =========================================================================
     // Phase 4: Build reactive function (HIR → Reactive tree)
@@ -372,7 +399,7 @@ pub fn run_pipeline(
         crate::reactive_scopes::rename_variables::rename_variables(&mut reactive_function);
 
     // 48. PruneHoistedContexts
-    crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_function);
+    crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_function)?;
 
     // 49. ValidatePreservedManualMemoization (optional)
     if env.config.enable_preserve_existing_memoization_guarantees
@@ -417,7 +444,7 @@ pub fn run_pipeline(
             crate::reactive_scopes::build_reactive_function::build_reactive_function(&entry.func)?;
         crate::reactive_scopes::prune_unused_labels::prune_unused_labels(&mut outlined_reactive);
         crate::reactive_scopes::prune_unused_lvalues::prune_unused_lvalues(&mut outlined_reactive);
-        crate::reactive_scopes::prune::prune_hoisted_contexts(&mut outlined_reactive);
+        crate::reactive_scopes::prune::prune_hoisted_contexts(&mut outlined_reactive)?;
         let outlined_identifiers =
             crate::reactive_scopes::rename_variables::rename_variables(&mut outlined_reactive);
         let outlined_codegen_options = CodegenOptions {
@@ -447,6 +474,16 @@ pub fn run_pipeline(
     // ValidateSourceLocations (optional)
     if env.config.validate_source_locations {
         crate::validation::validate_source_locations::validate_source_locations(&ast);
+    }
+
+    // [TESTING ONLY] Simulate an unexpected exception during compilation.
+    // Port of Pipeline.ts lines 511-518.
+    if env.config.throw_unknown_exception_testonly {
+        return Err(crate::compiler_error::CompilerError::invalid_config(
+            "unexpected error",
+            None,
+            None,
+        ));
     }
 
     Ok(ast)
