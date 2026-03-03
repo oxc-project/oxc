@@ -513,20 +513,20 @@
           "markdownDescription": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI."
         },
         "typeAware": {
-          "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.",
+          "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
           "type": [
             "boolean",
             "null"
           ],
-          "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI."
+          "markdownDescription": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         },
         "typeCheck": {
-          "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.",
+          "description": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
           "type": [
             "boolean",
             "null"
           ],
-          "markdownDescription": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI."
+          "markdownDescription": "Enable experimental type checking (includes TypeScript compiler diagnostics).\n\nEquivalent to passing `--type-check` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed."
         }
       },
       "additionalProperties": false,

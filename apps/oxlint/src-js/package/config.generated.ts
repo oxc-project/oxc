@@ -328,12 +328,16 @@ export interface OxlintOptions {
    * Enable rules that require type information.
    *
    * Equivalent to passing `--type-aware` on the CLI.
+   *
+   * Note that this requires the `oxlint-tsgolint` package to be installed.
    */
   typeAware?: boolean | null;
   /**
    * Enable experimental type checking (includes TypeScript compiler diagnostics).
    *
    * Equivalent to passing `--type-check` on the CLI.
+   *
+   * Note that this requires the `oxlint-tsgolint` package to be installed.
    */
   typeCheck?: boolean | null;
 }
