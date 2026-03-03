@@ -114,7 +114,7 @@ impl LintCommand {
 #[derive(Debug, Clone, Bpaf)]
 pub struct BasicOptions {
     /// Oxlint configuration file
-    ///  * `.json` config files are supported in all runtimes
+    ///  * `.json` and `.jsonc` config files are supported in all runtimes
     ///  * JavaScript/TypeScript config files are experimental and require running via Node.js
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
@@ -521,6 +521,7 @@ mod warning_options {
 mod lint_options {
     use std::{fs::File, path::PathBuf};
 
+    use insta::assert_snapshot;
     use oxc_linter::AllowWarnDeny;
 
     use super::{LintCommand, OutputFormat, lint_command};
@@ -637,6 +638,18 @@ mod lint_options {
         assert!(options.type_check);
         let options = get_lint_options(".");
         assert!(!options.type_check);
+    }
+
+    #[test]
+    fn help_mentions_jsonc_in_config_line() {
+        let help = lint_command().run_inner(&["--help"]).unwrap_err().unwrap_stdout();
+        let json_config_line = help
+            .lines()
+            .find(|line| line.contains("config files are supported in all runtimes"))
+            .expect("expected JSON/JSONC config support line in --help output")
+            .trim();
+
+        assert_snapshot!("lint_config_json_support_help_line", json_config_line);
     }
 }
 
