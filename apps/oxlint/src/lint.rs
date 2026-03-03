@@ -1625,6 +1625,104 @@ mod suppression {
 
     use crate::tester::Tester;
 
+    fn file_suppression_generator_tester(fixture_name: &str, args: &[&str]) {
+        let cwd = env::current_dir().unwrap();
+        let fixture_path = format!("fixtures/{fixture_name}/oxlint-suppressions.json");
+        let fixture_buf = cwd.join(fixture_path);
+        let expected_buf =
+            cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions-expected.json"));
+        let fixture_path = fixture_buf.to_str().unwrap();
+        assert!(
+            !fs::exists(fixture_path).unwrap(),
+            "oxlint-suppression found in fixtures/{}/oxlint-suppressions.json",
+            fixture_name
+        );
+
+        Tester::new().with_cwd(format!("fixtures/{fixture_name}").into()).test(args);
+
+        assert!(
+            fs::exists(fixture_path).unwrap(),
+            "oxlint-suppression not found in fixtures/{}/oxlint-suppressions.json",
+            fixture_name
+        );
+
+        let stdout =
+            Tester::new().with_cwd(format!("fixtures/{fixture_name}").into()).test_output(args);
+
+        assert!(stdout.starts_with("Found 0 warnings and 0 errors."), "Unexpected errors found");
+
+        let new_content = fs::read_to_string(cwd.join(fixture_path))
+            .expect("Unable to read the new oxlint-suppressions.json");
+        let expected_content = fs::read_to_string(expected_buf)
+            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
+
+        assert_eq!(
+            new_content, expected_content,
+            "The suppression generated doesn't match the expected"
+        );
+
+        fs::remove_file(fixture_path).unwrap();
+    }
+
+    fn file_suppression_update_tester(fixture_name: &str, args: &[&str]) {
+        let cwd = env::current_dir().unwrap();
+        let fixture_buf = cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json"));
+        let expected_buf =
+            cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions-expected.json"));
+        let backup_buf =
+            cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions-backup.json"));
+
+        Tester::new().with_cwd(format!("fixtures/{fixture_name}").into()).test(args);
+
+        let new_content = fs::read_to_string(fixture_buf)
+            .expect("Unable to read the new oxlint-suppressions.json");
+        let expected_content = fs::read_to_string(expected_buf)
+            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
+
+        assert_eq!(
+            new_content, expected_content,
+            "The suppression generated doesn't match the expected"
+        );
+
+        fs::remove_file(cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json")))
+            .unwrap();
+        fs::copy(backup_buf, cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json")))
+            .unwrap();
+    }
+
+    fn fix_suppression_tester(fixture_name: &str, args: &[&str]) {
+        let cwd = env::current_dir().unwrap();
+        let fixture_buf = cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json"));
+        let expected_buf =
+            cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions-expected.json"));
+        let backup_buf =
+            cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions-backup.json"));
+
+        Tester::new().with_cwd(format!("fixtures/{fixture_name}").into()).test(args);
+
+        let new_content = fs::read_to_string(fixture_buf)
+            .expect("Unable to read the new oxlint-suppressions.json");
+        let expected_content = fs::read_to_string(expected_buf)
+            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
+
+        assert_eq!(
+            new_content, expected_content,
+            "The suppression generated doesn't match the expected"
+        );
+
+        fs::remove_file(cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json")))
+            .unwrap();
+        fs::copy(backup_buf, cwd.join(format!("fixtures/{fixture_name}/oxlint-suppressions.json")))
+            .unwrap();
+
+        fs::remove_file(cwd.join(format!("fixtures/{fixture_name}/files/test.js"))).unwrap();
+        fs::copy(
+            cwd.join(format!("fixtures/{fixture_name}/files/test-backup.js")),
+            cwd.join(format!("fixtures/{fixture_name}/files/test.js")),
+        )
+        .unwrap();
+    }
+
     #[test]
     fn test_suppression_not_file_reporting_errors() {
         let args = &[];
@@ -1705,90 +1803,10 @@ mod suppression {
 
     #[test]
     fn test_suppression_with_suppress_all_arg_and_no_file() {
-        let cwd = env::current_dir().unwrap();
-        let fixture_path =
-            "fixtures/suppression_with_suppress_all_arg_and_no_file/oxlint-suppressions.json";
-        let fixture_buf = cwd.join(fixture_path);
-        let expected_buf = cwd.join(
-            "fixtures/suppression_with_suppress_all_arg_and_no_file/oxlint-suppressions-expected.json",
+        file_suppression_generator_tester(
+            "suppression_with_suppress_all_arg_and_no_file",
+            &["--suppress-all"],
         );
-        let fixture_path = fixture_buf.to_str().unwrap();
-        assert!(
-            !fs::exists(fixture_path).unwrap(),
-            "oxlint-suppression found in fixtures/suppression_with_suppress_all_arg_and_no_file/oxlint-suppressions.json"
-        );
-
-        let args = &["--suppress-all"];
-        Tester::new()
-            .with_cwd("fixtures/suppression_with_suppress_all_arg_and_no_file".into())
-            .test(args);
-
-        assert!(
-            fs::exists(fixture_path).unwrap(),
-            "oxlint-suppression not found in fixtures/suppression_with_suppress_all_arg_and_no_file/oxlint-suppressions.json"
-        );
-
-        let stdout = Tester::new()
-            .with_cwd("fixtures/suppression_with_suppress_all_arg_and_no_file".into())
-            .test_output(args);
-
-        assert!(stdout.starts_with("Found 0 warnings and 0 errors."), "Unexpected errors found");
-
-        let new_content = fs::read_to_string(cwd.join(fixture_path))
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(fixture_path).unwrap();
-    }
-
-    #[test]
-    fn test_suppression_with_suppress_all_and_fix_arg_and_file() {
-        let cwd = env::current_dir().unwrap();
-        let fixture_path =
-            "fixtures/suppression_with_suppress_all_and_fix_arg_and_file/oxlint-suppressions.json";
-        let fixture_buf = cwd.join(fixture_path);
-        let expected_buf = cwd.join(
-            "fixtures/suppression_with_suppress_all_and_fix_arg_and_file/oxlint-suppressions-expected.json",
-        );
-        let backup_buf = cwd.join(
-            "fixtures/suppression_with_suppress_all_and_fix_arg_and_file/oxlint-suppressions-backup.json",
-        );
-
-        let args = &["--fix", "--suppress-all"];
-        Tester::new()
-            .with_cwd("fixtures/suppression_with_suppress_all_and_fix_arg_and_file".into())
-            .test(args);
-
-        let new_content = fs::read_to_string(fixture_buf)
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(cwd.join(fixture_path)).unwrap();
-        fs::copy(backup_buf, cwd.join(fixture_path)).unwrap();
-
-        fs::remove_file(
-            cwd.join("fixtures/suppression_with_suppress_all_and_fix_arg_and_file/files/test.js"),
-        )
-        .unwrap();
-        fs::copy(
-            cwd.join(
-                "fixtures/suppression_with_suppress_all_and_fix_arg_and_file/files/test-backup.js",
-            ),
-            cwd.join("fixtures/suppression_with_suppress_all_and_fix_arg_and_file/files/test.js"),
-        )
-        .unwrap();
     }
 
     #[test]
@@ -1850,190 +1868,58 @@ mod suppression {
     }
 
     #[test]
+    fn test_suppression_with_suppress_all_and_fix_arg_and_file() {
+        fix_suppression_tester(
+            "suppression_with_suppress_all_and_fix_arg_and_file",
+            &["--fix", "--suppress-all"],
+        );
+    }
+
+    #[test]
     fn test_suppression_with_suppress_all_arg_and_pruned_errors() {
-        let cwd = env::current_dir().unwrap();
-        let fixture_path =
-            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions.json";
-        let fixture_buf = cwd.join(fixture_path);
-        let expected_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-expected.json",
+        file_suppression_update_tester(
+            "suppression_with_arg_and_pruned_errors",
+            &["--suppress-all"],
         );
-        let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-backup.json",
-        );
-        let args = &["--suppress-all"];
-
-        Tester::new().with_cwd("fixtures/suppression_with_arg_and_pruned_errors".into()).test(args);
-
-        let new_content = fs::read_to_string(fixture_buf)
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(cwd.join(fixture_path)).unwrap();
-        fs::copy(backup_buf, cwd.join(fixture_path)).unwrap();
     }
 
     #[test]
     fn test_suppression_with_prune_suppressions_arg_and_pruned_errors() {
-        let cwd = env::current_dir().unwrap();
-        let fixture_path =
-            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions.json";
-        let fixture_buf = cwd.join(fixture_path);
-        let expected_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-expected.json",
+        file_suppression_update_tester(
+            "suppression_with_arg_and_pruned_errors",
+            &["--prune-suppressions"],
         );
-        let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_pruned_errors/oxlint-suppressions-backup.json",
-        );
-        let args = &["--prune-suppressions"];
-
-        Tester::new().with_cwd("fixtures/suppression_with_arg_and_pruned_errors".into()).test(args);
-
-        let new_content = fs::read_to_string(fixture_buf)
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(cwd.join(fixture_path)).unwrap();
-        fs::copy(backup_buf, cwd.join(fixture_path)).unwrap();
     }
 
     #[test]
     fn test_suppression_with_suppress_all_arg_and_increased_errors() {
-        let cwd = env::current_dir().unwrap();
-        let fixture_path =
-            "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions.json";
-        let fixture_buf = cwd.join(fixture_path);
-        let expected_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions-expected.json",
+        file_suppression_update_tester(
+            "suppression_with_arg_and_increased_errors",
+            &["--suppress-all"],
         );
-        let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions-backup.json",
-        );
-        let args = &["--suppress-all"];
-
-        Tester::new()
-            .with_cwd("fixtures/suppression_with_arg_and_increased_errors".into())
-            .test(args);
-
-        let new_content = fs::read_to_string(fixture_buf)
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(cwd.join(fixture_path)).unwrap();
-        fs::copy(backup_buf, cwd.join(fixture_path)).unwrap();
     }
 
     #[test]
     fn test_suppression_with_prune_suppressions_arg_and_increased_errors() {
-        let cwd = env::current_dir().unwrap();
-        let fixture_path =
-            "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions.json";
-        let fixture_buf = cwd.join(fixture_path);
-        let expected_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions-expected.json",
+        file_suppression_update_tester(
+            "suppression_with_arg_and_increased_errors",
+            &["--prune-suppressions"],
         );
-        let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_increased_errors/oxlint-suppressions-backup.json",
-        );
-        let args = &["--prune-suppressions"];
-
-        Tester::new()
-            .with_cwd("fixtures/suppression_with_arg_and_increased_errors".into())
-            .test(args);
-
-        let new_content = fs::read_to_string(fixture_buf)
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(cwd.join(fixture_path)).unwrap();
-        fs::copy(backup_buf, cwd.join(fixture_path)).unwrap();
     }
 
     #[test]
     fn test_suppression_with_suppress_all_arg_and_decreased_errors() {
-        let cwd = env::current_dir().unwrap();
-        let fixture_path =
-            "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions.json";
-        let fixture_buf = cwd.join(fixture_path);
-        let expected_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions-expected.json",
+        file_suppression_update_tester(
+            "suppression_with_arg_and_decreased_errors",
+            &["--suppress-all"],
         );
-        let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions-backup.json",
-        );
-        let args = &["--suppress-all"];
-
-        Tester::new()
-            .with_cwd("fixtures/suppression_with_arg_and_decreased_errors".into())
-            .test(args);
-
-        let new_content = fs::read_to_string(fixture_buf)
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(cwd.join(fixture_path)).unwrap();
-        fs::copy(backup_buf, cwd.join(fixture_path)).unwrap();
     }
 
     #[test]
     fn test_suppression_with_prune_suppressions_arg_and_decreased_errors() {
-        let cwd = env::current_dir().unwrap();
-        let fixture_path =
-            "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions.json";
-        let fixture_buf = cwd.join(fixture_path);
-        let expected_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions-expected.json",
+        file_suppression_update_tester(
+            "suppression_with_arg_and_decreased_errors",
+            &["--prune-suppressions"],
         );
-        let backup_buf = cwd.join(
-            "fixtures/suppression_with_arg_and_decreased_errors/oxlint-suppressions-backup.json",
-        );
-        let args = &["--prune-suppressions"];
-
-        Tester::new()
-            .with_cwd("fixtures/suppression_with_arg_and_decreased_errors".into())
-            .test(args);
-
-        let new_content = fs::read_to_string(fixture_buf)
-            .expect("Unable to read the new oxlint-suppressions.json");
-        let expected_content = fs::read_to_string(expected_buf)
-            .expect("Unable to read the expected content oxlint-suppressions-expected.json");
-
-        assert_eq!(
-            new_content, expected_content,
-            "The suppression generated doesn't match the expected"
-        );
-
-        fs::remove_file(cwd.join(fixture_path)).unwrap();
-        fs::copy(backup_buf, cwd.join(fixture_path)).unwrap();
     }
 }
