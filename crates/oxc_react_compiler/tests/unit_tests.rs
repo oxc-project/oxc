@@ -48,8 +48,8 @@ mod result_tests {
 
     #[test]
     fn result_and_then() {
-        assert_eq!(add_max_10(1, 1).map(|n| n * 2), Ok(4));
-        assert!(add_max_10(10, 10).map(|n| n * 2).is_err());
+        assert_eq!(add_max_10(1, 1).and_then(|n| add_max_10(n, n)), Ok(4));
+        assert!(add_max_10(10, 10).and_then(|n| add_max_10(n, n)).is_err());
     }
 
     #[test]

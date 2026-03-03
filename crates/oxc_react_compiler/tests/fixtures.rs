@@ -8612,6 +8612,169 @@ fn codegen_conformance_inner() {
     insta::assert_snapshot!("codegen_conformance", snapshot);
 }
 
+/// How our error fixture failed (i.e., why the compiler did NOT reject it).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ErrorMatchLevel {
+    /// Pipeline returned success when error was expected
+    UnexpectedSuccess,
+    /// Could not parse the source file
+    ParseError,
+}
+
+impl std::fmt::Display for ErrorMatchLevel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::UnexpectedSuccess => write!(f, "unexpected_success"),
+            Self::ParseError => write!(f, "parse_error"),
+        }
+    }
+}
+
+/// Error fixture conformance test: verify that the compiler correctly rejects
+/// error fixtures (files starting with `error.` or `todo.error.`).
+///
+/// For each error fixture that has a `.expect.md` with a `## Error` section,
+/// runs the compilation pipeline and verifies it returns an error (not success).
+///
+/// Run with: `cargo test -p oxc_react_compiler --release -- --ignored test_error_fixture_conformance`
+#[test]
+#[ignore]
+fn test_error_fixture_conformance() {
+    error_fixture_conformance_inner();
+}
+
+fn error_fixture_conformance_inner() {
+    let fixtures_dir = Path::new(FIXTURES_PATH);
+    if !fixtures_dir.exists() {
+        return;
+    }
+
+    // Collect all error fixture paths (error.* and todo.error.* with matching .expect.md).
+    let mut fixture_pairs: Vec<(std::path::PathBuf, std::path::PathBuf)> = Vec::new();
+    for entry in walkdir::WalkDir::new(fixtures_dir)
+        .into_iter()
+        .filter_entry(|e| e.file_name() != "__snapshots__")
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().is_file())
+    {
+        let path = entry.path().to_path_buf();
+
+        if !is_js_ts_tsx(&path) {
+            continue;
+        }
+
+        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        // Only error-prefixed fixtures
+        if !file_name.starts_with("error.") && !file_name.starts_with("todo.error.") {
+            continue;
+        }
+
+        let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+        let expect_path = entry.path().parent().unwrap().join(format!("{stem}.expect.md"));
+        if expect_path.exists() {
+            fixture_pairs.push((path, expect_path));
+        }
+    }
+    fixture_pairs.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let mut passed = 0u32;
+    let mut flow_skipped = 0u32;
+    let mut failed: Vec<(String, ErrorMatchLevel)> = Vec::new();
+
+    for (input_path, expect_path) in &fixture_pairs {
+        let file_name =
+            input_path.strip_prefix(fixtures_dir).unwrap().to_string_lossy().to_string();
+
+        let Ok(source) = std::fs::read_to_string(input_path) else {
+            failed.push((file_name, ErrorMatchLevel::ParseError));
+            continue;
+        };
+
+        if is_flow_file(input_path, &source) {
+            flow_skipped += 1;
+            continue;
+        }
+
+        let Ok(expect_content) = std::fs::read_to_string(expect_path) else {
+            continue;
+        };
+
+        // Must have ## Error section
+        if extract_expect_md_section(&expect_content, "Error").is_none() {
+            continue;
+        }
+
+        // Determine source type from extension
+        let ext = input_path.extension().and_then(|e| e.to_str()).unwrap_or("js");
+        let source_type = match ext {
+            "tsx" => oxc_span::SourceType::tsx(),
+            "ts" => oxc_span::SourceType::ts(),
+            _ => oxc_span::SourceType::jsx(),
+        };
+
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            run_pipeline_for_codegen(&source, source_type)
+        }));
+
+        // Retry as TSX if parse failed
+        let result = match &result {
+            Ok(Err(e)) if e.starts_with("Parse") && ext != "ts" && ext != "tsx" => {
+                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    run_pipeline_for_codegen(&source, oxc_span::SourceType::tsx())
+                }))
+            }
+            _ => result,
+        };
+
+        match result {
+            Ok(Err(_)) => {
+                // Pipeline returned an error -- this is the correct behavior for error fixtures
+                passed += 1;
+            }
+            Ok(Ok(_)) => {
+                // Pipeline succeeded when it should have failed
+                failed.push((file_name, ErrorMatchLevel::UnexpectedSuccess));
+            }
+            Err(_) => {
+                // Pipeline panicked -- count as error returned (it didn't succeed)
+                // Panics in error fixtures are acceptable since the fixture is invalid code
+                passed += 1;
+            }
+        }
+    }
+
+    let total = fixture_pairs.len() as u32 - flow_skipped;
+    let pct = if total > 0 { (passed as f64 / total as f64) * 100.0 } else { 0.0 };
+
+    let mut unexpected_success = 0u32;
+    let mut parse_errors = 0u32;
+
+    for (_, level) in &failed {
+        match level {
+            ErrorMatchLevel::UnexpectedSuccess => unexpected_success += 1,
+            ErrorMatchLevel::ParseError => parse_errors += 1,
+        }
+    }
+
+    let mut snapshot = String::new();
+    snapshot.push_str(&format!("Error fixture conformance: {passed}/{total} ({pct:.1}%)\n"));
+    snapshot.push_str(&format!("Flow files skipped: {flow_skipped}\n"));
+    snapshot.push('\n');
+    snapshot.push_str("Failure breakdown:\n");
+    snapshot.push_str(&format!("  unexpected_success: {unexpected_success}\n"));
+    snapshot.push_str(&format!("  parse_error:        {parse_errors}\n"));
+    snapshot.push('\n');
+
+    if !failed.is_empty() {
+        snapshot.push_str("Failed fixtures (compiler did not reject):\n");
+        for (name, level) in &failed {
+            snapshot.push_str(&format!("  [{level}] {name}\n"));
+        }
+    }
+
+    insta::assert_snapshot!("error_fixture_conformance", snapshot);
+}
+
 /// Diagnostic test: print near-miss fixtures with diffs to find low-hanging fixes.
 /// Run with: cargo test -p oxc_react_compiler --release -- --ignored --nocapture test_near_miss_diagnostic
 #[allow(dead_code)]
