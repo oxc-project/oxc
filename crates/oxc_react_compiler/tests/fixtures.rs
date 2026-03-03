@@ -8245,7 +8245,7 @@ impl std::fmt::Display for FailureCategory {
 /// Debug test: print actual vs expected for specific failing fixtures.
 #[test]
 fn test_debug_print_failing() {
-    let fixtures: &[&str] = &["name-anonymous-functions.js"];
+    let fixtures: &[&str] = &["repro-dont-memoize-array-with-mutable-map-after-hook.js"];
     let fixtures_dir = std::path::Path::new(FIXTURES_PATH);
     if !fixtures_dir.exists() {
         return;
