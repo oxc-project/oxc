@@ -30,8 +30,8 @@ pub fn indent_str(n: usize) -> std::borrow::Cow<'static, str> {
 struct ListItemPrefix {
     /// Width for continuation indentation
     indent_width: usize,
-    /// The normalized prefix text (e.g., "1. ", "- ")
-    normalized_prefix: String,
+    /// Whether this is a numbered (ordered) list item
+    is_numbered: bool,
     /// The rest of the line after the prefix (trimmed)
     rest_start: usize,
 }
@@ -41,11 +41,7 @@ struct ListItemPrefix {
 fn parse_list_item(trimmed: &str) -> Option<ListItemPrefix> {
     // Markdown unordered list items: "- ", "* ", "+ "
     if trimmed.starts_with("- ") || trimmed.starts_with("* ") || trimmed.starts_with("+ ") {
-        return Some(ListItemPrefix {
-            indent_width: 2,
-            normalized_prefix: "- ".to_string(),
-            rest_start: 2,
-        });
+        return Some(ListItemPrefix { indent_width: 2, is_numbered: false, rest_start: 2 });
     }
     // Markdown ordered list items: "1. ", "2. ", "1- ", etc.
     if let Some(first) = trimmed.chars().next()
@@ -57,11 +53,10 @@ fn parse_list_item(trimmed: &str) -> Option<ListItemPrefix> {
         {
             let number = &trimmed[..dot_space_pos];
             if number.chars().all(|c| c.is_ascii_digit()) {
-                let prefix = format!("{number}. ");
                 let rest_start = dot_space_pos + 2;
                 return Some(ListItemPrefix {
-                    indent_width: prefix.len(),
-                    normalized_prefix: prefix,
+                    indent_width: number.len() + 2,
+                    is_numbered: true,
                     rest_start,
                 });
             }
@@ -72,14 +67,13 @@ fn parse_list_item(trimmed: &str) -> Option<ListItemPrefix> {
         {
             let number = &trimmed[..dash_pos];
             if number.chars().all(|c| c.is_ascii_digit()) {
-                let prefix = format!("{number}. ");
                 // Skip past dash and any extra spaces
                 let after_dash = &trimmed[dash_pos + 1..];
                 let spaces = after_dash.len() - after_dash.trim_start().len();
                 let rest_start = dash_pos + 1 + spaces;
                 return Some(ListItemPrefix {
-                    indent_width: prefix.len(),
-                    normalized_prefix: prefix,
+                    indent_width: number.len() + 2,
+                    is_numbered: true,
                     rest_start,
                 });
             }
@@ -135,9 +129,9 @@ fn is_table_separator(line: &str) -> bool {
 }
 
 /// Parse a table row into cells.
-fn parse_table_cells(line: &str) -> Vec<String> {
+fn parse_table_cells(line: &str) -> Vec<&str> {
     let inner = line.trim().trim_start_matches('|').trim_end_matches('|');
-    inner.split('|').map(|cell| cell.trim().to_string()).collect()
+    inner.split('|').map(str::trim).collect()
 }
 
 /// Format a block of consecutive table lines.
@@ -156,7 +150,7 @@ pub fn format_table_block(table_lines: &[String], lines: &mut Vec<String>) {
     }
 
     // Parse all rows into cells
-    let all_cells: Vec<Vec<String>> = table_lines
+    let all_cells: Vec<Vec<&str>> = table_lines
         .iter()
         .filter(|l| !is_table_separator(l))
         .map(|l| parse_table_cells(l))
@@ -188,20 +182,22 @@ pub fn format_table_block(table_lines: &[String], lines: &mut Vec<String>) {
         }
     }
 
-    // Format each row
+    // Format each row, reusing already-parsed cells from all_cells
     let separator_idx = separator_idx.unwrap();
-    for (idx, table_line) in table_lines.iter().enumerate() {
+    let mut data_row_idx = 0;
+    for (idx, _table_line) in table_lines.iter().enumerate() {
         if idx == separator_idx {
             // Format separator row
             let sep_cells: Vec<String> = col_widths.iter().map(|&w| "-".repeat(w)).collect();
             let formatted = format!("| {} |", sep_cells.join(" | "));
             lines.push(formatted);
         } else {
-            // Format data row
-            let cells = parse_table_cells(table_line);
+            // Format data row using pre-parsed cells
+            let cells = &all_cells[data_row_idx];
+            data_row_idx += 1;
             let padded_cells: Vec<String> = (0..num_cols)
                 .map(|j| {
-                    let cell = cells.get(j).map_or("", String::as_str);
+                    let cell = cells.get(j).copied().unwrap_or("");
                     format!("{cell:<width$}", width = col_widths[j])
                 })
                 .collect();
@@ -594,14 +590,14 @@ pub fn wrap_text(text: &str, max_width: usize, lines: &mut Vec<String>) {
             in_list = true;
             let rest = &trimmed[parsed.rest_start..].trim_start();
 
-            if parsed.normalized_prefix.contains('.') {
+            if parsed.is_numbered {
                 numbered_list_counter += 1;
                 list_marker = format!("{numbered_list_counter}. ");
                 current_list_indent = Some(list_marker.len());
             } else {
                 numbered_list_counter = 0;
                 current_list_indent = Some(parsed.indent_width);
-                list_marker = parsed.normalized_prefix;
+                list_marker = "- ".to_string();
             }
             list_text = rest.to_string();
             i += 1;

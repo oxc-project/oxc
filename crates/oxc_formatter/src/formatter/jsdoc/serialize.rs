@@ -25,6 +25,24 @@ use super::{
 /// The ` * ` prefix used in multiline JSDoc comments (3 chars).
 const LINE_PREFIX_LEN: usize = 3;
 
+/// Trim trailing whitespace from an owned `String` in place, avoiding a reallocation.
+fn truncate_trim_end(s: &mut String) {
+    let trimmed_len = s.trim_end().len();
+    s.truncate(trimmed_len);
+}
+
+/// Join an iterator of string slices with a separator, avoiding an intermediate `Vec`.
+fn join_iter<'a>(iter: impl Iterator<Item = &'a str>, sep: &str) -> String {
+    let mut result = String::new();
+    for (i, item) in iter.enumerate() {
+        if i > 0 {
+            result.push_str(sep);
+        }
+        result.push_str(item);
+    }
+    result
+}
+
 /// Tags whose descriptions should NOT be capitalized.
 /// Includes upstream's `TAGS_PEV_FORMAT_DESCRIPTION` (borrows, default, defaultValue,
 /// import, memberof, module, see) plus tags whose content is a name/reference rather
@@ -181,16 +199,14 @@ fn reorder_param_tags(
     if param_names.len() != fn_params.len() {
         return;
     }
-    let mut sorted_doc = param_names.clone();
-    sorted_doc.sort_unstable();
-    let mut sorted_fn: Vec<&str> = fn_params.iter().map(String::as_str).collect();
-    sorted_fn.sort_unstable();
-    if sorted_doc != sorted_fn {
+
+    // Already in order?
+    if param_names.iter().zip(fn_params.iter()).all(|(a, b)| *a == *b) {
         return;
     }
 
-    // Already in order?
-    if param_names.iter().zip(fn_params.iter()).all(|(a, b)| *a == b.as_str()) {
+    // Check same set of names (lengths already verified equal, param lists are small)
+    if !param_names.iter().all(|name| fn_params.iter().any(|p| p == name)) {
         return;
     }
 
@@ -198,14 +214,14 @@ fn reorder_param_tags(
     effective_tags[param_start..param_end].sort_by_key(|(tag, _)| {
         let (_, name_part, _) = tag.type_name_comment();
         let name = name_part.map_or("", |n| n.parsed());
-        fn_params.iter().position(|p| p == name).unwrap_or(usize::MAX)
+        fn_params.iter().position(|p| *p == name).unwrap_or(usize::MAX)
     });
 }
 
 /// Extract function parameter names from the source text after the comment.
 /// Handles `function name(...)`, `name(...)` methods, `name = (...) =>` arrows.
 /// Uses balanced parenthesis matching to handle nested type annotations.
-fn extract_function_params(comment: &Comment, source_text: &str) -> Vec<String> {
+fn extract_function_params<'a>(comment: &Comment, source_text: &'a str) -> Vec<&'a str> {
     let after_start = comment.span.end as usize;
     let after = &source_text[after_start..];
 
@@ -420,7 +436,7 @@ fn find_matching_paren(text: &str, start: usize) -> Option<usize> {
 
 /// Parse parameter names from a function parameter list string.
 /// Handles TypeScript type annotations, default values, destructuring, and rest params.
-fn parse_param_names(params_str: &str) -> Vec<String> {
+fn parse_param_names(params_str: &str) -> Vec<&str> {
     let mut names = Vec::new();
     let mut i = 0;
     let bytes = params_str.as_bytes();
@@ -502,7 +518,7 @@ fn parse_param_names(params_str: &str) -> Vec<String> {
             i += 1;
         }
         if i > name_start {
-            names.push(params_str[name_start..i].to_string());
+            names.push(&params_str[name_start..i]);
         }
 
         // Skip type annotation (`: Type`), which may include nested parens/angles
@@ -549,16 +565,17 @@ fn parse_param_names(params_str: &str) -> Vec<String> {
 /// Sort tags by priority within groups.
 /// `@typedef` and `@callback` start new groups (TAGS_GROUP_HEAD).
 /// Tags within each group are sorted by weight. Groups maintain their relative order.
+/// Returns tuples of `(tag, normalized_kind)` so callers don't need to recompute the kind.
 fn sort_tags_by_groups<'a>(
     tags: &'a [oxc_jsdoc::parser::JSDocTag<'a>],
-) -> Vec<&'a oxc_jsdoc::parser::JSDocTag<'a>> {
+) -> Vec<(&'a oxc_jsdoc::parser::JSDocTag<'a>, &'a str)> {
     if tags.is_empty() {
         return Vec::new();
     }
 
     // Split into groups at TAGS_GROUP_HEAD boundaries
-    let mut groups: Vec<Vec<&oxc_jsdoc::parser::JSDocTag<'a>>> = Vec::new();
-    let mut current_group: Vec<&oxc_jsdoc::parser::JSDocTag<'a>> = Vec::new();
+    let mut groups: Vec<Vec<(&oxc_jsdoc::parser::JSDocTag<'a>, &'a str)>> = Vec::new();
+    let mut current_group: Vec<(&oxc_jsdoc::parser::JSDocTag<'a>, &'a str)> = Vec::new();
 
     for tag in tags {
         let normalized_kind = normalize_tag_kind(tag.kind.parsed());
@@ -566,7 +583,7 @@ fn sort_tags_by_groups<'a>(
             groups.push(current_group);
             current_group = Vec::new();
         }
-        current_group.push(tag);
+        current_group.push((tag, normalized_kind));
     }
     if !current_group.is_empty() {
         groups.push(current_group);
@@ -574,14 +591,15 @@ fn sort_tags_by_groups<'a>(
 
     // Sort within each group by weight (stable sort preserves original order for same weight)
     for group in &mut groups {
-        group.sort_by_key(|tag| {
-            let normalized_kind = normalize_tag_kind(tag.kind.parsed());
-            tag_sort_priority(normalized_kind)
-        });
+        group.sort_by_key(|(_, kind)| tag_sort_priority(kind));
     }
 
     // Flatten groups back into a single list
-    groups.into_iter().flatten().collect()
+    let mut result = Vec::with_capacity(tags.len());
+    for group in groups {
+        result.extend(group);
+    }
+    result
 }
 
 /// Check if a tag has meaningful content.
@@ -623,14 +641,12 @@ pub fn format_jsdoc_comment<'a>(
 ) -> Option<&'a str> {
     let content = &source_text[comment.span.start as usize..comment.span.end as usize];
 
-    // Must be at least `/** */` (5 chars)
-    if content.len() < 5 {
-        return None;
-    }
-
     // Extract inner content (between `/**` and `*/`)
-    let inner = &content[3..content.len() - 2];
-    let jsdoc = JSDoc::new(inner, Span::new(comment.span.start + 3, comment.span.end - 2));
+    let content_span = comment.content_span();
+    // content_span strips `/*` and `*/`; bump start by 1 to also skip the extra `*` in `/**`
+    let jsdoc_span = Span::new(content_span.start + 1, content_span.end);
+    let inner = jsdoc_span.source_text(source_text);
+    let jsdoc = JSDoc::new(inner, jsdoc_span);
 
     let comment_part = jsdoc.comment();
     let description = comment_part.parsed_preserving_whitespace();
@@ -662,14 +678,12 @@ pub fn format_jsdoc_comment<'a>(
 
     // Collect effective tags, merging @description into the description area
     let mut effective_tags: Vec<(&oxc_jsdoc::parser::JSDocTag<'_>, &str)> = Vec::new();
-    for tag in &sorted_tags {
-        let raw_kind = tag.kind.parsed();
-        let normalized_kind = normalize_tag_kind(raw_kind);
+    for (tag, normalized_kind) in &sorted_tags {
         if should_remove_empty_tag(normalized_kind) && !tag_has_content(tag) {
             continue;
         }
         // @description tag: merge its content into the main description
-        if normalized_kind == "description" {
+        if *normalized_kind == "description" {
             let desc_content = tag.comment().parsed();
             let desc_content = desc_content.trim();
             if !desc_content.is_empty() {
@@ -1126,16 +1140,16 @@ fn find_line_comment(field: &str) -> Option<usize> {
 }
 
 /// Normalize a single object field's value: `*` → `any`, whitespace cleanup.
-fn normalize_object_field(field: &str) -> String {
+fn normalize_object_field(field: &str) -> Cow<'_, str> {
     if let Some(colon_pos) = find_field_colon(field) {
         let key = field[..colon_pos].trim();
         let value = field[colon_pos + 1..].trim();
         let normalized_value =
             if value == "*" { "any".to_string() } else { normalize_type_whitespace(value) };
         // Preserve inline comments
-        format!("{key}: {normalized_value}")
+        Cow::Owned(format!("{key}: {normalized_value}"))
     } else {
-        field.to_string()
+        Cow::Borrowed(field)
     }
 }
 
@@ -1349,13 +1363,13 @@ fn split_object_fields(inner: &str) -> Vec<String> {
 /// Handles JSON-like formatting: spaces after `:` and `,`, inside `{}`.
 /// Converts quotes based on the `quote_style` option.
 /// Non-JSON values (code, plain text) are returned as-is.
-fn format_default_value(value: &str, quote_style: QuoteStyle) -> String {
+fn format_default_value(value: &str, quote_style: QuoteStyle) -> Cow<'_, str> {
     let trimmed = value.trim();
     // Detect if value looks like JSON/object/array literal
     let first_byte = trimmed.as_bytes().first().copied().unwrap_or(b' ');
     if !matches!(first_byte, b'{' | b'[' | b'"' | b'\'') {
         // Doesn't start with JSON-like syntax; return unchanged
-        return trimmed.to_string();
+        return Cow::Borrowed(trimmed);
     }
 
     // Determine target and source quote characters based on quote style.
@@ -1473,20 +1487,20 @@ fn format_default_value(value: &str, quote_style: QuoteStyle) -> String {
             }
         }
     }
-    result
+    Cow::Owned(result)
 }
 
 /// Strip an existing "Default is `...`" or "Default is ..." suffix from a description.
 /// The plugin always recomputes this from the `[name=value]` syntax.
-fn strip_default_is_suffix(desc: &str) -> String {
+fn strip_default_is_suffix(desc: &str) -> Cow<'_, str> {
     // Look for "Default is " (case insensitive matching for "default is")
     if let Some(pos) = desc.find("Default is ") {
         let before = desc[..pos].trim_end();
         // Remove trailing period before "Default is"
         let before = before.strip_suffix('.').unwrap_or(before);
-        before.trim_end().to_string()
+        Cow::Borrowed(before.trim_end())
     } else {
-        desc.to_string()
+        Cow::Borrowed(desc)
     }
 }
 
@@ -1548,11 +1562,8 @@ fn format_fenced_code_blocks(
             };
 
             // Extract code content
-            let code: String = content_lines[start..end_idx]
-                .iter()
-                .map(String::as_str)
-                .collect::<Vec<_>>()
-                .join("\n");
+            let code: String =
+                join_iter(content_lines[start..end_idx].iter().map(String::as_str), "\n");
 
             // Try to format: native for JS/TS, external for other languages.
             // The upstream plugin reduces print width by 4 for code inside fenced blocks.
@@ -1567,12 +1578,12 @@ fn format_fenced_code_blocks(
 
             if let Some(formatted) = formatted {
                 // Replace the code lines with formatted output
-                let new_lines: Vec<String> = formatted.lines().map(String::from).collect();
-                // Remove old code lines and insert new ones
-                let range = start..end_idx;
-                content_lines.splice(range, new_lines.clone());
+                let prev_len = content_lines.len();
+                let removed = end_idx - start;
+                content_lines.splice(start..end_idx, formatted.lines().map(String::from));
+                let inserted = content_lines.len() - prev_len + removed;
                 // Adjust index past the new content + closing fence
-                i = start + new_lines.len() + 1;
+                i = start + inserted + 1;
             } else {
                 i = end_idx + 1;
             }
@@ -1592,7 +1603,10 @@ fn format_external_language(
 ) -> Option<String> {
     let result = external_callbacks.format_embedded(language, code)?;
     match result {
-        Ok(formatted) => Some(formatted.trim_end().to_string()),
+        Ok(mut formatted) => {
+            truncate_trim_end(&mut formatted);
+            Some(formatted)
+        }
         Err(_) => None,
     }
 }
@@ -1697,21 +1711,18 @@ fn format_indented_code_blocks(
             }
 
             // Extract code content (strip 4-space prefix)
-            let code: String = content_lines[start..end]
-                .iter()
-                .map(|l| l.strip_prefix("    ").unwrap_or(l.as_str()))
-                .collect::<Vec<_>>()
-                .join("\n");
+            let code: String = join_iter(
+                content_lines[start..end].iter().map(|l| l.strip_prefix("    ").unwrap_or(l.as_str())),
+                "\n",
+            );
 
             // Try to format (effective width = wrap_width - 4 for the indent)
             let effective_width = wrap_width.saturating_sub(4);
             if let Some(formatted) = format_embedded_js(&code, effective_width, format_options) {
-                let new_lines: Vec<String> =
-                    formatted.lines().map(|l| format!("    {l}")).collect();
-                let range = start..end;
-                let new_len = new_lines.len();
-                content_lines.splice(range, new_lines);
-                i = start + new_len;
+                let prev_len = content_lines.len();
+                let removed = end - start;
+                content_lines.splice(start..end, formatted.lines().map(|l| format!("    {l}")));
+                i = start + content_lines.len() - prev_len + removed;
             }
         } else {
             i += 1;
@@ -1742,8 +1753,9 @@ fn format_embedded_js(
         if ret.panicked || !ret.errors.is_empty() {
             return None;
         }
-        let formatted = Formatter::new(&allocator, make_options()).build(&ret.program);
-        Some(formatted.trim_end().to_string())
+        let mut formatted = Formatter::new(&allocator, make_options()).build(&ret.program);
+        truncate_trim_end(&mut formatted);
+        Some(formatted)
     };
 
     // Try JSX first (most @example code in React projects uses JSX),
@@ -1816,6 +1828,14 @@ fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> 
         return Some(format!("...{inner}"));
     }
 
+    // Fast path: skip the expensive parse+format cycle for types that the TS
+    // formatter won't change. Types without union/intersection operators, object
+    // literals, function arrows, or parenthesized expressions are already in
+    // their final form after normalize_type().
+    if !needs_formatter_pass(type_str) {
+        return None;
+    }
+
     let input = format!("type __t = {type_str};");
 
     let allocator = Allocator::default();
@@ -1838,6 +1858,28 @@ fn format_type_via_formatter(type_str: &str, format_options: &FormatOptions) -> 
     Some(result.to_string())
 }
 
+/// Check if a type expression needs to go through the TS formatter.
+///
+/// Returns `false` for types that are already in their final form after
+/// `normalize_type()` — simple identifiers, dotted names, array shorthand (`T[]`),
+/// and generic types without complex structure.
+///
+/// The TS formatter can only change types that contain:
+/// - `|` or `&`: union/intersection types may need wrapping
+/// - `{` or `}`: object literal types need spacing
+/// - `(` or `)`: parenthesized/function types need formatting
+/// - `=>`: function type arrows
+/// - Newlines: multi-line types need reformatting
+fn needs_formatter_pass(type_str: &str) -> bool {
+    for &b in type_str.as_bytes() {
+        match b {
+            b'|' | b'&' | b'{' | b'}' | b'(' | b')' | b'\n' => return true,
+            _ => {}
+        }
+    }
+    type_str.contains("=>")
+}
+
 /// Format example code content with 2-space base indent.
 /// Tries to format the code as JS/JSX first; falls back to pass-through on parse failure.
 fn format_example_code(
@@ -1855,13 +1897,33 @@ fn format_example_code(
     // `format_embedded_js` would parse them as JS and produce wrong output.
     // Handle fenced blocks by stripping the markers, formatting just the
     // inner code, and re-adding the fences with proper indentation.
-    let code_lines: Vec<&str> = code.lines().collect();
-    if code_lines.len() >= 2
-        && code_lines[0].starts_with("```")
-        && code_lines.last().is_some_and(|l| l.trim() == "```")
+    if let Some((first_line, rest)) = code.split_once('\n')
+        && first_line.starts_with("```")
     {
-        format_example_fenced_block(&code_lines, wrap_width, format_options, content_lines);
-        return;
+        if let Some(closing_pos) = rest.rfind("\n```") {
+            let inner_code = &rest[..closing_pos];
+            let closing_fence = rest[closing_pos + 1..].trim();
+            format_example_fenced_block(
+                first_line,
+                inner_code,
+                closing_fence,
+                wrap_width,
+                format_options,
+                content_lines,
+            );
+            return;
+        } else if rest.trim() == "```" {
+            // Only two lines: opening + closing fence, no inner code
+            format_example_fenced_block(
+                first_line,
+                "",
+                rest.trim(),
+                wrap_width,
+                format_options,
+                content_lines,
+            );
+            return;
+        }
     }
 
     // Try formatting the code. The effective print width for @example code is
@@ -1901,13 +1963,13 @@ fn format_example_code(
 /// Strips the ``` markers, formats the inner code, and re-adds fences
 /// with proper 2-space indentation.
 fn format_example_fenced_block(
-    code_lines: &[&str],
+    lang_line: &str,
+    inner_code: &str,
+    closing_fence: &str,
     wrap_width: usize,
     format_options: &FormatOptions,
     content_lines: &mut Vec<String>,
 ) {
-    let lang_line = code_lines[0];
-    let inner_code: String = code_lines[1..code_lines.len() - 1].to_vec().join("\n");
     let effective_width = wrap_width.saturating_sub(2);
 
     // Add opening fence with indent
@@ -1917,7 +1979,7 @@ fn format_example_fenced_block(
         let lang = lang_line[3..].trim();
         if is_js_ts_lang(lang) {
             if let Some(formatted) =
-                format_embedded_js(&inner_code, effective_width, format_options)
+                format_embedded_js(inner_code, effective_width, format_options)
             {
                 let mut template_depth: u32 = 0;
                 for line in formatted.lines() {
@@ -1955,7 +2017,7 @@ fn format_example_fenced_block(
     }
 
     // Add closing fence with indent
-    content_lines.push(format!("  {}", code_lines.last().unwrap().trim()));
+    content_lines.push(format!("  {closing_fence}"));
 }
 
 fn format_example_tag(
@@ -2014,7 +2076,7 @@ fn format_type_name_comment_tag(
 
     let tag_prefix = format!("@{normalized_kind}");
     let mut is_type_optional = false;
-    let mut normalized_type_str = String::new();
+    let mut normalized_type_str: Cow<'_, str> = Cow::Borrowed("");
 
     // When original has no space before `{type}` (e.g., `@typedef{import(...)}`),
     // preserve original quotes — the plugin treats this as a raw type annotation.
@@ -2035,33 +2097,33 @@ fn format_type_name_comment_tag(
                 && let Some(formatted) =
                     format_type_via_formatter(&normalized_type_str, format_options)
             {
-                normalized_type_str = formatted;
+                normalized_type_str = Cow::Owned(formatted);
             }
         }
     }
 
     // Build name string and extract default value
-    let mut name_str = String::new();
-    let mut default_value: Option<String> = None;
+    let mut name_str: Cow<'_, str> = Cow::Borrowed("");
+    let mut default_value: Option<Cow<'_, str>> = None;
     if let Some(np) = &name_part {
         let name_raw = np.raw();
         if is_type_optional && !name_raw.starts_with('[') {
-            name_str = format!("[{name_raw}]");
+            name_str = Cow::Owned(format!("[{name_raw}]"));
         } else if name_raw.starts_with('[') && name_raw.ends_with(']') {
             if let Some(eq_pos) = name_raw.find('=') {
                 let name_part_inner = &name_raw[1..eq_pos];
                 let val = name_raw[eq_pos + 1..name_raw.len() - 1].trim();
                 if val.is_empty() {
-                    name_str = format!("[{name_part_inner}]");
+                    name_str = Cow::Owned(format!("[{name_part_inner}]"));
                 } else {
-                    default_value = Some(val.to_string());
-                    name_str = format!("[{name_part_inner}={val}]");
+                    default_value = Some(Cow::Borrowed(val));
+                    name_str = Cow::Owned(format!("[{name_part_inner}={val}]"));
                 }
             } else {
-                name_str = name_raw.to_string();
+                name_str = Cow::Borrowed(name_raw);
             }
         } else {
-            name_str = name_raw.to_string();
+            name_str = Cow::Borrowed(name_raw);
         }
     }
 
@@ -2086,7 +2148,7 @@ fn format_type_name_comment_tag(
     let desc_raw = if default_value.is_some() {
         strip_default_is_suffix(desc_raw)
     } else {
-        desc_raw.to_string()
+        Cow::Borrowed(desc_raw)
     };
     let desc_raw = desc_raw.trim();
 
@@ -2108,9 +2170,11 @@ fn format_type_name_comment_tag(
         return;
     }
 
-    // Extract first text line from description (before any structural content)
-    let desc_lines_raw: Vec<&str> = desc_raw.lines().collect();
-    let first_text_line = desc_lines_raw.first().map_or("", |s| s.trim());
+    // Split description into first line and rest (avoids collecting all lines)
+    let (first_text_line, rest_of_desc) = match desc_raw.split_once('\n') {
+        Some((first, rest)) => (first.trim(), Some(rest)),
+        None => (desc_raw.trim(), None),
+    };
 
     // If the description starts with a code fence, output the tag line alone
     // and treat the entire description as structural content with a blank line separator
@@ -2151,7 +2215,7 @@ fn format_type_name_comment_tag(
     // Build the default value suffix
     let default_suffix = default_value.as_ref().map(|dv| format!("Default is `{dv}`"));
 
-    if first_text.is_empty() && default_suffix.is_none() && desc_lines_raw.len() <= 1 {
+    if first_text.is_empty() && default_suffix.is_none() && rest_of_desc.is_none() {
         content_lines.push(tag_line);
         return;
     }
@@ -2163,9 +2227,8 @@ fn format_type_name_comment_tag(
     // (subsequent lines with text, tables, code blocks, etc.)
     // Strip the common leading whitespace from continuation lines — this is
     // just the original JSDoc formatting indent, not semantic content.
-    let remaining_desc = if desc_lines_raw.len() > 1 {
-        let rest_lines: Vec<&str> = desc_lines_raw[1..].iter().map(|s| s.trim()).collect();
-        rest_lines.join("\n")
+    let remaining_desc = if let Some(rest) = rest_of_desc {
+        join_iter(rest.lines().map(str::trim), "\n")
     } else {
         String::new()
     };
@@ -2308,7 +2371,7 @@ fn format_type_comment_tag(
     let (type_part, comment_part) = tag.type_comment();
 
     let tag_prefix = format!("@{normalized_kind}");
-    let mut normalized_type_str = String::new();
+    let mut normalized_type_str: Cow<'_, str> = Cow::Borrowed("");
     let mut tag_line = tag_prefix.clone();
 
     // For @type/@satisfies, the plugin keeps types mostly as-is (no quote conversion).
@@ -2328,7 +2391,7 @@ fn format_type_comment_tag(
                 && let Some(formatted) =
                     format_type_via_formatter(&normalized_type_str, format_options)
             {
-                normalized_type_str = formatted;
+                normalized_type_str = Cow::Owned(formatted);
             }
             // Preserve no-space only when the type isn't an object literal
             // (object types start with `{`, making `@type{{` → should be `@type {{`)
@@ -2466,7 +2529,7 @@ fn format_generic_tag(
 
     // For @default/@defaultValue, format JSON-like values
     let desc_text: Cow<'_, str> = if matches!(normalized_kind, "default" | "defaultValue") {
-        Cow::Owned(format_default_value(desc_text, quote_style))
+        format_default_value(desc_text, quote_style)
     } else if should_capitalize {
         capitalize_first(desc_text)
     } else {
@@ -2557,7 +2620,7 @@ struct ImportInfo {
 /// - `Default from "module"`
 fn parse_import_tag(comment_text: &str) -> Option<ImportInfo> {
     // Normalize: join lines, collapse whitespace
-    let text: String = comment_text.lines().map(str::trim).collect::<Vec<_>>().join(" ");
+    let text: String = join_iter(comment_text.lines().map(str::trim), " ");
     let text = text.trim();
 
     // Find "from" keyword followed by a quoted string
@@ -2565,10 +2628,12 @@ fn parse_import_tag(comment_text: &str) -> Option<ImportInfo> {
     let specifier = text[..from_idx].trim();
     let module_part = text[from_idx + 6..].trim();
 
-    // Extract module path (strip quotes)
-    let module_path =
-        module_part.trim_start_matches(['"', '\'']).trim_end_matches(['"', '\'']).to_string();
-
+    // Extract module path (strip matching quotes)
+    let quote = match module_part.as_bytes().first() {
+        Some(b'"' | b'\'') => module_part.as_bytes()[0] as char,
+        _ => return None,
+    };
+    let module_path = module_part.strip_prefix(quote)?.strip_suffix(quote)?;
     if module_path.is_empty() {
         return None;
     }
@@ -2586,7 +2651,7 @@ fn parse_import_tag(comment_text: &str) -> Option<ImportInfo> {
             .split(',')
             .map(|s| {
                 // Normalize whitespace: "B  as  B1" → "B as B1"
-                s.split_whitespace().collect::<Vec<_>>().join(" ")
+                join_iter(s.split_whitespace(), " ")
             })
             .filter(|s| !s.is_empty())
             .collect();
@@ -2594,11 +2659,11 @@ fn parse_import_tag(comment_text: &str) -> Option<ImportInfo> {
         (default_import, named_imports)
     } else {
         // No braces — just a default import
-        let name = specifier.split_whitespace().collect::<Vec<_>>().join(" ");
+        let name = join_iter(specifier.split_whitespace(), " ");
         (Some(name), Vec::new())
     };
 
-    Some(ImportInfo { default_import, named_imports, module_path })
+    Some(ImportInfo { default_import, named_imports, module_path: module_path.to_string() })
 }
 
 /// Get the sort key for a named import specifier.
@@ -2811,8 +2876,10 @@ mod tests {
 
     #[test]
     fn test_format_type_via_formatter() {
-        assert_eq!(fmt_type("string"), Some("string".to_string()));
-        assert_eq!(fmt_type("number"), Some("number".to_string()));
+        // Simple types return None (no formatting needed — fast path)
+        assert_eq!(fmt_type("string"), None);
+        assert_eq!(fmt_type("number"), None);
+        // Types with operators go through the formatter
         assert_eq!(fmt_type("string | number"), Some("string | number".to_string()));
         assert_eq!(fmt_type(""), None);
     }
