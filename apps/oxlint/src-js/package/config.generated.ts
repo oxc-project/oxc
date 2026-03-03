@@ -90,13 +90,7 @@ export type CustomComponent =
  *
  * This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
  *
- * Usage: `oxlint -c oxlintrc.json --import-plugin`
- *
- * ::: danger NOTE
- *
- * Only the `.json` format is supported. You can use comments in configuration files.
- *
- * :::
+ * Usage: `oxlint -c oxlintrc.json`
  *
  * Example
  *
@@ -132,6 +126,42 @@ export type CustomComponent =
  * }
  * ]
  * }
+ * ```
+ *
+ * `oxlint.config.ts`
+ *
+ * ```ts
+ * import { defineConfig } from "oxlint";
+ *
+ * export default defineConfig({
+ * plugins: ["import", "typescript", "unicorn"],
+ * env: {
+ * "browser": true
+ * },
+ * globals: {
+ * "foo": "readonly"
+ * },
+ * settings: {
+ * react: {
+ * version: "18.2.0"
+ * },
+ * custom: { option: true }
+ * },
+ * rules: {
+ * "eqeqeq": "warn",
+ * "import/no-cycle": "error",
+ * "react/self-closing-comp": ["error", { "html": false }]
+ * },
+ * overrides: [
+ * {
+ * files: ["*.test.ts", "*.spec.ts"],
+ * rules: {
+ * "@typescript-eslint/no-explicit-any": "off"
+ * }
+ * }
+ * ]
+ * }
+ * });
  * ```
  */
 export interface Oxlintrc {
