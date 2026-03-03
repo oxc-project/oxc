@@ -150,6 +150,10 @@ export let tokensAndComments: TokenOrComment[] | null = null;
 // Tokens are mutated in place during deserialization, then `tokens` is set to a slice of this array.
 const cachedTokens: Token[] = [];
 
+// Tokens array from previous file.
+// Reused for next file if next file has less tokens than the previous file (by truncating it to correct length).
+let previousTokens: Token[] = [];
+
 // Tokens whose `loc` property has been accessed, and therefore needs clearing on reset
 const tokensWithLoc: Token[] = [];
 
@@ -227,7 +231,16 @@ export function initTokens() {
   // Use `slice` rather than copying tokens one-by-one into a new array.
   // V8 implements `slice` with a single `memcpy` of the backing store, which is faster
   // than N individual `push` calls with bounds checking and potential resizing.
-  tokens = cachedTokens.slice(0, tokensLen);
+  //
+  // If the tokens array from previous file is longer than the current one,
+  // reuse it and truncate it to avoid the memcpy entirely.
+  // Assuming random distribution of file sizes, this cheaper branch should be hit on 50% of files.
+  if (previousTokens.length >= tokensLen) {
+    previousTokens.length = tokensLen;
+    tokens = previousTokens;
+  } else {
+    tokens = previousTokens = cachedTokens.slice(0, tokensLen);
+  }
 
   uint32 = null;
 
