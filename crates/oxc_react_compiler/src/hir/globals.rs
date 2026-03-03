@@ -10,7 +10,7 @@ use super::{
     hir_types::{Effect, ValueKind, ValueReason},
     object_shape::{
         BUILT_IN_ARRAY_ID, BUILT_IN_DEFAULT_MUTATING_HOOK_ID, BUILT_IN_DEFAULT_NONMUTATING_HOOK_ID,
-        BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID,
+        BUILT_IN_EFFECT_EVENT_ID, BUILT_IN_MAP_ID, BUILT_IN_MIXED_READONLY_ID, BUILT_IN_OBJECT_ID, BUILT_IN_PROPS_ID,
         BUILT_IN_SET_ID, BUILT_IN_USE_ACTION_STATE_HOOK_ID, BUILT_IN_USE_ACTION_STATE_ID,
         BUILT_IN_USE_CONTEXT_HOOK_ID, BUILT_IN_USE_EFFECT_EVENT_ID, BUILT_IN_USE_EFFECT_HOOK_ID,
         BUILT_IN_USE_INSERTION_EFFECT_HOOK_ID, BUILT_IN_USE_LAYOUT_EFFECT_HOOK_ID,
@@ -932,6 +932,16 @@ pub fn default_shapes() -> ShapeRegistry {
         let ref_value_type =
             Type::Object(ObjectType { shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()) });
         add_object(&mut registry, BUILT_IN_REF_VALUE_ID, vec![("*".to_string(), ref_value_type)]);
+    }
+
+    // BuiltInPropsId: { 'ref': Object(BuiltInUseRefId) }
+    // Port of TS ObjectShape.ts:
+    //   addObject(BUILTIN_SHAPES, BuiltInPropsId, [["ref", { kind: "Object", shapeId: BuiltInUseRefId }]]);
+    // If the `ref` prop exists, it has the ref type.
+    {
+        let use_ref_type =
+            Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) });
+        add_object(&mut registry, BUILT_IN_PROPS_ID, vec![("ref".to_string(), use_ref_type)]);
     }
 
     // BuiltInEffectEventId: function shape

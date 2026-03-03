@@ -1488,6 +1488,7 @@ fn run_pipeline_for_codegen_impl(
     let ignore_use_no_forget = first_line.contains("@ignoreUseNoForget");
 
     let mut last_err = String::new();
+    let mut last_success: Option<(CodegenFunction, Option<WrapperInfo>)> = None;
     for (func, candidate_name, wrapper) in candidates {
         // Skip candidates with opt-out directives ('use no forget', 'use no memo'),
         // UNLESS @ignoreUseNoForget is set in the pragma.
@@ -1555,12 +1556,27 @@ fn run_pipeline_for_codegen_impl(
             Ok(f) => f,
             Err(e) => {
                 last_err = format!("Lower: {e:?}");
+                if return_first_error {
+                    return Err(last_err);
+                }
                 continue;
             }
         };
 
         match run_pipeline(&mut hir_func, &env) {
-            Ok(result) => return Ok((result, wrapper)),
+            Ok(result) => {
+                if return_first_error {
+                    // In error-fixture conformance mode, a successful compilation
+                    // does not mean the whole file passes — another candidate may
+                    // fail. Continue to try remaining candidates and only return
+                    // success if ALL candidates succeed. This matches the TS
+                    // reference compiler which compiles ALL qualifying functions
+                    // and reports any error.
+                    last_success = Some((result, wrapper));
+                    continue;
+                }
+                return Ok((result, wrapper));
+            }
             Err(e) => {
                 last_err = format!("Pipeline: {e:?}");
                 // Return the error immediately if:
@@ -1573,6 +1589,13 @@ fn run_pipeline_for_codegen_impl(
                 }
                 // Otherwise continue to try the next candidate.
             }
+        }
+    }
+
+    // In error-fixture mode: if all candidates succeeded, return the last success.
+    if return_first_error {
+        if let Some((result, wrapper)) = last_success {
+            return Ok((result, wrapper));
         }
     }
 
