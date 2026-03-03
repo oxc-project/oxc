@@ -113,6 +113,10 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                 env_config.enable_treat_set_identifiers_as_state_setters =
                     parse_bool_value(entry.value.as_ref(), true);
             }
+            "throwUnknownException__testonly" => {
+                env_config.throw_unknown_exception_testonly =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
             "enableResetCacheOnSourceFileChanges" => {
                 env_config.enable_reset_cache_on_source_file_changes =
                     Some(parse_bool_value(entry.value.as_ref(), true));
