@@ -34,3 +34,5 @@ export const { ownKeys: ReflectOwnKeys } = Reflect;
 export const { iterator: SymbolIterator } = Symbol;
 
 export const { fromCodePoint: StringFromCodePoint } = String;
+
+export const { now: DateNow } = Date;
