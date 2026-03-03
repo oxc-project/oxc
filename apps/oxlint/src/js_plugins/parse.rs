@@ -11,7 +11,7 @@ use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_estree_tokens::{ESTreeTokenOptionsJS, update_tokens};
 use oxc_linter::RawTransferMetadata2 as RawTransferMetadata;
 use oxc_napi::get_source_type;
-use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
+use oxc_parser::{ParseOptions, Parser, ParserReturn, config::TokensParserConfig};
 use oxc_semantic::SemanticBuilder;
 
 use crate::generated::raw_transfer_constants::{BLOCK_ALIGN as BUFFER_ALIGN, BUFFER_SIZE};
@@ -166,16 +166,14 @@ unsafe fn parse_raw_impl(
             str::from_utf8_unchecked(source_bytes)
         };
 
-        // Parse with same options as linter.
-        // We use `RuntimeParserConfig` even though we always pass `true` here, to avoid compiling the parser twice.
-        // The linter itself uses `RuntimeParserConfig`.
+        // Parse with same options as linter
         let parser_ret = Parser::new(&allocator, source_text, source_type)
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,
                 ..ParseOptions::default()
             })
-            .with_config(RuntimeParserConfig::new(true))
+            .with_config(TokensParserConfig)
             .parse();
         let ParserReturn { program: parsed_program, errors, mut tokens, panicked, .. } = parser_ret;
         let program = allocator.alloc(parsed_program);

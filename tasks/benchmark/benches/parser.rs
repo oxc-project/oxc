@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
 use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use oxc_estree_tokens::{ESTreeTokenOptionsJS, to_estree_tokens_json, update_tokens};
-use oxc_parser::{ParseOptions, Parser, ParserReturn, config::RuntimeParserConfig};
+use oxc_parser::{ParseOptions, Parser, ParserReturn, config::TokensParserConfig};
 use oxc_tasks_common::TestFiles;
 
 fn bench_parser(criterion: &mut Criterion) {
@@ -49,18 +49,16 @@ fn bench_parser_tokens(criterion: &mut Criterion) {
             let mut allocator = Allocator::default();
 
             b.iter(|| {
-                // Use `RuntimeParserConfig` (runtime config), same as NAPI parser package will.
+                // Use `TokensParserConfig` (tokens enabled), same as linter does.
                 // `bench_parser` uses `NoTokensParserConfig` (implicitly as default).
                 // Usually it's inadvisable to use 2 different configs in the same application,
                 // but this is just a benchmark, and it's better if we don't entwine this benchmark with `bench_parser`.
-                let config = RuntimeParserConfig::new(true);
-
                 Parser::new(&allocator, source_text, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
                         ..ParseOptions::default()
                     })
-                    .with_config(config)
+                    .with_config(TokensParserConfig)
                     .parse();
 
                 allocator.reset();
@@ -120,18 +118,16 @@ fn bench_estree_tokens(criterion: &mut Criterion) {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
 
-                // Use `RuntimeParserConfig` (runtime config), same as NAPI parser package will.
+                // Use `TokensParserConfig` (tokens enabled), same as linter does.
                 // `bench_estree` uses `NoTokensParserConfig` (implicitly as default).
                 // Usually it's inadvisable to use 2 different configs in the same application,
                 // but this is just a benchmark, and it's better if we don't entwine this benchmark with `bench_estree`.
-                let config = RuntimeParserConfig::new(true);
-
                 let ret = Parser::new(&allocator, source_text, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
                         ..ParseOptions::default()
                     })
-                    .with_config(config)
+                    .with_config(TokensParserConfig)
                     .parse();
                 let ParserReturn { program, tokens, .. } = ret;
 
@@ -173,18 +169,16 @@ fn bench_estree_tokens_raw(criterion: &mut Criterion) {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
 
-                // Use `RuntimeParserConfig` (runtime config), same as NAPI parser package will.
+                // Use `TokensParserConfig` (tokens enabled), same as linter does.
                 // `bench_estree` uses `NoTokensParserConfig` (implicitly as default).
                 // Usually it's inadvisable to use 2 different configs in the same application,
                 // but this is just a benchmark, and it's better if we don't entwine this benchmark with `bench_estree`.
-                let config = RuntimeParserConfig::new(true);
-
                 let ret = Parser::new(&allocator, source_text, source_type)
                     .with_options(ParseOptions {
                         parse_regular_expression: true,
                         ..ParseOptions::default()
                     })
-                    .with_config(config)
+                    .with_config(TokensParserConfig)
                     .parse();
                 let ParserReturn { program, mut tokens, .. } = ret;
 
