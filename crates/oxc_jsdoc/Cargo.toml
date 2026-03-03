@@ -23,5 +23,6 @@ doctest = false
 oxc_ast = { workspace = true }
 oxc_span = { workspace = true }
 
+cow-utils = { workspace = true }
 rustc-hash = { workspace = true }
 
