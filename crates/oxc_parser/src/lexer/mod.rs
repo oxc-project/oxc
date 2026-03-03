@@ -302,7 +302,11 @@ impl<'a, C: Config> Lexer<'a, C> {
         let token = self.token;
         if self.config.tokens() {
             match mode {
-                FinishTokenMode::Push => self.tokens.push(token),
+                FinishTokenMode::Push => {
+                    // We allocated sufficient capacity in the `Vec` for all tokens at the start.
+                    // `push_fast` is optimized for the "doesn't need to grow" case.
+                    self.tokens.push_fast(token);
+                }
                 FinishTokenMode::Replace => {
                     debug_assert!(
                         self.tokens.last().is_some_and(|last| last.start() == token.start())
