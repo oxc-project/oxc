@@ -43,6 +43,19 @@ pub struct HookConfig {
     pub transitive_mixed_data: bool,
 }
 
+/// Mode for exhaustive effect dependency validation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExhaustiveEffectDepsMode {
+    /// No validation.
+    Off,
+    /// Report both missing and extra dependencies.
+    All,
+    /// Only report missing dependencies.
+    MissingOnly,
+    /// Only report extra dependencies.
+    ExtraOnly,
+}
+
 /// The full environment configuration — all compiler knobs and settings.
 ///
 /// This corresponds to the Zod-validated `EnvironmentConfig` in the TS version.
@@ -86,8 +99,13 @@ pub struct EnvironmentConfig {
     /// Whether to validate exhaustive memoization dependencies.
     pub validate_exhaustive_memoization_dependencies: bool,
 
-    /// Whether to validate exhaustive effect dependencies.
-    pub validate_exhaustive_effect_dependencies: bool,
+    /// Mode for validating exhaustive effect dependencies.
+    ///
+    /// - `Off`: no validation
+    /// - `All`: report both missing and extra deps
+    /// - `MissingOnly`: only report missing deps
+    /// - `ExtraOnly`: only report extra deps
+    pub validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode,
 
     /// Whether to validate no derived computations in effects.
     pub validate_no_derived_computations_in_effects: bool,
@@ -181,7 +199,7 @@ impl Default for EnvironmentConfig {
             validate_preserve_existing_memoization_guarantees: true,
             enable_preserve_existing_memoization_guarantees: true,
             validate_exhaustive_memoization_dependencies: false,
-            validate_exhaustive_effect_dependencies: false,
+            validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode::Off,
             validate_no_derived_computations_in_effects: false,
             validate_no_derived_computations_in_effects_exp: false,
             validate_no_set_state_in_effects: false,

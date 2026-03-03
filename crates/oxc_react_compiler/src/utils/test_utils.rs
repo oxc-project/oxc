@@ -7,7 +7,7 @@
 use crate::entrypoint::options::{
     CompilationMode, DynamicGatingOptions, PanicThreshold, PluginOptions,
 };
-use crate::hir::environment::EnvironmentConfig;
+use crate::hir::environment::{EnvironmentConfig, ExhaustiveEffectDepsMode};
 
 /// Parse a config pragma string from a test fixture's first line.
 ///
@@ -172,6 +172,21 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
             "validateExhaustiveMemoizationDependencies" => {
                 env_config.validate_exhaustive_memoization_dependencies =
                     parse_bool_value(entry.value.as_ref(), true);
+            }
+            "validateExhaustiveEffectDependencies" => {
+                if let Some(val) = &entry.value {
+                    let stripped = val.trim_matches('"');
+                    env_config.validate_exhaustive_effect_dependencies = match stripped {
+                        "all" => ExhaustiveEffectDepsMode::All,
+                        "missing-only" => ExhaustiveEffectDepsMode::MissingOnly,
+                        "extra-only" => ExhaustiveEffectDepsMode::ExtraOnly,
+                        "off" => ExhaustiveEffectDepsMode::Off,
+                        _ => ExhaustiveEffectDepsMode::All,
+                    };
+                } else {
+                    env_config.validate_exhaustive_effect_dependencies =
+                        ExhaustiveEffectDepsMode::All;
+                }
             }
             "eslintSuppressionRules" => {
                 if let Some(val) = &entry.value {
