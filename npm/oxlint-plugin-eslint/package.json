@@ -1,6 +1,6 @@
 {
   "name": "oxlint-plugin-eslint",
-  "version": "1.50.0",
+  "version": "1.51.0",
   "description": "ESLint's built-in rules as an Oxlint plugin",
   "keywords": [
     "eslint",
@@ -22,26 +22,12 @@
   },
   "files": [
     "index.js",
-    "index.cjs",
-    "index.d.ts",
     "rules",
     "README.md"
   ],
   "type": "module",
   "main": "index.js",
-  "types": "index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "import": "./index.js",
-      "require": "./index.cjs",
-      "default": "./index.js"
-    }
-  },
-  "peerDependencies": {
-    "eslint": ">=8.0.0"
-  },
   "engines": {
-    "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
+    "node": "^20.19.0 || >=22.12.0"
   }
 }
