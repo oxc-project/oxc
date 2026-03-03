@@ -5,8 +5,8 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     compiler_error::{
-        CompilerError, CompilerErrorDetail, CompilerErrorDetailOptions, ErrorCategory,
-        GENERATED_SOURCE, SourceLocation,
+        CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, CompilerErrorDetail,
+        CompilerErrorDetailOptions, ErrorCategory, GENERATED_SOURCE, SourceLocation,
     },
     hir::{
         ArrayExpressionElement, BlockKind, BranchTerminal, Case, DeclareContext, DeclareLocal,
@@ -263,6 +263,23 @@ fn lower_identifier_param_with_default(
     param_place: crate::hir::Place,
     loc: SourceLocation,
 ) -> Result<(), CompilerError> {
+    // TS: lowerReorderableExpression checks isReorderableExpression and pushes a Todo
+    // error if the expression cannot be safely reordered (BuildHIR.ts lines 2863-2873).
+    // Default parameter values are evaluated out of order (the function arity affects
+    // when defaults are evaluated), so we restrict them to reorderable expressions.
+    if !is_reorderable_expression(default_expr, true) {
+        let expr_type_name = expression_type_name(default_expr);
+        builder.errors.push_error_detail(CompilerErrorDetail::new(CompilerErrorDetailOptions {
+            category: ErrorCategory::Todo,
+            reason: format!(
+                "(BuildHIR::node.lowerReorderableExpression) Expression type `{expr_type_name}` cannot be safely reordered",
+            ),
+            description: None,
+            loc: Some(span_to_loc(default_expr.span())),
+            suggestions: None,
+        }));
+    }
+
     let ident_loc = span_to_loc(ident.span);
 
     // Create a temporary to hold the resolved value (either provided or default).
@@ -510,17 +527,17 @@ fn lower_object_destructuring(
 
         // Port of BuildHIR.ts line 3847-3854: computed properties in ObjectPattern are unsupported
         if prop.computed {
-            builder.errors.push_error_detail(
-                crate::compiler_error::CompilerErrorDetail::new(
-                    crate::compiler_error::CompilerErrorDetailOptions {
-                        category: crate::compiler_error::ErrorCategory::Todo,
-                        reason: "(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern".to_string(),
-                        description: None,
-                        loc: Some(prop_loc.into()),
-                        suggestions: None,
-                    },
-                ),
-            );
+            builder.errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+                crate::compiler_error::CompilerErrorDetailOptions {
+                    category: crate::compiler_error::ErrorCategory::Todo,
+                    reason:
+                        "(BuildHIR::lowerAssignment) Handle computed properties in ObjectPattern"
+                            .to_string(),
+                    description: None,
+                    loc: Some(prop_loc.into()),
+                    suggestions: None,
+                },
+            ));
             continue;
         }
 
@@ -3729,17 +3746,17 @@ fn lower_statement_with_label(
             let value = lower_expression(builder, &lowerable)?.place;
             // Port of BuildHIR.ts line 272-283: throw inside try/catch is unsupported
             if builder.resolve_throw_handler().is_some() {
-                builder.errors.push_error_detail(
-                    crate::compiler_error::CompilerErrorDetail::new(
-                        crate::compiler_error::CompilerErrorDetailOptions {
-                            category: crate::compiler_error::ErrorCategory::Todo,
-                            reason: "(BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch".to_string(),
-                            description: None,
-                            loc: Some(loc.into()),
-                            suggestions: None,
-                        },
-                    ),
-                );
+                builder.errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+                    crate::compiler_error::CompilerErrorDetailOptions {
+                        category: crate::compiler_error::ErrorCategory::Todo,
+                        reason:
+                            "(BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch"
+                                .to_string(),
+                        description: None,
+                        loc: Some(loc.into()),
+                        suggestions: None,
+                    },
+                ));
             }
             builder.terminate(
                 Terminal::Throw(crate::hir::ThrowTerminal { id: InstructionId(0), value, loc }),
@@ -4132,17 +4149,15 @@ fn lower_statement_with_label(
 
             // Port of BuildHIR.ts line 1011-1018: for-await-of is unsupported
             if for_of.r#await {
-                builder.errors.push_error_detail(
-                    crate::compiler_error::CompilerErrorDetail::new(
-                        crate::compiler_error::CompilerErrorDetailOptions {
-                            category: crate::compiler_error::ErrorCategory::Todo,
-                            reason: "(BuildHIR::lowerStatement) Handle for-await loops".to_string(),
-                            description: None,
-                            loc: Some(loc.into()),
-                            suggestions: None,
-                        },
-                    ),
-                );
+                builder.errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+                    crate::compiler_error::CompilerErrorDetailOptions {
+                        category: crate::compiler_error::ErrorCategory::Todo,
+                        reason: "(BuildHIR::lowerStatement) Handle for-await loops".to_string(),
+                        description: None,
+                        loc: Some(loc.into()),
+                        suggestions: None,
+                    },
+                ));
                 return Ok(());
             }
 
@@ -4467,17 +4482,17 @@ fn lower_statement_with_label(
             let loc = span_to_loc(var_decl.span);
             // Port of BuildHIR.ts line 824-831: `var` declarations are unsupported
             if var_decl.kind == ast::VariableDeclarationKind::Var {
-                builder.errors.push_error_detail(
-                    crate::compiler_error::CompilerErrorDetail::new(
-                        crate::compiler_error::CompilerErrorDetailOptions {
-                            category: crate::compiler_error::ErrorCategory::Todo,
-                            reason: "(BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration".to_string(),
-                            description: None,
-                            loc: Some(loc.into()),
-                            suggestions: None,
-                        },
-                    ),
-                );
+                builder.errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+                    crate::compiler_error::CompilerErrorDetailOptions {
+                        category: crate::compiler_error::ErrorCategory::Todo,
+                        reason:
+                            "(BuildHIR::lowerStatement) Handle var kinds in VariableDeclaration"
+                                .to_string(),
+                        description: None,
+                        loc: Some(loc.into()),
+                        suggestions: None,
+                    },
+                ));
                 return Ok(());
             }
             let kind = match var_decl.kind {
@@ -5164,7 +5179,9 @@ pub fn lower_expression(
                             place: result.place,
                         }));
                     }
-                    LowerableObjectProperty::Property { key, value, method, kind, span, .. } => {
+                    LowerableObjectProperty::Property {
+                        key, value, method, kind, span, ..
+                    } => {
                         // Port of BuildHIR.ts line 1563-1570: get/set functions are unsupported
                         if *kind != LowerablePropertyKind::Init && !*method {
                             let kind_str = match kind {
@@ -6269,6 +6286,58 @@ pub fn lower_expression(
             // Lower the tag
             let lowered_tag = lower_jsx_tag(builder, tag)?;
 
+            // =====================================================================
+            // FBT duplicate-tag detection
+            // Port of BuildHIR.ts lines 2165-2220
+            //
+            // If this is an fbt/fbs builtin element, scan all children recursively
+            // for <fbt:enum>, <fbt:plural>, <fbt:pronoun> and throw a Todo error if
+            // any kind appears more than once.
+            // =====================================================================
+            let is_fbt = matches!(&tag,
+                LowerableJsxTag::BuiltIn(name, _) if name == "fbt" || name == "fbs"
+            );
+            if is_fbt {
+                let tag_name = match &tag {
+                    LowerableJsxTag::BuiltIn(name, _) => name.as_str(),
+                    LowerableJsxTag::Expression(_) => unreachable!(),
+                };
+                let mut fbt_enum_locs: Vec<SourceLocation> = Vec::new();
+                let mut fbt_plural_locs: Vec<SourceLocation> = Vec::new();
+                let mut fbt_pronoun_locs: Vec<SourceLocation> = Vec::new();
+                collect_fbt_namespaced_children(
+                    children,
+                    tag_name,
+                    &mut fbt_enum_locs,
+                    &mut fbt_plural_locs,
+                    &mut fbt_pronoun_locs,
+                );
+                for (kind, locs) in [
+                    ("enum", &fbt_enum_locs),
+                    ("plural", &fbt_plural_locs),
+                    ("pronoun", &fbt_pronoun_locs),
+                ] {
+                    if locs.len() > 1 {
+                        let mut diagnostic = CompilerDiagnostic::create(
+                            ErrorCategory::Todo,
+                            "Support duplicate fbt tags".to_string(),
+                            Some(format!(
+                                "Support `<{tag_name}>` tags with multiple `<{tag_name}:{kind}>` values"
+                            )),
+                            None,
+                        );
+                        for &loc in locs {
+                            diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Error {
+                                loc: Some(loc),
+                                message: Some(format!("Multiple `<{tag_name}:{kind}>` tags found")),
+                            });
+                        }
+                        builder.errors.push_diagnostic(diagnostic);
+                        return Err(builder.errors.clone());
+                    }
+                }
+            }
+
             // Lower attributes
             let mut lowered_props = Vec::new();
             for attr in props {
@@ -6404,17 +6473,15 @@ pub fn lower_expression(
         // Port of BuildHIR.ts default case: unsupported expression types push a Todo error
         LowerableExpression::UnsupportedExpression { kind, span } => {
             let loc = span_to_loc(*span);
-            builder.errors.push_error_detail(
-                crate::compiler_error::CompilerErrorDetail::new(
-                    crate::compiler_error::CompilerErrorDetailOptions {
-                        category: crate::compiler_error::ErrorCategory::Todo,
-                        reason: format!("(BuildHIR::lowerExpression) Handle {kind} expressions"),
-                        description: None,
-                        loc: Some(loc.into()),
-                        suggestions: None,
-                    },
-                ),
-            );
+            builder.errors.push_error_detail(crate::compiler_error::CompilerErrorDetail::new(
+                crate::compiler_error::CompilerErrorDetailOptions {
+                    category: crate::compiler_error::ErrorCategory::Todo,
+                    reason: format!("(BuildHIR::lowerExpression) Handle {kind} expressions"),
+                    description: None,
+                    loc: Some(loc.into()),
+                    suggestions: None,
+                },
+            ));
             lower_value_to_temporary(
                 builder,
                 InstructionValue::UnsupportedNode(crate::hir::UnsupportedNode { loc }),
@@ -6485,17 +6552,15 @@ fn lower_assignment(
                 VariableBinding::Identifier { identifier, binding_kind } => {
                     // Port of BuildHIR.ts line 3487-3497: const reassignment error
                     if binding_kind == BindingKind::Const {
-                        builder.errors.push_error_detail(
-                            CompilerErrorDetail::new(
-                                CompilerErrorDetailOptions {
-                                    category: ErrorCategory::Syntax,
-                                    reason: "Cannot reassign a `const` variable".to_string(),
-                                    description: Some(format!("`{name}` is declared as const")),
-                                    loc: Some(ident_loc.into()),
-                                    suggestions: None,
-                                },
-                            ),
-                        );
+                        builder.errors.push_error_detail(CompilerErrorDetail::new(
+                            CompilerErrorDetailOptions {
+                                category: ErrorCategory::Syntax,
+                                reason: "Cannot reassign a `const` variable".to_string(),
+                                description: Some(format!("`{name}` is declared as const")),
+                                loc: Some(ident_loc.into()),
+                                suggestions: None,
+                            },
+                        ));
                     }
 
                     let place = crate::hir::Place {
@@ -6625,16 +6690,70 @@ fn lower_object_property_key(
     }
 }
 
+/// Recursively collect source locations of `<fbt:enum>`, `<fbt:plural>`, `<fbt:pronoun>`
+/// children within an `<fbt>`/`<fbs>` element.
+///
+/// Port of the `JSXNamespacedName` traversal in BuildHIR.ts lines 2185-2203.
+fn collect_fbt_namespaced_children(
+    children: &[LowerableJsxChild<'_>],
+    tag_name: &str,
+    enum_locs: &mut Vec<SourceLocation>,
+    plural_locs: &mut Vec<SourceLocation>,
+    pronoun_locs: &mut Vec<SourceLocation>,
+) {
+    for child in children {
+        match child {
+            LowerableJsxChild::Element(LowerableExpression::JsxElement {
+                tag: LowerableJsxTag::BuiltIn(name, span),
+                children: inner_children,
+                ..
+            }) => {
+                // Check if this is a namespaced tag like "fbt:enum"
+                let prefix = format!("{tag_name}:");
+                if let Some(suffix) = name.strip_prefix(&prefix) {
+                    let loc = span_to_loc(*span);
+                    match suffix {
+                        "enum" => enum_locs.push(loc),
+                        "plural" => plural_locs.push(loc),
+                        "pronoun" => pronoun_locs.push(loc),
+                        _ => {}
+                    }
+                }
+                // Recurse into this element's children
+                collect_fbt_namespaced_children(
+                    inner_children,
+                    tag_name,
+                    enum_locs,
+                    plural_locs,
+                    pronoun_locs,
+                );
+            }
+            LowerableJsxChild::Fragment { children: inner_children, .. } => {
+                collect_fbt_namespaced_children(
+                    inner_children,
+                    tag_name,
+                    enum_locs,
+                    plural_locs,
+                    pronoun_locs,
+                );
+            }
+            _ => {}
+        }
+    }
+}
+
 /// Lower a JSX tag to a `JsxTag`.
 fn lower_jsx_tag(
     builder: &mut HirBuilder,
     tag: &LowerableJsxTag<'_>,
 ) -> Result<crate::hir::JsxTag, CompilerError> {
     match tag {
-        LowerableJsxTag::BuiltIn(name) => Ok(crate::hir::JsxTag::BuiltIn(crate::hir::BuiltinTag {
-            name: name.clone(),
-            loc: GENERATED_SOURCE,
-        })),
+        LowerableJsxTag::BuiltIn(name, span) => {
+            Ok(crate::hir::JsxTag::BuiltIn(crate::hir::BuiltinTag {
+                name: name.clone(),
+                loc: span_to_loc(*span),
+            }))
+        }
         LowerableJsxTag::Expression(expr) => {
             let result = lower_expression(builder, expr.as_ref())?;
             Ok(crate::hir::JsxTag::Place(result.place))
@@ -7337,8 +7456,9 @@ pub enum LowerableObjectPropertyKey<'a> {
 /// A JSX tag type for lowering.
 #[derive(Debug)]
 pub enum LowerableJsxTag<'a> {
-    /// A built-in tag like "div", "span"
-    BuiltIn(String),
+    /// A built-in tag like "div", "span" or namespaced like "fbt:enum".
+    /// The Span covers the tag name (used for error reporting).
+    BuiltIn(String, Span),
     /// A component or member expression tag
     Expression(Box<LowerableExpression<'a>>),
 }
@@ -7594,4 +7714,150 @@ pub fn lower_undefined(loc: SourceLocation) -> InstructionValue {
 /// Convert an oxc Span to a SourceLocation.
 pub fn span_to_loc(span: Span) -> SourceLocation {
     SourceLocation::Source(span)
+}
+
+/// Return the string name of an expression's type, matching Babel's AST node type names.
+/// Used for error messages matching the TS reference (BuildHIR.ts `expr.type`).
+fn expression_type_name(expr: &ast::Expression<'_>) -> &'static str {
+    match expr {
+        ast::Expression::Identifier(_) => "Identifier",
+        ast::Expression::StringLiteral(_) => "StringLiteral",
+        ast::Expression::NumericLiteral(_) => "NumericLiteral",
+        ast::Expression::BooleanLiteral(_) => "BooleanLiteral",
+        ast::Expression::NullLiteral(_) => "NullLiteral",
+        ast::Expression::BigIntLiteral(_) => "BigIntLiteral",
+        ast::Expression::RegExpLiteral(_) => "RegExpLiteral",
+        ast::Expression::TemplateLiteral(_) => "TemplateLiteral",
+        ast::Expression::UnaryExpression(_) => "UnaryExpression",
+        ast::Expression::BinaryExpression(_) => "BinaryExpression",
+        ast::Expression::LogicalExpression(_) => "LogicalExpression",
+        ast::Expression::ConditionalExpression(_) => "ConditionalExpression",
+        ast::Expression::AssignmentExpression(_) => "AssignmentExpression",
+        ast::Expression::SequenceExpression(_) => "SequenceExpression",
+        ast::Expression::CallExpression(_) => "CallExpression",
+        ast::Expression::NewExpression(_) => "NewExpression",
+        ast::Expression::StaticMemberExpression(_)
+        | ast::Expression::ComputedMemberExpression(_)
+        | ast::Expression::PrivateFieldExpression(_) => "MemberExpression",
+        ast::Expression::ArrayExpression(_) => "ArrayExpression",
+        ast::Expression::ObjectExpression(_) => "ObjectExpression",
+        ast::Expression::ArrowFunctionExpression(_) => "ArrowFunctionExpression",
+        ast::Expression::FunctionExpression(_) => "FunctionExpression",
+        ast::Expression::TaggedTemplateExpression(_) => "TaggedTemplateExpression",
+        ast::Expression::TSAsExpression(_) => "TSAsExpression",
+        ast::Expression::TSSatisfiesExpression(_) => "TSSatisfiesExpression",
+        ast::Expression::TSNonNullExpression(_) => "TSNonNullExpression",
+        ast::Expression::TSInstantiationExpression(_) => "TSInstantiationExpression",
+        ast::Expression::TSTypeAssertion(_) => "TSTypeAssertion",
+        ast::Expression::UpdateExpression(_) => "UpdateExpression",
+        ast::Expression::AwaitExpression(_) => "AwaitExpression",
+        ast::Expression::YieldExpression(_) => "YieldExpression",
+        ast::Expression::ClassExpression(_) => "ClassExpression",
+        ast::Expression::JSXElement(_) => "JSXElement",
+        ast::Expression::JSXFragment(_) => "JSXFragment",
+        ast::Expression::ChainExpression(_) => "ChainExpression",
+        ast::Expression::ImportExpression(_) => "ImportExpression",
+        ast::Expression::MetaProperty(_) => "MetaProperty",
+        ast::Expression::Super(_) => "Super",
+        ast::Expression::ThisExpression(_) => "ThisExpression",
+        ast::Expression::ParenthesizedExpression(_) => "ParenthesizedExpression",
+        ast::Expression::PrivateInExpression(_) => "PrivateInExpression",
+        ast::Expression::V8IntrinsicExpression(_) => "V8IntrinsicExpression",
+    }
+}
+
+/// Check if an expression can be safely reordered (i.e., its evaluation order is unobservable).
+///
+/// Port of `isReorderableExpression` from BuildHIR.ts lines 2875-3020.
+/// Used by `lower_reorderable_expression` to validate default values in destructuring
+/// and switch case tests where evaluation order may differ from the original source.
+fn is_reorderable_expression(expr: &ast::Expression<'_>, allow_local_identifiers: bool) -> bool {
+    match expr {
+        ast::Expression::Identifier(_) => {
+            // Local identifiers are reorderable only when explicitly allowed.
+            // Global identifiers are always reorderable, but since we cannot
+            // distinguish here without builder context, conservatively use the flag.
+            allow_local_identifiers
+        }
+        ast::Expression::RegExpLiteral(_)
+        | ast::Expression::StringLiteral(_)
+        | ast::Expression::NumericLiteral(_)
+        | ast::Expression::NullLiteral(_)
+        | ast::Expression::BooleanLiteral(_)
+        | ast::Expression::BigIntLiteral(_)
+        | ast::Expression::TemplateLiteral(_) => true,
+        ast::Expression::UnaryExpression(unary) => {
+            use oxc_syntax::operator::UnaryOperator;
+            matches!(
+                unary.operator,
+                UnaryOperator::LogicalNot | UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
+            ) && is_reorderable_expression(&unary.argument, allow_local_identifiers)
+        }
+        ast::Expression::TSAsExpression(ts_as) => {
+            is_reorderable_expression(&ts_as.expression, allow_local_identifiers)
+        }
+        ast::Expression::TSNonNullExpression(ts_nn) => {
+            is_reorderable_expression(&ts_nn.expression, allow_local_identifiers)
+        }
+        ast::Expression::TSInstantiationExpression(ts_inst) => {
+            is_reorderable_expression(&ts_inst.expression, allow_local_identifiers)
+        }
+        ast::Expression::LogicalExpression(logical) => {
+            is_reorderable_expression(&logical.left, allow_local_identifiers)
+                && is_reorderable_expression(&logical.right, allow_local_identifiers)
+        }
+        ast::Expression::ConditionalExpression(cond) => {
+            is_reorderable_expression(&cond.test, allow_local_identifiers)
+                && is_reorderable_expression(&cond.consequent, allow_local_identifiers)
+                && is_reorderable_expression(&cond.alternate, allow_local_identifiers)
+        }
+        ast::Expression::ArrayExpression(arr) => arr.elements.iter().all(|el| match el {
+            ast::ArrayExpressionElement::SpreadElement(_)
+            | ast::ArrayExpressionElement::Elision(_) => false,
+            // All expression variants: delegate to recursive check
+            other => is_reorderable_expression(other.to_expression(), allow_local_identifiers),
+        }),
+        ast::Expression::ObjectExpression(obj) => obj.properties.iter().all(|prop| match prop {
+            ast::ObjectPropertyKind::SpreadProperty(_) => false,
+            ast::ObjectPropertyKind::ObjectProperty(p) => {
+                !p.computed && is_reorderable_expression(&p.value, allow_local_identifiers)
+            }
+        }),
+        // TS: ArrowFunctionExpression is reorderable if its body is an empty BlockStatement,
+        // or if it's an expression body with no local identifier references
+        // (BuildHIR.ts lines 2983-2996).
+        ast::Expression::ArrowFunctionExpression(arrow) => {
+            if arrow.expression {
+                // Expression body `() => expr`: reorderable if the body expression is reorderable
+                // with allowLocalIdentifiers=false (no captured variables allowed).
+                // In oxc_ast, the expression body is stored as an ExpressionStatement in body.statements.
+                match arrow.body.statements.first() {
+                    Some(ast::Statement::ExpressionStatement(expr_stmt)) => {
+                        is_reorderable_expression(&expr_stmt.expression, false)
+                    }
+                    _ => false,
+                }
+            } else {
+                // Block body: reorderable only if the block is empty (`() => {}`)
+                arrow.body.statements.is_empty()
+            }
+        }
+        // CallExpression: reorderable if callee and all arguments are reorderable
+        // (BuildHIR.ts lines 2998-3010).
+        ast::Expression::CallExpression(call) => {
+            let callee_reorderable = match &call.callee {
+                ast::Expression::Identifier(_) => allow_local_identifiers,
+                other => is_reorderable_expression(other, allow_local_identifiers),
+            };
+            callee_reorderable
+                && call.arguments.iter().all(|arg| match arg {
+                    ast::Argument::SpreadElement(_) => false,
+                    other => {
+                        is_reorderable_expression(other.to_expression(), allow_local_identifiers)
+                    }
+                })
+        }
+        // FunctionExpression and all other expression types are NOT reorderable.
+        _ => false,
+    }
 }
