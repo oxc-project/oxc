@@ -1,12 +1,13 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 8975
 expression: snapshot
 ---
-Error fixture conformance: 169/275 (61.5%)
+Error fixture conformance: 188/275 (68.4%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 106
+  unexpected_success: 87
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -25,21 +26,15 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.dont-hoist-inline-reference.js
   [unexpected_success] error.handle-unexpected-exception-pipeline.ts
   [unexpected_success] error.hoisting-simple-function-declaration.js
-  [unexpected_success] error.hook-call-freezes-captured-identifier.tsx
   [unexpected_success] error.hook-property-load-local-hook.js
   [unexpected_success] error.invalid-array-push-frozen.js
-  [unexpected_success] error.invalid-computed-store-to-frozen-value.js
-  [unexpected_success] error.invalid-delete-computed-property-of-frozen-value.js
-  [unexpected_success] error.invalid-delete-property-of-frozen-value.js
   [unexpected_success] error.invalid-eval-unsupported.js
   [unexpected_success] error.invalid-function-expression-mutates-immutable-value.js
   [unexpected_success] error.invalid-hoisting-setstate.js
   [unexpected_success] error.invalid-hook-function-argument-mutates-local-variable.js
-  [unexpected_success] error.invalid-jsx-captures-context-variable.js
   [unexpected_success] error.invalid-mutate-after-aliased-freeze.js
   [unexpected_success] error.invalid-mutate-after-freeze.js
   [unexpected_success] error.invalid-mutate-context-in-callback.js
-  [unexpected_success] error.invalid-mutate-context.js
   [unexpected_success] error.invalid-mutate-global-in-render-helper-phi-return-prop.js
   [unexpected_success] error.invalid-mutate-global-in-render-helper-prop.js
   [unexpected_success] error.invalid-mutate-phi-which-could-be-frozen.js
@@ -50,7 +45,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-nested-function-reassign-local-variable-in-effect.js
   [unexpected_success] error.invalid-pass-mutable-function-as-prop.js
   [unexpected_success] error.invalid-prop-mutation-indirect.js
-  [unexpected_success] error.invalid-property-store-to-frozen-value.js
   [unexpected_success] error.invalid-props-mutation-in-effect-indirect.js
   [unexpected_success] error.invalid-read-ref-prop-in-render-property-load.js
   [unexpected_success] error.invalid-reassign-const.js
@@ -63,22 +57,13 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-type-provider-nonhook-name-typed-as-hook.js
   [unexpected_success] error.invalid-unconditional-set-state-hook-return-in-render.js
   [unexpected_success] error.modify-state-2.js
-  [unexpected_success] error.modify-state.js
-  [unexpected_success] error.modify-useReducer-state.js
-  [unexpected_success] error.mutate-function-property.js
-  [unexpected_success] error.mutate-hook-argument.js
-  [unexpected_success] error.mutate-property-from-global.js
-  [unexpected_success] error.mutate-props.js
-  [unexpected_success] error.not-useEffect-external-mutate.js
   [unexpected_success] error.reassign-global-fn-arg.js
   [unexpected_success] error.ref-like-name-not-Ref.js
   [unexpected_success] error.ref-like-name-not-a-ref.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-later-mutation.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-mutated-dep.js
-  [unexpected_success] error.store-property-in-global.js
   [unexpected_success] error.todo-allow-assigning-to-inferred-ref-prop-in-callback.js
   [unexpected_success] error.todo-for-await-loops.js
-  [unexpected_success] error.todo-for-loop-with-context-variable-iterator.js
   [unexpected_success] error.todo-functiondecl-hoisting.tsx
   [unexpected_success] error.todo-hoist-function-decls.js
   [unexpected_success] error.todo-hoisted-function-in-unreachable-code.js
@@ -107,9 +92,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] fbt/error.todo-locally-require-fbt.js
   [unexpected_success] fbt/error.todo-multiple-fbt-plural.tsx
   [unexpected_success] new-mutability/error.invalid-useCallback-captures-reassigned-context.js
-  [unexpected_success] new-mutability/error.mutate-frozen-value.js
-  [unexpected_success] new-mutability/error.mutate-hook-argument.js
-  [unexpected_success] new-mutability/error.not-useEffect-external-mutate.js
   [unexpected_success] new-mutability/error.todo-repro-named-function-with-shadowed-local-same-name.js
   [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-infer-mutate-deps.ts
   [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-overlap-scopes.ts
