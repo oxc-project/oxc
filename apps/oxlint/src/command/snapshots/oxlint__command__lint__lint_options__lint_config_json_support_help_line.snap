@@ -1,5 +1,0 @@
----
-source: apps/oxlint/src/command/lint.rs
-expression: json_config_line
----
-* `.json` and `.jsonc` config files are supported in all runtimes
