@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "3e9b676c57d2",
+  "session_id": "3ff49ef2-2406-42ce-94bf-e0d0a53b51fa",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-28T07:34:04.128505Z",
+  "branch": "fix/minifier-substitute-declarators-esbuild-pattern",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "crates/oxc_transformer/src/common/helper_loader.rs",
+    "crates/oxc_transformer/src/lib.rs",
+    "crates/oxc_transformer/src/modules/metadata.rs",
+    "crates/oxc_transformer/src/modules/mod.rs",
+    "crates/oxc_transformer/src/modules/options.rs",
+    "tasks/transform_conformance/src/constants.rs"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 54,
+    "cache_creation_tokens": 123496,
+    "cache_read_tokens": 4415214,
+    "output_tokens": 30985,
+    "api_call_count": 46
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-28T07:34:03.979129Z",
+    "agent_lines": 0,
+    "human_added": 3118,
+    "human_modified": 694,
+    "human_removed": 0,
+    "total_committed": 3812,
+    "agent_percentage": 0
+  }
+}

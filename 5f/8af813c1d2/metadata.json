@@ -2,8 +2,8 @@
   "cli_version": "0.4.2",
   "checkpoint_id": "5f8af813c1d2",
   "strategy": "manual-commit",
-  "branch": "fix/yarn-pnp-prefer-unplugged",
-  "checkpoints_count": 3,
+  "branch": "feat/formatter-jsdoc",
+  "checkpoints_count": 2,
   "files_touched": [
     "apps/oxfmt/src/core/oxfmtrc.rs",
     "crates/oxc_formatter/Cargo.toml",
@@ -19,9 +19,7 @@
     "crates/oxc_jsdoc/src/parser/jsdoc_parts.rs",
     "crates/oxc_semantic/Cargo.toml",
     "crates/oxc_semantic/src/builder.rs",
-    "crates/oxc_semantic/src/lib.rs",
-    "npm/oxfmt/package.json",
-    "npm/oxlint/package.json"
+    "crates/oxc_semantic/src/lib.rs"
   ],
   "sessions": [
     {
@@ -37,20 +35,13 @@
       "context": "/5f/8af813c1d2/1/context.md",
       "content_hash": "/5f/8af813c1d2/1/content_hash.txt",
       "prompt": "/5f/8af813c1d2/1/prompt.txt"
-    },
-    {
-      "metadata": "/5f/8af813c1d2/2/metadata.json",
-      "transcript": "/5f/8af813c1d2/2/full.jsonl",
-      "context": "/5f/8af813c1d2/2/context.md",
-      "content_hash": "/5f/8af813c1d2/2/content_hash.txt",
-      "prompt": "/5f/8af813c1d2/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 299,
-    "cache_creation_tokens": 154981,
-    "cache_read_tokens": 13367259,
-    "output_tokens": 9467,
-    "api_call_count": 120
+    "input_tokens": 115,
+    "cache_creation_tokens": 95371,
+    "cache_read_tokens": 13080488,
+    "output_tokens": 7505,
+    "api_call_count": 109
   }
 }
