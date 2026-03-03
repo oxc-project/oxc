@@ -82,7 +82,7 @@ pub fn discover_configs_in_tree(root: &Path) -> impl IntoIterator<Item = Discove
 fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfig> {
     let mut configs = Vec::new();
 
-    // Prefer .json over .jsonc (check .json first)
+    // Collect both JSON config variants so conflicts can be diagnosed.
     let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
     let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
     if json_path.is_file() {
@@ -308,7 +308,8 @@ impl<'a> ConfigLoader<'a> {
         let mut configs = Vec::new();
         let mut errors = Vec::new();
 
-        let mut by_dir = FxHashMap::<PathBuf, (Option<PathBuf>, Option<PathBuf>)>::default();
+        let mut by_dir =
+            FxHashMap::<PathBuf, (Option<PathBuf>, Option<PathBuf>, Option<PathBuf>)>::default();
 
         for config in paths {
             match config {
@@ -317,34 +318,33 @@ impl<'a> ConfigLoader<'a> {
                         continue;
                     };
                     let entry = by_dir.entry(dir).or_default();
-                    // Prefer .json over .jsonc: don't overwrite a .json path with a .jsonc path
-                    if entry
-                        .0
-                        .as_ref()
-                        .is_some_and(|p| p.extension().is_some_and(|ext| ext == "json"))
-                    {
-                        continue;
+                    if path.extension() == Some(OsStr::new("jsonc")) {
+                        entry.1 = Some(path);
+                    } else {
+                        entry.0 = Some(path);
                     }
-                    entry.0 = Some(path);
                 }
                 DiscoveredConfig::Js(path) => {
                     let Some(dir) = path.parent().map(Path::to_path_buf) else {
                         continue;
                     };
-                    by_dir.entry(dir).or_default().1 = Some(path);
+                    by_dir.entry(dir).or_default().2 = Some(path);
                 }
             }
         }
 
         let mut js_configs = Vec::new();
 
-        for (dir, (json_path, ts_path)) in by_dir {
-            if json_path.is_some() && ts_path.is_some() {
+        for (dir, (json_path, jsonc_path, ts_path)) in by_dir {
+            let config_count = usize::from(json_path.is_some())
+                + usize::from(jsonc_path.is_some())
+                + usize::from(ts_path.is_some());
+            if config_count > 1 {
                 errors.push(ConfigLoadError::Diagnostic(config_conflict_diagnostic(&dir)));
                 continue;
             }
 
-            if let Some(path) = json_path {
+            if let Some(path) = json_path.or(jsonc_path) {
                 match Self::load(&path) {
                     Ok(config) => configs.push(config),
                     Err(e) => errors.push(e),
@@ -462,8 +462,9 @@ impl<'a> ConfigLoader<'a> {
         let jsonc_exists = jsonc_path.is_file();
         let ts_exists = ts_path.is_file();
 
-        // Error if any JSON config conflicts with TS config
-        if (json_exists || jsonc_exists) && ts_exists {
+        let config_count =
+            usize::from(json_exists) + usize::from(jsonc_exists) + usize::from(ts_exists);
+        if config_count > 1 {
             return Err(config_conflict_diagnostic(dir));
         }
 
@@ -1101,7 +1102,7 @@ mod test {
     }
 
     #[test]
-    fn test_json_preferred_over_jsonc() {
+    fn test_json_and_jsonc_conflict() {
         let root_dir = tempfile::tempdir().unwrap();
         // Create both .oxlintrc.json and .oxlintrc.jsonc
         std::fs::write(root_dir.path().join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
@@ -1115,13 +1116,39 @@ mod test {
         let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
 
         let result = loader.load_root_config(root_dir.path(), None);
-        assert!(result.is_ok(), "Expected .oxlintrc.json to be preferred over .oxlintrc.jsonc");
-        let config = result.unwrap();
         assert!(
-            config.path.to_string_lossy().ends_with(".oxlintrc.json")
-                && !config.path.to_string_lossy().ends_with(".oxlintrc.jsonc"),
-            "Expected config path to end with .oxlintrc.json (not .jsonc), got: {}",
-            config.path.display()
+            result.is_err(),
+            "Expected an error when both .oxlintrc.json and .oxlintrc.jsonc exist"
         );
+    }
+
+    #[test]
+    fn test_json_and_ts_conflict() {
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.json"), r#"{ "rules": {} }"#).unwrap();
+        std::fs::write(root_dir.path().join("oxlint.config.ts"), "export default {};").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let result = loader.load_root_config(root_dir.path(), None);
+        assert!(result.is_err(), "Expected an error when both JSON and TS configs exist");
+    }
+
+    #[test]
+    fn test_jsonc_and_ts_conflict() {
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            root_dir.path().join(".oxlintrc.jsonc"),
+            r#"{ /* comment */ "rules": {} }"#,
+        )
+        .unwrap();
+        std::fs::write(root_dir.path().join("oxlint.config.ts"), "export default {};").unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        let result = loader.load_root_config(root_dir.path(), None);
+        assert!(result.is_err(), "Expected an error when both JSONC and TS configs exist");
     }
 }
