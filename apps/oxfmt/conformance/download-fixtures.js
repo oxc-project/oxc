@@ -14,11 +14,11 @@ const sources = [
     repo: "prettier/prettier/tests/format",
     version: pkg.dependencies.prettier,
   },
-  // {
-  //   name: "plugin-svelte",
-  //   repo: "sveltejs/prettier-plugin-svelte/tests",
-  //   version: pkg.dependencies["prettier-plugin-svelte"],
-  // },
+  {
+    name: "plugin-svelte",
+    repo: "sveltejs/prettier-plugin-svelte/test/formatting",
+    version: `v${pkg.dependencies["prettier-plugin-svelte"]}`,
+  },
 ];
 
 for (const { name, repo, version } of sources) {

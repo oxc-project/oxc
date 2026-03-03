@@ -3,6 +3,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import prettier from "prettier";
+import * as sveltePlugin from "prettier-plugin-svelte";
 import { format } from "../dist/index.js";
 
 const CONFORMANCE_DIR = import.meta.dirname;
@@ -24,6 +25,8 @@ type Source = {
   ext?: string;
   /** Files to exclude (e.g. test runner files that are not fixtures) */
   excludes?: string[];
+  /** Transform relative path to a filepath for formatting (e.g. "xxx/input.html" → "xxx.svelte") */
+  resolveFilePath?: (name: string) => string;
 };
 
 const categories: Category[] = [
@@ -56,6 +59,34 @@ const categories: Category[] = [
       "comment-tag.js": "`/* GraphQL */` comment tag not yet supported",
     },
   },
+  {
+    name: "svelte",
+    sources: [
+      {
+        dir: join(FIXTURES_DIR, "plugin-svelte", "samples"),
+        ext: "input.html",
+        excludes: ["syntax-error"],
+        resolveFilePath: (name) => name.replace("/input.html", ".svelte"),
+      },
+    ],
+    optionSets: [
+      { printWidth: 80 },
+      {
+        printWidth: 120,
+        singleQuote: true,
+        htmlWhitespaceSensitivity: "ignore",
+        bracketSameLine: true,
+        // For prettier
+        svelteIndentScriptAndStyle: true,
+        svelteSortOrder: "options-scripts-styles-markup",
+        // For oxfmt
+        svelte: {
+          indentScriptAndStyle: true,
+          sortOrder: "options-scripts-styles-markup",
+        },
+      },
+    ],
+  },
 ];
 
 // ---
@@ -74,9 +105,10 @@ for (const category of categories) {
   const categoryResult = await runCategory(category, fixtures);
   results.push(categoryResult);
 
-  for (const r of categoryResult.optionSetResults) {
+  for (let i = 0; i < categoryResult.optionSetResults.length; i++) {
+    const r = categoryResult.optionSetResults[i];
     const pct = ((r.passed / r.total) * 100).toFixed(2);
-    console.log(`  ${JSON.stringify(r.options)}: ${r.passed}/${r.total} (${pct}%)`);
+    console.log(`  Option ${i + 1}: ${r.passed}/${r.total} (${pct}%)`);
   }
 }
 
@@ -117,7 +149,8 @@ function collectFixtures(sources: Source[]): Fixture[] {
       const relPath = relative(source.dir, fullPath);
       if (source.excludes?.some((s) => relPath.includes(s))) continue;
 
-      results.push({ name: relPath, fullPath });
+      const name = source.resolveFilePath?.(relPath) ?? relPath;
+      results.push({ name, fullPath });
     }
   }
 
@@ -160,8 +193,9 @@ async function compareWithPrettier(
   let prettierResult: string;
   try {
     prettierResult = await prettier.format(content, {
-      filepath: fileName,
       ...options,
+      filepath: fileName,
+      plugins: [sveltePlugin],
     });
   } catch {
     prettierResult = "ERROR";
