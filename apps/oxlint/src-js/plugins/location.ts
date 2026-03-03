@@ -293,9 +293,9 @@ export function getNodeLoc(nodeOrToken: NodeOrToken): Location {
   // It would be weird if `Object.keys(node)` included `loc` if the property had been accessed previously,
   // but not if it hadn't.
   //
-  // We also don't make it configurable, because deleting it wouldn't make `node.loc` evaluate to `undefined`,
-  // because the access would fall through to the getter on the prototype.
-  Object.defineProperty(nodeOrToken, "loc", { value: loc, writable: true });
+  // The property is configurable so that it can be deleted when token objects are reused across files
+  // (see token pooling in `tokens.ts`). Deleting the own property restores the prototype getter.
+  Object.defineProperty(nodeOrToken, "loc", { value: loc, writable: true, configurable: true });
 
   return loc;
 }

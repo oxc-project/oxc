@@ -133,6 +133,7 @@ const TokenProto = Object.create(Object.prototype, {
   loc: {
     // Note: Not configurable
     get() {
+      tokensWithLoc.push(this);
       return getNodeLoc(this);
     },
     enumerable: true,
@@ -144,6 +145,22 @@ const TokenProto = Object.create(Object.prototype, {
 export let tokens: Token[] | null = null;
 let comments: Comment[] | null = null;
 export let tokensAndComments: TokenOrComment[] | null = null;
+
+// Cached token objects, reused across files to reduce GC pressure.
+// Tokens are mutated in place during deserialization, then `tokens` is set to a slice of this array.
+const cachedTokens: Token[] = [];
+
+// Tokens whose `loc` property has been accessed, and therefore needs clearing on reset
+const tokensWithLoc: Token[] = [];
+
+// Cached regex descriptor objects, reused across files
+const regexObjects: RegularExpressionToken["regex"][] = [];
+
+// Tokens whose `regex` property was set, and therefore needs clearing on reset.
+// Regex tokens are rare, so this array is almost always very small.
+// `tokensWithRegex.length` also serves as the index into `regexObjects`
+// for the next regex descriptor object which can be reused.
+const tokensWithRegex: Token[] = [];
 
 let uint32: Uint32Array | null = null;
 
@@ -185,15 +202,32 @@ export function initTokens() {
   debugAssertIsNonNull(buffer);
   uint32 = buffer.uint32;
 
-  let pos = uint32[TOKENS_OFFSET_POS_32];
-  const len = uint32[TOKENS_LEN_POS_32];
-  const endPos = pos + len * TOKEN_SIZE;
+  const tokensLen = uint32[TOKENS_LEN_POS_32];
 
-  tokens = [];
-  while (pos < endPos) {
-    tokens.push(deserializeToken(pos));
-    pos += TOKEN_SIZE;
+  // Grow cache if needed (one-time cost as cache warms up)
+  while (cachedTokens.length < tokensLen) {
+    cachedTokens.push({
+      // @ts-expect-error - TS doesn't understand `__proto__`
+      __proto__: TokenProto,
+      type: "" as Token["type"], // Overwritten later
+      value: "",
+      regex: undefined,
+      start: 0,
+      end: 0,
+      range: [0, 0],
+    });
   }
+
+  // Deserialize into cached token objects
+  const pos = uint32[TOKENS_OFFSET_POS_32];
+  for (let i = 0; i < tokensLen; i++) {
+    deserializeTokenInto(cachedTokens[i], pos + i * TOKEN_SIZE);
+  }
+
+  // Use `slice` rather than copying tokens one-by-one into a new array.
+  // V8 implements `slice` with a single `memcpy` of the backing store, which is faster
+  // than N individual `push` calls with bounds checking and potential resizing.
+  tokens = cachedTokens.slice(0, tokensLen);
 
   uint32 = null;
 
@@ -202,11 +236,11 @@ export function initTokens() {
 }
 
 /**
- * Deserialize a token from buffer at position `pos`.
+ * Deserialize a token from buffer at position `pos` into an existing token object.
+ * @param token - Token object to mutate
  * @param pos - Position in buffer containing Rust `Token` type
- * @returns `Token` object
  */
-function deserializeToken(pos: number): Token {
+function deserializeTokenInto(token: Token, pos: number): void {
   const pos32 = pos >> 2;
   const start = uint32![pos32],
     end = uint32![pos32 + 1];
@@ -215,7 +249,6 @@ function deserializeToken(pos: number): Token {
 
   const kind = buffer![pos + KIND_FIELD_OFFSET];
 
-  let regex: RegularExpressionToken["regex"] | undefined;
   if (kind <= PRIVATE_IDENTIFIER_KIND) {
     // Strip leading `#` from private identifiers
     if (kind === PRIVATE_IDENTIFIER_KIND) value = value.slice(1);
@@ -225,23 +258,28 @@ function deserializeToken(pos: number): Token {
       value = unescapeIdentifier(value);
     }
   } else if (kind === REGEXP_KIND) {
+    // Reuse cached regex descriptor object if available, otherwise create a new one.
+    // The array access is inside the `regexObjects.length > regexIndex` branch so V8 can elide the bounds check.
+    let regex: RegularExpressionToken["regex"];
+    const regexIndex = tokensWithRegex.length;
+    if (regexObjects.length > regexIndex) {
+      regex = regexObjects[regexIndex];
+    } else {
+      regexObjects.push((regex = { pattern: "", flags: "" }));
+    }
+    token.regex = regex;
+
     const patternEnd = value.lastIndexOf("/");
-    regex = {
-      pattern: value.slice(1, patternEnd),
-      flags: value.slice(patternEnd + 1),
-    };
+    regex.pattern = value.slice(1, patternEnd);
+    regex.flags = value.slice(patternEnd + 1);
+
+    tokensWithRegex.push(token);
   }
 
-  return {
-    // @ts-expect-error - TS doesn't understand `__proto__`
-    __proto__: TokenProto,
-    type: TOKEN_TYPES[kind],
-    value,
-    regex,
-    start,
-    end,
-    range: [start, end],
-  };
+  token.type = TOKEN_TYPES[kind];
+  token.value = value;
+  token.range[0] = token.start = start;
+  token.range[1] = token.end = end;
 }
 
 /**
@@ -408,9 +446,22 @@ function debugCheckTokensAndComments() {
 }
 
 /**
- * Discard tokens to free memory.
+ * Reset tokens after file has been linted.
+ *
+ * Deletes cached `loc` from tokens that had it accessed, so the prototype getter
+ * will recalculate it when the token is reused for a different file.
  */
 export function resetTokens() {
+  for (let i = 0, len = tokensWithLoc.length; i < len; i++) {
+    delete (tokensWithLoc[i] as { loc?: unknown }).loc;
+  }
+  tokensWithLoc.length = 0;
+
+  for (let i = 0, len = tokensWithRegex.length; i < len; i++) {
+    tokensWithRegex[i].regex = undefined;
+  }
+  tokensWithRegex.length = 0;
+
   tokens = null;
   comments = null;
   tokensAndComments = null;
