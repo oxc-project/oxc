@@ -82,12 +82,11 @@ pub fn discover_configs_in_tree(root: &Path) -> impl IntoIterator<Item = Discove
 fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfig> {
     let mut configs = Vec::new();
 
-    // Collect both JSON config variants so conflicts can be diagnosed.
     let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
-    let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
     if json_path.is_file() {
         configs.push(DiscoveredConfig::Json(json_path));
     }
+    let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
     if jsonc_path.is_file() {
         configs.push(DiscoveredConfig::Json(jsonc_path));
     }
@@ -340,7 +339,12 @@ impl<'a> ConfigLoader<'a> {
                 + usize::from(jsonc_path.is_some())
                 + usize::from(ts_path.is_some());
             if config_count > 1 {
-                errors.push(ConfigLoadError::Diagnostic(config_conflict_diagnostic(&dir)));
+                errors.push(ConfigLoadError::Diagnostic(config_conflict_diagnostic(
+                    &dir,
+                    json_path.is_some(),
+                    jsonc_path.is_some(),
+                    ts_path.is_some(),
+                )));
                 continue;
             }
 
@@ -465,14 +469,13 @@ impl<'a> ConfigLoader<'a> {
         let config_count =
             usize::from(json_exists) + usize::from(jsonc_exists) + usize::from(ts_exists);
         if config_count > 1 {
-            return Err(config_conflict_diagnostic(dir));
+            return Err(config_conflict_diagnostic(dir, json_exists, jsonc_exists, ts_exists));
         }
 
         if ts_exists {
             return self.load_root_js_config(&ts_path).map(Some);
         }
 
-        // Prefer .json over .jsonc
         if json_exists {
             return Oxlintrc::from_file(&json_path).map(Some);
         }
@@ -647,13 +650,43 @@ pub fn build_nested_configs(
     nested_configs
 }
 
-fn config_conflict_diagnostic(dir: &Path) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "Both '{}' and '{}' found in {}.",
-        DEFAULT_OXLINTRC_NAME,
-        DEFAULT_TS_OXLINTRC_NAME,
-        dir.display()
-    ))
+fn config_conflict_diagnostic(
+    dir: &Path,
+    has_json: bool,
+    has_jsonc: bool,
+    has_ts: bool,
+) -> OxcDiagnostic {
+    fn format_conflicting_config_names(config_names: &[&str]) -> String {
+        debug_assert!(config_names.len() > 1);
+
+        let mut quoted_names =
+            config_names.iter().map(|name| format!("'{name}'")).collect::<Vec<_>>();
+        if quoted_names.len() == 2 {
+            return format!("{} and {}", quoted_names[0], quoted_names[1]);
+        }
+
+        let last = quoted_names.pop().unwrap();
+        format!("{}, and {last}", quoted_names.join(", "))
+    }
+    let mut config_names = Vec::with_capacity(3);
+    if has_json {
+        config_names.push(DEFAULT_OXLINTRC_NAME);
+    }
+    if has_jsonc {
+        config_names.push(DEFAULT_JSONC_OXLINTRC_NAME);
+    }
+    if has_ts {
+        config_names.push(DEFAULT_TS_OXLINTRC_NAME);
+    }
+
+    let config_list = format_conflicting_config_names(&config_names);
+    let message = if config_names.len() == 2 {
+        format!("Both {config_list} found in {}.", dir.display())
+    } else {
+        format!("Multiple config files found in {}: {config_list}.", dir.display())
+    };
+
+    OxcDiagnostic::error(message)
     .with_note("Only one of `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` is allowed per directory.")
     .with_help("Delete one of the configuration files.")
 }
