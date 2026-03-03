@@ -1139,9 +1139,8 @@ fn infer_instruction_effects(
         // StartMemoize: freeze the deps (matching TS applyEffect for Freeze)
         // In TS, StartMemoize with enablePreserveExistingMemoizationGuarantees
         // iterates eachInstructionValueOperand (the named local deps) and emits
-        // Freeze effects. applyEffect then calls state.freeze(dep) which updates
-        // the abstract state. We replicate this here to ensure the abstract state
-        // is up-to-date for subsequent LoadContext/LoadLocal instructions.
+        // Freeze effects. applyEffect then calls state.freeze(dep) which
+        // transitively freezes through alias chains and function captures.
         InstructionValue::StartMemoize(v) => {
             if env.config.enable_preserve_existing_memoization_guarantees {
                 if let Some(deps) = &v.deps {
@@ -1149,9 +1148,7 @@ fn infer_instruction_effects(
                         if let crate::hir::ManualMemoDependencyRoot::NamedLocal { value, .. } =
                             &dep.root
                         {
-                            let mut reasons = FxHashSet::default();
-                            reasons.insert(ValueReason::HookCaptured);
-                            state.define(value, AbstractValue::frozen(reasons));
+                            state.freeze(value.identifier.id, ValueReason::HookCaptured);
                         }
                     }
                 }
@@ -1161,16 +1158,11 @@ fn infer_instruction_effects(
 
         // FinishMemoize: freeze the declared memoized value (matching TS applyEffect for Freeze)
         // In TS, FinishMemoize with enablePreserveExistingMemoizationGuarantees
-        // emits Freeze(decl). applyEffect calls state.freeze(decl), updating the
-        // abstract state so subsequent LoadContext/LoadLocal of the same identifier
-        // see a Frozen abstract value and emit ImmutableCapture instead of CreateFrom.
-        // This prevents item1/item2 mutable ranges from being extended through the
-        // items useMemo scope (fixes type-provider-store-capture.tsx).
+        // emits Freeze(decl). applyEffect calls state.freeze(decl), which
+        // transitively freezes through alias chains and function captures.
         InstructionValue::FinishMemoize(v) => {
             if env.config.enable_preserve_existing_memoization_guarantees {
-                let mut reasons = FxHashSet::default();
-                reasons.insert(ValueReason::HookCaptured);
-                state.define(&v.decl, AbstractValue::frozen(reasons));
+                state.freeze(v.decl.identifier.id, ValueReason::HookCaptured);
             }
             state.define(&instr.lvalue, AbstractValue::mutable());
         }
