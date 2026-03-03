@@ -24,7 +24,7 @@ use crate::{
         hir_builder::{compute_rpo_order, each_terminal_successor},
         visitors::{PatternItem, each_instruction_value_operand, each_pattern_item},
     },
-    inference::aliasing_effects::{AliasingEffect, AliasingSignature},
+    inference::aliasing_effects::{AliasingEffect, AliasingSignature, MutationReason},
 };
 
 /// Abstract value representation for a place during inference.
@@ -1983,6 +1983,76 @@ fn compute_effects_for_signature(
     Some(effects)
 }
 
+/// Port of `getWriteErrorReason` from `InferMutationAliasingEffects.ts` (lines 2655-2679).
+///
+/// Returns a human-readable error message describing why a mutation is invalid,
+/// based on the abstract value's reason set.
+fn get_write_error_reason(abstract_value: &AbstractValue) -> &'static str {
+    if abstract_value.reason.contains(&ValueReason::Global) {
+        "Modifying a variable defined outside a component or hook is not allowed. Consider using an effect"
+    } else if abstract_value.reason.contains(&ValueReason::JsxCaptured) {
+        "Modifying a value used previously in JSX is not allowed. Consider moving the modification before the JSX"
+    } else if abstract_value.reason.contains(&ValueReason::Context) {
+        "Modifying a value returned from 'useContext()' is not allowed."
+    } else if abstract_value.reason.contains(&ValueReason::KnownReturnSignature) {
+        "Modifying a value returned from a function whose return value should not be mutated"
+    } else if abstract_value.reason.contains(&ValueReason::ReactiveFunctionArgument) {
+        "Modifying component props or hook arguments is not allowed. Consider using a local variable instead"
+    } else if abstract_value.reason.contains(&ValueReason::State) {
+        "Modifying a value returned from 'useState()', which should not be modified directly. Use the setter function to update instead"
+    } else if abstract_value.reason.contains(&ValueReason::ReducerState) {
+        "Modifying a value returned from 'useReducer()', which should not be modified directly. Use the dispatch function to update instead"
+    } else if abstract_value.reason.contains(&ValueReason::Effect) {
+        "Modifying a value used previously in an effect function or as an effect dependency is not allowed. Consider moving the modification before calling useEffect()"
+    } else if abstract_value.reason.contains(&ValueReason::HookCaptured) {
+        "Modifying a value previously passed as an argument to a hook is not allowed. Consider moving the modification before calling the hook"
+    } else if abstract_value.reason.contains(&ValueReason::HookReturn) {
+        "Modifying a value returned from a hook is not allowed. Consider moving the modification into the hook where the value is constructed"
+    } else {
+        "This modifies a variable that React considers immutable"
+    }
+}
+
+/// Create a MutateFrozen or MutateGlobal error effect for an invalid mutation.
+///
+/// Port of the error creation logic from TS `applyEffect` (lines 1163-1197).
+/// When a non-conditional mutation (Mutate/MutateTransitive) targets a frozen or global value,
+/// the TS compiler creates a diagnostic and wraps it in a MutateFrozen or MutateGlobal effect.
+fn make_mutation_error_effect(
+    value: &Place,
+    abstract_value: &AbstractValue,
+    reason: &Option<MutationReason>,
+) -> AliasingEffect {
+    let error_reason = get_write_error_reason(abstract_value);
+    let variable = match &value.identifier.name {
+        Some(crate::hir::IdentifierName::Named(name)) => format!("`{name}`"),
+        _ => "value".to_string(),
+    };
+
+    let mut diagnostic = CompilerDiagnostic::create(
+        ErrorCategory::Immutability,
+        "This value cannot be modified".to_string(),
+        Some(error_reason.to_string()),
+        None,
+    )
+    .with_detail(CompilerDiagnosticDetail::Error {
+        loc: Some(value.loc),
+        message: Some(format!("{variable} cannot be modified")),
+    });
+
+    if matches!(reason, Some(MutationReason::AssignCurrentProperty)) {
+        diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Hint {
+            message: "Hint: If this value is a Ref (value returned by `useRef()`), rename the variable to end in \"Ref\".".to_string(),
+        });
+    }
+
+    if abstract_value.kind == ValueKind::Frozen || abstract_value.kind == ValueKind::MaybeFrozen {
+        AliasingEffect::MutateFrozen { place: value.clone(), error: diagnostic }
+    } else {
+        AliasingEffect::MutateGlobal { place: value.clone(), error: diagnostic }
+    }
+}
+
 /// Filter substituted effects from `compute_effects_for_signature` through the
 /// abstract state, matching the TS `applyEffect` filtering behavior.
 ///
@@ -1990,6 +2060,8 @@ fn compute_effects_for_signature(
 /// `applyEffect`, which checks the abstract value kind of places referenced by
 /// the effect and may drop, downgrade, or transform effects:
 ///
+/// - `Mutate`/`MutateTransitive`: converted to `MutateFrozen`/`MutateGlobal` error effects
+///   if the value is frozen or global; dropped if primitive; kept if mutable/context.
 /// - `MutateConditionally`/`MutateTransitiveConditionally`: dropped if the value
 ///   is not Mutable or Context (e.g. frozen values are not conditionally mutated).
 /// - `Alias`/`Capture`: downgraded to `ImmutableCapture` if the source is frozen,
@@ -2005,6 +2077,60 @@ fn filter_substituted_effects(
 
     for effect in raw_effects {
         match &effect {
+            // Mutate / MutateTransitive:
+            // TS applyEffect (lines 1104-1200) + state.mutate() (lines 1372-1426):
+            // - ref/ref-value → drop (mutate-ref)
+            // - mutable/context → keep (mutate)
+            // - primitive → drop (none)
+            // - frozen/maybeFrozen → MutateFrozen error
+            // - global → MutateGlobal error
+            AliasingEffect::Mutate { value, reason } => {
+                if is_ref_or_ref_value(&value.identifier) {
+                    // mutate-ref: no-op
+                    continue;
+                }
+                match state.get(value) {
+                    Some(av) => match av.kind {
+                        ValueKind::Mutable | ValueKind::Context => {
+                            filtered.push(effect);
+                        }
+                        ValueKind::Primitive => {
+                            // technically an error, but not React-specific: drop
+                        }
+                        ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global => {
+                            filtered.push(make_mutation_error_effect(value, av, reason));
+                        }
+                    },
+                    None => {
+                        // Unknown: conservatively keep
+                        filtered.push(effect);
+                    }
+                }
+            }
+            AliasingEffect::MutateTransitive { value } => {
+                if is_ref_or_ref_value(&value.identifier) {
+                    // mutate-ref: no-op
+                    continue;
+                }
+                match state.get(value) {
+                    Some(av) => match av.kind {
+                        ValueKind::Mutable | ValueKind::Context => {
+                            filtered.push(effect);
+                        }
+                        ValueKind::Primitive => {
+                            // technically an error, but not React-specific: drop
+                        }
+                        ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global => {
+                            filtered.push(make_mutation_error_effect(value, av, &None));
+                        }
+                    },
+                    None => {
+                        // Unknown: conservatively keep
+                        filtered.push(effect);
+                    }
+                }
+            }
+
             // MutateConditionally / MutateTransitiveConditionally:
             // TS applyEffect (lines 1490-1501): only kept if value is Mutable or Context.
             AliasingEffect::MutateConditionally { value }
@@ -2943,40 +3069,64 @@ fn compute_instruction_effects(
         }
     }
 
-    // Post-process: drop mutations on ref values and conditional mutations on frozen values.
+    // Post-process: convert/drop mutation effects based on abstract state.
     //
-    // Port of the `applyEffect` / `mutate()` behavior from `InferMutationAliasingEffects.ts`:
-    // 1. When a mutation targets a ref or ref-value type, the TS reference returns
-    //    'mutate-ref' (a no-op), effectively dropping the mutation. This is critical
-    //    for tests like `capture-ref-for-later-mutation.tsx` where ref.current
-    //    mutations should not extend the mutable range of the ref.
-    // 2. When a `MutateTransitiveConditionally` or `MutateConditionally` effect targets
-    //    a value that is frozen (or any non-mutable kind), the mutation is silently
-    //    dropped because conditional mutations only apply to mutable values.
-    effects.retain(|effect| {
-        match effect {
-            AliasingEffect::Mutate { value, .. }
-            | AliasingEffect::MutateTransitive { value }
-            | AliasingEffect::MutateTransitiveConditionally { value }
-            | AliasingEffect::MutateConditionally { value } => {
-                // Drop all mutation effects on ref types
-                if is_ref_or_ref_value(&value.identifier) {
-                    return false;
+    // Port of the `applyEffect` / `state.mutate()` behavior from `InferMutationAliasingEffects.ts`
+    // (lines 1104-1200, 1372-1426):
+    // 1. ref/ref-value targets → drop (mutate-ref)
+    // 2. frozen/global targets → convert Mutate/MutateTransitive to MutateFrozen/MutateGlobal error
+    // 3. conditional mutations on non-mutable values → drop
+    // 4. all other mutations → keep
+    {
+        let mut processed = Vec::with_capacity(effects.len());
+        for effect in effects {
+            match &effect {
+                AliasingEffect::Mutate { value, reason } => {
+                    if is_ref_or_ref_value(&value.identifier) {
+                        continue; // mutate-ref: drop
+                    }
+                    match state.get(value) {
+                        Some(av) if matches!(av.kind, ValueKind::Frozen | ValueKind::Global) => {
+                            processed.push(make_mutation_error_effect(value, av, reason));
+                        }
+                        _ => {
+                            processed.push(effect);
+                        }
+                    }
                 }
-                // Drop conditional mutations on non-mutable values
-                if matches!(
-                    effect,
-                    AliasingEffect::MutateTransitiveConditionally { .. }
-                        | AliasingEffect::MutateConditionally { .. }
-                ) && let Some(abstract_val) = state.get(value)
-                {
-                    return matches!(abstract_val.kind, ValueKind::Mutable | ValueKind::Context);
+                AliasingEffect::MutateTransitive { value } => {
+                    if is_ref_or_ref_value(&value.identifier) {
+                        continue; // mutate-ref: drop
+                    }
+                    match state.get(value) {
+                        Some(av) if matches!(av.kind, ValueKind::Frozen | ValueKind::Global) => {
+                            processed.push(make_mutation_error_effect(value, av, &None));
+                        }
+                        _ => {
+                            processed.push(effect);
+                        }
+                    }
                 }
-                true
+                AliasingEffect::MutateTransitiveConditionally { value }
+                | AliasingEffect::MutateConditionally { value } => {
+                    if is_ref_or_ref_value(&value.identifier) {
+                        continue; // mutate-ref: drop
+                    }
+                    let keep = match state.get(value) {
+                        Some(av) => matches!(av.kind, ValueKind::Mutable | ValueKind::Context),
+                        None => true,
+                    };
+                    if keep {
+                        processed.push(effect);
+                    }
+                }
+                _ => {
+                    processed.push(effect);
+                }
             }
-            _ => true,
         }
-    });
+        effects = processed;
+    }
 
     // Port of TS applyEffect data-flow conversions (InferMutationAliasingEffects.ts lines 861-944):
     //
