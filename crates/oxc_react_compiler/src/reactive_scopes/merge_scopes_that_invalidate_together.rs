@@ -250,7 +250,7 @@ fn merge_in_block(
                 i += 1;
             }
             ReactiveStatement::Terminal(term) => {
-                merge_in_terminal(&mut term.terminal, last_usage, temporaries);
+                merge_in_terminal(&mut term.terminal, parent_deps, last_usage, temporaries);
                 i += 1;
             }
             ReactiveStatement::Instruction(_) => {
@@ -520,41 +520,46 @@ fn merge_in_block(
 
 fn merge_in_terminal(
     terminal: &mut crate::hir::ReactiveTerminal,
+    parent_deps: Option<&FxHashSet<ReactiveScopeDependency>>,
     last_usage: &FxHashMap<DeclarationId, InstructionId>,
     temporaries: &mut FxHashMap<DeclarationId, DeclarationId>,
 ) {
     use crate::hir::ReactiveTerminal;
     match terminal {
         ReactiveTerminal::If(t) => {
-            merge_in_block(&mut t.consequent, None, last_usage, temporaries);
+            merge_in_block(&mut t.consequent, parent_deps, last_usage, temporaries);
             if let Some(alt) = &mut t.alternate {
-                merge_in_block(alt, None, last_usage, temporaries);
+                merge_in_block(alt, parent_deps, last_usage, temporaries);
             }
         }
         ReactiveTerminal::Switch(t) => {
             for case in &mut t.cases {
                 if let Some(block) = &mut case.block {
-                    merge_in_block(block, None, last_usage, temporaries);
+                    merge_in_block(block, parent_deps, last_usage, temporaries);
                 }
             }
         }
-        ReactiveTerminal::While(t) => merge_in_block(&mut t.r#loop, None, last_usage, temporaries),
-        ReactiveTerminal::DoWhile(t) => {
-            merge_in_block(&mut t.r#loop, None, last_usage, temporaries);
+        ReactiveTerminal::While(t) => {
+            merge_in_block(&mut t.r#loop, parent_deps, last_usage, temporaries);
         }
-        ReactiveTerminal::For(t) => merge_in_block(&mut t.r#loop, None, last_usage, temporaries),
+        ReactiveTerminal::DoWhile(t) => {
+            merge_in_block(&mut t.r#loop, parent_deps, last_usage, temporaries);
+        }
+        ReactiveTerminal::For(t) => {
+            merge_in_block(&mut t.r#loop, parent_deps, last_usage, temporaries);
+        }
         ReactiveTerminal::ForOf(t) => {
-            merge_in_block(&mut t.r#loop, None, last_usage, temporaries);
+            merge_in_block(&mut t.r#loop, parent_deps, last_usage, temporaries);
         }
         ReactiveTerminal::ForIn(t) => {
-            merge_in_block(&mut t.r#loop, None, last_usage, temporaries);
+            merge_in_block(&mut t.r#loop, parent_deps, last_usage, temporaries);
         }
         ReactiveTerminal::Label(t) => {
-            merge_in_block(&mut t.block, None, last_usage, temporaries);
+            merge_in_block(&mut t.block, parent_deps, last_usage, temporaries);
         }
         ReactiveTerminal::Try(t) => {
-            merge_in_block(&mut t.block, None, last_usage, temporaries);
-            merge_in_block(&mut t.handler, None, last_usage, temporaries);
+            merge_in_block(&mut t.block, parent_deps, last_usage, temporaries);
+            merge_in_block(&mut t.handler, parent_deps, last_usage, temporaries);
         }
         ReactiveTerminal::Break(_)
         | ReactiveTerminal::Continue(_)
