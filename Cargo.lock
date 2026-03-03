@@ -1974,7 +1974,6 @@ dependencies = [
 name = "oxc_jsdoc"
 version = "0.116.0"
 dependencies = [
- "cow-utils",
  "oxc_ast",
  "oxc_span",
  "rustc-hash",
