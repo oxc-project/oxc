@@ -578,7 +578,7 @@ fn codegen_inner_function(
     crate::reactive_scopes::prune_unused_labels::prune_unused_labels(&mut reactive_fn);
     crate::reactive_scopes::prune_unused_lvalues::prune_unused_lvalues(&mut reactive_fn);
     if include_prune_hoisted {
-        crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_fn);
+        crate::reactive_scopes::prune::prune_hoisted_contexts(&mut reactive_fn)?;
     }
     // NOTE: We do NOT call rename_variables here, matching the TS reference.
     // In TS, codegenReactiveFunction for FunctionExpression/ObjectMethod
@@ -1425,6 +1425,15 @@ fn codegen_store_or_declare(
 
     match kind {
         InstructionKind::Const | InstructionKind::HoistedConst => {
+            // TS: CompilerError.invariant(instr.lvalue === null, { reason: `Const declaration
+            // cannot be referenced as an expression`, ... }) — CodegenReactiveFunction.ts:960
+            if kind == InstructionKind::Const && instr.lvalue.is_some() {
+                cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                    "Const declaration cannot be referenced as an expression",
+                    Some(&format!("this is {kind:?}")),
+                    instr.loc,
+                ));
+            }
             cx.declare(lvalue_place.identifier.declaration_id);
             Some(CodegenStatement::VariableDeclaration {
                 kind: VarKind::Const,
@@ -1433,6 +1442,15 @@ fn codegen_store_or_declare(
             })
         }
         InstructionKind::Let | InstructionKind::HoistedLet => {
+            // TS: CompilerError.invariant(instr.lvalue === null, { reason: `Const declaration
+            // cannot be referenced as an expression`, ... }) — CodegenReactiveFunction.ts:994
+            if kind == InstructionKind::Let && instr.lvalue.is_some() {
+                cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                    "Const declaration cannot be referenced as an expression",
+                    Some(&format!("this is {kind:?}")),
+                    instr.loc,
+                ));
+            }
             cx.declare(lvalue_place.identifier.declaration_id);
             Some(CodegenStatement::VariableDeclaration {
                 kind: VarKind::Let,
@@ -1503,12 +1521,32 @@ fn codegen_destructure_statement(
         InstructionKind::Const
         | InstructionKind::HoistedConst
         | InstructionKind::Function
-        | InstructionKind::HoistedFunction => Some(CodegenStatement::VariableDeclaration {
-            kind: VarKind::Const,
-            name: lval.to_string(),
-            init: Some(value.to_string()),
-        }),
+        | InstructionKind::HoistedFunction => {
+            // TS: CompilerError.invariant(instr.lvalue === null, { reason: `Const declaration
+            // cannot be referenced as an expression`, ... }) — CodegenReactiveFunction.ts:960
+            if kind == InstructionKind::Const && instr.lvalue.is_some() {
+                cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                    "Const declaration cannot be referenced as an expression",
+                    Some(&format!("this is {kind:?}")),
+                    instr.loc,
+                ));
+            }
+            Some(CodegenStatement::VariableDeclaration {
+                kind: VarKind::Const,
+                name: lval.to_string(),
+                init: Some(value.to_string()),
+            })
+        }
         InstructionKind::Let | InstructionKind::HoistedLet => {
+            // TS: CompilerError.invariant(instr.lvalue === null, { reason: `Const declaration
+            // cannot be referenced as an expression`, ... }) — CodegenReactiveFunction.ts:994
+            if kind == InstructionKind::Let && instr.lvalue.is_some() {
+                cx.codegen_errors.borrow_mut().push(CompilerError::invariant(
+                    "Const declaration cannot be referenced as an expression",
+                    Some(&format!("this is {kind:?}")),
+                    instr.loc,
+                ));
+            }
             Some(CodegenStatement::VariableDeclaration {
                 kind: VarKind::Let,
                 name: lval.to_string(),
