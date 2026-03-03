@@ -6831,7 +6831,7 @@ fn remove_dead_anonymous_function_statements(s: &str) -> String {
                     | "||"
                     | "&&"
                     | "??"
-            );
+            ) || prev.ends_with(':');
 
             if !prev_is_assignment && !is_at_top_level {
                 // Find the matching closing brace
@@ -8245,7 +8245,7 @@ impl std::fmt::Display for FailureCategory {
 /// Debug test: print actual vs expected for specific failing fixtures.
 #[test]
 fn test_debug_print_failing() {
-    let fixtures: &[&str] = &["reactive-scopes-if.js"];
+    let fixtures: &[&str] = &["name-anonymous-functions.js"];
     let fixtures_dir = std::path::Path::new(FIXTURES_PATH);
     if !fixtures_dir.exists() {
         return;
