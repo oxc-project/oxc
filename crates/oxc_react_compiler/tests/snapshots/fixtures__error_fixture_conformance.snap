@@ -1,13 +1,12 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 8980
 expression: snapshot
 ---
-Error fixture conformance: 99/275 (36.0%)
+Error fixture conformance: 129/275 (46.9%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 176
+  unexpected_success: 146
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -40,10 +39,7 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-access-ref-in-state-initializer.js
   [unexpected_success] error.invalid-aliased-ref-in-callback-invoked-during-render-.js
   [unexpected_success] error.invalid-array-push-frozen.js
-  [unexpected_success] error.invalid-assign-hook-to-local.js
   [unexpected_success] error.invalid-computed-store-to-frozen-value.js
-  [unexpected_success] error.invalid-conditional-call-aliased-hook-import.js
-  [unexpected_success] error.invalid-conditional-call-aliased-react-hook.js
   [unexpected_success] error.invalid-delete-computed-property-of-frozen-value.js
   [unexpected_success] error.invalid-delete-property-of-frozen-value.js
   [unexpected_success] error.invalid-destructure-assignment-to-global.js
@@ -71,8 +67,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-mutation-in-closure.js
   [unexpected_success] error.invalid-mutation-of-possible-props-phi-indirect.js
   [unexpected_success] error.invalid-nested-function-reassign-local-variable-in-effect.js
-  [unexpected_success] error.invalid-pass-hook-as-call-arg.js
-  [unexpected_success] error.invalid-pass-hook-as-prop.js
   [unexpected_success] error.invalid-pass-mutable-function-as-prop.js
   [unexpected_success] error.invalid-pass-ref-to-function.js
   [unexpected_success] error.invalid-prop-mutation-indirect.js
@@ -88,7 +82,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-return-mutable-function-from-hook.js
   [unexpected_success] error.invalid-set-and-read-ref-during-render.js
   [unexpected_success] error.invalid-set-and-read-ref-nested-property-during-render.js
-  [unexpected_success] error.invalid-ternary-with-hook-values.js
   [unexpected_success] error.invalid-type-provider-hook-name-not-typed-as-hook-namespace.js
   [unexpected_success] error.invalid-type-provider-hook-name-not-typed-as-hook.js
   [unexpected_success] error.invalid-type-provider-hooklike-module-default-not-hook.js
@@ -106,7 +99,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.mutate-property-from-global.js
   [unexpected_success] error.mutate-props.js
   [unexpected_success] error.not-useEffect-external-mutate.js
-  [unexpected_success] error.propertyload-hook.js
   [unexpected_success] error.reassign-global-fn-arg.js
   [unexpected_success] error.reassignment-to-global-indirect.js
   [unexpected_success] error.reassignment-to-global.js
@@ -163,27 +155,4 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] preserve-memo-validation/error.invalid-useCallback-captures-reassigned-context.ts
   [unexpected_success] preserve-memo-validation/error.maybe-mutable-ref-not-preserved.ts
   [unexpected_success] propagate-scope-deps-hir-fork/error.todo-optional-call-chain-in-optional.ts
-  [unexpected_success] rules-of-hooks/error.bail.rules-of-hooks-3d692676194b.js
-  [unexpected_success] rules-of-hooks/error.bail.rules-of-hooks-8503ca76d6f8.js
-  [unexpected_success] rules-of-hooks/error.invalid-call-phi-possibly-hook.js
-  [unexpected_success] rules-of-hooks/error.invalid-conditionally-call-local-named-like-hook.js
-  [unexpected_success] rules-of-hooks/error.invalid-conditionally-call-prop-named-like-hook.js
-  [unexpected_success] rules-of-hooks/error.invalid-conditionally-methodcall-hooklike-property-of-local.js
-  [unexpected_success] rules-of-hooks/error.invalid-condtionally-call-hooklike-property-of-local.js
-  [unexpected_success] rules-of-hooks/error.invalid-dynamic-hook-via-hooklike-local.js
-  [unexpected_success] rules-of-hooks/error.invalid-hook-as-conditional-test.js
-  [unexpected_success] rules-of-hooks/error.invalid-hook-as-prop.js
-  [unexpected_success] rules-of-hooks/error.invalid-hook-from-hook-return.js
-  [unexpected_success] rules-of-hooks/error.invalid-hook-from-property-of-other-hook.js
-  [unexpected_success] rules-of-hooks/error.invalid-hook-in-nested-function-expression-object-expression.js
-  [unexpected_success] rules-of-hooks/error.invalid-hook-in-nested-object-method.js
-  [unexpected_success] rules-of-hooks/error.invalid-hook-optional-methodcall.js
-  [unexpected_success] rules-of-hooks/error.invalid-hook-optional-property.js
-  [unexpected_success] rules-of-hooks/error.invalid-hook-reassigned-in-conditional.js
-  [unexpected_success] rules-of-hooks/error.invalid.invalid-rules-of-hooks-0a1dbff27ba0.js
-  [unexpected_success] rules-of-hooks/error.invalid.invalid-rules-of-hooks-0de1224ce64b.js
-  [unexpected_success] rules-of-hooks/error.invalid.invalid-rules-of-hooks-449a37146a83.js
-  [unexpected_success] rules-of-hooks/error.invalid.invalid-rules-of-hooks-76a74b4666e9.js
-  [unexpected_success] rules-of-hooks/error.invalid.invalid-rules-of-hooks-d842d36db450.js
-  [unexpected_success] rules-of-hooks/error.invalid.invalid-rules-of-hooks-d952b82c2597.js
   [unexpected_success] todo.error.object-pattern-computed-key.js
