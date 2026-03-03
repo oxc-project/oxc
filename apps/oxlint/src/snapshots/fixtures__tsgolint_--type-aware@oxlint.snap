@@ -209,6 +209,50 @@ working directory: fixtures/tsgolint
  3 | 
    `----
 
+  x typescript-eslint(no-unnecessary-type-conversion): This type conversion does not change the type or value of the expression.
+   ,-[no-unnecessary-type-conversion.ts:3:11]
+ 2 | 
+ 3 | const a = String('asdf');
+   :           ^^^^^^ ^^^|^^
+   :              |      `-- This expression already has type '"asdf"'.
+ 4 | const b = 'asdf'.toString();
+   `----
+
+  x typescript-eslint(no-unnecessary-type-conversion): This type conversion does not change the type or value of the expression.
+   ,-[no-unnecessary-type-conversion.ts:4:18]
+ 3 | const a = String('asdf');
+ 4 | const b = 'asdf'.toString();
+   :           ^^^|^^ ^^^^^^^^^^
+   :              `-- This expression already has type '"asdf"'.
+ 5 | const c = '' + 'asdf';
+   `----
+
+  x typescript-eslint(no-unnecessary-type-conversion): This type conversion does not change the type or value of the expression.
+   ,-[no-unnecessary-type-conversion.ts:5:11]
+ 4 | const b = 'asdf'.toString();
+ 5 | const c = '' + 'asdf';
+   :           ^^^^^^^^|^^
+   :             |     `-- This expression already has type '"asdf"'.
+ 6 | const d = Number(123);
+   `----
+
+  x typescript-eslint(no-unnecessary-type-conversion): This type conversion does not change the type or value of the expression.
+   ,-[no-unnecessary-type-conversion.ts:6:11]
+ 5 | const c = '' + 'asdf';
+ 6 | const d = Number(123);
+   :           ^^^^^^ ^|^
+   :              |    `-- This expression already has type '123'.
+ 7 | const e = !!true;
+   `----
+
+  x typescript-eslint(no-unnecessary-type-conversion): This type conversion does not change the type or value of the expression.
+   ,-[no-unnecessary-type-conversion.ts:7:11]
+ 6 | const d = Number(123);
+ 7 | const e = !!true;
+   :           ^^^^|^
+   :            |  `-- This expression already has type 'true'.
+   `----
+
   x typescript-eslint(no-unnecessary-type-parameters): Type parameter T is used only once in the function signature.
    ,-[no-unnecessary-type-parameters.ts:3:20]
  2 | 
@@ -617,8 +661,8 @@ working directory: fixtures/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 76 errors.
-Finished in <variable>ms on 59 files with 58 rules using 1 threads.
+Found 0 warnings and 81 errors.
+Finished in <variable>ms on 60 files with 59 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

@@ -495,6 +495,7 @@ pub use crate::rules::typescript::no_unnecessary_template_expression::NoUnnecess
 pub use crate::rules::typescript::no_unnecessary_type_arguments::NoUnnecessaryTypeArguments as TypescriptNoUnnecessaryTypeArguments;
 pub use crate::rules::typescript::no_unnecessary_type_assertion::NoUnnecessaryTypeAssertion as TypescriptNoUnnecessaryTypeAssertion;
 pub use crate::rules::typescript::no_unnecessary_type_constraint::NoUnnecessaryTypeConstraint as TypescriptNoUnnecessaryTypeConstraint;
+pub use crate::rules::typescript::no_unnecessary_type_conversion::NoUnnecessaryTypeConversion as TypescriptNoUnnecessaryTypeConversion;
 pub use crate::rules::typescript::no_unnecessary_type_parameters::NoUnnecessaryTypeParameters as TypescriptNoUnnecessaryTypeParameters;
 pub use crate::rules::typescript::no_unsafe_argument::NoUnsafeArgument as TypescriptNoUnsafeArgument;
 pub use crate::rules::typescript::no_unsafe_assignment::NoUnsafeAssignment as TypescriptNoUnsafeAssignment;
@@ -973,6 +974,7 @@ pub enum RuleEnum {
     TypescriptNoUnnecessaryTypeArguments(TypescriptNoUnnecessaryTypeArguments),
     TypescriptNoUnnecessaryTypeAssertion(TypescriptNoUnnecessaryTypeAssertion),
     TypescriptNoUnnecessaryTypeConstraint(TypescriptNoUnnecessaryTypeConstraint),
+    TypescriptNoUnnecessaryTypeConversion(TypescriptNoUnnecessaryTypeConversion),
     TypescriptNoUnnecessaryTypeParameters(TypescriptNoUnnecessaryTypeParameters),
     TypescriptNoUnsafeArgument(TypescriptNoUnsafeArgument),
     TypescriptNoUnsafeAssignment(TypescriptNoUnsafeAssignment),
@@ -1695,8 +1697,10 @@ const TYPESCRIPT_NO_UNNECESSARY_TYPE_ASSERTION_ID: usize =
     TYPESCRIPT_NO_UNNECESSARY_TYPE_ARGUMENTS_ID + 1usize;
 const TYPESCRIPT_NO_UNNECESSARY_TYPE_CONSTRAINT_ID: usize =
     TYPESCRIPT_NO_UNNECESSARY_TYPE_ASSERTION_ID + 1usize;
-const TYPESCRIPT_NO_UNNECESSARY_TYPE_PARAMETERS_ID: usize =
+const TYPESCRIPT_NO_UNNECESSARY_TYPE_CONVERSION_ID: usize =
     TYPESCRIPT_NO_UNNECESSARY_TYPE_CONSTRAINT_ID + 1usize;
+const TYPESCRIPT_NO_UNNECESSARY_TYPE_PARAMETERS_ID: usize =
+    TYPESCRIPT_NO_UNNECESSARY_TYPE_CONVERSION_ID + 1usize;
 const TYPESCRIPT_NO_UNSAFE_ARGUMENT_ID: usize =
     TYPESCRIPT_NO_UNNECESSARY_TYPE_PARAMETERS_ID + 1usize;
 const TYPESCRIPT_NO_UNSAFE_ASSIGNMENT_ID: usize = TYPESCRIPT_NO_UNSAFE_ARGUMENT_ID + 1usize;
@@ -2492,6 +2496,9 @@ impl RuleEnum {
             }
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
                 TYPESCRIPT_NO_UNNECESSARY_TYPE_CONSTRAINT_ID
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TYPESCRIPT_NO_UNNECESSARY_TYPE_CONVERSION_ID
             }
             Self::TypescriptNoUnnecessaryTypeParameters(_) => {
                 TYPESCRIPT_NO_UNNECESSARY_TYPE_PARAMETERS_ID
@@ -3295,6 +3302,9 @@ impl RuleEnum {
             }
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
                 TypescriptNoUnnecessaryTypeConstraint::NAME
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::NAME
             }
             Self::TypescriptNoUnnecessaryTypeParameters(_) => {
                 TypescriptNoUnnecessaryTypeParameters::NAME
@@ -4100,6 +4110,9 @@ impl RuleEnum {
             }
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
                 TypescriptNoUnnecessaryTypeConstraint::CATEGORY
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::CATEGORY
             }
             Self::TypescriptNoUnnecessaryTypeParameters(_) => {
                 TypescriptNoUnnecessaryTypeParameters::CATEGORY
@@ -4928,6 +4941,9 @@ impl RuleEnum {
             }
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
                 TypescriptNoUnnecessaryTypeConstraint::FIX
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::FIX
             }
             Self::TypescriptNoUnnecessaryTypeParameters(_) => {
                 TypescriptNoUnnecessaryTypeParameters::FIX
@@ -5768,6 +5784,9 @@ impl RuleEnum {
             }
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
                 TypescriptNoUnnecessaryTypeConstraint::documentation()
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::documentation()
             }
             Self::TypescriptNoUnnecessaryTypeParameters(_) => {
                 TypescriptNoUnnecessaryTypeParameters::documentation()
@@ -7124,6 +7143,10 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
                 TypescriptNoUnnecessaryTypeConstraint::config_schema(generator)
                     .or_else(|| TypescriptNoUnnecessaryTypeConstraint::schema(generator))
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::config_schema(generator)
+                    .or_else(|| TypescriptNoUnnecessaryTypeConversion::schema(generator))
             }
             Self::TypescriptNoUnnecessaryTypeParameters(_) => {
                 TypescriptNoUnnecessaryTypeParameters::config_schema(generator)
@@ -8651,6 +8674,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryTypeArguments(_) => "typescript",
             Self::TypescriptNoUnnecessaryTypeAssertion(_) => "typescript",
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => "typescript",
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => "typescript",
             Self::TypescriptNoUnnecessaryTypeParameters(_) => "typescript",
             Self::TypescriptNoUnsafeArgument(_) => "typescript",
             Self::TypescriptNoUnsafeAssignment(_) => "typescript",
@@ -9913,6 +9937,11 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
                 Ok(Self::TypescriptNoUnnecessaryTypeConstraint(
                     TypescriptNoUnnecessaryTypeConstraint::from_configuration(value)?,
+                ))
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                Ok(Self::TypescriptNoUnnecessaryTypeConversion(
+                    TypescriptNoUnnecessaryTypeConversion::from_configuration(value)?,
                 ))
             }
             Self::TypescriptNoUnnecessaryTypeParameters(_) => {
@@ -11586,6 +11615,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryTypeAssertion(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryTypeConstraint(rule) => rule.to_configuration(),
+            Self::TypescriptNoUnnecessaryTypeConversion(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryTypeParameters(rule) => rule.to_configuration(),
             Self::TypescriptNoUnsafeArgument(rule) => rule.to_configuration(),
             Self::TypescriptNoUnsafeAssignment(rule) => rule.to_configuration(),
@@ -12287,6 +12317,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryTypeAssertion(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryTypeConstraint(rule) => rule.run(node, ctx),
+            Self::TypescriptNoUnnecessaryTypeConversion(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryTypeParameters(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeArgument(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnsafeAssignment(rule) => rule.run(node, ctx),
@@ -12986,6 +13017,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryTypeAssertion(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryTypeConstraint(rule) => rule.run_once(ctx),
+            Self::TypescriptNoUnnecessaryTypeConversion(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryTypeParameters(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeArgument(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnsafeAssignment(rule) => rule.run_once(ctx),
@@ -13727,6 +13759,9 @@ impl RuleEnum {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::TypescriptNoUnnecessaryTypeConstraint(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
             Self::TypescriptNoUnnecessaryTypeParameters(rule) => {
@@ -14482,6 +14517,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryTypeAssertion(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryTypeConstraint(rule) => rule.should_run(ctx),
+            Self::TypescriptNoUnnecessaryTypeConversion(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryTypeParameters(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeArgument(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnsafeAssignment(rule) => rule.should_run(ctx),
@@ -15266,6 +15302,9 @@ impl RuleEnum {
             }
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
                 TypescriptNoUnnecessaryTypeConstraint::IS_TSGOLINT_RULE
+            }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::IS_TSGOLINT_RULE
             }
             Self::TypescriptNoUnnecessaryTypeParameters(_) => {
                 TypescriptNoUnnecessaryTypeParameters::IS_TSGOLINT_RULE
@@ -16233,6 +16272,9 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
                 TypescriptNoUnnecessaryTypeConstraint::HAS_CONFIG
             }
+            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
+                TypescriptNoUnnecessaryTypeConversion::HAS_CONFIG
+            }
             Self::TypescriptNoUnnecessaryTypeParameters(_) => {
                 TypescriptNoUnnecessaryTypeParameters::HAS_CONFIG
             }
@@ -17038,6 +17080,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryTypeAssertion(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryTypeConstraint(rule) => rule.types_info(),
+            Self::TypescriptNoUnnecessaryTypeConversion(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryTypeParameters(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeArgument(rule) => rule.types_info(),
             Self::TypescriptNoUnsafeAssignment(rule) => rule.types_info(),
@@ -17737,6 +17780,7 @@ impl RuleEnum {
             Self::TypescriptNoUnnecessaryTypeArguments(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryTypeAssertion(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryTypeConstraint(rule) => rule.run_info(),
+            Self::TypescriptNoUnnecessaryTypeConversion(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryTypeParameters(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeArgument(rule) => rule.run_info(),
             Self::TypescriptNoUnsafeAssignment(rule) => rule.run_info(),
@@ -18497,6 +18541,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::TypescriptNoUnnecessaryTypeConstraint(
             TypescriptNoUnnecessaryTypeConstraint::default(),
+        ),
+        RuleEnum::TypescriptNoUnnecessaryTypeConversion(
+            TypescriptNoUnnecessaryTypeConversion::default(),
         ),
         RuleEnum::TypescriptNoUnnecessaryTypeParameters(
             TypescriptNoUnnecessaryTypeParameters::default(),
