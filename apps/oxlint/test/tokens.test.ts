@@ -31,7 +31,7 @@ import { parse as parseRaw } from "../src-js/package/parse.ts";
 import { debugAssertIsNonNull } from "../src-js/utils/asserts.ts";
 
 import type { Node } from "../src-js/plugins/types.ts";
-import type { Token } from "../src-js/plugins/tokens.ts";
+import type { TokenOrComment } from "../src-js/plugins/tokens.ts";
 import type { BinaryExpression } from "../src-js/generated/types.d.ts";
 
 // Source text used for most tests
@@ -1301,7 +1301,7 @@ describe("when calling getFirstToken & getTokenAfter", () => {
     setup("(function(a, /*b,*/ c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
-    let token = getFirstToken({ range: [0, 25] } as Node);
+    let token: TokenOrComment | null = getFirstToken({ range: [0, 25] } as Node);
 
     while (token) {
       tokens.push(token);
@@ -1329,7 +1329,7 @@ describe("when calling getFirstToken & getTokenAfter", () => {
     setup("(function(a,/*b,*/c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
-    let token = getFirstToken({ range: [0, 23] } as Node);
+    let token: TokenOrComment | null = getFirstToken({ range: [0, 23] } as Node);
 
     while (token) {
       tokens.push(token);
@@ -1360,7 +1360,7 @@ describe("when calling getLastToken & getTokenBefore", () => {
     setup("(function(a, /*b,*/ c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
-    let token = getLastToken({ range: [0, 25] } as Node);
+    let token: TokenOrComment | null = getLastToken({ range: [0, 25] } as Node);
 
     while (token) {
       tokens.push(token);
@@ -1388,7 +1388,7 @@ describe("when calling getLastToken & getTokenBefore", () => {
     setup("(function(a,/*b,*/c){})");
     const tokens = [];
     // TODO: replace this verbatim range with `ast`
-    let token = getLastToken({ range: [0, 23] } as Node);
+    let token: TokenOrComment | null = getLastToken({ range: [0, 23] } as Node);
 
     while (token) {
       tokens.push(token);
@@ -1561,7 +1561,7 @@ describe("token regex across sequential files", () => {
     // File 2: no regex tokens - reused token objects should have `regex: undefined`
     const withoutRegex = "var y = 1;";
     setup(withoutRegex);
-    const tokens2 = getTokens({ range: [0, withoutRegex.length] } as Node) as Token[];
+    const tokens2 = getTokens({ range: [0, withoutRegex.length] } as Node);
     for (const token of tokens2) {
       expect(token.regex).toBeUndefined();
     }
@@ -1571,7 +1571,7 @@ describe("token regex across sequential files", () => {
     // File 1: no regex
     const withoutRegex = "var x = 1;";
     setup(withoutRegex);
-    const tokens1 = getTokens({ range: [0, withoutRegex.length] } as Node) as Token[];
+    const tokens1 = getTokens({ range: [0, withoutRegex.length] } as Node);
     for (const token of tokens1) {
       expect(token.regex).toBeUndefined();
     }
@@ -1579,7 +1579,7 @@ describe("token regex across sequential files", () => {
     // File 2: has a regex token
     const withRegex = "var y = /foo/m;";
     setup(withRegex);
-    const tokens2 = getTokens({ range: [0, withRegex.length] } as Node) as Token[];
+    const tokens2 = getTokens({ range: [0, withRegex.length] } as Node);
     const regexToken2 = tokens2.find((t) => t.type === "RegularExpression");
     expect(regexToken2).toBeDefined();
     expect(regexToken2!.regex).toEqual({ pattern: "foo", flags: "m" });
@@ -1623,7 +1623,7 @@ describe("token regex across sequential files", () => {
     // File 2: no regex - all tokens should have `regex: undefined`
     const noRegex = "x + y + z;";
     setup(noRegex);
-    const tokens2 = getTokens({ range: [0, noRegex.length] } as Node) as Token[];
+    const tokens2 = getTokens({ range: [0, noRegex.length] } as Node);
     for (const token of tokens2) {
       expect(token.regex).toBeUndefined();
     }
