@@ -857,6 +857,203 @@ struct WrapperInfo {
     binding_name: Option<String>,
 }
 
+/// Run pre-pipeline checks that the TS `compileProgram` / `processFn` perform
+/// before lowering. Returns `true` if any check rejects the source (i.e., the
+/// fixture should be considered an error).
+///
+/// Checks performed:
+/// 1. Blocklisted imports — if `@validateBlocklistedImports` pragma is set
+/// 2. ESLint/Flow suppressions — scans comments for eslint-disable/Flow patterns
+/// 3. Dynamic gating validation — checks `"use memo if(...)"` directives
+fn run_pre_pipeline_checks(source: &str, source_type: oxc_span::SourceType) -> bool {
+    let allocator = oxc_allocator::Allocator::default();
+    let parser_result = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+    if !parser_result.errors.is_empty() {
+        return false;
+    }
+
+    let first_line = source.lines().next().unwrap_or("");
+    let plugin_options = parse_config_pragma_for_tests(
+        first_line,
+        &PragmaDefaults { compilation_mode: CompilationMode::All },
+    );
+
+    // 1. Blocklisted imports check (port of `validateRestrictedImports` from Imports.ts)
+    if let Some(ref blocklisted) = plugin_options.environment.validate_blocklisted_imports {
+        if !blocklisted.is_empty() {
+            use oxc_ast::ast::Statement;
+            let restricted: std::collections::HashSet<&str> =
+                blocklisted.iter().map(|s| s.as_str()).collect();
+            for stmt in &parser_result.program.body {
+                if let Statement::ImportDeclaration(import_decl) = stmt {
+                    if restricted.contains(import_decl.source.value.as_str()) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. ESLint/Flow suppression check (port of `findProgramSuppressions` from Suppression.ts)
+    {
+        use oxc_react_compiler::entrypoint::suppression::{
+            DEFAULT_ESLINT_SUPPRESSION_RULES, find_program_suppressions,
+        };
+
+        // Determine ESLint suppression rules to use.
+        // The TS compiler skips ESLint suppression checking when both
+        // `validateExhaustiveMemoizationDependencies` and `validateHooksUsage` are true.
+        let rule_names: Option<Vec<String>> =
+            if plugin_options.environment.validate_exhaustive_memoization_dependencies
+                && plugin_options.environment.validate_hooks_usage
+            {
+                None
+            } else if let Some(ref custom_rules) = plugin_options.eslint_suppression_rules {
+                Some(custom_rules.clone())
+            } else {
+                Some(
+                    DEFAULT_ESLINT_SUPPRESSION_RULES
+                        .iter()
+                        .map(|s| (*s).to_string())
+                        .collect(),
+                )
+            };
+
+        let suppressions = find_program_suppressions(
+            &parser_result.program.comments,
+            source,
+            rule_names.as_deref(),
+            plugin_options.flow_suppressions,
+        );
+
+        if !suppressions.is_empty() {
+            return true;
+        }
+    }
+
+    // 3. Dynamic gating validation (port of `findDirectivesDynamicGating` from Program.ts)
+    if plugin_options.dynamic_gating.is_some() {
+        use oxc_ast::ast::Statement;
+
+        for stmt in &parser_result.program.body {
+            let directives = match stmt {
+                Statement::FunctionDeclaration(f) => {
+                    f.body.as_ref().map(|b| b.directives.as_slice())
+                }
+                Statement::ExportDefaultDeclaration(export) => {
+                    use oxc_ast::ast::ExportDefaultDeclarationKind;
+                    match &export.declaration {
+                        ExportDefaultDeclarationKind::FunctionDeclaration(f) => {
+                            f.body.as_ref().map(|b| b.directives.as_slice())
+                        }
+                        _ => None,
+                    }
+                }
+                _ => None,
+            };
+
+            if let Some(directives) = directives {
+                if has_invalid_dynamic_gating_directive(directives) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    false
+}
+
+/// Check if any directive in the list is an invalid dynamic gating directive.
+/// A valid dynamic gating directive has the form `"use memo if(<identifier>)"`
+/// where `<identifier>` is a valid JavaScript identifier (not a keyword).
+fn has_invalid_dynamic_gating_directive(directives: &[oxc_ast::ast::Directive]) -> bool {
+    for directive in directives {
+        let value = directive.directive.as_str();
+        if let Some(rest) = value.strip_prefix("use memo if(") {
+            if let Some(ident) = rest.strip_suffix(')') {
+                if !is_valid_js_identifier(ident) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Check if a string is a valid JavaScript identifier (not a keyword).
+///
+/// Port of Babel's `t.isValidIdentifier()` — checks that the string is a
+/// syntactically valid identifier and not a reserved keyword.
+fn is_valid_js_identifier(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+
+    // Must start with letter, _, or $
+    let mut chars = s.chars();
+    let first = chars.next().unwrap();
+    if !first.is_ascii_alphabetic() && first != '_' && first != '$' {
+        return false;
+    }
+
+    // Rest must be alphanumeric, _, or $
+    for c in chars {
+        if !c.is_ascii_alphanumeric() && c != '_' && c != '$' {
+            return false;
+        }
+    }
+
+    // Must not be a reserved keyword
+    matches!(
+        s,
+        "break"
+            | "case"
+            | "catch"
+            | "continue"
+            | "debugger"
+            | "default"
+            | "delete"
+            | "do"
+            | "else"
+            | "finally"
+            | "for"
+            | "function"
+            | "if"
+            | "in"
+            | "instanceof"
+            | "new"
+            | "return"
+            | "switch"
+            | "this"
+            | "throw"
+            | "try"
+            | "typeof"
+            | "var"
+            | "void"
+            | "while"
+            | "with"
+            | "class"
+            | "const"
+            | "enum"
+            | "export"
+            | "extends"
+            | "import"
+            | "super"
+            | "implements"
+            | "interface"
+            | "let"
+            | "package"
+            | "private"
+            | "protected"
+            | "public"
+            | "static"
+            | "yield"
+            | "null"
+            | "true"
+            | "false"
+    ) == false
+}
+
 /// Run the full pipeline (parse -> lower -> pipeline -> codegen) on a source
 /// string and return the `CodegenFunction` on success.
 ///
@@ -8711,6 +8908,14 @@ fn error_fixture_conformance_inner() {
             "ts" => oxc_span::SourceType::ts(),
             _ => oxc_span::SourceType::jsx(),
         };
+
+        // Run pre-pipeline checks that the TS `compileProgram` / `processFn`
+        // perform before lowering, such as blocklisted imports, ESLint/Flow
+        // suppressions, and dynamic gating validation.
+        if run_pre_pipeline_checks(&source, source_type) {
+            passed += 1;
+            continue;
+        }
 
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             run_pipeline_for_codegen(&source, source_type)

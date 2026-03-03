@@ -1,13 +1,13 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 8775
+assertion_line: 8980
 expression: snapshot
 ---
-Error fixture conformance: 87/275 (31.6%)
+Error fixture conformance: 99/275 (36.0%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 188
+  unexpected_success: 176
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
@@ -16,8 +16,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.assign-global-in-component-tag-function.js
   [unexpected_success] error.assign-global-in-jsx-children.js
   [unexpected_success] error.assign-ref-in-effect-hint.js
-  [unexpected_success] error.bailout-on-flow-suppression.js
-  [unexpected_success] error.bailout-on-suppression-of-custom-rule.js
   [unexpected_success] error.bug-infer-mutation-aliasing-effects.js
   [unexpected_success] error.bug-invariant-codegen-methodcall.js
   [unexpected_success] error.bug-invariant-couldnt-find-binding-for-decl.js
@@ -90,13 +88,11 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-return-mutable-function-from-hook.js
   [unexpected_success] error.invalid-set-and-read-ref-during-render.js
   [unexpected_success] error.invalid-set-and-read-ref-nested-property-during-render.js
-  [unexpected_success] error.invalid-sketchy-code-use-forget.js
   [unexpected_success] error.invalid-ternary-with-hook-values.js
   [unexpected_success] error.invalid-type-provider-hook-name-not-typed-as-hook-namespace.js
   [unexpected_success] error.invalid-type-provider-hook-name-not-typed-as-hook.js
   [unexpected_success] error.invalid-type-provider-hooklike-module-default-not-hook.js
   [unexpected_success] error.invalid-type-provider-nonhook-name-typed-as-hook.js
-  [unexpected_success] error.invalid-unclosed-eslint-suppression.js
   [unexpected_success] error.invalid-unconditional-set-state-hook-return-in-render.js
   [unexpected_success] error.invalid-unconditional-set-state-prop-in-render.js
   [unexpected_success] error.invalid-use-ref-added-to-dep-without-type-info.js
@@ -119,7 +115,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.ref-optional.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-later-mutation.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-mutated-dep.js
-  [unexpected_success] error.sketchy-code-rules-of-hooks.js
   [unexpected_success] error.store-property-in-global.js
   [unexpected_success] error.todo-allow-assigning-to-inferred-ref-prop-in-callback.js
   [unexpected_success] error.todo-for-await-loops.js
@@ -145,24 +140,17 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.useCallback-accesses-ref-mutated-later-via-function-preserve-memoization.js
   [unexpected_success] error.useCallback-set-ref-nested-property-dont-preserve-memoization.js
   [unexpected_success] error.useMemo-callback-generator.js
-  [unexpected_success] error.validate-blocklisted-imports.ts
   [unexpected_success] error.validate-mutate-ref-arg-in-render.js
   [unexpected_success] error.validate-object-entries-mutation.js
   [unexpected_success] error.validate-object-values-mutation.js
   [unexpected_success] exhaustive-deps/error.exhaustive-deps-effect-events.js
-  [unexpected_success] exhaustive-deps/error.invalid-dep-on-ref-current-value.js
-  [unexpected_success] exhaustive-deps/error.invalid-exhaustive-deps-disallow-unused-stable-types.js
   [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps-extra-only.js
   [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps-missing-only.js
   [unexpected_success] exhaustive-deps/error.invalid-exhaustive-effect-deps.js
-  [unexpected_success] exhaustive-deps/error.invalid-missing-nonreactive-dep-inner-function.js
-  [unexpected_success] exhaustive-deps/error.invalid-missing-nonreactive-dep.js
-  [unexpected_success] exhaustive-deps/error.sketchy-code-exhaustive-deps.js
   [unexpected_success] fbt/error.todo-fbt-as-local.js
   [unexpected_success] fbt/error.todo-fbt-unknown-enum-value.js
   [unexpected_success] fbt/error.todo-locally-require-fbt.js
   [unexpected_success] fbt/error.todo-multiple-fbt-plural.tsx
-  [unexpected_success] gating/error.dynamic-gating-invalid-identifier.js
   [unexpected_success] new-mutability/error.invalid-useCallback-captures-reassigned-context.js
   [unexpected_success] new-mutability/error.mutate-frozen-value.js
   [unexpected_success] new-mutability/error.mutate-hook-argument.js

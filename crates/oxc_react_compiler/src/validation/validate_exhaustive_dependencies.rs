@@ -13,10 +13,11 @@ use crate::{
         CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory, SourceLocation,
     },
     hir::{
-        DependencyPath, DependencyPathEntry, HIRFunction, Identifier, IdentifierId, IdentifierName,
-        InstructionKind, InstructionValue, ManualMemoDependency, ManualMemoDependencyRoot, Place,
+        BlockId, DependencyPath, DependencyPathEntry, HIRFunction, Identifier, IdentifierId,
+        IdentifierName, InstructionKind, InstructionValue, ManualMemoDependency,
+        ManualMemoDependencyRoot, Place, Terminal,
         object_shape::BUILT_IN_USE_EFFECT_EVENT_ID,
-        types::{FunctionType, Type},
+        types::{FunctionType, ObjectType, Type},
         visitors::{
             each_instruction_lvalue, each_instruction_value_lvalue, each_instruction_value_operand,
             each_terminal_operand,
@@ -108,6 +109,93 @@ fn collect_reactive_identifiers(func: &HIRFunction) -> FxHashSet<IdentifierId> {
     reactive
 }
 
+fn is_use_ref_type(identifier: &Identifier) -> bool {
+    matches!(
+        &identifier.type_,
+        Type::Object(ObjectType { shape_id: Some(id) }) if id == "BuiltInUseRefId"
+    )
+}
+
+/// Port of `findOptionalPlaces` from `ValidateExhaustiveDeps.ts`.
+///
+/// Builds a map from `IdentifierId` to `bool` indicating whether that identifier
+/// is part of an optional chain (i.e. `?.`). This is used when constructing
+/// dependency paths so that `x?.y` produces `{optional: true, property: "y"}`
+/// instead of `{optional: false, property: "y"}`.
+fn find_optional_places(func: &HIRFunction) -> FxHashMap<IdentifierId, bool> {
+    let mut optionals: FxHashMap<IdentifierId, bool> = FxHashMap::default();
+    let mut visited: FxHashSet<BlockId> = FxHashSet::default();
+
+    for block in func.body.blocks.values() {
+        if visited.contains(&block.id) {
+            continue;
+        }
+        if let Terminal::Optional(optional_terminal) = &block.terminal {
+            visited.insert(block.id);
+            let fallthrough = optional_terminal.fallthrough;
+            let mut test_block_id = optional_terminal.test;
+            let mut queue: Vec<Option<bool>> = vec![Some(optional_terminal.optional)];
+
+            loop {
+                let test_block = &func.body.blocks[&test_block_id];
+                visited.insert(test_block.id);
+
+                match &test_block.terminal {
+                    Terminal::Branch(branch) => {
+                        let is_optional = queue.pop();
+                        // invariant: queue should have a value for each branch
+                        let is_optional = match is_optional {
+                            Some(v) => v,
+                            None => break,
+                        };
+                        if let Some(is_opt) = is_optional {
+                            optionals.insert(branch.test.identifier.id, is_opt);
+                        }
+                        if branch.fallthrough == fallthrough {
+                            // Found the end of the optional chain
+                            let consequent_block = &func.body.blocks[&branch.consequent];
+                            if let Some(last) = consequent_block.instructions.last() {
+                                if let InstructionValue::StoreLocal(store) = &last.value {
+                                    if let Some(is_opt) = is_optional {
+                                        optionals
+                                            .insert(store.value.identifier.id, is_opt);
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                        test_block_id = branch.fallthrough;
+                    }
+                    Terminal::Optional(inner_opt) => {
+                        queue.push(Some(inner_opt.optional));
+                        test_block_id = inner_opt.test;
+                    }
+                    Terminal::Logical(logical) => {
+                        queue.push(None);
+                        test_block_id = logical.test;
+                    }
+                    Terminal::Ternary(ternary) => {
+                        queue.push(None);
+                        test_block_id = ternary.test;
+                    }
+                    Terminal::Sequence(seq) => {
+                        // Don't push to queue - no corresponding branch terminal
+                        test_block_id = seq.block;
+                    }
+                    Terminal::MaybeThrow(mt) => {
+                        test_block_id = mt.continuation;
+                    }
+                    _ => {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    optionals
+}
+
 fn add_dependency(
     dep: &Temporary,
     dependencies: &mut Vec<Temporary>,
@@ -149,6 +237,7 @@ fn collect_dependencies_with_memos(
     errors: &mut CompilerError,
     env: &crate::hir::environment::Environment,
 ) {
+    let optionals = find_optional_places(func);
     let mut locals: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut dependencies: Vec<Temporary> = Vec::new();
     let mut start_memo: Option<crate::hir::StartMemoize> = None;
@@ -169,6 +258,7 @@ fn collect_dependencies_with_memos(
                 &mut dependencies,
                 reactive,
                 errors,
+                &optionals,
             );
 
             // Handle memoization callbacks
@@ -200,6 +290,11 @@ fn collect_dependencies_with_memos(
         }
 
         for operand in each_terminal_operand(&block.terminal) {
+            // Skip operands that are part of optional chains — they are
+            // intermediate values tracked by findOptionalPlaces.
+            if optionals.contains_key(&operand.identifier.id) {
+                continue;
+            }
             visit_candidate_dependency(operand, temporaries, &mut dependencies, &locals);
         }
     }
@@ -246,6 +341,7 @@ fn process_instruction(
     dependencies: &mut Vec<Temporary>,
     reactive: &FxHashSet<IdentifierId>,
     errors: &mut CompilerError,
+    optionals: &FxHashMap<IdentifierId, bool>,
 ) {
     match value {
         InstructionValue::LoadGlobal(v) => {
@@ -351,12 +447,15 @@ fn process_instruction(
         }
         InstructionValue::PropertyLoad(v) => {
             let is_numeric = matches!(&v.property, crate::hir::types::PropertyLiteral::Number(_));
-            if is_numeric {
+            let is_ref_current = is_use_ref_type(&v.object.identifier)
+                && matches!(&v.property, crate::hir::types::PropertyLiteral::String(s) if s == "current");
+            if is_numeric || is_ref_current {
                 visit_candidate_dependency(&v.object, temporaries, dependencies, locals);
             } else if let Some(Temporary::Local(local)) = temporaries.get(&v.object.identifier.id) {
+                let optional = optionals.get(&v.object.identifier.id).copied().unwrap_or(false);
                 let mut new_path = local.path.clone();
                 new_path.push(DependencyPathEntry {
-                    optional: false,
+                    optional,
                     property: v.property.clone(),
                     loc: v.loc,
                 });
@@ -447,6 +546,7 @@ fn collect_dependencies_inner(
     errors: &mut CompilerError,
     is_function_expression: bool,
 ) -> Temporary {
+    let optionals = find_optional_places(func);
     let mut locals: FxHashSet<IdentifierId> = FxHashSet::default();
 
     if is_function_expression {
@@ -472,10 +572,15 @@ fn collect_dependencies_inner(
                 &mut dependencies,
                 reactive,
                 errors,
+                &optionals,
             );
         }
 
         for operand in each_terminal_operand(&block.terminal) {
+            // Skip operands that are part of optional chains.
+            if optionals.contains_key(&operand.identifier.id) {
+                continue;
+            }
             visit_candidate_dependency(operand, temporaries, &mut dependencies, &locals);
         }
     }

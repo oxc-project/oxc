@@ -4,7 +4,9 @@
 ///
 /// Provides utilities for parsing test configuration pragmas from
 /// fixture files and setting up the compiler for test execution.
-use crate::entrypoint::options::{CompilationMode, PanicThreshold, PluginOptions};
+use crate::entrypoint::options::{
+    CompilationMode, DynamicGatingOptions, PanicThreshold, PluginOptions,
+};
 use crate::hir::environment::EnvironmentConfig;
 
 /// Parse a config pragma string from a test fixture's first line.
@@ -146,6 +148,33 @@ pub fn parse_config_pragma_for_tests(pragma: &str, defaults: &PragmaDefaults) ->
                     }
                 }
             }
+            "validateBlocklistedImports" => {
+                if let Some(val) = &entry.value {
+                    if let Some(arr) = parse_json_string_array(val) {
+                        env_config.validate_blocklisted_imports = Some(arr);
+                    }
+                }
+            }
+            "validateExhaustiveMemoizationDependencies" => {
+                env_config.validate_exhaustive_memoization_dependencies =
+                    parse_bool_value(entry.value.as_ref(), true);
+            }
+            "eslintSuppressionRules" => {
+                if let Some(val) = &entry.value {
+                    if let Some(arr) = parse_json_string_array(val) {
+                        options.eslint_suppression_rules = Some(arr);
+                    }
+                }
+            }
+            "dynamicGating" => {
+                if let Some(val) = &entry.value {
+                    if let Some(source) = parse_dynamic_gating_value(val) {
+                        options.dynamic_gating = Some(DynamicGatingOptions { source });
+                    }
+                } else {
+                    // @dynamicGating with no value — not valid, ignore
+                }
+            }
             _ => {
                 // Unknown pragma — ignore
             }
@@ -190,6 +219,43 @@ fn split_pragma(pragma: &str) -> Vec<PragmaEntry> {
         entries.push(PragmaEntry { key, value });
     }
     entries
+}
+
+/// Parse a JSON-like string array from a pragma value, e.g. `["foo","bar"]`.
+fn parse_json_string_array(val: &str) -> Option<Vec<String>> {
+    let trimmed = val.trim();
+    let inner = trimmed.strip_prefix('[')?.strip_suffix(']')?;
+    let inner = inner.trim();
+    if inner.is_empty() {
+        return Some(Vec::new());
+    }
+    let mut result = Vec::new();
+    for item in inner.split(',') {
+        let item = item.trim().trim_matches('"');
+        if !item.is_empty() {
+            result.push(item.to_string());
+        }
+    }
+    Some(result)
+}
+
+/// Parse a dynamic gating pragma value, e.g. `{"source":"shared-runtime"}`.
+/// Returns the `source` string if successfully parsed.
+fn parse_dynamic_gating_value(val: &str) -> Option<String> {
+    let trimmed = val.trim();
+    let inner = trimmed.strip_prefix('{')?.strip_suffix('}')?;
+    // Look for "source":"value"
+    for part in inner.split(',') {
+        let part = part.trim();
+        if let Some(rest) = part.strip_prefix("\"source\"") {
+            let rest = rest.trim().strip_prefix(':')?;
+            let rest = rest.trim().trim_matches('"');
+            if !rest.is_empty() {
+                return Some(rest.to_string());
+            }
+        }
+    }
+    None
 }
 
 fn parse_bool_value(value: Option<&String>, default: bool) -> bool {
