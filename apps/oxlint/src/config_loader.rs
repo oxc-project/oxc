@@ -87,7 +87,8 @@ fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfig> {
     let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
     if json_path.is_file() {
         configs.push(DiscoveredConfig::Json(json_path));
-    } else if jsonc_path.is_file() {
+    }
+    if jsonc_path.is_file() {
         configs.push(DiscoveredConfig::Json(jsonc_path));
     }
 
