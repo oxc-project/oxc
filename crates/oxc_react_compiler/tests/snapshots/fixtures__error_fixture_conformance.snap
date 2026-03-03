@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
-assertion_line: 8996
 expression: snapshot
 ---
 Error fixture conformance: 243/275 (88.4%)
