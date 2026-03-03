@@ -1126,8 +1126,14 @@ fn infer_instruction_effects(
                             }
                         }
                         crate::hir::visitors::PatternItem::Identifier(place) => {
-                            // Identifier items inherit the source's abstract type
-                            state.define(place, val.clone());
+                            // Primitive-typed identifier items are independent copies,
+                            // not aliases of the source value.
+                            if place.identifier.is_primitive_type() {
+                                state.define(place, AbstractValue::primitive());
+                            } else {
+                                // Non-primitive identifier items inherit the source's abstract type
+                                state.define(place, val.clone());
+                            }
                         }
                     }
                 }
