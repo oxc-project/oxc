@@ -198,8 +198,7 @@ fn normalize_type_impl(type_str: &str, convert_quotes: bool) -> String {
         if convert_quotes { normalize_type_quotes(&transformed) } else { Cow::Owned(transformed) };
     // Phase 3: Unquote object property names that are valid JS identifiers.
     // The plugin's formatType() uses Prettier's TS parser which strips unnecessary quotes.
-    let unquoted =
-        if convert_quotes { unquote_object_property_names(&quoted) } else { quoted };
+    let unquoted = if convert_quotes { unquote_object_property_names(&quoted) } else { quoted };
     // Phase 4: Format inline object type spacing (simulating Prettier's TS parser).
     // { key:value } → { key: value }
     format_inline_object_type(&unquoted).into_owned()
