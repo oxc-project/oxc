@@ -326,6 +326,15 @@ jobs:
           just coverage
           git diff --exit-code
 
+      - if: steps.filter.outputs.src == 'true'
+        name: Run oxfmt conformance
+        working-directory: apps/oxfmt
+        run: |
+          pnpm build-test
+          pnpm download-fixtures
+          pnpm conformance
+          git diff --exit-code
+
   minification:
     name: Minification Size
     runs-on: ubuntu-latest
