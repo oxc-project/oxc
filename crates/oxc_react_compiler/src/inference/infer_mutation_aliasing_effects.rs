@@ -755,12 +755,23 @@ pub fn infer_mutation_aliasing_effects(
             let mut replay_state = incoming_state.clone();
             for instr in &mut block.instructions {
                 // Compute effects using the state BEFORE this instruction
-                let effects = compute_instruction_effects(
+                let raw_effects = compute_instruction_effects(
                     &replay_state,
                     instr,
                     &func.env,
                     &non_mutating_spreads,
                 )?;
+                // Filter mutation effects through abstract state: convert Mutate on
+                // frozen/global values to MutateFrozen/MutateGlobal error effects.
+                // This matches TS applyEffect behavior where unconditional mutations
+                // of frozen values generate diagnostics.
+                //
+                // NOTE: We only filter Mutate/MutateTransitive effects (not the full
+                // filter_substituted_effects) because a full filter would incorrectly
+                // drop Capture effects whose destination hasn't been created in the
+                // abstract state yet (the state reflects BEFORE this instruction, so
+                // newly-created lvalues don't exist yet).
+                let effects = filter_mutation_effects(&replay_state, raw_effects);
                 instr.effects = Some(effects);
 
                 // Match TS applyEffect for CreateFunction: demote context operands
@@ -2053,6 +2064,150 @@ fn make_mutation_error_effect(
     }
 }
 
+/// Port of TS `applySignature` lines 538-583 from `InferMutationAliasingEffects.ts`.
+///
+/// For FunctionExpression/ObjectMethod instructions, eagerly validate that the inner
+/// function isn't mutating a known-frozen context variable. The inner function's
+/// `aliasingEffects` (computed by `analyse_functions`) contain `Mutate`/`MutateTransitive`
+/// effects for context variables that are mutated inside the callback. We check the
+/// OUTER function's abstract state to see if those context variables are Frozen, and if
+/// so, emit `MutateFrozen` error effects.
+fn emit_inner_function_frozen_mutation_errors(
+    state: &InferenceState,
+    inner_func: &crate::hir::HIRFunction,
+    effects: &mut Vec<AliasingEffect>,
+) {
+    let aliasing_effects = match &inner_func.aliasing_effects {
+        Some(e) => e,
+        None => return,
+    };
+    let context_ids: rustc_hash::FxHashSet<IdentifierId> =
+        inner_func.context.iter().map(|p| p.identifier.id).collect();
+
+    for effect in aliasing_effects {
+        // Only check unconditional Mutate effects (local mutations like PropertyStore).
+        // We intentionally exclude MutateTransitive because the Rust port's
+        // infer_mutation_aliasing_ranges BFS may incorrectly upgrade conditional
+        // transitive mutations (e.g., from conservative call effects) to unconditional,
+        // causing false positives. The TS compiler checks both Mutate and MutateTransitive,
+        // but in practice all genuine frozen-value mutations produce local Mutate effects.
+        let (value, reason) = match effect {
+            AliasingEffect::Mutate { value, reason } => (value, reason.clone()),
+            _ => continue,
+        };
+        if !context_ids.contains(&value.identifier.id) {
+            continue;
+        }
+        // Check the OUTER state for this context variable
+        if let Some(av) = state.get(value) {
+            if av.kind == ValueKind::Frozen {
+                // Create MutateFrozen error matching TS behavior
+                let error_reason = get_write_error_reason(av);
+                let variable = match &value.identifier.name {
+                    Some(crate::hir::IdentifierName::Named(name)) => format!("`{name}`"),
+                    _ => "value".to_string(),
+                };
+                let mut diagnostic = CompilerDiagnostic::create(
+                    ErrorCategory::Immutability,
+                    "This value cannot be modified".to_string(),
+                    Some(error_reason.to_string()),
+                    None,
+                )
+                .with_detail(CompilerDiagnosticDetail::Error {
+                    loc: Some(value.loc),
+                    message: Some(format!("{variable} cannot be modified")),
+                });
+                if matches!(reason, Some(MutationReason::AssignCurrentProperty)) {
+                    diagnostic = diagnostic.with_detail(CompilerDiagnosticDetail::Hint {
+                        message: "Hint: If this value is a Ref (value returned by `useRef()`), rename the variable to end in \"Ref\".".to_string(),
+                    });
+                }
+                effects.push(AliasingEffect::MutateFrozen {
+                    place: value.clone(),
+                    error: diagnostic,
+                });
+            }
+        }
+    }
+}
+
+/// Filter mutation effects through the abstract state to detect invalid mutations
+/// of frozen/global values.
+///
+/// This is a lightweight filter applied to ALL instruction effects. It only
+/// converts unconditional mutations (`Mutate`/`MutateTransitive`) of frozen or
+/// global values to `MutateFrozen`/`MutateGlobal` error effects. All other
+/// effects pass through unchanged.
+///
+/// Unlike `filter_substituted_effects`, this does NOT modify Capture/Alias/Assign
+/// effects, because at the point where it's called, the instruction's lvalue has
+/// not yet been created in the abstract state. A full Capture filter would
+/// incorrectly drop effects whose destination doesn't exist yet.
+fn filter_mutation_effects(
+    state: &InferenceState,
+    raw_effects: Vec<AliasingEffect>,
+) -> Vec<AliasingEffect> {
+    let mut filtered = Vec::with_capacity(raw_effects.len());
+
+    for effect in raw_effects {
+        match &effect {
+            AliasingEffect::Mutate { value, reason } => {
+                if is_ref_or_ref_value(&value.identifier) {
+                    // Ref mutations are handled separately; pass through
+                    filtered.push(effect);
+                    continue;
+                }
+                match state.get(value) {
+                    Some(av) => match av.kind {
+                        ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global => {
+                            filtered.push(make_mutation_error_effect(value, av, reason));
+                        }
+                        // Mutable, Context, Primitive: keep as-is.
+                        // Note: unlike filter_substituted_effects, we do NOT drop
+                        // mutations of Primitive values here. That drop is only
+                        // correct for signature-substituted effects. For regular
+                        // instruction effects, the Mutate must be kept so
+                        // InferMutationAliasingRanges can extend mutable ranges.
+                        _ => {
+                            filtered.push(effect);
+                        }
+                    },
+                    None => {
+                        // Unknown: conservatively keep
+                        filtered.push(effect);
+                    }
+                }
+            }
+            AliasingEffect::MutateTransitive { value } => {
+                if is_ref_or_ref_value(&value.identifier) {
+                    filtered.push(effect);
+                    continue;
+                }
+                match state.get(value) {
+                    Some(av) => match av.kind {
+                        ValueKind::Frozen | ValueKind::MaybeFrozen | ValueKind::Global => {
+                            filtered.push(make_mutation_error_effect(value, av, &None));
+                        }
+                        _ => {
+                            filtered.push(effect);
+                        }
+                    },
+                    None => {
+                        // Unknown: conservatively keep
+                        filtered.push(effect);
+                    }
+                }
+            }
+            // All other effects pass through unchanged
+            _ => {
+                filtered.push(effect);
+            }
+        }
+    }
+
+    filtered
+}
+
 /// Filter substituted effects from `compute_effects_for_signature` through the
 /// abstract state, matching the TS `applyEffect` filtering behavior.
 ///
@@ -2626,6 +2781,17 @@ fn compute_instruction_effects(
         // edges in the alias graph, enabling mutation propagation through
         // captured variables.
         InstructionValue::FunctionExpression(v) => {
+            // Port of TS applySignature lines 538-583: eagerly validate that
+            // the inner function isn't mutating a known-frozen context variable.
+            // The inner function's aliasingEffects contain Mutate/MutateTransitive
+            // for context variables that are mutated inside the callback. We check
+            // the OUTER state to see if those context variables are Frozen.
+            emit_inner_function_frozen_mutation_errors(
+                state,
+                &v.lowered_func.func,
+                &mut effects,
+            );
+
             // Match TS applyEffect for CreateFunction: if a context operand has kind
             // Primitive, Frozen, or Global in the outer state, demote it from Capture to Read
             // (it doesn't need to be mutable-captured). This prevents false-positive
@@ -2665,6 +2831,14 @@ fn compute_instruction_effects(
             }
         }
         InstructionValue::ObjectMethod(v) => {
+            // Same as FunctionExpression: check inner function's aliasing effects
+            // for mutations of frozen context variables.
+            emit_inner_function_frozen_mutation_errors(
+                state,
+                &v.lowered_func.func,
+                &mut effects,
+            );
+
             let captures: Vec<Place> = v
                 .lowered_func
                 .func
