@@ -7,7 +7,8 @@
 use rustc_hash::FxHashMap;
 
 use crate::hir::{
-    HIRFunction, Instruction, InstructionKind, InstructionValue, ReactFunctionType, ReactiveParam,
+    HIRFunction, IdentifierId, IdentifierName, Instruction, InstructionKind, InstructionValue,
+    ReactFunctionType, ReactiveParam,
     environment::Environment,
     globals::Global,
     object_shape::{
@@ -51,6 +52,10 @@ impl<'a> Unifier<'a> {
         if let Type::Property(prop) = &right {
             if is_ref_like_name(prop) {
                 self.unify(
+                    prop.object_type.clone(),
+                    Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) }),
+                );
+                self.unify(
                     left,
                     Type::Object(ObjectType { shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()) }),
                 );
@@ -72,6 +77,10 @@ impl<'a> Unifier<'a> {
         }
         if let Type::Property(prop) = &left {
             if is_ref_like_name(prop) {
+                self.unify(
+                    prop.object_type.clone(),
+                    Type::Object(ObjectType { shape_id: Some(BUILT_IN_USE_REF_ID.to_string()) }),
+                );
                 self.unify(
                     Type::Object(ObjectType { shape_id: Some(BUILT_IN_REF_VALUE_ID.to_string()) }),
                     right,
@@ -584,27 +593,14 @@ fn generate(func: &HIRFunction) -> Vec<TypeEquation> {
         }
     }
 
+    // Port of TS InferTypes.ts: `const names = new Map();`
+    // Maps temporary identifier IDs to their original source names. When
+    // `LoadLocal(maybeRef) → $tmp`, we store `names[$tmp.id] = "maybeRef"`.
+    // Later, `PropertyLoad($tmp, "current")` uses `names[$tmp.id]` to get
+    // "maybeRef", allowing `is_ref_like_name` to fire on the property access.
+    let mut names: FxHashMap<IdentifierId, String> = FxHashMap::default();
+
     // Port of TS InferTypes.ts: collect return value types to connect func.returns.
-    // In TS (lines 131, 143-154):
-    //   const returnTypes: Array<Type> = [];
-    //   for (const [_, block] of func.body.blocks) {
-    //     ...
-    //     const terminal = block.terminal;
-    //     if (terminal.kind === 'return') {
-    //       returnTypes.push(terminal.value.identifier.type);
-    //     }
-    //   }
-    //   if (returnTypes.length > 1) {
-    //     yield equation(func.returns.identifier.type, {kind: 'Phi', operands: returnTypes});
-    //   } else if (returnTypes.length === 1) {
-    //     yield equation(func.returns.identifier.type, returnTypes[0]);
-    //   }
-    //
-    // This is critical for propagating return types from inner functions through
-    // FunctionExpression type equations. For example, `() => bar + baz` returns a
-    // Primitive (BinaryExpression), so func.returns.type = Primitive. The
-    // FunctionExpression equation uses `func.returns.identifier.type` as the function's
-    // return type, allowing `foo()` call results to also be typed as Primitive.
     let mut return_types: Vec<Type> = Vec::new();
     for block in func.body.blocks.values() {
         if let crate::hir::Terminal::Return(ret) = &block.terminal {
@@ -628,21 +624,6 @@ fn generate(func: &HIRFunction) -> Vec<TypeEquation> {
     }
 
     for block in func.body.blocks.values() {
-        // Generate type equations for phi nodes.
-        //
-        // Port of TS InferTypes.ts lines 133-138:
-        //   for (const phi of block.phis) {
-        //     yield equation(phi.place.identifier.type, {
-        //       kind: 'Phi',
-        //       operands: [...phi.operands.values()].map(id => id.identifier.type),
-        //     });
-        //   }
-        //
-        // This is critical for propagating types through control-flow join points.
-        // For example, `const ref = cond ? useRef() : initialRef` produces a phi
-        // node. Without this equation, the phi result keeps a fresh TypeVar and
-        // is_use_ref_type() never fires, so `ref.current` is not collapsed to `ref`
-        // as a scope dependency.
         for phi in &block.phis {
             let operand_types: Vec<Type> =
                 phi.operands.values().map(|p| p.identifier.type_.clone()).collect();
@@ -655,16 +636,35 @@ fn generate(func: &HIRFunction) -> Vec<TypeEquation> {
         }
 
         for instr in &block.instructions {
-            generate_instruction_equations(instr, &func.env, &mut equations);
+            generate_instruction_equations(instr, &func.env, &mut names, &mut equations);
         }
     }
 
     equations
 }
 
+/// Port of TS `setName()`: store the original name of an identifier in the names map.
+/// Only stores if the identifier has a `Named` name (not a promoted temporary).
+fn set_name(
+    names: &mut FxHashMap<IdentifierId, String>,
+    id: IdentifierId,
+    name: &Option<IdentifierName>,
+) {
+    if let Some(IdentifierName::Named(value)) = name {
+        names.insert(id, value.clone());
+    }
+}
+
+/// Port of TS `getName()`: look up the original name for an identifier ID.
+/// Returns the stored name or empty string if not found.
+fn get_name(names: &FxHashMap<IdentifierId, String>, id: IdentifierId) -> String {
+    names.get(&id).cloned().unwrap_or_default()
+}
+
 fn generate_instruction_equations(
     instr: &Instruction,
     env: &Environment,
+    names: &mut FxHashMap<IdentifierId, String>,
     equations: &mut Vec<TypeEquation>,
 ) {
     let lvalue_type = instr.lvalue.identifier.type_.clone();
@@ -692,6 +692,7 @@ fn generate_instruction_equations(
             equations.push(TypeEquation { left: lvalue_type, right: Type::Primitive });
         }
         InstructionValue::LoadLocal(v) => {
+            set_name(names, instr.lvalue.identifier.id, &v.place.identifier.name);
             equations
                 .push(TypeEquation { left: lvalue_type, right: v.place.identifier.type_.clone() });
         }
@@ -815,16 +816,14 @@ fn generate_instruction_equations(
         InstructionValue::PropertyLoad(load) => {
             // Create a lazy Property type that will be resolved during unification,
             // allowing type propagation through property accesses like React.useState.
+            // Use getName() to resolve the object name through temporary aliases
+            // (e.g. LoadLocal(maybeRef) → $tmp, then PropertyLoad($tmp, "current")
+            // needs to see "maybeRef" not "" to trigger is_ref_like_name).
             equations.push(TypeEquation {
                 left: lvalue_type,
                 right: Type::Property(Box::new(PropType {
                     object_type: load.object.identifier.type_.clone(),
-                    object_name: load
-                        .object
-                        .identifier
-                        .name
-                        .as_ref()
-                        .map_or_else(String::new, |n| n.value().to_string()),
+                    object_name: get_name(names, load.object.identifier.id),
                     property_name: PropertyName::Literal {
                         value: PropertyLiteral::String(load.property.to_string()),
                     },
@@ -835,19 +834,11 @@ fn generate_instruction_equations(
             // Port of TS InferTypes.ts `ComputedLoad` case:
             // Generates a Property equation with a computed property name so that the
             // unifier can look up the wildcard `*` property on the receiver's shape.
-            // This is critical for type propagation through computed property accesses
-            // like `data.a[idx]` on MixedReadonly objects, where the result type should
-            // still be MixedReadonly (via the `*` wildcard property).
             equations.push(TypeEquation {
                 left: lvalue_type,
                 right: Type::Property(Box::new(PropType {
                     object_type: v.object.identifier.type_.clone(),
-                    object_name: v
-                        .object
-                        .identifier
-                        .name
-                        .as_ref()
-                        .map_or_else(String::new, |n| n.value().to_string()),
+                    object_name: get_name(names, v.object.identifier.id),
                     property_name: PropertyName::Computed {
                         value: Box::new(v.property.identifier.type_.clone()),
                     },
@@ -904,6 +895,7 @@ fn generate_instruction_equations(
         }
         InstructionValue::Destructure(v) => {
             let source_type = v.value.identifier.type_.clone();
+            let source_name = get_name(names, v.value.identifier.id);
             match &v.lvalue.pattern {
                 crate::hir::Pattern::Array(arr) => {
                     for (i, item) in arr.items.iter().enumerate() {
@@ -914,7 +906,7 @@ fn generate_instruction_equations(
                                     left: place.identifier.type_.clone(),
                                     right: Type::Property(Box::new(PropType {
                                         object_type: source_type.clone(),
-                                        object_name: String::new(),
+                                        object_name: source_name.clone(),
                                         property_name: PropertyName::Literal {
                                             value: PropertyLiteral::String(i.to_string()),
                                         },
@@ -950,7 +942,7 @@ fn generate_instruction_equations(
                                         left: p.place.identifier.type_.clone(),
                                         right: Type::Property(Box::new(PropType {
                                             object_type: source_type.clone(),
-                                            object_name: String::new(),
+                                            object_name: source_name.clone(),
                                             property_name: PropertyName::Literal {
                                                 value: PropertyLiteral::String(name),
                                             },
@@ -965,6 +957,24 @@ fn generate_instruction_equations(
                     }
                 }
             }
+        }
+        InstructionValue::PropertyStore(v) => {
+            // Port of TS InferTypes.ts `PropertyStore` case (lines 473-501):
+            // Infer types based on assignments to known object properties.
+            // Important for refs, where assignment to `<maybeRef>.current`
+            // can help infer that an object itself is a ref.
+            // Uses a dummy type for the lvalue since we only want to trigger
+            // ref inference from the Property type, not infer rvalue types.
+            equations.push(TypeEquation {
+                left: make_type(),
+                right: Type::Property(Box::new(PropType {
+                    object_type: v.object.identifier.type_.clone(),
+                    object_name: get_name(names, v.object.identifier.id),
+                    property_name: PropertyName::Literal {
+                        value: PropertyLiteral::String(v.property.to_string()),
+                    },
+                })),
+            });
         }
         InstructionValue::StoreContext(v) => {
             // TS InferTypes.ts: only emit type equation when lvalue.kind === InstructionKind.Const

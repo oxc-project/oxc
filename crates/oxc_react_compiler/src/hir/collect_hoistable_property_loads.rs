@@ -378,40 +378,16 @@ fn collect_non_nulls_in_blocks(
                 if context.assumed_invoked_fns.contains(&inner_fn_key) {
                     // Build nested context for inner function.
                     //
-                    // When building the initial nestedFnImmutableContext from the outermost
-                    // function, exclude direct function parameters from the immutable context.
-                    // In TypeScript HIR, function parameters appear as LoadLocal in the outer
-                    // function body (not LoadContext), so `isLoadContextMutable` returns false
-                    // for them in inner functions — they never get added to the temporaries
-                    // sidemap. In Rust HIR, all identifiers have scope=None, so
-                    // `isLoadContextMutable` can't distinguish params from locals via scope
-                    // ranges. Excluding params from `nestedFnImmutableContext` ensures that
-                    // when an inner function accesses a param like `maybeRef` via
-                    // `PropertyLoad(maybeRef_ctx_tmp, "current")`, the resolved PropertyPathNode
-                    // `{maybeRef, path=[]}` is not treated as immutable/hoistable. Without this
-                    // exclusion, `{maybeRef, path=[]}` would propagate to the outer scope as a
-                    // hoistable object, causing `add_dependency({maybeRef, path=[current]})` to
-                    // produce `maybeRef.current` instead of `maybeRef`, triggering false-positive
-                    // "Differences in ref.current access" validation errors.
+                    // Match the TS reference (CollectHoistablePropertyLoads.ts):
+                    // include all context variables that are immutable at the
+                    // instruction point, including function parameters.
                     //
-                    // Note: destructured params (e.g. `{x}` from `Component({x})`) are NOT
-                    // excluded because they appear as locally declared variables (not directly as
-                    // ReactiveParam::Place entries in func.params).
-                    let outer_fn_param_ids: FxHashSet<IdentifierId> =
-                        if context.nested_fn_immutable_context.is_none() {
-                            func.params
-                                .iter()
-                                .filter_map(|p| {
-                                    if let ReactiveParam::Place(place) = p {
-                                        Some(place.identifier.id)
-                                    } else {
-                                        None
-                                    }
-                                })
-                                .collect()
-                        } else {
-                            FxHashSet::default()
-                        };
+                    // Previously, we excluded outer function parameters to avoid
+                    // false-positive "Differences in ref.current access" validation
+                    // errors. That workaround is no longer needed because
+                    // infer_types now correctly unifies ref-like identifiers (e.g.
+                    // `maybeRef`) with BuiltInUseRefId, and visit_dependency
+                    // truncates `.current` accesses on such identifiers.
                     let nested_fn_immutable_context =
                         context.nested_fn_immutable_context.clone().unwrap_or_else(|| {
                             fe.lowered_func
@@ -419,12 +395,7 @@ fn collect_non_nulls_in_blocks(
                                 .context
                                 .iter()
                                 .filter(|place| {
-                                    !outer_fn_param_ids.contains(&place.identifier.id)
-                                        && is_immutable_at_instr(
-                                            &place.identifier,
-                                            instr.id,
-                                            context,
-                                        )
+                                    is_immutable_at_instr(&place.identifier, instr.id, context)
                                 })
                                 .map(|place| place.identifier.id)
                                 .collect()
