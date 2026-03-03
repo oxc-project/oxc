@@ -20,6 +20,7 @@ use crate::js_config;
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub enum DiscoveredConfig {
     Json(PathBuf),
+    Jsonc(PathBuf),
     Js(PathBuf),
 }
 
@@ -30,7 +31,7 @@ pub enum DiscoveredConfig {
 ///
 /// Example: For files `/project/src/foo.js` and `/project/src/bar/baz.js`:
 /// - Checks `/project/src/bar/`, `/project/src/`, `/project/`, `/`
-/// - Returns paths to any `.oxlintrc.json` files found
+/// - Returns paths to any `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` files found
 pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
     files: &[P],
 ) -> impl IntoIterator<Item = DiscoveredConfig> {
@@ -88,7 +89,7 @@ fn find_configs_in_directory(dir: &Path) -> Vec<DiscoveredConfig> {
     }
     let jsonc_path = dir.join(DEFAULT_JSONC_OXLINTRC_NAME);
     if jsonc_path.is_file() {
-        configs.push(DiscoveredConfig::Json(jsonc_path));
+        configs.push(DiscoveredConfig::Jsonc(jsonc_path));
     }
 
     let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
@@ -142,8 +143,10 @@ fn to_discovered_config(entry: &DirEntry) -> Option<DiscoveredConfig> {
         return None;
     }
     let file_name = entry.path().file_name()?;
-    if file_name == DEFAULT_OXLINTRC_NAME || file_name == DEFAULT_JSONC_OXLINTRC_NAME {
+    if file_name == DEFAULT_OXLINTRC_NAME {
         Some(DiscoveredConfig::Json(entry.path().to_path_buf()))
+    } else if file_name == DEFAULT_JSONC_OXLINTRC_NAME {
+        Some(DiscoveredConfig::Jsonc(entry.path().to_path_buf()))
     } else if file_name == DEFAULT_TS_OXLINTRC_NAME {
         Some(DiscoveredConfig::Js(entry.path().to_path_buf()))
     } else {
@@ -316,12 +319,13 @@ impl<'a> ConfigLoader<'a> {
                     let Some(dir) = path.parent().map(Path::to_path_buf) else {
                         continue;
                     };
-                    let entry = by_dir.entry(dir).or_default();
-                    if path.extension() == Some(OsStr::new("jsonc")) {
-                        entry.1 = Some(path);
-                    } else {
-                        entry.0 = Some(path);
-                    }
+                    by_dir.entry(dir).or_default().0 = Some(path);
+                }
+                DiscoveredConfig::Jsonc(path) => {
+                    let Some(dir) = path.parent().map(Path::to_path_buf) else {
+                        continue;
+                    };
+                    by_dir.entry(dir).or_default().1 = Some(path);
                 }
                 DiscoveredConfig::Js(path) => {
                     let Some(dir) = path.parent().map(Path::to_path_buf) else {
