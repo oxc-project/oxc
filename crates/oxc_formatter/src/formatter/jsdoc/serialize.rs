@@ -12,13 +12,14 @@ use crate::options::TrailingCommas;
 use crate::options::{JsdocOptions, QuoteStyle};
 use crate::{FormatOptions, Formatter, LineWidth, get_parse_options};
 
+use oxc_jsdoc::normalize::{
+    normalize_tag_kind, normalize_type, normalize_type_preserve_quotes, normalize_type_return,
+    normalize_type_whitespace, strip_optional_type_suffix,
+};
+
 use super::{
     mdast_serialize::format_description_mdast,
-    normalize::{
-        capitalize_first, normalize_markdown_emphasis, normalize_tag_kind, normalize_type,
-        normalize_type_preserve_quotes, normalize_type_return, normalize_type_whitespace,
-        strip_optional_type_suffix,
-    },
+    normalize::{capitalize_first, normalize_markdown_emphasis},
     wrap::{tokenize_words, wrap_text},
 };
 

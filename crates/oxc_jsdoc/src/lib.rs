@@ -1,4 +1,5 @@
 mod builder;
+pub mod normalize;
 pub mod parser;
 
 pub use builder::{JSDocBuilder, JSDocBuilderResult};
