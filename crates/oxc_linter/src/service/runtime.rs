@@ -21,7 +21,7 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool, Box as ArenaBox};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::{ParseOptions, Parser, Token, config::RuntimeParserConfig};
+use oxc_parser::{ParseOptions, Parser, Token, config::TokensParserConfig};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
@@ -1028,14 +1028,16 @@ impl Runtime {
         check_syntax_errors: bool,
     ) -> Result<(ResolvedModuleRecord, Semantic<'a>, ArenaBox<'a, [Token]>), Vec<OxcDiagnostic>>
     {
-        let collect_tokens = self.linter.has_external_linter();
+        // Always collect tokens, even if we don't need them (files where no JS plugins are enabled).
+        // Removing the "are tokens enabled?" branch by using `TokensParserConfig` static config
+        // is a bigger perf win than skipping storing the tokens.
         let ret = Parser::new(allocator, source_text, source_type)
             .with_options(ParseOptions {
                 parse_regular_expression: true,
                 allow_return_outside_function: true,
                 ..ParseOptions::default()
             })
-            .with_config(RuntimeParserConfig::new(collect_tokens))
+            .with_config(TokensParserConfig)
             .parse();
 
         if !ret.errors.is_empty() {
