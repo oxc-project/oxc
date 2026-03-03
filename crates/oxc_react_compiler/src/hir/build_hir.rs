@@ -6226,6 +6226,20 @@ pub fn lower_expression(
                     }
                 }
                 VariableBinding::NonLocal(binding) => {
+                    // Port of BuildHIR.ts line 3420-3428: eval is unsupported
+                    if matches!(&binding, NonLocalBinding::Global { name: n } if n == "eval") {
+                        builder.errors.push_error_detail(
+                            CompilerErrorDetail::new(
+                                CompilerErrorDetailOptions {
+                                    category: ErrorCategory::UnsupportedSyntax,
+                                    reason: "The 'eval' function is not supported".to_string(),
+                                    description: Some("Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler".to_string()),
+                                    loc: Some(loc.into()),
+                                    suggestions: None,
+                                },
+                            ),
+                        );
+                    }
                     // Global: emit LoadGlobal
                     lower_value_to_temporary(
                         builder,
@@ -6468,7 +6482,22 @@ fn lower_assignment(
         LowerableExpression::Identifier(name, span) => {
             let ident_loc = span_to_loc(*span);
             match builder.resolve_identifier(name) {
-                VariableBinding::Identifier { identifier, .. } => {
+                VariableBinding::Identifier { identifier, binding_kind } => {
+                    // Port of BuildHIR.ts line 3487-3497: const reassignment error
+                    if binding_kind == BindingKind::Const {
+                        builder.errors.push_error_detail(
+                            CompilerErrorDetail::new(
+                                CompilerErrorDetailOptions {
+                                    category: ErrorCategory::Syntax,
+                                    reason: "Cannot reassign a `const` variable".to_string(),
+                                    description: Some(format!("`{name}` is declared as const")),
+                                    loc: Some(ident_loc.into()),
+                                    suggestions: None,
+                                },
+                            ),
+                        );
+                    }
+
                     let place = crate::hir::Place {
                         identifier,
                         effect: crate::hir::Effect::Unknown,
