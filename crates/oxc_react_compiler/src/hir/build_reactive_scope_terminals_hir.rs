@@ -276,7 +276,7 @@ fn reverse_postorder_blocks(body: &mut Hir) {
                 };
 
                 let successors: Vec<BlockId> =
-                    each_terminal_successor(&block.terminal).into_iter().rev().collect();
+                    each_terminal_successor(&block.terminal).into_iter().collect();
                 let fallthrough = block.terminal.fallthrough();
 
                 if !was_visited {
