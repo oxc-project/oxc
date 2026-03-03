@@ -1,21 +1,20 @@
 ---
 source: crates/oxc_react_compiler/tests/fixtures.rs
+assertion_line: 8975
 expression: snapshot
 ---
-Error fixture conformance: 129/275 (46.9%)
+Error fixture conformance: 156/275 (56.7%)
 Flow files skipped: 17
 
 Failure breakdown:
-  unexpected_success: 146
+  unexpected_success: 119
   parse_error:        0
 
 Failed fixtures (compiler did not reject):
-  [unexpected_success] ecma/error.reserved-words.ts
   [unexpected_success] error._todo.computed-lval-in-destructure.js
   [unexpected_success] error.assign-global-in-component-tag-function.js
   [unexpected_success] error.assign-global-in-jsx-children.js
   [unexpected_success] error.assign-ref-in-effect-hint.js
-  [unexpected_success] error.bug-infer-mutation-aliasing-effects.js
   [unexpected_success] error.bug-invariant-codegen-methodcall.js
   [unexpected_success] error.bug-invariant-couldnt-find-binding-for-decl.js
   [unexpected_success] error.bug-invariant-local-or-context-references.js
@@ -24,28 +23,18 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.capitalized-function-call-aliased.js
   [unexpected_success] error.capitalized-function-call.js
   [unexpected_success] error.capitalized-method-call.js
-  [unexpected_success] error.capture-ref-for-mutation.tsx
   [unexpected_success] error.default-param-accesses-local.js
   [unexpected_success] error.dont-hoist-inline-reference.js
   [unexpected_success] error.handle-unexpected-exception-pipeline.ts
   [unexpected_success] error.hoisting-simple-function-declaration.js
   [unexpected_success] error.hook-call-freezes-captured-identifier.tsx
   [unexpected_success] error.hook-property-load-local-hook.js
-  [unexpected_success] error.hook-ref-value.js
-  [unexpected_success] error.invalid-access-ref-during-render.js
-  [unexpected_success] error.invalid-access-ref-in-reducer-init.js
-  [unexpected_success] error.invalid-access-ref-in-reducer.js
-  [unexpected_success] error.invalid-access-ref-in-render-mutate-object-with-ref-function.js
-  [unexpected_success] error.invalid-access-ref-in-state-initializer.js
-  [unexpected_success] error.invalid-aliased-ref-in-callback-invoked-during-render-.js
   [unexpected_success] error.invalid-array-push-frozen.js
   [unexpected_success] error.invalid-computed-store-to-frozen-value.js
   [unexpected_success] error.invalid-delete-computed-property-of-frozen-value.js
   [unexpected_success] error.invalid-delete-property-of-frozen-value.js
   [unexpected_success] error.invalid-destructure-assignment-to-global.js
   [unexpected_success] error.invalid-destructure-to-local-global-variables.js
-  [unexpected_success] error.invalid-disallow-mutating-ref-in-render.js
-  [unexpected_success] error.invalid-disallow-mutating-refs-in-render-transitive.js
   [unexpected_success] error.invalid-eval-unsupported.js
   [unexpected_success] error.invalid-function-expression-mutates-immutable-value.js
   [unexpected_success] error.invalid-global-reassignment-indirect.js
@@ -68,29 +57,20 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.invalid-mutation-of-possible-props-phi-indirect.js
   [unexpected_success] error.invalid-nested-function-reassign-local-variable-in-effect.js
   [unexpected_success] error.invalid-pass-mutable-function-as-prop.js
-  [unexpected_success] error.invalid-pass-ref-to-function.js
   [unexpected_success] error.invalid-prop-mutation-indirect.js
   [unexpected_success] error.invalid-property-store-to-frozen-value.js
   [unexpected_success] error.invalid-props-mutation-in-effect-indirect.js
-  [unexpected_success] error.invalid-read-ref-prop-in-render-destructure.js
   [unexpected_success] error.invalid-read-ref-prop-in-render-property-load.js
   [unexpected_success] error.invalid-reassign-const.js
   [unexpected_success] error.invalid-reassign-local-variable-in-effect.js
   [unexpected_success] error.invalid-reassign-variable-in-usememo.js
-  [unexpected_success] error.invalid-ref-in-callback-invoked-during-render.js
-  [unexpected_success] error.invalid-ref-value-as-props.js
   [unexpected_success] error.invalid-return-mutable-function-from-hook.js
-  [unexpected_success] error.invalid-set-and-read-ref-during-render.js
-  [unexpected_success] error.invalid-set-and-read-ref-nested-property-during-render.js
   [unexpected_success] error.invalid-type-provider-hook-name-not-typed-as-hook-namespace.js
   [unexpected_success] error.invalid-type-provider-hook-name-not-typed-as-hook.js
   [unexpected_success] error.invalid-type-provider-hooklike-module-default-not-hook.js
   [unexpected_success] error.invalid-type-provider-nonhook-name-typed-as-hook.js
   [unexpected_success] error.invalid-unconditional-set-state-hook-return-in-render.js
   [unexpected_success] error.invalid-unconditional-set-state-prop-in-render.js
-  [unexpected_success] error.invalid-use-ref-added-to-dep-without-type-info.js
-  [unexpected_success] error.invalid-write-but-dont-read-ref-in-render.js
-  [unexpected_success] error.invalid-write-ref-prop-in-render.js
   [unexpected_success] error.modify-state-2.js
   [unexpected_success] error.modify-state.js
   [unexpected_success] error.modify-useReducer-state.js
@@ -104,7 +84,6 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.reassignment-to-global.js
   [unexpected_success] error.ref-like-name-not-Ref.js
   [unexpected_success] error.ref-like-name-not-a-ref.js
-  [unexpected_success] error.ref-optional.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-later-mutation.js
   [unexpected_success] error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-mutated-dep.js
   [unexpected_success] error.store-property-in-global.js
@@ -125,14 +104,10 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] error.todo-optional-call-chain-in-optional.ts
   [unexpected_success] error.todo-repro-named-function-with-shadowed-local-same-name.js
   [unexpected_success] error.todo-repro-unmemoized-callback-captured-in-context-variable.tsx
-  [unexpected_success] error.todo-useCallback-set-ref-nested-property-ref-modified-later-preserve-memoization.js
   [unexpected_success] error.todo-valid-functiondecl-hoisting.tsx
   [unexpected_success] error.todo.try-catch-with-throw.js
   [unexpected_success] error.update-global-should-bailout.tsx
-  [unexpected_success] error.useCallback-accesses-ref-mutated-later-via-function-preserve-memoization.js
-  [unexpected_success] error.useCallback-set-ref-nested-property-dont-preserve-memoization.js
   [unexpected_success] error.useMemo-callback-generator.js
-  [unexpected_success] error.validate-mutate-ref-arg-in-render.js
   [unexpected_success] error.validate-object-entries-mutation.js
   [unexpected_success] error.validate-object-values-mutation.js
   [unexpected_success] exhaustive-deps/error.exhaustive-deps-effect-events.js
@@ -153,6 +128,5 @@ Failed fixtures (compiler did not reject):
   [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-infer-mutate-deps.ts
   [unexpected_success] preserve-memo-validation/error.false-positive-useMemo-overlap-scopes.ts
   [unexpected_success] preserve-memo-validation/error.invalid-useCallback-captures-reassigned-context.ts
-  [unexpected_success] preserve-memo-validation/error.maybe-mutable-ref-not-preserved.ts
   [unexpected_success] propagate-scope-deps-hir-fork/error.todo-optional-call-chain-in-optional.ts
   [unexpected_success] todo.error.object-pattern-computed-key.js
