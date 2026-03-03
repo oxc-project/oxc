@@ -242,12 +242,11 @@ impl LanguageServer for Backend {
                     if responsible_worker.is_none_or(|w| !std::ptr::eq(w, worker)) {
                         continue;
                     }
-                    let (language_id, content) = self
-                        .file_system
-                        .read()
-                        .await
-                        .get(uri)
-                        .map_or_else(|| (LanguageId::default(), None), |(lang, c)| (lang, Some(c)));
+                    let (language_id, content) =
+                        self.file_system.read().await.get(uri).map_or_else(
+                            || (LanguageId::default(), None),
+                            |(lang, c)| (lang, Some(c)),
+                        );
                     let diagnostics =
                         worker.run_diagnostic(uri, &language_id, content.as_deref()).await;
                     match diagnostics {
