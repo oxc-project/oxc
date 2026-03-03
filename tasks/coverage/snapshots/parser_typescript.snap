@@ -1,9 +1,9 @@
-commit: 34725489
+commit: 0c2c7a35
 
 parser_typescript Summary:
-AST Parsed     : 9831/9834 (99.97%)
-Positive Passed: 9820/9834 (99.86%)
-Negative Passed: 1530/2578 (59.35%)
+AST Parsed     : 9824/9827 (99.97%)
+Positive Passed: 9813/9827 (99.86%)
+Negative Passed: 1530/2586 (59.16%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -186,6 +186,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWith
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithErrorsInInputDeclarationFileWithOut.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitCommonJsModuleReferencedType.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedPropertyNameEnum3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringWithOptionalBindingParameters.ts
@@ -194,11 +196,19 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMonorepoBaseUrl.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitObjectAssignedDefaultExport.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo2.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitReexportedSymlinkReference3.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRelativeModuleError.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUnsafeImportSymbolName.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitUsingTypeAlias1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declareModifierOnImport1.ts
 
@@ -1718,11 +1728,17 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allo
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsTopLevelAwait.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/legacyNodeModulesExportsSpecifierGenerationConditions.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesCJSEmit1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitWithPackageExports.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksSpecifierResolution.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksTypesVersions.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsSourceTs.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesGeneratedNameCollisions.ts
 
