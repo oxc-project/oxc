@@ -354,6 +354,17 @@ Specify a warning threshold. Exits with an error status if warnings exceed this 
 Equivalent to passing `--max-warnings` on the CLI.
 
 
+### options.reportUnusedDisableDirectives
+
+
+
+Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
+
+Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
+CLI flags take precedence over this value when both are set.
+Only supported in the root configuration file.
+
+
 ### options.typeAware
 
 type: `boolean`

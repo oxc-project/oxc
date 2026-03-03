@@ -344,10 +344,17 @@ impl CliRunner {
         let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
         let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
 
+        // Only propagate Warn/Deny; treat Allow (off) as disabling reports.
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
-            ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
-            _ => None,
+            ReportUnusedDirectives::WithSeverity(Some(severity)) if severity.is_warn_deny() => {
+                Some(severity)
+            }
+            ReportUnusedDirectives::WithSeverity(Some(_)) => None,
+            _ => match config_store.report_unused_disable_directives() {
+                Some(severity) if severity.is_warn_deny() => Some(severity),
+                _ => None,
+            },
         };
         let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
             &output_formatter,
@@ -1055,6 +1062,26 @@ mod test {
     #[test]
     fn test_report_unused_directives() {
         let args = &["-c", ".oxlintrc.json", "--report-unused-disable-directives"];
+
+        Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_report_unused_directives_from_config() {
+        // Verify that `reportUnusedDisableDirectives` in the config file enables reporting
+        // without needing a CLI flag.
+        let args = &["-c", ".oxlintrc-with-rudd.json"];
+
+        Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_report_unused_directives_cli_overrides_config() {
+        // Verify that the CLI flag takes precedence over the config file value.
+        // Config has `reportUnusedDisableDirectives: "warn"`, but CLI passes `off`,
+        // so no unused-directive diagnostics should be reported.
+        let args =
+            &["-c", ".oxlintrc-with-rudd.json", "--report-unused-disable-directives-severity=off"];
 
         Tester::new().with_cwd("fixtures/report_unused_directives".into()).test_and_snapshot(args);
     }
