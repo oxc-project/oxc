@@ -385,6 +385,7 @@ pub(crate) mod react {
     pub mod checked_requires_onchange_or_readonly;
     pub mod display_name;
     pub mod exhaustive_deps;
+    pub mod forbid_component_props;
     pub mod forbid_dom_props;
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
