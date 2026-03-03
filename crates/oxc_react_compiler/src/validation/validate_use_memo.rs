@@ -5,21 +5,29 @@
 /// Validates that useMemo/useCallback are used correctly:
 /// - The callback must return a value (not void)
 /// - The result must be used (not discarded)
+/// - Callbacks may not reassign variables declared outside of the callback
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
     compiler_error::{CompilerDiagnostic, CompilerDiagnosticDetail, CompilerError, ErrorCategory},
-    hir::{HIRFunction, IdentifierId, InstructionValue, visitors::each_instruction_value_operand},
+    hir::{
+        CallArg, FunctionExpressionValue, HIRFunction, IdentifierId, InstructionValue,
+        visitors::each_instruction_value_operand,
+    },
 };
 
 /// Validate useMemo and useCallback usage.
 ///
-/// # Errors
-/// Returns a `CompilerError` if invalid useMemo usage is found.
-pub fn validate_use_memo(func: &HIRFunction) -> Result<(), CompilerError> {
+/// Returns a tuple of (fatal_errors, non_fatal_void_memo_errors).
+/// In the TS compiler, the fatal errors are returned via `errors.asResult()` and
+/// unwrapped (thrown on error), while the void memo errors are logged via
+/// `fn.env.logErrors(voidMemoErrors.asResult())` as non-fatal warnings.
+pub fn validate_use_memo(func: &HIRFunction) -> (Result<(), CompilerError>, Result<(), CompilerError>) {
     let mut errors = CompilerError::new();
+    let mut void_memo_errors = CompilerError::new();
     let mut use_memos: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut react_ids: FxHashSet<IdentifierId> = FxHashSet::default();
+    let mut functions: FxHashMap<IdentifierId, FunctionExpressionValue> = FxHashMap::default();
     let mut unused_use_memos: FxHashMap<IdentifierId, crate::compiler_error::SourceLocation> =
         FxHashMap::default();
 
@@ -53,10 +61,32 @@ pub fn validate_use_memo(func: &HIRFunction) -> Result<(), CompilerError> {
                         }
                     }
                 }
+                InstructionValue::FunctionExpression(v) => {
+                    functions.insert(instr.lvalue.identifier.id, v.clone());
+                }
                 InstructionValue::CallExpression(v) => {
-                    if use_memos.contains(&v.callee.identifier.id) {
-                        // This is a useMemo/useCallback call — track the result
-                        unused_use_memos.insert(instr.lvalue.identifier.id, v.loc);
+                    let is_use_memo = use_memos.contains(&v.callee.identifier.id);
+                    if !is_use_memo || v.args.is_empty() {
+                        continue;
+                    }
+
+                    // Track the result as potentially unused
+                    unused_use_memos.insert(instr.lvalue.identifier.id, v.loc);
+
+                    // Get the first argument
+                    let first_arg_id = match &v.args[0] {
+                        CallArg::Place(p) => Some(p.identifier.id),
+                        CallArg::Spread(_) => None,
+                    };
+
+                    // If the first arg is a locally-defined FunctionExpression, validate it
+                    if let Some(arg_id) = first_arg_id {
+                        if let Some(body) = functions.get(&arg_id) {
+                            validate_no_context_variable_assignment(
+                                &body.lowered_func.func,
+                                &mut errors,
+                            );
+                        }
                     }
                 }
                 _ => {}
@@ -64,9 +94,9 @@ pub fn validate_use_memo(func: &HIRFunction) -> Result<(), CompilerError> {
         }
     }
 
-    // Report unused useMemo results
+    // Report unused useMemo results (non-fatal, matching TS voidMemoErrors)
     for loc in unused_use_memos.values() {
-        errors.push_diagnostic(
+        void_memo_errors.push_diagnostic(
             CompilerDiagnostic::create(
                 ErrorCategory::VoidUseMemo,
                 "useMemo/useCallback result is unused".to_string(),
@@ -80,5 +110,37 @@ pub fn validate_use_memo(func: &HIRFunction) -> Result<(), CompilerError> {
         );
     }
 
-    errors.into_result()
+    (errors.into_result(), void_memo_errors.into_result())
+}
+
+/// Port of `validateNoContextVariableAssignment` from `ValidateUseMemo.ts`.
+///
+/// Checks that a useMemo/useCallback callback does not reassign variables
+/// declared outside of the callback (via `StoreContext` to a captured context variable).
+fn validate_no_context_variable_assignment(func: &HIRFunction, errors: &mut CompilerError) {
+    let context: FxHashSet<IdentifierId> =
+        func.context.iter().map(|place| place.identifier.id).collect();
+
+    for block in func.body.blocks.values() {
+        for instr in &block.instructions {
+            if let InstructionValue::StoreContext(v) = &instr.value {
+                if context.contains(&v.lvalue_place.identifier.id) {
+                    errors.push_diagnostic(
+                        CompilerDiagnostic::create(
+                            ErrorCategory::UseMemo,
+                            "useMemo() callbacks may not reassign variables declared outside of the callback".to_string(),
+                            Some(
+                                "useMemo() callbacks must be pure functions and cannot reassign variables defined outside of the callback function".to_string(),
+                            ),
+                            None,
+                        )
+                        .with_detail(CompilerDiagnosticDetail::Error {
+                            loc: Some(v.lvalue_place.loc),
+                            message: Some("Cannot reassign variable".to_string()),
+                        }),
+                    );
+                }
+            }
+        }
+    }
 }
