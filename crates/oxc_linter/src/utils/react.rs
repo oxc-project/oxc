@@ -429,14 +429,14 @@ fn get_jsx_mem_expr_name<'a>(jsx_mem_expr: &JSXMemberExpression) -> Cow<'a, str>
     Cow::Owned(format!("{}.{}", prefix, jsx_mem_expr.property.name))
 }
 
-/// Resolve element type(name) using jsx-a11y settings
-/// ref:
-/// <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/getElementType.js>
-pub fn get_element_type<'c, 'a>(
-    context: &'c LintContext<'a>,
-    element: &JSXOpeningElement<'a>,
-) -> Cow<'c, str> {
-    let name = match &element.name {
+/// Returns the full name of a JSX element as a string.
+///
+/// - Simple identifiers (`<Foo>`) return `"Foo"`.
+/// - Member expressions (`<AntdLayout.Content>`) return `"AntdLayout.Content"`.
+/// - `this` expressions (`<this.Modal>`) return `"this.Modal"`.
+/// - Namespaced names (`<fbt:param>`) return `"fbt:param"`.
+pub fn get_jsx_element_name<'a>(name: &JSXElementName<'a>) -> Cow<'a, str> {
+    match &name {
         JSXElementName::Identifier(id) => Cow::Borrowed(id.as_ref().name.as_str()),
         JSXElementName::IdentifierReference(id) => Cow::Borrowed(id.as_ref().name.as_str()),
         JSXElementName::NamespacedName(namespaced) => {
@@ -444,7 +444,17 @@ pub fn get_element_type<'c, 'a>(
         }
         JSXElementName::MemberExpression(jsx_mem_expr) => get_jsx_mem_expr_name(jsx_mem_expr),
         JSXElementName::ThisExpression(_) => Cow::Borrowed("this"),
-    };
+    }
+}
+
+/// Resolve element type(name) using jsx-a11y settings
+/// ref:
+/// <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/getElementType.js>
+pub fn get_element_type<'c, 'a>(
+    context: &'c LintContext<'a>,
+    element: &JSXOpeningElement<'a>,
+) -> Cow<'c, str> {
+    let name = get_jsx_element_name(&element.name);
 
     let OxlintSettings { jsx_a11y, .. } = context.settings();
 
@@ -818,6 +828,41 @@ mod test {
 
             let found = semantic.nodes().iter().any(|node| is_es5_component(node));
             assert_eq!(found, expected, "Failed for: {source}");
+        }
+    }
+
+    #[test]
+    fn test_get_jsx_element_name() {
+        use oxc_parser::Parser;
+        use oxc_semantic::SemanticBuilder;
+        use oxc_span::SourceType;
+
+        let cases: Vec<(&str, &str)> = vec![
+            ("const App = () => <div />", "div"),
+            ("const App = () => <Foo />", "Foo"),
+            ("const App = () => <AntdLayout.Content />", "AntdLayout.Content"),
+            (
+                "class App extends React.Component { render() { return <this.Modal />; } }",
+                "this.Modal",
+            ),
+            ("const App = () => <fbt:param />", "fbt:param"),
+        ];
+
+        for (source, expected) in cases {
+            let allocator = Allocator::default();
+            let parser_ret = Parser::new(&allocator, source, SourceType::tsx()).parse();
+            assert!(parser_ret.errors.is_empty(), "Parse error in: {source}");
+
+            let semantic = SemanticBuilder::new().build(allocator.alloc(parser_ret.program)).semantic;
+            let found = semantic.nodes().iter().find_map(|node| {
+                if let super::AstKind::JSXOpeningElement(opening) = node.kind() {
+                    Some(get_jsx_element_name(&opening.name).into_owned())
+                } else {
+                    None
+                }
+            });
+
+            assert_eq!(found.as_deref(), Some(expected), "Failed for: {source}");
         }
     }
 

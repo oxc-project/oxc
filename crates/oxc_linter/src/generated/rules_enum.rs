@@ -385,6 +385,7 @@ pub use crate::rules::react::button_has_type::ButtonHasType as ReactButtonHasTyp
 pub use crate::rules::react::checked_requires_onchange_or_readonly::CheckedRequiresOnchangeOrReadonly as ReactCheckedRequiresOnchangeOrReadonly;
 pub use crate::rules::react::display_name::DisplayName as ReactDisplayName;
 pub use crate::rules::react::exhaustive_deps::ExhaustiveDeps as ReactExhaustiveDeps;
+pub use crate::rules::react::forbid_component_props::ForbidComponentProps as ReactForbidComponentProps;
 pub use crate::rules::react::forbid_dom_props::ForbidDomProps as ReactForbidDomProps;
 pub use crate::rules::react::forbid_elements::ForbidElements as ReactForbidElements;
 pub use crate::rules::react::forward_ref_uses_ref::ForwardRefUsesRef as ReactForwardRefUsesRef;
@@ -1083,6 +1084,7 @@ pub enum RuleEnum {
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
     ReactDisplayName(ReactDisplayName),
     ReactExhaustiveDeps(ReactExhaustiveDeps),
+    ReactForbidComponentProps(ReactForbidComponentProps),
     ReactForbidDomProps(ReactForbidDomProps),
     ReactForbidElements(ReactForbidElements),
     ReactForwardRefUsesRef(ReactForwardRefUsesRef),
@@ -1827,7 +1829,8 @@ const REACT_BUTTON_HAS_TYPE_ID: usize = JEST_VALID_TITLE_ID + 1usize;
 const REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID: usize = REACT_BUTTON_HAS_TYPE_ID + 1usize;
 const REACT_DISPLAY_NAME_ID: usize = REACT_CHECKED_REQUIRES_ONCHANGE_OR_READONLY_ID + 1usize;
 const REACT_EXHAUSTIVE_DEPS_ID: usize = REACT_DISPLAY_NAME_ID + 1usize;
-const REACT_FORBID_DOM_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
+const REACT_FORBID_COMPONENT_PROPS_ID: usize = REACT_EXHAUSTIVE_DEPS_ID + 1usize;
+const REACT_FORBID_DOM_PROPS_ID: usize = REACT_FORBID_COMPONENT_PROPS_ID + 1usize;
 const REACT_FORBID_ELEMENTS_ID: usize = REACT_FORBID_DOM_PROPS_ID + 1usize;
 const REACT_FORWARD_REF_USES_REF_ID: usize = REACT_FORBID_ELEMENTS_ID + 1usize;
 const REACT_IFRAME_MISSING_SANDBOX_ID: usize = REACT_FORWARD_REF_USES_REF_ID + 1usize;
@@ -2634,6 +2637,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => REACT_DISPLAY_NAME_ID,
             Self::ReactExhaustiveDeps(_) => REACT_EXHAUSTIVE_DEPS_ID,
+            Self::ReactForbidComponentProps(_) => REACT_FORBID_COMPONENT_PROPS_ID,
             Self::ReactForbidDomProps(_) => REACT_FORBID_DOM_PROPS_ID,
             Self::ReactForbidElements(_) => REACT_FORBID_ELEMENTS_ID,
             Self::ReactForwardRefUsesRef(_) => REACT_FORWARD_REF_USES_REF_ID,
@@ -3438,6 +3442,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::NAME,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::NAME,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::NAME,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::NAME,
             Self::ReactForbidElements(_) => ReactForbidElements::NAME,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::NAME,
@@ -4258,6 +4263,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::CATEGORY,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::CATEGORY,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::CATEGORY,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::CATEGORY,
             Self::ReactForbidElements(_) => ReactForbidElements::CATEGORY,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::CATEGORY,
@@ -5077,6 +5083,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::FIX,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::FIX,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::FIX,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::FIX,
             Self::ReactForbidElements(_) => ReactForbidElements::FIX,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::FIX,
@@ -5970,6 +5977,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::documentation(),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::documentation(),
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::documentation(),
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::documentation(),
             Self::ReactForbidElements(_) => ReactForbidElements::documentation(),
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::documentation(),
@@ -7476,6 +7484,10 @@ impl RuleEnum {
                 .or_else(|| ReactDisplayName::schema(generator)),
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::config_schema(generator)
                 .or_else(|| ReactExhaustiveDeps::schema(generator)),
+            Self::ReactForbidComponentProps(_) => {
+                ReactForbidComponentProps::config_schema(generator)
+                    .or_else(|| ReactForbidComponentProps::schema(generator))
+            }
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::config_schema(generator)
                 .or_else(|| ReactForbidDomProps::schema(generator)),
             Self::ReactForbidElements(_) => ReactForbidElements::config_schema(generator)
@@ -8783,6 +8795,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
             Self::ReactDisplayName(_) => "react",
             Self::ReactExhaustiveDeps(_) => "react",
+            Self::ReactForbidComponentProps(_) => "react",
             Self::ReactForbidDomProps(_) => "react",
             Self::ReactForbidElements(_) => "react",
             Self::ReactForwardRefUsesRef(_) => "react",
@@ -10308,6 +10321,9 @@ impl RuleEnum {
             Self::ReactExhaustiveDeps(_) => {
                 Ok(Self::ReactExhaustiveDeps(ReactExhaustiveDeps::from_configuration(value)?))
             }
+            Self::ReactForbidComponentProps(_) => Ok(Self::ReactForbidComponentProps(
+                ReactForbidComponentProps::from_configuration(value)?,
+            )),
             Self::ReactForbidDomProps(_) => {
                 Ok(Self::ReactForbidDomProps(ReactForbidDomProps::from_configuration(value)?))
             }
@@ -11724,6 +11740,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
             Self::ReactDisplayName(rule) => rule.to_configuration(),
             Self::ReactExhaustiveDeps(rule) => rule.to_configuration(),
+            Self::ReactForbidComponentProps(rule) => rule.to_configuration(),
             Self::ReactForbidDomProps(rule) => rule.to_configuration(),
             Self::ReactForbidElements(rule) => rule.to_configuration(),
             Self::ReactForwardRefUsesRef(rule) => rule.to_configuration(),
@@ -12426,6 +12443,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
             Self::ReactDisplayName(rule) => rule.run(node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run(node, ctx),
+            Self::ReactForbidComponentProps(rule) => rule.run(node, ctx),
             Self::ReactForbidDomProps(rule) => rule.run(node, ctx),
             Self::ReactForbidElements(rule) => rule.run(node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run(node, ctx),
@@ -13126,6 +13144,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
             Self::ReactDisplayName(rule) => rule.run_once(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_once(ctx),
+            Self::ReactForbidComponentProps(rule) => rule.run_once(ctx),
             Self::ReactForbidDomProps(rule) => rule.run_once(ctx),
             Self::ReactForbidElements(rule) => rule.run_once(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_once(ctx),
@@ -13896,6 +13915,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactExhaustiveDeps(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactForbidComponentProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidDomProps(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForbidElements(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14626,6 +14646,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
             Self::ReactDisplayName(rule) => rule.should_run(ctx),
             Self::ReactExhaustiveDeps(rule) => rule.should_run(ctx),
+            Self::ReactForbidComponentProps(rule) => rule.should_run(ctx),
             Self::ReactForbidDomProps(rule) => rule.should_run(ctx),
             Self::ReactForbidElements(rule) => rule.should_run(ctx),
             Self::ReactForwardRefUsesRef(rule) => rule.should_run(ctx),
@@ -15488,6 +15509,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::IS_TSGOLINT_RULE,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::IS_TSGOLINT_RULE,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::IS_TSGOLINT_RULE,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::IS_TSGOLINT_RULE,
             Self::ReactForbidElements(_) => ReactForbidElements::IS_TSGOLINT_RULE,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::IS_TSGOLINT_RULE,
@@ -16425,6 +16447,7 @@ impl RuleEnum {
             }
             Self::ReactDisplayName(_) => ReactDisplayName::HAS_CONFIG,
             Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::HAS_CONFIG,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::HAS_CONFIG,
             Self::ReactForbidDomProps(_) => ReactForbidDomProps::HAS_CONFIG,
             Self::ReactForbidElements(_) => ReactForbidElements::HAS_CONFIG,
             Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::HAS_CONFIG,
@@ -17189,6 +17212,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
             Self::ReactDisplayName(rule) => rule.types_info(),
             Self::ReactExhaustiveDeps(rule) => rule.types_info(),
+            Self::ReactForbidComponentProps(rule) => rule.types_info(),
             Self::ReactForbidDomProps(rule) => rule.types_info(),
             Self::ReactForbidElements(rule) => rule.types_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.types_info(),
@@ -17889,6 +17913,7 @@ impl RuleEnum {
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
             Self::ReactDisplayName(rule) => rule.run_info(),
             Self::ReactExhaustiveDeps(rule) => rule.run_info(),
+            Self::ReactForbidComponentProps(rule) => rule.run_info(),
             Self::ReactForbidDomProps(rule) => rule.run_info(),
             Self::ReactForbidElements(rule) => rule.run_info(),
             Self::ReactForwardRefUsesRef(rule) => rule.run_info(),
@@ -18677,6 +18702,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::ReactDisplayName(ReactDisplayName::default()),
         RuleEnum::ReactExhaustiveDeps(ReactExhaustiveDeps::default()),
+        RuleEnum::ReactForbidComponentProps(ReactForbidComponentProps::default()),
         RuleEnum::ReactForbidDomProps(ReactForbidDomProps::default()),
         RuleEnum::ReactForbidElements(ReactForbidElements::default()),
         RuleEnum::ReactForwardRefUsesRef(ReactForwardRefUsesRef::default()),
